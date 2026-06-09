@@ -232,27 +232,70 @@ export default function PartnersLanding() {
       </section>
 
       {/* COMO FUNCIONA */}
-      <section id="como-funciona" className="px-6 py-24 bg-card/30 border-y border-border/40">
-        <div className="max-w-6xl mx-auto">
+      <section id="como-funciona" className="relative px-6 py-24 bg-card/30 border-y border-border/40 overflow-hidden">
+        {/* Soft glows */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-24 left-1/4 h-72 w-72 rounded-full bg-primary/10 blur-[110px]" />
+          <div className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-primary/10 blur-[120px]" />
+        </div>
+        <div className="max-w-6xl mx-auto relative">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4 ring-1 ring-primary/20">
               <Megaphone size={13} /> Passo a passo
             </div>
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Como funciona, do cadastro ao Pix</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight mb-3 leading-[1.1]">
+              <span className="block">Como funciona,</span>
+              <span className="block text-shimmer-highlight font-extrabold whitespace-nowrap text-[clamp(1.4rem,5vw,3rem)]">
+                do cadastro ao Pix
+              </span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto mt-4">
               Cinco passos simples. Você cadastra, recebe um link de divulgação exclusivo, compartilha onde quiser e acompanha tudo em tempo real no portal.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {steps.map((s) => (
-              <Card key={s.n} className="border-border/50 bg-card/60 backdrop-blur-sm hover:border-primary/30 transition-colors">
-                <CardContent className="p-7">
-                  <div className="text-5xl font-semibold text-primary/25 mb-3">{s.n}</div>
-                  <h3 className="font-semibold text-lg mb-2">{s.t}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{s.d}</p>
-                </CardContent>
-              </Card>
-            ))}
+
+          {/* Primeiros 3 passos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
+            {steps.slice(0, 3).map((s) => {
+              const Icon = s.icon;
+              return (
+                <Card key={s.n} className="group relative overflow-hidden border-border/50 bg-card/70 backdrop-blur-sm hover:border-primary/40 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/5">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <CardContent className="relative p-7">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20 text-primary">
+                        <Icon size={22} strokeWidth={2} />
+                      </div>
+                      <span className="text-[11px] font-bold tracking-[0.18em] text-muted-foreground/70 uppercase">Passo {s.n}</span>
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2 text-foreground">{s.t}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{s.d}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Passos 4 e 5 — ocupam metade cada, largura total */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {steps.slice(3).map((s) => {
+              const Icon = s.icon;
+              return (
+                <Card key={s.n} className="group relative overflow-hidden border-border/50 bg-card/70 backdrop-blur-sm hover:border-primary/40 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/5">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <CardContent className="relative p-7">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20 text-primary">
+                        <Icon size={22} strokeWidth={2} />
+                      </div>
+                      <span className="text-[11px] font-bold tracking-[0.18em] text-muted-foreground/70 uppercase">Passo {s.n}</span>
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2 text-foreground">{s.t}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{s.d}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           <div className="mt-10 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-7 text-sm text-muted-foreground leading-relaxed">
@@ -260,7 +303,7 @@ export default function PartnersLanding() {
               <Target size={16} className="text-primary" /> Sobre o link de divulgação
             </p>
             <p>
-              Cada parceiro recebe <strong className="text-foreground">um único link rastreável</strong> (ex.: <code className="px-1.5 py-0.5 rounded bg-card border border-border/60 text-foreground text-xs">wiize.com.br/?ref=seu-codigo</code>). Quando alguém clica, gravamos um cookie de <strong className="text-foreground">2 anos</strong> no navegador. Toda venda feita por esse usuário dentro desse período é creditada automaticamente a você — mesmo que ele cadastre por outro caminho depois. Sem código pra colar, sem integração, sem complicação.
+              Cada parceiro recebe <strong className="text-foreground">um único link rastreável</strong> (ex.: <code className="px-1.5 py-0.5 rounded bg-card border border-border/60 text-foreground text-xs break-all">wiize.com.br/?ref=seu-codigo</code>). Quando alguém clica, gravamos um cookie de <strong className="text-foreground">2 anos</strong> no navegador. Toda venda feita por esse usuário dentro desse período é creditada automaticamente a você — mesmo que ele cadastre por outro caminho depois. Sem código pra colar, sem integração, sem complicação.
             </p>
           </div>
         </div>
