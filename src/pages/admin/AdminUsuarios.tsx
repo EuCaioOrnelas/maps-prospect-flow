@@ -15,6 +15,7 @@ import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
 import { getProviderLabel, getProviderBucket } from "@/lib/paymentProviderLabel";
 
 export default function AdminUsuarios() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
