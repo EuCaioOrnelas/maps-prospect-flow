@@ -212,6 +212,12 @@ const KanbanBoardWithScrollComponent = ({
     }
   }, [draggedLead, calculateScrollVelocity, scheduleDragPreviewPosition]);
 
+  const handleGlobalDrag = useCallback((e: DragEvent) => {
+    if (draggedLead && e.clientX > 0 && e.clientY > 0) {
+      scheduleDragPreviewPosition(e.clientX, e.clientY);
+    }
+  }, [draggedLead, scheduleDragPreviewPosition]);
+
   const handleContainerDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     if (draggedLead) {
@@ -222,12 +228,14 @@ const KanbanBoardWithScrollComponent = ({
 
   useEffect(() => {
     if (draggedLead) {
+      document.addEventListener('drag', handleGlobalDrag);
       document.addEventListener('dragover', handleGlobalDragOver);
       return () => {
+        document.removeEventListener('drag', handleGlobalDrag);
         document.removeEventListener('dragover', handleGlobalDragOver);
       };
     }
-  }, [draggedLead, handleGlobalDragOver]);
+  }, [draggedLead, handleGlobalDrag, handleGlobalDragOver]);
 
   useEffect(() => {
     return () => {
@@ -237,9 +245,10 @@ const KanbanBoardWithScrollComponent = ({
       if (dragPreviewAnimationRef.current) {
         cancelAnimationFrame(dragPreviewAnimationRef.current);
       }
+      document.removeEventListener('drag', handleGlobalDrag);
       document.removeEventListener('dragover', handleGlobalDragOver);
     };
-  }, [handleGlobalDragOver]);
+  }, [handleGlobalDrag, handleGlobalDragOver]);
 
   const displayedStages = useMemo(() => 
     filteredStageId 
