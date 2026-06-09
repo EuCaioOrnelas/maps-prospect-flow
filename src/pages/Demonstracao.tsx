@@ -62,7 +62,8 @@ const VideoCover = ({ className = "", blurred = true }: { className?: string; bl
       }}
     />
     {/* Light wash to keep the play button readable without harsh shadow */}
-    <div className="absolute inset-0 bg-background/20" />
+    {blurred && <div className="absolute inset-0 bg-background/20" />}
+
   </>
 );
 
