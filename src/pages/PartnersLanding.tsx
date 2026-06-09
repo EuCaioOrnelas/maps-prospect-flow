@@ -482,8 +482,11 @@ export default function PartnersLanding() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-5 ring-1 ring-primary/20">
               <Sparkles size={13} /> Vagas abertas
             </div>
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight mb-5">
-              Pronto para começar a ganhar com a Wiize?
+            <h2 className="font-semibold tracking-tight mb-5 leading-[1.1]">
+              <span className="block text-2xl sm:text-4xl md:text-5xl">Pronto para começar a</span>
+              <span className="block text-shimmer-highlight font-extrabold whitespace-nowrap text-[clamp(1.4rem,5.4vw,3rem)] mt-1">
+                ganhar com a Wiize?
+              </span>
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
               Candidate-se ao Wiize Partners e tenha acesso ao portal exclusivo,
