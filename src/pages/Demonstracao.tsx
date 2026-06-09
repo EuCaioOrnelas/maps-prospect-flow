@@ -368,6 +368,7 @@ export default function Demonstracao() {
         <Navbar />
         <main>
           <Hero onWatch={() => setVideoOpen(true)} />
+          <TrustedBySection />
           <Suspense fallback={<SectionFallback />}>
             <ProblemSection />
             <OpportunitySection />
