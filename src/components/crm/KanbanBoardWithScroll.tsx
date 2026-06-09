@@ -48,6 +48,7 @@ const KanbanBoardWithScrollComponent = ({
   canChangeResponsible,
   hideValue,
 }: KanbanBoardWithScrollProps) => {
+  const { getScoreForPhone } = useLeadScores();
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<{
