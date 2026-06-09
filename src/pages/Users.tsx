@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Loader2, UserPlus, MoreHorizontal, ShieldAlert, Crown } from "lucide-react";
+import {
+  Loader2, UserPlus, MoreHorizontal, ShieldAlert, Crown,
+  User, Mail, Briefcase, Activity, Calendar, Clock, Settings2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,10 +12,20 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAccountRole } from "@/hooks/useAccountRole";
-import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { useAccountMembers, type AccountMember } from "@/hooks/useAccountMembers";
+import { ROLE_LABEL } from "@/lib/accountPermissions";
+import { getPlanDisplayName } from "@/lib/planAccess";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { AddUserDialog } from "@/components/users/AddUserDialog";
+import { MemberDetailDialog } from "@/components/users/MemberDetailDialog";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { ROLE_LABEL } from "@/lib/accountPermissions";
 import { getPlanDisplayName } from "@/lib/planAccess";
 import { supabase } from "@/integrations/supabase/client";
