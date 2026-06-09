@@ -122,7 +122,7 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
         onClick={onWatch}
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
         className="group relative w-full aspect-video rounded-2xl overflow-hidden border border-border bg-card shadow-2xl"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-primary/5" />
