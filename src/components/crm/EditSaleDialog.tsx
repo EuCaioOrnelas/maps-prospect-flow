@@ -7,8 +7,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Sale, SaleStatus, SaleType, useSales, PAYMENT_METHODS } from "@/hooks/useSales";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import {
+  Loader2,
+  Tag,
+  AlignLeft,
+  Repeat,
+  DollarSign,
+  CalendarClock,
+  Calendar,
+  CreditCard,
+  Activity,
+  StickyNote,
+  User as UserIcon,
+} from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -18,6 +31,7 @@ interface Props {
 
 export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
   const { updateSale } = useSales();
+  const { members } = useAccountMembers();
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -28,6 +42,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
   const [startDate, setStartDate] = useState("");
   const [status, setStatus] = useState<SaleStatus>("active");
   const [notes, setNotes] = useState("");
+  const [responsibleUserId, setResponsibleUserId] = useState<string>("");
 
   useEffect(() => {
     if (!open || !sale) return;
@@ -40,6 +55,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
     setStartDate(sale.start_date ?? "");
     setStatus(sale.status);
     setNotes(sale.notes ?? "");
+    setResponsibleUserId(sale.responsible_user_id ?? "");
   }, [open, sale]);
 
   const handleSave = async () => {
@@ -61,6 +77,7 @@ export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
         start_date: startDate || undefined,
         notes,
         status,
+        responsible_user_id: responsibleUserId || null,
       });
       toast.success("Venda atualizada");
       onOpenChange(false);
@@ -71,6 +88,10 @@ export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
     }
   };
 
+  const inputCls = "pl-9 h-9";
+  const iconCls =
+    "absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-primary pointer-events-none";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -79,60 +100,150 @@ export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
           <DialogDescription>Atualize as informações da venda</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label>Título</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Label className="flex items-center gap-1.5 text-xs">
+              <Tag className="w-3.5 h-3.5 text-primary" /> Título
+            </Label>
+            <div className="relative">
+              <Tag className={iconCls} />
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} />
+            </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label>Descrição</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+            <Label className="flex items-center gap-1.5 text-xs">
+              <AlignLeft className="w-3.5 h-3.5 text-primary" /> Descrição
+            </Label>
+            <div className="relative">
+              <AlignLeft className={iconCls} style={{ top: "0.9rem", transform: "none" }} />
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={2}
+                className="pl-9"
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label>Tipo de venda</Label>
+            <Label className="flex items-center gap-1.5 text-xs">
+              <Repeat className="w-3.5 h-3.5 text-primary" /> Tipo de venda
+            </Label>
             <ToggleGroup
               type="single"
               value={saleType}
               onValueChange={(v) => v && setSaleType(v as SaleType)}
-              className="inline-flex justify-start rounded-full border border-border bg-muted/40 p-1"
+              className="inline-flex justify-start gap-1 rounded-full border border-border bg-muted/40 p-0.5"
             >
-              <ToggleGroupItem value="one_time" className="rounded-full px-4 text-sm">Única</ToggleGroupItem>
-              <ToggleGroupItem value="recurring" className="rounded-full px-4 text-sm">Recorrente</ToggleGroupItem>
+              <ToggleGroupItem
+                value="one_time"
+                className="h-7 rounded-full px-3 text-xs text-muted-foreground hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+              >
+                Única
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="recurring"
+                className="h-7 rounded-full px-3 text-xs text-muted-foreground hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+              >
+                Recorrente
+              </ToggleGroupItem>
             </ToggleGroup>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Valor (R$)</Label>
-              <Input value={value} onChange={(e) => setValue(e.target.value)} />
+              <Label className="flex items-center gap-1.5 text-xs">
+                <DollarSign className="w-3.5 h-3.5 text-primary" /> Valor (R$)
+              </Label>
+              <div className="relative">
+                <DollarSign className={iconCls} />
+                <Input value={value} onChange={(e) => setValue(e.target.value)} className={inputCls} />
+              </div>
             </div>
             {saleType === "recurring" && (
               <div className="space-y-1.5">
-                <Label>Meses de contrato</Label>
-                <Input type="number" min={1} value={contractMonths} onChange={(e) => setContractMonths(e.target.value)} />
+                <Label className="flex items-center gap-1.5 text-xs">
+                  <CalendarClock className="w-3.5 h-3.5 text-primary" /> Meses de contrato
+                </Label>
+                <div className="relative">
+                  <CalendarClock className={iconCls} />
+                  <Input
+                    type="number"
+                    min={1}
+                    value={contractMonths}
+                    onChange={(e) => setContractMonths(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
               </div>
             )}
             <div className="space-y-1.5">
-              <Label>Data de início</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <Label className="flex items-center gap-1.5 text-xs">
+                <Calendar className="w-3.5 h-3.5 text-primary" /> Data de início
+              </Label>
+              <div className="relative">
+                <Calendar className={iconCls} />
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Forma de pagamento</Label>
+              <Label className="flex items-center gap-1.5 text-xs">
+                <CreditCard className="w-3.5 h-3.5 text-primary" /> Forma de pagamento
+              </Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger className="h-9">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-3.5 h-3.5 text-primary" />
+                    <SelectValue placeholder="Selecione" />
+                  </div>
+                </SelectTrigger>
                 <SelectContent>
                   {PAYMENT_METHODS.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label>Status</Label>
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-xs">
+                <UserIcon className="w-3.5 h-3.5 text-primary" /> Responsável pela venda
+              </Label>
+              <Select value={responsibleUserId || "none"} onValueChange={(v) => setResponsibleUserId(v === "none" ? "" : v)}>
+                <SelectTrigger className="h-9">
+                  <div className="flex items-center gap-2">
+                    <UserIcon className="w-3.5 h-3.5 text-primary" />
+                    <SelectValue placeholder="Selecione" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem responsável</SelectItem>
+                  {members.map((m) => (
+                    <SelectItem key={m.user_id} value={m.user_id}>
+                      {m.name || m.email || m.user_id.slice(0, 8)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-xs">
+                <Activity className="w-3.5 h-3.5 text-primary" /> Status
+              </Label>
               <Select value={status} onValueChange={(v) => setStatus(v as SaleStatus)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-3.5 h-3.5 text-primary" />
+                    <SelectValue />
+                  </div>
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Ativo</SelectItem>
                   <SelectItem value="expired">Expirado</SelectItem>
@@ -144,13 +255,20 @@ export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Notas</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+            <Label className="flex items-center gap-1.5 text-xs">
+              <StickyNote className="w-3.5 h-3.5 text-primary" /> Notas
+            </Label>
+            <div className="relative">
+              <StickyNote className={iconCls} style={{ top: "0.9rem", transform: "none" }} />
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="pl-9" />
+            </div>
           </div>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
             Salvar alterações
