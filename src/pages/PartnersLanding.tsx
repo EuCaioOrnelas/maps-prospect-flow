@@ -185,10 +185,10 @@ export default function PartnersLanding() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-6 ring-1 ring-primary/20">
             <Sparkles size={14} /> Programa oficial Wiize Partners
           </div>
-          <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05] mb-6">
-            Indique a Wiize.<br />
-            <span className="bg-gradient-to-r from-primary via-primary/70 to-primary bg-clip-text text-transparent">
-              Receba até {settings.platinum}% por 24 meses.
+          <h1 className="font-display font-bold tracking-tight leading-[1.05] mb-6 text-foreground">
+            <span className="block text-3xl sm:text-4xl md:text-5xl mb-2">Indique a Wiize.</span>
+            <span className="block text-shimmer-highlight font-extrabold text-[clamp(1.4rem,4.6vw,3.25rem)] whitespace-nowrap">
+              Receba até {displayMax}% por 24 meses.
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -207,10 +207,10 @@ export default function PartnersLanding() {
           </div>
           <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
             {[
-              { v: `${settings.platinum}%`, l: "comissão máxima" },
+              { v: `${displayMax}%`, l: "comissão máxima" },
               { v: "24 meses", l: "recorrência" },
               { v: "R$ 100", l: "saque mínimo" },
-              { v: "5 dias", l: "para receber" },
+              { v: `R$ ${formattedMaxPerReferral}`, l: "por indicação¹" },
             ].map((s) => (
               <div key={s.l} className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm py-4">
                 <div className="text-2xl md:text-3xl font-bold tracking-tight">{s.v}</div>
@@ -218,15 +218,23 @@ export default function PartnersLanding() {
               </div>
             ))}
           </div>
+          <p className="mt-4 text-[11px] text-muted-foreground/80 max-w-2xl mx-auto">
+            ¹ Projeção máxima: ticket médio de R$ {AVG_TICKET.toLocaleString("pt-BR")}/mês × {displayMax}% × 24 meses de recorrência por cliente indicado.
+          </p>
         </div>
       </section>
 
       {/* COMO FUNCIONA */}
       <section id="como-funciona" className="px-6 py-24 bg-card/30 border-y border-border/40">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Como funciona</h2>
-            <p className="text-muted-foreground">Três passos. Sem burocracia. Comissão automática.</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4 ring-1 ring-primary/20">
+              <Megaphone size={13} /> Passo a passo
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Como funciona, do cadastro ao Pix</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Cinco passos simples. Você cadastra, recebe um link de divulgação exclusivo, compartilha onde quiser e acompanha tudo em tempo real no portal.
+            </p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {steps.map((s) => (
