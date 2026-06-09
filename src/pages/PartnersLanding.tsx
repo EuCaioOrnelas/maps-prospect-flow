@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Award, TrendingUp, Users, Wallet, Sparkles, ArrowRight,
-  Megaphone, Target, Rocket, Crown, ShieldCheck, Check,
+  Megaphone, Target, Rocket, ShieldCheck, Check,
+  Ban, ScrollText, Scale,
 } from "lucide-react";
 import wiizeLogo from "@/assets/logos/wiize-logo.png";
 
@@ -27,6 +28,10 @@ const DEFAULTS: Settings = {
   silverClients: 100, goldClients: 250, platinumClients: 500,
 };
 
+const MAX_COMMISSION = 20;
+const AVG_TICKET = 798;
+const MAX_PER_REFERRAL = Math.round(AVG_TICKET * (MAX_COMMISSION / 100) * 24); // R$ 3.830
+
 const benefits = [
   { icon: Wallet, title: "Comissão recorrente por 24 meses", desc: "Você ganha sobre cada renovação do cliente indicado, mês após mês, durante 2 anos." },
   { icon: TrendingUp, title: "Níveis progressivos", desc: "Quanto mais clientes ativos, maior sua porcentagem sobre cada venda — automaticamente." },
@@ -37,9 +42,31 @@ const benefits = [
 ];
 
 const steps = [
-  { n: "01", t: "Candidate-se", d: "Preencha o formulário oficial. Análise em até 48h úteis." },
-  { n: "02", t: "Receba seu link", d: "Acesso ao portal Wiize Partners e link único de indicação." },
-  { n: "03", t: "Indique e ganhe", d: "Cada venda gerada vira comissão recorrente no seu painel." },
+  {
+    n: "01",
+    t: "Candidate-se em 2 minutos",
+    d: "Preencha o formulário oficial com seus dados e canais de divulgação. Análise da equipe Wiize em até 48h úteis, sem custo nem mensalidade.",
+  },
+  {
+    n: "02",
+    t: "Receba seu link exclusivo",
+    d: "Aprovado, você ganha acesso ao portal Wiize Partners com um link único de indicação (ex.: wiize.com.br/?ref=seu-codigo). Toda venda que vier por ele fica vinculada a você por 2 anos via cookie last-click.",
+  },
+  {
+    n: "03",
+    t: "Divulgue onde quiser",
+    d: "Compartilhe o link em redes sociais, WhatsApp, e-mail, YouTube, blog ou comunidades. Use os materiais prontos do portal — banners, copies, posts e roteiros validados pelo time Wiize.",
+  },
+  {
+    n: "04",
+    t: "Acompanhe em tempo real",
+    d: "No painel você vê cliques, leads, conversões, comissões pendentes e disponíveis. Tudo transparente, atualizado direto do nosso sistema de pagamentos.",
+  },
+  {
+    n: "05",
+    t: "Receba via Pix",
+    d: "A cada renovação do cliente, sua comissão entra automática. Solicitou o saque com saldo mínimo de R$ 100? Cai no seu Pix em até 5 dias úteis.",
+  },
 ];
 
 const faq = [
@@ -112,20 +139,16 @@ export default function PartnersLanding() {
       icon: Award,
     },
     {
-      name: "Prime", percent: settings.gold,
-      range: `${settings.goldClients} – ${settings.platinumClients - 1} clientes`,
+      name: "Prime", percent: Math.min(settings.gold, MAX_COMMISSION),
+      range: `${settings.goldClients}+ clientes`,
       icon: Rocket,
-      highlight: true,
-    },
-    {
-      name: "Exclusive", percent: settings.platinum,
-      range: `${settings.platinumClients}+ clientes`,
-      icon: Crown,
     },
   ];
 
-  const pageTitle = `Wiize Partners — Comissão recorrente até ${settings.platinum}% indicando a Wiize`;
-  const pageDescription = `Indique a Wiize, receba até ${settings.platinum}% de comissão recorrente por 24 meses. Atribuição last-click, materiais prontos e saque via Pix.`;
+  const displayMax = MAX_COMMISSION;
+  const formattedMaxPerReferral = MAX_PER_REFERRAL.toLocaleString("pt-BR");
+  const pageTitle = `Wiize Partners — Comissão recorrente até ${displayMax}% indicando a Wiize`;
+  const pageDescription = `Indique a Wiize, receba até ${displayMax}% de comissão recorrente por 24 meses. Atribuição last-click, materiais prontos e saque via Pix.`;
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
@@ -145,6 +168,7 @@ export default function PartnersLanding() {
           </Link>
           <div className="flex items-center gap-5">
             <a href="#tiers" className="text-sm text-muted-foreground hover:text-foreground transition hidden md:block">Comissões</a>
+            <a href="#regras" className="text-sm text-muted-foreground hover:text-foreground transition hidden md:block">Regras</a>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition hidden md:block">FAQ</a>
             <Link to="/partners/login" className="text-sm text-muted-foreground hover:text-foreground transition">
               Já sou parceiro
@@ -163,10 +187,10 @@ export default function PartnersLanding() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-6 ring-1 ring-primary/20">
             <Sparkles size={14} /> Programa oficial Wiize Partners
           </div>
-          <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05] mb-6">
-            Indique a Wiize.<br />
-            <span className="bg-gradient-to-r from-primary via-primary/70 to-primary bg-clip-text text-transparent">
-              Receba até {settings.platinum}% por 24 meses.
+          <h1 className="font-display font-bold tracking-tight leading-[1.05] mb-6 text-foreground">
+            <span className="block text-3xl sm:text-4xl md:text-5xl mb-2">Indique a Wiize.</span>
+            <span className="block text-shimmer-highlight font-extrabold text-[clamp(1.4rem,4.6vw,3.25rem)] whitespace-nowrap">
+              Receba até {displayMax}% por 24 meses.
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -185,10 +209,10 @@ export default function PartnersLanding() {
           </div>
           <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
             {[
-              { v: `${settings.platinum}%`, l: "comissão máxima" },
+              { v: `${displayMax}%`, l: "comissão máxima" },
               { v: "24 meses", l: "recorrência" },
               { v: "R$ 100", l: "saque mínimo" },
-              { v: "5 dias", l: "para receber" },
+              { v: `R$ ${formattedMaxPerReferral}`, l: "por indicação¹" },
             ].map((s) => (
               <div key={s.l} className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm py-4">
                 <div className="text-2xl md:text-3xl font-bold tracking-tight">{s.v}</div>
@@ -196,17 +220,25 @@ export default function PartnersLanding() {
               </div>
             ))}
           </div>
+          <p className="mt-4 text-[11px] text-muted-foreground/80 max-w-2xl mx-auto">
+            ¹ Projeção máxima: ticket médio de R$ {AVG_TICKET.toLocaleString("pt-BR")}/mês × {displayMax}% × 24 meses de recorrência por cliente indicado.
+          </p>
         </div>
       </section>
 
       {/* COMO FUNCIONA */}
       <section id="como-funciona" className="px-6 py-24 bg-card/30 border-y border-border/40">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Como funciona</h2>
-            <p className="text-muted-foreground">Três passos. Sem burocracia. Comissão automática.</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4 ring-1 ring-primary/20">
+              <Megaphone size={13} /> Passo a passo
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Como funciona, do cadastro ao Pix</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Cinco passos simples. Você cadastra, recebe um link de divulgação exclusivo, compartilha onde quiser e acompanha tudo em tempo real no portal.
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {steps.map((s) => (
               <Card key={s.n} className="border-border/50 bg-card/60 backdrop-blur-sm hover:border-primary/30 transition-colors">
                 <CardContent className="p-7">
@@ -216,6 +248,15 @@ export default function PartnersLanding() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+
+          <div className="mt-10 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-7 text-sm text-muted-foreground leading-relaxed">
+            <p className="text-foreground font-semibold mb-2 flex items-center gap-2">
+              <Target size={16} className="text-primary" /> Sobre o link de divulgação
+            </p>
+            <p>
+              Cada parceiro recebe <strong className="text-foreground">um único link rastreável</strong> (ex.: <code className="px-1.5 py-0.5 rounded bg-card border border-border/60 text-foreground text-xs">wiize.com.br/?ref=seu-codigo</code>). Quando alguém clica, gravamos um cookie de <strong className="text-foreground">2 anos</strong> no navegador. Toda venda feita por esse usuário dentro desse período é creditada automaticamente a você — mesmo que ele cadastre por outro caminho depois. Sem código pra colar, sem integração, sem complicação.
+            </p>
           </div>
         </div>
       </section>
@@ -235,22 +276,15 @@ export default function PartnersLanding() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
             {tiers.map((t) => {
               const Icon = t.icon;
               return (
                 <Card
                   key={t.name}
-                  className={`relative overflow-hidden border-border/60 bg-card transition-all hover:-translate-y-1 hover:shadow-lg ${
-                    t.highlight ? "ring-1 ring-primary/60 shadow-xl shadow-primary/10 lg:-translate-y-2" : ""
-                  }`}
+                  className="relative overflow-hidden border-border/60 bg-card transition-all hover:-translate-y-1 hover:shadow-lg"
                 >
-                  {t.highlight && (
-                    <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest text-center py-1.5">
-                      Mais popular
-                    </div>
-                  )}
-                  <CardContent className={`relative p-7 text-center ${t.highlight ? "pt-12" : ""}`}>
+                  <CardContent className="relative p-7 text-center">
                     <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-muted/60 ring-1 ring-border/60 mb-4">
                       <Icon size={22} className="text-foreground/70" strokeWidth={2} />
                     </div>
@@ -271,7 +305,7 @@ export default function PartnersLanding() {
           </div>
 
           <p className="text-center text-sm text-muted-foreground mt-10">
-            Todo parceiro começa em <strong className="text-foreground">Select ({settings.bronze}%)</strong>. A progressão é automática conforme seus clientes ativos crescem.
+            Todo parceiro começa em <strong className="text-foreground">Select ({settings.bronze}%)</strong>. A progressão é automática conforme seus clientes ativos crescem — comissão máxima do programa: <strong className="text-foreground">{displayMax}%</strong>.
           </p>
         </div>
       </section>
@@ -312,6 +346,76 @@ export default function PartnersLanding() {
               <Check size={16} className="text-primary" /> {t}
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* REGRAS / CONTRATO */}
+      <section id="regras" className="px-6 py-24 bg-card/30 border-y border-border/40">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4 ring-1 ring-primary/20">
+              <ShieldCheck size={13} /> Regras do programa
+            </div>
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-3">Regras claras. Sem vínculo trabalhista.</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Wiize Partners é um programa de indicação <strong className="text-foreground">por performance</strong>. Você atua como colaborador parceiro independente — sem contrato CLT, sem metas obrigatórias, sem custo. Indicou e a venda caiu no sistema, você recebe. Não caiu, não recebe. Simples e transparente.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-5">
+            {[
+              {
+                icon: ShieldCheck,
+                title: "Relação jurídica",
+                desc: "Você é parceiro autônomo, não funcionário. Não há vínculo empregatício, CLT, férias, 13º, FGTS ou jornada fixa. Cada parceiro é responsável pela própria tributação (PF ou PJ) sobre as comissões recebidas.",
+              },
+              {
+                icon: Wallet,
+                title: "Pagamento por performance",
+                desc: "Comissão só é gerada quando a venda é confirmada e paga no nosso sistema. Sem venda confirmada, sem comissão — sem exceção. Estornos, chargebacks ou cancelamentos no prazo de proteção (30 dias) revertem a comissão.",
+              },
+              {
+                icon: Megaphone,
+                title: "Conduta de divulgação",
+                desc: "Proibido spam, compra de tráfego em palavras-chave da marca Wiize, falsas promessas, prints adulterados, fake news ou qualquer prática que prejudique a reputação da Wiize. Materiais oficiais do portal são a base recomendada.",
+              },
+              {
+                icon: Ban,
+                title: "Práticas proibidas",
+                desc: "Auto-indicação, indicar empresas que já são suas, criar múltiplas contas para burlar o sistema, ou fraudar conversões resulta em suspensão imediata e perda de todas as comissões pendentes.",
+              },
+              {
+                icon: ScrollText,
+                title: "Privacidade e LGPD",
+                desc: "Você não tem acesso a dados pessoais dos leads — apenas métricas agregadas no painel (cliques, conversões, comissões). A Wiize é controladora dos dados conforme LGPD. Confidencialidade total sobre informações comerciais que receber.",
+              },
+              {
+                icon: Scale,
+                title: "Encerramento do programa",
+                desc: "Qualquer das partes pode encerrar a relação a qualquer momento, sem multa. Comissões já creditadas e disponíveis para saque seguem sendo pagas. Novas indicações deixam de ser remuneradas a partir do encerramento.",
+              },
+            ].map((r) => (
+              <div key={r.title} className="flex gap-4 p-6 rounded-2xl border border-border/40 bg-card hover:border-primary/30 transition-all">
+                <div className="shrink-0 h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/20">
+                  <r.icon size={18} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">{r.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{r.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
+            <Link
+              to="/partners/terms"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-primary/30 bg-primary/5 text-primary font-medium hover:bg-primary/10 transition"
+            >
+              <ScrollText size={16} /> Ler termos e contrato completo
+            </Link>
+            <span className="text-muted-foreground">Ao se candidatar, você concorda integralmente com os termos.</span>
+          </div>
         </div>
       </section>
 
