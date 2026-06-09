@@ -3,8 +3,11 @@ import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 import { type Lead, type PipelineStage, WHATSAPP_STATUS_COLORS, WHATSAPP_STATUS_LABELS } from '@/hooks/useCRM';
 import { KanbanColumn, type ColumnWidth } from './KanbanColumn';
 import { cn } from '@/lib/utils';
-import { Phone } from 'lucide-react';
+import { Phone, MessageCircle, User as UserIcon } from 'lucide-react';
 import { formatPhoneShort } from '@/lib/phoneUtils';
+import { useLeadScores } from '@/hooks/useLeadScores';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface KanbanBoardWithScrollProps {
   stages: PipelineStage[];
@@ -45,6 +48,7 @@ const KanbanBoardWithScrollComponent = ({
   canChangeResponsible,
   hideValue,
 }: KanbanBoardWithScrollProps) => {
+  const { getScoreForPhone } = useLeadScores();
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   const [dragPreview, setDragPreview] = useState<{
@@ -298,37 +302,87 @@ const KanbanBoardWithScrollComponent = ({
         ))}
       </div>
 
-      {dragPreview && (
-        <div
-          className="pointer-events-none fixed left-0 top-0 z-[80] opacity-100 will-change-transform"
-          style={{
-            width: dragPreview.width,
-            transform: `translate3d(${dragPreview.x - dragPreview.offsetX}px, ${dragPreview.y - dragPreview.offsetY}px, 0) rotate(-1deg)`,
-          }}
-        >
-          <div className="rounded-[18px] border border-primary/35 bg-card p-5 shadow-2xl shadow-foreground/20 ring-2 ring-primary/20">
-            <div className="flex items-start justify-between gap-2 mb-1.5">
-              <h4 className="font-medium text-sm text-foreground min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
-                {previewDisplayName}
-              </h4>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2.5 min-w-0">
-              <Phone className="w-3 h-3 shrink-0" />
-              <span className="truncate min-w-0">{formatPhoneShort(dragPreview.lead.phone)}</span>
-            </div>
-            {dragPreview.lead.whatsapp_status && (
-              <span
-                className={cn(
-                  "inline-flex items-center rounded-full px-1.5 py-0 text-[10px] font-medium",
-                  WHATSAPP_STATUS_COLORS[dragPreview.lead.whatsapp_status]
+      {dragPreview && (() => {
+        const lead = dragPreview.lead;
+        const responsible = members?.find((m) => m.user_id === lead.responsible_user_id) || null;
+        const initials = (() => {
+          const s = (responsible?.name || responsible?.email || '').trim();
+          const parts = s.split(/\s+/);
+          if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+          return s.slice(0, 2).toUpperCase();
+        })();
+        const score = getScoreForPhone(lead.phone);
+        const s = score ? Math.max(0, Math.min(score.score_total, 1000)) : 0;
+        const pct = (s / 1000) * 100;
+        const bg = s >= 750 ? 'bg-emerald-500' : s >= 500 ? 'bg-blue-500' : s >= 250 ? 'bg-orange-500' : 'bg-red-500';
+        const fg = s >= 750 ? 'text-emerald-500' : s >= 500 ? 'text-blue-500' : s >= 250 ? 'text-orange-500' : 'text-red-500';
+        return (
+          <div
+            className="pointer-events-none fixed left-0 top-0 z-[80] opacity-100 will-change-transform"
+            style={{
+              width: dragPreview.width,
+              transform: `translate3d(${dragPreview.x - dragPreview.offsetX}px, ${dragPreview.y - dragPreview.offsetY}px, 0) rotate(-1deg)`,
+            }}
+          >
+            <div className="rounded-[18px] border border-primary/35 bg-card p-5 shadow-2xl shadow-foreground/20 ring-2 ring-primary/20 overflow-hidden">
+              <div className="flex items-start justify-between gap-2 mb-1.5">
+                <h4 className="font-medium text-sm text-foreground min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                  {previewDisplayName}
+                </h4>
+                <div className="shrink-0">
+                  {responsible?.avatar_url ? (
+                    <img src={responsible.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border/60" />
+                  ) : responsible ? (
+                    <div className="w-8 h-8 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center border border-border/60">
+                      {initials}
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center border border-border/60">
+                      <UserIcon className="w-4 h-4" />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2.5 min-w-0">
+                <Phone className="w-3 h-3 shrink-0" />
+                <span className="truncate min-w-0">{formatPhoneShort(lead.phone)}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {lead.whatsapp_status && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full px-1.5 py-0 text-[10px] font-medium",
+                      WHATSAPP_STATUS_COLORS[lead.whatsapp_status]
+                    )}
+                  >
+                    {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
+                  </span>
                 )}
-              >
-                {WHATSAPP_STATUS_LABELS[dragPreview.lead.whatsapp_status]}
-              </span>
-            )}
+                {lead.last_response_at && (
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1 ml-auto min-w-0">
+                    <MessageCircle className="w-3 h-3 shrink-0" />
+                    <span className="truncate min-w-0">
+                      {formatDistanceToNow(new Date(lead.last_response_at), { addSuffix: true, locale: ptBR })}
+                    </span>
+                  </span>
+                )}
+              </div>
+              {score && score.score_total > 0 && (
+                <div className="-mx-5 -mb-5 mt-3 px-5 pt-2.5 pb-3 relative rounded-b-[18px]">
+                  <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Score</span>
+                    <span className={cn("text-xs font-semibold tabular-nums", fg)}>{s}</span>
+                    <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
+                      <div className={cn("h-full rounded-full", bg)} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
 
   );
