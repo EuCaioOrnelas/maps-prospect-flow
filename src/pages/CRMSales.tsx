@@ -67,6 +67,8 @@ export default function CRMSales() {
   const navigate = useNavigate();
   const location = useLocation();
   const { sales, metrics, deleteSale, getAttachmentUrl } = useSales();
+  const { members } = useAccountMembers();
+  const memberById = useMemo(() => Object.fromEntries(members.map((m) => [m.user_id, m])), [members]);
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
