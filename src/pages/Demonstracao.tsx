@@ -155,7 +155,7 @@ const Hero = () => {
           <motion.h1
             variants={fadeUp}
             className="font-display font-bold text-foreground leading-[1.08] tracking-tight"
-            style={{ fontSize: "clamp(1.5rem, 2.8vw, 2.4rem)" }}
+            style={{ fontSize: "clamp(1.6rem, 3.6vw, 3rem)" }}
           >
             <span className="block">Transforme sua operação</span>
             <span className="block">comercial em uma</span>
@@ -171,7 +171,7 @@ const Hero = () => {
 
           <motion.div
             variants={fadeUp}
-            className="mt-6 sm:mt-7 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 sm:gap-4"
+            className="mt-6 sm:mt-7 flex flex-col sm:flex-row items-center lg:items-center justify-center lg:justify-start gap-3 sm:gap-4"
           >
             <Link to="/#pricing" className="w-full sm:w-auto">
               <Button
@@ -198,7 +198,7 @@ const Hero = () => {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, delay: 0.15 }}
-          className="order-1 lg:order-2 w-full p-[3px] rounded-2xl bg-border/70 border border-border/60 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
+          className="order-1 lg:order-2 w-full p-[3px] rounded-2xl bg-white/60 border border-white/80 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
         >
           <div
             className="relative w-full rounded-[0.875rem] overflow-hidden bg-card group ring-1 ring-border/40"
@@ -242,7 +242,7 @@ const Hero = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.8 }}
-        className="mt-10 sm:mt-14 flex flex-col items-center gap-2 text-muted-foreground"
+        className="mt-4 sm:mt-6 flex flex-col items-center gap-2 text-muted-foreground"
       >
         <span className="text-[11px] sm:text-xs uppercase tracking-[0.18em]">Veja mais</span>
         <ArrowDown size={18} className="animate-bounce" />
