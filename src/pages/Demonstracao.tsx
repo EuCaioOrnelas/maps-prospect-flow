@@ -6,6 +6,7 @@ import { SEO } from "@/components/SEO";
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -109,8 +110,8 @@ const VideoModal = ({
 
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
-                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                  <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
                     <Play size={38} strokeWidth={1.5} className="ml-1" />
                   </div>
                 </div>
@@ -192,7 +193,7 @@ const HeroBackdrop = () => (
 );
 
 const Hero = ({ onWatch }: { onWatch: () => void }) => (
-  <section className="relative w-full -mt-[72px] sm:-mt-[80px] pt-[104px] sm:pt-[120px] pb-12 sm:pb-16 overflow-hidden">
+  <section className="relative w-full -mt-[72px] sm:-mt-[80px] pt-[104px] sm:pt-[120px] pb-12 sm:pb-16 overflow-x-clip">
     <HeroBackdrop />
 
     <div className="container mx-auto px-4 sm:px-6 max-w-6xl relative z-10">
@@ -240,10 +241,10 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, delay: 0.25 }}
-        className="mt-10 sm:mt-12 max-w-5xl mx-auto p-1 rounded-2xl bg-card/60 border border-primary/25 shadow-[0_50px_140px_-35px_rgba(0,0,0,0.18),0_20px_60px_-15px_rgba(0,0,0,0.10)]"
+        className="mt-10 sm:mt-12 max-w-5xl mx-auto p-1 rounded-2xl bg-card/60 border border-border/50 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
       >
         <div
-          className="relative w-full rounded-2xl overflow-hidden bg-card cursor-pointer group ring-1 ring-primary/15"
+          className="relative w-full rounded-2xl overflow-hidden bg-card cursor-pointer group ring-1 ring-border/40"
           style={{ aspectRatio: "16 / 9" }}
           onClick={onWatch}
         >
@@ -251,12 +252,12 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
 
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 sm:gap-5">
             <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+              <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
                 <Play size={38} strokeWidth={1.5} className="ml-1" />
               </div>
             </div>
-            <span className="text-sm sm:text-base font-medium text-foreground drop-shadow-sm">
+            <span className="text-sm sm:text-base font-medium text-foreground px-4 py-2 rounded-full bg-background/70 backdrop-blur-md border border-border/40 shadow-sm">
               Aperte o play para ver a demonstração
             </span>
           </div>
@@ -265,6 +266,32 @@ const Hero = ({ onWatch }: { onWatch: () => void }) => (
             <span className="text-xs font-semibold">Tour da plataforma · 4 min</span>
           </div>
         </div>
+      </motion.div>
+
+      {/* CTAs under the video */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, delay: 0.45 }}
+        className="mt-8 sm:mt-10 flex flex-col items-center justify-center gap-4"
+      >
+        <Link to="/#pricing" className="w-full sm:w-auto">
+          <Button
+            variant="hero"
+            size="lg"
+            className="rounded-full group h-14 sm:h-16 px-8 sm:px-12 text-base sm:text-lg font-semibold w-full sm:w-auto shadow-xl"
+          >
+            Escalar Operação com Wiize
+            <ArrowRight size={20} className="ml-1 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </Link>
+        <Link
+          to="/parceiros"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
+        >
+          <Handshake size={15} />
+          Quero ser parceiro
+        </Link>
       </motion.div>
     </div>
   </section>
@@ -341,6 +368,7 @@ export default function Demonstracao() {
         <Navbar />
         <main>
           <Hero onWatch={() => setVideoOpen(true)} />
+          <TrustedBySection />
           <Suspense fallback={<SectionFallback />}>
             <ProblemSection />
             <OpportunitySection />
