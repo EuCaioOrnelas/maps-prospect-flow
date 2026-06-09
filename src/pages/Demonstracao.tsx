@@ -141,20 +141,20 @@ const Hero = () => {
 
         <motion.h1
           variants={fadeUp}
-          className="font-display font-bold text-foreground leading-[1.08] tracking-tight text-balance max-w-[42rem]"
-          style={{ fontSize: "clamp(1.75rem, 4.8vw, 3.5rem)" }}
+          className="font-display font-bold text-foreground leading-[1.08] tracking-tight text-balance max-w-[44rem]"
+          style={{ fontSize: "clamp(1.75rem, 4.6vw, 3.4rem)" }}
         >
           Veja a Wiize gerando{" "}<br className="hidden sm:block" />
-          <span className="text-shimmer-highlight font-extrabold whitespace-nowrap">oportunidades com IA</span>{" "}na prática
+          <span className="text-shimmer-highlight font-extrabold">oportunidades com IA</span> na prática
         </motion.h1>
 
         {/* Video */}
         <motion.div
           variants={fadeUp}
-          className="w-full max-w-3xl mt-7 sm:mt-9 p-[2px] rounded-2xl bg-border/60 border border-border/70 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
+          className="w-full max-w-3xl mt-7 sm:mt-9 p-[3px] rounded-2xl bg-white border border-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.18),0_12px_40px_-15px_rgba(0,0,0,0.1)]"
         >
           <div
-            className="relative w-full rounded-[0.875rem] overflow-hidden bg-card group ring-1 ring-border/40"
+            className="relative w-full rounded-[0.875rem] overflow-hidden bg-card group ring-1 ring-white"
             style={{ aspectRatio: "16 / 9" }}
           >
             {!playing ? (
@@ -195,7 +195,7 @@ const Hero = () => {
           variants={fadeUp}
           className="mt-7 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
         >
-          <Link to="/#pricing" className="w-full sm:w-auto">
+          <Link to="/signup/escolher-plano" className="w-full sm:w-auto">
             <Button
               variant="hero"
               size="lg"
