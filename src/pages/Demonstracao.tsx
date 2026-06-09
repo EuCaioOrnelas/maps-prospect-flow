@@ -152,16 +152,16 @@ const Hero = () => {
 
         <motion.h1
           variants={fadeUp}
-          className="font-display font-bold text-foreground leading-[1.08] tracking-tight"
-          style={{ fontSize: "clamp(1.75rem, 4.2vw, 3.25rem)" }}
+          className="font-display font-bold text-foreground leading-[1.08] tracking-tight max-w-3xl"
+          style={{ fontSize: "clamp(1.5rem, 3.4vw, 2.5rem)" }}
         >
-          Veja uma <span className="text-shimmer-highlight font-extrabold">demonstração</span> da Wiize
+          Veja a Wiize gerando <span className="text-shimmer-highlight font-extrabold">oportunidades com IA</span> na prática
         </motion.h1>
 
         {/* Video */}
         <motion.div
           variants={fadeUp}
-          className="w-full mt-8 sm:mt-10 p-[2px] rounded-2xl bg-border/60 border border-border/70 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
+          className="w-full max-w-3xl mt-7 sm:mt-9 p-[2px] rounded-2xl bg-border/60 border border-border/70 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
         >
           <div
             className="relative w-full rounded-[0.875rem] overflow-hidden bg-card group ring-1 ring-border/40"
@@ -174,7 +174,8 @@ const Hero = () => {
                 className="absolute inset-0 h-full w-full cursor-pointer"
                 aria-label="Reproduzir vídeo"
               >
-                <VideoCover className="opacity-95 group-hover:opacity-100 transition-opacity" />
+                <VideoCover className="opacity-95 group-hover:opacity-100 transition-opacity" blurred={false} />
+
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
                     <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
