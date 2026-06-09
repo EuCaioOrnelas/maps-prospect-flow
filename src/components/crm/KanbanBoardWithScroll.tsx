@@ -369,13 +369,6 @@ const KanbanBoardWithScrollComponent = ({
 
       {dragPreview && (() => {
         const lead = dragPreview.lead;
-        const responsible = members?.find((m) => m.user_id === lead.responsible_user_id) || null;
-        const initials = (() => {
-          const s = (responsible?.name || responsible?.email || '').trim();
-          const parts = s.split(/\s+/);
-          if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-          return s.slice(0, 2).toUpperCase();
-        })();
         const score = getScoreForPhone(lead.phone);
         const s = score ? Math.max(0, Math.min(score.score_total, 1000)) : 0;
         const pct = (s / 1000) * 100;
@@ -391,23 +384,14 @@ const KanbanBoardWithScrollComponent = ({
             }}
           >
             <div className="rounded-xl border border-primary/30 bg-card px-3 py-2.5 shadow-md shadow-foreground/5 overflow-hidden">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="shrink-0">
-                  {responsible?.avatar_url ? (
-                    <img src={responsible.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover border border-border/60" />
-                  ) : responsible ? (
-                    <div className="w-7 h-7 rounded-full bg-primary/15 text-primary text-[10px] font-semibold flex items-center justify-center border border-border/60">
-                      {initials}
-                    </div>
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-muted text-muted-foreground flex items-center justify-center border border-border/60">
-                      <UserIcon className="w-3.5 h-3.5" />
-                    </div>
-                  )}
-                </div>
+              <div className="flex flex-col gap-1 min-w-0">
                 <h4 className="font-medium text-sm text-foreground min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                   {previewDisplayName}
                 </h4>
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground min-w-0">
+                  <Phone className="w-3 h-3 shrink-0" />
+                  <span className="truncate min-w-0">{previewPhone}</span>
+                </div>
               </div>
               <div className="mt-2 flex items-center gap-2 min-w-0">
                 {score && score.score_total > 0 && (
