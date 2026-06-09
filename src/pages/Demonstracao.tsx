@@ -131,16 +131,77 @@ const Hero = () => {
     <HeroBackdrop />
 
     <div className="container mx-auto px-4 sm:px-6 max-w-7xl relative z-10">
-      <div className="grid grid-cols-1 lg:grid-cols-[1.7fr_1fr] gap-8 lg:gap-12 items-center">
-        {/* Video — left (>60% width on desktop) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.7fr] gap-8 lg:gap-10 xl:gap-12 items-center">
+        {/* Text — left */}
+        <motion.div
+          initial="hidden"
+          animate="show"
+          variants={stagger}
+          className="order-2 lg:order-1 text-center lg:text-left"
+        >
+          <motion.div
+            variants={fadeUp}
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full glass mb-5 sm:mb-6 border border-primary/10"
+          >
+            <div className="flex -space-x-1 sm:-space-x-1.5">
+              <img src={avatar1} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
+              <img src={avatar2} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
+              <img src={avatar3} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
+              <img src={avatar4} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
+            </div>
+            <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
+          </motion.div>
+
+          <motion.h1
+            variants={fadeUp}
+            className="font-display font-bold text-foreground leading-[1.08] tracking-tight"
+            style={{ fontSize: "clamp(1.5rem, 2.8vw, 2.4rem)" }}
+          >
+            <span className="block">Transforme sua operação</span>
+            <span className="block">comercial em uma</span>
+            <span className="block text-shimmer-highlight font-extrabold">máquina de oportunidades</span>
+          </motion.h1>
+
+          <motion.p
+            variants={fadeUp}
+            className="mt-4 sm:mt-5 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0"
+          >
+            Veja como a Wiize combina IA, automações e inteligência comercial para ampliar sua capacidade comercial e reduzir o trabalho manual.
+          </motion.p>
+
+          <motion.div
+            variants={fadeUp}
+            className="mt-6 sm:mt-7 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 sm:gap-4"
+          >
+            <Link to="/#pricing" className="w-full sm:w-auto">
+              <Button
+                variant="hero"
+                size="lg"
+                className="rounded-full group h-11 sm:h-12 px-5 sm:px-6 text-sm font-semibold w-full sm:w-auto shadow-xl whitespace-nowrap"
+              >
+                Escalar Operação
+                <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+            <Link
+              to="/parceiros"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-2 whitespace-nowrap"
+            >
+              <Handshake size={14} />
+              Quero ser parceiro
+            </Link>
+          </motion.div>
+        </motion.div>
+
+        {/* Video — right */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, delay: 0.15 }}
-          className="order-2 lg:order-1 w-full p-[2px] rounded-2xl bg-gradient-to-br from-primary/45 via-primary/20 to-primary/35 border border-primary/30 shadow-[0_30px_80px_-30px_rgba(16,185,129,0.18),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
+          className="order-1 lg:order-2 w-full p-[3px] rounded-2xl bg-border/70 border border-border/60 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.15),0_12px_40px_-15px_rgba(0,0,0,0.08)]"
         >
           <div
-            className="relative w-full rounded-[0.875rem] overflow-hidden bg-card group ring-1 ring-primary/10"
+            className="relative w-full rounded-[0.875rem] overflow-hidden bg-card group ring-1 ring-border/40"
             style={{ aspectRatio: "16 / 9" }}
           >
             {!playing ? (
@@ -154,8 +215,8 @@ const Hero = () => {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
                     <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
-                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
-                      <Play size={38} strokeWidth={1.5} className="ml-1" />
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                      <Play size={32} strokeWidth={1.5} className="ml-1 sm:size-9" />
                     </div>
                   </div>
                 </div>
@@ -174,68 +235,18 @@ const Hero = () => {
             )}
           </div>
         </motion.div>
-
-        {/* Text — right */}
-        <motion.div
-          initial="hidden"
-          animate="show"
-          variants={stagger}
-          className="order-1 lg:order-2 text-center lg:text-left"
-        >
-          <motion.div
-            variants={fadeUp}
-            className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full glass mb-5 sm:mb-6 border border-primary/10"
-          >
-            <div className="flex -space-x-1 sm:-space-x-1.5">
-              <img src={avatar1} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-              <img src={avatar2} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-              <img src={avatar3} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-              <img src={avatar4} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-            </div>
-            <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
-          </motion.div>
-
-          <motion.h1
-            variants={fadeUp}
-            className="font-display font-bold text-foreground leading-[1.08] tracking-tight"
-            style={{ fontSize: "clamp(1.55rem, 3vw, 2.55rem)" }}
-          >
-            <span className="block">Transforme sua operação</span>
-            <span className="block">comercial em uma</span>
-            <span className="block text-shimmer-highlight font-extrabold">máquina de oportunidades</span>
-          </motion.h1>
-
-          <motion.p
-            variants={fadeUp}
-            className="mt-4 sm:mt-5 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0"
-          >
-            Veja como a Wiize combina IA, automações e inteligência comercial para ampliar sua capacidade comercial e reduzir o trabalho manual.
-          </motion.p>
-
-          <motion.div
-            variants={fadeUp}
-            className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 sm:gap-4"
-          >
-            <Link to="/#pricing" className="w-full sm:w-auto">
-              <Button
-                variant="hero"
-                size="lg"
-                className="rounded-full group h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-semibold w-full sm:w-auto shadow-xl"
-              >
-                Escalar Operação com Wiize
-                <ArrowRight size={18} className="ml-1 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link
-              to="/parceiros"
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
-            >
-              <Handshake size={15} />
-              Quero ser parceiro
-            </Link>
-          </motion.div>
-        </motion.div>
       </div>
+
+      {/* Scroll-down hint */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.8 }}
+        className="mt-10 sm:mt-14 flex flex-col items-center gap-2 text-muted-foreground"
+      >
+        <span className="text-[11px] sm:text-xs uppercase tracking-[0.18em]">Veja mais</span>
+        <ArrowDown size={18} className="animate-bounce" />
+      </motion.div>
     </div>
   </section>
   );
