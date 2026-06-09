@@ -138,18 +138,6 @@ const Hero = () => {
         variants={stagger}
         className="flex flex-col items-center text-center"
       >
-        <motion.div
-          variants={fadeUp}
-          className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full glass mb-5 sm:mb-6 border border-primary/10"
-        >
-          <div className="flex -space-x-1 sm:-space-x-1.5">
-            <img src={avatar1} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-            <img src={avatar2} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-            <img src={avatar3} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-            <img src={avatar4} alt="" className="w-4 h-4 sm:w-6 sm:h-6 rounded-full border border-background sm:border-2 object-cover" width={24} height={24} />
-          </div>
-          <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
-        </motion.div>
 
         <motion.h1
           variants={fadeUp}
