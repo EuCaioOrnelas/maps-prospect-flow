@@ -25,6 +25,21 @@ interface Withdrawal {
   partner: { full_name: string; email: string; level: string };
 }
 
+async function resetGoalPrizeIfNeeded(withdrawal: Withdrawal) {
+  const goalId = withdrawal.bank_snapshot?.goal_prize === true ? withdrawal.bank_snapshot?.goal_id : null;
+  if (!goalId) return null;
+  return supabase
+    .from("partner_goals")
+    .update({
+      prize_status: "not_claimed",
+      prize_withdrawal_id: null,
+      prize_claimed_at: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", goalId)
+    .eq("prize_withdrawal_id", withdrawal.id);
+}
+
 export default function AdminPartnersWithdrawals() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,14 +68,16 @@ export default function AdminPartnersWithdrawals() {
     load();
   };
 
-  const quickReject = async (id: string) => {
+  const quickReject = async (withdrawal: Withdrawal) => {
     const reason = window.prompt("Motivo da rejeição:");
     if (!reason) return;
     const { error } = await supabase
       .from("partner_withdrawals")
       .update({ status: "rejected", rejected_at: new Date().toISOString(), rejection_reason: reason })
-      .eq("id", id);
+      .eq("id", withdrawal.id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    const goalReset = await resetGoalPrizeIfNeeded(withdrawal);
+    if (goalReset?.error) { toast({ title: "Erro", description: goalReset.error.message, variant: "destructive" }); return; }
     toast({ title: "Saque rejeitado" });
     load();
   };
@@ -97,7 +114,7 @@ export default function AdminPartnersWithdrawals() {
                   {w.status === "pending" && (
                     <>
                       <Button size="sm" variant="ghost" onClick={() => quickApprove(w.id)} title="Aprovar"><CheckCircle2 size={14} className="text-emerald-600" /></Button>
-                      <Button size="sm" variant="ghost" onClick={() => quickReject(w.id)} title="Rejeitar"><XCircle size={14} className="text-destructive" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => quickReject(w)} title="Rejeitar"><XCircle size={14} className="text-destructive" /></Button>
                     </>
                   )}
                 </div>

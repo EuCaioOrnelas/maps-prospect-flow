@@ -81,10 +81,14 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
     })();
   }, [withdrawal?.id, withdrawal?.partner_id]);
 
+  const isGoalPrize = withdrawal?.bank_snapshot?.goal_prize === true;
+  const goalPrizeId = withdrawal?.bank_snapshot?.goal_id || null;
+
   // Compute the FIFO selection of available commissions that compose this withdrawal,
   // following the same rule used when marking as paid.
   const composingIds = useMemo(() => {
     if (!withdrawal) return new Set<string>();
+    if (isGoalPrize) return new Set<string>();
     let remaining = withdrawal.amount_cents;
     const selected: string[] = [];
     // If already paid, prefer commissions actually marked paid around the withdrawal date.
@@ -108,7 +112,7 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
       }
     }
     return new Set(selected);
-  }, [commissions, withdrawal]);
+  }, [commissions, withdrawal, isGoalPrize]);
 
   const composing = useMemo(
     () => commissions.filter((c) => composingIds.has(c.id)),
@@ -122,7 +126,7 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
     const list: Issue[] = [];
     if (!withdrawal) return list;
 
-    if (withdrawal.status !== "paid") {
+    if (!isGoalPrize && withdrawal.status !== "paid") {
       if (composedTotal < withdrawal.amount_cents) {
         list.push({
           level: "error",
@@ -134,7 +138,8 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
       }
     }
 
-    // Check sales status of composing commissions
+    // Check sales status of composing commissions. Goal prizes are paid as bonuses,
+    // so they do not need available commissions to compose the withdrawal.
     for (const c of composing) {
       if (c.sale?.refunded_at) {
         list.push({
@@ -169,7 +174,7 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
     }
 
     // Are there partial sales not fully covered? Just informational
-    if (withdrawal.status !== "paid" && composedTotal > withdrawal.amount_cents) {
+    if (!isGoalPrize && withdrawal.status !== "paid" && composedTotal > withdrawal.amount_cents) {
       const overflow = composedTotal - withdrawal.amount_cents;
       list.push({
         level: "warning",
@@ -178,7 +183,7 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
     }
 
     return list;
-  }, [withdrawal, composing, composedTotal, balance, bankAccount]);
+  }, [withdrawal, composing, composedTotal, balance, bankAccount, isGoalPrize]);
 
   if (!withdrawal) return null;
   const bank = withdrawal.bank_snapshot || {};
@@ -221,6 +226,15 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
         internal_notes: internalNotes || null,
       }).eq("id", withdrawal.id);
       if (updErr) throw updErr;
+
+      if (isGoalPrize && goalPrizeId) {
+        const { error: goalErr } = await supabase.from("partner_goals").update({
+          prize_status: "paid",
+          prize_claimed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }).eq("id", goalPrizeId).eq("prize_withdrawal_id", withdrawal.id);
+        if (goalErr) throw goalErr;
+      }
 
       // Mark composing commissions as paid
       const ids = Array.from(composingIds);
