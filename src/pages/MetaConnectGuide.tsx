@@ -87,7 +87,7 @@ export default function MetaConnectGuide() {
   const progress = (completed.size / PHASES.length) * 100;
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900">
+    <div className="min-h-screen bg-white text-zinc-900 landing-light">
       <SEO
         title="Guia: como conectar seu WhatsApp na Wiize"
         description="Passo a passo simples e ilustrado para conectar seu número WhatsApp Business à Wiize."
