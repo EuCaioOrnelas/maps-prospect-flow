@@ -111,7 +111,7 @@ export default function MetaConnectGuide() {
             <span>{completed.size}/{PHASES.length}</span>
             <div className="w-32 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-zinc-900 transition-all duration-500"
+                className="h-full bg-gradient-to-r from-[#00C896] to-[#2BF0B8] transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -131,13 +131,24 @@ export default function MetaConnectGuide() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-12">
         {/* Hero */}
         <section className="text-center space-y-5 animate-fade-in">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 text-zinc-600 text-[11px] font-medium">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00C896]/10 text-[#00A87C] text-[11px] font-medium border border-[#00C896]/20">
             <Sparkles size={11} /> Calma, é mais simples do que parece
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1]">
             Conecte seu WhatsApp <br className="hidden sm:block" />
-            <span className="text-zinc-400">em 3 passinhos</span>
+            <span
+              className="bg-clip-text text-transparent inline-block"
+              style={{
+                backgroundImage:
+                  "linear-gradient(90deg, #00C896 0%, #00E0A8 25%, #2BF0B8 50%, #00E0A8 75%, #00C896 100%)",
+                backgroundSize: "200% 100%",
+                animation: "wiize-shine 3.5s linear infinite",
+              }}
+            >
+              em 3 passos
+            </span>
           </h1>
+          <style>{`@keyframes wiize-shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
           <p className="text-zinc-600 text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
             Deixe esta aba aberta e siga junto. Cada passo abre quando o anterior fecha. Não tem mistério.
           </p>
@@ -174,22 +185,41 @@ export default function MetaConnectGuide() {
         {/* Antes de começar */}
         <section className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 animate-fade-in">
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
-              <HelpCircle size={16} className="text-zinc-600" />
+            <div className="w-9 h-9 rounded-xl bg-[#00C896]/10 flex items-center justify-center shrink-0">
+              <HelpCircle size={16} className="text-[#00A87C]" />
             </div>
             <div className="flex-1 space-y-3">
               <p className="font-semibold text-sm">Antes de começar, tenha em mãos:</p>
               <ul className="space-y-2 text-sm text-zinc-600">
-                <CheckLi>Uma conta no Facebook (pessoal mesmo) que seja dona da empresa.</CheckLi>
-                <CheckLi>O celular com o número que vai virar WhatsApp de disparos.</CheckLi>
+                <CheckLi>
+                  Uma conta no <strong>Facebook pessoal</strong> que seja administradora da sua empresa no Meta Business.
+                </CheckLi>
+                <CheckLi>
+                  Um <strong>celular com um número</strong> (de preferência um chip novo, exclusivo da empresa)
+                  que vai virar o seu <strong>número oficial Meta</strong> dentro da Wiize — usado para
+                  responder clientes, criar campanhas e automações.
+                </CheckLi>
                 <CheckLi>Cerca de 15 minutinhos sem interrupção.</CheckLi>
               </ul>
+
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 flex gap-2 items-start">
                 <AlertTriangle size={14} className="shrink-0 mt-0.5 text-amber-600" />
-                <p>
-                  <strong>Importante:</strong> o número que você usar aqui deixa de funcionar no WhatsApp normal.
-                  Por isso indicamos usar um <strong>chip novo</strong>, só para a empresa.
-                </p>
+                <div className="space-y-1.5">
+                  <p>
+                    <strong>Importante — leia com atenção:</strong> assim que você conectar esse número à Meta,
+                    ele <strong>deixa de funcionar no app WhatsApp do celular</strong> (não dá mais para abrir o
+                    WhatsApp comum nele).
+                  </p>
+                  <p>
+                    A partir daí, esse número passa a viver <strong>dentro da Wiize</strong>: somos nós que fazemos
+                    a ponte entre o <strong>seu número</strong> e o <strong>WhatsApp dos seus clientes</strong>.
+                    Toda conversa, campanha e automação acontece pelo painel da Wiize.
+                  </p>
+                  <p>
+                    Por isso recomendamos fortemente usar um <strong>chip novo, dedicado à empresa</strong> —
+                    nunca um número pessoal que você ainda usa no dia a dia.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -386,7 +416,11 @@ const PhaseAppContent = ({ copy }: { copy: (v: string, l: string) => void }) => 
       <p>
         Depois de criar, você cai numa página com vários cards. Encontre o card escrito{" "}
         <strong>"WhatsApp"</strong> e clique no botão <strong>"Configurar"</strong> dentro dele.
+        Se já fechou a aba, abra direto pelo link abaixo:
       </p>
+      <BigLink href="https://developers.facebook.com/apps/">
+        Abrir meus aplicativos Meta
+      </BigLink>
       <Hint>
         Se aparecer alguma pergunta sobre a conta do WhatsApp Business, é só clicar em continuar.
         A Meta cuida da ligação automaticamente.
@@ -399,6 +433,9 @@ const PhaseAppContent = ({ copy }: { copy: (v: string, l: string) => void }) => 
         superior, tem um botão que muda de <strong>"Em desenvolvimento"</strong> para{" "}
         <strong>"Ativo"</strong>. Clique nele.
       </p>
+      <BigLink href="https://developers.facebook.com/apps/">
+        Abrir Configurações do meu app
+      </BigLink>
       <p>A Meta vai te pedir 2 endereços. Já preparamos eles prontos pra você copiar:</p>
       <CopyRow
         label="Endereço da política de privacidade"
@@ -422,7 +459,23 @@ const PhaseNumeroContent = () => (
     <Step number={1} title="Entre no painel do WhatsApp">
       <p>
         Continue na mesma página do aplicativo que você criou. No menu lateral, clique em{" "}
-        <strong>WhatsApp → Configuração da API</strong>.
+        <strong>WhatsApp → Configuração da API</strong>. Se já fechou a aba, abra a lista de apps
+        abaixo e clique no app que você criou na etapa 1:
+      </p>
+      <BigLink href="https://developers.facebook.com/apps/">
+        Abrir meus aplicativos Meta
+      </BigLink>
+      <p className="text-xs text-zinc-500">
+        Também é possível gerenciar pelo{" "}
+        <a
+          href="https://business.facebook.com/wa/manage/home"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#00A87C] font-medium hover:underline inline-flex items-center gap-0.5"
+        >
+          WhatsApp Manager <ExternalLink size={10} />
+        </a>
+        .
       </p>
     </Step>
 
