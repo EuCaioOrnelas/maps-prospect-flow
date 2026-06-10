@@ -111,7 +111,7 @@ export default function MetaConnectGuide() {
             <span>{completed.size}/{PHASES.length}</span>
             <div className="w-32 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-zinc-900 transition-all duration-500"
+                className="h-full bg-gradient-to-r from-[#00C896] to-[#2BF0B8] transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
