@@ -214,59 +214,46 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
             </p>
           </div>
         )}
-        {/* Step-by-step guide */}
-        <div className="rounded-xl border border-border bg-muted/20 p-5 space-y-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <Info size={12} /> Como obter os dados
+        {/* CTA principal: Guia completo em nova aba */}
+        <button
+          type="button"
+          onClick={() => window.open("/meta/guia-conexao", "_blank", "noopener,noreferrer")}
+          className="group w-full text-left rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 hover:border-primary/50 hover:from-primary/15 transition-all"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Info size={22} className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-semibold text-base">Não sabe como obter esses dados?</p>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+                  Guia completo
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                Tutorial passo a passo das <strong>3 fases</strong> (App, Número, System User) com vídeo,
+                prints e troubleshooting. <strong>Abre em nova guia</strong> para você acompanhar enquanto preenche aqui.
+              </p>
+              <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
+                Abrir guia de conexão <ExternalLink size={13} />
+              </div>
+            </div>
+          </div>
+        </button>
+
+        {/* Resumo rápido dos 3 dados que serão pedidos */}
+        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2.5">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Você vai precisar de 3 informações:
           </p>
-
-          <Step
-            number={1}
-            icon={<KeyRound size={14} />}
-            title="Gere um Access Token permanente"
-            description={
-              <>
-                Acesse{" "}
-                <ExternalLink_ href="https://business.facebook.com/settings/system-users">
-                  Meta Business Suite → Usuários do Sistema
-                </ExternalLink_>
-                . Crie (ou selecione) um System User com função <strong>Admin</strong>, clique em{" "}
-                <strong>Gerar token</strong>, escolha seu app e marque as permissões{" "}
-                <code className="text-[11px] bg-muted px-1 py-0.5 rounded">whatsapp_business_messaging</code> e{" "}
-                <code className="text-[11px] bg-muted px-1 py-0.5 rounded">whatsapp_business_management</code>. Defina
-                expiração para <strong>Nunca</strong>.
-              </>
-            }
-          />
-
-          <Step
-            number={2}
-            icon={<Hash size={14} />}
-            title="Encontre o WABA ID (Conta do WhatsApp Business)"
-            description={
-              <>
-                Em{" "}
-                <ExternalLink_ href="https://business.facebook.com/wa/manage/home">
-                  Meta Business Suite → Contas do WhatsApp
-                </ExternalLink_>
-                , clique na sua conta. O <strong>ID da conta</strong> aparece no topo (em "Informações da conta") — é
-                uma sequência numérica longa.
-              </>
-            }
-          />
-
-          <Step
-            number={3}
-            icon={<Phone size={14} />}
-            title="Encontre o Phone Number ID"
-            description={
-              <>
-                Na mesma tela da conta WhatsApp, vá em <strong>Números de telefone</strong> e clique no número desejado.
-                O <strong>ID do número</strong> aparece nos detalhes (não confunda com o número em si).
-              </>
-            }
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <MiniHint icon={<KeyRound size={12} />} label="Access Token" detail="permanente, do System User" />
+            <MiniHint icon={<Hash size={12} />} label="WABA ID" detail="da Conta WhatsApp Business" />
+            <MiniHint icon={<Phone size={12} />} label="Phone Number ID" detail="do número cadastrado" />
+          </div>
         </div>
+
 
         {/* Form */}
         <div className="space-y-4">
@@ -420,6 +407,27 @@ const ExternalLink_ = ({ href, children }: { href: string; children: React.React
     <ExternalLink size={9} />
   </a>
 );
+
+const MiniHint = ({
+  icon,
+  label,
+  detail,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  detail: string;
+}) => (
+  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-background border border-border">
+    <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+      {icon}
+    </div>
+    <div className="min-w-0">
+      <p className="text-xs font-semibold truncate">{label}</p>
+      <p className="text-[10px] text-muted-foreground leading-tight">{detail}</p>
+    </div>
+  </div>
+);
+
 
 const CopyField = ({
   label,
