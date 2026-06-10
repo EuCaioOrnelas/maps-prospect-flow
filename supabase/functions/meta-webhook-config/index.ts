@@ -359,7 +359,7 @@ serve(async (req) => {
           });
         }
 
-        if (tokenOk && wabaOk) {
+        if (wabaOk) {
           let subscribe = await graphRequest(`${conn.waba_id}/subscribed_apps`, conn.access_token, {
             method: "POST",
             body: { subscribed_fields: REQUIRED_EVENTS },
@@ -433,12 +433,12 @@ serve(async (req) => {
             key: "subscribe_post",
             label: "Instalação do webhook na WABA",
             status: "skipped",
-            summary: "Etapa pulada porque o token ou WABA ID falhou antes.",
+            summary: "Etapa pulada porque o WABA ID falhou antes.",
           });
         }
       }
 
-      const ok = handshakeOk && tokenOk && wabaOk && phoneInWabaOk && subscriptionOk && eventsOk;
+      const ok = handshakeOk && wabaOk && phoneInWabaOk && subscriptionOk && eventsOk;
       const firstError = diagnostics.find((s) => s.status === "error");
       const detail = ok
         ? `Webhook validado: callback ok + WABA acessível + assinatura instalada${subscribedEvents.length ? ` + ${subscribedEvents.length}/${REQUIRED_EVENTS.length} eventos` : ""}`
