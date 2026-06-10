@@ -87,7 +87,7 @@ export default function MetaConnectGuide() {
   const progress = (completed.size / PHASES.length) * 100;
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900">
+    <div className="min-h-screen bg-white text-zinc-900 landing-light">
       <SEO
         title="Guia: como conectar seu WhatsApp na Wiize"
         description="Passo a passo simples e ilustrado para conectar seu número WhatsApp Business à Wiize."
@@ -131,7 +131,7 @@ export default function MetaConnectGuide() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-12">
         {/* Hero */}
         <section className="text-center space-y-5 animate-fade-in">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(158_72%_32%)]/[0.06] text-[hsl(158_72%_28%)] text-[11px] font-medium border border-[hsl(158_72%_32%)]/15">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(158_72%_32%)]/[0.06] text-[hsl(158_72%_28%)] text-[11px] font-medium border border-[#b8decf]">
             <Sparkles size={11} /> Calma, é mais simples do que parece
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1]">
