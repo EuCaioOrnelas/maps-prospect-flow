@@ -75,12 +75,16 @@ export function PartnerGoalsTab({ partnerId }: { partnerId: string }) {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("partner_goals")
-      .select("*")
-      .eq("partner_id", partnerId)
-      .order("created_at", { ascending: false });
-    setGoals((data as any) || []);
+    const { data, error } = await supabase.functions.invoke("admin-manage-partner-goal", {
+      body: { action: "list", partner_id: partnerId },
+    });
+    if (error || data?.error) {
+      toast({ title: "Erro ao carregar metas", description: await getFunctionErrorMessage(error, data), variant: "destructive" });
+      setGoals([]);
+      setLoading(false);
+      return;
+    }
+    setGoals((data?.goals as any) || []);
     setLoading(false);
   };
 
