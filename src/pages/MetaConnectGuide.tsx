@@ -185,22 +185,41 @@ export default function MetaConnectGuide() {
         {/* Antes de começar */}
         <section className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 animate-fade-in">
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
-              <HelpCircle size={16} className="text-zinc-600" />
+            <div className="w-9 h-9 rounded-xl bg-[#00C896]/10 flex items-center justify-center shrink-0">
+              <HelpCircle size={16} className="text-[#00A87C]" />
             </div>
             <div className="flex-1 space-y-3">
               <p className="font-semibold text-sm">Antes de começar, tenha em mãos:</p>
               <ul className="space-y-2 text-sm text-zinc-600">
-                <CheckLi>Uma conta no Facebook (pessoal mesmo) que seja dona da empresa.</CheckLi>
-                <CheckLi>O celular com o número que vai virar WhatsApp de disparos.</CheckLi>
+                <CheckLi>
+                  Uma conta no <strong>Facebook pessoal</strong> que seja administradora da sua empresa no Meta Business.
+                </CheckLi>
+                <CheckLi>
+                  Um <strong>celular com um número</strong> (de preferência um chip novo, exclusivo da empresa)
+                  que vai virar o seu <strong>número oficial Meta</strong> dentro da Wiize — usado para
+                  responder clientes, criar campanhas e automações.
+                </CheckLi>
                 <CheckLi>Cerca de 15 minutinhos sem interrupção.</CheckLi>
               </ul>
+
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 flex gap-2 items-start">
                 <AlertTriangle size={14} className="shrink-0 mt-0.5 text-amber-600" />
-                <p>
-                  <strong>Importante:</strong> o número que você usar aqui deixa de funcionar no WhatsApp normal.
-                  Por isso indicamos usar um <strong>chip novo</strong>, só para a empresa.
-                </p>
+                <div className="space-y-1.5">
+                  <p>
+                    <strong>Importante — leia com atenção:</strong> assim que você conectar esse número à Meta,
+                    ele <strong>deixa de funcionar no app WhatsApp do celular</strong> (não dá mais para abrir o
+                    WhatsApp comum nele).
+                  </p>
+                  <p>
+                    A partir daí, esse número passa a viver <strong>dentro da Wiize</strong>: somos nós que fazemos
+                    a ponte entre o <strong>seu número</strong> e o <strong>WhatsApp dos seus clientes</strong>.
+                    Toda conversa, campanha e automação acontece pelo painel da Wiize.
+                  </p>
+                  <p>
+                    Por isso recomendamos fortemente usar um <strong>chip novo, dedicado à empresa</strong> —
+                    nunca um número pessoal que você ainda usa no dia a dia.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
