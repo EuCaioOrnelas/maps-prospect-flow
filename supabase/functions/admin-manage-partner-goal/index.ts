@@ -153,15 +153,36 @@ serve(async (req) => {
 
       if (partnerId) goalsQuery = goalsQuery.eq("partner_id", partnerId);
 
-      const [{ data: goals, error: goalsError }, { data: partners, error: partnersError }, { data: links, error: linksError }] = await Promise.all([
+      // Try with `label` first; if the column doesn't exist in this database, fall back to `internal_name`.
+      let linksRes = await admin
+        .from("partner_referral_links")
+        .select("id, partner_id, slug, label, is_active, created_at")
+        .order("created_at", { ascending: false });
+      if (linksRes.error && /column .*label.* does not exist/i.test(linksRes.error.message || "")) {
+        const fallback = await admin
+          .from("partner_referral_links")
+          .select("id, partner_id, slug, internal_name, is_active, created_at")
+          .order("created_at", { ascending: false });
+        if (!fallback.error) {
+          linksRes = {
+            ...fallback,
+            data: (fallback.data || []).map((l: any) => ({ ...l, label: l.internal_name ?? null })),
+          } as any;
+        } else {
+          linksRes = fallback as any;
+        }
+      }
+
+      const [{ data: goals, error: goalsError }, { data: partners, error: partnersError }] = await Promise.all([
         goalsQuery,
         admin.from("partners").select("id, full_name, email, status").order("full_name"),
-        admin.from("partner_referral_links").select("id, partner_id, slug, label, is_active, created_at").order("created_at", { ascending: false }),
       ]);
+      const { data: links, error: linksError } = linksRes;
 
       if (goalsError) return jsonResponse({ error: goalsError.message }, 400);
       if (partnersError) return jsonResponse({ error: partnersError.message }, 400);
       if (linksError) return jsonResponse({ error: linksError.message }, 400);
+
 
       const partnerMap = new Map((partners || []).map((p: any) => [p.id, p]));
       const linkMap = new Map((links || []).map((l: any) => [l.id, l]));
