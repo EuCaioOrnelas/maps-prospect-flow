@@ -35,6 +35,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 import { useRef } from "react";
+import { getPartnerReferralMetadata } from "@/hooks/usePartnerTracking";
 
 const PLAN_INFO: Record<string, { name: string; monthly: number }> = {
   start: { name: "Wiize Start", monthly: 296 },
@@ -350,6 +351,7 @@ function SignupWithCardInner() {
             trial_card_last4: trialRes.cardLast4,
             trial_card_brand: trialRes.cardBrand,
             trial_will_charge_at: trialRes.nextDueDate,
+            ...getPartnerReferralMetadata(),
           },
         },
       });

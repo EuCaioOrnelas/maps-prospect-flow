@@ -25,6 +25,7 @@ import { motion } from "framer-motion";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { markBlogAttribution } from "@/lib/blogAttribution";
+import { getPartnerReferralMetadata } from "@/hooks/usePartnerTracking";
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
@@ -111,6 +112,7 @@ const CheckoutSuccess = () => {
         extra_numbers: String(purchase.bumps?.numbers || 0),
         extra_contacts_packs: String(purchase.bumps?.contacts || 0),
         extra_opportunities_packs: String(purchase.bumps?.opportunities || 0),
+        ...getPartnerReferralMetadata(),
       };
 
       const { data, error } = await supabase.auth.signUp({
