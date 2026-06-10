@@ -149,7 +149,9 @@ serve(async (req) => {
       return jsonResponse({
         success: true,
         goals: enrichedGoals,
-        partners: (partners || []).filter((p: any) => p.status === "active").map(({ id, full_name, email }: any) => ({ id, full_name, email })),
+        partners: (partners || [])
+          .filter((p: any) => p.status !== "blocked")
+          .map(({ id, full_name, email, status }: any) => ({ id, full_name, email, status })),
         links: (links || []).filter((l: any) => l.is_active).map(({ id, partner_id, slug, label }: any) => ({ id, partner_id, slug, label })),
       });
     }
