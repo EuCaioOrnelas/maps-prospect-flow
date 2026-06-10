@@ -459,7 +459,23 @@ const PhaseNumeroContent = () => (
     <Step number={1} title="Entre no painel do WhatsApp">
       <p>
         Continue na mesma página do aplicativo que você criou. No menu lateral, clique em{" "}
-        <strong>WhatsApp → Configuração da API</strong>.
+        <strong>WhatsApp → Configuração da API</strong>. Se já fechou a aba, abra a lista de apps
+        abaixo e clique no app que você criou na etapa 1:
+      </p>
+      <BigLink href="https://developers.facebook.com/apps/">
+        Abrir meus aplicativos Meta
+      </BigLink>
+      <p className="text-xs text-zinc-500">
+        Também é possível gerenciar pelo{" "}
+        <a
+          href="https://business.facebook.com/wa/manage/home"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#00A87C] font-medium hover:underline inline-flex items-center gap-0.5"
+        >
+          WhatsApp Manager <ExternalLink size={10} />
+        </a>
+        .
       </p>
     </Step>
 
