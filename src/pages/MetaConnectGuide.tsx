@@ -416,7 +416,11 @@ const PhaseAppContent = ({ copy }: { copy: (v: string, l: string) => void }) => 
       <p>
         Depois de criar, você cai numa página com vários cards. Encontre o card escrito{" "}
         <strong>"WhatsApp"</strong> e clique no botão <strong>"Configurar"</strong> dentro dele.
+        Se já fechou a aba, abra direto pelo link abaixo:
       </p>
+      <BigLink href="https://developers.facebook.com/apps/">
+        Abrir meus aplicativos Meta
+      </BigLink>
       <Hint>
         Se aparecer alguma pergunta sobre a conta do WhatsApp Business, é só clicar em continuar.
         A Meta cuida da ligação automaticamente.
