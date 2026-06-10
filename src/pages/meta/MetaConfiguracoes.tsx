@@ -804,9 +804,20 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
                   {steps.map((s) => (
                     <li key={s.n} className="flex gap-3">
                       <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">{s.n}</div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium">{s.t}</p>
-                        <p className="text-xs text-muted-foreground">{s.d}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{s.d}</p>
+                        {s.href && (
+                          <a
+                            href={s.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-primary hover:underline"
+                          >
+                            {s.linkLabel ?? "Abrir link"}
+                            <ChevronDown className="h-3 w-3 -rotate-90" />
+                          </a>
+                        )}
                       </div>
                     </li>
                   ))}
