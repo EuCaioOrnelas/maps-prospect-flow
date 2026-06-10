@@ -301,6 +301,16 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
     setLoading(false);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
 
+    if (isGoalPrize && goalPrizeId) {
+      const { error: goalErr } = await supabase.from("partner_goals").update({
+        prize_status: "not_claimed",
+        prize_withdrawal_id: null,
+        prize_claimed_at: null,
+        updated_at: new Date().toISOString(),
+      }).eq("id", goalPrizeId).eq("prize_withdrawal_id", withdrawal.id);
+      if (goalErr) { toast({ title: "Erro", description: goalErr.message, variant: "destructive" }); return; }
+    }
+
     supabase.functions.invoke("send-partner-email", {
       body: {
         type: "partner_withdrawal_rejected",
