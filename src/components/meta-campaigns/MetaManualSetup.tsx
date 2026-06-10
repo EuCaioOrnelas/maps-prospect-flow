@@ -408,6 +408,27 @@ const ExternalLink_ = ({ href, children }: { href: string; children: React.React
   </a>
 );
 
+const MiniHint = ({
+  icon,
+  label,
+  detail,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  detail: string;
+}) => (
+  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-background border border-border">
+    <div className="w-6 h-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+      {icon}
+    </div>
+    <div className="min-w-0">
+      <p className="text-xs font-semibold truncate">{label}</p>
+      <p className="text-[10px] text-muted-foreground leading-tight">{detail}</p>
+    </div>
+  </div>
+);
+
+
 const CopyField = ({
   label,
   value,
