@@ -136,17 +136,7 @@ export default function MetaConnectGuide() {
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1]">
             Conecte seu WhatsApp <br className="hidden sm:block" />
-            <span
-              className="bg-clip-text text-transparent inline-block"
-              style={{
-                backgroundImage:
-                  "linear-gradient(90deg, hsl(158_72%_32%) 0%, hsl(158_72%_42%) 25%, hsl(158_72%_52%) 50%, hsl(158_72%_42%) 75%, hsl(158_72%_32%) 100%)",
-                backgroundSize: "200% 100%",
-                animation: "wiize-shine 3.5s linear infinite",
-              }}
-            >
-              em 3 passos
-            </span>
+            <span className="text-shimmer-highlight font-extrabold">em 3 passos</span>
           </h1>
           <style>{`@keyframes wiize-shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
           <p className="text-zinc-600 text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
