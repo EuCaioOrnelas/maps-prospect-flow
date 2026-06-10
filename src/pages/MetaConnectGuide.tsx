@@ -281,6 +281,7 @@ export default function MetaConnectGuide() {
                       {phase.id === "app" && <PhaseAppContent copy={copy} />}
                       {phase.id === "numero" && <PhaseNumeroContent />}
                       {phase.id === "usuario" && <PhaseUsuarioContent />}
+                      {phase.id === "webhook" && <PhaseWebhookContent navigate={navigate} />}
 
                       <div className="flex flex-col sm:flex-row gap-2 pt-2">
                         <Button
