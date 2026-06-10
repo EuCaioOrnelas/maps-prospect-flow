@@ -494,13 +494,13 @@ const PhaseNumeroContent = () => (
         Eles parecem iguais mas são diferentes. Copie os dois e guarde:
       </p>
       <IdBlock
-        emoji="📱"
+        icon={<Phone size={16} className="text-[hsl(158_72%_32%)]" />}
         label="ID do número de telefone"
         hint="Aparece logo abaixo do nome de exibição. Tem cerca de 15 dígitos."
         example="123456789012345"
       />
       <IdBlock
-        emoji="🏢"
+        icon={<Hash size={16} className="text-[hsl(158_72%_32%)]" />}
         label="ID da conta WhatsApp (WABA)"
         hint="Aparece no topo da página, em 'Informações da conta'. Também tem cerca de 15 dígitos."
         example="987654321098765"
@@ -539,15 +539,27 @@ const PhaseUsuarioContent = () => (
 
     <Step number={3} title="Dê acesso ao aplicativo e ao WhatsApp">
       <p>
-        Selecione o usuário Wiize que você acabou de criar e clique em{" "}
-        <strong>"Atribuir ativos"</strong>. Você vai fazer isso <strong>duas vezes</strong>:
+        Selecione o usuário <strong>Wiize</strong> que você acabou de criar (clique no nome dele na lista).
+        Agora você precisa <strong>conectar 2 coisas a esse usuário</strong>: o aplicativo da etapa 1 e
+        a conta de WhatsApp da etapa 2. Sem isso, a chave que vamos gerar a seguir não vai funcionar.
       </p>
-      <div className="grid sm:grid-cols-2 gap-3">
-        <AssetCard emoji="🧱" title="Aplicativos" hint="Selecione o aplicativo da etapa 1. Marque controle total." />
-        <AssetCard emoji="💬" title="Contas do WhatsApp" hint="Selecione a conta da etapa 2. Marque controle total." />
+      <div className="space-y-3">
+        <AssetCard
+          step="3.1"
+          icon={<KeyRound size={18} className="text-[hsl(158_72%_32%)]" />}
+          title="Conectar o aplicativo"
+          hint='Clique em "Atribuir ativos" → escolha "Aplicativos" → selecione o app que você criou na etapa 1 → marque CONTROLE TOTAL → salvar.'
+        />
+        <AssetCard
+          step="3.2"
+          icon={<MessageSquare size={18} className="text-[hsl(158_72%_32%)]" />}
+          title="Conectar a conta de WhatsApp"
+          hint='Clique em "Atribuir ativos" de novo → escolha "Contas do WhatsApp" → selecione a conta da etapa 2 → marque CONTROLE TOTAL → salvar.'
+        />
       </div>
       <Hint type="warning">
-        Se pular isso, a chave que vamos gerar não vai funcionar.
+        São <strong>dois cliques separados em "Atribuir ativos"</strong>: um para vincular o app e
+        outro para vincular a conta do WhatsApp. Se faltar qualquer um dos dois, a chave não funciona.
       </Hint>
     </Step>
 
@@ -574,7 +586,39 @@ const PhaseUsuarioContent = () => (
       </p>
     </Step>
 
-    <FinishBox>É isso. Você tem as 3 informações que a Wiize precisa. Volte para a aba dela.</FinishBox>
+    <Step number={6} title="Junte os 3 dados e cole na Wiize">
+      <p>
+        Pronto! Você já tem tudo. Volte para a aba da Wiize, abra o formulário{" "}
+        <strong>"Adicionar número"</strong> e cole cada dado no campo correspondente:
+      </p>
+      <div className="space-y-2.5">
+        <DataPickup
+          icon={<KeyRound size={16} className="text-[hsl(158_72%_32%)]" />}
+          field="Access Token"
+          where="O texto longo que começa com EAAN... que você acabou de copiar agora (etapa 3, passo 5)."
+        />
+        <DataPickup
+          icon={<Hash size={16} className="text-[hsl(158_72%_32%)]" />}
+          field="WABA ID"
+          where='O número longo de "ID da conta WhatsApp" que você anotou na etapa 2, passo 4.'
+        />
+        <DataPickup
+          icon={<Phone size={16} className="text-[hsl(158_72%_32%)]" />}
+          field="Phone Number ID"
+          where='O número longo de "ID do número de telefone" que você anotou na etapa 2, passo 4.'
+        />
+      </div>
+      <Hint>
+        Cole cada um no campo certo (são parecidos, mas vão em lugares diferentes), dê um apelido pro
+        número se quiser, e clique em <strong>"Conectar número"</strong>. A Wiize valida tudo e pronto.
+      </Hint>
+      <Hint type="warning">
+        Se a Wiize avisar "token inválido", o problema quase sempre é a etapa 3.1 ou 3.2 que ficou faltando.
+        Volte e confira se os <strong>dois ativos</strong> estão vinculados com controle total.
+      </Hint>
+    </Step>
+
+    <FinishBox>É isso. Conexão criada. Você pode fechar essa aba.</FinishBox>
   </>
 );
 
@@ -689,19 +733,22 @@ const CopyRow = ({
 );
 
 const IdBlock = ({
-  emoji,
+  icon,
   label,
   hint,
   example,
 }: {
-  emoji: string;
+  icon: React.ReactNode;
   label: string;
   hint: string;
   example: string;
 }) => (
   <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-1.5">
     <p className="text-sm font-semibold flex items-center gap-2">
-      <span className="text-base">{emoji}</span> {label}
+      <span className="w-7 h-7 rounded-lg bg-[hsl(158_72%_32%)]/10 flex items-center justify-center shrink-0">
+        {icon}
+      </span>
+      {label}
     </p>
     <p className="text-xs text-zinc-500">{hint}</p>
     <code className="text-[11px] font-mono text-zinc-600 bg-zinc-100 px-2 py-1 rounded inline-block mt-1">
@@ -710,11 +757,48 @@ const IdBlock = ({
   </div>
 );
 
-const AssetCard = ({ emoji, title, hint }: { emoji: string; title: string; hint: string }) => (
-  <div className="rounded-xl border border-zinc-200 bg-white p-4">
-    <div className="text-2xl mb-2">{emoji}</div>
-    <p className="font-semibold text-sm">{title}</p>
-    <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{hint}</p>
+const AssetCard = ({
+  step,
+  icon,
+  title,
+  hint,
+}: {
+  step: string;
+  icon: React.ReactNode;
+  title: string;
+  hint: string;
+}) => (
+  <div className="rounded-xl border border-zinc-200 bg-white p-4 flex gap-3">
+    <div className="w-10 h-10 rounded-xl bg-[hsl(158_72%_32%)]/10 flex items-center justify-center shrink-0">
+      {icon}
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(158_72%_28%)]">
+        Passo {step}
+      </p>
+      <p className="font-semibold text-sm mt-0.5">{title}</p>
+      <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{hint}</p>
+    </div>
+  </div>
+);
+
+const DataPickup = ({
+  icon,
+  field,
+  where,
+}: {
+  icon: React.ReactNode;
+  field: string;
+  where: string;
+}) => (
+  <div className="rounded-xl border border-zinc-200 bg-white p-3.5 flex gap-3 items-start">
+    <div className="w-8 h-8 rounded-lg bg-[hsl(158_72%_32%)]/10 flex items-center justify-center shrink-0">
+      {icon}
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-sm font-semibold">{field}</p>
+      <p className="text-xs text-zinc-600 mt-0.5 leading-relaxed">{where}</p>
+    </div>
   </div>
 );
 
