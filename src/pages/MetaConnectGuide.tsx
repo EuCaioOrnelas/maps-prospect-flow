@@ -733,19 +733,22 @@ const CopyRow = ({
 );
 
 const IdBlock = ({
-  emoji,
+  icon,
   label,
   hint,
   example,
 }: {
-  emoji: string;
+  icon: React.ReactNode;
   label: string;
   hint: string;
   example: string;
 }) => (
   <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-1.5">
     <p className="text-sm font-semibold flex items-center gap-2">
-      <span className="text-base">{emoji}</span> {label}
+      <span className="w-7 h-7 rounded-lg bg-[hsl(158_72%_32%)]/10 flex items-center justify-center shrink-0">
+        {icon}
+      </span>
+      {label}
     </p>
     <p className="text-xs text-zinc-500">{hint}</p>
     <code className="text-[11px] font-mono text-zinc-600 bg-zinc-100 px-2 py-1 rounded inline-block mt-1">
@@ -754,11 +757,48 @@ const IdBlock = ({
   </div>
 );
 
-const AssetCard = ({ emoji, title, hint }: { emoji: string; title: string; hint: string }) => (
-  <div className="rounded-xl border border-zinc-200 bg-white p-4">
-    <div className="text-2xl mb-2">{emoji}</div>
-    <p className="font-semibold text-sm">{title}</p>
-    <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{hint}</p>
+const AssetCard = ({
+  step,
+  icon,
+  title,
+  hint,
+}: {
+  step: string;
+  icon: React.ReactNode;
+  title: string;
+  hint: string;
+}) => (
+  <div className="rounded-xl border border-zinc-200 bg-white p-4 flex gap-3">
+    <div className="w-10 h-10 rounded-xl bg-[hsl(158_72%_32%)]/10 flex items-center justify-center shrink-0">
+      {icon}
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(158_72%_28%)]">
+        Passo {step}
+      </p>
+      <p className="font-semibold text-sm mt-0.5">{title}</p>
+      <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{hint}</p>
+    </div>
+  </div>
+);
+
+const DataPickup = ({
+  icon,
+  field,
+  where,
+}: {
+  icon: React.ReactNode;
+  field: string;
+  where: string;
+}) => (
+  <div className="rounded-xl border border-zinc-200 bg-white p-3.5 flex gap-3 items-start">
+    <div className="w-8 h-8 rounded-lg bg-[hsl(158_72%_32%)]/10 flex items-center justify-center shrink-0">
+      {icon}
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-sm font-semibold">{field}</p>
+      <p className="text-xs text-zinc-600 mt-0.5 leading-relaxed">{where}</p>
+    </div>
   </div>
 );
 
