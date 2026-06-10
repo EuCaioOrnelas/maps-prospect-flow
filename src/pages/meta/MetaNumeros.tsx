@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2,
+  Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2, HelpCircle,
 } from "lucide-react";
 import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 export interface WabaConnection {
   id: string;
