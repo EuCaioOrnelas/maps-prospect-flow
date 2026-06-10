@@ -131,13 +131,24 @@ export default function MetaConnectGuide() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-12">
         {/* Hero */}
         <section className="text-center space-y-5 animate-fade-in">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 text-zinc-600 text-[11px] font-medium">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00C896]/10 text-[#00A87C] text-[11px] font-medium border border-[#00C896]/20">
             <Sparkles size={11} /> Calma, é mais simples do que parece
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1]">
             Conecte seu WhatsApp <br className="hidden sm:block" />
-            <span className="text-zinc-400">em 3 passinhos</span>
+            <span
+              className="bg-clip-text text-transparent inline-block"
+              style={{
+                backgroundImage:
+                  "linear-gradient(90deg, #00C896 0%, #00E0A8 25%, #2BF0B8 50%, #00E0A8 75%, #00C896 100%)",
+                backgroundSize: "200% 100%",
+                animation: "wiize-shine 3.5s linear infinite",
+              }}
+            >
+              em 3 passos
+            </span>
           </h1>
+          <style>{`@keyframes wiize-shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
           <p className="text-zinc-600 text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
             Deixe esta aba aberta e siga junto. Cada passo abre quando o anterior fecha. Não tem mistério.
           </p>
