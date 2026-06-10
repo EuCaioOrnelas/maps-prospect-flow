@@ -131,7 +131,7 @@ export default function MetaConnectGuide() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-12">
         {/* Hero */}
         <section className="text-center space-y-5 animate-fade-in">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(158_72%_32%)]/10 text-[hsl(158_72%_28%)] text-[11px] font-medium border border-[hsl(158_72%_32%)]/20">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(158_72%_32%)]/[0.06] text-[hsl(158_72%_28%)] text-[11px] font-medium border border-[hsl(158_72%_32%)]/15">
             <Sparkles size={11} /> Calma, é mais simples do que parece
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1]">
@@ -377,197 +377,184 @@ export default function MetaConnectGuide() {
 const PhaseAppContent = ({ copy }: { copy: (v: string, l: string) => void }) => (
   <>
     <Intro>
-      Pense no aplicativo como um <strong>"cadastro oficial"</strong> que a Meta exige para
-      qualquer empresa enviar mensagens. Você só faz isso uma vez na vida.
+      Vamos criar um "aplicativo" na Meta. É só um cadastro que ela exige. Você faz uma vez e nunca mais mexe.
     </Intro>
 
-    <Step number={1} title="Abra a página de desenvolvedores da Meta">
-      <p>
-        Clique no botão abaixo. Vai abrir o site oficial. Faça login com a sua conta do Facebook (a mesma
-        que cuida da página da empresa).
-      </p>
-      <BigLink href="https://developers.facebook.com/apps">
-        Abrir o site da Meta
+    <Step number={1} title="Abra a página de aplicativos da Meta">
+      <p>Clique no botão abaixo. Faça login com a sua conta do Facebook que cuida da empresa.</p>
+      <BigLink href="https://developers.facebook.com/apps/">
+        Abrir Meta for Developers
       </BigLink>
     </Step>
 
-    <Step number={2} title="Clique no botão verde 'Criar aplicativo'">
-      <p>Fica no canto superior direito da tela. A Meta vai te fazer algumas perguntas, responda assim:</p>
+    <Step number={2} title='Clique em "Criar aplicativo"'>
+      <p>O botão verde fica no canto superior direito. A Meta vai te perguntar algumas coisas — responda assim:</p>
       <AnswerCard>
-        <Answer q="Qual é o seu caso de uso?" a="Marque a opção 'Outro' e clique em Avançar." />
-        <Answer q="Tipo de aplicativo?" a="Selecione 'Negócios' e clique em Avançar." />
-        <Answer q="Nome do aplicativo" a="Pode ser qualquer nome, ex: 'Wiize Minha Empresa'. Só você vai ver." />
-        <Answer q="Email de contato" a="Coloque o seu email." />
-        <Answer q="Conta do Business" a="Selecione a conta da sua empresa. Se não tiver, a Meta cria na hora." />
+        <Answer q="Qual é o seu caso de uso?" a='Marque "Outro" e clique em Avançar.' />
+        <Answer q="Tipo de aplicativo" a='Selecione "Negócios" e clique em Avançar.' />
+        <Answer q="Nome do aplicativo" a='Qualquer nome, ex: "Wiize Minha Empresa". Só você vê.' />
+        <Answer q="Email de contato" a="O seu email." />
+        <Answer q="Conta do Business" a="A conta da sua empresa. Se não tiver, a Meta cria na hora." />
       </AnswerCard>
+      <BigLink href="https://developers.facebook.com/apps/creation/">
+        Ir direto para "Criar aplicativo"
+      </BigLink>
     </Step>
 
-    <Step number={3} title="Adicione o produto WhatsApp">
+    <Step number={3} title='Adicione o produto "WhatsApp" ao app'>
       <p>
-        Depois de criar, você cai numa página com vários cards. Encontre o card escrito{" "}
-        <strong>"WhatsApp"</strong> e clique no botão <strong>"Configurar"</strong> dentro dele.
-        Se já fechou a aba, abra direto pelo link abaixo:
+        Depois de criar o app, você cai numa página com vários cards. Encontre o card{" "}
+        <strong>"WhatsApp"</strong> e clique em <strong>"Configurar"</strong> dentro dele.
       </p>
       <BigLink href="https://developers.facebook.com/apps/">
-        Abrir meus aplicativos Meta
+        Abrir meu app (lista de apps)
       </BigLink>
-      <Hint>
-        Se aparecer alguma pergunta sobre a conta do WhatsApp Business, é só clicar em continuar.
-        A Meta cuida da ligação automaticamente.
-      </Hint>
     </Step>
 
-    <Step number={4} title="Coloque o aplicativo no ar (modo Ativo)">
+    <Step number={4} title='Coloque o app no ar (modo "Ativo")'>
       <p>
-        No menu lateral esquerdo, vá em <strong>Configurações → Básico</strong>. Lá em cima, na parte
-        superior, tem um botão que muda de <strong>"Em desenvolvimento"</strong> para{" "}
-        <strong>"Ativo"</strong>. Clique nele.
+        Dentro do seu app, no menu lateral esquerdo, vá em{" "}
+        <strong>Configurações → Básico</strong>. No topo tem um botão{" "}
+        <strong>"Em desenvolvimento"</strong>. Clique nele e mude para <strong>"Ativo"</strong>.
       </p>
       <BigLink href="https://developers.facebook.com/apps/">
-        Abrir Configurações do meu app
+        Abrir meu app
       </BigLink>
-      <p>A Meta vai te pedir 2 endereços. Já preparamos eles prontos pra você copiar:</p>
+      <p className="text-sm">A Meta vai pedir 2 endereços. Use estes (já estão prontos):</p>
       <CopyRow
-        label="Endereço da política de privacidade"
+        label="Política de privacidade"
         value="https://wiize.com.br/privacidade"
         onCopy={copy}
       />
-      <CopyRow label="Endereço do site" value="https://wiize.com.br" onCopy={copy} />
+      <CopyRow label="Site" value="https://wiize.com.br" onCopy={copy} />
     </Step>
 
-    <FinishBox>Pronto! Aplicativo criado e ativo. Pode passar para a etapa 2.</FinishBox>
+    <FinishBox>App criado e ativo. Pode passar para a Etapa 2.</FinishBox>
   </>
 );
 
 const PhaseNumeroContent = () => (
   <>
     <Intro>
-      Agora você vai dizer pra Meta qual <strong>número de telefone</strong> vai enviar as mensagens.
-      No final, vamos pegar dois códigos importantes (vou te avisar quando).
+      Agora você vai cadastrar o número que vai virar o WhatsApp oficial Meta dentro da Wiize.
+      No final, vamos copiar 2 códigos importantes.
     </Intro>
 
-    <Step number={1} title="Entre no painel do WhatsApp">
+    <Step number={1} title='Abra "WhatsApp → Configuração da API" dentro do seu app'>
       <p>
-        Continue na mesma página do aplicativo que você criou. No menu lateral, clique em{" "}
-        <strong>WhatsApp → Configuração da API</strong>. Se já fechou a aba, abra a lista de apps
-        abaixo e clique no app que você criou na etapa 1:
+        Volte para o app que você criou na etapa anterior. No menu lateral esquerdo, clique em{" "}
+        <strong>WhatsApp</strong> e depois em <strong>Configuração da API</strong>.
       </p>
       <BigLink href="https://developers.facebook.com/apps/">
-        Abrir meus aplicativos Meta
+        Abrir meu app
       </BigLink>
-      <p className="text-xs text-zinc-500">
-        Também é possível gerenciar pelo{" "}
-        <a
-          href="https://business.facebook.com/wa/manage/home"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[hsl(158_72%_28%)] font-medium hover:underline inline-flex items-center gap-0.5"
-        >
-          WhatsApp Manager <ExternalLink size={10} />
-        </a>
-        .
-      </p>
     </Step>
 
-    <Step number={2} title="Clique em 'Adicionar número de telefone'">
-      <p>O botão fica no topo, ao lado dos números de exemplo. A Meta vai te pedir:</p>
+    <Step number={2} title='Clique em "Adicionar número de telefone"'>
+      <p>O botão fica no topo da página, ao lado dos números de exemplo. A Meta vai pedir:</p>
       <AnswerCard>
-        <Answer q="Nome de exibição" a="O nome que seu cliente vai ver no WhatsApp. Ex: 'Minha Empresa'." />
-        <Answer q="Categoria" a="Escolha o que mais combina com o seu negócio." />
-        <Answer q="Número de telefone" a="Coloque com DDI 55 e DDD. Exemplo: +55 11 98765-4321" />
-        <Answer q="Receber código por" a="Escolha SMS ou ligação. Ligação costuma ser mais rápida." />
+        <Answer q="Nome de exibição" a='O nome que o cliente vê. Ex: "Minha Empresa".' />
+        <Answer q="Categoria" a="O que mais combina com seu negócio." />
+        <Answer q="Número de telefone" a="Com DDI 55 e DDD. Ex: +55 11 98765-4321" />
+        <Answer q="Receber código por" a="SMS ou ligação. Ligação costuma ser mais rápida." />
       </AnswerCard>
       <Hint type="warning">
-        <strong>Atenção:</strong> esse número não vai mais funcionar no WhatsApp comum do celular.
-        Se for um número que você usa, faça <strong>backup das conversas</strong> antes.
+        <strong>Atenção:</strong> esse número deixa de funcionar no app WhatsApp comum do celular.
+        Se for um número que você usa, faça <strong>backup das conversas antes</strong>.
       </Hint>
     </Step>
 
-    <Step number={3} title="Digite o código que chegou">
-      <p>A Meta manda um código de 6 dígitos. Cole na tela e pronto, seu número está cadastrado.</p>
+    <Step number={3} title="Digite o código de verificação que chegou">
+      <p>A Meta envia um código de 6 dígitos. Cole na tela e o número fica cadastrado.</p>
     </Step>
 
-    <Step number={4} title="Anote os dois códigos que a Wiize vai pedir">
-      <p>Esta é a parte mais importante. Não pule.</p>
+    <Step number={4} title="Copie o ID do número de telefone">
       <p>
-        Logo após cadastrar o número, você vai ver uma tela com <strong>dois números longos</strong>.
-        Eles parecem iguais mas são diferentes. Copie os dois e guarde:
+        Logo abaixo do nome de exibição, vai aparecer um número longo (cerca de 15 dígitos).
+        Esse é o <strong>Phone Number ID</strong>. Copie e guarde em um bloco de notas.
       </p>
       <IdBlock
         icon={<Phone size={16} className="text-[hsl(158_72%_32%)]" />}
-        label="ID do número de telefone"
-        hint="Aparece logo abaixo do nome de exibição. Tem cerca de 15 dígitos."
+        label="Phone Number ID"
+        hint="Fica logo abaixo do nome de exibição do número."
         example="123456789012345"
       />
-      <IdBlock
-        icon={<Hash size={16} className="text-[hsl(158_72%_32%)]" />}
-        label="ID da conta WhatsApp (WABA)"
-        hint="Aparece no topo da página, em 'Informações da conta'. Também tem cerca de 15 dígitos."
-        example="987654321098765"
-      />
-      <Hint>
-        Dica: cole os dois num bloco de notas ou já vai colando no formulário da Wiize em outra aba.
-      </Hint>
+      <BigLink href="https://business.facebook.com/wa/manage/phone-numbers/">
+        Ver meus números no WhatsApp Manager
+      </BigLink>
     </Step>
 
-    <FinishBox>Número cadastrado, códigos no bolso. Vamos para a última etapa.</FinishBox>
+    <Step number={5} title="Copie o ID da conta WhatsApp (WABA ID)">
+      <p>
+        Ainda na mesma página, no topo (em "Informações da conta"), vai aparecer outro número longo.
+        Esse é o <strong>WABA ID</strong>. Copie e guarde junto.
+      </p>
+      <IdBlock
+        icon={<Hash size={16} className="text-[hsl(158_72%_32%)]" />}
+        label="WABA ID"
+        hint='Aparece no topo da página, em "Informações da conta".'
+        example="987654321098765"
+      />
+      <BigLink href="https://business.facebook.com/wa/manage/home/">
+        Abrir WhatsApp Manager
+      </BigLink>
+    </Step>
+
+    <FinishBox>Número cadastrado e os 2 IDs guardados. Última etapa agora.</FinishBox>
   </>
 );
 
 const PhaseUsuarioContent = () => (
   <>
     <Intro>
-      Agora vamos criar uma <strong>chave que nunca vence</strong>. Sem isso, sua conexão pararia de
-      funcionar a cada 24 horas, e ninguém merece isso.
+      Agora vamos criar uma <strong>chave de acesso que nunca expira</strong>. Sem ela, a conexão
+      pararia a cada 24h.
     </Intro>
 
-    <Step number={1} title="Abra a página de usuários do sistema">
-      <p>Clique no botão e faça login se pedir:</p>
+    <Step number={1} title="Abra a página de Usuários do Sistema">
+      <p>Clique no botão abaixo e faça login se pedir.</p>
       <BigLink href="https://business.facebook.com/settings/system-users">
-        Abrir página de usuários
+        Abrir Usuários do Sistema
       </BigLink>
     </Step>
 
-    <Step number={2} title="Crie um novo usuário do sistema">
+    <Step number={2} title='Crie um novo usuário chamado "Wiize"'>
       <p>Clique no botão azul <strong>"Adicionar"</strong> e preencha:</p>
       <AnswerCard>
-        <Answer q="Nome" a="Coloque 'Wiize'. Esse nome só você vê." />
-        <Answer q="Função do sistema" a="Escolha 'Administrador'. É obrigatório, sem isso a chave não funciona." />
+        <Answer q="Nome" a='Coloque "Wiize". Só você vê.' />
+        <Answer q="Função do sistema" a='Escolha "Administrador". É obrigatório.' />
       </AnswerCard>
       <p>Clique em <strong>"Criar usuário do sistema"</strong>.</p>
     </Step>
 
-    <Step number={3} title="Dê acesso ao aplicativo e ao WhatsApp">
+    <Step number={3} title="Vincule o aplicativo a esse usuário">
       <p>
-        Selecione o usuário <strong>Wiize</strong> que você acabou de criar (clique no nome dele na lista).
-        Agora você precisa <strong>conectar 2 coisas a esse usuário</strong>: o aplicativo da etapa 1 e
-        a conta de WhatsApp da etapa 2. Sem isso, a chave que vamos gerar a seguir não vai funcionar.
+        Selecione o usuário <strong>Wiize</strong> na lista. Clique em{" "}
+        <strong>"Atribuir ativos"</strong> e escolha <strong>"Aplicativos"</strong>. Selecione o app
+        que você criou na Etapa 1, marque <strong>CONTROLE TOTAL</strong> e salve.
       </p>
-      <div className="space-y-3">
-        <AssetCard
-          step="3.1"
-          icon={<KeyRound size={18} className="text-[hsl(158_72%_32%)]" />}
-          title="Conectar o aplicativo"
-          hint='Clique em "Atribuir ativos" → escolha "Aplicativos" → selecione o app que você criou na etapa 1 → marque CONTROLE TOTAL → salvar.'
-        />
-        <AssetCard
-          step="3.2"
-          icon={<MessageSquare size={18} className="text-[hsl(158_72%_32%)]" />}
-          title="Conectar a conta de WhatsApp"
-          hint='Clique em "Atribuir ativos" de novo → escolha "Contas do WhatsApp" → selecione a conta da etapa 2 → marque CONTROLE TOTAL → salvar.'
-        />
-      </div>
+      <BigLink href="https://business.facebook.com/settings/system-users">
+        Abrir Usuários do Sistema
+      </BigLink>
+    </Step>
+
+    <Step number={4} title="Vincule a conta de WhatsApp a esse usuário">
+      <p>
+        Ainda no usuário Wiize, clique em <strong>"Atribuir ativos"</strong> de novo. Dessa vez escolha{" "}
+        <strong>"Contas do WhatsApp"</strong>. Selecione a conta da Etapa 2, marque{" "}
+        <strong>CONTROLE TOTAL</strong> e salve.
+      </p>
       <Hint type="warning">
-        São <strong>dois cliques separados em "Atribuir ativos"</strong>: um para vincular o app e
-        outro para vincular a conta do WhatsApp. Se faltar qualquer um dos dois, a chave não funciona.
+        Sem esse passo a chave não funciona. Os passos 3 e 4 são <strong>dois cliques separados</strong>{" "}
+        em "Atribuir ativos" — um para o app, outro para a conta de WhatsApp.
       </Hint>
     </Step>
 
-    <Step number={4} title="Gere a chave de acesso">
+    <Step number={5} title='Gere a chave (clique em "Gerar novo token")'>
       <p>Ainda no usuário Wiize, clique em <strong>"Gerar novo token"</strong> e responda:</p>
       <AnswerCard>
-        <Answer q="Aplicativo" a="Selecione o aplicativo da etapa 1." />
-        <Answer q="Validade" a="Escolha 'Nunca'. Esse é o pulo do gato." />
+        <Answer q="Aplicativo" a="Selecione o aplicativo da Etapa 1." />
+        <Answer q="Validade do token" a='Escolha "Nunca". Esse é o pulo do gato.' />
         <Answer
           q="Permissões"
           a="Marque as três: whatsapp_business_messaging, whatsapp_business_management e business_management."
@@ -576,49 +563,44 @@ const PhaseUsuarioContent = () => (
       <p>Clique em <strong>"Gerar token"</strong>.</p>
     </Step>
 
-    <Step number={5} title="Copie a chave agora">
+    <Step number={6} title='Copie a chave AGORA (ela só aparece 1 vez)'>
       <Hint type="warning">
-        <strong>Cuidado:</strong> essa chave só aparece <strong>uma vez na tela</strong>. Se você fechar
-        sem copiar, vai precisar gerar outra. Clique em <strong>"Copiar"</strong> agora mesmo.
+        <strong>Cuidado:</strong> essa chave só aparece <strong>uma vez na tela</strong>. Se fechar
+        sem copiar, vai precisar gerar outra. Clique em <strong>"Copiar"</strong> agora.
       </Hint>
-      <p className="text-sm mt-3">
-        É um texto bem longo que começa com algumas letras tipo <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded font-mono">EAAN...</code>
+      <p className="text-sm">
+        É um texto longo que começa com{" "}
+        <code className="text-xs bg-zinc-100 px-1.5 py-0.5 rounded font-mono">EAAN...</code>
+        Esse é o seu <strong>Access Token</strong>.
       </p>
     </Step>
 
-    <Step number={6} title="Junte os 3 dados e cole na Wiize">
-      <p>
-        Pronto! Você já tem tudo. Volte para a aba da Wiize, abra o formulário{" "}
-        <strong>"Adicionar número"</strong> e cole cada dado no campo correspondente:
-      </p>
+    <Step number={7} title="Volte para a Wiize e cole os 3 dados">
+      <p>Pronto. Você tem tudo. Volte para a aba da Wiize, no formulário "Adicionar número", e cole:</p>
       <div className="space-y-2.5">
         <DataPickup
           icon={<KeyRound size={16} className="text-[hsl(158_72%_32%)]" />}
           field="Access Token"
-          where="O texto longo que começa com EAAN... que você acabou de copiar agora (etapa 3, passo 5)."
+          where="O texto longo que começa com EAAN... (passo 6 desta etapa)."
         />
         <DataPickup
           icon={<Hash size={16} className="text-[hsl(158_72%_32%)]" />}
           field="WABA ID"
-          where='O número longo de "ID da conta WhatsApp" que você anotou na etapa 2, passo 4.'
+          where="O número longo que você copiou no passo 5 da Etapa 2."
         />
         <DataPickup
           icon={<Phone size={16} className="text-[hsl(158_72%_32%)]" />}
           field="Phone Number ID"
-          where='O número longo de "ID do número de telefone" que você anotou na etapa 2, passo 4.'
+          where="O número longo que você copiou no passo 4 da Etapa 2."
         />
       </div>
-      <Hint>
-        Cole cada um no campo certo (são parecidos, mas vão em lugares diferentes), dê um apelido pro
-        número se quiser, e clique em <strong>"Conectar número"</strong>. A Wiize valida tudo e pronto.
-      </Hint>
-      <Hint type="warning">
-        Se a Wiize avisar "token inválido", o problema quase sempre é a etapa 3.1 ou 3.2 que ficou faltando.
-        Volte e confira se os <strong>dois ativos</strong> estão vinculados com controle total.
-      </Hint>
+      <p className="text-sm">
+        Cole cada um no campo certo, dê um apelido para o número (opcional) e clique em{" "}
+        <strong>"Conectar número"</strong>. A Wiize valida tudo na hora.
+      </p>
     </Step>
 
-    <FinishBox>É isso. Conexão criada. Você pode fechar essa aba.</FinishBox>
+    <FinishBox>Conexão criada com sucesso. Você já pode fechar essa aba.</FinishBox>
   </>
 );
 
