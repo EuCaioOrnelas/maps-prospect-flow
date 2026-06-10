@@ -136,7 +136,8 @@ export default function PartnersApply() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [params] = useSearchParams();
-  const [started, setStarted] = useState(false);
+  // Página /partners/apply sempre abre direto no formulário (sem repetir landing).
+  const [started, setStarted] = useState(true);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<Record<string, string>>({});
