@@ -76,16 +76,20 @@ export default function AdminPartnersGoals() {
 
   const load = async () => {
     setLoading(true);
-    const [g, p, l] = await Promise.all([
-      supabase.from("partner_goals")
-        .select("*, partners:partner_id(full_name, email), partner_referral_links:referral_link_id(slug, label)")
-        .order("created_at", { ascending: false }),
-      supabase.from("partners").select("id, full_name, email").eq("status", "active").order("full_name"),
-      supabase.from("partner_referral_links").select("id, partner_id, slug, label").eq("is_active", true).order("created_at", { ascending: false }),
-    ]);
-    setGoals((g.data as any) || []);
-    setPartners((p.data as any) || []);
-    setAllLinks((l.data as any) || []);
+    const { data, error } = await supabase.functions.invoke("admin-manage-partner-goal", {
+      body: { action: "list" },
+    });
+    if (error || data?.error) {
+      toast({ title: "Erro ao carregar metas", description: await getFunctionErrorMessage(error, data), variant: "destructive" });
+      setGoals([]);
+      setPartners([]);
+      setAllLinks([]);
+      setLoading(false);
+      return;
+    }
+    setGoals((data?.goals as any) || []);
+    setPartners((data?.partners as any) || []);
+    setAllLinks((data?.links as any) || []);
     setLoading(false);
   };
 
