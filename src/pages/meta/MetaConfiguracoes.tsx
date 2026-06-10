@@ -625,6 +625,8 @@ type WebhookData = {
   required_events?: string[];
   connections: Array<{
     id: string;
+    waba_id?: string | null;
+    phone_number_id?: string | null;
     display_phone_number: string | null;
     business_name: string | null;
     status: string;
@@ -645,7 +647,22 @@ const EVENT_DETAILS: Record<string, { label: string; why: string; required: bool
 };
 
 
-type ValidationState = { status: "idle" | "ok" | "error"; detail?: string };
+type DiagnosticStep = {
+  key: string;
+  label: string;
+  status: "ok" | "warning" | "error" | "skipped";
+  summary: string;
+  details?: string[];
+  technical?: string;
+  fbtrace_id?: string;
+};
+
+type ValidationState = {
+  status: "idle" | "ok" | "error";
+  detail?: string;
+  issue?: { title: string; cause: string; action: string } | null;
+  diagnostics?: DiagnosticStep[];
+};
 
 function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending" | null) => void }) {
   const [data, setData] = useState<WebhookData | null>(null);
@@ -686,9 +703,18 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
       body: { action: "validate", connection_id: connectionId },
     });
     setValidatingId(null);
-    const ok = !error && (res as any)?.ok;
-    const detail = (res as any)?.detail ?? error?.message ?? "Falha desconhecida";
-    setResults((r) => ({ ...r, [connectionId]: { status: ok ? "ok" : "error", detail } }));
+    const payload = res as any;
+    const ok = !error && payload?.ok;
+    const detail = payload?.detail ?? error?.message ?? "Falha desconhecida";
+    setResults((r) => ({
+      ...r,
+      [connectionId]: {
+        status: ok ? "ok" : "error",
+        detail,
+        issue: payload?.issue ?? null,
+        diagnostics: payload?.diagnostics ?? [],
+      },
+    }));
     return ok;
   };
 
