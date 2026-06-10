@@ -37,6 +37,12 @@ export default function PartnerGoals() {
   const load = async () => {
     if (!partner?.id) return;
     setLoading(true);
+    // Best-effort: recompute progress (also flips overdue active goals to "expired")
+    try {
+      await supabase.functions.invoke("admin-manage-partner-goal", {
+        body: { action: "recompute", partner_id: partner.id },
+      });
+    } catch { /* non-blocking */ }
     const { data } = await supabase
       .from("partner_goals")
       .select("*")
@@ -47,6 +53,7 @@ export default function PartnerGoals() {
   };
 
   useEffect(() => { load(); }, [partner?.id]);
+
 
   const claim = async (goalId: string) => {
     setClaimingId(goalId);
