@@ -217,9 +217,9 @@ export default function PartnersTerms() {
                 </tr>
               </thead>
               <tbody className="text-foreground/90">
-                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Select</td><td className="px-4 py-2.5">10%</td><td className="px-4 py-2.5 text-muted-foreground">Nível inicial após aprovação</td></tr>
-                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Signature</td><td className="px-4 py-2.5">15%</td><td className="px-4 py-2.5 text-muted-foreground">A partir de 5 clientes ativos</td></tr>
-                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Prime</td><td className="px-4 py-2.5">20%</td><td className="px-4 py-2.5 text-muted-foreground">A partir de 15 clientes ativos</td></tr>
+                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Select</td><td className="px-4 py-2.5">10%</td><td className="px-4 py-2.5 text-muted-foreground">0 a 99 clientes ativos</td></tr>
+                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Signature</td><td className="px-4 py-2.5">15%</td><td className="px-4 py-2.5 text-muted-foreground">100 a 249 clientes ativos</td></tr>
+                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Prime</td><td className="px-4 py-2.5">20%</td><td className="px-4 py-2.5 text-muted-foreground">A partir de 250 clientes ativos</td></tr>
               </tbody>
             </table>
           </div>
