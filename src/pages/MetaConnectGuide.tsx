@@ -35,21 +35,27 @@ const TUTORIAL_VIDEO_URL: string | null = null;
 const PHASES = [
   {
     id: "app",
-    badge: "Etapa 1 de 3",
+    badge: "Etapa 1 de 4",
     title: "Criar o aplicativo na Meta",
     subtitle: "É como abrir uma conta na Meta para sua empresa poder enviar mensagens. Só precisa fazer uma vez.",
   },
   {
     id: "numero",
-    badge: "Etapa 2 de 3",
+    badge: "Etapa 2 de 4",
     title: "Cadastrar o número de WhatsApp",
     subtitle: "Aqui você diz qual número vai disparar as mensagens. Pode ser um número novo.",
   },
   {
     id: "usuario",
-    badge: "Etapa 3 de 3",
+    badge: "Etapa 3 de 4",
     title: "Gerar a chave de acesso (token)",
     subtitle: "É a senha que a Wiize vai usar para enviar mensagens no seu lugar. Criamos uma que nunca vence.",
+  },
+  {
+    id: "webhook",
+    badge: "Etapa 4 de 4",
+    title: "Ligar o webhook (receber mensagens)",
+    subtitle: "É o que faz as respostas dos seus clientes caírem dentro da Wiize. Sem isso, você só envia — não recebe.",
   },
 ];
 
