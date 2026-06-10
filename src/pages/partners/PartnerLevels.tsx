@@ -164,9 +164,12 @@ export default function PartnerLevels() {
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <LevelBadge level={nextTier.key} size="md" />
                     <span className="text-sm font-medium text-muted-foreground">
-                      sobe para <span className="text-foreground font-bold">{nextTier.commissionPercent.toFixed(0)}%</span> de comissão
+                      {nextTier.key === "platinum"
+                        ? <>nível <span className="text-foreground font-bold">sob convite</span></>
+                        : <>sobe para <span className="text-foreground font-bold">{nextTier.commissionPercent.toFixed(0)}%</span> de comissão</>}
                     </span>
                   </div>
+
                 </div>
 
                 <div className="space-y-2">
