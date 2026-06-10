@@ -147,23 +147,19 @@ serve(async (req) => {
           return jsonResponse({ error: "Metas de MRR não podem ser vinculadas a um único link." }, 400);
         }
       }
-      const { data, error } = await admin.from("partner_goals").insert({
-        partner_id,
-        title: title.trim(),
-        description: description || null,
-        goal_type,
-        target_value: numericTarget,
-        prize_amount_cents: Math.max(0, Math.round(parseNumber(prize_amount_cents) || 0)),
-        deadline_at: deadlineDate.toISOString(),
-
-        internal_notes: internal_notes || null,
-        referral_link_id: referral_link_id || null,
-        created_by_admin_id: u.user.id,
-      }).select().single();
+      const { data, error } = await admin.rpc("admin_create_partner_goal", {
+        p_admin_id: u.user.id,
+        p_partner_id: partner_id,
+        p_title: title.trim(),
+        p_description: description || null,
+        p_goal_type: goal_type,
+        p_target_value: numericTarget,
+        p_prize_amount_cents: Math.max(0, Math.round(parseNumber(prize_amount_cents) || 0)),
+        p_deadline_at: deadlineDate.toISOString(),
+        p_referral_link_id: referral_link_id || null,
+        p_internal_notes: internal_notes || null,
+      });
       if (error) return jsonResponse({ error: error.message }, 400);
-
-      // run progress to set initial achieved value
-      await admin.rpc("update_partner_goal_progress", { p_partner_id: partner_id });
 
       return jsonResponse({ success: true, goal: data });
     }
