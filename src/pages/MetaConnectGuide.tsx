@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   MessageSquare,
@@ -53,6 +54,7 @@ const PHASES = [
 ];
 
 export default function MetaConnectGuide() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [openPhase, setOpenPhase] = useState<string>("app");
   const [completed, setCompleted] = useState<Set<string>>(new Set());
