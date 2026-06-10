@@ -114,19 +114,23 @@ export default function AdminPartnersGoals() {
       toast({ title: "Prazo inválido", description: "Selecione uma data final válida.", variant: "destructive" }); return;
     }
     setSubmitting(true);
-    const { data, error } = await supabase.functions.invoke("admin-manage-partner-goal", {
-      body: {
-        action: "create",
-        partner_id: form.partner_id,
-        title: form.title,
-        description: form.description || null,
-        goal_type: form.goal_type,
-        target_value: targetValue,
-        prize_amount_cents: Math.round(prizeAmount * 100),
-        deadline_at: deadlineIso,
-        referral_link_id: form.referral_link_id !== "all" ? form.referral_link_id : null,
-      },
-    });
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      setSubmitting(false);
+      toast({ title: "Erro", description: "Sessão administrativa não encontrada. Faça login novamente.", variant: "destructive" }); return;
+    }
+    const { data, error } = await supabase.rpc("admin_create_partner_goal", {
+      p_admin_id: authData.user.id,
+      p_partner_id: form.partner_id,
+      p_title: form.title.trim(),
+      p_description: form.description || "",
+      p_goal_type: form.goal_type as any,
+      p_target_value: targetValue,
+      p_prize_amount_cents: Math.round(prizeAmount * 100),
+      p_deadline_at: deadlineIso,
+      p_referral_link_id: form.referral_link_id !== "all" ? form.referral_link_id : null,
+      p_internal_notes: "",
+    } as any);
     setSubmitting(false);
     if (error || (data as any)?.error) {
       toast({ title: "Erro", description: await getFunctionErrorMessage(error, data), variant: "destructive" }); return;
