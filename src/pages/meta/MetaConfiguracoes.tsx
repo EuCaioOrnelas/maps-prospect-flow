@@ -625,6 +625,8 @@ type WebhookData = {
   required_events?: string[];
   connections: Array<{
     id: string;
+    waba_id?: string | null;
+    phone_number_id?: string | null;
     display_phone_number: string | null;
     business_name: string | null;
     status: string;
@@ -645,7 +647,22 @@ const EVENT_DETAILS: Record<string, { label: string; why: string; required: bool
 };
 
 
-type ValidationState = { status: "idle" | "ok" | "error"; detail?: string };
+type DiagnosticStep = {
+  key: string;
+  label: string;
+  status: "ok" | "warning" | "error" | "skipped";
+  summary: string;
+  details?: string[];
+  technical?: string;
+  fbtrace_id?: string;
+};
+
+type ValidationState = {
+  status: "idle" | "ok" | "error";
+  detail?: string;
+  issue?: { title: string; cause: string; action: string } | null;
+  diagnostics?: DiagnosticStep[];
+};
 
 function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending" | null) => void }) {
   const [data, setData] = useState<WebhookData | null>(null);
@@ -686,9 +703,18 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
       body: { action: "validate", connection_id: connectionId },
     });
     setValidatingId(null);
-    const ok = !error && (res as any)?.ok;
-    const detail = (res as any)?.detail ?? error?.message ?? "Falha desconhecida";
-    setResults((r) => ({ ...r, [connectionId]: { status: ok ? "ok" : "error", detail } }));
+    const payload = res as any;
+    const ok = !error && payload?.ok;
+    const detail = payload?.detail ?? error?.message ?? "Falha desconhecida";
+    setResults((r) => ({
+      ...r,
+      [connectionId]: {
+        status: ok ? "ok" : "error",
+        detail,
+        issue: payload?.issue ?? null,
+        diagnostics: payload?.diagnostics ?? [],
+      },
+    }));
     return ok;
   };
 
@@ -950,6 +976,9 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
                   <div className="min-w-0 pr-2">
                     <p className="text-sm font-medium truncate">{c.display_phone_number ?? "—"}</p>
                     <p className="text-xs text-muted-foreground truncate">{c.business_name ?? "Sem nome"}</p>
+                    <p className="text-[11px] text-muted-foreground font-mono truncate mt-0.5">
+                      WABA {c.waba_id ?? "—"} · Phone {c.phone_number_id ?? "—"}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {errored ? (
@@ -978,10 +1007,32 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
                   </div>
                 </div>
                 {errored && r?.detail && (
-                  <p className="text-xs text-destructive flex items-start gap-1.5">
-                    <XCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                    <span className="break-all">{r.detail}</span>
-                  </p>
+                  <div className="rounded-md border border-destructive/25 bg-destructive/5 p-3 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <XCircle className="h-4 w-4 mt-0.5 shrink-0 text-destructive" />
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-xs font-semibold text-destructive">
+                          {r.issue?.title ?? "Falha na validação do webhook"}
+                        </p>
+                        <p className="text-xs text-foreground/80 break-words">
+                          {r.issue?.cause ?? r.detail}
+                        </p>
+                        {r.issue?.action && (
+                          <p className="text-xs font-medium text-foreground break-words">
+                            Próximo passo: {r.issue.action}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {r.diagnostics && r.diagnostics.length > 0 && (
+                      <div className="space-y-1.5">
+                        {r.diagnostics.map((step) => (
+                          <DiagnosticRow key={step.key} step={step} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             );
@@ -1003,6 +1054,44 @@ function Field({ label, value, mono, onCopy }: { label: string; value: string; m
         <Button size="sm" variant="outline" onClick={onCopy} className="gap-1.5">
           <Copy className="h-3 w-3" /> Copiar
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function DiagnosticRow({ step }: { step: DiagnosticStep }) {
+  const tone = step.status === "ok"
+    ? "border-emerald-500/25 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400"
+    : step.status === "warning"
+      ? "border-amber-500/25 bg-amber-500/5 text-amber-700 dark:text-amber-400"
+      : step.status === "skipped"
+        ? "border-border/60 bg-muted/20 text-muted-foreground"
+        : "border-destructive/25 bg-background text-destructive";
+  const Icon = step.status === "ok" ? CheckCircle2 : step.status === "error" ? XCircle : AlertTriangle;
+
+  return (
+    <div className={`rounded-md border p-2.5 ${tone}`}>
+      <div className="flex items-start gap-2">
+        <Icon className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-foreground">{step.label}</p>
+            {step.fbtrace_id && <code className="text-[10px] text-muted-foreground shrink-0">{step.fbtrace_id}</code>}
+          </div>
+          <p className="text-xs text-foreground/75 break-words mt-0.5">{step.summary}</p>
+          {step.details && step.details.length > 0 && (
+            <ul className="mt-1 space-y-0.5">
+              {step.details.slice(0, 4).map((d, index) => (
+                <li key={`${step.key}-${index}`} className="text-[11px] text-muted-foreground break-words">• {d}</li>
+              ))}
+            </ul>
+          )}
+          {step.technical && (
+            <code className="block mt-1 text-[11px] text-muted-foreground break-all rounded bg-muted/40 px-2 py-1">
+              {step.technical}
+            </code>
+          )}
+        </div>
       </div>
     </div>
   );
