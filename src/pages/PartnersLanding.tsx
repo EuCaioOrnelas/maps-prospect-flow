@@ -345,11 +345,11 @@ export default function PartnersLanding() {
                 ? "relative overflow-hidden border-primary/40 bg-card ring-1 ring-primary/20 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10"
                 : "relative overflow-hidden border-border/60 bg-card transition-all hover:-translate-y-1 hover:shadow-lg";
               const iconWrapClasses = isPrime
-                ? "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-foreground/10 ring-1 ring-foreground/20 mb-4"
+                ? "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-foreground ring-1 ring-foreground/40 mb-4 shadow-md"
                 : isSignature
                 ? "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30 mb-4"
                 : "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-muted/60 ring-1 ring-border/60 mb-4";
-              const iconClasses = isPrime ? "text-foreground" : isSignature ? "text-primary" : "text-foreground/70";
+              const iconClasses = isPrime ? "text-background" : isSignature ? "text-primary" : "text-foreground/70";
               const nameClasses = isPrime
                 ? "text-xs uppercase tracking-[0.2em] text-foreground mb-2 font-semibold"
                 : isSignature
