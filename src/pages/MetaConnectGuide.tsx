@@ -494,13 +494,13 @@ const PhaseNumeroContent = () => (
         Eles parecem iguais mas são diferentes. Copie os dois e guarde:
       </p>
       <IdBlock
-        emoji="📱"
+        icon={<Phone size={16} className="text-[hsl(158_72%_32%)]" />}
         label="ID do número de telefone"
         hint="Aparece logo abaixo do nome de exibição. Tem cerca de 15 dígitos."
         example="123456789012345"
       />
       <IdBlock
-        emoji="🏢"
+        icon={<Hash size={16} className="text-[hsl(158_72%_32%)]" />}
         label="ID da conta WhatsApp (WABA)"
         hint="Aparece no topo da página, em 'Informações da conta'. Também tem cerca de 15 dígitos."
         example="987654321098765"
