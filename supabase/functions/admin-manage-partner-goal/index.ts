@@ -116,6 +116,17 @@ serve(async (req) => {
     if (action === "list") {
       const partnerId = body.partner_id || null;
 
+      if (partnerId) {
+        await admin.rpc("update_partner_goal_progress", { p_partner_id: partnerId });
+      } else {
+        const { data: activePartnerIds } = await admin
+          .from("partner_goals")
+          .select("partner_id")
+          .eq("status", "active");
+        const uniquePartnerIds = Array.from(new Set((activePartnerIds || []).map((row: any) => row.partner_id).filter(Boolean)));
+        await Promise.all(uniquePartnerIds.map((id) => admin.rpc("update_partner_goal_progress", { p_partner_id: id })));
+      }
+
       let goalsQuery = admin
         .from("partner_goals")
         .select("*")
@@ -246,6 +257,7 @@ serve(async (req) => {
 
     if (action === "recompute") {
       const { partner_id } = body;
+      if (!partner_id) return jsonResponse({ error: "partner_id é obrigatório" }, 400);
 
       // Snapshot active goals before recompute
       const { data: beforeGoals } = await admin
