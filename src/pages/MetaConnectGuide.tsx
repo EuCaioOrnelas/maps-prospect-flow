@@ -226,7 +226,7 @@ export default function MetaConnectGuide() {
                 id={`fase-${phase.id}`}
                 className={`scroll-mt-20 rounded-2xl border bg-white transition-all duration-300 overflow-hidden ${
                   isOpen
-                    ? "border-zinc-900 shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
+                    ? "border-[hsl(158_72%_32%)] shadow-[0_8px_30px_-12px_hsl(158_72%_32%/0.35)]"
                     : "border-zinc-200 hover:border-zinc-300"
                 }`}
               >
@@ -239,9 +239,9 @@ export default function MetaConnectGuide() {
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
                       isDone
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-[hsl(158_72%_32%)] text-white"
                         : isOpen
-                        ? "bg-zinc-900 text-white"
+                        ? "bg-[hsl(158_72%_32%)] text-white"
                         : "bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200"
                     }`}
                   >
