@@ -739,15 +739,27 @@ function FreeText({ label, value }: { label: string; value: string | null }) {
   );
 }
 
+function normalizeExternalUrl(raw: string): string {
+  const v = (raw || "").trim();
+  if (!v) return "#";
+  // already absolute (http, https, mailto, tel)
+  if (/^(https?:|mailto:|tel:)/i.test(v)) return v;
+  // protocol-relative
+  if (v.startsWith("//")) return `https:${v}`;
+  // bare domain or @handle → prepend https://
+  return `https://${v.replace(/^\/+/, "")}`;
+}
+
 function SocialLink({ icon: Icon, url, label }: { icon: any; url: string | null; label: string }) {
   if (!url) return null;
   return (
-    <a href={url} target="_blank" rel="noopener noreferrer"
+    <a href={normalizeExternalUrl(url)} target="_blank" rel="noopener noreferrer"
       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border hover:border-primary/40 hover:bg-primary/5 text-xs transition">
       <Icon className="h-3 w-3" /> {label} <ExternalLink className="h-2.5 w-2.5" />
     </a>
   );
 }
+
 
 function SummaryCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string; sub?: string }) {
   return (
