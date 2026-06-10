@@ -277,7 +277,7 @@ export default function MetaConnectGuide() {
                       <div className="flex flex-col sm:flex-row gap-2 pt-2">
                         <Button
                           onClick={() => markDone(phase.id)}
-                          className="flex-1 bg-zinc-900 text-white hover:bg-zinc-800 gap-2"
+                          className="flex-1 bg-[hsl(158_72%_32%)] text-white hover:bg-[hsl(158_72%_28%)] gap-2"
                         >
                           <CheckCircle2 size={15} />
                           {idx === PHASES.length - 1 ? "Concluir tudo" : "Marcar como feito e abrir próximo"}
@@ -301,7 +301,7 @@ export default function MetaConnectGuide() {
         {/* Final CTA */}
         {completed.size === PHASES.length && (
           <section className="rounded-3xl border border-zinc-200 bg-zinc-50 p-8 sm:p-10 text-center space-y-5 animate-fade-in">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center mx-auto shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-[hsl(158_72%_32%)] flex items-center justify-center mx-auto shadow-sm">
               <CheckCircle2 size={28} className="text-white" />
             </div>
             <div className="space-y-2">
@@ -318,7 +318,7 @@ export default function MetaConnectGuide() {
             <Button
               size="lg"
               onClick={() => window.close()}
-              className="bg-zinc-900 text-white hover:bg-zinc-800 gap-2"
+              className="bg-[hsl(158_72%_32%)] text-white hover:bg-[hsl(158_72%_28%)] gap-2"
             >
               Voltar para a Wiize <ChevronRight size={16} />
             </Button>
@@ -597,7 +597,7 @@ const Step = ({
 }) => (
   <div className="flex gap-4">
     <div className="flex flex-col items-center">
-      <div className="w-7 h-7 rounded-full bg-zinc-900 text-white flex items-center justify-center text-xs font-bold shrink-0">
+      <div className="w-7 h-7 rounded-full bg-[hsl(158_72%_32%)] text-white flex items-center justify-center text-xs font-bold shrink-0">
         {number}
       </div>
       <div className="w-px flex-1 bg-zinc-100 mt-2" />
@@ -614,7 +614,7 @@ const BigLink = ({ href, children }: { href: string; children: React.ReactNode }
     href={href}
     target="_blank"
     rel="noopener noreferrer"
-    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors no-underline"
+    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[hsl(158_72%_32%)] text-white text-sm font-medium hover:bg-[hsl(158_72%_28%)] transition-colors no-underline"
   >
     {children}
     <ExternalLink size={13} />
@@ -658,7 +658,7 @@ const Answer = ({ q, a }: { q: string; a: string }) => (
 
 const CheckLi = ({ children }: { children: React.ReactNode }) => (
   <li className="flex gap-2 items-start">
-    <CheckCircle2 size={15} className="text-emerald-500 mt-0.5 shrink-0" />
+    <CheckCircle2 size={15} className="text-[hsl(158_72%_32%)] mt-0.5 shrink-0" />
     <span>{children}</span>
   </li>
 );
@@ -719,9 +719,9 @@ const AssetCard = ({ emoji, title, hint }: { emoji: string; title: string; hint:
 );
 
 const FinishBox = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 flex items-start gap-2.5">
-    <CheckCircle2 size={16} className="text-emerald-600 mt-0.5 shrink-0" />
-    <p className="text-sm text-emerald-900 leading-relaxed">{children}</p>
+  <div className="rounded-xl bg-[hsl(158_72%_32%)]/8 border border-[hsl(158_72%_32%)]/25 p-4 flex items-start gap-2.5">
+    <CheckCircle2 size={16} className="text-[hsl(158_72%_32%)] mt-0.5 shrink-0" />
+    <p className="text-sm text-[hsl(158_72%_18%)] leading-relaxed">{children}</p>
   </div>
 );
 
@@ -742,7 +742,7 @@ const FinalItem = ({
       <p className="text-sm font-semibold truncate">{label}</p>
       <p className="text-[11px] text-zinc-500">{hint}</p>
     </div>
-    <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+    <CheckCircle2 size={16} className="text-[hsl(158_72%_32%)] shrink-0" />
   </div>
 );
 
