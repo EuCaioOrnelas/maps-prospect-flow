@@ -95,21 +95,34 @@ serve(async (req) => {
     const action = body.action || "create";
 
     if (action === "create") {
-      const { partner_id, title, description, goal_type, target_value, prize_amount_cents, deadline_at, internal_notes, referral_link_id } = body;
+      const { partner_id, title, description, goal_type, target_value, prize_amount_cents, deadline_at, internal_notes } = body;
+      // Normalize empty strings to null for optional fields
+      const referral_link_id = body.referral_link_id && body.referral_link_id !== "all" && body.referral_link_id !== "" ? body.referral_link_id : null;
+
       if (!partner_id || !title?.trim() || !goal_type || !target_value || !deadline_at) {
-        return new Response(JSON.stringify({ error: "partner_id, title, goal_type, target_value e deadline_at são obrigatórios" }), { status: 400, headers: corsHeaders });
+        return new Response(JSON.stringify({ error: "partner_id, título, tipo, meta e prazo são obrigatórios." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (!["revenue", "paid_clients", "leads", "mrr"].includes(goal_type)) {
-        return new Response(JSON.stringify({ error: "goal_type inválido" }), { status: 400, headers: corsHeaders });
+        return new Response(JSON.stringify({ error: "Tipo de meta inválido." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      // If linked to a specific referral link, ensure it belongs to this partner
+      const numericTarget = Number(target_value);
+      if (!Number.isFinite(numericTarget) || numericTarget <= 0) {
+        return new Response(JSON.stringify({ error: "Meta deve ser um número maior que zero." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const deadlineDate = new Date(deadline_at);
+      if (isNaN(deadlineDate.getTime())) {
+        return new Response(JSON.stringify({ error: "Prazo final inválido." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (deadlineDate.getTime() <= Date.now()) {
+        return new Response(JSON.stringify({ error: "Prazo final precisa ser uma data futura." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       if (referral_link_id) {
         const { data: rl } = await admin.from("partner_referral_links").select("partner_id").eq("id", referral_link_id).maybeSingle();
         if (!rl || rl.partner_id !== partner_id) {
-          return new Response(JSON.stringify({ error: "Link de campanha inválido para este parceiro" }), { status: 400, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "Link de campanha inválido para este parceiro." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
         if (goal_type === "mrr") {
-          return new Response(JSON.stringify({ error: "Metas de MRR não podem ser vinculadas a um único link" }), { status: 400, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "Metas de MRR não podem ser vinculadas a um único link." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       }
       const { data, error } = await admin.from("partner_goals").insert({
@@ -117,9 +130,10 @@ serve(async (req) => {
         title: title.trim(),
         description: description || null,
         goal_type,
-        target_value: Number(target_value),
+        target_value: numericTarget,
         prize_amount_cents: Math.max(0, Math.round(Number(prize_amount_cents) || 0)),
-        deadline_at,
+        deadline_at: deadlineDate.toISOString(),
+
         internal_notes: internal_notes || null,
         referral_link_id: referral_link_id || null,
         created_by_admin_id: u.user.id,
