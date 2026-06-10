@@ -111,7 +111,7 @@ export default function MetaConnectGuide() {
             <span>{completed.size}/{PHASES.length}</span>
             <div className="w-32 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-[hsl(158 72% 32%)] to-[hsl(158 72% 52%)] transition-all duration-500"
+                className="h-full bg-gradient-to-r from-[hsl(158_72%_32%)] to-[hsl(158_72%_52%)] transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -131,7 +131,7 @@ export default function MetaConnectGuide() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-12">
         {/* Hero */}
         <section className="text-center space-y-5 animate-fade-in">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(158 72% 32%)]/10 text-[hsl(158 72% 28%)] text-[11px] font-medium border border-[hsl(158 72% 32%)]/20">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(158_72%_32%)]/10 text-[hsl(158_72%_28%)] text-[11px] font-medium border border-[hsl(158_72%_32%)]/20">
             <Sparkles size={11} /> Calma, é mais simples do que parece
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1]">
@@ -140,7 +140,7 @@ export default function MetaConnectGuide() {
               className="bg-clip-text text-transparent inline-block"
               style={{
                 backgroundImage:
-                  "linear-gradient(90deg, hsl(158 72% 32%) 0%, hsl(158 72% 42%) 25%, hsl(158 72% 52%) 50%, hsl(158 72% 42%) 75%, hsl(158 72% 32%) 100%)",
+                  "linear-gradient(90deg, hsl(158_72%_32%) 0%, hsl(158_72%_42%) 25%, hsl(158_72%_52%) 50%, hsl(158_72%_42%) 75%, hsl(158_72%_32%) 100%)",
                 backgroundSize: "200% 100%",
                 animation: "wiize-shine 3.5s linear infinite",
               }}
@@ -185,8 +185,8 @@ export default function MetaConnectGuide() {
         {/* Antes de começar */}
         <section className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 animate-fade-in">
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[hsl(158 72% 32%)]/10 flex items-center justify-center shrink-0">
-              <HelpCircle size={16} className="text-[hsl(158 72% 28%)]" />
+            <div className="w-9 h-9 rounded-xl bg-[hsl(158_72%_32%)]/10 flex items-center justify-center shrink-0">
+              <HelpCircle size={16} className="text-[hsl(158_72%_28%)]" />
             </div>
             <div className="flex-1 space-y-3">
               <p className="font-semibold text-sm">Antes de começar, tenha em mãos:</p>
@@ -471,7 +471,7 @@ const PhaseNumeroContent = () => (
           href="https://business.facebook.com/wa/manage/home"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[hsl(158 72% 28%)] font-medium hover:underline inline-flex items-center gap-0.5"
+          className="text-[hsl(158_72%_28%)] font-medium hover:underline inline-flex items-center gap-0.5"
         >
           WhatsApp Manager <ExternalLink size={10} />
         </a>
