@@ -976,6 +976,9 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
                   <div className="min-w-0 pr-2">
                     <p className="text-sm font-medium truncate">{c.display_phone_number ?? "—"}</p>
                     <p className="text-xs text-muted-foreground truncate">{c.business_name ?? "Sem nome"}</p>
+                    <p className="text-[11px] text-muted-foreground font-mono truncate mt-0.5">
+                      WABA {c.waba_id ?? "—"} · Phone {c.phone_number_id ?? "—"}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {errored ? (
@@ -1004,10 +1007,32 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
                   </div>
                 </div>
                 {errored && r?.detail && (
-                  <p className="text-xs text-destructive flex items-start gap-1.5">
-                    <XCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                    <span className="break-all">{r.detail}</span>
-                  </p>
+                  <div className="rounded-md border border-destructive/25 bg-destructive/5 p-3 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <XCircle className="h-4 w-4 mt-0.5 shrink-0 text-destructive" />
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-xs font-semibold text-destructive">
+                          {r.issue?.title ?? "Falha na validação do webhook"}
+                        </p>
+                        <p className="text-xs text-foreground/80 break-words">
+                          {r.issue?.cause ?? r.detail}
+                        </p>
+                        {r.issue?.action && (
+                          <p className="text-xs font-medium text-foreground break-words">
+                            Próximo passo: {r.issue.action}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {r.diagnostics && r.diagnostics.length > 0 && (
+                      <div className="space-y-1.5">
+                        {r.diagnostics.map((step) => (
+                          <DiagnosticRow key={step.key} step={step} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             );
