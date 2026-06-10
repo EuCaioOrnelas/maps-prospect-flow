@@ -539,15 +539,27 @@ const PhaseUsuarioContent = () => (
 
     <Step number={3} title="Dê acesso ao aplicativo e ao WhatsApp">
       <p>
-        Selecione o usuário Wiize que você acabou de criar e clique em{" "}
-        <strong>"Atribuir ativos"</strong>. Você vai fazer isso <strong>duas vezes</strong>:
+        Selecione o usuário <strong>Wiize</strong> que você acabou de criar (clique no nome dele na lista).
+        Agora você precisa <strong>conectar 2 coisas a esse usuário</strong>: o aplicativo da etapa 1 e
+        a conta de WhatsApp da etapa 2. Sem isso, a chave que vamos gerar a seguir não vai funcionar.
       </p>
-      <div className="grid sm:grid-cols-2 gap-3">
-        <AssetCard emoji="🧱" title="Aplicativos" hint="Selecione o aplicativo da etapa 1. Marque controle total." />
-        <AssetCard emoji="💬" title="Contas do WhatsApp" hint="Selecione a conta da etapa 2. Marque controle total." />
+      <div className="space-y-3">
+        <AssetCard
+          step="3.1"
+          icon={<KeyRound size={18} className="text-[hsl(158_72%_32%)]" />}
+          title="Conectar o aplicativo"
+          hint='Clique em "Atribuir ativos" → escolha "Aplicativos" → selecione o app que você criou na etapa 1 → marque CONTROLE TOTAL → salvar.'
+        />
+        <AssetCard
+          step="3.2"
+          icon={<MessageSquare size={18} className="text-[hsl(158_72%_32%)]" />}
+          title="Conectar a conta de WhatsApp"
+          hint='Clique em "Atribuir ativos" de novo → escolha "Contas do WhatsApp" → selecione a conta da etapa 2 → marque CONTROLE TOTAL → salvar.'
+        />
       </div>
       <Hint type="warning">
-        Se pular isso, a chave que vamos gerar não vai funcionar.
+        São <strong>dois cliques separados em "Atribuir ativos"</strong>: um para vincular o app e
+        outro para vincular a conta do WhatsApp. Se faltar qualquer um dos dois, a chave não funciona.
       </Hint>
     </Step>
 
@@ -574,7 +586,39 @@ const PhaseUsuarioContent = () => (
       </p>
     </Step>
 
-    <FinishBox>É isso. Você tem as 3 informações que a Wiize precisa. Volte para a aba dela.</FinishBox>
+    <Step number={6} title="Junte os 3 dados e cole na Wiize">
+      <p>
+        Pronto! Você já tem tudo. Volte para a aba da Wiize, abra o formulário{" "}
+        <strong>"Adicionar número"</strong> e cole cada dado no campo correspondente:
+      </p>
+      <div className="space-y-2.5">
+        <DataPickup
+          icon={<KeyRound size={16} className="text-[hsl(158_72%_32%)]" />}
+          field="Access Token"
+          where="O texto longo que começa com EAAN... que você acabou de copiar agora (etapa 3, passo 5)."
+        />
+        <DataPickup
+          icon={<Hash size={16} className="text-[hsl(158_72%_32%)]" />}
+          field="WABA ID"
+          where='O número longo de "ID da conta WhatsApp" que você anotou na etapa 2, passo 4.'
+        />
+        <DataPickup
+          icon={<Phone size={16} className="text-[hsl(158_72%_32%)]" />}
+          field="Phone Number ID"
+          where='O número longo de "ID do número de telefone" que você anotou na etapa 2, passo 4.'
+        />
+      </div>
+      <Hint>
+        Cole cada um no campo certo (são parecidos, mas vão em lugares diferentes), dê um apelido pro
+        número se quiser, e clique em <strong>"Conectar número"</strong>. A Wiize valida tudo e pronto.
+      </Hint>
+      <Hint type="warning">
+        Se a Wiize avisar "token inválido", o problema quase sempre é a etapa 3.1 ou 3.2 que ficou faltando.
+        Volte e confira se os <strong>dois ativos</strong> estão vinculados com controle total.
+      </Hint>
+    </Step>
+
+    <FinishBox>É isso. Conexão criada. Você pode fechar essa aba.</FinishBox>
   </>
 );
 
