@@ -39,10 +39,9 @@ export default function PartnerGoals() {
     setLoading(true);
     // Best-effort: recompute progress (also flips overdue active goals to "expired")
     try {
-      await supabase.functions.invoke("admin-manage-partner-goal", {
-        body: { action: "recompute", partner_id: partner.id },
-      });
+      await supabase.rpc("refresh_my_partner_goals" as any);
     } catch { /* non-blocking */ }
+
     const { data } = await supabase
       .from("partner_goals")
       .select("*")
