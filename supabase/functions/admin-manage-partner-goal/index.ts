@@ -8,6 +8,25 @@ const corsHeaders = {
 
 const ADMIN_INBOX = Deno.env.get("PARTNERS_ADMIN_INBOX") || "parceiros@wiize.com.br";
 
+function jsonResponse(payload: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function parseNumber(value: unknown) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : NaN;
+  if (typeof value !== "string") return NaN;
+  const trimmed = value.trim();
+  if (!trimmed) return NaN;
+  const normalized = trimmed.includes(",")
+    ? trimmed.replace(/\./g, "").replace(",", ".")
+    : trimmed;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+
 // Inlined helper (previously in _shared/partner-email.ts)
 async function sendPartnerEmail(
   supabase: any,
@@ -81,15 +100,15 @@ serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+    if (!authHeader) return jsonResponse({ error: "Unauthorized" }, 401);
 
     const caller = createClient(url, anonKey, { global: { headers: { Authorization: authHeader } } });
     const { data: u } = await caller.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (!u?.user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+    if (!u?.user) return jsonResponse({ error: "Unauthorized" }, 401);
 
     const admin = createClient(url, serviceKey);
     const { data: roleCheck } = await admin.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin").maybeSingle();
-    if (!roleCheck) return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: corsHeaders });
+    if (!roleCheck) return jsonResponse({ error: "Forbidden" }, 403);
 
     const body = await req.json();
     const action = body.action || "create";
@@ -99,30 +118,33 @@ serve(async (req) => {
       // Normalize empty strings to null for optional fields
       const referral_link_id = body.referral_link_id && body.referral_link_id !== "all" && body.referral_link_id !== "" ? body.referral_link_id : null;
 
-      if (!partner_id || !title?.trim() || !goal_type || !target_value || !deadline_at) {
-        return new Response(JSON.stringify({ error: "partner_id, título, tipo, meta e prazo são obrigatórios." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!partner_id || !title?.trim() || !goal_type || target_value === undefined || target_value === null || !deadline_at) {
+        return jsonResponse({ error: "partner_id, título, tipo, meta e prazo são obrigatórios." }, 400);
       }
       if (!["revenue", "paid_clients", "leads", "mrr"].includes(goal_type)) {
-        return new Response(JSON.stringify({ error: "Tipo de meta inválido." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Tipo de meta inválido." }, 400);
       }
-      const numericTarget = Number(target_value);
+      const numericTarget = parseNumber(target_value);
       if (!Number.isFinite(numericTarget) || numericTarget <= 0) {
-        return new Response(JSON.stringify({ error: "Meta deve ser um número maior que zero." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Meta deve ser um número maior que zero." }, 400);
+      }
+      if (["paid_clients", "leads"].includes(goal_type) && !Number.isInteger(numericTarget)) {
+        return jsonResponse({ error: "Metas de clientes ou leads precisam ser números inteiros, por exemplo: 10." }, 400);
       }
       const deadlineDate = new Date(deadline_at);
       if (isNaN(deadlineDate.getTime())) {
-        return new Response(JSON.stringify({ error: "Prazo final inválido." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Prazo final inválido." }, 400);
       }
       if (deadlineDate.getTime() <= Date.now()) {
-        return new Response(JSON.stringify({ error: "Prazo final precisa ser uma data futura." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Prazo final precisa ser uma data futura." }, 400);
       }
       if (referral_link_id) {
         const { data: rl } = await admin.from("partner_referral_links").select("partner_id").eq("id", referral_link_id).maybeSingle();
         if (!rl || rl.partner_id !== partner_id) {
-          return new Response(JSON.stringify({ error: "Link de campanha inválido para este parceiro." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          return jsonResponse({ error: "Link de campanha inválido para este parceiro." }, 400);
         }
         if (goal_type === "mrr") {
-          return new Response(JSON.stringify({ error: "Metas de MRR não podem ser vinculadas a um único link." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          return jsonResponse({ error: "Metas de MRR não podem ser vinculadas a um único link." }, 400);
         }
       }
       const { data, error } = await admin.from("partner_goals").insert({
@@ -131,19 +153,19 @@ serve(async (req) => {
         description: description || null,
         goal_type,
         target_value: numericTarget,
-        prize_amount_cents: Math.max(0, Math.round(Number(prize_amount_cents) || 0)),
+        prize_amount_cents: Math.max(0, Math.round(parseNumber(prize_amount_cents) || 0)),
         deadline_at: deadlineDate.toISOString(),
 
         internal_notes: internal_notes || null,
         referral_link_id: referral_link_id || null,
         created_by_admin_id: u.user.id,
       }).select().single();
-      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders });
+      if (error) return jsonResponse({ error: error.message }, 400);
 
       // run progress to set initial achieved value
       await admin.rpc("update_partner_goal_progress", { p_partner_id: partner_id });
 
-      return new Response(JSON.stringify({ success: true, goal: data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return jsonResponse({ success: true, goal: data });
     }
 
     // Accept both "update" (legacy) and "update_status" (UI shorthand)

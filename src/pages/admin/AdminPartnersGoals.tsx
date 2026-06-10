@@ -15,6 +15,35 @@ import { useToast } from "@/hooks/use-toast";
 import { fmtBRL, fmtDate, goalStatusColors, goalStatusLabel, goalTypeLabel, formatGoalValue } from "@/lib/partnerFormat";
 import { PartnerCombobox } from "@/components/admin/partners/PartnerCombobox";
 
+const moneyGoalTypes = new Set(["revenue", "mrr"]);
+const countGoalTypes = new Set(["paid_clients", "leads"]);
+
+function parseLocalizedNumber(value: string) {
+  const normalized = value.trim().replace(/\./g, "").replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+
+function dateInputToEndOfDayIso(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return "";
+  return new Date(year, month - 1, day, 23, 59, 59, 999).toISOString();
+}
+
+async function getFunctionErrorMessage(error: any, data: any) {
+  if (data?.error) return data.error;
+  const response = error?.context;
+  if (response instanceof Response) {
+    try {
+      const payload = await response.clone().json();
+      if (payload?.error) return payload.error;
+    } catch {
+      // Keep fallback below.
+    }
+  }
+  return error?.message || "Não foi possível criar a meta.";
+}
+
 interface Partner { id: string; full_name: string; email: string; }
 interface ReferralLink { id: string; partner_id: string; slug: string; label: string; }
 interface Goal {
@@ -68,6 +97,22 @@ export default function AdminPartnersGoals() {
     if (!form.partner_id || !form.title || !form.target_value || !form.deadline_at) {
       toast({ title: "Campos obrigatórios", description: "Parceiro, título, meta e prazo.", variant: "destructive" }); return;
     }
+    const targetValue = parseLocalizedNumber(form.target_value);
+    const prizeAmount = parseLocalizedNumber(form.prize_amount || "0");
+    const deadlineIso = dateInputToEndOfDayIso(form.deadline_at);
+
+    if (!Number.isFinite(targetValue) || targetValue <= 0) {
+      toast({ title: "Meta inválida", description: "Informe um número válido maior que zero. Use 10 para clientes/leads ou 10.000,00 para valores em R$.", variant: "destructive" }); return;
+    }
+    if (countGoalTypes.has(form.goal_type) && !Number.isInteger(targetValue)) {
+      toast({ title: "Meta inválida", description: "Metas de clientes ou leads precisam ser números inteiros, por exemplo: 10.", variant: "destructive" }); return;
+    }
+    if (!Number.isFinite(prizeAmount) || prizeAmount < 0) {
+      toast({ title: "Prêmio inválido", description: "Informe um prêmio válido em reais.", variant: "destructive" }); return;
+    }
+    if (!deadlineIso) {
+      toast({ title: "Prazo inválido", description: "Selecione uma data final válida.", variant: "destructive" }); return;
+    }
     setSubmitting(true);
     const { data, error } = await supabase.functions.invoke("admin-manage-partner-goal", {
       body: {
@@ -76,15 +121,15 @@ export default function AdminPartnersGoals() {
         title: form.title,
         description: form.description || null,
         goal_type: form.goal_type,
-        target_value: Number(form.target_value),
-        prize_amount_cents: Math.round(Number(form.prize_amount || 0) * 100),
-        deadline_at: new Date(form.deadline_at).toISOString(),
+        target_value: targetValue,
+        prize_amount_cents: Math.round(prizeAmount * 100),
+        deadline_at: deadlineIso,
         referral_link_id: form.referral_link_id !== "all" ? form.referral_link_id : null,
       },
     });
     setSubmitting(false);
     if (error || (data as any)?.error) {
-      toast({ title: "Erro", description: (data as any)?.error || error?.message, variant: "destructive" }); return;
+      toast({ title: "Erro", description: await getFunctionErrorMessage(error, data), variant: "destructive" }); return;
     }
     toast({ title: "Meta criada", description: "Recalcule o progresso para já refletir as vendas." });
     setOpen(false);
@@ -319,7 +364,7 @@ export default function AdminPartnersGoals() {
                 </Select>
               </FormRow>
               <FormRow label={form.goal_type === "revenue" || form.goal_type === "mrr" ? "Meta (R$) *" : "Meta (qtd) *"}>
-                <Input type="number" min="0" step="0.01" value={form.target_value} onChange={(e) => setForm({ ...form, target_value: e.target.value })} />
+                <Input type="text" inputMode={moneyGoalTypes.has(form.goal_type) ? "decimal" : "numeric"} value={form.target_value} onChange={(e) => setForm({ ...form, target_value: e.target.value })} placeholder={moneyGoalTypes.has(form.goal_type) ? "10000" : "10"} />
               </FormRow>
             </div>
             <FormRow label="Vínculo a link de campanha (opcional)">
@@ -346,7 +391,7 @@ export default function AdminPartnersGoals() {
             </FormRow>
             <div className="grid grid-cols-2 gap-3">
               <FormRow label="Prêmio em R$ (bônus extra) *">
-                <Input type="number" min="0" step="10" value={form.prize_amount} onChange={(e) => setForm({ ...form, prize_amount: e.target.value })} placeholder="500" />
+                <Input type="text" inputMode="decimal" value={form.prize_amount} onChange={(e) => setForm({ ...form, prize_amount: e.target.value })} placeholder="500" />
               </FormRow>
               <FormRow label="Prazo final *">
                 <Input type="date" value={form.deadline_at} onChange={(e) => setForm({ ...form, deadline_at: e.target.value })} />
