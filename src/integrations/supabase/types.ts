@@ -7953,6 +7953,19 @@ export type Database = {
         Args: { p_new_limit: number; p_user_email: string }
         Returns: undefined
       }
+      attribute_partner_lead: {
+        Args: {
+          p_click_id?: string
+          p_email: string
+          p_name?: string
+          p_partner_id?: string
+          p_referral_code?: string
+          p_referral_link_id?: string
+          p_source?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       check_and_reset_monthly_searches: {
         Args: { user_id: string }
         Returns: Json
@@ -8117,6 +8130,10 @@ export type Database = {
       }
       recompute_partner_level: {
         Args: { p_partner_id: string }
+        Returns: undefined
+      }
+      recompute_partner_referral_link_stats: {
+        Args: { p_referral_link_id: string }
         Returns: undefined
       }
       refresh_my_partner_goals: { Args: never; Returns: undefined }

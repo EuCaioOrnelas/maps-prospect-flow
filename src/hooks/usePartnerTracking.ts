@@ -39,6 +39,18 @@ export function getStoredReferral(): StoredReferral | null {
   } catch { return null; }
 }
 
+export function getPartnerReferralMetadata(): Record<string, string> {
+  const ref = getStoredReferral();
+  if (!ref) return {};
+
+  return {
+    partner_referral_code: ref.code,
+    partner_id: ref.partner_id,
+    partner_click_id: ref.click_id,
+    ...(ref.referral_link_id ? { partner_referral_link_id: ref.referral_link_id } : {}),
+  };
+}
+
 function persistReferral(data: StoredReferral) {
   try {
     const json = JSON.stringify(data);
@@ -109,53 +121,28 @@ export async function attributePartnerLeadOnSignup(userId: string, email: string
   const ref = getStoredReferral();
   if (!ref) return;
   try {
-    // Server-side anti-self-referral guard (CPF, e-mail, IP, fingerprint, telefone)
-    const { data: fraudCheck } = await supabase.rpc("check_partner_self_referral", {
-      p_partner_id: ref.partner_id,
+    const { data, error } = await (supabase as any).rpc("attribute_partner_lead", {
       p_user_id: userId,
+      p_email: email,
+      p_name: name || null,
+      p_referral_code: ref.code,
+      p_click_id: ref.click_id,
+      p_partner_id: ref.partner_id,
+      p_referral_link_id: ref.referral_link_id ?? null,
+      p_source: "signed_in_event",
     });
-    if (fraudCheck && (fraudCheck as any).blocked) {
-      console.warn("[attributePartnerLeadOnSignup] self-referral blocked:", fraudCheck);
-      // Clear stored referral so future actions don't retry
+
+    if (error) {
+      console.warn("[attributePartnerLeadOnSignup] attribution failed:", error.message);
+      return;
+    }
+
+    if (data?.status === "blocked") {
+      console.warn("[attributePartnerLeadOnSignup] self-referral blocked:", data);
       try {
         localStorage.removeItem(STORAGE_KEY);
         document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
       } catch {}
-      // Audit-only log; insertion is allowed by RLS for authenticated users
-      await supabase.from("partner_fraud_attempts").insert({
-        partner_id: ref.partner_id,
-        user_id: userId,
-        email,
-        reason: (fraudCheck as any).reason,
-        matched_field: (fraudCheck as any).matched_field,
-        metadata: { source: "signup", click_id: ref.click_id },
-      });
-      return;
-    }
-
-    const { error: leadErr } = await supabase.from("partner_leads").insert({
-      partner_id: ref.partner_id,
-      user_id: userId,
-      email,
-      name: name || null,
-      click_id: ref.click_id,
-      referral_link_id: ref.referral_link_id ?? null,
-      is_trial: true,
-    });
-    if (leadErr) {
-      // Unique violation on user_id (23505) means this user was already attributed — silent ok.
-      if ((leadErr as any).code !== "23505") {
-        console.warn("[attributePartnerLeadOnSignup] lead insert failed:", leadErr.message);
-        return;
-      }
-    }
-    const { error: clickUpdErr } = await supabase
-      .from("partner_clicks")
-      .update({ converted_to_lead_at: new Date().toISOString(), converted_user_id: userId })
-      .eq("id", ref.click_id)
-      .is("converted_user_id", null);
-    if (clickUpdErr) {
-      console.warn("[attributePartnerLeadOnSignup] click update failed:", clickUpdErr.message);
     }
   } catch (err) {
     console.warn("[attributePartnerLeadOnSignup]", err);

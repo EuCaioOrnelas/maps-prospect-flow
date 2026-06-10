@@ -4,7 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { generateFingerprint, getClientIP } from '@/lib/fingerprint';
 import { trackSignupCompleted, getLandingPageSlug } from '@/hooks/useLandingPageTracking';
-import { attributePartnerLeadOnSignup } from '@/hooks/usePartnerTracking';
+import { attributePartnerLeadOnSignup, getPartnerReferralMetadata } from '@/hooks/usePartnerTracking';
 
 interface Profile {
   id: string;
@@ -350,20 +350,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     if (error) console.error('[AuthContext] Error tracking trial event:', error);
                   });
 
-                  // Attribute partner referral if exists in localStorage/cookie
-                  try {
-                    await attributePartnerLeadOnSignup(
-                      session.user.id,
-                      session.user.email || '',
-                      (session.user.user_metadata?.name as string) || undefined
-                    );
-                  } catch (e) {
-                    console.error('[AuthContext] Partner attribution failed:', e);
-                  }
-                  
                   console.log('[AuthContext] Signup tracked for landing page:', metaSlug || 'index');
                 } else {
                   console.log('[AuthContext] Signup already tracked (db check) - skipping');
+                }
+
+                // Partner attribution is independent from landing-page tracking and must never be skipped.
+                try {
+                  await attributePartnerLeadOnSignup(
+                    session.user.id,
+                    session.user.email || '',
+                    (session.user.user_metadata?.name as string) || undefined
+                  );
+                } catch (e) {
+                  console.error('[AuthContext] Partner attribution failed:', e);
                 }
               }
             }
@@ -533,7 +533,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fraud_check_skipped: fraudCheckSkipped,
             stripe_whitelisted: isWhitelisted,
             terms_accepted: 'true',
-            landing_page_slug: getLandingPageSlug()
+            landing_page_slug: getLandingPageSlug(),
+            ...getPartnerReferralMetadata()
           }
       }
     });
