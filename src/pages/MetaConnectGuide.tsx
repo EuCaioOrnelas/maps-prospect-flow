@@ -35,21 +35,27 @@ const TUTORIAL_VIDEO_URL: string | null = null;
 const PHASES = [
   {
     id: "app",
-    badge: "Etapa 1 de 3",
+    badge: "Etapa 1 de 4",
     title: "Criar o aplicativo na Meta",
     subtitle: "É como abrir uma conta na Meta para sua empresa poder enviar mensagens. Só precisa fazer uma vez.",
   },
   {
     id: "numero",
-    badge: "Etapa 2 de 3",
+    badge: "Etapa 2 de 4",
     title: "Cadastrar o número de WhatsApp",
     subtitle: "Aqui você diz qual número vai disparar as mensagens. Pode ser um número novo.",
   },
   {
     id: "usuario",
-    badge: "Etapa 3 de 3",
+    badge: "Etapa 3 de 4",
     title: "Gerar a chave de acesso (token)",
     subtitle: "É a senha que a Wiize vai usar para enviar mensagens no seu lugar. Criamos uma que nunca vence.",
+  },
+  {
+    id: "webhook",
+    badge: "Etapa 4 de 4",
+    title: "Ligar o webhook (receber mensagens)",
+    subtitle: "É o que faz as respostas dos seus clientes caírem dentro da Wiize. Sem isso, você só envia — não recebe.",
   },
 ];
 
@@ -138,7 +144,7 @@ export default function MetaConnectGuide() {
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1]">
             Conecte seu WhatsApp <br className="hidden sm:block" />
-            <span className="text-shimmer-highlight font-extrabold">em 3 passos</span>
+            <span className="text-shimmer-highlight font-extrabold">em 4 passos</span>
           </h1>
           <style>{`@keyframes wiize-shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
           <p className="text-zinc-600 text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
@@ -275,6 +281,7 @@ export default function MetaConnectGuide() {
                       {phase.id === "app" && <PhaseAppContent copy={copy} />}
                       {phase.id === "numero" && <PhaseNumeroContent />}
                       {phase.id === "usuario" && <PhaseUsuarioContent />}
+                      {phase.id === "webhook" && <PhaseWebhookContent navigate={navigate} />}
 
                       <div className="flex flex-col sm:flex-row gap-2 pt-2">
                         <Button
@@ -603,6 +610,80 @@ const PhaseUsuarioContent = () => (
     </Step>
 
     <FinishBox>Conexão criada com sucesso. Você já pode fechar essa aba.</FinishBox>
+  </>
+);
+
+const PhaseWebhookContent = ({ navigate }: { navigate: (path: string) => void }) => (
+  <>
+    <Intro>
+      O webhook é o que faz as <strong>respostas dos seus clientes</strong> chegarem até a Wiize.
+      Sem ele, o Chat fica vazio e as campanhas não medem leitura nem resposta. Leva 2 minutinhos.
+    </Intro>
+
+    <Step number={1} title="Abra a tela de Webhook dentro da Wiize">
+      <p>
+        Toda a configuração acontece numa tela só, dentro da própria Wiize — lá você copia a URL e o token
+        prontos, sem precisar inventar nada.
+      </p>
+      <button
+        type="button"
+        onClick={() => navigate("/meta/configuracoes?tab=webhook")}
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[hsl(158_72%_32%)] text-white text-sm font-medium hover:bg-[hsl(158_72%_28%)] transition-colors"
+      >
+        Abrir configuração de Webhook
+        <ChevronRight size={13} />
+      </button>
+    </Step>
+
+    <Step number={2} title='Volte ao seu App da Meta, em "WhatsApp → Configuração"'>
+      <p>
+        No menu lateral esquerdo do seu App (o mesmo da Etapa 1), clique em <strong>WhatsApp</strong> →{" "}
+        <strong>Configuração</strong>. Role até a seção <strong>Webhook</strong> e clique em{" "}
+        <strong>Editar</strong>.
+      </p>
+      <BigLink href="https://developers.facebook.com/apps/">
+        Abrir meu App
+      </BigLink>
+    </Step>
+
+    <Step number={3} title="Cole a Callback URL e o Verify Token">
+      <p>
+        Na tela da Wiize (aberta no passo 1) tem dois campos prontos para copiar: <strong>Callback URL</strong>{" "}
+        e <strong>Verify Token</strong>. Cole cada um no campo correspondente da Meta e clique em{" "}
+        <strong>Verificar e salvar</strong>.
+      </p>
+      <Hint>
+        Se der "erro de validação", confira se copiou os dois valores inteiros, sem espaços extras no começo
+        ou no fim.
+      </Hint>
+    </Step>
+
+    <Step number={4} title="Marque TODOS os eventos obrigatórios">
+      <p>
+        Ainda na seção Webhook da Meta, clique em <strong>Gerenciar</strong> (Webhook fields). Marque todos
+        os eventos que a Wiize lista no card <strong>Eventos obrigatórios</strong>.
+      </p>
+      <Hint type="warning">
+        Sem marcar tudo, Chat, Campanhas, taxa de resposta e quality rating não funcionam direito.
+      </Hint>
+    </Step>
+
+    <Step number={5} title='Volte para a Wiize e clique em "Testar todos"'>
+      <p>
+        Na mesma tela da Wiize, role até <strong>Teste e validação por número</strong> e clique em{" "}
+        <strong>Testar todos</strong>. Quando todos ficarem verdes, Chat e Campanhas são liberados.
+      </p>
+      <button
+        type="button"
+        onClick={() => navigate("/meta/configuracoes?tab=webhook")}
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[hsl(158_72%_32%)] text-white text-sm font-medium hover:bg-[hsl(158_72%_28%)] transition-colors"
+      >
+        Ir para Testar todos
+        <ChevronRight size={13} />
+      </button>
+    </Step>
+
+    <FinishBox>Webhook ligado. Agora sim sua operação está 100% pronta.</FinishBox>
   </>
 );
 

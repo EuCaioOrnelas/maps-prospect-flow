@@ -717,12 +717,34 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
     );
   }
 
-  const steps = [
-    { n: 1, t: "Abra o Meta Business Manager", d: "Acesse business.facebook.com, vá em Configurações do Negócio, Contas, Apps, e selecione o App vinculado à sua WhatsApp Business Account." },
-    { n: 2, t: "Vá em Webhooks (WhatsApp)", d: "No menu lateral do app, abra Webhooks. No seletor de objeto, escolha WhatsApp Business Account e clique em Configurar (ou Editar, se já existir)." },
-    { n: 3, t: "Cole a Callback URL e o Verify Token", d: "Copie os dois valores do card Credenciais abaixo e cole nos campos correspondentes. Clique em Verificar e salvar. A Meta vai bater na URL e validar o token." },
-    { n: 4, t: "Inscreva todos os eventos obrigatórios", d: `Em Webhook fields, Subscribe, marque TODOS os ${Object.keys(EVENT_DETAILS).length} eventos listados abaixo. Sem isso, partes do sistema (Chat, Campanhas, Métricas, Taxa de Resposta, Taxa de Erro) não funcionam corretamente.` },
-    { n: 5, t: "Volte aqui e clique em Testar todos", d: "Disparamos um handshake real para cada número e confirmamos que a URL responde. Se algum falhar, fica vermelho. Corrija e teste de novo. Quando todos ficarem verdes, Chat e Campanhas são liberados automaticamente." },
+  const steps: Array<{ n: number; t: string; d: string; href?: string; linkLabel?: string }> = [
+    {
+      n: 1,
+      t: "Abra o seu App da Meta",
+      d: "Entre no Meta for Developers, faça login e abra o App que você usa para o WhatsApp (o mesmo da etapa de conexão do número).",
+      href: "https://developers.facebook.com/apps/",
+      linkLabel: "Abrir Meta for Developers",
+    },
+    {
+      n: 2,
+      t: "No menu lateral, clique em WhatsApp → Configuração",
+      d: "Role até a seção Webhook. Clique em Editar (ou Configurar, se for a primeira vez).",
+    },
+    {
+      n: 3,
+      t: "Cole a Callback URL e o Verify Token",
+      d: "Copie os dois valores do card Credenciais logo abaixo e cole nos campos correspondentes. Clique em Verificar e salvar — a Meta vai bater na URL e validar o token.",
+    },
+    {
+      n: 4,
+      t: "Inscreva todos os eventos obrigatórios",
+      d: `Ainda na seção Webhook, clique em Gerenciar (Webhook fields). Marque TODOS os ${Object.keys(EVENT_DETAILS).length} eventos listados no card Eventos obrigatórios abaixo. Sem isso, Chat, Campanhas e métricas não funcionam.`,
+    },
+    {
+      n: 5,
+      t: "Volte aqui e clique em Testar todos",
+      d: "Disparamos um teste real para cada número. Quando todos ficarem verdes, Chat e Campanhas são liberados automaticamente.",
+    },
   ];
 
   const allVerified = data.connections.length > 0 && data.connections.every((c) => !!c.webhook_verified_at);
@@ -782,9 +804,20 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
                   {steps.map((s) => (
                     <li key={s.n} className="flex gap-3">
                       <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">{s.n}</div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium">{s.t}</p>
-                        <p className="text-xs text-muted-foreground">{s.d}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{s.d}</p>
+                        {s.href && (
+                          <a
+                            href={s.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-primary hover:underline"
+                          >
+                            {s.linkLabel ?? "Abrir link"}
+                            <ChevronDown className="h-3 w-3 -rotate-90" />
+                          </a>
+                        )}
                       </div>
                     </li>
                   ))}
