@@ -433,6 +433,9 @@ const PhaseAppContent = ({ copy }: { copy: (v: string, l: string) => void }) => 
         superior, tem um botão que muda de <strong>"Em desenvolvimento"</strong> para{" "}
         <strong>"Ativo"</strong>. Clique nele.
       </p>
+      <BigLink href="https://developers.facebook.com/apps/">
+        Abrir Configurações do meu app
+      </BigLink>
       <p>A Meta vai te pedir 2 endereços. Já preparamos eles prontos pra você copiar:</p>
       <CopyRow
         label="Endereço da política de privacidade"
