@@ -113,6 +113,47 @@ serve(async (req) => {
     const body = await req.json();
     const action = body.action || "create";
 
+    if (action === "list") {
+      const partnerId = body.partner_id || null;
+
+      let goalsQuery = admin
+        .from("partner_goals")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (partnerId) goalsQuery = goalsQuery.eq("partner_id", partnerId);
+
+      const [{ data: goals, error: goalsError }, { data: partners, error: partnersError }, { data: links, error: linksError }] = await Promise.all([
+        goalsQuery,
+        admin.from("partners").select("id, full_name, email, status").order("full_name"),
+        admin.from("partner_referral_links").select("id, partner_id, slug, label, is_active, created_at").order("created_at", { ascending: false }),
+      ]);
+
+      if (goalsError) return jsonResponse({ error: goalsError.message }, 400);
+      if (partnersError) return jsonResponse({ error: partnersError.message }, 400);
+      if (linksError) return jsonResponse({ error: linksError.message }, 400);
+
+      const partnerMap = new Map((partners || []).map((p: any) => [p.id, p]));
+      const linkMap = new Map((links || []).map((l: any) => [l.id, l]));
+      const enrichedGoals = (goals || []).map((goal: any) => {
+        const partner = partnerMap.get(goal.partner_id) as any;
+        const link = goal.referral_link_id ? (linkMap.get(goal.referral_link_id) as any) : null;
+
+        return {
+          ...goal,
+          partners: partner ? { full_name: partner.full_name, email: partner.email } : null,
+          partner_referral_links: link ? { slug: link.slug, label: link.label } : null,
+        };
+      });
+
+      return jsonResponse({
+        success: true,
+        goals: enrichedGoals,
+        partners: (partners || []).filter((p: any) => p.status === "active").map(({ id, full_name, email }: any) => ({ id, full_name, email })),
+        links: (links || []).filter((l: any) => l.is_active).map(({ id, partner_id, slug, label }: any) => ({ id, partner_id, slug, label })),
+      });
+    }
+
     if (action === "create") {
       const { partner_id, title, description, goal_type, target_value, prize_amount_cents, deadline_at, internal_notes } = body;
       // Normalize empty strings to null for optional fields
