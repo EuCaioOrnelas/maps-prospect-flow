@@ -107,11 +107,30 @@ serve(async (req) => {
     if (!u?.user) return jsonResponse({ error: "Unauthorized" }, 401);
 
     const admin = createClient(url, serviceKey);
-    const { data: roleCheck } = await admin.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin").maybeSingle();
-    if (!roleCheck) return jsonResponse({ error: "Forbidden" }, 403);
-
     const body = await req.json();
     const action = body.action || "create";
+
+    if (action === "partner_list") {
+      const { data: partner, error: partnerError } = await admin
+        .from("partners")
+        .select("id, status")
+        .eq("user_id", u.user.id)
+        .maybeSingle();
+      if (partnerError) return jsonResponse({ error: partnerError.message }, 400);
+      if (!partner || partner.status === "blocked") return jsonResponse({ error: "Parceiro não encontrado" }, 404);
+
+      await admin.rpc("update_partner_goal_progress", { p_partner_id: partner.id });
+      const { data: goals, error: goalsError } = await admin
+        .from("partner_goals")
+        .select("*")
+        .eq("partner_id", partner.id)
+        .order("created_at", { ascending: false });
+      if (goalsError) return jsonResponse({ error: goalsError.message }, 400);
+      return jsonResponse({ success: true, goals: goals || [] });
+    }
+
+    const { data: roleCheck } = await admin.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin").maybeSingle();
+    if (!roleCheck) return jsonResponse({ error: "Forbidden" }, 403);
 
     if (action === "list") {
       const partnerId = body.partner_id || null;
