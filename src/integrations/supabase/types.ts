@@ -7893,6 +7893,48 @@ export type Database = {
         Returns: Json
       }
       account_mark_member_login: { Args: never; Returns: undefined }
+      admin_create_partner_goal: {
+        Args: {
+          p_admin_id: string
+          p_deadline_at: string
+          p_description: string
+          p_goal_type: Database["public"]["Enums"]["partner_goal_type"]
+          p_internal_notes?: string
+          p_partner_id: string
+          p_prize_amount_cents: number
+          p_referral_link_id?: string
+          p_target_value: number
+          p_title: string
+        }
+        Returns: {
+          achieved_value: number
+          completed_at: string | null
+          created_at: string
+          created_by_admin_id: string | null
+          deadline_at: string
+          description: string | null
+          goal_type: Database["public"]["Enums"]["partner_goal_type"]
+          id: string
+          internal_notes: string | null
+          partner_id: string
+          prize_amount_cents: number
+          prize_claimed_at: string | null
+          prize_status: Database["public"]["Enums"]["partner_goal_prize_status"]
+          prize_withdrawal_id: string | null
+          referral_link_id: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["partner_goal_status"]
+          target_value: number
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "partner_goals"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_get_user_activity_sessions: {
         Args: { _from: string; _to: string; _user_id: string }
         Returns: {
