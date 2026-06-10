@@ -111,7 +111,7 @@ export default function MetaConnectGuide() {
             <span>{completed.size}/{PHASES.length}</span>
             <div className="w-32 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-[#00C896] to-[#2BF0B8] transition-all duration-500"
+                className="h-full bg-gradient-to-r from-[hsl(158_72%_32%)] to-[hsl(158_72%_52%)] transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -131,22 +131,12 @@ export default function MetaConnectGuide() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-12">
         {/* Hero */}
         <section className="text-center space-y-5 animate-fade-in">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00C896]/10 text-[#00A87C] text-[11px] font-medium border border-[#00C896]/20">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(158_72%_32%)]/10 text-[hsl(158_72%_28%)] text-[11px] font-medium border border-[hsl(158_72%_32%)]/20">
             <Sparkles size={11} /> Calma, é mais simples do que parece
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.1]">
             Conecte seu WhatsApp <br className="hidden sm:block" />
-            <span
-              className="bg-clip-text text-transparent inline-block"
-              style={{
-                backgroundImage:
-                  "linear-gradient(90deg, #00C896 0%, #00E0A8 25%, #2BF0B8 50%, #00E0A8 75%, #00C896 100%)",
-                backgroundSize: "200% 100%",
-                animation: "wiize-shine 3.5s linear infinite",
-              }}
-            >
-              em 3 passos
-            </span>
+            <span className="text-shimmer-highlight font-extrabold">em 3 passos</span>
           </h1>
           <style>{`@keyframes wiize-shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
           <p className="text-zinc-600 text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
@@ -185,8 +175,8 @@ export default function MetaConnectGuide() {
         {/* Antes de começar */}
         <section className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 animate-fade-in">
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#00C896]/10 flex items-center justify-center shrink-0">
-              <HelpCircle size={16} className="text-[#00A87C]" />
+            <div className="w-9 h-9 rounded-xl bg-[hsl(158_72%_32%)]/10 flex items-center justify-center shrink-0">
+              <HelpCircle size={16} className="text-[hsl(158_72%_28%)]" />
             </div>
             <div className="flex-1 space-y-3">
               <p className="font-semibold text-sm">Antes de começar, tenha em mãos:</p>
@@ -236,7 +226,7 @@ export default function MetaConnectGuide() {
                 id={`fase-${phase.id}`}
                 className={`scroll-mt-20 rounded-2xl border bg-white transition-all duration-300 overflow-hidden ${
                   isOpen
-                    ? "border-zinc-900 shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
+                    ? "border-[hsl(158_72%_32%)] shadow-[0_8px_30px_-12px_hsl(158_72%_32%/0.35)]"
                     : "border-zinc-200 hover:border-zinc-300"
                 }`}
               >
@@ -249,9 +239,9 @@ export default function MetaConnectGuide() {
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
                       isDone
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-[hsl(158_72%_32%)] text-white"
                         : isOpen
-                        ? "bg-zinc-900 text-white"
+                        ? "bg-[hsl(158_72%_32%)] text-white"
                         : "bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200"
                     }`}
                   >
@@ -287,7 +277,7 @@ export default function MetaConnectGuide() {
                       <div className="flex flex-col sm:flex-row gap-2 pt-2">
                         <Button
                           onClick={() => markDone(phase.id)}
-                          className="flex-1 bg-zinc-900 text-white hover:bg-zinc-800 gap-2"
+                          className="flex-1 bg-[hsl(158_72%_32%)] text-white hover:bg-[hsl(158_72%_28%)] gap-2"
                         >
                           <CheckCircle2 size={15} />
                           {idx === PHASES.length - 1 ? "Concluir tudo" : "Marcar como feito e abrir próximo"}
@@ -311,7 +301,7 @@ export default function MetaConnectGuide() {
         {/* Final CTA */}
         {completed.size === PHASES.length && (
           <section className="rounded-3xl border border-zinc-200 bg-zinc-50 p-8 sm:p-10 text-center space-y-5 animate-fade-in">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center mx-auto shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-[hsl(158_72%_32%)] flex items-center justify-center mx-auto shadow-sm">
               <CheckCircle2 size={28} className="text-white" />
             </div>
             <div className="space-y-2">
@@ -328,7 +318,7 @@ export default function MetaConnectGuide() {
             <Button
               size="lg"
               onClick={() => window.close()}
-              className="bg-zinc-900 text-white hover:bg-zinc-800 gap-2"
+              className="bg-[hsl(158_72%_32%)] text-white hover:bg-[hsl(158_72%_28%)] gap-2"
             >
               Voltar para a Wiize <ChevronRight size={16} />
             </Button>
@@ -471,7 +461,7 @@ const PhaseNumeroContent = () => (
           href="https://business.facebook.com/wa/manage/home"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#00A87C] font-medium hover:underline inline-flex items-center gap-0.5"
+          className="text-[hsl(158_72%_28%)] font-medium hover:underline inline-flex items-center gap-0.5"
         >
           WhatsApp Manager <ExternalLink size={10} />
         </a>
@@ -607,7 +597,7 @@ const Step = ({
 }) => (
   <div className="flex gap-4">
     <div className="flex flex-col items-center">
-      <div className="w-7 h-7 rounded-full bg-zinc-900 text-white flex items-center justify-center text-xs font-bold shrink-0">
+      <div className="w-7 h-7 rounded-full bg-[hsl(158_72%_32%)] text-white flex items-center justify-center text-xs font-bold shrink-0">
         {number}
       </div>
       <div className="w-px flex-1 bg-zinc-100 mt-2" />
@@ -624,7 +614,7 @@ const BigLink = ({ href, children }: { href: string; children: React.ReactNode }
     href={href}
     target="_blank"
     rel="noopener noreferrer"
-    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 transition-colors no-underline"
+    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[hsl(158_72%_32%)] text-white text-sm font-medium hover:bg-[hsl(158_72%_28%)] transition-colors no-underline"
   >
     {children}
     <ExternalLink size={13} />
@@ -668,7 +658,7 @@ const Answer = ({ q, a }: { q: string; a: string }) => (
 
 const CheckLi = ({ children }: { children: React.ReactNode }) => (
   <li className="flex gap-2 items-start">
-    <CheckCircle2 size={15} className="text-emerald-500 mt-0.5 shrink-0" />
+    <CheckCircle2 size={15} className="text-[hsl(158_72%_32%)] mt-0.5 shrink-0" />
     <span>{children}</span>
   </li>
 );
@@ -729,9 +719,9 @@ const AssetCard = ({ emoji, title, hint }: { emoji: string; title: string; hint:
 );
 
 const FinishBox = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 flex items-start gap-2.5">
-    <CheckCircle2 size={16} className="text-emerald-600 mt-0.5 shrink-0" />
-    <p className="text-sm text-emerald-900 leading-relaxed">{children}</p>
+  <div className="rounded-xl bg-[hsl(158_72%_32%)]/8 border border-[hsl(158_72%_32%)]/25 p-4 flex items-start gap-2.5">
+    <CheckCircle2 size={16} className="text-[hsl(158_72%_32%)] mt-0.5 shrink-0" />
+    <p className="text-sm text-[hsl(158_72%_18%)] leading-relaxed">{children}</p>
   </div>
 );
 
@@ -752,7 +742,7 @@ const FinalItem = ({
       <p className="text-sm font-semibold truncate">{label}</p>
       <p className="text-[11px] text-zinc-500">{hint}</p>
     </div>
-    <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+    <CheckCircle2 size={16} className="text-[hsl(158_72%_32%)] shrink-0" />
   </div>
 );
 
