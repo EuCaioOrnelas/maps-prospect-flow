@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2,
+  Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2, HelpCircle,
 } from "lucide-react";
 import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 export interface WabaConnection {
   id: string;
@@ -41,6 +43,7 @@ const META_PLAN_LIMITS: Record<string, number> = {
 
 export default function MetaNumeros() {
   const { user, accountOwnerId, profile } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { role } = useAccountRole();
   const { members } = useAccountMembers();
@@ -197,6 +200,23 @@ export default function MetaNumeros() {
       <MetaPageHeader
         title="Números & WABA"
         description="Conecte, edite e gerencie os tokens dos seus números oficiais da Meta."
+        titleBadge={
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => navigate("/meta-api-guide")}
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <HelpCircle size={14} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Guia de conexão de números</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        }
         actions={
           <div className="flex items-center gap-3">
             <span

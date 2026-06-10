@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   MessageSquare,
@@ -53,6 +54,7 @@ const PHASES = [
 ];
 
 export default function MetaConnectGuide() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [openPhase, setOpenPhase] = useState<string>("app");
   const [completed, setCompleted] = useState<Set<string>>(new Set());
@@ -120,7 +122,7 @@ export default function MetaConnectGuide() {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => window.close()}
+            onClick={() => navigate("/meta/numeros")}
             className="text-xs gap-1.5 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
           >
             <ArrowLeft size={12} /> Voltar
@@ -317,7 +319,7 @@ export default function MetaConnectGuide() {
             </div>
             <Button
               size="lg"
-              onClick={() => window.close()}
+              onClick={() => navigate("/meta/numeros")}
               className="bg-[hsl(158_72%_32%)] text-white hover:bg-[hsl(158_72%_28%)] gap-2"
             >
               Voltar para a Wiize <ChevronRight size={16} />
