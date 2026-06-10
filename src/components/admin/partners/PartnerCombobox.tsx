@@ -7,6 +7,7 @@ export interface PartnerOption {
   id: string;
   full_name: string;
   email: string;
+  status?: string;
 }
 
 interface Props {
@@ -53,7 +54,7 @@ export function PartnerCombobox({ partners, value, onChange, placeholder = "Sele
         className="w-full h-10 px-3 rounded-md border border-input bg-background text-left text-sm flex items-center justify-between gap-2 hover:bg-accent/40 transition-colors"
       >
         <span className={cn("truncate", !selected && "text-muted-foreground")}>
-          {selected ? `${selected.full_name} · ${selected.email}` : placeholder}
+          {selected ? `${selected.full_name} · ${selected.email}${selected.status === "inactive" ? " · inativo" : ""}` : placeholder}
         </span>
         <div className="flex items-center gap-1 shrink-0">
           {allowClear && selected && (
@@ -97,7 +98,9 @@ export function PartnerCombobox({ partners, value, onChange, placeholder = "Sele
                 <Check size={13} className={cn("shrink-0", p.id === value ? "text-primary opacity-100" : "opacity-0")} />
                 <div className="min-w-0">
                   <div className="font-medium truncate">{p.full_name}</div>
-                  <div className="text-[11px] text-muted-foreground truncate">{p.email}</div>
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {p.email}{p.status === "inactive" ? " · inativo" : ""}
+                  </div>
                 </div>
               </button>
             ))}

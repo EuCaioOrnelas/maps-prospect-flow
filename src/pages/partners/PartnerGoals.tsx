@@ -37,17 +37,16 @@ export default function PartnerGoals() {
   const load = async () => {
     if (!partner?.id) return;
     setLoading(true);
-    // Best-effort: recompute progress (also flips overdue active goals to "expired")
-    try {
-      await supabase.rpc("refresh_my_partner_goals" as any);
-    } catch { /* non-blocking */ }
-
-    const { data } = await supabase
-      .from("partner_goals")
-      .select("*")
-      .eq("partner_id", partner.id)
-      .order("created_at", { ascending: false });
-    setGoals((data as any) || []);
+    const { data, error } = await supabase.functions.invoke("admin-manage-partner-goal", {
+      body: { action: "partner_list" },
+    });
+    if (error || data?.error) {
+      toast({ title: "Erro ao carregar metas", description: data?.error || error?.message, variant: "destructive" });
+      setGoals([]);
+      setLoading(false);
+      return;
+    }
+    setGoals((data?.goals as any) || []);
     setLoading(false);
   };
 

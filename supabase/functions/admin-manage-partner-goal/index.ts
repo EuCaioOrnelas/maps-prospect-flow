@@ -107,14 +107,44 @@ serve(async (req) => {
     if (!u?.user) return jsonResponse({ error: "Unauthorized" }, 401);
 
     const admin = createClient(url, serviceKey);
-    const { data: roleCheck } = await admin.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin").maybeSingle();
-    if (!roleCheck) return jsonResponse({ error: "Forbidden" }, 403);
-
     const body = await req.json();
     const action = body.action || "create";
 
+    if (action === "partner_list") {
+      const { data: partner, error: partnerError } = await admin
+        .from("partners")
+        .select("id, status")
+        .eq("user_id", u.user.id)
+        .maybeSingle();
+      if (partnerError) return jsonResponse({ error: partnerError.message }, 400);
+      if (!partner || partner.status === "blocked") return jsonResponse({ error: "Parceiro não encontrado" }, 404);
+
+      await admin.rpc("update_partner_goal_progress", { p_partner_id: partner.id });
+      const { data: goals, error: goalsError } = await admin
+        .from("partner_goals")
+        .select("*")
+        .eq("partner_id", partner.id)
+        .order("created_at", { ascending: false });
+      if (goalsError) return jsonResponse({ error: goalsError.message }, 400);
+      return jsonResponse({ success: true, goals: goals || [] });
+    }
+
+    const { data: roleCheck } = await admin.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin").maybeSingle();
+    if (!roleCheck) return jsonResponse({ error: "Forbidden" }, 403);
+
     if (action === "list") {
       const partnerId = body.partner_id || null;
+
+      if (partnerId) {
+        await admin.rpc("update_partner_goal_progress", { p_partner_id: partnerId });
+      } else {
+        const { data: activePartnerIds } = await admin
+          .from("partner_goals")
+          .select("partner_id")
+          .eq("status", "active");
+        const uniquePartnerIds = Array.from(new Set((activePartnerIds || []).map((row: any) => row.partner_id).filter(Boolean)));
+        await Promise.all(uniquePartnerIds.map((id) => admin.rpc("update_partner_goal_progress", { p_partner_id: id })));
+      }
 
       let goalsQuery = admin
         .from("partner_goals")
@@ -149,7 +179,9 @@ serve(async (req) => {
       return jsonResponse({
         success: true,
         goals: enrichedGoals,
-        partners: (partners || []).filter((p: any) => p.status === "active").map(({ id, full_name, email }: any) => ({ id, full_name, email })),
+        partners: (partners || [])
+          .filter((p: any) => p.status !== "blocked")
+          .map(({ id, full_name, email, status }: any) => ({ id, full_name, email, status })),
         links: (links || []).filter((l: any) => l.is_active).map(({ id, partner_id, slug, label }: any) => ({ id, partner_id, slug, label })),
       });
     }
@@ -244,6 +276,7 @@ serve(async (req) => {
 
     if (action === "recompute") {
       const { partner_id } = body;
+      if (!partner_id) return jsonResponse({ error: "partner_id é obrigatório" }, 400);
 
       // Snapshot active goals before recompute
       const { data: beforeGoals } = await admin
