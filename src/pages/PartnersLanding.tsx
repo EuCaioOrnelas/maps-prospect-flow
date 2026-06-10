@@ -217,16 +217,23 @@ export default function PartnersLanding() {
               { v: `${displayMax}%`, l: "comissão máxima" },
               { v: "24 meses", l: "recorrência" },
               { v: "R$ 100", l: "saque mínimo" },
-              { v: `Até R$ ${formattedMaxPerReferral}`, l: "por indicação¹" },
+              { v: null, prefix: "Até", amount: `R$ ${formattedMaxPerReferral}`, l: "por indicação¹" },
             ].map((s) => (
-              <div key={s.l} className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm py-4 px-2">
-                <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">{s.v}</div>
+              <div key={s.l} className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm py-4 px-2 flex flex-col justify-center min-h-[92px]">
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight leading-tight flex items-baseline justify-center gap-1 flex-nowrap whitespace-nowrap">
+                  {s.prefix && (
+                    <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                      {s.prefix}
+                    </span>
+                  )}
+                  <span>{s.v ?? s.amount}</span>
+                </div>
                 <div className="text-[10px] sm:text-[11px] uppercase tracking-wider text-muted-foreground mt-1">{s.l}</div>
               </div>
             ))}
           </div>
-          <p className="mt-4 text-[11px] text-muted-foreground/80 max-w-2xl mx-auto px-2">
-            ¹ Estimativa baseada no ticket médio de R$ {AVG_TICKET.toLocaleString("pt-BR")}/mês × {displayMax}% × 24 meses. Como temos planos que chegam a R$ 10 mil/mês, o ganho real por indicação pode ser significativamente maior.
+          <p className="mt-4 text-[11px] text-muted-foreground/80 max-w-2xl mx-auto px-2 leading-relaxed">
+            ¹ Estimativa conservadora considerando o ticket médio de R$ {AVG_TICKET.toLocaleString("pt-BR")}/mês × {displayMax}% × 24 meses. Os planos da Wiize são modulares e contam com diversos adicionais conforme a demanda de cada cliente, podendo ultrapassar R$ 10 mil/mês — ou seja, <strong className="text-foreground">não há teto fixo</strong> e o ganho real por indicação pode ser significativamente maior.
           </p>
         </div>
       </section>
@@ -338,11 +345,11 @@ export default function PartnersLanding() {
                 ? "relative overflow-hidden border-primary/40 bg-card ring-1 ring-primary/20 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10"
                 : "relative overflow-hidden border-border/60 bg-card transition-all hover:-translate-y-1 hover:shadow-lg";
               const iconWrapClasses = isPrime
-                ? "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-foreground/10 ring-1 ring-foreground/20 mb-4"
+                ? "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-foreground ring-1 ring-foreground/40 mb-4 shadow-md"
                 : isSignature
                 ? "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30 mb-4"
                 : "inline-flex h-12 w-12 items-center justify-center rounded-xl bg-muted/60 ring-1 ring-border/60 mb-4";
-              const iconClasses = isPrime ? "text-foreground" : isSignature ? "text-primary" : "text-foreground/70";
+              const iconClasses = isPrime ? "text-background" : isSignature ? "text-primary" : "text-foreground/70";
               const nameClasses = isPrime
                 ? "text-xs uppercase tracking-[0.2em] text-foreground mb-2 font-semibold"
                 : isSignature
