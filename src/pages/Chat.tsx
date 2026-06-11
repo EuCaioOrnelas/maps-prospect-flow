@@ -388,6 +388,7 @@ const Chat = () => {
                 >
                   <ChatMessageArea
                     conversation={chat.activeConversation}
+                    conversations={chat.conversations}
                     messages={chat.messages}
                     loading={chat.loadingMessages}
                     onSendMessage={chat.sendMessage}
@@ -405,6 +406,7 @@ const Chat = () => {
                     onDeleteConversation={chat.deleteConversation}
                     onToggleBlock={chat.toggleBlock}
                     onSaveContactName={chat.saveContactName}
+                    onForwardMessages={chat.forwardMessages}
                   />
                 </div>
               </>
