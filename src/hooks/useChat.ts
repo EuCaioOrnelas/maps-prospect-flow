@@ -243,10 +243,14 @@ export function useChat() {
         const newMsg = payload.new as ChatMessage;
         if ((newMsg as any).owner_user_id && (newMsg as any).owner_user_id !== accountOwnerId) return;
         if (newMsg.conversation_id === activeConversationId) {
-          // Dedupe: skip if message id already exists (avoids duplicate after
-          // optimistic insert + DB insert returning the same row via realtime).
           setMessages(prev => {
+            // Dedupe by id
             if (prev.some(m => m.id === newMsg.id)) return prev;
+            // Replace optimistic temp msg matched by client_token in metadata
+            const ct = (newMsg.metadata as any)?.client_token;
+            if (ct && prev.some(m => m.id === ct)) {
+              return prev.map(m => m.id === ct ? newMsg : m);
+            }
             return [...prev, newMsg];
           });
         }
