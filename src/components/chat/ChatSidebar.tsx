@@ -59,15 +59,6 @@ function formatPhoneDisplay(phone: string): string {
   return phone;
 }
 
-function getInitials(name: string | null, phone: string): string {
-  if (name) {
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    return name.substring(0, 2).toUpperCase();
-  }
-  return phone.slice(-2);
-}
-
 function truncateText(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
   return text.substring(0, maxLen) + "…";
@@ -78,16 +69,6 @@ function getLastMessagePreview(conv: ChatConversation): string {
   return truncateText(conv.last_message_text, 42);
 }
 
-const AVATAR_COLORS = [
-  "bg-[#00a884]", "bg-[#53bdeb]", "bg-[#7f66ff]", "bg-[#ff6f69]",
-  "bg-[#ffa62b]", "bg-[#25d366]", "bg-[#5f66cd]", "bg-[#ff4081]",
-];
-
-function getAvatarColor(phone: string): string {
-  const hash = phone.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
-}
-
 type FilterType = "all" | "unread" | "filtered";
 
 const DEFAULT_FILTER_CONFIG: ChatFilterConfig = { tags: [], crmStages: [], scoreMin: 0, scoreMax: 1000 };
@@ -96,8 +77,10 @@ export function ChatSidebar({
   conversations, activeConversationId, onSelectConversation,
   searchQuery, onSearchChange, connections, activeConnectionId,
   onConnectionChange, onTogglePin, onArchive, onToggleMute, loading,
-  onNewConversation, connectionHealth = {}, topToolbar,
+  onNewConversation, onSaveContactName, onDeleteConversation, onToggleBlock,
+  connectionHealth = {}, topToolbar,
 }: ChatSidebarProps) {
+  const [addContactFor, setAddContactFor] = useState<ChatConversation | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
