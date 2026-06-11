@@ -9,6 +9,7 @@ import { NewConversationDialog } from "./NewConversationDialog";
 import { ChatFiltersDialog, type ChatFilterConfig } from "./ChatFiltersDialog";
 import { AddContactDialog } from "./AddContactDialog";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
+import { getResponsibleColor } from "@/lib/responsibleColor";
 import { toast } from "sonner";
 
 interface ChatSidebarProps {
