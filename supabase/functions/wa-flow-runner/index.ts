@@ -460,20 +460,23 @@ async function sendMessage(
   userId: string,
   leadPhone: string,
   payload: any,
+  nodeConfig?: any,
 ) {
-  if (flow.api_type === "meta") {
-    if (!flow.waba_connection_id) {
-      console.error("[wa-flow-runner] Meta flow missing waba_connection_id");
-      return;
-    }
-    return sendViaMeta(supabase, flow.waba_connection_id, leadPhone, payload);
-  }
-  // evolution: whatsapp_number_id stores the source_id (which is the whatsapp_numbers.id)
-  if (!flow.whatsapp_number_id) {
-    console.error("[wa-flow-runner] Evolution flow missing whatsapp_number_id");
+  // META-ONLY: Evolution flows are no longer accepted by the runner.
+  if (flow.api_type !== "meta") {
+    console.error(`[wa-flow-runner] Flow ${flow.id} has api_type='${flow.api_type}' — Meta API official required. Skipping send.`);
     return;
   }
-  return sendViaEvolution(supabase, flow.whatsapp_number_id, userId, leadPhone, payload);
+  if (!flow.waba_connection_id) {
+    console.error("[wa-flow-runner] Meta flow missing waba_connection_id");
+    return;
+  }
+  const outOfWindowTemplate = nodeConfig?.out_of_window_template
+    || (flow.default_out_of_window_template || null);
+  return sendViaMeta(supabase, flow.waba_connection_id, leadPhone, payload, {
+    userId,
+    outOfWindowTemplate,
+  });
 }
 
 // ── Action executors ──
