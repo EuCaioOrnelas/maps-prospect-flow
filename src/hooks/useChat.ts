@@ -212,7 +212,11 @@ export function useChat() {
         filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         if (payload.eventType === "INSERT") {
-          setConversations(prev => [payload.new as ChatConversation, ...prev]);
+          setConversations(prev => {
+            const next = payload.new as ChatConversation;
+            if (prev.some(c => c.id === next.id)) return prev;
+            return [next, ...prev];
+          });
         } else if (payload.eventType === "UPDATE") {
           setConversations(prev =>
             prev.map(c => c.id === (payload.new as ChatConversation).id ? payload.new as ChatConversation : c)
@@ -222,6 +226,8 @@ export function useChat() {
                 return new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime();
               })
           );
+        } else if (payload.eventType === "DELETE") {
+          setConversations(prev => prev.filter(c => c.id !== (payload.old as any).id));
         }
       })
       .on("postgres_changes", {
@@ -232,7 +238,12 @@ export function useChat() {
       }, (payload) => {
         const newMsg = payload.new as ChatMessage;
         if (newMsg.conversation_id === activeConversationId) {
-          setMessages(prev => [...prev, newMsg]);
+          // Dedupe: skip if message id already exists (avoids duplicate after
+          // optimistic insert + DB insert returning the same row via realtime).
+          setMessages(prev => {
+            if (prev.some(m => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
         }
       })
       .on("postgres_changes", {
@@ -494,6 +505,72 @@ export function useChat() {
     setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, responsible_user_id: responsibleUserId } : c));
   }, []);
 
+  // Delete conversation (apaga DB; mensagens em cascade)
+  const deleteConversation = useCallback(async (conversationId: string) => {
+    const { error } = await supabase.from("chat_conversations").delete().eq("id", conversationId);
+    if (error) throw error;
+    setConversations(prev => prev.filter(c => c.id !== conversationId));
+    if (activeConversationId === conversationId) setActiveConversationId(null);
+  }, [activeConversationId]);
+
+  // Toggle block: bloqueia/desbloqueia contato; mensagens recebidas ficam silenciadas
+  const toggleBlock = useCallback(async (conversationId: string) => {
+    const conv = conversations.find(c => c.id === conversationId);
+    if (!conv) return;
+    const next = !(conv as any).is_blocked;
+    const { error } = await supabase
+      .from("chat_conversations")
+      .update({ is_blocked: next, is_muted: next } as any)
+      .eq("id", conversationId);
+    if (error) throw error;
+    setConversations(prev => prev.map(c => c.id === conversationId ? ({ ...c, is_blocked: next, is_muted: next } as any) : c));
+  }, [conversations]);
+
+  // Salva o nome do contato no chat E sincroniza no CRM (cria lead se não existir)
+  const saveContactName = useCallback(async (conversationId: string, name: string) => {
+    if (!user) return;
+    const conv = conversations.find(c => c.id === conversationId);
+    if (!conv) return;
+
+    // 1. Update chat conversation
+    await supabase
+      .from("chat_conversations")
+      .update({ contact_name: name })
+      .eq("id", conversationId);
+    setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, contact_name: name } : c));
+
+    // 2. Sync to CRM: find lead by phone (last 8 digits) or create
+    const cleanPhone = conv.contact_phone.replace(/\D/g, "");
+    const last8 = cleanPhone.slice(-8);
+    const { data: existing } = await supabase
+      .from("leads")
+      .select("id, contact_name, phone")
+      .eq("user_id", accountOwnerId)
+      .ilike("phone", `%${last8}`)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      await supabase.from("leads").update({ contact_name: name }).eq("id", existing[0].id);
+    } else {
+      // Find default pipeline stage (Prospectado or first)
+      const { data: stages } = await supabase
+        .from("pipeline_stages")
+        .select("id, name, position")
+        .eq("user_id", accountOwnerId)
+        .order("position", { ascending: true })
+        .limit(1);
+      const stageId = stages?.[0]?.id;
+      if (stageId) {
+        await supabase.from("leads").insert({
+          user_id: accountOwnerId,
+          contact_name: name,
+          phone: cleanPhone,
+          pipeline_stage_id: stageId,
+          origin: "chat",
+        } as any);
+      }
+    }
+  }, [user, accountOwnerId, conversations]);
 
   return {
     conversations: filteredConversations,
@@ -524,6 +601,9 @@ export function useChat() {
     fetchTemplates,
     handleReconnect,
     transferConversation,
+    deleteConversation,
+    toggleBlock,
+    saveContactName,
   };
 }
 

@@ -1,14 +1,20 @@
 import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft } from "lucide-react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
+import { AddContactDialog } from "./AddContactDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 function formatPhoneDisplay(phone: string): string {
@@ -34,14 +40,18 @@ interface ChatMessageAreaProps {
   onTransferResponsible?: (conversationId: string, userId: string | null) => Promise<void>;
   currentUserId?: string;
   onBack?: () => void;
+  onDeleteConversation?: (conversationId: string) => Promise<void>;
+  onToggleBlock?: (conversationId: string) => Promise<void>;
+  onSaveContactName?: (conversationId: string, name: string) => Promise<void>;
 }
 
 
 function MessageStatus({ status }: { status: string }) {
   if (status === "pending") {
     return (
-      <svg viewBox="0 0 16 15" width="16" height="15" className="wa-status-pending">
-        <path fill="currentColor" d="M9.75 7.713H8.244V5.359a.5.5 0 0 0-.5-.5H7.65a.5.5 0 0 0-.5.5v2.947a.5.5 0 0 0 .5.5h2.1a.5.5 0 0 0 .5-.5v-.093a.5.5 0 0 0-.5-.5zM7.894.982a6.512 6.512 0 1 0 0 13.024 6.512 6.512 0 0 0 0-13.024zm0 11.795a5.283 5.283 0 1 1 0-10.566 5.283 5.283 0 0 1 0 10.566z" />
+      <svg viewBox="0 0 16 16" width="14" height="14" className="wa-status-pending opacity-70">
+        <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M8 4.5v3.6l2.4 1.4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
@@ -240,11 +250,16 @@ function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply
 export function ChatMessageArea({
   conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
   members = [], canChangeResponsible = false, onTransferResponsible, currentUserId, onBack,
+  onDeleteConversation, onToggleBlock, onSaveContactName,
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [addContactOpen, setAddContactOpen] = useState(false);
+  const navigate = useNavigate();
+  const { accountOwnerId } = useAuth();
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -252,10 +267,48 @@ export function ChatMessageArea({
     }
   }, [messages]);
 
-  // Clear reply when conversation changes
   useEffect(() => {
     setReplyingTo(null);
   }, [conversation?.id]);
+
+  const handleOpenContactData = async () => {
+    if (!conversation) return;
+    const cleanPhone = conversation.contact_phone.replace(/\D/g, "");
+    const last8 = cleanPhone.slice(-8);
+    const { data: existing } = await supabase
+      .from("leads")
+      .select("id")
+      .eq("user_id", accountOwnerId)
+      .ilike("phone", `%${last8}`)
+      .limit(1);
+    if (existing && existing.length > 0) {
+      navigate("/crm", { state: { openLeadId: existing[0].id } });
+    } else {
+      toast.info("Contato não está no CRM. Salve para abrir a ficha.");
+      setAddContactOpen(true);
+    }
+  };
+
+  const handleToggleBlock = async () => {
+    if (!conversation || !onToggleBlock) return;
+    try {
+      await onToggleBlock(conversation.id);
+      toast.success((conversation as any).is_blocked ? "Contato desbloqueado" : "Contato bloqueado");
+    } catch {
+      toast.error("Erro ao bloquear contato");
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!conversation || !onDeleteConversation) return;
+    try {
+      await onDeleteConversation(conversation.id);
+      toast.success("Conversa apagada");
+      setConfirmDeleteOpen(false);
+    } catch {
+      toast.error("Erro ao apagar conversa");
+    }
+  };
 
   if (!conversation) {
     return (
@@ -280,9 +333,9 @@ export function ChatMessageArea({
     );
   }
 
-  const AVATAR_COLORS = ["bg-[#00a884]", "bg-[#53bdeb]", "bg-[#7f66ff]", "bg-[#ff6f69]", "bg-[#ffa62b]"];
-  const hash = conversation.contact_phone.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const avatarColor = AVATAR_COLORS[hash % AVATAR_COLORS.length];
+  const avatarColor = getChatAvatarColor(conversation.contact_phone);
+  const initials = getChatInitials(conversation.contact_name, conversation.contact_phone);
+  const hasContactName = !!conversation.contact_name?.trim();
 
   // Build a map for reply lookups
   const messagesMap = new Map(messages.map(m => [m.id, m]));
@@ -302,24 +355,30 @@ export function ChatMessageArea({
             </button>
           )}
           <div className={cn(
-            "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-light",
+            "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-medium",
             avatarColor
           )}>
             {conversation.contact_profile_pic ? (
               <img src={conversation.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
             ) : (
-              <span>
-                {conversation.contact_name
-                  ? conversation.contact_name.split(/\s+/).map(n => n[0]).join("").substring(0, 2).toUpperCase()
-                  : conversation.contact_phone.slice(-2)
-                }
-              </span>
+              <span>{initials}</span>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px]">
-              {conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px]">
+                {conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
+              </h3>
+              {!hasContactName && onSaveContactName && (
+                <button
+                  onClick={() => setAddContactOpen(true)}
+                  title="Salvar contato no CRM"
+                  className="shrink-0 inline-flex items-center justify-center w-[26px] h-[26px] rounded-full bg-[#00a884]/15 hover:bg-[#00a884]/25 text-[#00a884] transition-colors"
+                >
+                  <UserPlus size={14} />
+                </button>
+              )}
+            </div>
             <p className="text-[13px] wa-chat-header-sub truncate leading-[18px]">
               {conversation.last_message_at
                 ? `Último contato: ${format(parseISO(conversation.last_message_at), "dd/MM/yyyy 'às' HH:mm")}`
@@ -328,61 +387,88 @@ export function ChatMessageArea({
             </p>
           </div>
           <div className="flex items-center gap-[16px]">
-            {canChangeResponsible && onTransferResponsible && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className="wa-icon-button p-1 flex items-center gap-1.5"
-                    title={
-                      conversation.responsible_user_id
-                        ? `Responsável: ${members.find(m => m.user_id === conversation.responsible_user_id)?.name || "atribuído"}`
-                        : "Sem responsável"
-                    }
-                  >
-                    <UserCog size={18} className="wa-chat-header-icon" />
-                    <span className="text-[12px] wa-chat-header-sub max-w-[100px] truncate">
-                      {conversation.responsible_user_id
-                        ? (members.find(m => m.user_id === conversation.responsible_user_id)?.name?.split(" ")[0]
-                            || members.find(m => m.user_id === conversation.responsible_user_id)?.email
-                            || "Atribuído")
-                        : "Sem resp."}
-                    </span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-64 p-1 bg-popover">
-                  <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Transferir conversa
-                  </div>
-                  <button
-                    className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted text-muted-foreground"
-                    onClick={async () => {
-                      try { await onTransferResponsible(conversation.id, null); toast.success("Sem responsável definido"); }
-                      catch { toast.error("Erro ao transferir"); }
-                    }}
-                  >
-                    Sem responsável
-                  </button>
-                  <div className="max-h-56 overflow-y-auto">
-                    {members.map((m) => (
-                      <button
-                        key={m.user_id}
-                        className={cn(
-                          "w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted",
-                          m.user_id === conversation.responsible_user_id && "bg-muted font-medium"
-                        )}
-                        onClick={async () => {
-                          try { await onTransferResponsible(conversation.id, m.user_id); toast.success("Conversa transferida"); }
-                          catch { toast.error("Erro ao transferir"); }
-                        }}
-                      >
-                        {m.name || m.email || m.user_id.slice(0, 8)}
-                        {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
-                      </button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
+            {canChangeResponsible && onTransferResponsible && (() => {
+              const respMember = members.find(m => m.user_id === conversation.responsible_user_id);
+              const respLabel = respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || null;
+              const respColor = getChatAvatarColor(respMember?.user_id || "none");
+              const respInitials = respMember
+                ? getChatInitials(respMember.name, respMember.email || "")
+                : null;
+              return (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        "flex items-center gap-2 h-[34px] pl-1 pr-3 rounded-full border transition-colors",
+                        conversation.responsible_user_id
+                          ? "border-[#00a884]/30 bg-[#00a884]/10 hover:bg-[#00a884]/15"
+                          : "border-white/10 hover:border-white/20 bg-transparent"
+                      )}
+                      title={respLabel ? `Responsável: ${respMember?.name || respMember?.email}` : "Atribuir responsável"}
+                    >
+                      {respInitials ? (
+                        <span className={cn("w-[24px] h-[24px] rounded-full flex items-center justify-center text-white text-[10px] font-medium", respColor)}>
+                          {respInitials}
+                        </span>
+                      ) : (
+                        <span className="w-[24px] h-[24px] rounded-full bg-white/5 flex items-center justify-center">
+                          <UserCog size={13} className="wa-chat-header-icon" />
+                        </span>
+                      )}
+                      <span className="text-[12px] font-medium wa-chat-header-text max-w-[110px] truncate">
+                        {respLabel || "Atribuir"}
+                      </span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-72 p-1.5 bg-popover">
+                    <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                      Responsável pela conversa
+                    </div>
+                    <button
+                      className="w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md hover:bg-muted text-muted-foreground"
+                      onClick={async () => {
+                        try { await onTransferResponsible(conversation.id, null); toast.success("Sem responsável definido"); }
+                        catch { toast.error("Erro ao transferir"); }
+                      }}
+                    >
+                      <span className="w-[28px] h-[28px] rounded-full bg-muted flex items-center justify-center">
+                        <X size={14} />
+                      </span>
+                      Sem responsável
+                    </button>
+                    <div className="max-h-56 overflow-y-auto mt-0.5">
+                      {members.map((m) => {
+                        const c = getChatAvatarColor(m.user_id);
+                        const i = getChatInitials(m.name, m.email || "");
+                        const selected = m.user_id === conversation.responsible_user_id;
+                        return (
+                          <button
+                            key={m.user_id}
+                            className={cn(
+                              "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
+                              selected ? "bg-[#00a884]/10 text-foreground" : "hover:bg-muted"
+                            )}
+                            onClick={async () => {
+                              try { await onTransferResponsible(conversation.id, m.user_id); toast.success("Conversa transferida"); }
+                              catch { toast.error("Erro ao transferir"); }
+                            }}
+                          >
+                            <span className={cn("w-[28px] h-[28px] rounded-full flex items-center justify-center text-white text-[11px] font-medium", c)}>
+                              {i}
+                            </span>
+                            <span className="flex-1 text-left truncate">
+                              {m.name || m.email || m.user_id.slice(0, 8)}
+                              {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
+                            </span>
+                            {selected && <span className="text-[#00a884] text-[10px] font-semibold">●</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              );
+            })()}
             <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
               <Search size={20} className="wa-chat-header-icon" />
             </button>
@@ -393,27 +479,30 @@ export function ChatMessageArea({
                   <MoreVertical size={20} className="wa-chat-header-icon" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="wa-dropdown-bg border wa-border min-w-[220px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
-                  <User size={15} className="wa-icon-muted" /> Dados do contato
+              <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[220px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                <DropdownMenuItem
+                  onClick={() => void handleOpenContactData()}
+                  className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
+                  <User size={15} /> Dados do contato
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setShowSearch(true)}>
-                  <Search size={15} className="wa-icon-muted" /> Pesquisar
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
-                  <MessageSquareText size={15} className="wa-icon-muted" /> Selecionar mensagens
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
-                  <BellOff size={15} className="wa-icon-muted" /> Silenciar
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
-                  <Star size={15} className="wa-icon-muted" /> Favoritos
+                <DropdownMenuItem
+                  onClick={() => setShowSearch(true)}
+                  className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
+                  <Search size={15} /> Pesquisar mensagens
                 </DropdownMenuItem>
                 <div className="my-1 mx-3 border-t wa-border-light" />
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
-                  <Ban size={15} className="wa-icon-muted" /> Bloquear
+                <DropdownMenuItem
+                  onClick={() => void handleToggleBlock()}
+                  className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
+                  <Ban size={15} /> {(conversation as any).is_blocked ? "Desbloquear" : "Bloquear"}
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] text-red-400 cursor-pointer hover:bg-red-500/10 transition-colors">
+                <DropdownMenuItem
+                  onClick={() => setConfirmDeleteOpen(true)}
+                  className="wa-dropdown-item-destructive flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
                   <Trash2 size={15} /> Apagar conversa
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -530,6 +619,45 @@ export function ChatMessageArea({
       {showSearch && (
         <SearchMessagesBar messages={messages} onClose={() => setShowSearch(false)} />
       )}
+
+      {/* Add / Save contact to CRM */}
+      {onSaveContactName && (
+        <AddContactDialog
+          open={addContactOpen}
+          onOpenChange={setAddContactOpen}
+          phone={conversation.contact_phone}
+          defaultName={conversation.contact_name}
+          onSave={async (name) => {
+            try {
+              await onSaveContactName(conversation.id, name);
+              toast.success("Contato salvo no CRM");
+            } catch {
+              toast.error("Erro ao salvar contato");
+            }
+          }}
+        />
+      )}
+
+      {/* Confirm delete */}
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent className="bg-popover">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar esta conversa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todas as mensagens desta conversa serão removidas permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

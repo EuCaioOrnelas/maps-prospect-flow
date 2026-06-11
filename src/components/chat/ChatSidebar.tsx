@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle } from "lucide-react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle, UserPlus, Trash2, Ban } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
@@ -7,6 +7,9 @@ import { getChatPhoneKey, useChatCRMFilters } from "@/hooks/useChatCRMFilters";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { NewConversationDialog } from "./NewConversationDialog";
 import { ChatFiltersDialog, type ChatFilterConfig } from "./ChatFiltersDialog";
+import { AddContactDialog } from "./AddContactDialog";
+import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
+import { toast } from "sonner";
 
 interface ChatSidebarProps {
   conversations: ChatConversation[];
@@ -22,6 +25,9 @@ interface ChatSidebarProps {
   onToggleMute: (id: string) => void;
   loading: boolean;
   onNewConversation?: (phone: string, name?: string) => void;
+  onSaveContactName?: (conversationId: string, name: string) => Promise<void>;
+  onDeleteConversation?: (conversationId: string) => Promise<void>;
+  onToggleBlock?: (conversationId: string) => Promise<void>;
   connectionHealth?: Record<string, boolean>;
   topToolbar?: React.ReactNode;
 }
@@ -53,15 +59,6 @@ function formatPhoneDisplay(phone: string): string {
   return phone;
 }
 
-function getInitials(name: string | null, phone: string): string {
-  if (name) {
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    return name.substring(0, 2).toUpperCase();
-  }
-  return phone.slice(-2);
-}
-
 function truncateText(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
   return text.substring(0, maxLen) + "…";
@@ -72,16 +69,6 @@ function getLastMessagePreview(conv: ChatConversation): string {
   return truncateText(conv.last_message_text, 42);
 }
 
-const AVATAR_COLORS = [
-  "bg-[#00a884]", "bg-[#53bdeb]", "bg-[#7f66ff]", "bg-[#ff6f69]",
-  "bg-[#ffa62b]", "bg-[#25d366]", "bg-[#5f66cd]", "bg-[#ff4081]",
-];
-
-function getAvatarColor(phone: string): string {
-  const hash = phone.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
-}
-
 type FilterType = "all" | "unread" | "filtered";
 
 const DEFAULT_FILTER_CONFIG: ChatFilterConfig = { tags: [], crmStages: [], scoreMin: 0, scoreMax: 1000 };
@@ -90,8 +77,10 @@ export function ChatSidebar({
   conversations, activeConversationId, onSelectConversation,
   searchQuery, onSearchChange, connections, activeConnectionId,
   onConnectionChange, onTogglePin, onArchive, onToggleMute, loading,
-  onNewConversation, connectionHealth = {}, topToolbar,
+  onNewConversation, onSaveContactName, onDeleteConversation, onToggleBlock,
+  connectionHealth = {}, topToolbar,
 }: ChatSidebarProps) {
+  const [addContactFor, setAddContactFor] = useState<ChatConversation | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
@@ -349,8 +338,9 @@ export function ChatSidebar({
           filteredConversations.map(conv => {
             const isActive = activeConversationId === conv.id;
             const hasUnread = conv.unread_count > 0;
-            const displayName = conv.contact_name
-              ? truncateText(conv.contact_name, 24)
+            const hasName = !!conv.contact_name?.trim();
+            const displayName = hasName
+              ? truncateText(conv.contact_name as string, 24)
               : formatPhoneDisplay(conv.contact_phone);
 
             return (
@@ -365,21 +355,30 @@ export function ChatSidebar({
               >
                 {/* Avatar */}
                 <div className={cn(
-                  "w-[49px] h-[49px] rounded-full flex items-center justify-center shrink-0 text-white text-[17px] font-light",
-                  getAvatarColor(conv.contact_phone)
+                  "w-[49px] h-[49px] rounded-full flex items-center justify-center shrink-0 text-white text-[17px] font-medium",
+                  getChatAvatarColor(conv.contact_phone)
                 )}>
                   {conv.contact_profile_pic ? (
                     <img src={conv.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
                   ) : (
-                    <span>{getInitials(conv.contact_name, conv.contact_phone)}</span>
+                    <span>{getChatInitials(conv.contact_name, conv.contact_phone)}</span>
                   )}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0 border-b wa-border-conversation py-[14px] h-full flex flex-col justify-center">
                   <div className="flex items-center justify-between mb-[2px]">
-                    <span className="text-[17px] leading-[21px] wa-text-primary truncate flex items-center gap-1 max-w-[200px]">
+                    <span className="text-[17px] leading-[21px] wa-text-primary truncate flex items-center gap-1.5 max-w-[200px]">
                       {displayName}
+                      {!hasName && onSaveContactName && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setAddContactFor(conv); }}
+                          title="Salvar contato no CRM"
+                          className="shrink-0 inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-[#00a884]/15 hover:bg-[#00a884]/25 text-[#00a884] transition-colors"
+                        >
+                          <UserPlus size={11} />
+                        </button>
+                      )}
                     </span>
                     <span className={cn(
                       "text-[12px] leading-[14px] shrink-0 ml-2",
@@ -419,28 +418,55 @@ export function ChatSidebar({
                             <ChevronDown size={18} className="wa-icon-muted" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="wa-dropdown-bg border wa-border min-w-[200px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                        <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[210px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
                           <DropdownMenuItem
                             onClick={() => onTogglePin(conv.id)}
-                            className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors"
+                            className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                           >
-                            <Pin size={14} className="wa-icon-muted" />
+                            <Pin size={14} />
                             {conv.is_pinned ? "Desafixar conversa" : "Fixar conversa"}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => onToggleMute(conv.id)}
-                            className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors"
+                            className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                           >
-                            <VolumeX size={14} className="wa-icon-muted" />
+                            <VolumeX size={14} />
                             {conv.is_muted ? "Ativar notificações" : "Silenciar notificações"}
                           </DropdownMenuItem>
+                          {onToggleBlock && (
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                try {
+                                  await onToggleBlock(conv.id);
+                                  toast.success((conv as any).is_blocked ? "Desbloqueado" : "Bloqueado");
+                                } catch { toast.error("Erro"); }
+                              }}
+                              className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                            >
+                              <Ban size={14} />
+                              {(conv as any).is_blocked ? "Desbloquear" : "Bloquear"}
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onClick={() => onArchive(conv.id)}
-                            className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors"
+                            className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="wa-icon-muted"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
                             Arquivar conversa
                           </DropdownMenuItem>
+                          {onDeleteConversation && (
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                if (!confirm("Apagar esta conversa? Esta ação não pode ser desfeita.")) return;
+                                try { await onDeleteConversation(conv.id); toast.success("Conversa apagada"); }
+                                catch { toast.error("Erro ao apagar"); }
+                              }}
+                              className="wa-dropdown-item-destructive flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                            >
+                              <Trash2 size={14} />
+                              Apagar conversa
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -471,6 +497,24 @@ export function ChatSidebar({
         availableStages={availableStages}
         loading={loadingCrmFilters}
       />
+
+      {/* Save contact to CRM (per-conversation) */}
+      {onSaveContactName && addContactFor && (
+        <AddContactDialog
+          open={!!addContactFor}
+          onOpenChange={(open) => { if (!open) setAddContactFor(null); }}
+          phone={addContactFor.contact_phone}
+          defaultName={addContactFor.contact_name}
+          onSave={async (name) => {
+            try {
+              await onSaveContactName(addContactFor.id, name);
+              toast.success("Contato salvo no CRM");
+            } catch {
+              toast.error("Erro ao salvar contato");
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
