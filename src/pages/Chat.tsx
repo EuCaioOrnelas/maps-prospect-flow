@@ -99,8 +99,23 @@ const Chat = () => {
     if (!webhookGate.loading && webhookGate.blocked) setWebhookDialogOpen(true);
   }, [webhookGate.loading, webhookGate.blocked]);
 
-  // Remove the duplicated effect below by skipping it
-  void 0;
+  // ESC closes the active conversation, returning to the Wiize Chat home screen
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (!chat.activeConversationId) return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      const isEditable = tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable;
+      const hasOpenOverlay = !!document.querySelector('[role="dialog"][data-state="open"], [data-radix-popper-content-wrapper]');
+      if (isEditable || hasOpenOverlay) return;
+      chat.setActiveConversationId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [chat.activeConversationId, chat.setActiveConversationId]);
+
+
 
 
   useEffect(() => {
