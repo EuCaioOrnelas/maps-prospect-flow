@@ -11,6 +11,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import waChatBgAsset from "@/assets/wa-chat-bg.png.asset.json";
+import { WhatsAppAudio } from "./WhatsAppAudio";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
