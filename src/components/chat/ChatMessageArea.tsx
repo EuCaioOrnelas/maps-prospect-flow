@@ -1,14 +1,20 @@
 import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical, X, User, MessageSquareText, BellOff, Star, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft } from "lucide-react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
+import { AddContactDialog } from "./AddContactDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 function formatPhoneDisplay(phone: string): string {
