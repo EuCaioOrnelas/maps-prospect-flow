@@ -250,11 +250,16 @@ function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply
 export function ChatMessageArea({
   conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
   members = [], canChangeResponsible = false, onTransferResponsible, currentUserId, onBack,
+  onDeleteConversation, onToggleBlock, onSaveContactName,
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [addContactOpen, setAddContactOpen] = useState(false);
+  const navigate = useNavigate();
+  const { accountOwnerId } = useAuth();
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -262,10 +267,48 @@ export function ChatMessageArea({
     }
   }, [messages]);
 
-  // Clear reply when conversation changes
   useEffect(() => {
     setReplyingTo(null);
   }, [conversation?.id]);
+
+  const handleOpenContactData = async () => {
+    if (!conversation) return;
+    const cleanPhone = conversation.contact_phone.replace(/\D/g, "");
+    const last8 = cleanPhone.slice(-8);
+    const { data: existing } = await supabase
+      .from("leads")
+      .select("id")
+      .eq("user_id", accountOwnerId)
+      .ilike("phone", `%${last8}`)
+      .limit(1);
+    if (existing && existing.length > 0) {
+      navigate("/crm", { state: { openLeadId: existing[0].id } });
+    } else {
+      toast.info("Contato não está no CRM. Salve para abrir a ficha.");
+      setAddContactOpen(true);
+    }
+  };
+
+  const handleToggleBlock = async () => {
+    if (!conversation || !onToggleBlock) return;
+    try {
+      await onToggleBlock(conversation.id);
+      toast.success((conversation as any).is_blocked ? "Contato desbloqueado" : "Contato bloqueado");
+    } catch {
+      toast.error("Erro ao bloquear contato");
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!conversation || !onDeleteConversation) return;
+    try {
+      await onDeleteConversation(conversation.id);
+      toast.success("Conversa apagada");
+      setConfirmDeleteOpen(false);
+    } catch {
+      toast.error("Erro ao apagar conversa");
+    }
+  };
 
   if (!conversation) {
     return (
@@ -290,9 +333,9 @@ export function ChatMessageArea({
     );
   }
 
-  const AVATAR_COLORS = ["bg-[#00a884]", "bg-[#53bdeb]", "bg-[#7f66ff]", "bg-[#ff6f69]", "bg-[#ffa62b]"];
-  const hash = conversation.contact_phone.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const avatarColor = AVATAR_COLORS[hash % AVATAR_COLORS.length];
+  const avatarColor = getChatAvatarColor(conversation.contact_phone);
+  const initials = getChatInitials(conversation.contact_name, conversation.contact_phone);
+  const hasContactName = !!conversation.contact_name?.trim();
 
   // Build a map for reply lookups
   const messagesMap = new Map(messages.map(m => [m.id, m]));
