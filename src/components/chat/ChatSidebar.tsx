@@ -354,6 +354,11 @@ export function ChatSidebar({
             const displayName = hasName
               ? truncateText(conv.contact_name as string, 24)
               : formatPhoneDisplay(conv.contact_phone);
+            const respColor = getResponsibleColor(conv.responsible_user_id);
+            const respMember = conv.responsible_user_id ? memberMap[conv.responsible_user_id] : null;
+            const respLabel = respMember ? (respMember.name || respMember.email || "") : "";
+            const respShort = respLabel ? respLabel.split(/\s+/)[0] : "";
+            const isMine = conv.responsible_user_id && conv.responsible_user_id === currentUserId;
 
             return (
               <div
@@ -364,16 +369,33 @@ export function ChatSidebar({
                   "h-[72px] transition-colors duration-100",
                   isActive ? "wa-conv-active" : "wa-conv-hover"
                 )}
+                title={respLabel ? `Responsável: ${respLabel}${isMine ? " (você)" : ""}` : undefined}
               >
+                {/* Responsible color bar (left) */}
+                {respColor && (
+                  <span
+                    aria-hidden
+                    className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full"
+                    style={{ backgroundColor: respColor }}
+                  />
+                )}
+
                 {/* Avatar */}
                 <div className={cn(
-                  "w-[49px] h-[49px] rounded-full flex items-center justify-center shrink-0 text-white text-[17px] font-medium",
+                  "w-[49px] h-[49px] rounded-full flex items-center justify-center shrink-0 text-white text-[17px] font-medium relative",
                   getChatAvatarColor(conv.contact_phone)
                 )}>
                   {conv.contact_profile_pic ? (
                     <img src={conv.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
                   ) : (
                     <span>{getChatInitials(conv.contact_name, conv.contact_phone)}</span>
+                  )}
+                  {respColor && (
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[var(--wa-sidebar-bg,#111b21)]"
+                      style={{ backgroundColor: respColor }}
+                    />
                   )}
                 </div>
 
