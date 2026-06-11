@@ -2291,6 +2291,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
               {renderApiIndicator()}
               {renderInfoBanner("Configure o conteúdo da mensagem: texto, imagem, áudio, vídeo ou documento.")}
               <MessageContentBuilder config={config} updateConfig={updateConfig} />
+              <OutOfWindowTemplateSection config={config} updateConfig={updateConfig} entryConfig={entryConfig} />
             </div>
           )}
 
