@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useWebhookGate } from "@/hooks/useWebhookGate";
 import { WebhookRequiredDialog } from "@/components/meta/WebhookRequiredDialog";
+import { BackupProgressBanner } from "@/components/chat/BackupProgressBanner";
 
 const Chat = () => {
   const { user, accountOwnerId } = useAuth();
