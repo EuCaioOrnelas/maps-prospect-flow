@@ -7003,6 +7003,7 @@ export type Database = {
         Row: {
           api_type: string | null
           created_at: string
+          default_out_of_window_template: Json | null
           description: string | null
           id: string
           name: string
@@ -7018,6 +7019,7 @@ export type Database = {
         Insert: {
           api_type?: string | null
           created_at?: string
+          default_out_of_window_template?: Json | null
           description?: string | null
           id?: string
           name?: string
@@ -7033,6 +7035,7 @@ export type Database = {
         Update: {
           api_type?: string | null
           created_at?: string
+          default_out_of_window_template?: Json | null
           description?: string | null
           id?: string
           name?: string
