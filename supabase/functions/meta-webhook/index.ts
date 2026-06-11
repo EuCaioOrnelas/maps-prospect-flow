@@ -165,7 +165,8 @@ serve(async (req) => {
         const { data: conns } = await supabase
           .from('user_waba_connections')
           .select('user_id, waba_id')
-          .in('waba_id', wabaIds);
+          .in('waba_id', wabaIds)
+          .eq('status', 'active');
         ownerSettings = (conns || []).map((c: any) => ({ user_id: c.user_id, waba_id: c.waba_id }));
       }
 
@@ -200,6 +201,10 @@ serve(async (req) => {
 
       // ---------- 2) IP allowlist (Meta CIDR ranges) ----------
       const ipOk = !reqIp || ipInMetaRanges(reqIp);
+      if ((hmacStatus === 'missing' || !ipOk) && ownerSettings.length === 0) {
+        console.warn('[meta-webhook] 🚫 Rejected — missing signature/proxy IP without active WABA match');
+        return new Response('Forbidden', { status: 403, headers: corsHeaders });
+      }
       if (!ipOk) {
         for (const o of ownerSettings) {
           await logSecurityEvent({
