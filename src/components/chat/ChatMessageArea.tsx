@@ -1,11 +1,12 @@
 import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, ExternalLink, Tag, Check } from "lucide-react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { AddContactDialog } from "./AddContactDialog";
+import { ForwardDialog } from "./ForwardDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -28,6 +29,7 @@ function formatPhoneDisplay(phone: string): string {
 
 interface ChatMessageAreaProps {
   conversation: ChatConversation | null;
+  conversations?: ChatConversation[];
   messages: ChatMessage[];
   loading: boolean;
   onSendMessage: (text: string, replyToId?: string) => void;
@@ -43,6 +45,7 @@ interface ChatMessageAreaProps {
   onDeleteConversation?: (conversationId: string) => Promise<void>;
   onToggleBlock?: (conversationId: string) => Promise<void>;
   onSaveContactName?: (conversationId: string, name: string) => Promise<void>;
+  onForwardMessages?: (targetPhone: string, targetName: string | undefined, msgs: ChatMessage[], templateName?: string) => Promise<{ requiresTemplate?: boolean }>;
 }
 
 
@@ -163,13 +166,18 @@ function InboundTail() {
   );
 }
 
-// Reply quote inside bubble
+// Reply quote inside bubble — green for self, blue for contact
 function ReplyQuote({ replyMsg }: { replyMsg: ChatMessage | undefined }) {
   if (!replyMsg) return null;
+  const isSelf = replyMsg.direction === "outbound";
+  const color = isSelf ? "#00a884" : "#1f7aec";
   return (
-    <div className="mx-[4px] mt-[4px] mb-[2px] rounded-[7px] bg-black/10 px-[8px] py-[5px] border-l-[3px] border-[#00a884] cursor-pointer">
-      <p className="text-[11px] text-[#00a884] font-medium">
-        {replyMsg.direction === "outbound" ? "Você" : "Contato"}
+    <div
+      className="mx-[4px] mt-[4px] mb-[2px] rounded-[7px] bg-black/10 px-[8px] py-[5px] border-l-[3px] cursor-pointer"
+      style={{ borderLeftColor: color }}
+    >
+      <p className="text-[11px] font-medium" style={{ color }}>
+        {isSelf ? "Você" : "Contato"}
       </p>
       <p className="text-[12px] wa-text-muted truncate">{replyMsg.content || "📎 Mídia"}</p>
     </div>
@@ -220,16 +228,32 @@ function SearchMessagesBar({ messages, onClose }: { messages: ChatMessage[]; onC
   );
 }
 
-// Message action menu (reply, copy, forward)
-function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply: () => void; onForward: () => void }) {
+// Message action menu (reply, copy, forward) — rendered OUTSIDE the bubble
+function MessageActions({
+  msg, onReply, onForward, isOutbound,
+}: {
+  msg: ChatMessage;
+  onReply: () => void;
+  onForward: () => void;
+  isOutbound: boolean;
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="opacity-0 group-hover/msg:opacity-100 absolute top-[4px] right-[4px] p-1 rounded-md bg-black/20 hover:bg-black/30 transition-all z-10">
-          <ChevronDown size={14} className="text-white/80" />
+        <button
+          className={cn(
+            "opacity-0 group-hover/msg:opacity-100 focus:opacity-100 transition-all",
+            "shrink-0 self-center w-[28px] h-[28px] rounded-full",
+            "bg-background/90 backdrop-blur border border-border/60 shadow-sm",
+            "flex items-center justify-center hover:bg-muted",
+            isOutbound ? "mr-1 order-first" : "ml-1"
+          )}
+          aria-label="Ações da mensagem"
+        >
+          <ChevronDown size={14} className="text-foreground/70" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+      <DropdownMenuContent align={isOutbound ? "start" : "end"} className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
         <DropdownMenuItem onClick={onReply} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Reply size={14} /> Responder
         </DropdownMenuItem>
@@ -248,14 +272,17 @@ function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply
 }
 
 export function ChatMessageArea({
-  conversation, messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
+  conversation, conversations = [], messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
   members = [], canChangeResponsible = false, onTransferResponsible, currentUserId, onBack,
-  onDeleteConversation, onToggleBlock, onSaveContactName,
+  onDeleteConversation, onToggleBlock, onSaveContactName, onForwardMessages,
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [forwardOpen, setForwardOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [pipelineStages, setPipelineStages] = useState<{ id: string; name: string; color: string | null; position: number }[]>([]);
@@ -308,7 +335,35 @@ export function ChatMessageArea({
 
   useEffect(() => {
     setReplyingTo(null);
+    setSelectionMode(false);
+    setSelectedIds(new Set());
   }, [conversation?.id]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else {
+        if (next.size >= 30) { toast.error("Máximo de 30 mensagens"); return prev; }
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const exitSelection = () => { setSelectionMode(false); setSelectedIds(new Set()); };
+
+  const startForwardFromMessage = (msg: ChatMessage) => {
+    setSelectionMode(true);
+    setSelectedIds(new Set([msg.id]));
+  };
+
+  const openForwardDialog = () => {
+    if (selectedIds.size === 0) return;
+    setForwardOpen(true);
+  };
+
+  const selectedMessages = messages.filter(m => selectedIds.has(m.id));
 
   const handleOpenContactData = async () => {
     if (!conversation) return;
@@ -678,48 +733,85 @@ export function ChatMessageArea({
                     const showTail = !isSameAuthorAsPrev;
                     const replyMsg = msg.reply_to_message_id ? messagesMap.get(msg.reply_to_message_id) : undefined;
 
+                    const isSelected = selectedIds.has(msg.id);
+                    const rowClickable = selectionMode;
                     return (
                       <div key={msg.id}>
                         {showDate && <DateDivider date={parseISO(msg.created_at)} />}
-                        <div className={cn(
-                          "flex",
-                          isOutbound ? "justify-end" : "justify-start",
-                          isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]"
-                        )}>
+                        <div
+                          className={cn(
+                            "flex items-center transition-colors rounded-md",
+                            isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]",
+                            selectionMode && "px-2 -mx-2 hover:bg-foreground/5 cursor-pointer",
+                            selectionMode && isSelected && "bg-[#00a884]/10"
+                          )}
+                          onClick={rowClickable ? () => toggleSelect(msg.id) : undefined}
+                        >
+                          {/* Checkbox on the left during selection */}
+                          {selectionMode && (
+                            <div className="shrink-0 mr-2 w-[22px] h-[22px] flex items-center justify-center">
+                              <span className={cn(
+                                "w-[20px] h-[20px] rounded-[5px] border-2 flex items-center justify-center transition-colors",
+                                isSelected ? "bg-[#00a884] border-[#00a884]" : "border-foreground/30"
+                              )}>
+                                {isSelected && <Check size={14} className="text-white" />}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Translate inbound bubbles slightly right when selecting (WhatsApp-style) */}
                           <div className={cn(
-                            "relative max-w-[65%] group/msg",
-                            showTail ? (isOutbound ? "mr-0" : "ml-0") : (isOutbound ? "mr-[8px]" : "ml-[8px]")
+                            "flex-1 flex items-start gap-1",
+                            isOutbound ? "justify-end" : "justify-start",
+                            selectionMode && !isOutbound && "pl-2"
                           )}>
-                            {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
-                            <MessageActions
-                              msg={msg}
-                              onReply={() => setReplyingTo(msg)}
-                              onForward={() => toast.info("Encaminhar: em breve!")}
-                            />
+                            {isOutbound && !selectionMode && (
+                              <MessageActions
+                                msg={msg}
+                                isOutbound
+                                onReply={() => setReplyingTo(msg)}
+                                onForward={() => startForwardFromMessage(msg)}
+                              />
+                            )}
                             <div className={cn(
-                              "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
-                              isOutbound ? "wa-bubble-out rounded-[7.5px]" : "wa-bubble-in rounded-[7.5px]",
-                              showTail && isOutbound && "!rounded-tr-none",
-                              showTail && !isOutbound && "!rounded-tl-none"
+                              "relative max-w-[65%] group/msg",
+                              // Always reserve tail space so messages align
+                              isOutbound ? "mr-[8px]" : "ml-[8px]"
                             )}>
-                              {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
-                              {msg.message_type !== "text" && (
-                                <div className="p-[3px]"><MediaPreview msg={msg} /></div>
-                              )}
-                              {msg.content && msg.message_type === "text" && (
-                                <div className="px-[9px] pt-[6px] pb-[8px]">
-                                  <span className="text-[14.2px] wa-text-primary leading-[19px] whitespace-pre-wrap break-words">
-                                    {msg.content}
+                              {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
+                              <div className={cn(
+                                "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
+                                isOutbound ? "wa-bubble-out rounded-[7.5px]" : "wa-bubble-in rounded-[7.5px]",
+                                showTail && isOutbound && "!rounded-tr-none",
+                                showTail && !isOutbound && "!rounded-tl-none"
+                              )}>
+                                {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
+                                {msg.message_type !== "text" && (
+                                  <div className="p-[3px]"><MediaPreview msg={msg} /></div>
+                                )}
+                                {msg.content && msg.message_type === "text" && (
+                                  <div className="px-[9px] pt-[6px] pb-[8px]">
+                                    <span className="text-[14.2px] wa-text-primary leading-[19px] whitespace-pre-wrap break-words">
+                                      {msg.content}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-end gap-[3px] px-[7px] pb-[5px] -mt-[2px]">
+                                  <span className="text-[11px] leading-[15px] wa-text-timestamp select-none">
+                                    {format(parseISO(msg.created_at), "HH:mm")}
                                   </span>
+                                  {isOutbound && <MessageStatus status={msg.status} />}
                                 </div>
-                              )}
-                              <div className="flex items-center justify-end gap-[3px] px-[7px] pb-[5px] -mt-[2px]">
-                                <span className="text-[11px] leading-[15px] wa-text-timestamp select-none">
-                                  {format(parseISO(msg.created_at), "HH:mm")}
-                                </span>
-                                {isOutbound && <MessageStatus status={msg.status} />}
                               </div>
                             </div>
+                            {!isOutbound && !selectionMode && (
+                              <MessageActions
+                                msg={msg}
+                                isOutbound={false}
+                                onReply={() => setReplyingTo(msg)}
+                                onForward={() => startForwardFromMessage(msg)}
+                              />
+                            )}
                           </div>
                         </div>
                       </div>
@@ -733,7 +825,26 @@ export function ChatMessageArea({
 
           {/* Input — inside background container so pattern extends behind it */}
           <div className="relative z-10 shrink-0">
-            {(() => {
+            {selectionMode ? (
+              <div className="flex items-center justify-between gap-3 px-4 py-3 wa-input-field border-t wa-border-light">
+                <button
+                  onClick={exitSelection}
+                  className="text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-foreground/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <span className="text-sm font-medium wa-text-primary">
+                  {selectedIds.size} {selectedIds.size === 1 ? "selecionada" : "selecionadas"}
+                </span>
+                <button
+                  onClick={openForwardDialog}
+                  disabled={selectedIds.size === 0}
+                  className="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-lg bg-[#00a884] hover:bg-[#06cf9c] text-white disabled:opacity-40 transition-colors"
+                >
+                  <Forward size={16} /> Encaminhar
+                </button>
+              </div>
+            ) : (() => {
               const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
               const isWindowExpired = lastInbound
                 ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) >= 24
@@ -758,7 +869,6 @@ export function ChatMessageArea({
                   externalFiles={droppedFiles}
                   onExternalConsumed={() => setDroppedFiles([])}
                 />
-
               );
             })()}
           </div>
@@ -808,6 +918,18 @@ export function ChatMessageArea({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Forward dialog */}
+      {onForwardMessages && (
+        <ForwardDialog
+          open={forwardOpen}
+          onOpenChange={(v) => { setForwardOpen(v); if (!v) exitSelection(); }}
+          messages={selectedMessages}
+          conversations={conversations}
+          fetchTemplates={fetchTemplates}
+          onForward={onForwardMessages}
+        />
+      )}
     </div>
   );
 }

@@ -596,6 +596,98 @@ export function useChat() {
     }
   }, [user, accountOwnerId, conversations]);
 
+  // Forward selected messages to a target phone. Returns {requiresTemplate} when window closed.
+  const forwardMessages = useCallback(async (
+    targetPhone: string,
+    targetName: string | undefined,
+    msgs: ChatMessage[],
+    templateName?: string,
+  ): Promise<{ requiresTemplate?: boolean }> => {
+    if (!user || !activeConnectionId) return {};
+    const clean = targetPhone.replace(/\D/g, "");
+    const last8 = clean.slice(-8);
+
+    // Find or create conversation
+    let conv = conversations.find(c => c.contact_phone.replace(/\D/g, "").endsWith(last8) && c.waba_connection_id === activeConnectionId);
+    if (!conv) {
+      const { data } = await supabase.from("chat_conversations").insert({
+        user_id: user.id,
+        owner_user_id: accountOwnerId || user.id,
+        waba_connection_id: activeConnectionId,
+        contact_phone: clean,
+        contact_name: targetName || null,
+      } as any).select().single();
+      if (!data) throw new Error("Falha ao criar conversa");
+      conv = data as ChatConversation;
+      setConversations(prev => [conv as ChatConversation, ...prev]);
+    }
+
+    const connection = connections.find(c => c.id === activeConnectionId);
+    if (!connection) throw new Error("Conexão não encontrada");
+
+    // If template requested, send template first
+    if (templateName) {
+      await supabase.functions.invoke("send-chat-message", {
+        body: {
+          phone_number_id: connection.phone_number_id,
+          to: clean,
+          type: "template",
+          template_name: templateName,
+          waba_connection_id: connection.id,
+        },
+      });
+    }
+
+    // Forward each message
+    for (const m of msgs) {
+      const insertBody: any = {
+        conversation_id: conv.id,
+        user_id: user.id,
+        owner_user_id: accountOwnerId || user.id,
+        direction: "outbound",
+        message_type: m.message_type,
+        content: m.content,
+        media_url: m.media_url,
+        media_mime_type: m.media_mime_type,
+        media_filename: m.media_filename,
+        media_caption: m.media_caption,
+        status: "pending",
+      };
+      const { data: inserted } = await supabase.from("chat_messages").insert(insertBody).select().single();
+      if (!inserted) continue;
+      await supabase.functions.invoke("send-chat-message", {
+        body: {
+          message_id: (inserted as any).id,
+          phone_number_id: connection.phone_number_id,
+          to: clean,
+          type: m.message_type,
+          text: m.message_type === "text" ? m.content : undefined,
+          media_url: m.media_url || undefined,
+          caption: m.media_caption || undefined,
+          filename: m.media_filename || undefined,
+          waba_connection_id: connection.id,
+        },
+      });
+    }
+
+    // Update conversation snapshot
+    const lastMsg = msgs[msgs.length - 1];
+    const lastText = lastMsg.message_type === "text"
+      ? (lastMsg.content || "")
+      : lastMsg.message_type === "image" ? "📷 Imagem"
+      : lastMsg.message_type === "video" ? "🎥 Vídeo"
+      : lastMsg.message_type === "audio" ? "🎤 Áudio"
+      : `📄 ${lastMsg.media_filename || "Arquivo"}`;
+    await supabase.from("chat_conversations").update({
+      last_message_text: lastText,
+      last_message_at: new Date().toISOString(),
+      last_message_type: lastMsg.message_type,
+      last_message_direction: "outbound",
+    }).eq("id", conv.id);
+
+    return {};
+  }, [user, accountOwnerId, activeConnectionId, conversations, connections]);
+
   return {
     conversations: filteredConversations,
     messages,
@@ -628,6 +720,7 @@ export function useChat() {
     deleteConversation,
     toggleBlock,
     saveContactName,
+    forwardMessages,
   };
 }
 
