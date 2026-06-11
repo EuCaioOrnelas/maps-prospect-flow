@@ -1191,7 +1191,7 @@ serve(async (req) => {
             status_bucket: newBucket,
             score_last_calc_at: nowIso,
             risk_state: hoursSince >= 24 ? "AT_RISK" : (hoursSince >= 6 ? "COOLING" : lead.risk_state),
-            risk_reason: hoursSince >= 24 ? `Sem resposta há ${Math.round(hoursSince)}h` : lead.risk_reason,
+            risk_reason: hoursSince >= 24 ? `Sem resposta há ${Math.round(hoursSince)}h` : null,
           }).eq("id", lead.id);
           penaltiesApplied += eventsBatch.length;
         }
