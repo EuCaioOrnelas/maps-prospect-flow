@@ -619,6 +619,45 @@ export function ChatMessageArea({
       {showSearch && (
         <SearchMessagesBar messages={messages} onClose={() => setShowSearch(false)} />
       )}
+
+      {/* Add / Save contact to CRM */}
+      {onSaveContactName && (
+        <AddContactDialog
+          open={addContactOpen}
+          onOpenChange={setAddContactOpen}
+          phone={conversation.contact_phone}
+          defaultName={conversation.contact_name}
+          onSave={async (name) => {
+            try {
+              await onSaveContactName(conversation.id, name);
+              toast.success("Contato salvo no CRM");
+            } catch {
+              toast.error("Erro ao salvar contato");
+            }
+          }}
+        />
+      )}
+
+      {/* Confirm delete */}
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent className="bg-popover">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar esta conversa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todas as mensagens desta conversa serão removidas permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
