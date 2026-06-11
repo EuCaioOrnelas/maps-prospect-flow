@@ -400,6 +400,18 @@ serve(async (req) => {
         }
 
         if (wabaOk) {
+          const appSubscription = await ensureAppWebhookSubscription();
+          pushStep({
+            key: "app_subscription",
+            label: "Callback do App Meta",
+            status: appSubscription.ok ? "ok" : "warning",
+            summary: appSubscription.ok
+              ? "Callback do App configurado para receber eventos do WhatsApp."
+              : "Não consegui atualizar automaticamente o callback do App, mas a assinatura da WABA ainda será testada.",
+            technical: appSubscription.ok ? undefined : graphTechnical(appSubscription),
+            fbtrace_id: appSubscription.error?.fbtrace_id,
+          });
+
           let subscribe = await graphRequest(`${conn.waba_id}/subscribed_apps`, conn.access_token, {
             method: "POST",
             body: { subscribed_fields: REQUIRED_EVENTS },
