@@ -40,14 +40,18 @@ interface ChatMessageAreaProps {
   onTransferResponsible?: (conversationId: string, userId: string | null) => Promise<void>;
   currentUserId?: string;
   onBack?: () => void;
+  onDeleteConversation?: (conversationId: string) => Promise<void>;
+  onToggleBlock?: (conversationId: string) => Promise<void>;
+  onSaveContactName?: (conversationId: string, name: string) => Promise<void>;
 }
 
 
 function MessageStatus({ status }: { status: string }) {
   if (status === "pending") {
     return (
-      <svg viewBox="0 0 16 15" width="16" height="15" className="wa-status-pending">
-        <path fill="currentColor" d="M9.75 7.713H8.244V5.359a.5.5 0 0 0-.5-.5H7.65a.5.5 0 0 0-.5.5v2.947a.5.5 0 0 0 .5.5h2.1a.5.5 0 0 0 .5-.5v-.093a.5.5 0 0 0-.5-.5zM7.894.982a6.512 6.512 0 1 0 0 13.024 6.512 6.512 0 0 0 0-13.024zm0 11.795a5.283 5.283 0 1 1 0-10.566 5.283 5.283 0 0 1 0 10.566z" />
+      <svg viewBox="0 0 16 16" width="14" height="14" className="wa-status-pending opacity-70">
+        <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M8 4.5v3.6l2.4 1.4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
