@@ -130,11 +130,7 @@ function MediaPreview({ msg }: { msg: ChatMessage }) {
     );
   }
   if (msg.message_type === "audio") {
-    return (
-      <div className="min-w-[240px] max-w-[330px] px-1 py-1">
-        <audio src={msg.media_url || ""} controls className="w-full h-[36px]" preload="metadata" />
-      </div>
-    );
+    return null; // rendered by bubble with WhatsAppAudio for avatar context
   }
   if (msg.message_type === "document") {
     return (
