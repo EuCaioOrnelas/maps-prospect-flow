@@ -172,6 +172,16 @@ function parseSubscribedFields(apps: any[]) {
   return Array.from(fields);
 }
 
+function parseSubscribedAppLabels(apps: any[]) {
+  return apps
+    .map((app) => {
+      const data = app?.whatsapp_business_api_data ?? app;
+      const label = data?.name || data?.id || app?.id;
+      return label ? String(label) : null;
+    })
+    .filter(Boolean) as string[];
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -263,7 +273,7 @@ serve(async (req) => {
 
       // ---------- 2) Diagnóstico completo contra a Graph API ----------
       let subscribedEvents: string[] = [];
-      let missingEvents: string[] = [...REQUIRED_EVENTS];
+      let missingEvents: string[] = [];
       let eventsDetail = "";
       let eventsOk = false;
       let tokenOk = false;
@@ -403,13 +413,19 @@ serve(async (req) => {
             } else {
               eventsOk = subscriptionOk;
               missingEvents = [];
-              eventsDetail = "A Meta confirmou a assinatura, mas não retornou a lista de eventos.";
+              const appLabels = parseSubscribedAppLabels(apps);
+              eventsDetail = subscriptionOk
+                ? "A Meta confirmou a assinatura da WABA. O endpoint oficial não retorna quais Webhook fields foram marcados no painel."
+                : "A Meta retornou apps inscritos, mas a instalação automática não foi confirmada.";
               pushStep({
                 key: "subscribed_fields",
-                label: "Eventos inscritos",
+                label: "Apps inscritos na WABA",
                 status: subscriptionOk ? "warning" : "skipped",
                 summary: eventsDetail,
-                details: ["Confira manualmente no App da Meta se os Webhook fields estão marcados."],
+                details: [
+                  appLabels.length ? `Apps encontrados: ${appLabels.slice(0, 3).join(", ")}` : "A Meta retornou a assinatura, mas sem nome do app.",
+                  "Os prints mostram os campos marcados no App; isso é validado manualmente porque a Graph não expõe essa lista por WABA.",
+                ],
               });
             }
           } else {
