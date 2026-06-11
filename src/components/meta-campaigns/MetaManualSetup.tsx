@@ -154,7 +154,7 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
             status: "active",
             raw_signup_data: { source: "manual" },
           },
-          { onConflict: "user_id,waba_id" }
+          { onConflict: "phone_number_id" }
         )
         .select()
         .single();
