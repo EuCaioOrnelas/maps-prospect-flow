@@ -165,13 +165,18 @@ function InboundTail() {
   );
 }
 
-// Reply quote inside bubble
+// Reply quote inside bubble — green for self, blue for contact
 function ReplyQuote({ replyMsg }: { replyMsg: ChatMessage | undefined }) {
   if (!replyMsg) return null;
+  const isSelf = replyMsg.direction === "outbound";
+  const color = isSelf ? "#00a884" : "#1f7aec";
   return (
-    <div className="mx-[4px] mt-[4px] mb-[2px] rounded-[7px] bg-black/10 px-[8px] py-[5px] border-l-[3px] border-[#00a884] cursor-pointer">
-      <p className="text-[11px] text-[#00a884] font-medium">
-        {replyMsg.direction === "outbound" ? "Você" : "Contato"}
+    <div
+      className="mx-[4px] mt-[4px] mb-[2px] rounded-[7px] bg-black/10 px-[8px] py-[5px] border-l-[3px] cursor-pointer"
+      style={{ borderLeftColor: color }}
+    >
+      <p className="text-[11px] font-medium" style={{ color }}>
+        {isSelf ? "Você" : "Contato"}
       </p>
       <p className="text-[12px] wa-text-muted truncate">{replyMsg.content || "📎 Mídia"}</p>
     </div>
@@ -222,16 +227,32 @@ function SearchMessagesBar({ messages, onClose }: { messages: ChatMessage[]; onC
   );
 }
 
-// Message action menu (reply, copy, forward)
-function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply: () => void; onForward: () => void }) {
+// Message action menu (reply, copy, forward) — rendered OUTSIDE the bubble
+function MessageActions({
+  msg, onReply, onForward, isOutbound,
+}: {
+  msg: ChatMessage;
+  onReply: () => void;
+  onForward: () => void;
+  isOutbound: boolean;
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="opacity-0 group-hover/msg:opacity-100 absolute top-[4px] right-[4px] p-1 rounded-md bg-black/20 hover:bg-black/30 transition-all z-10">
-          <ChevronDown size={14} className="text-white/80" />
+        <button
+          className={cn(
+            "opacity-0 group-hover/msg:opacity-100 focus:opacity-100 transition-all",
+            "shrink-0 self-center w-[28px] h-[28px] rounded-full",
+            "bg-background/90 backdrop-blur border border-border/60 shadow-sm",
+            "flex items-center justify-center hover:bg-muted",
+            isOutbound ? "mr-1 order-first" : "ml-1"
+          )}
+          aria-label="Ações da mensagem"
+        >
+          <ChevronDown size={14} className="text-foreground/70" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+      <DropdownMenuContent align={isOutbound ? "start" : "end"} className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
         <DropdownMenuItem onClick={onReply} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Reply size={14} /> Responder
         </DropdownMenuItem>
