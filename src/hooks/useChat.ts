@@ -544,13 +544,13 @@ export function useChat() {
     const last8 = cleanPhone.slice(-8);
     const { data: existing } = await supabase
       .from("leads")
-      .select("id, name, phone")
+      .select("id, contact_name, phone")
       .eq("user_id", accountOwnerId)
       .ilike("phone", `%${last8}`)
       .limit(1);
 
     if (existing && existing.length > 0) {
-      await supabase.from("leads").update({ name }).eq("id", existing[0].id);
+      await supabase.from("leads").update({ contact_name: name }).eq("id", existing[0].id);
     } else {
       // Find default pipeline stage (Prospectado or first)
       const { data: stages } = await supabase
@@ -563,10 +563,10 @@ export function useChat() {
       if (stageId) {
         await supabase.from("leads").insert({
           user_id: accountOwnerId,
-          name,
+          contact_name: name,
           phone: cleanPhone,
           pipeline_stage_id: stageId,
-          source: "chat",
+          origin: "chat",
         } as any);
       }
     }
