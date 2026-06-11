@@ -177,8 +177,9 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
 
               {/* AI */}
               <button
-                onClick={() => setMode("ai")}
-                className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all text-center"
+                onClick={() => hasEligible && setMode("ai")}
+                disabled={!hasEligible || loadingGate}
+                className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all text-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Badge className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 shadow-md">
                   Recomendado
