@@ -178,42 +178,6 @@ export function useChat() {
   useEffect(() => {
     if (!activeConversationId || !user) return;
     
-    // Handle fake test conversation
-    if (activeConversationId === "fake-test-conversation") {
-      const fakeMessages: ChatMessage[] = [
-        {
-          id: "fake-msg-1",
-          conversation_id: "fake-test-conversation",
-          user_id: user.id,
-          waba_message_id: null,
-          direction: "outbound",
-          message_type: "text",
-          content: "Olá! Somos da Wiize. Vi que você tem interesse em automação de WhatsApp. Posso ajudar?",
-          media_url: null, media_mime_type: null, media_filename: null, media_caption: null,
-          status: "read", status_updated_at: null, reply_to_message_id: null, metadata: {},
-          created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: "fake-msg-2",
-          conversation_id: "fake-test-conversation",
-          user_id: user.id,
-          waba_message_id: null,
-          direction: "inbound",
-          message_type: "text",
-          content: "Olá, gostaria de saber mais sobre o serviço!",
-          media_url: null, media_mime_type: null, media_filename: null, media_caption: null,
-          status: "read", status_updated_at: null, reply_to_message_id: null, metadata: {},
-          created_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
-        },
-      ];
-      setMessages(fakeMessages);
-      setLoadingMessages(false);
-      setConversations(prev =>
-        prev.map(c => c.id === activeConversationId ? { ...c, unread_count: 0 } : c)
-      );
-      return;
-    }
-    
     const loadMessages = async () => {
       setLoadingMessages(true);
       const { data } = await supabase
