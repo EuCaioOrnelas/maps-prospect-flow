@@ -31,6 +31,8 @@ interface ChatSidebarProps {
   onToggleBlock?: (conversationId: string) => Promise<void>;
   connectionHealth?: Record<string, boolean>;
   topToolbar?: React.ReactNode;
+  members?: Array<{ user_id: string; name: string | null; email: string | null }>;
+  currentUserId?: string | null;
 }
 
 function formatTimestamp(dateStr: string | null): string {
