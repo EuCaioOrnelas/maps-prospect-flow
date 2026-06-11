@@ -292,6 +292,7 @@ export function useChat() {
     const { data: inserted } = await supabase.from("chat_messages").insert({
       conversation_id: activeConversationId,
       user_id: user.id,
+      owner_user_id: accountOwnerId || user.id,
       direction: "outbound",
       message_type: "text",
       content: text,
@@ -303,18 +304,17 @@ export function useChat() {
       setMessages(prev => prev.map(m => m.id === tempId ? inserted as ChatMessage : m));
     }
 
-    // Update conversation last message
-    await supabase.from("chat_conversations").update({
+    // Fire conversation update & Meta send in parallel (no await — speeds up perceived latency)
+    supabase.from("chat_conversations").update({
       last_message_text: text,
       last_message_at: new Date().toISOString(),
       last_message_type: "text",
       last_message_direction: "outbound",
-    }).eq("id", activeConversationId);
+    }).eq("id", activeConversationId).then(() => {});
 
-    // Call edge function to send via Meta API
     const connection = connections.find(c => c.id === conversation.waba_connection_id);
     if (connection && inserted) {
-      const { error: fnError } = await supabase.functions.invoke("send-chat-message", {
+      supabase.functions.invoke("send-chat-message", {
         body: {
           message_id: (inserted as any).id,
           phone_number_id: connection.phone_number_id,
@@ -323,14 +323,14 @@ export function useChat() {
           text: text,
           waba_connection_id: connection.id,
         },
+      }).then(({ error: fnError }) => {
+        if (fnError) {
+          console.error("send-chat-message error:", fnError);
+          setMessages(prev => prev.map(m => m.id === (inserted as any).id ? { ...m, status: "failed" } : m));
+        }
       });
-      if (fnError) {
-        console.error("send-chat-message error:", fnError);
-        // Update message status to failed
-        setMessages(prev => prev.map(m => m.id === (inserted as any).id ? { ...m, status: "failed" } : m));
-      }
     }
-  }, [activeConversationId, user, conversations, connections]);
+  }, [activeConversationId, user, accountOwnerId, conversations, connections]);
 
   // Send media message
   const sendMedia = useCallback(async (file: File, caption?: string) => {
