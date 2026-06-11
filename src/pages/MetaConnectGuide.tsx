@@ -627,7 +627,7 @@ const PhaseWebhookContent = ({ navigate }: { navigate: (path: string) => void })
       </p>
       <button
         type="button"
-        onClick={() => navigate("/meta/configuracoes?tab=webhook")}
+        onClick={() => navigate("/meta/numeros?tab=webhook")}
         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[hsl(158_72%_32%)] text-white text-sm font-medium hover:bg-[hsl(158_72%_28%)] transition-colors"
       >
         Abrir configuração de Webhook
@@ -675,7 +675,7 @@ const PhaseWebhookContent = ({ navigate }: { navigate: (path: string) => void })
       </p>
       <button
         type="button"
-        onClick={() => navigate("/meta/configuracoes?tab=webhook")}
+        onClick={() => navigate("/meta/numeros?tab=webhook")}
         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[hsl(158_72%_32%)] text-white text-sm font-medium hover:bg-[hsl(158_72%_28%)] transition-colors"
       >
         Ir para Testar todos
