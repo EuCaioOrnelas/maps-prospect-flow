@@ -195,7 +195,7 @@ export function ChatSidebar({
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 mx-1 my-0.5 rounded-lg cursor-pointer transition-colors",
                       c.id === activeConnectionId
-                        ? "bg-[#00a884]/10 text-[#00a884]"
+                        ? "wa-accent-bg/10 wa-accent-text"
                         : "hover:bg-white/5"
                     )}
                   >
@@ -203,17 +203,17 @@ export function ChatSidebar({
                       "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
                       connectionHealth[c.id] === false 
                         ? "bg-red-500/20" 
-                        : c.id === activeConnectionId ? "bg-[#00a884]/20" : "bg-white/5"
+                        : c.id === activeConnectionId ? "wa-accent-bg/20" : "bg-white/5"
                     )}>
                       {connectionHealth[c.id] === false ? (
                         <AlertTriangle size={14} className="text-red-500" />
                       ) : (
-                        <Phone size={14} className={c.id === activeConnectionId ? "text-[#00a884]" : "wa-icon-muted"} />
+                        <Phone size={14} className={c.id === activeConnectionId ? "wa-accent-text" : "wa-icon-muted"} />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className={cn("text-[13px] font-medium truncate", c.id === activeConnectionId ? "text-[#00a884]" : "wa-text-primary")}>
+                        <p className={cn("text-[13px] font-medium truncate", c.id === activeConnectionId ? "wa-accent-text" : "wa-text-primary")}>
                           {truncateText(c.nickname || c.business_name || "Número", 22)}
                         </p>
                         {connectionHealth[c.id] === false && (
@@ -225,7 +225,7 @@ export function ChatSidebar({
                       <p className="text-[11px] wa-text-muted truncate">{c.display_phone_number || c.phone_number_id}</p>
                     </div>
                     {c.id === activeConnectionId && (
-                      <Check size={16} className="text-[#00a884] shrink-0" />
+                      <Check size={16} className="wa-accent-text shrink-0" />
                     )}
                   </DropdownMenuItem>
                 ))}
@@ -333,7 +333,7 @@ export function ChatSidebar({
       <div className="flex-1 overflow-y-auto wa-scrollbar">
         {isListLoading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="h-7 w-7 rounded-full border-[3px] border-[#00a884]/20 border-t-[#00a884] animate-spin" />
+            <div className="h-7 w-7 rounded-full border-[3px] border-[#128c7e]/20 border-t-[#128c7e] animate-spin" />
           </div>
         ) : filteredConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
@@ -408,7 +408,7 @@ export function ChatSidebar({
                         <button
                           onClick={(e) => { e.stopPropagation(); setAddContactFor(conv); }}
                           title="Salvar contato no CRM"
-                          className="shrink-0 inline-flex items-center justify-center w-[20px] h-[20px] rounded-full bg-[#00a884]/15 hover:bg-[#00a884]/25 text-[#00a884] transition-colors"
+                          className="shrink-0 inline-flex items-center justify-center w-[20px] h-[20px] rounded-full wa-accent-bg/15 hover:wa-accent-bg/25 wa-accent-text transition-colors"
                         >
                           <UserPlus size={11} />
                         </button>
@@ -416,7 +416,7 @@ export function ChatSidebar({
                     </span>
                     <span className={cn(
                       "text-[12px] leading-[14px] shrink-0 ml-2",
-                      hasUnread ? "text-[#00a884] dark:text-[#00a884]" : "wa-text-timestamp"
+                      hasUnread ? "wa-accent-text dark:wa-accent-text" : "wa-text-timestamp"
                     )}>
                       {formatTimestamp(conv.last_message_at)}
                     </span>
@@ -454,7 +454,7 @@ export function ChatSidebar({
                         <VolumeX size={14} className="wa-icon-muted" />
                       )}
                       {hasUnread && (
-                        <span className="bg-[#00a884] text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
+                        <span className="wa-accent-bg text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
                           {conv.unread_count}
                         </span>
                       )}

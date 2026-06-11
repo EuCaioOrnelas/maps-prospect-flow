@@ -170,7 +170,7 @@ function InboundTail() {
 function ReplyQuote({ replyMsg }: { replyMsg: ChatMessage | undefined }) {
   if (!replyMsg) return null;
   const isSelf = replyMsg.direction === "outbound";
-  const color = isSelf ? "#00a884" : "#1f7aec";
+  const color = isSelf ? "#128c7e" : "#1f7aec";
   return (
     <div
       className="mx-[4px] mt-[4px] mb-[2px] rounded-[7px] bg-black/10 px-[8px] py-[5px] border-l-[3px] cursor-pointer"
@@ -468,14 +468,14 @@ export function ChatMessageArea({
     >
       {isDragging && (
         <div className="absolute inset-0 z-50 p-4 pointer-events-none">
-          <div className="w-full h-full rounded-2xl border-2 border-dashed border-[#00a884] bg-[#00a884]/15 hover:bg-[#00a884]/25 flex flex-col items-center justify-center gap-3 backdrop-blur-sm transition-colors">
+          <div className="w-full h-full rounded-2xl border-2 border-dashed wa-accent-border wa-accent-bg/15 hover:wa-accent-bg/25 flex flex-col items-center justify-center gap-3 backdrop-blur-sm transition-colors">
             <div className="w-[72px] h-[72px] rounded-2xl bg-white shadow-lg flex items-center justify-center">
-              <svg viewBox="0 0 24 24" width="36" height="36" className="text-[#00a884]" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg viewBox="0 0 24 24" width="36" height="36" className="wa-accent-text" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M14 3v4a1 1 0 0 0 1 1h4" />
                 <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
               </svg>
             </div>
-            <span className="text-[20px] font-medium text-[#00a884]">Solte o arquivo aqui</span>
+            <span className="text-[20px] font-medium wa-accent-text">Solte o arquivo aqui</span>
             <span className="text-[13px] wa-text-muted">Imagens, vídeos ou documentos</span>
           </div>
         </div>
@@ -511,7 +511,7 @@ export function ChatMessageArea({
                 <button
                   onClick={() => setAddContactOpen(true)}
                   title="Salvar contato no CRM"
-                  className="shrink-0 inline-flex items-center justify-center w-[26px] h-[26px] rounded-full bg-[#00a884]/15 hover:bg-[#00a884]/25 text-[#00a884] transition-colors"
+                  className="shrink-0 inline-flex items-center justify-center w-[26px] h-[26px] rounded-full wa-accent-bg/15 hover:wa-accent-bg/25 wa-accent-text transition-colors"
                 >
                   <UserPlus size={14} />
                 </button>
@@ -560,7 +560,7 @@ export function ChatMessageArea({
                     <div className="max-h-64 overflow-y-auto">
                       {pipelineStages.map(s => {
                         const selected = s.id === leadInfo?.pipeline_stage_id;
-                        const color = s.color || "#00a884";
+                        const color = s.color || "#128c7e";
                         return (
                           <button
                             key={s.id}
@@ -572,7 +572,7 @@ export function ChatMessageArea({
                           >
                             <span className="w-[10px] h-[10px] rounded-full shrink-0" style={{ backgroundColor: color }} />
                             <span className="flex-1 text-left truncate">{s.name}</span>
-                            {selected && <Check size={14} className="text-[#00a884]" />}
+                            {selected && <Check size={14} className="wa-accent-text" />}
                           </button>
                         );
                       })}
@@ -721,7 +721,7 @@ export function ChatMessageArea({
             <div className="px-3 sm:px-6 lg:px-[63px] py-[4px] min-h-full flex flex-col justify-end">
               {loading ? (
                 <div className="flex items-center justify-center py-16">
-                  <div className="h-8 w-8 rounded-full border-[3px] border-[#00a884]/20 border-t-[#00a884] animate-spin" />
+                  <div className="h-8 w-8 rounded-full border-[3px] border-[#128c7e]/20 border-t-[#128c7e] animate-spin" />
                 </div>
               ) : (
                 <>
@@ -743,7 +743,7 @@ export function ChatMessageArea({
                             "group/msg-row flex items-center transition-colors rounded-md",
                             isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]",
                             selectionMode && "px-2 -mx-2 hover:bg-foreground/5 cursor-pointer",
-                            selectionMode && isSelected && "bg-[#00a884]/10"
+                            selectionMode && isSelected && "wa-accent-bg/10"
                           )}
                           onClick={rowClickable ? () => toggleSelect(msg.id) : undefined}
                         >
@@ -752,7 +752,7 @@ export function ChatMessageArea({
                             <div className="shrink-0 mr-2 w-[22px] h-[22px] flex items-center justify-center">
                               <span className={cn(
                                 "w-[20px] h-[20px] rounded-[5px] border-2 flex items-center justify-center transition-colors",
-                                isSelected ? "bg-[#00a884] border-[#00a884]" : "border-foreground/30"
+                                isSelected ? "wa-accent-bg wa-accent-border" : "border-foreground/30"
                               )}>
                                 {isSelected && <Check size={14} className="text-white" />}
                               </span>
@@ -839,7 +839,7 @@ export function ChatMessageArea({
                 <button
                   onClick={openForwardDialog}
                   disabled={selectedIds.size === 0}
-                  className="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-lg bg-[#00a884] hover:bg-[#06cf9c] text-white disabled:opacity-40 transition-colors"
+                  className="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-lg wa-accent-bg text-white disabled:opacity-40 transition-colors"
                 >
                   <Forward size={16} /> Encaminhar
                 </button>
