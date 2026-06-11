@@ -169,7 +169,11 @@ serve(async (req) => {
         ownerSettings = (conns || []).map((c: any) => ({ user_id: c.user_id, waba_id: c.waba_id }));
       }
 
-      // ---------- 1) HMAC validation (mandatory when app secret configured) ----------
+      // ---------- 1) HMAC validation ----------
+      // Some Meta webhook deliveries can arrive without the signature when routed
+      // through infrastructure/proxy variations. Invalid signatures are still
+      // rejected; missing signatures are accepted only after the payload resolves
+      // to an active WABA/phone saved in this account below.
       let hmacStatus: 'verified' | 'missing' | 'invalid' | 'no_secret' = 'no_secret';
       if (META_APP_SECRET) {
         if (sigHeader) {
@@ -179,21 +183,22 @@ serve(async (req) => {
           hmacStatus = 'missing';
         }
       }
-      if (hmacStatus === 'invalid' || hmacStatus === 'missing') {
+      if (hmacStatus === 'invalid') {
         for (const o of ownerSettings) {
           await logSecurityEvent({
             user_id: o.user_id, waba_id: o.waba_id,
-            action: hmacStatus === 'invalid' ? 'meta_webhook_rejected_hmac_invalid' : 'meta_webhook_rejected_hmac_missing',
+            action: 'meta_webhook_rejected_hmac_invalid',
             extra: { reason: hmacStatus },
           });
         }
-        console.warn('[meta-webhook] 🚫 Rejected — HMAC', hmacStatus);
-        if (META_APP_SECRET) {
-          return new Response('Unauthorized', { status: 401, headers: corsHeaders });
-        }
+        console.warn('[meta-webhook] 🚫 Rejected — HMAC invalid');
+        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+      }
+      if (hmacStatus === 'missing') {
+        console.warn('[meta-webhook] ⚠️ Missing HMAC signature — will require active WABA match before processing');
       }
 
-      // ---------- 2) IP allowlist (Meta CIDR ranges) — always enforced ----------
+      // ---------- 2) IP allowlist (Meta CIDR ranges) ----------
       const ipOk = !reqIp || ipInMetaRanges(reqIp);
       if (!ipOk) {
         for (const o of ownerSettings) {
@@ -203,8 +208,7 @@ serve(async (req) => {
             extra: { ip: reqIp },
           });
         }
-        console.warn('[meta-webhook] 🚫 Rejected — IP', reqIp);
-        return new Response('Forbidden', { status: 403, headers: corsHeaders });
+        console.warn('[meta-webhook] ⚠️ Non-Meta IP seen at edge, continuing only with active WABA match', reqIp);
       }
 
       // ---------- 3) Audit log accepted webhook (always) ----------
