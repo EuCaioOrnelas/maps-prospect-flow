@@ -51,10 +51,22 @@ export default function MetaNumeros() {
   const { members } = useAccountMembers();
   const canChangeResponsible = role === "owner" || role === "admin";
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab") === "webhook" ? "webhook" : "numeros";
+  const [activeTab, setActiveTab] = useState<"numeros" | "webhook">(tabFromUrl);
+  const handleTabChange = (v: string) => {
+    const next = v === "webhook" ? "webhook" : "numeros";
+    setActiveTab(next);
+    const sp = new URLSearchParams(searchParams);
+    if (next === "webhook") sp.set("tab", "webhook"); else sp.delete("tab");
+    setSearchParams(sp, { replace: true });
+  };
+
   const [connections, setConnections] = useState<WabaConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [expiredTokenIds, setExpiredTokenIds] = useState<Set<string>>(new Set());
   const [showExpiredAlert, setShowExpiredAlert] = useState(false);
+  const [webhookVerifiedIds, setWebhookVerifiedIds] = useState<Set<string>>(new Set());
 
   const [editingConn, setEditingConn] = useState<WabaConnection | null>(null);
   const [editNickname, setEditNickname] = useState("");
@@ -65,6 +77,16 @@ export default function MetaNumeros() {
   const [showAddNumber, setShowAddNumber] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const loadWebhookStatus = useCallback(async () => {
+    const { data, error } = await supabase.functions.invoke("meta-webhook-config", { body: { action: "info" } });
+    if (error || !data) return;
+    const conns = (data as any).connections ?? [];
+    setWebhookVerifiedIds(new Set(conns.filter((c: any) => !!c.webhook_verified_at).map((c: any) => c.id)));
+  }, []);
+
+  useEffect(() => { loadWebhookStatus(); }, [loadWebhookStatus]);
+
 
 
   const userPlan = (profile?.plan || "free").toLowerCase();
