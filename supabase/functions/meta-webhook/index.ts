@@ -609,7 +609,36 @@ serve(async (req) => {
                     .select('id, status')
                     .eq('waba_message_id', status.id);
 
-                  for (const existing of existingMessages || []) {
+                  let messagesToUpdate = existingMessages || [];
+                  if (messagesToUpdate.length === 0 && wabaConn?.id && status.recipient_id) {
+                    const tail = phoneTail8(status.recipient_id);
+                    const statusTimeIso = new Date(parseInt(status.timestamp) * 1000).toISOString();
+                    const { data: fallbackConversation } = await supabase
+                      .from('chat_conversations')
+                      .select('id')
+                      .eq('waba_connection_id', wabaConn.id)
+                      .or(`contact_phone.eq.${status.recipient_id},contact_phone.ilike.%${tail}`)
+                      .order('last_message_at', { ascending: false, nullsFirst: false })
+                      .limit(1)
+                      .maybeSingle();
+
+                    if (fallbackConversation) {
+                      const { data: fallbackMessages } = await supabase
+                        .from('chat_messages')
+                        .select('id, status')
+                        .eq('conversation_id', fallbackConversation.id)
+                        .eq('direction', 'outbound')
+                        .lte('created_at', statusTimeIso)
+                        .order('created_at', { ascending: false })
+                        .limit(1);
+                      messagesToUpdate = fallbackMessages || [];
+                      if (messagesToUpdate.length) {
+                        console.warn(`[meta-webhook] ⚠️ Status fallback matched ${status.status} for ${status.recipient_id} without waba_message_id match`);
+                      }
+                    }
+                  }
+
+                  for (const existing of messagesToUpdate) {
                     const currentRank = rank[existing.status || 'pending'] ?? 0;
                     const nextRank = rank[newStatus] ?? 0;
                     if (newStatus !== 'failed' && currentRank > nextRank) continue;
