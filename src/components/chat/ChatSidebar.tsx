@@ -23,6 +23,7 @@ interface ChatSidebarProps {
   loading: boolean;
   onNewConversation?: (phone: string, name?: string) => void;
   connectionHealth?: Record<string, boolean>;
+  topToolbar?: React.ReactNode;
 }
 
 function formatTimestamp(dateStr: string | null): string {
