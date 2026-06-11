@@ -732,48 +732,85 @@ export function ChatMessageArea({
                     const showTail = !isSameAuthorAsPrev;
                     const replyMsg = msg.reply_to_message_id ? messagesMap.get(msg.reply_to_message_id) : undefined;
 
+                    const isSelected = selectedIds.has(msg.id);
+                    const rowClickable = selectionMode;
                     return (
                       <div key={msg.id}>
                         {showDate && <DateDivider date={parseISO(msg.created_at)} />}
-                        <div className={cn(
-                          "flex",
-                          isOutbound ? "justify-end" : "justify-start",
-                          isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]"
-                        )}>
+                        <div
+                          className={cn(
+                            "flex items-center transition-colors rounded-md",
+                            isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]",
+                            selectionMode && "px-2 -mx-2 hover:bg-foreground/5 cursor-pointer",
+                            selectionMode && isSelected && "bg-[#00a884]/10"
+                          )}
+                          onClick={rowClickable ? () => toggleSelect(msg.id) : undefined}
+                        >
+                          {/* Checkbox on the left during selection */}
+                          {selectionMode && (
+                            <div className="shrink-0 mr-2 w-[22px] h-[22px] flex items-center justify-center">
+                              <span className={cn(
+                                "w-[20px] h-[20px] rounded-[5px] border-2 flex items-center justify-center transition-colors",
+                                isSelected ? "bg-[#00a884] border-[#00a884]" : "border-foreground/30"
+                              )}>
+                                {isSelected && <Check size={14} className="text-white" />}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Translate inbound bubbles slightly right when selecting (WhatsApp-style) */}
                           <div className={cn(
-                            "relative max-w-[65%] group/msg",
-                            showTail ? (isOutbound ? "mr-0" : "ml-0") : (isOutbound ? "mr-[8px]" : "ml-[8px]")
+                            "flex-1 flex items-start gap-1",
+                            isOutbound ? "justify-end" : "justify-start",
+                            selectionMode && !isOutbound && "pl-2"
                           )}>
-                            {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
-                            <MessageActions
-                              msg={msg}
-                              onReply={() => setReplyingTo(msg)}
-                              onForward={() => toast.info("Encaminhar: em breve!")}
-                            />
+                            {isOutbound && !selectionMode && (
+                              <MessageActions
+                                msg={msg}
+                                isOutbound
+                                onReply={() => setReplyingTo(msg)}
+                                onForward={() => startForwardFromMessage(msg)}
+                              />
+                            )}
                             <div className={cn(
-                              "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
-                              isOutbound ? "wa-bubble-out rounded-[7.5px]" : "wa-bubble-in rounded-[7.5px]",
-                              showTail && isOutbound && "!rounded-tr-none",
-                              showTail && !isOutbound && "!rounded-tl-none"
+                              "relative max-w-[65%] group/msg",
+                              // Always reserve tail space so messages align
+                              isOutbound ? "mr-[8px]" : "ml-[8px]"
                             )}>
-                              {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
-                              {msg.message_type !== "text" && (
-                                <div className="p-[3px]"><MediaPreview msg={msg} /></div>
-                              )}
-                              {msg.content && msg.message_type === "text" && (
-                                <div className="px-[9px] pt-[6px] pb-[8px]">
-                                  <span className="text-[14.2px] wa-text-primary leading-[19px] whitespace-pre-wrap break-words">
-                                    {msg.content}
+                              {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
+                              <div className={cn(
+                                "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
+                                isOutbound ? "wa-bubble-out rounded-[7.5px]" : "wa-bubble-in rounded-[7.5px]",
+                                showTail && isOutbound && "!rounded-tr-none",
+                                showTail && !isOutbound && "!rounded-tl-none"
+                              )}>
+                                {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
+                                {msg.message_type !== "text" && (
+                                  <div className="p-[3px]"><MediaPreview msg={msg} /></div>
+                                )}
+                                {msg.content && msg.message_type === "text" && (
+                                  <div className="px-[9px] pt-[6px] pb-[8px]">
+                                    <span className="text-[14.2px] wa-text-primary leading-[19px] whitespace-pre-wrap break-words">
+                                      {msg.content}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-end gap-[3px] px-[7px] pb-[5px] -mt-[2px]">
+                                  <span className="text-[11px] leading-[15px] wa-text-timestamp select-none">
+                                    {format(parseISO(msg.created_at), "HH:mm")}
                                   </span>
+                                  {isOutbound && <MessageStatus status={msg.status} />}
                                 </div>
-                              )}
-                              <div className="flex items-center justify-end gap-[3px] px-[7px] pb-[5px] -mt-[2px]">
-                                <span className="text-[11px] leading-[15px] wa-text-timestamp select-none">
-                                  {format(parseISO(msg.created_at), "HH:mm")}
-                                </span>
-                                {isOutbound && <MessageStatus status={msg.status} />}
                               </div>
                             </div>
+                            {!isOutbound && !selectionMode && (
+                              <MessageActions
+                                msg={msg}
+                                isOutbound={false}
+                                onReply={() => setReplyingTo(msg)}
+                                onForward={() => startForwardFromMessage(msg)}
+                              />
+                            )}
                           </div>
                         </div>
                       </div>
