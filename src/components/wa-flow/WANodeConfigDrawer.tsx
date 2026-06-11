@@ -2715,7 +2715,10 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== AI AGENT NODE ===== */}
           {node.type === "ai_agent" && (
-            <AIAgentConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} renderApiIndicator={renderApiIndicator} />
+            <>
+              <AIAgentConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} renderApiIndicator={renderApiIndicator} />
+              <OutOfWindowTemplateSection config={config} updateConfig={updateConfig} entryConfig={entryConfig} />
+            </>
           )}
 
           {/* ===== A/B TEST NODE ===== */}
