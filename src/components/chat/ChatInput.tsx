@@ -309,18 +309,22 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
   return (
     <>
-      {replyingTo && !attachments.length && (
-        <div className="flex items-center gap-2 mx-4 mt-2 px-3 py-2 rounded-t-xl wa-input-field">
-          <div className="w-[3px] h-8 rounded-full bg-[#00a884] shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] text-[#00a884] font-medium">{replyingTo.direction === "outbound" ? "Você" : "Contato"}</p>
-            <p className="text-[12px] wa-text-muted truncate">{replyingTo.content || "📎 Mídia"}</p>
+      {replyingTo && !attachments.length && (() => {
+        const isSelf = replyingTo.direction === "outbound";
+        const color = isSelf ? "#00a884" : "#1f7aec";
+        return (
+          <div className="flex items-center gap-2 mx-4 mt-2 px-3 py-2 rounded-t-xl wa-input-field">
+            <div className="w-[3px] h-8 rounded-full shrink-0" style={{ backgroundColor: color }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-medium" style={{ color }}>{isSelf ? "Você" : "Contato"}</p>
+              <p className="text-[12px] wa-text-muted truncate">{replyingTo.content || "📎 Mídia"}</p>
+            </div>
+            <button onClick={onCancelReply} className="p-1 rounded-full hover:bg-white/10">
+              <X size={16} className="wa-icon-muted" />
+            </button>
           </div>
-          <button onClick={onCancelReply} className="p-1 rounded-full hover:bg-white/10">
-            <X size={16} className="wa-icon-muted" />
-          </button>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Multi-attachment WhatsApp-style preview */}
       {attachments.length > 0 && (
