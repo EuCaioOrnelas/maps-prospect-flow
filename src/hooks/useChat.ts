@@ -6,6 +6,7 @@ import { toast } from "sonner";
 export interface ChatConversation {
   id: string;
   user_id: string;
+  owner_user_id?: string | null;
   waba_connection_id: string;
   contact_phone: string;
   contact_name: string | null;
@@ -261,7 +262,7 @@ export function useChat() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, accountOwnerId, activeConversationId]);
+  }, [user, accountOwnerId, activeConnectionId, activeConversationId]);
 
   // Send text message
   const sendMessage = useCallback(async (text: string, replyToId?: string) => {
