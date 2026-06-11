@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle } from "lucide-react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle, UserPlus, Trash2, Ban } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
@@ -7,6 +7,9 @@ import { getChatPhoneKey, useChatCRMFilters } from "@/hooks/useChatCRMFilters";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { NewConversationDialog } from "./NewConversationDialog";
 import { ChatFiltersDialog, type ChatFilterConfig } from "./ChatFiltersDialog";
+import { AddContactDialog } from "./AddContactDialog";
+import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
+import { toast } from "sonner";
 
 interface ChatSidebarProps {
   conversations: ChatConversation[];
