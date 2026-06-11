@@ -310,16 +310,6 @@ const Chat = () => {
                       : "w-[360px] shrink-0"
                   )}
                 >
-                  {(role === "owner" || role === "admin") && (
-                    <div className="px-3 py-2 border-b border-border bg-background/40">
-                      <CRMResponsibleFilter
-                        value={responsibleFilter}
-                        onChange={setResponsibleFilter}
-                        members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
-                        currentUserId={user?.id || ""}
-                      />
-                    </div>
-                  )}
                   <div className="flex-1 min-h-0">
                     <ChatSidebar
                       conversations={filteredConversations}
@@ -336,6 +326,16 @@ const Chat = () => {
                       loading={chat.loading}
                       onNewConversation={chat.startNewConversation}
                       connectionHealth={chat.connectionHealth}
+                      topToolbar={
+                        (role === "owner" || role === "admin") ? (
+                          <CRMResponsibleFilter
+                            value={responsibleFilter}
+                            onChange={setResponsibleFilter}
+                            members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
+                            currentUserId={user?.id || ""}
+                          />
+                        ) : null
+                      }
                     />
                   </div>
                 </div>

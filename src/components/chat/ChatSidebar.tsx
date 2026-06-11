@@ -23,6 +23,7 @@ interface ChatSidebarProps {
   loading: boolean;
   onNewConversation?: (phone: string, name?: string) => void;
   connectionHealth?: Record<string, boolean>;
+  topToolbar?: React.ReactNode;
 }
 
 function formatTimestamp(dateStr: string | null): string {
@@ -89,7 +90,7 @@ export function ChatSidebar({
   conversations, activeConversationId, onSelectConversation,
   searchQuery, onSearchChange, connections, activeConnectionId,
   onConnectionChange, onTogglePin, onArchive, onToggleMute, loading,
-  onNewConversation, connectionHealth = {},
+  onNewConversation, connectionHealth = {}, topToolbar,
 }: ChatSidebarProps) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
@@ -244,6 +245,12 @@ export function ChatSidebar({
           )}
         </div>
       </div>
+
+      {topToolbar && (
+        <div className="px-3 py-2 border-b border-border/40 bg-background/40">
+          {topToolbar}
+        </div>
+      )}
 
       {/* Search bar */}
       <div className="px-3 py-[7px] wa-sidebar-search-area">
