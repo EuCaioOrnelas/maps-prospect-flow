@@ -282,7 +282,21 @@ export default function WhatsAppAutomations() {
             </p>
           </div>
 
+          {!gateLoading && !hasEligibleWaba && (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4">
+              <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1">
+                <p className="font-semibold text-amber-700 text-sm">Conecte um número Meta oficial para usar fluxos</p>
+                <p className="text-xs text-amber-700/80">
+                  Os fluxos só rodam em números conectados via <strong>API oficial da Meta</strong> com <strong>webhook verificado</strong>. Configure agora em Configurações &rsaquo; WhatsApp Oficial.
+                </p>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => navigate("/meta-app")}>Configurar</Button>
+            </div>
+          )}
+
           {/* Action Buttons */}
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               onClick={() => createBlankFlow.mutate()}
