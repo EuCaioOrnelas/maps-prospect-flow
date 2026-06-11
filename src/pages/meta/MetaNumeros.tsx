@@ -229,7 +229,7 @@ export default function MetaNumeros() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => navigate("/meta-api-guide")}
+                  onClick={() => window.open("/meta-api-guide", "_blank", "noopener,noreferrer")}
                   className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                 >
                   <HelpCircle size={14} />
