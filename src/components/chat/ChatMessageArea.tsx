@@ -387,61 +387,88 @@ export function ChatMessageArea({
             </p>
           </div>
           <div className="flex items-center gap-[16px]">
-            {canChangeResponsible && onTransferResponsible && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className="wa-icon-button p-1 flex items-center gap-1.5"
-                    title={
-                      conversation.responsible_user_id
-                        ? `Responsável: ${members.find(m => m.user_id === conversation.responsible_user_id)?.name || "atribuído"}`
-                        : "Sem responsável"
-                    }
-                  >
-                    <UserCog size={18} className="wa-chat-header-icon" />
-                    <span className="text-[12px] wa-chat-header-sub max-w-[100px] truncate">
-                      {conversation.responsible_user_id
-                        ? (members.find(m => m.user_id === conversation.responsible_user_id)?.name?.split(" ")[0]
-                            || members.find(m => m.user_id === conversation.responsible_user_id)?.email
-                            || "Atribuído")
-                        : "Sem resp."}
-                    </span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-64 p-1 bg-popover">
-                  <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Transferir conversa
-                  </div>
-                  <button
-                    className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted text-muted-foreground"
-                    onClick={async () => {
-                      try { await onTransferResponsible(conversation.id, null); toast.success("Sem responsável definido"); }
-                      catch { toast.error("Erro ao transferir"); }
-                    }}
-                  >
-                    Sem responsável
-                  </button>
-                  <div className="max-h-56 overflow-y-auto">
-                    {members.map((m) => (
-                      <button
-                        key={m.user_id}
-                        className={cn(
-                          "w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted",
-                          m.user_id === conversation.responsible_user_id && "bg-muted font-medium"
-                        )}
-                        onClick={async () => {
-                          try { await onTransferResponsible(conversation.id, m.user_id); toast.success("Conversa transferida"); }
-                          catch { toast.error("Erro ao transferir"); }
-                        }}
-                      >
-                        {m.name || m.email || m.user_id.slice(0, 8)}
-                        {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
-                      </button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
+            {canChangeResponsible && onTransferResponsible && (() => {
+              const respMember = members.find(m => m.user_id === conversation.responsible_user_id);
+              const respLabel = respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || null;
+              const respColor = getChatAvatarColor(respMember?.user_id || "none");
+              const respInitials = respMember
+                ? getChatInitials(respMember.name, respMember.email || "")
+                : null;
+              return (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        "flex items-center gap-2 h-[34px] pl-1 pr-3 rounded-full border transition-colors",
+                        conversation.responsible_user_id
+                          ? "border-[#00a884]/30 bg-[#00a884]/10 hover:bg-[#00a884]/15"
+                          : "border-white/10 hover:border-white/20 bg-transparent"
+                      )}
+                      title={respLabel ? `Responsável: ${respMember?.name || respMember?.email}` : "Atribuir responsável"}
+                    >
+                      {respInitials ? (
+                        <span className={cn("w-[24px] h-[24px] rounded-full flex items-center justify-center text-white text-[10px] font-medium", respColor)}>
+                          {respInitials}
+                        </span>
+                      ) : (
+                        <span className="w-[24px] h-[24px] rounded-full bg-white/5 flex items-center justify-center">
+                          <UserCog size={13} className="wa-chat-header-icon" />
+                        </span>
+                      )}
+                      <span className="text-[12px] font-medium wa-chat-header-text max-w-[110px] truncate">
+                        {respLabel || "Atribuir"}
+                      </span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-72 p-1.5 bg-popover">
+                    <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                      Responsável pela conversa
+                    </div>
+                    <button
+                      className="w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md hover:bg-muted text-muted-foreground"
+                      onClick={async () => {
+                        try { await onTransferResponsible(conversation.id, null); toast.success("Sem responsável definido"); }
+                        catch { toast.error("Erro ao transferir"); }
+                      }}
+                    >
+                      <span className="w-[28px] h-[28px] rounded-full bg-muted flex items-center justify-center">
+                        <X size={14} />
+                      </span>
+                      Sem responsável
+                    </button>
+                    <div className="max-h-56 overflow-y-auto mt-0.5">
+                      {members.map((m) => {
+                        const c = getChatAvatarColor(m.user_id);
+                        const i = getChatInitials(m.name, m.email || "");
+                        const selected = m.user_id === conversation.responsible_user_id;
+                        return (
+                          <button
+                            key={m.user_id}
+                            className={cn(
+                              "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
+                              selected ? "bg-[#00a884]/10 text-foreground" : "hover:bg-muted"
+                            )}
+                            onClick={async () => {
+                              try { await onTransferResponsible(conversation.id, m.user_id); toast.success("Conversa transferida"); }
+                              catch { toast.error("Erro ao transferir"); }
+                            }}
+                          >
+                            <span className={cn("w-[28px] h-[28px] rounded-full flex items-center justify-center text-white text-[11px] font-medium", c)}>
+                              {i}
+                            </span>
+                            <span className="flex-1 text-left truncate">
+                              {m.name || m.email || m.user_id.slice(0, 8)}
+                              {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
+                            </span>
+                            {selected && <span className="text-[#00a884] text-[10px] font-semibold">●</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              );
+            })()}
             <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
               <Search size={20} className="wa-chat-header-icon" />
             </button>
