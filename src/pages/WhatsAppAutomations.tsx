@@ -92,16 +92,24 @@ export default function WhatsAppAutomations() {
 
   const createBlankFlow = useMutation({
     mutationFn: async () => {
+      const meta = eligibleWaba[0];
+      if (!meta) throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos.");
       const { data, error } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, owner_user_id: accountOwnerId || user!.id, name: "Novo Fluxo" })
+        .insert({
+          user_id: user!.id,
+          owner_user_id: accountOwnerId || user!.id,
+          name: "Novo Fluxo",
+          api_type: "meta",
+          waba_connection_id: meta.id,
+        })
         .select()
         .single();
       if (error) throw error;
       return data;
     },
     onSuccess: (data) => navigate(`/fluxos/${data.id}`),
-    onError: () => toast.error("Erro ao criar fluxo"),
+    onError: (e: any) => toast.error(e?.message || "Erro ao criar fluxo"),
   });
 
   const deleteFlow = useMutation({
