@@ -242,10 +242,10 @@ function MessageActions({
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "opacity-0 group-hover/msg:opacity-100 focus:opacity-100 transition-all",
+            "opacity-0 group-hover/msg-row:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-all duration-150",
             "shrink-0 self-center w-[28px] h-[28px] rounded-full",
-            "bg-background/90 backdrop-blur border border-border/60 shadow-sm",
-            "flex items-center justify-center hover:bg-muted",
+            "wa-message-action-button border shadow-sm",
+            "flex items-center justify-center hover:scale-105 active:scale-95",
             isOutbound ? "mr-1 order-first" : "ml-1"
           )}
           aria-label="Ações da mensagem"
@@ -740,7 +740,7 @@ export function ChatMessageArea({
                         {showDate && <DateDivider date={parseISO(msg.created_at)} />}
                         <div
                           className={cn(
-                            "flex items-center transition-colors rounded-md",
+                            "group/msg-row flex items-center transition-colors rounded-md",
                             isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]",
                             selectionMode && "px-2 -mx-2 hover:bg-foreground/5 cursor-pointer",
                             selectionMode && isSelected && "bg-[#00a884]/10"
@@ -774,7 +774,7 @@ export function ChatMessageArea({
                               />
                             )}
                             <div className={cn(
-                              "relative max-w-[65%] group/msg",
+                              "relative max-w-[65%]",
                               // Always reserve tail space so messages align
                               isOutbound ? "mr-[8px]" : "ml-[8px]"
                             )}>
