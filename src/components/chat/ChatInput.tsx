@@ -407,7 +407,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
             ))}
             <button
               onClick={() => addMoreInputRef.current?.click()}
-              className="w-[56px] h-[56px] rounded-lg shrink-0 border-2 border-dashed wa-accent-border-muted hover:wa-accent-bg-soft flex items-center justify-center transition-colors"
+              className="w-[56px] h-[56px] rounded-lg shrink-0 border-2 border-dashed wa-accent-border-muted wa-accent-hover-bg-softer flex items-center justify-center transition-colors"
               title="Adicionar mais"
             >
               <Plus size={22} className="wa-accent-text" />
