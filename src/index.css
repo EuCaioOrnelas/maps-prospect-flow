@@ -1242,13 +1242,13 @@ input::placeholder, textarea::placeholder {
 .wa-search-panel { background-color: hsl(220 18% 6%); }
 .landing-light .wa-search-panel { background-color: #ffffff; }
 
-/* ─── Message bubbles — Wiize green ─── */
-.wa-bubble-out { background-color: #a7ecd0; }
-.landing-light .wa-bubble-out { background-color: #a7ecd0; }
+/* ─── Message bubbles — comfortable WhatsApp green ─── */
+.wa-bubble-out { background-color: #d9fdd3; }
+.landing-light .wa-bubble-out { background-color: #d9fdd3; }
 .wa-bubble-in { background-color: #dde2e5; }
 .landing-light .wa-bubble-in { background-color: #dde2e5; }
-.wa-bubble-out-fill { fill: #a7ecd0; }
-.landing-light .wa-bubble-out-fill { fill: #a7ecd0; }
+.wa-bubble-out-fill { fill: #d9fdd3; }
+.landing-light .wa-bubble-out-fill { fill: #d9fdd3; }
 .wa-bubble-in-fill { fill: #dde2e5; }
 .landing-light .wa-bubble-in-fill { fill: #dde2e5; }
 
@@ -1288,8 +1288,27 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-icon-header { color: #54656f; }
 .wa-icon-panel { color: #8696a0; }
 .landing-light .wa-icon-panel { color: #54656f; }
-.wa-icon-tinted { color: #00a884; }
-.wa-icon-active { background-color: rgba(0,168,132,0.1); }
+.wa-icon-tinted { color: #128c7e; }
+.wa-icon-active { background-color: rgba(18,140,126,0.1); }
+
+.wa-accent-text { color: #128c7e; }
+.wa-accent-bg { background-color: #128c7e; }
+.wa-accent-bg:hover { background-color: #0f7f73; }
+.wa-accent-bg-soft { background-color: rgba(18,140,126,0.10); }
+.wa-accent-bg-softer { background-color: rgba(18,140,126,0.15); }
+.wa-accent-border-soft { border-color: rgba(18,140,126,0.28); }
+.wa-message-action-button {
+  background-color: rgba(255,255,255,0.96);
+  border-color: rgba(17,27,33,0.08);
+  color: #54656f;
+  box-shadow: 0 2px 8px rgba(11,20,26,0.10);
+}
+.wa-message-action-button:hover,
+.wa-message-action-button[data-state="open"] {
+  background-color: #ffffff;
+  color: #128c7e;
+  border-color: rgba(18,140,126,0.22);
+}
 
 .wa-icon-button {
   transition: background-color 0.15s;
@@ -1314,7 +1333,7 @@ input::placeholder, textarea::placeholder {
 .wa-dropdown-item:focus-visible,
 .wa-dropdown-item[data-highlighted],
 .wa-dropdown-item[data-state="open"] {
-  background-color: #00a884 !important;
+  background-color: #128c7e !important;
   color: #ffffff !important;
   outline: none;
 }
