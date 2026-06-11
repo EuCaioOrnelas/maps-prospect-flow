@@ -375,6 +375,7 @@ export function useChat() {
     const { data: urlData } = supabase.storage.from("chat-media").getPublicUrl(filePath);
     const publicUrl = urlData.publicUrl;
 
+    const tempId = crypto.randomUUID();
     const { data: inserted, error: insertError } = await supabase.from("chat_messages").insert({
       conversation_id: activeConversationId,
       user_id: user.id,
@@ -387,6 +388,7 @@ export function useChat() {
       media_filename: file.name,
       media_caption: caption || null,
       status: "pending",
+      metadata: { client_token: tempId },
     }).select().single();
 
     if (insertError) {
