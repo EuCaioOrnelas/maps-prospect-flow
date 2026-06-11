@@ -258,8 +258,44 @@ export function ChatMessageArea({
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
+  const [pipelineStages, setPipelineStages] = useState<{ id: string; name: string; color: string | null; position: number }[]>([]);
+  const [leadInfo, setLeadInfo] = useState<{ id: string; pipeline_stage_id: string | null } | null>(null);
   const navigate = useNavigate();
   const { accountOwnerId } = useAuth();
+
+  // Load pipeline stages once
+  useEffect(() => {
+    if (!accountOwnerId) return;
+    supabase
+      .from("pipeline_stages")
+      .select("id, name, color, position")
+      .eq("user_id", accountOwnerId)
+      .order("position", { ascending: true })
+      .then(({ data }) => setPipelineStages((data as any) || []));
+  }, [accountOwnerId]);
+
+  // Load lead for the active conversation
+  useEffect(() => {
+    if (!conversation || !accountOwnerId) { setLeadInfo(null); return; }
+    const last8 = conversation.contact_phone.replace(/\D/g, "").slice(-8);
+    supabase
+      .from("leads")
+      .select("id, pipeline_stage_id")
+      .eq("user_id", accountOwnerId)
+      .ilike("phone", `%${last8}`)
+      .limit(1)
+      .then(({ data }) => setLeadInfo((data && data[0]) ? (data[0] as any) : null));
+  }, [conversation?.id, conversation?.contact_phone, accountOwnerId]);
+
+  const handleChangeStage = async (stageId: string) => {
+    if (!leadInfo) { toast.error("Salve o contato no CRM antes de mudar a coluna"); return; }
+    const prev = leadInfo.pipeline_stage_id;
+    setLeadInfo({ ...leadInfo, pipeline_stage_id: stageId });
+    const { error } = await supabase.from("leads").update({ pipeline_stage_id: stageId }).eq("id", leadInfo.id);
+    if (error) { setLeadInfo({ ...leadInfo, pipeline_stage_id: prev }); toast.error("Erro ao mudar coluna"); }
+    else toast.success("Coluna do CRM atualizada");
+  };
+
 
   useEffect(() => {
     if (messagesEndRef.current) {
