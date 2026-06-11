@@ -600,7 +600,7 @@ export function ChatMessageArea({
                       className={cn(
                         "flex items-center gap-2 h-[34px] pl-1 pr-3 rounded-full border transition-colors",
                         conversation.responsible_user_id
-                          ? "wa-accent-border-soft wa-accent-bg-soft hover:wa-accent-bg-softer"
+                          ? "wa-accent-border-soft wa-accent-bg-soft wa-accent-hover-bg-softer"
                           : "border-white/10 hover:border-white/20 bg-transparent"
                       )}
                       title={respLabel ? `Responsável: ${respMember?.name || respMember?.email}` : "Atribuir responsável"}
