@@ -281,7 +281,10 @@ export default function MetaNumeros() {
       />
 
 
+      <BackupProgressBanner className="mt-3" />
+
       <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-2">
+
         <TabsList className="bg-muted/40">
           <TabsTrigger value="numeros">
             <Phone size={13} className="mr-1.5" />
