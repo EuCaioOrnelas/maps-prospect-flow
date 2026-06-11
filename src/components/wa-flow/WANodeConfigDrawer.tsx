@@ -2490,6 +2490,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                   </div>
                 </div>
               )}
+                  <OutOfWindowTemplateSection config={config} updateConfig={updateConfig} entryConfig={entryConfig} />
                 </>
               )}
             </div>
