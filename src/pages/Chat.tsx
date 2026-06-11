@@ -365,6 +365,8 @@ const Chat = () => {
                       onDeleteConversation={chat.deleteConversation}
                       onToggleBlock={chat.toggleBlock}
                       connectionHealth={chat.connectionHealth}
+                      members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
+                      currentUserId={user?.id || null}
                       topToolbar={
                         (role === "owner" || role === "admin") ? (
                           <CRMResponsibleFilter
