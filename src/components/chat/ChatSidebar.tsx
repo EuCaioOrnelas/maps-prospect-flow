@@ -97,6 +97,12 @@ export function ChatSidebar({
     loading: loadingCrmFilters,
   } = useChatCRMFilters();
 
+  const memberMap = useMemo(() => {
+    const m: Record<string, { name: string | null; email: string | null }> = {};
+    for (const x of members) m[x.user_id] = { name: x.name, email: x.email };
+    return m;
+  }, [members]);
+
   const hasCustomFilters = customFilters.tags.length > 0 || customFilters.crmStages.length > 0 || customFilters.scoreMin > 0 || customFilters.scoreMax < 1000;
   const customFilterCount = customFilters.tags.length + customFilters.crmStages.length + (customFilters.scoreMin > 0 || customFilters.scoreMax < 1000 ? 1 : 0);
 
