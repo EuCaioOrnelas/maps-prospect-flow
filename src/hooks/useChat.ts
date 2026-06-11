@@ -340,12 +340,18 @@ export function useChat() {
 
     const messageType = file.type.startsWith("image/") ? "image"
       : file.type.startsWith("video/") ? "video"
+      : file.type.startsWith("audio/") ? "audio"
       : "document";
 
     // Upload to storage
     const filePath = `chat/${user.id}/${Date.now()}_${file.name}`;
-    const { data: uploadData } = await supabase.storage.from("chat-media").upload(filePath, file);
-    if (!uploadData) return;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("chat-media")
+      .upload(filePath, file, { contentType: file.type, upsert: false });
+    if (uploadError || !uploadData) {
+      console.error("[sendMedia] upload failed", uploadError);
+      return;
+    }
 
     const { data: urlData } = supabase.storage.from("chat-media").getPublicUrl(filePath);
     const publicUrl = urlData.publicUrl;
@@ -363,8 +369,9 @@ export function useChat() {
       status: "pending",
     }).select().single();
 
-    const lastText = messageType === "image" ? "📷 Imagem" 
-      : messageType === "video" ? "🎥 Vídeo" 
+    const lastText = messageType === "image" ? "📷 Imagem"
+      : messageType === "video" ? "🎥 Vídeo"
+      : messageType === "audio" ? "🎤 Áudio"
       : `📄 ${file.name}`;
 
     await supabase.from("chat_conversations").update({
