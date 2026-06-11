@@ -434,7 +434,7 @@ serve(async (req) => {
                   .select('id, unread_count')
                   .eq('user_id', userId)
                   .eq('waba_connection_id', connectionId)
-                  .eq('contact_phone', from)
+                  .or(`contact_phone.eq.${from},contact_phone.ilike.%${phoneTail8(from)}`)
                   .maybeSingle();
 
                 const lastText = msgType === 'text' ? textContent
@@ -448,6 +448,7 @@ serve(async (req) => {
                 if (!conversation) {
                   const { data: newConv } = await supabase.from('chat_conversations').insert({
                     user_id: userId,
+                    owner_user_id: userId,
                     waba_connection_id: connectionId,
                     contact_phone: from,
                     contact_name: contactName,
@@ -473,6 +474,7 @@ serve(async (req) => {
                   await supabase.from('chat_messages').insert({
                     conversation_id: conversation.id,
                     user_id: userId,
+                    owner_user_id: userId,
                     waba_message_id: msg.id || null,
                     direction: 'inbound',
                     message_type: msgType,
