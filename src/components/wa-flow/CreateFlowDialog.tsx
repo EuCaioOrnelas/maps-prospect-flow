@@ -80,13 +80,23 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
         throw new Error("Descreva o que deseja para o fluxo");
       }
 
-      // 1. Create flow
+      if (!defaultConnection) {
+        throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos.");
+      }
+
+      // 1. Create flow (Meta-bound)
       const { data: flow, error: flowErr } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, name: "Fluxo IA" })
+        .insert({
+          user_id: user!.id,
+          name: "Fluxo IA",
+          api_type: "meta",
+          waba_connection_id: defaultConnection.id,
+        })
         .select()
         .single();
       if (flowErr) throw flowErr;
+
 
       // 2. Call edge function to generate
       const { data: result, error: fnErr } = await supabase.functions.invoke("generate-wa-flow", {
