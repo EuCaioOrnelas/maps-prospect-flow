@@ -223,21 +223,24 @@ export function ChatSidebar({
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          {onNewConversation && (
-            <button
-              onClick={() => setNewConvOpen(true)}
-              className="p-[6px] rounded-full wa-sidebar-header-btn transition-colors"
-              title="Nova conversa"
-            >
-              <MessageSquarePlus size={20} className="wa-sidebar-header-icon" />
-            </button>
-          )}
         </div>
       </div>
 
-      {topToolbar && (
-        <div className="px-3 py-2 border-b border-border/40 bg-background/40">
-          {topToolbar}
+      {(topToolbar || onNewConversation) && (
+        <div className="px-3 py-2 border-b border-border/40 bg-background/40 flex items-center gap-2">
+          <div className="flex-1 min-w-0 overflow-hidden">
+            {topToolbar}
+          </div>
+          {onNewConversation && (
+            <button
+              onClick={() => setNewConvOpen(true)}
+              className="shrink-0 p-[7px] rounded-full wa-sidebar-header-btn transition-colors border border-border/40 hover:border-primary/40"
+              title="Nova conversa"
+              aria-label="Nova conversa"
+            >
+              <MessageSquarePlus size={18} className="wa-sidebar-header-icon" />
+            </button>
+          )}
         </div>
       )}
 
