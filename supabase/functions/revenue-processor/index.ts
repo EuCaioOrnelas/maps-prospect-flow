@@ -251,6 +251,46 @@ const EVENT_CATEGORIES: Record<string, string> = {
   CALL_REQUEST: "action",
 };
 
+// ========== GREETING / FAREWELL DETECTION ==========
+// Mensagens "sociais" não devem disparar SLA de resposta (cumprimentos, despedidas, agradecimentos)
+const GREETING_PATTERNS = [
+  "oi", "ola", "olá", "opa", "eai", "e ai", "e aí", "hello", "hi", "hey",
+  "bom dia", "boa tarde", "boa noite", "fala", "salve",
+];
+const FAREWELL_PATTERNS = [
+  "tchau", "ate mais", "até mais", "ate logo", "até logo", "flw", "falou",
+  "ate amanha", "até amanhã", "ate depois", "boa noite pra voce",
+  "fui", "tmj", "abracos", "abraços", "abc", "abs",
+];
+const THANKS_PATTERNS = [
+  "obrigado", "obrigada", "obg", "vlw", "valeu", "agradeco", "agradeço",
+  "thanks", "thank you", "grato", "grata",
+];
+const ACK_PATTERNS = [
+  "ok", "okay", "okk", "tá", "ta", "tá bom", "ta bom", "blz", "beleza",
+  "show", "perfeito", "combinado", "fechado", "certo", "entendi",
+  "uhum", "aham", "humm", "kkkk", "rsrs", "haha", "👍", "👌", "✅",
+];
+
+function isSocialOnlyMessage(rawText: string, normalized: string): boolean {
+  if (!rawText) return false;
+  const cleaned = normalized.replace(/[^a-z0-9 ]/gi, "").trim();
+  if (!cleaned) {
+    // Mensagem só com emoji/pontuação -> considera social
+    return rawText.trim().length <= 6;
+  }
+  // Muito curta (≤25 chars) e match com greeting/farewell/thanks/ack
+  if (rawText.trim().length > 60) return false;
+  const wordCount = cleaned.split(/\s+/).length;
+  if (wordCount > 6) return false;
+
+  const all = [...GREETING_PATTERNS, ...FAREWELL_PATTERNS, ...THANKS_PATTERNS, ...ACK_PATTERNS];
+  return all.some((p) => {
+    const np = p.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return cleaned === np || cleaned.startsWith(np + " ") || cleaned.endsWith(" " + np) || cleaned === np.replace(/\s+/g, "");
+  });
+}
+
 // ========== ACTION DETECTION (LINK_CLICK / FORM_SUBMIT / CALL_REQUEST) ==========
 const URL_REGEX = /\b(?:https?:\/\/|www\.)\S+/i;
 const CALL_REQUEST_PATTERNS = [
