@@ -361,7 +361,35 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
               disabled={saving}
             />
           </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              Responsável pelo número <span className="text-destructive">*</span>
+            </Label>
+            <Select value={responsibleUserId} onValueChange={setResponsibleUserId} disabled={saving}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione quem vai atender por este número" />
+              </SelectTrigger>
+              <SelectContent>
+                {members.slice(0, Math.ceil(members.length / 2)).map((m) => (
+                  <SelectItem key={m.user_id} value={m.user_id}>
+                    {m.name || m.email || m.user_id.slice(0, 8)}
+                  </SelectItem>
+                ))}
+                <SelectItem value="none">— Sem responsável (CRM inteiro) —</SelectItem>
+                {members.slice(Math.ceil(members.length / 2)).map((m) => (
+                  <SelectItem key={m.user_id} value={m.user_id}>
+                    {m.name || m.email || m.user_id.slice(0, 8)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Ao conectar, importamos os contatos do CRM deste responsável para o chat. Sem responsável, importamos todos os contatos da conta.
+            </p>
+          </div>
         </div>
+
 
         {/* Error */}
         {error && (
