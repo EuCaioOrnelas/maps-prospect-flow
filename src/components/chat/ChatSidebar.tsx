@@ -25,6 +25,9 @@ interface ChatSidebarProps {
   onToggleMute: (id: string) => void;
   loading: boolean;
   onNewConversation?: (phone: string, name?: string) => void;
+  onSaveContactName?: (conversationId: string, name: string) => Promise<void>;
+  onDeleteConversation?: (conversationId: string) => Promise<void>;
+  onToggleBlock?: (conversationId: string) => Promise<void>;
   connectionHealth?: Record<string, boolean>;
   topToolbar?: React.ReactNode;
 }
