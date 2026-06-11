@@ -34,6 +34,14 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
   const [prompt, setPrompt] = useState(initialPrompt || "");
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { connections, loading: loadingGate } = useWebhookGate();
+
+  // Only Meta connections with verified webhook can power a flow.
+  const eligible = (connections || []).filter(
+    (c) => !!c.webhook_verified_at && (c.status === "connected" || c.status === "active"),
+  );
+  const hasEligible = eligible.length > 0;
+  const defaultConnection = eligible[0] || null;
 
   useEffect(() => {
     if (open) {
@@ -44,9 +52,15 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
 
   const createBlank = useMutation({
     mutationFn: async () => {
+      if (!defaultConnection) throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos.");
       const { data, error } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, name: "Novo Fluxo" })
+        .insert({
+          user_id: user!.id,
+          name: "Novo Fluxo",
+          api_type: "meta",
+          waba_connection_id: defaultConnection.id,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -56,8 +70,9 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
       onOpenChange(false);
       navigate(`/fluxos/${data.id}`);
     },
-    onError: () => toast.error("Erro ao criar fluxo"),
+    onError: (e: any) => toast.error(e.message || "Erro ao criar fluxo"),
   });
+
 
   const createWithAI = useMutation({
     mutationFn: async () => {
