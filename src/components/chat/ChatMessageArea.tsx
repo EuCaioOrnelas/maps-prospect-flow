@@ -918,6 +918,18 @@ export function ChatMessageArea({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Forward dialog */}
+      {onForwardMessages && (
+        <ForwardDialog
+          open={forwardOpen}
+          onOpenChange={(v) => { setForwardOpen(v); if (!v) exitSelection(); }}
+          messages={selectedMessages}
+          conversations={conversations}
+          fetchTemplates={fetchTemplates}
+          onForward={onForwardMessages}
+        />
+      )}
     </div>
   );
 }
