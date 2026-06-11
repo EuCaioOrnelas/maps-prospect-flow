@@ -308,7 +308,7 @@ export default function WhatsAppAutomations() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               onClick={() => createBlankFlow.mutate()}
-              disabled={createBlankFlow.isPending}
+              disabled={createBlankFlow.isPending || !hasEligibleWaba || gateLoading}
               className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left disabled:opacity-50"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
