@@ -246,6 +246,12 @@ export function ChatSidebar({
         </div>
       </div>
 
+      {topToolbar && (
+        <div className="px-3 py-2 border-b border-border/40 bg-background/40">
+          {topToolbar}
+        </div>
+      )}
+
       {/* Search bar */}
       <div className="px-3 py-[7px] wa-sidebar-search-area">
         <div className={cn(
