@@ -609,7 +609,10 @@ export function ChatMessageArea({
 
         {/* Messages area + input — background extends fully */}
         <div className="flex-1 flex flex-col min-h-0 wa-chat-bg relative">
-          <div className="absolute inset-0 wa-chat-pattern pointer-events-none" />
+          <div
+            className="absolute inset-0 wa-chat-pattern pointer-events-none"
+            style={{ backgroundImage: `url(${logoIconNew})` }}
+          />
           <div className="wa-chat-glow" />
 
           <div className="flex-1 overflow-y-auto wa-scrollbar relative z-[1]" ref={scrollContainerRef}>
