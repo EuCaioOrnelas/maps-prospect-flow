@@ -325,6 +325,9 @@ const Chat = () => {
                       onToggleMute={chat.toggleMute}
                       loading={chat.loading}
                       onNewConversation={chat.startNewConversation}
+                      onSaveContactName={chat.saveContactName}
+                      onDeleteConversation={chat.deleteConversation}
+                      onToggleBlock={chat.toggleBlock}
                       connectionHealth={chat.connectionHealth}
                       topToolbar={
                         (role === "owner" || role === "admin") ? (
@@ -361,6 +364,9 @@ const Chat = () => {
                     onTransferResponsible={chat.transferConversation}
                     currentUserId={user?.id || ""}
                     onBack={isMobile ? () => chat.setActiveConversationId(null) : undefined}
+                    onDeleteConversation={chat.deleteConversation}
+                    onToggleBlock={chat.toggleBlock}
+                    onSaveContactName={chat.saveContactName}
                   />
                 </div>
               </>
