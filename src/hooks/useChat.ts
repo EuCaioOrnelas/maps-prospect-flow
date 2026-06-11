@@ -212,7 +212,11 @@ export function useChat() {
         filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         if (payload.eventType === "INSERT") {
-          setConversations(prev => [payload.new as ChatConversation, ...prev]);
+          setConversations(prev => {
+            const next = payload.new as ChatConversation;
+            if (prev.some(c => c.id === next.id)) return prev;
+            return [next, ...prev];
+          });
         } else if (payload.eventType === "UPDATE") {
           setConversations(prev =>
             prev.map(c => c.id === (payload.new as ChatConversation).id ? payload.new as ChatConversation : c)
@@ -222,6 +226,8 @@ export function useChat() {
                 return new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime();
               })
           );
+        } else if (payload.eventType === "DELETE") {
+          setConversations(prev => prev.filter(c => c.id !== (payload.old as any).id));
         }
       })
       .on("postgres_changes", {
@@ -232,7 +238,12 @@ export function useChat() {
       }, (payload) => {
         const newMsg = payload.new as ChatMessage;
         if (newMsg.conversation_id === activeConversationId) {
-          setMessages(prev => [...prev, newMsg]);
+          // Dedupe: skip if message id already exists (avoids duplicate after
+          // optimistic insert + DB insert returning the same row via realtime).
+          setMessages(prev => {
+            if (prev.some(m => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
         }
       })
       .on("postgres_changes", {
