@@ -185,8 +185,8 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
       };
 
       const op = existing?.id
-        ? await supabase.from("user_waba_connections").update(payload).eq("id", existing.id).select().single()
-        : await supabase.from("user_waba_connections").insert([payload]).select().single();
+        ? await (supabase.from("user_waba_connections") as any).update(payload).eq("id", existing.id).select().single()
+        : await (supabase.from("user_waba_connections") as any).insert(payload).select().single();
 
       const connection = op.data;
       const dbError = op.error;
