@@ -392,7 +392,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                   </div>
                 )}
                 {a.type === "document" && (
-                  <div className="w-full h-full wa-accent-bg/15 flex items-center justify-center">
+                  <div className="w-full h-full wa-accent-bg-soft flex items-center justify-center">
                     <FileText size={22} className="wa-accent-text" />
                   </div>
                 )}
@@ -407,7 +407,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
             ))}
             <button
               onClick={() => addMoreInputRef.current?.click()}
-              className="w-[56px] h-[56px] rounded-lg shrink-0 border-2 border-dashed wa-accent-border/40 hover:wa-accent-border hover:wa-accent-bg/10 flex items-center justify-center transition-colors"
+              className="w-[56px] h-[56px] rounded-lg shrink-0 border-2 border-dashed wa-accent-border-muted hover:wa-accent-bg-soft flex items-center justify-center transition-colors"
               title="Adicionar mais"
             >
               <Plus size={22} className="wa-accent-text" />
@@ -428,19 +428,19 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
           {showAttach && (
             <div className="wa-attach-menu absolute bottom-[60px] left-[20px] wa-attach-bg rounded-2xl shadow-2xl border wa-border-light p-3 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <button onClick={() => imageInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
-                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg/15 ring-1 wa-accent-ring flex items-center justify-center group-hover:wa-accent-bg/25 group-hover:scale-105 transition-all">
+                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
                   <ImageIcon size={22} className="wa-accent-text" strokeWidth={1.8} />
                 </div>
                 <span className="text-[11px] wa-text-muted font-medium">Fotos</span>
               </button>
               <button onClick={() => videoInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
-                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg/15 ring-1 wa-accent-ring flex items-center justify-center group-hover:wa-accent-bg/25 group-hover:scale-105 transition-all">
+                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
                   <Film size={22} className="wa-accent-text" strokeWidth={1.8} />
                 </div>
                 <span className="text-[11px] wa-text-muted font-medium">Vídeo</span>
               </button>
               <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
-                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg/15 ring-1 wa-accent-ring flex items-center justify-center group-hover:wa-accent-bg/25 group-hover:scale-105 transition-all">
+                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
                   <FileText size={22} className="wa-accent-text" strokeWidth={1.8} />
                 </div>
                 <span className="text-[11px] wa-text-muted font-medium">Arquivo</span>

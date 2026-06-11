@@ -468,7 +468,7 @@ export function ChatMessageArea({
     >
       {isDragging && (
         <div className="absolute inset-0 z-50 p-4 pointer-events-none">
-          <div className="w-full h-full rounded-2xl border-2 border-dashed wa-accent-border wa-accent-bg/15 hover:wa-accent-bg/25 flex flex-col items-center justify-center gap-3 backdrop-blur-sm transition-colors">
+          <div className="w-full h-full rounded-2xl border-2 border-dashed wa-accent-border wa-accent-surface flex flex-col items-center justify-center gap-3 backdrop-blur-sm transition-colors">
             <div className="w-[72px] h-[72px] rounded-2xl bg-white shadow-lg flex items-center justify-center">
               <svg viewBox="0 0 24 24" width="36" height="36" className="wa-accent-text" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M14 3v4a1 1 0 0 0 1 1h4" />
@@ -511,7 +511,7 @@ export function ChatMessageArea({
                 <button
                   onClick={() => setAddContactOpen(true)}
                   title="Salvar contato no CRM"
-                  className="shrink-0 inline-flex items-center justify-center w-[26px] h-[26px] rounded-full wa-accent-bg/15 hover:wa-accent-bg/25 wa-accent-text transition-colors"
+                  className="shrink-0 inline-flex items-center justify-center w-[26px] h-[26px] rounded-full wa-accent-surface wa-accent-text transition-colors"
                 >
                   <UserPlus size={14} />
                 </button>
@@ -743,7 +743,7 @@ export function ChatMessageArea({
                             "group/msg-row flex items-center transition-colors rounded-md",
                             isSameAuthorAsPrev ? "mt-[2px]" : "mt-[10px]",
                             selectionMode && "px-2 -mx-2 hover:bg-foreground/5 cursor-pointer",
-                            selectionMode && isSelected && "wa-accent-bg/10"
+                            selectionMode && isSelected && "wa-accent-bg-soft"
                           )}
                           onClick={rowClickable ? () => toggleSelect(msg.id) : undefined}
                         >

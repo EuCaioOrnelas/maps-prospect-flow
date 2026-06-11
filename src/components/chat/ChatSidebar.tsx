@@ -195,7 +195,7 @@ export function ChatSidebar({
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 mx-1 my-0.5 rounded-lg cursor-pointer transition-colors",
                       c.id === activeConnectionId
-                        ? "wa-accent-bg/10 wa-accent-text"
+                        ? "wa-accent-bg-soft wa-accent-text"
                         : "hover:bg-white/5"
                     )}
                   >
@@ -203,7 +203,7 @@ export function ChatSidebar({
                       "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
                       connectionHealth[c.id] === false 
                         ? "bg-red-500/20" 
-                        : c.id === activeConnectionId ? "wa-accent-bg/20" : "bg-white/5"
+                        : c.id === activeConnectionId ? "wa-accent-bg-softer" : "bg-white/5"
                     )}>
                       {connectionHealth[c.id] === false ? (
                         <AlertTriangle size={14} className="text-red-500" />
@@ -408,7 +408,7 @@ export function ChatSidebar({
                         <button
                           onClick={(e) => { e.stopPropagation(); setAddContactFor(conv); }}
                           title="Salvar contato no CRM"
-                          className="shrink-0 inline-flex items-center justify-center w-[20px] h-[20px] rounded-full wa-accent-bg/15 hover:wa-accent-bg/25 wa-accent-text transition-colors"
+                          className="shrink-0 inline-flex items-center justify-center w-[20px] h-[20px] rounded-full wa-accent-surface wa-accent-text transition-colors"
                         >
                           <UserPlus size={11} />
                         </button>
@@ -416,7 +416,7 @@ export function ChatSidebar({
                     </span>
                     <span className={cn(
                       "text-[12px] leading-[14px] shrink-0 ml-2",
-                      hasUnread ? "wa-accent-text dark:wa-accent-text" : "wa-text-timestamp"
+                      hasUnread ? "wa-accent-text " : "wa-text-timestamp"
                     )}>
                       {formatTimestamp(conv.last_message_at)}
                     </span>
