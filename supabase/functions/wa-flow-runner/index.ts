@@ -683,7 +683,7 @@ async function runFlow(
             mediaUrl: it.media_url || it.url,
             caption: interpolate(it.caption || "", ctx.variables),
             filename: it.filename,
-          });
+          }, config);
         }
         ctx.hasFreshUserInput = false;
         currentNodeId = getDefaultTarget(bySource, node.id);
@@ -717,7 +717,7 @@ async function runFlow(
               footer: footerText,
               buttonText: config.list_button_text || "Ver opções",
               sections: [{ title: config.list_section_title || "Opções", rows: normalizedChoices }],
-            });
+            }, config);
           } else {
             await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
               type: "buttons",
@@ -725,7 +725,7 @@ async function runFlow(
               body: bodyText,
               footer: footerText,
               buttons: normalizedChoices.slice(0, 3),
-            });
+            }, config);
           }
         } catch (e) {
           // Fallback to plain-text numbered list if interactive send fails (e.g. Evolution endpoint unavailable).
@@ -735,7 +735,7 @@ async function runFlow(
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
             type: "text",
             content: `${lines.join("\n\n")}${optionLines ? `\n\n${optionLines}` : ""}`,
-          });
+          }, config);
         }
 
         ctx.hasFreshUserInput = false;
@@ -818,7 +818,7 @@ async function runFlow(
           const prompt = config.prompt_message
             ? interpolate(config.prompt_message, ctx.variables)
             : `Por favor, informe ${labels[config.collect_type] || varName}:`;
-          await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: prompt });
+          await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: prompt }, config);
           ctx.hasFreshUserInput = false;
           pausedNodeId = node.id;
           currentNodeId = null;
@@ -848,7 +848,7 @@ async function runFlow(
         if (config.handoff_message) {
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
             type: "text", content: interpolate(config.handoff_message, ctx.variables),
-          });
+          }, config);
         }
         ctx.hasFreshUserInput = false;
         // Move to human support stage if configured
@@ -865,7 +865,7 @@ async function runFlow(
         if (config.end_message) {
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
             type: "text", content: interpolate(config.end_message, ctx.variables),
-          });
+          }, config);
         }
         await supabase.from("wa_flow_executions").update({
           status: "completed",
@@ -951,7 +951,7 @@ async function runFlow(
             await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
               type: "text",
               content: cleanedText,
-            });
+            }, config);
           }
           ctx.variables["ai_response"] = cleanedText;
           if (chosenRoute) ctx.variables["ai_route"] = chosenRoute;
