@@ -14,11 +14,10 @@ const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const VERIFY_TOKEN = Deno.env.get("META_WEBHOOK_VERIFY_TOKEN") ?? "wiize-meta-webhook-2026";
 const GRAPH_VERSION = "v21.0";
 
-// Callback fixo no banco externo do usuário (projeto lqfqnqfeuneorxocybru).
-// Pode ser sobrescrito via env META_WEBHOOK_CALLBACK_URL.
+// Callback do próprio backend atual. Pode ser sobrescrito via env META_WEBHOOK_CALLBACK_URL.
 const CALLBACK_URL =
   Deno.env.get("META_WEBHOOK_CALLBACK_URL") ??
-  "https://lqfqnqfeuneorxocybru.supabase.co/functions/v1/meta-webhook";
+  `${SUPABASE_URL}/functions/v1/meta-webhook`;
 
 // Lista canônica de eventos obrigatórios para o sistema funcionar (chat, campanhas, métricas).
 const REQUIRED_EVENTS = [
