@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export interface ChatConversation {
   id: string;
@@ -292,6 +293,7 @@ export function useChat() {
     const { data: inserted } = await supabase.from("chat_messages").insert({
       conversation_id: activeConversationId,
       user_id: user.id,
+      owner_user_id: accountOwnerId || user.id,
       direction: "outbound",
       message_type: "text",
       content: text,
@@ -303,18 +305,17 @@ export function useChat() {
       setMessages(prev => prev.map(m => m.id === tempId ? inserted as ChatMessage : m));
     }
 
-    // Update conversation last message
-    await supabase.from("chat_conversations").update({
+    // Fire conversation update & Meta send in parallel (no await — speeds up perceived latency)
+    supabase.from("chat_conversations").update({
       last_message_text: text,
       last_message_at: new Date().toISOString(),
       last_message_type: "text",
       last_message_direction: "outbound",
-    }).eq("id", activeConversationId);
+    }).eq("id", activeConversationId).then(() => {});
 
-    // Call edge function to send via Meta API
     const connection = connections.find(c => c.id === conversation.waba_connection_id);
     if (connection && inserted) {
-      const { error: fnError } = await supabase.functions.invoke("send-chat-message", {
+      supabase.functions.invoke("send-chat-message", {
         body: {
           message_id: (inserted as any).id,
           phone_number_id: connection.phone_number_id,
@@ -323,14 +324,14 @@ export function useChat() {
           text: text,
           waba_connection_id: connection.id,
         },
+      }).then(({ error: fnError }) => {
+        if (fnError) {
+          console.error("send-chat-message error:", fnError);
+          setMessages(prev => prev.map(m => m.id === (inserted as any).id ? { ...m, status: "failed" } : m));
+        }
       });
-      if (fnError) {
-        console.error("send-chat-message error:", fnError);
-        // Update message status to failed
-        setMessages(prev => prev.map(m => m.id === (inserted as any).id ? { ...m, status: "failed" } : m));
-      }
     }
-  }, [activeConversationId, user, conversations, connections]);
+  }, [activeConversationId, user, accountOwnerId, conversations, connections]);
 
   // Send media message
   const sendMedia = useCallback(async (file: File, caption?: string) => {
@@ -343,22 +344,25 @@ export function useChat() {
       : file.type.startsWith("audio/") ? "audio"
       : "document";
 
-    // Upload to storage
-    const filePath = `chat/${user.id}/${Date.now()}_${file.name}`;
+    // Upload to storage — path MUST start with user.id (RLS policy)
+    const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+    const filePath = `${user.id}/${Date.now()}_${safeName}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("chat-media")
       .upload(filePath, file, { contentType: file.type, upsert: false });
     if (uploadError || !uploadData) {
       console.error("[sendMedia] upload failed", uploadError);
+      toast.error("Falha ao enviar arquivo", { description: uploadError?.message });
       return;
     }
 
     const { data: urlData } = supabase.storage.from("chat-media").getPublicUrl(filePath);
     const publicUrl = urlData.publicUrl;
 
-    const { data: inserted } = await supabase.from("chat_messages").insert({
+    const { data: inserted, error: insertError } = await supabase.from("chat_messages").insert({
       conversation_id: activeConversationId,
       user_id: user.id,
+      owner_user_id: accountOwnerId || user.id,
       direction: "outbound",
       message_type: messageType,
       content: caption || null,
@@ -369,17 +373,24 @@ export function useChat() {
       status: "pending",
     }).select().single();
 
+    if (insertError) {
+      console.error("[sendMedia] insert failed", insertError);
+      toast.error("Falha ao registrar mensagem", { description: insertError.message });
+      return;
+    }
+
     const lastText = messageType === "image" ? "📷 Imagem"
       : messageType === "video" ? "🎥 Vídeo"
       : messageType === "audio" ? "🎤 Áudio"
       : `📄 ${file.name}`;
 
-    await supabase.from("chat_conversations").update({
+    // Fire conversation update and Meta send in parallel
+    supabase.from("chat_conversations").update({
       last_message_text: lastText,
       last_message_at: new Date().toISOString(),
       last_message_type: messageType,
       last_message_direction: "outbound",
-    }).eq("id", activeConversationId);
+    }).eq("id", activeConversationId).then(() => {});
 
     const connection = connections.find(c => c.id === conversation.waba_connection_id);
     if (connection && inserted) {
@@ -394,9 +405,15 @@ export function useChat() {
           filename: file.name,
           waba_connection_id: connection.id,
         },
+      }).then(({ error: fnError }) => {
+        if (fnError) {
+          console.error("[sendMedia] send-chat-message error:", fnError);
+          setMessages(prev => prev.map(m => m.id === (inserted as any).id ? { ...m, status: "failed" } : m));
+          toast.error("Falha ao enviar mídia", { description: fnError.message });
+        }
       });
     }
-  }, [activeConversationId, user, conversations, connections]);
+  }, [activeConversationId, user, accountOwnerId, conversations, connections]);
 
   // Pin/unpin conversation
   const togglePin = useCallback(async (conversationId: string) => {
