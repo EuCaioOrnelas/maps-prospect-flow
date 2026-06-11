@@ -20,6 +20,9 @@ import {
   Clock,
 } from "lucide-react";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { startChatBackup } from "@/hooks/useChatBackup";
 
 interface MetaManualSetupProps {
   onConnectionSaved: (connection: WabaConnection | null) => void;
@@ -31,6 +34,7 @@ interface MetaManualSetupProps {
 export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: MetaManualSetupProps) => {
   const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
+  const { members } = useAccountMembers();
 
   // Draft persistido por usuário para não perder dados ao sair/voltar da página
   const draftKey = user ? `meta-manual-setup-draft:${user.id}:${isAddingExtra ? "extra" : "primary"}` : null;
@@ -40,8 +44,10 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
   const [wabaId, setWabaId] = useState("");
   const [phoneNumberId, setPhoneNumberId] = useState("");
   const [nickname, setNickname] = useState("");
+  const [responsibleUserId, setResponsibleUserId] = useState<string>(""); // "" = não escolheu | "none" = sem responsável | <uuid>
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
 
   // Hidratar do localStorage uma vez quando o user estiver disponível
   useEffect(() => {
@@ -104,8 +110,14 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
       return;
     }
 
+    if (!responsibleUserId) {
+      setError("Selecione o responsável por este número (ou 'Sem responsável').");
+      return;
+    }
+
     setSaving(true);
     setError(null);
+
 
     try {
       // Validate token by fetching phone info from Meta
@@ -156,7 +168,9 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
         );
       }
 
-      const payload = {
+      const responsibleId = responsibleUserId === "none" ? null : responsibleUserId;
+
+      const payload: Record<string, any> = {
         user_id: ownerId,
         owner_user_id: ownerId,
         waba_id: cleanWaba,
@@ -165,13 +179,14 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
         display_phone_number: displayPhone,
         business_name: businessName,
         nickname: nickname.trim() || null,
+        responsible_user_id: responsibleId,
         status: "active",
         raw_signup_data: { source: "manual" },
       };
 
       const op = existing?.id
-        ? await supabase.from("user_waba_connections").update(payload).eq("id", existing.id).select().single()
-        : await supabase.from("user_waba_connections").insert(payload).select().single();
+        ? await (supabase.from("user_waba_connections") as any).update(payload).eq("id", existing.id).select().single()
+        : await (supabase.from("user_waba_connections") as any).insert(payload).select().single();
 
       const connection = op.data;
       const dbError = op.error;
@@ -200,10 +215,19 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
 
       toast({
         title: "Número conectado!",
-        description: `${displayPhone || cleanPhone} vinculado com sucesso.`,
+        description: `${displayPhone || cleanPhone} vinculado. Iniciando importação de contatos do CRM…`,
       });
 
       clearDraft();
+
+      // Dispara backup CRM → Chat em background (não bloqueia UI)
+      const label = nickname.trim() || displayPhone || cleanPhone;
+      void startChatBackup({
+        connectionId: (connection as any).id,
+        ownerUserId: ownerId,
+        responsibleUserId: responsibleId,
+        connectionLabel: label,
+      });
 
       onConnectionSaved({
         id: (connection as any).id,
@@ -215,6 +239,7 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
         status: (connection as any).status,
         nickname: (connection as any).nickname,
       });
+
     } catch (err: any) {
       console.error("[MetaManualSetup] Save error:", err);
       setError(err.message || "Erro ao salvar conexão.");
@@ -336,7 +361,35 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
               disabled={saving}
             />
           </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              Responsável pelo número <span className="text-destructive">*</span>
+            </Label>
+            <Select value={responsibleUserId} onValueChange={setResponsibleUserId} disabled={saving}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione quem vai atender por este número" />
+              </SelectTrigger>
+              <SelectContent>
+                {members.slice(0, Math.ceil(members.length / 2)).map((m) => (
+                  <SelectItem key={m.user_id} value={m.user_id}>
+                    {m.name || m.email || m.user_id.slice(0, 8)}
+                  </SelectItem>
+                ))}
+                <SelectItem value="none">— Sem responsável (CRM inteiro) —</SelectItem>
+                {members.slice(Math.ceil(members.length / 2)).map((m) => (
+                  <SelectItem key={m.user_id} value={m.user_id}>
+                    {m.name || m.email || m.user_id.slice(0, 8)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Ao conectar, importamos os contatos do CRM deste responsável para o chat. Sem responsável, importamos todos os contatos da conta.
+            </p>
+          </div>
         </div>
+
 
         {/* Error */}
         {error && (

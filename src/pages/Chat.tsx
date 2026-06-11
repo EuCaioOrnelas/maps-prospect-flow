@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useWebhookGate } from "@/hooks/useWebhookGate";
 import { WebhookRequiredDialog } from "@/components/meta/WebhookRequiredDialog";
+import { BackupProgressBanner } from "@/components/chat/BackupProgressBanner";
 
 const Chat = () => {
   const { user, accountOwnerId } = useAuth();
@@ -136,7 +137,9 @@ const Chat = () => {
           <div className="lg:hidden">
             <AppHeader profile={profile} />
           </div>
+          <BackupProgressBanner className="mx-3 mt-2" />
           <div className="flex-1 flex overflow-hidden relative">
+
             {showDisconnectedOverlay && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
                 <div className="bg-background border border-border rounded-2xl p-8 max-w-[440px] text-center shadow-2xl animate-in fade-in zoom-in-95 duration-300">

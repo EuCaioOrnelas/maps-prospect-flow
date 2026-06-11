@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WebhookPanel } from "@/components/meta/WebhookPanel";
+import { BackupProgressBanner } from "@/components/chat/BackupProgressBanner";
 import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { Button } from "@/components/ui/button";
@@ -229,7 +230,7 @@ export default function MetaNumeros() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => navigate("/meta-api-guide")}
+                  onClick={() => window.open("/meta-api-guide", "_blank", "noopener,noreferrer")}
                   className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                 >
                   <HelpCircle size={14} />
@@ -280,7 +281,10 @@ export default function MetaNumeros() {
       />
 
 
+      <BackupProgressBanner className="mt-3" />
+
       <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-2">
+
         <TabsList className="bg-muted/40">
           <TabsTrigger value="numeros">
             <Phone size={13} className="mr-1.5" />

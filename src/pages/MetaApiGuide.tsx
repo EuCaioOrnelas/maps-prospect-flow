@@ -1,44 +1,33 @@
-import { useState, useEffect } from "react";
-import { AppSidebar } from "@/components/layout/AppSidebar";
-import { AppHeader } from "@/components/layout/AppHeader";
-import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import {
   MessageSquare, Shield, DollarSign, FileText, Settings, CheckCircle2,
   AlertTriangle, Clock, ExternalLink, ChevronDown, ChevronRight,
   Smartphone, Building2, Globe, Zap, Users, ArrowRight, Info,
-  BookOpen, Layout, Send, ShieldCheck, BadgeCheck, Megaphone,
+  BookOpen, Layout, Send, ShieldCheck, BadgeCheck, Megaphone, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 const MetaApiGuide = () => {
   useAutoScoreTracking("meta-api-guide");
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("profiles")
-      .select("name, email, avatar_url, plan, searches_used, searches_limit, trial_start_at")
-      .eq("id", user.id)
-      .single()
-      .then(({ data }) => setProfile(data));
-  }, [user]);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AppSidebar profile={profile} />
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
-        <AppHeader profile={profile} />
-        <BackgroundGlow />
-        <main className="flex-1 overflow-y-auto px-4 md:px-8 py-8">
-          <div className="max-w-4xl mx-auto space-y-10">
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+        <div className="max-w-4xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BookOpen size={18} className="text-primary" />
+            <span className="text-sm font-semibold">Guia Meta API · Wiize</span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => window.close()} className="gap-1.5">
+            <X size={14} /> Fechar
+          </Button>
+        </div>
+      </header>
+      <main className="px-4 md:px-8 py-8">
+        <div className="max-w-4xl mx-auto space-y-10">
+
+
 
             {/* Header */}
             <div className="space-y-4">
@@ -51,9 +40,10 @@ const MetaApiGuide = () => {
                   <p className="text-muted-foreground text-sm">Guia completo para configurar e usar a API oficial do WhatsApp</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate("/meta-campaigns")} className="gap-2">
-                <ArrowRight size={14} className="rotate-180" /> Voltar para Campanhas Meta
+              <Button variant="outline" size="sm" onClick={() => window.close()} className="gap-2">
+                <X size={14} /> Fechar guia
               </Button>
+
             </div>
 
             {/* Intro Section */}
@@ -507,17 +497,17 @@ const MetaApiGuide = () => {
                 Se você já configurou sua conta no Meta Business Suite e tem templates aprovados,
                 conecte sua conta na Wiize e envie sua primeira campanha.
               </p>
-              <Button onClick={() => navigate("/meta-campaigns")} className="gap-2">
-                <Zap size={16} /> Ir para Campanhas Meta
+              <Button onClick={() => window.close()} className="gap-2">
+                <X size={16} /> Fechar guia
               </Button>
             </div>
 
           </div>
         </main>
-      </div>
     </div>
   );
 };
+
 
 /* ---- Sub-components ---- */
 
