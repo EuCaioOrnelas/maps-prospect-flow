@@ -91,8 +91,10 @@ serve(async (req) => {
       });
     }
 
-    // Helper: revenue event processing (awaited to avoid dropping events)
-    async function fireRevenueEvent(params: {
+    // Helper: revenue event processing — DESATIVADO.
+    // O scoring de leads passou a ser 100% Meta Cloud API oficial.
+    // Eventos vindos da Evolution (warming/legado) NÃO alimentam mais o revenue-processor.
+    async function fireRevenueEvent(_params: {
       user_id: string;
       phone_e164: string;
       number_instance_id?: string;
@@ -100,23 +102,10 @@ serve(async (req) => {
       message_content?: string;
       lead_name?: string;
     }) {
-      try {
-        const { data: revenueResult, error } = await supabase.functions.invoke('revenue-processor', {
-          body: { action: 'process_message', ...params },
-        });
-
-        if (error) {
-          console.error('Revenue processor invoke failed:', error);
-          return;
-        }
-
-        if (revenueResult && revenueResult.success === false) {
-          console.log('Revenue processor skipped:', revenueResult);
-        }
-      } catch (e) {
-        console.error('Revenue event fire error:', e);
-      }
+      // no-op: scoring agora é exclusivo do meta-webhook + send-chat-message (source: 'meta').
+      return;
     }
+
 
     function phoneTail8(phone: string): string {
       return String(phone || '').replace(/\D/g, '').slice(-8);

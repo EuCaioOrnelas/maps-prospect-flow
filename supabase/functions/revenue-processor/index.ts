@@ -251,6 +251,46 @@ const EVENT_CATEGORIES: Record<string, string> = {
   CALL_REQUEST: "action",
 };
 
+// ========== GREETING / FAREWELL DETECTION ==========
+// Mensagens "sociais" não devem disparar SLA de resposta (cumprimentos, despedidas, agradecimentos)
+const GREETING_PATTERNS = [
+  "oi", "ola", "olá", "opa", "eai", "e ai", "e aí", "hello", "hi", "hey",
+  "bom dia", "boa tarde", "boa noite", "fala", "salve",
+];
+const FAREWELL_PATTERNS = [
+  "tchau", "ate mais", "até mais", "ate logo", "até logo", "flw", "falou",
+  "ate amanha", "até amanhã", "ate depois", "boa noite pra voce",
+  "fui", "tmj", "abracos", "abraços", "abc", "abs",
+];
+const THANKS_PATTERNS = [
+  "obrigado", "obrigada", "obg", "vlw", "valeu", "agradeco", "agradeço",
+  "thanks", "thank you", "grato", "grata",
+];
+const ACK_PATTERNS = [
+  "ok", "okay", "okk", "tá", "ta", "tá bom", "ta bom", "blz", "beleza",
+  "show", "perfeito", "combinado", "fechado", "certo", "entendi",
+  "uhum", "aham", "humm", "kkkk", "rsrs", "haha", "👍", "👌", "✅",
+];
+
+function isSocialOnlyMessage(rawText: string, normalized: string): boolean {
+  if (!rawText) return false;
+  const cleaned = normalized.replace(/[^a-z0-9 ]/gi, "").trim();
+  if (!cleaned) {
+    // Mensagem só com emoji/pontuação -> considera social
+    return rawText.trim().length <= 6;
+  }
+  // Muito curta (≤25 chars) e match com greeting/farewell/thanks/ack
+  if (rawText.trim().length > 60) return false;
+  const wordCount = cleaned.split(/\s+/).length;
+  if (wordCount > 6) return false;
+
+  const all = [...GREETING_PATTERNS, ...FAREWELL_PATTERNS, ...THANKS_PATTERNS, ...ACK_PATTERNS];
+  return all.some((p) => {
+    const np = p.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return cleaned === np || cleaned.startsWith(np + " ") || cleaned.endsWith(" " + np) || cleaned === np.replace(/\s+/g, "");
+  });
+}
+
 // ========== ACTION DETECTION (LINK_CLICK / FORM_SUBMIT / CALL_REQUEST) ==========
 const URL_REGEX = /\b(?:https?:\/\/|www\.)\S+/i;
 const CALL_REQUEST_PATTERNS = [
@@ -517,6 +557,15 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ error: "Missing required fields" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // META-ONLY: ignora qualquer fonte que não seja Meta Cloud API oficial.
+      // Mantém compatibilidade quando o caller é o próprio sweep interno (source === 'sweep').
+      if (source && source !== "meta" && source !== "sweep") {
+        return new Response(
+          JSON.stringify({ success: false, skipped: true, reason: `Source '${source}' is not Meta Cloud API (Meta-only mode)` }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -824,6 +873,14 @@ serve(async (req) => {
 
         if (message_content) {
           const normalizedText = normalizeText(message_content);
+          const isSocial = isSocialOnlyMessage(message_content, normalizedText);
+          // Marca a última INBOUND com flag social para o próximo outbound não aplicar SLA
+          if (isSocial && eventEntries.length > 0) {
+            const lastEntry = eventEntries[eventEntries.length - 1];
+            if (lastEntry?.event?.event_type === "INBOUND_MESSAGE") {
+              lastEntry.event.event_meta = { ...(lastEntry.event.event_meta || {}), is_social: true };
+            }
+          }
           classificationResult = classifyMessage(normalizedText, rulesMap);
 
           // Action detection (LINK_CLICK / FORM_SUBMIT / CALL_REQUEST)
@@ -868,7 +925,8 @@ serve(async (req) => {
 
       if (currentDirection === "outbound") {
         const pendingInboundStart = getTrailingRunStart(interactionEventsAsc, "inbound");
-        if (lastInteractionDirection === "inbound" && pendingInboundStart?.created_at) {
+        const lastInboundWasSocial = !!(pendingInboundStart?.event_meta?.is_social);
+        if (lastInteractionDirection === "inbound" && pendingInboundStart?.created_at && !lastInboundWasSocial) {
           const responseMinutes = diffMinutes(occurredAt, new Date(pendingInboundStart.created_at));
 
           if (responseMinutes <= 5) {
@@ -1018,6 +1076,131 @@ serve(async (req) => {
               }
             : null,
         }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // === ACTION: sweep_unreplied ===
+    // Aplica penalidades progressivas em leads que enviaram mensagem (inbound) e
+    // não receberam resposta. -40 uma vez ao cruzar 2h; -140 a cada 24h adicionais.
+    // Idempotente: conta logs já aplicados desde last_inbound_at e só dispara o delta.
+    if (action === "sweep_unreplied") {
+      const nowIso = new Date().toISOString();
+      const cutoffIso = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+
+      let query = supabase
+        .from("revenue_leads")
+        .select("id, user_id, score_total, last_activity_at, status_bucket, risk_state, phone_e164")
+        .lt("last_activity_at", cutoffIso)
+        .limit(2000);
+      if (user_id) query = query.eq("user_id", user_id);
+
+      const { data: candidates, error: candErr } = await query;
+      if (candErr) throw candErr;
+
+      let processed = 0;
+      let penaltiesApplied = 0;
+
+      for (const lead of candidates || []) {
+        // Última inbound vs outbound: se o lead já foi respondido (outbound posterior),
+        // não há "sem resposta". Buscamos o último evento de cada lado.
+        const { data: recentEvents } = await supabase
+          .from("revenue_events")
+          .select("event_type, created_at")
+          .eq("lead_id", lead.id)
+          .in("event_type", ["INBOUND_MESSAGE", "OUTBOUND_MESSAGE"])
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        const lastInbound = (recentEvents || []).find((e: any) => e.event_type === "INBOUND_MESSAGE");
+        const lastOutbound = (recentEvents || []).find((e: any) => e.event_type === "OUTBOUND_MESSAGE");
+        if (!lastInbound) continue;
+        if (lastOutbound && new Date(lastOutbound.created_at) > new Date(lastInbound.created_at)) continue;
+
+        const inboundAt = new Date(lastInbound.created_at);
+        const hoursSince = (Date.now() - inboundAt.getTime()) / (1000 * 60 * 60);
+        if (hoursSince < 2) continue;
+
+        // Conta logs já aplicados desde a última inbound
+        const { data: existingLogs } = await supabase
+          .from("revenue_score_logs")
+          .select("event_type")
+          .eq("lead_id", lead.id)
+          .in("event_type", ["UNREPLIED_INBOUND_OVER_2H", "UNREPLIED_INBOUND_OVER_24H"])
+          .gte("created_at", lastInbound.created_at);
+
+        const existing2h = (existingLogs || []).filter((l: any) => l.event_type === "UNREPLIED_INBOUND_OVER_2H").length;
+        const existing24h = (existingLogs || []).filter((l: any) => l.event_type === "UNREPLIED_INBOUND_OVER_24H").length;
+
+        // 2h: dispara 1 vez
+        const need2h = hoursSince >= 2 && existing2h === 0 ? 1 : 0;
+        // 24h: progressivo, 1 por bloco de 24h
+        const expected24h = Math.floor(hoursSince / 24);
+        const need24h = Math.max(0, expected24h - existing24h);
+
+        if (need2h + need24h === 0) continue;
+
+        // Pontos das regras (defensivo)
+        const { data: rules } = await supabase
+          .from("revenue_score_rules")
+          .select("rule_key, points")
+          .eq("user_id", lead.user_id)
+          .in("rule_key", ["UNREPLIED_INBOUND_OVER_2H", "UNREPLIED_INBOUND_OVER_24H"]);
+        const pts2h = Number(rules?.find((r: any) => r.rule_key === "UNREPLIED_INBOUND_OVER_2H")?.points ?? -40);
+        const pts24h = Number(rules?.find((r: any) => r.rule_key === "UNREPLIED_INBOUND_OVER_24H")?.points ?? -140);
+
+        let running = Number(lead.score_total || 0);
+        const eventsBatch: any[] = [];
+        const logsBatch: any[] = [];
+
+        const pushPenalty = (ruleKey: string, pts: number, idx: number) => {
+          const before = running;
+          const after = Math.max(0, Math.min(1000, before + pts));
+          running = after;
+          const stampIso = new Date(Date.now() - idx * 1000).toISOString();
+          eventsBatch.push({
+            user_id: lead.user_id,
+            lead_id: lead.id,
+            event_type: ruleKey,
+            event_value: pts,
+            event_meta: { progressive: true, hours_since_inbound: Math.round(hoursSince), sweep: true },
+            created_at: stampIso,
+          });
+          logsBatch.push({
+            user_id: lead.user_id,
+            lead_id: lead.id,
+            event_type: ruleKey,
+            points_applied: pts,
+            score_before: before,
+            score_after: after,
+            category: "penalty",
+            created_at: stampIso,
+          });
+        };
+
+        let idx = 0;
+        for (let i = 0; i < need2h; i++) pushPenalty("UNREPLIED_INBOUND_OVER_2H", pts2h, idx++);
+        for (let i = 0; i < need24h; i++) pushPenalty("UNREPLIED_INBOUND_OVER_24H", pts24h, idx++);
+
+        if (eventsBatch.length > 0) {
+          await supabase.from("revenue_events").insert(eventsBatch);
+          await supabase.from("revenue_score_logs").insert(logsBatch);
+          const newBucket = scoreToBucket(running);
+          await supabase.from("revenue_leads").update({
+            score_total: running,
+            status_bucket: newBucket,
+            score_last_calc_at: nowIso,
+            risk_state: hoursSince >= 24 ? "AT_RISK" : (hoursSince >= 6 ? "COOLING" : lead.risk_state),
+            risk_reason: hoursSince >= 24 ? `Sem resposta há ${Math.round(hoursSince)}h` : null,
+          }).eq("id", lead.id);
+          penaltiesApplied += eventsBatch.length;
+        }
+
+        processed += 1;
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, leads_processed: processed, penalties_applied: penaltiesApplied }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
