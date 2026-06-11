@@ -229,18 +229,18 @@ function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply
           <ChevronDown size={14} className="text-white/80" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="wa-dropdown-bg border wa-border min-w-[180px] rounded-xl shadow-2xl py-1 overflow-hidden">
-        <DropdownMenuItem onClick={onReply} className="flex items-center gap-2 px-3 py-2 mx-1 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5">
-          <Reply size={14} className="wa-icon-muted" /> Responder
+      <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+        <DropdownMenuItem onClick={onReply} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+          <Reply size={14} /> Responder
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => {
           navigator.clipboard.writeText(msg.content || "");
           toast.success("Mensagem copiada");
-        }} className="flex items-center gap-2 px-3 py-2 mx-1 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5">
-          <Copy size={14} className="wa-icon-muted" /> Copiar
+        }} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+          <Copy size={14} /> Copiar
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onForward} className="flex items-center gap-2 px-3 py-2 mx-1 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5">
-          <Forward size={14} className="wa-icon-muted" /> Encaminhar
+        <DropdownMenuItem onClick={onForward} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+          <Forward size={14} /> Encaminhar
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
