@@ -1,0 +1,2 @@
+ALTER TABLE public.chat_conversations ADD COLUMN IF NOT EXISTS is_blocked boolean NOT NULL DEFAULT false;
+CREATE INDEX IF NOT EXISTS idx_chat_conversations_is_blocked ON public.chat_conversations(is_blocked);

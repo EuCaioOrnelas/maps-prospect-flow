@@ -1100,6 +1100,7 @@ export type Database = {
           created_at: string
           id: string
           is_archived: boolean | null
+          is_blocked: boolean
           is_muted: boolean | null
           is_pinned: boolean | null
           last_message_at: string | null
@@ -1121,6 +1122,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_archived?: boolean | null
+          is_blocked?: boolean
           is_muted?: boolean | null
           is_pinned?: boolean | null
           last_message_at?: string | null
@@ -1142,6 +1144,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_archived?: boolean | null
+          is_blocked?: boolean
           is_muted?: boolean | null
           is_pinned?: boolean | null
           last_message_at?: string | null
