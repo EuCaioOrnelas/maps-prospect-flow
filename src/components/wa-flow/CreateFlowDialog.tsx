@@ -139,17 +139,30 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
       <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden border-border/50 bg-card">
         {mode === "choose" ? (
           <div className="p-8">
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <h2 className="text-xl font-bold text-foreground mb-1">Criar Novo Fluxo</h2>
               <p className="text-sm text-muted-foreground">Escolha como deseja começar</p>
             </div>
+
+            {!loadingGate && !hasEligible && (
+              <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
+                <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-amber-700">Webhook Meta obrigatório</p>
+                  <p className="text-xs text-amber-700/80">
+                    Fluxos só funcionam em números conectados via API oficial da Meta <strong>com webhook verificado</strong>. Conecte ou verifique o webhook em Configurações &rsaquo; WhatsApp Oficial.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Blank */}
               <button
                 onClick={() => createBlank.mutate()}
-                disabled={createBlank.isPending}
-                className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-center"
+                disabled={createBlank.isPending || !hasEligible || loadingGate}
+                className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-center disabled:opacity-50 disabled:cursor-not-allowed"
+
               >
                 <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                   <Workflow size={24} className="text-muted-foreground group-hover:text-primary transition-colors" />
