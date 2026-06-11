@@ -916,7 +916,8 @@ serve(async (req) => {
 
       if (currentDirection === "outbound") {
         const pendingInboundStart = getTrailingRunStart(interactionEventsAsc, "inbound");
-        if (lastInteractionDirection === "inbound" && pendingInboundStart?.created_at) {
+        const lastInboundWasSocial = !!(pendingInboundStart?.event_meta?.is_social);
+        if (lastInteractionDirection === "inbound" && pendingInboundStart?.created_at && !lastInboundWasSocial) {
           const responseMinutes = diffMinutes(occurredAt, new Date(pendingInboundStart.created_at));
 
           if (responseMinutes <= 5) {
