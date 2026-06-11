@@ -1297,6 +1297,14 @@ input::placeholder, textarea::placeholder {
 .wa-accent-bg-soft { background-color: rgba(18,140,126,0.10); }
 .wa-accent-bg-softer { background-color: rgba(18,140,126,0.15); }
 .wa-accent-border-soft { border-color: rgba(18,140,126,0.28); }
+.wa-accent-border { border-color: #128c7e; }
+.wa-accent-border-muted { border-color: rgba(18,140,126,0.36); }
+.wa-accent-surface {
+  background-color: rgba(18,140,126,0.12);
+  color: #128c7e;
+}
+.wa-accent-surface:hover { background-color: rgba(18,140,126,0.18); }
+.wa-accent-ring { box-shadow: inset 0 0 0 1px rgba(18,140,126,0.30); }
 .wa-message-action-button {
   background-color: rgba(255,255,255,0.96);
   border-color: rgba(17,27,33,0.08);
