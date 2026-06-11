@@ -422,7 +422,68 @@ export function ChatMessageArea({
               }
             </p>
           </div>
-          <div className="flex items-center gap-[16px]">
+          <div className="flex items-center gap-[10px]">
+            {/* CRM stage selector */}
+            {pipelineStages.length > 0 && (() => {
+              const currentStage = pipelineStages.find(s => s.id === leadInfo?.pipeline_stage_id);
+              const stageColor = currentStage?.color || "#00a884";
+              return (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="hidden md:flex items-center gap-1.5 h-[30px] pl-2 pr-2.5 rounded-full border transition-colors hover:opacity-90"
+                      style={{
+                        borderColor: leadInfo ? `${stageColor}55` : undefined,
+                        backgroundColor: leadInfo ? `${stageColor}1a` : "transparent",
+                      }}
+                      title={leadInfo ? `Coluna no CRM: ${currentStage?.name || "—"}` : "Salve o contato para definir uma coluna"}
+                    >
+                      <span
+                        className="w-[8px] h-[8px] rounded-full shrink-0"
+                        style={{ backgroundColor: leadInfo ? stageColor : "#9ca3af" }}
+                      />
+                      <span
+                        className="text-[12px] font-medium max-w-[140px] truncate"
+                        style={{ color: leadInfo ? stageColor : undefined }}
+                      >
+                        {leadInfo ? (currentStage?.name || "Sem coluna") : "Não está no CRM"}
+                      </span>
+                      <ChevronDown size={12} style={{ color: leadInfo ? stageColor : undefined }} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-64 p-1.5 bg-popover">
+                    <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                      Mover no CRM
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {pipelineStages.map(s => {
+                        const selected = s.id === leadInfo?.pipeline_stage_id;
+                        const color = s.color || "#00a884";
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={() => void handleChangeStage(s.id)}
+                            className={cn(
+                              "w-full flex items-center gap-2.5 px-2 py-2 text-sm rounded-md transition-colors",
+                              selected ? "bg-muted" : "hover:bg-muted"
+                            )}
+                          >
+                            <span className="w-[10px] h-[10px] rounded-full shrink-0" style={{ backgroundColor: color }} />
+                            <span className="flex-1 text-left truncate">{s.name}</span>
+                            {selected && <Check size={14} className="text-[#00a884]" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {!leadInfo && (
+                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">
+                        Salve o contato no CRM para habilitar a mudança de coluna.
+                      </p>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              );
+            })()}
             {canChangeResponsible && onTransferResponsible && (() => {
               const respMember = members.find(m => m.user_id === conversation.responsible_user_id);
               const respLabel = respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || null;
