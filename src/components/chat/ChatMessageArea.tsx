@@ -28,6 +28,7 @@ function formatPhoneDisplay(phone: string): string {
 
 interface ChatMessageAreaProps {
   conversation: ChatConversation | null;
+  conversations?: ChatConversation[];
   messages: ChatMessage[];
   loading: boolean;
   onSendMessage: (text: string, replyToId?: string) => void;
@@ -43,6 +44,7 @@ interface ChatMessageAreaProps {
   onDeleteConversation?: (conversationId: string) => Promise<void>;
   onToggleBlock?: (conversationId: string) => Promise<void>;
   onSaveContactName?: (conversationId: string, name: string) => Promise<void>;
+  onForwardMessages?: (targetPhone: string, targetName: string | undefined, msgs: ChatMessage[], templateName?: string) => Promise<{ requiresTemplate?: boolean }>;
 }
 
 
