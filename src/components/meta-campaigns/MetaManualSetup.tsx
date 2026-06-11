@@ -110,8 +110,14 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
       return;
     }
 
+    if (!responsibleUserId) {
+      setError("Selecione o responsável por este número (ou 'Sem responsável').");
+      return;
+    }
+
     setSaving(true);
     setError(null);
+
 
     try {
       // Validate token by fetching phone info from Meta
