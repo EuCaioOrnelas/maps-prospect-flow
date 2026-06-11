@@ -14,10 +14,10 @@ interface Props {
 export function CRMResponsibleFilter({ value, onChange, members, currentUserId }: Props) {
   const others = members.filter((m) => m.user_id !== currentUserId);
   return (
-    <div className="flex items-center gap-1.5">
-      <Users className="w-3.5 h-3.5 text-muted-foreground" />
+    <div className="flex items-center gap-1.5 min-w-0">
+      <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="h-8 sm:h-9 w-[150px] bg-card/60 border-border/60">
+        <SelectTrigger className="h-8 sm:h-9 w-full max-w-[150px] min-w-0 bg-card/60 border-border/60 truncate">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
