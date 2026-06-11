@@ -280,123 +280,179 @@ export default function MetaNumeros() {
       />
 
 
-      {loading ? (
-        <div className="flex items-center justify-center py-20 text-muted-foreground">
-          <Loader2 className="animate-spin mr-2" size={16} /> Carregando números…
-        </div>
-      ) : connections.length === 0 ? (
-        <MetaManualSetup onConnectionSaved={handleConnectionSaved} />
-      ) : (
-        <div className="space-y-6">
-          {hasExpired && (
-            <div className="flex items-start gap-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-5 shadow-sm">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/15">
-                <ShieldAlert size={20} className="text-destructive" />
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-2">
+        <TabsList className="bg-muted/40">
+          <TabsTrigger value="numeros">
+            <Phone size={13} className="mr-1.5" />
+            Números
+          </TabsTrigger>
+          <TabsTrigger value="webhook">
+            <Webhook size={13} className="mr-1.5" />
+            Webhook
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="numeros" className="mt-5">
+          {loading ? (
+            <div className="flex items-center justify-center py-20 text-muted-foreground">
+              <Loader2 className="animate-spin mr-2" size={16} /> Carregando números…
+            </div>
+          ) : connections.length === 0 ? (
+            <MetaManualSetup onConnectionSaved={handleConnectionSaved} />
+          ) : (
+            <div className="space-y-6">
+              {hasExpired && (
+                <div className="flex items-start gap-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-5 shadow-sm">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+                    <ShieldAlert size={20} className="text-destructive" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-base text-destructive">
+                      {expiredConnections.length === 1 ? "1 token expirado" : `${expiredConnections.length} tokens expirados`}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {expiredConnections.map(c => c.nickname || c.display_phone_number || c.phone_number_id).join(", ")} — o token de acesso expirou. Clique em editar para atualizar.
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-3 gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"
+                      onClick={() => setShowExpiredAlert(true)}
+                    >
+                      <Info size={12} /> Como resolver
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {connections.map((conn) => {
+                  const isExpired = expiredTokenIds.has(conn.id);
+                  const webhookOk = webhookVerifiedIds.has(conn.id);
+                  return (
+                    <div
+                      key={conn.id}
+                      className={`flex flex-col gap-3 rounded-xl border p-4 transition-colors ${
+                        isExpired ? "border-destructive/40 bg-destructive/5" : "border-border hover:bg-muted/20"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                            isExpired ? "bg-destructive/10" : "bg-primary/10"
+                          }`}>
+                            {isExpired ? (
+                              <AlertTriangle size={14} className="text-destructive" />
+                            ) : (
+                              <Phone size={14} className="text-primary" />
+                            )}
+                          </div>
+                          <div className="truncate">
+                            <p className="font-medium text-sm truncate">
+                              {conn.nickname || conn.display_phone_number || conn.phone_number_id}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {conn.business_name || conn.waba_id}
+                            </p>
+                            {isExpired && (
+                              <p className="mt-1 text-[11px] font-medium text-destructive">
+                                Atualize o token para voltar a carregar templates e enviar mensagens.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => {
+                              setEditingConn(conn);
+                              setEditNickname(conn.nickname || "");
+                              setEditResponsible(conn.responsible_user_id || "none");
+                              setEditToken("");
+                              setShowTokenField(isExpired);
+                            }}
+                          >
+                            <Pencil size={13} className="text-muted-foreground" />
+                          </Button>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                            isExpired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+                          }`}>
+                            {isExpired ? "Expirado" : "Ativo"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${
+                        webhookOk
+                          ? "border-emerald-500/25 bg-emerald-500/5"
+                          : "border-amber-500/25 bg-amber-500/5"
+                      }`}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          {webhookOk ? (
+                            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                          ) : (
+                            <AlertTriangle size={14} className="text-amber-600 shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                            <p className={`text-[11px] font-semibold ${webhookOk ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
+                              {webhookOk ? "Webhook configurado" : "Webhook pendente"}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {webhookOk
+                                ? "Eventos da Meta chegando normalmente."
+                                : "Chat e Campanhas precisam do webhook para funcionar."}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={webhookOk ? "ghost" : "outline"}
+                          className="gap-1.5 h-7 px-2 shrink-0 text-[11px]"
+                          onClick={() => handleTabChange("webhook")}
+                        >
+                          <Webhook size={11} />
+                          {webhookOk ? "Ver webhook" : "Configurar"}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="flex-1">
-                <p className="font-semibold text-base text-destructive">
-                  {expiredConnections.length === 1 ? "1 token expirado" : `${expiredConnections.length} tokens expirados`}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {expiredConnections.map(c => c.nickname || c.display_phone_number || c.phone_number_id).join(", ")} — o token de acesso expirou. Clique em editar para atualizar.
-                </p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="mt-3 gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"
-                  onClick={() => setShowExpiredAlert(true)}
-                >
-                  <Info size={12} /> Como resolver
-                </Button>
+
+              <div className="text-xs text-muted-foreground">
+                {connections.length}/{maxMetaConnections} números conectados
+                {" "}<span className="opacity-70">({basePlanNumbers} do plano {userPlan}{extraNumbers > 0 ? ` + ${extraNumbers} da Expansão de Atendimento` : ""})</span>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5">
+                <Info size={18} className="text-primary mt-0.5 shrink-0" />
+                <div className="text-sm">
+                  <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
+                  <p className="text-muted-foreground mt-0.5">
+                    Disparo via WhatsApp Cloud API utilizando <strong>HSM templates</strong> pré-aprovados pela Meta (categorias: marketing, utility e authentication). O envio é tarifado por <strong>conversa de 24h</strong> conforme a tabela oficial da Meta por país e categoria, com cobrança realizada diretamente pela Meta na conta de billing vinculada ao WABA — independente da assinatura da plataforma. Cada número possui limite de envio próprio definido pelo <strong>messaging tier</strong> e <strong>quality rating</strong> atribuídos pela Meta.
+                  </p>
+                  <a
+                    href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline flex items-center gap-1 mt-1 text-xs"
+                  >
+                    <ExternalLink size={10} /> Ver limites de envio da Meta
+                  </a>
+                </div>
               </div>
             </div>
           )}
+        </TabsContent>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {connections.map((conn) => {
-              const isExpired = expiredTokenIds.has(conn.id);
-              return (
-                <div
-                  key={conn.id}
-                  className={`flex items-center justify-between rounded-xl border p-4 transition-colors ${
-                    isExpired ? "border-destructive/40 bg-destructive/5" : "border-border hover:bg-muted/20"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                      isExpired ? "bg-destructive/10" : "bg-primary/10"
-                    }`}>
-                      {isExpired ? (
-                        <AlertTriangle size={14} className="text-destructive" />
-                      ) : (
-                        <Phone size={14} className="text-primary" />
-                      )}
-                    </div>
-                    <div className="truncate">
-                      <p className="font-medium text-sm truncate">
-                        {conn.nickname || conn.display_phone_number || conn.phone_number_id}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground truncate">
-                        {conn.business_name || conn.waba_id}
-                      </p>
-                      {isExpired && (
-                        <p className="mt-1 text-[11px] font-medium text-destructive">
-                          Atualize o token para voltar a carregar templates e enviar mensagens.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7"
-                      onClick={() => {
-                        setEditingConn(conn);
-                        setEditNickname(conn.nickname || "");
-                        setEditResponsible(conn.responsible_user_id || "none");
-                        setEditToken("");
-                        setShowTokenField(isExpired);
-                      }}
+        <TabsContent value="webhook" className="mt-5">
+          <WebhookPanel onStatusChange={() => loadWebhookStatus()} />
+        </TabsContent>
+      </Tabs>
 
-                    >
-                      <Pencil size={13} className="text-muted-foreground" />
-                    </Button>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                      isExpired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
-                    }`}>
-                      {isExpired ? "Expirado" : "Ativo"}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
 
-          <div className="text-xs text-muted-foreground">
-            {connections.length}/{maxMetaConnections} números conectados
-            {" "}<span className="opacity-70">({basePlanNumbers} do plano {userPlan}{extraNumbers > 0 ? ` + ${extraNumbers} da Expansão de Atendimento` : ""})</span>
-          </div>
-
-          <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5">
-            <Info size={18} className="text-primary mt-0.5 shrink-0" />
-            <div className="text-sm">
-              <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
-              <p className="text-muted-foreground mt-0.5">
-                Disparo via WhatsApp Cloud API utilizando <strong>HSM templates</strong> pré-aprovados pela Meta (categorias: marketing, utility e authentication). O envio é tarifado por <strong>conversa de 24h</strong> conforme a tabela oficial da Meta por país e categoria, com cobrança realizada diretamente pela Meta na conta de billing vinculada ao WABA — independente da assinatura da plataforma. Cada número possui limite de envio próprio definido pelo <strong>messaging tier</strong> e <strong>quality rating</strong> atribuídos pela Meta.
-              </p>
-              <a
-                href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline flex items-center gap-1 mt-1 text-xs"
-              >
-                <ExternalLink size={10} /> Ver limites de envio da Meta
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Edit Dialog */}
       <Dialog open={!!editingConn} onOpenChange={(o) => { if (!o) { setEditingConn(null); setShowTokenField(false); setEditToken(""); } }}>
