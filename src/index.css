@@ -1317,6 +1317,22 @@ input::placeholder, textarea::placeholder {
   border-color: rgba(18,140,126,0.22);
 }
 
+/* Hover action button anchored at top-right of bubble (WhatsApp style) */
+.wa-bubble-action-out {
+  background: linear-gradient(225deg, #d9fdd3 35%, rgba(217,253,211,0.85) 70%, rgba(217,253,211,0));
+  color: #54656f;
+}
+.wa-bubble-action-in {
+  background: linear-gradient(225deg, #ffffff 35%, rgba(255,255,255,0.85) 70%, rgba(255,255,255,0));
+  color: #54656f;
+}
+.wa-bubble-action-out:hover,
+.wa-bubble-action-in:hover,
+.wa-bubble-action-out[data-state="open"],
+.wa-bubble-action-in[data-state="open"] {
+  color: #128c7e;
+}
+
 .wa-icon-button {
   transition: background-color 0.15s;
   border-radius: 9999px;
