@@ -40,9 +40,10 @@ const MetaApiGuide = () => {
                   <p className="text-muted-foreground text-sm">Guia completo para configurar e usar a API oficial do WhatsApp</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate("/meta-campaigns")} className="gap-2">
-                <ArrowRight size={14} className="rotate-180" /> Voltar para Campanhas Meta
+              <Button variant="outline" size="sm" onClick={() => window.close()} className="gap-2">
+                <X size={14} /> Fechar guia
               </Button>
+
             </div>
 
             {/* Intro Section */}
