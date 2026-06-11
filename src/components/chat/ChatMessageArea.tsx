@@ -755,7 +755,10 @@ export function ChatMessageArea({
                   onSendMedia={onSendMedia}
                   replyingTo={replyingTo}
                   onCancelReply={() => setReplyingTo(null)}
+                  externalFiles={droppedFiles}
+                  onExternalConsumed={() => setDroppedFiles([])}
                 />
+
               );
             })()}
           </div>
