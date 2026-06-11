@@ -10,10 +10,24 @@ interface ChatInputProps {
   onSendMedia: (file: File, caption?: string) => void;
   replyingTo?: ChatMessage | null;
   onCancelReply?: () => void;
+  /** External files (e.g. dropped on the message area) — preview opens automatically */
+  externalFiles?: File[];
+  onExternalConsumed?: () => void;
 }
 
-// Pick the best supported mime — Meta accepts audio/ogg (opus) and audio/mp4.
-// audio/webm is NOT supported by Meta Cloud API. Always prefer ogg/opus.
+interface AttachedFile {
+  file: File;
+  url: string;
+  type: "image" | "video" | "document";
+  id: string;
+}
+
+function fileTypeOf(file: File): "image" | "video" | "document" {
+  if (file.type.startsWith("image/")) return "image";
+  if (file.type.startsWith("video/")) return "video";
+  return "document";
+}
+
 function pickAudioMime(): { mime: string; ext: string } {
   const candidates: Array<{ mime: string; ext: string }> = [
     { mime: "audio/ogg;codecs=opus", ext: "ogg" },
@@ -27,12 +41,13 @@ function pickAudioMime(): { mime: string; ext: string } {
   return { mime: "audio/webm", ext: "webm" };
 }
 
-export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply }: ChatInputProps) {
+export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed }: ChatInputProps) {
   const [text, setText] = useState("");
   const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
   const [showAttach, setShowAttach] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
-  const [preview, setPreview] = useState<{ file: File; url: string; type: string } | null>(null);
+  const [attachments, setAttachments] = useState<AttachedFile[]>([]);
+  const [activeIdx, setActiveIdx] = useState(0);
   const [caption, setCaption] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -41,6 +56,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const addMoreInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -49,15 +65,57 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const audioCtxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioMimeRef = useRef<{ mime: string; ext: string }>({ mime: "audio/webm", ext: "webm" });
-  // Press tracking: differentiate tap vs hold (whatsapp-style)
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHoldingRef = useRef(false);
 
+  const addFiles = useCallback((files: File[]) => {
+    if (!files.length) return;
+    const next: AttachedFile[] = files.map(f => ({
+      file: f,
+      url: f.type.startsWith("image/") || f.type.startsWith("video/") ? URL.createObjectURL(f) : "",
+      type: fileTypeOf(f),
+      id: crypto.randomUUID(),
+    }));
+    setAttachments(prev => {
+      const merged = [...prev, ...next];
+      setActiveIdx(merged.length - next.length);
+      return merged;
+    });
+  }, []);
+
+  // Consume externally dropped files
+  useEffect(() => {
+    if (externalFiles && externalFiles.length) {
+      addFiles(externalFiles);
+      onExternalConsumed?.();
+    }
+  }, [externalFiles, addFiles, onExternalConsumed]);
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => {
+      const idx = prev.findIndex(a => a.id === id);
+      const next = prev.filter(a => a.id !== id);
+      if (idx <= activeIdx) setActiveIdx(Math.max(0, activeIdx - 1));
+      const removed = prev[idx];
+      if (removed?.url) URL.revokeObjectURL(removed.url);
+      return next;
+    });
+  };
+
+  const clearAttachments = () => {
+    attachments.forEach(a => a.url && URL.revokeObjectURL(a.url));
+    setAttachments([]);
+    setCaption("");
+    setActiveIdx(0);
+  };
+
   const handleSend = useCallback(() => {
-    if (preview) {
-      onSendMedia(preview.file, caption || undefined);
-      setPreview(null);
-      setCaption("");
+    if (attachments.length) {
+      // Send each file; caption attached to the first one (WhatsApp behavior)
+      attachments.forEach((a, i) => {
+        onSendMedia(a.file, i === 0 ? (caption || undefined) : undefined);
+      });
+      clearAttachments();
       return;
     }
     if (!text.trim()) return;
@@ -66,7 +124,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     setEmojiOpen(false);
     onCancelReply?.();
     inputRef.current?.focus();
-  }, [text, preview, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply]);
+  }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -75,20 +133,22 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setShowAttach(false);
-    if (type === "image" || type === "video") {
-      const url = URL.createObjectURL(file);
-      setPreview({ file, url, type });
-    } else {
-      setPreview({ file, url: "", type: "document" });
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.files;
+    if (items && items.length > 0) {
+      e.preventDefault();
+      addFiles(Array.from(items));
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    setShowAttach(false);
+    addFiles(files);
     e.target.value = "";
   };
 
-  // Waveform analyser loop — responsive (uses container width)
+  // Waveform analyser loop
   const startWaveformLoop = useCallback(() => {
     const analyser = analyserRef.current;
     if (!analyser) return;
@@ -104,7 +164,6 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
       const barHeight = Math.min(Math.max(rms * 4, 0.05), 1);
       setWaveformBars(prev => {
         const next = [...prev, barHeight];
-        // Cap at 240 bars (~2min @120bpm sampling) — display layer clamps to width
         if (next.length > 240) next.shift();
         return next;
       });
@@ -117,7 +176,6 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-
       const audioCtx = new AudioContext();
       audioCtxRef.current = audioCtx;
       const source = audioCtx.createMediaStreamSource(stream);
@@ -130,11 +188,9 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
       audioMimeRef.current = picked;
       const mediaRecorder = new MediaRecorder(stream, { mimeType: picked.mime });
       audioChunksRef.current = [];
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data);
-      };
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mediaRecorder.onstop = () => {
-        const blobType = picked.mime.split(";")[0]; // strip codecs for File
+        const blobType = picked.mime.split(";")[0];
         const audioBlob = new Blob(audioChunksRef.current, { type: blobType });
         if (audioBlob.size > 0) {
           const audioFile = new File([audioBlob], `audio_${Date.now()}.${picked.ext}`, { type: blobType });
@@ -143,7 +199,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
         cleanupRecording();
       };
       mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start(100); // get periodic data
+      mediaRecorder.start(100);
       setIsRecording(true);
       setRecordingTime(0);
       setWaveformBars([]);
@@ -181,9 +237,6 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     audioChunksRef.current = [];
   };
 
-  // Mic button behavior (WhatsApp-style):
-  //  - tap (release < 250ms, no hold): start recording — tap again to send
-  //  - hold (press > 250ms): record while held — release to send
   const handleMicPointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
     if (isRecording) return;
@@ -194,23 +247,12 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     }, 250);
   };
   const handleMicPointerUp = () => {
-    if (pressTimerRef.current) {
-      clearTimeout(pressTimerRef.current);
-      pressTimerRef.current = null;
-    }
-    if (isRecording && isHoldingRef.current) {
-      // Was a hold-to-record gesture: release sends
-      stopRecording();
-    } else if (!isRecording) {
-      // Was a tap: start recording (toggle mode)
-      void startRecording();
-    }
+    if (pressTimerRef.current) { clearTimeout(pressTimerRef.current); pressTimerRef.current = null; }
+    if (isRecording && isHoldingRef.current) stopRecording();
+    else if (!isRecording) void startRecording();
   };
   const handleMicPointerLeave = () => {
-    if (pressTimerRef.current) {
-      clearTimeout(pressTimerRef.current);
-      pressTimerRef.current = null;
-    }
+    if (pressTimerRef.current) { clearTimeout(pressTimerRef.current); pressTimerRef.current = null; }
   };
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -236,56 +278,42 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
       if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+      attachments.forEach(a => a.url && URL.revokeObjectURL(a.url));
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Recording UI — WhatsApp style with responsive waveform
   if (isRecording) {
     return (
       <div className="flex items-center gap-[8px] px-[12px] py-[6px]">
-        <button
-          onClick={cancelRecording}
-          className="w-[42px] h-[42px] rounded-full flex items-center justify-center hover:bg-white/5 transition-colors shrink-0"
-        >
+        <button onClick={cancelRecording} className="w-[42px] h-[42px] rounded-full flex items-center justify-center hover:bg-white/5 transition-colors shrink-0">
           <Trash2 size={20} className="text-red-400" />
         </button>
-
         <div className="flex-1 wa-input-field rounded-[21px] flex items-center gap-3 px-[16px] py-[10px] min-h-[46px] overflow-hidden">
           <div className="w-[10px] h-[10px] rounded-full bg-red-500 animate-pulse shrink-0" />
           <span className="text-[14px] wa-text-primary font-mono min-w-[42px] shrink-0">{formatTime(recordingTime)}</span>
-
-          {/* Responsive waveform — fills available width */}
           <div className="flex-1 flex items-center justify-end gap-[2px] h-[28px] overflow-hidden">
             {waveformBars.slice(-200).map((bar, i) => (
-              <div
-                key={i}
-                className="w-[3px] rounded-full bg-[#00a884] shrink-0"
-                style={{ height: `${Math.max(bar * 26, 3)}px` }}
-              />
+              <div key={i} className="w-[3px] rounded-full bg-[#00a884] shrink-0" style={{ height: `${Math.max(bar * 26, 3)}px` }} />
             ))}
           </div>
         </div>
-
-        <button
-          onClick={stopRecording}
-          className="w-[42px] h-[42px] bg-[#00a884] hover:bg-[#06cf9c] rounded-full flex items-center justify-center transition-colors shrink-0"
-          title="Enviar áudio"
-        >
+        <button onClick={stopRecording} className="w-[42px] h-[42px] bg-[#00a884] hover:bg-[#06cf9c] rounded-full flex items-center justify-center transition-colors shrink-0" title="Enviar áudio">
           <Send size={18} className="text-white ml-[1px]" />
         </button>
       </div>
     );
   }
 
+  const active = attachments[activeIdx];
+
   return (
     <>
-      {replyingTo && (
+      {replyingTo && !attachments.length && (
         <div className="flex items-center gap-2 mx-4 mt-2 px-3 py-2 rounded-t-xl wa-input-field">
           <div className="w-[3px] h-8 rounded-full bg-[#00a884] shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] text-[#00a884] font-medium">
-              {replyingTo.direction === "outbound" ? "Você" : "Contato"}
-            </p>
+            <p className="text-[11px] text-[#00a884] font-medium">{replyingTo.direction === "outbound" ? "Você" : "Contato"}</p>
             <p className="text-[12px] wa-text-muted truncate">{replyingTo.content || "📎 Mídia"}</p>
           </div>
           <button onClick={onCancelReply} className="p-1 rounded-full hover:bg-white/10">
@@ -294,45 +322,104 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
         </div>
       )}
 
-      {preview && (
-        <div className="mx-4 mb-2 rounded-xl wa-input-field border wa-border-light overflow-hidden">
-          <div className="flex items-end gap-3 px-4 py-3">
-            <div className="flex-1 flex flex-col items-center">
-              {preview.type === "image" && (
-                <img src={preview.url} alt="Preview" className="max-h-[250px] rounded-[6px] object-contain mb-3" />
-              )}
-              {preview.type === "video" && (
-                <video src={preview.url} controls className="max-h-[250px] rounded-[6px] mb-3" />
-              )}
-              {preview.type === "document" && (
-                <div className="wa-doc-preview rounded-xl p-4 flex items-center gap-3 mb-3 w-full max-w-[300px]">
-                  <FileText size={28} className="text-[#00a884] shrink-0" />
-                  <span className="text-[14px] wa-text-primary truncate">{preview.file.name}</span>
-                </div>
-              )}
-              {preview.type !== "document" && (
-                <input
-                  value={caption}
-                  onChange={e => setCaption(e.target.value)}
-                  placeholder="Adicionar legenda..."
-                  className="w-full bg-transparent wa-text-primary text-[14px] px-[12px] py-[9px] rounded-lg outline-none border-none placeholder:wa-text-muted"
-                  onKeyDown={e => e.key === "Enter" && handleSend()}
-                />
-              )}
-            </div>
-            <div className="flex flex-col gap-2 pb-1">
-              <button onClick={() => { setPreview(null); setCaption(""); }} className="p-2 rounded-full hover:bg-white/5 transition-colors">
-                <X size={20} className="wa-icon-header" />
+      {/* Multi-attachment WhatsApp-style preview */}
+      {attachments.length > 0 && (
+        <div className="mx-3 mb-2 rounded-xl wa-input-field border wa-border-light overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-2 border-b wa-border-light">
+            <span className="text-[13px] wa-text-muted">
+              {attachments.length === 1
+                ? active?.file.name
+                : `${attachments.length} arquivos`}
+            </span>
+            <button onClick={clearAttachments} className="p-1.5 rounded-full hover:bg-white/5">
+              <X size={18} className="wa-icon-header" />
+            </button>
+          </div>
+
+          {/* Active preview */}
+          <div className="flex items-center justify-center bg-black/5 dark:bg-black/30 min-h-[260px] max-h-[420px] p-4">
+            {active?.type === "image" && (
+              <img src={active.url} alt="Preview" className="max-h-[380px] max-w-full rounded-lg object-contain" />
+            )}
+            {active?.type === "video" && (
+              <video src={active.url} controls className="max-h-[380px] max-w-full rounded-lg" />
+            )}
+            {active?.type === "document" && (
+              <div className="wa-doc-preview rounded-xl p-6 flex flex-col items-center gap-3 max-w-[340px]">
+                <FileText size={56} className="text-[#00a884]" />
+                <span className="text-[14px] wa-text-primary text-center break-words">{active.file.name}</span>
+                <span className="text-[12px] wa-text-muted">
+                  {(active.file.size / 1024).toFixed(0)} KB
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Caption + send */}
+          <div className="flex items-end gap-3 px-4 py-3 border-t wa-border-light">
+            <input
+              value={caption}
+              onChange={e => setCaption(e.target.value)}
+              placeholder="Adicionar legenda..."
+              className="flex-1 bg-transparent wa-text-primary text-[14px] px-[12px] py-[10px] rounded-lg outline-none border-none placeholder:wa-text-muted"
+              onKeyDown={e => e.key === "Enter" && handleSend()}
+            />
+            <button onClick={handleSend} className="w-[44px] h-[44px] bg-[#00a884] hover:bg-[#06cf9c] rounded-full flex items-center justify-center transition-colors shrink-0">
+              <Send size={18} className="text-white ml-[2px]" />
+            </button>
+          </div>
+
+          {/* Thumbnails + add more */}
+          <div className="flex items-center gap-2 px-3 py-2 overflow-x-auto wa-border-top">
+            {attachments.map((a, idx) => (
+              <button
+                key={a.id}
+                onClick={() => setActiveIdx(idx)}
+                className={cn(
+                  "relative w-[56px] h-[56px] rounded-lg overflow-hidden shrink-0 border-2 transition-all",
+                  idx === activeIdx ? "border-[#00a884]" : "border-transparent opacity-70 hover:opacity-100"
+                )}
+              >
+                {a.type === "image" && <img src={a.url} alt="" className="w-full h-full object-cover" />}
+                {a.type === "video" && (
+                  <div className="w-full h-full bg-black flex items-center justify-center">
+                    <Film size={22} className="text-white" />
+                  </div>
+                )}
+                {a.type === "document" && (
+                  <div className="w-full h-full bg-[#00a884]/15 flex items-center justify-center">
+                    <FileText size={22} className="text-[#00a884]" />
+                  </div>
+                )}
+                <span
+                  role="button"
+                  onClick={(e) => { e.stopPropagation(); removeAttachment(a.id); }}
+                  className="absolute top-0 right-0 w-[18px] h-[18px] bg-black/70 rounded-bl-md flex items-center justify-center"
+                >
+                  <X size={11} className="text-white" />
+                </span>
               </button>
-              <button onClick={handleSend} className="w-[42px] h-[42px] bg-[#00a884] hover:bg-[#06cf9c] rounded-full flex items-center justify-center transition-colors">
-                <Send size={18} className="text-white ml-[2px]" />
-              </button>
-            </div>
+            ))}
+            <button
+              onClick={() => addMoreInputRef.current?.click()}
+              className="w-[56px] h-[56px] rounded-lg shrink-0 border-2 border-dashed border-[#00a884]/40 hover:border-[#00a884] hover:bg-[#00a884]/10 flex items-center justify-center transition-colors"
+              title="Adicionar mais"
+            >
+              <Plus size={22} className="text-[#00a884]" />
+            </button>
+            <input
+              ref={addMoreInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFileSelect}
+            />
           </div>
         </div>
       )}
 
-      {!preview && (
+      {!attachments.length && (
         <div className="flex items-end gap-[6px] px-[12px] py-[6px] relative">
           {showAttach && (
             <div className="wa-attach-menu absolute bottom-[60px] left-[20px] wa-attach-bg rounded-2xl shadow-2xl border wa-border-light p-3 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -406,6 +493,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder="Digite uma mensagem"
               rows={1}
               className="flex-1 bg-transparent wa-text-primary text-[15px] pl-[4px] pr-[8px] py-[12px] outline-none resize-none max-h-[120px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
@@ -432,9 +520,9 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
         </div>
       )}
 
-      <input ref={fileInputRef} type="file" className="hidden" onChange={e => handleFileSelect(e, "document")} />
-      <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={e => handleFileSelect(e, "image")} />
-      <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={e => handleFileSelect(e, "video")} />
+      <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
+      <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
+      <input ref={videoInputRef} type="file" accept="video/*" multiple className="hidden" onChange={handleFileSelect} />
     </>
   );
 }

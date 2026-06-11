@@ -260,6 +260,9 @@ export function ChatMessageArea({
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [pipelineStages, setPipelineStages] = useState<{ id: string; name: string; color: string | null; position: number }[]>([]);
   const [leadInfo, setLeadInfo] = useState<{ id: string; pipeline_stage_id: string | null } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
+  const dragCounterRef = useRef(0);
   const navigate = useNavigate();
   const { accountOwnerId } = useAuth();
 
@@ -376,8 +379,52 @@ export function ChatMessageArea({
   // Build a map for reply lookups
   const messagesMap = new Map(messages.map(m => [m.id, m]));
 
+  const handleDragEnter = (e: React.DragEvent) => {
+    if (!e.dataTransfer?.types?.includes("Files")) return;
+    e.preventDefault();
+    dragCounterRef.current += 1;
+    setIsDragging(true);
+  };
+  const handleDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer?.types?.includes("Files")) e.preventDefault();
+  };
+  const handleDragLeave = (e: React.DragEvent) => {
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0;
+      setIsDragging(false);
+    }
+  };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setIsDragging(false);
+    const files = e.dataTransfer?.files ? Array.from(e.dataTransfer.files) : [];
+    if (files.length) setDroppedFiles(files);
+  };
+
   return (
-    <div className="flex-1 flex min-w-0">
+    <div
+      className="flex-1 flex min-w-0 relative"
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="absolute inset-0 z-50 p-4 pointer-events-none">
+          <div className="w-full h-full rounded-2xl border-2 border-dashed border-[#00a884] bg-[#00a884]/15 hover:bg-[#00a884]/25 flex flex-col items-center justify-center gap-3 backdrop-blur-sm transition-colors">
+            <div className="w-[72px] h-[72px] rounded-2xl bg-white shadow-lg flex items-center justify-center">
+              <svg viewBox="0 0 24 24" width="36" height="36" className="text-[#00a884]" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" />
+              </svg>
+            </div>
+            <span className="text-[20px] font-medium text-[#00a884]">Solte o arquivo aqui</span>
+            <span className="text-[13px] wa-text-muted">Imagens, vídeos ou documentos</span>
+          </div>
+        </div>
+      )}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Chat Header */}
         <div className="h-[58px] min-h-[58px] flex items-center gap-[10px] px-[16px] wa-chat-header-bg wa-border-header-bottom shrink-0">
@@ -708,7 +755,10 @@ export function ChatMessageArea({
                   onSendMedia={onSendMedia}
                   replyingTo={replyingTo}
                   onCancelReply={() => setReplyingTo(null)}
+                  externalFiles={droppedFiles}
+                  onExternalConsumed={() => setDroppedFiles([])}
                 />
+
               );
             })()}
           </div>
