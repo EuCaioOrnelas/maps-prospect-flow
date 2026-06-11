@@ -172,6 +172,16 @@ function parseSubscribedFields(apps: any[]) {
   return Array.from(fields);
 }
 
+function parseSubscribedAppLabels(apps: any[]) {
+  return apps
+    .map((app) => {
+      const data = app?.whatsapp_business_api_data ?? app;
+      const label = data?.name || data?.id || app?.id;
+      return label ? String(label) : null;
+    })
+    .filter(Boolean) as string[];
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
