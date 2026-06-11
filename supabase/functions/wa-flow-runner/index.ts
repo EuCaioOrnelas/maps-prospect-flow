@@ -308,19 +308,88 @@ async function sendViaEvolution(
   return JSON.parse(txt || "{}");
 }
 
+// Check whether the conversation with `phone` is currently inside Meta's free-form 24h window.
+// We consider the window OPEN when the lead sent any inbound message within the last 24h.
+async function isInside24hWindow(supabase: any, userId: string, phone: string): Promise<boolean> {
+  const last8 = String(phone || "").replace(/\D/g, "").slice(-8);
+  if (!last8) return false;
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("chat_messages")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("direction", "inbound")
+    .ilike("from_phone", `%${last8}`)
+    .gte("created_at", since)
+    .limit(1);
+  return !!(data && data.length > 0);
+}
+
 async function sendViaMeta(
   supabase: any,
   wabaConnectionId: string,
   toPhone: string,
   payload: SendPayload,
+  opts?: { userId?: string; outOfWindowTemplate?: { name: string; language?: string; variables?: string[] } | null },
 ) {
   const { data: conn } = await supabase
     .from("user_waba_connections")
-    .select("phone_number_id, access_token")
+    .select("phone_number_id, access_token, webhook_verified_at, status")
     .eq("id", wabaConnectionId)
     .maybeSingle();
   if (!conn?.phone_number_id || !conn?.access_token) {
     throw new Error(`Meta WABA connection missing token/phone_number_id for ${wabaConnectionId}`);
+  }
+  // Hard gate: webhook must be verified for the conversation to receive inbound events.
+  if (!conn.webhook_verified_at) {
+    throw new Error(`Meta WABA connection ${wabaConnectionId} has no verified webhook — flow blocked`);
+  }
+
+  // 24h window enforcement: if the conversation is closed and the payload is a free-form message,
+  // either swap for the configured HSM template or refuse.
+  const needsWindowCheck = ["text", "image", "video", "audio", "document", "buttons", "list"].includes(payload.type);
+  if (needsWindowCheck && opts?.userId) {
+    const open = await isInside24hWindow(supabase, opts.userId, toPhone);
+    if (!open) {
+      const tpl = opts.outOfWindowTemplate;
+      if (!tpl?.name) {
+        console.warn(
+          `[wa-flow-runner] 24h window closed for ${toPhone} and no out-of-window template configured — skipping send`,
+        );
+        return { skipped: true, reason: "24h_window_closed_no_template" };
+      }
+      // Send approved template instead
+      const tplBody: any = {
+        messaging_product: "whatsapp",
+        to: toPhone.replace(/\D/g, ""),
+        type: "template",
+        template: {
+          name: tpl.name,
+          language: { code: tpl.language || "pt_BR" },
+        },
+      };
+      const vars = (tpl.variables || []).filter((v) => v != null && v !== "");
+      if (vars.length > 0) {
+        tplBody.template.components = [
+          {
+            type: "body",
+            parameters: vars.map((v) => ({ type: "text", text: String(v) })),
+          },
+        ];
+      }
+      const tres = await fetch(`https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${conn.access_token}` },
+        body: JSON.stringify(tplBody),
+      });
+      const ttxt = await tres.text();
+      if (!tres.ok) {
+        console.error(`[wa-flow-runner] Meta template send failed (${tres.status}):`, ttxt);
+        throw new Error(`Meta template error ${tres.status}: ${ttxt.slice(0, 200)}`);
+      }
+      console.log(`[wa-flow-runner] Sent HSM template '${tpl.name}' to ${toPhone} (window closed)`);
+      return JSON.parse(ttxt || "{}");
+    }
   }
 
   const url = `https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`;
