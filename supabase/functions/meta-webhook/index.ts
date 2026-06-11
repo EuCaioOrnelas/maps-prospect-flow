@@ -371,12 +371,14 @@ serve(async (req) => {
             const phoneNumberId = metadata.phone_number_id;
             const displayPhone = metadata.display_phone_number;
 
-            // Find WABA connection for this phone_number_id
+            // Find WABA connection for this phone_number_id. If Meta omits or changes
+            // metadata format, fall back to the WABA id so inbound messages still land.
             const { data: wabaConn } = await supabase
               .from('user_waba_connections')
               .select('id, user_id')
-              .eq('phone_number_id', phoneNumberId)
+              .or(`phone_number_id.eq.${phoneNumberId},waba_id.eq.${wabaId}`)
               .eq('status', 'active')
+              .limit(1)
               .maybeSingle();
 
             for (const msg of messages) {
@@ -435,6 +437,7 @@ serve(async (req) => {
                   .eq('user_id', userId)
                   .eq('waba_connection_id', connectionId)
                   .or(`contact_phone.eq.${from},contact_phone.ilike.%${phoneTail8(from)}`)
+                  .limit(1)
                   .maybeSingle();
 
                 const lastText = msgType === 'text' ? textContent
