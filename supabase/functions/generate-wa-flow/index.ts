@@ -906,7 +906,7 @@ const enrichFlowDraft = (draft: { flow_name: string; nodes: FlowNodeDraft[]; edg
 
   // Ensure entry
   if (!nodes.some((n) => n.type === "entry")) {
-    nodes.unshift({ id: "node_entry", type: "entry", label: "Entrada", position_x: 0, position_y: 300, config: { trigger_type: "first_message", keywords: [] } });
+    nodes.unshift({ id: "node_entry", type: "entry", label: "Entrada", position_x: 0, position_y: 300, config: { api_type: "meta", trigger_type: "first_message", keywords: [] } });
   }
 
   // Ensure end/handoff
