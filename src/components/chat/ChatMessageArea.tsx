@@ -528,7 +528,7 @@ export function ChatMessageArea({
             {/* CRM stage selector */}
             {pipelineStages.length > 0 && (() => {
               const currentStage = pipelineStages.find(s => s.id === leadInfo?.pipeline_stage_id);
-              const stageColor = currentStage?.color || "#00a884";
+              const stageColor = currentStage?.color || "#128c7e";
               return (
                 <Popover>
                   <PopoverTrigger asChild>
@@ -600,7 +600,7 @@ export function ChatMessageArea({
                       className={cn(
                         "flex items-center gap-2 h-[34px] pl-1 pr-3 rounded-full border transition-colors",
                         conversation.responsible_user_id
-                          ? "border-[#00a884]/30 bg-[#00a884]/10 hover:bg-[#00a884]/15"
+                          ? "wa-accent-border-soft wa-accent-bg-soft hover:wa-accent-bg-softer"
                           : "border-white/10 hover:border-white/20 bg-transparent"
                       )}
                       title={respLabel ? `Responsável: ${respMember?.name || respMember?.email}` : "Atribuir responsável"}
@@ -645,7 +645,7 @@ export function ChatMessageArea({
                             key={m.user_id}
                             className={cn(
                               "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
-                              selected ? "bg-[#00a884]/10 text-foreground" : "hover:bg-muted"
+                              selected ? "wa-accent-bg-soft text-foreground" : "hover:bg-muted"
                             )}
                             onClick={async () => {
                               try { await onTransferResponsible(conversation.id, m.user_id); toast.success("Conversa transferida"); }
@@ -659,7 +659,7 @@ export function ChatMessageArea({
                               {m.name || m.email || m.user_id.slice(0, 8)}
                               {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
                             </span>
-                            {selected && <span className="text-[#00a884] text-[10px] font-semibold">●</span>}
+                            {selected && <span className="wa-accent-text text-[10px] font-semibold">●</span>}
                           </button>
                         );
                       })}
