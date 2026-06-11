@@ -197,7 +197,7 @@ serve(async (req) => {
             token_data: { ...tokenData, access_token: "***REDACTED***" },
           },
         },
-        { onConflict: "user_id,waba_id" }
+        { onConflict: "phone_number_id" }
       )
       .select()
       .single();
