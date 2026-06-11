@@ -285,6 +285,15 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
     <div className="space-y-4">
       {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets. Os dados são adicionados em novas linhas.")}
 
+      {!isConnected && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-amber-500 leading-relaxed">
+            <span className="font-semibold">Conta Google obrigatória.</span> Conecte uma conta abaixo para habilitar a integração com Sheets.
+          </p>
+        </div>
+      )}
+
       <GoogleConnectionBlock
         accounts={googleAccounts}
         selectedAccountId={selectedAccountId}
@@ -294,6 +303,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
         handleDisconnect={(id) => { handleDisconnect(id); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
         label="Google"
       />
+
 
       {isConnected && (
         <>
