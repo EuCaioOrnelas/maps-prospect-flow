@@ -1300,34 +1300,52 @@ input::placeholder, textarea::placeholder {
 .wa-icon-button:hover { background-color: rgba(134,150,160,0.1); }
 .landing-light .wa-icon-button:hover { background-color: rgba(0,0,0,0.05); }
 
-/* ─── Dropdowns — Wiize green highlight + white text on hover ─── */
+/* ─── Dropdowns — Wiize green highlight + white text on hover/focus ─── */
 .wa-dropdown-menu,
 .wa-dropdown-bg { background-color: hsl(220 18% 10%); color: #e9edef; }
 .landing-light .wa-dropdown-menu,
 .landing-light .wa-dropdown-bg { background-color: #ffffff; color: #111b21; }
 
-.wa-dropdown-item { color: #e9edef; }
+.wa-dropdown-item { color: #e9edef; transition: background-color 0.12s, color 0.12s; }
 .landing-light .wa-dropdown-item { color: #111b21; }
 .wa-dropdown-item svg { color: #8696a0; transition: color 0.12s; }
 .landing-light .wa-dropdown-item svg { color: #54656f; }
 
 .wa-dropdown-item:hover,
-.wa-dropdown-item[data-highlighted] {
+.wa-dropdown-item:focus,
+.wa-dropdown-item:focus-visible,
+.wa-dropdown-item[data-highlighted],
+.wa-dropdown-item[data-state="open"] {
   background-color: #00a884 !important;
   color: #ffffff !important;
+  outline: none;
 }
 .wa-dropdown-item:hover svg,
-.wa-dropdown-item[data-highlighted] svg { color: #ffffff !important; }
+.wa-dropdown-item:focus svg,
+.wa-dropdown-item:focus-visible svg,
+.wa-dropdown-item[data-highlighted] svg,
+.wa-dropdown-item[data-state="open"] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
 
-.wa-dropdown-item-destructive { color: #f87171; }
-.wa-dropdown-item-destructive svg { color: #f87171; }
+.wa-dropdown-item-destructive { color: #ef4444; transition: background-color 0.12s, color 0.12s; }
+.wa-dropdown-item-destructive svg { color: #ef4444; }
 .wa-dropdown-item-destructive:hover,
+.wa-dropdown-item-destructive:focus,
+.wa-dropdown-item-destructive:focus-visible,
 .wa-dropdown-item-destructive[data-highlighted] {
   background-color: hsl(0 72% 51%) !important;
   color: #ffffff !important;
+  outline: none;
 }
 .wa-dropdown-item-destructive:hover svg,
-.wa-dropdown-item-destructive[data-highlighted] svg { color: #ffffff !important; }
+.wa-dropdown-item-destructive:focus svg,
+.wa-dropdown-item-destructive:focus-visible svg,
+.wa-dropdown-item-destructive[data-highlighted] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
 
 /* ─── Attach menu ─── */
 .wa-attach-bg { background-color: hsl(220 18% 10%); }
