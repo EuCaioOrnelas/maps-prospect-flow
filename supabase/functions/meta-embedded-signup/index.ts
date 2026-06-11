@@ -179,37 +179,59 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: connection, error: dbError } = await supabase
+    // Check existing connection by phone_number_id (partial unique index doesn't work with onConflict)
+    const { data: existing } = await supabase
       .from("user_waba_connections")
-      .upsert(
-        {
-          user_id,
-          waba_id: wabaId,
-          phone_number_id: phoneNumberId,
-          display_phone_number: displayPhone,
-          business_name: businessName,
-          access_token: accessToken,
-          status: "active",
-          raw_signup_data: {
-            debug_token: debugData,
-            redirect_uri_received: redirect_uri ?? null,
-            redirect_uri_used: redirectUriUsed,
-            token_data: { ...tokenData, access_token: "***REDACTED***" },
-          },
-        },
-        { onConflict: "phone_number_id" }
-      )
-      .select()
-      .single();
+      .select("id, owner_user_id, user_id")
+      .eq("phone_number_id", phoneNumberId)
+      .maybeSingle();
+
+    if (existing && existing.owner_user_id && existing.owner_user_id !== user_id && existing.user_id !== user_id) {
+      return respond({
+        success: false,
+        error: "phone_number_already_connected",
+        message: "Este número WhatsApp já está conectado em outra conta Wiize. Cada número só pode estar vinculado a uma conta por vez. Desconecte-o na outra conta antes de tentar novamente — se você não tem acesso à outra conta, fale com o suporte.",
+      });
+    }
+
+    const payload = {
+      user_id,
+      waba_id: wabaId,
+      phone_number_id: phoneNumberId,
+      display_phone_number: displayPhone,
+      business_name: businessName,
+      access_token: accessToken,
+      status: "active",
+      raw_signup_data: {
+        debug_token: debugData,
+        redirect_uri_received: redirect_uri ?? null,
+        redirect_uri_used: redirectUriUsed,
+        token_data: { ...tokenData, access_token: "***REDACTED***" },
+      },
+    };
+
+    const op = existing?.id
+      ? await supabase.from("user_waba_connections").update(payload).eq("id", existing.id).select().single()
+      : await supabase.from("user_waba_connections").insert(payload).select().single();
+
+    const connection = op.data;
+    const dbError = op.error;
 
     if (dbError) {
       console.error("[meta-embedded-signup] DB error:", dbError);
+      const msg = dbError.message || "";
+      const friendly = msg.includes("duplicate key") || msg.includes("phone_number_id_uniq")
+        ? "Este número já está conectado em outra conta Wiize. Desconecte-o lá antes de vincular aqui."
+        : msg.includes("ON CONFLICT")
+        ? "Erro temporário ao salvar. Tente novamente em alguns instantes."
+        : msg;
       return respond({
         success: false,
         error: "Failed to save connection",
-        message: dbError.message,
+        message: friendly,
       });
     }
+
 
     try {
       const subscribeRes = await fetch(`https://graph.facebook.com/v21.0/${wabaId}/subscribed_apps`, {

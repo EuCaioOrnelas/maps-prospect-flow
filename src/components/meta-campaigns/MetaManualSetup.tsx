@@ -139,27 +139,53 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
         // ignore — not critical
       }
 
-      const { data: connection, error: dbError } = await supabase
+      // Partial unique index não funciona com upsert/onConflict no PostgREST.
+      // Fazemos check manual para dar erro amigável quando o número já está em outra conta.
+      const ownerId = accountOwnerId || user.id;
+      const { data: existing, error: existErr } = await supabase
         .from("user_waba_connections")
-        .upsert(
-          {
-            user_id: accountOwnerId || user.id,
-            owner_user_id: accountOwnerId || user.id,
-            waba_id: cleanWaba,
-            phone_number_id: cleanPhone,
-            access_token: cleanToken,
-            display_phone_number: displayPhone,
-            business_name: businessName,
-            nickname: nickname.trim() || null,
-            status: "active",
-            raw_signup_data: { source: "manual" },
-          },
-          { onConflict: "phone_number_id" }
-        )
-        .select()
-        .single();
+        .select("id, owner_user_id")
+        .eq("phone_number_id", cleanPhone)
+        .maybeSingle();
 
-      if (dbError) throw new Error(dbError.message);
+      if (existErr) throw new Error(existErr.message);
+
+      if (existing && existing.owner_user_id && existing.owner_user_id !== ownerId) {
+        throw new Error(
+          "Este número (Phone Number ID) já está conectado em outra conta Wiize. Cada número só pode estar vinculado a uma conta por vez. Desconecte-o na outra conta antes de tentar novamente — se você não tem acesso à outra conta, fale com o suporte para liberar."
+        );
+      }
+
+      const payload = {
+        user_id: ownerId,
+        owner_user_id: ownerId,
+        waba_id: cleanWaba,
+        phone_number_id: cleanPhone,
+        access_token: cleanToken,
+        display_phone_number: displayPhone,
+        business_name: businessName,
+        nickname: nickname.trim() || null,
+        status: "active",
+        raw_signup_data: { source: "manual" },
+      };
+
+      const op = existing?.id
+        ? await supabase.from("user_waba_connections").update(payload).eq("id", existing.id).select().single()
+        : await supabase.from("user_waba_connections").insert(payload).select().single();
+
+      const connection = op.data;
+      const dbError = op.error;
+
+      if (dbError) {
+        const msg = dbError.message || "";
+        if (msg.includes("duplicate key") || msg.includes("phone_number_id_uniq")) {
+          throw new Error("Este número já está conectado em outra conta Wiize. Desconecte-o lá antes de vincular aqui — ou fale com o suporte.");
+        }
+        if (msg.includes("ON CONFLICT")) {
+          throw new Error("Erro temporário ao salvar. Atualize a página e tente de novo; se persistir, fale com o suporte.");
+        }
+        throw new Error(msg);
+      }
 
       // Try to subscribe webhook (best-effort)
       try {
