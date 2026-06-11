@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, ExternalLink } from "lucide-react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, ExternalLink, Tag, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
@@ -229,18 +229,18 @@ function MessageActions({ msg, onReply, onForward }: { msg: ChatMessage; onReply
           <ChevronDown size={14} className="text-white/80" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="wa-dropdown-bg border wa-border min-w-[180px] rounded-xl shadow-2xl py-1 overflow-hidden">
-        <DropdownMenuItem onClick={onReply} className="flex items-center gap-2 px-3 py-2 mx-1 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5">
-          <Reply size={14} className="wa-icon-muted" /> Responder
+      <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+        <DropdownMenuItem onClick={onReply} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+          <Reply size={14} /> Responder
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => {
           navigator.clipboard.writeText(msg.content || "");
           toast.success("Mensagem copiada");
-        }} className="flex items-center gap-2 px-3 py-2 mx-1 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5">
-          <Copy size={14} className="wa-icon-muted" /> Copiar
+        }} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+          <Copy size={14} /> Copiar
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onForward} className="flex items-center gap-2 px-3 py-2 mx-1 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5">
-          <Forward size={14} className="wa-icon-muted" /> Encaminhar
+        <DropdownMenuItem onClick={onForward} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+          <Forward size={14} /> Encaminhar
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -258,8 +258,44 @@ export function ChatMessageArea({
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
+  const [pipelineStages, setPipelineStages] = useState<{ id: string; name: string; color: string | null; position: number }[]>([]);
+  const [leadInfo, setLeadInfo] = useState<{ id: string; pipeline_stage_id: string | null } | null>(null);
   const navigate = useNavigate();
   const { accountOwnerId } = useAuth();
+
+  // Load pipeline stages once
+  useEffect(() => {
+    if (!accountOwnerId) return;
+    supabase
+      .from("pipeline_stages")
+      .select("id, name, color, position")
+      .eq("user_id", accountOwnerId)
+      .order("position", { ascending: true })
+      .then(({ data }) => setPipelineStages((data as any) || []));
+  }, [accountOwnerId]);
+
+  // Load lead for the active conversation
+  useEffect(() => {
+    if (!conversation || !accountOwnerId) { setLeadInfo(null); return; }
+    const last8 = conversation.contact_phone.replace(/\D/g, "").slice(-8);
+    supabase
+      .from("leads")
+      .select("id, pipeline_stage_id")
+      .eq("user_id", accountOwnerId)
+      .ilike("phone", `%${last8}`)
+      .limit(1)
+      .then(({ data }) => setLeadInfo((data && data[0]) ? (data[0] as any) : null));
+  }, [conversation?.id, conversation?.contact_phone, accountOwnerId]);
+
+  const handleChangeStage = async (stageId: string) => {
+    if (!leadInfo) { toast.error("Salve o contato no CRM antes de mudar a coluna"); return; }
+    const prev = leadInfo.pipeline_stage_id;
+    setLeadInfo({ ...leadInfo, pipeline_stage_id: stageId });
+    const { error } = await supabase.from("leads").update({ pipeline_stage_id: stageId }).eq("id", leadInfo.id);
+    if (error) { setLeadInfo({ ...leadInfo, pipeline_stage_id: prev }); toast.error("Erro ao mudar coluna"); }
+    else toast.success("Coluna do CRM atualizada");
+  };
+
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -386,7 +422,68 @@ export function ChatMessageArea({
               }
             </p>
           </div>
-          <div className="flex items-center gap-[16px]">
+          <div className="flex items-center gap-[10px]">
+            {/* CRM stage selector */}
+            {pipelineStages.length > 0 && (() => {
+              const currentStage = pipelineStages.find(s => s.id === leadInfo?.pipeline_stage_id);
+              const stageColor = currentStage?.color || "#00a884";
+              return (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="hidden md:flex items-center gap-1.5 h-[30px] pl-2 pr-2.5 rounded-full border transition-colors hover:opacity-90"
+                      style={{
+                        borderColor: leadInfo ? `${stageColor}55` : undefined,
+                        backgroundColor: leadInfo ? `${stageColor}1a` : "transparent",
+                      }}
+                      title={leadInfo ? `Coluna no CRM: ${currentStage?.name || "—"}` : "Salve o contato para definir uma coluna"}
+                    >
+                      <span
+                        className="w-[8px] h-[8px] rounded-full shrink-0"
+                        style={{ backgroundColor: leadInfo ? stageColor : "#9ca3af" }}
+                      />
+                      <span
+                        className="text-[12px] font-medium max-w-[140px] truncate"
+                        style={{ color: leadInfo ? stageColor : undefined }}
+                      >
+                        {leadInfo ? (currentStage?.name || "Sem coluna") : "Não está no CRM"}
+                      </span>
+                      <ChevronDown size={12} style={{ color: leadInfo ? stageColor : undefined }} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-64 p-1.5 bg-popover">
+                    <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                      Mover no CRM
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {pipelineStages.map(s => {
+                        const selected = s.id === leadInfo?.pipeline_stage_id;
+                        const color = s.color || "#00a884";
+                        return (
+                          <button
+                            key={s.id}
+                            onClick={() => void handleChangeStage(s.id)}
+                            className={cn(
+                              "w-full flex items-center gap-2.5 px-2 py-2 text-sm rounded-md transition-colors",
+                              selected ? "bg-muted" : "hover:bg-muted"
+                            )}
+                          >
+                            <span className="w-[10px] h-[10px] rounded-full shrink-0" style={{ backgroundColor: color }} />
+                            <span className="flex-1 text-left truncate">{s.name}</span>
+                            {selected && <Check size={14} className="text-[#00a884]" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {!leadInfo && (
+                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">
+                        Salve o contato no CRM para habilitar a mudança de coluna.
+                      </p>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              );
+            })()}
             {canChangeResponsible && onTransferResponsible && (() => {
               const respMember = members.find(m => m.user_id === conversation.responsible_user_id);
               const respLabel = respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || null;
@@ -512,7 +609,10 @@ export function ChatMessageArea({
 
         {/* Messages area + input — background extends fully */}
         <div className="flex-1 flex flex-col min-h-0 wa-chat-bg relative">
-          <div className="absolute inset-0 wa-chat-pattern pointer-events-none" />
+          <div
+            className="absolute inset-0 wa-chat-pattern pointer-events-none"
+            style={{ backgroundImage: `url(${logoIconNew})` }}
+          />
           <div className="wa-chat-glow" />
 
           <div className="flex-1 overflow-y-auto wa-scrollbar relative z-[1]" ref={scrollContainerRef}>
