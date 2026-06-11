@@ -40,12 +40,11 @@ const WEBHOOK_GUIDE_VIDEO_URL = "";
 export default function MetaConfiguracoes() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const defaultTab = (searchParams.get("tab") === "notifications" || searchParams.get("tab") === "security") ? searchParams.get("tab")! : "webhook";
+  const defaultTab = searchParams.get("tab") === "security" ? "security" : "notifications";
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
-  const [webhookStatus, setWebhookStatus] = useState<"ok" | "pending" | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -104,32 +103,10 @@ export default function MetaConfiguracoes() {
       <MetaPageHeader
         title="Configurações"
         description="Escolha quais alertas receber por e-mail e as regras de segurança da sua operação Meta."
-        titleBadge={
-          webhookStatus ? (
-            <div
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-                webhookStatus === "ok"
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                  : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"
-              }`}
-            >
-              {webhookStatus === "ok" ? (
-                <CheckCircle2 className="h-3 w-3" />
-              ) : (
-                <AlertTriangle className="h-3 w-3" />
-              )}
-              <span>{webhookStatus === "ok" ? "Webhooks ativos" : "Webhook obrigatório pendente"}</span>
-            </div>
-          ) : undefined
-        }
       />
 
       <Tabs defaultValue={defaultTab}>
         <TabsList className="bg-muted/40">
-          <TabsTrigger value="webhook">
-            <Webhook size={13} className="mr-1.5" />
-            Webhook
-          </TabsTrigger>
           <TabsTrigger value="notifications">
             <Bell size={13} className="mr-1.5" />
             Notificações
@@ -139,11 +116,6 @@ export default function MetaConfiguracoes() {
             Segurança
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="webhook" className="mt-5 space-y-4">
-          <WebhookPanel onStatusChange={setWebhookStatus} />
-        </TabsContent>
-
 
         <TabsContent value="notifications" className="mt-5 space-y-4">
           <Card className="border-border/60 overflow-hidden">
