@@ -1241,12 +1241,12 @@ input::placeholder, textarea::placeholder {
 /* ─── Message bubbles — comfortable WhatsApp green ─── */
 .wa-bubble-out { background-color: #d9fdd3; }
 .landing-light .wa-bubble-out { background-color: #d9fdd3; }
-.wa-bubble-in { background-color: #dde2e5; }
-.landing-light .wa-bubble-in { background-color: #dde2e5; }
+.wa-bubble-in { background-color: #ffffff; }
+.landing-light .wa-bubble-in { background-color: #ffffff; }
 .wa-bubble-out-fill { fill: #d9fdd3; }
 .landing-light .wa-bubble-out-fill { fill: #d9fdd3; }
-.wa-bubble-in-fill { fill: #dde2e5; }
-.landing-light .wa-bubble-in-fill { fill: #dde2e5; }
+.wa-bubble-in-fill { fill: #ffffff; }
+.landing-light .wa-bubble-in-fill { fill: #ffffff; }
 
 /* Bubble text — always dark for contrast on light bubbles */
 .wa-bubble-out .wa-text-primary,
