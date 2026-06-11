@@ -294,11 +294,11 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
           <span className="text-[14px] wa-text-primary font-mono min-w-[42px] shrink-0">{formatTime(recordingTime)}</span>
           <div className="flex-1 flex items-center justify-end gap-[2px] h-[28px] overflow-hidden">
             {waveformBars.slice(-200).map((bar, i) => (
-              <div key={i} className="w-[3px] rounded-full bg-[#00a884] shrink-0" style={{ height: `${Math.max(bar * 26, 3)}px` }} />
+              <div key={i} className="w-[3px] rounded-full wa-accent-bg shrink-0" style={{ height: `${Math.max(bar * 26, 3)}px` }} />
             ))}
           </div>
         </div>
-        <button onClick={stopRecording} className="w-[42px] h-[42px] bg-[#00a884] hover:bg-[#06cf9c] rounded-full flex items-center justify-center transition-colors shrink-0" title="Enviar áudio">
+        <button onClick={stopRecording} className="w-[42px] h-[42px] wa-accent-bg rounded-full flex items-center justify-center transition-colors shrink-0" title="Enviar áudio">
           <Send size={18} className="text-white ml-[1px]" />
         </button>
       </div>
@@ -311,7 +311,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     <>
       {replyingTo && !attachments.length && (() => {
         const isSelf = replyingTo.direction === "outbound";
-        const color = isSelf ? "#00a884" : "#1f7aec";
+        const color = isSelf ? "#128c7e" : "#1f7aec";
         return (
           <div className="flex items-center gap-2 mx-4 mt-2 px-3 py-2 rounded-t-xl wa-input-field">
             <div className="w-[3px] h-8 rounded-full shrink-0" style={{ backgroundColor: color }} />
@@ -351,7 +351,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
             )}
             {active?.type === "document" && (
               <div className="wa-doc-preview rounded-xl p-6 flex flex-col items-center gap-3 max-w-[340px]">
-                <FileText size={56} className="text-[#00a884]" />
+                <FileText size={56} className="wa-accent-text" />
                 <span className="text-[14px] wa-text-primary text-center break-words">{active.file.name}</span>
                 <span className="text-[12px] wa-text-muted">
                   {(active.file.size / 1024).toFixed(0)} KB
@@ -369,7 +369,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               className="flex-1 bg-transparent wa-text-primary text-[14px] px-[12px] py-[10px] rounded-lg outline-none border-none placeholder:wa-text-muted"
               onKeyDown={e => e.key === "Enter" && handleSend()}
             />
-            <button onClick={handleSend} className="w-[44px] h-[44px] bg-[#00a884] hover:bg-[#06cf9c] rounded-full flex items-center justify-center transition-colors shrink-0">
+            <button onClick={handleSend} className="w-[44px] h-[44px] wa-accent-bg rounded-full flex items-center justify-center transition-colors shrink-0">
               <Send size={18} className="text-white ml-[2px]" />
             </button>
           </div>
@@ -382,7 +382,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                 onClick={() => setActiveIdx(idx)}
                 className={cn(
                   "relative w-[56px] h-[56px] rounded-lg overflow-hidden shrink-0 border-2 transition-all",
-                  idx === activeIdx ? "border-[#00a884]" : "border-transparent opacity-70 hover:opacity-100"
+                  idx === activeIdx ? "wa-accent-border" : "border-transparent opacity-70 hover:opacity-100"
                 )}
               >
                 {a.type === "image" && <img src={a.url} alt="" className="w-full h-full object-cover" />}
@@ -392,8 +392,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                   </div>
                 )}
                 {a.type === "document" && (
-                  <div className="w-full h-full bg-[#00a884]/15 flex items-center justify-center">
-                    <FileText size={22} className="text-[#00a884]" />
+                  <div className="w-full h-full wa-accent-bg-soft flex items-center justify-center">
+                    <FileText size={22} className="wa-accent-text" />
                   </div>
                 )}
                 <span
@@ -407,10 +407,10 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
             ))}
             <button
               onClick={() => addMoreInputRef.current?.click()}
-              className="w-[56px] h-[56px] rounded-lg shrink-0 border-2 border-dashed border-[#00a884]/40 hover:border-[#00a884] hover:bg-[#00a884]/10 flex items-center justify-center transition-colors"
+              className="w-[56px] h-[56px] rounded-lg shrink-0 border-2 border-dashed wa-accent-border-muted wa-accent-hover-bg-softer flex items-center justify-center transition-colors"
               title="Adicionar mais"
             >
-              <Plus size={22} className="text-[#00a884]" />
+              <Plus size={22} className="wa-accent-text" />
             </button>
             <input
               ref={addMoreInputRef}
@@ -428,20 +428,20 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
           {showAttach && (
             <div className="wa-attach-menu absolute bottom-[60px] left-[20px] wa-attach-bg rounded-2xl shadow-2xl border wa-border-light p-3 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <button onClick={() => imageInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
-                <div className="w-[50px] h-[50px] rounded-2xl bg-[#00a884]/15 ring-1 ring-[#00a884]/30 flex items-center justify-center group-hover:bg-[#00a884]/25 group-hover:scale-105 transition-all">
-                  <ImageIcon size={22} className="text-[#00a884]" strokeWidth={1.8} />
+                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
+                  <ImageIcon size={22} className="wa-accent-text" strokeWidth={1.8} />
                 </div>
                 <span className="text-[11px] wa-text-muted font-medium">Fotos</span>
               </button>
               <button onClick={() => videoInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
-                <div className="w-[50px] h-[50px] rounded-2xl bg-[#00a884]/15 ring-1 ring-[#00a884]/30 flex items-center justify-center group-hover:bg-[#00a884]/25 group-hover:scale-105 transition-all">
-                  <Film size={22} className="text-[#00a884]" strokeWidth={1.8} />
+                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
+                  <Film size={22} className="wa-accent-text" strokeWidth={1.8} />
                 </div>
                 <span className="text-[11px] wa-text-muted font-medium">Vídeo</span>
               </button>
               <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
-                <div className="w-[50px] h-[50px] rounded-2xl bg-[#00a884]/15 ring-1 ring-[#00a884]/30 flex items-center justify-center group-hover:bg-[#00a884]/25 group-hover:scale-105 transition-all">
-                  <FileText size={22} className="text-[#00a884]" strokeWidth={1.8} />
+                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
+                  <FileText size={22} className="wa-accent-text" strokeWidth={1.8} />
                 </div>
                 <span className="text-[11px] wa-text-muted font-medium">Arquivo</span>
               </button>
@@ -453,13 +453,13 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
               className="wa-attach-btn p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity"
             >
-              <Plus size={22} className={cn("transition-transform duration-200", showAttach ? "text-[#00a884] rotate-45" : "wa-icon-panel")} />
+              <Plus size={22} className={cn("transition-transform duration-200", showAttach ? "wa-accent-text rotate-45" : "wa-icon-panel")} />
             </button>
 
             <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
               <PopoverTrigger asChild>
                 <button className="p-[12px] pl-0 shrink-0 self-end hover:opacity-70 transition-opacity">
-                  <Smile size={22} className={emojiOpen ? "text-[#00a884]" : "wa-icon-panel"} />
+                  <Smile size={22} className={emojiOpen ? "wa-accent-text" : "wa-icon-panel"} />
                 </button>
               </PopoverTrigger>
               <PopoverContent
@@ -506,7 +506,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
             {text.trim() ? (
               <button onClick={handleSend} className="p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity">
-                <Send size={20} className="text-[#00a884]" />
+                <Send size={20} className="wa-accent-text" />
               </button>
             ) : (
               <button

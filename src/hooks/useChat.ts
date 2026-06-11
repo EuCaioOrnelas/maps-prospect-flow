@@ -6,6 +6,7 @@ import { toast } from "sonner";
 export interface ChatConversation {
   id: string;
   user_id: string;
+  owner_user_id?: string | null;
   waba_connection_id: string;
   contact_phone: string;
   contact_name: string | null;
@@ -28,6 +29,7 @@ export interface ChatMessage {
   id: string;
   conversation_id: string;
   user_id: string;
+  owner_user_id?: string | null;
   waba_message_id: string | null;
   direction: string;
   message_type: string;
@@ -210,8 +212,10 @@ export function useChat() {
         event: "*",
         schema: "public",
         table: "chat_conversations",
-        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
+        const nextRow = (payload.new || payload.old) as ChatConversation | undefined;
+        if (nextRow?.owner_user_id && nextRow.owner_user_id !== accountOwnerId) return;
+        if (nextRow?.waba_connection_id && activeConnectionId && nextRow.waba_connection_id !== activeConnectionId) return;
         if (payload.eventType === "INSERT") {
           setConversations(prev => {
             const next = payload.new as ChatConversation;
@@ -235,9 +239,9 @@ export function useChat() {
         event: "INSERT",
         schema: "public",
         table: "chat_messages",
-        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         const newMsg = payload.new as ChatMessage;
+        if ((newMsg as any).owner_user_id && (newMsg as any).owner_user_id !== accountOwnerId) return;
         if (newMsg.conversation_id === activeConversationId) {
           // Dedupe: skip if message id already exists (avoids duplicate after
           // optimistic insert + DB insert returning the same row via realtime).
@@ -251,15 +255,15 @@ export function useChat() {
         event: "UPDATE",
         schema: "public",
         table: "chat_messages",
-        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         const updated = payload.new as ChatMessage;
+        if ((updated as any).owner_user_id && (updated as any).owner_user_id !== accountOwnerId) return;
         setMessages(prev => prev.map(m => m.id === updated.id ? updated : m));
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, accountOwnerId, activeConversationId]);
+  }, [user, accountOwnerId, activeConnectionId, activeConversationId]);
 
   // Send text message
   const sendMessage = useCallback(async (text: string, replyToId?: string) => {

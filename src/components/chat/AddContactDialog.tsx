@@ -36,8 +36,8 @@ export function AddContactDialog({ open, onOpenChange, phone, defaultName, onSav
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px] bg-popover">
         <DialogHeader>
-          <div className="w-12 h-12 rounded-full bg-[#00a884]/15 flex items-center justify-center mb-2">
-            <UserPlus size={22} className="text-[#00a884]" />
+          <div className="w-12 h-12 rounded-full wa-accent-bg-soft flex items-center justify-center mb-2">
+            <UserPlus size={22} className="wa-accent-text" />
           </div>
           <DialogTitle>Salvar contato</DialogTitle>
           <DialogDescription>

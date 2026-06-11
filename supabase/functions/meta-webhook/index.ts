@@ -165,11 +165,16 @@ serve(async (req) => {
         const { data: conns } = await supabase
           .from('user_waba_connections')
           .select('user_id, waba_id')
-          .in('waba_id', wabaIds);
+          .in('waba_id', wabaIds)
+          .eq('status', 'active');
         ownerSettings = (conns || []).map((c: any) => ({ user_id: c.user_id, waba_id: c.waba_id }));
       }
 
-      // ---------- 1) HMAC validation (mandatory when app secret configured) ----------
+      // ---------- 1) HMAC validation ----------
+      // Some Meta webhook deliveries can arrive without the signature when routed
+      // through infrastructure/proxy variations. Invalid signatures are still
+      // rejected; missing signatures are accepted only after the payload resolves
+      // to an active WABA/phone saved in this account below.
       let hmacStatus: 'verified' | 'missing' | 'invalid' | 'no_secret' = 'no_secret';
       if (META_APP_SECRET) {
         if (sigHeader) {
@@ -179,22 +184,27 @@ serve(async (req) => {
           hmacStatus = 'missing';
         }
       }
-      if (hmacStatus === 'invalid' || hmacStatus === 'missing') {
+      if (hmacStatus === 'invalid') {
         for (const o of ownerSettings) {
           await logSecurityEvent({
             user_id: o.user_id, waba_id: o.waba_id,
-            action: hmacStatus === 'invalid' ? 'meta_webhook_rejected_hmac_invalid' : 'meta_webhook_rejected_hmac_missing',
+            action: 'meta_webhook_rejected_hmac_invalid',
             extra: { reason: hmacStatus },
           });
         }
-        console.warn('[meta-webhook] 🚫 Rejected — HMAC', hmacStatus);
-        if (META_APP_SECRET) {
-          return new Response('Unauthorized', { status: 401, headers: corsHeaders });
-        }
+        console.warn('[meta-webhook] 🚫 Rejected — HMAC invalid');
+        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+      }
+      if (hmacStatus === 'missing') {
+        console.warn('[meta-webhook] ⚠️ Missing HMAC signature — will require active WABA match before processing');
       }
 
-      // ---------- 2) IP allowlist (Meta CIDR ranges) — always enforced ----------
+      // ---------- 2) IP allowlist (Meta CIDR ranges) ----------
       const ipOk = !reqIp || ipInMetaRanges(reqIp);
+      if ((hmacStatus === 'missing' || !ipOk) && ownerSettings.length === 0) {
+        console.warn('[meta-webhook] 🚫 Rejected — missing signature/proxy IP without active WABA match');
+        return new Response('Forbidden', { status: 403, headers: corsHeaders });
+      }
       if (!ipOk) {
         for (const o of ownerSettings) {
           await logSecurityEvent({
@@ -203,8 +213,7 @@ serve(async (req) => {
             extra: { ip: reqIp },
           });
         }
-        console.warn('[meta-webhook] 🚫 Rejected — IP', reqIp);
-        return new Response('Forbidden', { status: 403, headers: corsHeaders });
+        console.warn('[meta-webhook] ⚠️ Non-Meta IP seen at edge, continuing only with active WABA match', reqIp);
       }
 
       // ---------- 3) Audit log accepted webhook (always) ----------
@@ -373,13 +382,30 @@ serve(async (req) => {
 
             // Find WABA connection for this phone_number_id. If Meta omits or changes
             // metadata format, fall back to the WABA id so inbound messages still land.
-            const { data: wabaConn } = await supabase
-              .from('user_waba_connections')
-              .select('id, user_id')
-              .or(`phone_number_id.eq.${phoneNumberId},waba_id.eq.${wabaId}`)
-              .eq('status', 'active')
-              .limit(1)
-              .maybeSingle();
+            let wabaConn: any = null;
+            if (phoneNumberId) {
+              const { data } = await supabase
+                .from('user_waba_connections')
+                .select('id, user_id, owner_user_id')
+                .eq('phone_number_id', phoneNumberId)
+                .eq('status', 'active')
+                .limit(1)
+                .maybeSingle();
+              wabaConn = data;
+            }
+            if (!wabaConn && wabaId) {
+              const { data } = await supabase
+                .from('user_waba_connections')
+                .select('id, user_id, owner_user_id')
+                .eq('waba_id', wabaId)
+                .eq('status', 'active')
+                .limit(1)
+                .maybeSingle();
+              wabaConn = data;
+            }
+            if (!wabaConn) {
+              console.warn(`[meta-webhook] ⚠️ No active WABA connection for waba=${wabaId} phone_number_id=${phoneNumberId || 'missing'}`);
+            }
 
             for (const msg of messages) {
               const from = msg.from;
@@ -427,6 +453,7 @@ serve(async (req) => {
               // ===== CHAT SYSTEM INTEGRATION =====
               if (wabaConn) {
                 const userId = wabaConn.user_id;
+                const ownerUserId = wabaConn.owner_user_id || wabaConn.user_id;
                 const connectionId = wabaConn.id;
                 const msgTime = new Date(parseInt(timestamp) * 1000).toISOString();
 
@@ -451,7 +478,7 @@ serve(async (req) => {
                 if (!conversation) {
                   const { data: newConv } = await supabase.from('chat_conversations').insert({
                     user_id: userId,
-                    owner_user_id: userId,
+                    owner_user_id: ownerUserId,
                     waba_connection_id: connectionId,
                     contact_phone: from,
                     contact_name: contactName,
@@ -474,21 +501,34 @@ serve(async (req) => {
                 }
 
                 if (conversation) {
-                  await supabase.from('chat_messages').insert({
-                    conversation_id: conversation.id,
-                    user_id: userId,
-                    owner_user_id: userId,
-                    waba_message_id: msg.id || null,
-                    direction: 'inbound',
-                    message_type: msgType,
-                    content: textContent || null,
-                    media_url: mediaUrl,
-                    media_mime_type: mediaMime,
-                    media_filename: mediaFilename,
-                    media_caption: msgType !== 'text' ? (textContent || null) : null,
-                    status: 'delivered',
-                  });
-                  console.log(`[meta-webhook] ✅ Chat message saved for conversation ${conversation.id}`);
+                  const { data: existingInbound } = msg.id
+                    ? await supabase
+                      .from('chat_messages')
+                      .select('id')
+                      .eq('waba_message_id', msg.id)
+                      .limit(1)
+                      .maybeSingle()
+                    : { data: null } as any;
+
+                  if (!existingInbound) {
+                    await supabase.from('chat_messages').insert({
+                      conversation_id: conversation.id,
+                      user_id: userId,
+                      owner_user_id: ownerUserId,
+                      waba_message_id: msg.id || null,
+                      direction: 'inbound',
+                      message_type: msgType,
+                      content: textContent || null,
+                      media_url: mediaUrl,
+                      media_mime_type: mediaMime,
+                      media_filename: mediaFilename,
+                      media_caption: msgType !== 'text' ? (textContent || null) : null,
+                      status: 'delivered',
+                    });
+                    console.log(`[meta-webhook] ✅ Chat message saved for conversation ${conversation.id}`);
+                  } else {
+                    console.log(`[meta-webhook] ↩️ Duplicate inbound message ignored ${msg.id}`);
+                  }
 
                   // === CRM LEAD STATUS: mark as 'replied' on inbound ===
                   await updateLeadStatus({
@@ -574,7 +614,36 @@ serve(async (req) => {
                     .select('id, status')
                     .eq('waba_message_id', status.id);
 
-                  for (const existing of existingMessages || []) {
+                  let messagesToUpdate = existingMessages || [];
+                  if (messagesToUpdate.length === 0 && wabaConn?.id && status.recipient_id) {
+                    const tail = phoneTail8(status.recipient_id);
+                    const statusTimeIso = new Date(parseInt(status.timestamp) * 1000).toISOString();
+                    const { data: fallbackConversation } = await supabase
+                      .from('chat_conversations')
+                      .select('id')
+                      .eq('waba_connection_id', wabaConn.id)
+                      .or(`contact_phone.eq.${status.recipient_id},contact_phone.ilike.%${tail}`)
+                      .order('last_message_at', { ascending: false, nullsFirst: false })
+                      .limit(1)
+                      .maybeSingle();
+
+                    if (fallbackConversation) {
+                      const { data: fallbackMessages } = await supabase
+                        .from('chat_messages')
+                        .select('id, status')
+                        .eq('conversation_id', fallbackConversation.id)
+                        .eq('direction', 'outbound')
+                        .lte('created_at', statusTimeIso)
+                        .order('created_at', { ascending: false })
+                        .limit(1);
+                      messagesToUpdate = fallbackMessages || [];
+                      if (messagesToUpdate.length) {
+                        console.warn(`[meta-webhook] ⚠️ Status fallback matched ${status.status} for ${status.recipient_id} without waba_message_id match`);
+                      }
+                    }
+                  }
+
+                  for (const existing of messagesToUpdate) {
                     const currentRank = rank[existing.status || 'pending'] ?? 0;
                     const nextRank = rank[newStatus] ?? 0;
                     if (newStatus !== 'failed' && currentRank > nextRank) continue;

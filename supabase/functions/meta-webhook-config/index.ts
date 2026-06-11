@@ -13,6 +13,7 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const VERIFY_TOKEN = Deno.env.get("META_WEBHOOK_VERIFY_TOKEN") ?? "wiize-meta-webhook-2026";
 const GRAPH_VERSION = "v21.0";
+const META_APP_ID = Deno.env.get("META_APP_ID") ?? "988774494328539";
 
 // Callback do próprio backend atual. Pode ser sobrescrito via env META_WEBHOOK_CALLBACK_URL.
 const CALLBACK_URL =
@@ -97,6 +98,36 @@ async function graphRequest(
       error: { message: (e as Error).message, type: "FetchError" },
       raw: (e as Error).message,
     };
+  }
+}
+
+async function ensureAppWebhookSubscription(): Promise<GraphResult> {
+  const appSecret = Deno.env.get("META_APP_SECRET") ?? "";
+  if (!META_APP_ID || !appSecret) {
+    return { ok: false, status: 0, data: null, error: { message: "META_APP_ID ou META_APP_SECRET ausente" }, raw: "missing app credentials" };
+  }
+  const appToken = `${META_APP_ID}|${appSecret}`;
+  const params = new URLSearchParams({
+    object: "whatsapp_business_account",
+    callback_url: CALLBACK_URL,
+    verify_token: VERIFY_TOKEN,
+    fields: REQUIRED_EVENTS.join(","),
+    access_token: appToken,
+  });
+
+  try {
+    const response = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${META_APP_ID}/subscriptions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+    const raw = redact(await response.text(), appToken).slice(0, 1200);
+    let data: any = null;
+    try { data = raw ? JSON.parse(raw) : null; } catch { data = { raw }; }
+    const error = (data?.error ?? (!response.ok ? { message: raw } : null)) as GraphError | null;
+    return { ok: response.ok && !error, status: response.status, data, error, raw };
+  } catch (e) {
+    return { ok: false, status: 0, data: null, error: { message: (e as Error).message, type: "FetchError" }, raw: (e as Error).message };
   }
 }
 
@@ -369,6 +400,18 @@ serve(async (req) => {
         }
 
         if (wabaOk) {
+          const appSubscription = await ensureAppWebhookSubscription();
+          pushStep({
+            key: "app_subscription",
+            label: "Callback do App Meta",
+            status: appSubscription.ok ? "ok" : "warning",
+            summary: appSubscription.ok
+              ? "Callback do App configurado para receber eventos do WhatsApp."
+              : "Não consegui atualizar automaticamente o callback do App, mas a assinatura da WABA ainda será testada.",
+            technical: appSubscription.ok ? undefined : graphTechnical(appSubscription),
+            fbtrace_id: appSubscription.error?.fbtrace_id,
+          });
+
           let subscribe = await graphRequest(`${conn.waba_id}/subscribed_apps`, conn.access_token, {
             method: "POST",
             body: { subscribed_fields: REQUIRED_EVENTS },

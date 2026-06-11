@@ -1123,7 +1123,7 @@ input::placeholder, textarea::placeholder {
 .wa-bg-search { background-color: hsl(220 18% 10%); }
 .landing-light .wa-bg-search { background-color: #f0f2f5; }
 .wa-search-focused { background-color: hsl(220 16% 14%); }
-.landing-light .wa-search-focused { background-color: #ffffff; box-shadow: inset 0 0 0 1px #00a884; }
+.landing-light .wa-search-focused { background-color: #ffffff; box-shadow: inset 0 0 0 1px #128c7e; }
 
 /* ─── Input field ─── */
 .wa-bg-input { background-color: hsl(220 18% 10%); }
@@ -1149,22 +1149,24 @@ input::placeholder, textarea::placeholder {
 .wa-conv-hover:hover { background-color: hsl(220 16% 10%); }
 .landing-light .wa-conv-hover:hover { background-color: #f5f6f6; }
 
-/* ─── Chat area — same tone as sidebar ─── */
-/* Subtle green-tinted chat background with infinite-curve Wiize logo watermark */
+/* ─── Chat area — soft WhatsApp-inspired green ─── */
 .wa-chat-bg {
-  background-color: #f7faf8;
+  --wa-green: #128c7e;
+  --wa-green-soft: #d9fdd3;
+  --wa-green-soft-hover: #c8f7c5;
+  background-color: #f7faf5;
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(0,168,132,0.05) 1px, transparent 0),
-    radial-gradient(ellipse 80% 60% at 30% 20%, rgba(0,168,132,0.03) 0%, transparent 60%),
-    radial-gradient(ellipse 70% 50% at 80% 90%, rgba(0,168,132,0.025) 0%, transparent 65%);
+    radial-gradient(circle at 1px 1px, rgba(18,140,126,0.035) 1px, transparent 0),
+    radial-gradient(ellipse 80% 60% at 30% 20%, rgba(18,140,126,0.018) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 80% 90%, rgba(18,140,126,0.014) 0%, transparent 65%);
   background-size: 22px 22px, auto, auto;
 }
 .landing-light .wa-chat-bg {
-  background-color: #f7faf8;
+  background-color: #f7faf5;
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(0,168,132,0.05) 1px, transparent 0),
-    radial-gradient(ellipse 80% 60% at 30% 20%, rgba(0,168,132,0.03) 0%, transparent 60%),
-    radial-gradient(ellipse 70% 50% at 80% 90%, rgba(0,168,132,0.025) 0%, transparent 65%);
+    radial-gradient(circle at 1px 1px, rgba(18,140,126,0.035) 1px, transparent 0),
+    radial-gradient(ellipse 80% 60% at 30% 20%, rgba(18,140,126,0.018) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 80% 90%, rgba(18,140,126,0.014) 0%, transparent 65%);
   background-size: 22px 22px, auto, auto;
 }
 
@@ -1187,7 +1189,7 @@ input::placeholder, textarea::placeholder {
   left: -15%;
   width: 60%;
   height: 60%;
-  background: radial-gradient(circle, rgba(0,168,132,0.04) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(18,140,126,0.025) 0%, transparent 70%);
   filter: blur(100px);
 }
 .wa-chat-glow::after {
@@ -1197,14 +1199,14 @@ input::placeholder, textarea::placeholder {
   right: -10%;
   width: 50%;
   height: 50%;
-  background: radial-gradient(circle, rgba(0,168,132,0.03) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(18,140,126,0.018) 0%, transparent 70%);
   filter: blur(80px);
 }
 .landing-light .wa-chat-glow::before {
-  background: radial-gradient(circle, rgba(0,168,132,0.04) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(18,140,126,0.025) 0%, transparent 70%);
 }
 .landing-light .wa-chat-glow::after {
-  background: radial-gradient(circle, rgba(0,168,132,0.03) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(18,140,126,0.018) 0%, transparent 70%);
 }
 
 /* ─── Empty state ─── */
@@ -1240,13 +1242,13 @@ input::placeholder, textarea::placeholder {
 .wa-search-panel { background-color: hsl(220 18% 6%); }
 .landing-light .wa-search-panel { background-color: #ffffff; }
 
-/* ─── Message bubbles — Wiize green ─── */
-.wa-bubble-out { background-color: #a7ecd0; }
-.landing-light .wa-bubble-out { background-color: #a7ecd0; }
+/* ─── Message bubbles — comfortable WhatsApp green ─── */
+.wa-bubble-out { background-color: #d9fdd3; }
+.landing-light .wa-bubble-out { background-color: #d9fdd3; }
 .wa-bubble-in { background-color: #dde2e5; }
 .landing-light .wa-bubble-in { background-color: #dde2e5; }
-.wa-bubble-out-fill { fill: #a7ecd0; }
-.landing-light .wa-bubble-out-fill { fill: #a7ecd0; }
+.wa-bubble-out-fill { fill: #d9fdd3; }
+.landing-light .wa-bubble-out-fill { fill: #d9fdd3; }
 .wa-bubble-in-fill { fill: #dde2e5; }
 .landing-light .wa-bubble-in-fill { fill: #dde2e5; }
 
@@ -1267,7 +1269,7 @@ input::placeholder, textarea::placeholder {
 /* ─── Document card ─── */
 .wa-doc-bg { background-color: rgba(0,0,0,0.15); }
 .landing-light .wa-doc-bg { background-color: rgba(0,0,0,0.04); }
-.wa-doc-icon { background-color: rgba(0,168,132,0.1); }
+.wa-doc-icon { background-color: rgba(18,140,126,0.1); }
 .wa-doc-preview { background-color: hsl(220 18% 10%); }
 .landing-light .wa-doc-preview { background-color: #f0f2f5; }
 
@@ -1286,8 +1288,38 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-icon-header { color: #54656f; }
 .wa-icon-panel { color: #8696a0; }
 .landing-light .wa-icon-panel { color: #54656f; }
-.wa-icon-tinted { color: #00a884; }
-.wa-icon-active { background-color: rgba(0,168,132,0.1); }
+.wa-icon-tinted { color: #128c7e; }
+.wa-icon-active { background-color: rgba(18,140,126,0.1); }
+
+.wa-accent-text { color: #128c7e; }
+.wa-accent-bg { background-color: #128c7e; }
+.wa-accent-bg:hover { background-color: #0f7f73; }
+.wa-accent-bg-soft { background-color: rgba(18,140,126,0.10); }
+.wa-accent-bg-softer { background-color: rgba(18,140,126,0.15); }
+.wa-accent-hover-bg-softer:hover { background-color: rgba(18,140,126,0.15); }
+.wa-accent-border-soft { border-color: rgba(18,140,126,0.28); }
+.wa-accent-border { border-color: #128c7e; }
+.wa-accent-border-muted { border-color: rgba(18,140,126,0.36); }
+.wa-accent-border-muted:hover { border-color: #128c7e; }
+.wa-accent-surface {
+  background-color: rgba(18,140,126,0.12);
+  color: #128c7e;
+}
+.wa-accent-surface:hover { background-color: rgba(18,140,126,0.18); }
+.group:hover .wa-accent-surface { background-color: rgba(18,140,126,0.18); }
+.wa-accent-ring { box-shadow: inset 0 0 0 1px rgba(18,140,126,0.30); }
+.wa-message-action-button {
+  background-color: rgba(255,255,255,0.96);
+  border-color: rgba(17,27,33,0.08);
+  color: #54656f;
+  box-shadow: 0 2px 8px rgba(11,20,26,0.10);
+}
+.wa-message-action-button:hover,
+.wa-message-action-button[data-state="open"] {
+  background-color: #ffffff;
+  color: #128c7e;
+  border-color: rgba(18,140,126,0.22);
+}
 
 .wa-icon-button {
   transition: background-color 0.15s;
@@ -1312,7 +1344,7 @@ input::placeholder, textarea::placeholder {
 .wa-dropdown-item:focus-visible,
 .wa-dropdown-item[data-highlighted],
 .wa-dropdown-item[data-state="open"] {
-  background-color: #00a884 !important;
+  background-color: #128c7e !important;
   color: #ffffff !important;
   outline: none;
 }
