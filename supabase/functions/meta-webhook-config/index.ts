@@ -273,7 +273,7 @@ serve(async (req) => {
 
       // ---------- 2) Diagnóstico completo contra a Graph API ----------
       let subscribedEvents: string[] = [];
-      let missingEvents: string[] = [...REQUIRED_EVENTS];
+      let missingEvents: string[] = [];
       let eventsDetail = "";
       let eventsOk = false;
       let tokenOk = false;
