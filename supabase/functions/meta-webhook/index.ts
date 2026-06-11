@@ -371,12 +371,14 @@ serve(async (req) => {
             const phoneNumberId = metadata.phone_number_id;
             const displayPhone = metadata.display_phone_number;
 
-            // Find WABA connection for this phone_number_id
+            // Find WABA connection for this phone_number_id. If Meta omits or changes
+            // metadata format, fall back to the WABA id so inbound messages still land.
             const { data: wabaConn } = await supabase
               .from('user_waba_connections')
               .select('id, user_id')
-              .eq('phone_number_id', phoneNumberId)
+              .or(`phone_number_id.eq.${phoneNumberId},waba_id.eq.${wabaId}`)
               .eq('status', 'active')
+              .limit(1)
               .maybeSingle();
 
             for (const msg of messages) {
@@ -434,7 +436,8 @@ serve(async (req) => {
                   .select('id, unread_count')
                   .eq('user_id', userId)
                   .eq('waba_connection_id', connectionId)
-                  .eq('contact_phone', from)
+                  .or(`contact_phone.eq.${from},contact_phone.ilike.%${phoneTail8(from)}`)
+                  .limit(1)
                   .maybeSingle();
 
                 const lastText = msgType === 'text' ? textContent
@@ -448,6 +451,7 @@ serve(async (req) => {
                 if (!conversation) {
                   const { data: newConv } = await supabase.from('chat_conversations').insert({
                     user_id: userId,
+                    owner_user_id: userId,
                     waba_connection_id: connectionId,
                     contact_phone: from,
                     contact_name: contactName,
@@ -473,6 +477,7 @@ serve(async (req) => {
                   await supabase.from('chat_messages').insert({
                     conversation_id: conversation.id,
                     user_id: userId,
+                    owner_user_id: userId,
                     waba_message_id: msg.id || null,
                     direction: 'inbound',
                     message_type: msgType,
@@ -563,12 +568,23 @@ serve(async (req) => {
                 };
                 const newStatus = statusMap[status.status];
                 if (newStatus) {
-                  await supabase.from('chat_messages')
-                    .update({
-                      status: newStatus,
-                      status_updated_at: new Date(parseInt(status.timestamp) * 1000).toISOString(),
-                    })
+                  const rank: Record<string, number> = { pending: 0, sent: 1, delivered: 2, read: 3, failed: 4 };
+                  const { data: existingMessages } = await supabase
+                    .from('chat_messages')
+                    .select('id, status')
                     .eq('waba_message_id', status.id);
+
+                  for (const existing of existingMessages || []) {
+                    const currentRank = rank[existing.status || 'pending'] ?? 0;
+                    const nextRank = rank[newStatus] ?? 0;
+                    if (newStatus !== 'failed' && currentRank > nextRank) continue;
+                    await supabase.from('chat_messages')
+                      .update({
+                        status: newStatus,
+                        status_updated_at: new Date(parseInt(status.timestamp) * 1000).toISOString(),
+                      })
+                      .eq('id', existing.id);
+                  }
                   console.log(`[meta-webhook] ✅ Message ${status.id} status → ${newStatus}`);
                 }
               }

@@ -736,8 +736,8 @@ export function ChatMessageArea({
             {(() => {
               const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
               const isWindowExpired = lastInbound
-                ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) > 24
-                : messages.length > 0;
+                ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) >= 24
+                : false;
 
               if (isWindowExpired && onReopenConversation) {
                   return (
