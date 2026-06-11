@@ -448,7 +448,15 @@ export default function MetaNumeros() {
 
               <div className="flex gap-2">
                 <Button onClick={handleSaveEdit} className="flex-1">Salvar</Button>
-                <Button variant="destructive" size="icon" onClick={() => setPendingDeleteId(editingConn.id)}>
+                <Button variant="destructive" size="icon" onClick={() => {
+                  const id = editingConn.id;
+                  setEditingConn(null);
+                  setShowTokenField(false);
+                  setEditToken("");
+                  // Defer to next tick so the edit Dialog fully unmounts before the AlertDialog mounts,
+                  // avoiding stacked Radix overlays/focus traps that block the confirm click.
+                  setTimeout(() => setPendingDeleteId(id), 50);
+                }}>
                   <Trash2 size={14} />
                 </Button>
               </div>
