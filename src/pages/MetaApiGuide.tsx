@@ -496,17 +496,17 @@ const MetaApiGuide = () => {
                 Se você já configurou sua conta no Meta Business Suite e tem templates aprovados,
                 conecte sua conta na Wiize e envie sua primeira campanha.
               </p>
-              <Button onClick={() => navigate("/meta-campaigns")} className="gap-2">
-                <Zap size={16} /> Ir para Campanhas Meta
+              <Button onClick={() => window.close()} className="gap-2">
+                <X size={16} /> Fechar guia
               </Button>
             </div>
 
           </div>
         </main>
-      </div>
     </div>
   );
 };
+
 
 /* ---- Sub-components ---- */
 
