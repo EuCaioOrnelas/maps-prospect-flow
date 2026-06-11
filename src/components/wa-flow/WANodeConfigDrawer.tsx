@@ -817,6 +817,15 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
         )}
       </div>
 
+      {!isConnected && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-amber-500 leading-relaxed">
+            <span className="font-semibold">Conta Google obrigatória.</span> Conecte uma conta abaixo para enviar e-mails pelo Gmail.
+          </p>
+        </div>
+      )}
+
       <GoogleConnectionBlock
         accounts={googleAccounts}
         selectedAccountId={selectedAccountId}
