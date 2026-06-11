@@ -377,13 +377,30 @@ serve(async (req) => {
 
             // Find WABA connection for this phone_number_id. If Meta omits or changes
             // metadata format, fall back to the WABA id so inbound messages still land.
-            const { data: wabaConn } = await supabase
-              .from('user_waba_connections')
-              .select('id, user_id')
-              .or(`phone_number_id.eq.${phoneNumberId},waba_id.eq.${wabaId}`)
-              .eq('status', 'active')
-              .limit(1)
-              .maybeSingle();
+            let wabaConn: any = null;
+            if (phoneNumberId) {
+              const { data } = await supabase
+                .from('user_waba_connections')
+                .select('id, user_id, owner_user_id')
+                .eq('phone_number_id', phoneNumberId)
+                .eq('status', 'active')
+                .limit(1)
+                .maybeSingle();
+              wabaConn = data;
+            }
+            if (!wabaConn && wabaId) {
+              const { data } = await supabase
+                .from('user_waba_connections')
+                .select('id, user_id, owner_user_id')
+                .eq('waba_id', wabaId)
+                .eq('status', 'active')
+                .limit(1)
+                .maybeSingle();
+              wabaConn = data;
+            }
+            if (!wabaConn) {
+              console.warn(`[meta-webhook] ⚠️ No active WABA connection for waba=${wabaId} phone_number_id=${phoneNumberId || 'missing'}`);
+            }
 
             for (const msg of messages) {
               const from = msg.from;
@@ -431,6 +448,7 @@ serve(async (req) => {
               // ===== CHAT SYSTEM INTEGRATION =====
               if (wabaConn) {
                 const userId = wabaConn.user_id;
+                const ownerUserId = wabaConn.owner_user_id || wabaConn.user_id;
                 const connectionId = wabaConn.id;
                 const msgTime = new Date(parseInt(timestamp) * 1000).toISOString();
 
@@ -455,7 +473,7 @@ serve(async (req) => {
                 if (!conversation) {
                   const { data: newConv } = await supabase.from('chat_conversations').insert({
                     user_id: userId,
-                    owner_user_id: userId,
+                    owner_user_id: ownerUserId,
                     waba_connection_id: connectionId,
                     contact_phone: from,
                     contact_name: contactName,
@@ -478,21 +496,34 @@ serve(async (req) => {
                 }
 
                 if (conversation) {
-                  await supabase.from('chat_messages').insert({
-                    conversation_id: conversation.id,
-                    user_id: userId,
-                    owner_user_id: userId,
-                    waba_message_id: msg.id || null,
-                    direction: 'inbound',
-                    message_type: msgType,
-                    content: textContent || null,
-                    media_url: mediaUrl,
-                    media_mime_type: mediaMime,
-                    media_filename: mediaFilename,
-                    media_caption: msgType !== 'text' ? (textContent || null) : null,
-                    status: 'delivered',
-                  });
-                  console.log(`[meta-webhook] ✅ Chat message saved for conversation ${conversation.id}`);
+                  const { data: existingInbound } = msg.id
+                    ? await supabase
+                      .from('chat_messages')
+                      .select('id')
+                      .eq('waba_message_id', msg.id)
+                      .limit(1)
+                      .maybeSingle()
+                    : { data: null } as any;
+
+                  if (!existingInbound) {
+                    await supabase.from('chat_messages').insert({
+                      conversation_id: conversation.id,
+                      user_id: userId,
+                      owner_user_id: ownerUserId,
+                      waba_message_id: msg.id || null,
+                      direction: 'inbound',
+                      message_type: msgType,
+                      content: textContent || null,
+                      media_url: mediaUrl,
+                      media_mime_type: mediaMime,
+                      media_filename: mediaFilename,
+                      media_caption: msgType !== 'text' ? (textContent || null) : null,
+                      status: 'delivered',
+                    });
+                    console.log(`[meta-webhook] ✅ Chat message saved for conversation ${conversation.id}`);
+                  } else {
+                    console.log(`[meta-webhook] ↩️ Duplicate inbound message ignored ${msg.id}`);
+                  }
 
                   // === CRM LEAD STATUS: mark as 'replied' on inbound ===
                   await updateLeadStatus({
