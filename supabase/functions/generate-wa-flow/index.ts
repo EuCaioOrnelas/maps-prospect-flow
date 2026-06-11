@@ -445,7 +445,12 @@ const ensureNodeConfig = (
 
   switch (node.type) {
     case "entry":
-      return { ...config, trigger_type: normalizeText(config.trigger_type) || "first_message", keywords: Array.isArray(config.keywords) ? config.keywords : [] };
+      return {
+        ...config,
+        api_type: "meta", // Meta-only: fluxos gerados pela IA sempre usam API Oficial
+        trigger_type: normalizeText(config.trigger_type) || "first_message",
+        keywords: Array.isArray(config.keywords) ? config.keywords : [],
+      };
 
     case "message": {
       const messageType = normalizeText(config.message_type) || "text";
