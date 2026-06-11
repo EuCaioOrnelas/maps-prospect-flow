@@ -1241,24 +1241,24 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-search-panel { background-color: #ffffff; }
 
 /* ─── Message bubbles — Wiize green ─── */
-.wa-bubble-out { background-color: #0c6b58; }
-.landing-light .wa-bubble-out { background-color: #d9fdd3; }
-.wa-bubble-in { background-color: hsl(220 16% 14%); }
-.landing-light .wa-bubble-in { background-color: #ffffff; }
-.wa-bubble-out-fill { fill: #0c6b58; }
-.landing-light .wa-bubble-out-fill { fill: #d9fdd3; }
-.wa-bubble-in-fill { fill: hsl(220 16% 14%); }
-.landing-light .wa-bubble-in-fill { fill: #ffffff; }
+.wa-bubble-out { background-color: #a7ecd0; }
+.landing-light .wa-bubble-out { background-color: #a7ecd0; }
+.wa-bubble-in { background-color: #dde2e5; }
+.landing-light .wa-bubble-in { background-color: #dde2e5; }
+.wa-bubble-out-fill { fill: #a7ecd0; }
+.landing-light .wa-bubble-out-fill { fill: #a7ecd0; }
+.wa-bubble-in-fill { fill: #dde2e5; }
+.landing-light .wa-bubble-in-fill { fill: #dde2e5; }
 
-/* Force bubble text bright enough against new backgrounds */
+/* Bubble text — always dark for contrast on light bubbles */
 .wa-bubble-out .wa-text-primary,
-.wa-bubble-in .wa-text-primary { color: #f4f6f7; }
+.wa-bubble-in .wa-text-primary { color: #0b1f17; }
 .landing-light .wa-bubble-out .wa-text-primary,
-.landing-light .wa-bubble-in .wa-text-primary { color: #111b21; }
+.landing-light .wa-bubble-in .wa-text-primary { color: #0b1f17; }
 .wa-bubble-out .wa-text-timestamp,
-.wa-bubble-in .wa-text-timestamp { color: rgba(244,246,247,0.65); }
+.wa-bubble-in .wa-text-timestamp { color: rgba(11,31,23,0.55); }
 .landing-light .wa-bubble-out .wa-text-timestamp,
-.landing-light .wa-bubble-in .wa-text-timestamp { color: rgba(17,27,33,0.55); }
+.landing-light .wa-bubble-in .wa-text-timestamp { color: rgba(11,31,23,0.55); }
 
 /* ─── Date badge ─── */
 .wa-date-badge { background-color: hsl(220 18% 8%); color: rgba(233,237,239,0.9); }
