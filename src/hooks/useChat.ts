@@ -168,34 +168,7 @@ export function useChat() {
         .order("is_pinned", { ascending: false })
         .order("last_message_at", { ascending: false, nullsFirst: false });
       
-      const dbConversations = (data as ChatConversation[]) || [];
-      
-      // Add a fake test conversation if none exist
-      if (dbConversations.length === 0) {
-        const fakeConv: ChatConversation = {
-          id: "fake-test-conversation",
-          user_id: user.id,
-          waba_connection_id: activeConnectionId,
-          contact_phone: "5511999887766",
-          contact_name: "Lead Teste (Demo)",
-          contact_profile_pic: null,
-          last_message_text: "Olá, gostaria de saber mais sobre o serviço!",
-          last_message_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(), // 25h ago (expired)
-          last_message_type: "text",
-          last_message_direction: "inbound",
-          unread_count: 1,
-          is_pinned: false,
-          is_archived: false,
-          is_muted: false,
-          responsible_user_id: null,
-          created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
-
-        };
-        dbConversations.push(fakeConv);
-      }
-      
-      setConversations(dbConversations);
+      setConversations((data as ChatConversation[]) || []);
       setLoading(false);
     };
     loadConversations();
