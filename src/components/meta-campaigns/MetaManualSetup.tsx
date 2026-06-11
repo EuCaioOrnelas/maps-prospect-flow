@@ -168,7 +168,9 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
         );
       }
 
-      const payload = {
+      const responsibleId = responsibleUserId === "none" ? null : responsibleUserId;
+
+      const payload: Record<string, any> = {
         user_id: ownerId,
         owner_user_id: ownerId,
         waba_id: cleanWaba,
@@ -177,6 +179,7 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
         display_phone_number: displayPhone,
         business_name: businessName,
         nickname: nickname.trim() || null,
+        responsible_user_id: responsibleId,
         status: "active",
         raw_signup_data: { source: "manual" },
       };
@@ -212,10 +215,19 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
 
       toast({
         title: "Número conectado!",
-        description: `${displayPhone || cleanPhone} vinculado com sucesso.`,
+        description: `${displayPhone || cleanPhone} vinculado. Iniciando importação de contatos do CRM…`,
       });
 
       clearDraft();
+
+      // Dispara backup CRM → Chat em background (não bloqueia UI)
+      const label = nickname.trim() || displayPhone || cleanPhone;
+      void startChatBackup({
+        connectionId: (connection as any).id,
+        ownerUserId: ownerId,
+        responsibleUserId: responsibleId,
+        connectionLabel: label,
+      });
 
       onConnectionSaved({
         id: (connection as any).id,
@@ -227,6 +239,7 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
         status: (connection as any).status,
         nickname: (connection as any).nickname,
       });
+
     } catch (err: any) {
       console.error("[MetaManualSetup] Save error:", err);
       setError(err.message || "Erro ao salvar conexão.");
