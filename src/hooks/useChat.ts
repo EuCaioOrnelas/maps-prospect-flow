@@ -29,6 +29,7 @@ export interface ChatMessage {
   id: string;
   conversation_id: string;
   user_id: string;
+  owner_user_id?: string | null;
   waba_message_id: string | null;
   direction: string;
   message_type: string;
