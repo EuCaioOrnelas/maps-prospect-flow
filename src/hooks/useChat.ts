@@ -720,6 +720,7 @@ export function useChat() {
     deleteConversation,
     toggleBlock,
     saveContactName,
+    forwardMessages,
   };
 }
 
