@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronDown, ChevronUp, KeyRound, BotMessageSquare, PowerOff, Calendar, Clock, Type, Mail, Bell, UserPlus, ListOrdered, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { MessageContentBuilder } from "./MessageContentBuilder";
+import { OutOfWindowTemplateSection } from "./OutOfWindowTemplateSection";
 import type { Node } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import googleLogo from "@/assets/icons/google-g-sm.png";
@@ -284,6 +285,15 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
     <div className="space-y-4">
       {renderInfoBanner("Salve os dados do lead automaticamente em uma planilha do Google Sheets. Os dados são adicionados em novas linhas.")}
 
+      {!isConnected && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-amber-500 leading-relaxed">
+            <span className="font-semibold">Conta Google obrigatória.</span> Conecte uma conta abaixo para habilitar a integração com Sheets.
+          </p>
+        </div>
+      )}
+
       <GoogleConnectionBlock
         accounts={googleAccounts}
         selectedAccountId={selectedAccountId}
@@ -293,6 +303,7 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
         handleDisconnect={(id) => { handleDisconnect(id); updateConfig("google_connected", false); updateConfig("google_email", ""); }}
         label="Google"
       />
+
 
       {isConnected && (
         <>
@@ -530,6 +541,15 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner, allNodes
           </div>
         )}
       </div>
+
+      {!isConnected && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-amber-500 leading-relaxed">
+            <span className="font-semibold">Conta Google obrigatória.</span> Conecte uma conta abaixo para criar eventos no Calendar.
+          </p>
+        </div>
+      )}
 
       <GoogleConnectionBlock
         accounts={googleAccounts}
@@ -796,6 +816,15 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
           </div>
         )}
       </div>
+
+      {!isConnected && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-amber-500 leading-relaxed">
+            <span className="font-semibold">Conta Google obrigatória.</span> Conecte uma conta abaixo para enviar e-mails pelo Gmail.
+          </p>
+        </div>
+      )}
 
       <GoogleConnectionBlock
         accounts={googleAccounts}
@@ -2290,6 +2319,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
               {renderApiIndicator()}
               {renderInfoBanner("Configure o conteúdo da mensagem: texto, imagem, áudio, vídeo ou documento.")}
               <MessageContentBuilder config={config} updateConfig={updateConfig} />
+              <OutOfWindowTemplateSection config={config} updateConfig={updateConfig} entryConfig={entryConfig} />
             </div>
           )}
 
@@ -2488,6 +2518,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                   </div>
                 </div>
               )}
+                  <OutOfWindowTemplateSection config={config} updateConfig={updateConfig} entryConfig={entryConfig} />
                 </>
               )}
             </div>
@@ -2712,7 +2743,10 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== AI AGENT NODE ===== */}
           {node.type === "ai_agent" && (
-            <AIAgentConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} renderApiIndicator={renderApiIndicator} />
+            <>
+              <AIAgentConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} renderApiIndicator={renderApiIndicator} />
+              <OutOfWindowTemplateSection config={config} updateConfig={updateConfig} entryConfig={entryConfig} />
+            </>
           )}
 
           {/* ===== A/B TEST NODE ===== */}

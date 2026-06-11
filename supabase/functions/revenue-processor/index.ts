@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { classifyMessage as sharedClassify } from "../_shared/messageClassifier.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -274,12 +275,19 @@ const ACK_PATTERNS = [
 
 function isSocialOnlyMessage(rawText: string, normalized: string): boolean {
   if (!rawText) return false;
+  // Primary: shared classifier (single source of truth for greetings/farewells/emoji-only).
+  // Any meaningful intent (buy_now, price, demo, objections, opt-out) immediately disqualifies social.
+  try {
+    const shared = sharedClassify(rawText);
+    if (shared.intents.length || shared.objections.length || shared.optOut) return false;
+    if (shared.isSocial) return true;
+  } catch (_) {
+    // fallthrough to legacy heuristic
+  }
   const cleaned = normalized.replace(/[^a-z0-9 ]/gi, "").trim();
   if (!cleaned) {
-    // Mensagem só com emoji/pontuação -> considera social
     return rawText.trim().length <= 6;
   }
-  // Muito curta (≤25 chars) e match com greeting/farewell/thanks/ack
   if (rawText.trim().length > 60) return false;
   const wordCount = cleaned.split(/\s+/).length;
   if (wordCount > 6) return false;

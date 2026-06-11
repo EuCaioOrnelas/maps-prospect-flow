@@ -25,6 +25,7 @@ Sua missão é transformar o pedido do usuário em um fluxo EXECUTÁVEL no edito
 2. NUNCA deixe config vazio, exceto no nó end.
 3. Gere apenas blocos que façam sentido visual e operacionalmente.
 4. Quando o prompt do usuário parecer um prompt interno de agente, SOP, playbook, manual, instrução operacional, estados de IA ou regras de atendimento, NÃO crie um nó para cada etapa abstrata. Compacte essas regras dentro de UM nó ai_agent com system_prompt robusto.
+5. TODOS os fluxos são executados na API Oficial Meta (Cloud API). Não use recursos exclusivos da Evolution e assuma que o número conectado é Meta com webhook ativo. Blocos enviados após 24h de inatividade devem usar template HSM (configurável pelo usuário no editor).
 
 === TIPOS DE NÓS PERMITIDOS ===
 entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_collect, random_split, ab_test, google_sheets, google_calendar, gmail
@@ -445,7 +446,12 @@ const ensureNodeConfig = (
 
   switch (node.type) {
     case "entry":
-      return { ...config, trigger_type: normalizeText(config.trigger_type) || "first_message", keywords: Array.isArray(config.keywords) ? config.keywords : [] };
+      return {
+        ...config,
+        api_type: "meta", // Meta-only: fluxos gerados pela IA sempre usam API Oficial
+        trigger_type: normalizeText(config.trigger_type) || "first_message",
+        keywords: Array.isArray(config.keywords) ? config.keywords : [],
+      };
 
     case "message": {
       const messageType = normalizeText(config.message_type) || "text";
@@ -901,7 +907,7 @@ const enrichFlowDraft = (draft: { flow_name: string; nodes: FlowNodeDraft[]; edg
 
   // Ensure entry
   if (!nodes.some((n) => n.type === "entry")) {
-    nodes.unshift({ id: "node_entry", type: "entry", label: "Entrada", position_x: 0, position_y: 300, config: { trigger_type: "first_message", keywords: [] } });
+    nodes.unshift({ id: "node_entry", type: "entry", label: "Entrada", position_x: 0, position_y: 300, config: { api_type: "meta", trigger_type: "first_message", keywords: [] } });
   }
 
   // Ensure end/handoff
