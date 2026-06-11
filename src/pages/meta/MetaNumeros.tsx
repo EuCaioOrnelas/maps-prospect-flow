@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WebhookPanel } from "@/components/meta/WebhookPanel";
 import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { Button } from "@/components/ui/button";
@@ -13,7 +15,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2, HelpCircle,
+  Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2, HelpCircle, Webhook, CheckCircle2,
 } from "lucide-react";
 import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { supabase } from "@/integrations/supabase/client";
