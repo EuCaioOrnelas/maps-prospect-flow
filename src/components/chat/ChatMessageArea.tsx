@@ -355,24 +355,30 @@ export function ChatMessageArea({
             </button>
           )}
           <div className={cn(
-            "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-light",
+            "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-medium",
             avatarColor
           )}>
             {conversation.contact_profile_pic ? (
               <img src={conversation.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
             ) : (
-              <span>
-                {conversation.contact_name
-                  ? conversation.contact_name.split(/\s+/).map(n => n[0]).join("").substring(0, 2).toUpperCase()
-                  : conversation.contact_phone.slice(-2)
-                }
-              </span>
+              <span>{initials}</span>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px]">
-              {conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px]">
+                {conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
+              </h3>
+              {!hasContactName && onSaveContactName && (
+                <button
+                  onClick={() => setAddContactOpen(true)}
+                  title="Salvar contato no CRM"
+                  className="shrink-0 inline-flex items-center justify-center w-[26px] h-[26px] rounded-full bg-[#00a884]/15 hover:bg-[#00a884]/25 text-[#00a884] transition-colors"
+                >
+                  <UserPlus size={14} />
+                </button>
+              )}
+            </div>
             <p className="text-[13px] wa-chat-header-sub truncate leading-[18px]">
               {conversation.last_message_at
                 ? `Último contato: ${format(parseISO(conversation.last_message_at), "dd/MM/yyyy 'às' HH:mm")}`
