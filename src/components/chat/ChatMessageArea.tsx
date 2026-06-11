@@ -6,6 +6,7 @@ import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { AddContactDialog } from "./AddContactDialog";
+import { ForwardDialog } from "./ForwardDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
