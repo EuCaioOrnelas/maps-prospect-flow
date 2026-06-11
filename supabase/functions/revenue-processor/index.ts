@@ -864,6 +864,14 @@ serve(async (req) => {
 
         if (message_content) {
           const normalizedText = normalizeText(message_content);
+          const isSocial = isSocialOnlyMessage(message_content, normalizedText);
+          // Marca a última INBOUND com flag social para o próximo outbound não aplicar SLA
+          if (isSocial && eventEntries.length > 0) {
+            const lastEntry = eventEntries[eventEntries.length - 1];
+            if (lastEntry?.event?.event_type === "INBOUND_MESSAGE") {
+              lastEntry.event.event_meta = { ...(lastEntry.event.event_meta || {}), is_social: true };
+            }
+          }
           classificationResult = classifyMessage(normalizedText, rulesMap);
 
           // Action detection (LINK_CLICK / FORM_SUBMIT / CALL_REQUEST)
