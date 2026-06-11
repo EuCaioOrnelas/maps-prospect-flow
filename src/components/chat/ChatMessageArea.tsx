@@ -468,7 +468,7 @@ export function ChatMessageArea({
     >
       {isDragging && (
         <div className="absolute inset-0 z-50 p-4 pointer-events-none">
-          <div className="w-full h-full rounded-2xl border-2 border-dashed wa-accent-border wa-accent-surface flex flex-col items-center justify-center gap-3 backdrop-blur-sm transition-colors">
+          <div className="w-full h-full rounded-2xl border-2 border-dashed wa-accent-border wa-accent-surface flex flex-col items-center justify-center gap-3 transition-colors">
             <div className="w-[72px] h-[72px] rounded-2xl bg-white shadow-lg flex items-center justify-center">
               <svg viewBox="0 0 24 24" width="36" height="36" className="wa-accent-text" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M14 3v4a1 1 0 0 0 1 1h4" />
