@@ -755,38 +755,48 @@ export function ChatMessageArea({
                             </div>
                           )}
 
-                          {/* Translate inbound bubbles slightly right when selecting (WhatsApp-style) */}
+                          {/* Bubble container — actions live INSIDE at top-right */}
                           <div className={cn(
                             "flex-1 flex items-start gap-1",
                             isOutbound ? "justify-end" : "justify-start",
                             selectionMode && !isOutbound && "pl-2"
                           )}>
-                            {isOutbound && !selectionMode && (
-                              <MessageActions
-                                msg={msg}
-                                isOutbound
-                                onReply={() => setReplyingTo(msg)}
-                                onForward={() => startForwardFromMessage(msg)}
-                              />
-                            )}
                             <div className={cn(
                               "relative max-w-[65%]",
-                              // Always reserve tail space so messages align
                               isOutbound ? "mr-[8px]" : "ml-[8px]"
                             )}>
                               {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
                               <div className={cn(
-                                "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
+                                "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative overflow-hidden",
                                 isOutbound ? "wa-bubble-out rounded-[7.5px]" : "wa-bubble-in rounded-[7.5px]",
                                 showTail && isOutbound && "!rounded-tr-none",
                                 showTail && !isOutbound && "!rounded-tl-none"
                               )}>
+                                {!selectionMode && (
+                                  <MessageActions
+                                    msg={msg}
+                                    isOutbound={isOutbound}
+                                    onReply={() => setReplyingTo(msg)}
+                                    onForward={() => startForwardFromMessage(msg)}
+                                  />
+                                )}
                                 {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
-                                {msg.message_type !== "text" && (
+                                {msg.message_type === "audio" && (
+                                  <div className="p-[3px]">
+                                    <WhatsAppAudio
+                                      src={msg.media_url || ""}
+                                      isOutbound={isOutbound}
+                                      avatarUrl={!isOutbound ? conversation.contact_profile_pic : null}
+                                      avatarInitials={!isOutbound ? initials : "EU"}
+                                      avatarColorClass={!isOutbound ? avatarColor : "bg-[#128c7e]"}
+                                    />
+                                  </div>
+                                )}
+                                {msg.message_type !== "text" && msg.message_type !== "audio" && (
                                   <div className="p-[3px]"><MediaPreview msg={msg} /></div>
                                 )}
                                 {msg.content && msg.message_type === "text" && (
-                                  <div className="px-[9px] pt-[6px] pb-[8px]">
+                                  <div className="px-[9px] pt-[6px] pb-[8px] pr-[36px]">
                                     <span className="text-[14.2px] wa-text-primary leading-[19px] whitespace-pre-wrap break-words">
                                       {msg.content}
                                     </span>
@@ -800,14 +810,6 @@ export function ChatMessageArea({
                                 </div>
                               </div>
                             </div>
-                            {!isOutbound && !selectionMode && (
-                              <MessageActions
-                                msg={msg}
-                                isOutbound={false}
-                                onReply={() => setReplyingTo(msg)}
-                                onForward={() => startForwardFromMessage(msg)}
-                              />
-                            )}
                           </div>
                         </div>
                       </div>
