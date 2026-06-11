@@ -824,7 +824,26 @@ export function ChatMessageArea({
 
           {/* Input — inside background container so pattern extends behind it */}
           <div className="relative z-10 shrink-0">
-            {(() => {
+            {selectionMode ? (
+              <div className="flex items-center justify-between gap-3 px-4 py-3 wa-input-field border-t wa-border-light">
+                <button
+                  onClick={exitSelection}
+                  className="text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-foreground/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <span className="text-sm font-medium wa-text-primary">
+                  {selectedIds.size} {selectedIds.size === 1 ? "selecionada" : "selecionadas"}
+                </span>
+                <button
+                  onClick={openForwardDialog}
+                  disabled={selectedIds.size === 0}
+                  className="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-lg bg-[#00a884] hover:bg-[#06cf9c] text-white disabled:opacity-40 transition-colors"
+                >
+                  <Forward size={16} /> Encaminhar
+                </button>
+              </div>
+            ) : (() => {
               const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
               const isWindowExpired = lastInbound
                 ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) >= 24
@@ -849,7 +868,6 @@ export function ChatMessageArea({
                   externalFiles={droppedFiles}
                   onExternalConsumed={() => setDroppedFiles([])}
                 />
-
               );
             })()}
           </div>
