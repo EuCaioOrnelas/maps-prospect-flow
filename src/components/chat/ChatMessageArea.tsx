@@ -240,18 +240,17 @@ function MessageActions({
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "opacity-0 group-hover/msg-row:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-all duration-150",
-            "shrink-0 self-center w-[28px] h-[28px] rounded-full",
-            "wa-message-action-button border shadow-sm",
-            "flex items-center justify-center hover:scale-105 active:scale-95",
-            isOutbound ? "mr-1 order-first" : "ml-1"
+            "opacity-0 group-hover/msg-row:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity duration-150",
+            "absolute top-0 right-0 z-10 w-[34px] h-[28px] rounded-tr-[7.5px] rounded-bl-[10px]",
+            "flex items-start justify-end pt-[2px] pr-[4px]",
+            isOutbound ? "wa-bubble-action-out" : "wa-bubble-action-in"
           )}
           aria-label="Ações da mensagem"
         >
-          <ChevronDown size={14} className="text-foreground/70" />
+          <ChevronDown size={18} strokeWidth={2.5} />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align={isOutbound ? "start" : "end"} className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+      <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
         <DropdownMenuItem onClick={onReply} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Reply size={14} /> Responder
         </DropdownMenuItem>
