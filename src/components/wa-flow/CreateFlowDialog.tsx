@@ -2,14 +2,16 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Workflow, Sparkles, ArrowLeft, Loader2, Wand2, RefreshCw } from "lucide-react";
+import { Workflow, Sparkles, ArrowLeft, Loader2, Wand2, RefreshCw, ShieldAlert } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useWebhookGate } from "@/hooks/useWebhookGate";
+
 
 interface CreateFlowDialogProps {
   open: boolean;
@@ -32,6 +34,14 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
   const [prompt, setPrompt] = useState(initialPrompt || "");
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { connections, loading: loadingGate } = useWebhookGate();
+
+  // Only Meta connections with verified webhook can power a flow.
+  const eligible = (connections || []).filter(
+    (c) => !!c.webhook_verified_at && (c.status === "connected" || c.status === "active"),
+  );
+  const hasEligible = eligible.length > 0;
+  const defaultConnection = eligible[0] || null;
 
   useEffect(() => {
     if (open) {
@@ -42,9 +52,15 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
 
   const createBlank = useMutation({
     mutationFn: async () => {
+      if (!defaultConnection) throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos.");
       const { data, error } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, name: "Novo Fluxo" })
+        .insert({
+          user_id: user!.id,
+          name: "Novo Fluxo",
+          api_type: "meta",
+          waba_connection_id: defaultConnection.id,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -54,8 +70,9 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
       onOpenChange(false);
       navigate(`/fluxos/${data.id}`);
     },
-    onError: () => toast.error("Erro ao criar fluxo"),
+    onError: (e: any) => toast.error(e.message || "Erro ao criar fluxo"),
   });
+
 
   const createWithAI = useMutation({
     mutationFn: async () => {
@@ -63,13 +80,23 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
         throw new Error("Descreva o que deseja para o fluxo");
       }
 
-      // 1. Create flow
+      if (!defaultConnection) {
+        throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos.");
+      }
+
+      // 1. Create flow (Meta-bound)
       const { data: flow, error: flowErr } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, name: "Fluxo IA" })
+        .insert({
+          user_id: user!.id,
+          name: "Fluxo IA",
+          api_type: "meta",
+          waba_connection_id: defaultConnection.id,
+        })
         .select()
         .single();
       if (flowErr) throw flowErr;
+
 
       // 2. Call edge function to generate
       const { data: result, error: fnErr } = await supabase.functions.invoke("generate-wa-flow", {
@@ -112,17 +139,30 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
       <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden border-border/50 bg-card">
         {mode === "choose" ? (
           <div className="p-8">
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <h2 className="text-xl font-bold text-foreground mb-1">Criar Novo Fluxo</h2>
               <p className="text-sm text-muted-foreground">Escolha como deseja começar</p>
             </div>
+
+            {!loadingGate && !hasEligible && (
+              <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
+                <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-amber-700">Webhook Meta obrigatório</p>
+                  <p className="text-xs text-amber-700/80">
+                    Fluxos só funcionam em números conectados via API oficial da Meta <strong>com webhook verificado</strong>. Conecte ou verifique o webhook em Configurações &rsaquo; WhatsApp Oficial.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Blank */}
               <button
                 onClick={() => createBlank.mutate()}
-                disabled={createBlank.isPending}
-                className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-center"
+                disabled={createBlank.isPending || !hasEligible || loadingGate}
+                className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-center disabled:opacity-50 disabled:cursor-not-allowed"
+
               >
                 <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                   <Workflow size={24} className="text-muted-foreground group-hover:text-primary transition-colors" />
@@ -137,8 +177,9 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
 
               {/* AI */}
               <button
-                onClick={() => setMode("ai")}
-                className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all text-center"
+                onClick={() => hasEligible && setMode("ai")}
+                disabled={!hasEligible || loadingGate}
+                className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all text-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Badge className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 shadow-md">
                   Recomendado

@@ -30,6 +30,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { getFlowTemplate } from "@/data/flowTemplates";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { useWebhookGate } from "@/hooks/useWebhookGate";
+import { ShieldAlert } from "lucide-react";
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   draft: { label: "Rascunho", color: "bg-muted text-muted-foreground" },
@@ -58,6 +60,9 @@ export default function WhatsAppAutomations() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   useAutoScoreTracking("whatsapp_automations");
+  const { connections: wabaConnections, loading: gateLoading } = useWebhookGate();
+  const eligibleWaba = (wabaConnections || []).filter((c) => !!c.webhook_verified_at);
+  const hasEligibleWaba = eligibleWaba.length > 0;
   const [showTemplatesDialog, setShowTemplatesDialog] = useState(false);
   const [templateSearch, setTemplateSearch] = useState("");
 
@@ -87,16 +92,24 @@ export default function WhatsAppAutomations() {
 
   const createBlankFlow = useMutation({
     mutationFn: async () => {
+      const meta = eligibleWaba[0];
+      if (!meta) throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos.");
       const { data, error } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, owner_user_id: accountOwnerId || user!.id, name: "Novo Fluxo" })
+        .insert({
+          user_id: user!.id,
+          owner_user_id: accountOwnerId || user!.id,
+          name: "Novo Fluxo",
+          api_type: "meta",
+          waba_connection_id: meta.id,
+        })
         .select()
         .single();
       if (error) throw error;
       return data;
     },
     onSuccess: (data) => navigate(`/fluxos/${data.id}`),
-    onError: () => toast.error("Erro ao criar fluxo"),
+    onError: (e: any) => toast.error(e?.message || "Erro ao criar fluxo"),
   });
 
   const deleteFlow = useMutation({
@@ -277,11 +290,25 @@ export default function WhatsAppAutomations() {
             </p>
           </div>
 
+          {!gateLoading && !hasEligibleWaba && (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4">
+              <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1">
+                <p className="font-semibold text-amber-700 text-sm">Conecte um número Meta oficial para usar fluxos</p>
+                <p className="text-xs text-amber-700/80">
+                  Os fluxos só rodam em números conectados via <strong>API oficial da Meta</strong> com <strong>webhook verificado</strong>. Configure agora em Configurações &rsaquo; WhatsApp Oficial.
+                </p>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => navigate("/meta-app")}>Configurar</Button>
+            </div>
+          )}
+
           {/* Action Buttons */}
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               onClick={() => createBlankFlow.mutate()}
-              disabled={createBlankFlow.isPending}
+              disabled={createBlankFlow.isPending || !hasEligibleWaba || gateLoading}
               className="group flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-left disabled:opacity-50"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">

@@ -308,19 +308,88 @@ async function sendViaEvolution(
   return JSON.parse(txt || "{}");
 }
 
+// Check whether the conversation with `phone` is currently inside Meta's free-form 24h window.
+// We consider the window OPEN when the lead sent any inbound message within the last 24h.
+async function isInside24hWindow(supabase: any, userId: string, phone: string): Promise<boolean> {
+  const last8 = String(phone || "").replace(/\D/g, "").slice(-8);
+  if (!last8) return false;
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("chat_messages")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("direction", "inbound")
+    .ilike("from_phone", `%${last8}`)
+    .gte("created_at", since)
+    .limit(1);
+  return !!(data && data.length > 0);
+}
+
 async function sendViaMeta(
   supabase: any,
   wabaConnectionId: string,
   toPhone: string,
   payload: SendPayload,
+  opts?: { userId?: string; outOfWindowTemplate?: { name: string; language?: string; variables?: string[] } | null },
 ) {
   const { data: conn } = await supabase
     .from("user_waba_connections")
-    .select("phone_number_id, access_token")
+    .select("phone_number_id, access_token, webhook_verified_at, status")
     .eq("id", wabaConnectionId)
     .maybeSingle();
   if (!conn?.phone_number_id || !conn?.access_token) {
     throw new Error(`Meta WABA connection missing token/phone_number_id for ${wabaConnectionId}`);
+  }
+  // Hard gate: webhook must be verified for the conversation to receive inbound events.
+  if (!conn.webhook_verified_at) {
+    throw new Error(`Meta WABA connection ${wabaConnectionId} has no verified webhook — flow blocked`);
+  }
+
+  // 24h window enforcement: if the conversation is closed and the payload is a free-form message,
+  // either swap for the configured HSM template or refuse.
+  const needsWindowCheck = ["text", "image", "video", "audio", "document", "buttons", "list"].includes(payload.type);
+  if (needsWindowCheck && opts?.userId) {
+    const open = await isInside24hWindow(supabase, opts.userId, toPhone);
+    if (!open) {
+      const tpl = opts.outOfWindowTemplate;
+      if (!tpl?.name) {
+        console.warn(
+          `[wa-flow-runner] 24h window closed for ${toPhone} and no out-of-window template configured — skipping send`,
+        );
+        return { skipped: true, reason: "24h_window_closed_no_template" };
+      }
+      // Send approved template instead
+      const tplBody: any = {
+        messaging_product: "whatsapp",
+        to: toPhone.replace(/\D/g, ""),
+        type: "template",
+        template: {
+          name: tpl.name,
+          language: { code: tpl.language || "pt_BR" },
+        },
+      };
+      const vars = (tpl.variables || []).filter((v) => v != null && v !== "");
+      if (vars.length > 0) {
+        tplBody.template.components = [
+          {
+            type: "body",
+            parameters: vars.map((v) => ({ type: "text", text: String(v) })),
+          },
+        ];
+      }
+      const tres = await fetch(`https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${conn.access_token}` },
+        body: JSON.stringify(tplBody),
+      });
+      const ttxt = await tres.text();
+      if (!tres.ok) {
+        console.error(`[wa-flow-runner] Meta template send failed (${tres.status}):`, ttxt);
+        throw new Error(`Meta template error ${tres.status}: ${ttxt.slice(0, 200)}`);
+      }
+      console.log(`[wa-flow-runner] Sent HSM template '${tpl.name}' to ${toPhone} (window closed)`);
+      return JSON.parse(ttxt || "{}");
+    }
   }
 
   const url = `https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`;
@@ -391,20 +460,23 @@ async function sendMessage(
   userId: string,
   leadPhone: string,
   payload: any,
+  nodeConfig?: any,
 ) {
-  if (flow.api_type === "meta") {
-    if (!flow.waba_connection_id) {
-      console.error("[wa-flow-runner] Meta flow missing waba_connection_id");
-      return;
-    }
-    return sendViaMeta(supabase, flow.waba_connection_id, leadPhone, payload);
-  }
-  // evolution: whatsapp_number_id stores the source_id (which is the whatsapp_numbers.id)
-  if (!flow.whatsapp_number_id) {
-    console.error("[wa-flow-runner] Evolution flow missing whatsapp_number_id");
+  // META-ONLY: Evolution flows are no longer accepted by the runner.
+  if (flow.api_type !== "meta") {
+    console.error(`[wa-flow-runner] Flow ${flow.id} has api_type='${flow.api_type}' — Meta API official required. Skipping send.`);
     return;
   }
-  return sendViaEvolution(supabase, flow.whatsapp_number_id, userId, leadPhone, payload);
+  if (!flow.waba_connection_id) {
+    console.error("[wa-flow-runner] Meta flow missing waba_connection_id");
+    return;
+  }
+  const outOfWindowTemplate = nodeConfig?.out_of_window_template
+    || (flow.default_out_of_window_template || null);
+  return sendViaMeta(supabase, flow.waba_connection_id, leadPhone, payload, {
+    userId,
+    outOfWindowTemplate,
+  });
 }
 
 // ── Action executors ──
@@ -611,7 +683,7 @@ async function runFlow(
             mediaUrl: it.media_url || it.url,
             caption: interpolate(it.caption || "", ctx.variables),
             filename: it.filename,
-          });
+          }, config);
         }
         ctx.hasFreshUserInput = false;
         currentNodeId = getDefaultTarget(bySource, node.id);
@@ -645,7 +717,7 @@ async function runFlow(
               footer: footerText,
               buttonText: config.list_button_text || "Ver opções",
               sections: [{ title: config.list_section_title || "Opções", rows: normalizedChoices }],
-            });
+            }, config);
           } else {
             await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
               type: "buttons",
@@ -653,7 +725,7 @@ async function runFlow(
               body: bodyText,
               footer: footerText,
               buttons: normalizedChoices.slice(0, 3),
-            });
+            }, config);
           }
         } catch (e) {
           // Fallback to plain-text numbered list if interactive send fails (e.g. Evolution endpoint unavailable).
@@ -663,7 +735,7 @@ async function runFlow(
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
             type: "text",
             content: `${lines.join("\n\n")}${optionLines ? `\n\n${optionLines}` : ""}`,
-          });
+          }, config);
         }
 
         ctx.hasFreshUserInput = false;
@@ -746,7 +818,7 @@ async function runFlow(
           const prompt = config.prompt_message
             ? interpolate(config.prompt_message, ctx.variables)
             : `Por favor, informe ${labels[config.collect_type] || varName}:`;
-          await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: prompt });
+          await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: prompt }, config);
           ctx.hasFreshUserInput = false;
           pausedNodeId = node.id;
           currentNodeId = null;
@@ -776,7 +848,7 @@ async function runFlow(
         if (config.handoff_message) {
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
             type: "text", content: interpolate(config.handoff_message, ctx.variables),
-          });
+          }, config);
         }
         ctx.hasFreshUserInput = false;
         // Move to human support stage if configured
@@ -793,7 +865,7 @@ async function runFlow(
         if (config.end_message) {
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
             type: "text", content: interpolate(config.end_message, ctx.variables),
-          });
+          }, config);
         }
         await supabase.from("wa_flow_executions").update({
           status: "completed",
@@ -879,7 +951,7 @@ async function runFlow(
             await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
               type: "text",
               content: cleanedText,
-            });
+            }, config);
           }
           ctx.variables["ai_response"] = cleanedText;
           if (chosenRoute) ctx.variables["ai_route"] = chosenRoute;
@@ -1216,13 +1288,23 @@ serve(async (req) => {
 
     const triggered: string[] = [];
     for (const flow of flows) {
-      // Filter by number/connection
-      if (flow.api_type === "evolution") {
-        if (body.source !== "evolution") continue;
-        if (flow.whatsapp_number_id && body.whatsapp_number_id && flow.whatsapp_number_id !== body.whatsapp_number_id) continue;
-      } else if (flow.api_type === "meta") {
-        if (body.source !== "meta") continue;
-        if (flow.waba_connection_id && body.waba_connection_id && flow.waba_connection_id !== body.waba_connection_id) continue;
+      // META-ONLY: drop any flow not bound to a Meta WABA connection with a verified webhook.
+      if (flow.api_type !== "meta") {
+        console.log(`[wa-flow-runner] flow ${flow.id} skipped — api_type='${flow.api_type}' (Meta API official required)`);
+        continue;
+      }
+      if (body.source !== "meta") continue;
+      if (flow.waba_connection_id && body.waba_connection_id && flow.waba_connection_id !== body.waba_connection_id) continue;
+      if (flow.waba_connection_id) {
+        const { data: connCheck } = await supabase
+          .from("user_waba_connections")
+          .select("webhook_verified_at, status")
+          .eq("id", flow.waba_connection_id)
+          .maybeSingle();
+        if (!connCheck?.webhook_verified_at) {
+          console.log(`[wa-flow-runner] flow ${flow.id} skipped — WABA ${flow.waba_connection_id} has no verified webhook`);
+          continue;
+        }
       }
 
       const { nodes, edges } = await loadFlowGraph(supabase, flow.id);
