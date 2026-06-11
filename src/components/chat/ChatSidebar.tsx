@@ -497,6 +497,24 @@ export function ChatSidebar({
         availableStages={availableStages}
         loading={loadingCrmFilters}
       />
+
+      {/* Save contact to CRM (per-conversation) */}
+      {onSaveContactName && addContactFor && (
+        <AddContactDialog
+          open={!!addContactFor}
+          onOpenChange={(open) => { if (!open) setAddContactFor(null); }}
+          phone={addContactFor.contact_phone}
+          defaultName={addContactFor.contact_name}
+          onSave={async (name) => {
+            try {
+              await onSaveContactName(addContactFor.id, name);
+              toast.success("Contato salvo no CRM");
+            } catch {
+              toast.error("Erro ao salvar contato");
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
