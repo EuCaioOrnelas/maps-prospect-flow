@@ -275,7 +275,8 @@ export function useChat() {
     const conversation = conversations.find(c => c.id === activeConversationId);
     if (!conversation) return;
 
-    // Optimistic insert
+    // Optimistic insert — tempId is also written to DB row metadata.client_token,
+    // so realtime INSERT can replace the optimistic row instead of duplicating it.
     const tempId = crypto.randomUUID();
     const tempMsg: ChatMessage = {
       id: tempId,
@@ -292,12 +293,12 @@ export function useChat() {
       status: "pending",
       status_updated_at: null,
       reply_to_message_id: replyToId || null,
-      metadata: {},
+      metadata: { client_token: tempId },
       created_at: new Date().toISOString(),
     };
     setMessages(prev => [...prev, tempMsg]);
 
-    // Insert in DB
+    // Insert in DB (with client_token in metadata for dedupe)
     const { data: inserted } = await supabase.from("chat_messages").insert({
       conversation_id: activeConversationId,
       user_id: user.id,
@@ -307,10 +308,17 @@ export function useChat() {
       content: text,
       status: "pending",
       reply_to_message_id: replyToId || null,
+      metadata: { client_token: tempId },
     }).select().single();
 
     if (inserted) {
-      setMessages(prev => prev.map(m => m.id === tempId ? inserted as ChatMessage : m));
+      setMessages(prev => {
+        // If realtime already swapped tempId for inserted.id, skip
+        if (prev.some(m => m.id === (inserted as any).id)) {
+          return prev.filter(m => m.id !== tempId || m.id === (inserted as any).id);
+        }
+        return prev.map(m => m.id === tempId ? inserted as ChatMessage : m);
+      });
     }
 
     // Fire conversation update & Meta send in parallel (no await — speeds up perceived latency)
