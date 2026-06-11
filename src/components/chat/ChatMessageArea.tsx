@@ -403,27 +403,30 @@ export function ChatMessageArea({
                   <MoreVertical size={20} className="wa-chat-header-icon" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="wa-dropdown-bg border wa-border min-w-[220px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
-                  <User size={15} className="wa-icon-muted" /> Dados do contato
+              <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[220px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                <DropdownMenuItem
+                  onClick={() => void handleOpenContactData()}
+                  className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
+                  <User size={15} /> Dados do contato
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setShowSearch(true)}>
-                  <Search size={15} className="wa-icon-muted" /> Pesquisar
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
-                  <MessageSquareText size={15} className="wa-icon-muted" /> Selecionar mensagens
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
-                  <BellOff size={15} className="wa-icon-muted" /> Silenciar
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
-                  <Star size={15} className="wa-icon-muted" /> Favoritos
+                <DropdownMenuItem
+                  onClick={() => setShowSearch(true)}
+                  className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
+                  <Search size={15} /> Pesquisar mensagens
                 </DropdownMenuItem>
                 <div className="my-1 mx-3 border-t wa-border-light" />
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] wa-text-primary cursor-pointer hover:bg-white/5 transition-colors">
-                  <Ban size={15} className="wa-icon-muted" /> Bloquear
+                <DropdownMenuItem
+                  onClick={() => void handleToggleBlock()}
+                  className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
+                  <Ban size={15} /> {(conversation as any).is_blocked ? "Desbloquear" : "Bloquear"}
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] text-red-400 cursor-pointer hover:bg-red-500/10 transition-colors">
+                <DropdownMenuItem
+                  onClick={() => setConfirmDeleteOpen(true)}
+                  className="wa-dropdown-item-destructive flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
                   <Trash2 size={15} /> Apagar conversa
                 </DropdownMenuItem>
               </DropdownMenuContent>
