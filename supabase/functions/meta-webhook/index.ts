@@ -568,12 +568,23 @@ serve(async (req) => {
                 };
                 const newStatus = statusMap[status.status];
                 if (newStatus) {
-                  await supabase.from('chat_messages')
-                    .update({
-                      status: newStatus,
-                      status_updated_at: new Date(parseInt(status.timestamp) * 1000).toISOString(),
-                    })
+                  const rank: Record<string, number> = { pending: 0, sent: 1, delivered: 2, read: 3, failed: 4 };
+                  const { data: existingMessages } = await supabase
+                    .from('chat_messages')
+                    .select('id, status')
                     .eq('waba_message_id', status.id);
+
+                  for (const existing of existingMessages || []) {
+                    const currentRank = rank[existing.status || 'pending'] ?? 0;
+                    const nextRank = rank[newStatus] ?? 0;
+                    if (newStatus !== 'failed' && currentRank > nextRank) continue;
+                    await supabase.from('chat_messages')
+                      .update({
+                        status: newStatus,
+                        status_updated_at: new Date(parseInt(status.timestamp) * 1000).toISOString(),
+                      })
+                      .eq('id', existing.id);
+                  }
                   console.log(`[meta-webhook] ✅ Message ${status.id} status → ${newStatus}`);
                 }
               }
