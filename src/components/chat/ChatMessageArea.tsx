@@ -334,7 +334,35 @@ export function ChatMessageArea({
 
   useEffect(() => {
     setReplyingTo(null);
+    setSelectionMode(false);
+    setSelectedIds(new Set());
   }, [conversation?.id]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else {
+        if (next.size >= 30) { toast.error("Máximo de 30 mensagens"); return prev; }
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const exitSelection = () => { setSelectionMode(false); setSelectedIds(new Set()); };
+
+  const startForwardFromMessage = (msg: ChatMessage) => {
+    setSelectionMode(true);
+    setSelectedIds(new Set([msg.id]));
+  };
+
+  const openForwardDialog = () => {
+    if (selectedIds.size === 0) return;
+    setForwardOpen(true);
+  };
+
+  const selectedMessages = messages.filter(m => selectedIds.has(m.id));
 
   const handleOpenContactData = async () => {
     if (!conversation) return;
