@@ -51,9 +51,18 @@ const Chat = () => {
   const { members } = useAccountMembers();
   const canChangeResponsible = role === "owner" || role === "admin";
   const isMobile = useIsMobile();
-  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>(
-    role === "operational" ? "me" : "me"
-  );
+  const RESP_FILTER_KEY = user ? `wiize:chat:respFilter:${user.id}` : null;
+  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>(() => {
+    try {
+      if (typeof window === "undefined" || !user) return "me";
+      const saved = window.localStorage.getItem(`wiize:chat:respFilter:${user.id}`);
+      return (saved as ResponsibleFilter) || "me";
+    } catch { return "me"; }
+  });
+  useEffect(() => {
+    if (!RESP_FILTER_KEY) return;
+    try { window.localStorage.setItem(RESP_FILTER_KEY, responsibleFilter); } catch {}
+  }, [responsibleFilter, RESP_FILTER_KEY]);
   const filteredConversations = useMemo(() => {
     if (responsibleFilter === "all") return chat.conversations;
     if (responsibleFilter === "me") {
@@ -61,6 +70,30 @@ const Chat = () => {
     }
     return chat.conversations.filter(c => c.responsible_user_id === responsibleFilter);
   }, [chat.conversations, responsibleFilter, user?.id]);
+
+  // Auto-revalidate webhook subscription on chat load so inbound messages flow.
+  // Runs once per connection per session — if Meta lost the subscription,
+  // this re-installs the /subscribed_apps POST silently.
+  useEffect(() => {
+    if (!user || chat.loading || chat.connections.length === 0) return;
+    const SESSION_KEY = `wiize:chat:webhookRevalidated:${user.id}`;
+    try {
+      const already = sessionStorage.getItem(SESSION_KEY);
+      if (already) return;
+      sessionStorage.setItem(SESSION_KEY, String(Date.now()));
+    } catch {}
+    (async () => {
+      for (const conn of chat.connections) {
+        try {
+          await supabase.functions.invoke("meta-webhook-config", {
+            body: { action: "validate", connection_id: conn.id },
+          });
+        } catch (e) {
+          console.warn("[chat] webhook revalidate failed", conn.id, e);
+        }
+      }
+    })();
+  }, [user, chat.loading, chat.connections]);
 
   useEffect(() => {
     if (!webhookGate.loading && webhookGate.blocked) setWebhookDialogOpen(true);
@@ -332,6 +365,8 @@ const Chat = () => {
                       onDeleteConversation={chat.deleteConversation}
                       onToggleBlock={chat.toggleBlock}
                       connectionHealth={chat.connectionHealth}
+                      members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
+                      currentUserId={user?.id || null}
                       topToolbar={
                         (role === "owner" || role === "admin") ? (
                           <CRMResponsibleFilter

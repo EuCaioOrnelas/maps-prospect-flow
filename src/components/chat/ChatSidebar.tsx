@@ -9,6 +9,7 @@ import { NewConversationDialog } from "./NewConversationDialog";
 import { ChatFiltersDialog, type ChatFilterConfig } from "./ChatFiltersDialog";
 import { AddContactDialog } from "./AddContactDialog";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
+import { getResponsibleColor } from "@/lib/responsibleColor";
 import { toast } from "sonner";
 
 interface ChatSidebarProps {
@@ -30,6 +31,8 @@ interface ChatSidebarProps {
   onToggleBlock?: (conversationId: string) => Promise<void>;
   connectionHealth?: Record<string, boolean>;
   topToolbar?: React.ReactNode;
+  members?: Array<{ user_id: string; name: string | null; email: string | null }>;
+  currentUserId?: string | null;
 }
 
 function formatTimestamp(dateStr: string | null): string {
@@ -78,7 +81,7 @@ export function ChatSidebar({
   searchQuery, onSearchChange, connections, activeConnectionId,
   onConnectionChange, onTogglePin, onArchive, onToggleMute, loading,
   onNewConversation, onSaveContactName, onDeleteConversation, onToggleBlock,
-  connectionHealth = {}, topToolbar,
+  connectionHealth = {}, topToolbar, members = [], currentUserId = null,
 }: ChatSidebarProps) {
   const [addContactFor, setAddContactFor] = useState<ChatConversation | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -93,6 +96,12 @@ export function ChatSidebar({
     crmLeadByPhoneKey,
     loading: loadingCrmFilters,
   } = useChatCRMFilters();
+
+  const memberMap = useMemo(() => {
+    const m: Record<string, { name: string | null; email: string | null }> = {};
+    for (const x of members) m[x.user_id] = { name: x.name, email: x.email };
+    return m;
+  }, [members]);
 
   const hasCustomFilters = customFilters.tags.length > 0 || customFilters.crmStages.length > 0 || customFilters.scoreMin > 0 || customFilters.scoreMax < 1000;
   const customFilterCount = customFilters.tags.length + customFilters.crmStages.length + (customFilters.scoreMin > 0 || customFilters.scoreMax < 1000 ? 1 : 0);
@@ -345,6 +354,11 @@ export function ChatSidebar({
             const displayName = hasName
               ? truncateText(conv.contact_name as string, 24)
               : formatPhoneDisplay(conv.contact_phone);
+            const respColor = getResponsibleColor(conv.responsible_user_id);
+            const respMember = conv.responsible_user_id ? memberMap[conv.responsible_user_id] : null;
+            const respLabel = respMember ? (respMember.name || respMember.email || "") : "";
+            const respShort = respLabel ? respLabel.split(/\s+/)[0] : "";
+            const isMine = conv.responsible_user_id && conv.responsible_user_id === currentUserId;
 
             return (
               <div
@@ -355,16 +369,33 @@ export function ChatSidebar({
                   "h-[72px] transition-colors duration-100",
                   isActive ? "wa-conv-active" : "wa-conv-hover"
                 )}
+                title={respLabel ? `Responsável: ${respLabel}${isMine ? " (você)" : ""}` : undefined}
               >
+                {/* Responsible color bar (left) */}
+                {respColor && (
+                  <span
+                    aria-hidden
+                    className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full"
+                    style={{ backgroundColor: respColor }}
+                  />
+                )}
+
                 {/* Avatar */}
                 <div className={cn(
-                  "w-[49px] h-[49px] rounded-full flex items-center justify-center shrink-0 text-white text-[17px] font-medium",
+                  "w-[49px] h-[49px] rounded-full flex items-center justify-center shrink-0 text-white text-[17px] font-medium relative",
                   getChatAvatarColor(conv.contact_phone)
                 )}>
                   {conv.contact_profile_pic ? (
                     <img src={conv.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
                   ) : (
                     <span>{getChatInitials(conv.contact_name, conv.contact_phone)}</span>
+                  )}
+                  {respColor && (
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[var(--wa-sidebar-bg,#111b21)]"
+                      style={{ backgroundColor: respColor }}
+                    />
                   )}
                 </div>
 
@@ -404,6 +435,18 @@ export function ChatSidebar({
                       </span>
                     </div>
                     <div className="flex items-center gap-[6px] shrink-0 ml-1">
+                      {respColor && respShort && (
+                        <span
+                          className="inline-flex items-center gap-1 px-1.5 py-[1px] rounded-full text-[10px] font-medium leading-tight max-w-[80px]"
+                          style={{
+                            backgroundColor: `${respColor}1F`,
+                            color: respColor,
+                          }}
+                          title={`Responsável: ${respLabel}`}
+                        >
+                          <span className="truncate">{truncateText(respShort, 8)}</span>
+                        </span>
+                      )}
                       {conv.is_pinned && (
                         <Pin size={14} className="wa-icon-muted fill-current" />
                       )}
