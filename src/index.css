@@ -1123,7 +1123,7 @@ input::placeholder, textarea::placeholder {
 .wa-bg-search { background-color: hsl(220 18% 10%); }
 .landing-light .wa-bg-search { background-color: #f0f2f5; }
 .wa-search-focused { background-color: hsl(220 16% 14%); }
-.landing-light .wa-search-focused { background-color: #ffffff; box-shadow: inset 0 0 0 1px #00a884; }
+.landing-light .wa-search-focused { background-color: #ffffff; box-shadow: inset 0 0 0 1px #128c7e; }
 
 /* ─── Input field ─── */
 .wa-bg-input { background-color: hsl(220 18% 10%); }
@@ -1269,7 +1269,7 @@ input::placeholder, textarea::placeholder {
 /* ─── Document card ─── */
 .wa-doc-bg { background-color: rgba(0,0,0,0.15); }
 .landing-light .wa-doc-bg { background-color: rgba(0,0,0,0.04); }
-.wa-doc-icon { background-color: rgba(0,168,132,0.1); }
+.wa-doc-icon { background-color: rgba(18,140,126,0.1); }
 .wa-doc-preview { background-color: hsl(220 18% 10%); }
 .landing-light .wa-doc-preview { background-color: #f0f2f5; }
 
