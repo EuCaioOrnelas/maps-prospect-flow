@@ -1236,14 +1236,24 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-search-panel { background-color: #ffffff; }
 
 /* ─── Message bubbles — Wiize green ─── */
-.wa-bubble-out { background-color: #024d3f; }
-.landing-light .wa-bubble-out { background-color: #d4f5e2; }
-.wa-bubble-in { background-color: hsl(220 18% 10%); }
+.wa-bubble-out { background-color: #0c6b58; }
+.landing-light .wa-bubble-out { background-color: #d9fdd3; }
+.wa-bubble-in { background-color: hsl(220 16% 14%); }
 .landing-light .wa-bubble-in { background-color: #ffffff; }
-.wa-bubble-out-fill { fill: #024d3f; }
-.landing-light .wa-bubble-out-fill { fill: #d4f5e2; }
-.wa-bubble-in-fill { fill: hsl(220 18% 10%); }
+.wa-bubble-out-fill { fill: #0c6b58; }
+.landing-light .wa-bubble-out-fill { fill: #d9fdd3; }
+.wa-bubble-in-fill { fill: hsl(220 16% 14%); }
 .landing-light .wa-bubble-in-fill { fill: #ffffff; }
+
+/* Force bubble text bright enough against new backgrounds */
+.wa-bubble-out .wa-text-primary,
+.wa-bubble-in .wa-text-primary { color: #f4f6f7; }
+.landing-light .wa-bubble-out .wa-text-primary,
+.landing-light .wa-bubble-in .wa-text-primary { color: #111b21; }
+.wa-bubble-out .wa-text-timestamp,
+.wa-bubble-in .wa-text-timestamp { color: rgba(244,246,247,0.65); }
+.landing-light .wa-bubble-out .wa-text-timestamp,
+.landing-light .wa-bubble-in .wa-text-timestamp { color: rgba(17,27,33,0.55); }
 
 /* ─── Date badge ─── */
 .wa-date-badge { background-color: hsl(220 18% 8%); color: rgba(233,237,239,0.9); }
@@ -1257,12 +1267,12 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-doc-preview { background-color: #f0f2f5; }
 
 /* ─── Status icons ─── */
-.wa-status-pending { color: rgba(134,150,160,0.7); }
-.landing-light .wa-status-pending { color: rgba(102,119,129,0.6); }
-.wa-status-sent { color: rgba(134,150,160,0.8); }
-.landing-light .wa-status-sent { color: rgba(102,119,129,0.7); }
-.wa-status-delivered { color: rgba(134,150,160,0.8); }
-.landing-light .wa-status-delivered { color: rgba(102,119,129,0.7); }
+.wa-status-pending { color: rgba(134,150,160,0.85); }
+.landing-light .wa-status-pending { color: rgba(102,119,129,0.75); }
+.wa-status-sent { color: rgba(134,150,160,0.85); }
+.landing-light .wa-status-sent { color: rgba(102,119,129,0.75); }
+.wa-status-delivered { color: rgba(134,150,160,0.85); }
+.landing-light .wa-status-delivered { color: rgba(102,119,129,0.75); }
 
 /* ─── Icons ─── */
 .wa-icon-muted { color: #8696a0; }
@@ -1274,18 +1284,41 @@ input::placeholder, textarea::placeholder {
 .wa-icon-tinted { color: #00a884; }
 .wa-icon-active { background-color: rgba(0,168,132,0.1); }
 
-.wa-icon-button { 
-  transition: background-color 0.15s; 
+.wa-icon-button {
+  transition: background-color 0.15s;
   border-radius: 9999px;
 }
 .wa-icon-button:hover { background-color: rgba(134,150,160,0.1); }
 .landing-light .wa-icon-button:hover { background-color: rgba(0,0,0,0.05); }
 
-/* ─── Dropdowns ─── */
-.wa-dropdown-bg { background-color: hsl(220 18% 10%); }
-.landing-light .wa-dropdown-bg { background-color: #ffffff; }
-.wa-dropdown-item:hover { background-color: hsl(220 18% 8%) !important; }
-.landing-light .wa-dropdown-item:hover { background-color: #f5f6f6 !important; }
+/* ─── Dropdowns — Wiize green highlight + white text on hover ─── */
+.wa-dropdown-menu,
+.wa-dropdown-bg { background-color: hsl(220 18% 10%); color: #e9edef; }
+.landing-light .wa-dropdown-menu,
+.landing-light .wa-dropdown-bg { background-color: #ffffff; color: #111b21; }
+
+.wa-dropdown-item { color: #e9edef; }
+.landing-light .wa-dropdown-item { color: #111b21; }
+.wa-dropdown-item svg { color: #8696a0; transition: color 0.12s; }
+.landing-light .wa-dropdown-item svg { color: #54656f; }
+
+.wa-dropdown-item:hover,
+.wa-dropdown-item[data-highlighted] {
+  background-color: #00a884 !important;
+  color: #ffffff !important;
+}
+.wa-dropdown-item:hover svg,
+.wa-dropdown-item[data-highlighted] svg { color: #ffffff !important; }
+
+.wa-dropdown-item-destructive { color: #f87171; }
+.wa-dropdown-item-destructive svg { color: #f87171; }
+.wa-dropdown-item-destructive:hover,
+.wa-dropdown-item-destructive[data-highlighted] {
+  background-color: hsl(0 72% 51%) !important;
+  color: #ffffff !important;
+}
+.wa-dropdown-item-destructive:hover svg,
+.wa-dropdown-item-destructive[data-highlighted] svg { color: #ffffff !important; }
 
 /* ─── Attach menu ─── */
 .wa-attach-bg { background-color: hsl(220 18% 10%); }
