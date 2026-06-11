@@ -11,6 +11,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import waChatBgAsset from "@/assets/wa-chat-bg.png.asset.json";
+import { WhatsAppAudio } from "./WhatsAppAudio";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -128,11 +130,7 @@ function MediaPreview({ msg }: { msg: ChatMessage }) {
     );
   }
   if (msg.message_type === "audio") {
-    return (
-      <div className="min-w-[240px] max-w-[330px] px-1 py-1">
-        <audio src={msg.media_url || ""} controls className="w-full h-[36px]" preload="metadata" />
-      </div>
-    );
+    return null; // rendered by bubble with WhatsAppAudio for avatar context
   }
   if (msg.message_type === "document") {
     return (
@@ -242,18 +240,17 @@ function MessageActions({
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "opacity-0 group-hover/msg-row:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-all duration-150",
-            "shrink-0 self-center w-[28px] h-[28px] rounded-full",
-            "wa-message-action-button border shadow-sm",
-            "flex items-center justify-center hover:scale-105 active:scale-95",
-            isOutbound ? "mr-1 order-first" : "ml-1"
+            "opacity-0 group-hover/msg-row:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity duration-150",
+            "absolute top-0 right-0 z-10 w-[34px] h-[28px] rounded-tr-[7.5px] rounded-bl-[10px]",
+            "flex items-start justify-end pt-[2px] pr-[4px]",
+            isOutbound ? "wa-bubble-action-out" : "wa-bubble-action-in"
           )}
           aria-label="Ações da mensagem"
         >
-          <ChevronDown size={14} className="text-foreground/70" />
+          <ChevronDown size={18} strokeWidth={2.5} />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align={isOutbound ? "start" : "end"} className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+      <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
         <DropdownMenuItem onClick={onReply} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Reply size={14} /> Responder
         </DropdownMenuItem>
@@ -710,11 +707,10 @@ export function ChatMessageArea({
         </div>
 
         {/* Messages area + input — background extends fully */}
-        <div className="flex-1 flex flex-col min-h-0 wa-chat-bg relative">
-          <div
-            className="absolute inset-0 wa-chat-pattern pointer-events-none"
-            style={{ backgroundImage: `url(${logoIconNew})` }}
-          />
+        <div
+          className="flex-1 flex flex-col min-h-0 wa-chat-bg relative"
+          style={{ ['--wa-chat-bg-pattern' as any]: `url(${waChatBgAsset.url})` }}
+        >
           <div className="wa-chat-glow" />
 
           <div className="flex-1 overflow-y-auto wa-scrollbar relative z-[1]" ref={scrollContainerRef}>
@@ -759,38 +755,48 @@ export function ChatMessageArea({
                             </div>
                           )}
 
-                          {/* Translate inbound bubbles slightly right when selecting (WhatsApp-style) */}
+                          {/* Bubble container — actions live INSIDE at top-right */}
                           <div className={cn(
                             "flex-1 flex items-start gap-1",
                             isOutbound ? "justify-end" : "justify-start",
                             selectionMode && !isOutbound && "pl-2"
                           )}>
-                            {isOutbound && !selectionMode && (
-                              <MessageActions
-                                msg={msg}
-                                isOutbound
-                                onReply={() => setReplyingTo(msg)}
-                                onForward={() => startForwardFromMessage(msg)}
-                              />
-                            )}
                             <div className={cn(
                               "relative max-w-[65%]",
-                              // Always reserve tail space so messages align
                               isOutbound ? "mr-[8px]" : "ml-[8px]"
                             )}>
                               {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
                               <div className={cn(
-                                "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative",
+                                "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative overflow-hidden",
                                 isOutbound ? "wa-bubble-out rounded-[7.5px]" : "wa-bubble-in rounded-[7.5px]",
                                 showTail && isOutbound && "!rounded-tr-none",
                                 showTail && !isOutbound && "!rounded-tl-none"
                               )}>
+                                {!selectionMode && (
+                                  <MessageActions
+                                    msg={msg}
+                                    isOutbound={isOutbound}
+                                    onReply={() => setReplyingTo(msg)}
+                                    onForward={() => startForwardFromMessage(msg)}
+                                  />
+                                )}
                                 {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
-                                {msg.message_type !== "text" && (
+                                {msg.message_type === "audio" && (
+                                  <div className="p-[3px]">
+                                    <WhatsAppAudio
+                                      src={msg.media_url || ""}
+                                      isOutbound={isOutbound}
+                                      avatarUrl={!isOutbound ? conversation.contact_profile_pic : null}
+                                      avatarInitials={!isOutbound ? initials : "EU"}
+                                      avatarColorClass={!isOutbound ? avatarColor : "bg-[#128c7e]"}
+                                    />
+                                  </div>
+                                )}
+                                {msg.message_type !== "text" && msg.message_type !== "audio" && (
                                   <div className="p-[3px]"><MediaPreview msg={msg} /></div>
                                 )}
                                 {msg.content && msg.message_type === "text" && (
-                                  <div className="px-[9px] pt-[6px] pb-[8px]">
+                                  <div className="px-[9px] pt-[6px] pb-[8px] pr-[36px]">
                                     <span className="text-[14.2px] wa-text-primary leading-[19px] whitespace-pre-wrap break-words">
                                       {msg.content}
                                     </span>
@@ -804,14 +810,6 @@ export function ChatMessageArea({
                                 </div>
                               </div>
                             </div>
-                            {!isOutbound && !selectionMode && (
-                              <MessageActions
-                                msg={msg}
-                                isOutbound={false}
-                                onReply={() => setReplyingTo(msg)}
-                                onForward={() => startForwardFromMessage(msg)}
-                              />
-                            )}
                           </div>
                         </div>
                       </div>
