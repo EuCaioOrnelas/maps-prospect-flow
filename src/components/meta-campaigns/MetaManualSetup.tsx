@@ -20,6 +20,9 @@ import {
   Clock,
 } from "lucide-react";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { startChatBackup } from "@/hooks/useChatBackup";
 
 interface MetaManualSetupProps {
   onConnectionSaved: (connection: WabaConnection | null) => void;
@@ -31,6 +34,7 @@ interface MetaManualSetupProps {
 export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: MetaManualSetupProps) => {
   const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
+  const { members } = useAccountMembers();
 
   // Draft persistido por usuário para não perder dados ao sair/voltar da página
   const draftKey = user ? `meta-manual-setup-draft:${user.id}:${isAddingExtra ? "extra" : "primary"}` : null;
@@ -40,8 +44,10 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
   const [wabaId, setWabaId] = useState("");
   const [phoneNumberId, setPhoneNumberId] = useState("");
   const [nickname, setNickname] = useState("");
+  const [responsibleUserId, setResponsibleUserId] = useState<string>(""); // "" = não escolheu | "none" = sem responsável | <uuid>
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
 
   // Hidratar do localStorage uma vez quando o user estiver disponível
   useEffect(() => {
