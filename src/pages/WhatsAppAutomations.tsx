@@ -60,6 +60,9 @@ export default function WhatsAppAutomations() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   useAutoScoreTracking("whatsapp_automations");
+  const { connections: wabaConnections, loading: gateLoading } = useWebhookGate();
+  const eligibleWaba = (wabaConnections || []).filter((c) => !!c.webhook_verified_at);
+  const hasEligibleWaba = eligibleWaba.length > 0;
   const [showTemplatesDialog, setShowTemplatesDialog] = useState(false);
   const [templateSearch, setTemplateSearch] = useState("");
 
