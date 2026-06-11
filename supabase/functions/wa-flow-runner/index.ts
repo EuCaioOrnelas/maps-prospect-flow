@@ -1288,13 +1288,23 @@ serve(async (req) => {
 
     const triggered: string[] = [];
     for (const flow of flows) {
-      // Filter by number/connection
-      if (flow.api_type === "evolution") {
-        if (body.source !== "evolution") continue;
-        if (flow.whatsapp_number_id && body.whatsapp_number_id && flow.whatsapp_number_id !== body.whatsapp_number_id) continue;
-      } else if (flow.api_type === "meta") {
-        if (body.source !== "meta") continue;
-        if (flow.waba_connection_id && body.waba_connection_id && flow.waba_connection_id !== body.waba_connection_id) continue;
+      // META-ONLY: drop any flow not bound to a Meta WABA connection with a verified webhook.
+      if (flow.api_type !== "meta") {
+        console.log(`[wa-flow-runner] flow ${flow.id} skipped — api_type='${flow.api_type}' (Meta API official required)`);
+        continue;
+      }
+      if (body.source !== "meta") continue;
+      if (flow.waba_connection_id && body.waba_connection_id && flow.waba_connection_id !== body.waba_connection_id) continue;
+      if (flow.waba_connection_id) {
+        const { data: connCheck } = await supabase
+          .from("user_waba_connections")
+          .select("webhook_verified_at, status")
+          .eq("id", flow.waba_connection_id)
+          .maybeSingle();
+        if (!connCheck?.webhook_verified_at) {
+          console.log(`[wa-flow-runner] flow ${flow.id} skipped — WABA ${flow.waba_connection_id} has no verified webhook`);
+          continue;
+        }
       }
 
       const { nodes, edges } = await loadFlowGraph(supabase, flow.id);
