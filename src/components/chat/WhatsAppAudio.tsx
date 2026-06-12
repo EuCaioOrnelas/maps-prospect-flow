@@ -10,17 +10,19 @@ interface Props {
   avatarUrl?: string | null;
   avatarInitials?: string;
   avatarColorClass?: string;
-  /** When provided, persists the transcription on the message metadata */
   messageId?: string;
-  /** Initial transcription if already stored */
   initialTranscription?: string | null;
 }
 
 const SPEEDS = [1, 1.5, 2];
+const BAR_COUNT = 40;
 
-/** WhatsApp-style audio player with waveform + speed toggle on avatar hover */
 export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "", avatarColorClass = "bg-muted", messageId, initialTranscription }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
+  const [playableSrc, setPlayableSrc] = useState<string | null>(null);
+  const [loadingSrc, setLoadingSrc] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [current, setCurrent] = useState(0);
@@ -28,19 +30,115 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
   const [hoverAvatar, setHoverAvatar] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(initialTranscription || null);
   const [transcribing, setTranscribing] = useState(false);
+  const [peaks, setPeaks] = useState<number[] | null>(null);
 
-  // Generate stable pseudo-random bar heights from src
-  const bars = useMemo(() => {
+  // Fallback pseudo-random bars while real peaks load
+  const fallbackBars = useMemo(() => {
     const out: number[] = [];
     let seed = 0;
     for (let i = 0; i < src.length; i++) seed = (seed * 31 + src.charCodeAt(i)) & 0xffffffff;
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < BAR_COUNT; i++) {
       seed = (seed * 1103515245 + 12345) & 0x7fffffff;
       const v = (seed % 100) / 100;
       out.push(0.25 + v * 0.75);
     }
     return out;
   }, [src]);
+
+  const bars = peaks || fallbackBars;
+
+  // Resolve src → playable blob (handles meta_media: refs)
+  useEffect(() => {
+    let cancelled = false;
+    setPlayableSrc(null);
+    setLoadError(false);
+    setPeaks(null);
+    if (blobUrlRef.current) { URL.revokeObjectURL(blobUrlRef.current); blobUrlRef.current = null; }
+
+    const load = async () => {
+      try {
+        let blob: Blob | null = null;
+        if (src.startsWith("meta_media:")) {
+          setLoadingSrc(true);
+          const { data, error } = await supabase.functions.invoke("fetch-meta-media", {
+            method: "GET",
+            // @ts-ignore - functions.invoke supports query via path
+            body: undefined,
+            headers: {},
+          } as any);
+          // supabase.functions.invoke doesn't accept query params for GET cleanly; do raw fetch
+          if (!data && !error) {
+            // fall through to manual fetch
+          }
+          const { data: { session } } = await supabase.auth.getSession();
+          const projectRef = (import.meta as any).env.VITE_SUPABASE_PROJECT_ID || (import.meta as any).env.VITE_SUPABASE_URL?.match(/https:\/\/(.*?)\.supabase/)?.[1];
+          const baseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+          const anonKey = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+          const url = `${baseUrl}/functions/v1/fetch-meta-media?ref=${encodeURIComponent(src)}${messageId ? `&message_id=${messageId}` : ""}`;
+          const res = await fetch(url, {
+            headers: {
+              apikey: anonKey,
+              Authorization: `Bearer ${session?.access_token || anonKey}`,
+            },
+          });
+          if (!res.ok) throw new Error(`media ${res.status}`);
+          blob = await res.blob();
+        } else {
+          // direct URL — fetch as blob so we can also decode peaks
+          const res = await fetch(src);
+          if (!res.ok) throw new Error(`media ${res.status}`);
+          blob = await res.blob();
+        }
+
+        if (cancelled || !blob) return;
+        const objUrl = URL.createObjectURL(blob);
+        blobUrlRef.current = objUrl;
+        setPlayableSrc(objUrl);
+
+        // Decode for real waveform peaks
+        try {
+          const arrBuf = await blob.arrayBuffer();
+          const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
+          if (Ctx) {
+            const ctx = new Ctx();
+            const audioBuf = await ctx.decodeAudioData(arrBuf.slice(0));
+            const channel = audioBuf.getChannelData(0);
+            const samplesPerBar = Math.floor(channel.length / BAR_COUNT);
+            const out: number[] = [];
+            let max = 0;
+            for (let i = 0; i < BAR_COUNT; i++) {
+              let sum = 0;
+              const start = i * samplesPerBar;
+              for (let j = 0; j < samplesPerBar; j++) {
+                const v = channel[start + j];
+                sum += v * v;
+              }
+              const rms = Math.sqrt(sum / samplesPerBar);
+              out.push(rms);
+              if (rms > max) max = rms;
+            }
+            if (max > 0) {
+              const norm = out.map(v => 0.15 + (v / max) * 0.85);
+              if (!cancelled) setPeaks(norm);
+            }
+            try { ctx.close(); } catch {}
+          }
+        } catch (e) {
+          // peaks decode failed — keep fallback bars
+        }
+      } catch (e) {
+        if (!cancelled) setLoadError(true);
+      } finally {
+        if (!cancelled) setLoadingSrc(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+      if (blobUrlRef.current) { URL.revokeObjectURL(blobUrlRef.current); blobUrlRef.current = null; }
+    };
+  }, [src, messageId]);
 
   useEffect(() => {
     const a = audioRef.current;
@@ -58,15 +156,18 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
       a.removeEventListener("durationchange", onDur);
       a.removeEventListener("ended", onEnd);
     };
-  }, []);
+  }, [playableSrc]);
 
   useEffect(() => { if (audioRef.current) audioRef.current.playbackRate = speed; }, [speed]);
 
   const toggle = () => {
     const a = audioRef.current;
-    if (!a) return;
+    if (!a || !playableSrc) {
+      if (loadError) toast.error("Não foi possível carregar o áudio");
+      return;
+    }
     if (playing) { a.pause(); setPlaying(false); }
-    else { a.play().then(() => setPlaying(true)).catch(() => {}); }
+    else { a.play().then(() => setPlaying(true)).catch((err) => { console.error("audio play", err); toast.error("Erro ao reproduzir áudio"); }); }
   };
 
   const cycleSpeed = () => {
@@ -97,7 +198,6 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         return;
       }
       setTranscription(text);
-      // Persist on message metadata (best-effort)
       if (messageId) {
         try {
           const { data: msg } = await supabase.from("chat_messages").select("metadata").eq("id", messageId).single();
@@ -126,18 +226,19 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
   return (
     <div className="min-w-[260px] max-w-[330px]">
       <div className="flex items-center gap-2 px-1 py-1">
-        <audio ref={audioRef} src={src} preload="metadata" />
+        {playableSrc && <audio ref={audioRef} src={playableSrc} preload="metadata" />}
 
-        {/* Play / Pause */}
         <button
           onClick={toggle}
-          className="shrink-0 w-[34px] h-[34px] rounded-full flex items-center justify-center text-[#54656f] hover:bg-black/5 transition-colors"
+          disabled={!playableSrc}
+          className="shrink-0 w-[34px] h-[34px] rounded-full flex items-center justify-center text-[#54656f] hover:bg-black/5 transition-colors disabled:opacity-60"
           aria-label={playing ? "Pausar" : "Tocar"}
         >
-          {playing ? <Pause size={18} className="fill-current" /> : <Play size={18} className="fill-current" />}
+          {loadingSrc ? <Loader2 size={18} className="animate-spin" />
+            : playing ? <Pause size={18} className="fill-current" />
+            : <Play size={18} className="fill-current" />}
         </button>
 
-        {/* Waveform + time */}
         <div className="flex-1 min-w-0">
           <div
             onClick={seek}
@@ -166,7 +267,6 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
           </div>
         </div>
 
-        {/* Avatar / Speed toggle */}
         <button
           onClick={cycleSpeed}
           onMouseEnter={() => setHoverAvatar(true)}
@@ -196,7 +296,6 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         </button>
       </div>
 
-      {/* Transcribe button / transcription text */}
       <div className="px-1 mt-1">
         {transcription ? (
           <div className="text-[12px] leading-relaxed bg-black/5 dark:bg-white/5 rounded-md px-2 py-1.5 wa-text-primary whitespace-pre-wrap">
