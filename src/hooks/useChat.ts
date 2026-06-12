@@ -255,6 +255,20 @@ export function useChat() {
             return [...prev, newMsg];
           });
         }
+        // Browser notification on inbound (skip muted, blocked, active conversation, or hidden tab off)
+        if (newMsg.direction === "inbound") {
+          const conv = conversations.find(c => c.id === newMsg.conversation_id);
+          const muted = !!(conv && (conv.is_muted || (conv as any).is_blocked));
+          const isActive = newMsg.conversation_id === activeConversationId && document.visibilityState === "visible";
+          if (!muted && !isActive && typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+            try {
+              const title = conv?.contact_name || conv?.contact_phone || "Nova mensagem";
+              const body = (newMsg as any).text || (newMsg.type ? `[${newMsg.type}]` : "Nova mensagem recebida");
+              const n = new Notification(title, { body, icon: "/favicon.ico", tag: newMsg.conversation_id });
+              n.onclick = () => { window.focus(); n.close(); };
+            } catch {}
+          }
+        }
       })
       .on("postgres_changes", {
         event: "UPDATE",
