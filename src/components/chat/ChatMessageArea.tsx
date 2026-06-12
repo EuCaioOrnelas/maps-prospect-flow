@@ -867,7 +867,7 @@ export function ChatMessageArea({
                             selectionMode && !isOutbound && "pl-2"
                           )}>
                             <div className={cn(
-                              "relative max-w-[65%]",
+                              "relative max-w-[65%] w-fit",
                               isOutbound ? "mr-[8px]" : "ml-[8px]"
                             )}>
                               {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
