@@ -975,6 +975,7 @@ export function ChatMessageArea({
                   onCancelReply={() => setReplyingTo(null)}
                   externalFiles={droppedFiles}
                   onExternalConsumed={() => setDroppedFiles([])}
+                  conversation={conversation}
                 />
               );
             })()}
