@@ -46,7 +46,7 @@ function pickAudioMime(): { mime: string; ext: string } {
   return { mime: "audio/webm", ext: "webm" };
 }
 
-export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed }: ChatInputProps) {
+export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed, conversation }: ChatInputProps) {
   const [text, setText] = useState("");
   const [activeEmojiCategory, setActiveEmojiCategory] = useState<string>("smileys");
   const [emojiSearch, setEmojiSearch] = useState("");
@@ -58,6 +58,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformBars, setWaveformBars] = useState<number[]>([]);
+  const [qrIdx, setQrIdx] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const emojiViewportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -74,6 +75,22 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const audioMimeRef = useRef<{ mime: string; ext: string }>({ mime: "audio/webm", ext: "webm" });
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHoldingRef = useRef(false);
+
+  // Quick replies
+  const { items: quickReplies } = useQuickReplies();
+  const quickReplyCtx = useQuickReplyContext(conversation);
+  const qrMatch = useMemo(() => {
+    const m = text.match(/^\/([a-zA-Z0-9_\-]*)$/);
+    return m ? m[1].toLowerCase() : null;
+  }, [text]);
+  const qrFiltered = useMemo(() => {
+    if (qrMatch === null) return [];
+    if (qrMatch === "") return quickReplies.slice(0, 8);
+    return quickReplies.filter(q => q.shortcut.toLowerCase().startsWith(qrMatch)).slice(0, 8);
+  }, [qrMatch, quickReplies]);
+  const qrOpen = qrMatch !== null && qrFiltered.length > 0;
+
+  useEffect(() => { setQrIdx(0); }, [qrMatch, qrFiltered.length]);
 
   const addFiles = useCallback((files: File[]) => {
     if (!files.length) return;
