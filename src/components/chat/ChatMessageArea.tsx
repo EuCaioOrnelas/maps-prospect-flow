@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, useMemo } from "react";
 import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles } from "lucide-react";
 import { ConversationSummaryDialog } from "./ConversationSummaryDialog";
 import { cn } from "@/lib/utils";
+import { ContactDetailsPanel } from "./ContactDetailsPanel";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
@@ -341,6 +342,7 @@ export function ChatMessageArea({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [contactPanelOpen, setContactPanelOpen] = useState(false);
   const [pipelineStages, setPipelineStages] = useState<{ id: string; name: string; color: string | null; position: number }[]>([]);
   const [leadInfo, setLeadInfo] = useState<{ id: string; pipeline_stage_id: string | null } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -423,21 +425,7 @@ export function ChatMessageArea({
   const selectedMessages = messages.filter(m => selectedIds.has(m.id));
 
   const handleOpenContactData = async () => {
-    if (!conversation) return;
-    const cleanPhone = conversation.contact_phone.replace(/\D/g, "");
-    const last8 = cleanPhone.slice(-8);
-    const { data: existing } = await supabase
-      .from("leads")
-      .select("id")
-      .eq("user_id", accountOwnerId)
-      .ilike("phone", `%${last8}`)
-      .limit(1);
-    if (existing && existing.length > 0) {
-      navigate("/crm", { state: { openLeadId: existing[0].id } });
-    } else {
-      toast.info("Contato não está no CRM. Salve para abrir a ficha.");
-      setAddContactOpen(true);
-    }
+    setContactPanelOpen(true);
   };
 
   const handleToggleBlock = async () => {
@@ -585,38 +573,48 @@ export function ChatMessageArea({
               <ArrowLeft size={22} className="wa-chat-header-icon" />
             </button>
           )}
-          <div className={cn(
-            "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-medium",
-            avatarColor
-          )}>
-            {conversation.contact_profile_pic ? (
-              <img src={conversation.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
-            ) : (
-              <span>{initials}</span>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px]">
-                {conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
-              </h3>
-              {!hasContactName && onSaveContactName && (
-                <button
-                  onClick={() => setAddContactOpen(true)}
-                  title="Salvar contato no CRM"
-                  className="shrink-0 inline-flex items-center justify-center w-[26px] h-[26px] rounded-full wa-accent-surface wa-accent-text transition-colors"
-                >
-                  <UserPlus size={14} />
-                </button>
+          <button
+            type="button"
+            onClick={() => setContactPanelOpen(true)}
+            className="flex items-center gap-[10px] flex-1 min-w-0 text-left hover:opacity-90 transition-opacity"
+            aria-label="Abrir dados do contato"
+          >
+            <div className={cn(
+              "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-medium",
+              avatarColor
+            )}>
+              {conversation.contact_profile_pic ? (
+                <img src={conversation.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
+              ) : (
+                <span>{initials}</span>
               )}
             </div>
-            <p className="text-[13px] wa-chat-header-sub truncate leading-[18px]">
-              {conversation.last_message_at
-                ? `Último contato: ${format(parseISO(conversation.last_message_at), "dd/MM/yyyy 'às' HH:mm")}`
-                : formatPhoneDisplay(conversation.contact_phone)
-              }
-            </p>
-          </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px]">
+                  {conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
+                </h3>
+                {!hasContactName && onSaveContactName && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); setAddContactOpen(true); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); setAddContactOpen(true); } }}
+                    title="Salvar contato no CRM"
+                    className="shrink-0 inline-flex items-center justify-center w-[26px] h-[26px] rounded-full wa-accent-surface wa-accent-text transition-colors cursor-pointer"
+                  >
+                    <UserPlus size={14} />
+                  </span>
+                )}
+              </div>
+              <p className="text-[13px] wa-chat-header-sub truncate leading-[18px]">
+                {conversation.last_message_at
+                  ? `Último contato: ${format(parseISO(conversation.last_message_at), "dd/MM/yyyy 'às' HH:mm")}`
+                  : formatPhoneDisplay(conversation.contact_phone)
+                }
+              </p>
+            </div>
+          </button>
           <div className="flex items-center gap-[10px]">
             {/* CRM stage selector */}
             {pipelineStages.length > 0 && (() => {
@@ -1067,6 +1065,18 @@ export function ChatMessageArea({
         onOpenChange={setSummaryOpen}
         conversationId={conversation?.id ?? null}
         contactName={conversation?.contact_name}
+      />
+
+      <ContactDetailsPanel
+        open={contactPanelOpen}
+        onClose={() => setContactPanelOpen(false)}
+        conversation={conversation}
+        messages={messages}
+        accountOwnerId={accountOwnerId ?? null}
+        onOpenSearch={() => { setContactPanelOpen(false); setShowSearch(true); }}
+        onToggleBlock={onToggleBlock}
+        onDeleteConversation={onDeleteConversation}
+        onSaveContact={() => { setContactPanelOpen(false); setAddContactOpen(true); }}
       />
     </div>
   );
