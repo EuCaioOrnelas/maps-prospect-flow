@@ -223,7 +223,7 @@ function ReplyQuote({ replyMsg }: { replyMsg: ChatMessage | undefined }) {
   const color = isSelf ? "#128c7e" : "#1f7aec";
   return (
     <div
-      className="mx-[4px] mt-[4px] mb-[2px] rounded-[7px] bg-black/10 px-[8px] py-[5px] border-l-[3px] cursor-pointer"
+      className="mx-[4px] mt-[4px] mb-[2px] rounded-[7px] bg-black/10 dark:bg-white/10 px-[8px] py-[5px] border-l-[3px] cursor-pointer"
       style={{ borderLeftColor: color }}
     >
       <p className="text-[11px] font-medium" style={{ color }}>
@@ -867,7 +867,7 @@ export function ChatMessageArea({
                             selectionMode && !isOutbound && "pl-2"
                           )}>
                             <div className={cn(
-                              "relative max-w-[65%]",
+                              "relative max-w-[65%] w-fit",
                               isOutbound ? "mr-[8px]" : "ml-[8px]"
                             )}>
                               {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
