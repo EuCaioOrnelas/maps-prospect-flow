@@ -1092,6 +1092,121 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_ai_summary_usage: {
+        Row: {
+          count: number
+          created_at: string
+          day: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          day?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          day?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_auto_replies: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          end_time: string
+          id: string
+          message: string
+          once_per_day: boolean
+          start_time: string
+          timezone: string
+          updated_at: string
+          user_id: string
+          waba_connection_id: string
+          weekdays: number[]
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          end_time?: string
+          id?: string
+          message?: string
+          once_per_day?: boolean
+          start_time?: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+          waba_connection_id: string
+          weekdays?: number[]
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          end_time?: string
+          id?: string
+          message?: string
+          once_per_day?: boolean
+          start_time?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+          waba_connection_id?: string
+          weekdays?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_auto_replies_waba_connection_id_fkey"
+            columns: ["waba_connection_id"]
+            isOneToOne: true
+            referencedRelation: "user_waba_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_conversation_summaries: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          message_count: number
+          summary: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          message_count?: number
+          summary: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          message_count?: number
+          summary?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_conversation_summaries_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           contact_name: string | null
@@ -1103,6 +1218,7 @@ export type Database = {
           is_blocked: boolean
           is_muted: boolean | null
           is_pinned: boolean | null
+          last_auto_reply_at: string | null
           last_message_at: string | null
           last_message_direction: string | null
           last_message_status: string | null
@@ -1126,6 +1242,7 @@ export type Database = {
           is_blocked?: boolean
           is_muted?: boolean | null
           is_pinned?: boolean | null
+          last_auto_reply_at?: string | null
           last_message_at?: string | null
           last_message_direction?: string | null
           last_message_status?: string | null
@@ -1149,6 +1266,7 @@ export type Database = {
           is_blocked?: boolean
           is_muted?: boolean | null
           is_pinned?: boolean | null
+          last_auto_reply_at?: string | null
           last_message_at?: string | null
           last_message_direction?: string | null
           last_message_status?: string | null

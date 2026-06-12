@@ -92,6 +92,7 @@ const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEdito
 const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "CreateFlowAI");
 const ChatSettings = lazyWithRetry(() => import("./pages/ChatSettings"), "ChatSettings");
 const ChatQuickReplies = lazyWithRetry(() => import("./pages/ChatQuickReplies"), "ChatQuickReplies");
+const ChatAutoReply = lazyWithRetry(() => import("./pages/ChatAutoReply"), "ChatAutoReply");
 
 // Meta Platforms module
 const MetaDashboard = lazyWithRetry(() => import("./pages/meta/MetaDashboard"), "MetaDashboard");
@@ -191,10 +192,10 @@ const queryClient = new QueryClient({
 });
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-white flex items-center justify-center">
+  <div className="min-h-screen bg-background flex items-center justify-center">
     <div className="flex flex-col items-center gap-4 animate-fade-in">
       <div className="h-10 w-10 rounded-full border-[3px] border-[hsl(158,72%,38%)]/20 border-t-[hsl(158,72%,38%)] animate-spin" />
-      <p className="text-sm text-[hsl(220,12%,46%)] font-medium">Carregando...</p>
+      <p className="text-sm text-muted-foreground font-medium">Carregando...</p>
     </div>
   </div>
 );
@@ -297,6 +298,7 @@ const App = () => (
                 <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes" element={<ProtectedRoute><ChatSettings /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes/mensagens-rapidas" element={<ProtectedRoute><ChatQuickReplies /></ProtectedRoute>} />
+                <Route path="/chat/configuracoes/resposta-automatica" element={<ProtectedRoute><ChatAutoReply /></ProtectedRoute>} />
                 <Route path="/agents" element={<ProtectedRoute><AIAgents /></ProtectedRoute>} />
                 <Route path="/agents/reports" element={<ProtectedRoute><AgentReports /></ProtectedRoute>} />
                 <Route path="/fluxos" element={<ProtectedRoute><WhatsAppAutomations /></ProtectedRoute>} />

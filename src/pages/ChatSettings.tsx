@@ -29,18 +29,16 @@ const CARDS: Card[] = [
   {
     id: "auto-reply",
     title: "Resposta automática",
-    description: "Configure mensagens automáticas para fora do horário comercial.",
+    description: "Envie uma mensagem automática fora do horário comercial. Não dispara em números com fluxos ativos.",
     icon: Clock,
-    badge: "Em breve",
-    disabled: true,
+    route: "/chat/configuracoes/resposta-automatica",
   },
   {
     id: "ai-summary",
     title: "Resumo de conversas (IA)",
-    description: "Gere um resumo executivo da conversa com um clique.",
+    description: "Gere um resumo executivo de qualquer conversa com 1 clique. Limite diário para proteger seu uso.",
     icon: Sparkles,
-    badge: "Em breve",
-    disabled: true,
+    badge: "No chat",
   },
 ];
 

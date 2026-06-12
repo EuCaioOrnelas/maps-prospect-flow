@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useMemo } from "react";
-import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download } from "lucide-react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles } from "lucide-react";
+import { ConversationSummaryDialog } from "./ConversationSummaryDialog";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
@@ -339,6 +340,7 @@ export function ChatMessageArea({
   const [forwardOpen, setForwardOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [pipelineStages, setPipelineStages] = useState<{ id: string; name: string; color: string | null; position: number }[]>([]);
   const [leadInfo, setLeadInfo] = useState<{ id: string; pipeline_stage_id: string | null } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -782,6 +784,12 @@ export function ChatMessageArea({
                 >
                   <Search size={15} /> Pesquisar mensagens
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setSummaryOpen(true)}
+                  className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
+                  <Sparkles size={15} /> Resumir conversa (IA)
+                </DropdownMenuItem>
                 <div className="my-1 mx-3 border-t wa-border-light" />
                 <DropdownMenuItem
                   onClick={() => void handleToggleBlock()}
@@ -1053,6 +1061,13 @@ export function ChatMessageArea({
           onForward={onForwardMessages}
         />
       )}
+
+      <ConversationSummaryDialog
+        open={summaryOpen}
+        onOpenChange={setSummaryOpen}
+        conversationId={conversation?.id ?? null}
+        contactName={conversation?.contact_name}
+      />
     </div>
   );
 }
