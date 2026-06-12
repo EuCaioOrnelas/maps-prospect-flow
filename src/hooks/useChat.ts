@@ -449,10 +449,16 @@ export function useChat() {
   const togglePin = useCallback(async (conversationId: string) => {
     const conv = conversations.find(c => c.id === conversationId);
     if (!conv) return;
-    await supabase.from("chat_conversations").update({
-      is_pinned: !conv.is_pinned,
-      pinned_at: !conv.is_pinned ? new Date().toISOString() : null,
+    const next = !conv.is_pinned;
+    setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, is_pinned: next, pinned_at: next ? new Date().toISOString() : null } as ChatConversation : c));
+    const { error } = await supabase.from("chat_conversations").update({
+      is_pinned: next,
+      pinned_at: next ? new Date().toISOString() : null,
     }).eq("id", conversationId);
+    if (error) {
+      setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, is_pinned: conv.is_pinned, pinned_at: conv.pinned_at } as ChatConversation : c));
+      throw error;
+    }
   }, [conversations]);
 
   // Archive conversation
@@ -466,8 +472,15 @@ export function useChat() {
   const toggleMute = useCallback(async (conversationId: string) => {
     const conv = conversations.find(c => c.id === conversationId);
     if (!conv) return;
-    await supabase.from("chat_conversations").update({ is_muted: !conv.is_muted }).eq("id", conversationId);
+    const next = !conv.is_muted;
+    setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, is_muted: next } as ChatConversation : c));
+    const { error } = await supabase.from("chat_conversations").update({ is_muted: next }).eq("id", conversationId);
+    if (error) {
+      setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, is_muted: conv.is_muted } as ChatConversation : c));
+      throw error;
+    }
   }, [conversations]);
+
 
   // Start new conversation
   const startNewConversation = useCallback(async (phone: string, name?: string) => {
