@@ -44,6 +44,7 @@ function pickAudioMime(): { mime: string; ext: string } {
 export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed }: ChatInputProps) {
   const [text, setText] = useState("");
   const [activeEmojiCategory, setActiveEmojiCategory] = useState<string>("smileys");
+  const [emojiSearch, setEmojiSearch] = useState("");
   const [showAttach, setShowAttach] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
@@ -53,6 +54,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformBars, setWaveformBars] = useState<number[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const emojiViewportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -283,6 +285,28 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const scrollEmojiCategory = useCallback((id: string) => {
+    setActiveEmojiCategory(id);
+    setEmojiSearch("");
+
+    const run = () => {
+      const viewport = emojiViewportRef.current;
+      if (!viewport) return false;
+
+      const header = viewport.querySelector(`[data-category-id="${id}"]`) as HTMLElement | null;
+      const category = header?.closest("[frimousse-category]") as HTMLElement | null;
+      const target = category ?? header;
+      if (!target) return false;
+
+      viewport.scrollTo({ top: Math.max(target.offsetTop - 1, 0), behavior: "smooth" });
+      return true;
+    };
+
+    requestAnimationFrame(() => {
+      if (!run()) window.setTimeout(run, 120);
+    });
+  }, []);
+
   if (isRecording) {
     return (
       <div className="flex items-center gap-[8px] px-[12px] py-[6px]">
@@ -477,17 +501,14 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                 >
                   <EmojiPickerCategories
                     activeCategoryId={activeEmojiCategory}
-                    onCategoryClick={(id) => {
-                      setActiveEmojiCategory(id);
-                      const popoverEl = document.querySelector('[data-radix-popper-content-wrapper] [class*="outline-none"]');
-                      if (popoverEl) {
-                        const header = popoverEl.querySelector(`[data-category-id="${id}"]`) as HTMLElement | null;
-                        header?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }
-                    }}
+                    onCategoryClick={scrollEmojiCategory}
                   />
-                  <EmojiPickerSearch placeholder="Pesquisar emoji" />
-                  <EmojiPickerContent onVisibleCategoryChange={setActiveEmojiCategory} />
+                  <EmojiPickerSearch
+                    placeholder="Pesquisar emoji"
+                    value={emojiSearch}
+                    onChange={(e) => setEmojiSearch(e.target.value)}
+                  />
+                  <EmojiPickerContent ref={emojiViewportRef} onVisibleCategoryChange={setActiveEmojiCategory} />
                 </EmojiPicker>
               </PopoverContent>
             </Popover>

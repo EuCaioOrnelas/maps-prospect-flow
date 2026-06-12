@@ -10,15 +10,15 @@ import {
   LoaderIcon, SearchIcon,
   Smile, Users, Dog, UtensilsCrossed, Plane, Dribbble, Lightbulb, Heart, Flag,
 } from "lucide-react";
-import { useRef, useEffect } from "react";
-import type * as React from "react";
+import { forwardRef, useRef, useEffect, useCallback } from "react";
+import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";
 
 function EmojiPicker({
   className,
   ...props
-}: React.ComponentProps<typeof EmojiPickerPrimitive.Root>) {
+}: ComponentProps<typeof EmojiPickerPrimitive.Root>) {
   return (
     <EmojiPickerPrimitive.Root
       className={cn("flex flex-col isolate", className)}
@@ -32,7 +32,7 @@ function EmojiPicker({
 function EmojiPickerSearch({
   className,
   ...props
-}: React.ComponentProps<typeof EmojiPickerPrimitive.Search>) {
+}: ComponentProps<typeof EmojiPickerPrimitive.Search>) {
   return (
     <div className="flex items-center gap-2 px-3 py-1 border-b">
       <SearchIcon className="size-4 shrink-0 opacity-50" />
@@ -47,18 +47,21 @@ function EmojiPickerSearch({
   );
 }
 
-// English category labels emitted by frimousse (locale="en") mapped to our identifiers
+// English category labels emitted by frimousse (locale="en") mapped to our identifiers.
+// Emojibase returns mixed capitalization (e.g. "People & body"), so normalize first.
 const EN_LABEL_TO_ID: Record<string, string> = {
-  "Smileys & Emotion": "smileys",
-  "People & Body": "people",
-  "Animals & Nature": "animals",
-  "Food & Drink": "food",
-  "Travel & Places": "travel",
-  "Activities": "activities",
-  "Objects": "objects",
-  "Symbols": "symbols",
-  "Flags": "flags",
+  "smileys & emotion": "smileys",
+  "people & body": "people",
+  "animals & nature": "animals",
+  "food & drink": "food",
+  "travel & places": "travel",
+  "activities": "activities",
+  "objects": "objects",
+  "symbols": "symbols",
+  "flags": "flags",
 };
+
+const getCategoryId = (label: string) => EN_LABEL_TO_ID[label.trim().toLowerCase()] || label;
 
 const CATEGORIES = [
   { id: "smileys", label: "Smileys e emoções", Icon: Smile },
@@ -132,7 +135,7 @@ function EmojiPickerCategoryHeader({
   category,
   ...props
 }: EmojiPickerListCategoryHeaderProps) {
-  const id = EN_LABEL_TO_ID[category.label] || category.label;
+  const id = getCategoryId(category.label);
   const ptLabel = CATEGORIES.find(c => c.id === id)?.label || category.label;
   return (
     <div
@@ -145,12 +148,22 @@ function EmojiPickerCategoryHeader({
   );
 }
 
-function EmojiPickerContent({
+type EmojiPickerContentProps = ComponentProps<typeof EmojiPickerPrimitive.Viewport> & {
+  onVisibleCategoryChange?: (id: string) => void;
+};
+
+const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(function EmojiPickerContent({
   className,
   onVisibleCategoryChange,
   ...props
-}: React.ComponentProps<typeof EmojiPickerPrimitive.Viewport> & { onVisibleCategoryChange?: (id: string) => void }) {
+}, forwardedRef) {
   const viewportRef = useRef<HTMLDivElement>(null);
+
+  const setViewportRef = useCallback((node: HTMLDivElement | null) => {
+    viewportRef.current = node;
+    if (typeof forwardedRef === "function") forwardedRef(node);
+    else if (forwardedRef) forwardedRef.current = node;
+  }, [forwardedRef]);
 
   useEffect(() => {
     if (!onVisibleCategoryChange || !viewportRef.current) return;
@@ -184,7 +197,7 @@ function EmojiPickerContent({
 
   return (
     <EmojiPickerPrimitive.Viewport
-      ref={viewportRef}
+      ref={setViewportRef}
       className={cn("outline-none", className)}
       {...props}
     >
@@ -208,7 +221,7 @@ function EmojiPickerContent({
       />
     </EmojiPickerPrimitive.Viewport>
   );
-}
+});
 
 export {
   EmojiPicker,
