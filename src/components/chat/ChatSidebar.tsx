@@ -517,10 +517,10 @@ export function ChatSidebar({
                         {getLastMessagePreview(conv)}
                       </span>
                     </div>
-                    <div className="shrink-0 w-[104px] ml-2 pr-[25px] flex items-center justify-end gap-[6px]">
+                    <div className="shrink-0 w-[104px] ml-2 pr-[22px] flex items-center justify-end gap-[6px]">
                       {responsibleFilter === "all" && respShort && respColor && (
                         <span
-                          className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[79px] border"
+                          className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[82px] border"
                           style={{
                             backgroundColor: `${respColor}26`,
                             color: respColor,
