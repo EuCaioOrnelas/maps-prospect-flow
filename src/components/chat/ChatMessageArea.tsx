@@ -203,15 +203,15 @@ function ImageAlbumGrid({ msgs, onOpenImage, onQuickForward }: { msgs: ChatMessa
 
 function OutboundTail() {
   return (
-    <span className="absolute top-0 -right-[8px] w-[8px] h-[13px]">
-      <svg viewBox="0 0 8 13" width="8" height="13"><path className="wa-bubble-out-fill" d="M5.188 1H0v11.193l6.467-8.625C7.526 2.156 6.958 1 5.188 1z" /></svg>
+    <span className="absolute top-0 -right-[7px] w-[8px] h-[13px] pointer-events-none leading-[0]">
+      <svg viewBox="0 0 8 13" width="8" height="13" className="block"><path className="wa-bubble-out-fill" d="M0 0h5.188C6.958 0 7.526 1.156 6.467 2.568L0 11.193V0z" /></svg>
     </span>
   );
 }
 function InboundTail() {
   return (
-    <span className="absolute top-0 -left-[8px] w-[8px] h-[13px]">
-      <svg viewBox="0 0 8 13" width="8" height="13"><path className="wa-bubble-in-fill" d="M1.533 3.568 8 12.193V1H2.812C1.042 1 .474 2.156 1.533 3.568z" /></svg>
+    <span className="absolute top-0 -left-[7px] w-[8px] h-[13px] pointer-events-none leading-[0]">
+      <svg viewBox="0 0 8 13" width="8" height="13" className="block"><path className="wa-bubble-in-fill" d="M8 0H2.812C1.042 0 .474 1.156 1.533 2.568L8 11.193V0z" /></svg>
     </span>
   );
 }
