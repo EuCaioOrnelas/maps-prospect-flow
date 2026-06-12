@@ -16,6 +16,7 @@ interface SidebarNavItemProps {
   hasSubmenu?: boolean;
   isSubmenuOpen?: boolean;
   className?: string;
+  iconClassName?: string;
 }
 
 export const SidebarNavItem = ({
@@ -31,6 +32,7 @@ export const SidebarNavItem = ({
   hasSubmenu = false,
   isSubmenuOpen = false,
   className,
+  iconClassName,
 }: SidebarNavItemProps) => {
   const baseClasses = cn(
     "flex items-center rounded-lg transition-colors duration-200",
@@ -49,7 +51,7 @@ export const SidebarNavItem = ({
   const content = (
     <>
       <div className="relative shrink-0 flex items-center justify-center w-5 h-5">
-        <Icon size={20} />
+        <Icon size={20} className={iconClassName} />
         {badge}
       </div>
       {isExpanded && (

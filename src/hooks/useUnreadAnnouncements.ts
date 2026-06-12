@@ -38,14 +38,19 @@ export const useUnreadAnnouncements = () => {
         const readIds = new Set(reads?.map(r => r.announcement_id) || []);
         const unreadAnnouncements = announcements?.filter(a => !readIds.has(a.id)).length || 0;
 
-        // Get disconnected numbers
-        const { data: numbersData } = await supabase
-          .from('whatsapp_numbers')
-          .select('id, name, phone_number, instance_name, is_connected')
+        // Get disconnected Meta WABA numbers (anything other than 'active' is a problem)
+        const { data: wabaData } = await supabase
+          .from('user_waba_connections')
+          .select('id, nickname, business_name, display_phone_number, status')
           .eq('user_id', user.id)
-          .eq('is_connected', false);
+          .neq('status', 'active');
 
-        const disconnected = numbersData || [];
+        const disconnected = (wabaData || []).map((w: any) => ({
+          id: w.id,
+          name: w.nickname || w.business_name || 'Número Meta',
+          phone_number: w.display_phone_number,
+          instance_name: null,
+        }));
         setDisconnectedNumbers(disconnected);
 
         // Check which disconnection alerts have been dismissed
@@ -76,7 +81,7 @@ export const useUnreadAnnouncements = () => {
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'whatsapp_numbers', filter: `user_id=eq.${user.id}` },
+        { event: '*', schema: 'public', table: 'user_waba_connections', filter: `user_id=eq.${user.id}` },
         () => fetchData()
       )
       .subscribe();

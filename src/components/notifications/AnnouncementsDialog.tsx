@@ -167,24 +167,24 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
           {undismissedDisconnections.length > 0 && (
             <div className="space-y-3 mb-4">
               {undismissedDisconnections.map(num => (
-                <div key={num.id} className="p-4 rounded-lg border bg-destructive/5 border-destructive/20">
+                <div key={num.id} className="p-4 rounded-lg border bg-amber-500/10 border-amber-500/30">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <WifiOff className="w-4 h-4 text-destructive" />
+                    <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <WifiOff className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-medium text-sm text-destructive">Número desconectado</h3>
-                        <Badge variant="secondary" className="bg-destructive/20 text-destructive text-[10px] shrink-0">
+                        <h3 className="font-medium text-sm text-amber-700 dark:text-amber-300">Número Meta desconectado</h3>
+                        <Badge variant="secondary" className="bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[10px] shrink-0">
                           Urgente
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-1">
                         <strong className="text-foreground">{num.name}</strong>
-                        {num.phone_number && <span> ({num.phone_number})</span>} perdeu a conexão com a ferramenta.
+                        {num.phone_number && <span> ({num.phone_number})</span>} perdeu a conexão com a Meta Cloud API.
                       </p>
                       <p className="text-xs text-muted-foreground mb-3">
-                        Campanhas, agentes e aquecimento não funcionarão até reconectar.
+                        Chat, campanhas e fluxos não funcionarão até reconectar este número.
                       </p>
                       <div className="flex items-center gap-2">
                         <Button
@@ -193,11 +193,11 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
                           className="h-7 text-xs gap-1.5"
                           onClick={() => {
                             onOpenChange(false);
-                            navigate('/whatsapp');
+                            navigate('/meta/numeros');
                           }}
                         >
                           <Smartphone className="w-3 h-3" />
-                          Reconectar
+                          Reconectar número Meta
                         </Button>
                         <Button
                           size="sm"
