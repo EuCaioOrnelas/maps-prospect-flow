@@ -456,7 +456,7 @@ export function useChat() {
       pinned_at: next ? new Date().toISOString() : null,
     }).eq("id", conversationId);
     if (error) {
-      setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, is_pinned: conv.is_pinned, pinned_at: conv.pinned_at } as ChatConversation : c));
+      setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, is_pinned: conv.is_pinned } as ChatConversation : c));
       throw error;
     }
   }, [conversations]);
