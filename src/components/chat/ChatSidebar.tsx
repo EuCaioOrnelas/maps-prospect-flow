@@ -83,7 +83,7 @@ export function ChatSidebar({
   searchQuery, onSearchChange, connections, activeConnectionId,
   onConnectionChange, onTogglePin, onArchive, onToggleMute, loading,
   onNewConversation, onSaveContactName, onDeleteConversation, onToggleBlock,
-  connectionHealth = {}, topToolbar, members = [], currentUserId = null,
+  connectionHealth = {}, topToolbar, members = [], currentUserId = null, responsibleFilter = "all",
 }: ChatSidebarProps) {
   const [addContactFor, setAddContactFor] = useState<ChatConversation | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
