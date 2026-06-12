@@ -1061,6 +1061,13 @@ export function ChatMessageArea({
           onForward={onForwardMessages}
         />
       )}
+
+      <ConversationSummaryDialog
+        open={summaryOpen}
+        onOpenChange={setSummaryOpen}
+        conversationId={conversation?.id ?? null}
+        contactName={conversation?.contact_name}
+      />
     </div>
   );
 }
