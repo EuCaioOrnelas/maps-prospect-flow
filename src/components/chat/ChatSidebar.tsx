@@ -71,7 +71,7 @@ function truncateText(text: string, maxLen: number): string {
 
 function getLastMessagePreview(conv: ChatConversation): string {
   if (!conv.last_message_text) return "";
-  return truncateText(conv.last_message_text, 42);
+  return truncateText(conv.last_message_text, 28);
 }
 
 type FilterType = "all" | "unread" | "filtered";
@@ -395,8 +395,8 @@ export function ChatSidebar({
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0 border-b wa-border-conversation py-[14px] h-full flex flex-col justify-center">
-                  <div className="flex items-start justify-between gap-2 mb-[2px]">
+                <div className="flex-1 min-w-0 border-b wa-border-conversation py-[10px] h-full flex flex-col justify-center">
+                  <div className="flex items-start justify-between gap-2 mb-[1px]">
                     <span className="text-[17px] leading-[21px] wa-text-primary truncate flex items-center gap-1.5 min-w-0 flex-1">
                       <span className="truncate">{displayName}</span>
                       {!hasName && onSaveContactName && (
@@ -409,33 +409,18 @@ export function ChatSidebar({
                         </button>
                       )}
                     </span>
-                    <div className="shrink-0 flex flex-col items-end gap-[2px]">
-                      <div className="flex items-center gap-1.5">
-                        {hasUnread && (
-                          <span className="wa-accent-bg text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
-                            {conv.unread_count}
-                          </span>
-                        )}
-                        <span className={cn(
-                          "text-[12px] leading-[14px]",
-                          hasUnread ? "wa-accent-text" : "wa-text-timestamp"
-                        )}>
-                          {formatTimestamp(conv.last_message_at)}
-                        </span>
-                      </div>
-                      {responsibleFilter === "all" && respShort && respColor && (
-                        <span
-                          className="inline-flex items-center px-[7px] py-[2px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[100px] border"
-                          style={{
-                            backgroundColor: `${respColor}26`,
-                            color: respColor,
-                            borderColor: `${respColor}55`,
-                          }}
-                          title={`Responsável: ${respLabel}${isMine ? " (você)" : ""}`}
-                        >
-                          <span className="truncate">{truncateText(respShort, 10)}</span>
+                    <div className="shrink-0 flex items-center gap-1.5">
+                      {hasUnread && (
+                        <span className="wa-accent-bg text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
+                          {conv.unread_count}
                         </span>
                       )}
+                      <span className={cn(
+                        "text-[12px] leading-[14px]",
+                        hasUnread ? "wa-accent-text" : "wa-text-timestamp"
+                      )}>
+                        {formatTimestamp(conv.last_message_at)}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
@@ -473,6 +458,19 @@ export function ChatSidebar({
                       </span>
                     </div>
                     <div className="flex items-center gap-[6px] shrink-0 ml-1">
+                      {responsibleFilter === "all" && respShort && respColor && (
+                        <span
+                          className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[80px] border"
+                          style={{
+                            backgroundColor: `${respColor}26`,
+                            color: respColor,
+                            borderColor: `${respColor}55`,
+                          }}
+                          title={`Responsável: ${respLabel}${isMine ? " (você)" : ""}`}
+                        >
+                          <span className="truncate">{truncateText(respShort, 10)}</span>
+                        </span>
+                      )}
                       {conv.is_pinned && (
                         <Pin size={14} className="wa-icon-muted fill-current" />
                       )}
