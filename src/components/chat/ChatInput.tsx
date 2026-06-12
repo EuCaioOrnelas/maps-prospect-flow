@@ -150,7 +150,45 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     inputRef.current?.focus();
   }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply]);
 
+  const applyQuickReply = useCallback(async (qr: QuickReply) => {
+    const resolved = applyQuickReplyVariables(qr.content || "", quickReplyCtx);
+    // confirm before sending so the user can review
+    const preview = resolved.length > 220 ? resolved.slice(0, 220) + "…" : resolved;
+    const ok = window.confirm(
+      `Enviar mensagem rápida /${qr.shortcut}?\n\n${preview}${qr.media_url ? `\n\n[Anexo: ${qr.media_filename || qr.media_type}]` : ""}`
+    );
+    if (!ok) { setText(""); return; }
+    if (qr.media_url) {
+      try {
+        const res = await fetch(qr.media_url);
+        const blob = await res.blob();
+        const fname = qr.media_filename || `quick-reply-${qr.shortcut}`;
+        const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
+        onSendMedia(file, resolved || undefined);
+      } catch (err) {
+        console.error("[quick-reply] media fetch failed", err);
+        if (resolved.trim()) onSendMessage(resolved, replyingTo?.id);
+      }
+    } else if (resolved.trim()) {
+      onSendMessage(resolved, replyingTo?.id);
+    }
+    setText("");
+    onCancelReply?.();
+    inputRef.current?.focus();
+  }, [quickReplyCtx, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (qrOpen) {
+      if (e.key === "ArrowDown") { e.preventDefault(); setQrIdx(i => Math.min(i + 1, qrFiltered.length - 1)); return; }
+      if (e.key === "ArrowUp") { e.preventDefault(); setQrIdx(i => Math.max(i - 1, 0)); return; }
+      if (e.key === "Escape") { e.preventDefault(); setText(""); return; }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        const pick = qrFiltered[qrIdx];
+        if (pick) void applyQuickReply(pick);
+        return;
+      }
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
