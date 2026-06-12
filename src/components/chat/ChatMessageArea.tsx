@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check } from "lucide-react";
+import { useRef, useEffect, useState, useMemo } from "react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
@@ -7,6 +7,7 @@ import { ChatInput } from "./ChatInput";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { AddContactDialog } from "./AddContactDialog";
 import { ForwardDialog } from "./ForwardDialog";
+import { ImageLightbox, downloadFromUrl } from "./ImageLightbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
