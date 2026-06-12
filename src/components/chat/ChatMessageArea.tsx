@@ -816,15 +816,22 @@ export function ChatMessageArea({
               ) : (
                 <>
                   {messages.map((msg, idx) => {
+                    if (albumSkip.has(msg.id)) return null;
+                    const album = albumHead.get(msg.id) || null;
                     const prevMsg = idx > 0 ? messages[idx - 1] : null;
                     const showDate = !prevMsg || !isSameDay(parseISO(msg.created_at), parseISO(prevMsg.created_at));
                     const isOutbound = msg.direction === "outbound";
-                    const isSameAuthorAsPrev = prevMsg && prevMsg.direction === msg.direction && !showDate;
+                    const isSameAuthorAsPrev = prevMsg && prevMsg.direction === msg.direction && !showDate && !albumHead.has(prevMsg.id);
                     const showTail = !isSameAuthorAsPrev;
                     const replyMsg = msg.reply_to_message_id ? messagesMap.get(msg.reply_to_message_id) : undefined;
+                    const isForwarded = !!(msg.metadata as any)?.forwarded;
 
                     const isSelected = selectedIds.has(msg.id);
                     const rowClickable = selectionMode;
+
+                    const openImage = (m: ChatMessage) => setLightboxOpenId(m.id);
+                    const quickForward = (m: ChatMessage) => startForwardFromMessage(m);
+
                     return (
                       <div key={msg.id}>
                         {showDate && <DateDivider date={parseISO(msg.created_at)} />}
@@ -837,7 +844,6 @@ export function ChatMessageArea({
                           )}
                           onClick={rowClickable ? () => toggleSelect(msg.id) : undefined}
                         >
-                          {/* Checkbox on the left during selection */}
                           {selectionMode && (
                             <div className="shrink-0 mr-2 w-[22px] h-[22px] flex items-center justify-center">
                               <span className={cn(
@@ -849,7 +855,6 @@ export function ChatMessageArea({
                             </div>
                           )}
 
-                          {/* Bubble container — actions live INSIDE at top-right */}
                           <div className={cn(
                             "flex-1 flex items-start gap-1",
                             isOutbound ? "justify-end" : "justify-start",
@@ -874,6 +879,12 @@ export function ChatMessageArea({
                                     onForward={() => startForwardFromMessage(msg)}
                                   />
                                 )}
+                                {isForwarded && (
+                                  <div className="flex items-center gap-1 px-[10px] pt-[6px] -mb-[2px] wa-text-muted">
+                                    <Forward size={12} className="rotate-180 scale-x-[-1]" />
+                                    <span className="text-[12px] italic">Encaminhada</span>
+                                  </div>
+                                )}
                                 {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
                                 {msg.message_type === "audio" && (
                                   <div className="p-[3px]">
@@ -886,8 +897,12 @@ export function ChatMessageArea({
                                     />
                                   </div>
                                 )}
-                                {msg.message_type !== "text" && msg.message_type !== "audio" && (
-                                  <div className="p-[3px]"><MediaPreview msg={msg} /></div>
+                                {album ? (
+                                  <div className="p-[3px]">
+                                    <ImageAlbumGrid msgs={album} onOpenImage={openImage} onQuickForward={quickForward} />
+                                  </div>
+                                ) : (msg.message_type !== "text" && msg.message_type !== "audio") && (
+                                  <div className="p-[3px]"><MediaPreview msg={msg} onOpenImage={openImage} onQuickForward={quickForward} /></div>
                                 )}
                                 {msg.content && msg.message_type === "text" && (
                                   <div className="px-[9px] pt-[6px] pb-[8px] pr-[36px]">
