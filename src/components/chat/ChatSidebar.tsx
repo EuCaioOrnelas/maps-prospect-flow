@@ -34,6 +34,7 @@ interface ChatSidebarProps {
   topToolbar?: React.ReactNode;
   members?: Array<{ user_id: string; name: string | null; email: string | null }>;
   currentUserId?: string | null;
+  responsibleFilter?: string;
 }
 
 function formatTimestamp(dateStr: string | null): string {
