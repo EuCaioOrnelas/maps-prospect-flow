@@ -1066,6 +1066,18 @@ export function ChatMessageArea({
         conversationId={conversation?.id ?? null}
         contactName={conversation?.contact_name}
       />
+
+      <ContactDetailsPanel
+        open={contactPanelOpen}
+        onClose={() => setContactPanelOpen(false)}
+        conversation={conversation}
+        messages={messages}
+        accountOwnerId={accountOwnerId ?? null}
+        onOpenSearch={() => { setContactPanelOpen(false); setShowSearch(true); }}
+        onToggleBlock={onToggleBlock}
+        onDeleteConversation={onDeleteConversation}
+        onSaveContact={() => { setContactPanelOpen(false); setAddContactOpen(true); }}
+      />
     </div>
   );
 }
