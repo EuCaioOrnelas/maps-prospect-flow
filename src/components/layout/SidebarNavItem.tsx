@@ -32,6 +32,7 @@ export const SidebarNavItem = ({
   hasSubmenu = false,
   isSubmenuOpen = false,
   className,
+  iconClassName,
 }: SidebarNavItemProps) => {
   const baseClasses = cn(
     "flex items-center rounded-lg transition-colors duration-200",
