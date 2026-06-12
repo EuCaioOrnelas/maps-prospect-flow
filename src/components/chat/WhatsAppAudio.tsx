@@ -84,13 +84,16 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         blobUrlRef.current = objUrl;
         setPlayableSrc(objUrl);
 
-        // Decode for real waveform peaks
+        // Decode for real waveform peaks + reliable duration (ogg/opus blobs often report Infinity)
         try {
           const arrBuf = await blob.arrayBuffer();
           const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
           if (Ctx) {
             const ctx = new Ctx();
             const audioBuf = await ctx.decodeAudioData(arrBuf.slice(0));
+            if (!cancelled && audioBuf.duration && isFinite(audioBuf.duration)) {
+              setDuration(audioBuf.duration);
+            }
             const channel = audioBuf.getChannelData(0);
             const samplesPerBar = Math.floor(channel.length / BAR_COUNT);
             const out: number[] = [];
@@ -107,7 +110,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
               if (rms > max) max = rms;
             }
             if (max > 0) {
-              const norm = out.map(v => 0.15 + (v / max) * 0.85);
+              const norm = out.map(v => 0.2 + (v / max) * 0.8);
               if (!cancelled) setPeaks(norm);
             }
             try { ctx.close(); } catch {}
@@ -115,6 +118,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         } catch (e) {
           // peaks decode failed — keep fallback bars
         }
+
       } catch (e) {
         if (!cancelled) setLoadError(true);
       } finally {
@@ -149,14 +153,30 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
 
   useEffect(() => { if (audioRef.current) audioRef.current.playbackRate = speed; }, [speed]);
 
-  const toggle = () => {
+  const toggle = async () => {
     const a = audioRef.current;
     if (!a || !playableSrc) {
       if (loadError) toast.error("Não foi possível carregar o áudio");
       return;
     }
-    if (playing) { a.pause(); setPlaying(false); }
-    else { a.play().then(() => setPlaying(true)).catch((err) => { console.error("audio play", err); toast.error("Erro ao reproduzir áudio"); }); }
+    if (playing) { a.pause(); setPlaying(false); return; }
+    try {
+      // Workaround: some webm/ogg blobs report duration=Infinity until you seek to the end
+      if (!isFinite(a.duration) || a.duration === 0) {
+        await new Promise<void>((resolve) => {
+          const onLoaded = () => { a.removeEventListener("durationchange", onLoaded); resolve(); };
+          a.addEventListener("durationchange", onLoaded);
+          try { a.currentTime = 1e101; } catch {}
+          setTimeout(() => { a.removeEventListener("durationchange", onLoaded); resolve(); }, 800);
+        });
+        try { a.currentTime = 0; } catch {}
+      }
+      await a.play();
+      setPlaying(true);
+    } catch (err) {
+      console.error("audio play", err);
+      toast.error("Erro ao reproduzir áudio");
+    }
   };
 
   const cycleSpeed = () => {
@@ -238,11 +258,13 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
               return (
                 <span
                   key={i}
-                  className="flex-1 rounded-full transition-colors"
-                  style={{
-                    height: `${Math.max(h * 24, 3)}px`,
-                    backgroundColor: filled ? "#53bdeb" : "rgba(0,0,0,0.22)",
-                  }}
+                  className={cn(
+                    "flex-1 rounded-full transition-colors",
+                    filled
+                      ? "bg-[#53bdeb]"
+                      : "bg-black/30 dark:bg-white/45"
+                  )}
+                  style={{ height: `${Math.max(h * 24, 3)}px` }}
                 />
               );
             })}
@@ -285,9 +307,9 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         </button>
       </div>
 
-      <div className="px-1 mt-1">
+      <div className="-mx-1 -mb-1 mt-1">
         {transcription ? (
-          <div className="text-[12px] leading-relaxed bg-black/5 dark:bg-white/5 rounded-md px-2 py-1.5 wa-text-primary whitespace-pre-wrap">
+          <div className="text-[12px] leading-relaxed bg-black/5 dark:bg-white/10 rounded-b-[7px] px-2.5 py-1.5 wa-text-primary whitespace-pre-wrap">
             <span className="text-[10px] uppercase tracking-wider font-semibold opacity-60 block mb-0.5">Transcrição</span>
             {transcription}
           </div>
@@ -295,7 +317,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
           <button
             onClick={handleTranscribe}
             disabled={transcribing}
-            className="flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100 transition-opacity disabled:opacity-50"
+            className="px-2.5 py-1 flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100 transition-opacity disabled:opacity-50"
           >
             {transcribing ? <Loader2 size={11} className="animate-spin" /> : <FileText size={11} />}
             <span>{transcribing ? "Transcrevendo..." : "Transcrever áudio"}</span>
