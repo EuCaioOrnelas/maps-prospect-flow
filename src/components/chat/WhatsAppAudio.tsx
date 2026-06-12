@@ -88,7 +88,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
     setTranscribing(true);
     try {
       const { data, error } = await supabase.functions.invoke("transcribe-audio", {
-        body: { audio_url: src },
+        body: { audio_url: src, message_id: messageId },
       });
       if (error) throw error;
       const text = (data as any)?.text || "";
