@@ -489,6 +489,42 @@ export function ChatMessageArea({
   // Build a map for reply lookups
   const messagesMap = new Map(messages.map(m => [m.id, m]));
 
+  // All image messages of the conversation (used by lightbox)
+  const imageMessages = useMemo(
+    () => messages.filter(m => m.message_type === "image" && !!m.media_url),
+    [messages]
+  );
+
+  // Group 4+ consecutive image messages from same author (gap < 10 min) into an album
+  const { albumHead, albumSkip } = useMemo(() => {
+    const head = new Map<string, ChatMessage[]>();
+    const skip = new Set<string>();
+    let i = 0;
+    while (i < messages.length) {
+      const m = messages[i];
+      if (m.message_type !== "image" || !m.media_url) { i++; continue; }
+      let j = i + 1;
+      const group: ChatMessage[] = [m];
+      while (j < messages.length) {
+        const n = messages[j];
+        if (n.message_type !== "image" || !n.media_url) break;
+        if (n.direction !== m.direction) break;
+        const gapMin = (new Date(n.created_at).getTime() - new Date(group[group.length - 1].created_at).getTime()) / 60000;
+        if (gapMin > 10) break;
+        group.push(n);
+        j++;
+      }
+      if (group.length >= 4) {
+        head.set(m.id, group);
+        for (let k = 1; k < group.length; k++) skip.add(group[k].id);
+        i = j;
+      } else {
+        i++;
+      }
+    }
+    return { albumHead: head, albumSkip: skip };
+  }, [messages]);
+
   const handleDragEnter = (e: React.DragEvent) => {
     if (!e.dataTransfer?.types?.includes("Files")) return;
     e.preventDefault();
