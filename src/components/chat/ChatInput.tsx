@@ -43,7 +43,7 @@ function pickAudioMime(): { mime: string; ext: string } {
 
 export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed }: ChatInputProps) {
   const [text, setText] = useState("");
-  const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
+  const [activeEmojiCategory, setActiveEmojiCategory] = useState<string>("smileys");
   const [showAttach, setShowAttach] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
