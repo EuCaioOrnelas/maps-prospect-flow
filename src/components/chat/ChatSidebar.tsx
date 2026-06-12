@@ -423,12 +423,17 @@ export function ChatSidebar({
                           {formatTimestamp(conv.last_message_at)}
                         </span>
                       </div>
-                      {respShort && (
+                      {responsibleFilter === "all" && respShort && respColor && (
                         <span
-                          className="text-[10.5px] leading-[12px] wa-text-muted truncate max-w-[90px]"
+                          className="inline-flex items-center px-[7px] py-[2px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[100px] border"
+                          style={{
+                            backgroundColor: `${respColor}26`,
+                            color: respColor,
+                            borderColor: `${respColor}55`,
+                          }}
                           title={`Responsável: ${respLabel}${isMine ? " (você)" : ""}`}
                         >
-                          {truncateText(respShort, 10)}
+                          <span className="truncate">{truncateText(respShort, 10)}</span>
                         </span>
                       )}
                     </div>
