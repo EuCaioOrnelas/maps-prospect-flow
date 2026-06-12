@@ -92,11 +92,16 @@ const Chat = () => {
           console.warn("[chat] webhook revalidate failed", conn.id, e);
         }
       }
+      // Refresh the gate state after revalidation so we don't show a stale
+      // "pending webhook" warning when validation actually succeeded.
+      try { await webhookGate.reload(); } catch {}
     })();
-  }, [user, chat.loading, chat.connections]);
+  }, [user, chat.loading, chat.connections, webhookGate.reload]);
 
   useEffect(() => {
-    if (!webhookGate.loading && webhookGate.blocked) setWebhookDialogOpen(true);
+    if (webhookGate.loading) return;
+    if (webhookGate.blocked) setWebhookDialogOpen(true);
+    else setWebhookDialogOpen(false);
   }, [webhookGate.loading, webhookGate.blocked]);
 
   // ESC closes the active conversation, returning to the Wiize Chat home screen
