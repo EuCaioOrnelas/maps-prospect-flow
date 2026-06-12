@@ -340,6 +340,7 @@ export function ChatMessageArea({
   const [forwardOpen, setForwardOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [pipelineStages, setPipelineStages] = useState<{ id: string; name: string; color: string | null; position: number }[]>([]);
   const [leadInfo, setLeadInfo] = useState<{ id: string; pipeline_stage_id: string | null } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -782,6 +783,12 @@ export function ChatMessageArea({
                   className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                 >
                   <Search size={15} /> Pesquisar mensagens
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setSummaryOpen(true)}
+                  className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
+                  <Sparkles size={15} /> Resumir conversa (IA)
                 </DropdownMenuItem>
                 <div className="my-1 mx-3 border-t wa-border-light" />
                 <DropdownMenuItem
