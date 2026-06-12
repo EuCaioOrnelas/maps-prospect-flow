@@ -15,6 +15,7 @@ export interface ChatConversation {
   last_message_at: string | null;
   last_message_type: string;
   last_message_direction: string;
+  last_message_status?: string | null;
   unread_count: number;
   is_pinned: boolean;
   is_archived: boolean;
