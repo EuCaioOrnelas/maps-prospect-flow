@@ -987,6 +987,19 @@ export function ChatMessageArea({
         <SearchMessagesBar messages={messages} onClose={() => setShowSearch(false)} />
       )}
 
+      {/* Image lightbox */}
+      <ImageLightbox
+        open={!!lightboxOpenId}
+        images={imageMessages}
+        initialMessageId={lightboxOpenId}
+        contactName={conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
+        contactSubtitle={conversation.last_message_at ? `Último contato: ${format(parseISO(conversation.last_message_at), "dd/MM/yyyy 'às' HH:mm")}` : undefined}
+        onClose={() => setLightboxOpenId(null)}
+        onReply={(m) => { setLightboxOpenId(null); setReplyingTo(m); }}
+        onForward={(m) => { setLightboxOpenId(null); startForwardFromMessage(m); }}
+      />
+
+
       {/* Add / Save contact to CRM */}
       {onSaveContactName && (
         <AddContactDialog
