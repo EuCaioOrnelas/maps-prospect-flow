@@ -395,9 +395,9 @@ export function ChatSidebar({
 
                 {/* Content */}
                 <div className="flex-1 min-w-0 border-b wa-border-conversation py-[14px] h-full flex flex-col justify-center">
-                  <div className="flex items-center justify-between mb-[2px]">
-                    <span className="text-[17px] leading-[21px] wa-text-primary truncate flex items-center gap-1.5 max-w-[200px]">
-                      {displayName}
+                  <div className="flex items-start justify-between gap-2 mb-[2px]">
+                    <span className="text-[17px] leading-[21px] wa-text-primary truncate flex items-center gap-1.5 min-w-0 flex-1">
+                      <span className="truncate">{displayName}</span>
                       {!hasName && onSaveContactName && (
                         <button
                           onClick={(e) => { e.stopPropagation(); setAddContactFor(conv); }}
@@ -408,12 +408,29 @@ export function ChatSidebar({
                         </button>
                       )}
                     </span>
-                    <span className={cn(
-                      "text-[12px] leading-[14px] shrink-0 ml-2",
-                      hasUnread ? "wa-accent-text " : "wa-text-timestamp"
-                    )}>
-                      {formatTimestamp(conv.last_message_at)}
-                    </span>
+                    <div className="shrink-0 flex flex-col items-end gap-[2px]">
+                      <div className="flex items-center gap-1.5">
+                        {hasUnread && (
+                          <span className="wa-accent-bg text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
+                            {conv.unread_count}
+                          </span>
+                        )}
+                        <span className={cn(
+                          "text-[12px] leading-[14px]",
+                          hasUnread ? "wa-accent-text" : "wa-text-timestamp"
+                        )}>
+                          {formatTimestamp(conv.last_message_at)}
+                        </span>
+                      </div>
+                      {respShort && (
+                        <span
+                          className="text-[10.5px] leading-[12px] wa-text-muted truncate max-w-[90px]"
+                          title={`Responsável: ${respLabel}${isMine ? " (você)" : ""}`}
+                        >
+                          {truncateText(respShort, 10)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-0 flex-1 min-w-0">
@@ -450,28 +467,11 @@ export function ChatSidebar({
                       </span>
                     </div>
                     <div className="flex items-center gap-[6px] shrink-0 ml-1">
-                      {respColor && respShort && (
-                        <span
-                          className="inline-flex items-center gap-1 px-1.5 py-[1px] rounded-full text-[10px] font-medium leading-tight max-w-[80px]"
-                          style={{
-                            backgroundColor: `${respColor}1F`,
-                            color: respColor,
-                          }}
-                          title={`Responsável: ${respLabel}`}
-                        >
-                          <span className="truncate">{truncateText(respShort, 8)}</span>
-                        </span>
-                      )}
                       {conv.is_pinned && (
                         <Pin size={14} className="wa-icon-muted fill-current" />
                       )}
                       {conv.is_muted && (
                         <VolumeX size={14} className="wa-icon-muted" />
-                      )}
-                      {hasUnread && (
-                        <span className="wa-accent-bg text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
-                          {conv.unread_count}
-                        </span>
                       )}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
