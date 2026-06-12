@@ -307,9 +307,9 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         </button>
       </div>
 
-      <div className="px-1 mt-1">
+      <div className="-mx-1 -mb-1 mt-1">
         {transcription ? (
-          <div className="text-[12px] leading-relaxed bg-black/5 dark:bg-white/5 rounded-md px-2 py-1.5 wa-text-primary whitespace-pre-wrap">
+          <div className="text-[12px] leading-relaxed bg-black/5 dark:bg-white/10 rounded-b-[7px] px-2.5 py-1.5 wa-text-primary whitespace-pre-wrap">
             <span className="text-[10px] uppercase tracking-wider font-semibold opacity-60 block mb-0.5">Transcrição</span>
             {transcription}
           </div>
