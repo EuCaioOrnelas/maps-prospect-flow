@@ -1,9 +1,12 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent } from "@/components/ui/emoji-picker";
 import { ChatMessage } from "@/hooks/useChat";
+import { useQuickReplies, applyQuickReplyVariables, type QuickReply } from "@/hooks/useQuickReplies";
+import { useQuickReplyContext } from "@/hooks/useQuickReplyContext";
+import { QuickReplyPicker } from "./QuickReplyPicker";
 
 interface ChatInputProps {
   onSendMessage: (text: string, replyToId?: string) => void;
@@ -13,6 +16,8 @@ interface ChatInputProps {
   /** External files (e.g. dropped on the message area) — preview opens automatically */
   externalFiles?: File[];
   onExternalConsumed?: () => void;
+  /** Current conversation context (for quick reply variable resolution) */
+  conversation?: { contact_name?: string | null; contact_phone?: string | null } | null;
 }
 
 interface AttachedFile {
