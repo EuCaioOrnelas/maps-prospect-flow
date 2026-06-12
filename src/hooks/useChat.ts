@@ -264,6 +264,17 @@ export function useChat() {
         const updated = payload.new as ChatMessage;
         if ((updated as any).owner_user_id && (updated as any).owner_user_id !== accountOwnerId) return;
         setMessages(prev => prev.map(m => m.id === updated.id ? updated : m));
+        // Also reflect the new status on the sidebar conversation row, in case
+        // the chat_conversations realtime UPDATE is delayed or dropped.
+        if (updated.direction === "outbound") {
+          setConversations(prev => prev.map(c => {
+            if (c.id !== updated.conversation_id) return c;
+            const order: Record<string, number> = { pending: 0, sent: 1, failed: 1, delivered: 2, read: 3 };
+            const cur = (c as any).last_message_status as string | null | undefined;
+            if (cur && (order[cur] ?? 0) > (order[updated.status] ?? 0)) return c;
+            return { ...c, last_message_status: updated.status } as ChatConversation;
+          }));
+        }
       })
       .subscribe();
 

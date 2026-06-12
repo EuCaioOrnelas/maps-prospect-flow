@@ -43,7 +43,7 @@ function pickAudioMime(): { mime: string; ext: string } {
 
 export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed }: ChatInputProps) {
   const [text, setText] = useState("");
-  const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
+  const [activeEmojiCategory, setActiveEmojiCategory] = useState<string>("smileys");
   const [showAttach, setShowAttach] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
@@ -476,13 +476,13 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                   }}
                 >
                   <EmojiPickerCategories
-                    activeCategory={activeEmojiCategory}
-                    onCategoryClick={(idx) => {
-                      setActiveEmojiCategory(idx);
+                    activeCategoryId={activeEmojiCategory}
+                    onCategoryClick={(id) => {
+                      setActiveEmojiCategory(id);
                       const popoverEl = document.querySelector('[data-radix-popper-content-wrapper] [class*="outline-none"]');
                       if (popoverEl) {
-                        const headers = popoverEl.querySelectorAll("[data-category-header]");
-                        if (headers[idx]) headers[idx].scrollIntoView({ behavior: "smooth", block: "start" });
+                        const header = popoverEl.querySelector(`[data-category-id="${id}"]`) as HTMLElement | null;
+                        header?.scrollIntoView({ behavior: "smooth", block: "start" });
                       }
                     }}
                   />
