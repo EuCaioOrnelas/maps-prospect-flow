@@ -387,6 +387,7 @@ const Chat = () => {
                       connectionHealth={chat.connectionHealth}
                       members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
                       currentUserId={user?.id || null}
+                      responsibleFilter={responsibleFilter}
                       topToolbar={
                         (role === "owner" || role === "admin") ? (
                           <CRMResponsibleFilter
