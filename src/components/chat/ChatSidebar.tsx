@@ -71,7 +71,7 @@ function truncateText(text: string, maxLen: number): string {
 
 function getLastMessagePreview(conv: ChatConversation): string {
   if (!conv.last_message_text) return "";
-  return truncateText(conv.last_message_text, 42);
+  return truncateText(conv.last_message_text, 28);
 }
 
 type FilterType = "all" | "unread" | "filtered";
