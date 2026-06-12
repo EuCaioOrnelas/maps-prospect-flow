@@ -427,10 +427,14 @@ export function ChatSidebar({
                         const st = (conv as any).last_message_status as string | null | undefined;
                         const isRead = st === "read";
                         const isDelivered = st === "delivered" || isRead;
-                        const colorClass = isRead ? "text-[#53bdeb]" : "wa-text-muted";
+                        const colorStyle = isRead ? { color: "#53bdeb" } : undefined;
                         if (isDelivered) {
                           return (
-                            <span className={cn("mr-1 shrink-0", colorClass)} aria-label={isRead ? "Visualizada" : "Entregue"}>
+                            <span
+                              className={cn("mr-1 shrink-0", isRead ? "" : "wa-text-muted")}
+                              style={colorStyle}
+                              aria-label={isRead ? "Visualizada" : "Entregue"}
+                            >
                               <svg viewBox="0 0 18 11" height="11" width="18" fill="none">
                                 <path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.353.178.477.477 0 0 0-.076.541l2.432 4.31a.494.494 0 0 0 .42.254.457.457 0 0 0 .369-.178l7.07-9.76a.477.477 0 0 0-.076-.559l-.564-.25z" fill="currentColor" />
                                 <path d="M15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-.58-.604a.456.456 0 0 0-.65.018.475.475 0 0 0-.013.66l1.002 1.045a.494.494 0 0 0 .42.254.457.457 0 0 0 .369-.178l7.07-9.76a.477.477 0 0 0-.076-.559l-.667-.588z" fill="currentColor" />
