@@ -421,65 +421,9 @@ export function ChatSidebar({
                       )}>
                         {formatTimestamp(conv.last_message_at)}
                       </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-0 flex-1 min-w-0">
-                      {conv.last_message_direction === "outbound" && (() => {
-                        const st = (conv as any).last_message_status as string | null | undefined;
-                        const isRead = st === "read";
-                        const isDelivered = st === "delivered" || isRead;
-                        const colorStyle = isRead ? { color: "#53bdeb" } : undefined;
-                        if (isDelivered) {
-                          return (
-                            <span
-                              className={cn("mr-1 shrink-0", isRead ? "" : "wa-text-muted")}
-                              style={colorStyle}
-                              aria-label={isRead ? "Visualizada" : "Entregue"}
-                            >
-                              <svg viewBox="0 0 18 11" height="11" width="18" fill="none">
-                                <path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.353.178.477.477 0 0 0-.076.541l2.432 4.31a.494.494 0 0 0 .42.254.457.457 0 0 0 .369-.178l7.07-9.76a.477.477 0 0 0-.076-.559l-.564-.25z" fill="currentColor" />
-                                <path d="M15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-.58-.604a.456.456 0 0 0-.65.018.475.475 0 0 0-.013.66l1.002 1.045a.494.494 0 0 0 .42.254.457.457 0 0 0 .369-.178l7.07-9.76a.477.477 0 0 0-.076-.559l-.667-.588z" fill="currentColor" />
-                              </svg>
-                            </span>
-                          );
-                        }
-                        // sent or pending: single check
-                        return (
-                          <span className="wa-text-muted mr-1 shrink-0" aria-label={st === "failed" ? "Falhou" : "Enviada"}>
-                            <svg viewBox="0 0 16 11" height="11" width="16" fill="none">
-                              <path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.353.178.477.477 0 0 0-.076.541l2.432 4.31a.494.494 0 0 0 .42.254.457.457 0 0 0 .369-.178l7.07-9.76a.477.477 0 0 0-.076-.559l-.564-.25z" fill="currentColor" />
-                            </svg>
-                          </span>
-                        );
-                      })()}
-                      <span className="text-[14px] leading-[20px] wa-text-secondary truncate">
-                        {getLastMessagePreview(conv)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-[6px] shrink-0 ml-1">
-                      {responsibleFilter === "all" && respShort && respColor && (
-                        <span
-                          className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[80px] border"
-                          style={{
-                            backgroundColor: `${respColor}26`,
-                            color: respColor,
-                            borderColor: `${respColor}55`,
-                          }}
-                          title={`Responsável: ${respLabel}${isMine ? " (você)" : ""}`}
-                        >
-                          <span className="truncate">{truncateText(respShort, 10)}</span>
-                        </span>
-                      )}
-                      {conv.is_pinned && (
-                        <Pin size={14} className="wa-icon-muted fill-current" />
-                      )}
-                      {conv.is_muted && (
-                        <VolumeX size={14} className="wa-icon-muted" />
-                      )}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                          <button className="p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <button className="p-0.5 -mr-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                             <ChevronDown size={18} className="wa-icon-muted" />
                           </button>
                         </DropdownMenuTrigger>
@@ -534,6 +478,62 @@ export function ChatSidebar({
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-0 flex-1 min-w-0">
+                      {conv.last_message_direction === "outbound" && (() => {
+                        const st = (conv as any).last_message_status as string | null | undefined;
+                        const isRead = st === "read";
+                        const isDelivered = st === "delivered" || isRead;
+                        const colorStyle = isRead ? { color: "#53bdeb" } : undefined;
+                        if (isDelivered) {
+                          return (
+                            <span
+                              className={cn("mr-1 shrink-0", isRead ? "" : "wa-text-muted")}
+                              style={colorStyle}
+                              aria-label={isRead ? "Visualizada" : "Entregue"}
+                            >
+                              <svg viewBox="0 0 18 11" height="11" width="18" fill="none">
+                                <path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.353.178.477.477 0 0 0-.076.541l2.432 4.31a.494.494 0 0 0 .42.254.457.457 0 0 0 .369-.178l7.07-9.76a.477.477 0 0 0-.076-.559l-.564-.25z" fill="currentColor" />
+                                <path d="M15.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-.58-.604a.456.456 0 0 0-.65.018.475.475 0 0 0-.013.66l1.002 1.045a.494.494 0 0 0 .42.254.457.457 0 0 0 .369-.178l7.07-9.76a.477.477 0 0 0-.076-.559l-.667-.588z" fill="currentColor" />
+                              </svg>
+                            </span>
+                          );
+                        }
+                        // sent or pending: single check
+                        return (
+                          <span className="wa-text-muted mr-1 shrink-0" aria-label={st === "failed" ? "Falhou" : "Enviada"}>
+                            <svg viewBox="0 0 16 11" height="11" width="16" fill="none">
+                              <path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.011-2.095a.463.463 0 0 0-.336-.153.457.457 0 0 0-.353.178.477.477 0 0 0-.076.541l2.432 4.31a.494.494 0 0 0 .42.254.457.457 0 0 0 .369-.178l7.07-9.76a.477.477 0 0 0-.076-.559l-.564-.25z" fill="currentColor" />
+                            </svg>
+                          </span>
+                        );
+                      })()}
+                      <span className="text-[14px] leading-[20px] wa-text-secondary truncate">
+                        {getLastMessagePreview(conv)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-[6px] shrink-0 ml-1">
+                      {conv.is_pinned && (
+                        <Pin size={14} className="wa-icon-muted fill-current" />
+                      )}
+                      {conv.is_muted && (
+                        <VolumeX size={14} className="wa-icon-muted" />
+                      )}
+                      {responsibleFilter === "all" && respShort && respColor && (
+                        <span
+                          className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[80px] border"
+                          style={{
+                            backgroundColor: `${respColor}26`,
+                            color: respColor,
+                            borderColor: `${respColor}55`,
+                          }}
+                          title={`Responsável: ${respLabel}${isMine ? " (você)" : ""}`}
+                        >
+                          <span className="truncate">{truncateText(respShort, 10)}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
