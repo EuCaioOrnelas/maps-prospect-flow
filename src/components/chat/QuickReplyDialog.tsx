@@ -87,6 +87,7 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
 
   const handleSave = async () => {
     if (!shortcut.trim()) { toast.error("Defina um atalho"); return; }
+    if (!title.trim()) { toast.error("Defina um título para a mensagem rápida"); return; }
     if (!content.trim() && !mediaUrl) { toast.error("Adicione texto ou mídia"); return; }
     setSaving(true);
     try {
@@ -127,8 +128,8 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
               </div>
             </div>
             <div className="sm:col-span-2">
-              <Label className="text-xs">Título (opcional)</Label>
-              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex.: Tabela de preços" />
+              <Label className="text-xs">Título *</Label>
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex.: Tabela de preços" maxLength={60} />
             </div>
           </div>
 

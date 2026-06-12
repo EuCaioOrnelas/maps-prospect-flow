@@ -482,6 +482,22 @@ export function useChat() {
     if (activeConversationId === conversationId) setActiveConversationId(null);
   }, [activeConversationId]);
 
+  // Mark as read
+  const markAsRead = useCallback(async (conversationId: string) => {
+    setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, unread_count: 0 } : c));
+    const { error } = await supabase.from("chat_conversations").update({ unread_count: 0 }).eq("id", conversationId);
+    if (error) throw error;
+  }, []);
+
+  // Mark as unread
+  const markAsUnread = useCallback(async (conversationId: string) => {
+    const conv = conversations.find(c => c.id === conversationId);
+    const next = Math.max(1, conv?.unread_count || 0);
+    setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, unread_count: next } : c));
+    const { error } = await supabase.from("chat_conversations").update({ unread_count: next }).eq("id", conversationId);
+    if (error) throw error;
+  }, [conversations]);
+
   // Mute
   const toggleMute = useCallback(async (conversationId: string) => {
     const conv = conversations.find(c => c.id === conversationId);
@@ -770,6 +786,8 @@ export function useChat() {
     togglePin,
     archiveConversation,
     toggleMute,
+    markAsRead,
+    markAsUnread,
     startNewConversation,
     messagesEndRef,
     fetchTemplates,
