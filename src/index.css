@@ -1268,34 +1268,37 @@ input::placeholder, textarea::placeholder {
 .wa-search-panel { background-color: hsl(220 18% 6%); }
 .landing-light .wa-search-panel { background-color: #ffffff; }
 
-/* ─── Message bubbles — comfortable WhatsApp green ─── */
-.wa-bubble-out { background-color: #d9fdd3; }
+/* ─── Message bubbles — WhatsApp dark/light ─── */
+.wa-bubble-out { background-color: #005c4b; }
 .landing-light .wa-bubble-out { background-color: #d9fdd3; }
-.wa-bubble-in { background-color: #ffffff; }
+.wa-bubble-in { background-color: #202c33; }
 .landing-light .wa-bubble-in { background-color: #ffffff; }
-.wa-bubble-out-fill { fill: #d9fdd3; }
+.wa-bubble-out-fill { fill: #005c4b; }
 .landing-light .wa-bubble-out-fill { fill: #d9fdd3; }
-.wa-bubble-in-fill { fill: #ffffff; }
+.wa-bubble-in-fill { fill: #202c33; }
 .landing-light .wa-bubble-in-fill { fill: #ffffff; }
 
-/* Bubble text — always dark for contrast on light bubbles */
+/* Bubble text — contrasta com cada tema */
 .wa-bubble-out .wa-text-primary,
-.wa-bubble-in .wa-text-primary { color: #0b1f17; }
+.wa-bubble-in .wa-text-primary { color: #e9edef; }
 .landing-light .wa-bubble-out .wa-text-primary,
 .landing-light .wa-bubble-in .wa-text-primary { color: #0b1f17; }
 .wa-bubble-out .wa-text-timestamp,
-.wa-bubble-in .wa-text-timestamp { color: rgba(11,31,23,0.55); }
+.wa-bubble-in .wa-text-timestamp { color: rgba(233,237,239,0.6); }
 .landing-light .wa-bubble-out .wa-text-timestamp,
 .landing-light .wa-bubble-in .wa-text-timestamp { color: rgba(11,31,23,0.55); }
+.wa-bubble-out .wa-text-muted,
+.wa-bubble-in .wa-text-muted { color: rgba(233,237,239,0.6); }
 
 /* ─── Date badge ─── */
 .wa-date-badge { background-color: hsl(220 18% 8%); color: rgba(233,237,239,0.9); }
 .landing-light .wa-date-badge { background-color: rgba(255,255,255,0.9); color: #54656f; box-shadow: 0 1px 0.5px rgba(11,20,26,.13); }
 
 /* ─── Document card ─── */
-.wa-doc-bg { background-color: rgba(0,0,0,0.15); }
+.wa-doc-bg { background-color: rgba(11,20,26,0.35); }
 .landing-light .wa-doc-bg { background-color: rgba(0,0,0,0.04); }
-.wa-doc-icon { background-color: rgba(18,140,126,0.1); }
+.wa-doc-icon { background-color: rgba(255,255,255,0.08); }
+.landing-light .wa-doc-icon { background-color: rgba(18,140,126,0.1); }
 .wa-doc-preview { background-color: hsl(220 18% 10%); }
 .landing-light .wa-doc-preview { background-color: #f0f2f5; }
 
