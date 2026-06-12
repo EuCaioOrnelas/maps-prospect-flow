@@ -60,18 +60,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         let blob: Blob | null = null;
         if (src.startsWith("meta_media:")) {
           setLoadingSrc(true);
-          const { data, error } = await supabase.functions.invoke("fetch-meta-media", {
-            method: "GET",
-            // @ts-ignore - functions.invoke supports query via path
-            body: undefined,
-            headers: {},
-          } as any);
-          // supabase.functions.invoke doesn't accept query params for GET cleanly; do raw fetch
-          if (!data && !error) {
-            // fall through to manual fetch
-          }
           const { data: { session } } = await supabase.auth.getSession();
-          const projectRef = (import.meta as any).env.VITE_SUPABASE_PROJECT_ID || (import.meta as any).env.VITE_SUPABASE_URL?.match(/https:\/\/(.*?)\.supabase/)?.[1];
           const baseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
           const anonKey = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
           const url = `${baseUrl}/functions/v1/fetch-meta-media?ref=${encodeURIComponent(src)}${messageId ? `&message_id=${messageId}` : ""}`;
