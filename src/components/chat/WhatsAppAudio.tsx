@@ -84,13 +84,16 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         blobUrlRef.current = objUrl;
         setPlayableSrc(objUrl);
 
-        // Decode for real waveform peaks
+        // Decode for real waveform peaks + reliable duration (ogg/opus blobs often report Infinity)
         try {
           const arrBuf = await blob.arrayBuffer();
           const Ctx = (window.AudioContext || (window as any).webkitAudioContext);
           if (Ctx) {
             const ctx = new Ctx();
             const audioBuf = await ctx.decodeAudioData(arrBuf.slice(0));
+            if (!cancelled && audioBuf.duration && isFinite(audioBuf.duration)) {
+              setDuration(audioBuf.duration);
+            }
             const channel = audioBuf.getChannelData(0);
             const samplesPerBar = Math.floor(channel.length / BAR_COUNT);
             const out: number[] = [];
@@ -107,7 +110,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
               if (rms > max) max = rms;
             }
             if (max > 0) {
-              const norm = out.map(v => 0.15 + (v / max) * 0.85);
+              const norm = out.map(v => 0.2 + (v / max) * 0.8);
               if (!cancelled) setPeaks(norm);
             }
             try { ctx.close(); } catch {}
@@ -115,6 +118,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         } catch (e) {
           // peaks decode failed — keep fallback bars
         }
+
       } catch (e) {
         if (!cancelled) setLoadError(true);
       } finally {
