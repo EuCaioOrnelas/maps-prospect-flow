@@ -263,7 +263,7 @@ export function useChat() {
           if (!muted && !isActive && typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
             try {
               const title = conv?.contact_name || conv?.contact_phone || "Nova mensagem";
-              const body = (newMsg as any).text || (newMsg.type ? `[${newMsg.type}]` : "Nova mensagem recebida");
+              const body = (newMsg as any).text || ((newMsg as any).type ? `[${(newMsg as any).type}]` : "Nova mensagem recebida");
               const n = new Notification(title, { body, icon: "/favicon.ico", tag: newMsg.conversation_id });
               n.onclick = () => { window.focus(); n.close(); };
             } catch {}
