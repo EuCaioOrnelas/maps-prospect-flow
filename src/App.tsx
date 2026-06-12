@@ -191,10 +191,10 @@ const queryClient = new QueryClient({
 });
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-white flex items-center justify-center">
+  <div className="min-h-screen bg-background flex items-center justify-center">
     <div className="flex flex-col items-center gap-4 animate-fade-in">
       <div className="h-10 w-10 rounded-full border-[3px] border-[hsl(158,72%,38%)]/20 border-t-[hsl(158,72%,38%)] animate-spin" />
-      <p className="text-sm text-[hsl(220,12%,46%)] font-medium">Carregando...</p>
+      <p className="text-sm text-muted-foreground font-medium">Carregando...</p>
     </div>
   </div>
 );
