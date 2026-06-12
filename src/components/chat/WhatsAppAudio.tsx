@@ -268,20 +268,27 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
             className="relative h-[28px] flex items-center gap-[2px] cursor-pointer select-none"
           >
             {bars.map((h, i) => {
-              const filled = i / bars.length <= progress;
+              const barStart = i / bars.length;
+              const barEnd = (i + 1) / bars.length;
+              const fillRatio = progress <= barStart ? 0 : progress >= barEnd ? 1 : (progress - barStart) / (barEnd - barStart);
+              const barH = Math.max(h * 24, 3);
               return (
                 <span
                   key={i}
-                  className={cn(
-                    "flex-1 rounded-full transition-colors",
-                    filled ? "wa-audio-bar-filled" : "wa-audio-bar"
+                  className="flex-1 relative rounded-full wa-audio-bar overflow-hidden"
+                  style={{ height: `${barH}px` }}
+                >
+                  {fillRatio > 0 && (
+                    <span
+                      className="absolute inset-y-0 left-0 rounded-full wa-audio-bar-filled"
+                      style={{ width: `${fillRatio * 100}%` }}
+                    />
                   )}
-                  style={{ height: `${Math.max(h * 24, 3)}px` }}
-                />
+                </span>
               );
             })}
             <span
-              className="absolute top-1/2 -translate-y-1/2 w-[11px] h-[11px] rounded-full bg-[#53bdeb] shadow-sm pointer-events-none"
+              className="absolute top-1/2 -translate-y-1/2 w-[11px] h-[11px] rounded-full bg-[#53bdeb] shadow-sm pointer-events-none transition-[left] duration-75 linear"
               style={{ left: `calc(${progress * 100}% - 5px)` }}
             />
           </div>
