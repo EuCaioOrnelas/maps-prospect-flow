@@ -295,6 +295,8 @@ const App = () => (
                 <Route path="/crm/score" element={<ProtectedRoute><CRMScore /></ProtectedRoute>} />
                 <Route path="/crm-coming-soon" element={<ProtectedRoute><CRMComingSoon /></ProtectedRoute>} />
                 <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+                <Route path="/chat/configuracoes" element={<ProtectedRoute><ChatSettings /></ProtectedRoute>} />
+                <Route path="/chat/configuracoes/mensagens-rapidas" element={<ProtectedRoute><ChatQuickReplies /></ProtectedRoute>} />
                 <Route path="/agents" element={<ProtectedRoute><AIAgents /></ProtectedRoute>} />
                 <Route path="/agents/reports" element={<ProtectedRoute><AgentReports /></ProtectedRoute>} />
                 <Route path="/fluxos" element={<ProtectedRoute><WhatsAppAutomations /></ProtectedRoute>} />
