@@ -304,12 +304,19 @@ function MessageActions({
         <DropdownMenuItem onClick={onReply} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Reply size={14} /> Responder
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => {
-          navigator.clipboard.writeText(msg.content || "");
-          toast.success("Mensagem copiada");
-        }} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
-          <Copy size={14} /> Copiar
-        </DropdownMenuItem>
+        {(msg.content || msg.media_caption) && (
+          <DropdownMenuItem onClick={() => {
+            navigator.clipboard.writeText(msg.content || msg.media_caption || "");
+            toast.success("Mensagem copiada");
+          }} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+            <Copy size={14} /> Copiar
+          </DropdownMenuItem>
+        )}
+        {(msg.message_type === "image" || msg.message_type === "video" || msg.message_type === "document" || msg.message_type === "audio") && msg.media_url && (
+          <DropdownMenuItem onClick={() => downloadFromUrl(msg.media_url!, msg.media_filename || undefined)} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+            <Download size={14} /> Baixar {msg.message_type === "image" ? "imagem" : msg.message_type === "video" ? "vídeo" : msg.message_type === "audio" ? "áudio" : "arquivo"}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={onForward} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Forward size={14} /> Encaminhar
         </DropdownMenuItem>
