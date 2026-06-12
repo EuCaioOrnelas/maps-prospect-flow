@@ -136,14 +136,28 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
-    const onTime = () => setCurrent(a.currentTime);
+    let raf = 0;
+    const tick = () => {
+      if (!a.paused && !a.ended) {
+        setCurrent(a.currentTime);
+        raf = requestAnimationFrame(tick);
+      }
+    };
+    const onPlay = () => { setPlaying(true); cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); };
+    const onPause = () => { setPlaying(false); cancelAnimationFrame(raf); setCurrent(a.currentTime); };
+    const onTime = () => { if (a.paused) setCurrent(a.currentTime); };
     const onDur = () => setDuration(isFinite(a.duration) ? a.duration : 0);
-    const onEnd = () => { setPlaying(false); setCurrent(0); };
+    const onEnd = () => { setPlaying(false); setCurrent(0); cancelAnimationFrame(raf); };
+    a.addEventListener("play", onPlay);
+    a.addEventListener("pause", onPause);
     a.addEventListener("timeupdate", onTime);
     a.addEventListener("loadedmetadata", onDur);
     a.addEventListener("durationchange", onDur);
     a.addEventListener("ended", onEnd);
     return () => {
+      cancelAnimationFrame(raf);
+      a.removeEventListener("play", onPlay);
+      a.removeEventListener("pause", onPause);
       a.removeEventListener("timeupdate", onTime);
       a.removeEventListener("loadedmetadata", onDur);
       a.removeEventListener("durationchange", onDur);
