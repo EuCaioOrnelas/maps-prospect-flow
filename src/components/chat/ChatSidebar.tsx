@@ -412,22 +412,23 @@ export function ChatSidebar({
                         </button>
                       )}
                     </span>
-                    <div className="shrink-0 flex items-center gap-1.5">
-                      {hasUnread && (
-                        <span className="wa-accent-bg text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
-                          {conv.unread_count}
+                    <div className="shrink-0 flex flex-col items-end gap-[3px]">
+                      <div className="flex items-center gap-1.5">
+                        {hasUnread && (
+                          <span className="wa-accent-bg text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
+                            {conv.unread_count}
+                          </span>
+                        )}
+                        <span className={cn(
+                          "text-[12px] leading-[14px]",
+                          hasUnread ? "wa-accent-text" : "wa-text-timestamp"
+                        )}>
+                          {formatTimestamp(conv.last_message_at)}
                         </span>
-                      )}
-                      <span className={cn(
-                        "text-[12px] leading-[14px]",
-                        hasUnread ? "wa-accent-text" : "wa-text-timestamp"
-                      )}>
-                        {formatTimestamp(conv.last_message_at)}
-                      </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                          <button className="p-0.5 -mr-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <ChevronDown size={18} className="wa-icon-muted" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                            <button className="p-0.5 -mr-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <ChevronDown size={18} className="wa-icon-muted" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[210px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
