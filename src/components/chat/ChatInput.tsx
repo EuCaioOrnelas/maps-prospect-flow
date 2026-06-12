@@ -509,6 +509,15 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
       {!attachments.length && (
         <div className="flex items-end gap-[6px] px-[12px] py-[6px] relative">
+          {qrOpen && (
+            <QuickReplyPicker
+              items={qrFiltered}
+              query={qrMatch || ""}
+              activeIdx={qrIdx}
+              onHover={setQrIdx}
+              onSelect={(item) => void applyQuickReply(item)}
+            />
+          )}
           {showAttach && (
             <div className="wa-attach-menu absolute bottom-[60px] left-[20px] wa-attach-bg rounded-2xl shadow-2xl border wa-border-light p-3 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <button onClick={() => imageInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
