@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 function EmojiPicker({
   className,
   ...props
-}: React.ComponentProps<typeof EmojiPickerPrimitive.Root>) {
+}: ComponentProps<typeof EmojiPickerPrimitive.Root>) {
   return (
     <EmojiPickerPrimitive.Root
       className={cn("flex flex-col isolate", className)}
@@ -32,7 +32,7 @@ function EmojiPicker({
 function EmojiPickerSearch({
   className,
   ...props
-}: React.ComponentProps<typeof EmojiPickerPrimitive.Search>) {
+}: ComponentProps<typeof EmojiPickerPrimitive.Search>) {
   return (
     <div className="flex items-center gap-2 px-3 py-1 border-b">
       <SearchIcon className="size-4 shrink-0 opacity-50" />
@@ -145,7 +145,7 @@ function EmojiPickerCategoryHeader({
   );
 }
 
-type EmojiPickerContentProps = React.ComponentProps<typeof EmojiPickerPrimitive.Viewport> & {
+type EmojiPickerContentProps = ComponentProps<typeof EmojiPickerPrimitive.Viewport> & {
   onVisibleCategoryChange?: (id: string) => void;
 };
 
