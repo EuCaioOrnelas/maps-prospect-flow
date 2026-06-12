@@ -412,8 +412,7 @@ export function ChatSidebar({
                         </button>
                       )}
                     </span>
-                    <div className="shrink-0 flex flex-col items-end gap-[3px]">
-                      <div className="flex items-center gap-1.5">
+                    <div className="shrink-0 w-[104px] flex items-center justify-end gap-1.5">
                         {hasUnread && (
                           <span className="wa-accent-bg text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
                             {conv.unread_count}
@@ -427,7 +426,7 @@ export function ChatSidebar({
                         </span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                            <button className="p-0.5 -mr-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <button className="w-[20px] h-[20px] -mr-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                               <ChevronDown size={18} className="wa-icon-muted" />
                           </button>
                         </DropdownMenuTrigger>
@@ -482,20 +481,6 @@ export function ChatSidebar({
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
-                      </div>
-                      {responsibleFilter === "all" && respShort && respColor && (
-                        <span
-                          className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[100px] border"
-                          style={{
-                            backgroundColor: `${respColor}26`,
-                            color: respColor,
-                            borderColor: `${respColor}55`,
-                          }}
-                          title={`Responsável: ${respLabel}${isMine ? " (você)" : ""}`}
-                        >
-                          <span className="truncate">{truncateText(respShort, 10)}</span>
-                        </span>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
@@ -532,11 +517,24 @@ export function ChatSidebar({
                         {getLastMessagePreview(conv)}
                       </span>
                     </div>
-                    {conv.is_pinned && (
-                      <div className="flex items-center gap-[6px] shrink-0 ml-1">
+                    <div className="shrink-0 w-[104px] ml-2 pr-[25px] flex items-center justify-end gap-[6px]">
+                      {responsibleFilter === "all" && respShort && respColor && (
+                        <span
+                          className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[79px] border"
+                          style={{
+                            backgroundColor: `${respColor}26`,
+                            color: respColor,
+                            borderColor: `${respColor}55`,
+                          }}
+                          title={`Responsável: ${respLabel}${isMine ? " (você)" : ""}`}
+                        >
+                          <span className="truncate">{truncateText(respShort, 10)}</span>
+                        </span>
+                      )}
+                      {conv.is_pinned && (
                         <Pin size={14} className="wa-icon-muted fill-current" />
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
