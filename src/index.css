@@ -1152,12 +1152,34 @@ input::placeholder, textarea::placeholder {
 
 /* ─── Chat area — WhatsApp doodle background ─── */
 .wa-chat-bg {
-  background-color: #efeae2;
+  background-color: #0a0f0c;
+  position: relative;
+}
+.wa-chat-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   background-image: var(--wa-chat-bg-pattern, none);
   background-repeat: repeat;
   background-position: center center;
   background-size: 240px auto;
+  filter: invert(1) brightness(0.18) sepia(0.5) hue-rotate(80deg) saturate(1.4);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
 }
+.wa-chat-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 70% 55% at 18% 20%, hsl(158 72% 38% / 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 65% 50% at 85% 80%, hsl(158 72% 38% / 0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, hsl(158 72% 38% / 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.wa-chat-bg > * { position: relative; z-index: 1; }
 .landing-light .wa-chat-bg {
   background-color: #efeae2;
   background-image: var(--wa-chat-bg-pattern, none);
@@ -1165,8 +1187,11 @@ input::placeholder, textarea::placeholder {
   background-position: center center;
   background-size: 240px auto;
 }
+.landing-light .wa-chat-bg::before,
+.landing-light .wa-chat-bg::after { display: none; }
 @media (max-width: 640px) {
-  .wa-chat-bg, .landing-light .wa-chat-bg { background-size: 180px auto; }
+  .landing-light .wa-chat-bg { background-size: 180px auto; }
+  .wa-chat-bg::before { background-size: 180px auto; }
 }
 
 
