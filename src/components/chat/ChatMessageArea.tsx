@@ -590,8 +590,8 @@ export function ChatMessageArea({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px]">
+              <div className="flex items-center gap-2 min-w-0">
+                <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px] max-w-[260px]" title={conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}>
                   {conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
                 </h3>
                 {!hasContactName && onSaveContactName && (
