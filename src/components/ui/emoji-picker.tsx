@@ -10,8 +10,8 @@ import {
   LoaderIcon, SearchIcon,
   Smile, Users, Dog, UtensilsCrossed, Plane, Dribbble, Lightbulb, Heart, Flag,
 } from "lucide-react";
-import { useRef, useEffect, useCallback } from "react";
-import type * as React from "react";
+import { forwardRef, useRef, useEffect, useCallback } from "react";
+import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -149,7 +149,7 @@ type EmojiPickerContentProps = React.ComponentProps<typeof EmojiPickerPrimitive.
   onVisibleCategoryChange?: (id: string) => void;
 };
 
-const EmojiPickerContent = React.forwardRef<HTMLDivElement, EmojiPickerContentProps>(function EmojiPickerContent({
+const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(function EmojiPickerContent({
   className,
   onVisibleCategoryChange,
   ...props
