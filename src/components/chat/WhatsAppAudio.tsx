@@ -260,9 +260,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
                   key={i}
                   className={cn(
                     "flex-1 rounded-full transition-colors",
-                    filled
-                      ? "bg-[#53bdeb]"
-                      : "bg-black/30 dark:bg-white/45"
+                    filled ? "wa-audio-bar-filled" : "wa-audio-bar"
                   )}
                   style={{ height: `${Math.max(h * 24, 3)}px` }}
                 />
@@ -307,17 +305,17 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         </button>
       </div>
 
-      <div className="-mx-1 -mb-1 mt-1">
+      <div className="mx-[6px] mb-[6px] mt-[4px]">
         {transcription ? (
-          <div className="text-[12px] leading-relaxed bg-black/5 dark:bg-white/10 rounded-b-[7px] px-2.5 py-1.5 wa-text-primary whitespace-pre-wrap">
-            <span className="text-[10px] uppercase tracking-wider font-semibold opacity-60 block mb-0.5">Transcrição</span>
+          <div className="wa-transcription rounded-[6px] px-[10px] py-[8px] text-[12.5px] leading-[18px] whitespace-pre-wrap">
+            <span className="wa-transcription-label text-[10px] uppercase tracking-wider font-semibold block mb-[2px]">Transcrição</span>
             {transcription}
           </div>
         ) : (
           <button
             onClick={handleTranscribe}
             disabled={transcribing}
-            className="px-2.5 py-1 flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100 transition-opacity disabled:opacity-50"
+            className="px-[8px] py-[4px] flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100 transition-opacity disabled:opacity-50"
           >
             {transcribing ? <Loader2 size={11} className="animate-spin" /> : <FileText size={11} />}
             <span>{transcribing ? "Transcrevendo..." : "Transcrever áudio"}</span>

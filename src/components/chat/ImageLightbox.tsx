@@ -96,37 +96,39 @@ export function ImageLightbox({ open, images, initialMessageId, contactName, con
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex flex-col bg-black/95 select-none"
+      className="fixed inset-0 z-[200] flex flex-col wa-lightbox-bg select-none"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* Header */}
-      <div className="h-[60px] flex items-center justify-between px-4 bg-black/40 backdrop-blur-sm shrink-0 z-10">
-        <div className="min-w-0">
-          <p className="text-white text-[15px] font-medium truncate">{contactName}</p>
-          {contactSubtitle && <p className="text-white/60 text-[12px] truncate">{contactSubtitle}</p>}
+      <div className="h-[60px] flex items-center justify-between px-4 wa-lightbox-header shrink-0 z-10">
+        <div className="flex items-center gap-3 min-w-0">
+          <button onClick={onClose} title="Fechar" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn shrink-0">
+            <X size={22} />
+          </button>
+          <div className="min-w-0">
+            <p className="text-[15px] font-medium truncate">{contactName}</p>
+            {contactSubtitle && <p className="text-[12px] truncate wa-lightbox-subtitle">{contactSubtitle}</p>}
+          </div>
         </div>
         <div className="flex items-center gap-1">
           {onReply && (
-            <button onClick={() => onReply(current)} title="Responder" className="w-10 h-10 rounded-full flex items-center justify-center text-white/85 hover:bg-white/10">
+            <button onClick={() => onReply(current)} title="Responder" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn">
               <Reply size={18} />
             </button>
           )}
           {onForward && (
-            <button onClick={() => onForward(current)} title="Encaminhar" className="w-10 h-10 rounded-full flex items-center justify-center text-white/85 hover:bg-white/10">
+            <button onClick={() => onForward(current)} title="Encaminhar" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn">
               <Forward size={18} />
             </button>
           )}
-          <button onClick={() => setScale(s => Math.max(1, s - 0.25))} title="Diminuir zoom" className="w-10 h-10 rounded-full flex items-center justify-center text-white/85 hover:bg-white/10">
+          <button onClick={() => setScale(s => Math.max(1, s - 0.25))} title="Diminuir zoom" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn">
             <ZoomOut size={18} />
           </button>
-          <button onClick={() => setScale(s => Math.min(5, s + 0.25))} title="Aumentar zoom" className="w-10 h-10 rounded-full flex items-center justify-center text-white/85 hover:bg-white/10">
+          <button onClick={() => setScale(s => Math.min(5, s + 0.25))} title="Aumentar zoom" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn">
             <ZoomIn size={18} />
           </button>
-          <button onClick={handleDownload} title="Baixar" className="w-10 h-10 rounded-full flex items-center justify-center text-white/85 hover:bg-white/10">
+          <button onClick={handleDownload} title="Baixar" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn">
             <Download size={18} />
-          </button>
-          <button onClick={onClose} title="Fechar" className="w-10 h-10 rounded-full flex items-center justify-center text-white/85 hover:bg-white/10 ml-1">
-            <X size={20} />
           </button>
         </div>
       </div>
@@ -134,12 +136,12 @@ export function ImageLightbox({ open, images, initialMessageId, contactName, con
       {/* Main image */}
       <div className="flex-1 relative overflow-hidden flex items-center justify-center" onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}>
         {index > 0 && (
-          <button onClick={() => go(-1)} className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center z-10">
+          <button onClick={() => go(-1)} className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full wa-lightbox-nav flex items-center justify-center z-10 transition-colors">
             <ChevronLeft size={28} />
           </button>
         )}
         {index < images.length - 1 && (
-          <button onClick={() => go(1)} className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center z-10">
+          <button onClick={() => go(1)} className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full wa-lightbox-nav flex items-center justify-center z-10 transition-colors">
             <ChevronRight size={28} />
           </button>
         )}
@@ -160,7 +162,7 @@ export function ImageLightbox({ open, images, initialMessageId, contactName, con
       </div>
 
       {/* Bottom thumbnail strip */}
-      <div className="h-[110px] bg-black/40 backdrop-blur-sm shrink-0 px-3 z-10">
+      <div className="h-[110px] wa-lightbox-strip shrink-0 px-3 z-10">
         <div className="h-full flex items-center gap-2 overflow-x-auto wa-scrollbar">
           {images.map((m, i) => (
             <button
@@ -168,7 +170,7 @@ export function ImageLightbox({ open, images, initialMessageId, contactName, con
               onClick={() => { setIndex(i); setScale(1); setOffset({ x: 0, y: 0 }); }}
               className={cn(
                 "shrink-0 h-[82px] w-[82px] rounded-md overflow-hidden border-2 transition-all",
-                i === index ? "border-white scale-100" : "border-transparent opacity-60 hover:opacity-100"
+                i === index ? "border-[#00a884] scale-100" : "border-transparent opacity-60 hover:opacity-100"
               )}
               title={format(parseISO(m.created_at), "dd/MM/yyyy HH:mm")}
             >

@@ -1294,12 +1294,45 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-date-badge { background-color: rgba(255,255,255,0.9); color: #54656f; box-shadow: 0 1px 0.5px rgba(11,20,26,.13); }
 
 /* ─── Document card ─── */
-.wa-doc-bg { background-color: rgba(11,20,26,0.35); }
-.landing-light .wa-doc-bg { background-color: rgba(0,0,0,0.04); }
+.wa-doc-bg { background-color: rgba(11,20,26,0.35); color: #e9edef; }
+.landing-light .wa-doc-bg { background-color: rgba(0,0,0,0.04); color: #0b1f17; }
+.wa-doc-bg .wa-text-primary { color: #e9edef !important; }
+.landing-light .wa-doc-bg .wa-text-primary { color: #0b1f17 !important; }
+.wa-doc-bg .wa-text-muted { color: rgba(233,237,239,0.6) !important; }
+.landing-light .wa-doc-bg .wa-text-muted { color: rgba(11,31,23,0.55) !important; }
 .wa-doc-icon { background-color: rgba(255,255,255,0.08); }
 .landing-light .wa-doc-icon { background-color: rgba(18,140,126,0.1); }
 .wa-doc-preview { background-color: hsl(220 18% 10%); }
 .landing-light .wa-doc-preview { background-color: #f0f2f5; }
+
+/* ─── Audio waveform bars ─── */
+.wa-audio-bar { background-color: rgba(255,255,255,0.55); }
+.landing-light .wa-audio-bar { background-color: rgba(0,0,0,0.28); }
+.wa-audio-bar-filled { background-color: #53bdeb; }
+
+/* ─── Transcription inner card ─── */
+.wa-transcription { background-color: rgba(255,255,255,0.08); color: #e9edef; }
+.landing-light .wa-transcription { background-color: rgba(0,0,0,0.05); color: #0b1f17; }
+.wa-transcription-label { color: rgba(233,237,239,0.6); }
+.landing-light .wa-transcription-label { color: rgba(11,31,23,0.55); }
+
+/* ─── Image lightbox theme-aware surfaces ─── */
+.wa-lightbox-bg { background-color: #111b21; }
+.landing-light .wa-lightbox-bg { background-color: #f0f2f5; }
+.wa-lightbox-header { background-color: #202c33; color: #e9edef; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.landing-light .wa-lightbox-header { background-color: #ffffff; color: #111b21; border-bottom: 1px solid rgba(0,0,0,0.08); }
+.wa-lightbox-strip { background-color: #202c33; border-top: 1px solid rgba(255,255,255,0.06); }
+.landing-light .wa-lightbox-strip { background-color: #ffffff; border-top: 1px solid rgba(0,0,0,0.08); }
+.wa-lightbox-btn { color: #aebac1; }
+.wa-lightbox-btn:hover { background-color: rgba(255,255,255,0.08); color: #e9edef; }
+.landing-light .wa-lightbox-btn { color: #54656f; }
+.landing-light .wa-lightbox-btn:hover { background-color: rgba(0,0,0,0.05); color: #111b21; }
+.wa-lightbox-subtitle { color: rgba(233,237,239,0.6); }
+.landing-light .wa-lightbox-subtitle { color: #667781; }
+.wa-lightbox-nav { background-color: rgba(0,0,0,0.5); color: #ffffff; }
+.wa-lightbox-nav:hover { background-color: rgba(0,0,0,0.7); }
+.landing-light .wa-lightbox-nav { background-color: rgba(255,255,255,0.95); color: #111b21; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.landing-light .wa-lightbox-nav:hover { background-color: #ffffff; }
 
 /* ─── Status icons ─── */
 .wa-status-pending { color: rgba(134,150,160,0.85); }
