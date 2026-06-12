@@ -16,6 +16,7 @@ interface SidebarNavItemProps {
   hasSubmenu?: boolean;
   isSubmenuOpen?: boolean;
   className?: string;
+  iconClassName?: string;
 }
 
 export const SidebarNavItem = ({
