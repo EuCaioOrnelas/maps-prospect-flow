@@ -21,8 +21,9 @@ function EmojiPicker({
 }: React.ComponentProps<typeof EmojiPickerPrimitive.Root>) {
   return (
     <EmojiPickerPrimitive.Root
-      className={cn("flex flex-col", className)}
-      locale="pt"
+      className={cn("flex flex-col isolate", className)}
+      locale="en"
+      columns={8}
       {...props}
     />
   );
@@ -46,29 +47,42 @@ function EmojiPickerSearch({
   );
 }
 
+// English category labels emitted by frimousse (locale="en") mapped to our identifiers
+const EN_LABEL_TO_ID: Record<string, string> = {
+  "Smileys & Emotion": "smileys",
+  "People & Body": "people",
+  "Animals & Nature": "animals",
+  "Food & Drink": "food",
+  "Travel & Places": "travel",
+  "Activities": "activities",
+  "Objects": "objects",
+  "Symbols": "symbols",
+  "Flags": "flags",
+};
+
 const CATEGORIES = [
-  { id: 0, label: "Smileys e emoções", Icon: Smile },
-  { id: 1, label: "Pessoas", Icon: Users },
-  { id: 2, label: "Animais e natureza", Icon: Dog },
-  { id: 3, label: "Comida e bebida", Icon: UtensilsCrossed },
-  { id: 4, label: "Viagens e lugares", Icon: Plane },
-  { id: 5, label: "Atividades", Icon: Dribbble },
-  { id: 6, label: "Objetos", Icon: Lightbulb },
-  { id: 7, label: "Símbolos", Icon: Heart },
-  { id: 8, label: "Bandeiras", Icon: Flag },
+  { id: "smileys", label: "Smileys e emoções", Icon: Smile },
+  { id: "people", label: "Pessoas", Icon: Users },
+  { id: "animals", label: "Animais e natureza", Icon: Dog },
+  { id: "food", label: "Comida e bebida", Icon: UtensilsCrossed },
+  { id: "travel", label: "Viagens e lugares", Icon: Plane },
+  { id: "activities", label: "Atividades", Icon: Dribbble },
+  { id: "objects", label: "Objetos", Icon: Lightbulb },
+  { id: "symbols", label: "Símbolos", Icon: Heart },
+  { id: "flags", label: "Bandeiras", Icon: Flag },
 ];
 
-function EmojiPickerCategories({ activeCategory, onCategoryClick }: { activeCategory?: number; onCategoryClick: (idx: number) => void }) {
+function EmojiPickerCategories({ activeCategoryId, onCategoryClick }: { activeCategoryId?: string; onCategoryClick: (id: string) => void }) {
   return (
     <div className="flex items-center justify-around px-1 py-0.5 border-b gap-0">
-      {CATEGORIES.map((cat, idx) => {
+      {CATEGORIES.map((cat) => {
         const Icon = cat.Icon;
-        const isActive = activeCategory === idx;
+        const isActive = activeCategoryId === cat.id;
         return (
           <button
             key={cat.id}
             title={cat.label}
-            onClick={() => onCategoryClick(idx)}
+            onClick={() => onCategoryClick(cat.id)}
             className={cn(
               "w-9 h-9 flex items-center justify-center transition-all relative",
               isActive ? "opacity-100" : "opacity-50 hover:opacity-80"
@@ -90,7 +104,7 @@ function EmojiPickerCategories({ activeCategory, onCategoryClick }: { activeCate
 
 function EmojiPickerRow({ children, ...props }: EmojiPickerListRowProps) {
   return (
-    <div className="flex" {...props}>
+    <div className="flex justify-between" {...props}>
       {children}
     </div>
   );
@@ -118,13 +132,15 @@ function EmojiPickerCategoryHeader({
   category,
   ...props
 }: EmojiPickerListCategoryHeaderProps) {
+  const id = EN_LABEL_TO_ID[category.label] || category.label;
+  const ptLabel = CATEGORIES.find(c => c.id === id)?.label || category.label;
   return (
     <div
       className="bg-background px-1 py-2 text-xs font-medium text-muted-foreground"
-      data-category-header={category.label}
+      data-category-id={id}
       {...props}
     >
-      {category.label}
+      {ptLabel}
     </div>
   );
 }
@@ -133,7 +149,7 @@ function EmojiPickerContent({
   className,
   onVisibleCategoryChange,
   ...props
-}: React.ComponentProps<typeof EmojiPickerPrimitive.Viewport> & { onVisibleCategoryChange?: (idx: number) => void }) {
+}: React.ComponentProps<typeof EmojiPickerPrimitive.Viewport> & { onVisibleCategoryChange?: (id: string) => void }) {
   const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -143,24 +159,25 @@ function EmojiPickerContent({
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            const label = (entry.target as HTMLElement).getAttribute("data-category-header");
-            if (label) {
-              const idx = CATEGORIES.findIndex(c => c.label === label);
-              if (idx >= 0) onVisibleCategoryChange(idx);
-            }
+            const id = (entry.target as HTMLElement).getAttribute("data-category-id");
+            if (id) onVisibleCategoryChange(id);
           }
         }
       },
-      { root: viewport, threshold: 0.5, rootMargin: "0px 0px -80% 0px" }
+      { root: viewport, threshold: 0.1, rootMargin: "0px 0px -80% 0px" }
     );
 
-    const timer = setTimeout(() => {
-      const headers = viewport.querySelectorAll("[data-category-header]");
+    const attach = () => {
+      const headers = viewport.querySelectorAll("[data-category-id]");
       headers.forEach(h => observer.observe(h));
-    }, 500);
+    };
+    const timer = setTimeout(attach, 300);
+    const mo = new MutationObserver(() => attach());
+    mo.observe(viewport, { childList: true, subtree: true });
 
     return () => {
       clearTimeout(timer);
+      mo.disconnect();
       observer.disconnect();
     };
   }, [onVisibleCategoryChange]);
@@ -199,4 +216,5 @@ export {
   EmojiPickerCategories,
   EmojiPickerContent,
   CATEGORIES,
+  EN_LABEL_TO_ID,
 };
