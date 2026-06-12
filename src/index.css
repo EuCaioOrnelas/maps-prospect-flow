@@ -1152,7 +1152,7 @@ input::placeholder, textarea::placeholder {
 
 /* ─── Chat area — WhatsApp doodle background ─── */
 .wa-chat-bg {
-  background-color: #0b141a;
+  background-color: #0a0f0c;
   position: relative;
 }
 .wa-chat-bg::before {
@@ -1163,9 +1163,8 @@ input::placeholder, textarea::placeholder {
   background-repeat: repeat;
   background-position: center center;
   background-size: 240px auto;
-  /* Pure black & white pattern — sem tom marrom/sépia */
-  filter: grayscale(1) brightness(0) invert(1);
-  opacity: 0.06;
+  filter: invert(1) brightness(0.18) sepia(0.5) hue-rotate(80deg) saturate(1.4);
+  opacity: 0.5;
   pointer-events: none;
   z-index: 0;
 }
@@ -1174,9 +1173,9 @@ input::placeholder, textarea::placeholder {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(ellipse 70% 55% at 18% 20%, hsl(158 72% 42% / 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 65% 50% at 85% 80%, hsl(158 72% 42% / 0.10) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 50% 50%, hsl(158 72% 42% / 0.05) 0%, transparent 70%);
+    radial-gradient(ellipse 70% 55% at 18% 20%, hsl(158 72% 38% / 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 65% 50% at 85% 80%, hsl(158 72% 38% / 0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, hsl(158 72% 38% / 0.06) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
