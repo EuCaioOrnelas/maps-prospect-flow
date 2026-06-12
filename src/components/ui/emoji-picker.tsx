@@ -10,7 +10,7 @@ import {
   LoaderIcon, SearchIcon,
   Smile, Users, Dog, UtensilsCrossed, Plane, Dribbble, Lightbulb, Heart, Flag,
 } from "lucide-react";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -145,12 +145,22 @@ function EmojiPickerCategoryHeader({
   );
 }
 
-function EmojiPickerContent({
+type EmojiPickerContentProps = React.ComponentProps<typeof EmojiPickerPrimitive.Viewport> & {
+  onVisibleCategoryChange?: (id: string) => void;
+};
+
+const EmojiPickerContent = React.forwardRef<HTMLDivElement, EmojiPickerContentProps>(function EmojiPickerContent({
   className,
   onVisibleCategoryChange,
   ...props
-}: React.ComponentProps<typeof EmojiPickerPrimitive.Viewport> & { onVisibleCategoryChange?: (id: string) => void }) {
+}, forwardedRef) {
   const viewportRef = useRef<HTMLDivElement>(null);
+
+  const setViewportRef = useCallback((node: HTMLDivElement | null) => {
+    viewportRef.current = node;
+    if (typeof forwardedRef === "function") forwardedRef(node);
+    else if (forwardedRef) forwardedRef.current = node;
+  }, [forwardedRef]);
 
   useEffect(() => {
     if (!onVisibleCategoryChange || !viewportRef.current) return;
@@ -184,7 +194,7 @@ function EmojiPickerContent({
 
   return (
     <EmojiPickerPrimitive.Viewport
-      ref={viewportRef}
+      ref={setViewportRef}
       className={cn("outline-none", className)}
       {...props}
     >
@@ -208,7 +218,7 @@ function EmojiPickerContent({
       />
     </EmojiPickerPrimitive.Viewport>
   );
-}
+});
 
 export {
   EmojiPicker,
