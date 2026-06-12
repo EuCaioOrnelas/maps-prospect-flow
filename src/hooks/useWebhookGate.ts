@@ -27,6 +27,19 @@ export function useWebhookGate() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Reload when the tab regains focus / becomes visible — keeps the gate
+  // in sync after the user configures the webhook in another tab/window.
+  useEffect(() => {
+    const onFocus = () => load();
+    const onVisibility = () => { if (document.visibilityState === "visible") load(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [load]);
+
   const pendingConnections = connections.filter((c) => !c.webhook_verified_at);
   const hasPending = pendingConnections.length > 0;
   const hasAnyConnection = connections.length > 0;
