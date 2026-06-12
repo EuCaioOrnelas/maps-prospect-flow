@@ -104,6 +104,15 @@ const Chat = () => {
     else setWebhookDialogOpen(false);
   }, [webhookGate.loading, webhookGate.blocked]);
 
+  // Request browser notification permission once for inbound messages
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission === "default") {
+      try { Notification.requestPermission().catch(() => {}); } catch {}
+    }
+  }, []);
+
+
   // ESC closes the active conversation, returning to the Wiize Chat home screen
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
