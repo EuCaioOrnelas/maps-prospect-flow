@@ -398,6 +398,9 @@ export function ChatSidebar({
                 <div className="flex-1 min-w-0 border-b wa-border-conversation py-[10px] h-full flex flex-col justify-center">
                   <div className="flex items-start justify-between gap-2 mb-[1px]">
                     <span className="text-[17px] leading-[21px] wa-text-primary truncate flex items-center gap-1.5 min-w-0 flex-1">
+                      {conv.is_muted && (
+                        <VolumeX size={14} className="wa-icon-muted shrink-0" />
+                      )}
                       <span className="truncate">{displayName}</span>
                       {!hasName && onSaveContactName && (
                         <button
@@ -409,22 +412,23 @@ export function ChatSidebar({
                         </button>
                       )}
                     </span>
-                    <div className="shrink-0 flex items-center gap-1.5">
-                      {hasUnread && (
-                        <span className="wa-accent-bg text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
-                          {conv.unread_count}
+                    <div className="shrink-0 flex flex-col items-end gap-[3px]">
+                      <div className="flex items-center gap-1.5">
+                        {hasUnread && (
+                          <span className="wa-accent-bg text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
+                            {conv.unread_count}
+                          </span>
+                        )}
+                        <span className={cn(
+                          "text-[12px] leading-[14px]",
+                          hasUnread ? "wa-accent-text" : "wa-text-timestamp"
+                        )}>
+                          {formatTimestamp(conv.last_message_at)}
                         </span>
-                      )}
-                      <span className={cn(
-                        "text-[12px] leading-[14px]",
-                        hasUnread ? "wa-accent-text" : "wa-text-timestamp"
-                      )}>
-                        {formatTimestamp(conv.last_message_at)}
-                      </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                          <button className="p-0.5 -mr-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <ChevronDown size={18} className="wa-icon-muted" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                            <button className="p-0.5 -mr-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <ChevronDown size={18} className="wa-icon-muted" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[210px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
@@ -478,6 +482,20 @@ export function ChatSidebar({
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
+                      </div>
+                      {responsibleFilter === "all" && respShort && respColor && (
+                        <span
+                          className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[100px] border"
+                          style={{
+                            backgroundColor: `${respColor}26`,
+                            color: respColor,
+                            borderColor: `${respColor}55`,
+                          }}
+                          title={`Responsável: ${respLabel}${isMine ? " (você)" : ""}`}
+                        >
+                          <span className="truncate">{truncateText(respShort, 10)}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
@@ -514,27 +532,11 @@ export function ChatSidebar({
                         {getLastMessagePreview(conv)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-[6px] shrink-0 ml-1">
-                      {conv.is_pinned && (
+                    {conv.is_pinned && (
+                      <div className="flex items-center gap-[6px] shrink-0 ml-1">
                         <Pin size={14} className="wa-icon-muted fill-current" />
-                      )}
-                      {conv.is_muted && (
-                        <VolumeX size={14} className="wa-icon-muted" />
-                      )}
-                      {responsibleFilter === "all" && respShort && respColor && (
-                        <span
-                          className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[80px] border"
-                          style={{
-                            backgroundColor: `${respColor}26`,
-                            color: respColor,
-                            borderColor: `${respColor}55`,
-                          }}
-                          title={`Responsável: ${respLabel}${isMine ? " (você)" : ""}`}
-                        >
-                          <span className="truncate">{truncateText(respShort, 10)}</span>
-                        </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
