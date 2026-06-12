@@ -1352,10 +1352,18 @@ input::placeholder, textarea::placeholder {
 
 /* Hover action button anchored at top-right of bubble (WhatsApp style) */
 .wa-bubble-action-out {
+  background: linear-gradient(225deg, #005c4b 35%, rgba(0,92,75,0.85) 70%, rgba(0,92,75,0));
+  color: #aebac1;
+}
+.wa-bubble-action-in {
+  background: linear-gradient(225deg, #202c33 35%, rgba(32,44,51,0.85) 70%, rgba(32,44,51,0));
+  color: #aebac1;
+}
+.landing-light .wa-bubble-action-out {
   background: linear-gradient(225deg, #d9fdd3 35%, rgba(217,253,211,0.85) 70%, rgba(217,253,211,0));
   color: #54656f;
 }
-.wa-bubble-action-in {
+.landing-light .wa-bubble-action-in {
   background: linear-gradient(225deg, #ffffff 35%, rgba(255,255,255,0.85) 70%, rgba(255,255,255,0));
   color: #54656f;
 }
@@ -1363,7 +1371,7 @@ input::placeholder, textarea::placeholder {
 .wa-bubble-action-in:hover,
 .wa-bubble-action-out[data-state="open"],
 .wa-bubble-action-in[data-state="open"] {
-  color: #128c7e;
+  color: #25d366;
 }
 
 .wa-icon-button {
