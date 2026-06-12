@@ -573,38 +573,48 @@ export function ChatMessageArea({
               <ArrowLeft size={22} className="wa-chat-header-icon" />
             </button>
           )}
-          <div className={cn(
-            "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-medium",
-            avatarColor
-          )}>
-            {conversation.contact_profile_pic ? (
-              <img src={conversation.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
-            ) : (
-              <span>{initials}</span>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px]">
-                {conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
-              </h3>
-              {!hasContactName && onSaveContactName && (
-                <button
-                  onClick={() => setAddContactOpen(true)}
-                  title="Salvar contato no CRM"
-                  className="shrink-0 inline-flex items-center justify-center w-[26px] h-[26px] rounded-full wa-accent-surface wa-accent-text transition-colors"
-                >
-                  <UserPlus size={14} />
-                </button>
+          <button
+            type="button"
+            onClick={() => setContactPanelOpen(true)}
+            className="flex items-center gap-[10px] flex-1 min-w-0 text-left hover:opacity-90 transition-opacity"
+            aria-label="Abrir dados do contato"
+          >
+            <div className={cn(
+              "w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-medium",
+              avatarColor
+            )}>
+              {conversation.contact_profile_pic ? (
+                <img src={conversation.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
+              ) : (
+                <span>{initials}</span>
               )}
             </div>
-            <p className="text-[13px] wa-chat-header-sub truncate leading-[18px]">
-              {conversation.last_message_at
-                ? `Último contato: ${format(parseISO(conversation.last_message_at), "dd/MM/yyyy 'às' HH:mm")}`
-                : formatPhoneDisplay(conversation.contact_phone)
-              }
-            </p>
-          </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-[16px] font-normal wa-chat-header-text truncate leading-[21px]">
+                  {conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
+                </h3>
+                {!hasContactName && onSaveContactName && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); setAddContactOpen(true); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); setAddContactOpen(true); } }}
+                    title="Salvar contato no CRM"
+                    className="shrink-0 inline-flex items-center justify-center w-[26px] h-[26px] rounded-full wa-accent-surface wa-accent-text transition-colors cursor-pointer"
+                  >
+                    <UserPlus size={14} />
+                  </span>
+                )}
+              </div>
+              <p className="text-[13px] wa-chat-header-sub truncate leading-[18px]">
+                {conversation.last_message_at
+                  ? `Último contato: ${format(parseISO(conversation.last_message_at), "dd/MM/yyyy 'às' HH:mm")}`
+                  : formatPhoneDisplay(conversation.contact_phone)
+                }
+              </p>
+            </div>
+          </button>
           <div className="flex items-center gap-[10px]">
             {/* CRM stage selector */}
             {pipelineStages.length > 0 && (() => {
