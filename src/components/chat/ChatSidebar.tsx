@@ -242,6 +242,14 @@ export function ChatSidebar({
           <div className="flex-1 min-w-0 overflow-hidden">
             {topToolbar}
           </div>
+          <button
+            onClick={() => navigate("/chat/configuracoes")}
+            className="shrink-0 p-[7px] rounded-full wa-sidebar-header-btn transition-colors border border-border/40 hover:border-primary/40"
+            title="Configurações do chat"
+            aria-label="Configurações do chat"
+          >
+            <Settings size={18} className="wa-sidebar-header-icon" />
+          </button>
           {onNewConversation && (
             <button
               onClick={() => setNewConvOpen(true)}
