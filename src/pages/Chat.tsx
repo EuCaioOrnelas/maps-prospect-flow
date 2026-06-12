@@ -100,24 +100,8 @@ const Chat = () => {
 
   useEffect(() => {
     if (webhookGate.loading) return;
-    if (!webhookGate.blocked) {
-      setWebhookDialogOpen(false);
-      return;
-    }
-    // Double-check with a fresh load before opening to avoid stale warnings
-    // right after the user finished configuring the webhook.
-    (async () => {
-      await webhookGate.reload();
-    })();
-  }, [webhookGate.loading, webhookGate.blocked, webhookGate.reload]);
-
-  // Open the dialog only after a confirmed pending state from a fresh load.
-  useEffect(() => {
-    if (!webhookGate.loading && webhookGate.blocked) {
-      setWebhookDialogOpen(true);
-    } else if (!webhookGate.blocked) {
-      setWebhookDialogOpen(false);
-    }
+    if (webhookGate.blocked) setWebhookDialogOpen(true);
+    else setWebhookDialogOpen(false);
   }, [webhookGate.loading, webhookGate.blocked]);
 
   // ESC closes the active conversation, returning to the Wiize Chat home screen
