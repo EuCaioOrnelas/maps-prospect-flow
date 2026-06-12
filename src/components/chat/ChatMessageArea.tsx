@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, useMemo } from "react";
 import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles } from "lucide-react";
 import { ConversationSummaryDialog } from "./ConversationSummaryDialog";
 import { cn } from "@/lib/utils";
+import { ContactDetailsPanel } from "./ContactDetailsPanel";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
@@ -341,6 +342,7 @@ export function ChatMessageArea({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [contactPanelOpen, setContactPanelOpen] = useState(false);
   const [pipelineStages, setPipelineStages] = useState<{ id: string; name: string; color: string | null; position: number }[]>([]);
   const [leadInfo, setLeadInfo] = useState<{ id: string; pipeline_stage_id: string | null } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -423,21 +425,7 @@ export function ChatMessageArea({
   const selectedMessages = messages.filter(m => selectedIds.has(m.id));
 
   const handleOpenContactData = async () => {
-    if (!conversation) return;
-    const cleanPhone = conversation.contact_phone.replace(/\D/g, "");
-    const last8 = cleanPhone.slice(-8);
-    const { data: existing } = await supabase
-      .from("leads")
-      .select("id")
-      .eq("user_id", accountOwnerId)
-      .ilike("phone", `%${last8}`)
-      .limit(1);
-    if (existing && existing.length > 0) {
-      navigate("/crm", { state: { openLeadId: existing[0].id } });
-    } else {
-      toast.info("Contato não está no CRM. Salve para abrir a ficha.");
-      setAddContactOpen(true);
-    }
+    setContactPanelOpen(true);
   };
 
   const handleToggleBlock = async () => {
