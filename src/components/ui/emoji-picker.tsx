@@ -47,18 +47,21 @@ function EmojiPickerSearch({
   );
 }
 
-// English category labels emitted by frimousse (locale="en") mapped to our identifiers
+// English category labels emitted by frimousse (locale="en") mapped to our identifiers.
+// Emojibase returns mixed capitalization (e.g. "People & body"), so normalize first.
 const EN_LABEL_TO_ID: Record<string, string> = {
-  "Smileys & Emotion": "smileys",
-  "People & Body": "people",
-  "Animals & Nature": "animals",
-  "Food & Drink": "food",
-  "Travel & Places": "travel",
-  "Activities": "activities",
-  "Objects": "objects",
-  "Symbols": "symbols",
-  "Flags": "flags",
+  "smileys & emotion": "smileys",
+  "people & body": "people",
+  "animals & nature": "animals",
+  "food & drink": "food",
+  "travel & places": "travel",
+  "activities": "activities",
+  "objects": "objects",
+  "symbols": "symbols",
+  "flags": "flags",
 };
+
+const getCategoryId = (label: string) => EN_LABEL_TO_ID[label.trim().toLowerCase()] || label;
 
 const CATEGORIES = [
   { id: "smileys", label: "Smileys e emoções", Icon: Smile },
@@ -132,7 +135,7 @@ function EmojiPickerCategoryHeader({
   category,
   ...props
 }: EmojiPickerListCategoryHeaderProps) {
-  const id = EN_LABEL_TO_ID[category.label] || category.label;
+  const id = getCategoryId(category.label);
   const ptLabel = CATEGORIES.find(c => c.id === id)?.label || category.label;
   return (
     <div
