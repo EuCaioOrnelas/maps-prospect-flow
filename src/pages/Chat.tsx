@@ -393,6 +393,8 @@ const Chat = () => {
                       onSaveContactName={chat.saveContactName}
                       onDeleteConversation={chat.deleteConversation}
                       onToggleBlock={chat.toggleBlock}
+                      onMarkRead={chat.markAsRead}
+                      onMarkUnread={chat.markAsUnread}
                       connectionHealth={chat.connectionHealth}
                       members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
                       currentUserId={user?.id || null}

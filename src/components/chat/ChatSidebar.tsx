@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle, UserPlus, Trash2, Ban, Settings } from "lucide-react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle, UserPlus, Trash2, Ban, Settings, CheckCheck, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,8 @@ interface ChatSidebarProps {
   onSaveContactName?: (conversationId: string, name: string) => Promise<void>;
   onDeleteConversation?: (conversationId: string) => Promise<void>;
   onToggleBlock?: (conversationId: string) => Promise<void>;
+  onMarkRead?: (conversationId: string) => Promise<void>;
+  onMarkUnread?: (conversationId: string) => Promise<void>;
   connectionHealth?: Record<string, boolean>;
   topToolbar?: React.ReactNode;
   members?: Array<{ user_id: string; name: string | null; email: string | null }>;
@@ -83,6 +85,7 @@ export function ChatSidebar({
   searchQuery, onSearchChange, connections, activeConnectionId,
   onConnectionChange, onTogglePin, onArchive, onToggleMute, loading,
   onNewConversation, onSaveContactName, onDeleteConversation, onToggleBlock,
+  onMarkRead, onMarkUnread,
   connectionHealth = {}, topToolbar, members = [], currentUserId = null, responsibleFilter = "all",
 }: ChatSidebarProps) {
   const [addContactFor, setAddContactFor] = useState<ChatConversation | null>(null);
@@ -431,6 +434,20 @@ export function ChatSidebar({
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[210px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                          {(onMarkRead || onMarkUnread) && (
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                try {
+                                  if (hasUnread && onMarkRead) { await onMarkRead(conv.id); toast.success("Marcado como lido"); }
+                                  else if (!hasUnread && onMarkUnread) { await onMarkUnread(conv.id); toast.success("Marcado como não lido"); }
+                                } catch { toast.error("Erro"); }
+                              }}
+                              className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                            >
+                              {hasUnread ? <CheckCheck size={14} /> : <Mail size={14} />}
+                              {hasUnread ? "Marcar como lido" : "Marcar como não lido"}
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onClick={() => onTogglePin(conv.id)}
                             className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
