@@ -5,14 +5,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { ArrowLeft, Zap, Clock, Sparkles, MessageSquare } from "lucide-react";
+import { ArrowLeft, Zap, Clock, Sparkles, MessageSquare, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Card = {
   id: string;
   title: string;
   description: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   route?: string;
   badge?: string;
   disabled?: boolean;
