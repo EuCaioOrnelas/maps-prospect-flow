@@ -90,6 +90,8 @@ import { ChatComingSoonGate } from "./components/chat/ChatComingSoonGate";
 const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomations"), "WhatsAppAutomations");
 const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEditor"), "WhatsAppFlowEditor");
 const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "CreateFlowAI");
+const ChatSettings = lazyWithRetry(() => import("./pages/ChatSettings"), "ChatSettings");
+const ChatQuickReplies = lazyWithRetry(() => import("./pages/ChatQuickReplies"), "ChatQuickReplies");
 
 // Meta Platforms module
 const MetaDashboard = lazyWithRetry(() => import("./pages/meta/MetaDashboard"), "MetaDashboard");
