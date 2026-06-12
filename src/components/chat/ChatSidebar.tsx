@@ -473,19 +473,6 @@ export function ChatSidebar({
                       </span>
                     </div>
                     <div className="flex items-center gap-[6px] shrink-0 ml-1">
-                      {responsibleFilter === "all" && respShort && respColor && (
-                        <span
-                          className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[80px] border"
-                          style={{
-                            backgroundColor: `${respColor}26`,
-                            color: respColor,
-                            borderColor: `${respColor}55`,
-                          }}
-                          title={`Responsável: ${respLabel}${isMine ? " (você)" : ""}`}
-                        >
-                          <span className="truncate">{truncateText(respShort, 10)}</span>
-                        </span>
-                      )}
                       {conv.is_pinned && (
                         <Pin size={14} className="wa-icon-muted fill-current" />
                       )}
