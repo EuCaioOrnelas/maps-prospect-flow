@@ -51,7 +51,7 @@ export const SidebarNavItem = ({
   const content = (
     <>
       <div className="relative shrink-0 flex items-center justify-center w-5 h-5">
-        <Icon size={20} />
+        <Icon size={20} className={iconClassName} />
         {badge}
       </div>
       {isExpanded && (
