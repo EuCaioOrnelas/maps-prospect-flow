@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle, UserPlus, Trash2, Ban } from "lucide-react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle, UserPlus, Trash2, Ban, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
@@ -85,6 +86,7 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   const [addContactFor, setAddContactFor] = useState<ChatConversation | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
+  const navigate = useNavigate();
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -240,6 +242,14 @@ export function ChatSidebar({
           <div className="flex-1 min-w-0 overflow-hidden">
             {topToolbar}
           </div>
+          <button
+            onClick={() => navigate("/chat/configuracoes")}
+            className="shrink-0 p-[7px] rounded-full wa-sidebar-header-btn transition-colors border border-border/40 hover:border-primary/40"
+            title="Configurações do chat"
+            aria-label="Configurações do chat"
+          >
+            <Settings size={18} className="wa-sidebar-header-icon" />
+          </button>
           {onNewConversation && (
             <button
               onClick={() => setNewConvOpen(true)}

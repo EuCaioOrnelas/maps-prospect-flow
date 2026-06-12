@@ -1,9 +1,12 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent } from "@/components/ui/emoji-picker";
 import { ChatMessage } from "@/hooks/useChat";
+import { useQuickReplies, applyQuickReplyVariables, type QuickReply } from "@/hooks/useQuickReplies";
+import { useQuickReplyContext } from "@/hooks/useQuickReplyContext";
+import { QuickReplyPicker } from "./QuickReplyPicker";
 
 interface ChatInputProps {
   onSendMessage: (text: string, replyToId?: string) => void;
@@ -13,6 +16,8 @@ interface ChatInputProps {
   /** External files (e.g. dropped on the message area) — preview opens automatically */
   externalFiles?: File[];
   onExternalConsumed?: () => void;
+  /** Current conversation context (for quick reply variable resolution) */
+  conversation?: { contact_name?: string | null; contact_phone?: string | null } | null;
 }
 
 interface AttachedFile {
@@ -41,7 +46,7 @@ function pickAudioMime(): { mime: string; ext: string } {
   return { mime: "audio/webm", ext: "webm" };
 }
 
-export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed }: ChatInputProps) {
+export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed, conversation }: ChatInputProps) {
   const [text, setText] = useState("");
   const [activeEmojiCategory, setActiveEmojiCategory] = useState<string>("smileys");
   const [emojiSearch, setEmojiSearch] = useState("");
@@ -53,6 +58,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformBars, setWaveformBars] = useState<number[]>([]);
+  const [qrIdx, setQrIdx] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const emojiViewportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,6 +75,22 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const audioMimeRef = useRef<{ mime: string; ext: string }>({ mime: "audio/webm", ext: "webm" });
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHoldingRef = useRef(false);
+
+  // Quick replies
+  const { items: quickReplies } = useQuickReplies();
+  const quickReplyCtx = useQuickReplyContext(conversation);
+  const qrMatch = useMemo(() => {
+    const m = text.match(/^\/([a-zA-Z0-9_\-]*)$/);
+    return m ? m[1].toLowerCase() : null;
+  }, [text]);
+  const qrFiltered = useMemo(() => {
+    if (qrMatch === null) return [];
+    if (qrMatch === "") return quickReplies.slice(0, 8);
+    return quickReplies.filter(q => q.shortcut.toLowerCase().startsWith(qrMatch)).slice(0, 8);
+  }, [qrMatch, quickReplies]);
+  const qrOpen = qrMatch !== null && qrFiltered.length > 0;
+
+  useEffect(() => { setQrIdx(0); }, [qrMatch, qrFiltered.length]);
 
   const addFiles = useCallback((files: File[]) => {
     if (!files.length) return;
@@ -128,7 +150,45 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     inputRef.current?.focus();
   }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply]);
 
+  const applyQuickReply = useCallback(async (qr: QuickReply) => {
+    const resolved = applyQuickReplyVariables(qr.content || "", quickReplyCtx);
+    // confirm before sending so the user can review
+    const preview = resolved.length > 220 ? resolved.slice(0, 220) + "…" : resolved;
+    const ok = window.confirm(
+      `Enviar mensagem rápida /${qr.shortcut}?\n\n${preview}${qr.media_url ? `\n\n[Anexo: ${qr.media_filename || qr.media_type}]` : ""}`
+    );
+    if (!ok) { setText(""); return; }
+    if (qr.media_url) {
+      try {
+        const res = await fetch(qr.media_url);
+        const blob = await res.blob();
+        const fname = qr.media_filename || `quick-reply-${qr.shortcut}`;
+        const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
+        onSendMedia(file, resolved || undefined);
+      } catch (err) {
+        console.error("[quick-reply] media fetch failed", err);
+        if (resolved.trim()) onSendMessage(resolved, replyingTo?.id);
+      }
+    } else if (resolved.trim()) {
+      onSendMessage(resolved, replyingTo?.id);
+    }
+    setText("");
+    onCancelReply?.();
+    inputRef.current?.focus();
+  }, [quickReplyCtx, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (qrOpen) {
+      if (e.key === "ArrowDown") { e.preventDefault(); setQrIdx(i => Math.min(i + 1, qrFiltered.length - 1)); return; }
+      if (e.key === "ArrowUp") { e.preventDefault(); setQrIdx(i => Math.max(i - 1, 0)); return; }
+      if (e.key === "Escape") { e.preventDefault(); setText(""); return; }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        const pick = qrFiltered[qrIdx];
+        if (pick) void applyQuickReply(pick);
+        return;
+      }
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -449,6 +509,15 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
       {!attachments.length && (
         <div className="flex items-end gap-[6px] px-[12px] py-[6px] relative">
+          {qrOpen && (
+            <QuickReplyPicker
+              items={qrFiltered}
+              query={qrMatch || ""}
+              activeIdx={qrIdx}
+              onHover={setQrIdx}
+              onSelect={(item) => void applyQuickReply(item)}
+            />
+          )}
           {showAttach && (
             <div className="wa-attach-menu absolute bottom-[60px] left-[20px] wa-attach-bg rounded-2xl shadow-2xl border wa-border-light p-3 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <button onClick={() => imageInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">

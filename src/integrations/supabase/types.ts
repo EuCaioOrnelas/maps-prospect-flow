@@ -1247,6 +1247,48 @@ export type Database = {
           },
         ]
       }
+      chat_quick_replies: {
+        Row: {
+          account_owner_id: string
+          content: string
+          created_at: string
+          created_by_user_id: string
+          id: string
+          media_filename: string | null
+          media_type: string | null
+          media_url: string | null
+          shortcut: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_owner_id: string
+          content?: string
+          created_at?: string
+          created_by_user_id: string
+          id?: string
+          media_filename?: string | null
+          media_type?: string | null
+          media_url?: string | null
+          shortcut: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_owner_id?: string
+          content?: string
+          created_at?: string
+          created_by_user_id?: string
+          id?: string
+          media_filename?: string | null
+          media_type?: string | null
+          media_url?: string | null
+          shortcut?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       checkout_leads: {
         Row: {
           address: string | null
