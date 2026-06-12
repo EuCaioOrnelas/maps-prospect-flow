@@ -459,36 +459,6 @@ export function ChatMessageArea({
     }
   };
 
-  if (!conversation) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center wa-empty-bg select-none">
-        <div className="text-center max-w-[500px] px-8">
-          <div className="mb-[28px]">
-            <img src={logoIconNew} alt="Wiize" className="w-[120px] h-[120px] mx-auto opacity-[0.12] grayscale" />
-          </div>
-          <h1 className="text-[32px] font-light wa-text-primary leading-[38px] mb-[14px]">Wiize Chat</h1>
-          <p className="text-[14px] wa-text-secondary leading-[20px]">
-            Envie e receba mensagens pelo WhatsApp Business.<br />
-            Selecione uma conversa à esquerda para começar.
-          </p>
-          <div className="mt-[48px] flex items-center justify-center gap-[6px]">
-            <svg viewBox="0 0 10 12" width="10" height="12" className="wa-icon-muted">
-              <path fill="currentColor" d="M5.002 0C3.17 0 1.684 1.486 1.684 3.318v1.316H.87a.87.87 0 0 0-.87.87v5.626a.87.87 0 0 0 .87.87h8.264a.87.87 0 0 0 .87-.87V5.504a.87.87 0 0 0-.87-.87h-.813V3.318C8.321 1.486 6.834 0 5.002 0zM3.2 3.318c0-.993.808-1.8 1.8-1.8 .994 0 1.801.807 1.801 1.8v1.316H3.2V3.318z" />
-            </svg>
-            <span className="text-[12px] wa-text-muted">Suas mensagens são protegidas com criptografia</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const avatarColor = getChatAvatarColor(conversation.contact_phone);
-  const initials = getChatInitials(conversation.contact_name, conversation.contact_phone);
-  const hasContactName = !!conversation.contact_name?.trim();
-
-  // Build a map for reply lookups
-  const messagesMap = new Map(messages.map(m => [m.id, m]));
-
   // All image messages of the conversation (used by lightbox)
   const imageMessages = useMemo(
     () => messages.filter(m => m.message_type === "image" && !!m.media_url),
@@ -524,6 +494,36 @@ export function ChatMessageArea({
     }
     return { albumHead: head, albumSkip: skip };
   }, [messages]);
+
+  if (!conversation) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center wa-empty-bg select-none">
+        <div className="text-center max-w-[500px] px-8">
+          <div className="mb-[28px]">
+            <img src={logoIconNew} alt="Wiize" className="w-[120px] h-[120px] mx-auto opacity-[0.12] grayscale" />
+          </div>
+          <h1 className="text-[32px] font-light wa-text-primary leading-[38px] mb-[14px]">Wiize Chat</h1>
+          <p className="text-[14px] wa-text-secondary leading-[20px]">
+            Envie e receba mensagens pelo WhatsApp Business.<br />
+            Selecione uma conversa à esquerda para começar.
+          </p>
+          <div className="mt-[48px] flex items-center justify-center gap-[6px]">
+            <svg viewBox="0 0 10 12" width="10" height="12" className="wa-icon-muted">
+              <path fill="currentColor" d="M5.002 0C3.17 0 1.684 1.486 1.684 3.318v1.316H.87a.87.87 0 0 0-.87.87v5.626a.87.87 0 0 0 .87.87h8.264a.87.87 0 0 0 .87-.87V5.504a.87.87 0 0 0-.87-.87h-.813V3.318C8.321 1.486 6.834 0 5.002 0zM3.2 3.318c0-.993.808-1.8 1.8-1.8 .994 0 1.801.807 1.801 1.8v1.316H3.2V3.318z" />
+            </svg>
+            <span className="text-[12px] wa-text-muted">Suas mensagens são protegidas com criptografia</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const avatarColor = getChatAvatarColor(conversation.contact_phone);
+  const initials = getChatInitials(conversation.contact_name, conversation.contact_phone);
+  const hasContactName = !!conversation.contact_name?.trim();
+
+  // Build a map for reply lookups
+  const messagesMap = new Map(messages.map(m => [m.id, m]));
 
   const handleDragEnter = (e: React.DragEvent) => {
     if (!e.dataTransfer?.types?.includes("Files")) return;
