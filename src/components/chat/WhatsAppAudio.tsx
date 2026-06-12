@@ -260,9 +260,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
                   key={i}
                   className={cn(
                     "flex-1 rounded-full transition-colors",
-                    filled
-                      ? "bg-[#53bdeb]"
-                      : "bg-black/30 dark:bg-white/45"
+                    filled ? "wa-audio-bar-filled" : "wa-audio-bar"
                   )}
                   style={{ height: `${Math.max(h * 24, 3)}px` }}
                 />
