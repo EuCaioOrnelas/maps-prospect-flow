@@ -621,31 +621,34 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             )}
             
             {/* Avisos */}
-            <li>
+            <li className="relative">
               <SidebarNavItem
                 title="Avisos"
                 icon={Bell}
                 onClick={() => setAnnouncementsOpen(true)}
                 isExpanded={isExpanded}
+                iconClassName={cn(
+                  disconnectedNumberAlerts.length > 0 && "text-amber-500 animate-pulse drop-shadow-[0_0_6px_rgba(245,158,11,0.55)]"
+                )}
                 badge={unreadAnnouncements > 0 ? (
                   <div className={cn(
-                    "absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center",
-                    disconnectedNumberAlerts.length > 0 
-                      ? "bg-destructive animate-pulse" 
+                    "absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full flex items-center justify-center ring-2 ring-sidebar",
+                    disconnectedNumberAlerts.length > 0
+                      ? "bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.7)]"
                       : "bg-primary"
                   )}>
                     <span className={cn(
-                      "text-[10px] font-bold",
-                      disconnectedNumberAlerts.length > 0 
-                        ? "text-destructive-foreground" 
+                      "text-[10px] font-bold leading-none",
+                      disconnectedNumberAlerts.length > 0
+                        ? "text-amber-950"
                         : "text-primary-foreground"
                     )}>{unreadAnnouncements}</span>
                   </div>
                 ) : undefined}
                 tooltip={disconnectedNumberAlerts.length > 0 ? (
                   <div>
-                    <p className="font-medium">⚠️ Número desconectado</p>
-                    <p className="text-xs opacity-90">{disconnectedNumberAlerts.length} número(s) precisa(m) reconectar</p>
+                    <p className="font-medium text-amber-500">⚠️ Número Meta desconectado</p>
+                    <p className="text-xs opacity-90">{disconnectedNumberAlerts.length} número(s) Meta precisa(m) reconectar</p>
                   </div>
                 ) : "Avisos"}
               />
