@@ -894,6 +894,8 @@ export function ChatMessageArea({
                                       avatarUrl={!isOutbound ? conversation.contact_profile_pic : null}
                                       avatarInitials={!isOutbound ? initials : "EU"}
                                       avatarColorClass={!isOutbound ? avatarColor : "bg-[#128c7e]"}
+                                      messageId={msg.id}
+                                      initialTranscription={(msg.metadata as any)?.transcription || null}
                                     />
                                   </div>
                                 )}
