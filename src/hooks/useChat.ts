@@ -670,6 +670,7 @@ export function useChat() {
         media_filename: m.media_filename,
         media_caption: m.media_caption,
         status: "pending",
+        metadata: { forwarded: true, forwarded_from_message_id: m.id },
       };
       const { data: inserted } = await supabase.from("chat_messages").insert(insertBody).select().single();
       if (!inserted) continue;

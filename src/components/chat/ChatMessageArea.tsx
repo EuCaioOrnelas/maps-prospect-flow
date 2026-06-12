@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState } from "react";
-import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check } from "lucide-react";
+import { useRef, useEffect, useState, useMemo } from "react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
@@ -7,6 +7,7 @@ import { ChatInput } from "./ChatInput";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { AddContactDialog } from "./AddContactDialog";
 import { ForwardDialog } from "./ForwardDialog";
+import { ImageLightbox, downloadFromUrl } from "./ImageLightbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -112,11 +113,26 @@ function DateDivider({ date }: { date: Date }) {
   );
 }
 
-function MediaPreview({ msg }: { msg: ChatMessage }) {
+function MediaPreview({ msg, onOpenImage, onQuickForward }: { msg: ChatMessage; onOpenImage?: (m: ChatMessage) => void; onQuickForward?: (m: ChatMessage) => void }) {
   if (msg.message_type === "image") {
     return (
-      <div className="rounded-[6px] overflow-hidden mb-[3px] max-w-[330px]">
-        <img src={msg.media_url || ""} alt={msg.media_caption || "Imagem"} className="w-full max-h-[330px] object-cover cursor-pointer" loading="lazy" />
+      <div className="relative rounded-[6px] overflow-hidden mb-[3px] max-w-[330px] group/img">
+        <img
+          src={msg.media_url || ""}
+          alt={msg.media_caption || "Imagem"}
+          className="w-full max-h-[330px] object-cover cursor-zoom-in"
+          loading="lazy"
+          onClick={() => onOpenImage?.(msg)}
+        />
+        {onQuickForward && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onQuickForward(msg); }}
+            title="Encaminhar"
+            className="absolute top-1.5 left-1.5 w-8 h-8 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
+          >
+            <Forward size={15} />
+          </button>
+        )}
         {msg.media_caption && <p className="text-[14.2px] wa-text-primary mt-[4px] px-[2px] leading-[19px]">{msg.media_caption}</p>}
       </div>
     );
@@ -134,19 +150,53 @@ function MediaPreview({ msg }: { msg: ChatMessage }) {
   }
   if (msg.message_type === "document") {
     return (
-      <a href={msg.media_url || "#"} target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-[10px] wa-doc-bg rounded-[8px] p-[10px] mb-[3px] max-w-[330px] group/doc">
+      <button
+        type="button"
+        onClick={() => downloadFromUrl(msg.media_url || "", msg.media_filename || undefined)}
+        className="flex items-center gap-[10px] wa-doc-bg rounded-[8px] p-[10px] mb-[3px] max-w-[330px] w-full text-left hover:opacity-90 transition-opacity"
+      >
         <div className="h-[40px] w-[40px] rounded-[4px] wa-doc-icon flex items-center justify-center shrink-0">
           <svg viewBox="0 0 37 40" width="28" height="30"><path fill="#aaa" d="M22.94 0H5.63C2.52 0 0 2.52 0 5.63v28.74c0 3.11 2.52 5.63 5.63 5.63h25.74c3.11 0 5.63-2.52 5.63-5.63V14.06L22.94 0z" /><path fill="#ccc" d="M37 14.06h-8.43c-3.11 0-5.63-2.52-5.63-5.63V0L37 14.06z" /></svg>
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[13.6px] wa-text-primary truncate leading-[18px]">{msg.media_filename || "Documento"}</p>
-          <p className="text-[11px] wa-text-muted mt-[2px]">{msg.media_mime_type || "arquivo"}</p>
+          <p className="text-[11px] wa-text-muted mt-[2px]">{msg.media_mime_type || "arquivo"} · clique para baixar</p>
         </div>
-      </a>
+        <Download size={16} className="wa-text-muted shrink-0" />
+      </button>
     );
   }
   return null;
+}
+
+// Album grid for 4+ consecutive image messages from same author
+function ImageAlbumGrid({ msgs, onOpenImage, onQuickForward }: { msgs: ChatMessage[]; onOpenImage: (m: ChatMessage) => void; onQuickForward: (m: ChatMessage) => void }) {
+  const visible = msgs.slice(0, 4);
+  const extra = msgs.length - visible.length;
+  return (
+    <div className="grid grid-cols-2 gap-[3px] rounded-[6px] overflow-hidden max-w-[330px] mb-[3px] group/album">
+      {visible.map((m, i) => {
+        const isLast = i === visible.length - 1 && extra > 0;
+        return (
+          <div key={m.id} className="relative aspect-square overflow-hidden group/cell">
+            <img src={m.media_url || ""} alt="" className="w-full h-full object-cover cursor-zoom-in" loading="lazy" onClick={() => onOpenImage(m)} />
+            {isLast && (
+              <div onClick={() => onOpenImage(visible[0])} className="absolute inset-0 bg-black/55 flex items-center justify-center text-white text-[28px] font-light cursor-pointer">
+                +{extra}
+              </div>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); onQuickForward(m); }}
+              title="Encaminhar"
+              className="absolute top-1 left-1 w-7 h-7 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-opacity"
+            >
+              <Forward size={13} />
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function OutboundTail() {
@@ -254,12 +304,19 @@ function MessageActions({
         <DropdownMenuItem onClick={onReply} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Reply size={14} /> Responder
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => {
-          navigator.clipboard.writeText(msg.content || "");
-          toast.success("Mensagem copiada");
-        }} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
-          <Copy size={14} /> Copiar
-        </DropdownMenuItem>
+        {(msg.content || msg.media_caption) && (
+          <DropdownMenuItem onClick={() => {
+            navigator.clipboard.writeText(msg.content || msg.media_caption || "");
+            toast.success("Mensagem copiada");
+          }} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+            <Copy size={14} /> Copiar
+          </DropdownMenuItem>
+        )}
+        {(msg.message_type === "image" || msg.message_type === "video" || msg.message_type === "document" || msg.message_type === "audio") && msg.media_url && (
+          <DropdownMenuItem onClick={() => downloadFromUrl(msg.media_url!, msg.media_filename || undefined)} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+            <Download size={14} /> Baixar {msg.message_type === "image" ? "imagem" : msg.message_type === "video" ? "vídeo" : msg.message_type === "audio" ? "áudio" : "arquivo"}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={onForward} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Forward size={14} /> Encaminhar
         </DropdownMenuItem>
@@ -286,6 +343,7 @@ export function ChatMessageArea({
   const [leadInfo, setLeadInfo] = useState<{ id: string; pipeline_stage_id: string | null } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
+  const [lightboxOpenId, setLightboxOpenId] = useState<string | null>(null);
   const dragCounterRef = useRef(0);
   const navigate = useNavigate();
   const { accountOwnerId } = useAuth();
@@ -430,6 +488,42 @@ export function ChatMessageArea({
 
   // Build a map for reply lookups
   const messagesMap = new Map(messages.map(m => [m.id, m]));
+
+  // All image messages of the conversation (used by lightbox)
+  const imageMessages = useMemo(
+    () => messages.filter(m => m.message_type === "image" && !!m.media_url),
+    [messages]
+  );
+
+  // Group 4+ consecutive image messages from same author (gap < 10 min) into an album
+  const { albumHead, albumSkip } = useMemo(() => {
+    const head = new Map<string, ChatMessage[]>();
+    const skip = new Set<string>();
+    let i = 0;
+    while (i < messages.length) {
+      const m = messages[i];
+      if (m.message_type !== "image" || !m.media_url) { i++; continue; }
+      let j = i + 1;
+      const group: ChatMessage[] = [m];
+      while (j < messages.length) {
+        const n = messages[j];
+        if (n.message_type !== "image" || !n.media_url) break;
+        if (n.direction !== m.direction) break;
+        const gapMin = (new Date(n.created_at).getTime() - new Date(group[group.length - 1].created_at).getTime()) / 60000;
+        if (gapMin > 10) break;
+        group.push(n);
+        j++;
+      }
+      if (group.length >= 4) {
+        head.set(m.id, group);
+        for (let k = 1; k < group.length; k++) skip.add(group[k].id);
+        i = j;
+      } else {
+        i++;
+      }
+    }
+    return { albumHead: head, albumSkip: skip };
+  }, [messages]);
 
   const handleDragEnter = (e: React.DragEvent) => {
     if (!e.dataTransfer?.types?.includes("Files")) return;
@@ -722,15 +816,22 @@ export function ChatMessageArea({
               ) : (
                 <>
                   {messages.map((msg, idx) => {
+                    if (albumSkip.has(msg.id)) return null;
+                    const album = albumHead.get(msg.id) || null;
                     const prevMsg = idx > 0 ? messages[idx - 1] : null;
                     const showDate = !prevMsg || !isSameDay(parseISO(msg.created_at), parseISO(prevMsg.created_at));
                     const isOutbound = msg.direction === "outbound";
-                    const isSameAuthorAsPrev = prevMsg && prevMsg.direction === msg.direction && !showDate;
+                    const isSameAuthorAsPrev = prevMsg && prevMsg.direction === msg.direction && !showDate && !albumHead.has(prevMsg.id);
                     const showTail = !isSameAuthorAsPrev;
                     const replyMsg = msg.reply_to_message_id ? messagesMap.get(msg.reply_to_message_id) : undefined;
+                    const isForwarded = !!(msg.metadata as any)?.forwarded;
 
                     const isSelected = selectedIds.has(msg.id);
                     const rowClickable = selectionMode;
+
+                    const openImage = (m: ChatMessage) => setLightboxOpenId(m.id);
+                    const quickForward = (m: ChatMessage) => startForwardFromMessage(m);
+
                     return (
                       <div key={msg.id}>
                         {showDate && <DateDivider date={parseISO(msg.created_at)} />}
@@ -743,7 +844,6 @@ export function ChatMessageArea({
                           )}
                           onClick={rowClickable ? () => toggleSelect(msg.id) : undefined}
                         >
-                          {/* Checkbox on the left during selection */}
                           {selectionMode && (
                             <div className="shrink-0 mr-2 w-[22px] h-[22px] flex items-center justify-center">
                               <span className={cn(
@@ -755,7 +855,6 @@ export function ChatMessageArea({
                             </div>
                           )}
 
-                          {/* Bubble container — actions live INSIDE at top-right */}
                           <div className={cn(
                             "flex-1 flex items-start gap-1",
                             isOutbound ? "justify-end" : "justify-start",
@@ -780,6 +879,12 @@ export function ChatMessageArea({
                                     onForward={() => startForwardFromMessage(msg)}
                                   />
                                 )}
+                                {isForwarded && (
+                                  <div className="flex items-center gap-1 px-[10px] pt-[6px] -mb-[2px] wa-text-muted">
+                                    <Forward size={12} className="rotate-180 scale-x-[-1]" />
+                                    <span className="text-[12px] italic">Encaminhada</span>
+                                  </div>
+                                )}
                                 {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
                                 {msg.message_type === "audio" && (
                                   <div className="p-[3px]">
@@ -792,8 +897,12 @@ export function ChatMessageArea({
                                     />
                                   </div>
                                 )}
-                                {msg.message_type !== "text" && msg.message_type !== "audio" && (
-                                  <div className="p-[3px]"><MediaPreview msg={msg} /></div>
+                                {album ? (
+                                  <div className="p-[3px]">
+                                    <ImageAlbumGrid msgs={album} onOpenImage={openImage} onQuickForward={quickForward} />
+                                  </div>
+                                ) : (msg.message_type !== "text" && msg.message_type !== "audio") && (
+                                  <div className="p-[3px]"><MediaPreview msg={msg} onOpenImage={openImage} onQuickForward={quickForward} /></div>
                                 )}
                                 {msg.content && msg.message_type === "text" && (
                                   <div className="px-[9px] pt-[6px] pb-[8px] pr-[36px]">
@@ -877,6 +986,19 @@ export function ChatMessageArea({
       {showSearch && (
         <SearchMessagesBar messages={messages} onClose={() => setShowSearch(false)} />
       )}
+
+      {/* Image lightbox */}
+      <ImageLightbox
+        open={!!lightboxOpenId}
+        images={imageMessages}
+        initialMessageId={lightboxOpenId}
+        contactName={conversation.contact_name || formatPhoneDisplay(conversation.contact_phone)}
+        contactSubtitle={conversation.last_message_at ? `Último contato: ${format(parseISO(conversation.last_message_at), "dd/MM/yyyy 'às' HH:mm")}` : undefined}
+        onClose={() => setLightboxOpenId(null)}
+        onReply={(m) => { setLightboxOpenId(null); setReplyingTo(m); }}
+        onForward={(m) => { setLightboxOpenId(null); startForwardFromMessage(m); }}
+      />
+
 
       {/* Add / Save contact to CRM */}
       {onSaveContactName && (
