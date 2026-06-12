@@ -153,14 +153,30 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
 
   useEffect(() => { if (audioRef.current) audioRef.current.playbackRate = speed; }, [speed]);
 
-  const toggle = () => {
+  const toggle = async () => {
     const a = audioRef.current;
     if (!a || !playableSrc) {
       if (loadError) toast.error("Não foi possível carregar o áudio");
       return;
     }
-    if (playing) { a.pause(); setPlaying(false); }
-    else { a.play().then(() => setPlaying(true)).catch((err) => { console.error("audio play", err); toast.error("Erro ao reproduzir áudio"); }); }
+    if (playing) { a.pause(); setPlaying(false); return; }
+    try {
+      // Workaround: some webm/ogg blobs report duration=Infinity until you seek to the end
+      if (!isFinite(a.duration) || a.duration === 0) {
+        await new Promise<void>((resolve) => {
+          const onLoaded = () => { a.removeEventListener("durationchange", onLoaded); resolve(); };
+          a.addEventListener("durationchange", onLoaded);
+          try { a.currentTime = 1e101; } catch {}
+          setTimeout(() => { a.removeEventListener("durationchange", onLoaded); resolve(); }, 800);
+        });
+        try { a.currentTime = 0; } catch {}
+      }
+      await a.play();
+      setPlaying(true);
+    } catch (err) {
+      console.error("audio play", err);
+      toast.error("Erro ao reproduzir áudio");
+    }
   };
 
   const cycleSpeed = () => {
