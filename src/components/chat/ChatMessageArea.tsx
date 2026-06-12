@@ -113,11 +113,26 @@ function DateDivider({ date }: { date: Date }) {
   );
 }
 
-function MediaPreview({ msg }: { msg: ChatMessage }) {
+function MediaPreview({ msg, onOpenImage, onQuickForward }: { msg: ChatMessage; onOpenImage?: (m: ChatMessage) => void; onQuickForward?: (m: ChatMessage) => void }) {
   if (msg.message_type === "image") {
     return (
-      <div className="rounded-[6px] overflow-hidden mb-[3px] max-w-[330px]">
-        <img src={msg.media_url || ""} alt={msg.media_caption || "Imagem"} className="w-full max-h-[330px] object-cover cursor-pointer" loading="lazy" />
+      <div className="relative rounded-[6px] overflow-hidden mb-[3px] max-w-[330px] group/img">
+        <img
+          src={msg.media_url || ""}
+          alt={msg.media_caption || "Imagem"}
+          className="w-full max-h-[330px] object-cover cursor-zoom-in"
+          loading="lazy"
+          onClick={() => onOpenImage?.(msg)}
+        />
+        {onQuickForward && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onQuickForward(msg); }}
+            title="Encaminhar"
+            className="absolute top-1.5 left-1.5 w-8 h-8 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
+          >
+            <Forward size={15} />
+          </button>
+        )}
         {msg.media_caption && <p className="text-[14.2px] wa-text-primary mt-[4px] px-[2px] leading-[19px]">{msg.media_caption}</p>}
       </div>
     );
@@ -135,19 +150,53 @@ function MediaPreview({ msg }: { msg: ChatMessage }) {
   }
   if (msg.message_type === "document") {
     return (
-      <a href={msg.media_url || "#"} target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-[10px] wa-doc-bg rounded-[8px] p-[10px] mb-[3px] max-w-[330px] group/doc">
+      <button
+        type="button"
+        onClick={() => downloadFromUrl(msg.media_url || "", msg.media_filename || undefined)}
+        className="flex items-center gap-[10px] wa-doc-bg rounded-[8px] p-[10px] mb-[3px] max-w-[330px] w-full text-left hover:opacity-90 transition-opacity"
+      >
         <div className="h-[40px] w-[40px] rounded-[4px] wa-doc-icon flex items-center justify-center shrink-0">
           <svg viewBox="0 0 37 40" width="28" height="30"><path fill="#aaa" d="M22.94 0H5.63C2.52 0 0 2.52 0 5.63v28.74c0 3.11 2.52 5.63 5.63 5.63h25.74c3.11 0 5.63-2.52 5.63-5.63V14.06L22.94 0z" /><path fill="#ccc" d="M37 14.06h-8.43c-3.11 0-5.63-2.52-5.63-5.63V0L37 14.06z" /></svg>
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[13.6px] wa-text-primary truncate leading-[18px]">{msg.media_filename || "Documento"}</p>
-          <p className="text-[11px] wa-text-muted mt-[2px]">{msg.media_mime_type || "arquivo"}</p>
+          <p className="text-[11px] wa-text-muted mt-[2px]">{msg.media_mime_type || "arquivo"} · clique para baixar</p>
         </div>
-      </a>
+        <Download size={16} className="wa-text-muted shrink-0" />
+      </button>
     );
   }
   return null;
+}
+
+// Album grid for 4+ consecutive image messages from same author
+function ImageAlbumGrid({ msgs, onOpenImage, onQuickForward }: { msgs: ChatMessage[]; onOpenImage: (m: ChatMessage) => void; onQuickForward: (m: ChatMessage) => void }) {
+  const visible = msgs.slice(0, 4);
+  const extra = msgs.length - visible.length;
+  return (
+    <div className="grid grid-cols-2 gap-[3px] rounded-[6px] overflow-hidden max-w-[330px] mb-[3px] group/album">
+      {visible.map((m, i) => {
+        const isLast = i === visible.length - 1 && extra > 0;
+        return (
+          <div key={m.id} className="relative aspect-square overflow-hidden group/cell">
+            <img src={m.media_url || ""} alt="" className="w-full h-full object-cover cursor-zoom-in" loading="lazy" onClick={() => onOpenImage(m)} />
+            {isLast && (
+              <div onClick={() => onOpenImage(visible[0])} className="absolute inset-0 bg-black/55 flex items-center justify-center text-white text-[28px] font-light cursor-pointer">
+                +{extra}
+              </div>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); onQuickForward(m); }}
+              title="Encaminhar"
+              className="absolute top-1 left-1 w-7 h-7 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-opacity"
+            >
+              <Forward size={13} />
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function OutboundTail() {
