@@ -515,6 +515,12 @@ export function ChatSidebar({
                       </span>
                     </div>
                     <div className="flex items-center gap-[6px] shrink-0 ml-1">
+                      {conv.is_pinned && (
+                        <Pin size={14} className="wa-icon-muted fill-current" />
+                      )}
+                      {conv.is_muted && (
+                        <VolumeX size={14} className="wa-icon-muted" />
+                      )}
                       {responsibleFilter === "all" && respShort && respColor && (
                         <span
                           className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[80px] border"
@@ -528,69 +534,6 @@ export function ChatSidebar({
                           <span className="truncate">{truncateText(respShort, 10)}</span>
                         </span>
                       )}
-                      {conv.is_pinned && (
-                        <Pin size={14} className="wa-icon-muted fill-current" />
-                      )}
-                      {conv.is_muted && (
-                        <VolumeX size={14} className="wa-icon-muted" />
-                      )}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                          <button className="p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <ChevronDown size={18} className="wa-icon-muted" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[210px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
-                          <DropdownMenuItem
-                            onClick={() => onTogglePin(conv.id)}
-                            className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
-                          >
-                            <Pin size={14} />
-                            {conv.is_pinned ? "Desafixar conversa" : "Fixar conversa"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onToggleMute(conv.id)}
-                            className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
-                          >
-                            <VolumeX size={14} />
-                            {conv.is_muted ? "Ativar notificações" : "Silenciar notificações"}
-                          </DropdownMenuItem>
-                          {onToggleBlock && (
-                            <DropdownMenuItem
-                              onClick={async () => {
-                                try {
-                                  await onToggleBlock(conv.id);
-                                  toast.success((conv as any).is_blocked ? "Desbloqueado" : "Bloqueado");
-                                } catch { toast.error("Erro"); }
-                              }}
-                              className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
-                            >
-                              <Ban size={14} />
-                              {(conv as any).is_blocked ? "Desbloquear" : "Bloquear"}
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            onClick={() => onArchive(conv.id)}
-                            className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
-                            Arquivar conversa
-                          </DropdownMenuItem>
-                          {onDeleteConversation && (
-                            <DropdownMenuItem
-                              onClick={async () => {
-                                if (!confirm("Apagar esta conversa? Esta ação não pode ser desfeita.")) return;
-                                try { await onDeleteConversation(conv.id); toast.success("Conversa apagada"); }
-                                catch { toast.error("Erro ao apagar"); }
-                              }}
-                              className="wa-dropdown-item-destructive flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
-                            >
-                              <Trash2 size={14} />
-                              Apagar conversa
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
                   </div>
                 </div>
