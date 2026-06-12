@@ -317,7 +317,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
           <button
             onClick={handleTranscribe}
             disabled={transcribing}
-            className="flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100 transition-opacity disabled:opacity-50"
+            className="px-2.5 py-1 flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100 transition-opacity disabled:opacity-50"
           >
             {transcribing ? <Loader2 size={11} className="animate-spin" /> : <FileText size={11} />}
             <span>{transcribing ? "Transcrevendo..." : "Transcrever áudio"}</span>
