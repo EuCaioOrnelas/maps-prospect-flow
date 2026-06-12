@@ -258,11 +258,13 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
               return (
                 <span
                   key={i}
-                  className="flex-1 rounded-full transition-colors"
-                  style={{
-                    height: `${Math.max(h * 24, 3)}px`,
-                    backgroundColor: filled ? "#53bdeb" : "rgba(0,0,0,0.22)",
-                  }}
+                  className={cn(
+                    "flex-1 rounded-full transition-colors",
+                    filled
+                      ? "bg-[#53bdeb]"
+                      : "bg-black/30 dark:bg-white/45"
+                  )}
+                  style={{ height: `${Math.max(h * 24, 3)}px` }}
                 />
               );
             })}
