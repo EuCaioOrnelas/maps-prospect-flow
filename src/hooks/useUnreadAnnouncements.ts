@@ -81,7 +81,7 @@ export const useUnreadAnnouncements = () => {
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'whatsapp_numbers', filter: `user_id=eq.${user.id}` },
+        { event: '*', schema: 'public', table: 'user_waba_connections', filter: `user_id=eq.${user.id}` },
         () => fetchData()
       )
       .subscribe();
