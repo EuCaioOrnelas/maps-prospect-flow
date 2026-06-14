@@ -77,6 +77,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformBars, setWaveformBars] = useState<number[]>([]);
   const [qrIdx, setQrIdx] = useState(0);
+  const [confirmQr, setConfirmQr] = useState<QuickReply | null>(null);
+  const [confirmPreview, setConfirmPreview] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const emojiViewportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
