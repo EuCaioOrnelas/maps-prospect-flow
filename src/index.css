@@ -1480,6 +1480,10 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); }
 .landing-light .wa-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(0,0,0,0.25); }
 
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* ─── Scrollbar thin (sidebar, panels) ─── */
 .scrollbar-thin::-webkit-scrollbar { width: 3px; }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }

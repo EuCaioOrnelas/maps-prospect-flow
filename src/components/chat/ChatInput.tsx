@@ -540,18 +540,19 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
       )}
 
       {!attachments.length && quickReplies.length > 0 && !qrOpen && (
-        <div className="px-[12px] pt-[6px] pb-[2px]">
-          <div className="flex gap-1.5 overflow-x-auto pb-1.5 wa-scrollbar -mx-0.5 px-0.5">
+        <div className="relative">
+          <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background/90 to-transparent pointer-events-none z-10" />
+          <div className="flex gap-2 overflow-x-auto px-3 py-2 no-scrollbar scroll-smooth snap-x snap-mandatory">
             {quickReplies.map((qr) => (
               <button
                 key={qr.id}
                 type="button"
                 onClick={() => void applyQuickReply(qr)}
                 title={qr.title || qr.shortcut}
-                className="shrink-0 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border wa-border-light bg-background/60 hover:bg-primary/10 hover:border-primary/40 transition-colors"
+                className="shrink-0 snap-start inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-border bg-card/70 hover:bg-primary/10 hover:border-primary/40 transition-colors shadow-sm"
               >
-                <MessageSquareText size={12} className="text-primary shrink-0" />
-                <span className="text-[11px] font-medium wa-text-primary whitespace-nowrap max-w-[140px] truncate">
+                <MessageSquareText size={13} className="text-primary shrink-0" />
+                <span className="text-[12px] font-medium text-foreground whitespace-nowrap max-w-[140px] truncate">
                   {qr.title || qr.shortcut}
                 </span>
               </button>
