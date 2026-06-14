@@ -726,6 +726,75 @@ export function WAFlowTestDialog({
     }
   };
 
+  const normalizePhone = (raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    if (!digits) return "";
+    return digits.startsWith("55") ? digits : `55${digits}`;
+  };
+
+  const handleSendReal = useCallback(async () => {
+    if (!user?.id) {
+      toast.error("Você precisa estar logado.");
+      return;
+    }
+    if (!flowId) {
+      toast.error("Salve o fluxo antes de testar com um número real.");
+      return;
+    }
+    const phone = normalizePhone(realPhone);
+    if (phone.length < 12) {
+      toast.error("Informe um número válido com DDD (ex.: 44 99123-6180).");
+      return;
+    }
+    const text = realMessage.trim() || "Oi";
+    setIsSendingReal(true);
+    try {
+      const { error } = await supabase.functions.invoke("wa-flow-runner", {
+        body: {
+          user_id: user.id,
+          lead_phone: phone,
+          incoming_text: text,
+          source: "meta",
+          test_mode: true,
+          target_flow_id: flowId,
+        },
+      });
+      if (error) throw error;
+      toast.success(`Mensagem enviada para +${phone}`);
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao enviar para o WhatsApp");
+    } finally {
+      setIsSendingReal(false);
+    }
+  }, [flowId, realMessage, realPhone, user?.id]);
+
+  const handleResetReal = useCallback(async () => {
+    if (!user?.id) return;
+    const phone = normalizePhone(realPhone);
+    if (phone.length < 12) {
+      toast.error("Informe o número antes de resetar.");
+      return;
+    }
+    setIsResettingReal(true);
+    try {
+      const last8 = phone.slice(-8);
+      const query = supabase
+        .from("wa_flow_executions")
+        .update({ status: "abandoned", completed_at: new Date().toISOString() })
+        .eq("user_id", user.id)
+        .in("status", ["active", "waiting", "paused"])
+        .like("lead_phone", `%${last8}`);
+      const { error } = flowId ? await query.eq("flow_id", flowId) : await query;
+      if (error) throw error;
+      toast.success("Execuções resetadas. Pode testar de novo.");
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao resetar execuções");
+    } finally {
+      setIsResettingReal(false);
+    }
+  }, [flowId, realPhone, user?.id]);
+
+
   const hasFlow = nodes.length > 0;
   const savedVars = runtimeRef.current.variables;
   const varCount = Object.keys(savedVars).length;
