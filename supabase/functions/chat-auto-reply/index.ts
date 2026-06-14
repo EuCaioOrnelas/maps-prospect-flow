@@ -160,7 +160,7 @@ serve(async (req) => {
       waba_message_id: wabaMsgId ?? null,
       direction: "outbound",
       message_type: "text",
-      content: cfg.message,
+      content: resolvedMessage,
       status: metaRes.ok ? "sent" : "failed",
       status_updated_at: new Date().toISOString(),
       metadata: { auto_reply: true },
