@@ -847,9 +847,10 @@ export function ChatMessageArea({
                             selectionMode && !isOutbound && "pl-2"
                           )}>
                             <div className={cn(
-                              "relative max-w-[80%] sm:max-w-[70%] lg:max-w-[65%] w-fit",
+                              "relative max-w-[65%] w-fit",
                               isOutbound ? "mr-[8px]" : "ml-[8px]"
                             )}>
+
                               {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
                               <div className={cn(
                                 "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative overflow-hidden",
