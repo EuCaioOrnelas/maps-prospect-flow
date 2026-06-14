@@ -1130,9 +1130,21 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
               />
               <div className="max-h-[180px] overflow-y-auto space-y-1 mt-1">
                 {filteredReopenTemplates.length === 0 && (
-                  <p className="text-[10px] text-muted-foreground py-2 text-center">
-                    {templateSearch ? "Nenhum template encontrado" : "Nenhum template aprovado disponível"}
-                  </p>
+                  <div className="py-3 flex flex-col items-center gap-2">
+                    <p className="text-[10px] text-muted-foreground text-center">
+                      {templateSearch ? "Nenhum template encontrado" : "Nenhum template aprovado disponível"}
+                    </p>
+                    {!templateSearch && wabaConn?.waba_id && (
+                      <a
+                        href={`https://business.facebook.com/wa/manage/message-templates/?waba_id=${wabaConn.waba_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        Criar template na Meta →
+                      </a>
+                    )}
+                  </div>
                 )}
                 {filteredReopenTemplates.map((t: any) => (
                   <button
