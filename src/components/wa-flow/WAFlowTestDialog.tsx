@@ -739,41 +739,66 @@ export function WAFlowTestDialog({
     return digits.startsWith("55") ? digits : `55${digits}`;
   };
 
-  const handleSendReal = useCallback(async () => {
-    if (!user?.id) {
-      toast.error("Você precisa estar logado.");
-      return;
-    }
+  // Load current test_mode + test_phone from the flow whenever the dialog opens.
+  useEffect(() => {
+    if (!open || !flowId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("wa_automation_flows")
+        .select("test_mode, test_phone")
+        .eq("id", flowId)
+        .maybeSingle();
+      if (cancelled) return;
+      setTestEnabled(!!data?.test_mode);
+      setRealPhone(data?.test_phone || "");
+      setLoadedTestState(true);
+    })();
+    return () => { cancelled = true; };
+  }, [open, flowId]);
+
+  const handleToggleTest = useCallback(async (next: boolean) => {
     if (!flowId) {
-      toast.error("Salve o fluxo antes de testar com um número real.");
+      toast.error("Salve o fluxo antes de ativar o modo de teste.");
       return;
     }
-    const phone = normalizePhone(realPhone);
-    if (phone.length < 12) {
-      toast.error("Informe um número válido com DDD (ex.: 44 99123-6180).");
-      return;
+    if (next) {
+      const phone = normalizePhone(realPhone);
+      if (phone.length < 12) {
+        toast.error("Informe um número válido com DDD (ex.: 44 99123-6180).");
+        return;
+      }
+      setIsTogglingTest(true);
+      try {
+        const { error } = await supabase
+          .from("wa_automation_flows")
+          .update({ test_mode: true, test_phone: phone })
+          .eq("id", flowId);
+        if (error) throw error;
+        setTestEnabled(true);
+        toast.success(`Modo teste ativado para +${phone}. Mande mensagem para o seu WhatsApp conectado.`);
+      } catch (err: any) {
+        toast.error(err?.message || "Falha ao ativar modo teste");
+      } finally {
+        setIsTogglingTest(false);
+      }
+    } else {
+      setIsTogglingTest(true);
+      try {
+        const { error } = await supabase
+          .from("wa_automation_flows")
+          .update({ test_mode: false })
+          .eq("id", flowId);
+        if (error) throw error;
+        setTestEnabled(false);
+        toast.success("Modo teste desativado. O número volta a se comportar como um número normal.");
+      } catch (err: any) {
+        toast.error(err?.message || "Falha ao desativar modo teste");
+      } finally {
+        setIsTogglingTest(false);
+      }
     }
-    const text = realMessage.trim() || "Oi";
-    setIsSendingReal(true);
-    try {
-      const { error } = await supabase.functions.invoke("wa-flow-runner", {
-        body: {
-          user_id: user.id,
-          lead_phone: phone,
-          incoming_text: text,
-          source: "meta",
-          test_mode: true,
-          target_flow_id: flowId,
-        },
-      });
-      if (error) throw error;
-      toast.success(`Mensagem enviada para +${phone}`);
-    } catch (err: any) {
-      toast.error(err?.message || "Falha ao enviar para o WhatsApp");
-    } finally {
-      setIsSendingReal(false);
-    }
-  }, [flowId, realMessage, realPhone, user?.id]);
+  }, [flowId, realPhone]);
 
   const handleResetReal = useCallback(async () => {
     if (!user?.id) return;
@@ -793,13 +818,25 @@ export function WAFlowTestDialog({
         .like("lead_phone", `%${last8}`);
       const { error } = flowId ? await query.eq("flow_id", flowId) : await query;
       if (error) throw error;
-      toast.success("Execuções resetadas. Pode testar de novo.");
+      toast.success("Execuções resetadas. Mande uma nova mensagem para iniciar do começo.");
     } catch (err: any) {
       toast.error(err?.message || "Falha ao resetar execuções");
     } finally {
       setIsResettingReal(false);
     }
   }, [flowId, realPhone, user?.id]);
+
+  const handleCopyPhone = useCallback(async () => {
+    const phone = normalizePhone(realPhone);
+    if (!phone) return;
+    try {
+      await navigator.clipboard.writeText(`+${phone}`);
+      toast.success("Número copiado");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  }, [realPhone]);
+
 
 
   const hasFlow = nodes.length > 0;
