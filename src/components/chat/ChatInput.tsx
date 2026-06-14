@@ -18,6 +18,8 @@ interface ChatInputProps {
   onExternalConsumed?: () => void;
   /** Current conversation context (for quick reply variable resolution) */
   conversation?: { contact_name?: string | null; contact_phone?: string | null } | null;
+  /** Stable identifier used to persist the draft per conversation in localStorage */
+  conversationId?: string | null;
 }
 
 interface AttachedFile {
@@ -46,8 +48,15 @@ function pickAudioMime(): { mime: string; ext: string } {
   return { mime: "audio/webm", ext: "webm" };
 }
 
-export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed, conversation }: ChatInputProps) {
-  const [text, setText] = useState("");
+export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed, conversation, conversationId }: ChatInputProps) {
+  const draftKey = useMemo(() => {
+    const id = conversationId || conversation?.contact_phone || null;
+    return id ? `wiize:chat:draft:${id}` : null;
+  }, [conversationId, conversation?.contact_phone]);
+  const [text, setText] = useState<string>(() => {
+    if (typeof window === "undefined" || !draftKey) return "";
+    try { return window.localStorage.getItem(draftKey) || ""; } catch { return ""; }
+  });
   const [activeEmojiCategory, setActiveEmojiCategory] = useState<string>("smileys");
   const [emojiSearch, setEmojiSearch] = useState("");
   const [showAttach, setShowAttach] = useState(false);
@@ -91,6 +100,29 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const qrOpen = qrMatch !== null && qrFiltered.length > 0;
 
   useEffect(() => { setQrIdx(0); }, [qrMatch, qrFiltered.length]);
+
+  // Load saved draft when the active conversation changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!draftKey) { setText(""); return; }
+    try {
+      const saved = window.localStorage.getItem(draftKey) || "";
+      setText(saved);
+    } catch { setText(""); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
+
+  // Persist draft on text change (debounced via microtask-free direct write — small payload)
+  useEffect(() => {
+    if (typeof window === "undefined" || !draftKey) return;
+    try {
+      if (text && text.length > 0) {
+        window.localStorage.setItem(draftKey, text);
+      } else {
+        window.localStorage.removeItem(draftKey);
+      }
+    } catch {}
+  }, [text, draftKey]);
 
   const addFiles = useCallback((files: File[]) => {
     if (!files.length) return;
