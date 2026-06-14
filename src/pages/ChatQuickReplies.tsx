@@ -29,6 +29,7 @@ export default function ChatQuickReplies() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<QuickReply | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState<QuickReply | null>(null);
 
   useEffect(() => {
     if (!user) return;
