@@ -936,6 +936,49 @@ export function WAFlowTestDialog({
           )}
         </div>
 
+        <div className="px-3 pt-3 pb-2 border-t border-border bg-muted/30">
+          <div className="flex items-center gap-2 mb-2">
+            <Smartphone className="h-3.5 w-3.5 text-primary" />
+            <p className="text-[11px] font-semibold text-foreground">Testar com WhatsApp real</p>
+            <span className="text-[10px] text-muted-foreground">(dispara o fluxo na conexão Meta)</span>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              value={realPhone}
+              onChange={(e) => setRealPhone(e.target.value)}
+              placeholder="DDD + número (ex: 44991236180)"
+              className="h-9 flex-1 text-sm"
+            />
+            <Input
+              value={realMessage}
+              onChange={(e) => setRealMessage(e.target.value)}
+              placeholder="Mensagem para disparar (opcional)"
+              className="h-9 flex-1 text-sm"
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 gap-1.5"
+                onClick={handleResetReal}
+                disabled={isResettingReal || !realPhone}
+              >
+                {isResettingReal ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                Resetar
+              </Button>
+              <Button
+                size="sm"
+                className="h-9 gap-1.5"
+                onClick={handleSendReal}
+                disabled={isSendingReal || !realPhone}
+              >
+                {isSendingReal ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                Enviar
+              </Button>
+            </div>
+          </div>
+        </div>
+
         <div className="p-3 border-t border-border bg-card">
           {awaitingNodeId ? (
             <p className="text-xs text-muted-foreground mb-2 text-center">
@@ -960,6 +1003,7 @@ export function WAFlowTestDialog({
             </Button>
           </div>
         </div>
+
 
         {listPopup && (
           <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/40 animate-in fade-in-0 duration-200">
