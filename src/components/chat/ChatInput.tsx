@@ -101,6 +101,29 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
   useEffect(() => { setQrIdx(0); }, [qrMatch, qrFiltered.length]);
 
+  // Load saved draft when the active conversation changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!draftKey) { setText(""); return; }
+    try {
+      const saved = window.localStorage.getItem(draftKey) || "";
+      setText(saved);
+    } catch { setText(""); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
+
+  // Persist draft on text change (debounced via microtask-free direct write — small payload)
+  useEffect(() => {
+    if (typeof window === "undefined" || !draftKey) return;
+    try {
+      if (text && text.length > 0) {
+        window.localStorage.setItem(draftKey, text);
+      } else {
+        window.localStorage.removeItem(draftKey);
+      }
+    } catch {}
+  }, [text, draftKey]);
+
   const addFiles = useCallback((files: File[]) => {
     if (!files.length) return;
     const next: AttachedFile[] = files.map(f => ({
