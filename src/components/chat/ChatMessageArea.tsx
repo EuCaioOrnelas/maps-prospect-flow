@@ -387,17 +387,52 @@ export function ChatMessageArea({
   };
 
 
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
+  const [showScrollDown, setShowScrollDown] = useState(false);
+  const isNearBottomRef = useRef(true);
 
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior });
+    } else if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior });
+    }
+  };
+
+  // On open/conversation switch: jump to last message instantly
   useEffect(() => {
     setReplyingTo(null);
     setSelectionMode(false);
     setSelectedIds(new Set());
+    isNearBottomRef.current = true;
+    setShowScrollDown(false);
+    // Defer to next frame so DOM has rendered
+    requestAnimationFrame(() => scrollToBottom("auto"));
   }, [conversation?.id]);
+
+  // On new messages: only auto-scroll if user is near the bottom
+  useEffect(() => {
+    if (isNearBottomRef.current) {
+      scrollToBottom("smooth");
+    } else {
+      setShowScrollDown(true);
+    }
+  }, [messages.length]);
+
+  // Track scroll position to toggle the scroll-down button
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+      const near = distance < 80;
+      isNearBottomRef.current = near;
+      setShowScrollDown(!near && el.scrollHeight > el.clientHeight + 80);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [conversation?.id, loading]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
