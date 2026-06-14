@@ -856,7 +856,8 @@ export function ChatMessageArea({
                           })}
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
-                    </DropdownMenuSub>
+                      </DropdownMenuSub>
+                    </div>
                   );
                 })()}
                 <DropdownMenuSeparator className="mx-3 my-1 wa-border-light" />
