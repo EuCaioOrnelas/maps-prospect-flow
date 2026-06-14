@@ -627,13 +627,97 @@ export function ChatMessageArea({
                   <MoreVertical size={20} className="wa-chat-header-icon" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[220px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+              <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[240px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
                 <DropdownMenuItem
                   onClick={() => void handleOpenContactData()}
                   className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                 >
                   <User size={15} /> Dados do contato
                 </DropdownMenuItem>
+                {pipelineStages.length > 0 && (() => {
+                  const currentStage = pipelineStages.find(s => s.id === leadInfo?.pipeline_stage_id);
+                  const stageColor = currentStage?.color || "#10b981";
+                  return (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+                        <span className="w-[14px] h-[14px] rounded-full inline-flex items-center justify-center shrink-0" style={{ backgroundColor: leadInfo ? stageColor : "transparent", border: leadInfo ? "none" : "1.5px solid currentColor" }} />
+                        <span className="flex-1 truncate">Coluna CRM: {leadInfo ? (currentStage?.name || "Sem coluna") : "Não está no CRM"}</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent className="wa-dropdown-menu border wa-border min-w-[220px] max-h-[60vh] overflow-y-auto rounded-xl shadow-2xl py-1.5">
+                          {!leadInfo && (
+                            <div className="px-3 py-2 text-[11px] text-muted-foreground">Salve o contato no CRM para mover entre colunas.</div>
+                          )}
+                          {pipelineStages.map(s => {
+                            const selected = s.id === leadInfo?.pipeline_stage_id;
+                            const color = s.color || "#10b981";
+                            return (
+                              <DropdownMenuItem
+                                key={s.id}
+                                disabled={!leadInfo}
+                                onClick={() => void handleChangeStage(s.id)}
+                                className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                              >
+                                <span className="w-[10px] h-[10px] rounded-full shrink-0" style={{ backgroundColor: color }} />
+                                <span className="flex-1 truncate">{s.name}</span>
+                                {selected && <Check size={14} className="wa-accent-text" />}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                  );
+                })()}
+                {canChangeResponsible && onTransferResponsible && (() => {
+                  const respMember = members.find(m => m.user_id === conversation.responsible_user_id);
+                  const respLabel = respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || "Atribuir";
+                  return (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+                        <UserCog size={15} />
+                        <span className="flex-1 truncate">Responsável: {respLabel}</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent className="wa-dropdown-menu border wa-border min-w-[240px] max-h-[60vh] overflow-y-auto rounded-xl shadow-2xl py-1.5">
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              try { await onTransferResponsible(conversation.id, null); toast.success("Sem responsável"); }
+                              catch { toast.error("Erro ao transferir"); }
+                            }}
+                            className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                          >
+                            <span className="w-[22px] h-[22px] rounded-full bg-muted flex items-center justify-center"><X size={12} /></span>
+                            <span className="flex-1">Sem responsável</span>
+                          </DropdownMenuItem>
+                          {members.map((m) => {
+                            const c = getChatAvatarColor(m.user_id);
+                            const i = getChatInitials(m.name, m.email || "");
+                            const selected = m.user_id === conversation.responsible_user_id;
+                            return (
+                              <DropdownMenuItem
+                                key={m.user_id}
+                                onClick={async () => {
+                                  try { await onTransferResponsible(conversation.id, m.user_id); toast.success("Conversa transferida"); }
+                                  catch { toast.error("Erro ao transferir"); }
+                                }}
+                                className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                              >
+                                <span className={cn("w-[22px] h-[22px] rounded-full flex items-center justify-center text-white text-[10px] font-medium shrink-0", c)}>{i}</span>
+                                <span className="flex-1 truncate">
+                                  {m.name || m.email || m.user_id.slice(0, 8)}
+                                  {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
+                                </span>
+                                {selected && <Check size={14} className="wa-accent-text" />}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                  );
+                })()}
+                <DropdownMenuSeparator className="mx-3 my-1 wa-border-light" />
                 <DropdownMenuItem
                   onClick={() => setShowSearch(true)}
                   className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
