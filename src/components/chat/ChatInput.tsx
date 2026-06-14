@@ -18,6 +18,8 @@ interface ChatInputProps {
   onExternalConsumed?: () => void;
   /** Current conversation context (for quick reply variable resolution) */
   conversation?: { contact_name?: string | null; contact_phone?: string | null } | null;
+  /** Stable identifier used to persist the draft per conversation in localStorage */
+  conversationId?: string | null;
 }
 
 interface AttachedFile {
