@@ -576,7 +576,7 @@ export function ChatSidebar({
                       </span>
                     </div>
                     <div className="shrink-0 w-[104px] ml-2 pr-[22px] flex items-center justify-end gap-[6px]">
-                      {responsibleFilter === "all" && respShort && respColor && (
+                      {respShort && respColor && (
                         <span
                           className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[82px] border"
                           style={{
