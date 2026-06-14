@@ -197,7 +197,7 @@ const Chat = () => {
         <AppSidebar profile={profile} />
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px] bg-background">
           <div className="lg:hidden">
-            <AppHeader profile={profile} />
+            <AppHeader profile={(authProfile as any) || profile} />
           </div>
           <BackupProgressBanner className="mx-3 mt-2" />
           <div className="flex-1 flex overflow-hidden relative">
