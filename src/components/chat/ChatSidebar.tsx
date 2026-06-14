@@ -93,6 +93,7 @@ export function ChatSidebar({
   const [searchFocused, setSearchFocused] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -248,6 +249,29 @@ export function ChatSidebar({
           <div className="flex-1 min-w-0 overflow-hidden">
             {topToolbar}
           </div>
+          {isMobile && (
+            <button
+              onClick={() => {
+                setMobileSearchOpen((v) => {
+                  const next = !v;
+                  if (next) {
+                    setTimeout(() => {
+                      searchRef.current?.focus();
+                      searchRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+                    }, 50);
+                  } else {
+                    onSearchChange("");
+                  }
+                  return next;
+                });
+              }}
+              className="shrink-0 p-[7px] rounded-full wa-sidebar-header-btn transition-colors border border-border/40 hover:border-primary/40"
+              title="Pesquisar"
+              aria-label="Pesquisar"
+            >
+              <Search size={18} className="wa-sidebar-header-icon" />
+            </button>
+          )}
           <button
             onClick={() => navigate("/chat/configuracoes")}
             className="shrink-0 p-[7px] rounded-full wa-sidebar-header-btn transition-colors border border-border/40 hover:border-primary/40"
@@ -269,38 +293,51 @@ export function ChatSidebar({
         </div>
       )}
 
-      {/* Search bar */}
-      <div className="px-3 py-[7px] wa-sidebar-search-area">
-        <div className={cn(
-          "flex items-center h-[35px] rounded-lg px-3 gap-3 transition-all duration-200",
-          "wa-bg-search",
-          searchFocused && "wa-search-focused"
-        )}>
+      {/* Search bar - hidden on mobile until lupa is clicked */}
+      {(!isMobile || mobileSearchOpen) && (
+        <div className="px-3 py-[7px] wa-sidebar-search-area">
           <div className={cn(
-            "flex items-center justify-center transition-transform duration-200",
-            searchFocused ? "transform -translate-x-1" : ""
+            "flex items-center h-[35px] rounded-lg px-3 gap-3 transition-all duration-200",
+            "wa-bg-search",
+            searchFocused && "wa-search-focused"
           )}>
-            {searchFocused ? (
-              <button onClick={() => { onSearchChange(""); searchRef.current?.blur(); }}>
-                <svg viewBox="0 0 24 24" width="20" height="20" className="wa-icon-tinted">
-                  <path fill="currentColor" d="m12 4 1.4 1.4L7.8 11H20v2H7.8l5.6 5.6L12 20l-8-8 8-8z" />
-                </svg>
-              </button>
-            ) : (
-              <Search size={16} className="wa-icon-muted" />
-            )}
+            <div className={cn(
+              "flex items-center justify-center transition-transform duration-200",
+              searchFocused ? "transform -translate-x-1" : ""
+            )}>
+              {searchFocused || (isMobile && mobileSearchOpen) ? (
+                <button onClick={() => {
+                  onSearchChange("");
+                  searchRef.current?.blur();
+                  if (isMobile) setMobileSearchOpen(false);
+                }}>
+                  <svg viewBox="0 0 24 24" width="20" height="20" className="wa-icon-tinted">
+                    <path fill="currentColor" d="m12 4 1.4 1.4L7.8 11H20v2H7.8l5.6 5.6L12 20l-8-8 8-8z" />
+                  </svg>
+                </button>
+              ) : (
+                <Search size={16} className="wa-icon-muted" />
+              )}
+            </div>
+            <input
+              ref={searchRef}
+              value={searchQuery}
+              onChange={e => onSearchChange(e.target.value)}
+              onFocus={(e) => {
+                setSearchFocused(true);
+                if (isMobile) {
+                  setTimeout(() => {
+                    (e.currentTarget as HTMLInputElement)?.scrollIntoView({ block: "center", behavior: "smooth" });
+                  }, 250);
+                }
+              }}
+              onBlur={() => { if (!searchQuery) setSearchFocused(false); }}
+              placeholder="Pesquisar"
+              className="flex-1 bg-transparent text-[13px] wa-text-primary placeholder:wa-text-muted outline-none"
+            />
           </div>
-          <input
-            ref={searchRef}
-            value={searchQuery}
-            onChange={e => onSearchChange(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => { if (!searchQuery) setSearchFocused(false); }}
-            placeholder="Pesquisar"
-            className="flex-1 bg-transparent text-[13px] wa-text-primary placeholder:wa-text-muted outline-none"
-          />
         </div>
-      </div>
+      )}
 
       {/* Filter chips */}
       <div className="flex items-center justify-center gap-2 px-3 pb-2 wa-sidebar-search-area">
