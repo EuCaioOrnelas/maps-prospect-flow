@@ -310,9 +310,24 @@ const normalizeButtonsConfig = (config: any = {}) => {
   nodeConfig.header_text = normalizeText(nodeConfig.header_text || nodeConfig.header);
   nodeConfig.footer_text = normalizeText(nodeConfig.footer_text || nodeConfig.footer);
 
+  // Meta limit: reply_buttons supports at most 3 options.
+  // If the AI generated 4+ buttons, auto-convert to interactive list.
+  if (nodeConfig.interaction_type === "reply_buttons") {
+    const rawButtons = Array.isArray(nodeConfig.buttons) ? nodeConfig.buttons : Array.isArray(nodeConfig.options) ? nodeConfig.options : [];
+    if (rawButtons.length > 3) {
+      nodeConfig.interaction_type = "list";
+      nodeConfig.list_items = rawButtons.map((btn: any, i: number) => ({
+        id: (normalizeHandle(btn?.id) || `btn_${i}`).replace(/^btn_/, "item_"),
+        title: truncateText(typeof btn === "string" ? btn : btn?.title || `Opção ${i + 1}`, 24),
+        description: truncateText(btn?.description || "", 72),
+      }));
+      delete nodeConfig.buttons;
+    }
+  }
+
   if (nodeConfig.interaction_type === "list") {
     const rawItems = Array.isArray(nodeConfig.list_items) ? nodeConfig.list_items : Array.isArray(nodeConfig.items) ? nodeConfig.items : [];
-    nodeConfig.list_items = rawItems.map((item: any, i: number) => ({
+    nodeConfig.list_items = rawItems.slice(0, 10).map((item: any, i: number) => ({
       id: normalizeHandle(item?.id) || `item_${i}`,
       title: truncateText(typeof item === "string" ? item : item?.title || `Item ${i + 1}`, 24),
       description: truncateText(item?.description || "", 72),
@@ -322,7 +337,7 @@ const normalizeButtonsConfig = (config: any = {}) => {
   } else {
     nodeConfig.interaction_type = "reply_buttons";
     const rawButtons = Array.isArray(nodeConfig.buttons) ? nodeConfig.buttons : Array.isArray(nodeConfig.options) ? nodeConfig.options : [];
-    nodeConfig.buttons = rawButtons.map((btn: any, i: number) => ({
+    nodeConfig.buttons = rawButtons.slice(0, 3).map((btn: any, i: number) => ({
       id: normalizeHandle(btn?.id) || `btn_${i}`,
       title: truncateText(typeof btn === "string" ? btn : btn?.title || `Opção ${i + 1}`, 20),
     }));
