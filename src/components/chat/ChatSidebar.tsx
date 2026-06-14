@@ -92,6 +92,7 @@ export function ChatSidebar({
   const [addContactFor, setAddContactFor] = useState<ChatConversation | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
