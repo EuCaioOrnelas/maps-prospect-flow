@@ -978,7 +978,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
 
   const selectedNumber = numbers.find((n: any) => n.id === config.whatsapp_number_id);
   const isMeta = selectedNumber?.api_type === "meta";
-  const isEvolution = selectedNumber?.api_type === "evolution";
+  const isEvolution = false; // Meta-only: fluxos não suportam mais Evolution.
 
   const wabaConn = isMeta && selectedNumber
     ? {
