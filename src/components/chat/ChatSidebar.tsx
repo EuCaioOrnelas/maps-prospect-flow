@@ -421,7 +421,7 @@ export function ChatSidebar({
                 onClick={() => onSelectConversation(conv.id)}
                 className={cn(
                   "flex items-center gap-[13px] pr-[15px] pl-[13px] cursor-pointer group relative",
-                  "h-[72px] transition-colors duration-100",
+                  "h-[72px] transition-colors duration-100 border-b wa-border-conversation last:border-b-0",
                   isActive ? "wa-conv-active" : "wa-conv-hover"
                 )}
                 title={respLabel ? `Responsável: ${respLabel}${isMine ? " (você)" : ""}` : undefined}
