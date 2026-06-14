@@ -1,5 +1,7 @@
 import React from 'react';
 import { isRuntimeAssetError, recoverFromRuntimeAssetError } from '@/lib/runtimeRecovery';
+import wiizeLogo from '@/assets/logos/wiize-logo-white.png';
+
 
 interface ErrorBoundaryState {
   hasError: boolean;
