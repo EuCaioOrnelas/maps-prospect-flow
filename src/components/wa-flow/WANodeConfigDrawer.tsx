@@ -956,24 +956,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           .eq("status", "active"),
       ]);
 
-      const evolutionOptions = (evoNumbers || [])
-        // Only exclude entries that belong to the Meta Cloud API (those come from user_waba_connections).
-        // Both "free" and "paid" Evolution tiers are valid Evolution numbers.
-        .filter((n: any) => n.api_tier !== "meta")
-        .map((n: any) => ({
-          id: n.id,
-          phone_number: n.phone_number,
-          name: n.name,
-          api_tier: n.api_tier,
-          api_type: "evolution" as const,
-          source_id: n.id,
-          phone_number_id: null,
-          waba_connection_id: null,
-          display_phone_number: null,
-          access_token: null,
-          waba_id: null,
-        }));
-
+      // Meta-only: fluxos só rodam na API Oficial Meta. Não listamos números Evolution aqui.
       const metaOptions = (wabaConns || []).map((conn: any) => ({
         id: `meta:${conn.id}`,
         phone_number: conn.display_phone_number,
@@ -988,7 +971,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
         waba_id: conn.waba_id,
       }));
 
-      return [...metaOptions, ...evolutionOptions];
+      return metaOptions;
     },
     enabled: !!user,
   });
