@@ -1490,6 +1490,14 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-quick-replies-fade-right { background: linear-gradient(to left, #efeae2 0%, transparent 100%); }
 .landing-light .wa-quick-replies-fade-left { background: linear-gradient(to right, #efeae2 0%, transparent 100%); }
 
+/* Composer surface: stands out from chat background (white on light, elevated dark on dark) */
+.wa-composer-surface { background-color: hsl(220 18% 12%); }
+.landing-light .wa-composer-surface { background-color: #ffffff; }
+.wa-composer-fade-right { background: linear-gradient(to left, hsl(220 18% 12%) 0%, transparent 100%); }
+.wa-composer-fade-left { background: linear-gradient(to right, hsl(220 18% 12%) 0%, transparent 100%); }
+.landing-light .wa-composer-fade-right { background: linear-gradient(to left, #ffffff 0%, transparent 100%); }
+.landing-light .wa-composer-fade-left { background: linear-gradient(to right, #ffffff 0%, transparent 100%); }
+
 /* ─── Scrollbar thin (sidebar, panels) ─── */
 .scrollbar-thin::-webkit-scrollbar { width: 3px; }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
