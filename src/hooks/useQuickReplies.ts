@@ -106,6 +106,9 @@ export function useQuickReplies() {
 /** Variables available to interpolate in quick reply content. */
 export const QUICK_REPLY_VARIABLES = [
   { key: "nome", label: "Nome do contato", description: "Nome salvo no contato ou CRM" },
+  { key: "nome_completo", label: "Nome completo", description: "Nome completo do contato" },
+  { key: "primeiro_nome", label: "Primeiro nome", description: "Primeiro nome do contato" },
+  { key: "sobrenome", label: "Sobrenome", description: "Último sobrenome do contato" },
   { key: "empresa", label: "Empresa", description: "Razão social ou nome fantasia (CRM)" },
   { key: "cidade", label: "Cidade", description: "Cidade do lead no CRM" },
   { key: "endereco", label: "Endereço", description: "Endereço completo do lead no CRM" },
