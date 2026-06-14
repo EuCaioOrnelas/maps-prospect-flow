@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Bot, FlaskConical, List, Loader2, RotateCcw, Send, X } from "lucide-react";
+import { Bot, FlaskConical, List, Loader2, RotateCcw, Send, Smartphone, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ interface WAFlowTestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   flowName: string;
+  flowId?: string;
   nodes: Node[];
   edges: Edge[];
   resetVersion: number;
