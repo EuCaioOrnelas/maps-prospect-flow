@@ -541,30 +541,25 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
       {!attachments.length && quickReplies.length > 0 && !qrOpen && (
         <div className="px-[12px] pt-[6px] pb-[2px]">
-          <div className="flex items-center gap-1.5 mb-1 px-0.5">
-            <span className="text-[10px] uppercase tracking-wider font-semibold wa-text-muted">Mensagens rápidas</span>
-            <span className="text-[10px] wa-text-muted opacity-60">· clique para enviar</span>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1.5 wa-scrollbar snap-x">
+          <div className="flex gap-1.5 overflow-x-auto pb-1.5 wa-scrollbar -mx-0.5 px-0.5">
             {quickReplies.map((qr) => (
               <button
                 key={qr.id}
                 type="button"
                 onClick={() => void applyQuickReply(qr)}
-                className="snap-start shrink-0 max-w-[220px] min-w-[140px] text-left px-3 py-2 rounded-xl border wa-border-light hover:wa-accent-border bg-background/40 hover:bg-background/70 transition-all group"
-                title={qr.content}
+                title={qr.title || qr.shortcut}
+                className="shrink-0 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border wa-border-light bg-background/60 hover:bg-primary/10 hover:border-primary/40 transition-colors"
               >
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <code className="text-[10px] font-mono font-semibold px-1 py-0 rounded bg-primary/15 text-primary">/{qr.shortcut}</code>
-                  {qr.media_url && <span className="text-[9px] wa-text-muted">📎</span>}
-                </div>
-                <p className="text-[12px] font-medium wa-text-primary truncate">{qr.title || qr.shortcut}</p>
-                <p className="text-[11px] wa-text-muted truncate">{qr.content || "(sem texto)"}</p>
+                <MessageSquareText size={12} className="text-primary shrink-0" />
+                <span className="text-[11px] font-medium wa-text-primary whitespace-nowrap max-w-[140px] truncate">
+                  {qr.title || qr.shortcut}
+                </span>
               </button>
             ))}
           </div>
         </div>
       )}
+
 
       {!attachments.length && (
         <div className="flex items-end gap-[6px] px-[12px] py-[6px] relative">
