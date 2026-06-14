@@ -425,14 +425,15 @@ export function ChatMessageArea({
     if (!el) return;
     const onScroll = () => {
       const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
-      const near = distance < 80;
+      const hasOverflow = el.scrollHeight - el.clientHeight > 40;
+      const near = distance < 40;
       isNearBottomRef.current = near;
-      setShowScrollDown(!near && el.scrollHeight > el.clientHeight + 80);
+      setShowScrollDown(hasOverflow && !near);
     };
     el.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
+    requestAnimationFrame(onScroll);
     return () => el.removeEventListener("scroll", onScroll);
-  }, [conversation?.id, loading]);
+  }, [conversation?.id, loading, messages.length]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -792,7 +793,7 @@ export function ChatMessageArea({
           <div className="wa-chat-glow" />
 
           <div className="flex-1 overflow-y-auto wa-scrollbar relative z-[1]" ref={scrollContainerRef}>
-            <div className="px-3 sm:px-6 lg:px-[63px] py-[4px] min-h-full flex flex-col justify-end">
+            <div className="px-2 sm:px-6 lg:px-[63px] py-[4px] min-h-full flex flex-col justify-end">
               {loading ? (
                 <div className="flex items-center justify-center py-16">
                   <div className="h-8 w-8 rounded-full border-[3px] border-[#128c7e]/20 border-t-[#128c7e] animate-spin" />
@@ -845,7 +846,7 @@ export function ChatMessageArea({
                             selectionMode && !isOutbound && "pl-2"
                           )}>
                             <div className={cn(
-                              "relative max-w-[65%] w-fit",
+                              "relative max-w-[80%] sm:max-w-[70%] lg:max-w-[65%] w-fit",
                               isOutbound ? "mr-[8px]" : "ml-[8px]"
                             )}>
                               {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
@@ -922,9 +923,9 @@ export function ChatMessageArea({
               type="button"
               onClick={() => scrollToBottom("smooth")}
               aria-label="Ir para a última mensagem"
-              className="absolute right-3 sm:right-5 bottom-[96px] z-20 w-10 h-10 rounded-full bg-background/95 hover:bg-background border wa-border-light shadow-lg flex items-center justify-center text-foreground/80 hover:text-foreground transition-all backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2"
+              className="absolute right-2 sm:right-4 bottom-[78px] sm:bottom-[88px] z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-background/95 hover:bg-background border wa-border-light shadow-lg flex items-center justify-center text-foreground/80 hover:text-foreground transition-all backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2"
             >
-              <ChevronDown size={22} />
+              <ChevronDown size={20} />
             </button>
           )}
 
