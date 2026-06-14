@@ -7173,6 +7173,8 @@ export type Database = {
           owner_user_id: string | null
           phone_number_id: string | null
           status: Database["public"]["Enums"]["wa_flow_status"]
+          test_mode: boolean
+          test_phone: string | null
           updated_at: string
           user_id: string
           version: number
@@ -7189,6 +7191,8 @@ export type Database = {
           owner_user_id?: string | null
           phone_number_id?: string | null
           status?: Database["public"]["Enums"]["wa_flow_status"]
+          test_mode?: boolean
+          test_phone?: string | null
           updated_at?: string
           user_id: string
           version?: number
@@ -7205,6 +7209,8 @@ export type Database = {
           owner_user_id?: string | null
           phone_number_id?: string | null
           status?: Database["public"]["Enums"]["wa_flow_status"]
+          test_mode?: boolean
+          test_phone?: string | null
           updated_at?: string
           user_id?: string
           version?: number
