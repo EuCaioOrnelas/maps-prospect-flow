@@ -1138,6 +1138,10 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-border { border-color: #e9edef; }
 .wa-border-light { border-color: hsl(220 14% 14%); }
 .landing-light .wa-border-light { border-color: #e9edef; }
+.wa-input-border { border-color: hsl(220 14% 24%); box-shadow: 0 1px 2px hsl(0 0% 0% / 0.18); }
+.landing-light .wa-input-border { border-color: #d1d7db; box-shadow: 0 1px 3px hsl(220 25% 14% / 0.06); }
+.wa-input-border:focus-within { border-color: hsl(var(--primary) / 0.55); box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12); }
+.landing-light .wa-input-border:focus-within { border-color: hsl(var(--primary) / 0.5); box-shadow: 0 0 0 3px hsl(var(--primary) / 0.10); }
 .wa-border-header-bottom { border-bottom: 1px solid hsl(220 14% 16%); }
 .landing-light .wa-border-header-bottom { border-bottom: 1px solid #d9dde0; }
 .wa-border-conversation { border-color: hsl(220 14% 14%); }

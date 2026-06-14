@@ -597,7 +597,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               </div>
             )}
 
-            <div className="flex-1 wa-input-field flex items-end rounded-[21px] overflow-hidden border wa-border-light">
+            <div className="flex-1 wa-input-field flex items-end rounded-[21px] overflow-hidden border wa-input-border transition-all">
               <button
                 onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
                 className="wa-attach-btn p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity"
