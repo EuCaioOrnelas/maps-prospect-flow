@@ -102,6 +102,7 @@ export function WAFlowTestDialog({
   open,
   onOpenChange,
   flowName,
+  flowId,
   nodes,
   edges,
   resetVersion,
