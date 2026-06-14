@@ -621,7 +621,7 @@ export function ChatMessageArea({
             <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
               <Search size={20} className="wa-chat-header-icon" />
             </button>
-            <DropdownMenu>
+            <DropdownMenu open={headerMenuOpen} onOpenChange={setHeaderMenuOpen}>
               <DropdownMenuTrigger asChild>
 
                 <button className="wa-icon-button p-1">
@@ -630,7 +630,7 @@ export function ChatMessageArea({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[240px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
                 <DropdownMenuItem
-                  onClick={() => void handleOpenContactData()}
+                  onClick={() => { setHeaderMenuOpen(false); handleOpenContactData(); }}
                   className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                 >
                   <User size={15} /> Dados do contato
@@ -656,7 +656,7 @@ export function ChatMessageArea({
                               <DropdownMenuItem
                                 key={s.id}
                                 disabled={!leadInfo}
-                                onClick={() => void handleChangeStage(s.id)}
+                                onClick={() => { setHeaderMenuOpen(false); handleChangeStage(s.id); }}
                                 className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                               >
                                 <span className="w-[10px] h-[10px] rounded-full shrink-0" style={{ backgroundColor: color }} />
@@ -683,7 +683,7 @@ export function ChatMessageArea({
                         <DropdownMenuSubContent className="wa-dropdown-menu border wa-border min-w-[240px] max-h-[60vh] overflow-y-auto rounded-xl shadow-2xl py-1.5">
                           <DropdownMenuItem
                             onClick={async () => {
-                              try { await onTransferResponsible(conversation.id, null); toast.success("Sem responsável"); }
+                              try { await onTransferResponsible(conversation.id, null); setHeaderMenuOpen(false); toast.success("Sem responsável"); }
                               catch { toast.error("Erro ao transferir"); }
                             }}
                             className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
@@ -699,7 +699,7 @@ export function ChatMessageArea({
                               <DropdownMenuItem
                                 key={m.user_id}
                                 onClick={async () => {
-                                  try { await onTransferResponsible(conversation.id, m.user_id); toast.success("Conversa transferida"); }
+                                  try { await onTransferResponsible(conversation.id, m.user_id); setHeaderMenuOpen(false); toast.success("Conversa transferida"); }
                                   catch { toast.error("Erro ao transferir"); }
                                 }}
                                 className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
@@ -720,26 +720,26 @@ export function ChatMessageArea({
                 })()}
                 <DropdownMenuSeparator className="mx-3 my-1 wa-border-light" />
                 <DropdownMenuItem
-                  onClick={() => setShowSearch(true)}
+                  onClick={() => { setHeaderMenuOpen(false); setShowSearch(true); }}
                   className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                 >
                   <Search size={15} /> Pesquisar mensagens
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setSummaryOpen(true)}
+                  onClick={() => { setHeaderMenuOpen(false); setSummaryOpen(true); }}
                   className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                 >
                   <Sparkles size={15} /> Resumir conversa (IA)
                 </DropdownMenuItem>
                 <div className="my-1 mx-3 border-t wa-border-light" />
                 <DropdownMenuItem
-                  onClick={() => void handleToggleBlock()}
+                  onClick={() => { setHeaderMenuOpen(false); handleToggleBlock(); }}
                   className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                 >
                   <Ban size={15} /> {(conversation as any).is_blocked ? "Desbloquear" : "Bloquear"}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setConfirmDeleteOpen(true)}
+                  onClick={() => { setHeaderMenuOpen(false); setConfirmDeleteOpen(true); }}
                   className="wa-dropdown-item-destructive flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                 >
                   <Trash2 size={15} /> Apagar conversa
