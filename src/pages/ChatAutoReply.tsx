@@ -55,6 +55,22 @@ export default function ChatAutoReply() {
   const [cfg, setCfg] = useState<Config>(DEFAULT_CFG);
   const [hasActiveFlows, setHasActiveFlows] = useState(false);
   const [saving, setSaving] = useState(false);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertVariable = (key: string) => {
+    const el = messageRef.current;
+    const token = `{{${key}}}`;
+    if (!el) { setCfg((c) => ({ ...c, message: c.message + token })); return; }
+    const start = el.selectionStart ?? cfg.message.length;
+    const end = el.selectionEnd ?? cfg.message.length;
+    const next = cfg.message.slice(0, start) + token + cfg.message.slice(end);
+    setCfg((c) => ({ ...c, message: next }));
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + token.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
 
   useEffect(() => {
     if (!user) return;
