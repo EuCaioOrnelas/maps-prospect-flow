@@ -55,9 +55,9 @@ export class ErrorBoundary extends React.Component<
             boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(34,197,94,0.08)',
           }}>
             <img
-              src="/favicon.svg"
+              src={wiizeLogo}
               alt="Wiize"
-              style={{ width: '64px', height: '64px', margin: '0 auto 1.25rem', filter: 'drop-shadow(0 0 18px rgba(34,197,94,0.45))' }}
+              style={{ width: '100px', height: 'auto', margin: '0 auto 1.25rem', filter: 'drop-shadow(0 0 18px rgba(34,197,94,0.45))' }}
             />
             <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.75rem', color: '#fff', letterSpacing: '-0.02em' }}>
               Algo deu errado
