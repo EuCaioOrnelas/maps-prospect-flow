@@ -1484,6 +1484,12 @@ input::placeholder, textarea::placeholder {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Quick replies edge fade — matches chat background so chips appear to dissolve */
+.wa-quick-replies-fade-right { background: linear-gradient(to left, #0a0f0c 0%, transparent 100%); }
+.wa-quick-replies-fade-left { background: linear-gradient(to right, #0a0f0c 0%, transparent 100%); }
+.landing-light .wa-quick-replies-fade-right { background: linear-gradient(to left, #efeae2 0%, transparent 100%); }
+.landing-light .wa-quick-replies-fade-left { background: linear-gradient(to right, #efeae2 0%, transparent 100%); }
+
 /* ─── Scrollbar thin (sidebar, panels) ─── */
 .scrollbar-thin::-webkit-scrollbar { width: 3px; }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
