@@ -541,7 +541,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
       {!attachments.length && quickReplies.length > 0 && !qrOpen && (
         <div className="relative">
-          <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background/90 to-transparent pointer-events-none z-10" />
+          <div className="absolute left-0 top-0 bottom-0 w-4 wa-quick-replies-fade-left pointer-events-none z-10" />
+          <div className="absolute right-0 top-0 bottom-0 w-10 wa-quick-replies-fade-right pointer-events-none z-10" />
           <div className="flex gap-2 overflow-x-auto px-3 py-2 no-scrollbar scroll-smooth snap-x snap-mandatory">
             {quickReplies.map((qr) => (
               <button
