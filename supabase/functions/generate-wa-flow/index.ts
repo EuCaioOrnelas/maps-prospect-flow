@@ -59,7 +59,7 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 8. Use variáveis coletadas {{variable_name}} nas mensagens seguintes para personalizar.
 9. Integrações Google (google_sheets, google_calendar, gmail) só quando o contexto exige claramente.
 10. message DEVE ter o campo "contents" preenchido com array de itens. Cada item de texto deve ter conteúdo real e útil, NÃO genérico. Adicione sempre um delay inteligente (type:"delay", delay_min:2, delay_max:5) após o texto.
-11. buttons precisa ter body_text E opções reais.
+11. buttons precisa ter body_text E opções reais. LIMITE META: máximo 3 botões em reply_buttons. Se precisar de 4+ opções, use interaction_type="list" com list_items. Nunca gere reply_buttons com mais de 3 itens — isso é rejeitado pela API da Meta.
 12. ai_agent precisa ter system_prompt, ai_model e ai_output_type. O system_prompt deve ser uma instrução para o agente sobre como se comportar, NUNCA copie o prompt de criação do fluxo como system_prompt. O ai_context deve ser vazio ou uma descrição curta do contexto do bloco.
 13. handoff deve ter handoff_message.
 14. data_collect deve ter collect_type, variable_name e question_text.
