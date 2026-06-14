@@ -1,6 +1,15 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent } from "@/components/ui/emoji-picker";
 import { ChatMessage } from "@/hooks/useChat";
