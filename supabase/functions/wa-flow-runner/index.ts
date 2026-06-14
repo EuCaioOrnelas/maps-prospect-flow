@@ -1304,11 +1304,14 @@ serve(async (req) => {
     }
 
     // 2) No active execution — try to trigger new flow(s)
+    // Include both:
+    //  - Production flows (status = active)
+    //  - Test-mode flows (test_mode = true) — but only when the incoming phone matches the configured test_phone
     const { data: flows } = await supabase
       .from("wa_automation_flows")
       .select("*")
       .eq("user_id", body.user_id)
-      .eq("status", "active");
+      .or("status.eq.active,test_mode.eq.true");
 
     if (!flows || flows.length === 0) {
       return new Response(JSON.stringify({ triggered: 0, reason: "no_active_flows" }), {
@@ -1317,13 +1320,23 @@ serve(async (req) => {
     }
 
     const triggered: string[] = [];
+    const leadPhoneKey = phoneKey(body.lead_phone);
     for (const flow of flows) {
+      // If the flow isn't in production, it must be in test_mode AND the incoming phone must match test_phone.
+      const isProd = flow.status === "active";
+      const isTest = flow.test_mode === true;
+      if (!isProd && !isTest) continue;
+      if (isTest && (!flow.test_phone || phoneKey(flow.test_phone) !== leadPhoneKey)) {
+        // Test mode is on but the message isn't from the test number — skip.
+        if (!isProd) continue;
+      }
       // META-ONLY: drop any flow not bound to a Meta WABA connection with a verified webhook.
       if (flow.api_type !== "meta") {
         console.log(`[wa-flow-runner] flow ${flow.id} skipped — api_type='${flow.api_type}' (Meta API official required)`);
         continue;
       }
       if (body.source !== "meta") continue;
+
       if (flow.waba_connection_id && body.waba_connection_id && flow.waba_connection_id !== body.waba_connection_id) continue;
       if (flow.waba_connection_id) {
         const { data: connCheck } = await supabase
