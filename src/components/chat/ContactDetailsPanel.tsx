@@ -56,7 +56,7 @@ const COUNTRY_BY_DDI: Record<string, string> = {
   "46": "Suécia", "47": "Noruega", "45": "Dinamarca", "358": "Finlândia",
   "30": "Grécia", "48": "Polônia",
   "972": "Israel", "971": "Emirados Árabes", "966": "Arábia Saudita",
-  "27": "África do Sul", "20": "Egito", "212": "Marrocos", "351": "Portugal",
+  "27": "África do Sul", "20": "Egito", "212": "Marrocos",
 };
 
 function detectDDI(digits: string): { ddi: string; rest: string; country: string } {
