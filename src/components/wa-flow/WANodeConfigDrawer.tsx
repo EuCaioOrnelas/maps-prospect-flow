@@ -1075,39 +1075,26 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             {numbers.length === 0 && (
               <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum número conectado</div>
             )}
-            {numbers.map((n: any) => {
-              const nIsMeta = n.api_type === "meta";
-              return (
-                <SelectItem key={n.id} value={n.id}>
-                  <div className="flex items-center gap-2">
-                    <span>{n.name || n.display_phone_number || n.phone_number}</span>
-                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${nIsMeta ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-500"}`}>
-                      {nIsMeta ? "API Inbound" : "API Outbound"}
-                    </span>
-                  </div>
-                </SelectItem>
-              );
-            })}
+            {numbers.map((n: any) => (
+              <SelectItem key={n.id} value={n.id}>
+                <div className="flex items-center gap-2">
+                  <span>{n.name || n.display_phone_number || n.phone_number}</span>
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                    API Oficial Meta
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
-
-      {/* Evolution warning */}
-      {selectedNumber && isEvolution && (
-        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
-          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-[11px] text-amber-500 leading-relaxed">
-            <span className="font-semibold">API Outbound (Evolution)</span> — Recomendada para prospecção fria. Risco de bloqueio por spam.
-          </p>
-        </div>
-      )}
 
       {/* Meta API info */}
       {selectedNumber && isMeta && (
         <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/20">
           <Info size={14} className="text-primary shrink-0 mt-0.5" />
           <p className="text-[11px] text-primary leading-relaxed">
-            <span className="font-semibold">API Inbound (Oficial Meta)</span> — Requer template HSM para reabrir conversas após 24h.
+            <span className="font-semibold">API Oficial Meta</span> — Requer template HSM aprovado para reabrir conversas após 24h.
           </p>
         </div>
       )}
