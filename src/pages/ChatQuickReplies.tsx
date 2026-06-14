@@ -127,7 +127,7 @@ export default function ChatQuickReplies() {
                           <Button size="icon" variant="ghost" onClick={() => openEdit(item)} className="h-7 w-7">
                             <Pencil size={13} />
                           </Button>
-                          <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover esta mensagem rápida?")) void remove(item.id); }} className="h-7 w-7 text-destructive">
+                          <Button size="icon" variant="ghost" onClick={() => setDeleting(item)} className="h-7 w-7 text-destructive">
                             <Trash2 size={13} />
                           </Button>
                         </div>
