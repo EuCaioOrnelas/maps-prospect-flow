@@ -34,7 +34,7 @@ import { WebhookRequiredDialog } from "@/components/meta/WebhookRequiredDialog";
 import { BackupProgressBanner } from "@/components/chat/BackupProgressBanner";
 
 const Chat = () => {
-  const { user, accountOwnerId } = useAuth();
+  const { user, accountOwnerId, profile: authProfile } = useAuth();
   useAutoScoreTracking("chat");
   const navigate = useNavigate();
   const { toast } = useToast();
