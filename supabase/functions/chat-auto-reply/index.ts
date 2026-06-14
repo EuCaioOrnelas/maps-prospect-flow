@@ -47,7 +47,7 @@ serve(async (req) => {
 
     const { data: conv } = await supabase
       .from("chat_conversations")
-      .select("id, user_id, waba_connection_id, contact_phone, last_auto_reply_at")
+      .select("id, user_id, waba_connection_id, contact_phone, contact_name, last_auto_reply_at")
       .eq("id", conversation_id)
       .single();
     if (!conv) return new Response(JSON.stringify({ skipped: "no conv" }), { headers: corsHeaders });
@@ -100,13 +100,49 @@ serve(async (req) => {
       return new Response(JSON.stringify({ skipped: "connection missing" }), { headers: corsHeaders });
     }
 
+    // Resolve variables ({{nome}}, {{empresa}}, ...) from CRM lead + conversation
+    const phoneDigits = String(conv.contact_phone || "").replace(/\D/g, "");
+    const phoneKey = phoneDigits.length >= 8 ? phoneDigits.slice(-8) : phoneDigits;
+    let lead: any = null;
+    if (phoneKey) {
+      const { data } = await supabase
+        .from("leads")
+        .select("contact_name, company_name, city, address, email, phone")
+        .ilike("phone", `%${phoneKey}`)
+        .limit(1)
+        .maybeSingle();
+      lead = data;
+    }
+    const formatPhone = (p: string) => {
+      const d = (p || "").replace(/\D/g, "");
+      if (d.length === 13 && d.startsWith("55")) return `+55 (${d.slice(2,4)}) ${d.slice(4,9)}-${d.slice(9)}`;
+      if (d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+      return p || "";
+    };
+    const ctx: Record<string, string> = {
+      nome: (conv.contact_name || lead?.contact_name || "").trim(),
+      empresa: (lead?.company_name || "").trim(),
+      cidade: (lead?.city || "").trim(),
+      endereco: (lead?.address || "").trim(),
+      email: (lead?.email || "").trim(),
+      telefone: formatPhone(conv.contact_phone || lead?.phone || ""),
+    };
+    const resolvedMessage = String(cfg.message || "").replace(
+      /\{\{\s*([a-zA-Z_]+)\s*\}\}/g,
+      (_m, raw) => {
+        const k = String(raw).toLowerCase();
+        const v = ctx[k];
+        return v && v.trim() ? v : `{{${k}}}`;
+      },
+    );
+
     // Send via Meta Cloud API
     const payload = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
       to: conv.contact_phone,
       type: "text",
-      text: { body: cfg.message },
+      text: { body: resolvedMessage },
     };
     const metaRes = await fetch(`https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`, {
       method: "POST",
@@ -124,7 +160,7 @@ serve(async (req) => {
       waba_message_id: wabaMsgId ?? null,
       direction: "outbound",
       message_type: "text",
-      content: cfg.message,
+      content: resolvedMessage,
       status: metaRes.ok ? "sent" : "failed",
       status_updated_at: new Date().toISOString(),
       metadata: { auto_reply: true },
@@ -134,7 +170,7 @@ serve(async (req) => {
       .from("chat_conversations")
       .update({
         last_auto_reply_at: new Date().toISOString(),
-        last_message_text: cfg.message,
+        last_message_text: resolvedMessage,
         last_message_at: new Date().toISOString(),
         last_message_direction: "outbound",
         last_message_type: "text",

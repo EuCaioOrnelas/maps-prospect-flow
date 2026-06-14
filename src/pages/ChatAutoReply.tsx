@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { QUICK_REPLY_VARIABLES } from "@/hooks/useQuickReplies";
 import { toast } from "sonner";
 
 const WEEKDAYS = [
@@ -54,6 +55,22 @@ export default function ChatAutoReply() {
   const [cfg, setCfg] = useState<Config>(DEFAULT_CFG);
   const [hasActiveFlows, setHasActiveFlows] = useState(false);
   const [saving, setSaving] = useState(false);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertVariable = (key: string) => {
+    const el = messageRef.current;
+    const token = `{{${key}}}`;
+    if (!el) { setCfg((c) => ({ ...c, message: c.message + token })); return; }
+    const start = el.selectionStart ?? cfg.message.length;
+    const end = el.selectionEnd ?? cfg.message.length;
+    const next = cfg.message.slice(0, start) + token + cfg.message.slice(end);
+    setCfg((c) => ({ ...c, message: next }));
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + token.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -179,12 +196,32 @@ export default function ChatAutoReply() {
                   <div>
                     <Label className="text-sm">Mensagem</Label>
                     <Textarea
+                      ref={messageRef}
                       value={cfg.message}
                       onChange={(e) => setCfg((c) => ({ ...c, message: e.target.value }))}
                       rows={4}
                       className="mt-2"
                       maxLength={1000}
+                      placeholder="Olá {{nome}}! Recebemos sua mensagem fora do horário..."
                     />
+                    <div className="mt-2">
+                      <p className="text-[11px] text-muted-foreground mb-1.5">
+                        Variáveis disponíveis (clique para inserir):
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {QUICK_REPLY_VARIABLES.map((v) => (
+                          <button
+                            key={v.key}
+                            type="button"
+                            title={v.description}
+                            onClick={() => insertVariable(v.key)}
+                            className="px-2 py-1 rounded-md text-[11px] font-mono bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          >
+                            {`{{${v.key}}}`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
