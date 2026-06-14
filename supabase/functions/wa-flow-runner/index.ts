@@ -310,19 +310,49 @@ async function sendViaEvolution(
 
 // Check whether the conversation with `phone` is currently inside Meta's free-form 24h window.
 // We consider the window OPEN when the lead sent any inbound message within the last 24h.
+// chat_messages has NO `from_phone` column — phones live on chat_conversations.contact_phone.
+// The previous version queried a non-existent column and always returned `false`, silently
+// blocking every Meta send from the flow runner.
 async function isInside24hWindow(supabase: any, userId: string, phone: string): Promise<boolean> {
   const last8 = String(phone || "").replace(/\D/g, "").slice(-8);
   if (!last8) return false;
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { data } = await supabase
+
+  // 1) Find candidate conversations for this user/phone (tolerant match on last 8 digits).
+  const { data: convs } = await supabase
+    .from("chat_conversations")
+    .select("id, contact_phone, last_message_at, last_message_direction")
+    .eq("user_id", userId)
+    .ilike("contact_phone", `%${last8}`)
+    .order("last_message_at", { ascending: false })
+    .limit(10);
+
+  const matching = (convs || []).filter(
+    (c: any) => String(c.contact_phone || "").replace(/\D/g, "").endsWith(last8),
+  );
+  if (matching.length === 0) return false;
+
+  // 2) Fast path: most recent message on the conversation is inbound and < 24h old.
+  for (const c of matching) {
+    if (
+      c.last_message_direction === "inbound" &&
+      c.last_message_at &&
+      new Date(c.last_message_at).getTime() >= Date.now() - 24 * 60 * 60 * 1000
+    ) {
+      return true;
+    }
+  }
+
+  // 3) Fallback: scan chat_messages for any inbound in the last 24h on those conversations.
+  const convIds = matching.map((c: any) => c.id);
+  const { data: msgs } = await supabase
     .from("chat_messages")
     .select("id")
-    .eq("user_id", userId)
+    .in("conversation_id", convIds)
     .eq("direction", "inbound")
-    .ilike("from_phone", `%${last8}`)
     .gte("created_at", since)
     .limit(1);
-  return !!(data && data.length > 0);
+  return !!(msgs && msgs.length > 0);
 }
 
 async function sendViaMeta(
