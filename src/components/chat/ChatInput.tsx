@@ -1,6 +1,15 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent } from "@/components/ui/emoji-picker";
 import { ChatMessage } from "@/hooks/useChat";
@@ -68,6 +77,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformBars, setWaveformBars] = useState<number[]>([]);
   const [qrIdx, setQrIdx] = useState(0);
+  const [confirmQr, setConfirmQr] = useState<QuickReply | null>(null);
+  const [confirmPreview, setConfirmPreview] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const emojiViewportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -182,14 +193,18 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     inputRef.current?.focus();
   }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply]);
 
-  const applyQuickReply = useCallback(async (qr: QuickReply) => {
+  const applyQuickReply = useCallback((qr: QuickReply) => {
     const resolved = applyQuickReplyVariables(qr.content || "", quickReplyCtx);
-    // confirm before sending so the user can review
-    const preview = resolved.length > 220 ? resolved.slice(0, 220) + "…" : resolved;
-    const ok = window.confirm(
-      `Enviar mensagem rápida /${qr.shortcut}?\n\n${preview}${qr.media_url ? `\n\n[Anexo: ${qr.media_filename || qr.media_type}]` : ""}`
-    );
-    if (!ok) { setText(""); return; }
+    setConfirmPreview(resolved);
+    setConfirmQr(qr);
+  }, [quickReplyCtx]);
+
+  const handleConfirmSend = useCallback(async () => {
+    if (!confirmQr) return;
+    const qr = confirmQr;
+    const resolved = confirmPreview;
+    setConfirmQr(null);
+    setText("");
     if (qr.media_url) {
       try {
         const res = await fetch(qr.media_url);
@@ -204,10 +219,9 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     } else if (resolved.trim()) {
       onSendMessage(resolved, replyingTo?.id);
     }
-    setText("");
     onCancelReply?.();
     inputRef.current?.focus();
-  }, [quickReplyCtx, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
+  }, [confirmQr, confirmPreview, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (qrOpen) {
@@ -679,6 +693,46 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
       <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
       <input ref={videoInputRef} type="file" accept="video/*" multiple className="hidden" onChange={handleFileSelect} />
+
+      <Dialog
+        open={!!confirmQr}
+        onOpenChange={(open) => {
+          if (!open) {
+            setText("");
+            setConfirmQr(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enviar mensagem rápida?</DialogTitle>
+            <DialogDescription>
+              Você está enviando a resposta{" "}
+              <span className="font-medium text-primary">/{confirmQr?.shortcut}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-muted/50 rounded-lg p-3 text-sm text-foreground border border-border">
+            {confirmPreview.length > 220 ? confirmPreview.slice(0, 220) + "…" : confirmPreview || "(sem texto)"}
+            {confirmQr?.media_url && (
+              <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
+                Anexo: {confirmQr.media_filename || confirmQr.media_type}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setText("");
+                setConfirmQr(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={() => void handleConfirmSend()}>Enviar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
