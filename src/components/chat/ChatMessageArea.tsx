@@ -425,14 +425,15 @@ export function ChatMessageArea({
     if (!el) return;
     const onScroll = () => {
       const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
-      const near = distance < 80;
+      const hasOverflow = el.scrollHeight - el.clientHeight > 40;
+      const near = distance < 40;
       isNearBottomRef.current = near;
-      setShowScrollDown(!near && el.scrollHeight > el.clientHeight + 80);
+      setShowScrollDown(hasOverflow && !near);
     };
     el.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
+    requestAnimationFrame(onScroll);
     return () => el.removeEventListener("scroll", onScroll);
-  }, [conversation?.id, loading]);
+  }, [conversation?.id, loading, messages.length]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
