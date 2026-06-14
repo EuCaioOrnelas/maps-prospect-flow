@@ -228,6 +228,13 @@ export function useChat() {
     loadMessages();
   }, [activeConversationId, user?.id]);
 
+  // Keep a ref to activeConversationId so the realtime channel doesn't
+  // unsubscribe/resubscribe every time the user opens a different conversation.
+  const activeConversationIdRef = useRef<string | null>(null);
+  useEffect(() => { activeConversationIdRef.current = activeConversationId; }, [activeConversationId]);
+  const conversationsRef = useRef<ChatConversation[]>([]);
+  useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
+
   // Realtime subscriptions
   useEffect(() => {
     if (!user || !accountOwnerId) return;
@@ -267,7 +274,8 @@ export function useChat() {
       }, (payload) => {
         const newMsg = payload.new as ChatMessage;
         if ((newMsg as any).owner_user_id && (newMsg as any).owner_user_id !== accountOwnerId) return;
-        if (newMsg.conversation_id === activeConversationId) {
+        const currentActive = activeConversationIdRef.current;
+        if (newMsg.conversation_id === currentActive) {
           setMessages(prev => {
             // Dedupe by id
             if (prev.some(m => m.id === newMsg.id)) return prev;
@@ -281,9 +289,9 @@ export function useChat() {
         }
         // Browser notification on inbound (skip muted, blocked, active conversation, or hidden tab off)
         if (newMsg.direction === "inbound") {
-          const conv = conversations.find(c => c.id === newMsg.conversation_id);
+          const conv = conversationsRef.current.find(c => c.id === newMsg.conversation_id);
           const muted = !!(conv && (conv.is_muted || (conv as any).is_blocked));
-          const isActive = newMsg.conversation_id === activeConversationId && document.visibilityState === "visible";
+          const isActive = newMsg.conversation_id === currentActive && document.visibilityState === "visible";
           if (!muted && !isActive && typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
             try {
               const title = conv?.contact_name || conv?.contact_phone || "Nova mensagem";
@@ -317,7 +325,7 @@ export function useChat() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, accountOwnerId, activeConnectionId, activeConversationId]);
+  }, [user?.id, accountOwnerId, activeConnectionId]);
 
   // Send text message
   const sendMessage = useCallback(async (text: string, replyToId?: string) => {
