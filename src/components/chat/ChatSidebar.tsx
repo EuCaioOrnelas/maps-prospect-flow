@@ -459,7 +459,7 @@ export function ChatSidebar({
                     </span>
                     <div className="shrink-0 w-[104px] flex items-center justify-end gap-1.5">
                         {hasUnread && (
-                          <span className="wa-accent-bg text-white text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
+                          <span className="bg-primary text-primary-foreground text-[11px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-[5px]">
                             {conv.unread_count}
                           </span>
                         )}
