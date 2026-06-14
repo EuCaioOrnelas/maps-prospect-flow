@@ -469,7 +469,7 @@ export function ChatSidebar({
                         )}>
                           {formatTimestamp(conv.last_message_at)}
                         </span>
-                        <DropdownMenu>
+                        <DropdownMenu open={openMenuId === conv.id} onOpenChange={(open) => setOpenMenuId(open ? conv.id : null)}>
                           <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
                             <button className={cn("w-[20px] h-[20px] -mr-1 rounded transition-opacity duration-200 flex items-center justify-center", isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
                               <ChevronDown size={18} className="wa-icon-muted" />
@@ -483,9 +483,9 @@ export function ChatSidebar({
                         >
                           {(onMarkRead || onMarkUnread) && (
                             <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
                               onClick={async (e) => {
                                 e.stopPropagation();
+                                setOpenMenuId(null);
                                 try {
                                   if (hasUnread && onMarkRead) { await onMarkRead(conv.id); toast.success("Marcado como lido"); }
                                   else if (!hasUnread && onMarkUnread) { await onMarkUnread(conv.id); toast.success("Marcado como não lido"); }
@@ -498,16 +498,14 @@ export function ChatSidebar({
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem
-                            onSelect={(e) => e.preventDefault()}
-                            onClick={(e) => { e.stopPropagation(); onTogglePin(conv.id); }}
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); onTogglePin(conv.id); }}
                             className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                           >
                             <Pin size={14} />
                             {conv.is_pinned ? "Desafixar conversa" : "Fixar conversa"}
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={(e) => e.preventDefault()}
-                            onClick={(e) => { e.stopPropagation(); onToggleMute(conv.id); }}
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); onToggleMute(conv.id); }}
                             className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                           >
                             <VolumeX size={14} />
@@ -515,9 +513,9 @@ export function ChatSidebar({
                           </DropdownMenuItem>
                           {onToggleBlock && (
                             <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
                               onClick={async (e) => {
                                 e.stopPropagation();
+                                setOpenMenuId(null);
                                 try {
                                   await onToggleBlock(conv.id);
                                   toast.success((conv as any).is_blocked ? "Desbloqueado" : "Bloqueado");
@@ -530,8 +528,7 @@ export function ChatSidebar({
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem
-                            onSelect={(e) => e.preventDefault()}
-                            onClick={(e) => { e.stopPropagation(); onArchive(conv.id); }}
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(null); onArchive(conv.id); }}
                             className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>
@@ -539,9 +536,9 @@ export function ChatSidebar({
                           </DropdownMenuItem>
                           {onDeleteConversation && (
                             <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
                               onClick={async (e) => {
                                 e.stopPropagation();
+                                setOpenMenuId(null);
                                 if (!confirm("Apagar esta conversa? Esta ação não pode ser desfeita.")) return;
                                 try { await onDeleteConversation(conv.id); toast.success("Conversa apagada"); }
                                 catch { toast.error("Erro ao apagar"); }
