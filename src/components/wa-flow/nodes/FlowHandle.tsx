@@ -1,6 +1,5 @@
 import { Handle, useNodeConnections } from "@xyflow/react";
 import type { ComponentProps } from "react";
-import { ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -20,8 +19,6 @@ export function FlowHandle({ type, id, className, ...props }: FlowHandleProps) {
       type={type}
       className={cn("wa-flow-handle", type, isConnected && "is-connected", className)}
       {...props}
-    >
-      {isConnected ? <ChevronRight className="wa-flow-handle__icon" aria-hidden="true" /> : null}
-    </Handle>
+    />
   );
 }

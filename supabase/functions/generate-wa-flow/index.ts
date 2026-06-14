@@ -33,7 +33,7 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 === DESCRIÇÃO DOS NÓS ===
 - entry: Ponto de entrada do fluxo. Config: trigger_type, keywords.
 - message: Envia mensagem de texto/mídia. Config deve conter um campo "contents" que é um array de itens sequenciais. Cada item tem: id (string único), type ("text"|"image"|"audio"|"video"|"document"|"delay"), content (texto para type=text), caption (legenda para mídia), media_url (URL para mídia, pode ser vazio), delay_min e delay_max (segundos para type=delay). SEMPRE adicione pelo menos um item de texto com conteúdo real e relevante. Adicione um delay inteligente (delay_min: 2, delay_max: 5) entre conteúdos para simular digitação humana. Exemplo: contents: [{id:"item_0",type:"text",content:"Olá! Como posso ajudar?"},{id:"delay_0",type:"delay",delay_min:2,delay_max:5}]
-- buttons: Menu interativo com botões ou lista. Config: interaction_type, body_text, buttons/list_items.
+- buttons: Menu interativo. Use interaction_type="reply_buttons" quando tiver 2 OU 3 opções curtas (até 20 caracteres cada) — é o formato preferido pelo lead (clica direto, sem abrir popup). Use interaction_type="list" SOMENTE quando tiver 4 OU MAIS opções (até 10), pois a Meta NÃO permite mais de 3 reply_buttons em uma mesma mensagem — neste caso defina list_button_text (rótulo do botão que abre a lista). Config: interaction_type, body_text, buttons OU list_items, header_text (opcional), footer_text (opcional), list_button_text (apenas para list).
 - condition: Lógica condicional. Config: condition_type, condition_value. Handles: yes, no.
 - wait: Espera um tempo. Config: delay_value, delay_unit, smart.
 - action: Ação de CRM (tag, pipeline, webhook). Config: action_type e detalhes.
@@ -59,7 +59,7 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 8. Use variáveis coletadas {{variable_name}} nas mensagens seguintes para personalizar.
 9. Integrações Google (google_sheets, google_calendar, gmail) só quando o contexto exige claramente.
 10. message DEVE ter o campo "contents" preenchido com array de itens. Cada item de texto deve ter conteúdo real e útil, NÃO genérico. Adicione sempre um delay inteligente (type:"delay", delay_min:2, delay_max:5) após o texto.
-11. buttons precisa ter body_text E opções reais.
+11. buttons precisa ter body_text E opções reais. LIMITE META: máximo 3 botões em reply_buttons. Se precisar de 4+ opções, use interaction_type="list" com list_items. Nunca gere reply_buttons com mais de 3 itens — isso é rejeitado pela API da Meta.
 12. ai_agent precisa ter system_prompt, ai_model e ai_output_type. O system_prompt deve ser uma instrução para o agente sobre como se comportar, NUNCA copie o prompt de criação do fluxo como system_prompt. O ai_context deve ser vazio ou uma descrição curta do contexto do bloco.
 13. handoff deve ter handoff_message.
 14. data_collect deve ter collect_type, variable_name e question_text.
@@ -310,9 +310,24 @@ const normalizeButtonsConfig = (config: any = {}) => {
   nodeConfig.header_text = normalizeText(nodeConfig.header_text || nodeConfig.header);
   nodeConfig.footer_text = normalizeText(nodeConfig.footer_text || nodeConfig.footer);
 
+  // Meta limit: reply_buttons supports at most 3 options.
+  // If the AI generated 4+ buttons, auto-convert to interactive list.
+  if (nodeConfig.interaction_type === "reply_buttons") {
+    const rawButtons = Array.isArray(nodeConfig.buttons) ? nodeConfig.buttons : Array.isArray(nodeConfig.options) ? nodeConfig.options : [];
+    if (rawButtons.length > 3) {
+      nodeConfig.interaction_type = "list";
+      nodeConfig.list_items = rawButtons.map((btn: any, i: number) => ({
+        id: (normalizeHandle(btn?.id) || `btn_${i}`).replace(/^btn_/, "item_"),
+        title: truncateText(typeof btn === "string" ? btn : btn?.title || `Opção ${i + 1}`, 24),
+        description: truncateText(btn?.description || "", 72),
+      }));
+      delete nodeConfig.buttons;
+    }
+  }
+
   if (nodeConfig.interaction_type === "list") {
     const rawItems = Array.isArray(nodeConfig.list_items) ? nodeConfig.list_items : Array.isArray(nodeConfig.items) ? nodeConfig.items : [];
-    nodeConfig.list_items = rawItems.map((item: any, i: number) => ({
+    nodeConfig.list_items = rawItems.slice(0, 10).map((item: any, i: number) => ({
       id: normalizeHandle(item?.id) || `item_${i}`,
       title: truncateText(typeof item === "string" ? item : item?.title || `Item ${i + 1}`, 24),
       description: truncateText(item?.description || "", 72),
@@ -322,7 +337,7 @@ const normalizeButtonsConfig = (config: any = {}) => {
   } else {
     nodeConfig.interaction_type = "reply_buttons";
     const rawButtons = Array.isArray(nodeConfig.buttons) ? nodeConfig.buttons : Array.isArray(nodeConfig.options) ? nodeConfig.options : [];
-    nodeConfig.buttons = rawButtons.map((btn: any, i: number) => ({
+    nodeConfig.buttons = rawButtons.slice(0, 3).map((btn: any, i: number) => ({
       id: normalizeHandle(btn?.id) || `btn_${i}`,
       title: truncateText(typeof btn === "string" ? btn : btn?.title || `Opção ${i + 1}`, 20),
     }));

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Bot, FlaskConical, List, Loader2, RotateCcw, Send, X } from "lucide-react";
+import { Bot, FlaskConical, List, Loader2, RotateCcw, Send, Smartphone, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ interface WAFlowTestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   flowName: string;
+  flowId?: string;
   nodes: Node[];
   edges: Edge[];
   resetVersion: number;
@@ -101,6 +102,7 @@ export function WAFlowTestDialog({
   open,
   onOpenChange,
   flowName,
+  flowId,
   nodes,
   edges,
   resetVersion,
@@ -111,6 +113,10 @@ export function WAFlowTestDialog({
   const [awaitingNodeId, setAwaitingNodeId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [listPopup, setListPopup] = useState<{ nodeId: string; choices: InteractiveChoice[]; title: string } | null>(null);
+  const [realPhone, setRealPhone] = useState("");
+  const [realMessage, setRealMessage] = useState("");
+  const [isSendingReal, setIsSendingReal] = useState(false);
+  const [isResettingReal, setIsResettingReal] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const runtimeRef = useRef<RuntimeContext>(createRuntimeContext());
   const runVersionRef = useRef(0);
@@ -720,6 +726,75 @@ export function WAFlowTestDialog({
     }
   };
 
+  const normalizePhone = (raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    if (!digits) return "";
+    return digits.startsWith("55") ? digits : `55${digits}`;
+  };
+
+  const handleSendReal = useCallback(async () => {
+    if (!user?.id) {
+      toast.error("Você precisa estar logado.");
+      return;
+    }
+    if (!flowId) {
+      toast.error("Salve o fluxo antes de testar com um número real.");
+      return;
+    }
+    const phone = normalizePhone(realPhone);
+    if (phone.length < 12) {
+      toast.error("Informe um número válido com DDD (ex.: 44 99123-6180).");
+      return;
+    }
+    const text = realMessage.trim() || "Oi";
+    setIsSendingReal(true);
+    try {
+      const { error } = await supabase.functions.invoke("wa-flow-runner", {
+        body: {
+          user_id: user.id,
+          lead_phone: phone,
+          incoming_text: text,
+          source: "meta",
+          test_mode: true,
+          target_flow_id: flowId,
+        },
+      });
+      if (error) throw error;
+      toast.success(`Mensagem enviada para +${phone}`);
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao enviar para o WhatsApp");
+    } finally {
+      setIsSendingReal(false);
+    }
+  }, [flowId, realMessage, realPhone, user?.id]);
+
+  const handleResetReal = useCallback(async () => {
+    if (!user?.id) return;
+    const phone = normalizePhone(realPhone);
+    if (phone.length < 12) {
+      toast.error("Informe o número antes de resetar.");
+      return;
+    }
+    setIsResettingReal(true);
+    try {
+      const last8 = phone.slice(-8);
+      const query = supabase
+        .from("wa_flow_executions")
+        .update({ status: "abandoned", completed_at: new Date().toISOString() })
+        .eq("user_id", user.id)
+        .in("status", ["active", "waiting", "paused"])
+        .like("lead_phone", `%${last8}`);
+      const { error } = flowId ? await query.eq("flow_id", flowId) : await query;
+      if (error) throw error;
+      toast.success("Execuções resetadas. Pode testar de novo.");
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao resetar execuções");
+    } finally {
+      setIsResettingReal(false);
+    }
+  }, [flowId, realPhone, user?.id]);
+
+
   const hasFlow = nodes.length > 0;
   const savedVars = runtimeRef.current.variables;
   const varCount = Object.keys(savedVars).length;
@@ -861,6 +936,49 @@ export function WAFlowTestDialog({
           )}
         </div>
 
+        <div className="px-3 pt-3 pb-2 border-t border-border bg-muted/30">
+          <div className="flex items-center gap-2 mb-2">
+            <Smartphone className="h-3.5 w-3.5 text-primary" />
+            <p className="text-[11px] font-semibold text-foreground">Testar com WhatsApp real</p>
+            <span className="text-[10px] text-muted-foreground">(dispara o fluxo na conexão Meta)</span>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              value={realPhone}
+              onChange={(e) => setRealPhone(e.target.value)}
+              placeholder="DDD + número (ex: 44991236180)"
+              className="h-9 flex-1 text-sm"
+            />
+            <Input
+              value={realMessage}
+              onChange={(e) => setRealMessage(e.target.value)}
+              placeholder="Mensagem para disparar (opcional)"
+              className="h-9 flex-1 text-sm"
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 gap-1.5"
+                onClick={handleResetReal}
+                disabled={isResettingReal || !realPhone}
+              >
+                {isResettingReal ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                Resetar
+              </Button>
+              <Button
+                size="sm"
+                className="h-9 gap-1.5"
+                onClick={handleSendReal}
+                disabled={isSendingReal || !realPhone}
+              >
+                {isSendingReal ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                Enviar
+              </Button>
+            </div>
+          </div>
+        </div>
+
         <div className="p-3 border-t border-border bg-card">
           {awaitingNodeId ? (
             <p className="text-xs text-muted-foreground mb-2 text-center">
@@ -885,6 +1003,7 @@ export function WAFlowTestDialog({
             </Button>
           </div>
         </div>
+
 
         {listPopup && (
           <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/40 animate-in fade-in-0 duration-200">

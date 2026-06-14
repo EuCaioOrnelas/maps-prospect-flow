@@ -1051,6 +1051,7 @@ export default function WhatsAppFlowEditor() {
         open={testDialogOpen}
         onOpenChange={setTestDialogOpen}
         flowName={flowName}
+        flowId={id}
         nodes={nodes}
         edges={edges}
         resetVersion={testResetVersion}
