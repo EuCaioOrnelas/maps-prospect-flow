@@ -814,7 +814,8 @@ export function ChatMessageArea({
                   const respMember = members.find(m => m.user_id === conversation.responsible_user_id);
                   const respLabel = respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || "Atribuir";
                   return (
-                    <DropdownMenuSub>
+                    <div className="md:hidden">
+                      <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
                         <UserCog size={15} />
                         <span className="flex-1 truncate">Responsável: {respLabel}</span>
