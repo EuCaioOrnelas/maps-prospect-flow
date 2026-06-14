@@ -1189,6 +1189,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
         <Select value={config.trigger_type || ""} onValueChange={(v) => updateConfig("trigger_type", v)}>
           <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
           <SelectContent>
+            <SelectItem value="any_message">Qualquer mensagem</SelectItem>
             <SelectItem value="keyword">Palavra-chave</SelectItem>
             <SelectItem value="campaign_reply">Resposta de campanha</SelectItem>
             <SelectItem value="first_message">1ª mensagem recebida</SelectItem>
