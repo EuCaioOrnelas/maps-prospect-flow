@@ -167,7 +167,7 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
               ref={textareaRef}
               value={content}
               onChange={e => setContent(e.target.value)}
-              placeholder="Digite a mensagem... use {{nome}}, {{empresa}}, {{cidade}}, {{endereco}}, {{email}}, {{telefone}}"
+              placeholder="Digite a mensagem... use {{nome}}, {{nome_completo}}, {{primeiro_nome}}, {{sobrenome}}, {{empresa}}, {{cidade}}, {{endereco}}, {{email}}, {{telefone}}"
               className="min-h-[140px] resize-y font-mono text-sm"
             />
           </div>

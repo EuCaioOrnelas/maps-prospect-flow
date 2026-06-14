@@ -15,6 +15,16 @@ function formatPhone(phone: string) {
   return phone;
 }
 
+function parseName(name?: string | null) {
+  const full = (name || "").trim();
+  if (!full) return { full: "", first: "", last: "" };
+  const parts = full.split(/\s+/).filter(Boolean);
+  const first = parts[0] || "";
+  const last = parts.length > 1 ? parts[parts.length - 1] : "";
+  return { full, first, last };
+}
+
+
 /** Resolve as variáveis das mensagens rápidas a partir da conversa + lead do CRM */
 export function useQuickReplyContext(conversation: Conv | null | undefined) {
   const [ctx, setCtx] = useState<Partial<Record<QuickReplyVarKey, string>>>({});
@@ -22,8 +32,12 @@ export function useQuickReplyContext(conversation: Conv | null | undefined) {
   useEffect(() => {
     let cancel = false;
     if (!conversation?.contact_phone) { setCtx({}); return; }
+    const parsed = parseName(conversation.contact_name);
     const base: Partial<Record<QuickReplyVarKey, string>> = {
-      nome: conversation.contact_name || "",
+      nome: parsed.full,
+      nome_completo: parsed.full,
+      primeiro_nome: parsed.first,
+      sobrenome: parsed.last,
       telefone: formatPhone(conversation.contact_phone),
     };
     setCtx(base);
@@ -39,8 +53,12 @@ export function useQuickReplyContext(conversation: Conv | null | undefined) {
         .limit(1)
         .maybeSingle();
       if (cancel || !data) return;
+      const crmParsed = parseName(conversation.contact_name || data.contact_name);
       setCtx({
-        nome: conversation.contact_name || data.contact_name || "",
+        nome: crmParsed.full,
+        nome_completo: crmParsed.full,
+        primeiro_nome: crmParsed.first,
+        sobrenome: crmParsed.last,
         empresa: data.company_name || "",
         cidade: data.city || "",
         endereco: data.address || "",
