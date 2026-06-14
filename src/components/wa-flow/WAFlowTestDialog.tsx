@@ -618,11 +618,16 @@ export function WAFlowTestDialog({
     void advanceFromNode(entryNodeId, nextRunVersion);
   }, [advanceFromNode, entryNodeId, resetSimulation]);
 
+  // Bootstrap only on dialog open / explicit reset — avoid restart loops when nodes/edges change.
+  const bootstrapRef = useRef(bootstrapSimulation);
+  bootstrapRef.current = bootstrapSimulation;
   useEffect(() => {
     if (open) {
-      bootstrapSimulation();
+      bootstrapRef.current();
     }
-  }, [open, resetVersion, bootstrapSimulation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, resetVersion]);
+
 
   const consumeInteractiveReply = useCallback(async (nodeId: string, choice?: InteractiveChoice, rawText?: string) => {
     const node = nodeMap.get(nodeId);
