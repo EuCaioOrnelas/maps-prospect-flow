@@ -439,7 +439,7 @@ export function ChatSidebar({
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0 border-b wa-border-conversation py-[10px] h-full flex flex-col justify-center">
+                <div className="flex-1 min-w-0 py-[10px] h-full flex flex-col justify-center">
                   <div className="flex items-start justify-between gap-2 mb-[1px]">
                     <span className="text-[17px] leading-[21px] wa-text-primary truncate flex items-center gap-1.5 min-w-0 flex-1">
                       {conv.is_muted && (
