@@ -10,6 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQuickReplies, type QuickReply } from "@/hooks/useQuickReplies";
 import { QuickReplyDialog } from "@/components/chat/QuickReplyDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function ChatQuickReplies() {
   const navigate = useNavigate();
@@ -19,6 +29,7 @@ export default function ChatQuickReplies() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<QuickReply | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState<QuickReply | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -116,7 +127,7 @@ export default function ChatQuickReplies() {
                           <Button size="icon" variant="ghost" onClick={() => openEdit(item)} className="h-7 w-7">
                             <Pencil size={13} />
                           </Button>
-                          <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remover esta mensagem rápida?")) void remove(item.id); }} className="h-7 w-7 text-destructive">
+                          <Button size="icon" variant="ghost" onClick={() => setDeleting(item)} className="h-7 w-7 text-destructive">
                             <Trash2 size={13} />
                           </Button>
                         </div>
@@ -146,6 +157,29 @@ export default function ChatQuickReplies() {
           if (ok) setDialogOpen(false);
         }}
       />
+
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover mensagem rápida?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O atalho <code className="px-1 rounded bg-muted">/{deleting?.shortcut}</code> deixará de estar disponível no chat.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (deleting) await remove(deleting.id);
+                setDeleting(null);
+              }}
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   );
 }

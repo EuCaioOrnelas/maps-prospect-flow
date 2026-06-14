@@ -30,13 +30,13 @@ export function QuickReplyPicker({ items, query, activeIdx, onSelect, onHover }:
   };
 
   return (
-    <div className="absolute bottom-[58px] left-[12px] right-[12px] z-40 max-h-[260px] overflow-y-auto rounded-xl border border-border bg-popover shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-150">
-      <div className="px-3 py-2 border-b border-border flex items-center gap-2">
-        <Zap size={12} className="text-primary" />
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="absolute bottom-[58px] left-[8px] right-[8px] sm:left-[12px] sm:right-[12px] z-40 max-h-[260px] overflow-y-auto rounded-xl border border-border bg-popover shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-150">
+      <div className="px-3 py-2 border-b border-border flex items-center gap-2 flex-wrap">
+        <Zap size={12} className="text-primary shrink-0" />
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
           Mensagens rápidas {query ? `· /${query}` : ""}
         </span>
-        <span className="ml-auto text-[10px] text-muted-foreground">↑↓ navegar · Enter usar · Esc cancelar</span>
+        <span className="ml-auto text-[10px] text-muted-foreground hidden sm:inline">↑↓ navegar · Enter usar · Esc cancelar</span>
       </div>
       <div ref={containerRef}>
         {items.map((item, idx) => (
@@ -46,14 +46,14 @@ export function QuickReplyPicker({ items, query, activeIdx, onSelect, onHover }:
             onMouseEnter={() => onHover(idx)}
             onClick={() => onSelect(item)}
             className={cn(
-              "w-full text-left px-3 py-2 flex items-start gap-3 transition-colors border-b border-border/40 last:border-b-0",
+              "w-full text-left px-3 py-2 flex items-start gap-2.5 transition-colors border-b border-border/40 last:border-b-0",
               idx === activeIdx ? "bg-primary/10" : "hover:bg-muted/60"
             )}
           >
-            <code className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded bg-primary/15 text-primary text-[11px] font-mono font-semibold">
+            <code className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded bg-primary/15 text-primary text-[11px] font-mono font-semibold max-w-[90px] truncate">
               /{item.shortcut}
             </code>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 overflow-hidden">
               {item.title && <p className="text-xs font-medium text-foreground truncate">{item.title}</p>}
               <p className="text-[11px] text-muted-foreground truncate">{item.content || "(sem texto)"}</p>
               {item.media_url && (
@@ -69,3 +69,4 @@ export function QuickReplyPicker({ items, query, activeIdx, onSelect, onHover }:
     </div>
   );
 }
+
