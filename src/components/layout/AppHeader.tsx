@@ -151,8 +151,10 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
             );
           })()}
 
-          {/* Theme toggle - between credits and avatar */}
-          <ThemeSwitch />
+          {/* Theme toggle - desktop only */}
+          <div className="hidden lg:block">
+            <ThemeSwitch />
+          </div>
 
           {/* Desktop Avatar dropdown */}
           <div className="hidden lg:block">

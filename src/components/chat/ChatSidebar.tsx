@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
-import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle, UserPlus, Trash2, Ban, Settings, CheckCheck, Mail } from "lucide-react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle, UserPlus, Trash2, Ban, Settings, CheckCheck, Mail, User as UserIcon, Columns } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
 import { getChatPhoneKey, useChatCRMFilters } from "@/hooks/useChatCRMFilters";
@@ -11,6 +11,7 @@ import { ChatFiltersDialog, type ChatFilterConfig } from "./ChatFiltersDialog";
 import { AddContactDialog } from "./AddContactDialog";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { getResponsibleColor } from "@/lib/responsibleColor";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 interface ChatSidebarProps {
@@ -91,6 +92,7 @@ export function ChatSidebar({
   const [addContactFor, setAddContactFor] = useState<ChatConversation | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -373,6 +375,8 @@ export function ChatSidebar({
             const respLabel = respMember ? (respMember.name || respMember.email || "") : "";
             const respShort = respLabel ? respLabel.split(/\s+/)[0] : "";
             const isMine = conv.responsible_user_id && conv.responsible_user_id === currentUserId;
+            const crmLeadForRow = crmLeadByPhoneKey[getChatPhoneKey(conv.contact_phone)];
+            const crmStageName = crmLeadForRow?.stageName || null;
 
             return (
               <div
@@ -429,11 +433,37 @@ export function ChatSidebar({
                         </span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                            <button className="w-[20px] h-[20px] -mr-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                            <button className={cn("w-[20px] h-[20px] -mr-1 rounded transition-opacity duration-200 flex items-center justify-center", isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
                               <ChevronDown size={18} className="wa-icon-muted" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[210px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                        <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[220px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                          {isMobile && (respShort || crmStageName) && (
+                            <>
+                              <div className="px-3 py-1.5">
+                                {respShort && respColor && (
+                                  <div className="flex items-center gap-2 text-[12px] mb-1">
+                                    <UserIcon size={12} className="wa-icon-muted shrink-0" />
+                                    <span className="wa-text-muted">Responsável:</span>
+                                    <span
+                                      className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold border max-w-[120px]"
+                                      style={{ backgroundColor: `${respColor}26`, color: respColor, borderColor: `${respColor}55` }}
+                                    >
+                                      <span className="truncate">{truncateText(respLabel || respShort, 14)}</span>
+                                    </span>
+                                  </div>
+                                )}
+                                {crmStageName && (
+                                  <div className="flex items-center gap-2 text-[12px]">
+                                    <Columns size={12} className="wa-icon-muted shrink-0" />
+                                    <span className="wa-text-muted">Coluna CRM:</span>
+                                    <span className="wa-text-primary font-medium truncate">{truncateText(crmStageName, 18)}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
                           {(onMarkRead || onMarkUnread) && (
                             <DropdownMenuItem
                               onClick={async () => {
@@ -535,7 +565,7 @@ export function ChatSidebar({
                       </span>
                     </div>
                     <div className="shrink-0 w-[104px] ml-2 pr-[22px] flex items-center justify-end gap-[6px]">
-                      {responsibleFilter === "all" && respShort && respColor && (
+                      {!isMobile && responsibleFilter === "all" && respShort && respColor && (
                         <span
                           className="inline-flex items-center px-[7px] py-[1px] rounded-full text-[10px] font-semibold leading-[14px] max-w-[82px] border"
                           style={{
