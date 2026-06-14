@@ -880,20 +880,8 @@ export function ChatMessageArea({
                                       avatarColorClass={!isOutbound ? avatarColor : "bg-[#128c7e]"}
                                       messageId={msg.id}
                                       initialTranscription={(msg.metadata as any)?.transcription || null}
-                                    />
+                                     />
           </div>
-
-          {/* Floating scroll-to-bottom button */}
-          {showScrollDown && (
-            <button
-              type="button"
-              onClick={() => scrollToBottom("smooth")}
-              aria-label="Ir para a última mensagem"
-              className="absolute right-3 sm:right-5 bottom-[96px] z-20 w-10 h-10 rounded-full bg-background/95 hover:bg-background border wa-border-light shadow-lg flex items-center justify-center text-foreground/80 hover:text-foreground transition-all backdrop-blur-sm"
-            >
-              <ChevronDown size={22} />
-            </button>
-          )}
                                 )}
                                 {album ? (
                                   <div className="p-[3px]">
