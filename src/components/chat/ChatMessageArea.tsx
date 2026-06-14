@@ -10,7 +10,7 @@ import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { AddContactDialog } from "./AddContactDialog";
 import { ForwardDialog } from "./ForwardDialog";
 import { ImageLightbox, downloadFromUrl } from "./ImageLightbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import logoIconNew from "@/assets/logo-icon-new.png";
