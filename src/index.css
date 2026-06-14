@@ -1429,8 +1429,8 @@ input::placeholder, textarea::placeholder {
 .wa-dropdown-item:focus-visible,
 .wa-dropdown-item[data-highlighted],
 .wa-dropdown-item[data-state="open"] {
-  background-color: #10b981 !important;
-  color: #ffffff !important;
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
   outline: none;
 }
 .wa-dropdown-item:hover svg,
@@ -1438,8 +1438,8 @@ input::placeholder, textarea::placeholder {
 .wa-dropdown-item:focus-visible svg,
 .wa-dropdown-item[data-highlighted] svg,
 .wa-dropdown-item[data-state="open"] svg {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
+  color: hsl(var(--primary-foreground)) !important;
+  stroke: hsl(var(--primary-foreground)) !important;
 }
 
 .wa-dropdown-item-destructive { color: #ef4444; transition: background-color 0.12s, color 0.12s; }
