@@ -170,7 +170,7 @@ serve(async (req) => {
       .from("chat_conversations")
       .update({
         last_auto_reply_at: new Date().toISOString(),
-        last_message_text: cfg.message,
+        last_message_text: resolvedMessage,
         last_message_at: new Date().toISOString(),
         last_message_direction: "outbound",
         last_message_type: "text",
