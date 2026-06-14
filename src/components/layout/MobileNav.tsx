@@ -192,6 +192,9 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                   Análise
                 </p>
                 <TopLink to="/dashboard" icon={LayoutDashboard} label="Cockpit" />
+                {can("chat") && (
+                  <TopLink to="/chat" icon={MessageCircle} label="Chat" highlight />
+                )}
                 {can("crm") && (
                   <TopLink to="/crm/score" icon={Trophy} label="Score de leads" />
                 )}
@@ -201,7 +204,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                 )}
 
                 <div className="mt-2 px-3 py-2 rounded-lg bg-muted/40 border border-border/60 text-[11px] text-muted-foreground leading-relaxed">
-                  📱 No celular você acessa só os dashboards.
+                  📱 No celular você acessa dashboards e o Chat para responder contatos.
                   Para operar campanhas, fluxos e CRM, use o computador.
                 </div>
               </div>
