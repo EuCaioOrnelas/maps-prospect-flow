@@ -923,9 +923,9 @@ export function ChatMessageArea({
               type="button"
               onClick={() => scrollToBottom("smooth")}
               aria-label="Ir para a última mensagem"
-              className="absolute right-3 sm:right-5 bottom-[96px] z-20 w-10 h-10 rounded-full bg-background/95 hover:bg-background border wa-border-light shadow-lg flex items-center justify-center text-foreground/80 hover:text-foreground transition-all backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2"
+              className="absolute right-2 sm:right-4 bottom-[78px] sm:bottom-[88px] z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-background/95 hover:bg-background border wa-border-light shadow-lg flex items-center justify-center text-foreground/80 hover:text-foreground transition-all backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2"
             >
-              <ChevronDown size={22} />
+              <ChevronDown size={20} />
             </button>
           )}
 
