@@ -777,7 +777,8 @@ export function ChatMessageArea({
                   const currentStage = pipelineStages.find(s => s.id === leadInfo?.pipeline_stage_id);
                   const stageColor = currentStage?.color || "#10b981";
                   return (
-                    <DropdownMenuSub>
+                    <div className="md:hidden">
+                      <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
                         <span className="w-[14px] h-[14px] rounded-full inline-flex items-center justify-center shrink-0" style={{ backgroundColor: leadInfo ? stageColor : "transparent", border: leadInfo ? "none" : "1.5px solid currentColor" }} />
                         <span className="flex-1 truncate">Coluna CRM: {leadInfo ? (currentStage?.name || "Sem coluna") : "Não está no CRM"}</span>
@@ -805,7 +806,8 @@ export function ChatMessageArea({
                           })}
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
-                    </DropdownMenuSub>
+                      </DropdownMenuSub>
+                    </div>
                   );
                 })()}
                 {canChangeResponsible && onTransferResponsible && (() => {
