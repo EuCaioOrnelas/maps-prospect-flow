@@ -115,9 +115,10 @@ export function WAFlowTestDialog({
   const [isRunning, setIsRunning] = useState(false);
   const [listPopup, setListPopup] = useState<{ nodeId: string; choices: InteractiveChoice[]; title: string } | null>(null);
   const [realPhone, setRealPhone] = useState("");
-  const [realMessage, setRealMessage] = useState("");
-  const [isSendingReal, setIsSendingReal] = useState(false);
+  const [testEnabled, setTestEnabled] = useState(false);
+  const [isTogglingTest, setIsTogglingTest] = useState(false);
   const [isResettingReal, setIsResettingReal] = useState(false);
+  const [loadedTestState, setLoadedTestState] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const runtimeRef = useRef<RuntimeContext>(createRuntimeContext());
   const runVersionRef = useRef(0);
