@@ -156,13 +156,19 @@ export function useChat() {
   useEffect(() => {
     if (!user) return;
     loadConnections();
-  }, [user, loadConnections]);
+  }, [user?.id, loadConnections]);
+
+  // Track last loaded ids to avoid blanking UI when effects re-run with same params
+  // (e.g. after AuthContext refocus produces a new `user` reference).
+  const loadedConvForConnRef = useRef<string | null>(null);
+  const loadedMessagesForConvRef = useRef<string | null>(null);
 
   // Load conversations
   useEffect(() => {
     if (!user || !activeConnectionId) return;
+    const isFirstLoadForConn = loadedConvForConnRef.current !== activeConnectionId;
     const loadConversations = async () => {
-      setLoading(true);
+      if (isFirstLoadForConn) setLoading(true);
       const { data } = await supabase
         .from("chat_conversations")
         .select("*")
@@ -171,26 +177,44 @@ export function useChat() {
         .eq("is_archived", false)
         .order("is_pinned", { ascending: false })
         .order("last_message_at", { ascending: false, nullsFirst: false });
-      
+
       setConversations((data as ChatConversation[]) || []);
+      loadedConvForConnRef.current = activeConnectionId;
       setLoading(false);
     };
     loadConversations();
-  }, [user, accountOwnerId, activeConnectionId]);
+  }, [user?.id, accountOwnerId, activeConnectionId]);
 
   // Load messages for active conversation
   useEffect(() => {
     if (!activeConversationId || !user) return;
-    
+    const isFirstLoadForConv = loadedMessagesForConvRef.current !== activeConversationId;
+
     const loadMessages = async () => {
-      setLoadingMessages(true);
+      if (isFirstLoadForConv) setLoadingMessages(true);
       const { data } = await supabase
         .from("chat_messages")
         .select("*")
         .eq("conversation_id", activeConversationId)
         .order("created_at", { ascending: true })
         .limit(200);
-      setMessages((data as ChatMessage[]) || []);
+      // Avoid clobbering an optimistic/realtime-updated list when re-running for
+      // the same conversation (e.g. user object got a new reference on refocus).
+      if (isFirstLoadForConv) {
+        setMessages((data as ChatMessage[]) || []);
+      } else {
+        const fresh = (data as ChatMessage[]) || [];
+        setMessages(prev => {
+          const map = new Map<string, ChatMessage>();
+          for (const m of fresh) map.set(m.id, m);
+          // Keep any optimistic/local messages that aren't in the fresh server set
+          for (const m of prev) if (!map.has(m.id)) map.set(m.id, m);
+          return Array.from(map.values()).sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+        });
+      }
+      loadedMessagesForConvRef.current = activeConversationId;
       setLoadingMessages(false);
       // Mark as read
       await supabase
@@ -202,7 +226,7 @@ export function useChat() {
       );
     };
     loadMessages();
-  }, [activeConversationId, user]);
+  }, [activeConversationId, user?.id]);
 
   // Realtime subscriptions
   useEffect(() => {
