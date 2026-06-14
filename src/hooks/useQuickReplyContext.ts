@@ -53,8 +53,12 @@ export function useQuickReplyContext(conversation: Conv | null | undefined) {
         .limit(1)
         .maybeSingle();
       if (cancel || !data) return;
+      const crmParsed = parseName(conversation.contact_name || data.contact_name);
       setCtx({
-        nome: conversation.contact_name || data.contact_name || "",
+        nome: crmParsed.full,
+        nome_completo: crmParsed.full,
+        primeiro_nome: crmParsed.first,
+        sobrenome: crmParsed.last,
         empresa: data.company_name || "",
         cidade: data.city || "",
         endereco: data.address || "",
