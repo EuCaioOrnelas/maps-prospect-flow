@@ -466,12 +466,33 @@ export default function CreateFlowAI() {
         setShowDailyLimit(true);
         throw new Error("__limit__");
       }
+
+      // Bind to a Meta WABA connection (Meta-only flows)
+      const { data: conns } = await supabase
+        .from("user_waba_connections")
+        .select("id, webhook_verified_at, status")
+        .eq("user_id", user!.id)
+        .eq("status", "active");
+      const eligible = (conns || []).find((c: any) => !!c.webhook_verified_at);
+      if (!eligible) {
+        throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos com IA.");
+      }
+
       const { data: flow, error: flowErr } = await supabase
         .from("wa_automation_flows")
-        .insert({ user_id: user!.id, name: "Fluxo IA" })
+        .insert({
+          user_id: user!.id,
+          name: "Fluxo IA",
+          api_type: "meta",
+          waba_connection_id: eligible.id,
+        })
         .select()
         .single();
       if (flowErr) throw flowErr;
+
+      // Count this attempt against the daily limit immediately so retries don't bypass it.
+      incrementDailyCount();
+
       const { data: result, error: fnErr } = await supabase.functions.invoke("generate-wa-flow", {
         body: { prompt: prompt.trim(), flow_id: flow.id },
       });
@@ -483,11 +504,8 @@ export default function CreateFlowAI() {
       return flow;
     },
     onSuccess: (flow) => {
-      incrementDailyCount();
-      setReviewFlowId(flow.id);
-      setTimeout(() => {
-        setShowReviewPopup(true);
-      }, 1500);
+      toast.success("Fluxo gerado com IA!");
+      navigate(`/fluxos/${flow.id}`);
     },
     onError: (err: any) => {
       if (err.message === "__limit__") return;
