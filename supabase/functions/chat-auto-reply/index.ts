@@ -47,7 +47,7 @@ serve(async (req) => {
 
     const { data: conv } = await supabase
       .from("chat_conversations")
-      .select("id, user_id, waba_connection_id, contact_phone, last_auto_reply_at")
+      .select("id, user_id, waba_connection_id, contact_phone, contact_name, last_auto_reply_at")
       .eq("id", conversation_id)
       .single();
     if (!conv) return new Response(JSON.stringify({ skipped: "no conv" }), { headers: corsHeaders });
