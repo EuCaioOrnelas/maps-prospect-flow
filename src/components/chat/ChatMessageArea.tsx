@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 
 function formatPhoneDisplay(phone: string): string {
@@ -352,6 +354,18 @@ export function ChatMessageArea({
   const dragCounterRef = useRef(0);
   const navigate = useNavigate();
   const { accountOwnerId } = useAuth();
+  const isMobile = useIsMobile();
+
+  const currentStage = useMemo(
+    () => pipelineStages.find(s => s.id === leadInfo?.pipeline_stage_id),
+    [pipelineStages, leadInfo?.pipeline_stage_id],
+  );
+  const stageColor = currentStage?.color || "#10b981";
+  const respMember = useMemo(
+    () => members?.find(m => m.user_id === conversation?.responsible_user_id),
+    [members, conversation?.responsible_user_id],
+  );
+
 
   // Load pipeline stages once
   useEffect(() => {
@@ -652,6 +666,94 @@ export function ChatMessageArea({
               </p>
             </div>
           </button>
+          {/* Desktop: CRM stage & responsible chips */}
+          <div className="hidden md:flex items-center gap-2 shrink-0">
+            {/* Stage badge */}
+            {pipelineStages.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted/70 hover:bg-muted text-xs text-foreground transition">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: leadInfo ? stageColor : "transparent", border: leadInfo ? "none" : "1.5px solid currentColor" }} />
+                    <span className="truncate max-w-[120px]">{leadInfo ? (currentStage?.name || "Sem coluna") : "Não está no CRM"}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[220px] max-h-[60vh] overflow-y-auto rounded-xl shadow-2xl py-1.5">
+                  {!leadInfo && (
+                    <div className="px-3 py-2 text-[11px] text-muted-foreground">Salve o contato no CRM para mover entre colunas.</div>
+                  )}
+                  {pipelineStages.map(s => {
+                    const selected = s.id === leadInfo?.pipeline_stage_id;
+                    const color = s.color || "#10b981";
+                    return (
+                      <DropdownMenuItem
+                        key={s.id}
+                        disabled={!leadInfo}
+                        onClick={() => handleChangeStage(s.id)}
+                        className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                      >
+                        <span className="w-[10px] h-[10px] rounded-full shrink-0" style={{ backgroundColor: color }} />
+                        <span className="flex-1 truncate">{s.name}</span>
+                        {selected && <Check size={14} className="wa-accent-text" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {/* Responsible badge */}
+            {canChangeResponsible && onTransferResponsible && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted/70 hover:bg-muted text-xs text-foreground transition">
+                    {respMember ? (
+                      <span className={cn("w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-medium shrink-0", getChatAvatarColor(respMember.user_id))}>
+                        {getChatInitials(respMember.name, respMember.email || "")}
+                      </span>
+                    ) : (
+                      <UserCog size={13} className="text-muted-foreground" />
+                    )}
+                    <span className="truncate max-w-[100px]">
+                      {respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || "Atribuir"}
+                    </span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[240px] max-h-[60vh] overflow-y-auto rounded-xl shadow-2xl py-1.5">
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      try { await onTransferResponsible(conversation.id, null); toast.success("Sem responsável"); }
+                      catch { toast.error("Erro ao transferir"); }
+                    }}
+                    className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                  >
+                    <span className="w-[22px] h-[22px] rounded-full bg-muted flex items-center justify-center"><X size={12} /></span>
+                    <span className="flex-1">Sem responsável</span>
+                  </DropdownMenuItem>
+                  {members.map((m) => {
+                    const c = getChatAvatarColor(m.user_id);
+                    const i = getChatInitials(m.name, m.email || "");
+                    const selected = m.user_id === conversation.responsible_user_id;
+                    return (
+                      <DropdownMenuItem
+                        key={m.user_id}
+                        onClick={async () => {
+                          try { await onTransferResponsible(conversation.id, m.user_id); toast.success("Conversa transferida"); }
+                          catch { toast.error("Erro ao transferir"); }
+                        }}
+                        className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                      >
+                        <span className={cn("w-[22px] h-[22px] rounded-full flex items-center justify-center text-white text-[10px] font-medium shrink-0", c)}>{i}</span>
+                        <span className="flex-1 truncate">
+                          {m.name || m.email || m.user_id.slice(0, 8)}
+                          {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
+                        </span>
+                        {selected && <Check size={14} className="wa-accent-text" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
           <div className="flex items-center gap-[10px]">
 
             <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
@@ -675,7 +777,8 @@ export function ChatMessageArea({
                   const currentStage = pipelineStages.find(s => s.id === leadInfo?.pipeline_stage_id);
                   const stageColor = currentStage?.color || "#10b981";
                   return (
-                    <DropdownMenuSub>
+                    <div className="md:hidden">
+                      <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
                         <span className="w-[14px] h-[14px] rounded-full inline-flex items-center justify-center shrink-0" style={{ backgroundColor: leadInfo ? stageColor : "transparent", border: leadInfo ? "none" : "1.5px solid currentColor" }} />
                         <span className="flex-1 truncate">Coluna CRM: {leadInfo ? (currentStage?.name || "Sem coluna") : "Não está no CRM"}</span>
@@ -703,14 +806,16 @@ export function ChatMessageArea({
                           })}
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
-                    </DropdownMenuSub>
+                      </DropdownMenuSub>
+                    </div>
                   );
                 })()}
                 {canChangeResponsible && onTransferResponsible && (() => {
                   const respMember = members.find(m => m.user_id === conversation.responsible_user_id);
                   const respLabel = respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || "Atribuir";
                   return (
-                    <DropdownMenuSub>
+                    <div className="md:hidden">
+                      <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
                         <UserCog size={15} />
                         <span className="flex-1 truncate">Responsável: {respLabel}</span>
@@ -751,7 +856,8 @@ export function ChatMessageArea({
                           })}
                         </DropdownMenuSubContent>
                       </DropdownMenuPortal>
-                    </DropdownMenuSub>
+                      </DropdownMenuSub>
+                    </div>
                   );
                 })()}
                 <DropdownMenuSeparator className="mx-3 my-1 wa-border-light" />
