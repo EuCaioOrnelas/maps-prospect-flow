@@ -98,6 +98,7 @@ export function ChatSidebar({
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [customFilters, setCustomFilters] = useState<ChatFilterConfig>(DEFAULT_FILTER_CONFIG);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const {
     availableTags,
