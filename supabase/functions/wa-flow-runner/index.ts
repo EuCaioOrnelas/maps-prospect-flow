@@ -1313,21 +1313,30 @@ serve(async (req) => {
       const entryConfig = entry.config || {};
       const triggerType = entryConfig.trigger_type || "first_message";
 
+      // Active-execution guard: don't re-trigger the same flow for the same lead while it's already running.
+      // After the flow reaches an `end` node, status becomes "completed" and the lead can enter again.
+      const leadKey = phoneKey(body.lead_phone);
+      const { data: activeExecs } = await supabase
+        .from("wa_flow_executions")
+        .select("lead_phone, status")
+        .eq("flow_id", flow.id)
+        .in("status", ["active", "waiting", "paused"]);
+      const hasActive = (activeExecs || []).some((e: any) => phoneKey(e.lead_phone) === leadKey);
+      if (hasActive) {
+        console.log(`[wa-flow-runner] flow ${flow.id} skipped — already active for lead ${leadKey}`);
+        continue;
+      }
+
       // Match trigger
       let shouldTrigger = false;
       if (triggerType === "first_message") {
-        // Trigger only on the lead's FIRST inbound message — i.e. no prior execution and an incoming text
         if (!body.incoming_text) continue;
-        // #5 fix: tolerant phone match (compare last 8 digits across all executions of this flow)
-        const leadKey = phoneKey(body.lead_phone);
-        const { data: priorExec } = await supabase
-          .from("wa_flow_executions")
-          .select("lead_phone")
-          .eq("flow_id", flow.id);
-        const alreadyRan = (priorExec || []).some((e: any) => phoneKey(e.lead_phone) === leadKey);
-        shouldTrigger = !alreadyRan && !!body.incoming_text;
+        shouldTrigger = true;
+      } else if (triggerType === "any_message") {
+        // Any inbound message re-activates the flow (when not already active for this lead).
+        if (!body.incoming_text) continue;
+        shouldTrigger = true;
       } else if (triggerType === "keyword") {
-        // #1 fix: keywords may be CSV string OR array. #2 fix: respect exact_match flag.
         const keywords = parseKeywords(entryConfig.keywords);
         if (keywords.length === 0 || !body.incoming_text) { continue; }
         const text = normalizeText(body.incoming_text);
@@ -1336,11 +1345,8 @@ serve(async (req) => {
           ? keywords.some((k: string) => text === k)
           : keywords.some((k: string) => text.includes(k));
       } else if (triggerType === "campaign_reply") {
-        // #3: campaign_reply triggers when this lead replied to a campaign of this user.
-        // Source of truth: public.campaign_responses (logged by the campaign engine).
         if (!body.incoming_text) { continue; }
         const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
-        const leadKey = phoneKey(body.lead_phone);
         let q = supabase
           .from("campaign_responses")
           .select("id, campaign_id, contact_phone, responded_at")
@@ -1353,15 +1359,8 @@ serve(async (req) => {
         const { data: responses } = await q;
         const matched = (responses || []).find((r: any) => phoneKey(r.contact_phone) === leadKey);
         if (!matched) { continue; }
-        // ensure not already triggered for this lead+flow
-        const { data: priorExec2 } = await supabase
-          .from("wa_flow_executions")
-          .select("lead_phone")
-          .eq("flow_id", flow.id);
-        const alreadyRan2 = (priorExec2 || []).some((e: any) => phoneKey(e.lead_phone) === leadKey);
-        shouldTrigger = !alreadyRan2;
+        shouldTrigger = true;
       } else {
-        // Unknown trigger types — log and skip
         console.log(`[wa-flow-runner] Unsupported trigger_type='${triggerType}' on flow ${flow.id}`);
         continue;
       }

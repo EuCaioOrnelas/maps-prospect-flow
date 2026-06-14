@@ -956,24 +956,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           .eq("status", "active"),
       ]);
 
-      const evolutionOptions = (evoNumbers || [])
-        // Only exclude entries that belong to the Meta Cloud API (those come from user_waba_connections).
-        // Both "free" and "paid" Evolution tiers are valid Evolution numbers.
-        .filter((n: any) => n.api_tier !== "meta")
-        .map((n: any) => ({
-          id: n.id,
-          phone_number: n.phone_number,
-          name: n.name,
-          api_tier: n.api_tier,
-          api_type: "evolution" as const,
-          source_id: n.id,
-          phone_number_id: null,
-          waba_connection_id: null,
-          display_phone_number: null,
-          access_token: null,
-          waba_id: null,
-        }));
-
+      // Meta-only: fluxos só rodam na API Oficial Meta. Não listamos números Evolution aqui.
       const metaOptions = (wabaConns || []).map((conn: any) => ({
         id: `meta:${conn.id}`,
         phone_number: conn.display_phone_number,
@@ -988,14 +971,14 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
         waba_id: conn.waba_id,
       }));
 
-      return [...metaOptions, ...evolutionOptions];
+      return metaOptions;
     },
     enabled: !!user,
   });
 
   const selectedNumber = numbers.find((n: any) => n.id === config.whatsapp_number_id);
   const isMeta = selectedNumber?.api_type === "meta";
-  const isEvolution = selectedNumber?.api_type === "evolution";
+  const isEvolution = false; // Meta-only: fluxos não suportam mais Evolution.
 
   const wabaConn = isMeta && selectedNumber
     ? {
@@ -1080,7 +1063,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             const numIsMeta = num?.api_type === "meta";
             updateConfig("whatsapp_number_id", v);
             updateConfig("whatsapp_number_name", num?.name || num?.display_phone_number || num?.phone_number || "");
-            updateConfig("api_type", numIsMeta ? "meta" : "evolution");
+            updateConfig("api_type", "meta");
             updateConfig("waba_connection_id", num?.waba_connection_id || null);
             updateConfig("phone_number_id", num?.phone_number_id || null);
             updateConfig("source_id", num?.source_id || null);
@@ -1092,39 +1075,26 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             {numbers.length === 0 && (
               <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum número conectado</div>
             )}
-            {numbers.map((n: any) => {
-              const nIsMeta = n.api_type === "meta";
-              return (
-                <SelectItem key={n.id} value={n.id}>
-                  <div className="flex items-center gap-2">
-                    <span>{n.name || n.display_phone_number || n.phone_number}</span>
-                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${nIsMeta ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-500"}`}>
-                      {nIsMeta ? "API Inbound" : "API Outbound"}
-                    </span>
-                  </div>
-                </SelectItem>
-              );
-            })}
+            {numbers.map((n: any) => (
+              <SelectItem key={n.id} value={n.id}>
+                <div className="flex items-center gap-2">
+                  <span>{n.name || n.display_phone_number || n.phone_number}</span>
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                    API Oficial Meta
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
-
-      {/* Evolution warning */}
-      {selectedNumber && isEvolution && (
-        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
-          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-[11px] text-amber-500 leading-relaxed">
-            <span className="font-semibold">API Outbound (Evolution)</span> — Recomendada para prospecção fria. Risco de bloqueio por spam.
-          </p>
-        </div>
-      )}
 
       {/* Meta API info */}
       {selectedNumber && isMeta && (
         <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/20">
           <Info size={14} className="text-primary shrink-0 mt-0.5" />
           <p className="text-[11px] text-primary leading-relaxed">
-            <span className="font-semibold">API Inbound (Oficial Meta)</span> — Requer template HSM para reabrir conversas após 24h.
+            <span className="font-semibold">API Oficial Meta</span> — Requer template HSM aprovado para reabrir conversas após 24h.
           </p>
         </div>
       )}
@@ -1160,9 +1130,21 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
               />
               <div className="max-h-[180px] overflow-y-auto space-y-1 mt-1">
                 {filteredReopenTemplates.length === 0 && (
-                  <p className="text-[10px] text-muted-foreground py-2 text-center">
-                    {templateSearch ? "Nenhum template encontrado" : "Nenhum template aprovado disponível"}
-                  </p>
+                  <div className="py-3 flex flex-col items-center gap-2">
+                    <p className="text-[10px] text-muted-foreground text-center">
+                      {templateSearch ? "Nenhum template encontrado" : "Nenhum template aprovado disponível"}
+                    </p>
+                    {!templateSearch && wabaConn?.waba_id && (
+                      <a
+                        href={`https://business.facebook.com/wa/manage/message-templates/?waba_id=${wabaConn.waba_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        Criar template na Meta →
+                      </a>
+                    )}
+                  </div>
                 )}
                 {filteredReopenTemplates.map((t: any) => (
                   <button
@@ -1207,6 +1189,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
         <Select value={config.trigger_type || ""} onValueChange={(v) => updateConfig("trigger_type", v)}>
           <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
           <SelectContent>
+            <SelectItem value="any_message">Qualquer mensagem</SelectItem>
             <SelectItem value="keyword">Palavra-chave</SelectItem>
             <SelectItem value="campaign_reply">Resposta de campanha</SelectItem>
             <SelectItem value="first_message">1ª mensagem recebida</SelectItem>

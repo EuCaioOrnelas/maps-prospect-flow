@@ -7,6 +7,7 @@ const triggerLabels: Record<string, string> = {
   campaign_reply: "Resposta campanha",
   webhook: "Webhook/API",
   first_message: "1ª mensagem",
+  any_message: "Qualquer mensagem",
 };
 
 export function WAEntryNode({ data }: NodeProps) {
