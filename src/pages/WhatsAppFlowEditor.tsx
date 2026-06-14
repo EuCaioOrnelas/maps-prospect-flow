@@ -299,6 +299,9 @@ export default function WhatsAppFlowEditor() {
       return data;
     },
     enabled: !!id && !!user,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const { data: dbEdges = [] } = useQuery({
@@ -312,6 +315,9 @@ export default function WhatsAppFlowEditor() {
       return data;
     },
     enabled: !!id && !!user,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   useEffect(() => {
