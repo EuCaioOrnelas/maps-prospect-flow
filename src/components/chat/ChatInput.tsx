@@ -693,6 +693,46 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
       <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
       <input ref={videoInputRef} type="file" accept="video/*" multiple className="hidden" onChange={handleFileSelect} />
+
+      <Dialog
+        open={!!confirmQr}
+        onOpenChange={(open) => {
+          if (!open) {
+            setText("");
+            setConfirmQr(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enviar mensagem rápida?</DialogTitle>
+            <DialogDescription>
+              Você está enviando a resposta{" "}
+              <span className="font-medium text-primary">/{confirmQr?.shortcut}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-muted/50 rounded-lg p-3 text-sm text-foreground border border-border">
+            {confirmPreview.length > 220 ? confirmPreview.slice(0, 220) + "…" : confirmPreview || "(sem texto)"}
+            {confirmQr?.media_url && (
+              <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
+                Anexo: {confirmQr.media_filename || confirmQr.media_type}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setText("");
+                setConfirmQr(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={() => void handleConfirmSend()}>Enviar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
