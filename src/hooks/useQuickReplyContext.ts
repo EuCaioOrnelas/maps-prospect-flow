@@ -15,6 +15,16 @@ function formatPhone(phone: string) {
   return phone;
 }
 
+function parseName(name?: string | null) {
+  const full = (name || "").trim();
+  if (!full) return { full: "", first: "", last: "" };
+  const parts = full.split(/\s+/).filter(Boolean);
+  const first = parts[0] || "";
+  const last = parts.length > 1 ? parts[parts.length - 1] : "";
+  return { full, first, last };
+}
+
+
 /** Resolve as variáveis das mensagens rápidas a partir da conversa + lead do CRM */
 export function useQuickReplyContext(conversation: Conv | null | undefined) {
   const [ctx, setCtx] = useState<Partial<Record<QuickReplyVarKey, string>>>({});
