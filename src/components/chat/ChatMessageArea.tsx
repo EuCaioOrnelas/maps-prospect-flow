@@ -354,6 +354,18 @@ export function ChatMessageArea({
   const dragCounterRef = useRef(0);
   const navigate = useNavigate();
   const { accountOwnerId } = useAuth();
+  const isMobile = useIsMobile();
+
+  const currentStage = useMemo(
+    () => pipelineStages.find(s => s.id === leadInfo?.pipeline_stage_id),
+    [pipelineStages, leadInfo?.pipeline_stage_id],
+  );
+  const stageColor = currentStage?.color || "#10b981";
+  const respMember = useMemo(
+    () => members?.find(m => m.user_id === conversation?.responsible_user_id),
+    [members, conversation?.responsible_user_id],
+  );
+
 
   // Load pipeline stages once
   useEffect(() => {
