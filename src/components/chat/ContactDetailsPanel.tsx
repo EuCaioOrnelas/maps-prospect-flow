@@ -54,6 +54,7 @@ const COUNTRY_BY_DDI: Record<string, string> = {
   "86": "China", "91": "Índia", "61": "Austrália", "353": "Irlanda",
   "31": "Holanda", "41": "Suíça", "32": "Bélgica", "43": "Áustria",
   "46": "Suécia", "47": "Noruega", "45": "Dinamarca", "358": "Finlândia",
+  "30": "Grécia", "48": "Polônia",
   "972": "Israel", "971": "Emirados Árabes", "966": "Arábia Saudita",
   "27": "África do Sul", "20": "Egito", "212": "Marrocos", "351": "Portugal",
 };
