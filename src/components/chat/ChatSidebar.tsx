@@ -340,7 +340,7 @@ export function ChatSidebar({
       )}
 
       {/* Filter chips */}
-      <div className="flex items-center justify-center gap-2 px-3 pb-2 wa-sidebar-search-area">
+      <div className="flex items-center justify-center gap-2 px-3 pt-2 md:pt-0 pb-2 wa-sidebar-search-area">
         <button
           onClick={() => setActiveFilter("all")}
           className={cn(
