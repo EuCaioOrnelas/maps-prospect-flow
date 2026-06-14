@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
-import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle, UserPlus, Trash2, Ban, Settings, CheckCheck, Mail } from "lucide-react";
+import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle, UserPlus, Trash2, Ban, Settings, CheckCheck, Mail, User as UserIcon, Columns } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { ChatConversation, WabaConnection } from "@/hooks/useChat";
 import { getChatPhoneKey, useChatCRMFilters } from "@/hooks/useChatCRMFilters";
@@ -11,6 +11,7 @@ import { ChatFiltersDialog, type ChatFilterConfig } from "./ChatFiltersDialog";
 import { AddContactDialog } from "./AddContactDialog";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { getResponsibleColor } from "@/lib/responsibleColor";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 interface ChatSidebarProps {
