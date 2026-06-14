@@ -193,14 +193,18 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     inputRef.current?.focus();
   }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply]);
 
-  const applyQuickReply = useCallback(async (qr: QuickReply) => {
+  const applyQuickReply = useCallback((qr: QuickReply) => {
     const resolved = applyQuickReplyVariables(qr.content || "", quickReplyCtx);
-    // confirm before sending so the user can review
-    const preview = resolved.length > 220 ? resolved.slice(0, 220) + "…" : resolved;
-    const ok = window.confirm(
-      `Enviar mensagem rápida /${qr.shortcut}?\n\n${preview}${qr.media_url ? `\n\n[Anexo: ${qr.media_filename || qr.media_type}]` : ""}`
-    );
-    if (!ok) { setText(""); return; }
+    setConfirmPreview(resolved);
+    setConfirmQr(qr);
+  }, [quickReplyCtx]);
+
+  const handleConfirmSend = useCallback(async () => {
+    if (!confirmQr) return;
+    const qr = confirmQr;
+    const resolved = confirmPreview;
+    setConfirmQr(null);
+    setText("");
     if (qr.media_url) {
       try {
         const res = await fetch(qr.media_url);
@@ -215,10 +219,9 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     } else if (resolved.trim()) {
       onSendMessage(resolved, replyingTo?.id);
     }
-    setText("");
     onCancelReply?.();
     inputRef.current?.focus();
-  }, [quickReplyCtx, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
+  }, [confirmQr, confirmPreview, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (qrOpen) {
