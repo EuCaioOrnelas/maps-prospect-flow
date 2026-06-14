@@ -93,6 +93,7 @@ export function ChatSidebar({
   const [searchFocused, setSearchFocused] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
