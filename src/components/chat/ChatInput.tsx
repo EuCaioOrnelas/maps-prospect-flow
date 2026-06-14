@@ -705,7 +705,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
           }
         }}
       >
-        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md p-4 sm:p-6">
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md p-4 sm:p-6 rounded-[var(--radius-card)]">
           <DialogHeader className="space-y-1">
             <DialogTitle className="text-base sm:text-lg">Enviar mensagem rápida?</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">
