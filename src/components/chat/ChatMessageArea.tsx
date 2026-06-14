@@ -793,7 +793,8 @@ export function ChatMessageArea({
           <div className="wa-chat-glow" />
 
           <div className="flex-1 overflow-y-auto wa-scrollbar relative z-[1]" ref={scrollContainerRef}>
-            <div className="px-2 sm:px-6 lg:px-[63px] py-[4px] min-h-full flex flex-col justify-end">
+            <div className="px-3 sm:px-6 lg:px-[63px] py-[4px] min-h-full flex flex-col justify-end">
+
               {loading ? (
                 <div className="flex items-center justify-center py-16">
                   <div className="h-8 w-8 rounded-full border-[3px] border-[#128c7e]/20 border-t-[#128c7e] animate-spin" />
@@ -846,9 +847,10 @@ export function ChatMessageArea({
                             selectionMode && !isOutbound && "pl-2"
                           )}>
                             <div className={cn(
-                              "relative max-w-[80%] sm:max-w-[70%] lg:max-w-[65%] w-fit",
+                              "relative max-w-[65%] w-fit",
                               isOutbound ? "mr-[8px]" : "ml-[8px]"
                             )}>
+
                               {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
                               <div className={cn(
                                 "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative overflow-hidden",
@@ -917,20 +919,20 @@ export function ChatMessageArea({
             </div>
           </div>
 
-          {/* Floating scroll-to-bottom button */}
-          {showScrollDown && (
-            <button
-              type="button"
-              onClick={() => scrollToBottom("smooth")}
-              aria-label="Ir para a última mensagem"
-              className="absolute right-2 sm:right-4 bottom-[78px] sm:bottom-[88px] z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-background/95 hover:bg-background border wa-border-light shadow-lg flex items-center justify-center text-foreground/80 hover:text-foreground transition-all backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2"
-            >
-              <ChevronDown size={20} />
-            </button>
-          )}
-
           {/* Input — inside background container so pattern extends behind it */}
           <div className="relative z-10 shrink-0">
+            {/* Floating scroll-to-bottom button, sits just above the input */}
+            {showScrollDown && (
+              <button
+                type="button"
+                onClick={() => scrollToBottom("smooth")}
+                aria-label="Ir para a última mensagem"
+                className="absolute right-3 sm:right-5 -top-12 z-20 w-10 h-10 rounded-full bg-background/95 hover:bg-background border wa-border-light shadow-lg flex items-center justify-center text-foreground/80 hover:text-foreground transition-all backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2"
+              >
+                <ChevronDown size={20} />
+              </button>
+            )}
+
             {selectionMode ? (
               <div className="flex items-center justify-between gap-3 px-4 py-3 wa-input-field border-t wa-border-light">
                 <button
