@@ -32,8 +32,12 @@ export function useQuickReplyContext(conversation: Conv | null | undefined) {
   useEffect(() => {
     let cancel = false;
     if (!conversation?.contact_phone) { setCtx({}); return; }
+    const parsed = parseName(conversation.contact_name);
     const base: Partial<Record<QuickReplyVarKey, string>> = {
-      nome: conversation.contact_name || "",
+      nome: parsed.full,
+      nome_completo: parsed.full,
+      primeiro_nome: parsed.first,
+      sobrenome: parsed.last,
       telefone: formatPhone(conversation.contact_phone),
     };
     setCtx(base);
