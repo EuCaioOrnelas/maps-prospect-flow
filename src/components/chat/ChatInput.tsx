@@ -539,138 +539,139 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
         </div>
       )}
 
-      {!attachments.length && quickReplies.length > 0 && !qrOpen && (
-        <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-4 wa-quick-replies-fade-left pointer-events-none z-10" />
-          <div className="absolute right-0 top-0 bottom-0 w-10 wa-quick-replies-fade-right pointer-events-none z-10" />
-          <div className="flex gap-2 overflow-x-auto px-3 py-2 no-scrollbar scroll-smooth snap-x snap-mandatory">
-            {quickReplies.map((qr) => (
-              <button
-                key={qr.id}
-                type="button"
-                onClick={() => void applyQuickReply(qr)}
-                title={qr.title || qr.shortcut}
-                className="shrink-0 snap-start inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-border bg-card/70 hover:bg-primary/10 hover:border-primary/40 transition-colors shadow-sm"
-              >
-                <MessageSquareText size={13} className="text-primary shrink-0" />
-                <span className="text-[12px] font-medium text-foreground whitespace-nowrap max-w-[140px] truncate">
-                  {qr.title || qr.shortcut}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-
       {!attachments.length && (
-        <div className="flex items-end gap-[6px] px-[12px] py-[6px] relative">
-          {qrOpen && (
-            <QuickReplyPicker
-              items={qrFiltered}
-              query={qrMatch || ""}
-              activeIdx={qrIdx}
-              onHover={setQrIdx}
-              onSelect={(item) => void applyQuickReply(item)}
-            />
-          )}
-          {showAttach && (
-            <div className="wa-attach-menu absolute bottom-[60px] left-[20px] wa-attach-bg rounded-2xl shadow-2xl border wa-border-light p-3 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-              <button onClick={() => imageInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
-                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
-                  <ImageIcon size={22} className="wa-accent-text" strokeWidth={1.8} />
-                </div>
-                <span className="text-[11px] wa-text-muted font-medium">Fotos</span>
-              </button>
-              <button onClick={() => videoInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
-                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
-                  <Film size={22} className="wa-accent-text" strokeWidth={1.8} />
-                </div>
-                <span className="text-[11px] wa-text-muted font-medium">Vídeo</span>
-              </button>
-              <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
-                <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
-                  <FileText size={22} className="wa-accent-text" strokeWidth={1.8} />
-                </div>
-                <span className="text-[11px] wa-text-muted font-medium">Arquivo</span>
-              </button>
+        <div className="wa-composer-surface border-t wa-border-light">
+          {quickReplies.length > 0 && !qrOpen && (
+            <div className="relative">
+              <div className="absolute left-0 top-0 bottom-0 w-4 wa-composer-fade-left pointer-events-none z-10" />
+              <div className="absolute right-0 top-0 bottom-0 w-10 wa-composer-fade-right pointer-events-none z-10" />
+              <div className="flex gap-2 overflow-x-auto px-3 pt-2 pb-1 no-scrollbar scroll-smooth snap-x snap-mandatory">
+                {quickReplies.map((qr) => (
+                  <button
+                    key={qr.id}
+                    type="button"
+                    onClick={() => void applyQuickReply(qr)}
+                    title={qr.title || qr.shortcut}
+                    className="shrink-0 snap-start inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-border bg-background hover:bg-primary/10 hover:border-primary/40 transition-colors"
+                  >
+                    <MessageSquareText size={13} className="text-primary shrink-0" />
+                    <span className="text-[12px] font-medium text-foreground whitespace-nowrap max-w-[140px] truncate">
+                      {qr.title || qr.shortcut}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
-          <div className="flex-1 wa-input-field flex items-end shadow-sm rounded-[21px] overflow-hidden">
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
-              className="wa-attach-btn p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity"
-            >
-              <Plus size={22} className={cn("transition-transform duration-200", showAttach ? "wa-accent-text rotate-45" : "wa-icon-panel")} />
-            </button>
-
-            <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
-              <PopoverTrigger asChild>
-                <button className="p-[12px] pl-0 shrink-0 self-end hover:opacity-70 transition-opacity">
-                  <Smile size={22} className={emojiOpen ? "wa-accent-text" : "wa-icon-panel"} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                side="top"
-                align="start"
-                sideOffset={10}
-                className="w-[340px] p-0 rounded-xl border wa-border-light shadow-2xl bg-popover overflow-hidden"
-              >
-                <EmojiPicker
-                  className="h-[350px]"
-                  onEmojiSelect={({ emoji }) => {
-                    setText(prev => prev + emoji);
-                    inputRef.current?.focus();
-                  }}
-                >
-                  <EmojiPickerCategories
-                    activeCategoryId={activeEmojiCategory}
-                    onCategoryClick={scrollEmojiCategory}
-                  />
-                  <EmojiPickerSearch
-                    placeholder="Pesquisar emoji"
-                    value={emojiSearch}
-                    onChange={(e) => setEmojiSearch(e.target.value)}
-                  />
-                  <EmojiPickerContent ref={emojiViewportRef} onVisibleCategoryChange={setActiveEmojiCategory} />
-                </EmojiPicker>
-              </PopoverContent>
-            </Popover>
-
-            <textarea
-              ref={inputRef}
-              value={text}
-              onChange={e => setText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onPaste={handlePaste}
-              onFocus={(e) => {
-                setTimeout(() => {
-                  try { (e.currentTarget as HTMLTextAreaElement)?.scrollIntoView({ block: "center", behavior: "smooth" }); } catch {}
-                }, 250);
-              }}
-              placeholder="Digite uma mensagem"
-              rows={1}
-              className="flex-1 bg-transparent wa-text-primary text-[15px] pl-[4px] pr-[8px] py-[12px] outline-none resize-none max-h-[120px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
-              style={{ minHeight: "24px" }}
-            />
-
-            {text.trim() ? (
-              <button onClick={handleSend} className="p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity">
-                <Send size={20} className="wa-accent-text" />
-              </button>
-            ) : (
-              <button
-                onPointerDown={handleMicPointerDown}
-                onPointerUp={handleMicPointerUp}
-                onPointerLeave={handleMicPointerLeave}
-                onPointerCancel={handleMicPointerLeave}
-                className="p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity select-none touch-none"
-                title="Toque para gravar · Segure para gravar"
-              >
-                <Mic size={22} className="wa-icon-panel" />
-              </button>
+          <div className="flex items-end gap-[6px] px-[12px] py-[6px] relative">
+            {qrOpen && (
+              <QuickReplyPicker
+                items={qrFiltered}
+                query={qrMatch || ""}
+                activeIdx={qrIdx}
+                onHover={setQrIdx}
+                onSelect={(item) => void applyQuickReply(item)}
+              />
             )}
+            {showAttach && (
+              <div className="wa-attach-menu absolute bottom-[60px] left-[20px] wa-attach-bg rounded-2xl shadow-2xl border wa-border-light p-3 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <button onClick={() => imageInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
+                  <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
+                    <ImageIcon size={22} className="wa-accent-text" strokeWidth={1.8} />
+                  </div>
+                  <span className="text-[11px] wa-text-muted font-medium">Fotos</span>
+                </button>
+                <button onClick={() => videoInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
+                  <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
+                    <Film size={22} className="wa-accent-text" strokeWidth={1.8} />
+                  </div>
+                  <span className="text-[11px] wa-text-muted font-medium">Vídeo</span>
+                </button>
+                <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center gap-[6px] group">
+                  <div className="w-[50px] h-[50px] rounded-2xl wa-accent-bg-soft ring-1 wa-accent-ring flex items-center justify-center  group-hover:scale-105 transition-all">
+                    <FileText size={22} className="wa-accent-text" strokeWidth={1.8} />
+                  </div>
+                  <span className="text-[11px] wa-text-muted font-medium">Arquivo</span>
+                </button>
+              </div>
+            )}
+
+            <div className="flex-1 wa-input-field flex items-end rounded-[21px] overflow-hidden border wa-border-light">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
+                className="wa-attach-btn p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity"
+              >
+                <Plus size={22} className={cn("transition-transform duration-200", showAttach ? "wa-accent-text rotate-45" : "wa-icon-panel")} />
+              </button>
+
+              <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+                <PopoverTrigger asChild>
+                  <button className="p-[12px] pl-0 shrink-0 self-end hover:opacity-70 transition-opacity">
+                    <Smile size={22} className={emojiOpen ? "wa-accent-text" : "wa-icon-panel"} />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  side="top"
+                  align="start"
+                  sideOffset={10}
+                  className="w-[340px] p-0 rounded-xl border wa-border-light shadow-2xl bg-popover overflow-hidden"
+                >
+                  <EmojiPicker
+                    className="h-[350px]"
+                    onEmojiSelect={({ emoji }) => {
+                      setText(prev => prev + emoji);
+                      inputRef.current?.focus();
+                    }}
+                  >
+                    <EmojiPickerCategories
+                      activeCategoryId={activeEmojiCategory}
+                      onCategoryClick={scrollEmojiCategory}
+                    />
+                    <EmojiPickerSearch
+                      placeholder="Pesquisar emoji"
+                      value={emojiSearch}
+                      onChange={(e) => setEmojiSearch(e.target.value)}
+                    />
+                    <EmojiPickerContent ref={emojiViewportRef} onVisibleCategoryChange={setActiveEmojiCategory} />
+                  </EmojiPicker>
+                </PopoverContent>
+              </Popover>
+
+              <textarea
+                ref={inputRef}
+                value={text}
+                onChange={e => setText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
+                onFocus={(e) => {
+                  setTimeout(() => {
+                    try { (e.currentTarget as HTMLTextAreaElement)?.scrollIntoView({ block: "center", behavior: "smooth" }); } catch {}
+                  }, 250);
+                }}
+                placeholder="Digite uma mensagem"
+                rows={1}
+                className="flex-1 bg-transparent wa-text-primary text-[15px] pl-[4px] pr-[8px] py-[12px] outline-none resize-none max-h-[120px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
+                style={{ minHeight: "24px" }}
+              />
+
+              {text.trim() ? (
+                <button onClick={handleSend} className="p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity">
+                  <Send size={20} className="wa-accent-text" />
+                </button>
+              ) : (
+                <button
+                  onPointerDown={handleMicPointerDown}
+                  onPointerUp={handleMicPointerUp}
+                  onPointerLeave={handleMicPointerLeave}
+                  onPointerCancel={handleMicPointerLeave}
+                  className="p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity select-none touch-none"
+                  title="Toque para gravar · Segure para gravar"
+                >
+                  <Mic size={22} className="wa-icon-panel" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
