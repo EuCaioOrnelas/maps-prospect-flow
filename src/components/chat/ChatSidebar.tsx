@@ -375,6 +375,8 @@ export function ChatSidebar({
             const respLabel = respMember ? (respMember.name || respMember.email || "") : "";
             const respShort = respLabel ? respLabel.split(/\s+/)[0] : "";
             const isMine = conv.responsible_user_id && conv.responsible_user_id === currentUserId;
+            const crmLeadForRow = crmLeadByPhoneKey[getChatPhoneKey(conv.contact_phone)];
+            const crmStageName = crmLeadForRow?.stageName || null;
 
             return (
               <div
