@@ -433,7 +433,7 @@ export function ChatSidebar({
                         </span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                            <button className="w-[20px] h-[20px] -mr-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                            <button className={cn("w-[20px] h-[20px] -mr-1 rounded transition-opacity duration-200 flex items-center justify-center", isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
                               <ChevronDown size={18} className="wa-icon-muted" />
                           </button>
                         </DropdownMenuTrigger>
