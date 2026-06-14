@@ -926,7 +926,9 @@ export function ChatMessageArea({
                   externalFiles={droppedFiles}
                   onExternalConsumed={() => setDroppedFiles([])}
                   conversation={conversation}
+                  conversationId={conversation?.id ?? null}
                 />
+
               );
             })()}
           </div>
