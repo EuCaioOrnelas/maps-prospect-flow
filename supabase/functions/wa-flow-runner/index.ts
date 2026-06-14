@@ -1358,7 +1358,7 @@ serve(async (req) => {
 
       // Active-execution guard: don't re-trigger the same flow for the same lead while it's already running.
       // After the flow reaches an `end` node, status becomes "completed" and the lead can enter again.
-      const leadKey = phoneKey(body.lead_phone);
+      const leadKey = leadPhoneKey;
       const { data: activeExecs } = await supabase
         .from("wa_flow_executions")
         .select("lead_phone, status")
