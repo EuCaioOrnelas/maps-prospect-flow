@@ -79,6 +79,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const [qrIdx, setQrIdx] = useState(0);
   const [confirmQr, setConfirmQr] = useState<QuickReply | null>(null);
   const [confirmPreview, setConfirmPreview] = useState("");
+  const [confirmExpanded, setConfirmExpanded] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const emojiViewportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -700,36 +701,63 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
           if (!open) {
             setText("");
             setConfirmQr(null);
+            setConfirmExpanded(false);
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Enviar mensagem rápida?</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md p-4 sm:p-6">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-base sm:text-lg">Enviar mensagem rápida?</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               Você está enviando a resposta{" "}
               <span className="font-medium text-primary">/{confirmQr?.shortcut}</span>.
             </DialogDescription>
           </DialogHeader>
           <div className="bg-muted/50 rounded-lg p-3 text-sm text-foreground border border-border">
-            {confirmPreview.length > 220 ? confirmPreview.slice(0, 220) + "…" : confirmPreview || "(sem texto)"}
+            <div
+              className={cn(
+                "whitespace-pre-wrap break-words leading-relaxed",
+                !confirmExpanded && "max-h-[160px] overflow-hidden"
+              )}
+            >
+              {confirmPreview || "(sem texto)"}
+            </div>
+            {confirmPreview.length > 220 && (
+              <button
+                type="button"
+                onClick={() => setConfirmExpanded(v => !v)}
+                className="mt-2 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                {confirmExpanded ? (
+                  <>
+                    Ver menos <ChevronUp size={14} />
+                  </>
+                ) : (
+                  <>
+                    Ver mais <ChevronDown size={14} />
+                  </>
+                )}
+              </button>
+            )}
             {confirmQr?.media_url && (
               <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
                 Anexo: {confirmQr.media_filename || confirmQr.media_type}
               </div>
             )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-3">
             <Button
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={() => {
                 setText("");
                 setConfirmQr(null);
+                setConfirmExpanded(false);
               }}
             >
               Cancelar
             </Button>
-            <Button onClick={() => void handleConfirmSend()}>Enviar</Button>
+            <Button className="w-full sm:w-auto" onClick={() => void handleConfirmSend()}>Enviar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
