@@ -465,7 +465,7 @@ export function ChatSidebar({
                         )}
                         <span className={cn(
                           "text-[12px] leading-[14px]",
-                          hasUnread ? "wa-accent-text" : "wa-text-timestamp"
+                          hasUnread ? "text-primary" : "wa-text-timestamp"
                         )}>
                           {formatTimestamp(conv.last_message_at)}
                         </span>
