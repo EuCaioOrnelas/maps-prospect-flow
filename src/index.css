@@ -1123,7 +1123,7 @@ input::placeholder, textarea::placeholder {
 .wa-bg-search { background-color: hsl(220 18% 10%); }
 .landing-light .wa-bg-search { background-color: #f0f2f5; }
 .wa-search-focused { background-color: hsl(220 16% 14%); }
-.landing-light .wa-search-focused { background-color: #ffffff; box-shadow: inset 0 0 0 1px #128c7e; }
+.landing-light .wa-search-focused { background-color: #ffffff; box-shadow: inset 0 0 0 1px #10b981; }
 
 /* ─── Input field ─── */
 .wa-bg-input { background-color: hsl(220 18% 10%); }
@@ -1214,7 +1214,7 @@ input::placeholder, textarea::placeholder {
   left: -15%;
   width: 60%;
   height: 60%;
-  background: radial-gradient(circle, rgba(18,140,126,0.025) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(16,185,129,0.025) 0%, transparent 70%);
   filter: blur(100px);
 }
 .wa-chat-glow::after {
@@ -1224,14 +1224,14 @@ input::placeholder, textarea::placeholder {
   right: -10%;
   width: 50%;
   height: 50%;
-  background: radial-gradient(circle, rgba(18,140,126,0.018) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(16,185,129,0.018) 0%, transparent 70%);
   filter: blur(80px);
 }
 .landing-light .wa-chat-glow::before {
-  background: radial-gradient(circle, rgba(18,140,126,0.025) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(16,185,129,0.025) 0%, transparent 70%);
 }
 .landing-light .wa-chat-glow::after {
-  background: radial-gradient(circle, rgba(18,140,126,0.018) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(16,185,129,0.018) 0%, transparent 70%);
 }
 
 /* ─── Empty state ─── */
@@ -1301,7 +1301,7 @@ input::placeholder, textarea::placeholder {
 .wa-doc-bg .wa-text-muted { color: rgba(233,237,239,0.6) !important; }
 .landing-light .wa-doc-bg .wa-text-muted { color: rgba(11,31,23,0.55) !important; }
 .wa-doc-icon { background-color: rgba(255,255,255,0.08); }
-.landing-light .wa-doc-icon { background-color: rgba(18,140,126,0.1); }
+.landing-light .wa-doc-icon { background-color: rgba(16,185,129,0.1); }
 .wa-doc-preview { background-color: hsl(220 18% 10%); }
 .landing-light .wa-doc-preview { background-color: #f0f2f5; }
 
@@ -1349,26 +1349,26 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-icon-header { color: #54656f; }
 .wa-icon-panel { color: #8696a0; }
 .landing-light .wa-icon-panel { color: #54656f; }
-.wa-icon-tinted { color: #128c7e; }
-.wa-icon-active { background-color: rgba(18,140,126,0.1); }
+.wa-icon-tinted { color: #10b981; }
+.wa-icon-active { background-color: rgba(16,185,129,0.1); }
 
-.wa-accent-text { color: #128c7e; }
-.wa-accent-bg { background-color: #128c7e; }
-.wa-accent-bg:hover { background-color: #0f7f73; }
-.wa-accent-bg-soft { background-color: rgba(18,140,126,0.10); }
-.wa-accent-bg-softer { background-color: rgba(18,140,126,0.15); }
-.wa-accent-hover-bg-softer:hover { background-color: rgba(18,140,126,0.15); }
-.wa-accent-border-soft { border-color: rgba(18,140,126,0.28); }
-.wa-accent-border { border-color: #128c7e; }
-.wa-accent-border-muted { border-color: rgba(18,140,126,0.36); }
-.wa-accent-border-muted:hover { border-color: #128c7e; }
+.wa-accent-text { color: #10b981; }
+.wa-accent-bg { background-color: #10b981; }
+.wa-accent-bg:hover { background-color: #059669; }
+.wa-accent-bg-soft { background-color: rgba(16,185,129,0.10); }
+.wa-accent-bg-softer { background-color: rgba(16,185,129,0.15); }
+.wa-accent-hover-bg-softer:hover { background-color: rgba(16,185,129,0.15); }
+.wa-accent-border-soft { border-color: rgba(16,185,129,0.28); }
+.wa-accent-border { border-color: #10b981; }
+.wa-accent-border-muted { border-color: rgba(16,185,129,0.36); }
+.wa-accent-border-muted:hover { border-color: #10b981; }
 .wa-accent-surface {
-  background-color: rgba(18,140,126,0.12);
-  color: #128c7e;
+  background-color: rgba(16,185,129,0.12);
+  color: #10b981;
 }
-.wa-accent-surface:hover { background-color: rgba(18,140,126,0.18); }
-.group:hover .wa-accent-surface { background-color: rgba(18,140,126,0.18); }
-.wa-accent-ring { box-shadow: inset 0 0 0 1px rgba(18,140,126,0.30); }
+.wa-accent-surface:hover { background-color: rgba(16,185,129,0.18); }
+.group:hover .wa-accent-surface { background-color: rgba(16,185,129,0.18); }
+.wa-accent-ring { box-shadow: inset 0 0 0 1px rgba(16,185,129,0.30); }
 .wa-message-action-button {
   background-color: rgba(255,255,255,0.96);
   border-color: rgba(17,27,33,0.08);
@@ -1378,8 +1378,8 @@ input::placeholder, textarea::placeholder {
 .wa-message-action-button:hover,
 .wa-message-action-button[data-state="open"] {
   background-color: #ffffff;
-  color: #128c7e;
-  border-color: rgba(18,140,126,0.22);
+  color: #10b981;
+  border-color: rgba(16,185,129,0.22);
 }
 
 /* Hover action button anchored at top-right of bubble (WhatsApp style) */
@@ -1429,7 +1429,7 @@ input::placeholder, textarea::placeholder {
 .wa-dropdown-item:focus-visible,
 .wa-dropdown-item[data-highlighted],
 .wa-dropdown-item[data-state="open"] {
-  background-color: #128c7e !important;
+  background-color: #10b981 !important;
   color: #ffffff !important;
   outline: none;
 }

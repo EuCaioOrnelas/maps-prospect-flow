@@ -10,7 +10,7 @@ import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { AddContactDialog } from "./AddContactDialog";
 import { ForwardDialog } from "./ForwardDialog";
 import { ImageLightbox, downloadFromUrl } from "./ImageLightbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import logoIconNew from "@/assets/logo-icon-new.png";
@@ -616,149 +616,7 @@ export function ChatMessageArea({
             </div>
           </button>
           <div className="flex items-center gap-[10px]">
-            {/* CRM stage selector */}
-            {pipelineStages.length > 0 && (() => {
-              const currentStage = pipelineStages.find(s => s.id === leadInfo?.pipeline_stage_id);
-              const stageColor = currentStage?.color || "#128c7e";
-              return (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className="hidden md:flex items-center gap-1.5 h-[30px] pl-2 pr-2.5 rounded-full border transition-colors hover:opacity-90"
-                      style={{
-                        borderColor: leadInfo ? `${stageColor}55` : undefined,
-                        backgroundColor: leadInfo ? `${stageColor}1a` : "transparent",
-                      }}
-                      title={leadInfo ? `Coluna no CRM: ${currentStage?.name || "—"}` : "Salve o contato para definir uma coluna"}
-                    >
-                      <span
-                        className="w-[8px] h-[8px] rounded-full shrink-0"
-                        style={{ backgroundColor: leadInfo ? stageColor : "#9ca3af" }}
-                      />
-                      <span
-                        className="text-[12px] font-medium max-w-[140px] truncate"
-                        style={{ color: leadInfo ? stageColor : undefined }}
-                      >
-                        {leadInfo ? (currentStage?.name || "Sem coluna") : "Não está no CRM"}
-                      </span>
-                      <ChevronDown size={12} style={{ color: leadInfo ? stageColor : undefined }} />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-64 p-1.5 bg-popover">
-                    <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                      Mover no CRM
-                    </div>
-                    <div className="max-h-64 overflow-y-auto">
-                      {pipelineStages.map(s => {
-                        const selected = s.id === leadInfo?.pipeline_stage_id;
-                        const color = s.color || "#128c7e";
-                        return (
-                          <button
-                            key={s.id}
-                            onClick={() => void handleChangeStage(s.id)}
-                            className={cn(
-                              "w-full flex items-center gap-2.5 px-2 py-2 text-sm rounded-md transition-colors",
-                              selected ? "bg-muted" : "hover:bg-muted"
-                            )}
-                          >
-                            <span className="w-[10px] h-[10px] rounded-full shrink-0" style={{ backgroundColor: color }} />
-                            <span className="flex-1 text-left truncate">{s.name}</span>
-                            {selected && <Check size={14} className="wa-accent-text" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {!leadInfo && (
-                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">
-                        Salve o contato no CRM para habilitar a mudança de coluna.
-                      </p>
-                    )}
-                  </PopoverContent>
-                </Popover>
-              );
-            })()}
-            {canChangeResponsible && onTransferResponsible && (() => {
-              const respMember = members.find(m => m.user_id === conversation.responsible_user_id);
-              const respLabel = respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || null;
-              const respColor = getChatAvatarColor(respMember?.user_id || "none");
-              const respInitials = respMember
-                ? getChatInitials(respMember.name, respMember.email || "")
-                : null;
-              return (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className={cn(
-                        "flex items-center gap-2 h-[34px] pl-1 pr-3 rounded-full border transition-colors",
-                        conversation.responsible_user_id
-                          ? "wa-accent-border-soft wa-accent-bg-soft wa-accent-hover-bg-softer"
-                          : "border-white/10 hover:border-white/20 bg-transparent"
-                      )}
-                      title={respLabel ? `Responsável: ${respMember?.name || respMember?.email}` : "Atribuir responsável"}
-                    >
-                      {respInitials ? (
-                        <span className={cn("w-[24px] h-[24px] rounded-full flex items-center justify-center text-white text-[10px] font-medium", respColor)}>
-                          {respInitials}
-                        </span>
-                      ) : (
-                        <span className="w-[24px] h-[24px] rounded-full bg-white/5 flex items-center justify-center">
-                          <UserCog size={13} className="wa-chat-header-icon" />
-                        </span>
-                      )}
-                      <span className="text-[12px] font-medium wa-chat-header-text max-w-[110px] truncate">
-                        {respLabel || "Atribuir"}
-                      </span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-72 p-1.5 bg-popover">
-                    <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                      Responsável pela conversa
-                    </div>
-                    <button
-                      className="w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md hover:bg-muted text-muted-foreground"
-                      onClick={async () => {
-                        try { await onTransferResponsible(conversation.id, null); toast.success("Sem responsável definido"); }
-                        catch { toast.error("Erro ao transferir"); }
-                      }}
-                    >
-                      <span className="w-[28px] h-[28px] rounded-full bg-muted flex items-center justify-center">
-                        <X size={14} />
-                      </span>
-                      Sem responsável
-                    </button>
-                    <div className="max-h-56 overflow-y-auto mt-0.5">
-                      {members.map((m) => {
-                        const c = getChatAvatarColor(m.user_id);
-                        const i = getChatInitials(m.name, m.email || "");
-                        const selected = m.user_id === conversation.responsible_user_id;
-                        return (
-                          <button
-                            key={m.user_id}
-                            className={cn(
-                              "w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors",
-                              selected ? "wa-accent-bg-soft text-foreground" : "hover:bg-muted"
-                            )}
-                            onClick={async () => {
-                              try { await onTransferResponsible(conversation.id, m.user_id); toast.success("Conversa transferida"); }
-                              catch { toast.error("Erro ao transferir"); }
-                            }}
-                          >
-                            <span className={cn("w-[28px] h-[28px] rounded-full flex items-center justify-center text-white text-[11px] font-medium", c)}>
-                              {i}
-                            </span>
-                            <span className="flex-1 text-left truncate">
-                              {m.name || m.email || m.user_id.slice(0, 8)}
-                              {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
-                            </span>
-                            {selected && <span className="wa-accent-text text-[10px] font-semibold">●</span>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              );
-            })()}
+
             <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
               <Search size={20} className="wa-chat-header-icon" />
             </button>
@@ -769,13 +627,97 @@ export function ChatMessageArea({
                   <MoreVertical size={20} className="wa-chat-header-icon" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[220px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+              <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[240px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
                 <DropdownMenuItem
                   onClick={() => void handleOpenContactData()}
                   className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                 >
                   <User size={15} /> Dados do contato
                 </DropdownMenuItem>
+                {pipelineStages.length > 0 && (() => {
+                  const currentStage = pipelineStages.find(s => s.id === leadInfo?.pipeline_stage_id);
+                  const stageColor = currentStage?.color || "#10b981";
+                  return (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+                        <span className="w-[14px] h-[14px] rounded-full inline-flex items-center justify-center shrink-0" style={{ backgroundColor: leadInfo ? stageColor : "transparent", border: leadInfo ? "none" : "1.5px solid currentColor" }} />
+                        <span className="flex-1 truncate">Coluna CRM: {leadInfo ? (currentStage?.name || "Sem coluna") : "Não está no CRM"}</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent className="wa-dropdown-menu border wa-border min-w-[220px] max-h-[60vh] overflow-y-auto rounded-xl shadow-2xl py-1.5">
+                          {!leadInfo && (
+                            <div className="px-3 py-2 text-[11px] text-muted-foreground">Salve o contato no CRM para mover entre colunas.</div>
+                          )}
+                          {pipelineStages.map(s => {
+                            const selected = s.id === leadInfo?.pipeline_stage_id;
+                            const color = s.color || "#10b981";
+                            return (
+                              <DropdownMenuItem
+                                key={s.id}
+                                disabled={!leadInfo}
+                                onClick={() => void handleChangeStage(s.id)}
+                                className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                              >
+                                <span className="w-[10px] h-[10px] rounded-full shrink-0" style={{ backgroundColor: color }} />
+                                <span className="flex-1 truncate">{s.name}</span>
+                                {selected && <Check size={14} className="wa-accent-text" />}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                  );
+                })()}
+                {canChangeResponsible && onTransferResponsible && (() => {
+                  const respMember = members.find(m => m.user_id === conversation.responsible_user_id);
+                  const respLabel = respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || "Atribuir";
+                  return (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+                        <UserCog size={15} />
+                        <span className="flex-1 truncate">Responsável: {respLabel}</span>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent className="wa-dropdown-menu border wa-border min-w-[240px] max-h-[60vh] overflow-y-auto rounded-xl shadow-2xl py-1.5">
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              try { await onTransferResponsible(conversation.id, null); toast.success("Sem responsável"); }
+                              catch { toast.error("Erro ao transferir"); }
+                            }}
+                            className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                          >
+                            <span className="w-[22px] h-[22px] rounded-full bg-muted flex items-center justify-center"><X size={12} /></span>
+                            <span className="flex-1">Sem responsável</span>
+                          </DropdownMenuItem>
+                          {members.map((m) => {
+                            const c = getChatAvatarColor(m.user_id);
+                            const i = getChatInitials(m.name, m.email || "");
+                            const selected = m.user_id === conversation.responsible_user_id;
+                            return (
+                              <DropdownMenuItem
+                                key={m.user_id}
+                                onClick={async () => {
+                                  try { await onTransferResponsible(conversation.id, m.user_id); toast.success("Conversa transferida"); }
+                                  catch { toast.error("Erro ao transferir"); }
+                                }}
+                                className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                              >
+                                <span className={cn("w-[22px] h-[22px] rounded-full flex items-center justify-center text-white text-[10px] font-medium shrink-0", c)}>{i}</span>
+                                <span className="flex-1 truncate">
+                                  {m.name || m.email || m.user_id.slice(0, 8)}
+                                  {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
+                                </span>
+                                {selected && <Check size={14} className="wa-accent-text" />}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                  );
+                })()}
+                <DropdownMenuSeparator className="mx-3 my-1 wa-border-light" />
                 <DropdownMenuItem
                   onClick={() => setShowSearch(true)}
                   className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
