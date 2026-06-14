@@ -544,7 +544,7 @@ export default function CreateFlowAI() {
     }
   };
 
-  const isGenerating = createWithAI.isPending || (createWithAI.isSuccess && !showReviewPopup);
+  const isGenerating = createWithAI.isPending;
 
   // Loading state - show phone simulation
   if (isGenerating) {
