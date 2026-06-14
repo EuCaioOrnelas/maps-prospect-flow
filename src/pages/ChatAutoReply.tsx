@@ -196,12 +196,32 @@ export default function ChatAutoReply() {
                   <div>
                     <Label className="text-sm">Mensagem</Label>
                     <Textarea
+                      ref={messageRef}
                       value={cfg.message}
                       onChange={(e) => setCfg((c) => ({ ...c, message: e.target.value }))}
                       rows={4}
                       className="mt-2"
                       maxLength={1000}
+                      placeholder="Olá {{nome}}! Recebemos sua mensagem fora do horário..."
                     />
+                    <div className="mt-2">
+                      <p className="text-[11px] text-muted-foreground mb-1.5">
+                        Variáveis disponíveis (clique para inserir):
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {QUICK_REPLY_VARIABLES.map((v) => (
+                          <button
+                            key={v.key}
+                            type="button"
+                            title={v.description}
+                            onClick={() => insertVariable(v.key)}
+                            className="px-2 py-1 rounded-md text-[11px] font-mono bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          >
+                            {`{{${v.key}}}`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
