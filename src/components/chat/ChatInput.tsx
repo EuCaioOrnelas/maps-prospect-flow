@@ -615,6 +615,11 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               onChange={e => setText(e.target.value)}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
+              onFocus={(e) => {
+                setTimeout(() => {
+                  try { (e.currentTarget as HTMLTextAreaElement)?.scrollIntoView({ block: "center", behavior: "smooth" }); } catch {}
+                }, 250);
+              }}
               placeholder="Digite uma mensagem"
               rows={1}
               className="flex-1 bg-transparent wa-text-primary text-[15px] pl-[4px] pr-[8px] py-[12px] outline-none resize-none max-h-[120px] overflow-y-auto leading-[20px] placeholder:wa-text-muted wa-scrollbar"
