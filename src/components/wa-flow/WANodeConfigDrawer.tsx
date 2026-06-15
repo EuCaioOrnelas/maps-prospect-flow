@@ -2615,12 +2615,14 @@ function FlowButtonPicker({
                       )}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm shrink-0">{o.emoji}</span>
-                        <span className="font-medium truncate flex-1">{o.title}</span>
-                        {isSelected && <span className="text-[10px] text-primary shrink-0">✓</span>}
+                        {o.kind === "list"
+                          ? <List size={14} className="shrink-0 text-muted-foreground" />
+                          : <MousePointerClick size={14} className="shrink-0 text-primary" />}
+                        <span className="font-medium truncate flex-1 text-foreground">{o.title}</span>
+                        {isSelected && <Check size={12} className="shrink-0 text-primary" />}
                       </div>
                       <div className="text-[10px] text-muted-foreground truncate pl-6 mt-0.5">
-                        {o.kind} de "{o.source}"
+                        {o.kind === "list" ? "Item de lista" : "Botão"} de "{o.source}"
                       </div>
                     </button>
                   );
