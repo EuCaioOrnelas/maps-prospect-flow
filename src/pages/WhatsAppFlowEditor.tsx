@@ -145,6 +145,12 @@ const sidebarCategories = [
     ],
   },
   {
+    label: "Atendimento",
+    items: [
+      { type: "rating", icon: Star, label: "Avaliação", desc: "NPS, estrelas, feedback e sugestões", color: "text-amber-400 bg-amber-400/10" },
+    ],
+  },
+  {
     label: "Ações",
     items: [
       { type: "action", icon: Settings, label: "Ação", desc: "Tag, Kanban, CRM", color: "text-cyan-400 bg-cyan-400/10" },
@@ -433,7 +439,7 @@ export default function WhatsAppFlowEditor() {
         handoff: "Humano", end: "Encerramento", ai_agent: "Agente IA",
         ab_test: "Teste A/B", random_split: "Random Split",
         google_sheets: "Google Sheets", google_calendar: "Google Agenda", gmail: "Gmail",
-        data_collect: "Coleta de Dados",
+        data_collect: "Coleta de Dados", rating: "Avaliação",
       };
 
       const defaultConfigs: Record<string, any> = {
@@ -448,6 +454,22 @@ export default function WhatsAppFlowEditor() {
             { id: "out_0", name: "Saída 1" },
             { id: "out_1", name: "Saída 2" },
           ],
+        },
+        rating: {
+          name: "Pesquisa de Satisfação",
+          message: "Como você avalia nosso atendimento?",
+          type: "numeric",
+          numeric: { min: 0, max: 10, positive_min: 9, negative_max: 6 },
+          stars: { max: 5, positive_min: 4, negative_max: 2 },
+          options: [
+            { label: "Ruim", value: "1", bucket: "negative" },
+            { label: "Regular", value: "2", bucket: "neutral" },
+            { label: "Excelente", value: "3", bucket: "positive" },
+          ],
+          ask_suggestion: false,
+          suggestion_prompt: "Você possui alguma sugestão para melhorarmos nosso atendimento?",
+          suggestion_thanks: "Obrigado pela sua contribuição. Sua sugestão foi registrada com sucesso.",
+          no_suggestion_message: "Obrigado pelo seu feedback. Sua avaliação foi registrada.",
         },
       };
 
