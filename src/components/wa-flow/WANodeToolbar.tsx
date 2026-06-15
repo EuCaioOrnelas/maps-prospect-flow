@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { 
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings, 
-  HeadphonesIcon, CircleStop 
+  HeadphonesIcon, CircleStop, Star
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -15,6 +15,7 @@ const nodeButtons = [
   { type: "buttons", icon: ToggleLeft, label: "Botões", color: "text-indigo-400" },
   { type: "condition", icon: GitBranch, label: "Condição", color: "text-purple-400" },
   { type: "wait", icon: Clock, label: "Espera", color: "text-amber-400" },
+  { type: "rating", icon: Star, label: "Avaliação", color: "text-amber-400" },
   { type: "action", icon: Settings, label: "Ação", color: "text-cyan-400" },
   { type: "handoff", icon: HeadphonesIcon, label: "Humano", color: "text-orange-400" },
   { type: "end", icon: CircleStop, label: "Encerramento", color: "text-red-400" },
