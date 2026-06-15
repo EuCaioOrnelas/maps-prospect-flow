@@ -1,110 +1,144 @@
-## Objetivo
+## Visão geral
 
-1. **Scoring** — revisar TODAS as 25 regras de score para garantir comportamento minucioso (não só a de 24h), com detecção contextual real, limites por período, decay progressivo e penalidades coerentes.
-2. **Fluxos (WA Automation)** — bloquear execução em números Evolution; aceitar somente conexões Meta Oficial **com webhook verificado**; garantir que TODOS os nodes funcionem via Meta Cloud API; permitir template HSM para reabrir conversa fora da janela de 24h.
+Adicionar ao construtor visual de fluxos do WhatsApp:
 
----
+1. Um novo tipo de card chamado **Avaliação** (categoria Atendimento / Pesquisa / Feedback), com 5 modos de coleta (botões, menu, numérica, estrelas, livre), persistência de respostas, opcional pedido de sugestão, e múltiplas saídas (recebida, positiva, neutra, negativa, sugestão).
+2. Uma nova configuração global por fluxo: **Reset por Inatividade**, com tempo configurável, ação (reiniciar / ir a card / encerrar / menu) e mensagem opcional antes do reset.
 
-## Parte 1 — Auditoria do Scoring (`revenue-processor`)
-
-Revisão regra a regra, com lógica detalhada:
-
-| Regra | Refinamento que será implementado |
-|---|---|
-| `BACK_AND_FORTH_5_TURNS` | Contar turnos reais (alternância inbound↔outbound), ignorar mensagens sociais/duplicadas, janela móvel de 24h |
-| `CONVERSATION_ACTIVE_3D`/`5D`/`7D` | Verificar dias **distintos** com mensagem inbound real (não social), não dias corridos |
-| `INTENT_BUY_NOW`, `INTENT_PRICE`, `INTENT_DEMO` | Classificador léxico + regex PT-BR ampliado (preço, valor, quanto custa, fechar, contratar, comprar, demonstração, agendar, etc.) com dedupe por conversa/dia |
-| `OBJECTION_PRICE`, `OBJECTION_TIMING` | Detecção de padrões ("caro", "depois", "agora não", "sem tempo") com peso negativo controlado |
-| `SLA_FIRST_RESPONSE_UNDER_5MIN` / `UNDER_1H` | Mede tempo entre 1ª inbound do lead e 1ª outbound do operador, ignorando se a inbound foi social-only |
-| `LEAD_REPLIED_FAST` | Tempo do lead respondendo o operador < X min |
-| `MEDIA_SENT_BY_LEAD` (áudio/imagem/doc) | Conta por tipo, com cap diário; áudio longo (>15s) ganha bônus |
-| `LEAD_GHOSTED_2H` (decay 1) | -40 uma vez quando passam 2h sem resposta após msg do operador |
-| `LEAD_GHOSTED_24H_BLOCK` | -140 a cada bloco de 24h adicional, **reset** ao primeiro reply real do lead |
-| `CONVERSATION_REOPENED` | Detecta retorno após >7 dias de silêncio (+bônus) |
-| `BUSINESS_HOURS_REPLY` | Bônus se o lead responde em horário comercial (sinal de seriedade) |
-| `OUT_OF_HOURS_NOISE` | Penalidade leve para flood fora de horário |
-| `GREETING_ONLY` / `FAREWELL_ONLY` | Marca `is_social=true` e **não dispara** SLA nem decay |
-| `EMOJI_REACTION_POSITIVE/NEGATIVE` | Lê reações Meta (👍/❤️ vs 👎) |
-| `FORM_DATA_SUBMITTED` | Dados extraídos pelo Data Collect node → +pontos |
-| `CRM_STAGE_ADVANCED` / `REGRESSED` | Já existe, validar idempotência |
-| `OPT_OUT` / `BLOCK_REPORTED` | Hard-stop: zera score, marca `do_not_contact` |
-
-Implementação:
-- Função util `classifyMessage(content)` → `{intents[], objections[], isSocial, isGreeting, isFarewell, emojis[]}` usada por todas as regras.
-- Contadores e cooldowns persistidos em `revenue_score_logs` (idempotência por `dedupe_key`).
-- Cron `sweep_unreplied` já existente passa a aplicar TODAS as regras de decay temporais, não só ghost.
-- Guarda global: ignorar tudo que vier de `source != 'meta'`.
-
-**Arquivos:** `supabase/functions/revenue-processor/index.ts` (refactor grande), `supabase/functions/_shared/messageClassifier.ts` (novo módulo compartilhado), migration adicionando colunas em `revenue_score_rules` se faltar (`cooldown_minutes`, `requires_non_social`).
+Mantém o padrão visual atual (cards Wiize), suporta drag-and-drop, persiste em `wa_flow_nodes.config` e roda no `wa-flow-runner` com a Meta Cloud API.
 
 ---
 
-## Parte 2 — Fluxos (WA Automation) Meta-Only
+## 1. Banco de dados
 
-### 2.1 Gate de execução
-- `wa-flow-runner`: ao iniciar execução, validar que o número alvo é uma `user_waba_connections` com `webhook_verified_at IS NOT NULL` e `status='connected'`. Se não, marcar execução `failed` com motivo `"requires_meta_official_with_verified_webhook"`.
-- Bloquear na UI (`CreateFlowDialog`, `WAEntryNode`, configuração de gatilho): listar apenas números Meta com webhook OK; mostrar aviso quando o usuário tem só números Evolution/Meta sem webhook.
+### 1.1 Enum / novo tipo de nó
+- Adicionar `rating` ao enum `wa_flow_node_type`.
 
-### 2.2 Nodes — compatibilidade Meta Cloud
-Auditoria e correção por node:
-- **WAMessageNode**: enviar via `/messages` (text); suportar variáveis `{{lead.nome}}` etc.
-- **WAButtonsNode**: migrar payload para `interactive.type=button` (até 3 botões, 20 chars cada) — validação na UI.
-- **WAAgentNode**: usar `gpt-4o-mini` via Lovable AI; persistir contexto em `wa_flow_executions.context`.
-- **WAGmailNode / WAGoogleSheetsNode / WAGoogleCalendarNode**: usar `user_google_tokens` com refresh; retornar erro amigável se não conectado.
-- **WADataCollectNode**: extrair via IA, validar tipo, salvar no contexto + `leads`.
-- **WAWaitNode**: respeitar horário comercial e timezone do usuário.
-- **WAHandoffNode / WAActionNode / WAEndNode**: já ok, garantir flush do buffer e silenciar agente.
-- **WAConditionNode / WAABTestNode / WARandomSplitNode**: validar saídas múltiplas.
+### 1.2 Tabela `wa_flow_ratings` (novas avaliações coletadas)
+Campos relevantes (além de id/created_at): `user_id`, `owner_user_id`, `flow_id`, `node_id`, `execution_id`, `contact_phone`, `contact_name`, `lead_id` (nullable), `rating_name`, `rating_type` (buttons/menu/numeric/stars/free), `score_numeric` (nullable), `score_max` (nullable), `score_text` (nullable), `bucket` (positive/neutral/negative/null), `suggestion_text` (nullable), `sent_at`, `responded_at`.
+- RLS: dono da conta lê/edita; service_role total. GRANTs autenticado + service_role conforme padrão.
+- Índices: `(user_id, created_at)`, `(flow_id)`, `(execution_id)`.
 
-### 2.3 Janela de 24h e Template HSM
-- Em **todo node que envia mensagem** (Message, Buttons, Media), checar `last_inbound_at` do lead:
-  - dentro de 24h → envia mensagem livre normal.
-  - fora de 24h → **obrigatoriamente** usar template aprovado.
-- No editor (`WANodeConfigDrawer` + cada node config): adicionar seção "Fora da janela de 24h":
-  - selector de template HSM (lista vinda de `meta-templates-list`),
-  - mapeamento de variáveis `{{1}}`, `{{2}}`,
-  - opção "pular node se não houver template".
-- Novo node opcional **WAReopenTemplateNode** (ou flag em Message) para reabertura intencional de conversa fria.
+### 1.3 Reset por inatividade no fluxo
+- Acrescentar colunas em `wa_automation_flows`:
+  - `inactivity_reset_enabled boolean default false`
+  - `inactivity_timeout_seconds integer` (nullable)
+  - `inactivity_action text` (`restart` | `goto_node` | `end` | `main_menu`)
+  - `inactivity_target_node_id text` (nullable)
+  - `inactivity_message text` (nullable)
+- Acrescentar coluna em `wa_flow_executions`:
+  - `last_user_message_at timestamptz`
+  - `inactivity_processed_at timestamptz` (para evitar disparo duplo)
 
-### 2.4 Webhook obrigatório
-- Componente reutilizável `RequireMetaWebhookGuard` (usa `useWebhookGate`) envolvendo a página de fluxos; mostra dialog para configurar webhook.
-- `generate-wa-flow` (IA) passa a gerar somente nodes compatíveis Meta.
+### 1.4 Cron / agendamento
+- Reaproveitar a edge function `wa-flow-runner` com um novo modo `mode=inactivity_sweep` chamado por cron a cada 1 min (similar ao pattern já usado).
+- Migration adiciona um `pg_cron` job apontando para a função.
 
 ---
 
-## Arquivos previstos para edição/criação
+## 2. Backend (Edge Functions)
 
-**Backend (edge functions / migrations):**
-- `supabase/functions/revenue-processor/index.ts` (refactor)
-- `supabase/functions/_shared/messageClassifier.ts` (novo)
-- `supabase/functions/wa-flow-runner/index.ts` (gate Meta+webhook, suporte template fora 24h, fix nodes)
-- `supabase/functions/generate-wa-flow/index.ts` (apenas nodes Meta-compatíveis)
-- nova migration: colunas `cooldown_minutes`, `requires_non_social`, `is_social` em `revenue_score_rules`/`revenue_score_logs` se faltarem; seed/upsert das 25 regras finais.
+### 2.1 `wa-flow-runner`
+- Ao receber inbound: atualizar `last_user_message_at = now()` na execução ativa.
+- Novo handler de node `rating`:
+  - Envia mensagem inicial usando interativo apropriado:
+    - `buttons` (máx 3) → reply buttons Meta
+    - `menu` → list interactive
+    - `stars` → reply buttons com strings de estrelas, se ≤3; senão list
+    - `numeric` → list (gerado de min..max, paginado em até 10) ou texto livre se range > 10 (peça que digite e valide)
+    - `free` → mensagem de texto, aguarda input livre
+  - Aguarda input (via `awaiting_input_until` + `awaiting_node_id`).
+  - Ao receber resposta:
+    - Calcula `score_numeric` quando aplicável e `bucket` baseado em thresholds configuráveis (`positive_min`, `negative_max`).
+    - Insere em `wa_flow_ratings`.
+    - Se `ask_suggestion = true` → envia pergunta SIM/NÃO. SIM: aguarda texto → salva em `suggestion_text` e envia mensagem final. NÃO: envia mensagem curta e marca saída.
+  - Roteamento por handles: `received`, `positive`, `neutral`, `negative`, `suggestion`.
 
-**Frontend (fluxos):**
-- `src/components/wa-flow/CreateFlowDialog.tsx` — filtrar números Meta+webhook
-- `src/components/wa-flow/WANodeConfigDrawer.tsx` — seção template fora 24h
-- `src/components/wa-flow/nodes/WAMessageNode.tsx`, `WAButtonsNode.tsx` — UI template HSM
-- `src/components/wa-flow/nodes/WAGmailNode.tsx`, `WAGoogleSheetsNode.tsx`, `WAGoogleCalendarNode.tsx` — checagem Google conectado
-- `src/pages/WhatsAppAutomations.tsx` — RequireMetaWebhookGuard
-- `src/components/wa-flow/RequireMetaWebhookGuard.tsx` (novo)
+### 2.2 `wa-flow-inactivity` (handler embutido no runner)
+- Para cada execução `active`/`waiting` cujo `last_user_message_at + inactivity_timeout_seconds < now()` e `inactivity_processed_at IS NULL` e o fluxo tem reset habilitado:
+  - Envia `inactivity_message` (se houver).
+  - Aplica a ação:
+    - `restart`: marca execução `abandoned`, dispara nova execução do nó de entrada.
+    - `goto_node`: avança para `inactivity_target_node_id`.
+    - `end`: marca `abandoned` (libera novo trigger).
+    - `main_menu`: procura primeiro nó de menu/botões e vai para lá; fallback `restart`.
+  - Marca `inactivity_processed_at`.
 
 ---
 
-## Detalhes técnicos
+## 3. Frontend
 
-- Classifier compartilhado: léxicos PT-BR mantidos em constantes versionadas (`INTENT_LEXICON`, `OBJECTION_LEXICON`, `SOCIAL_LEXICON`) para facilitar tuning.
-- Idempotência: cada evento usa `dedupe_key = hash(user_id, lead_id, rule, bucket_window)`.
-- Decay temporal único loop (`sweep_temporal_rules`) iterando regras `kind='temporal'` no banco — extensível sem editar código.
-- Templates HSM: cache em `meta_template_cache` (1h TTL) para o editor.
-- Logs estruturados (`[scoring]`, `[wa-runner]`) com lead_id, rule, points, reason.
+### 3.1 Toolbar / catálogo de cards
+- `src/components/wa-flow/WANodeToolbar.tsx`: adicionar entrada **Avaliação** (ícone Star da lucide) na categoria Atendimento.
+
+### 3.2 Novo nó visual
+- `src/components/wa-flow/nodes/WARatingNode.tsx`: segue o padrão dos outros nodes (cabeçalho com ícone, resumo do tipo selecionado, handles de saída `received`/`positive`/`neutral`/`negative`/`suggestion`).
+- Registrar em `WhatsAppFlowEditor.tsx` (nodeTypes + mapping de criação) e nos helpers de paleta.
+
+### 3.3 Configuração do nó
+- `WANodeConfigDrawer.tsx`: nova seção quando `node_type === 'rating'`:
+  - Nome da avaliação (input)
+  - Mensagem (textarea)
+  - Tipo de avaliação (select: botões, menu, numérica, estrelas, livre)
+  - Campos condicionais:
+    - Botões: até 3 opções (label + valor + bucket positive/neutral/negative)
+    - Menu: até 10 opções (mesma estrutura)
+    - Numérica: nota mínima / máxima, limiares positive_min / negative_max
+    - Estrelas: máximo 3/5/10
+    - Livre: nada extra
+  - Toggle "Solicitar sugestão após avaliação" + textos personalizáveis
+  - Preview da mensagem que será enviada
+
+### 3.4 Configurações gerais do fluxo
+- `WhatsAppFlowEditor.tsx` → painel de Configurações (já existente para test mode):
+  - Adicionar seção **Reset por inatividade** com toggle, select de tempo (presets + Personalizado), select de ação, seletor de nó alvo (quando `goto_node`), textarea de mensagem opcional.
+- Persistir nas novas colunas de `wa_automation_flows`.
+
+### 3.5 Dashboard de resultados (estrutura inicial)
+- Em `FlowResultsDialog.tsx`, adicionar aba **Avaliações** com:
+  - Total de avaliações, média, NPS, contagens positiva/neutra/negativa, total de sugestões.
+  - Lista paginada das últimas avaliações (contato, nota, sugestão, data).
+- Dados via query a `wa_flow_ratings` filtrando pelo `flow_id`.
 
 ---
 
-## Riscos / fora de escopo
+## 4. Estrutura de `config` do nó rating
 
-- Não vou tocar no editor visual do React Flow além dos drawers de config dos nodes.
-- Templates HSM precisam estar pré-aprovados na Meta — não vamos criar templates novos no fluxo.
-- Se um node Google node falhar por falta de conexão, a execução pausa o ramo com mensagem clara — não tenta auth automaticamente.
+```json
+{
+  "name": "Pesquisa de Satisfação",
+  "message": "Como você avalia nosso atendimento?",
+  "type": "numeric",          // buttons | menu | numeric | stars | free
+  "options": [                 // buttons/menu
+    { "label": "Ruim", "value": "1", "bucket": "negative" }
+  ],
+  "numeric": { "min": 0, "max": 10, "positive_min": 9, "negative_max": 6 },
+  "stars":   { "max": 5, "positive_min": 4, "negative_max": 2 },
+  "ask_suggestion": true,
+  "suggestion_prompt": "Você possui alguma sugestão...",
+  "suggestion_thanks": "Obrigado pela sua contribuição..."
+}
+```
 
-Confirma para eu seguir com a implementação completa nessa ordem (scoring → guards de fluxo → nodes → templates HSM)?
+---
+
+## 5. Arquivos previstos
+
+- Migration nova (enum + tabela + colunas + cron).
+- `supabase/functions/wa-flow-runner/index.ts` — handler `rating` + sweep de inatividade + update de `last_user_message_at`.
+- `src/components/wa-flow/WANodeToolbar.tsx`
+- `src/components/wa-flow/WANodeConfigDrawer.tsx`
+- `src/components/wa-flow/nodes/WARatingNode.tsx` (novo)
+- `src/pages/WhatsAppFlowEditor.tsx` (registrar tipo + painel de configurações de inatividade)
+- `src/components/wa-flow/FlowResultsDialog.tsx` (aba avaliações)
+- `src/integrations/supabase/types.ts` (regenerado após migration)
+
+---
+
+## 6. Pontos de confirmação
+
+1. **Buckets default** (numeric): positivo ≥ 80% da nota máxima, neutro entre 50–79%, negativo < 50%? Posso usar isso como padrão e deixar editável.
+2. **Reset por inatividade — granularidade do timer**: cron rodando a cada 1 min é suficiente (margem ±60s)?
+3. **Dashboard de avaliações**: incluir já nesta entrega como aba dentro do `FlowResultsDialog`, ou apenas deixar a tabela pronta e construir dashboard depois?
+
+Posso seguir com os defaults acima se preferir não bloquear.
