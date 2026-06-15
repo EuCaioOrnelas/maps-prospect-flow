@@ -191,6 +191,7 @@ type SendPayload =
   | {
       type: "buttons";
       header?: string;
+      headerImageUrl?: string;
       body?: string;
       footer?: string;
       buttons: Array<{ id: string; title: string }>;
