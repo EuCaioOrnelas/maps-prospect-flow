@@ -2142,8 +2142,8 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
 
 function RatingNodeConfig({ config, updateConfig, renderInfoBanner }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element }) {
   const type = config.type || "buttons";
-  const numeric = config.numeric || { min: 0, max: 10, positive_min: 9, negative_max: 6 };
-  const stars = config.stars || { max: 5, positive_min: 4, negative_max: 2 };
+  const numeric = config.numeric || { min: 0, max: 10 };
+  const stars = config.stars || { max: 5 };
   const options: any[] = config.options || [];
 
   const updateNumeric = (patch: any) => updateConfig("numeric", { ...numeric, ...patch });
@@ -2158,13 +2158,13 @@ function RatingNodeConfig({ config, updateConfig, renderInfoBanner }: { config: 
       toast.error(type === "buttons" ? "Máximo 3 opções para botões" : "Máximo 10 opções para menu");
       return;
     }
-    updateConfig("options", [...options, { label: `Opção ${options.length + 1}`, value: String(options.length + 1), bucket: "neutral" }]);
+    updateConfig("options", [...options, { label: `Opção ${options.length + 1}`, value: String(options.length + 1) }]);
   };
   const removeOption = (i: number) => updateConfig("options", options.filter((_, idx) => idx !== i));
 
   return (
     <div className="space-y-4">
-      {renderInfoBanner("Colete avaliações, notas e feedbacks dos seus clientes. Cada resposta é salva e direciona o fluxo conforme a nota (positiva, neutra, negativa).")}
+      {renderInfoBanner("Colete avaliações, notas e feedbacks dos seus clientes. A resposta (e a sugestão, se ativada) é salva e aparece nos resultados do fluxo.")}
 
       <div className="space-y-2">
         <Label className="text-xs font-medium">Nome da avaliação</Label>
@@ -2198,19 +2198,11 @@ function RatingNodeConfig({ config, updateConfig, renderInfoBanner }: { config: 
           </div>
           <div className="space-y-2">
             {options.map((opt, i) => (
-              <div key={i} className="p-2 rounded-lg border border-border/50 bg-muted/10 space-y-1.5">
+              <div key={i} className="p-2 rounded-lg border border-border/50 bg-muted/10">
                 <div className="flex items-center gap-1.5">
                   <Input value={opt.label || ""} onChange={(e) => updateOption(i, { label: e.target.value })} placeholder="Rótulo (ex: Excelente)" className="h-8 text-xs flex-1" />
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70" onClick={() => removeOption(i)}><Trash2 size={11} /></Button>
                 </div>
-                <Select value={opt.bucket || "neutral"} onValueChange={(v) => updateOption(i, { bucket: v })}>
-                  <SelectTrigger className="h-7 text-[11px]"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="positive">Positiva</SelectItem>
-                    <SelectItem value="neutral">Neutra</SelectItem>
-                    <SelectItem value="negative">Negativa</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             ))}
           </div>
@@ -2230,18 +2222,6 @@ function RatingNodeConfig({ config, updateConfig, renderInfoBanner }: { config: 
               <Input type="number" value={numeric.max} onChange={(e) => updateNumeric({ max: parseInt(e.target.value) || 10 })} className="h-8 text-xs" />
             </div>
           </div>
-          <Label className="text-xs font-medium pt-1">Classificação</Label>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label className="text-[10px] text-muted-foreground">Positiva ≥</Label>
-              <Input type="number" value={numeric.positive_min} onChange={(e) => updateNumeric({ positive_min: parseInt(e.target.value) || 0 })} className="h-8 text-xs" />
-            </div>
-            <div>
-              <Label className="text-[10px] text-muted-foreground">Negativa ≤</Label>
-              <Input type="number" value={numeric.negative_max} onChange={(e) => updateNumeric({ negative_max: parseInt(e.target.value) || 0 })} className="h-8 text-xs" />
-            </div>
-          </div>
-          <p className="text-[10px] text-muted-foreground">Valores entre são tratados como Neutros.</p>
         </div>
       )}
 
@@ -2256,24 +2236,14 @@ function RatingNodeConfig({ config, updateConfig, renderInfoBanner }: { config: 
               <SelectItem value="10">10 estrelas</SelectItem>
             </SelectContent>
           </Select>
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <div>
-              <Label className="text-[10px] text-muted-foreground">Positiva ≥</Label>
-              <Input type="number" value={stars.positive_min} onChange={(e) => updateStars({ positive_min: parseInt(e.target.value) || 0 })} className="h-8 text-xs" />
-            </div>
-            <div>
-              <Label className="text-[10px] text-muted-foreground">Negativa ≤</Label>
-              <Input type="number" value={stars.negative_max} onChange={(e) => updateStars({ negative_max: parseInt(e.target.value) || 0 })} className="h-8 text-xs" />
-            </div>
-          </div>
         </div>
       )}
 
       <div className="p-3 rounded-lg border border-border/50 bg-muted/20 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-xs font-medium">Solicitar sugestão após avaliação</Label>
-            <p className="text-[10px] text-muted-foreground">Pergunta SIM/NÃO e coleta sugestão de melhoria.</p>
+            <Label className="text-xs font-medium">Solicitar sugestão de melhoria</Label>
+            <p className="text-[10px] text-muted-foreground">Após a avaliação, pede uma sugestão por texto livre.</p>
           </div>
           <Switch checked={!!config.ask_suggestion} onCheckedChange={(v) => updateConfig("ask_suggestion", v)} />
         </div>
@@ -2281,25 +2251,18 @@ function RatingNodeConfig({ config, updateConfig, renderInfoBanner }: { config: 
           <div className="space-y-2">
             <div>
               <Label className="text-[10px] text-muted-foreground">Pergunta de sugestão</Label>
-              <Textarea value={config.suggestion_prompt || ""} onChange={(e) => updateConfig("suggestion_prompt", e.target.value)} className="text-xs min-h-[50px]" />
+              <Textarea value={config.suggestion_prompt || ""} onChange={(e) => updateConfig("suggestion_prompt", e.target.value)} placeholder="Tem alguma sugestão para melhorarmos? (ou responda 'pular')" className="text-xs min-h-[50px]" />
             </div>
             <div>
-              <Label className="text-[10px] text-muted-foreground">Mensagem se NÃO</Label>
-              <Input value={config.no_suggestion_message || ""} onChange={(e) => updateConfig("no_suggestion_message", e.target.value)} className="h-8 text-xs" />
-            </div>
-            <div>
-              <Label className="text-[10px] text-muted-foreground">Mensagem final (após sugestão)</Label>
-              <Input value={config.suggestion_thanks || ""} onChange={(e) => updateConfig("suggestion_thanks", e.target.value)} className="h-8 text-xs" />
+              <Label className="text-[10px] text-muted-foreground">Mensagem de agradecimento</Label>
+              <Input value={config.suggestion_thanks || ""} onChange={(e) => updateConfig("suggestion_thanks", e.target.value)} placeholder="Obrigado pelo seu feedback!" className="h-8 text-xs" />
             </div>
           </div>
         )}
       </div>
 
-      <div className="p-3 rounded-lg border border-border/50 bg-muted/10 space-y-1">
-        <p className="text-[11px] font-medium text-foreground">Saídas disponíveis</p>
-        <p className="text-[10px] text-muted-foreground">• Avaliação recebida (qualquer resposta válida)</p>
-        <p className="text-[10px] text-muted-foreground">• Positiva / Neutra / Negativa (conforme classificação)</p>
-        <p className="text-[10px] text-muted-foreground">• Sugestão recebida (quando o cliente envia uma sugestão)</p>
+      <div className="p-3 rounded-lg border border-border/50 bg-muted/10">
+        <p className="text-[10px] text-muted-foreground">A avaliação e a sugestão são salvas automaticamente nos resultados do fluxo.</p>
       </div>
     </div>
   );

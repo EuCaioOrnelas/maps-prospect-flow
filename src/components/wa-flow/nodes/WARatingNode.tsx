@@ -7,16 +7,8 @@ const TYPE_LABELS: Record<string, string> = {
   menu: "Menu",
   numeric: "Numérica",
   stars: "Estrelas",
-  free: "Livre",
+  free: "Texto livre",
 };
-
-const HANDLES = [
-  { id: "received", label: "Avaliação recebida", color: "bg-amber-400" },
-  { id: "positive", label: "Positiva", color: "bg-emerald-400" },
-  { id: "neutral", label: "Neutra", color: "bg-sky-400" },
-  { id: "negative", label: "Negativa", color: "bg-rose-400" },
-  { id: "suggestion", label: "Sugestão recebida", color: "bg-violet-400" },
-];
 
 export function WARatingNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
@@ -36,7 +28,7 @@ export function WARatingNode({ data }: NodeProps) {
           </p>
           <p className="text-[10px] text-muted-foreground">
             {TYPE_LABELS[type] || type}
-            {askSuggestion ? " · sugestão" : ""}
+            {askSuggestion ? " · com sugestão" : ""}
           </p>
         </div>
       </div>
@@ -47,27 +39,14 @@ export function WARatingNode({ data }: NodeProps) {
         </div>
       )}
 
-      <div className="px-3 py-2 space-y-1">
-        {HANDLES.map((h) => (
-          <div
-            key={h.id}
-            className="text-[10px] bg-muted/40 rounded px-2 py-1.5 truncate text-foreground/80 flex items-center gap-1.5"
-          >
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${h.color}`} />
-            {h.label}
-          </div>
-        ))}
+      <div className="px-3 py-2">
+        <div className="text-[10px] bg-muted/40 rounded px-2 py-1.5 text-foreground/80 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-amber-400" />
+          Resposta salva nos resultados
+        </div>
       </div>
 
-      {HANDLES.map((h, i) => (
-        <FlowHandle
-          key={h.id}
-          type="source"
-          position={Position.Right}
-          id={h.id}
-          style={{ top: `${30 + i * 12}%` }}
-        />
-      ))}
+      <FlowHandle type="source" position={Position.Right} />
     </div>
   );
 }
