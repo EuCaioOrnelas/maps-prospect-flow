@@ -455,7 +455,7 @@ function ContentItemEditor({
                   <FileText size={18} className="text-amber-400 shrink-0" />
                   <span className="text-xs text-foreground truncate flex-1">{item.media_filename || "Documento"}</span>
                   <button
-                    onClick={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }}
+                    onClick={() => onUpdate({ media_url: "", media_filename: "" })}
                     className="w-6 h-6 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors shrink-0"
                   >
                     <X size={12} />
@@ -475,7 +475,7 @@ function ContentItemEditor({
                 label="Arraste ou clique para enviar"
                 onFileSelected={async (f) => {
                   const url = await onUpload(f, "document");
-                  if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                  if (url) onUpdate({ media_url: url, media_filename: f.name });
                 }}
                 uploading={uploading}
               />
