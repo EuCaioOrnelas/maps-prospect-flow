@@ -1103,25 +1103,12 @@ async function runFlow(
         const ratingType = config.type || "buttons";
         const phaseKey = `__rating_phase_${node.id}`;
         const idKey = `__rating_id_${node.id}`;
-        const bucketKey = `__rating_bucket_${node.id}`;
         const sentAtKey = `__rating_sent_at_${node.id}`;
         const phase = ctx.variables[phaseKey] || "ask";
 
-        const classifyNumeric = (score: number, cfg: any) => {
-          const positiveMin = Number(cfg.positive_min ?? Math.ceil((cfg.max ?? 10) * 0.8));
-          const negativeMax = Number(cfg.negative_max ?? Math.floor((cfg.max ?? 10) * 0.5));
-          if (score >= positiveMin) return "positive";
-          if (score <= negativeMax) return "negative";
-          return "neutral";
-        };
-
-        const sendBucketRoute = (bucket: string | null) => {
-          return (
-            getTargetByHandle(bySource, node.id, bucket || "received") ||
-            getTargetByHandle(bySource, node.id, "received") ||
-            getDefaultTarget(bySource, node.id)
-          );
-        };
+        const ratingName = config.name || "Avaliação";
+        const ratingKey = `Avaliação - ${ratingName}`;
+        const suggestionKey = `Sugestão - ${ratingName}`;
 
         if (phase === "ask") {
           const msg = interpolate(config.message || "Como você avalia nosso atendimento?", ctx.variables);
@@ -1205,11 +1192,9 @@ async function runFlow(
           let scoreNumeric: number | null = null;
           let scoreText: string | null = null;
           let scoreMax: number | null = null;
-          let bucket: string | null = null;
 
           if (ratingType === "free") {
             scoreText = text;
-            bucket = null;
           } else if (ratingType === "buttons" || ratingType === "menu") {
             let idx = -1;
             if (btnId.startsWith("rate_")) idx = parseInt(btnId.slice(5)) || -1;
@@ -1223,12 +1208,7 @@ async function runFlow(
               );
             }
             const opt = (config.options || [])[idx];
-            if (opt) {
-              scoreText = String(opt.label || "");
-              bucket = opt.bucket || null;
-            } else {
-              scoreText = btnTitle || text;
-            }
+            scoreText = opt ? String(opt.label || "") : (btnTitle || text);
           } else if (ratingType === "stars") {
             const max = Number(config.stars?.max || 5);
             scoreMax = max;
@@ -1237,8 +1217,7 @@ async function runFlow(
             if (isNaN(n) && text) n = parseInt(text);
             if (!isNaN(n) && n >= 1 && n <= max) {
               scoreNumeric = n;
-              bucket = classifyNumeric(n, { ...config.stars, max });
-              scoreText = "⭐".repeat(n);
+              scoreText = `${n}/${max} ⭐`;
             } else {
               scoreText = btnTitle || text;
             }
@@ -1251,12 +1230,17 @@ async function runFlow(
             if (isNaN(n) && text) n = parseInt(text);
             if (!isNaN(n) && n >= min && n <= max) {
               scoreNumeric = n;
-              bucket = classifyNumeric(n, { ...config.numeric, max });
               scoreText = String(n);
             } else {
               scoreText = text || btnTitle;
             }
           }
+
+          // Persist into collected_data so it shows up in flow results
+          const displayValue = scoreNumeric != null
+            ? (scoreMax ? `${scoreNumeric}/${scoreMax}` : String(scoreNumeric))
+            : (scoreText || "");
+          ctx.variables[ratingKey] = displayValue;
 
           try {
             const { data: rating } = await supabase
@@ -1273,7 +1257,6 @@ async function runFlow(
                 score_numeric: scoreNumeric,
                 score_max: scoreMax,
                 score_text: scoreText,
-                bucket,
                 sent_at: ctx.variables[sentAtKey] || null,
                 responded_at: new Date().toISOString(),
               })
@@ -1284,70 +1267,24 @@ async function runFlow(
             console.error("[wa-flow-runner] rating insert failed:", e);
           }
 
-          ctx.variables[bucketKey] = bucket || "";
           ctx.hasFreshUserInput = false;
 
           if (config.ask_suggestion) {
             const prompt = interpolate(
-              config.suggestion_prompt || "Você possui alguma sugestão para melhorarmos nosso atendimento?",
+              config.suggestion_prompt || "Tem alguma sugestão de melhoria para nós? (responda 'pular' para finalizar)",
               ctx.variables,
             );
-            try {
-              await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
-                type: "buttons", body: prompt,
-                buttons: [
-                  { id: "sugg_yes", title: "SIM" },
-                  { id: "sugg_no", title: "NÃO" },
-                ],
-              }, config);
-            } catch (e) {
-              await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
-                type: "text", content: `${prompt}\n\nResponda SIM ou NÃO.`,
-              }, config);
-            }
-            ctx.variables[phaseKey] = "awaiting_suggestion_choice";
-            pausedNodeId = node.id;
-            currentNodeId = null;
-            break;
-          }
-
-          delete ctx.variables[phaseKey];
-          delete ctx.variables[sentAtKey];
-          currentNodeId = sendBucketRoute(bucket);
-          break;
-        }
-
-        if (phase === "awaiting_suggestion_choice") {
-          if (!ctx.hasFreshUserInput) {
-            pausedNodeId = node.id;
-            currentNodeId = null;
-            break;
-          }
-          const btnId = (ctx.lastButtonId || "").toLowerCase();
-          const text = (ctx.lastUserText || "").trim().toLowerCase();
-          const isYes = btnId === "sugg_yes" || text === "sim" || text === "1" || text.startsWith("s");
-          ctx.hasFreshUserInput = false;
-
-          if (isYes) {
-            await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
-              type: "text", content: "Perfeito. Digite sua sugestão abaixo.",
-            }, config);
+            await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: prompt }, config);
             ctx.variables[phaseKey] = "awaiting_suggestion_text";
             pausedNodeId = node.id;
             currentNodeId = null;
             break;
           }
 
-          const finalMsg = interpolate(
-            config.no_suggestion_message || "Obrigado pelo seu feedback. Sua avaliação foi registrada.",
-            ctx.variables,
-          );
-          await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: finalMsg }, config);
-          const bucket = ctx.variables[bucketKey] || null;
           delete ctx.variables[phaseKey];
-          delete ctx.variables[bucketKey];
           delete ctx.variables[sentAtKey];
-          currentNodeId = sendBucketRoute(bucket || null);
+          delete ctx.variables[idKey];
+          currentNodeId = getDefaultTarget(bySource, node.id);
           break;
         }
 
@@ -1358,30 +1295,34 @@ async function runFlow(
             break;
           }
           const suggestion = (ctx.lastUserText || "").trim();
+          const skip = ["pular", "skip", "nao", "não", "n"].includes(suggestion.toLowerCase());
+          const finalSuggestion = skip ? "" : suggestion;
           const ratingId = ctx.variables[idKey];
-          if (ratingId) {
-            try {
-              await supabase
-                .from("wa_flow_ratings")
-                .update({ suggestion_text: suggestion })
-                .eq("id", ratingId);
-            } catch (e) {
-              console.error("[wa-flow-runner] rating suggestion update failed:", e);
+
+          if (finalSuggestion) {
+            ctx.variables[suggestionKey] = finalSuggestion;
+            if (ratingId) {
+              try {
+                await supabase
+                  .from("wa_flow_ratings")
+                  .update({ suggestion_text: finalSuggestion })
+                  .eq("id", ratingId);
+              } catch (e) {
+                console.error("[wa-flow-runner] rating suggestion update failed:", e);
+              }
             }
           }
+
           const thanks = interpolate(
-            config.suggestion_thanks || "Obrigado pela sua contribuição. Sua sugestão foi registrada com sucesso.",
+            config.suggestion_thanks || "Obrigado pelo seu feedback! Sua avaliação foi registrada.",
             ctx.variables,
           );
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: thanks }, config);
           delete ctx.variables[phaseKey];
-          delete ctx.variables[bucketKey];
           delete ctx.variables[sentAtKey];
           delete ctx.variables[idKey];
           ctx.hasFreshUserInput = false;
-          currentNodeId =
-            getTargetByHandle(bySource, node.id, "suggestion") ||
-            getDefaultTarget(bySource, node.id);
+          currentNodeId = getDefaultTarget(bySource, node.id);
           break;
         }
 
