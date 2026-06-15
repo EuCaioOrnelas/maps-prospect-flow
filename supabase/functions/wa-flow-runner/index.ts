@@ -703,7 +703,11 @@ async function runFlow(
       case "message": {
         // New schema: config.contents = [{type, content, media_url, caption, media_filename, delay_min, delay_max}, ...]
         // Legacy: config.items = [...] or single { message_type, content, media_url, caption, filename }
-        const rawItems: any[] = Array.isArray(config.contents) && config.contents.length > 0
+        const pending = ctx.variables?.__pending_message__;
+        const usePending = pending && pending.nodeId === node.id && Array.isArray(pending.items);
+        const rawItems: any[] = usePending
+          ? pending.items
+          : Array.isArray(config.contents) && config.contents.length > 0
           ? config.contents
           : Array.isArray(config.items) && config.items.length > 0
           ? config.items
