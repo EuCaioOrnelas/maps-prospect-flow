@@ -1510,7 +1510,10 @@ serve(async (req) => {
       for (const exec of dueWaits || []) await resumeExec(exec, "wait");
       for (const exec of dueTimeouts || []) await resumeExec(exec, "timeout");
 
-      return new Response(JSON.stringify({ scheduler: true, resumed: resumedIds.length }), {
+      // c) Inactivity sweep — execution waiting on user input that didn't reply within the configured timeout.
+      const inactivityCount = await runInactivitySweep(supabase);
+
+      return new Response(JSON.stringify({ scheduler: true, resumed: resumedIds.length, inactivity: inactivityCount }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
