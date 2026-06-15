@@ -611,6 +611,11 @@ export default function WhatsAppFlowEditor() {
 
   const saveFlow = useMutation({
     mutationFn: async () => {
+      // Require at least one "Encerramento" (end) node so every flow has a clear finalization path.
+      const hasEnd = nodes.some((n) => n.type === "end");
+      if (!hasEnd) {
+        throw new Error("MISSING_END");
+      }
       // Extract entry node config for flow-level metadata
       const entryNode = nodes.find((n) => n.type === "entry");
       const entryCfg = entryNode ? (entryNode.data as any).config || {} : {};
