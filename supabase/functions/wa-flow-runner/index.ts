@@ -707,6 +707,38 @@ async function runFlow(
   let runError: any = null;
   let overflowed = false;
 
+  // ── Capture EVERY user reply tied to the node they were paused on, so partial flow
+  //    responses (rating without suggestion, button click, free text) always show up
+  //    in collected_data / flow results even if the lead later abandons or hits inactivity.
+  try {
+    if (ctx.hasFreshUserInput && execution?.current_node_id) {
+      const pausedNode = nodeMap.get(execution.current_node_id);
+      if (pausedNode) {
+        const rawName = String(pausedNode.name || pausedNode.node_type || "resposta");
+        const slug = rawName
+          .toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "_")
+          .replace(/^_+|_+$/g, "")
+          .slice(0, 40) || "resposta";
+        const value = (ctx.lastButtonTitle && ctx.lastButtonTitle.trim())
+          || (ctx.lastUserText && ctx.lastUserText.trim())
+          || "";
+        if (value && ctx.variables[slug] !== value) {
+          ctx.variables[slug] = value;
+          try {
+            await supabase
+              .from("wa_flow_executions")
+              .update({ collected_data: ctx.variables, last_user_message_at: new Date().toISOString() })
+              .eq("id", execution.id);
+          } catch (_e) { /* non-fatal */ }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[wa-flow-runner] capture-user-reply failed:", e);
+  }
+
   try {
   while (currentNodeId && safety < MAX_ITERATIONS) {
     safety += 1;
@@ -1756,6 +1788,25 @@ serve(async (req) => {
       // #7 fix: if we're paused on a "buttons" node and the user reply did NOT match any handle,
       // skip re-execution (don't re-send the same buttons message). The execution stays paused.
       if (node?.node_type === "buttons" && !buttonResolved && (body.button_id || body.incoming_text)) {
+        // Still capture the lead's literal reply so it shows up in flow results
+        // even though it didn't match any button handle.
+        try {
+          const rawName = String(node.name || "botoes");
+          const slug = rawName
+            .toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "")
+            .slice(0, 40) || "botoes";
+          const value = (body.button_title || body.incoming_text || "").toString().trim();
+          if (value) {
+            const updated = { ...(exec.collected_data || {}), [slug]: value };
+            await supabase
+              .from("wa_flow_executions")
+              .update({ collected_data: updated })
+              .eq("id", exec.id);
+          }
+        } catch (_e) { /* non-fatal */ }
         console.log(`[wa-flow-runner] No matching button handle for exec ${exec.id} — staying paused`);
         continue;
       }
