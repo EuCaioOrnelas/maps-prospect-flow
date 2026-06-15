@@ -1507,6 +1507,31 @@ function ActionNodeConfig({ config, updateConfig, renderInfoBanner }: {
               </div>
             </div>
           )}
+          {action.type === "webhook" && (
+            <div className="space-y-3">
+              <p className="text-[10px] text-muted-foreground">Faz um POST para a URL informada com o telefone e ID do lead.</p>
+              <div className="space-y-1">
+                <Label className="text-[10px]">URL do webhook</Label>
+                <Input
+                  value={action.url || ""}
+                  onChange={(e) => updateAction(idx, "url", e.target.value)}
+                  placeholder="https://api.exemplo.com/webhook"
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">Método HTTP</Label>
+                <Select value={action.method || "POST"} onValueChange={(v) => updateAction(idx, "method", v)}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["POST", "PUT", "PATCH", "GET"].map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
         </div>
       ))}
 
