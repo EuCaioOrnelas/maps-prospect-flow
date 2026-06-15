@@ -1074,7 +1074,7 @@ export default function WhatsAppFlowEditor() {
             onPaneClick={() => { setSelectedNode(null); setSelectedNodeIds(new Set()); setContextMenu(null); }}
             onNodeContextMenu={onNodeContextMenu}
             onEdgeClick={(_event, edge) => {
-              setEdgeToDelete(edge.id);
+              setEditingEdge({ id: edge.id, label: typeof edge.label === "string" ? edge.label : "" });
             }}
             onInit={(instance) => {
               // Store instance on wrapper for screenToFlowPosition
