@@ -2474,6 +2474,7 @@ interface Props {
   entryApiType?: string;
   entryConfig?: any;
   allNodes?: Node[];
+  allEdges?: Edge[];
 }
 
 function FlowButtonPicker({
