@@ -1107,6 +1107,7 @@ export default function WhatsAppFlowEditor() {
             entryApiType={entryApiType}
             entryConfig={entryConfig}
             allNodes={nodes}
+            allEdges={edges}
           />
         )}
       </div>
