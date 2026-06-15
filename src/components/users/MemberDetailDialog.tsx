@@ -95,8 +95,9 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <Tabs defaultValue="info" className="mt-2">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="info">Perfil</TabsTrigger>
+            <TabsTrigger value="availability">Disponibilidade</TabsTrigger>
             <TabsTrigger value="time">Tempo de uso</TabsTrigger>
             <TabsTrigger value="ops">Operacional</TabsTrigger>
           </TabsList>
