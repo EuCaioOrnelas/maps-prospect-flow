@@ -707,6 +707,38 @@ async function runFlow(
   let runError: any = null;
   let overflowed = false;
 
+  // ── Capture EVERY user reply tied to the node they were paused on, so partial flow
+  //    responses (rating without suggestion, button click, free text) always show up
+  //    in collected_data / flow results even if the lead later abandons or hits inactivity.
+  try {
+    if (ctx.hasFreshUserInput && execution?.current_node_id) {
+      const pausedNode = nodeMap.get(execution.current_node_id);
+      if (pausedNode) {
+        const rawName = String(pausedNode.name || pausedNode.node_type || "resposta");
+        const slug = rawName
+          .toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "_")
+          .replace(/^_+|_+$/g, "")
+          .slice(0, 40) || "resposta";
+        const value = (ctx.lastButtonTitle && ctx.lastButtonTitle.trim())
+          || (ctx.lastUserText && ctx.lastUserText.trim())
+          || "";
+        if (value && ctx.variables[slug] !== value) {
+          ctx.variables[slug] = value;
+          try {
+            await supabase
+              .from("wa_flow_executions")
+              .update({ collected_data: ctx.variables, last_user_message_at: new Date().toISOString() })
+              .eq("id", execution.id);
+          } catch (_e) { /* non-fatal */ }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[wa-flow-runner] capture-user-reply failed:", e);
+  }
+
   try {
   while (currentNodeId && safety < MAX_ITERATIONS) {
     safety += 1;
