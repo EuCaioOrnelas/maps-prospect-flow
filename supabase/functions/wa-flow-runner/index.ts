@@ -430,10 +430,15 @@ async function sendViaMeta(
     body.type = "text";
     body.text = { body: payload.content || "" };
   } else if (payload.type === "buttons") {
+    const headerObj = payload.headerImageUrl
+      ? { header: { type: "image", image: { link: payload.headerImageUrl } } }
+      : payload.header
+        ? { header: { type: "text", text: payload.header.slice(0, 60) } }
+        : {};
     body.type = "interactive";
     body.interactive = {
       type: "button",
-      ...(payload.header ? { header: { type: "text", text: payload.header.slice(0, 60) } } : {}),
+      ...headerObj,
       body: { text: (payload.body || "Escolha uma opção:").slice(0, 1024) },
       ...(payload.footer ? { footer: { text: payload.footer.slice(0, 60) } } : {}),
       action: {
