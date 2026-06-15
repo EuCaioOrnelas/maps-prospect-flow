@@ -1397,6 +1397,7 @@ function ActionNodeConfig({ config, updateConfig, renderInfoBanner }: {
     { value: "remove_tag", label: "Remover tag" },
     { value: "move_pipeline", label: "Mover no Kanban (CRM)" },
     { value: "send_to_crm", label: "Criar/atualizar lead no CRM" },
+    { value: "webhook", label: "Disparar Webhook (URL)" },
   ];
 
   return (
