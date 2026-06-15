@@ -25,6 +25,19 @@ const CONTENT_TYPES = [
 
 const MAX_CONTENT_ITEMS = 5; // delay doesn't count
 
+function pickAudioMime(): { mime: string; ext: string } {
+  const candidates: Array<{ mime: string; ext: string }> = [
+    { mime: "audio/ogg;codecs=opus", ext: "ogg" },
+    { mime: "audio/mp4", ext: "m4a" },
+    { mime: "audio/webm;codecs=opus", ext: "webm" },
+    { mime: "audio/webm", ext: "webm" },
+  ];
+  for (const c of candidates) {
+    if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.(c.mime)) return c;
+  }
+  return { mime: "audio/webm", ext: "webm" };
+}
+
 interface ContentItem {
   id: string;
   type: "text" | "image" | "audio" | "video" | "document" | "delay";
@@ -190,13 +203,14 @@ function AudioRecorder({ onRecorded }: { onRecorded: (blob: Blob) => void }) {
       source.connect(analyser);
       analyserRef.current = analyser;
 
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
+      const picked = pickAudioMime();
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: picked.mime });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
       mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(chunksRef.current, { type: picked.mime.split(";")[0] });
         onRecorded(blob);
         stream.getTracks().forEach(t => t.stop());
         audioCtx.close();
