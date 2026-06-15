@@ -1852,6 +1852,7 @@ serve(async (req) => {
           entry_data: { trigger_type: triggerType, source: body.source, incoming_text: body.incoming_text },
           node_history: [],
           collected_data: {},
+          last_user_message_at: new Date().toISOString(),
         })
         .select()
         .single();
