@@ -2281,6 +2281,136 @@ interface Props {
   allNodes?: Node[];
 }
 
+function FlowButtonPicker({
+  value,
+  onChange,
+  allNodes,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  allNodes?: Node[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 8;
+
+  const options = (() => {
+    const out: { id: string; title: string; source: string; kind: string }[] = [];
+    for (const n of allNodes || []) {
+      const cfg = (n.data as any)?.config || {};
+      const label = String((n.data as any)?.label || n.id);
+      if (n.type === "buttons") {
+        if ((cfg.interaction_type || "reply_buttons") === "reply_buttons") {
+          for (const b of cfg.buttons || []) {
+            if (b?.title || b?.id) out.push({ id: b.id || b.title, title: b.title || b.id, source: label, kind: "Botão" });
+          }
+        } else if (cfg.interaction_type === "list") {
+          for (const it of cfg.list_items || []) {
+            if (it?.title || it?.id) out.push({ id: it.id || it.title, title: it.title || it.id, source: label, kind: "Lista" });
+          }
+        }
+      }
+    }
+    return out;
+  })();
+
+  const filtered = options.filter(
+    (o) =>
+      !search ||
+      o.title.toLowerCase().includes(search.toLowerCase()) ||
+      o.id.toLowerCase().includes(search.toLowerCase()) ||
+      o.source.toLowerCase().includes(search.toLowerCase())
+  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageItems = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+
+  const selected = options.find((o) => o.id === value || o.title === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="w-full h-9 justify-between text-sm font-normal">
+          <span className="truncate">
+            {selected ? `${selected.title} · ${selected.source}` : value || "Selecionar botão do fluxo..."}
+          </span>
+          <ChevronDown size={14} className="opacity-60" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] p-2" align="start">
+        <Input
+          autoFocus
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
+          placeholder="Buscar botão..."
+          className="h-8 text-xs mb-2"
+        />
+        {options.length === 0 ? (
+          <div className="text-xs text-muted-foreground px-2 py-6 text-center">
+            Nenhum botão criado no fluxo ainda.
+          </div>
+        ) : (
+          <>
+            <ScrollArea className="h-[260px] pr-2">
+              <div className="space-y-1">
+                {pageItems.map((o, i) => (
+                  <button
+                    key={`${o.id}-${i}`}
+                    type="button"
+                    onClick={() => {
+                      onChange(o.id);
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "w-full text-left px-2 py-1.5 rounded-md text-xs hover:bg-accent transition-colors",
+                      (selected?.id === o.id) && "bg-accent"
+                    )}
+                  >
+                    <div className="font-medium truncate">{o.title}</div>
+                    <div className="text-[10px] text-muted-foreground truncate">
+                      {o.kind} · {o.source} · id: {o.id}
+                    </div>
+                  </button>
+                ))}
+                {pageItems.length === 0 && (
+                  <div className="text-xs text-muted-foreground px-2 py-6 text-center">Sem resultados.</div>
+                )}
+              </div>
+            </ScrollArea>
+            <div className="flex items-center justify-between pt-2 mt-1 border-t">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-[11px]"
+                disabled={safePage === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                Anterior
+              </Button>
+              <span className="text-[10px] text-muted-foreground">
+                {safePage + 1} / {totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-[11px]"
+                disabled={safePage >= totalPages - 1}
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              >
+                Próxima
+              </Button>
+            </div>
+          </>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {}, allNodes }: Props) {
   const { user } = useAuth();
   const [config, setConfig] = useState<any>({});
