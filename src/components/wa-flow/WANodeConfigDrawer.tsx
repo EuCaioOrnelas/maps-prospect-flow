@@ -2559,14 +2559,19 @@ function FlowButtonPicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" className="w-full h-9 justify-between text-sm font-normal bg-background">
-          <span className="truncate flex items-center gap-1.5 min-w-0">
+          <span className="truncate flex items-center gap-2 min-w-0">
             {selected ? (
               <>
-                <span className="shrink-0">{selected.emoji}</span>
+                {selected.kind === "list"
+                  ? <List size={14} className="shrink-0 text-muted-foreground" />
+                  : <MousePointerClick size={14} className="shrink-0 text-primary" />}
                 <span className="font-medium truncate text-foreground">{selected.title}</span>
               </>
             ) : (
-              <span className="text-muted-foreground">{value || "Selecionar botão do fluxo..."}</span>
+              <>
+                <MousePointerClick size={14} className="shrink-0 text-muted-foreground" />
+                <span className="text-muted-foreground">{value || "Selecionar botão do fluxo..."}</span>
+              </>
             )}
           </span>
           <ChevronDown size={14} className="opacity-60 shrink-0" />
