@@ -537,13 +537,11 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
   const actions = Array.isArray(config.actions) && config.actions.length > 0
     ? config.actions
     : config.action_type
-      ? [{ type: config.action_type, value: config.tag_value || config.pipeline_stage, stage_name: config.pipeline_stage }]
+      ? [{ type: config.action_type, value: config.tag_value || config.pipeline_stage, tag_value: config.tag_value, stage_name: config.pipeline_stage, pipeline_stage_id: config.pipeline_stage_id }]
       : [];
 
   if (actions.length === 0) return;
 
-  // #6 fix: Find the lead by phone using DB-side filter (no arbitrary limit).
-  // Match using the last 8 digits (tolerant to +55, 9th digit, formatting differences).
   const last8 = leadPhone.replace(/\D/g, "").slice(-8);
   if (!last8) {
     console.log("[wa-flow-runner] Action skipped — invalid phone for", leadPhone);
@@ -567,14 +565,15 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
     try {
       switch (action.type) {
         case "add_tag": {
-          const tag = action.value || action.tag;
+          // FIX BUG-01: drawer salva `tag_value`; aceitar todos os aliases.
+          const tag = action.tag_value || action.value || action.tag;
           if (!tag) break;
           const newTags = Array.from(new Set([...(lead.tags || []), tag]));
           await supabase.from("leads").update({ tags: newTags }).eq("id", lead.id);
           break;
         }
         case "remove_tag": {
-          const tag = action.value || action.tag;
+          const tag = action.tag_value || action.value || action.tag;
           if (!tag) break;
           const newTags = (lead.tags || []).filter((t: string) => t !== tag);
           await supabase.from("leads").update({ tags: newTags }).eq("id", lead.id);
@@ -582,7 +581,6 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
         }
         case "move_kanban":
         case "move_pipeline": {
-          // Editor saves UUID in `pipeline_stage_id`; legacy callers may pass `stage_name`.
           let stageId: string | null = action.pipeline_stage_id || null;
           if (!stageId) {
             const stageName = action.stage_name || action.value;
@@ -601,13 +599,18 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
           break;
         }
         case "send_to_crm": {
-          // Create or update the lead in CRM with mapped fields (supports {variable} interpolation upstream).
           const updates: Record<string, any> = {};
           if (action.crm_name) updates.name = String(action.crm_name);
           if (action.crm_email) updates.email = String(action.crm_email);
           if (action.crm_company) updates.company = String(action.crm_company);
           if (action.crm_notes) updates.notes = String(action.crm_notes);
           if (action.crm_stage_id) updates.pipeline_stage_id = action.crm_stage_id;
+          // FIX BUG-06: aplica crm_value como deal_value se for número.
+          if (action.crm_value !== undefined && action.crm_value !== "") {
+            const cleaned = String(action.crm_value).replace(/[^\d.,-]/g, "").replace(",", ".");
+            const num = parseFloat(cleaned);
+            if (!isNaN(num)) updates.deal_value = num;
+          }
           if (Object.keys(updates).length > 0) {
             await supabase.from("leads").update(updates).eq("id", lead.id);
           }
