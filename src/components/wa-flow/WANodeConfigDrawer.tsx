@@ -15,7 +15,7 @@ import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, 
 import { toast } from "sonner";
 import { MessageContentBuilder } from "./MessageContentBuilder";
 import { OutOfWindowTemplateSection } from "./OutOfWindowTemplateSection";
-import type { Node } from "@xyflow/react";
+import type { Node, Edge } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import googleLogo from "@/assets/icons/google-g-sm.png";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
