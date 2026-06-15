@@ -2599,10 +2599,20 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
         return;
       }
     }
-    // Validate handoff requires message
+    // Validate handoff
     if (node.type === "handoff") {
-      if (!config.handoff_message?.trim()) {
-        toast.error("A mensagem ao lead é obrigatória");
+      const msg = (config.pre_message || config.handoff_message || "").trim();
+      if (!msg) {
+        toast.error("Configure a mensagem antes da transferência");
+        return;
+      }
+      const dist = config.distribution_type || "specific";
+      if (dist === "specific" && !config.specific_member_id) {
+        toast.error("Selecione o colaborador responsável");
+        return;
+      }
+      if (dist === "round_robin" && (!config.member_ids || config.member_ids.length === 0)) {
+        toast.error("Selecione ao menos um colaborador na equipe");
         return;
       }
       if (config.notify_team && !config.email_subject?.trim()) {
