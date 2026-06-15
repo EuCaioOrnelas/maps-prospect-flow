@@ -470,6 +470,19 @@ async function sendViaMeta(
   } else if (payload.type === "audio") {
     body.type = "audio";
     body.audio = { link: (payload as any).mediaUrl };
+  } else if (payload.type === "image" || payload.type === "video") {
+    body.type = payload.type;
+    body[payload.type] = {
+      link: (payload as any).mediaUrl,
+      ...((payload as any).caption ? { caption: (payload as any).caption } : {}),
+    };
+  } else if (payload.type === "document") {
+    body.type = "document";
+    body.document = {
+      link: (payload as any).mediaUrl,
+      ...((payload as any).caption ? { caption: (payload as any).caption } : {}),
+      ...((payload as any).filename ? { filename: (payload as any).filename } : {}),
+    };
   } else {
     body.type = payload.type;
     body[payload.type] = {
@@ -720,6 +733,7 @@ async function runFlow(
         // Legacy: config.items = [...] or single { message_type, content, media_url, caption, filename }
         const pending = ctx.variables?.__pending_message__;
         const usePending = pending && pending.nodeId === node.id && Array.isArray(pending.items);
+        const outgoingTarget = getDefaultTarget(bySource, node.id);
         const rawItems: any[] = usePending
           ? pending.items
           : Array.isArray(config.contents) && config.contents.length > 0
@@ -763,10 +777,16 @@ async function runFlow(
             continue;
           }
 
+          const mediaUrl = it.media_url || it.url;
+          if (["image", "audio", "video", "document"].includes(itemType) && !mediaUrl) {
+            console.warn(`[wa-flow-runner] skipping ${itemType} without media_url on node=${node.id}`);
+            continue;
+          }
+
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
             type: itemType,
             content: interpolate(it.content || "", ctx.variables),
-            mediaUrl: it.media_url || it.url,
+            mediaUrl,
             caption: interpolate(it.caption || "", ctx.variables),
             filename: it.media_filename || it.filename,
           }, config);
@@ -780,7 +800,7 @@ async function runFlow(
           pausedNodeId = node.id;
           currentNodeId = null;
         } else {
-          currentNodeId = getDefaultTarget(bySource, node.id);
+          currentNodeId = outgoingTarget;
         }
         break;
       }
@@ -836,8 +856,12 @@ async function runFlow(
         }
 
         ctx.hasFreshUserInput = false;
-        pausedNodeId = node.id;
-        currentNodeId = null;
+        if ((config.after_send || "wait") === "continue") {
+          currentNodeId = getDefaultTarget(bySource, node.id);
+        } else {
+          pausedNodeId = node.id;
+          currentNodeId = null;
+        }
         break;
       }
 
