@@ -790,6 +790,14 @@ async function runFlow(
             caption: interpolate(it.caption || "", ctx.variables),
             filename: it.media_filename || it.filename,
           }, config);
+
+          // Meta API returns as soon as it accepts the payload, not when the message is delivered.
+          // Media (image/audio/video/document) takes noticeably longer to render on the device than text,
+          // so without a pause the NEXT item (or the next node, e.g. buttons) can arrive before the image.
+          // Add a small delay to preserve visual ordering.
+          const isMedia = ["image", "audio", "video", "document"].includes(itemType);
+          await new Promise((r) => setTimeout(r, isMedia ? 2000 : 500));
+
         }
 
         if (currentNodeId === null) break; // paused for delay
@@ -856,14 +864,12 @@ async function runFlow(
         }
 
         ctx.hasFreshUserInput = false;
-        if ((config.after_send || "wait") === "continue") {
-          currentNodeId = getDefaultTarget(bySource, node.id);
-        } else {
-          pausedNodeId = node.id;
-          currentNodeId = null;
-        }
+        // Buttons/list always pause and wait for the user to click — never auto-advance.
+        pausedNodeId = node.id;
+        currentNodeId = null;
         break;
       }
+
 
       case "condition": {
         const conditionType = config.condition_type || "responded";

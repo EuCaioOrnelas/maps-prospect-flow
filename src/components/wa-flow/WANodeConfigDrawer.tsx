@@ -2673,31 +2673,8 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     <p className="text-[10px] text-muted-foreground">Disponível somente na API Oficial (Meta). Substitui o título de texto quando ativada.</p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">Após enviar</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { value: "wait", label: "Esperar resposta", desc: "Pausa até o lead clicar" },
-                        { value: "continue", label: "Avançar", desc: "Vai ao próximo card" },
-                      ].map((opt) => {
-                        const active = (config.after_send || "wait") === opt.value;
-                        return (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => updateConfig("after_send", opt.value)}
-                            className={cn(
-                              "p-2.5 rounded-lg border text-left transition-colors",
-                              active ? "border-primary/40 bg-primary/10" : "border-border/40 bg-muted/20 hover:border-border"
-                            )}
-                          >
-                            <p className="text-[11px] font-medium text-foreground">{opt.label}</p>
-                            <p className="text-[9px] text-muted-foreground leading-tight">{opt.desc}</p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+
+
 
 
               {/* Reply buttons */}
