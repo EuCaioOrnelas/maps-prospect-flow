@@ -835,6 +835,13 @@ const validateFlowDraft = (draft: FlowDraft, prompt: string) => {
         if (!normalizeText(config.variable_name)) issues.push(`O nó data_collect ${node.id} está sem variable_name.`);
         if (!normalizeText(config.question_text)) issues.push(`O nó data_collect ${node.id} está sem question_text.`);
         break;
+      case "rating": {
+        if (!normalizeText(config.message)) issues.push(`O nó rating ${node.id} está sem message.`);
+        if (!normalizeText(config.type)) issues.push(`O nó rating ${node.id} está sem type.`);
+        const ratingOutgoing = edgesBySource.get(node.id) || [];
+        if (ratingOutgoing.length === 0) issues.push(`O nó rating ${node.id} precisa de pelo menos uma saída conectada (use o handle "received" para um agradecimento + end).`);
+        break;
+      }
     }
 
     // Check for dead ends (nodes without outgoing edges that aren't terminal)
