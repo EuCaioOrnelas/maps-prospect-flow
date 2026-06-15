@@ -558,8 +558,14 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
 
   const contents: ContentItem[] = config.contents || [];
 
-  const setContents = (newContents: ContentItem[]) => {
-    updateConfig("contents", newContents);
+  const setContents = (
+    updater: ContentItem[] | ((prev: ContentItem[]) => ContentItem[])
+  ) => {
+    if (typeof updater === "function") {
+      updateConfig("contents", (prev: ContentItem[] | undefined) => updater(prev || []));
+    } else {
+      updateConfig("contents", updater);
+    }
   };
 
   const contentCount = contents.filter(c => c.type !== "delay").length;
@@ -593,36 +599,41 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
   };
 
   const addContent = (type: ContentItem["type"]) => {
-    if (type !== "delay" && contentCount >= MAX_CONTENT_ITEMS) {
-      toast.error(`Máximo de ${MAX_CONTENT_ITEMS} conteúdos por mensagem (delay não conta)`);
-      return;
-    }
-    const newItem: ContentItem = {
-      id: `${type}-${Date.now()}`,
-      type,
-      ...(type === "delay" ? { delay_min: 5, delay_max: 15 } : {}),
-    };
-    setContents([...contents, newItem]);
+    setContents((prev) => {
+      const count = prev.filter(c => c.type !== "delay").length;
+      if (type !== "delay" && count >= MAX_CONTENT_ITEMS) {
+        toast.error(`Máximo de ${MAX_CONTENT_ITEMS} conteúdos por mensagem (delay não conta)`);
+        return prev;
+      }
+      const newItem: ContentItem = {
+        id: `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        type,
+        ...(type === "delay" ? { delay_min: 5, delay_max: 15 } : {}),
+      };
+      return [...prev, newItem];
+    });
   };
 
   const updateItem = (id: string, keyOrPatch: string | Partial<ContentItem>, value?: any) => {
-    setContents(contents.map(c => {
+    setContents((prev) => prev.map(c => {
       if (c.id !== id) return c;
       return typeof keyOrPatch === "string" ? { ...c, [keyOrPatch]: value } : { ...c, ...keyOrPatch };
     }));
   };
 
   const removeItem = (id: string) => {
-    const item = contents.find(c => c.id === id);
-    if (item?.media_url) {
-      try {
-        const bucket = "wa-flow-media";
-        const prefix = supabase.storage.from(bucket).getPublicUrl("").data.publicUrl;
-        const path = item.media_url.replace(prefix, "");
-        if (path) supabase.storage.from(bucket).remove([path]);
-      } catch { /* silent */ }
-    }
-    setContents(contents.filter(c => c.id !== id));
+    setContents((prev) => {
+      const item = prev.find(c => c.id === id);
+      if (item?.media_url) {
+        try {
+          const bucket = "wa-flow-media";
+          const prefix = supabase.storage.from(bucket).getPublicUrl("").data.publicUrl;
+          const path = item.media_url.replace(prefix, "");
+          if (path) supabase.storage.from(bucket).remove([path]);
+        } catch { /* silent */ }
+      }
+      return prev.filter(c => c.id !== id);
+    });
   };
 
   const groups = computeGroups(contents);
