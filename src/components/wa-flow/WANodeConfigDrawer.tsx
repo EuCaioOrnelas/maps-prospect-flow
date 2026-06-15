@@ -1520,6 +1520,8 @@ function HandoffNodeConfig({ config, updateConfig, renderInfoBanner, renderApiIn
   config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; renderApiIndicator: () => JSX.Element | null;
 }) {
   const { user } = useAuth();
+  const { members } = useAccountMembers();
+  const { availabilities } = useAccountAvailabilities();
   const { data: stages = [] } = useQuery({
     queryKey: ["pipeline-stages-handoff", user?.id],
     queryFn: async () => {
@@ -1528,23 +1530,145 @@ function HandoffNodeConfig({ config, updateConfig, renderInfoBanner, renderApiIn
     },
     enabled: !!user,
   });
+  const { data: otherFlows = [] } = useQuery({
+    queryKey: ["wa-flows-handoff-redirect", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("wa_automation_flows").select("id, name").eq("user_id", user!.id).order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
+  const distributionType = config.distribution_type || "specific";
+  const memberIds: string[] = config.member_ids || [];
+  const noAgentsActions: string[] = config.no_agents_actions || ["send_message"];
   const ccEmails: string[] = config.cc_emails || [];
+  const notifyManagerIds: string[] = config.notify_manager_ids || [];
+
+  const availabilityMap = Object.fromEntries(availabilities.map((a) => [a.user_id, a]));
+  const isOnline = (uid: string) => availabilityMap[uid]?.status === "online";
+
+  const toggleMember = (uid: string) => {
+    const set = new Set(memberIds);
+    if (set.has(uid)) set.delete(uid); else set.add(uid);
+    updateConfig("member_ids", Array.from(set));
+  };
+
+  const toggleAction = (action: string) => {
+    const set = new Set(noAgentsActions);
+    if (set.has(action)) set.delete(action); else set.add(action);
+    updateConfig("no_agents_actions", Array.from(set));
+  };
+
+  const toggleManager = (uid: string) => {
+    const set = new Set(notifyManagerIds);
+    if (set.has(uid)) set.delete(uid); else set.add(uid);
+    updateConfig("notify_manager_ids", Array.from(set));
+  };
 
   return (
     <div className="space-y-4">
       {renderApiIndicator()}
-      {renderInfoBanner("Transfere a conversa para atendimento humano e encerra a automação neste lead.")}
+      {renderInfoBanner("Transfere a conversa para um colaborador respeitando disponibilidade e fila justa de distribuição.")}
 
-      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-        <div className="flex items-center gap-2">
-          <Switch checked={config.stop_automation !== false} onCheckedChange={(v) => updateConfig("stop_automation", v)} />
-          <Label className="text-xs font-medium">Encerrar automação neste lead</Label>
-        </div>
-        <p className="text-[10px] text-muted-foreground">Se o lead disparar novamente, ele entra no início do fluxo.</p>
+      {/* Tipo de distribuição */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Tipo de distribuição</Label>
+        <Select value={distributionType} onValueChange={(v) => updateConfig("distribution_type", v)}>
+          <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="specific">Colaborador específico</SelectItem>
+            <SelectItem value="round_robin">Distribuição automática (fila justa)</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Move no CRM */}
+      {/* Colaborador específico */}
+      {distributionType === "specific" && (
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">Colaborador</Label>
+          <Select value={config.specific_member_id || ""} onValueChange={(v) => updateConfig("specific_member_id", v)}>
+            <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar colaborador..." /></SelectTrigger>
+            <SelectContent>
+              {members.map((m) => (
+                <SelectItem key={m.user_id} value={m.user_id}>
+                  <span className="flex items-center gap-2">
+                    <span className={`inline-block h-2 w-2 rounded-full ${isOnline(m.user_id) ? "bg-emerald-500" : "bg-muted-foreground"}`} />
+                    {m.name || m.email}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Equipe round-robin */}
+      {distributionType === "round_robin" && (
+        <div className="space-y-2 p-3 rounded-lg border border-border/50 bg-muted/20">
+          <Label className="text-xs font-medium">Equipe participante</Label>
+          <p className="text-[10px] text-muted-foreground">Os leads serão distribuídos de forma equilibrada entre os colaboradores selecionados que estiverem disponíveis.</p>
+          <div className="space-y-1.5 max-h-48 overflow-y-auto">
+            {members.length === 0 && <p className="text-xs text-muted-foreground py-2">Nenhum colaborador cadastrado.</p>}
+            {members.map((m) => {
+              const checked = memberIds.includes(m.user_id);
+              const online = isOnline(m.user_id);
+              return (
+                <button
+                  key={m.user_id}
+                  type="button"
+                  onClick={() => toggleMember(m.user_id)}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs border transition-colors",
+                    checked ? "bg-primary/10 border-primary/40" : "border-border/50 hover:bg-muted/50"
+                  )}
+                >
+                  <span className={`h-3 w-3 rounded-sm border ${checked ? "bg-primary border-primary" : "border-border"}`} />
+                  <span className={`inline-block h-2 w-2 rounded-full ${online ? "bg-emerald-500" : "bg-muted-foreground"}`} />
+                  <span className="flex-1 text-left truncate">{m.name || m.email}</span>
+                  <span className="text-[9px] text-muted-foreground">{availabilityMap[m.user_id] ? STATUS_LABEL[availabilityMap[m.user_id].status] : "—"}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Mensagens */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Mensagem antes da transferência</Label>
+        <Textarea
+          value={config.pre_message || config.handoff_message || ""}
+          onChange={(e) => updateConfig("pre_message", e.target.value)}
+          placeholder="Um momento, vou te conectar com um especialista..."
+          className="text-sm min-h-[60px]"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Mensagem após a transferência (opcional)</Label>
+        <Textarea
+          value={config.post_message || ""}
+          onChange={(e) => updateConfig("post_message", e.target.value)}
+          placeholder="Pronto! {responsavel} já está com você."
+          className="text-sm min-h-[50px]"
+        />
+        <p className="text-[10px] text-muted-foreground">Variáveis: {"{responsavel}"}, {"{nome}"}.</p>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-xs font-medium">Tempo máximo de espera (minutos)</Label>
+        <Input
+          type="number"
+          min={0}
+          value={config.max_wait_minutes ?? 30}
+          onChange={(e) => updateConfig("max_wait_minutes", Number(e.target.value))}
+          className="h-9 text-sm"
+        />
+        <p className="text-[10px] text-muted-foreground">Tempo na fila antes de executar contingência. 0 = sem limite.</p>
+      </div>
+
+      {/* Move CRM */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">Mover lead no Kanban (CRM)</Label>
         <Select value={config.crm_stage_id || ""} onValueChange={(v) => updateConfig("crm_stage_id", v)}>
@@ -1562,77 +1686,120 @@ function HandoffNodeConfig({ config, updateConfig, renderInfoBanner, renderApiIn
         </Select>
       </div>
 
-      {/* Notify team */}
-      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
-        <div className="flex items-center gap-2">
-          <Switch checked={config.notify_team || false} onCheckedChange={(v) => updateConfig("notify_team", v)} />
-          <Label className="text-xs font-medium">Notificar equipe por email</Label>
+      {/* Contingência */}
+      <div className="space-y-3 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+        <div>
+          <Label className="text-xs font-semibold text-amber-600">Quando ninguém estiver disponível</Label>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            Selecione uma ou mais ações de contingência. Executadas na ordem da lista.
+          </p>
         </div>
-        {config.notify_team && (
-          <div className="space-y-3">
-            <p className="text-[10px] text-muted-foreground">Um email será enviado de no-reply@wiize.com.br.</p>
-            <div className="space-y-1">
-              <Label className="text-[10px]">Título do email</Label>
-              <Input
-                value={config.email_subject || ""}
-                onChange={(e) => updateConfig("email_subject", e.target.value)}
-                placeholder="Lead {nome} aguardando atendimento"
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px]">Conteúdo do email</Label>
-              <Textarea
-                value={config.email_body || ""}
-                onChange={(e) => updateConfig("email_body", e.target.value)}
-                placeholder="O lead {nome} ({telefone}) foi transferido para atendimento humano."
-                className="text-xs min-h-[60px]"
-              />
-              <p className="text-[9px] text-muted-foreground">Use variáveis: {"{nome}"}, {"{telefone}"}, {"{email}"}, {"{empresa}"}</p>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px]">Emails em cópia (opcional)</Label>
-              <div className="space-y-1">
-                {ccEmails.map((email: string, idx: number) => (
-                  <div key={idx} className="flex items-center gap-1">
-                    <Input
-                      value={email}
-                      onChange={(e) => {
-                        const updated = [...ccEmails];
-                        updated[idx] = e.target.value;
-                        updateConfig("cc_emails", updated);
-                      }}
-                      placeholder="email@empresa.com"
-                      className="h-7 text-[10px] flex-1"
-                    />
-                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => updateConfig("cc_emails", ccEmails.filter((_: any, i: number) => i !== idx))}>
-                      <X size={10} />
-                    </Button>
-                  </div>
-                ))}
-                <Button variant="ghost" size="sm" className="h-6 text-[10px] w-full" onClick={() => updateConfig("cc_emails", [...ccEmails, ""])}>
-                  <Plus size={10} className="mr-1" /> Adicionar email
-                </Button>
-              </div>
+
+        <div className="space-y-1.5">
+          {[
+            { id: "send_message", label: "Enviar mensagem personalizada ao lead" },
+            { id: "keep_in_queue", label: "Manter conversa em fila" },
+            { id: "auto_reassign_when_online", label: "Reencaminhar automaticamente quando alguém ficar online" },
+            { id: "redirect_flow", label: "Direcionar para outro fluxo" },
+            { id: "end", label: "Encerrar atendimento" },
+            { id: "create_crm_task", label: "Criar tarefa no CRM" },
+            { id: "notify_managers", label: "Notificar gestores" },
+          ].map((a) => {
+            const checked = noAgentsActions.includes(a.id);
+            return (
+              <label key={a.id} className={cn("flex items-center gap-2 px-2 py-1.5 rounded-md text-xs border cursor-pointer", checked ? "bg-primary/10 border-primary/40" : "border-border/50 hover:bg-muted/50")}>
+                <input type="checkbox" checked={checked} onChange={() => toggleAction(a.id)} className="h-3.5 w-3.5" />
+                <span>{a.label}</span>
+              </label>
+            );
+          })}
+        </div>
+
+        {noAgentsActions.includes("send_message") && (
+          <div className="space-y-1">
+            <Label className="text-[10px]">Mensagem ao lead</Label>
+            <Textarea
+              value={config.no_agents_message || ""}
+              onChange={(e) => updateConfig("no_agents_message", e.target.value)}
+              placeholder="Nossa equipe está fora do expediente. Assim que voltarmos, retornamos seu contato."
+              className="text-xs min-h-[60px]"
+            />
+          </div>
+        )}
+
+        {noAgentsActions.includes("redirect_flow") && (
+          <div className="space-y-1">
+            <Label className="text-[10px]">Fluxo de destino</Label>
+            <Select value={config.redirect_flow_id || ""} onValueChange={(v) => updateConfig("redirect_flow_id", v)}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecionar fluxo..." /></SelectTrigger>
+              <SelectContent>
+                {otherFlows.map((f: any) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {noAgentsActions.includes("notify_managers") && (
+          <div className="space-y-1">
+            <Label className="text-[10px]">Gestores a notificar</Label>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {members.filter((m) => m.role === "owner" || m.role === "admin").map((m) => {
+                const checked = notifyManagerIds.includes(m.user_id);
+                return (
+                  <label key={m.user_id} className="flex items-center gap-2 px-2 py-1 text-[10px]">
+                    <input type="checkbox" checked={checked} onChange={() => toggleManager(m.user_id)} />
+                    {m.name || m.email}
+                  </label>
+                );
+              })}
             </div>
           </div>
         )}
       </div>
 
-      {/* Message to lead - required */}
-      <div className="space-y-2">
-        <Label className="text-xs font-medium">Mensagem ao lead <span className="text-destructive">*</span></Label>
-        <Textarea
-          value={config.handoff_message || ""}
-          onChange={(e) => updateConfig("handoff_message", e.target.value)}
-          placeholder="Um de nossos especialistas vai te atender em breve!"
-          className="text-sm min-h-[60px]"
-        />
-        <p className="text-[10px] text-muted-foreground">O lead receberá esta mensagem ao ser transferido para atendimento humano.</p>
+      {/* Notify team por email (legado) */}
+      <div className="space-y-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+        <div className="flex items-center gap-2">
+          <Switch checked={config.notify_team || false} onCheckedChange={(v) => updateConfig("notify_team", v)} />
+          <Label className="text-xs font-medium">Notificar equipe por email (adicional)</Label>
+        </div>
+        {config.notify_team && (
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-[10px]">Título do email</Label>
+              <Input value={config.email_subject || ""} onChange={(e) => updateConfig("email_subject", e.target.value)} placeholder="Lead {nome} aguardando atendimento" className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Conteúdo do email</Label>
+              <Textarea value={config.email_body || ""} onChange={(e) => updateConfig("email_body", e.target.value)} placeholder="O lead {nome} ({telefone}) foi transferido." className="text-xs min-h-[60px]" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Emails em cópia</Label>
+              {ccEmails.map((email: string, idx: number) => (
+                <div key={idx} className="flex items-center gap-1">
+                  <Input value={email} onChange={(e) => { const u = [...ccEmails]; u[idx] = e.target.value; updateConfig("cc_emails", u); }} placeholder="email@empresa.com" className="h-7 text-[10px] flex-1" />
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateConfig("cc_emails", ccEmails.filter((_: any, i: number) => i !== idx))}><X size={10} /></Button>
+                </div>
+              ))}
+              <Button variant="ghost" size="sm" className="h-6 text-[10px] w-full" onClick={() => updateConfig("cc_emails", [...ccEmails, ""])}>
+                <Plus size={10} className="mr-1" /> Adicionar email
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-2 p-3 rounded-lg border border-border/50 bg-muted/20">
+        <div className="flex items-center gap-2">
+          <Switch checked={config.stop_automation !== false} onCheckedChange={(v) => updateConfig("stop_automation", v)} />
+          <Label className="text-xs font-medium">Encerrar automação neste lead</Label>
+        </div>
+        <p className="text-[10px] text-muted-foreground">Se desligado, o fluxo prossegue para o próximo card após a transferência.</p>
       </div>
     </div>
   );
 }
+
 
 function EndNodeConfig({ config, updateConfig, renderInfoBanner, renderApiIndicator }: {
   config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; renderApiIndicator: () => JSX.Element | null;
