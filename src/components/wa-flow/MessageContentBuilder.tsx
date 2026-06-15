@@ -427,7 +427,7 @@ function ContentItemEditor({
             ) : (
               <MediaDropZone
                 accept="video/mp4,video/webm"
-                maxSizeMB={50}
+                maxSizeMB={16}
                 label="Arraste ou clique para enviar"
                 onFileSelected={async (f) => {
                   const video = document.createElement("video");
