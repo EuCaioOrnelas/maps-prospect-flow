@@ -1099,6 +1099,296 @@ async function runFlow(
         break;
       }
 
+      case "rating": {
+        const ratingType = config.type || "buttons";
+        const phaseKey = `__rating_phase_${node.id}`;
+        const idKey = `__rating_id_${node.id}`;
+        const bucketKey = `__rating_bucket_${node.id}`;
+        const sentAtKey = `__rating_sent_at_${node.id}`;
+        const phase = ctx.variables[phaseKey] || "ask";
+
+        const classifyNumeric = (score: number, cfg: any) => {
+          const positiveMin = Number(cfg.positive_min ?? Math.ceil((cfg.max ?? 10) * 0.8));
+          const negativeMax = Number(cfg.negative_max ?? Math.floor((cfg.max ?? 10) * 0.5));
+          if (score >= positiveMin) return "positive";
+          if (score <= negativeMax) return "negative";
+          return "neutral";
+        };
+
+        const sendBucketRoute = (bucket: string | null) => {
+          return (
+            getTargetByHandle(bySource, node.id, bucket || "received") ||
+            getTargetByHandle(bySource, node.id, "received") ||
+            getDefaultTarget(bySource, node.id)
+          );
+        };
+
+        if (phase === "ask") {
+          const msg = interpolate(config.message || "Como você avalia nosso atendimento?", ctx.variables);
+          try {
+            if (ratingType === "free") {
+              await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: msg }, config);
+            } else if (ratingType === "buttons") {
+              const opts: any[] = (config.options || []).slice(0, 3).map((o: any, i: number) => ({
+                id: `rate_${i}`, title: String(o.label || `Opção ${i + 1}`).slice(0, 20),
+              }));
+              await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+                type: "buttons", body: msg, buttons: opts,
+              }, config);
+            } else if (ratingType === "menu") {
+              const opts: any[] = (config.options || []).slice(0, 10).map((o: any, i: number) => ({
+                id: `rate_${i}`, title: String(o.label || `Opção ${i + 1}`).slice(0, 24),
+              }));
+              await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+                type: "list", body: msg, buttonText: "Ver opções",
+                sections: [{ title: "Avaliação", rows: opts }],
+              }, config);
+            } else if (ratingType === "stars") {
+              const max = Number(config.stars?.max || 5);
+              if (max <= 3) {
+                const opts = Array.from({ length: max }, (_, i) => ({
+                  id: `rate_${i + 1}`, title: "⭐".repeat(i + 1),
+                }));
+                await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+                  type: "buttons", body: msg, buttons: opts,
+                }, config);
+              } else {
+                const opts = Array.from({ length: max }, (_, i) => ({
+                  id: `rate_${i + 1}`, title: `${i + 1} ⭐`, description: "⭐".repeat(i + 1),
+                }));
+                await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+                  type: "list", body: msg, buttonText: "Avaliar",
+                  sections: [{ title: "Escolha sua nota", rows: opts }],
+                }, config);
+              }
+            } else if (ratingType === "numeric") {
+              const min = Number(config.numeric?.min ?? 0);
+              const max = Number(config.numeric?.max ?? 10);
+              const range = max - min + 1;
+              if (range <= 10) {
+                const opts = Array.from({ length: range }, (_, i) => {
+                  const v = min + i;
+                  return { id: `rate_${v}`, title: String(v) };
+                });
+                await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+                  type: "list", body: msg, buttonText: "Avaliar",
+                  sections: [{ title: `De ${min} a ${max}`, rows: opts }],
+                }, config);
+              } else {
+                await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+                  type: "text", content: `${msg}\n\nResponda com um número de ${min} a ${max}.`,
+                }, config);
+              }
+            }
+          } catch (e) {
+            console.warn("[wa-flow-runner] rating send fallback:", e);
+            await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: msg }, config);
+          }
+          ctx.variables[phaseKey] = "awaiting_rating";
+          ctx.variables[sentAtKey] = new Date().toISOString();
+          ctx.hasFreshUserInput = false;
+          pausedNodeId = node.id;
+          currentNodeId = null;
+          break;
+        }
+
+        if (phase === "awaiting_rating") {
+          if (!ctx.hasFreshUserInput) {
+            pausedNodeId = node.id;
+            currentNodeId = null;
+            break;
+          }
+          const text = (ctx.lastUserText || "").trim();
+          const btnId = ctx.lastButtonId || "";
+          const btnTitle = ctx.lastButtonTitle || "";
+
+          let scoreNumeric: number | null = null;
+          let scoreText: string | null = null;
+          let scoreMax: number | null = null;
+          let bucket: string | null = null;
+
+          if (ratingType === "free") {
+            scoreText = text;
+            bucket = null;
+          } else if (ratingType === "buttons" || ratingType === "menu") {
+            let idx = -1;
+            if (btnId.startsWith("rate_")) idx = parseInt(btnId.slice(5)) || -1;
+            if (idx < 0 && text) {
+              const opts = config.options || [];
+              const t = text.toLowerCase();
+              idx = opts.findIndex((o: any, i: number) =>
+                String(o.label || "").toLowerCase() === t ||
+                String(i + 1) === t ||
+                String(o.value || "") === t
+              );
+            }
+            const opt = (config.options || [])[idx];
+            if (opt) {
+              scoreText = String(opt.label || "");
+              bucket = opt.bucket || null;
+            } else {
+              scoreText = btnTitle || text;
+            }
+          } else if (ratingType === "stars") {
+            const max = Number(config.stars?.max || 5);
+            scoreMax = max;
+            let n = NaN;
+            if (btnId.startsWith("rate_")) n = parseInt(btnId.slice(5));
+            if (isNaN(n) && text) n = parseInt(text);
+            if (!isNaN(n) && n >= 1 && n <= max) {
+              scoreNumeric = n;
+              bucket = classifyNumeric(n, { ...config.stars, max });
+              scoreText = "⭐".repeat(n);
+            } else {
+              scoreText = btnTitle || text;
+            }
+          } else if (ratingType === "numeric") {
+            const min = Number(config.numeric?.min ?? 0);
+            const max = Number(config.numeric?.max ?? 10);
+            scoreMax = max;
+            let n = NaN;
+            if (btnId.startsWith("rate_")) n = parseInt(btnId.slice(5));
+            if (isNaN(n) && text) n = parseInt(text);
+            if (!isNaN(n) && n >= min && n <= max) {
+              scoreNumeric = n;
+              bucket = classifyNumeric(n, { ...config.numeric, max });
+              scoreText = String(n);
+            } else {
+              scoreText = text || btnTitle;
+            }
+          }
+
+          try {
+            const { data: rating } = await supabase
+              .from("wa_flow_ratings")
+              .insert({
+                user_id: body.user_id,
+                flow_id: flow.id,
+                node_id: node.id,
+                execution_id: execution.id,
+                contact_phone: body.lead_phone,
+                contact_name: body.lead_name || execution.lead_name || null,
+                rating_name: config.name || null,
+                rating_type: ratingType,
+                score_numeric: scoreNumeric,
+                score_max: scoreMax,
+                score_text: scoreText,
+                bucket,
+                sent_at: ctx.variables[sentAtKey] || null,
+                responded_at: new Date().toISOString(),
+              })
+              .select("id")
+              .single();
+            if (rating?.id) ctx.variables[idKey] = rating.id;
+          } catch (e) {
+            console.error("[wa-flow-runner] rating insert failed:", e);
+          }
+
+          ctx.variables[bucketKey] = bucket || "";
+          ctx.hasFreshUserInput = false;
+
+          if (config.ask_suggestion) {
+            const prompt = interpolate(
+              config.suggestion_prompt || "Você possui alguma sugestão para melhorarmos nosso atendimento?",
+              ctx.variables,
+            );
+            try {
+              await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+                type: "buttons", body: prompt,
+                buttons: [
+                  { id: "sugg_yes", title: "SIM" },
+                  { id: "sugg_no", title: "NÃO" },
+                ],
+              }, config);
+            } catch (e) {
+              await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+                type: "text", content: `${prompt}\n\nResponda SIM ou NÃO.`,
+              }, config);
+            }
+            ctx.variables[phaseKey] = "awaiting_suggestion_choice";
+            pausedNodeId = node.id;
+            currentNodeId = null;
+            break;
+          }
+
+          delete ctx.variables[phaseKey];
+          delete ctx.variables[sentAtKey];
+          currentNodeId = sendBucketRoute(bucket);
+          break;
+        }
+
+        if (phase === "awaiting_suggestion_choice") {
+          if (!ctx.hasFreshUserInput) {
+            pausedNodeId = node.id;
+            currentNodeId = null;
+            break;
+          }
+          const btnId = (ctx.lastButtonId || "").toLowerCase();
+          const text = (ctx.lastUserText || "").trim().toLowerCase();
+          const isYes = btnId === "sugg_yes" || text === "sim" || text === "1" || text.startsWith("s");
+          ctx.hasFreshUserInput = false;
+
+          if (isYes) {
+            await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
+              type: "text", content: "Perfeito. Digite sua sugestão abaixo.",
+            }, config);
+            ctx.variables[phaseKey] = "awaiting_suggestion_text";
+            pausedNodeId = node.id;
+            currentNodeId = null;
+            break;
+          }
+
+          const finalMsg = interpolate(
+            config.no_suggestion_message || "Obrigado pelo seu feedback. Sua avaliação foi registrada.",
+            ctx.variables,
+          );
+          await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: finalMsg }, config);
+          const bucket = ctx.variables[bucketKey] || null;
+          delete ctx.variables[phaseKey];
+          delete ctx.variables[bucketKey];
+          delete ctx.variables[sentAtKey];
+          currentNodeId = sendBucketRoute(bucket || null);
+          break;
+        }
+
+        if (phase === "awaiting_suggestion_text") {
+          if (!ctx.hasFreshUserInput) {
+            pausedNodeId = node.id;
+            currentNodeId = null;
+            break;
+          }
+          const suggestion = (ctx.lastUserText || "").trim();
+          const ratingId = ctx.variables[idKey];
+          if (ratingId) {
+            try {
+              await supabase
+                .from("wa_flow_ratings")
+                .update({ suggestion_text: suggestion })
+                .eq("id", ratingId);
+            } catch (e) {
+              console.error("[wa-flow-runner] rating suggestion update failed:", e);
+            }
+          }
+          const thanks = interpolate(
+            config.suggestion_thanks || "Obrigado pela sua contribuição. Sua sugestão foi registrada com sucesso.",
+            ctx.variables,
+          );
+          await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: thanks }, config);
+          delete ctx.variables[phaseKey];
+          delete ctx.variables[bucketKey];
+          delete ctx.variables[sentAtKey];
+          delete ctx.variables[idKey];
+          ctx.hasFreshUserInput = false;
+          currentNodeId =
+            getTargetByHandle(bySource, node.id, "suggestion") ||
+            getDefaultTarget(bySource, node.id);
+          break;
+        }
+
+        currentNodeId = getDefaultTarget(bySource, node.id);
+        break;
+      }
+
       default: {
         // Skip unknown
         currentNodeId = getDefaultTarget(bySource, node.id);
@@ -1140,6 +1430,132 @@ async function runFlow(
     last_error: runError ? String(runError?.message || runError).slice(0, 500) : (overflowed ? `safety_overflow_${MAX_ITERATIONS}` : null),
   }).eq("id", execution.id);
 }
+
+// Sweep executions whose lead has been silent past the configured inactivity timeout.
+async function runInactivitySweep(supabase: any): Promise<number> {
+  const { data: flows } = await supabase
+    .from("wa_automation_flows")
+    .select("*")
+    .eq("inactivity_reset_enabled", true)
+    .gt("inactivity_timeout_seconds", 0);
+
+  if (!flows || flows.length === 0) return 0;
+
+  let processed = 0;
+  const now = Date.now();
+
+  for (const flow of flows) {
+    const timeoutMs = (flow.inactivity_timeout_seconds || 0) * 1000;
+    if (!timeoutMs) continue;
+    const threshold = new Date(now - timeoutMs).toISOString();
+
+    const { data: execs } = await supabase
+      .from("wa_flow_executions")
+      .select("*")
+      .eq("flow_id", flow.id)
+      .in("status", ["active", "waiting", "paused"])
+      .is("inactivity_processed_at", null)
+      .not("last_user_message_at", "is", null)
+      .lte("last_user_message_at", threshold)
+      .limit(50);
+
+    if (!execs || execs.length === 0) continue;
+
+    const { nodes, edges } = await loadFlowGraph(supabase, flow.id);
+    const fakeBodyBase = (exec: any) => ({
+      user_id: exec.user_id,
+      lead_phone: exec.lead_phone,
+      lead_name: exec.lead_name,
+      source: flow.api_type === "meta" ? "meta" : "evolution",
+    });
+
+    for (const exec of execs) {
+      try {
+        if (flow.inactivity_message) {
+          await sendMessage(supabase, flow, exec.user_id, exec.lead_phone, {
+            type: "text",
+            content: String(flow.inactivity_message),
+          }, {}).catch((e: any) => console.warn("[wa-flow-runner] inactivity msg failed:", e));
+        }
+
+        const action = flow.inactivity_action || "restart";
+        // Always mark processed to avoid loops
+        await supabase.from("wa_flow_executions").update({
+          inactivity_processed_at: new Date().toISOString(),
+          status: action === "goto_node" ? "active" : "abandoned",
+          completed_at: action === "goto_node" ? null : new Date().toISOString(),
+          awaiting_input_until: null,
+          awaiting_node_id: null,
+        }).eq("id", exec.id);
+
+        if (action === "end") {
+          processed++;
+          continue;
+        }
+
+        if (action === "goto_node" && flow.inactivity_target_node_id) {
+          const target = nodes.find((n: any) => n.id === flow.inactivity_target_node_id);
+          if (target) {
+            const ctx: RuntimeCtx = {
+              lastUserText: "",
+              lastButtonId: null,
+              lastButtonTitle: null,
+              hasFreshUserInput: false,
+              variables: (exec.collected_data && typeof exec.collected_data === "object") ? exec.collected_data : {},
+            };
+            await runFlow(supabase, fakeBodyBase(exec), flow, nodes, edges, target.id, exec, ctx);
+            processed++;
+            continue;
+          }
+        }
+
+        // restart or main_menu → start a fresh execution from entry (or first menu/buttons node for main_menu)
+        let startNode = findEntryNode(nodes);
+        if (action === "main_menu") {
+          const menuNode = nodes.find((n: any) => n.node_type === "buttons") || startNode;
+          startNode = menuNode || startNode;
+        }
+        if (!startNode) { processed++; continue; }
+
+        const { data: newExec } = await supabase
+          .from("wa_flow_executions")
+          .insert({
+            flow_id: flow.id,
+            user_id: exec.user_id,
+            lead_phone: exec.lead_phone,
+            lead_name: exec.lead_name,
+            status: "active",
+            current_node_id: startNode.id,
+            current_node_name: startNode.name,
+            entry_data: { trigger_type: "inactivity_reset", source: flow.api_type === "meta" ? "meta" : "evolution" },
+            node_history: [],
+            collected_data: {},
+            last_user_message_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (newExec) {
+          const ctx: RuntimeCtx = {
+            lastUserText: "",
+            lastButtonId: null,
+            lastButtonTitle: null,
+            hasFreshUserInput: false,
+            variables: {},
+          };
+          await runFlow(supabase, fakeBodyBase(exec), flow, nodes, edges, startNode.id, newExec, ctx);
+        }
+        processed++;
+      } catch (e) {
+        console.error("[wa-flow-runner] inactivity sweep error for exec", exec.id, e);
+      }
+    }
+  }
+
+  return processed;
+}
+
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -1220,7 +1636,10 @@ serve(async (req) => {
       for (const exec of dueWaits || []) await resumeExec(exec, "wait");
       for (const exec of dueTimeouts || []) await resumeExec(exec, "timeout");
 
-      return new Response(JSON.stringify({ scheduler: true, resumed: resumedIds.length }), {
+      // c) Inactivity sweep — execution waiting on user input that didn't reply within the configured timeout.
+      const inactivityCount = await runInactivitySweep(supabase);
+
+      return new Response(JSON.stringify({ scheduler: true, resumed: resumedIds.length, inactivity: inactivityCount }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -1250,6 +1669,15 @@ serve(async (req) => {
     for (const exec of activeExecutions || []) {
       const flow = exec.wa_automation_flows;
       if (!flow || flow.status !== "active") continue;
+
+      // Track last user activity so the inactivity sweep knows the lead is responsive.
+      if (body.incoming_text || body.button_id) {
+        await supabase
+          .from("wa_flow_executions")
+          .update({ last_user_message_at: new Date().toISOString(), inactivity_processed_at: null })
+          .eq("id", exec.id);
+      }
+
 
       const { nodes, edges } = await loadFlowGraph(supabase, flow.id);
       const ctx: RuntimeCtx = {
@@ -1424,6 +1852,7 @@ serve(async (req) => {
           entry_data: { trigger_type: triggerType, source: body.source, incoming_text: body.incoming_text },
           node_history: [],
           collected_data: {},
+          last_user_message_at: new Date().toISOString(),
         })
         .select()
         .single();

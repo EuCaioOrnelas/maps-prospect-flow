@@ -22,7 +22,7 @@ import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
   Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
   HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail, Database, BarChart3,
-  Save, AlertCircle, Loader2,
+  Save, AlertCircle, Loader2, Star, Timer,
 } from "lucide-react";
 import gmailIcon from "@/assets/icons/gmail-sm.png";
 import sheetsIcon from "@/assets/icons/google-sheets-sm.png";
@@ -43,7 +43,9 @@ import { WAGoogleSheetsNode } from "@/components/wa-flow/nodes/WAGoogleSheetsNod
 import { WAGoogleCalendarNode } from "@/components/wa-flow/nodes/WAGoogleCalendarNode";
 import { WAGmailNode } from "@/components/wa-flow/nodes/WAGmailNode";
 import { WADataCollectNode } from "@/components/wa-flow/nodes/WADataCollectNode";
+import { WARatingNode } from "@/components/wa-flow/nodes/WARatingNode";
 import { WANodeConfigDrawer } from "@/components/wa-flow/WANodeConfigDrawer";
+import { FlowInactivityPopover } from "@/components/wa-flow/FlowInactivityPopover";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -103,6 +105,7 @@ const nodeTypes = {
   google_calendar: WAGoogleCalendarNode,
   gmail: WAGmailNode,
   data_collect: WADataCollectNode,
+  rating: WARatingNode,
 };
 
 const defaultEdgeOptions = {
@@ -139,6 +142,12 @@ const sidebarCategories = [
     label: "Inteligência",
     items: [
       { type: "ai_agent", icon: Bot, label: "Agente IA", desc: "IA responde e direciona", color: "text-violet-400 bg-violet-400/10" },
+    ],
+  },
+  {
+    label: "Atendimento",
+    items: [
+      { type: "rating", icon: Star, label: "Avaliação", desc: "NPS, estrelas, feedback e sugestões", color: "text-amber-400 bg-amber-400/10" },
     ],
   },
   {
@@ -430,7 +439,7 @@ export default function WhatsAppFlowEditor() {
         handoff: "Humano", end: "Encerramento", ai_agent: "Agente IA",
         ab_test: "Teste A/B", random_split: "Random Split",
         google_sheets: "Google Sheets", google_calendar: "Google Agenda", gmail: "Gmail",
-        data_collect: "Coleta de Dados",
+        data_collect: "Coleta de Dados", rating: "Avaliação",
       };
 
       const defaultConfigs: Record<string, any> = {
@@ -445,6 +454,22 @@ export default function WhatsAppFlowEditor() {
             { id: "out_0", name: "Saída 1" },
             { id: "out_1", name: "Saída 2" },
           ],
+        },
+        rating: {
+          name: "Pesquisa de Satisfação",
+          message: "Como você avalia nosso atendimento?",
+          type: "numeric",
+          numeric: { min: 0, max: 10, positive_min: 9, negative_max: 6 },
+          stars: { max: 5, positive_min: 4, negative_max: 2 },
+          options: [
+            { label: "Ruim", value: "1", bucket: "negative" },
+            { label: "Regular", value: "2", bucket: "neutral" },
+            { label: "Excelente", value: "3", bucket: "positive" },
+          ],
+          ask_suggestion: false,
+          suggestion_prompt: "Você possui alguma sugestão para melhorarmos nosso atendimento?",
+          suggestion_thanks: "Obrigado pela sua contribuição. Sua sugestão foi registrada com sucesso.",
+          no_suggestion_message: "Obrigado pelo seu feedback. Sua avaliação foi registrada.",
         },
       };
 
@@ -766,6 +791,8 @@ export default function WhatsAppFlowEditor() {
           <BarChart3 size={14} />
           Resultados
         </Button>
+
+        <FlowInactivityPopover flowId={id!} flow={flow} nodes={nodes} />
 
         <div className="flex-1" />
 

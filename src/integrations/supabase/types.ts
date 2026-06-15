@@ -7169,6 +7169,11 @@ export type Database = {
           default_out_of_window_template: Json | null
           description: string | null
           id: string
+          inactivity_action: string | null
+          inactivity_message: string | null
+          inactivity_reset_enabled: boolean
+          inactivity_target_node_id: string | null
+          inactivity_timeout_seconds: number | null
           name: string
           owner_user_id: string | null
           phone_number_id: string | null
@@ -7187,6 +7192,11 @@ export type Database = {
           default_out_of_window_template?: Json | null
           description?: string | null
           id?: string
+          inactivity_action?: string | null
+          inactivity_message?: string | null
+          inactivity_reset_enabled?: boolean
+          inactivity_target_node_id?: string | null
+          inactivity_timeout_seconds?: number | null
           name?: string
           owner_user_id?: string | null
           phone_number_id?: string | null
@@ -7205,6 +7215,11 @@ export type Database = {
           default_out_of_window_template?: Json | null
           description?: string | null
           id?: string
+          inactivity_action?: string | null
+          inactivity_message?: string | null
+          inactivity_reset_enabled?: boolean
+          inactivity_target_node_id?: string | null
+          inactivity_timeout_seconds?: number | null
           name?: string
           owner_user_id?: string | null
           phone_number_id?: string | null
@@ -7287,7 +7302,9 @@ export type Database = {
           exit_node_name: string | null
           flow_id: string
           id: string
+          inactivity_processed_at: string | null
           last_error: string | null
+          last_user_message_at: string | null
           lead_name: string | null
           lead_phone: string
           node_history: Json | null
@@ -7310,7 +7327,9 @@ export type Database = {
           exit_node_name?: string | null
           flow_id: string
           id?: string
+          inactivity_processed_at?: string | null
           last_error?: string | null
+          last_user_message_at?: string | null
           lead_name?: string | null
           lead_phone: string
           node_history?: Json | null
@@ -7333,7 +7352,9 @@ export type Database = {
           exit_node_name?: string | null
           flow_id?: string
           id?: string
+          inactivity_processed_at?: string | null
           last_error?: string | null
+          last_user_message_at?: string | null
           lead_name?: string | null
           lead_phone?: string
           node_history?: Json | null
@@ -7391,6 +7412,83 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "wa_flow_nodes_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "wa_automation_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wa_flow_ratings: {
+        Row: {
+          bucket: string | null
+          contact_name: string | null
+          contact_phone: string
+          created_at: string
+          execution_id: string | null
+          flow_id: string
+          id: string
+          lead_id: string | null
+          node_id: string | null
+          owner_user_id: string | null
+          rating_name: string | null
+          rating_type: string
+          responded_at: string | null
+          score_max: number | null
+          score_numeric: number | null
+          score_text: string | null
+          sent_at: string | null
+          suggestion_text: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bucket?: string | null
+          contact_name?: string | null
+          contact_phone: string
+          created_at?: string
+          execution_id?: string | null
+          flow_id: string
+          id?: string
+          lead_id?: string | null
+          node_id?: string | null
+          owner_user_id?: string | null
+          rating_name?: string | null
+          rating_type: string
+          responded_at?: string | null
+          score_max?: number | null
+          score_numeric?: number | null
+          score_text?: string | null
+          sent_at?: string | null
+          suggestion_text?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bucket?: string | null
+          contact_name?: string | null
+          contact_phone?: string
+          created_at?: string
+          execution_id?: string | null
+          flow_id?: string
+          id?: string
+          lead_id?: string | null
+          node_id?: string | null
+          owner_user_id?: string | null
+          rating_name?: string | null
+          rating_type?: string
+          responded_at?: string | null
+          score_max?: number | null
+          score_numeric?: number | null
+          score_text?: string | null
+          sent_at?: string | null
+          suggestion_text?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_flow_ratings_flow_id_fkey"
             columns: ["flow_id"]
             isOneToOne: false
             referencedRelation: "wa_automation_flows"
@@ -8411,6 +8509,7 @@ export type Database = {
         | "google_sheets"
         | "google_calendar"
         | "gmail"
+        | "rating"
       wa_flow_status: "draft" | "active" | "paused" | "archived"
       withdrawal_status: "pending" | "approved" | "rejected" | "paid"
     }
@@ -8586,6 +8685,7 @@ export const Constants = {
         "google_sheets",
         "google_calendar",
         "gmail",
+        "rating",
       ],
       wa_flow_status: ["draft", "active", "paused", "archived"],
       withdrawal_status: ["pending", "approved", "rejected", "paid"],
