@@ -116,16 +116,15 @@ export function useSaveCanvas() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { workforceId: string; state: CanvasState }) => {
-      const { error } = await supabase
+      await supabase
         .from("ai_workforce_canvas" as never)
-        .upsert(
-          {
-            workforce_id: input.workforceId,
-            nodes: input.state.nodes,
-            edges: input.state.edges,
-          } as never,
-          { onConflict: "workforce_id" } as never
-        );
+        .delete()
+        .eq("workforce_id", input.workforceId);
+      const { error } = await supabase.from("ai_workforce_canvas" as never).insert({
+        workforce_id: input.workforceId,
+        nodes: input.state.nodes,
+        edges: input.state.edges,
+      } as never);
       if (error) throw error;
     },
     onSuccess: (_d, v) =>
