@@ -11,11 +11,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronDown, ChevronUp, KeyRound, BotMessageSquare, PowerOff, Calendar, Clock, Type, Mail, Bell, UserPlus, ListOrdered, Zap } from "lucide-react";
+import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronDown, ChevronUp, KeyRound, BotMessageSquare, PowerOff, Calendar, Clock, Type, Mail, Bell, UserPlus, ListOrdered, Zap, MousePointerClick, List, Check } from "lucide-react";
 import { toast } from "sonner";
 import { MessageContentBuilder } from "./MessageContentBuilder";
 import { OutOfWindowTemplateSection } from "./OutOfWindowTemplateSection";
-import type { Node } from "@xyflow/react";
+import type { Node, Edge } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import googleLogo from "@/assets/icons/google-g-sm.png";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
@@ -2474,57 +2474,74 @@ interface Props {
   entryApiType?: string;
   entryConfig?: any;
   allNodes?: Node[];
+  allEdges?: Edge[];
 }
 
 function FlowButtonPicker({
   value,
   onChange,
   allNodes,
+  allEdges,
+  currentNodeId,
 }: {
   value: string;
   onChange: (v: string) => void;
   allNodes?: Node[];
+  allEdges?: Edge[];
+  currentNodeId?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 8;
 
+  // Compute upstream ancestor node ids of the current node (BFS over reversed edges)
+  const ancestorIds = (() => {
+    if (!currentNodeId || !allEdges?.length) return null;
+    const parents = new Map<string, string[]>();
+    for (const e of allEdges) {
+      const arr = parents.get(e.target) || [];
+      arr.push(e.source);
+      parents.set(e.target, arr);
+    }
+    const visited = new Set<string>();
+    const stack = [currentNodeId];
+    while (stack.length) {
+      const id = stack.pop()!;
+      for (const p of parents.get(id) || []) {
+        if (!visited.has(p)) {
+          visited.add(p);
+          stack.push(p);
+        }
+      }
+    }
+    return visited;
+  })();
+
   const options = (() => {
-    const out: { id: string; title: string; source: string; kind: string; emoji: string }[] = [];
+    const out: { id: string; title: string; source: string; kind: "button" | "list" }[] = [];
     for (const n of allNodes || []) {
+      if (n.type !== "buttons") continue;
+      if (ancestorIds && !ancestorIds.has(n.id)) continue; // only nodes before current
       const cfg = (n.data as any)?.config || {};
       const label = String((n.data as any)?.label || n.id);
-      if (n.type === "buttons") {
-        if ((cfg.interaction_type || "reply_buttons") === "reply_buttons") {
-          for (const b of cfg.buttons || []) {
-            const text = String(b?.text || b?.title || b?.label || b?.id || "").trim();
-            if (!text && !b?.id) continue;
-            out.push({
-              id: b.id || text,
-              title: text || String(b.id),
-              source: label,
-              kind: "Botão",
-              emoji: "🔘",
-            });
-          }
-        } else if (cfg.interaction_type === "list") {
-          for (const it of cfg.list_items || []) {
-            const text = String(it?.text || it?.title || it?.label || it?.id || "").trim();
-            if (!text && !it?.id) continue;
-            out.push({
-              id: it.id || text,
-              title: text || String(it.id),
-              source: label,
-              kind: "Item de lista",
-              emoji: "📋",
-            });
-          }
+      if ((cfg.interaction_type || "reply_buttons") === "reply_buttons") {
+        for (const b of cfg.buttons || []) {
+          const text = String(b?.text || b?.title || b?.label || b?.id || "").trim();
+          if (!text && !b?.id) continue;
+          out.push({ id: b.id || text, title: text || String(b.id), source: label, kind: "button" });
+        }
+      } else if (cfg.interaction_type === "list") {
+        for (const it of cfg.list_items || []) {
+          const text = String(it?.text || it?.title || it?.label || it?.id || "").trim();
+          if (!text && !it?.id) continue;
+          out.push({ id: it.id || text, title: text || String(it.id), source: label, kind: "list" });
         }
       }
     }
     return out;
   })();
+
 
   const filtered = options.filter(
     (o) =>
@@ -2542,14 +2559,19 @@ function FlowButtonPicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" className="w-full h-9 justify-between text-sm font-normal bg-background">
-          <span className="truncate flex items-center gap-1.5 min-w-0">
+          <span className="truncate flex items-center gap-2 min-w-0">
             {selected ? (
               <>
-                <span className="shrink-0">{selected.emoji}</span>
+                {selected.kind === "list"
+                  ? <List size={14} className="shrink-0 text-muted-foreground" />
+                  : <MousePointerClick size={14} className="shrink-0 text-primary" />}
                 <span className="font-medium truncate text-foreground">{selected.title}</span>
               </>
             ) : (
-              <span className="text-muted-foreground">{value || "Selecionar botão do fluxo..."}</span>
+              <>
+                <MousePointerClick size={14} className="shrink-0 text-muted-foreground" />
+                <span className="text-muted-foreground">{value || "Selecionar botão do fluxo..."}</span>
+              </>
             )}
           </span>
           <ChevronDown size={14} className="opacity-60 shrink-0" />
@@ -2593,12 +2615,14 @@ function FlowButtonPicker({
                       )}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-sm shrink-0">{o.emoji}</span>
-                        <span className="font-medium truncate flex-1">{o.title}</span>
-                        {isSelected && <span className="text-[10px] text-primary shrink-0">✓</span>}
+                        {o.kind === "list"
+                          ? <List size={14} className="shrink-0 text-muted-foreground" />
+                          : <MousePointerClick size={14} className="shrink-0 text-primary" />}
+                        <span className="font-medium truncate flex-1 text-foreground">{o.title}</span>
+                        {isSelected && <Check size={12} className="shrink-0 text-primary" />}
                       </div>
                       <div className="text-[10px] text-muted-foreground truncate pl-6 mt-0.5">
-                        {o.kind} de "{o.source}"
+                        {o.kind === "list" ? "Item de lista" : "Botão"} de "{o.source}"
                       </div>
                     </button>
                   );
@@ -2639,7 +2663,7 @@ function FlowButtonPicker({
   );
 }
 
-export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {}, allNodes }: Props) {
+export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {}, allNodes, allEdges }: Props) {
   const { user } = useAuth();
   const [config, setConfig] = useState<any>({});
   const [label, setLabel] = useState("");
@@ -3077,6 +3101,8 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     value={config.condition_value || ""}
                     onChange={(v) => updateConfig("condition_value", v)}
                     allNodes={allNodes}
+                    allEdges={allEdges}
+                    currentNodeId={node.id}
                   />
                   <p className="text-[10px] text-muted-foreground">
                     Lista os botões e itens de lista criados nos nós do fluxo. Use a busca e a paginação para encontrar.
