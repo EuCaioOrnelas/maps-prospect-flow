@@ -657,8 +657,9 @@ export default function WhatsAppFlowEditor() {
         if (error) throw error;
       }
 
-      queryClient.invalidateQueries({ queryKey: ["wa-flow-nodes", id] });
-      queryClient.invalidateQueries({ queryKey: ["wa-flow-edges", id] });
+      // Note: do NOT invalidate node/edge queries here — the local state is the
+      // source of truth in the editor; refetching would wipe unsaved work and
+      // remap node IDs, causing the canvas to "reload" unexpectedly.
     },
     onSuccess: () => {
       toast.success("Fluxo salvo com sucesso!");

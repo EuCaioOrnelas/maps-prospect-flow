@@ -2351,7 +2351,10 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
   };
 
   const updateConfig = (key: string, value: any) => {
-    setConfig((prev: any) => ({ ...prev, [key]: value }));
+    setConfig((prev: any) => ({
+      ...prev,
+      [key]: typeof value === "function" ? value(prev?.[key]) : value,
+    }));
   };
 
   const getNextInteractiveId = (items: any[], prefix: "btn" | "item") => {
