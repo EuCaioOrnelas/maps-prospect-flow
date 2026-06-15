@@ -856,14 +856,12 @@ async function runFlow(
         }
 
         ctx.hasFreshUserInput = false;
-        if ((config.after_send || "wait") === "continue") {
-          currentNodeId = getDefaultTarget(bySource, node.id);
-        } else {
-          pausedNodeId = node.id;
-          currentNodeId = null;
-        }
+        // Buttons/list always pause and wait for the user to click — never auto-advance.
+        pausedNodeId = node.id;
+        currentNodeId = null;
         break;
       }
+
 
       case "condition": {
         const conditionType = config.condition_type || "responded";
