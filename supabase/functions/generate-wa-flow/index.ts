@@ -28,7 +28,7 @@ Sua missão é transformar o pedido do usuário em um fluxo EXECUTÁVEL no edito
 5. TODOS os fluxos são executados na API Oficial Meta (Cloud API). Não use recursos exclusivos da Evolution e assuma que o número conectado é Meta com webhook ativo. Blocos enviados após 24h de inatividade devem usar template HSM (configurável pelo usuário no editor).
 
 === TIPOS DE NÓS PERMITIDOS ===
-entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_collect, random_split, ab_test, google_sheets, google_calendar, gmail
+entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_collect, random_split, ab_test, google_sheets, google_calendar, gmail, rating
 
 === DESCRIÇÃO DOS NÓS ===
 - entry: Ponto de entrada do fluxo. Config: trigger_type, keywords.
@@ -47,6 +47,7 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 - google_sheets: Envia dados para planilha (requer conta conectada). Config: sheet_name, write_mode, columns.
 - google_calendar: Cria evento (requer conta conectada). Config: event_title, event_description, duration_minutes.
 - gmail: Envia email (requer conta conectada). Config: to_email, subject, body_text.
+- rating: Coleta avaliação/feedback/NPS do lead. USE APENAS QUANDO o usuário pedir explicitamente: pesquisa de satisfação, NPS, avaliação, nota, estrelas, feedback, opinião do cliente, CSAT. Config: name (rótulo), message (texto enviado pedindo a avaliação), type (um de: "buttons" para até 3 opções rápidas tipo Bom/Médio/Ruim; "menu" para 4-10 opções; "numeric" para escala numérica como NPS 0-10; "stars" para estrelas 1-5; "free" para texto livre), options (array de strings para buttons/menu), numeric ({min, max, positive_min, negative_max} para numeric — ex NPS: min 0, max 10, positive_min 9, negative_max 6), stars ({max, positive_min, negative_max} para stars — ex: max 5, positive_min 4, negative_max 2), ask_suggestion (boolean — se true pergunta se quer deixar sugestão depois), suggestion_prompt (texto pedindo sugestão), suggestion_thanks (texto de agradecimento). Handles de saída: received (sempre), positive, neutral, negative, suggestion. Conecte SEMPRE pelo menos o handle "received" para um próximo bloco (mensagem de agradecimento + end) e, se fizer sentido para o objetivo do usuário, ramifique positive/negative para caminhos diferentes (ex: negative → handoff humano; positive → pedir indicação).
 
 === REGRAS OBRIGATÓRIAS ===
 1. SEMPRE comece com um nó entry.
