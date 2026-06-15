@@ -792,6 +792,8 @@ export default function WhatsAppFlowEditor() {
           Resultados
         </Button>
 
+        <FlowInactivityPopover flowId={id!} flow={flow} nodes={nodes} />
+
         <div className="flex-1" />
 
         {/* Save button */}
