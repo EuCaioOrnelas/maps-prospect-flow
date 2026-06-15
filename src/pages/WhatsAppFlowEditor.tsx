@@ -670,7 +670,13 @@ export default function WhatsAppFlowEditor() {
       toast.success("Fluxo salvo com sucesso!");
       setHasChanges(false);
     },
-    onError: () => toast.error("Erro ao salvar fluxo"),
+    onError: (err: any) => {
+      if (err?.message === "MISSING_END") {
+        toast.error("Adicione um bloco de Encerramento antes de salvar o fluxo.");
+      } else {
+        toast.error("Erro ao salvar fluxo");
+      }
+    },
   });
 
   // Close context menu on outside click
