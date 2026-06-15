@@ -1567,6 +1567,7 @@ async function runFlow(
 
           const payload: any = {
             user_id: body.user_id,
+            google_account_id: config.google_account_id || null,
             to,
             cc: ccArr,
             bcc: bccArr,
