@@ -461,6 +461,9 @@ async function sendViaMeta(
         })),
       },
     };
+  } else if (payload.type === "audio") {
+    body.type = "audio";
+    body.audio = { link: (payload as any).mediaUrl };
   } else {
     body.type = payload.type;
     body[payload.type] = {
