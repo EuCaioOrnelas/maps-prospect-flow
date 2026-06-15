@@ -25,6 +25,19 @@ const CONTENT_TYPES = [
 
 const MAX_CONTENT_ITEMS = 5; // delay doesn't count
 
+function pickAudioMime(): { mime: string; ext: string } {
+  const candidates: Array<{ mime: string; ext: string }> = [
+    { mime: "audio/ogg;codecs=opus", ext: "ogg" },
+    { mime: "audio/mp4", ext: "m4a" },
+    { mime: "audio/webm;codecs=opus", ext: "webm" },
+    { mime: "audio/webm", ext: "webm" },
+  ];
+  for (const c of candidates) {
+    if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.(c.mime)) return c;
+  }
+  return { mime: "audio/webm", ext: "webm" };
+}
+
 interface ContentItem {
   id: string;
   type: "text" | "image" | "audio" | "video" | "document" | "delay";
@@ -190,13 +203,14 @@ function AudioRecorder({ onRecorded }: { onRecorded: (blob: Blob) => void }) {
       source.connect(analyser);
       analyserRef.current = analyser;
 
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
+      const picked = pickAudioMime();
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: picked.mime });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
       mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(chunksRef.current, { type: picked.mime.split(";")[0] });
         onRecorded(blob);
         stream.getTracks().forEach(t => t.stop());
         audioCtx.close();
@@ -284,7 +298,7 @@ function ContentItemEditor({
   item, onUpdate, onRemove, uploading, onUpload, onAudioRecorded,
 }: {
   item: ContentItem;
-  onUpdate: (key: string, value: any) => void;
+  onUpdate: (key: string | Partial<ContentItem>, value?: any) => void;
   onRemove: () => void;
   uploading: boolean;
   onUpload: (file: File, type: string) => Promise<string | null>;
@@ -335,7 +349,7 @@ function ContentItemEditor({
                 <div className="relative rounded-lg overflow-hidden border border-border/40 bg-muted/20">
                   <img src={item.media_url} alt="Preview" className="w-full max-h-40 object-contain" />
                   <button
-                    onClick={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }}
+                    onClick={() => onUpdate({ media_url: "", media_filename: "" })}
                     className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
                   >
                     <X size={12} />
@@ -355,7 +369,7 @@ function ContentItemEditor({
                 label="Arraste ou clique para enviar"
                 onFileSelected={async (f) => {
                   const url = await onUpload(f, "image");
-                  if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                  if (url) onUpdate({ media_url: url, media_filename: f.name });
                 }}
                 uploading={uploading}
               />
@@ -367,12 +381,12 @@ function ContentItemEditor({
         {item.type === "audio" && (
           <>
             {item.media_url ? (
-              <CustomAudioPlayer src={item.media_url} onRemove={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }} />
+              <CustomAudioPlayer src={item.media_url} onRemove={() => onUpdate({ media_url: "", media_filename: "" })} />
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 <AudioRecorder onRecorded={async (blob) => {
                   const url = await onAudioRecorded(blob);
-                  if (url) { onUpdate("media_url", url); onUpdate("media_filename", `gravacao-${Date.now()}.webm`); }
+                  if (url) onUpdate({ media_url: url, media_filename: `gravacao-${Date.now()}.webm` });
                 }} />
                 <MediaDropZone
                   accept="audio/ogg,audio/mpeg,audio/mp4,audio/webm,audio/wav"
@@ -380,7 +394,7 @@ function ContentItemEditor({
                   label="Enviar arquivo"
                   onFileSelected={async (f) => {
                     const url = await onUpload(f, "audio");
-                    if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                    if (url) onUpdate({ media_url: url, media_filename: f.name });
                   }}
                   uploading={uploading}
                 />
@@ -397,7 +411,7 @@ function ContentItemEditor({
                 <div className="relative rounded-lg overflow-hidden border border-border/40 bg-muted/20">
                   <video src={item.media_url} controls className="w-full max-h-40" />
                   <button
-                    onClick={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }}
+                    onClick={() => onUpdate({ media_url: "", media_filename: "" })}
                     className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
                   >
                     <X size={12} />
@@ -413,7 +427,7 @@ function ContentItemEditor({
             ) : (
               <MediaDropZone
                 accept="video/mp4,video/webm"
-                maxSizeMB={50}
+                maxSizeMB={16}
                 label="Arraste ou clique para enviar"
                 onFileSelected={async (f) => {
                   const video = document.createElement("video");
@@ -422,7 +436,7 @@ function ContentItemEditor({
                     URL.revokeObjectURL(video.src);
                     if (video.duration > 120) { toast.error("Máximo 2 minutos"); return; }
                     const url = await onUpload(f, "video");
-                    if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                    if (url) onUpdate({ media_url: url, media_filename: f.name });
                   };
                   video.src = URL.createObjectURL(f);
                 }}
@@ -441,7 +455,7 @@ function ContentItemEditor({
                   <FileText size={18} className="text-amber-400 shrink-0" />
                   <span className="text-xs text-foreground truncate flex-1">{item.media_filename || "Documento"}</span>
                   <button
-                    onClick={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }}
+                    onClick={() => onUpdate({ media_url: "", media_filename: "" })}
                     className="w-6 h-6 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors shrink-0"
                   >
                     <X size={12} />
@@ -461,7 +475,7 @@ function ContentItemEditor({
                 label="Arraste ou clique para enviar"
                 onFileSelected={async (f) => {
                   const url = await onUpload(f, "document");
-                  if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                  if (url) onUpdate({ media_url: url, media_filename: f.name });
                 }}
                 uploading={uploading}
               />
@@ -555,9 +569,11 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "bin";
-      const path = `${user.id}/${folder}/${Date.now()}.${ext}`;
+      const path = `${user.id}/${folder}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage.from("wa-flow-media").upload(path, file, {
-        cacheControl: "3600", upsert: false,
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type || undefined,
       });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("wa-flow-media").getPublicUrl(path);
@@ -571,7 +587,8 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
   };
 
   const handleAudioRecorded = async (blob: Blob): Promise<string | null> => {
-    const file = new File([blob], `gravacao-${Date.now()}.webm`, { type: "audio/webm" });
+    const ext = blob.type.includes("ogg") ? "ogg" : blob.type.includes("mp4") ? "m4a" : "webm";
+    const file = new File([blob], `gravacao-${Date.now()}.${ext}`, { type: blob.type || "audio/webm" });
     return await uploadFile(file, "audio");
   };
 
@@ -588,8 +605,11 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
     setContents([...contents, newItem]);
   };
 
-  const updateItem = (id: string, key: string, value: any) => {
-    setContents(contents.map(c => c.id === id ? { ...c, [key]: value } : c));
+  const updateItem = (id: string, keyOrPatch: string | Partial<ContentItem>, value?: any) => {
+    setContents(contents.map(c => {
+      if (c.id !== id) return c;
+      return typeof keyOrPatch === "string" ? { ...c, [keyOrPatch]: value } : { ...c, ...keyOrPatch };
+    }));
   };
 
   const removeItem = (id: string) => {
