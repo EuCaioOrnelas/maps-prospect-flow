@@ -1234,8 +1234,32 @@ async function runFlow(
 
       case "data_collect": {
         const varName = config.variable_name || "dado";
+        const collectType: string = config.collect_type || "custom";
         if (ctx.hasFreshUserInput && ctx.lastUserText) {
-          ctx.variables[varName] = ctx.lastUserText;
+          // FIX BUG-08: validação por tipo. Se inválido, re-pergunta uma vez.
+          const raw = String(ctx.lastUserText).trim();
+          const validators: Record<string, (s: string) => boolean> = {
+            email: (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s),
+            phone: (s) => s.replace(/\D/g, "").length >= 10,
+            cpf: (s) => s.replace(/\D/g, "").length === 11,
+            name: (s) => s.length >= 2,
+            address: (s) => s.length >= 5,
+            custom: () => true,
+          };
+          const ok = (validators[collectType] || validators.custom)(raw);
+          const attemptsKey = `__dc_attempts_${node.id}`;
+          const attempts = Number(ctx.variables[attemptsKey] || 0);
+          if (!ok && attempts < 2) {
+            ctx.variables[attemptsKey] = String(attempts + 1);
+            const retryMsg = config.invalid_message || `Valor inválido para ${collectType}. Tente novamente:`;
+            await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: interpolate(retryMsg, ctx.variables) }, config);
+            ctx.hasFreshUserInput = false;
+            pausedNodeId = node.id;
+            currentNodeId = null;
+            break;
+          }
+          ctx.variables[varName] = raw;
+          delete ctx.variables[attemptsKey];
           ctx.hasFreshUserInput = false;
           currentNodeId = getDefaultTarget(bySource, node.id);
         } else {
@@ -1245,7 +1269,7 @@ async function runFlow(
           };
           const prompt = config.prompt_message
             ? interpolate(config.prompt_message, ctx.variables)
-            : `Por favor, informe ${labels[config.collect_type] || varName}:`;
+            : `Por favor, informe ${labels[collectType] || varName}:`;
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: prompt }, config);
           ctx.hasFreshUserInput = false;
           pausedNodeId = node.id;
