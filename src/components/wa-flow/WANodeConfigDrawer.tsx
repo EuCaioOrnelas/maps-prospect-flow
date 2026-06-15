@@ -18,6 +18,8 @@ import { OutOfWindowTemplateSection } from "./OutOfWindowTemplateSection";
 import type { Node } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import googleLogo from "@/assets/icons/google-g-sm.png";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { useAccountAvailabilities, STATUS_LABEL } from "@/hooks/useMemberAvailability";
 
 
 function GoogleConnectionBlock({ accounts, selectedAccountId, onSelectAccount, isConnecting, handleConnect, handleDisconnect, label }: {
