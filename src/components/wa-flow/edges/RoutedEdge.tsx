@@ -57,20 +57,27 @@ export function RoutedEdge(props: EdgeProps) {
   let labelY: number;
 
   if (isSelfLoop || crossesSource) {
-    const OFFSET_X = 60;
-    const OFFSET_Y = 40;
+    const OFFSET_X = 40;
+    const OFFSET_Y = 30;
+    const boxTop = sourceBox?.y ?? Math.min(sourceY, targetY);
+    const boxBottom = sourceBox ? sourceBox.y + sourceBox.h : Math.max(sourceY, targetY);
+    const boxCenterY = (boxTop + boxBottom) / 2;
+
+    // Pick the shorter side: route below if the source handle sits in the
+    // lower half of the card, otherwise route above.
+    const routeBelow = sourceY >= boxCenterY;
+
     const rightX = sourceBox
       ? Math.max(sourceX, sourceBox.x + sourceBox.w) + OFFSET_X
       : Math.max(sourceX, targetX) + OFFSET_X;
-    const leftX = Math.min(sourceX, targetX) - OFFSET_X;
-    const topY = sourceBox
-      ? Math.min(sourceY, targetY, sourceBox.y) - OFFSET_Y
-      : Math.min(sourceY, targetY) - OFFSET_Y;
+    const leftX = sourceBox
+      ? Math.min(sourceX, targetX, sourceBox.x) - OFFSET_X
+      : Math.min(sourceX, targetX) - OFFSET_X;
+    const railY = routeBelow ? boxBottom + OFFSET_Y : boxTop - OFFSET_Y;
 
-    // exit source to the right, go up and over the source card, come down to target from the left
-    edgePath = `M ${sourceX},${sourceY} C ${rightX},${sourceY} ${rightX},${topY} ${(rightX + leftX) / 2},${topY} C ${leftX},${topY} ${leftX},${targetY} ${targetX},${targetY}`;
+    edgePath = `M ${sourceX},${sourceY} C ${rightX},${sourceY} ${rightX},${railY} ${(rightX + leftX) / 2},${railY} C ${leftX},${railY} ${leftX},${targetY} ${targetX},${targetY}`;
     labelX = (rightX + leftX) / 2;
-    labelY = topY;
+    labelY = railY;
   } else {
     const [path, lx, ly] = getBezierPath({
       sourceX,
