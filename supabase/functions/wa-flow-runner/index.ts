@@ -1431,6 +1431,132 @@ async function runFlow(
   }).eq("id", execution.id);
 }
 
+// Sweep executions whose lead has been silent past the configured inactivity timeout.
+async function runInactivitySweep(supabase: any): Promise<number> {
+  const { data: flows } = await supabase
+    .from("wa_automation_flows")
+    .select("*")
+    .eq("inactivity_reset_enabled", true)
+    .gt("inactivity_timeout_seconds", 0);
+
+  if (!flows || flows.length === 0) return 0;
+
+  let processed = 0;
+  const now = Date.now();
+
+  for (const flow of flows) {
+    const timeoutMs = (flow.inactivity_timeout_seconds || 0) * 1000;
+    if (!timeoutMs) continue;
+    const threshold = new Date(now - timeoutMs).toISOString();
+
+    const { data: execs } = await supabase
+      .from("wa_flow_executions")
+      .select("*")
+      .eq("flow_id", flow.id)
+      .in("status", ["active", "waiting", "paused"])
+      .is("inactivity_processed_at", null)
+      .not("last_user_message_at", "is", null)
+      .lte("last_user_message_at", threshold)
+      .limit(50);
+
+    if (!execs || execs.length === 0) continue;
+
+    const { nodes, edges } = await loadFlowGraph(supabase, flow.id);
+    const fakeBodyBase = (exec: any) => ({
+      user_id: exec.user_id,
+      lead_phone: exec.lead_phone,
+      lead_name: exec.lead_name,
+      source: flow.api_type === "meta" ? "meta" : "evolution",
+    });
+
+    for (const exec of execs) {
+      try {
+        if (flow.inactivity_message) {
+          await sendMessage(supabase, flow, exec.user_id, exec.lead_phone, {
+            type: "text",
+            content: String(flow.inactivity_message),
+          }, {}).catch((e: any) => console.warn("[wa-flow-runner] inactivity msg failed:", e));
+        }
+
+        const action = flow.inactivity_action || "restart";
+        // Always mark processed to avoid loops
+        await supabase.from("wa_flow_executions").update({
+          inactivity_processed_at: new Date().toISOString(),
+          status: action === "goto_node" ? "active" : "abandoned",
+          completed_at: action === "goto_node" ? null : new Date().toISOString(),
+          awaiting_input_until: null,
+          awaiting_node_id: null,
+        }).eq("id", exec.id);
+
+        if (action === "end") {
+          processed++;
+          continue;
+        }
+
+        if (action === "goto_node" && flow.inactivity_target_node_id) {
+          const target = nodes.find((n: any) => n.id === flow.inactivity_target_node_id);
+          if (target) {
+            const ctx: RuntimeCtx = {
+              lastUserText: "",
+              lastButtonId: null,
+              lastButtonTitle: null,
+              hasFreshUserInput: false,
+              variables: (exec.collected_data && typeof exec.collected_data === "object") ? exec.collected_data : {},
+            };
+            await runFlow(supabase, fakeBodyBase(exec), flow, nodes, edges, target.id, exec, ctx);
+            processed++;
+            continue;
+          }
+        }
+
+        // restart or main_menu → start a fresh execution from entry (or first menu/buttons node for main_menu)
+        let startNode = findEntryNode(nodes);
+        if (action === "main_menu") {
+          const menuNode = nodes.find((n: any) => n.node_type === "buttons") || startNode;
+          startNode = menuNode || startNode;
+        }
+        if (!startNode) { processed++; continue; }
+
+        const { data: newExec } = await supabase
+          .from("wa_flow_executions")
+          .insert({
+            flow_id: flow.id,
+            user_id: exec.user_id,
+            lead_phone: exec.lead_phone,
+            lead_name: exec.lead_name,
+            status: "active",
+            current_node_id: startNode.id,
+            current_node_name: startNode.name,
+            entry_data: { trigger_type: "inactivity_reset", source: flow.api_type === "meta" ? "meta" : "evolution" },
+            node_history: [],
+            collected_data: {},
+            last_user_message_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (newExec) {
+          const ctx: RuntimeCtx = {
+            lastUserText: "",
+            lastButtonId: null,
+            lastButtonTitle: null,
+            hasFreshUserInput: false,
+            variables: {},
+          };
+          await runFlow(supabase, fakeBodyBase(exec), flow, nodes, edges, startNode.id, newExec, ctx);
+        }
+        processed++;
+      } catch (e) {
+        console.error("[wa-flow-runner] inactivity sweep error for exec", exec.id, e);
+      }
+    }
+  }
+
+  return processed;
+}
+
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
