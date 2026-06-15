@@ -741,6 +741,47 @@ const ensureNodeConfig = (
         bcc: Array.isArray(config.bcc) ? config.bcc : [],
       };
 
+    case "rating": {
+      const allowed = ["buttons", "menu", "numeric", "stars", "free"];
+      const ratingType = allowed.includes(normalizeText(config.type)) ? normalizeText(config.type) : "numeric";
+      const out: Record<string, any> = {
+        ...config,
+        name: normalizeText(config.name) || normalizeText(node.label) || "Avaliação",
+        message: normalizeText(config.message) || "Sua opinião é muito importante! Como você avalia o nosso atendimento?",
+        type: ratingType,
+        ask_suggestion: typeof config.ask_suggestion === "boolean" ? config.ask_suggestion : false,
+      };
+      if (ratingType === "buttons") {
+        const raw = Array.isArray(config.options) ? config.options : [];
+        out.options = (raw.length ? raw : ["Ótimo", "Bom", "Ruim"]).slice(0, 3).map((o: any) => truncateText(normalizeText(o) || "Opção", 20));
+      } else if (ratingType === "menu") {
+        const raw = Array.isArray(config.options) ? config.options : [];
+        out.options = (raw.length ? raw : ["Excelente", "Muito bom", "Bom", "Regular", "Ruim"]).slice(0, 10).map((o: any) => truncateText(normalizeText(o) || "Opção", 24));
+      } else if (ratingType === "numeric") {
+        const n = (config.numeric && typeof config.numeric === "object") ? config.numeric : {};
+        const min = typeof n.min === "number" ? n.min : 0;
+        const max = typeof n.max === "number" ? n.max : 10;
+        out.numeric = {
+          min, max,
+          positive_min: typeof n.positive_min === "number" ? n.positive_min : Math.ceil(max * 0.9),
+          negative_max: typeof n.negative_max === "number" ? n.negative_max : Math.floor(max * 0.6),
+        };
+      } else if (ratingType === "stars") {
+        const s = (config.stars && typeof config.stars === "object") ? config.stars : {};
+        const max = typeof s.max === "number" ? s.max : 5;
+        out.stars = {
+          max,
+          positive_min: typeof s.positive_min === "number" ? s.positive_min : Math.max(1, max - 1),
+          negative_max: typeof s.negative_max === "number" ? s.negative_max : Math.max(1, Math.floor(max * 0.4)),
+        };
+      }
+      if (out.ask_suggestion) {
+        out.suggestion_prompt = normalizeText(config.suggestion_prompt) || "Quer deixar uma sugestão ou comentário?";
+        out.suggestion_thanks = normalizeText(config.suggestion_thanks) || "Obrigado pelo seu feedback! 💜";
+      }
+      return out;
+    }
+
     default:
       return config;
   }
