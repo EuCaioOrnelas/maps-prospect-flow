@@ -1337,7 +1337,8 @@ async function runFlow(
           return;
         }
         if (result.redirectFlowId) {
-          // Direcionar para outro fluxo: simplesmente encerra esta execução.
+          // FIX BUG-04: encerra execução atual E inicia execução no fluxo-alvo,
+          // preservando variáveis coletadas.
           await supabase.from("wa_flow_executions").update({
             status: "completed",
             current_node_id: node.id,
@@ -1347,6 +1348,37 @@ async function runFlow(
             collected_data: ctx.variables,
             node_history: history,
           }).eq("id", execution.id);
+
+          try {
+            const targetGraph = await loadFlowGraph(supabase, result.redirectFlowId);
+            if (targetGraph.flow && targetGraph.nodes.length > 0) {
+              const entry = findEntryNode(targetGraph.nodes);
+              if (entry) {
+                const { data: newExec } = await supabase.from("wa_flow_executions").insert({
+                  flow_id: result.redirectFlowId,
+                  user_id: body.user_id,
+                  lead_phone: body.lead_phone,
+                  lead_name: body.lead_name || null,
+                  status: "running",
+                  started_at: new Date().toISOString(),
+                  current_node_id: entry.id,
+                  current_node_name: entry.name,
+                  collected_data: ctx.variables,
+                  node_history: [],
+                  waba_connection_id: targetGraph.flow.waba_connection_id || null,
+                }).select("*").maybeSingle();
+                if (newExec) {
+                  await runFlow(
+                    supabase, body, targetGraph.flow, targetGraph.nodes, targetGraph.edges,
+                    entry.id, newExec,
+                    { ...ctx, hasFreshUserInput: false, variables: { ...ctx.variables } }
+                  );
+                }
+              }
+            }
+          } catch (e) {
+            console.error("[wa-flow-runner] redirect flow error:", e);
+          }
           return;
         }
         if (result.queued) {
