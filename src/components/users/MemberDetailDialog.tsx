@@ -127,6 +127,10 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
             </div>
           </TabsContent>
 
+          <TabsContent value="availability" className="space-y-4 mt-4">
+            <MemberAvailabilityCard userId={member.user_id} title={`Disponibilidade de ${member.name || member.email}`} />
+          </TabsContent>
+
           <TabsContent value="time" className="space-y-4 mt-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <RangePicker value={range} onChange={setRange} from={customFrom} to={customTo} onFromChange={setCustomFrom} onToChange={setCustomTo} />
