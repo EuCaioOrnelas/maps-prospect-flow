@@ -2640,7 +2640,7 @@ function FlowButtonPicker({
   );
 }
 
-export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {}, allNodes }: Props) {
+export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelete, entryApiType = "evolution", entryConfig = {}, allNodes, allEdges }: Props) {
   const { user } = useAuth();
   const [config, setConfig] = useState<any>({});
   const [label, setLabel] = useState("");
