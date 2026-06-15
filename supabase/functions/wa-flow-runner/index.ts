@@ -710,6 +710,12 @@ async function runFlow(
       }
 
       case "message": {
+        // If this node was paused waiting for response and user replied, advance now (don't re-send).
+        if ((config.after_send || "continue") === "wait" && ctx.hasFreshUserInput) {
+          ctx.hasFreshUserInput = false;
+          currentNodeId = getDefaultTarget(bySource, node.id);
+          break;
+        }
         // New schema: config.contents = [{type, content, media_url, caption, media_filename, delay_min, delay_max}, ...]
         // Legacy: config.items = [...] or single { message_type, content, media_url, caption, filename }
         const pending = ctx.variables?.__pending_message__;
