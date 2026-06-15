@@ -1705,7 +1705,9 @@ serve(async (req) => {
     const resumed: string[] = [];
     for (const exec of activeExecutions || []) {
       const flow = exec.wa_automation_flows;
-      if (!flow || flow.status !== "active") continue;
+      // Allow resume for both production flows (status=active) and test-mode flows.
+      if (!flow) continue;
+      if (flow.status !== "active" && flow.test_mode !== true) continue;
 
       // Track last user activity so the inactivity sweep knows the lead is responsive.
       if (body.incoming_text || body.button_id) {
