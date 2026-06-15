@@ -1670,6 +1670,15 @@ serve(async (req) => {
       const flow = exec.wa_automation_flows;
       if (!flow || flow.status !== "active") continue;
 
+      // Track last user activity so the inactivity sweep knows the lead is responsive.
+      if (body.incoming_text || body.button_id) {
+        await supabase
+          .from("wa_flow_executions")
+          .update({ last_user_message_at: new Date().toISOString(), inactivity_processed_at: null })
+          .eq("id", exec.id);
+      }
+
+
       const { nodes, edges } = await loadFlowGraph(supabase, flow.id);
       const ctx: RuntimeCtx = {
         lastUserText: body.incoming_text || "",
