@@ -94,7 +94,16 @@ serve(async (req) => {
       event.attendees = [{ email: attendee_email }];
     }
 
-    const calRes = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+    if (typeof reminder_minutes === "number" && reminder_minutes > 0) {
+      event.reminders = {
+        useDefault: false,
+        overrides: [{ method: "popup", minutes: reminder_minutes }],
+      };
+    }
+
+    // FIX BUG-03: respeita calendar_id; default "primary".
+    const calId = encodeURIComponent(calendar_id || "primary");
+    const calRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calId}/events`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
