@@ -2491,31 +2491,32 @@ function FlowButtonPicker({
   const PAGE_SIZE = 8;
 
   const options = (() => {
-    const out: { id: string; title: string; source: string; kind: string; preview: string; emoji: string }[] = [];
+    const out: { id: string; title: string; source: string; kind: string; emoji: string }[] = [];
     for (const n of allNodes || []) {
       const cfg = (n.data as any)?.config || {};
       const label = String((n.data as any)?.label || n.id);
-      const bodyPreview = String(cfg.body_text || cfg.message_text || cfg.text || "").trim();
       if (n.type === "buttons") {
         if ((cfg.interaction_type || "reply_buttons") === "reply_buttons") {
           for (const b of cfg.buttons || []) {
-            if (b?.title || b?.id) out.push({
-              id: b.id || b.title,
-              title: b.title || b.id,
+            const text = String(b?.text || b?.title || b?.label || b?.id || "").trim();
+            if (!text && !b?.id) continue;
+            out.push({
+              id: b.id || text,
+              title: text || String(b.id),
               source: label,
-              kind: "Botão de resposta",
-              preview: bodyPreview,
+              kind: "Botão",
               emoji: "🔘",
             });
           }
         } else if (cfg.interaction_type === "list") {
           for (const it of cfg.list_items || []) {
-            if (it?.title || it?.id) out.push({
-              id: it.id || it.title,
-              title: it.title || it.id,
+            const text = String(it?.text || it?.title || it?.label || it?.id || "").trim();
+            if (!text && !it?.id) continue;
+            out.push({
+              id: it.id || text,
+              title: text || String(it.id),
               source: label,
               kind: "Item de lista",
-              preview: bodyPreview,
               emoji: "📋",
             });
           }
@@ -2529,9 +2530,7 @@ function FlowButtonPicker({
     (o) =>
       !search ||
       o.title.toLowerCase().includes(search.toLowerCase()) ||
-      o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.source.toLowerCase().includes(search.toLowerCase()) ||
-      o.preview.toLowerCase().includes(search.toLowerCase())
+      o.source.toLowerCase().includes(search.toLowerCase())
   );
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
@@ -2542,13 +2541,12 @@ function FlowButtonPicker({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full h-auto min-h-9 justify-between text-sm font-normal py-1.5">
+        <Button variant="outline" className="w-full h-9 justify-between text-sm font-normal bg-background">
           <span className="truncate flex items-center gap-1.5 min-w-0">
             {selected ? (
               <>
                 <span className="shrink-0">{selected.emoji}</span>
-                <span className="font-medium truncate">"{selected.title}"</span>
-                <span className="text-muted-foreground text-[11px] truncate hidden sm:inline">· de {selected.source}</span>
+                <span className="font-medium truncate text-foreground">{selected.title}</span>
               </>
             ) : (
               <span className="text-muted-foreground">{value || "Selecionar botão do fluxo..."}</span>
@@ -2557,7 +2555,7 @@ function FlowButtonPicker({
           <ChevronDown size={14} className="opacity-60 shrink-0" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[360px] p-2" align="start">
+      <PopoverContent className="w-[320px] p-1.5 bg-popover border-border" align="start">
         <Input
           autoFocus
           value={search}
@@ -2565,50 +2563,52 @@ function FlowButtonPicker({
             setSearch(e.target.value);
             setPage(0);
           }}
-          placeholder="Buscar pelo texto do botão..."
-          className="h-8 text-xs mb-2"
+          placeholder="Buscar botão..."
+          className="h-8 text-xs mb-1.5 bg-background"
         />
         {options.length === 0 ? (
           <div className="text-xs text-muted-foreground px-2 py-6 text-center">
             Nenhum botão criado no fluxo ainda.<br/>
-            <span className="text-[10px]">Adicione um bloco "Botões" antes deste para poder escolher uma opção.</span>
+            <span className="text-[10px]">Adicione um bloco "Botões" antes deste.</span>
           </div>
         ) : (
           <>
-            <ScrollArea className="h-[280px] pr-2">
-              <div className="space-y-1">
-                {pageItems.map((o, i) => (
-                  <button
-                    key={`${o.id}-${i}`}
-                    type="button"
-                    onClick={() => {
-                      onChange(o.id);
-                      setOpen(false);
-                    }}
-                    className={cn(
-                      "w-full text-left px-2.5 py-2 rounded-md text-xs hover:bg-accent transition-colors border border-transparent",
-                      (selected?.id === o.id) && "bg-accent border-border"
-                    )}
-                  >
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-sm">{o.emoji}</span>
-                      <span className="font-semibold truncate">{o.title}</span>
-                    </div>
-                    {o.preview && (
-                      <div className="text-[10px] text-muted-foreground/80 italic line-clamp-2 pl-5 mb-0.5">
-                        "{o.preview.slice(0, 80)}{o.preview.length > 80 ? "…" : ""}"
+            <ScrollArea className="h-[260px] pr-1">
+              <div className="space-y-0.5">
+                {pageItems.map((o, i) => {
+                  const isSelected = selected?.id === o.id;
+                  return (
+                    <button
+                      key={`${o.id}-${i}`}
+                      type="button"
+                      onClick={() => {
+                        onChange(o.id);
+                        setOpen(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-colors border",
+                        isSelected
+                          ? "bg-primary/10 border-primary/30 text-foreground"
+                          : "border-transparent text-foreground hover:bg-muted hover:border-border/50"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm shrink-0">{o.emoji}</span>
+                        <span className="font-medium truncate flex-1">{o.title}</span>
+                        {isSelected && <span className="text-[10px] text-primary shrink-0">✓</span>}
                       </div>
-                    )}
-                    <div className="text-[10px] text-muted-foreground truncate pl-5">
-                      {o.kind} · vem de <span className="font-medium">{o.source}</span>
-                    </div>
-                  </button>
-                ))}
+                      <div className="text-[10px] text-muted-foreground truncate pl-6 mt-0.5">
+                        {o.kind} de "{o.source}"
+                      </div>
+                    </button>
+                  );
+                })}
                 {pageItems.length === 0 && (
                   <div className="text-xs text-muted-foreground px-2 py-6 text-center">Sem resultados.</div>
                 )}
               </div>
             </ScrollArea>
+
             <div className="flex items-center justify-between pt-2 mt-1 border-t">
               <Button
                 variant="ghost"
