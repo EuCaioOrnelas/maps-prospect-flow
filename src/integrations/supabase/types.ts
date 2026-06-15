@@ -2360,6 +2360,120 @@ export type Database = {
         }
         Relationships: []
       }
+      handoff_assignments: {
+        Row: {
+          account_owner_id: string
+          assigned_at: string | null
+          assigned_member_id: string | null
+          attempts: Json
+          closed_at: string | null
+          conversation_id: string | null
+          created_at: string
+          distribution_type: string
+          execution_id: string | null
+          expires_at: string | null
+          first_response_at: string | null
+          flow_id: string | null
+          id: string
+          lead_phone: string | null
+          max_wait_seconds: number | null
+          no_agents_actions: string[]
+          no_agents_message: string | null
+          node_id: string | null
+          post_message: string | null
+          pre_message: string | null
+          queued_at: string | null
+          redirect_flow_id: string | null
+          status: string
+          team_member_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          account_owner_id: string
+          assigned_at?: string | null
+          assigned_member_id?: string | null
+          attempts?: Json
+          closed_at?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          distribution_type?: string
+          execution_id?: string | null
+          expires_at?: string | null
+          first_response_at?: string | null
+          flow_id?: string | null
+          id?: string
+          lead_phone?: string | null
+          max_wait_seconds?: number | null
+          no_agents_actions?: string[]
+          no_agents_message?: string | null
+          node_id?: string | null
+          post_message?: string | null
+          pre_message?: string | null
+          queued_at?: string | null
+          redirect_flow_id?: string | null
+          status?: string
+          team_member_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          account_owner_id?: string
+          assigned_at?: string | null
+          assigned_member_id?: string | null
+          attempts?: Json
+          closed_at?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          distribution_type?: string
+          execution_id?: string | null
+          expires_at?: string | null
+          first_response_at?: string | null
+          flow_id?: string | null
+          id?: string
+          lead_phone?: string | null
+          max_wait_seconds?: number | null
+          no_agents_actions?: string[]
+          no_agents_message?: string | null
+          node_id?: string | null
+          post_message?: string | null
+          pre_message?: string | null
+          queued_at?: string | null
+          redirect_flow_id?: string | null
+          status?: string
+          team_member_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      handoff_audit_log: {
+        Row: {
+          account_owner_id: string
+          assignment_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          member_id: string | null
+          payload: Json
+        }
+        Insert: {
+          account_owner_id: string
+          assignment_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          member_id?: string | null
+          payload?: Json
+        }
+        Update: {
+          account_owner_id?: string
+          assignment_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          member_id?: string | null
+          payload?: Json
+        }
+        Relationships: []
+      }
       ignored_contacts: {
         Row: {
           campaign_id: string | null
@@ -2989,6 +3103,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      member_availability: {
+        Row: {
+          account_owner_id: string
+          auto_offline_after_minutes: number | null
+          created_at: string
+          id: string
+          last_seen_at: string | null
+          status: string
+          timezone: string
+          updated_at: string
+          user_id: string
+          work_days: number[]
+          work_end: string
+          work_start: string
+        }
+        Insert: {
+          account_owner_id: string
+          auto_offline_after_minutes?: number | null
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          status?: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+          work_days?: number[]
+          work_end?: string
+          work_start?: string
+        }
+        Update: {
+          account_owner_id?: string
+          auto_offline_after_minutes?: number | null
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          status?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+          work_days?: number[]
+          work_end?: string
+          work_start?: string
+        }
+        Relationships: []
       }
       meta_campaigns: {
         Row: {
@@ -8335,6 +8494,7 @@ export type Database = {
       }
       is_account_member: { Args: { _target_owner: string }; Returns: boolean }
       is_current_user_admin: { Args: never; Returns: boolean }
+      is_member_available: { Args: { _user_id: string }; Returns: boolean }
       is_user_blocked: { Args: { p_user_id: string }; Returns: boolean }
       log_security_event: {
         Args: {
