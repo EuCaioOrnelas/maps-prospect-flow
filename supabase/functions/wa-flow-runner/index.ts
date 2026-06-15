@@ -537,13 +537,11 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
   const actions = Array.isArray(config.actions) && config.actions.length > 0
     ? config.actions
     : config.action_type
-      ? [{ type: config.action_type, value: config.tag_value || config.pipeline_stage, stage_name: config.pipeline_stage }]
+      ? [{ type: config.action_type, value: config.tag_value || config.pipeline_stage, tag_value: config.tag_value, stage_name: config.pipeline_stage, pipeline_stage_id: config.pipeline_stage_id }]
       : [];
 
   if (actions.length === 0) return;
 
-  // #6 fix: Find the lead by phone using DB-side filter (no arbitrary limit).
-  // Match using the last 8 digits (tolerant to +55, 9th digit, formatting differences).
   const last8 = leadPhone.replace(/\D/g, "").slice(-8);
   if (!last8) {
     console.log("[wa-flow-runner] Action skipped — invalid phone for", leadPhone);
@@ -567,14 +565,15 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
     try {
       switch (action.type) {
         case "add_tag": {
-          const tag = action.value || action.tag;
+          // FIX BUG-01: drawer salva `tag_value`; aceitar todos os aliases.
+          const tag = action.tag_value || action.value || action.tag;
           if (!tag) break;
           const newTags = Array.from(new Set([...(lead.tags || []), tag]));
           await supabase.from("leads").update({ tags: newTags }).eq("id", lead.id);
           break;
         }
         case "remove_tag": {
-          const tag = action.value || action.tag;
+          const tag = action.tag_value || action.value || action.tag;
           if (!tag) break;
           const newTags = (lead.tags || []).filter((t: string) => t !== tag);
           await supabase.from("leads").update({ tags: newTags }).eq("id", lead.id);
@@ -582,7 +581,6 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
         }
         case "move_kanban":
         case "move_pipeline": {
-          // Editor saves UUID in `pipeline_stage_id`; legacy callers may pass `stage_name`.
           let stageId: string | null = action.pipeline_stage_id || null;
           if (!stageId) {
             const stageName = action.stage_name || action.value;
@@ -601,13 +599,17 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
           break;
         }
         case "send_to_crm": {
-          // Create or update the lead in CRM with mapped fields (supports {variable} interpolation upstream).
           const updates: Record<string, any> = {};
-          if (action.crm_name) updates.name = String(action.crm_name);
+          if (action.crm_name) updates.contact_name = String(action.crm_name);
           if (action.crm_email) updates.email = String(action.crm_email);
-          if (action.crm_company) updates.company = String(action.crm_company);
-          if (action.crm_notes) updates.notes = String(action.crm_notes);
+          if (action.crm_company) updates.company_name = String(action.crm_company);
           if (action.crm_stage_id) updates.pipeline_stage_id = action.crm_stage_id;
+          // FIX BUG-06: aplica crm_value como estimated_value se for número.
+          if (action.crm_value !== undefined && action.crm_value !== "") {
+            const cleaned = String(action.crm_value).replace(/[^\d.,-]/g, "").replace(",", ".");
+            const num = parseFloat(cleaned);
+            if (!isNaN(num)) updates.estimated_value = num;
+          }
           if (Object.keys(updates).length > 0) {
             await supabase.from("leads").update(updates).eq("id", lead.id);
           }
@@ -1232,8 +1234,32 @@ async function runFlow(
 
       case "data_collect": {
         const varName = config.variable_name || "dado";
+        const collectType: string = config.collect_type || "custom";
         if (ctx.hasFreshUserInput && ctx.lastUserText) {
-          ctx.variables[varName] = ctx.lastUserText;
+          // FIX BUG-08: validação por tipo. Se inválido, re-pergunta uma vez.
+          const raw = String(ctx.lastUserText).trim();
+          const validators: Record<string, (s: string) => boolean> = {
+            email: (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s),
+            phone: (s) => s.replace(/\D/g, "").length >= 10,
+            cpf: (s) => s.replace(/\D/g, "").length === 11,
+            name: (s) => s.length >= 2,
+            address: (s) => s.length >= 5,
+            custom: () => true,
+          };
+          const ok = (validators[collectType] || validators.custom)(raw);
+          const attemptsKey = `__dc_attempts_${node.id}`;
+          const attempts = Number(ctx.variables[attemptsKey] || 0);
+          if (!ok && attempts < 2) {
+            ctx.variables[attemptsKey] = String(attempts + 1);
+            const retryMsg = config.invalid_message || `Valor inválido para ${collectType}. Tente novamente:`;
+            await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: interpolate(retryMsg, ctx.variables) }, config);
+            ctx.hasFreshUserInput = false;
+            pausedNodeId = node.id;
+            currentNodeId = null;
+            break;
+          }
+          ctx.variables[varName] = raw;
+          delete ctx.variables[attemptsKey];
           ctx.hasFreshUserInput = false;
           currentNodeId = getDefaultTarget(bySource, node.id);
         } else {
@@ -1243,7 +1269,7 @@ async function runFlow(
           };
           const prompt = config.prompt_message
             ? interpolate(config.prompt_message, ctx.variables)
-            : `Por favor, informe ${labels[config.collect_type] || varName}:`;
+            : `Por favor, informe ${labels[collectType] || varName}:`;
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, { type: "text", content: prompt }, config);
           ctx.hasFreshUserInput = false;
           pausedNodeId = node.id;
@@ -1255,10 +1281,22 @@ async function runFlow(
       case "ab_test": {
         const variants: any[] = config.variants || [];
         if (variants.length === 0) { currentNodeId = null; break; }
-        const total = variants.reduce((s, v) => s + (v.weight || 1), 0);
+        // FIX BUG-07: use ?? para respeitar weight=0 (oculta variante) e fallback só para undefined.
+        const weights = variants.map((v) => (typeof v.weight === "number" ? v.weight : 1));
+        const total = weights.reduce((s, w) => s + w, 0);
+        if (total <= 0) { currentNodeId = null; break; }
         let r = Math.random() * total;
         let chosen = variants[0];
-        for (const v of variants) { r -= (v.weight || 1); if (r <= 0) { chosen = v; break; } }
+        for (let i = 0; i < variants.length; i++) {
+          r -= weights[i];
+          if (r <= 0) { chosen = variants[i]; break; }
+        }
+        // Registra métrica de A/B test selecionado
+        try {
+          await supabase.from("wa_flow_executions")
+            .update({ collected_data: { ...ctx.variables, [`__ab_${node.id}`]: chosen.id || chosen.label } })
+            .eq("id", execution.id);
+        } catch { /* ignore */ }
         currentNodeId = getTargetByHandle(bySource, node.id, chosen.id);
         break;
       }
@@ -1299,7 +1337,8 @@ async function runFlow(
           return;
         }
         if (result.redirectFlowId) {
-          // Direcionar para outro fluxo: simplesmente encerra esta execução.
+          // FIX BUG-04: encerra execução atual E inicia execução no fluxo-alvo,
+          // preservando variáveis coletadas.
           await supabase.from("wa_flow_executions").update({
             status: "completed",
             current_node_id: node.id,
@@ -1309,6 +1348,37 @@ async function runFlow(
             collected_data: ctx.variables,
             node_history: history,
           }).eq("id", execution.id);
+
+          try {
+            const targetGraph = await loadFlowGraph(supabase, result.redirectFlowId);
+            if (targetGraph.flow && targetGraph.nodes.length > 0) {
+              const entry = findEntryNode(targetGraph.nodes);
+              if (entry) {
+                const { data: newExec } = await supabase.from("wa_flow_executions").insert({
+                  flow_id: result.redirectFlowId,
+                  user_id: body.user_id,
+                  lead_phone: body.lead_phone,
+                  lead_name: body.lead_name || null,
+                  status: "running",
+                  started_at: new Date().toISOString(),
+                  current_node_id: entry.id,
+                  current_node_name: entry.name,
+                  collected_data: ctx.variables,
+                  node_history: [],
+                  waba_connection_id: targetGraph.flow.waba_connection_id || null,
+                }).select("*").maybeSingle();
+                if (newExec) {
+                  await runFlow(
+                    supabase, body, targetGraph.flow, targetGraph.nodes, targetGraph.edges,
+                    entry.id, newExec,
+                    { ...ctx, hasFreshUserInput: false, variables: { ...ctx.variables } }
+                  );
+                }
+              }
+            }
+          } catch (e) {
+            console.error("[wa-flow-runner] redirect flow error:", e);
+          }
           return;
         }
         if (result.queued) {
@@ -1382,6 +1452,32 @@ async function runFlow(
             ? agent.ai_model
             : "gpt-4o-mini";
 
+          // FIX BUG-09: inclui últimas mensagens da conversa como histórico.
+          const history: any[] = [];
+          try {
+            const { data: convo } = await supabase
+              .from("chat_conversations")
+              .select("id")
+              .eq("user_id", body.user_id)
+              .eq("contact_phone", body.lead_phone)
+              .maybeSingle();
+            if (convo?.id) {
+              const { data: msgs } = await supabase
+                .from("chat_messages")
+                .select("direction, content, created_at")
+                .eq("conversation_id", convo.id)
+                .order("created_at", { ascending: false })
+                .limit(10);
+              (msgs || []).reverse().forEach((m: any) => {
+                if (!m.content) return;
+                history.push({
+                  role: m.direction === "outbound" ? "assistant" : "user",
+                  content: String(m.content).slice(0, 1000),
+                });
+              });
+            }
+          } catch (e) { console.error("[wa-flow-runner] ai history error:", e); }
+
           const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -1392,6 +1488,7 @@ async function runFlow(
               model: openaiModel,
               messages: [
                 { role: "system", content: interpolate(sysFinal, ctx.variables) },
+                ...history,
                 { role: "user", content: userMessage },
               ],
               max_tokens: Math.min(1000, Math.ceil(maxChars / 2) + 200),
@@ -1456,6 +1553,7 @@ async function runFlow(
           const { error } = await supabase.functions.invoke("google-sheets-action", {
             body: {
               user_id: body.user_id,
+              google_account_id: config.google_account_id || null,
               spreadsheet_id: config.spreadsheet_id,
               sheet_name: config.sheet_name || "Dados",
               data: row,
@@ -1478,9 +1576,16 @@ async function runFlow(
             currentNodeId = getDefaultTarget(bySource, node.id);
             break;
           }
-          // Default to "next business hour" if no explicit start (editor doesn't expose one yet).
-          const start = new Date(Date.now() + 60 * 60 * 1000); // +1h
-          start.setMinutes(0, 0, 0);
+          // FIX BUG-03: respeita event_datetime (variável/literal) ou cai no próximo +1h.
+          const rawStart = interpolate(String(config.event_datetime || config.event_start || ""), ctx.variables).trim();
+          let start: Date;
+          if (rawStart) {
+            const parsed = new Date(rawStart);
+            start = isNaN(parsed.getTime()) ? new Date(Date.now() + 60 * 60 * 1000) : parsed;
+          } else {
+            start = new Date(Date.now() + 60 * 60 * 1000);
+            start.setMinutes(0, 0, 0);
+          }
 
           const attendeeRaw = interpolate(String(config.attendee_email || ""), ctx.variables);
           const attendee = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(attendeeRaw) ? attendeeRaw : undefined;
@@ -1488,11 +1593,14 @@ async function runFlow(
           const { error } = await supabase.functions.invoke("google-calendar-action", {
             body: {
               user_id: body.user_id,
+              google_account_id: config.google_account_id || null,
+              calendar_id: config.calendar_id || "primary",
               summary,
               description: interpolate(String(config.event_description || ""), ctx.variables),
               start_datetime: start.toISOString(),
               duration_minutes: Number(config.event_duration || 30),
               attendee_email: attendee,
+              reminder_minutes: Number(config.reminder_minutes || 30),
             },
           });
           if (error) console.error("[wa-flow-runner] google_calendar error:", error);
@@ -1518,6 +1626,7 @@ async function runFlow(
 
           const payload: any = {
             user_id: body.user_id,
+            google_account_id: config.google_account_id || null,
             to,
             cc: ccArr,
             bcc: bccArr,

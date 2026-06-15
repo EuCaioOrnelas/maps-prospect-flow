@@ -17,7 +17,7 @@ serve(async (req) => {
     const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
     const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
 
-    const { user_id, summary, description, start_datetime, duration_minutes, attendee_email } = await req.json();
+    const { user_id, google_account_id, calendar_id, summary, description, start_datetime, duration_minutes, attendee_email, reminder_minutes } = await req.json();
 
     if (!user_id || !summary) {
       return new Response(JSON.stringify({ error: "Missing required fields: user_id, summary" }), {
@@ -27,11 +27,13 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: tokenRecord, error: tokenError } = await supabase
-      .from("user_google_tokens")
-      .select("*")
-      .eq("user_id", user_id)
-      .single();
+    // FIX BUG-02: suporta múltiplas contas Google. Usa google_account_id quando fornecido;
+    // senão pega a conta mais recente do user_id (sem .single()).
+    let tokenQuery = supabase.from("user_google_tokens").select("*");
+    if (google_account_id) tokenQuery = tokenQuery.eq("id", google_account_id);
+    else tokenQuery = tokenQuery.eq("user_id", user_id).order("updated_at", { ascending: false }).limit(1);
+    const { data: tokenRecords, error: tokenError } = await tokenQuery;
+    const tokenRecord = Array.isArray(tokenRecords) ? tokenRecords[0] : tokenRecords;
 
     if (tokenError || !tokenRecord) {
       return new Response(JSON.stringify({ error: "Google not connected", requiresAuth: true }), {
@@ -92,7 +94,16 @@ serve(async (req) => {
       event.attendees = [{ email: attendee_email }];
     }
 
-    const calRes = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+    if (typeof reminder_minutes === "number" && reminder_minutes > 0) {
+      event.reminders = {
+        useDefault: false,
+        overrides: [{ method: "popup", minutes: reminder_minutes }],
+      };
+    }
+
+    // FIX BUG-03: respeita calendar_id; default "primary".
+    const calId = encodeURIComponent(calendar_id || "primary");
+    const calRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calId}/events`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
