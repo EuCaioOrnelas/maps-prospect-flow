@@ -2791,13 +2791,15 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
               </div>
               {config.condition_type === "button_clicked" && (
                 <div className="space-y-2">
-                  <Label className="text-xs">ID ou texto do botão</Label>
-                  <Input
+                  <Label className="text-xs">Botão que foi clicado</Label>
+                  <FlowButtonPicker
                     value={config.condition_value || ""}
-                    onChange={(e) => updateConfig("condition_value", e.target.value)}
-                    placeholder="btn_0 ou texto do botão"
-                    className="h-9 text-sm"
+                    onChange={(v) => updateConfig("condition_value", v)}
+                    allNodes={allNodes}
                   />
+                  <p className="text-[10px] text-muted-foreground">
+                    Lista os botões e itens de lista criados nos nós do fluxo. Use a busca e a paginação para encontrar.
+                  </p>
                 </div>
               )}
               {config.condition_type === "keyword_match" && (
