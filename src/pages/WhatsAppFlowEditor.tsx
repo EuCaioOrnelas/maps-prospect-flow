@@ -68,6 +68,11 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { WAFlowTestDialog } from "@/components/wa-flow/WAFlowTestDialog";
 import { FlowResultsDialog } from "@/components/wa-flow/FlowResultsDialog";
+import { RoutedEdge } from "@/components/wa-flow/edges/RoutedEdge";
+
+const edgeTypes = {
+  routed: RoutedEdge,
+};
 
 const normalizeStoredHandle = (value?: string | null) => {
   if (!value) return null;
@@ -119,12 +124,8 @@ const nodeTypes = {
 
 const defaultEdgeOptions = {
   animated: true,
-  type: "default" as const,
-  style: { strokeWidth: 2, stroke: "hsl(var(--muted-foreground) / 0.4)", strokeLinecap: "round" as const },
-  labelStyle: { fill: "hsl(var(--foreground))", fontSize: 11, fontWeight: 500 },
-  labelBgStyle: { fill: "hsl(var(--card))", fillOpacity: 0.95 },
-  labelBgPadding: [6, 4] as [number, number],
-  labelBgBorderRadius: 6,
+  type: "routed" as const,
+  style: { strokeWidth: 2, stroke: "hsl(var(--muted-foreground) / 0.45)", strokeLinecap: "round" as const },
 };
 
 const sidebarCategories = [
@@ -1084,6 +1085,7 @@ export default function WhatsAppFlowEditor() {
             }}
             deleteKeyCode={null}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             fitView
             fitViewOptions={{ padding: 0.3 }}
