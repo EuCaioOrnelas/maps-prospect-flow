@@ -3101,6 +3101,8 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     value={config.condition_value || ""}
                     onChange={(v) => updateConfig("condition_value", v)}
                     allNodes={allNodes}
+                    allEdges={allEdges}
+                    currentNodeId={node.id}
                   />
                   <p className="text-[10px] text-muted-foreground">
                     Lista os botões e itens de lista criados nos nós do fluxo. Use a busca e a paginação para encontrar.
