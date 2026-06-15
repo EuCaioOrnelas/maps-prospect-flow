@@ -1,144 +1,113 @@
-## Visão geral
+# Distribuição Inteligente de Atendimentos
 
-Adicionar ao construtor visual de fluxos do WhatsApp:
+Vou evoluir o card **Transferir para Humano** do construtor de fluxos para um sistema completo de distribuição, com disponibilidade por colaborador, fila justa (round-robin), contingência e auditoria.
 
-1. Um novo tipo de card chamado **Avaliação** (categoria Atendimento / Pesquisa / Feedback), com 5 modos de coleta (botões, menu, numérica, estrelas, livre), persistência de respostas, opcional pedido de sugestão, e múltiplas saídas (recebida, positiva, neutra, negativa, sugestão).
-2. Uma nova configuração global por fluxo: **Reset por Inatividade**, com tempo configurável, ação (reiniciar / ir a card / encerrar / menu) e mensagem opcional antes do reset.
+## 1. Banco de Dados (Lovable Cloud)
 
-Mantém o padrão visual atual (cards Wiize), suporta drag-and-drop, persiste em `wa_flow_nodes.config` e roda no `wa-flow-runner` com a Meta Cloud API.
+### Nova tabela `member_availability`
+Disponibilidade por colaborador da conta:
+- member_id (FK account_members)
+- account_owner_id
+- status: `online` | `away` | `offline`
+- work_days: array de dias (0–6)
+- work_start, work_end (time)
+- timezone
+- updated_at
 
----
+### Nova tabela `handoff_assignments`
+Histórico/estado de cada transferência executada por um card de handoff:
+- execution_id (FK wa_flow_executions)
+- flow_id, node_id, account_owner_id
+- assigned_member_id (nullable enquanto em fila)
+- team_member_ids (array dos elegíveis configurados no card)
+- distribution_type: `specific` | `round_robin`
+- status: `assigned` | `queued` | `reassigned` | `closed` | `failed`
+- queued_at, assigned_at, first_response_at, closed_at
+- attempts (jsonb com tentativas e falhas)
+- contingency_action (quando entra em fila)
 
-## 1. Banco de dados
+### Nova tabela `handoff_audit_log`
+Eventos detalhados (transferência, falhas, reatribuições, períodos sem operadores, tempo em fila).
 
-### 1.1 Enum / novo tipo de nó
-- Adicionar `rating` ao enum `wa_flow_node_type`.
+### Ajuste em `wa_flow_nodes`
+Os campos novos vão no `config` JSONB do nó handoff (sem migração de coluna):
+- distribution_type, member_ids[], specific_member_id
+- pre_message, post_message
+- max_wait_seconds
+- no_agents_actions[] (lista ordenada: send_message, keep_in_queue, auto_reassign_when_online, redirect_flow, end, create_crm_task, notify_managers)
+- no_agents_message, redirect_flow_id
+- notify_manager_ids[]
 
-### 1.2 Tabela `wa_flow_ratings` (novas avaliações coletadas)
-Campos relevantes (além de id/created_at): `user_id`, `owner_user_id`, `flow_id`, `node_id`, `execution_id`, `contact_phone`, `contact_name`, `lead_id` (nullable), `rating_name`, `rating_type` (buttons/menu/numeric/stars/free), `score_numeric` (nullable), `score_max` (nullable), `score_text` (nullable), `bucket` (positive/neutral/negative/null), `suggestion_text` (nullable), `sent_at`, `responded_at`.
-- RLS: dono da conta lê/edita; service_role total. GRANTs autenticado + service_role conforme padrão.
-- Índices: `(user_id, created_at)`, `(flow_id)`, `(execution_id)`.
+Todas as tabelas terão GRANTs + RLS (owner + service_role).
 
-### 1.3 Reset por inatividade no fluxo
-- Acrescentar colunas em `wa_automation_flows`:
-  - `inactivity_reset_enabled boolean default false`
-  - `inactivity_timeout_seconds integer` (nullable)
-  - `inactivity_action text` (`restart` | `goto_node` | `end` | `main_menu`)
-  - `inactivity_target_node_id text` (nullable)
-  - `inactivity_message text` (nullable)
-- Acrescentar coluna em `wa_flow_executions`:
-  - `last_user_message_at timestamptz`
-  - `inactivity_processed_at timestamptz` (para evitar disparo duplo)
+## 2. UI — Configuração de Disponibilidade
 
-### 1.4 Cron / agendamento
-- Reaproveitar a edge function `wa-flow-runner` com um novo modo `mode=inactivity_sweep` chamado por cron a cada 1 min (similar ao pattern já usado).
-- Migration adiciona um `pg_cron` job apontando para a função.
+Nova aba em **/usuarios** (ou no perfil do colaborador) chamada **Disponibilidade**:
+- Toggle status: Online / Ausente / Offline
+- Seletor de dias da semana
+- Horário início/fim
+- Cada colaborador edita o próprio; o dono da conta pode editar de todos
 
----
+Hook `useMemberAvailability` para leitura/escrita.
 
-## 2. Backend (Edge Functions)
+## 3. UI — Card "Transferir para Humano"
 
-### 2.1 `wa-flow-runner`
-- Ao receber inbound: atualizar `last_user_message_at = now()` na execução ativa.
-- Novo handler de node `rating`:
-  - Envia mensagem inicial usando interativo apropriado:
-    - `buttons` (máx 3) → reply buttons Meta
-    - `menu` → list interactive
-    - `stars` → reply buttons com strings de estrelas, se ≤3; senão list
-    - `numeric` → list (gerado de min..max, paginado em até 10) ou texto livre se range > 10 (peça que digite e valide)
-    - `free` → mensagem de texto, aguarda input livre
-  - Aguarda input (via `awaiting_input_until` + `awaiting_node_id`).
-  - Ao receber resposta:
-    - Calcula `score_numeric` quando aplicável e `bucket` baseado em thresholds configuráveis (`positive_min`, `negative_max`).
-    - Insere em `wa_flow_ratings`.
-    - Se `ask_suggestion = true` → envia pergunta SIM/NÃO. SIM: aguarda texto → salva em `suggestion_text` e envia mensagem final. NÃO: envia mensagem curta e marca saída.
-  - Roteamento por handles: `received`, `positive`, `neutral`, `negative`, `suggestion`.
+Reformular `WAHandoffNode` (node visual) e a seção handoff em `WANodeConfigDrawer`:
 
-### 2.2 `wa-flow-inactivity` (handler embutido no runner)
-- Para cada execução `active`/`waiting` cujo `last_user_message_at + inactivity_timeout_seconds < now()` e `inactivity_processed_at IS NULL` e o fluxo tem reset habilitado:
-  - Envia `inactivity_message` (se houver).
-  - Aplica a ação:
-    - `restart`: marca execução `abandoned`, dispara nova execução do nó de entrada.
-    - `goto_node`: avança para `inactivity_target_node_id`.
-    - `end`: marca `abandoned` (libera novo trigger).
-    - `main_menu`: procura primeiro nó de menu/botões e vai para lá; fallback `restart`.
-  - Marca `inactivity_processed_at`.
+**Painel lateral (Drawer):**
+- Tipo de distribuição: `Colaborador específico` | `Distribuição automática (round-robin)`
+- Se específico → Select 1 colaborador
+- Se automática → Multi-select de colaboradores + indicador "online agora"
+- Mensagem antes da transferência (textarea + suporte a variáveis)
+- Mensagem após a transferência
+- Tempo máximo de espera (min)
+- **Seção "Quando ninguém estiver disponível":**
+  - Mensagem personalizada
+  - Checkboxes de ações: encerrar, manter em fila, reencaminhar ao ficar online, direcionar para outro fluxo (select), criar tarefa no CRM, notificar gestores (multi-select)
 
----
+## 4. Runner (Edge Function `wa-flow-runner`)
 
-## 3. Frontend
+No node `handoff`:
+1. Carregar `member_availability` para os membros configurados.
+2. Filtrar elegíveis: status `online` + dentro do horário/dia configurado.
+3. Se nenhum elegível → executar **contingência** (mensagem, fila, redirect, CRM task, notify).
+4. Se distribuição específica → atribuir direto se elegível, senão contingência.
+5. Se round-robin → escolher quem recebeu menos atendimentos recentemente (consulta `handoff_assignments` por `account_owner_id` ordenando por `MAX(assigned_at)` asc). Empates → ordem alfabética.
+6. Enviar pre_message → atribuir conversa (gravar `assigned_member_id` em `chat_conversations` + criar `handoff_assignments`) → enviar post_message.
+7. Silenciar o agente IA da conversa (já existe esse comportamento no handoff atual; preservar).
+8. Logar tudo em `handoff_audit_log`.
 
-### 3.1 Toolbar / catálogo de cards
-- `src/components/wa-flow/WANodeToolbar.tsx`: adicionar entrada **Avaliação** (ícone Star da lucide) na categoria Atendimento.
+### Reencaminhamento automático
+Novo cron job (`pg_cron`) a cada 1 min chamando edge function `handoff-reassign-watcher`:
+- Busca `handoff_assignments` com `status=queued` e `auto_reassign_when_online=true`
+- Se algum membro elegível ficou online → atribui e envia post_message
+- Respeita `max_wait_seconds` (expira → executa próxima ação de contingência)
 
-### 3.2 Novo nó visual
-- `src/components/wa-flow/nodes/WARatingNode.tsx`: segue o padrão dos outros nodes (cabeçalho com ícone, resumo do tipo selecionado, handles de saída `received`/`positive`/`neutral`/`negative`/`suggestion`).
-- Registrar em `WhatsAppFlowEditor.tsx` (nodeTypes + mapping de criação) e nos helpers de paleta.
+## 5. Detalhes técnicos
 
-### 3.3 Configuração do nó
-- `WANodeConfigDrawer.tsx`: nova seção quando `node_type === 'rating'`:
-  - Nome da avaliação (input)
-  - Mensagem (textarea)
-  - Tipo de avaliação (select: botões, menu, numérica, estrelas, livre)
-  - Campos condicionais:
-    - Botões: até 3 opções (label + valor + bucket positive/neutral/negative)
-    - Menu: até 10 opções (mesma estrutura)
-    - Numérica: nota mínima / máxima, limiares positive_min / negative_max
-    - Estrelas: máximo 3/5/10
-    - Livre: nada extra
-  - Toggle "Solicitar sugestão após avaliação" + textos personalizáveis
-  - Preview da mensagem que será enviada
+- Round-robin "justo": query `SELECT member_id, MAX(assigned_at) FROM handoff_assignments WHERE node_id=? AND account_owner_id=? GROUP BY member_id` — quem nunca recebeu (NULL) ganha prioridade, depois o mais antigo.
+- Disponibilidade considera `timezone` do owner para comparar `now()` com `work_start/end`.
+- Auditoria com `event_type`: `transfer`, `assignment`, `no_agents`, `requeued`, `expired`, `reassigned`, `closed`.
+- RLS: somente owner da conta (via `account_owner_id`) lê handoff_assignments/audit; cada membro vê a própria availability + owner vê todas da conta.
+- Compatível com o builder visual atual (sem mudar formato dos nodes/edges).
 
-### 3.4 Configurações gerais do fluxo
-- `WhatsAppFlowEditor.tsx` → painel de Configurações (já existente para test mode):
-  - Adicionar seção **Reset por inatividade** com toggle, select de tempo (presets + Personalizado), select de ação, seletor de nó alvo (quando `goto_node`), textarea de mensagem opcional.
-- Persistir nas novas colunas de `wa_automation_flows`.
+## 6. Arquivos a criar/editar
 
-### 3.5 Dashboard de resultados (estrutura inicial)
-- Em `FlowResultsDialog.tsx`, adicionar aba **Avaliações** com:
-  - Total de avaliações, média, NPS, contagens positiva/neutra/negativa, total de sugestões.
-  - Lista paginada das últimas avaliações (contato, nota, sugestão, data).
-- Dados via query a `wa_flow_ratings` filtrando pelo `flow_id`.
+**Criar:**
+- migration: tabelas + cron
+- `src/hooks/useMemberAvailability.ts`
+- `src/components/users/MemberAvailabilityCard.tsx`
+- `supabase/functions/handoff-reassign-watcher/index.ts`
 
----
+**Editar:**
+- `src/components/wa-flow/nodes/WAHandoffNode.tsx` — exibir tipo de distribuição
+- `src/components/wa-flow/WANodeConfigDrawer.tsx` — nova UI completa do handoff
+- `supabase/functions/wa-flow-runner/index.ts` — lógica de distribuição + contingência + auditoria
+- `src/pages/Users.tsx` ou `src/components/users/MemberDetailDialog.tsx` — incluir aba de disponibilidade
 
-## 4. Estrutura de `config` do nó rating
+## 7. Fora do escopo desta entrega
 
-```json
-{
-  "name": "Pesquisa de Satisfação",
-  "message": "Como você avalia nosso atendimento?",
-  "type": "numeric",          // buttons | menu | numeric | stars | free
-  "options": [                 // buttons/menu
-    { "label": "Ruim", "value": "1", "bucket": "negative" }
-  ],
-  "numeric": { "min": 0, "max": 10, "positive_min": 9, "negative_max": 6 },
-  "stars":   { "max": 5, "positive_min": 4, "negative_max": 2 },
-  "ask_suggestion": true,
-  "suggestion_prompt": "Você possui alguma sugestão...",
-  "suggestion_thanks": "Obrigado pela sua contribuição..."
-}
-```
+- Dashboard analítico próprio de handoff (os dados ficam prontos para futuras telas; uma tela simples de auditoria pode vir em iteração seguinte).
+- Integração com IA para sugerir o melhor operador (a estrutura fica preparada).
 
----
-
-## 5. Arquivos previstos
-
-- Migration nova (enum + tabela + colunas + cron).
-- `supabase/functions/wa-flow-runner/index.ts` — handler `rating` + sweep de inatividade + update de `last_user_message_at`.
-- `src/components/wa-flow/WANodeToolbar.tsx`
-- `src/components/wa-flow/WANodeConfigDrawer.tsx`
-- `src/components/wa-flow/nodes/WARatingNode.tsx` (novo)
-- `src/pages/WhatsAppFlowEditor.tsx` (registrar tipo + painel de configurações de inatividade)
-- `src/components/wa-flow/FlowResultsDialog.tsx` (aba avaliações)
-- `src/integrations/supabase/types.ts` (regenerado após migration)
-
----
-
-## 6. Pontos de confirmação
-
-1. **Buckets default** (numeric): positivo ≥ 80% da nota máxima, neutro entre 50–79%, negativo < 50%? Posso usar isso como padrão e deixar editável.
-2. **Reset por inatividade — granularidade do timer**: cron rodando a cada 1 min é suficiente (margem ±60s)?
-3. **Dashboard de avaliações**: incluir já nesta entrega como aba dentro do `FlowResultsDialog`, ou apenas deixar a tabela pronta e construir dashboard depois?
-
-Posso seguir com os defaults acima se preferir não bloquear.
+Confirme para eu executar — ou diga o que ajustar.

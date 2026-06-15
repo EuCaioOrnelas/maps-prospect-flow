@@ -14,6 +14,7 @@ import {
 import { ROLE_LABEL } from "@/lib/accountPermissions";
 import type { AccountMember } from "@/hooks/useAccountMembers";
 import { downloadCsv, fmtDuration, rangeToDates, toDateInputValue, type UserMonitoringRange } from "@/lib/userMonitoring";
+import { MemberAvailabilityCard } from "@/components/users/MemberAvailabilityCard";
 
 interface Props {
   member: AccountMember | null;
@@ -94,8 +95,9 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <Tabs defaultValue="info" className="mt-2">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="info">Perfil</TabsTrigger>
+            <TabsTrigger value="availability">Disponibilidade</TabsTrigger>
             <TabsTrigger value="time">Tempo de uso</TabsTrigger>
             <TabsTrigger value="ops">Operacional</TabsTrigger>
           </TabsList>
@@ -123,6 +125,10 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
                 value={member.must_change_password ? "Pendente" : "OK"}
               />
             </div>
+          </TabsContent>
+
+          <TabsContent value="availability" className="space-y-4 mt-4">
+            <MemberAvailabilityCard userId={member.user_id} title={`Disponibilidade de ${member.name || member.email}`} />
           </TabsContent>
 
           <TabsContent value="time" className="space-y-4 mt-4">
