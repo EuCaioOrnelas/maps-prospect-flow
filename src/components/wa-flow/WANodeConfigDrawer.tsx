@@ -2305,7 +2305,7 @@ function RatingNodeConfig({ config, updateConfig, renderInfoBanner }: { config: 
   );
 }
 
-
+interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   node: Node;
