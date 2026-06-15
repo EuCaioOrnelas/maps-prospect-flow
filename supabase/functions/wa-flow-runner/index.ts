@@ -1463,8 +1463,7 @@ async function runInactivitySweep(supabase: any): Promise<number> {
       .eq("flow_id", flow.id)
       .in("status", ["active", "waiting", "paused"])
       .is("inactivity_processed_at", null)
-      .not("last_user_message_at", "is", null)
-      .lte("last_user_message_at", threshold)
+      .or(`last_user_message_at.lte.${threshold},and(last_user_message_at.is.null,started_at.lte.${threshold})`)
       .limit(50);
 
     if (!execs || execs.length === 0) continue;
