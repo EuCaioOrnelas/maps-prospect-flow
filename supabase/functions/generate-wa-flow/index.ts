@@ -198,6 +198,16 @@ const FLOW_NODE_CONFIG_PROPERTIES: Record<string, any> = {
   body_html: { type: "boolean" },
   cc: { type: "array", items: { type: "string" } },
   bcc: { type: "array", items: { type: "string" } },
+  // Rating
+  name: { type: "string", description: "Rótulo curto da avaliação (ex: CSAT pós-atendimento)" },
+  message: { type: "string", description: "Texto enviado ao lead pedindo a avaliação" },
+  type: { type: "string", enum: ["buttons", "menu", "numeric", "stars", "free"], description: "Formato da coleta de avaliação" },
+  options: { type: "array", items: { type: "string" }, description: "Opções para type=buttons (até 3) ou menu (até 10)" },
+  numeric: { type: "object", properties: { min: { type: "number" }, max: { type: "number" }, positive_min: { type: "number" }, negative_max: { type: "number" } } },
+  stars: { type: "object", properties: { max: { type: "number" }, positive_min: { type: "number" }, negative_max: { type: "number" } } },
+  ask_suggestion: { type: "boolean" },
+  suggestion_prompt: { type: "string" },
+  suggestion_thanks: { type: "string" },
 };
 
 const FLOW_TOOL = {
