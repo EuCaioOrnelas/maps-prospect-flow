@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppHeader } from "@/components/layout/AppHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Bot, Loader2, Sparkles } from "lucide-react";
 import { useCreateWorkforce } from "@/hooks/useAIWorkforce";
 import { toast } from "sonner";
+import { WorkforcePageLayout } from "@/components/ai-workforce/WorkforcePageLayout";
 
 const PRESETS = [
   { name: "SDR IA", role: "Qualificador de leads B2B", description: "Qualifica leads e agenda reunião com SDR humano." },
@@ -27,30 +27,23 @@ export default function AIWorkforceCreator() {
   const [description, setDescription] = useState("");
 
   function applyPreset(p: typeof PRESETS[number]) {
-    setName(p.name);
-    setRole(p.role);
-    setDescription(p.description);
+    setName(p.name); setRole(p.role); setDescription(p.description);
   }
 
   async function submit() {
-    if (!name.trim()) {
-      toast.error("Dê um nome ao colaborador.");
-      return;
-    }
+    if (!name.trim()) { toast.error("Dê um nome ao colaborador."); return; }
     try {
       const w = await create.mutateAsync({ name: name.trim(), role: role.trim(), description: description.trim() });
       toast.success("Colaborador criado!");
       navigate(`/ai-workforce/colaboradores/${w.id}`);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erro ao criar";
-      toast.error(msg);
+      toast.error(e instanceof Error ? e.message : "Erro ao criar");
     }
   }
 
   return (
-    <div className="min-h-screen">
-      <AppHeader />
-      <main className="max-w-4xl mx-auto px-6 py-8">
+    <WorkforcePageLayout>
+      <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-2 text-xs font-medium text-primary uppercase tracking-wider">
           <Sparkles className="size-3.5" /> Novo colaborador
         </div>
@@ -67,9 +60,7 @@ export default function AIWorkforceCreator() {
               className="text-left rounded-xl border bg-card hover:border-primary/60 p-4 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <div className="rounded-md p-1.5 bg-primary/10 text-primary">
-                  <Bot className="size-4" />
-                </div>
+                <div className="rounded-md p-1.5 bg-primary/10 text-primary"><Bot className="size-4" /></div>
                 <p className="font-medium">{p.name}</p>
               </div>
               <p className="text-xs text-muted-foreground mt-2">{p.description}</p>
@@ -89,12 +80,7 @@ export default function AIWorkforceCreator() {
             </div>
             <div>
               <Label>Descrição</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                placeholder="O que esse colaborador faz?"
-              />
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="O que esse colaborador faz?" />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => navigate("/ai-workforce")}>Cancelar</Button>
@@ -105,7 +91,7 @@ export default function AIWorkforceCreator() {
             </div>
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </WorkforcePageLayout>
   );
 }

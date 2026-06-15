@@ -2,13 +2,13 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppHeader } from "@/components/layout/AppHeader";
 import { Bot, Bot as BotIcon, Plus, Target, TrendingUp, Users, Activity, Sparkles } from "lucide-react";
 import { useWorkforceList } from "@/hooks/useAIWorkforce";
+import { WorkforcePageLayout } from "@/components/ai-workforce/WorkforcePageLayout";
 
 function Kpi({ icon: Icon, label, value, hint }: { icon: typeof BotIcon; label: string; value: string; hint?: string }) {
   return (
-    <Card className="bg-card/60 backdrop-blur-sm border-border/60">
+    <Card className="bg-card/60 border-border/60">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
@@ -25,10 +25,9 @@ export default function AIWorkforceDashboard() {
   const { data: workers = [], isLoading } = useWorkforceList();
 
   return (
-    <div className="min-h-screen">
-      <AppHeader />
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        <div className="flex items-start justify-between">
+    <WorkforcePageLayout>
+      <div className="space-y-8">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-2 text-xs font-medium text-primary uppercase tracking-wider">
               <Sparkles className="size-3.5" /> Novo
@@ -108,7 +107,7 @@ export default function AIWorkforceDashboard() {
             </div>
           )}
         </section>
-      </main>
-    </div>
+      </div>
+    </WorkforcePageLayout>
   );
 }
