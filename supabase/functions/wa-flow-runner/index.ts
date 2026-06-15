@@ -1004,21 +1004,61 @@ async function runFlow(
       }
 
       case "handoff": {
-        if (config.handoff_message) {
-          await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
-            type: "text", content: interpolate(config.handoff_message, ctx.variables),
-          }, config);
-        }
+        const result = await executeHandoff(supabase, {
+          flow, node, config, ctx, execution,
+          userId: body.user_id, leadPhone: body.lead_phone, leadName: body.lead_name,
+        });
         ctx.hasFreshUserInput = false;
-        // Move to human support stage if configured
         if (config.handoff_stage) {
           await executeActions(supabase, body.user_id, body.lead_phone, {
             actions: [{ type: "move_kanban", stage_name: config.handoff_stage }],
           });
         }
+        if (config.crm_stage_id) {
+          await executeActions(supabase, body.user_id, body.lead_phone, {
+            actions: [{ type: "move_kanban", pipeline_stage_id: config.crm_stage_id }],
+          });
+        }
+        if (result.shouldEnd) {
+          await supabase.from("wa_flow_executions").update({
+            status: "completed",
+            current_node_id: node.id,
+            current_node_name: node.name,
+            exit_node_name: node.name,
+            completed_at: new Date().toISOString(),
+            collected_data: ctx.variables,
+            node_history: history,
+          }).eq("id", execution.id);
+          return;
+        }
+        if (result.redirectFlowId) {
+          // Direcionar para outro fluxo: simplesmente encerra esta execução.
+          await supabase.from("wa_flow_executions").update({
+            status: "completed",
+            current_node_id: node.id,
+            current_node_name: node.name,
+            exit_node_name: `${node.name} → redirect`,
+            completed_at: new Date().toISOString(),
+            collected_data: ctx.variables,
+            node_history: history,
+          }).eq("id", execution.id);
+          return;
+        }
+        if (result.queued) {
+          // Espera na fila — pausa execução até reassign-watcher tomar o controle.
+          await supabase.from("wa_flow_executions").update({
+            status: "waiting",
+            current_node_id: node.id,
+            current_node_name: node.name,
+            collected_data: ctx.variables,
+            node_history: history,
+          }).eq("id", execution.id);
+          return;
+        }
         currentNodeId = getDefaultTarget(bySource, node.id);
         break;
       }
+
 
       case "end": {
         if (config.end_message) {
