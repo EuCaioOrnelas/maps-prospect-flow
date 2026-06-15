@@ -470,6 +470,19 @@ async function sendViaMeta(
   } else if (payload.type === "audio") {
     body.type = "audio";
     body.audio = { link: (payload as any).mediaUrl };
+  } else if (payload.type === "image" || payload.type === "video") {
+    body.type = payload.type;
+    body[payload.type] = {
+      link: (payload as any).mediaUrl,
+      ...((payload as any).caption ? { caption: (payload as any).caption } : {}),
+    };
+  } else if (payload.type === "document") {
+    body.type = "document";
+    body.document = {
+      link: (payload as any).mediaUrl,
+      ...((payload as any).caption ? { caption: (payload as any).caption } : {}),
+      ...((payload as any).filename ? { filename: (payload as any).filename } : {}),
+    };
   } else {
     body.type = payload.type;
     body[payload.type] = {
