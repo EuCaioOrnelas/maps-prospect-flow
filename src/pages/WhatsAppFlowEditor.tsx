@@ -68,6 +68,11 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { WAFlowTestDialog } from "@/components/wa-flow/WAFlowTestDialog";
 import { FlowResultsDialog } from "@/components/wa-flow/FlowResultsDialog";
+import { RoutedEdge } from "@/components/wa-flow/edges/RoutedEdge";
+
+const edgeTypes = {
+  routed: RoutedEdge,
+};
 
 const normalizeStoredHandle = (value?: string | null) => {
   if (!value) return null;
