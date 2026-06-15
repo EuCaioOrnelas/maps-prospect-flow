@@ -429,9 +429,12 @@ export default function WhatsAppFlowEditor() {
 
   const handleAddNode = useCallback(
     (type: string) => {
+      // Position new node near the most recent one, with a slight offset, so it's always close
+      // to the user's current focus on the canvas (avoids the perception that the card "didn't appear").
       const lastNode = nodes.length > 0 ? nodes[nodes.length - 1] : null;
-      const newX = lastNode ? lastNode.position.x + 280 : 100;
-      const newY = lastNode ? lastNode.position.y : 200;
+      const offsetIndex = nodes.filter((n) => n.type === type).length;
+      const newX = lastNode ? lastNode.position.x + 260 : 100;
+      const newY = lastNode ? lastNode.position.y + (offsetIndex % 3) * 30 : 200;
 
       const nameMap: Record<string, string> = {
         entry: "Entrada", message: "Mensagem", buttons: "Botões",
@@ -471,10 +474,11 @@ export default function WhatsAppFlowEditor() {
           suggestion_thanks: "Obrigado pela sua contribuição. Sua sugestão foi registrada com sucesso.",
           no_suggestion_message: "Obrigado pelo seu feedback. Sua avaliação foi registrada.",
         },
+        message: { after_send: "continue" },
       };
 
       const newNode: Node = {
-        id: `temp-${Date.now()}`,
+        id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         type,
         position: { x: newX, y: newY },
         data: { label: nameMap[type] || type, config: defaultConfigs[type] || {} },
@@ -482,7 +486,8 @@ export default function WhatsAppFlowEditor() {
 
       const newNodes = [...nodes, newNode];
       setNodes(newNodes);
-      pushHistory(newNodes, edges);
+      // Defer history snapshot to next frame so the canvas paints the new node first.
+      requestAnimationFrame(() => pushHistory(newNodes, edges));
       setHasChanges(true);
     },
     [nodes, edges, setNodes, pushHistory]
@@ -611,6 +616,11 @@ export default function WhatsAppFlowEditor() {
 
   const saveFlow = useMutation({
     mutationFn: async () => {
+      // Require at least one "Encerramento" (end) node so every flow has a clear finalization path.
+      const hasEnd = nodes.some((n) => n.type === "end");
+      if (!hasEnd) {
+        throw new Error("MISSING_END");
+      }
       // Extract entry node config for flow-level metadata
       const entryNode = nodes.find((n) => n.type === "entry");
       const entryCfg = entryNode ? (entryNode.data as any).config || {} : {};
@@ -665,7 +675,13 @@ export default function WhatsAppFlowEditor() {
       toast.success("Fluxo salvo com sucesso!");
       setHasChanges(false);
     },
-    onError: () => toast.error("Erro ao salvar fluxo"),
+    onError: (err: any) => {
+      if (err?.message === "MISSING_END") {
+        toast.error("Adicione um bloco de Encerramento antes de salvar o fluxo.");
+      } else {
+        toast.error("Erro ao salvar fluxo");
+      }
+    },
   });
 
   // Close context menu on outside click

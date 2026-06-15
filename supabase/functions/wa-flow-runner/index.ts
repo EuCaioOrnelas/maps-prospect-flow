@@ -191,6 +191,7 @@ type SendPayload =
   | {
       type: "buttons";
       header?: string;
+      headerImageUrl?: string;
       body?: string;
       footer?: string;
       buttons: Array<{ id: string; title: string }>;
@@ -429,10 +430,15 @@ async function sendViaMeta(
     body.type = "text";
     body.text = { body: payload.content || "" };
   } else if (payload.type === "buttons") {
+    const headerObj = payload.headerImageUrl
+      ? { header: { type: "image", image: { link: payload.headerImageUrl } } }
+      : payload.header
+        ? { header: { type: "text", text: payload.header.slice(0, 60) } }
+        : {};
     body.type = "interactive";
     body.interactive = {
       type: "button",
-      ...(payload.header ? { header: { type: "text", text: payload.header.slice(0, 60) } } : {}),
+      ...headerObj,
       body: { text: (payload.body || "Escolha uma opção:").slice(0, 1024) },
       ...(payload.footer ? { footer: { text: payload.footer.slice(0, 60) } } : {}),
       action: {
@@ -704,6 +710,12 @@ async function runFlow(
       }
 
       case "message": {
+        // If this node was paused waiting for response and user replied, advance now (don't re-send).
+        if ((config.after_send || "continue") === "wait" && ctx.hasFreshUserInput) {
+          ctx.hasFreshUserInput = false;
+          currentNodeId = getDefaultTarget(bySource, node.id);
+          break;
+        }
         // New schema: config.contents = [{type, content, media_url, caption, media_filename, delay_min, delay_max}, ...]
         // Legacy: config.items = [...] or single { message_type, content, media_url, caption, filename }
         const pending = ctx.variables?.__pending_message__;
@@ -763,7 +775,13 @@ async function runFlow(
         if (currentNodeId === null) break; // paused for delay
         if (ctx.variables) delete ctx.variables.__pending_message__;
         ctx.hasFreshUserInput = false;
-        currentNodeId = getDefaultTarget(bySource, node.id);
+        // after_send: "wait" → pause for user input; "continue" (default) → advance.
+        if ((config.after_send || "continue") === "wait") {
+          pausedNodeId = node.id;
+          currentNodeId = null;
+        } else {
+          currentNodeId = getDefaultTarget(bySource, node.id);
+        }
         break;
       }
 
@@ -800,6 +818,7 @@ async function runFlow(
             await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
               type: "buttons",
               header: headerText,
+              headerImageUrl: config.header_image_url || undefined,
               body: bodyText,
               footer: footerText,
               buttons: normalizedChoices.slice(0, 3),
@@ -1444,8 +1463,7 @@ async function runInactivitySweep(supabase: any): Promise<number> {
       .eq("flow_id", flow.id)
       .in("status", ["active", "waiting", "paused"])
       .is("inactivity_processed_at", null)
-      .not("last_user_message_at", "is", null)
-      .lte("last_user_message_at", threshold)
+      .or(`last_user_message_at.lte.${threshold},and(last_user_message_at.is.null,started_at.lte.${threshold})`)
       .limit(50);
 
     if (!execs || execs.length === 0) continue;

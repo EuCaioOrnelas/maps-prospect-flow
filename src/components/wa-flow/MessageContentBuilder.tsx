@@ -10,8 +10,9 @@ import { cn } from "@/lib/utils";
 import {
   MessageSquare, Image, FileAudio, Video, FileText,
   X, Upload, Trash2, Play, Pause, Square, Mic,
-  Clock, Shuffle,
+  Clock, Shuffle, ArrowRight, HelpCircle,
 } from "lucide-react";
+import { cn as cn2 } from "@/lib/utils";
 
 // ===== CONTENT TYPES (3x2 grid) =====
 const CONTENT_TYPES = [
@@ -754,6 +755,39 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
           </div>
         </div>
       )}
+
+      {/* After send behavior */}
+      <div className="space-y-2 pt-1">
+        <Label className="text-xs font-medium text-muted-foreground">Após enviar</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { value: "continue", icon: ArrowRight, label: "Avançar", desc: "Vai ao próximo card" },
+            { value: "wait", icon: HelpCircle, label: "Esperar resposta", desc: "Pausa até o lead responder" },
+          ].map((opt) => {
+            const current = config.after_send || "continue";
+            const active = current === opt.value;
+            const Icon = opt.icon;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => updateConfig("after_send", opt.value)}
+                className={cn(
+                  "p-2.5 rounded-lg border text-left transition-colors flex items-start gap-2",
+                  active ? "border-primary/40 bg-primary/10" : "border-border/40 bg-muted/20 hover:border-border"
+                )}
+              >
+                <Icon size={14} className={active ? "text-primary mt-0.5" : "text-muted-foreground mt-0.5"} />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium text-foreground">{opt.label}</p>
+                  <p className="text-[9px] text-muted-foreground leading-tight">{opt.desc}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[10px] text-muted-foreground/60">Padrão: avançar direto após enviar a mensagem.</p>
+      </div>
     </div>
   );
 }
