@@ -701,24 +701,64 @@ async function runFlow(
       }
 
       case "message": {
-        const messageType = config.message_type || "text";
-        const items = Array.isArray(config.items) && config.items.length > 0
+        // New schema: config.contents = [{type, content, media_url, caption, media_filename, delay_min, delay_max}, ...]
+        // Legacy: config.items = [...] or single { message_type, content, media_url, caption, filename }
+        const rawItems: any[] = Array.isArray(config.contents) && config.contents.length > 0
+          ? config.contents
+          : Array.isArray(config.items) && config.items.length > 0
           ? config.items
-          : [{ type: messageType, content: config.content, media_url: config.media_url, caption: config.caption, filename: config.filename }];
+          : [{
+              type: config.message_type || "text",
+              content: config.content,
+              media_url: config.media_url,
+              caption: config.caption,
+              media_filename: config.filename,
+            }];
 
-        for (const it of items) {
+        for (const it of rawItems) {
+          const itemType = it.type || "text";
+
+          // Handle delay separator items: pause inline for short delays (<= 5s)
+          // or persist a wait_until and resume via cron for longer delays.
+          if (itemType === "delay") {
+            const minS = Number(it.delay_min ?? it.delay_seconds ?? 0);
+            const maxS = Number(it.delay_max ?? it.delay_seconds ?? minS);
+            const lo = Math.max(0, Math.min(minS, maxS));
+            const hi = Math.max(lo, Math.max(minS, maxS));
+            const seconds = lo === hi ? lo : (lo + Math.floor(Math.random() * (hi - lo + 1)));
+            if (seconds <= 0) continue;
+            if (seconds <= 5) {
+              await new Promise((r) => setTimeout(r, seconds * 1000));
+            } else {
+              // Persist remaining items so the cron resume re-enters this same message node
+              // and continues from where we stopped. We store the remaining contents on the
+              // execution variables under __pending_message__ and pause.
+              const remaining = rawItems.slice(rawItems.indexOf(it) + 1);
+              ctx.variables.__pending_message__ = { nodeId: node.id, items: remaining };
+              waitUntil = new Date(Date.now() + seconds * 1000).toISOString();
+              pausedNodeId = node.id;
+              currentNodeId = null;
+              console.log(`[wa-flow-runner] Message delay ${seconds}s scheduled for ${waitUntil}`);
+              break;
+            }
+            continue;
+          }
+
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
-            type: it.type || "text",
+            type: itemType,
             content: interpolate(it.content || "", ctx.variables),
             mediaUrl: it.media_url || it.url,
             caption: interpolate(it.caption || "", ctx.variables),
-            filename: it.filename,
+            filename: it.media_filename || it.filename,
           }, config);
         }
+
+        if (currentNodeId === null) break; // paused for delay
         ctx.hasFreshUserInput = false;
         currentNodeId = getDefaultTarget(bySource, node.id);
         break;
       }
+
 
       case "buttons": {
         // Send native interactive buttons (Meta) or interactive list (Meta) — Evolution maps to sendButtons/sendList.
