@@ -600,16 +600,15 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
         }
         case "send_to_crm": {
           const updates: Record<string, any> = {};
-          if (action.crm_name) updates.name = String(action.crm_name);
+          if (action.crm_name) updates.contact_name = String(action.crm_name);
           if (action.crm_email) updates.email = String(action.crm_email);
-          if (action.crm_company) updates.company = String(action.crm_company);
-          if (action.crm_notes) updates.notes = String(action.crm_notes);
+          if (action.crm_company) updates.company_name = String(action.crm_company);
           if (action.crm_stage_id) updates.pipeline_stage_id = action.crm_stage_id;
-          // FIX BUG-06: aplica crm_value como deal_value se for número.
+          // FIX BUG-06: aplica crm_value como estimated_value se for número.
           if (action.crm_value !== undefined && action.crm_value !== "") {
             const cleaned = String(action.crm_value).replace(/[^\d.,-]/g, "").replace(",", ".");
             const num = parseFloat(cleaned);
-            if (!isNaN(num)) updates.deal_value = num;
+            if (!isNaN(num)) updates.estimated_value = num;
           }
           if (Object.keys(updates).length > 0) {
             await supabase.from("leads").update(updates).eq("id", lead.id);
