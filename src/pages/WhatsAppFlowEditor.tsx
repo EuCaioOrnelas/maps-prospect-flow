@@ -852,7 +852,7 @@ export default function WhatsAppFlowEditor() {
         <Button
           size="sm"
           onClick={() => saveFlow.mutate()}
-          disabled={saveFlow.isPending || !hasChanges}
+          disabled={saveFlow.isPending}
           className={cn(
             "gap-1.5 rounded-full transition-all",
             hasChanges && "shadow-md shadow-primary/20"
