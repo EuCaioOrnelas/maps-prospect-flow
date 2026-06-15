@@ -569,9 +569,11 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "bin";
-      const path = `${user.id}/${folder}/${Date.now()}.${ext}`;
+      const path = `${user.id}/${folder}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage.from("wa-flow-media").upload(path, file, {
-        cacheControl: "3600", upsert: false,
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type || undefined,
       });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("wa-flow-media").getPublicUrl(path);
@@ -585,7 +587,8 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
   };
 
   const handleAudioRecorded = async (blob: Blob): Promise<string | null> => {
-    const file = new File([blob], `gravacao-${Date.now()}.webm`, { type: "audio/webm" });
+    const ext = blob.type.includes("ogg") ? "ogg" : blob.type.includes("mp4") ? "m4a" : "webm";
+    const file = new File([blob], `gravacao-${Date.now()}.${ext}`, { type: blob.type || "audio/webm" });
     return await uploadFile(file, "audio");
   };
 
