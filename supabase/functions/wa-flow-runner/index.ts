@@ -1452,6 +1452,32 @@ async function runFlow(
             ? agent.ai_model
             : "gpt-4o-mini";
 
+          // FIX BUG-09: inclui últimas mensagens da conversa como histórico.
+          const history: any[] = [];
+          try {
+            const { data: convo } = await supabase
+              .from("chat_conversations")
+              .select("id")
+              .eq("user_id", body.user_id)
+              .eq("contact_phone", body.lead_phone)
+              .maybeSingle();
+            if (convo?.id) {
+              const { data: msgs } = await supabase
+                .from("chat_messages")
+                .select("direction, content, created_at")
+                .eq("conversation_id", convo.id)
+                .order("created_at", { ascending: false })
+                .limit(10);
+              (msgs || []).reverse().forEach((m: any) => {
+                if (!m.content) return;
+                history.push({
+                  role: m.direction === "outbound" ? "assistant" : "user",
+                  content: String(m.content).slice(0, 1000),
+                });
+              });
+            }
+          } catch (e) { console.error("[wa-flow-runner] ai history error:", e); }
+
           const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -1462,6 +1488,7 @@ async function runFlow(
               model: openaiModel,
               messages: [
                 { role: "system", content: interpolate(sysFinal, ctx.variables) },
+                ...history,
                 { role: "user", content: userMessage },
               ],
               max_tokens: Math.min(1000, Math.ceil(maxChars / 2) + 200),
