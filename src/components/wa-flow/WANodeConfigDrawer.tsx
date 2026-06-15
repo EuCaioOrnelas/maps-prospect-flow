@@ -2634,6 +2634,46 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     <p className="text-[10px] text-muted-foreground">Título exibido acima dos botões/menu no WhatsApp. Aparece em destaque.</p>
                   </div>
 
+                  <div className="space-y-2">
+                    <Label className="text-xs">Imagem no topo (opcional)</Label>
+                    {config.header_image_url ? (
+                      <div className="relative rounded-lg overflow-hidden border border-border/40 bg-muted/20">
+                        <img src={config.header_image_url} alt="Cabeçalho" className="w-full max-h-36 object-contain" />
+                        <button
+                          type="button"
+                          onClick={() => updateConfig("header_image_url", "")}
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center gap-1.5 p-4 rounded-lg border-2 border-dashed border-border/40 bg-muted/10 hover:border-border cursor-pointer transition-colors">
+                        <Upload size={14} className="text-muted-foreground" />
+                        <span className="text-[10px] text-muted-foreground">Enviar imagem (máx 5MB)</span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file || !user) return;
+                            if (file.size > 5 * 1024 * 1024) { toast.error("Máximo 5MB"); return; }
+                            const ext = file.name.split(".").pop() || "jpg";
+                            const path = `${user.id}/buttons-header/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+                            const { error } = await supabase.storage.from("wa-flow-media").upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+                            if (error) { toast.error("Erro ao enviar"); return; }
+                            const { data: u } = supabase.storage.from("wa-flow-media").getPublicUrl(path);
+                            updateConfig("header_image_url", u.publicUrl);
+                            if (e.target) e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    )}
+                    <p className="text-[10px] text-muted-foreground">Disponível somente na API Oficial (Meta). Substitui o título de texto quando ativada.</p>
+                  </div>
+
+
               {/* Reply buttons */}
               {(config.interaction_type || "reply_buttons") === "reply_buttons" && (
                 <div className="space-y-2">
