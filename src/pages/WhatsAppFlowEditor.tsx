@@ -640,16 +640,19 @@ export default function WhatsAppFlowEditor() {
       const entryNode = nodes.find((n) => n.type === "entry");
       const entryCfg = entryNode ? (entryNode.data as any).config || {} : {};
 
-      await supabase.from("wa_automation_flows").update({
+      const { error: flowErr } = await supabase.from("wa_automation_flows").update({
         name: flowName,
         api_type: entryCfg.api_type || "evolution",
         whatsapp_number_id: entryCfg.whatsapp_number_id || null,
         waba_connection_id: entryCfg.waba_connection_id || null,
         phone_number_id: entryCfg.phone_number_id || null,
       } as any).eq("id", id!);
+      if (flowErr) throw flowErr;
 
-      await supabase.from("wa_flow_edges").delete().eq("flow_id", id!);
-      await supabase.from("wa_flow_nodes").delete().eq("flow_id", id!);
+      const { error: delEdgesErr } = await supabase.from("wa_flow_edges").delete().eq("flow_id", id!);
+      if (delEdgesErr) throw delEdgesErr;
+      const { error: delNodesErr } = await supabase.from("wa_flow_nodes").delete().eq("flow_id", id!);
+      if (delNodesErr) throw delNodesErr;
 
       const nodeIdMap: Record<string, string> = {};
       for (const node of nodes) {
@@ -670,31 +673,48 @@ export default function WhatsAppFlowEditor() {
       }
 
       if (edges.length > 0) {
-        const edgesToInsert = edges.map((e) => ({
-          flow_id: id!,
-          source_node_id: nodeIdMap[e.source] || e.source,
-          target_node_id: nodeIdMap[e.target] || e.target,
-          source_handle: e.sourceHandle || null,
-          target_handle: e.targetHandle || null,
-          label: typeof e.label === "string" ? e.label : null,
-        }));
-        const { error } = await supabase.from("wa_flow_edges").insert(edgesToInsert);
-        if (error) throw error;
+        const edgesToInsert = edges
+          .filter((e) => nodeIdMap[e.source] && nodeIdMap[e.target])
+          .map((e) => ({
+            flow_id: id!,
+            source_node_id: nodeIdMap[e.source],
+            target_node_id: nodeIdMap[e.target],
+            source_handle: e.sourceHandle || null,
+            target_handle: e.targetHandle || null,
+            label: typeof e.label === "string" ? e.label : null,
+          }));
+        if (edgesToInsert.length > 0) {
+          const { error } = await supabase.from("wa_flow_edges").insert(edgesToInsert);
+          if (error) throw error;
+        }
       }
 
-      // Note: do NOT invalidate node/edge queries here — the local state is the
-      // source of truth in the editor; refetching would wipe unsaved work and
-      // remap node IDs, causing the canvas to "reload" unexpectedly.
+      return nodeIdMap;
     },
-    onSuccess: () => {
+    onSuccess: (nodeIdMap) => {
+      // Sync local in-memory IDs with newly-persisted DB UUIDs so subsequent
+      // saves/operations stay consistent and don't drift from the database.
+      if (nodeIdMap) {
+        setNodes((curr) =>
+          curr.map((n) => (nodeIdMap[n.id] ? { ...n, id: nodeIdMap[n.id] } : n))
+        );
+        setEdges((curr) =>
+          curr.map((e) => ({
+            ...e,
+            source: nodeIdMap[e.source] || e.source,
+            target: nodeIdMap[e.target] || e.target,
+          }))
+        );
+      }
       toast.success("Fluxo salvo com sucesso!");
       setHasChanges(false);
     },
     onError: (err: any) => {
+      console.error("[saveFlow] error", err);
       if (err?.message === "MISSING_END") {
         toast.error("Adicione um bloco de Encerramento antes de salvar o fluxo.");
       } else {
-        toast.error("Erro ao salvar fluxo");
+        toast.error(`Erro ao salvar fluxo: ${err?.message || "erro desconhecido"}`);
       }
     },
   });
@@ -832,7 +852,7 @@ export default function WhatsAppFlowEditor() {
         <Button
           size="sm"
           onClick={() => saveFlow.mutate()}
-          disabled={saveFlow.isPending || !hasChanges}
+          disabled={saveFlow.isPending}
           className={cn(
             "gap-1.5 rounded-full transition-all",
             hasChanges && "shadow-md shadow-primary/20"
