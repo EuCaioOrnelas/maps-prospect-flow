@@ -576,6 +576,25 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       </Link>
                     </li>
                     )}
+                    {can("agents") && (
+                    <li>
+                      <Link
+                        to="/ai-workforce"
+                        className={cn(
+                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
+                          currentPath.startsWith("/ai-workforce")
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Bot size={20} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">AI Workforce</span>
+                        <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider rounded px-1.5 py-0.5 bg-primary/15 text-primary">
+                          Novo
+                        </span>
+                      </Link>
+                    </li>
+                    )}
                     {can("warming") && (
                     <li data-tour="sidebar-automacao-aquecimento">
                       <Link

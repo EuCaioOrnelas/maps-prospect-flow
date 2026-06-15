@@ -1,113 +1,192 @@
-# Distribuição Inteligente de Atendimentos
+# Plano: AI Workforce (Digital Workers)
 
-Vou evoluir o card **Transferir para Humano** do construtor de fluxos para um sistema completo de distribuição, com disponibilidade por colaborador, fila justa (round-robin), contingência e auditoria.
+Refatoração do módulo de Agentes de IA da Wiize, transformando-o numa plataforma de colaboradores digitais orientados a objetivos com construtor visual de comportamento.
 
-## 1. Banco de Dados (Lovable Cloud)
+---
 
-### Nova tabela `member_availability`
-Disponibilidade por colaborador da conta:
-- member_id (FK account_members)
-- account_owner_id
-- status: `online` | `away` | `offline`
-- work_days: array de dias (0–6)
-- work_start, work_end (time)
-- timezone
-- updated_at
+## 1. Estratégia de Migração (Legado)
 
-### Nova tabela `handoff_assignments`
-Histórico/estado de cada transferência executada por um card de handoff:
-- execution_id (FK wa_flow_executions)
-- flow_id, node_id, account_owner_id
-- assigned_member_id (nullable enquanto em fila)
-- team_member_ids (array dos elegíveis configurados no card)
-- distribution_type: `specific` | `round_robin`
-- status: `assigned` | `queued` | `reassigned` | `closed` | `failed`
-- queued_at, assigned_at, first_response_at, closed_at
-- attempts (jsonb com tentativas e falhas)
-- contingency_action (quando entra em fila)
+- O sistema atual de Agentes IA permanece **100% funcional**, apenas movido para um sub-menu.
+- Novo item de menu principal: **"AI Workforce"** (novo produto).
+- Item secundário: **"Versão Clássica"** dentro do menu AI Workforce, apontando para todas as páginas atuais (`AdminIAAgentes`, edição de agente, `ai_agents`, `agent_templates`, etc.).
+- Banner discreto na Versão Clássica: "Esta é a versão anterior. Migre para AI Workforce para acessar os novos recursos."
+- Nenhuma tabela atual é removida ou alterada. Nenhuma edge function existente é tocada.
 
-### Nova tabela `handoff_audit_log`
-Eventos detalhados (transferência, falhas, reatribuições, períodos sem operadores, tempo em fila).
+---
 
-### Ajuste em `wa_flow_nodes`
-Os campos novos vão no `config` JSONB do nó handoff (sem migração de coluna):
-- distribution_type, member_ids[], specific_member_id
-- pre_message, post_message
-- max_wait_seconds
-- no_agents_actions[] (lista ordenada: send_message, keep_in_queue, auto_reassign_when_online, redirect_flow, end, create_crm_task, notify_managers)
-- no_agents_message, redirect_flow_id
-- notify_manager_ids[]
+## 2. Arquitetura de Banco (novas tabelas)
 
-Todas as tabelas terão GRANTs + RLS (owner + service_role).
+Todas com RLS por `account_id`/`user_id`, GRANTs corretos, timestamps.
 
-## 2. UI — Configuração de Disponibilidade
+```text
+ai_workforce                 — colaboradores digitais (1 row = 1 worker)
+ai_workforce_canvas          — nós e edges do construtor visual (JSONB)
+ai_workforce_goals           — objetivos (principal + secundários)
+ai_workforce_rules           — regras com prioridade
+ai_workforce_knowledge       — fontes de conhecimento (pdf, site, faq)
+ai_workforce_tools           — ferramentas habilitadas + permissões
+ai_workforce_data_schema     — campos obrigatórios de coleta
+ai_workforce_decisions       — árvore de decisão (JSONB)
+ai_workforce_executions      — execução ativa por conversa/lead
+ai_workforce_execution_logs  — log do ciclo Analisar→Avaliar
+ai_workforce_outcomes        — resumo final + análise da conversa
+ai_workforce_templates       — marketplace (público + privado)
+```
 
-Nova aba em **/usuarios** (ou no perfil do colaborador) chamada **Disponibilidade**:
-- Toggle status: Online / Ausente / Offline
-- Seletor de dias da semana
-- Horário início/fim
-- Cada colaborador edita o próprio; o dono da conta pode editar de todos
+`ai_workforce.config` em JSONB consolida nome, persona, modelo, temperatura, canal, idioma — para evitar 30 colunas.
 
-Hook `useMemberAvailability` para leitura/escrita.
+A integração com o construtor de fluxos existente (`wa_automation_flows`) é feita via novo tipo de nó `ai_workforce` em `wa_flow_nodes.data.kind`, sem migração de schema.
 
-## 3. UI — Card "Transferir para Humano"
+---
 
-Reformular `WAHandoffNode` (node visual) e a seção handoff em `WANodeConfigDrawer`:
+## 3. Estrutura de Pastas Frontend
 
-**Painel lateral (Drawer):**
-- Tipo de distribuição: `Colaborador específico` | `Distribuição automática (round-robin)`
-- Se específico → Select 1 colaborador
-- Se automática → Multi-select de colaboradores + indicador "online agora"
-- Mensagem antes da transferência (textarea + suporte a variáveis)
-- Mensagem após a transferência
-- Tempo máximo de espera (min)
-- **Seção "Quando ninguém estiver disponível":**
-  - Mensagem personalizada
-  - Checkboxes de ações: encerrar, manter em fila, reencaminhar ao ficar online, direcionar para outro fluxo (select), criar tarefa no CRM, notificar gestores (multi-select)
+```text
+src/pages/ai-workforce/
+  AIWorkforceDashboard.tsx          (dashboard principal)
+  AIWorkforceList.tsx               (lista de colaboradores)
+  AIWorkforceBuilder.tsx            (canvas visual)
+  AIWorkforceCreator.tsx            (assistente IA cria-tudo)
+  AIWorkforceMarketplace.tsx        (placeholder + estrutura)
+  AIWorkforceLegacy.tsx             (redirect/wrapper p/ páginas atuais)
 
-## 4. Runner (Edge Function `wa-flow-runner`)
+src/components/ai-workforce/
+  canvas/
+    WorkforceCanvas.tsx             (ReactFlow infinito)
+    nodes/
+      CoreNode.tsx                  (núcleo — card central obrigatório)
+      GoalNode.tsx
+      MemoryNode.tsx
+      KnowledgeNode.tsx
+      CRMDataNode.tsx
+      DataCollectionNode.tsx
+      RulesNode.tsx
+      DecisionNode.tsx
+      ToolsNode.tsx
+      ActionsNode.tsx
+      EscalationNode.tsx
+      AnalysisNode.tsx
+    edges/RoutedEdge.tsx            (reaproveita o já existente)
+    NodePalette.tsx                 (sidebar de cards arrastáveis)
+    NodeConfigDrawer.tsx            (config lateral por card)
+  dashboard/
+    WorkforceKPIs.tsx
+    GoalsCompletedChart.tsx
+    PerformanceByWorker.tsx
+    FunnelChart.tsx
+    FiltersBar.tsx
+  shared/
+    WorkerCard.tsx
+    WorkerStatusBadge.tsx
+```
 
-No node `handoff`:
-1. Carregar `member_availability` para os membros configurados.
-2. Filtrar elegíveis: status `online` + dentro do horário/dia configurado.
-3. Se nenhum elegível → executar **contingência** (mensagem, fila, redirect, CRM task, notify).
-4. Se distribuição específica → atribuir direto se elegível, senão contingência.
-5. Se round-robin → escolher quem recebeu menos atendimentos recentemente (consulta `handoff_assignments` por `account_owner_id` ordenando por `MAX(assigned_at)` asc). Empates → ordem alfabética.
-6. Enviar pre_message → atribuir conversa (gravar `assigned_member_id` em `chat_conversations` + criar `handoff_assignments`) → enviar post_message.
-7. Silenciar o agente IA da conversa (já existe esse comportamento no handoff atual; preservar).
-8. Logar tudo em `handoff_audit_log`.
+---
 
-### Reencaminhamento automático
-Novo cron job (`pg_cron`) a cada 1 min chamando edge function `handoff-reassign-watcher`:
-- Busca `handoff_assignments` com `status=queued` e `auto_reassign_when_online=true`
-- Se algum membro elegível ficou online → atribui e envia post_message
-- Respeita `max_wait_seconds` (expira → executa próxima ação de contingência)
+## 4. Núcleo de Execução por Objetivos
 
-## 5. Detalhes técnicos
+Edge function nova: `ai-workforce-runner`.
 
-- Round-robin "justo": query `SELECT member_id, MAX(assigned_at) FROM handoff_assignments WHERE node_id=? AND account_owner_id=? GROUP BY member_id` — quem nunca recebeu (NULL) ganha prioridade, depois o mais antigo.
-- Disponibilidade considera `timezone` do owner para comparar `now()` com `work_start/end`.
-- Auditoria com `event_type`: `transfer`, `assignment`, `no_agents`, `requeued`, `expired`, `reassigned`, `closed`.
-- RLS: somente owner da conta (via `account_owner_id`) lê handoff_assignments/audit; cada membro vê a própria availability + owner vê todas da conta.
-- Compatível com o builder visual atual (sem mudar formato dos nodes/edges).
+Ciclo (loop bounded `stepCountIs(50)`):
 
-## 6. Arquivos a criar/editar
+```text
+1. Carrega contexto (lead, histórico, memória)
+2. Verifica estado do objetivo (campos coletados vs schema)
+3. Identifica lacunas
+4. Gera estratégia (LLM com tools)
+5. Executa: responder | chamar tool | escalar | concluir
+6. Persiste execution_log + atualiza ai_workforce_executions
+7. Avalia critérios de sucesso/falha
+8. Se incompleto → próxima mensagem; se completo → outcome + evento
+```
 
-**Criar:**
-- migration: tabelas + cron
-- `src/hooks/useMemberAvailability.ts`
-- `src/components/users/MemberAvailabilityCard.tsx`
-- `supabase/functions/handoff-reassign-watcher/index.ts`
+Modelo padrão `google/gemini-3-flash-preview` via Lovable AI Gateway. Tools registradas dinamicamente conforme `ai_workforce_tools` habilitadas (CRM, agenda, WhatsApp, webhooks, etc).
 
-**Editar:**
-- `src/components/wa-flow/nodes/WAHandoffNode.tsx` — exibir tipo de distribuição
-- `src/components/wa-flow/WANodeConfigDrawer.tsx` — nova UI completa do handoff
-- `supabase/functions/wa-flow-runner/index.ts` — lógica de distribuição + contingência + auditoria
-- `src/pages/Users.tsx` ou `src/components/users/MemberDetailDialog.tsx` — incluir aba de disponibilidade
+---
 
-## 7. Fora do escopo desta entrega
+## 5. Construtor Visual
 
-- Dashboard analítico próprio de handoff (os dados ficam prontos para futuras telas; uma tela simples de auditoria pode vir em iteração seguinte).
-- Integração com IA para sugerir o melhor operador (a estrutura fica preparada).
+- Baseado em **ReactFlow** (já usado em `wa-flow`).
+- Canvas infinito, pan/zoom, minimap.
+- Card central **Core** (não removível, único).
+- Cards orbitais conectáveis ao Core e entre si.
+- Cada nó tem handles tipados (entrada/saída) e drawer de configuração.
+- Salvamento idêntico ao padrão recém-implementado em `WhatsAppFlowEditor` (mapa de IDs, sync de UUIDs no `onSuccess`).
+- Botão "Criar com IA" abre o **AIWorkforceCreator** (wizard de 4 perguntas que chama edge function `ai-workforce-generator` e devolve o grafo completo pronto para o canvas).
 
-Confirme para eu executar — ou diga o que ajustar.
+---
+
+## 6. Dashboard
+
+KPIs no topo + 4 gráficos (Recharts):
+- Objetivos concluídos por período (linha)
+- Performance por colaborador (barras)
+- Funil de conclusão (funnel)
+- Conversões/abandono (donut)
+
+Filtros: data, canal, fluxo, equipe, colaborador. Persistidos em querystring.
+
+---
+
+## 7. Integração com Fluxos Existentes
+
+Novo nó no editor de fluxos do WhatsApp (`WhatsAppFlowEditor`):
+- Tipo: `ai_workforce`
+- Config: seletor de colaborador, modo de espera, timeout.
+- Saídas: `success`, `failure`, `transferred`, `no_response`, `partial`.
+- Runtime do fluxo invoca `ai-workforce-runner` e aguarda evento.
+
+---
+
+## 8. Marketplace (estrutura preparada, UI mínima nesta entrega)
+
+- Tabela `ai_workforce_templates` com `visibility` (public/private/account).
+- Página placeholder com grid + filtros + botão "Instalar" (clonará para `ai_workforce` da conta).
+- Seeds iniciais: SDR SaaS, SDR Imobiliário, Suporte Clínicas, Cobrança, Pós-venda.
+
+---
+
+## 9. Entregas em Fases
+
+**Fase 1 — Fundação (esta entrega)**
+- Migrations das tabelas novas + RLS + GRANTs.
+- Menu reorganizado, página Legado funcional.
+- Dashboard AI Workforce com KPIs mockados conectando às novas tabelas.
+- Lista de colaboradores + criação básica.
+- Canvas visual funcional com **todos os 11 cards** (UI + config drawer), salvamento.
+- Edge function `ai-workforce-runner` (esqueleto com ciclo de objetivos, 1 canal: WhatsApp).
+- Wizard "Criar com IA" gerando grafo base.
+- Nó `ai_workforce` no editor de fluxos.
+
+**Fase 2 — Profundidade (entregas seguintes, sob demanda)**
+- Marketplace público.
+- Memória vetorial + indexação de conhecimento (pgvector).
+- Tools avançadas (Google Calendar, webhooks customizados).
+- Métricas finas de tokens/custo por execução.
+- A/B de personas.
+
+---
+
+## 10. Decisões Técnicas
+
+- Modelo IA: `google/gemini-3-flash-preview` (default, conforme memory).
+- Auth: Custom Supabase Auth existente (não tocar em `lovable/index.ts`).
+- UI: tokens semânticos Tailwind, popups com `bg-black/70` sólido (sem blur), padrão fintech premium.
+- Nenhuma alteração em tabelas existentes (`ai_agents`, `agent_templates`, etc.).
+- B2B only, gating por plano: AI Workforce exige plano com SDR IA (mesma regra do agente atual).
+
+---
+
+## 11. Riscos e Mitigações
+
+| Risco | Mitigação |
+|---|---|
+| Custo de tokens explodir | Limite de ciclos por execução + alertas no dashboard |
+| Loop infinito de objetivo | `max_attempts` por goal + `stepCountIs(50)` |
+| Confusão entre Legacy e novo | Banner claro + ambos no menu, sem deprecação forçada |
+| Schema grande para AI SDK Output | Schemas compactos, sem enums dinâmicos |
+
+---
+
+## Confirmação
+
+Esta Fase 1 é uma entrega grande (≈30 arquivos novos, 4 migrations, 2 edge functions). Posso prosseguir com tudo de uma vez, ou prefere que eu quebre em sub-entregas (ex.: primeiro Legado+menu+dashboard, depois canvas, depois runner)?

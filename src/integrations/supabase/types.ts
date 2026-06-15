@@ -504,6 +504,525 @@ export type Database = {
           },
         ]
       }
+      ai_workforce: {
+        Row: {
+          avatar_url: string | null
+          channel: string
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          language: string
+          model: string
+          name: string
+          persona: string | null
+          role: string | null
+          status: string
+          temperature: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          channel?: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          language?: string
+          model?: string
+          name: string
+          persona?: string | null
+          role?: string | null
+          status?: string
+          temperature?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          channel?: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          language?: string
+          model?: string
+          name?: string
+          persona?: string | null
+          role?: string | null
+          status?: string
+          temperature?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_workforce_canvas: {
+        Row: {
+          edges: Json
+          id: string
+          nodes: Json
+          updated_at: string
+          viewport: Json
+          workforce_id: string
+        }
+        Insert: {
+          edges?: Json
+          id?: string
+          nodes?: Json
+          updated_at?: string
+          viewport?: Json
+          workforce_id: string
+        }
+        Update: {
+          edges?: Json
+          id?: string
+          nodes?: Json
+          updated_at?: string
+          viewport?: Json
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_canvas_workforce_id_fkey"
+            columns: ["workforce_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_data_schema: {
+        Row: {
+          field_key: string
+          field_label: string
+          field_type: string
+          id: string
+          order_index: number
+          required: boolean
+          validation: Json
+          workforce_id: string
+        }
+        Insert: {
+          field_key: string
+          field_label: string
+          field_type?: string
+          id?: string
+          order_index?: number
+          required?: boolean
+          validation?: Json
+          workforce_id: string
+        }
+        Update: {
+          field_key?: string
+          field_label?: string
+          field_type?: string
+          id?: string
+          order_index?: number
+          required?: boolean
+          validation?: Json
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_data_schema_workforce_id_fkey"
+            columns: ["workforce_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_decisions: {
+        Row: {
+          id: string
+          tree: Json
+          updated_at: string
+          workforce_id: string
+        }
+        Insert: {
+          id?: string
+          tree?: Json
+          updated_at?: string
+          workforce_id: string
+        }
+        Update: {
+          id?: string
+          tree?: Json
+          updated_at?: string
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_decisions_workforce_id_fkey"
+            columns: ["workforce_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_execution_logs: {
+        Row: {
+          cost_estimate: number | null
+          created_at: string
+          execution_id: string
+          id: string
+          payload: Json
+          phase: string
+          step: number
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          cost_estimate?: number | null
+          created_at?: string
+          execution_id: string
+          id?: string
+          payload?: Json
+          phase: string
+          step?: number
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          cost_estimate?: number | null
+          created_at?: string
+          execution_id?: string
+          id?: string
+          payload?: Json
+          phase?: string
+          step?: number
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_execution_logs_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_executions: {
+        Row: {
+          attempts: number
+          channel: string
+          collected_data: Json
+          completion_reason: string | null
+          conversation_id: string | null
+          finished_at: string | null
+          goal_state: Json
+          id: string
+          lead_id: string | null
+          started_at: string
+          status: string
+          user_id: string
+          workforce_id: string
+        }
+        Insert: {
+          attempts?: number
+          channel?: string
+          collected_data?: Json
+          completion_reason?: string | null
+          conversation_id?: string | null
+          finished_at?: string | null
+          goal_state?: Json
+          id?: string
+          lead_id?: string | null
+          started_at?: string
+          status?: string
+          user_id: string
+          workforce_id: string
+        }
+        Update: {
+          attempts?: number
+          channel?: string
+          collected_data?: Json
+          completion_reason?: string | null
+          conversation_id?: string | null
+          finished_at?: string | null
+          goal_state?: Json
+          id?: string
+          lead_id?: string | null
+          started_at?: string
+          status?: string
+          user_id?: string
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_executions_workforce_id_fkey"
+            columns: ["workforce_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_goals: {
+        Row: {
+          created_at: string
+          description: string | null
+          failure_criteria: Json
+          id: string
+          is_primary: boolean
+          max_attempts: number
+          order_index: number
+          success_criteria: Json
+          title: string
+          workforce_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          failure_criteria?: Json
+          id?: string
+          is_primary?: boolean
+          max_attempts?: number
+          order_index?: number
+          success_criteria?: Json
+          title: string
+          workforce_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          failure_criteria?: Json
+          id?: string
+          is_primary?: boolean
+          max_attempts?: number
+          order_index?: number
+          success_criteria?: Json
+          title?: string
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_goals_workforce_id_fkey"
+            columns: ["workforce_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_knowledge: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          indexed: boolean
+          metadata: Json
+          source_type: string
+          source_url: string | null
+          title: string
+          workforce_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          indexed?: boolean
+          metadata?: Json
+          source_type: string
+          source_url?: string | null
+          title: string
+          workforce_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          indexed?: boolean
+          metadata?: Json
+          source_type?: string
+          source_url?: string | null
+          title?: string
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_knowledge_workforce_id_fkey"
+            columns: ["workforce_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_outcomes: {
+        Row: {
+          collected_data: Json
+          created_at: string
+          execution_id: string
+          id: string
+          interest_level: string | null
+          lead_score: number | null
+          next_action: string | null
+          outcome: string
+          summary: string | null
+          user_id: string
+          workforce_id: string
+        }
+        Insert: {
+          collected_data?: Json
+          created_at?: string
+          execution_id: string
+          id?: string
+          interest_level?: string | null
+          lead_score?: number | null
+          next_action?: string | null
+          outcome: string
+          summary?: string | null
+          user_id: string
+          workforce_id: string
+        }
+        Update: {
+          collected_data?: Json
+          created_at?: string
+          execution_id?: string
+          id?: string
+          interest_level?: string | null
+          lead_score?: number | null
+          next_action?: string | null
+          outcome?: string
+          summary?: string | null
+          user_id?: string
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_outcomes_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce_executions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_workforce_outcomes_workforce_id_fkey"
+            columns: ["workforce_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          priority: number
+          rule: string
+          workforce_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          priority?: number
+          rule: string
+          workforce_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          priority?: number
+          rule?: string
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_rules_workforce_id_fkey"
+            columns: ["workforce_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_templates: {
+        Row: {
+          blueprint: Json
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          install_count: number
+          name: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          blueprint?: Json
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          install_count?: number
+          name: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          blueprint?: Json
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          install_count?: number
+          name?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
+      ai_workforce_tools: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          permissions: Json
+          tool_key: string
+          workforce_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          permissions?: Json
+          tool_key: string
+          workforce_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          permissions?: Json
+          tool_key?: string
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_tools_workforce_id_fkey"
+            columns: ["workforce_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
           content: string
