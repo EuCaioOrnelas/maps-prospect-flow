@@ -588,10 +588,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <Bot size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">AI Workforce</span>
-                        <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider rounded px-1.5 py-0.5 bg-primary/15 text-primary">
-                          Novo
-                        </span>
+                        <span className="whitespace-nowrap truncate text-sm">AI Workforce</span>
                       </Link>
                     </li>
                     )}
