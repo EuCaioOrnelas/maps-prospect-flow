@@ -1257,10 +1257,22 @@ async function runFlow(
       case "ab_test": {
         const variants: any[] = config.variants || [];
         if (variants.length === 0) { currentNodeId = null; break; }
-        const total = variants.reduce((s, v) => s + (v.weight || 1), 0);
+        // FIX BUG-07: use ?? para respeitar weight=0 (oculta variante) e fallback só para undefined.
+        const weights = variants.map((v) => (typeof v.weight === "number" ? v.weight : 1));
+        const total = weights.reduce((s, w) => s + w, 0);
+        if (total <= 0) { currentNodeId = null; break; }
         let r = Math.random() * total;
         let chosen = variants[0];
-        for (const v of variants) { r -= (v.weight || 1); if (r <= 0) { chosen = v; break; } }
+        for (let i = 0; i < variants.length; i++) {
+          r -= weights[i];
+          if (r <= 0) { chosen = variants[i]; break; }
+        }
+        // Registra métrica de A/B test selecionado
+        try {
+          await supabase.from("wa_flow_executions")
+            .update({ collected_data: { ...ctx.variables, [`__ab_${node.id}`]: chosen.id || chosen.label } })
+            .eq("id", execution.id);
+        } catch { /* ignore */ }
         currentNodeId = getTargetByHandle(bySource, node.id, chosen.id);
         break;
       }
