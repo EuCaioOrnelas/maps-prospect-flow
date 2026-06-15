@@ -769,7 +769,13 @@ async function runFlow(
         if (currentNodeId === null) break; // paused for delay
         if (ctx.variables) delete ctx.variables.__pending_message__;
         ctx.hasFreshUserInput = false;
-        currentNodeId = getDefaultTarget(bySource, node.id);
+        // after_send: "wait" → pause for user input; "continue" (default) → advance.
+        if ((config.after_send || "continue") === "wait") {
+          pausedNodeId = node.id;
+          currentNodeId = null;
+        } else {
+          currentNodeId = getDefaultTarget(bySource, node.id);
+        }
         break;
       }
 
