@@ -284,7 +284,7 @@ function ContentItemEditor({
   item, onUpdate, onRemove, uploading, onUpload, onAudioRecorded,
 }: {
   item: ContentItem;
-  onUpdate: (key: string, value: any) => void;
+  onUpdate: (key: string | Partial<ContentItem>, value?: any) => void;
   onRemove: () => void;
   uploading: boolean;
   onUpload: (file: File, type: string) => Promise<string | null>;
@@ -335,7 +335,7 @@ function ContentItemEditor({
                 <div className="relative rounded-lg overflow-hidden border border-border/40 bg-muted/20">
                   <img src={item.media_url} alt="Preview" className="w-full max-h-40 object-contain" />
                   <button
-                    onClick={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }}
+                    onClick={() => onUpdate({ media_url: "", media_filename: "" })}
                     className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
                   >
                     <X size={12} />
@@ -355,7 +355,7 @@ function ContentItemEditor({
                 label="Arraste ou clique para enviar"
                 onFileSelected={async (f) => {
                   const url = await onUpload(f, "image");
-                  if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                  if (url) onUpdate({ media_url: url, media_filename: f.name });
                 }}
                 uploading={uploading}
               />
@@ -367,12 +367,12 @@ function ContentItemEditor({
         {item.type === "audio" && (
           <>
             {item.media_url ? (
-              <CustomAudioPlayer src={item.media_url} onRemove={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }} />
+              <CustomAudioPlayer src={item.media_url} onRemove={() => onUpdate({ media_url: "", media_filename: "" })} />
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 <AudioRecorder onRecorded={async (blob) => {
                   const url = await onAudioRecorded(blob);
-                  if (url) { onUpdate("media_url", url); onUpdate("media_filename", `gravacao-${Date.now()}.webm`); }
+                  if (url) onUpdate({ media_url: url, media_filename: `gravacao-${Date.now()}.webm` });
                 }} />
                 <MediaDropZone
                   accept="audio/ogg,audio/mpeg,audio/mp4,audio/webm,audio/wav"
@@ -380,7 +380,7 @@ function ContentItemEditor({
                   label="Enviar arquivo"
                   onFileSelected={async (f) => {
                     const url = await onUpload(f, "audio");
-                    if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                    if (url) onUpdate({ media_url: url, media_filename: f.name });
                   }}
                   uploading={uploading}
                 />
@@ -397,7 +397,7 @@ function ContentItemEditor({
                 <div className="relative rounded-lg overflow-hidden border border-border/40 bg-muted/20">
                   <video src={item.media_url} controls className="w-full max-h-40" />
                   <button
-                    onClick={() => { onUpdate("media_url", ""); onUpdate("media_filename", ""); }}
+                    onClick={() => onUpdate({ media_url: "", media_filename: "" })}
                     className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
                   >
                     <X size={12} />
@@ -422,7 +422,7 @@ function ContentItemEditor({
                     URL.revokeObjectURL(video.src);
                     if (video.duration > 120) { toast.error("Máximo 2 minutos"); return; }
                     const url = await onUpload(f, "video");
-                    if (url) { onUpdate("media_url", url); onUpdate("media_filename", f.name); }
+                    if (url) onUpdate({ media_url: url, media_filename: f.name });
                   };
                   video.src = URL.createObjectURL(f);
                 }}
