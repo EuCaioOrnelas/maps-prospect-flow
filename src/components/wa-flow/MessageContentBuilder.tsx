@@ -10,8 +10,9 @@ import { cn } from "@/lib/utils";
 import {
   MessageSquare, Image, FileAudio, Video, FileText,
   X, Upload, Trash2, Play, Pause, Square, Mic,
-  Clock, Shuffle,
+  Clock, Shuffle, ArrowRight, HelpCircle,
 } from "lucide-react";
+import { cn as cn2 } from "@/lib/utils";
 
 // ===== CONTENT TYPES (3x2 grid) =====
 const CONTENT_TYPES = [
