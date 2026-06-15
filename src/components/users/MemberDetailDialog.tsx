@@ -14,6 +14,7 @@ import {
 import { ROLE_LABEL } from "@/lib/accountPermissions";
 import type { AccountMember } from "@/hooks/useAccountMembers";
 import { downloadCsv, fmtDuration, rangeToDates, toDateInputValue, type UserMonitoringRange } from "@/lib/userMonitoring";
+import { MemberAvailabilityCard } from "@/components/users/MemberAvailabilityCard";
 
 interface Props {
   member: AccountMember | null;
