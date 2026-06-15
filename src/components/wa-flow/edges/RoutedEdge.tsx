@@ -1,13 +1,14 @@
-import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps } from "@xyflow/react";
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from "@xyflow/react";
 
 /**
- * Smart edge that routes around source/target nodes when the target is
- * positioned to the left or above the source (back-edges / loops).
- * Keeps the path clear of the cards so the flow direction is always visible.
+ * Bezier edge (default wavy style). Only self-loops (source === target)
+ * are routed around the card so the line never passes through itself.
  */
 export function RoutedEdge(props: EdgeProps) {
   const {
     id,
+    source,
+    target,
     sourceX,
     sourceY,
     targetX,
@@ -20,52 +21,30 @@ export function RoutedEdge(props: EdgeProps) {
     selected,
   } = props;
 
-  // Approx half-widths/heights of cards so we route around them, not through.
-  const HORIZONTAL_CLEARANCE = 160;
-  const VERTICAL_CLEARANCE = 60;
-
-  const dx = targetX - sourceX;
-  const dy = targetY - sourceY;
-  const isBackEdge = dx < -40 || dy < -120;
+  const isSelfLoop = source === target;
 
   let edgePath: string;
   let labelX: number;
   let labelY: number;
 
-  if (isBackEdge) {
-    // Exit source going right, drop/rise around both cards, enter target from left.
-    const rx = Math.max(sourceX, targetX) + HORIZONTAL_CLEARANCE;
-    const lx = Math.min(sourceX, targetX) - HORIZONTAL_CLEARANCE;
-    const midY =
-      dy < 0
-        ? Math.min(sourceY, targetY) - VERTICAL_CLEARANCE
-        : Math.max(sourceY, targetY) + VERTICAL_CLEARANCE;
-
-    const r = 12; // corner radius
-    edgePath = [
-      `M ${sourceX},${sourceY}`,
-      `L ${rx - r},${sourceY}`,
-      `Q ${rx},${sourceY} ${rx},${sourceY + (midY > sourceY ? r : -r)}`,
-      `L ${rx},${midY - (midY > sourceY ? r : -r)}`,
-      `Q ${rx},${midY} ${rx - r},${midY}`,
-      `L ${lx + r},${midY}`,
-      `Q ${lx},${midY} ${lx},${midY + (targetY > midY ? r : -r)}`,
-      `L ${lx},${targetY - (targetY > midY ? r : -r)}`,
-      `Q ${lx},${targetY} ${lx + r},${targetY}`,
-      `L ${targetX},${targetY}`,
-    ].join(" ");
-
-    labelX = (lx + rx) / 2;
-    labelY = midY;
+  if (isSelfLoop) {
+    // Route around the card: exit right, loop above, enter left.
+    const OFFSET_X = 80;
+    const OFFSET_Y = 60;
+    const rx = Math.max(sourceX, targetX) + OFFSET_X;
+    const lx = Math.min(sourceX, targetX) - OFFSET_X;
+    const topY = Math.min(sourceY, targetY) - OFFSET_Y;
+    edgePath = `M ${sourceX},${sourceY} C ${rx},${sourceY} ${rx},${topY} ${(rx + lx) / 2},${topY} C ${lx},${topY} ${lx},${targetY} ${targetX},${targetY}`;
+    labelX = (rx + lx) / 2;
+    labelY = topY;
   } else {
-    const [path, lx, ly] = getSmoothStepPath({
+    const [path, lx, ly] = getBezierPath({
       sourceX,
       sourceY,
       targetX,
       targetY,
       sourcePosition,
       targetPosition,
-      borderRadius: 10,
     });
     edgePath = path;
     labelX = lx;
