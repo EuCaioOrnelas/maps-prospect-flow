@@ -18,7 +18,7 @@ export function WARatingNode({ data }: NodeProps) {
   return (
     <div className="bg-card border border-border rounded-xl shadow-sm w-60 relative">
       <FlowHandle type="target" position={Position.Left} />
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
+      <div className="flex items-center gap-2.5 px-4 py-3">
         <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
           <Star size={16} className="text-amber-400" />
         </div>
