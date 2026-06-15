@@ -1494,6 +1494,7 @@ async function runFlow(
           const { error } = await supabase.functions.invoke("google-sheets-action", {
             body: {
               user_id: body.user_id,
+              google_account_id: config.google_account_id || null,
               spreadsheet_id: config.spreadsheet_id,
               sheet_name: config.sheet_name || "Dados",
               data: row,
@@ -1516,9 +1517,16 @@ async function runFlow(
             currentNodeId = getDefaultTarget(bySource, node.id);
             break;
           }
-          // Default to "next business hour" if no explicit start (editor doesn't expose one yet).
-          const start = new Date(Date.now() + 60 * 60 * 1000); // +1h
-          start.setMinutes(0, 0, 0);
+          // FIX BUG-03: respeita event_datetime (variável/literal) ou cai no próximo +1h.
+          const rawStart = interpolate(String(config.event_datetime || config.event_start || ""), ctx.variables).trim();
+          let start: Date;
+          if (rawStart) {
+            const parsed = new Date(rawStart);
+            start = isNaN(parsed.getTime()) ? new Date(Date.now() + 60 * 60 * 1000) : parsed;
+          } else {
+            start = new Date(Date.now() + 60 * 60 * 1000);
+            start.setMinutes(0, 0, 0);
+          }
 
           const attendeeRaw = interpolate(String(config.attendee_email || ""), ctx.variables);
           const attendee = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(attendeeRaw) ? attendeeRaw : undefined;
@@ -1526,11 +1534,14 @@ async function runFlow(
           const { error } = await supabase.functions.invoke("google-calendar-action", {
             body: {
               user_id: body.user_id,
+              google_account_id: config.google_account_id || null,
+              calendar_id: config.calendar_id || "primary",
               summary,
               description: interpolate(String(config.event_description || ""), ctx.variables),
               start_datetime: start.toISOString(),
               duration_minutes: Number(config.event_duration || 30),
               attendee_email: attendee,
+              reminder_minutes: Number(config.reminder_minutes || 30),
             },
           });
           if (error) console.error("[wa-flow-runner] google_calendar error:", error);
