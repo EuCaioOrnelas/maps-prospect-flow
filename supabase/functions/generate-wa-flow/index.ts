@@ -245,7 +245,7 @@ const FLOW_TOOL = {
             properties: {
               source: { type: "string" },
               target: { type: "string" },
-              source_handle: { type: "string", description: "btn_0, btn_1, item_0, yes, no, split_0, variant_0 ou null" },
+              source_handle: { type: "string", description: "btn_0, btn_1, item_0, yes, no, split_0, variant_0, received, positive, neutral, negative, suggestion ou null" },
               target_handle: { type: "string" },
             },
             required: ["source", "target"],
