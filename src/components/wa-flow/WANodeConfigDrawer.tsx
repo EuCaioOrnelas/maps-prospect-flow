@@ -2481,51 +2481,67 @@ function FlowButtonPicker({
   value,
   onChange,
   allNodes,
+  allEdges,
+  currentNodeId,
 }: {
   value: string;
   onChange: (v: string) => void;
   allNodes?: Node[];
+  allEdges?: Edge[];
+  currentNodeId?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 8;
 
+  // Compute upstream ancestor node ids of the current node (BFS over reversed edges)
+  const ancestorIds = (() => {
+    if (!currentNodeId || !allEdges?.length) return null;
+    const parents = new Map<string, string[]>();
+    for (const e of allEdges) {
+      const arr = parents.get(e.target) || [];
+      arr.push(e.source);
+      parents.set(e.target, arr);
+    }
+    const visited = new Set<string>();
+    const stack = [currentNodeId];
+    while (stack.length) {
+      const id = stack.pop()!;
+      for (const p of parents.get(id) || []) {
+        if (!visited.has(p)) {
+          visited.add(p);
+          stack.push(p);
+        }
+      }
+    }
+    return visited;
+  })();
+
   const options = (() => {
-    const out: { id: string; title: string; source: string; kind: string; emoji: string }[] = [];
+    const out: { id: string; title: string; source: string; kind: "button" | "list" }[] = [];
     for (const n of allNodes || []) {
+      if (n.type !== "buttons") continue;
+      if (ancestorIds && !ancestorIds.has(n.id)) continue; // only nodes before current
       const cfg = (n.data as any)?.config || {};
       const label = String((n.data as any)?.label || n.id);
-      if (n.type === "buttons") {
-        if ((cfg.interaction_type || "reply_buttons") === "reply_buttons") {
-          for (const b of cfg.buttons || []) {
-            const text = String(b?.text || b?.title || b?.label || b?.id || "").trim();
-            if (!text && !b?.id) continue;
-            out.push({
-              id: b.id || text,
-              title: text || String(b.id),
-              source: label,
-              kind: "Botão",
-              emoji: "🔘",
-            });
-          }
-        } else if (cfg.interaction_type === "list") {
-          for (const it of cfg.list_items || []) {
-            const text = String(it?.text || it?.title || it?.label || it?.id || "").trim();
-            if (!text && !it?.id) continue;
-            out.push({
-              id: it.id || text,
-              title: text || String(it.id),
-              source: label,
-              kind: "Item de lista",
-              emoji: "📋",
-            });
-          }
+      if ((cfg.interaction_type || "reply_buttons") === "reply_buttons") {
+        for (const b of cfg.buttons || []) {
+          const text = String(b?.text || b?.title || b?.label || b?.id || "").trim();
+          if (!text && !b?.id) continue;
+          out.push({ id: b.id || text, title: text || String(b.id), source: label, kind: "button" });
+        }
+      } else if (cfg.interaction_type === "list") {
+        for (const it of cfg.list_items || []) {
+          const text = String(it?.text || it?.title || it?.label || it?.id || "").trim();
+          if (!text && !it?.id) continue;
+          out.push({ id: it.id || text, title: text || String(it.id), source: label, kind: "list" });
         }
       }
     }
     return out;
   })();
+
 
   const filtered = options.filter(
     (o) =>
