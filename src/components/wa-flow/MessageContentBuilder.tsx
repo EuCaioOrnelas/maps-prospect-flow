@@ -588,8 +588,11 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
     setContents([...contents, newItem]);
   };
 
-  const updateItem = (id: string, key: string, value: any) => {
-    setContents(contents.map(c => c.id === id ? { ...c, [key]: value } : c));
+  const updateItem = (id: string, keyOrPatch: string | Partial<ContentItem>, value?: any) => {
+    setContents(contents.map(c => {
+      if (c.id !== id) return c;
+      return typeof keyOrPatch === "string" ? { ...c, [keyOrPatch]: value } : { ...c, ...keyOrPatch };
+    }));
   };
 
   const removeItem = (id: string) => {
