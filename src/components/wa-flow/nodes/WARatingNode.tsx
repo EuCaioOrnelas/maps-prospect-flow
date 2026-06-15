@@ -33,11 +33,6 @@ export function WARatingNode({ data }: NodeProps) {
         </div>
       </div>
 
-      {cfg.message && (
-        <div className="px-3 pt-2 pb-3">
-          <p className="text-[10px] text-foreground/70 line-clamp-2">{cfg.message}</p>
-        </div>
-      )}
 
       <FlowHandle type="source" position={Position.Right} />
     </div>
