@@ -10,7 +10,7 @@ const corsHeaders = {
 const VALID_NODE_TYPES = [
   "entry", "message", "buttons", "condition", "wait", "action",
   "ai_agent", "handoff", "end", "data_collect", "random_split",
-  "ab_test", "google_sheets", "google_calendar", "gmail",
+  "ab_test", "google_sheets", "google_calendar", "gmail", "rating",
 ] as const;
 
 const OPENAI_MODEL = "gpt-4o";
