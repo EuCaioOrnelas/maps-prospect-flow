@@ -733,7 +733,6 @@ async function runFlow(
         // Legacy: config.items = [...] or single { message_type, content, media_url, caption, filename }
         const pending = ctx.variables?.__pending_message__;
         const usePending = pending && pending.nodeId === node.id && Array.isArray(pending.items);
-        const shouldAdvanceImmediately = (config.after_send || "continue") !== "wait";
         const outgoingTarget = getDefaultTarget(bySource, node.id);
         const rawItems: any[] = usePending
           ? pending.items
