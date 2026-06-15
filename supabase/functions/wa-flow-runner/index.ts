@@ -632,7 +632,274 @@ async function executeActions(supabase: any, userId: string, leadPhone: string, 
   }
 }
 
-// ── Core executor ──
+// ── Handoff distribution ──
+
+async function resolveAccountOwner(supabase: any, userId: string): Promise<string> {
+  try {
+    const { data } = await supabase.rpc("get_account_owner", { _uid: userId });
+    return (data as string) || userId;
+  } catch {
+    return userId;
+  }
+}
+
+function memberIsAvailableNow(av: any): boolean {
+  if (!av || av.status !== "online") return false;
+  try {
+    const tz = av.timezone || "America/Sao_Paulo";
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz, weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false,
+    });
+    const parts = fmt.formatToParts(now);
+    const wd = parts.find((p) => p.type === "weekday")?.value || "";
+    const hh = parts.find((p) => p.type === "hour")?.value || "00";
+    const mm = parts.find((p) => p.type === "minute")?.value || "00";
+    const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const dow = map[wd] ?? new Date().getDay();
+    if (!Array.isArray(av.work_days) || !av.work_days.includes(dow)) return false;
+    const cur = parseInt(hh, 10) * 60 + parseInt(mm, 10);
+    const [sh, sm] = String(av.work_start || "08:00").split(":").map(Number);
+    const [eh, em] = String(av.work_end || "18:00").split(":").map(Number);
+    const start = sh * 60 + sm;
+    const end = eh * 60 + em;
+    return cur >= start && cur <= end;
+  } catch {
+    return av.status === "online";
+  }
+}
+
+async function pickRoundRobinMember(
+  supabase: any,
+  accountOwnerId: string,
+  nodeId: string,
+  eligibleIds: string[]
+): Promise<string | null> {
+  if (eligibleIds.length === 0) return null;
+  const { data } = await supabase
+    .from("handoff_assignments")
+    .select("assigned_member_id, assigned_at")
+    .eq("account_owner_id", accountOwnerId)
+    .eq("node_id", nodeId)
+    .in("assigned_member_id", eligibleIds)
+    .order("assigned_at", { ascending: false })
+    .limit(200);
+
+  const lastByMember = new Map<string, string>();
+  for (const row of data || []) {
+    if (!lastByMember.has(row.assigned_member_id)) {
+      lastByMember.set(row.assigned_member_id, row.assigned_at);
+    }
+  }
+  // Quem nunca foi atribuído vence; depois, o mais antigo.
+  const sorted = [...eligibleIds].sort((a, b) => {
+    const la = lastByMember.get(a);
+    const lb = lastByMember.get(b);
+    if (!la && lb) return -1;
+    if (la && !lb) return 1;
+    if (!la && !lb) return a.localeCompare(b);
+    return new Date(la!).getTime() - new Date(lb!).getTime();
+  });
+  return sorted[0] || null;
+}
+
+async function logHandoffAudit(supabase: any, payload: {
+  assignment_id?: string | null;
+  account_owner_id: string;
+  event_type: string;
+  member_id?: string | null;
+  data?: any;
+}) {
+  try {
+    await supabase.from("handoff_audit_log").insert({
+      assignment_id: payload.assignment_id || null,
+      account_owner_id: payload.account_owner_id,
+      event_type: payload.event_type,
+      member_id: payload.member_id || null,
+      payload: payload.data || {},
+    });
+  } catch (e) {
+    console.error("[handoff audit] error:", e);
+  }
+}
+
+async function executeHandoff(supabase: any, args: {
+  flow: any; node: any; config: any; ctx: any; execution: any;
+  userId: string; leadPhone: string; leadName?: string | null;
+}): Promise<{ shouldEnd: boolean; queued: boolean; redirectFlowId?: string | null }> {
+  const { flow, node, config, ctx, execution, userId, leadPhone } = args;
+  const accountOwnerId = await resolveAccountOwner(supabase, userId);
+  const distributionType = config.distribution_type || "specific";
+  const preMessage = config.pre_message || config.handoff_message || "";
+  const postMessage = config.post_message || "";
+  const maxWaitMin = Number(config.max_wait_minutes ?? 30);
+
+  // 1) Determinar candidatos
+  let candidateIds: string[] = [];
+  if (distributionType === "specific") {
+    if (config.specific_member_id) candidateIds = [config.specific_member_id];
+  } else {
+    candidateIds = Array.isArray(config.member_ids) ? config.member_ids : [];
+  }
+
+  // 2) Buscar disponibilidade dos candidatos
+  let eligibleIds: string[] = [];
+  if (candidateIds.length > 0) {
+    const { data: avs } = await supabase
+      .from("member_availability")
+      .select("*")
+      .in("user_id", candidateIds);
+    const byUser = new Map((avs || []).map((a: any) => [a.user_id, a]));
+    eligibleIds = candidateIds.filter((id) => memberIsAvailableNow(byUser.get(id)));
+  }
+
+  // 3) Sem disponíveis → contingência
+  if (eligibleIds.length === 0) {
+    const actions: string[] = config.no_agents_actions || ["send_message"];
+
+    // Cria registro de assignment em fila
+    const { data: assignment } = await supabase.from("handoff_assignments").insert({
+      execution_id: execution.id,
+      flow_id: flow.id,
+      node_id: node.id,
+      account_owner_id: accountOwnerId,
+      lead_phone: leadPhone,
+      team_member_ids: candidateIds,
+      distribution_type: distributionType,
+      status: "queued",
+      pre_message: preMessage,
+      post_message: postMessage,
+      no_agents_message: config.no_agents_message || null,
+      no_agents_actions: actions,
+      redirect_flow_id: config.redirect_flow_id || null,
+      max_wait_seconds: maxWaitMin > 0 ? maxWaitMin * 60 : null,
+      queued_at: new Date().toISOString(),
+      expires_at: maxWaitMin > 0 ? new Date(Date.now() + maxWaitMin * 60_000).toISOString() : null,
+    }).select("id").maybeSingle();
+
+    await logHandoffAudit(supabase, {
+      assignment_id: assignment?.id,
+      account_owner_id: accountOwnerId,
+      event_type: "no_agents_available",
+      data: { candidate_ids: candidateIds },
+    });
+
+    if (actions.includes("send_message") && config.no_agents_message) {
+      await sendMessage(supabase, flow, userId, leadPhone, {
+        type: "text", content: interpolate(config.no_agents_message, ctx.variables),
+      }, config);
+    }
+
+    if (actions.includes("create_crm_task")) {
+      try {
+        const { data: lead } = await supabase
+          .from("leads").select("id").eq("user_id", userId).eq("phone", leadPhone).maybeSingle();
+        if (lead?.id) {
+          await supabase.from("lead_activities").insert({
+            user_id: userId,
+            lead_id: lead.id,
+            type: "task",
+            description: `Lead aguardando atendimento humano (fluxo: ${flow.name})`,
+          });
+        }
+      } catch (e) { console.error("[handoff] crm task error:", e); }
+    }
+
+    if (actions.includes("notify_managers") && Array.isArray(config.notify_manager_ids)) {
+      // best-effort log; integração de email pode usar mesma estrutura de notify_team
+      await logHandoffAudit(supabase, {
+        assignment_id: assignment?.id,
+        account_owner_id: accountOwnerId,
+        event_type: "managers_notified",
+        data: { manager_ids: config.notify_manager_ids },
+      });
+    }
+
+    if (actions.includes("redirect_flow") && config.redirect_flow_id) {
+      return { shouldEnd: false, queued: false, redirectFlowId: config.redirect_flow_id };
+    }
+    if (actions.includes("end")) {
+      return { shouldEnd: true, queued: false };
+    }
+    if (actions.includes("keep_in_queue") || actions.includes("auto_reassign_when_online")) {
+      return { shouldEnd: false, queued: true };
+    }
+    // Default: encerra silenciosamente
+    return { shouldEnd: true, queued: false };
+  }
+
+  // 4) Selecionar colaborador
+  let chosen: string | null = null;
+  if (distributionType === "specific") {
+    chosen = eligibleIds[0];
+  } else {
+    chosen = await pickRoundRobinMember(supabase, accountOwnerId, node.id, eligibleIds);
+  }
+  if (!chosen) {
+    return { shouldEnd: true, queued: false };
+  }
+
+  // 5) Buscar nome do responsável
+  let responsibleName = "nosso especialista";
+  try {
+    const { data: prof } = await supabase
+      .from("profiles").select("name, email").eq("id", chosen).maybeSingle();
+    responsibleName = (prof as any)?.name || (prof as any)?.email || responsibleName;
+  } catch { /* ignore */ }
+  const enrichedVars = { ...ctx.variables, responsavel: responsibleName };
+
+  // 6) Enviar pre-message
+  if (preMessage) {
+    await sendMessage(supabase, flow, userId, leadPhone, {
+      type: "text", content: interpolate(preMessage, enrichedVars),
+    }, config);
+  }
+
+  // 7) Atribuir conversa
+  try {
+    await supabase
+      .from("chat_conversations")
+      .update({ responsible_user_id: chosen })
+      .eq("user_id", userId)
+      .eq("contact_phone", leadPhone);
+  } catch (e) { console.error("[handoff] assign conversation error:", e); }
+
+  // 8) Criar assignment
+  const { data: assignment } = await supabase.from("handoff_assignments").insert({
+    execution_id: execution.id,
+    flow_id: flow.id,
+    node_id: node.id,
+    account_owner_id: accountOwnerId,
+    lead_phone: leadPhone,
+    assigned_member_id: chosen,
+    team_member_ids: candidateIds,
+    distribution_type: distributionType,
+    status: "assigned",
+    pre_message: preMessage,
+    post_message: postMessage,
+    assigned_at: new Date().toISOString(),
+  }).select("id").maybeSingle();
+
+  await logHandoffAudit(supabase, {
+    assignment_id: assignment?.id,
+    account_owner_id: accountOwnerId,
+    event_type: "assigned",
+    member_id: chosen,
+    data: { distribution_type: distributionType, eligible_count: eligibleIds.length },
+  });
+
+  // 9) Enviar post-message
+  if (postMessage) {
+    await sendMessage(supabase, flow, userId, leadPhone, {
+      type: "text", content: interpolate(postMessage, enrichedVars),
+    }, config);
+  }
+
+  const shouldEnd = config.stop_automation !== false;
+  return { shouldEnd, queued: false };
+}
+
+
 
 async function loadFlowGraph(supabase: any, flowId: string) {
   const [{ data: flow }, { data: nodes }, { data: edges }] = await Promise.all([
