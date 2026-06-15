@@ -34,17 +34,10 @@ export function WARatingNode({ data }: NodeProps) {
       </div>
 
       {cfg.message && (
-        <div className="px-3 pt-2">
+        <div className="px-3 pt-2 pb-3">
           <p className="text-[10px] text-foreground/70 line-clamp-2">{cfg.message}</p>
         </div>
       )}
-
-      <div className="px-3 py-2">
-        <div className="text-[10px] bg-muted/40 rounded px-2 py-1.5 text-foreground/80 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-amber-400" />
-          Resposta salva nos resultados
-        </div>
-      </div>
 
       <FlowHandle type="source" position={Position.Right} />
     </div>
