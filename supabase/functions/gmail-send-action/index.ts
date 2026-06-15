@@ -17,7 +17,7 @@ serve(async (req) => {
     const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
     const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
 
-    const { user_id, to, cc, bcc, subject, body_text, body_html } = await req.json();
+    const { user_id, google_account_id, to, cc, bcc, subject, body_text, body_html } = await req.json();
 
     if (!user_id || !to || !subject) {
       return new Response(JSON.stringify({ error: "Missing required fields: user_id, to, subject" }), {
@@ -27,12 +27,12 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Get user tokens
-    const { data: tokenRecord, error: tokenError } = await supabase
-      .from("user_google_tokens")
-      .select("*")
-      .eq("user_id", user_id)
-      .single();
+    // FIX BUG-02: suporta múltiplas contas Google.
+    let tokenQuery = supabase.from("user_google_tokens").select("*");
+    if (google_account_id) tokenQuery = tokenQuery.eq("id", google_account_id);
+    else tokenQuery = tokenQuery.eq("user_id", user_id).order("updated_at", { ascending: false }).limit(1);
+    const { data: tokenRecords, error: tokenError } = await tokenQuery;
+    const tokenRecord = Array.isArray(tokenRecords) ? tokenRecords[0] : tokenRecords;
 
     if (tokenError || !tokenRecord) {
       return new Response(JSON.stringify({ error: "Google not connected", requiresAuth: true }), {
