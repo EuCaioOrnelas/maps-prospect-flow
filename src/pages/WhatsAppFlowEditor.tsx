@@ -56,6 +56,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { WAFlowTestDialog } from "@/components/wa-flow/WAFlowTestDialog";
 import { FlowResultsDialog } from "@/components/wa-flow/FlowResultsDialog";
@@ -112,6 +121,10 @@ const defaultEdgeOptions = {
   animated: true,
   type: "default" as const,
   style: { strokeWidth: 2, stroke: "hsl(var(--muted-foreground) / 0.4)", strokeLinecap: "round" as const },
+  labelStyle: { fill: "hsl(var(--foreground))", fontSize: 11, fontWeight: 500 },
+  labelBgStyle: { fill: "hsl(var(--card))", fillOpacity: 0.95 },
+  labelBgPadding: [6, 4] as [number, number],
+  labelBgBorderRadius: 6,
 };
 
 const sidebarCategories = [
@@ -241,6 +254,7 @@ export default function WhatsAppFlowEditor() {
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   const [edgeToDelete, setEdgeToDelete] = useState<string | null>(null);
+  const [editingEdge, setEditingEdge] = useState<{ id: string; label: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
 
   // Undo/Redo history – use refs to avoid stale closures
@@ -1060,7 +1074,7 @@ export default function WhatsAppFlowEditor() {
             onPaneClick={() => { setSelectedNode(null); setSelectedNodeIds(new Set()); setContextMenu(null); }}
             onNodeContextMenu={onNodeContextMenu}
             onEdgeClick={(_event, edge) => {
-              setEdgeToDelete(edge.id);
+              setEditingEdge({ id: edge.id, label: typeof edge.label === "string" ? edge.label : "" });
             }}
             onInit={(instance) => {
               // Store instance on wrapper for screenToFlowPosition
@@ -1114,34 +1128,71 @@ export default function WhatsAppFlowEditor() {
         flowName={flowName}
       />
 
-      <AlertDialog open={!!edgeToDelete} onOpenChange={(open) => { if (!open) setEdgeToDelete(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir conexão?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Deseja remover esta conexão entre os blocos? Esta ação pode ser desfeita com Ctrl+Z.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+      <Dialog open={!!editingEdge} onOpenChange={(open) => { if (!open) setEditingEdge(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar conexão</DialogTitle>
+            <DialogDescription>
+              Adicione um texto que aparecerá sobre a linha para descrever o caminho (ex.: "Sim", "Cliente respondeu", "Lead qualificado").
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="edge-label" className="text-xs">Texto da conexão (opcional)</Label>
+            <Input
+              id="edge-label"
+              autoFocus
+              value={editingEdge?.label ?? ""}
+              onChange={(e) => setEditingEdge((prev) => prev ? { ...prev, label: e.target.value } : prev)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && editingEdge) {
+                  const newEdges = edges.map((ed) => ed.id === editingEdge.id ? { ...ed, label: editingEdge.label.trim() || undefined } : ed);
+                  setEdges(newEdges);
+                  pushHistory(nodes, newEdges);
+                  setHasChanges(true);
+                  setEditingEdge(null);
+                }
+              }}
+              placeholder="Ex.: Sim, cliente interessado"
+              maxLength={40}
+            />
+            <p className="text-[10px] text-muted-foreground">O texto aparece sobre a linha no canvas para deixar o fluxo mais claro.</p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
             <Button
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="destructive"
+              className="mr-auto"
               onClick={() => {
-                if (edgeToDelete) {
-                  const newEdges = edges.filter((e) => e.id !== edgeToDelete);
+                if (editingEdge) {
+                  const newEdges = edges.filter((e) => e.id !== editingEdge.id);
                   setEdges(newEdges);
                   pushHistory(nodes, newEdges);
                   setHasChanges(true);
                   toast.success("Conexão removida");
+                  setEditingEdge(null);
                 }
-                setEdgeToDelete(null);
               }}
             >
+              <Trash2 size={14} className="mr-1.5" />
               Excluir
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <Button variant="outline" onClick={() => setEditingEdge(null)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                if (editingEdge) {
+                  const newEdges = edges.map((ed) => ed.id === editingEdge.id ? { ...ed, label: editingEdge.label.trim() || undefined } : ed);
+                  setEdges(newEdges);
+                  pushHistory(nodes, newEdges);
+                  setHasChanges(true);
+                  setEditingEdge(null);
+                  toast.success("Conexão atualizada");
+                }
+              }}
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Node right-click context menu */}
       {contextMenu && (
