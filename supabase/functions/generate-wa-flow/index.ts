@@ -10,7 +10,7 @@ const corsHeaders = {
 const VALID_NODE_TYPES = [
   "entry", "message", "buttons", "condition", "wait", "action",
   "ai_agent", "handoff", "end", "data_collect", "random_split",
-  "ab_test", "google_sheets", "google_calendar", "gmail",
+  "ab_test", "google_sheets", "google_calendar", "gmail", "rating",
 ] as const;
 
 const OPENAI_MODEL = "gpt-4o";
@@ -28,7 +28,7 @@ Sua missão é transformar o pedido do usuário em um fluxo EXECUTÁVEL no edito
 5. TODOS os fluxos são executados na API Oficial Meta (Cloud API). Não use recursos exclusivos da Evolution e assuma que o número conectado é Meta com webhook ativo. Blocos enviados após 24h de inatividade devem usar template HSM (configurável pelo usuário no editor).
 
 === TIPOS DE NÓS PERMITIDOS ===
-entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_collect, random_split, ab_test, google_sheets, google_calendar, gmail
+entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_collect, random_split, ab_test, google_sheets, google_calendar, gmail, rating
 
 === DESCRIÇÃO DOS NÓS ===
 - entry: Ponto de entrada do fluxo. Config: trigger_type, keywords.
@@ -47,6 +47,7 @@ entry, message, buttons, condition, wait, action, ai_agent, handoff, end, data_c
 - google_sheets: Envia dados para planilha (requer conta conectada). Config: sheet_name, write_mode, columns.
 - google_calendar: Cria evento (requer conta conectada). Config: event_title, event_description, duration_minutes.
 - gmail: Envia email (requer conta conectada). Config: to_email, subject, body_text.
+- rating: Coleta avaliação/feedback/NPS do lead. USE APENAS QUANDO o usuário pedir explicitamente: pesquisa de satisfação, NPS, avaliação, nota, estrelas, feedback, opinião do cliente, CSAT. Config: name (rótulo), message (texto enviado pedindo a avaliação), type (um de: "buttons" para até 3 opções rápidas tipo Bom/Médio/Ruim; "menu" para 4-10 opções; "numeric" para escala numérica como NPS 0-10; "stars" para estrelas 1-5; "free" para texto livre), options (array de strings para buttons/menu), numeric ({min, max, positive_min, negative_max} para numeric — ex NPS: min 0, max 10, positive_min 9, negative_max 6), stars ({max, positive_min, negative_max} para stars — ex: max 5, positive_min 4, negative_max 2), ask_suggestion (boolean — se true pergunta se quer deixar sugestão depois), suggestion_prompt (texto pedindo sugestão), suggestion_thanks (texto de agradecimento). Handles de saída: received (sempre), positive, neutral, negative, suggestion. Conecte SEMPRE pelo menos o handle "received" para um próximo bloco (mensagem de agradecimento + end) e, se fizer sentido para o objetivo do usuário, ramifique positive/negative para caminhos diferentes (ex: negative → handoff humano; positive → pedir indicação).
 
 === REGRAS OBRIGATÓRIAS ===
 1. SEMPRE comece com um nó entry.
@@ -197,6 +198,16 @@ const FLOW_NODE_CONFIG_PROPERTIES: Record<string, any> = {
   body_html: { type: "boolean" },
   cc: { type: "array", items: { type: "string" } },
   bcc: { type: "array", items: { type: "string" } },
+  // Rating
+  name: { type: "string", description: "Rótulo curto da avaliação (ex: CSAT pós-atendimento)" },
+  message: { type: "string", description: "Texto enviado ao lead pedindo a avaliação" },
+  type: { type: "string", enum: ["buttons", "menu", "numeric", "stars", "free"], description: "Formato da coleta de avaliação" },
+  options: { type: "array", items: { type: "string" }, description: "Opções para type=buttons (até 3) ou menu (até 10)" },
+  numeric: { type: "object", properties: { min: { type: "number" }, max: { type: "number" }, positive_min: { type: "number" }, negative_max: { type: "number" } } },
+  stars: { type: "object", properties: { max: { type: "number" }, positive_min: { type: "number" }, negative_max: { type: "number" } } },
+  ask_suggestion: { type: "boolean" },
+  suggestion_prompt: { type: "string" },
+  suggestion_thanks: { type: "string" },
 };
 
 const FLOW_TOOL = {
@@ -234,7 +245,7 @@ const FLOW_TOOL = {
             properties: {
               source: { type: "string" },
               target: { type: "string" },
-              source_handle: { type: "string", description: "btn_0, btn_1, item_0, yes, no, split_0, variant_0 ou null" },
+              source_handle: { type: "string", description: "btn_0, btn_1, item_0, yes, no, split_0, variant_0, received, positive, neutral, negative, suggestion ou null" },
               target_handle: { type: "string" },
             },
             required: ["source", "target"],
@@ -730,6 +741,47 @@ const ensureNodeConfig = (
         bcc: Array.isArray(config.bcc) ? config.bcc : [],
       };
 
+    case "rating": {
+      const allowed = ["buttons", "menu", "numeric", "stars", "free"];
+      const ratingType = allowed.includes(normalizeText(config.type)) ? normalizeText(config.type) : "numeric";
+      const out: Record<string, any> = {
+        ...config,
+        name: normalizeText(config.name) || normalizeText(node.label) || "Avaliação",
+        message: normalizeText(config.message) || "Sua opinião é muito importante! Como você avalia o nosso atendimento?",
+        type: ratingType,
+        ask_suggestion: typeof config.ask_suggestion === "boolean" ? config.ask_suggestion : false,
+      };
+      if (ratingType === "buttons") {
+        const raw = Array.isArray(config.options) ? config.options : [];
+        out.options = (raw.length ? raw : ["Ótimo", "Bom", "Ruim"]).slice(0, 3).map((o: any) => truncateText(normalizeText(o) || "Opção", 20));
+      } else if (ratingType === "menu") {
+        const raw = Array.isArray(config.options) ? config.options : [];
+        out.options = (raw.length ? raw : ["Excelente", "Muito bom", "Bom", "Regular", "Ruim"]).slice(0, 10).map((o: any) => truncateText(normalizeText(o) || "Opção", 24));
+      } else if (ratingType === "numeric") {
+        const n = (config.numeric && typeof config.numeric === "object") ? config.numeric : {};
+        const min = typeof n.min === "number" ? n.min : 0;
+        const max = typeof n.max === "number" ? n.max : 10;
+        out.numeric = {
+          min, max,
+          positive_min: typeof n.positive_min === "number" ? n.positive_min : Math.ceil(max * 0.9),
+          negative_max: typeof n.negative_max === "number" ? n.negative_max : Math.floor(max * 0.6),
+        };
+      } else if (ratingType === "stars") {
+        const s = (config.stars && typeof config.stars === "object") ? config.stars : {};
+        const max = typeof s.max === "number" ? s.max : 5;
+        out.stars = {
+          max,
+          positive_min: typeof s.positive_min === "number" ? s.positive_min : Math.max(1, max - 1),
+          negative_max: typeof s.negative_max === "number" ? s.negative_max : Math.max(1, Math.floor(max * 0.4)),
+        };
+      }
+      if (out.ask_suggestion) {
+        out.suggestion_prompt = normalizeText(config.suggestion_prompt) || "Quer deixar uma sugestão ou comentário?";
+        out.suggestion_thanks = normalizeText(config.suggestion_thanks) || "Obrigado pelo seu feedback! 💜";
+      }
+      return out;
+    }
+
     default:
       return config;
   }
@@ -783,6 +835,13 @@ const validateFlowDraft = (draft: FlowDraft, prompt: string) => {
         if (!normalizeText(config.variable_name)) issues.push(`O nó data_collect ${node.id} está sem variable_name.`);
         if (!normalizeText(config.question_text)) issues.push(`O nó data_collect ${node.id} está sem question_text.`);
         break;
+      case "rating": {
+        if (!normalizeText(config.message)) issues.push(`O nó rating ${node.id} está sem message.`);
+        if (!normalizeText(config.type)) issues.push(`O nó rating ${node.id} está sem type.`);
+        const ratingOutgoing = edgesBySource.get(node.id) || [];
+        if (ratingOutgoing.length === 0) issues.push(`O nó rating ${node.id} precisa de pelo menos uma saída conectada (use o handle "received" para um agradecimento + end).`);
+        break;
+      }
     }
 
     // Check for dead ends (nodes without outgoing edges that aren't terminal)
