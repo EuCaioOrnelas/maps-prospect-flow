@@ -121,6 +121,10 @@ const defaultEdgeOptions = {
   animated: true,
   type: "default" as const,
   style: { strokeWidth: 2, stroke: "hsl(var(--muted-foreground) / 0.4)", strokeLinecap: "round" as const },
+  labelStyle: { fill: "hsl(var(--foreground))", fontSize: 11, fontWeight: 500 },
+  labelBgStyle: { fill: "hsl(var(--card))", fillOpacity: 0.95 },
+  labelBgPadding: [6, 4] as [number, number],
+  labelBgBorderRadius: 6,
 };
 
 const sidebarCategories = [
