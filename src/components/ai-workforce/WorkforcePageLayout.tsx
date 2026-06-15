@@ -6,7 +6,7 @@ import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function WorkforcePageLayout({ children, wide }: { children: ReactNode; wide?: boolean }) {
-  const { profile } = useAuth() as { profile: never };
+  const { profile } = useAuth();
   return (
     <div className="min-h-screen bg-background flex w-full">
       <AppSidebar profile={profile} />
