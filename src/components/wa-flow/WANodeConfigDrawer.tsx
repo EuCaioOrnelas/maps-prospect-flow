@@ -3125,6 +3125,12 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
             </div>
           )}
 
+          {/* ===== RATING NODE ===== */}
+          {node.type === "rating" && (
+            <RatingNodeConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
+          )}
+
+
           {/* Actions */}
           <div className="flex gap-2 pt-4 border-t border-border">
             <Button onClick={handleSave} className="flex-1 h-9 text-sm">
