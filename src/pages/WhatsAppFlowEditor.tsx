@@ -1085,6 +1085,7 @@ export default function WhatsAppFlowEditor() {
             }}
             deleteKeyCode={null}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             fitView
             fitViewOptions={{ padding: 0.3 }}
