@@ -812,6 +812,7 @@ async function runFlow(
             await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
               type: "buttons",
               header: headerText,
+              headerImageUrl: config.header_image_url || undefined,
               body: bodyText,
               footer: footerText,
               buttons: normalizedChoices.slice(0, 3),
