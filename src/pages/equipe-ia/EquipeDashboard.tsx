@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bot, Bot as BotIcon, Plus, Target, TrendingUp, Users, Activity } from "lucide-react";
+import { Bot, Bot as BotIcon, Plus, Target, TrendingUp, Users, Activity, ArrowRight } from "lucide-react";
 import { useEquipeList } from "@/hooks/useEquipeIA";
 import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
+import { CreateEquipeDialog } from "@/components/equipe-ia/CreateEquipeDialog";
+import { usePrimaryProvider } from "@/hooks/useUserAICredentials";
+import { PROVIDER_BY_ID } from "@/lib/aiProviders";
 
 function Kpi({ icon: Icon, label, value, hint }: { icon: typeof BotIcon; label: string; value: string; hint?: string }) {
   return (
@@ -35,16 +39,19 @@ function statusMeta(status: string | null | undefined) {
 export default function EquipeDashboard() {
   const { data: workers = [], isLoading } = useEquipeList();
   const showSeeAll = workers.length > 6;
+  const [createOpen, setCreateOpen] = useState(false);
+  const primary = usePrimaryProvider();
+  const providerInfo = primary ? PROVIDER_BY_ID[primary] : null;
 
   return (
     <EquipePageLayout>
       <div className="space-y-8">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
             <Bot className="size-6" />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-3xl font-semibold tracking-tight">Equipe IA</h1>
+            <h1 className="text-3xl font-semibold tracking-tight leading-tight">Equipe IA</h1>
             <p className="text-muted-foreground mt-1">
               Colaboradores digitais orientados a objetivos, integrados ao CRM e aos fluxos.
             </p>
@@ -61,8 +68,8 @@ export default function EquipeDashboard() {
         <section>
           <div className="flex items-center justify-between mb-4 gap-3">
             <h2 className="text-lg font-semibold">Seus colaboradores</h2>
-            <Button asChild size="sm">
-              <Link to="/equipe-ia/novo"><Plus className="size-4 mr-1.5" /> Criar colaborador</Link>
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="size-4 mr-1.5" /> Criar colaborador
             </Button>
           </div>
           {isLoading ? (
@@ -75,8 +82,8 @@ export default function EquipeDashboard() {
                 <Bot className="size-10 mx-auto text-muted-foreground/60" />
                 <p className="mt-3 font-medium">Nenhum colaborador ainda</p>
                 <p className="text-sm text-muted-foreground mt-1">Crie seu primeiro colaborador digital para começar.</p>
-                <Button asChild className="mt-4">
-                  <Link to="/equipe-ia/novo"><Plus className="size-4 mr-2" /> Criar colaborador</Link>
+                <Button className="mt-4" onClick={() => setCreateOpen(true)}>
+                  <Plus className="size-4 mr-2" /> Criar colaborador
                 </Button>
               </CardContent>
             </Card>
@@ -86,28 +93,38 @@ export default function EquipeDashboard() {
                 {workers.slice(0, 6).map((w) => {
                   const st = statusMeta(w.status);
                   return (
-                    <Link key={w.id} to={`/equipe-ia/colaboradores/${w.id}`} className="group">
-                      <Card className="hover:border-primary/60 hover:shadow-sm transition-all h-full">
-                        <CardContent className="p-5">
-                          <div className="flex items-start gap-3">
-                            <div className="w-9 h-9 rounded-lg bg-primary/10 ring-1 ring-primary/15 flex items-center justify-center text-primary/80 shrink-0">
-                              <Bot className="size-4" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-semibold truncate">{w.name}</p>
-                              <p className="text-xs text-muted-foreground truncate mt-0.5">{w.role || "Sem função definida"}</p>
-                            </div>
+                    <Card key={w.id} className="hover:border-primary/60 hover:shadow-sm transition-all">
+                      <CardContent className="p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
+                            <Bot className="size-5" />
                           </div>
-                          <div className="flex items-center justify-between gap-2 mt-4">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold truncate leading-tight">{w.name}</p>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">{w.role || "Sem função definida"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 mt-4">
+                          <div className="flex items-center gap-2 min-w-0">
                             <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-md ring-1 ${st.cls}`}>
                               <span className="size-1.5 rounded-full bg-current" />
                               {st.label}
                             </span>
-                            <span className="text-[11px] text-muted-foreground truncate">{w.channel}</span>
+                            {providerInfo && (
+                              <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/60 ring-1 ring-border px-2 py-1 rounded-md">
+                                <img src={providerInfo.logo} alt={providerInfo.name} className="size-3.5 object-contain" />
+                                {providerInfo.shortName}
+                              </span>
+                            )}
                           </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
+                          <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10">
+                            <Link to={`/equipe-ia/colaboradores/${w.id}`}>
+                              Abrir <ArrowRight className="size-3 ml-1" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   );
                 })}
               </div>
@@ -122,6 +139,8 @@ export default function EquipeDashboard() {
           )}
         </section>
       </div>
+
+      <CreateEquipeDialog open={createOpen} onOpenChange={setCreateOpen} />
     </EquipePageLayout>
   );
 }
