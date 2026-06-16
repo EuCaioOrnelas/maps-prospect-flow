@@ -219,7 +219,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                     {cat.kinds.map((kind) => {
                       const meta = EQUIPE_NODE_META[kind];
                       const Icon = meta.icon;
-                      const iconBg = KIND_ICON_BG[kind] ?? "bg-muted";
+                      const accent = KIND_PALETTE_ACCENT[kind] ?? KIND_PALETTE_ACCENT.core;
                       return (
                         <div
                           key={kind}
@@ -229,17 +229,18 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                             e.dataTransfer.effectAllowed = "move";
                           }}
                           onClick={() => addNode(kind)}
-                          className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-border bg-card transition-all duration-200 text-left shadow-sm cursor-grab active:cursor-grabbing hover:border-foreground/30 hover:shadow-md"
+                          className="w-full bg-card border border-border rounded-xl shadow-[0_2px_12px_hsl(0_0%_0%/0.18)] overflow-hidden transition-colors hover:border-foreground/30 cursor-grab active:cursor-grabbing"
                         >
-                          <div className={cn(
-                            "w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-white",
-                            iconBg,
-                          )}>
-                            <Icon size={16} />
+                          <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
+                            <div className={cn("w-6 h-6 rounded-md flex items-center justify-center shrink-0", accent.bg)}>
+                              <Icon size={13} className={accent.text} />
+                            </div>
+                            <span className={cn("text-[10px] font-semibold uppercase tracking-wider truncate", accent.text)}>
+                              {meta.label}
+                            </span>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold text-foreground truncate">{meta.label}</p>
-                            <p className="text-[10px] text-muted-foreground leading-tight line-clamp-2">
+                          <div className="px-3 py-2">
+                            <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
                               {meta.description}
                             </p>
                           </div>
