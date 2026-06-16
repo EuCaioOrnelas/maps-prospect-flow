@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, RotateCcw, Brain, Loader2, FlaskConical } from "lucide-react";
+import { Send, RotateCcw, Loader2, FlaskConical } from "lucide-react";
+import coreMarkAsset from "@/assets/equipe-core-mark.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -66,8 +67,8 @@ export function EquipeTestChatDialog({ open, onOpenChange, equipeId, equipeName 
       <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden bg-card border-border/60">
         <DialogHeader className="px-5 py-3 border-b flex flex-row items-center justify-between gap-2 space-y-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Brain className="size-4 text-primary" />
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-[0_4px_12px_-4px_hsl(var(--primary)/0.5)]">
+              <img src={coreMarkAsset.url} alt="" className="size-7 select-none" draggable={false} />
             </div>
             <div className="min-w-0">
               <DialogTitle className="text-sm font-semibold truncate">{equipeName}</DialogTitle>
@@ -85,7 +86,7 @@ export function EquipeTestChatDialog({ open, onOpenChange, equipeId, equipeName 
           <div ref={scrollRef} className="p-4 space-y-3 scrollbar-thin">
             {messages.length === 0 && (
               <div className="text-center py-10 text-muted-foreground">
-                <Brain className="size-8 mx-auto opacity-30" />
+                <img src={coreMarkAsset.url} alt="" className="size-16 mx-auto opacity-30" draggable={false} />
                 <p className="text-xs mt-2">Inicie uma conversa com o colaborador.</p>
               </div>
             )}
