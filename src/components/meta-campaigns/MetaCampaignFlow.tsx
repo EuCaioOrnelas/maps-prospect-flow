@@ -209,6 +209,17 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
   };
 
   const handleSelectTemplate = (template: MetaTemplate) => {
+    if (template.status !== "APPROVED") {
+      toast({
+        title: "Template indisponível",
+        description:
+          template.status === "PENDING"
+            ? "Este template está em análise pela Meta. Você poderá usá-lo assim que for aprovado."
+            : `Template com status ${template.status}. Só é possível disparar templates aprovados pela Meta.`,
+        variant: "destructive",
+      });
+      return;
+    }
     setSelectedTemplate(template);
     const vars = extractVariables(template);
     const initVars: Record<string, string> = {};
