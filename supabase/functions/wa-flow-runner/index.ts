@@ -1495,7 +1495,7 @@ ${advanceCriteria || "Avance quando sentir que o objetivo foi atingido."}
 
 ## COMPORTAMENTO DE LOOP
 ${advanceRule}
-${dataBlock}${routeBlock}
+${routeBlock}
 
 ## CONTEXTO DO LEAD (variáveis já conhecidas)
 ${contextVars || "(nenhuma informação prévia)"}
@@ -1505,7 +1505,7 @@ ${contextVars || "(nenhuma informação prévia)"}
 - Faça UMA pergunta por vez. Seja natural como WhatsApp real.
 - Não repita perguntas já respondidas (consulte o histórico e o contexto).
 - SEMPRE termine sua mensagem com EXATAMENTE UM marcador de controle: [AVANCAR] ou [CONTINUAR].
-- Os marcadores [AVANCAR], [CONTINUAR], [COLETAR:...] e [ROUTE:...] são INVISÍVEIS para o lead — serão removidos antes do envio.`;
+- Os marcadores [AVANCAR], [CONTINUAR] e [ROUTE:...] são INVISÍVEIS para o lead — serão removidos antes do envio.`;
 
           const openaiModel = (agent?.ai_provider === "openai" && agent?.ai_model)
             ? agent.ai_model
