@@ -86,16 +86,6 @@ const REQ_BADGE: Record<"required" | "recommended" | "optional", { label: string
   optional:    { label: "Opc.",   cls: "text-muted-foreground" },
 };
 
-// Score weights — mirrored from WorkforceScorePanel.
-const SCORING: { kind: EquipeNodeKind; weight: number }[] = [
-  { kind: "goal", weight: 15 },
-  { kind: "rules", weight: 15 },
-  { kind: "knowledge", weight: 15 },
-  { kind: "escalation", weight: 15 },
-  { kind: "memory", weight: 15 },
-  { kind: "tools", weight: 15 },
-  { kind: "data_collection", weight: 10 },
-];
 
 function uid() {
   return `n_${Math.random().toString(36).slice(2, 10)}`;
