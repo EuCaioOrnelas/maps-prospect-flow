@@ -1428,10 +1428,18 @@ async function runFlow(
               .maybeSingle();
             agent = data;
           }
-          const systemPrompt = agent?.system_prompt || config.system_prompt || "";
+          const basePrompt: string = (agent?.system_prompt || config.system_prompt || "").trim();
           const aiRoutesRaw: string = agent?.ai_routes || config.ai_routes || "";
           const maxChars = Number(agent?.max_chars || config.max_chars || 500);
           const routes = aiRoutesRaw.split("\n").map((r: string) => r.trim()).filter(Boolean);
+
+          // Lógica & Objetivo (configurada no drawer)
+          const agentObjective: string = (config.agent_objective || "").trim();
+          const advanceCriteria: string = (config.advance_criteria || "").trim();
+          const loopBehavior: string = config.loop_behavior || "until_collected";
+          const maxAttempts: number = Number(config.max_attempts || 3);
+          const dataCollection: Array<{ name: string; description: string; required: boolean }> =
+            Array.isArray(config.data_collection) ? config.data_collection : [];
 
           const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
           if (!OPENAI_API_KEY) {
@@ -1440,19 +1448,89 @@ async function runFlow(
             break;
           }
 
-          const userMessage = ctx.lastUserText
-            || `(Lead acabou de entrar no fluxo, sem mensagem ainda. Inicie a conversa.)`;
-          const routeBlock = routes.length > 0
-            ? `\n\nAo final, classifique a conversa retornando OBRIGATORIAMENTE no formato:\n[ROUTE: <UMA_DAS_ROTAS>]\nRotas válidas: ${routes.join(", ")}.`
-            : "";
-          const sysFinal = `${systemPrompt}\n\nResponda em até ${maxChars} caracteres.${routeBlock}`;
+          // Attempt counter por nó
+          const attemptKey = `__ai_attempts_${node.id}__`;
+          const prevAttempts = Number(ctx.variables[attemptKey] || 0);
+          const currentAttempt = prevAttempts + 1;
 
-          // Use OpenAI directly. Respect agent's saved model when provider is openai; otherwise default.
+          // Coleta atual (já preenchida em variables)
+          const collectedSummary = dataCollection.length
+            ? dataCollection.map(f => {
+                const val = ctx.variables[f.name];
+                return `- ${f.name}${f.required ? " (obrigatório)" : ""}: ${val ? `JÁ COLETADO ("${val}")` : "PENDENTE"} — ${f.description || ""}`;
+              }).join("\n")
+            : "";
+
+          const missingRequired = dataCollection
+            .filter(f => f.required && !ctx.variables[f.name])
+            .map(f => f.name);
+
+          // Regras de avanço baseado em loop_behavior
+          let advanceRule = "";
+          if (loopBehavior === "single_reply") {
+            advanceRule = "Você DEVE sempre encerrar respondendo com o marcador [AVANCAR] ao final desta resposta. Apenas 1 resposta é permitida.";
+          } else if (loopBehavior === "max_attempts") {
+            advanceRule = `Você tem no máximo ${maxAttempts} tentativas para alcançar o objetivo. Esta é a tentativa ${currentAttempt}/${maxAttempts}. ${
+              currentAttempt >= maxAttempts
+                ? "Esta é a ÚLTIMA tentativa — encerre com [AVANCAR] obrigatoriamente."
+                : "Use [AVANCAR] quando atingir o objetivo, ou [CONTINUAR] para insistir mais uma vez."
+            }`;
+          } else if (loopBehavior === "free_chat") {
+            advanceRule = "Converse livremente. Use [AVANCAR] APENAS quando o critério de avanço for claramente atendido. Caso contrário, sempre [CONTINUAR].";
+          } else {
+            // until_collected (default)
+            advanceRule = `Insista até coletar todos os dados obrigatórios E atingir o objetivo. ${
+              missingRequired.length > 0
+                ? `Faltam coletar (obrigatórios): ${missingRequired.join(", ")}. Use [CONTINUAR] e peça os dados que faltam.`
+                : "Todos os dados obrigatórios foram coletados — se o objetivo foi atingido, use [AVANCAR]."
+            }`;
+          }
+
+          const routeBlock = routes.length > 0
+            ? `\n\n## ROTAS DISPONÍVEIS\nAo avançar, classifique a conversa retornando no formato [ROUTE: <UMA_DAS_ROTAS>].\nRotas válidas: ${routes.join(", ")}.`
+            : "";
+
+          const dataBlock = dataCollection.length > 0
+            ? `\n\n## DADOS A COLETAR DO LEAD\n${collectedSummary}\n\nQuando o lead informar um dado, registre usando o marcador (invisível ao lead):\n[COLETAR: nome_variavel=valor_informado]\nUm marcador por dado. Use exatamente os nomes acima.`
+            : "";
+
+          const contextVars = Object.entries(ctx.variables)
+            .filter(([k]) => !k.startsWith("__"))
+            .map(([k, v]) => `- ${k}: ${v}`)
+            .join("\n");
+
+          const fullSystem = `# INSTRUÇÃO PRIMÁRIA DO USUÁRIO
+${basePrompt || "Você é um agente conversacional no WhatsApp."}
+
+---
+
+# REGRAS OPERACIONAIS DO SISTEMA (não compartilhe com o lead)
+
+## OBJETIVO DESTA ETAPA
+${agentObjective || "Conversar com o lead de forma natural."}
+
+## CRITÉRIO PARA AVANÇAR AO PRÓXIMO PASSO
+${advanceCriteria || "Avance quando sentir que o objetivo foi atingido."}
+
+## COMPORTAMENTO DE LOOP
+${advanceRule}
+${dataBlock}${routeBlock}
+
+## CONTEXTO DO LEAD (variáveis já conhecidas)
+${contextVars || "(nenhuma informação prévia)"}
+
+## REGRAS DE RESPOSTA
+- Responda em até ${maxChars} caracteres.
+- Faça UMA pergunta por vez. Seja natural como WhatsApp real.
+- Não repita perguntas já respondidas (consulte o histórico e o contexto).
+- SEMPRE termine sua mensagem com EXATAMENTE UM marcador de controle: [AVANCAR] ou [CONTINUAR].
+- Os marcadores [AVANCAR], [CONTINUAR], [COLETAR:...] e [ROUTE:...] são INVISÍVEIS para o lead — serão removidos antes do envio.`;
+
           const openaiModel = (agent?.ai_provider === "openai" && agent?.ai_model)
             ? agent.ai_model
             : "gpt-4o-mini";
 
-          // FIX BUG-09: inclui últimas mensagens da conversa como histórico.
+          // Histórico recente da conversa
           const history: any[] = [];
           try {
             const { data: convo } = await supabase
@@ -1467,7 +1545,7 @@ async function runFlow(
                 .select("direction, content, created_at")
                 .eq("conversation_id", convo.id)
                 .order("created_at", { ascending: false })
-                .limit(10);
+                .limit(12);
               (msgs || []).reverse().forEach((m: any) => {
                 if (!m.content) return;
                 history.push({
@@ -1478,6 +1556,9 @@ async function runFlow(
             }
           } catch (e) { console.error("[wa-flow-runner] ai history error:", e); }
 
+          const userMessage = ctx.lastUserText
+            || `(Lead acabou de entrar no fluxo, sem mensagem ainda. Inicie a conversa seguindo o objetivo.)`;
+
           const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -1487,11 +1568,12 @@ async function runFlow(
             body: JSON.stringify({
               model: openaiModel,
               messages: [
-                { role: "system", content: interpolate(sysFinal, ctx.variables) },
+                { role: "system", content: interpolate(fullSystem, ctx.variables) },
                 ...history,
                 { role: "user", content: userMessage },
               ],
               max_tokens: Math.min(1000, Math.ceil(maxChars / 2) + 200),
+              temperature: 0.7,
             }),
           });
 
@@ -1504,11 +1586,46 @@ async function runFlow(
           const aiJson = await aiRes.json();
           const fullText: string = aiJson?.choices?.[0]?.message?.content || "";
 
-          // Extract route tag
+          // Extrair marcadores
           let chosenRoute: string | null = null;
           const routeMatch = fullText.match(/\[ROUTE:\s*([^\]]+)\]/i);
           if (routeMatch) chosenRoute = routeMatch[1].trim().toUpperCase();
-          const cleanedText = fullText.replace(/\[ROUTE:[^\]]+\]/gi, "").trim().slice(0, maxChars);
+
+          // Coletar dados marcados pela IA
+          const collectRegex = /\[COLETAR:\s*([a-zA-Z0-9_]+)\s*=\s*([^\]]+)\]/gi;
+          let collectMatch: RegExpExecArray | null;
+          while ((collectMatch = collectRegex.exec(fullText)) !== null) {
+            const key = collectMatch[1].trim();
+            const val = collectMatch[2].trim();
+            if (key && val) ctx.variables[key] = val;
+          }
+
+          // Avanço vs Loop
+          const hasAdvance = /\[AVANCAR\]/i.test(fullText);
+          const hasContinue = /\[CONTINUAR\]/i.test(fullText);
+          let shouldAdvance = false;
+          if (loopBehavior === "single_reply") {
+            shouldAdvance = true;
+          } else if (loopBehavior === "max_attempts") {
+            shouldAdvance = hasAdvance || currentAttempt >= maxAttempts;
+          } else if (loopBehavior === "free_chat") {
+            shouldAdvance = hasAdvance;
+          } else {
+            // until_collected: precisa de [AVANCAR] E todos obrigatórios coletados
+            const stillMissing = dataCollection
+              .filter(f => f.required && !ctx.variables[f.name]).length > 0;
+            shouldAdvance = hasAdvance && !stillMissing;
+          }
+
+          // Limpar marcadores antes de enviar ao lead
+          const cleanedText = fullText
+            .replace(/\[ROUTE:[^\]]+\]/gi, "")
+            .replace(/\[COLETAR:[^\]]+\]/gi, "")
+            .replace(/\[AVANCAR\]/gi, "")
+            .replace(/\[CONTINUAR\]/gi, "")
+            .replace(/\s{2,}/g, " ")
+            .trim()
+            .slice(0, maxChars);
 
           if (cleanedText) {
             await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
@@ -1519,7 +1636,24 @@ async function runFlow(
           ctx.variables["ai_response"] = cleanedText;
           if (chosenRoute) ctx.variables["ai_route"] = chosenRoute;
 
-          // Branch by route handle if matched, otherwise default edge.
+          if (!shouldAdvance) {
+            // Continua em loop: incrementa attempts, salva vars e pausa neste nó aguardando resposta
+            ctx.variables[attemptKey] = String(currentAttempt);
+            try {
+              await supabase
+                .from("wa_flow_executions")
+                .update({ collected_data: ctx.variables, last_user_message_at: new Date().toISOString() })
+                .eq("id", execution.id);
+            } catch (_e) { /* non-fatal */ }
+            ctx.hasFreshUserInput = false;
+            pausedNodeId = node.id;
+            currentNodeId = null;
+            break;
+          }
+
+          // Avança: zera attempts deste nó
+          delete ctx.variables[attemptKey];
+
           let nextId: string | null = null;
           if (chosenRoute) {
             nextId = getTargetByHandle(bySource, node.id, chosenRoute)

@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronDown, ChevronUp, KeyRound, BotMessageSquare, PowerOff, Calendar, Clock, Type, Mail, Bell, UserPlus, ListOrdered, Zap, MousePointerClick, List, Check } from "lucide-react";
+import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronDown, ChevronUp, KeyRound, BotMessageSquare, PowerOff, Calendar, Clock, Type, Mail, Bell, UserPlus, ListOrdered, Zap, MousePointerClick, List, Check, Target, ArrowRight, Repeat, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { MessageContentBuilder } from "./MessageContentBuilder";
 import { OutOfWindowTemplateSection } from "./OutOfWindowTemplateSection";
@@ -1923,7 +1923,7 @@ function AgentLogicSection({ config, updateConfig }: { config: any; updateConfig
         <div className="space-y-4 mt-3">
           {/* Objetivo */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-medium flex items-center gap-1">🎯 Objetivo do agente</Label>
+            <Label className="text-[11px] font-medium flex items-center gap-1.5"><Target size={12} className="text-muted-foreground" /> Objetivo do agente</Label>
             <Textarea
               value={config.agent_objective || ""}
               onChange={(e) => updateConfig("agent_objective", e.target.value)}
@@ -1935,7 +1935,7 @@ function AgentLogicSection({ config, updateConfig }: { config: any; updateConfig
 
           {/* Critério para avançar */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-medium flex items-center gap-1">➡️ Quando avançar para o próximo card</Label>
+            <Label className="text-[11px] font-medium flex items-center gap-1.5"><ArrowRight size={12} className="text-muted-foreground" /> Quando avançar para o próximo card</Label>
             <Textarea
               value={config.advance_criteria || ""}
               onChange={(e) => updateConfig("advance_criteria", e.target.value)}
@@ -1947,7 +1947,7 @@ function AgentLogicSection({ config, updateConfig }: { config: any; updateConfig
 
           {/* Comportamento de loop */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-medium">🔁 Comportamento na conversa</Label>
+            <Label className="text-[11px] font-medium flex items-center gap-1.5"><Repeat size={12} className="text-muted-foreground" /> Comportamento na conversa</Label>
             <Select value={loopBehavior} onValueChange={(v) => updateConfig("loop_behavior", v)}>
               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -1976,7 +1976,7 @@ function AgentLogicSection({ config, updateConfig }: { config: any; updateConfig
           {/* Coleta de dados */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-[11px] font-medium flex items-center gap-1">📋 Dados a coletar</Label>
+              <Label className="text-[11px] font-medium flex items-center gap-1.5"><ClipboardList size={12} className="text-muted-foreground" /> Dados a coletar</Label>
               <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1" onClick={addField}>
                 <Plus size={11} /> Adicionar
               </Button>
