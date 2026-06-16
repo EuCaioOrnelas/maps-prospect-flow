@@ -376,7 +376,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
         />
         <ReactFlow
           nodes={displayNodes}
-          edges={edges}
+          edges={displayEdges}
           onNodesChange={onNodesChange as (c: NodeChange[]) => void}
           onEdgesChange={onEdgesChange as (c: EdgeChange[]) => void}
           onConnect={onConnect}
