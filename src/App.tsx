@@ -71,11 +71,11 @@ const Warming = lazyWithRetry(() => import("./pages/Warming"), "Warming");
 const WarmingReports = lazyWithRetry(() => import("./pages/WarmingReports"), "WarmingReports");
 const AIAgents = lazyWithRetry(() => import("./pages/AIAgents"), "AIAgents");
 const AgentReports = lazyWithRetry(() => import("./pages/AgentReports"), "AgentReports");
-const AIWorkforceDashboard = lazyWithRetry(() => import("./pages/ai-workforce/AIWorkforceDashboard"), "AIWorkforceDashboard");
-const AIWorkforceList = lazyWithRetry(() => import("./pages/ai-workforce/AIWorkforceList"), "AIWorkforceList");
-const AIWorkforceCreator = lazyWithRetry(() => import("./pages/ai-workforce/AIWorkforceCreator"), "AIWorkforceCreator");
-const AIWorkforceBuilder = lazyWithRetry(() => import("./pages/ai-workforce/AIWorkforceBuilder"), "AIWorkforceBuilder");
-const AIWorkforceLegacy = lazyWithRetry(() => import("./pages/ai-workforce/AIWorkforceLegacy"), "AIWorkforceLegacy");
+const EquipeDashboard = lazyWithRetry(() => import("./pages/equipe-ia/EquipeDashboard"), "EquipeDashboard");
+const EquipeList = lazyWithRetry(() => import("./pages/equipe-ia/EquipeList"), "EquipeList");
+const EquipeCreator = lazyWithRetry(() => import("./pages/equipe-ia/EquipeCreator"), "EquipeCreator");
+const EquipeBuilder = lazyWithRetry(() => import("./pages/equipe-ia/EquipeBuilder"), "EquipeBuilder");
+const EquipeLegacy = lazyWithRetry(() => import("./pages/equipe-ia/EquipeLegacy"), "EquipeLegacy");
 const Consultoria = lazyWithRetry(() => import("./pages/Consultoria"), "Consultoria");
 const ThankYou = lazyWithRetry(() => import("./pages/ThankYou"), "ThankYou");
 const ProductionTests = lazyWithRetry(() => import("./pages/ProductionTests"), "ProductionTests");
@@ -306,11 +306,17 @@ const App = () => (
                 <Route path="/chat/configuracoes/resposta-automatica" element={<ProtectedRoute><ChatAutoReply /></ProtectedRoute>} />
                 <Route path="/agents" element={<ProtectedRoute><AIAgents /></ProtectedRoute>} />
                 <Route path="/agents/reports" element={<ProtectedRoute><AgentReports /></ProtectedRoute>} />
-                <Route path="/ai-workforce" element={<ProtectedRoute><AIWorkforceDashboard /></ProtectedRoute>} />
-                <Route path="/ai-workforce/novo" element={<ProtectedRoute><AIWorkforceCreator /></ProtectedRoute>} />
-                <Route path="/ai-workforce/colaboradores" element={<ProtectedRoute><AIWorkforceList /></ProtectedRoute>} />
-                <Route path="/ai-workforce/colaboradores/:id" element={<ProtectedRoute><AIWorkforceBuilder /></ProtectedRoute>} />
-                <Route path="/ai-workforce/legacy" element={<ProtectedRoute><AIWorkforceLegacy /></ProtectedRoute>} />
+                <Route path="/equipe-ia" element={<ProtectedRoute><EquipeDashboard /></ProtectedRoute>} />
+                <Route path="/equipe-ia/novo" element={<ProtectedRoute><EquipeCreator /></ProtectedRoute>} />
+                <Route path="/equipe-ia/colaboradores" element={<ProtectedRoute><EquipeList /></ProtectedRoute>} />
+                <Route path="/equipe-ia/colaboradores/:id" element={<ProtectedRoute><EquipeBuilder /></ProtectedRoute>} />
+                <Route path="/equipe-ia/legacy" element={<ProtectedRoute><EquipeLegacy /></ProtectedRoute>} />
+                {/* Backwards-compat redirects from old /ai-workforce paths */}
+                <Route path="/ai-workforce" element={<Navigate to="/equipe-ia" replace />} />
+                <Route path="/ai-workforce/novo" element={<Navigate to="/equipe-ia/novo" replace />} />
+                <Route path="/ai-workforce/colaboradores" element={<Navigate to="/equipe-ia/colaboradores" replace />} />
+                <Route path="/ai-workforce/colaboradores/:id" element={<Navigate to="/equipe-ia/colaboradores" replace />} />
+                <Route path="/ai-workforce/legacy" element={<Navigate to="/equipe-ia/legacy" replace />} />
                 <Route path="/fluxos" element={<ProtectedRoute><WhatsAppAutomations /></ProtectedRoute>} />
                 <Route path="/fluxos/novo" element={<ProtectedRoute><CreateFlowAI /></ProtectedRoute>} />
                 <Route path="/fluxos/:id" element={<ProtectedRoute><WhatsAppFlowEditor /></ProtectedRoute>} />
