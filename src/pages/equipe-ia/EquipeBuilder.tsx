@@ -1,10 +1,12 @@
-import { useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, Save, Loader2, FlaskConical } from "lucide-react";
+import { ChevronLeft, Save, Loader2, FlaskConical, Sparkles } from "lucide-react";
 import { EquipeCanvas, type CanvasHandle } from "@/components/equipe-ia/canvas/EquipeCanvas";
 import { EquipeTestChatDialog } from "@/components/equipe-ia/EquipeTestChatDialog";
+import { MandatoryProviderDialog } from "@/components/equipe-ia/MandatoryProviderDialog";
+import { useUserAICredentials } from "@/hooks/useUserAICredentials";
 import { useEquipe, useEquipeCanvas, useSaveCanvas } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
 
