@@ -2,13 +2,24 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, Save, Loader2, FlaskConical, Sparkles, Check } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { ChevronLeft, Save, Loader2, FlaskConical, Sparkles, Check, MoreVertical, Trash2 } from "lucide-react";
 import { EquipeCanvas, type CanvasHandle, type CanvasState } from "@/components/equipe-ia/canvas/EquipeCanvas";
 import { EquipeTestChatDialog } from "@/components/equipe-ia/EquipeTestChatDialog";
 import { MandatoryProviderDialog } from "@/components/equipe-ia/MandatoryProviderDialog";
 import { WorkforceScorePanel } from "@/components/equipe-ia/canvas/WorkforceScorePanel";
+import { WorkforceOverview } from "@/components/equipe-ia/builder/WorkforceOverview";
+import { WorkforceAnalytics } from "@/components/equipe-ia/builder/WorkforceAnalytics";
+import { WorkforceVersions } from "@/components/equipe-ia/builder/WorkforceVersions";
 import { useUserAICredentials } from "@/hooks/useUserAICredentials";
-import { useEquipe, useEquipeCanvas, useSaveCanvas, buildCanvasFromBlueprint } from "@/hooks/useEquipeIA";
+import { useEquipe, useEquipeCanvas, useSaveCanvas, useDeleteEquipe, buildCanvasFromBlueprint } from "@/hooks/useEquipeIA";
 import type { WorkforceBlueprint } from "@/components/equipe-ia/wizard/workforceTemplates";
 import { toast } from "sonner";
 
@@ -19,8 +30,11 @@ export default function EquipeBuilder() {
   const { data: canvas, isLoading: loadingC } = useEquipeCanvas(id);
   const credsQ = useUserAICredentials();
   const save = useSaveCanvas();
+  const del = useDeleteEquipe();
   const canvasRef = useRef<CanvasHandle>(null);
+  const [tab, setTab] = useState<"overview" | "canvas" | "testes" | "analytics" | "versoes">("canvas");
   const [testOpen, setTestOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [autoState, setAutoState] = useState<"idle" | "saving" | "saved">("idle");
   const [liveState, setLiveState] = useState<CanvasState | null>(null);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,7 +62,6 @@ export default function EquipeBuilder() {
 
   const loading = loadingW || loadingC;
 
-  // Auto-build canvas from blueprint when it's empty (just core).
   const generatedFromBlueprintRef = useRef(false);
   useEffect(() => {
     if (loading || !canvas || !id || generatedFromBlueprintRef.current) return;
@@ -61,6 +74,7 @@ export default function EquipeBuilder() {
   }, [loading, canvas, id, worker, save]);
 
   const displayedState = liveState ?? canvas ?? null;
+  const workforceStatus = (worker?.status?.toLowerCase() === "active" ? "active" : "draft") as "active" | "draft";
 
   async function handleSave() {
     if (!id || !canvasRef.current) return;
@@ -74,12 +88,19 @@ export default function EquipeBuilder() {
 
   async function handleTest() {
     if (!id || !canvasRef.current) return;
-    try {
-      await save.mutateAsync({ equipeId: id, state: canvasRef.current.getState() });
-    } catch {
-      /* silent */
-    }
+    try { await save.mutateAsync({ equipeId: id, state: canvasRef.current.getState() }); } catch { /* */ }
     setTestOpen(true);
+  }
+
+  async function handleDelete() {
+    if (!id) return;
+    try {
+      await del.mutateAsync(id);
+      toast.success("Colaborador excluído.");
+      navigate("/equipe-ia");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao excluir");
+    }
   }
 
   return (
@@ -94,8 +115,20 @@ export default function EquipeBuilder() {
             <p className="text-[11px] text-muted-foreground truncate leading-tight">{worker?.role ?? "Equipe IA"}</p>
           </div>
         </div>
+
+        {/* Tabs centered */}
+        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="hidden md:block">
+          <TabsList className="h-8">
+            <TabsTrigger value="overview" className="text-xs px-3">Overview</TabsTrigger>
+            <TabsTrigger value="canvas" className="text-xs px-3">Canvas</TabsTrigger>
+            <TabsTrigger value="testes" className="text-xs px-3">Testes</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs px-3">Analytics</TabsTrigger>
+            <TabsTrigger value="versoes" className="text-xs px-3">Versões</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         <div className="flex items-center gap-2">
-          {autoState !== "idle" && (
+          {autoState !== "idle" && tab === "canvas" && (
             <span className="text-[11px] text-muted-foreground flex items-center gap-1 mr-1">
               {autoState === "saving" ? (
                 <><Loader2 className="size-3 animate-spin" /> Salvando…</>
@@ -107,16 +140,34 @@ export default function EquipeBuilder() {
           <Button variant="outline" size="sm" onClick={handleTest} disabled={loading || !hasIA}>
             <FlaskConical className="size-3.5 mr-1.5" /> Testar
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={save.isPending || loading || !hasIA}>
-            {save.isPending ? (
-              <Loader2 className="size-3.5 mr-1.5 animate-spin" />
-            ) : (
-              <Save className="size-3.5 mr-1.5" />
-            )}
-            Salvar
-          </Button>
+          {tab === "canvas" && (
+            <Button size="sm" onClick={handleSave} disabled={save.isPending || loading || !hasIA}>
+              {save.isPending ? (<Loader2 className="size-3.5 mr-1.5 animate-spin" />) : (<Save className="size-3.5 mr-1.5" />)}
+              Salvar
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8">
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setProviderOpen(true)}>
+                <Sparkles className="size-4 mr-2" /> Configurar IA
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={(e) => { e.preventDefault(); setDeleteOpen(true); }}
+              >
+                <Trash2 className="size-4 mr-2" /> Excluir colaborador
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
+
       <div className="flex-1 min-h-0 relative">
         {loading || !canvas ? (
           <div className="p-4 h-full">
@@ -139,18 +190,44 @@ export default function EquipeBuilder() {
           </div>
         ) : (
           <>
-            <EquipeCanvas
-              ref={canvasRef}
-              initial={canvas}
-              onAutoSave={autoSave}
-              onStateChange={setLiveState}
-            />
-            {displayedState && (
-              <WorkforceScorePanel
-                nodes={displayedState.nodes}
-                onAddKind={(k) => canvasRef.current?.addNodeByKind(k)}
-              />
+            {tab === "overview" && worker && (
+              <WorkforceOverview worker={worker} nodes={displayedState?.nodes ?? canvas.nodes} />
             )}
+            {tab === "canvas" && (
+              <>
+                <EquipeCanvas
+                  ref={canvasRef}
+                  initial={canvas}
+                  workforceStatus={workforceStatus}
+                  onAutoSave={autoSave}
+                  onStateChange={setLiveState}
+                />
+                {displayedState && (
+                  <WorkforceScorePanel
+                    nodes={displayedState.nodes}
+                    onAddKind={(k) => canvasRef.current?.addNodeByKind(k)}
+                  />
+                )}
+              </>
+            )}
+            {tab === "testes" && (
+              <div className="h-full flex flex-col items-center justify-center gap-4 p-8 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center text-primary">
+                  <FlaskConical className="size-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Ambiente de Teste</h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mt-1">
+                    Converse com o seu colaborador digital para validar respostas, regras e objetivos antes de publicar.
+                  </p>
+                </div>
+                <Button onClick={() => setTestOpen(true)}>
+                  <FlaskConical className="size-4 mr-2" /> Abrir chat de teste
+                </Button>
+              </div>
+            )}
+            {tab === "analytics" && id && <WorkforceAnalytics equipeId={id} />}
+            {tab === "versoes" && <WorkforceVersions />}
           </>
         )}
       </div>
@@ -170,6 +247,28 @@ export default function EquipeBuilder() {
           equipeName={worker.name}
         />
       )}
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir colaborador</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <span className="font-semibold text-foreground">{worker?.name}</span>?
+              Esta ação é permanente e removerá toda a configuração, canvas e histórico.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={del.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              disabled={del.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {del.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
