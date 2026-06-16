@@ -1412,32 +1412,12 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                 if (sendResponse.ok) {
                   sentCount++;
 
-                  // Extract Evolution message id (key.id) for chat dedupe
-                  let wabaMessageId: string | null = null;
-                  try {
-                    const json = await sendResponse.clone().json();
-                    wabaMessageId = json?.key?.id || json?.messageId || null;
-                  } catch {}
-
                   // Log the message
                   await supabase.from('agent_message_logs').insert({
                     agent_id: agent.id,
                     conversation_id: conv.id,
                     direction: 'sent',
                     content: msgPart,
-                  });
-
-                  // Persist in chat UI tables (Meta-like webhook may not echo)
-                  await persistAgentChatMessage(supabase, {
-                    userId: whatsappNumber.user_id,
-                    leadPhone: conv.lead_phone,
-                    leadName: conv.lead_name,
-                    numberPhone: whatsappNumber.phone_number,
-                    wabaMessageId,
-                    messageType: 'text',
-                    content: msgPart,
-                    agentId: agent.id,
-                    agentName: agent.name,
                   });
                 } else {
                   console.error(`Failed to send message ${i + 1}:`, await sendResponse.text());
