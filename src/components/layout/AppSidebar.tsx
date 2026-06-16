@@ -577,22 +577,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       </Link>
                     </li>
                     )}
-                    {can("warming") && (
-                    <li data-tour="sidebar-automacao-aquecimento">
-                      <Link
-                        to="/warming"
-                        className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
-                          currentPath === "/warming"
-                            ? "bg-sidebar-accent/60 text-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <Flame size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Aquecimento</span>
-                      </Link>
-                    </li>
-                    )}
+                    {/* Aquecimento removido do menu — página continua acessível via /warming */}
+
                   </ul>
                 </div>
               )}
