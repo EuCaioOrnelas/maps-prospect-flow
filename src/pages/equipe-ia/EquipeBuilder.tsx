@@ -78,6 +78,15 @@ export default function EquipeBuilder() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {autoState !== "idle" && (
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1 mr-1">
+              {autoState === "saving" ? (
+                <><Loader2 className="size-3 animate-spin" /> Salvando…</>
+              ) : (
+                <><Check className="size-3 text-emerald-500" /> Salvo</>
+              )}
+            </span>
+          )}
           <Button variant="outline" size="sm" onClick={handleTest} disabled={loading || !hasIA}>
             <FlaskConical className="size-3.5 mr-1.5" /> Testar
           </Button>
