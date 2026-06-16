@@ -1,8 +1,8 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { EQUIPE_NODE_META, type EquipeNodeKind } from "../nodeTypes";
-import { KIND_ICON_BG } from "./EquipeCanvas";
 import { cn } from "@/lib/utils";
+import coreMarkAsset from "@/assets/equipe-core-mark.png.asset.json";
 
 interface EquipeNodeData {
   kind: EquipeNodeKind;
@@ -14,32 +14,22 @@ interface EquipeNodeData {
 // Sharp hexagon (flat-top). Single clip used by all hex layers so borders stay crisp.
 const HEX_CLIP = "polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%)";
 
-/**
- * Wiize core mark — 8 rounded parallelogram petals arranged in a pinwheel,
- * inspired by the user-provided reference logo.
- */
-function CoreMark({ className }: { className?: string }) {
-  const petals = Array.from({ length: 8 }, (_, i) => i);
-  return (
-    <svg viewBox="0 0 80 80" className={className} fill="currentColor">
-      {petals.map((i) => {
-        const a = i * 45;
-        return (
-          <rect
-            key={i}
-            x={32}
-            y={8}
-            width={16}
-            height={9}
-            rx={2.5}
-            ry={2.5}
-            transform={`rotate(${a} 40 40) rotate(22 40 12.5)`}
-          />
-        );
-      })}
-    </svg>
-  );
-}
+// Per-kind accent tokens mirroring the Flow node style: tinted icon chip + colored
+// uppercase label + matching handle dot.
+const KIND_ACCENT: Record<EquipeNodeKind, { text: string; bg: string; dot: string }> = {
+  core:            { text: "text-primary",        bg: "bg-primary/10",        dot: "!bg-primary" },
+  goal:            { text: "text-emerald-400",    bg: "bg-emerald-500/10",    dot: "!bg-emerald-400" },
+  rules:           { text: "text-rose-400",       bg: "bg-rose-500/10",       dot: "!bg-rose-400" },
+  decision:        { text: "text-fuchsia-400",    bg: "bg-fuchsia-500/10",    dot: "!bg-fuchsia-400" },
+  memory:          { text: "text-violet-400",     bg: "bg-violet-500/10",     dot: "!bg-violet-400" },
+  knowledge:       { text: "text-amber-400",      bg: "bg-amber-500/10",      dot: "!bg-amber-400" },
+  crm_data:        { text: "text-sky-400",        bg: "bg-sky-500/10",        dot: "!bg-sky-400" },
+  data_collection: { text: "text-cyan-400",       bg: "bg-cyan-500/10",       dot: "!bg-cyan-400" },
+  analysis:        { text: "text-teal-400",       bg: "bg-teal-500/10",       dot: "!bg-teal-400" },
+  tools:           { text: "text-indigo-400",     bg: "bg-indigo-500/10",     dot: "!bg-indigo-400" },
+  actions:         { text: "text-orange-400",     bg: "bg-orange-500/10",     dot: "!bg-orange-400" },
+  escalation:      { text: "text-yellow-400",     bg: "bg-yellow-500/10",     dot: "!bg-yellow-400" },
+};
 
 function EquipeNodeInner({ data, selected }: NodeProps) {
   const nodeData = data as unknown as EquipeNodeData;
@@ -47,10 +37,11 @@ function EquipeNodeInner({ data, selected }: NodeProps) {
   if (!meta) return null;
   const Icon = meta.icon;
   const isCore = meta.kind === "core";
-  const iconBg = KIND_ICON_BG[nodeData.kind] ?? "bg-muted";
+  const accent = KIND_ACCENT[nodeData.kind] ?? KIND_ACCENT.core;
 
   if (isCore) {
     const size = 260;
+    const hasSummary = !!(nodeData.summary && nodeData.summary.trim());
     return (
       <div className="relative" style={{ width: size, height: size }}>
         <div
@@ -75,7 +66,7 @@ function EquipeNodeInner({ data, selected }: NodeProps) {
             <div className="relative">
               <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full" />
               <div className="relative w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-[0_8px_24px_-8px_hsl(var(--primary)/0.6)]">
-                <CoreMark className="size-10 text-primary-foreground" />
+                <img src={coreMarkAsset.url} alt="" className="size-10 select-none pointer-events-none" draggable={false} />
               </div>
             </div>
             <p className="text-sm font-bold text-foreground tracking-tight leading-tight">
@@ -84,10 +75,19 @@ function EquipeNodeInner({ data, selected }: NodeProps) {
             <p className="text-[10px] text-muted-foreground uppercase tracking-[0.18em] font-medium">
               Núcleo de Inteligência
             </p>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/12 border border-emerald-500/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">Ativo</span>
-            </div>
+            {hasSummary ? (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/12 border border-emerald-500/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">Ativo</span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/12 border border-amber-500/40">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-300">
+                  Clique para configurar instruções
+                </span>
+              </div>
+            )}
           </div>
         </div>
         <Handle
@@ -102,35 +102,38 @@ function EquipeNodeInner({ data, selected }: NodeProps) {
     );
   }
 
+  const isConfigured = !!(nodeData.summary && nodeData.summary.trim());
+
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card text-card-foreground shadow-sm transition-all w-56",
-        selected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-foreground/30",
+        "bg-card border rounded-xl shadow-[0_2px_12px_hsl(0_0%_0%/0.3)] w-60 overflow-hidden backdrop-blur-sm transition-colors",
+        selected ? "border-primary" : "border-border hover:border-foreground/30",
       )}
     >
-      <Handle type="source" position={Position.Right} className="!h-2 !w-2 !bg-primary/70 !border-2 !border-background" />
-      <Handle type="target" position={Position.Left} className="!h-2 !w-2 !bg-muted-foreground/50 !border-2 !border-background" />
-
-      <div className="flex items-center gap-3 p-3">
-        <div className={cn(
-          "w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-white",
-          iconBg,
-        )}>
-          <Icon size={16} />
+      <div className="px-3.5 py-2 flex items-center gap-2 border-b border-border">
+        <div className={cn("w-6 h-6 rounded-md flex items-center justify-center", accent.bg)}>
+          <Icon size={13} className={accent.text} />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold truncate">
-            {meta.label}
-          </p>
-          <p className="font-semibold text-sm text-foreground leading-tight truncate">
-            {nodeData.title || meta.label}
-          </p>
-        </div>
+        <span className={cn("text-[11px] font-semibold uppercase tracking-wider", accent.text)}>
+          {meta.label}
+        </span>
+        {isConfigured && <span className="ml-auto text-[10px] text-primary">✓</span>}
       </div>
+      <div className="px-3.5 py-3">
+        <p className="text-sm font-medium text-foreground truncate">
+          {nodeData.title || meta.label}
+        </p>
+        {isConfigured ? (
+          <p className="text-[11px] text-muted-foreground mt-1.5 line-clamp-2">{nodeData.summary}</p>
+        ) : (
+          <p className="text-[11px] text-muted-foreground/60 mt-1.5 italic">Clique para configurar</p>
+        )}
+      </div>
+      <Handle type="target" position={Position.Left} className={cn("!w-2.5 !h-2.5 !border-2 !border-card !rounded-full", accent.dot)} />
+      <Handle type="source" position={Position.Right} className={cn("!w-2.5 !h-2.5 !border-2 !border-card !rounded-full", accent.dot)} />
     </div>
   );
 }
 
 export const EquipeNode = memo(EquipeNodeInner);
-

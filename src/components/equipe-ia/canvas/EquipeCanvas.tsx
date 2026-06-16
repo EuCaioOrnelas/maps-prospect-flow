@@ -59,6 +59,22 @@ export const KIND_ICON_BG: Record<EquipeNodeKind, string> = {
   escalation:      "bg-yellow-500",
 };
 
+// Sidebar palette accent — mirrors the flow editor (soft tinted chip + colored label).
+const KIND_PALETTE_ACCENT: Record<EquipeNodeKind, { text: string; bg: string }> = {
+  core:            { text: "text-primary",     bg: "bg-primary/10" },
+  goal:            { text: "text-emerald-400", bg: "bg-emerald-500/10" },
+  rules:           { text: "text-rose-400",    bg: "bg-rose-500/10" },
+  decision:        { text: "text-fuchsia-400", bg: "bg-fuchsia-500/10" },
+  memory:          { text: "text-violet-400",  bg: "bg-violet-500/10" },
+  knowledge:       { text: "text-amber-400",   bg: "bg-amber-500/10" },
+  crm_data:        { text: "text-sky-400",     bg: "bg-sky-500/10" },
+  data_collection: { text: "text-cyan-400",    bg: "bg-cyan-500/10" },
+  analysis:        { text: "text-teal-400",    bg: "bg-teal-500/10" },
+  tools:           { text: "text-indigo-400",  bg: "bg-indigo-500/10" },
+  actions:         { text: "text-orange-400",  bg: "bg-orange-500/10" },
+  escalation:      { text: "text-yellow-400",  bg: "bg-yellow-500/10" },
+};
+
 function uid() {
   return `n_${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -78,13 +94,19 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
     getState: () => ({ nodes, edges }),
   }), [nodes, edges]);
 
+  // Stabilize the autosave callback in a ref so re-renders in the parent (e.g.
+  // "Saving…" → "Saved" badge) don't re-trigger the debounce effect and cause a
+  // save loop.
+  const autoSaveRef = useRef(onAutoSave);
+  useEffect(() => { autoSaveRef.current = onAutoSave; }, [onAutoSave]);
+
   const firstRun = useRef(true);
   useEffect(() => {
-    if (!onAutoSave) return;
+    if (!autoSaveRef.current) return;
     if (firstRun.current) { firstRun.current = false; return; }
-    const t = setTimeout(() => onAutoSave({ nodes, edges }), 800);
+    const t = setTimeout(() => autoSaveRef.current?.({ nodes, edges }), 800);
     return () => clearTimeout(t);
-  }, [nodes, edges, onAutoSave]);
+  }, [nodes, edges]);
 
   const onConnect = useCallback(
     (c: Connection) => setEdges((eds) => addEdge({ ...c, animated: true }, eds)),
@@ -197,7 +219,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                     {cat.kinds.map((kind) => {
                       const meta = EQUIPE_NODE_META[kind];
                       const Icon = meta.icon;
-                      const iconBg = KIND_ICON_BG[kind] ?? "bg-muted";
+                      const accent = KIND_PALETTE_ACCENT[kind] ?? KIND_PALETTE_ACCENT.core;
                       return (
                         <div
                           key={kind}
@@ -207,17 +229,18 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                             e.dataTransfer.effectAllowed = "move";
                           }}
                           onClick={() => addNode(kind)}
-                          className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-border bg-card transition-all duration-200 text-left shadow-sm cursor-grab active:cursor-grabbing hover:border-foreground/30 hover:shadow-md"
+                          className="w-full bg-card border border-border rounded-xl shadow-[0_2px_12px_hsl(0_0%_0%/0.18)] overflow-hidden transition-colors hover:border-foreground/30 cursor-grab active:cursor-grabbing"
                         >
-                          <div className={cn(
-                            "w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-white",
-                            iconBg,
-                          )}>
-                            <Icon size={16} />
+                          <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
+                            <div className={cn("w-6 h-6 rounded-md flex items-center justify-center shrink-0", accent.bg)}>
+                              <Icon size={13} className={accent.text} />
+                            </div>
+                            <span className={cn("text-[10px] font-semibold uppercase tracking-wider truncate", accent.text)}>
+                              {meta.label}
+                            </span>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold text-foreground truncate">{meta.label}</p>
-                            <p className="text-[10px] text-muted-foreground leading-tight line-clamp-2">
+                          <div className="px-3 py-2">
+                            <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
                               {meta.description}
                             </p>
                           </div>
