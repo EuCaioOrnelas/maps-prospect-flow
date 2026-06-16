@@ -103,18 +103,19 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
     addNodeByKind: (kind: EquipeNodeKind) => {
       const meta = EQUIPE_NODE_META[kind];
       if (!meta) return;
+      const newId = uid();
       setNodes((nds) => {
-        const exists = nds.some((n) => (n.data as { kind?: string })?.kind === kind);
-        if (exists) return nds;
-        const newId = uid();
-        const newNode: Node = {
+        if (nds.some((n) => (n.data as { kind?: string })?.kind === kind)) return nds;
+        return [...nds, {
           id: newId, type: "equipe",
           position: { x: 200 + Math.random() * 400, y: 100 + Math.random() * 400 },
           data: { kind, title: meta.label, summary: "" },
-        };
-        return [...nds, newNode];
+        }];
       });
-      setEdges((eds) => [...eds, { id: `e_core_auto_${kind}_${Date.now()}`, source: "core", target: `_pending_`, animated: true } as Edge].slice(0, -1));
+      setEdges((eds) => {
+        if (eds.some((e) => e.target === newId)) return eds;
+        return [...eds, { id: `e_core_${newId}`, source: "core", target: newId, animated: true } as Edge];
+      });
     },
   }), [nodes, edges, setNodes, setEdges]);
 
