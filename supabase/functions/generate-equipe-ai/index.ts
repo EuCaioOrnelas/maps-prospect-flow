@@ -163,7 +163,7 @@ serve(async (req) => {
     // Sanitize nodes: unique kinds, valid kind, cap to 9
     const rawNodes = Array.isArray((parsed as { nodes?: unknown }).nodes) ? (parsed as { nodes: unknown[] }).nodes : [];
     const seen = new Set<string>();
-    const nodes = rawNodes
+    let nodes = rawNodes
       .map((n) => n as { kind?: string; title?: string; summary?: string; fields?: unknown })
       .filter((n) => typeof n?.kind === "string" && (VALID_KINDS as readonly string[]).includes(n.kind))
       .filter((n) => {
@@ -178,6 +178,19 @@ serve(async (req) => {
         summary: typeof n.summary === "string" ? n.summary : "",
         fields: n.kind === "data_collection" && Array.isArray(n.fields) ? n.fields : undefined,
       }));
+
+    // Safety net: never return zero nodes — guarantee a minimum viable skeleton
+    // so the canvas always opens populated, even when the model misbehaves.
+    if (nodes.length === 0) {
+      const userPrompt = String(prompt).trim().slice(0, 140);
+      nodes = [
+        { kind: "goal",       title: "Objetivo principal", summary: userPrompt || "Defina o objetivo deste colaborador." },
+        { kind: "memory",     title: "Memória de conversa", summary: "Lembrar contexto da conversa atual e do lead." },
+        { kind: "knowledge",  title: "Base de conhecimento", summary: "Conecte FAQs, PDFs e sites para consulta." },
+        { kind: "rules",      title: "Regras de negócio",   summary: "Tom de voz, horário de atendimento e proibições." },
+        { kind: "escalation", title: "Escalonamento humano", summary: "Quando transferir para um atendente." },
+      ];
+    }
 
     return new Response(
       JSON.stringify({
