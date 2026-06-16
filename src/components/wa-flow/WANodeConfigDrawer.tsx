@@ -1887,19 +1887,11 @@ function EndNodeConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
 
 function AgentLogicSection({ config, updateConfig }: { config: any; updateConfig: (k: string, v: any) => void }) {
   const [open, setOpen] = useState(false);
-  const dataFields: Array<{ name: string; description: string; required: boolean }> = config.data_collection || [];
   const loopBehavior = config.loop_behavior || "until_collected";
   const maxAttempts = config.max_attempts ?? 3;
 
-  const updateField = (i: number, patch: any) => {
-    const next = dataFields.map((f, idx) => idx === i ? { ...f, ...patch } : f);
-    updateConfig("data_collection", next);
-  };
-  const addField = () => updateConfig("data_collection", [...dataFields, { name: "", description: "", required: true }]);
-  const removeField = (i: number) => updateConfig("data_collection", dataFields.filter((_, idx) => idx !== i));
-
-  const filledCount = dataFields.filter(f => f.name?.trim()).length;
   const hasObjective = !!config.agent_objective?.trim();
+  const hasCriteria = !!config.advance_criteria?.trim();
 
   return (
     <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
@@ -1908,9 +1900,9 @@ function AgentLogicSection({ config, updateConfig }: { config: any; updateConfig
           <ListOrdered size={14} className="text-muted-foreground" /> Lógica & Objetivo
         </Label>
         <div className="flex items-center gap-2">
-          {(hasObjective || filledCount > 0) ? (
+          {(hasObjective || hasCriteria) ? (
             <span className="text-[9px] text-emerald-500 font-medium">
-              {hasObjective ? "Objetivo definido" : ""}{hasObjective && filledCount > 0 ? " · " : ""}{filledCount > 0 ? `${filledCount} dado${filledCount > 1 ? "s" : ""}` : ""}
+              {hasObjective ? "Objetivo definido" : ""}{hasObjective && hasCriteria ? " · " : ""}{hasCriteria ? "Critério definido" : ""}
             </span>
           ) : (
             <span className="text-[9px] text-muted-foreground font-medium">Configurar</span>
@@ -1951,7 +1943,7 @@ function AgentLogicSection({ config, updateConfig }: { config: any; updateConfig
             <Select value={loopBehavior} onValueChange={(v) => updateConfig("loop_behavior", v)}>
               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="until_collected">Insistir até coletar tudo / atingir objetivo</SelectItem>
+                <SelectItem value="until_collected">Insistir até atingir o objetivo</SelectItem>
                 <SelectItem value="max_attempts">Tentar até X vezes e avançar</SelectItem>
                 <SelectItem value="single_reply">Responder uma vez e avançar</SelectItem>
                 <SelectItem value="free_chat">Conversar livremente (avanço manual pelo critério)</SelectItem>
@@ -1970,64 +1962,14 @@ function AgentLogicSection({ config, updateConfig }: { config: any; updateConfig
                 />
               </div>
             )}
-            <p className="text-[10px] text-muted-foreground">Define se o agente repete perguntas até obter o que precisa, ou se avança mesmo sem resposta.</p>
-          </div>
-
-          {/* Coleta de dados */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-[11px] font-medium flex items-center gap-1.5"><ClipboardList size={12} className="text-muted-foreground" /> Dados a coletar</Label>
-              <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1" onClick={addField}>
-                <Plus size={11} /> Adicionar
-              </Button>
-            </div>
-            <p className="text-[10px] text-muted-foreground">O agente vai pedir esses dados ao lead durante a conversa e salvá-los como variáveis do fluxo.</p>
-
-            {dataFields.length === 0 && (
-              <div className="p-2.5 rounded-lg bg-muted/30 border border-dashed border-border/40 text-center">
-                <p className="text-[10px] text-muted-foreground">Nenhum dado configurado. Ex: email, nome da empresa, faturamento mensal...</p>
-              </div>
-            )}
-
-            {dataFields.map((field, i) => (
-              <div key={i} className="p-2.5 rounded-lg border border-border/40 bg-card space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <Input
-                    value={field.name}
-                    onChange={(e) => updateField(i, { name: e.target.value.replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase() })}
-                    placeholder="nome_variavel (ex: email)"
-                    className="h-7 text-xs flex-1 font-mono"
-                  />
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive" onClick={() => removeField(i)}>
-                    <Trash2 size={11} />
-                  </Button>
-                </div>
-                <Input
-                  value={field.description}
-                  onChange={(e) => updateField(i, { description: e.target.value })}
-                  placeholder="Descrição (ex: e-mail comercial do lead)"
-                  className="h-7 text-xs"
-                />
-                <div className="flex items-center justify-between pt-0.5">
-                  <Label className="text-[10px] text-muted-foreground flex items-center gap-1.5 cursor-pointer">
-                    <Switch
-                      checked={field.required}
-                      onCheckedChange={(v) => updateField(i, { required: v })}
-                    />
-                    Obrigatório (não avança sem este dado)
-                  </Label>
-                </div>
-                {field.name && (
-                  <p className="text-[9px] text-muted-foreground font-mono">Variável: {`{${field.name}}`}</p>
-                )}
-              </div>
-            ))}
+            <p className="text-[10px] text-muted-foreground">Define se o agente repete perguntas até atingir o objetivo, ou se avança mesmo sem resposta. Para coletar dados estruturados, use o bloco "Coletar dados" no fluxo.</p>
           </div>
         </div>
       )}
     </div>
   );
 }
+
 
 function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndicator }: {
 
