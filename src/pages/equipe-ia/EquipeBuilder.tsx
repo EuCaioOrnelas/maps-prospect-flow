@@ -12,11 +12,22 @@ import { toast } from "sonner";
 
 export default function EquipeBuilder() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: worker, isLoading: loadingW } = useEquipe(id);
   const { data: canvas, isLoading: loadingC } = useEquipeCanvas(id);
+  const credsQ = useUserAICredentials();
   const save = useSaveCanvas();
   const canvasRef = useRef<CanvasHandle>(null);
   const [testOpen, setTestOpen] = useState(false);
+
+  const hasIA = useMemo(
+    () => (credsQ.data ?? []).some((c) => c.is_active && c.api_key),
+    [credsQ.data],
+  );
+  const [providerOpen, setProviderOpen] = useState(false);
+  useEffect(() => {
+    if (!credsQ.isLoading && !hasIA) setProviderOpen(true);
+  }, [credsQ.isLoading, hasIA]);
 
   const loading = loadingW || loadingC;
 
