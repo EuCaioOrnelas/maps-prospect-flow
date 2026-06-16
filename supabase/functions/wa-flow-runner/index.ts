@@ -1453,18 +1453,6 @@ async function runFlow(
           const prevAttempts = Number(ctx.variables[attemptKey] || 0);
           const currentAttempt = prevAttempts + 1;
 
-          // Coleta atual (já preenchida em variables)
-          const collectedSummary = dataCollection.length
-            ? dataCollection.map(f => {
-                const val = ctx.variables[f.name];
-                return `- ${f.name}${f.required ? " (obrigatório)" : ""}: ${val ? `JÁ COLETADO ("${val}")` : "PENDENTE"} — ${f.description || ""}`;
-              }).join("\n")
-            : "";
-
-          const missingRequired = dataCollection
-            .filter(f => f.required && !ctx.variables[f.name])
-            .map(f => f.name);
-
           // Regras de avanço baseado em loop_behavior
           let advanceRule = "";
           if (loopBehavior === "single_reply") {
@@ -1478,21 +1466,14 @@ async function runFlow(
           } else if (loopBehavior === "free_chat") {
             advanceRule = "Converse livremente. Use [AVANCAR] APENAS quando o critério de avanço for claramente atendido. Caso contrário, sempre [CONTINUAR].";
           } else {
-            // until_collected (default)
-            advanceRule = `Insista até coletar todos os dados obrigatórios E atingir o objetivo. ${
-              missingRequired.length > 0
-                ? `Faltam coletar (obrigatórios): ${missingRequired.join(", ")}. Use [CONTINUAR] e peça os dados que faltam.`
-                : "Todos os dados obrigatórios foram coletados — se o objetivo foi atingido, use [AVANCAR]."
-            }`;
+            // until_collected (default) — agora baseado puramente no critério/objetivo
+            advanceRule = "Insista até atingir o objetivo definido. Use [AVANCAR] quando o critério de avanço for atendido, caso contrário [CONTINUAR] e siga a conversa.";
           }
 
           const routeBlock = routes.length > 0
             ? `\n\n## ROTAS DISPONÍVEIS\nAo avançar, classifique a conversa retornando no formato [ROUTE: <UMA_DAS_ROTAS>].\nRotas válidas: ${routes.join(", ")}.`
             : "";
 
-          const dataBlock = dataCollection.length > 0
-            ? `\n\n## DADOS A COLETAR DO LEAD\n${collectedSummary}\n\nQuando o lead informar um dado, registre usando o marcador (invisível ao lead):\n[COLETAR: nome_variavel=valor_informado]\nUm marcador por dado. Use exatamente os nomes acima.`
-            : "";
 
           const contextVars = Object.entries(ctx.variables)
             .filter(([k]) => !k.startsWith("__"))
