@@ -135,7 +135,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
       });
       setEdges((eds) => {
         if (eds.some((e) => e.target === newId)) return eds;
-        return [...eds, { id: `e_core_${newId}`, source: "core", target: newId, animated: true } as Edge];
+        return [...eds, { id: `e_core_${newId}`, source: "core", target: newId, type: "floating", animated: true } as Edge];
       });
     },
   }), [nodes, edges, setNodes, setEdges]);
