@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Bot, Loader2, Sparkles, ArrowLeft, Wand2, PencilRuler, LayoutTemplate,
-  Phone, Headphones, Wallet, User, Briefcase, FileText, SendIcon, CheckCircle2,
+  Phone, Headphones, Wallet, SendIcon, CheckCircle2,
 } from "lucide-react";
 import { useCreateEquipe } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ import { AI_PROVIDERS, ProviderId } from "@/lib/aiProviders";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 
-type Mode = "choose" | "blank" | "templates" | "ai";
+type Mode = "blank" | "templates" | "ai";
 type TemplateStep = "pick" | "connect";
 
 const TEMPLATES = [
