@@ -1,192 +1,128 @@
-# Plano: AI Workforce (Digital Workers)
 
-Refatoração do módulo de Agentes de IA da Wiize, transformando-o numa plataforma de colaboradores digitais orientados a objetivos com construtor visual de comportamento.
+# Refatoração AI Workforce — Experiência orientada por resultado
 
----
+Transformar a criação de colaboradores digitais em algo que parece "criar um colaborador", não "configurar uma IA". Manter o Canvas como modo avançado, nunca como ponto de partida.
 
-## 1. Estratégia de Migração (Legado)
+## 1. Novo fluxo de entrada (Dashboard / Lista)
 
-- O sistema atual de Agentes IA permanece **100% funcional**, apenas movido para um sub-menu.
-- Novo item de menu principal: **"AI Workforce"** (novo produto).
-- Item secundário: **"Versão Clássica"** dentro do menu AI Workforce, apontando para todas as páginas atuais (`AdminIAAgentes`, edição de agente, `ai_agents`, `agent_templates`, etc.).
-- Banner discreto na Versão Clássica: "Esta é a versão anterior. Migre para AI Workforce para acessar os novos recursos."
-- Nenhuma tabela atual é removida ou alterada. Nenhuma edge function existente é tocada.
+Ao clicar em **Novo Workforce** o usuário escolhe entre 3 caminhos, em um modal único:
 
----
+1. **Assistente Inteligente** (padrão, destacado) — wizard guiado em 7 passos
+2. **Criar com IA** (campo de prompt único, estilo ChatGPT)
+3. **Templates prontos** (biblioteca por categoria)
 
-## 2. Arquitetura de Banco (novas tabelas)
+Removeremos completamente o atalho que abre o Canvas vazio. O Canvas só abre **depois** que existe um Workforce gerado.
 
-Todas com RLS por `account_id`/`user_id`, GRANTs corretos, timestamps.
+## 2. Assistente Inteligente (Nível 1 — fluxo principal)
 
-```text
-ai_workforce                 — colaboradores digitais (1 row = 1 worker)
-ai_workforce_canvas          — nós e edges do construtor visual (JSONB)
-ai_workforce_goals           — objetivos (principal + secundários)
-ai_workforce_rules           — regras com prioridade
-ai_workforce_knowledge       — fontes de conhecimento (pdf, site, faq)
-ai_workforce_tools           — ferramentas habilitadas + permissões
-ai_workforce_data_schema     — campos obrigatórios de coleta
-ai_workforce_decisions       — árvore de decisão (JSONB)
-ai_workforce_executions      — execução ativa por conversa/lead
-ai_workforce_execution_logs  — log do ciclo Analisar→Avaliar
-ai_workforce_outcomes        — resumo final + análise da conversa
-ai_workforce_templates       — marketplace (público + privado)
-```
+Arquivo novo: `src/components/equipe-ia/wizard/WorkforceWizard.tsx` (modal full-screen, estilo Notion/Linear, 1 pergunta por tela com progresso).
 
-`ai_workforce.config` em JSONB consolida nome, persona, modelo, temperatura, canal, idioma — para evitar 30 colunas.
+Passos:
 
-A integração com o construtor de fluxos existente (`wa_automation_flows`) é feita via novo tipo de nó `ai_workforce` em `wa_flow_nodes.data.kind`, sem migração de schema.
+1. Função (SDR, Qualificador, Atendimento, Suporte, Cobrança, Agendamento, Pós-venda, Outro)
+2. Objetivo (agendar reunião, coletar info, resolver dúvidas, abrir chamado, qualificar, recuperar)
+3. Canais (WhatsApp, Instagram, Chat, Facebook, Multicanal)
+4. Acesso à plataforma (CRM, histórico, pipeline, agenda, conhecimento) — multi-select
+5. Coleta de dados (toggle + campos sugeridos: nome, telefone, e-mail, cidade, orçamento, custom)
+6. Personalidade (consultivo, profissional, comercial, amigável, objetivo)
+7. Descrição livre curta (ex.: "Qualificar leads de software para clínicas odontológicas")
 
----
+Cada passo: chip-cards grandes com ícone, sem jargão técnico. Atalhos "voltar" / "pular".
 
-## 3. Estrutura de Pastas Frontend
+Ao concluir → chama a edge function `generate-equipe-ai` (já existe) com o blueprint do wizard e gera tudo automaticamente: objetivo, memória, conhecimento, coleta de dados, regras, escalonamento, ferramentas, critérios de sucesso/falha.
 
-```text
-src/pages/ai-workforce/
-  AIWorkforceDashboard.tsx          (dashboard principal)
-  AIWorkforceList.tsx               (lista de colaboradores)
-  AIWorkforceBuilder.tsx            (canvas visual)
-  AIWorkforceCreator.tsx            (assistente IA cria-tudo)
-  AIWorkforceMarketplace.tsx        (placeholder + estrutura)
-  AIWorkforceLegacy.tsx             (redirect/wrapper p/ páginas atuais)
+## 3. Criador por prompt (Nível 2)
 
-src/components/ai-workforce/
-  canvas/
-    WorkforceCanvas.tsx             (ReactFlow infinito)
-    nodes/
-      CoreNode.tsx                  (núcleo — card central obrigatório)
-      GoalNode.tsx
-      MemoryNode.tsx
-      KnowledgeNode.tsx
-      CRMDataNode.tsx
-      DataCollectionNode.tsx
-      RulesNode.tsx
-      DecisionNode.tsx
-      ToolsNode.tsx
-      ActionsNode.tsx
-      EscalationNode.tsx
-      AnalysisNode.tsx
-    edges/RoutedEdge.tsx            (reaproveita o já existente)
-    NodePalette.tsx                 (sidebar de cards arrastáveis)
-    NodeConfigDrawer.tsx            (config lateral por card)
-  dashboard/
-    WorkforceKPIs.tsx
-    GoalsCompletedChart.tsx
-    PerformanceByWorker.tsx
-    FunnelChart.tsx
-    FiltersBar.tsx
-  shared/
-    WorkerCard.tsx
-    WorkerStatusBadge.tsx
-```
+Arquivo novo: `src/components/equipe-ia/wizard/WorkforcePromptCreator.tsx`.
 
----
+Tela única tipo composer ChatGPT: textarea grande + sugestões clicáveis ("Crie um SDR para imobiliárias…"). Envia para a mesma edge function com `mode: "prompt"`.
 
-## 4. Núcleo de Execução por Objetivos
+## 4. Biblioteca de Templates (Nível 3)
 
-Edge function nova: `ai-workforce-runner`.
+Componente novo: `src/components/equipe-ia/wizard/TemplateGallery.tsx`. Categorias: Vendas, Atendimento, Suporte, Cobrança, RH, Marketing. Cada template tem blueprint pronto → instala Workforce em 1 clique (reaproveita `generate-equipe-ai` com `mode: "template"`).
 
-Ciclo (loop bounded `stepCountIs(50)`):
+## 5. Canvas Inteligente (pós-criação)
 
-```text
-1. Carrega contexto (lead, histórico, memória)
-2. Verifica estado do objetivo (campos coletados vs schema)
-3. Identifica lacunas
-4. Gera estratégia (LLM com tools)
-5. Executa: responder | chamar tool | escalar | concluir
-6. Persiste execution_log + atualiza ai_workforce_executions
-7. Avalia critérios de sucesso/falha
-8. Se incompleto → próxima mensagem; se completo → outcome + evento
-```
+Mudanças em `src/components/equipe-ia/canvas/EquipeCanvas.tsx`:
 
-Modelo padrão `google/gemini-3-flash-preview` via Lovable AI Gateway. Tools registradas dinamicamente conforme `ai_workforce_tools` habilitadas (CRM, agenda, WhatsApp, webhooks, etc).
+- Canvas **nunca abre vazio**. Se não houver nodes, dispara geração automática a partir do blueprint salvo no `ai_workforce.config`.
+- Card central obrigatório **Workforce Core** (não pode ser deletado — bloquear delete quando `kind === "core"`).
+- Nodes organizados em **categorias** na sidebar de drag-and-drop:
+  - Objetivos · Conhecimento · Memória · Dados · Comportamento · Ferramentas · Ações · Inteligência
+- Cada categoria collapsable. Layout automático em árvore radial em torno do Core.
 
----
+## 6. Workforce Score
 
-## 5. Construtor Visual
+Componente novo: `src/components/equipe-ia/canvas/WorkforceScorePanel.tsx` (canto superior direito do Canvas).
 
-- Baseado em **ReactFlow** (já usado em `wa-flow`).
-- Canvas infinito, pan/zoom, minimap.
-- Card central **Core** (não removível, único).
-- Cards orbitais conectáveis ao Core e entre si.
-- Cada nó tem handles tipados (entrada/saída) e drawer de configuração.
-- Salvamento idêntico ao padrão recém-implementado em `WhatsAppFlowEditor` (mapa de IDs, sync de UUIDs no `onSuccess`).
-- Botão "Criar com IA" abre o **AIWorkforceCreator** (wizard de 4 perguntas que chama edge function `ai-workforce-generator` e devolve o grafo completo pronto para o canvas).
+- Score 0–100 calculado client-side a partir dos nodes presentes: objetivo (+15), regras (+15), conhecimento (+15), escalonamento (+15), memória (+15), ferramentas (+15), persona (+10).
+- Lista de sugestões acionáveis ("Adicione memória de longo prazo…") que ao clicar inserem o node correspondente.
 
----
+## 7. Dashboard refatorado
 
-## 6. Dashboard
+Substituir métricas técnicas em `src/pages/equipe-ia/EquipeDashboard.tsx` por:
 
-KPIs no topo + 4 gráficos (Recharts):
-- Objetivos concluídos por período (linha)
-- Performance por colaborador (barras)
-- Funil de conclusão (funnel)
-- Conversões/abandono (donut)
+- Conversas iniciadas / concluídas
+- Objetivos concluídos
+- Taxa de sucesso
+- Taxa de transferência humana
+- Leads qualificados
+- Reuniões agendadas
+- Conversões geradas
 
-Filtros: data, canal, fluxo, equipe, colaborador. Persistidos em querystring.
+Dados puxados de `agent_conversations` + `handoff_assignments` + `leads` (queries agregadas por workforce_id quando disponível; placeholder zero quando ainda não há dados, com empty state convidando a criar o primeiro Workforce).
 
----
+## 8. Linguagem e identidade visual
 
-## 7. Integração com Fluxos Existentes
+- Substituir "configurar IA / nodes / canvas" por "colaborador / habilidades / função" em toda a UI visível.
+- Botão primário sempre: **Novo Colaborador**.
+- Tom dos textos: orientado a resultado, não a engenharia.
 
-Novo nó no editor de fluxos do WhatsApp (`WhatsAppFlowEditor`):
-- Tipo: `ai_workforce`
-- Config: seletor de colaborador, modo de espera, timeout.
-- Saídas: `success`, `failure`, `transferred`, `no_response`, `partial`.
-- Runtime do fluxo invoca `ai-workforce-runner` e aguarda evento.
+## Detalhes técnicos
 
----
+- **Blueprint do wizard** salvo em `ai_workforce.config.blueprint` (jsonb existente, sem migração).
+- Edge function `supabase/functions/generate-equipe-ai/index.ts` atualizada para aceitar `{ mode: "wizard"|"prompt"|"template", blueprint }` e retornar `{ nodes, edges, summary, persona, rules, knowledge, dataFields, escalation }`. Mantém fallback de skeleton já existente.
+- `useEquipeIA.ts` ganha `useGenerateWorkforce({ mode, payload })` que chama a function e popula `ai_workforce` + `ai_workforce_canvas` em uma transação client-side (insert workforce → invoke function → insert canvas).
+- Roteamento:
+  - `/equipe-ia` → Dashboard novo
+  - `/equipe-ia/novo` → modal de entrada (wizard / prompt / template)
+  - `/equipe-ia/colaboradores/:id` → Canvas (com auto-gen se vazio)
+- Remover `EquipeCreator.tsx` antigo (substituído pelo wizard) e manter `EquipeLegacy.tsx` somente como rota oculta de fallback.
 
-## 8. Marketplace (estrutura preparada, UI mínima nesta entrega)
+## Arquivos a criar
 
-- Tabela `ai_workforce_templates` com `visibility` (public/private/account).
-- Página placeholder com grid + filtros + botão "Instalar" (clonará para `ai_workforce` da conta).
-- Seeds iniciais: SDR SaaS, SDR Imobiliário, Suporte Clínicas, Cobrança, Pós-venda.
+- `src/components/equipe-ia/wizard/WorkforceWizard.tsx`
+- `src/components/equipe-ia/wizard/WorkforcePromptCreator.tsx`
+- `src/components/equipe-ia/wizard/TemplateGallery.tsx`
+- `src/components/equipe-ia/wizard/NewWorkforceModal.tsx` (tabs entre os 3 modos)
+- `src/components/equipe-ia/wizard/workforceTemplates.ts` (catálogo)
+- `src/components/equipe-ia/canvas/WorkforceScorePanel.tsx`
+- `src/components/equipe-ia/canvas/NodeCategorySidebar.tsx`
 
----
+## Arquivos a editar
 
-## 9. Entregas em Fases
+- `src/pages/equipe-ia/EquipeDashboard.tsx` (KPIs de negócio)
+- `src/pages/equipe-ia/EquipeList.tsx` (CTA → NewWorkforceModal)
+- `src/pages/equipe-ia/EquipeBuilder.tsx` (auto-gen se canvas vazio, score panel)
+- `src/components/equipe-ia/canvas/EquipeCanvas.tsx` (categorias, core obrigatório)
+- `src/components/equipe-ia/EquipePageLayout.tsx` (linguagem)
+- `src/hooks/useEquipeIA.ts` (`useGenerateWorkforce`)
+- `supabase/functions/generate-equipe-ai/index.ts` (modos wizard/prompt/template)
 
-**Fase 1 — Fundação (esta entrega)**
-- Migrations das tabelas novas + RLS + GRANTs.
-- Menu reorganizado, página Legado funcional.
-- Dashboard AI Workforce com KPIs mockados conectando às novas tabelas.
-- Lista de colaboradores + criação básica.
-- Canvas visual funcional com **todos os 11 cards** (UI + config drawer), salvamento.
-- Edge function `ai-workforce-runner` (esqueleto com ciclo de objetivos, 1 canal: WhatsApp).
-- Wizard "Criar com IA" gerando grafo base.
-- Nó `ai_workforce` no editor de fluxos.
+## Fora de escopo desta entrega
 
-**Fase 2 — Profundidade (entregas seguintes, sob demanda)**
-- Marketplace público.
-- Memória vetorial + indexação de conhecimento (pgvector).
-- Tools avançadas (Google Calendar, webhooks customizados).
-- Métricas finas de tokens/custo por execução.
-- A/B de personas.
+- Execução real das novas ferramentas (Agenda, Webhooks) — só configurados visualmente.
+- Métricas históricas: o dashboard mostra dados atuais; séries temporais ficam para depois.
+- Edição inline de nodes complexos (segue usando o drawer atual).
 
----
+## Plano de validação
 
-## 10. Decisões Técnicas
+1. Criar Workforce via wizard → confirmar canvas pré-montado com Core + 5 módulos conectados.
+2. Criar via prompt "Crie um SDR para imobiliárias" → confirmar geração coerente.
+3. Instalar template "Atendimento" → confirmar canvas populado.
+4. Abrir canvas existente vazio → confirmar auto-geração.
+5. Tentar deletar Core → confirmar bloqueio.
+6. Score atualiza ao adicionar/remover nodes.
+7. Dashboard mostra KPIs de negócio (zeros + empty state em conta nova).
 
-- Modelo IA: `google/gemini-3-flash-preview` (default, conforme memory).
-- Auth: Custom Supabase Auth existente (não tocar em `lovable/index.ts`).
-- UI: tokens semânticos Tailwind, popups com `bg-black/70` sólido (sem blur), padrão fintech premium.
-- Nenhuma alteração em tabelas existentes (`ai_agents`, `agent_templates`, etc.).
-- B2B only, gating por plano: AI Workforce exige plano com SDR IA (mesma regra do agente atual).
-
----
-
-## 11. Riscos e Mitigações
-
-| Risco | Mitigação |
-|---|---|
-| Custo de tokens explodir | Limite de ciclos por execução + alertas no dashboard |
-| Loop infinito de objetivo | `max_attempts` por goal + `stepCountIs(50)` |
-| Confusão entre Legacy e novo | Banner claro + ambos no menu, sem deprecação forçada |
-| Schema grande para AI SDK Output | Schemas compactos, sem enums dinâmicos |
-
----
-
-## Confirmação
-
-Esta Fase 1 é uma entrega grande (≈30 arquivos novos, 4 migrations, 2 edge functions). Posso prosseguir com tudo de uma vez, ou prefere que eu quebre em sub-entregas (ex.: primeiro Legado+menu+dashboard, depois canvas, depois runner)?
+Após o ok, implemento na ordem: edge function → hook → wizard/prompt/templates → modal de entrada → canvas (core + categorias + score) → dashboard → linguagem.

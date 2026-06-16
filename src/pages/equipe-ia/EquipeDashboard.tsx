@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bot, Plus, Users, Activity, Target, TrendingUp } from "lucide-react";
+import { Bot, Plus, MessageCircle, Target, TrendingUp, UserCheck, CalendarCheck, Trophy, Activity } from "lucide-react";
 import { useEquipeList } from "@/hooks/useEquipeIA";
 import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
-import { CreateEquipeDialog } from "@/components/equipe-ia/CreateEquipeDialog";
+import { NewWorkforceModal } from "@/components/equipe-ia/wizard/NewWorkforceModal";
 import { getProviderByModel } from "@/lib/aiProviders";
 
 function Kpi({ icon: Icon, label, value, hint }: { icon: typeof Bot; label: string; value: string; hint?: string }) {
@@ -48,18 +48,24 @@ export default function EquipeDashboard() {
             <Bot className="size-6" />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-3xl font-semibold tracking-tight leading-tight">Equipe IA</h1>
+            <h1 className="text-3xl font-semibold tracking-tight leading-tight">Colaboradores Digitais</h1>
             <p className="text-muted-foreground mt-1">
-              Colaboradores digitais orientados a objetivos, integrados ao CRM e aos fluxos.
+              Acompanhe os resultados que seus colaboradores estão entregando.
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Kpi icon={Users} label="Colaboradores" value={String(workers.length)} hint="Total ativo na conta" />
-          <Kpi icon={Activity} label="Conversas em execução" value="0" hint="Em tempo real" />
-          <Kpi icon={Target} label="Objetivos concluídos" value="0" hint="Últimos 30 dias" />
+          <Kpi icon={MessageCircle} label="Conversas iniciadas" value="0" hint="Últimos 30 dias" />
+          <Kpi icon={Activity} label="Conversas concluídas" value="0" hint="Resolvidas pela IA" />
+          <Kpi icon={Target} label="Objetivos concluídos" value="0" hint="Sucesso da operação" />
           <Kpi icon={TrendingUp} label="Taxa de sucesso" value="—" hint="Média geral" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Kpi icon={UserCheck} label="Transferências humanas" value="0" hint="Taxa de handoff" />
+          <Kpi icon={Trophy} label="Leads qualificados" value="0" hint="Pela equipe IA" />
+          <Kpi icon={CalendarCheck} label="Reuniões agendadas" value="0" hint="Pela equipe IA" />
+          <Kpi icon={TrendingUp} label="Conversões geradas" value="0" hint="Receita influenciada" />
         </div>
 
         <section>
@@ -139,7 +145,7 @@ export default function EquipeDashboard() {
         </section>
       </div>
 
-      <CreateEquipeDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <NewWorkforceModal open={createOpen} onOpenChange={setCreateOpen} />
     </EquipePageLayout>
   );
 }

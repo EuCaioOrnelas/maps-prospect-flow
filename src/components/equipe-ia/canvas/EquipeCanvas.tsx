@@ -30,11 +30,13 @@ export interface CanvasState {
 
 export interface CanvasHandle {
   getState: () => CanvasState;
+  addNodeByKind: (kind: EquipeNodeKind) => void;
 }
 
 interface Props {
   initial: CanvasState;
   onAutoSave?: (state: CanvasState) => void;
+  onStateChange?: (state: CanvasState) => void;
 }
 
 const CATEGORIES: { label: string; kinds: EquipeNodeKind[] }[] = [
@@ -79,8 +81,8 @@ function uid() {
   return `n_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initial, onAutoSave }, ref) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes);
+const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initial, onAutoSave, onStateChange }, ref) {
+  const [nodes, setNodes, onNodesChangeRaw] = useNodesState<Node>(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -90,9 +92,34 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
   const wrapperRef = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
 
+  // Block deletion of the core node — it's mandatory.
+  const onNodesChange = useCallback((changes: NodeChange[]) => {
+    const filtered = changes.filter((c) => !(c.type === "remove" && c.id === "core"));
+    onNodesChangeRaw(filtered);
+  }, [onNodesChangeRaw]);
+
   useImperativeHandle(ref, () => ({
     getState: () => ({ nodes, edges }),
-  }), [nodes, edges]);
+    addNodeByKind: (kind: EquipeNodeKind) => {
+      const meta = EQUIPE_NODE_META[kind];
+      if (!meta) return;
+      const newId = uid();
+      setNodes((nds) => {
+        if (nds.some((n) => (n.data as { kind?: string })?.kind === kind)) return nds;
+        return [...nds, {
+          id: newId, type: "equipe",
+          position: { x: 200 + Math.random() * 400, y: 100 + Math.random() * 400 },
+          data: { kind, title: meta.label, summary: "" },
+        }];
+      });
+      setEdges((eds) => {
+        if (eds.some((e) => e.target === newId)) return eds;
+        return [...eds, { id: `e_core_${newId}`, source: "core", target: newId, animated: true } as Edge];
+      });
+    },
+  }), [nodes, edges, setNodes, setEdges]);
+
+  useEffect(() => { onStateChange?.({ nodes, edges }); }, [nodes, edges, onStateChange]);
 
   // Stabilize the autosave callback in a ref so re-renders in the parent (e.g.
   // "Saving…" → "Saved" badge) don't re-trigger the debounce effect and cause a

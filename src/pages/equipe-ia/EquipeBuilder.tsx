@@ -6,8 +6,10 @@ import { ChevronLeft, Save, Loader2, FlaskConical, Sparkles, Check } from "lucid
 import { EquipeCanvas, type CanvasHandle, type CanvasState } from "@/components/equipe-ia/canvas/EquipeCanvas";
 import { EquipeTestChatDialog } from "@/components/equipe-ia/EquipeTestChatDialog";
 import { MandatoryProviderDialog } from "@/components/equipe-ia/MandatoryProviderDialog";
+import { WorkforceScorePanel } from "@/components/equipe-ia/canvas/WorkforceScorePanel";
 import { useUserAICredentials } from "@/hooks/useUserAICredentials";
-import { useEquipe, useEquipeCanvas, useSaveCanvas } from "@/hooks/useEquipeIA";
+import { useEquipe, useEquipeCanvas, useSaveCanvas, buildCanvasFromBlueprint } from "@/hooks/useEquipeIA";
+import type { WorkforceBlueprint } from "@/components/equipe-ia/wizard/workforceTemplates";
 import { toast } from "sonner";
 
 export default function EquipeBuilder() {
@@ -20,6 +22,7 @@ export default function EquipeBuilder() {
   const canvasRef = useRef<CanvasHandle>(null);
   const [testOpen, setTestOpen] = useState(false);
   const [autoState, setAutoState] = useState<"idle" | "saving" | "saved">("idle");
+  const [liveState, setLiveState] = useState<CanvasState | null>(null);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const autoSave = useCallback((state: CanvasState) => {
@@ -44,6 +47,20 @@ export default function EquipeBuilder() {
   }, [credsQ.isLoading, hasIA]);
 
   const loading = loadingW || loadingC;
+
+  // Auto-build canvas from blueprint when it's empty (just core).
+  const generatedFromBlueprintRef = useRef(false);
+  useEffect(() => {
+    if (loading || !canvas || !id || generatedFromBlueprintRef.current) return;
+    if (canvas.nodes.length > 1) return;
+    const cfg = (worker?.config as { blueprint?: WorkforceBlueprint } | undefined) ?? {};
+    if (!cfg.blueprint || !Array.isArray(cfg.blueprint.nodes) || cfg.blueprint.nodes.length === 0) return;
+    generatedFromBlueprintRef.current = true;
+    const built = buildCanvasFromBlueprint(cfg.blueprint);
+    save.mutateAsync({ equipeId: id, state: built }).catch(() => {});
+  }, [loading, canvas, id, worker, save]);
+
+  const displayedState = liveState ?? canvas ?? null;
 
   async function handleSave() {
     if (!id || !canvasRef.current) return;
@@ -121,7 +138,20 @@ export default function EquipeBuilder() {
             </div>
           </div>
         ) : (
-          <EquipeCanvas ref={canvasRef} initial={canvas} onAutoSave={autoSave} />
+          <>
+            <EquipeCanvas
+              ref={canvasRef}
+              initial={canvas}
+              onAutoSave={autoSave}
+              onStateChange={setLiveState}
+            />
+            {displayedState && (
+              <WorkforceScorePanel
+                nodes={displayedState.nodes}
+                onAddKind={(k) => canvasRef.current?.addNodeByKind(k)}
+              />
+            )}
+          </>
         )}
       </div>
 
