@@ -8,6 +8,7 @@ import coreMarkAsset from "@/assets/equipe-core-mark.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ChatMsg { role: "user" | "assistant"; content: string }
 
@@ -22,11 +23,17 @@ export function EquipeTestChatDialog({ open, onOpenChange, equipeId, equipeName 
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const qc = useQueryClient();
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 100);
+    if (!open) {
+      setConversationId(null);
+      setMessages([]);
+    }
   }, [open]);
 
   useEffect(() => {
@@ -36,6 +43,44 @@ export function EquipeTestChatDialog({ open, onOpenChange, equipeId, equipeName 
   function reset() {
     setMessages([]);
     setInput("");
+    setConversationId(null);
+  }
+
+  async function ensureConversation(firstMessage: string): Promise<string | null> {
+    if (conversationId) return conversationId;
+    const { data: u } = await supabase.auth.getUser();
+    const uid = u.user?.id;
+    if (!uid) return null;
+    const { data, error } = await supabase
+      .from("ai_workforce_test_conversations" as never)
+      .insert({
+        workforce_id: equipeId,
+        user_id: uid,
+        title: firstMessage.slice(0, 60),
+      } as never)
+      .select("id")
+      .single();
+    if (error) return null;
+    const newId = (data as { id: string }).id;
+    setConversationId(newId);
+    return newId;
+  }
+
+  async function logMessage(convId: string, role: "user" | "assistant", content: string) {
+    const { data: u } = await supabase.auth.getUser();
+    const uid = u.user?.id;
+    if (!uid) return;
+    await supabase.from("ai_workforce_test_messages" as never).insert({
+      conversation_id: convId,
+      workforce_id: equipeId,
+      user_id: uid,
+      role,
+      content,
+    } as never);
+    await supabase
+      .from("ai_workforce_test_conversations" as never)
+      .update({ updated_at: new Date().toISOString(), message_count: (messages.length + 1) } as never)
+      .eq("id", convId);
   }
 
   async function send() {
@@ -45,13 +90,20 @@ export function EquipeTestChatDialog({ open, onOpenChange, equipeId, equipeName 
     setMessages(next);
     setInput("");
     setSending(true);
+
+    const convId = await ensureConversation(text);
+    if (convId) await logMessage(convId, "user", text);
+
     try {
       const { data, error } = await supabase.functions.invoke("equipe-ia-test", {
         body: { equipeId, messages: next },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setMessages((m) => [...m, { role: "assistant", content: data?.reply || "(sem resposta)" }]);
+      const reply = data?.reply || "(sem resposta)";
+      setMessages((m) => [...m, { role: "assistant", content: reply }]);
+      if (convId) await logMessage(convId, "assistant", reply);
+      qc.invalidateQueries({ queryKey: ["equipe-ia", equipeId, "test-conversations"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao enviar");
       setMessages((m) => m.slice(0, -1));
