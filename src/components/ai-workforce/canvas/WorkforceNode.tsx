@@ -26,7 +26,7 @@ function WorkforceNodeInner({ data, selected }: NodeProps) {
     >
       {!isCore && <Handle type="target" position={Position.Left} className="!h-2 !w-2 !bg-muted-foreground/40" />}
       <div className="flex items-start gap-3">
-        <div className={cn("rounded-lg p-2 bg-muted/40", meta.color)}>
+        <div className={cn("rounded-lg bg-muted/60 border border-border/40 flex items-center justify-center shrink-0", isCore ? "w-11 h-11" : "w-9 h-9", meta.color)}>
           <Icon size={isCore ? 22 : 18} />
         </div>
         <div className="min-w-0 flex-1">
