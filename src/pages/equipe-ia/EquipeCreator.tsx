@@ -262,19 +262,16 @@ export default function EquipeCreator() {
                 <div className="space-y-3">
                   <div>
                     <Label className="text-xs">Nome do colaborador</Label>
-                    <InputWithIcon icon={User} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: SDR IA Wiize" />
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: SDR IA Wiize" />
                   </div>
                   <div>
                     <Label className="text-xs">Função / cargo</Label>
-                    <InputWithIcon icon={Briefcase} value={role} onChange={(e) => setRole(e.target.value)} placeholder="Ex.: Qualificador de leads B2B" />
+                    <Input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Ex.: Qualificador de leads B2B" />
                   </div>
                   <div>
                     <Label className="text-xs">Descrição</Label>
-                    <div className="relative">
-                      <FileText className="absolute left-3 top-3 size-4 text-muted-foreground pointer-events-none" />
-                      <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-                        placeholder="O que esse colaborador faz?" className="pl-9" />
-                    </div>
+                    <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
+                      placeholder="O que esse colaborador faz?" />
                   </div>
                 </div>
               </CardContent>
@@ -283,7 +280,7 @@ export default function EquipeCreator() {
             <AIProvidersConnector enabled={enabled} setEnabled={setEnabled} keys={keys} setKeys={setKeys} savedProviders={savedSet} />
 
             <div className="flex justify-end gap-2 pt-1">
-              <Button variant="ghost" onClick={() => setMode("choose")}>Cancelar</Button>
+              <Button variant="ghost" onClick={() => navigate("/equipe-ia")}>Cancelar</Button>
               <Button onClick={submitBlank} disabled={create.isPending || !name.trim()}>
                 {create.isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
                 Criar colaborador
