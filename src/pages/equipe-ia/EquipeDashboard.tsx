@@ -27,14 +27,16 @@ export default function EquipeDashboard() {
   return (
     <EquipePageLayout>
       <div className="space-y-8">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-medium text-primary uppercase tracking-wider">
-            <Sparkles className="size-3.5" /> Novo
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
+            <Bot className="size-6" />
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight mt-1">Equipe IA</h1>
-          <p className="text-muted-foreground mt-1">
-            Colaboradores digitais orientados a objetivos, integrados ao CRM e aos fluxos.
-          </p>
+          <div className="min-w-0">
+            <h1 className="text-3xl font-semibold tracking-tight">Equipe IA</h1>
+            <p className="text-muted-foreground mt-1">
+              Colaboradores digitais orientados a objetivos, integrados ao CRM e aos fluxos.
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -69,24 +71,25 @@ export default function EquipeDashboard() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {workers.slice(0, 6).map((w) => (
-                <Link key={w.id} to={`/equipe-ia/colaboradores/${w.id}`}>
-                  <Card className="hover:border-primary/60 transition-colors h-full">
+                <Link key={w.id} to={`/equipe-ia/colaboradores/${w.id}`} className="group">
+                  <Card className="hover:border-primary/60 hover:shadow-sm transition-all h-full">
                     <CardContent className="p-5">
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold truncate">{w.name}</p>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">{w.role || "Sem função definida"}</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
                           <Bot className="size-5" />
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-semibold truncate">{w.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{w.role || "Sem função definida"}</p>
-                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-3 line-clamp-2 min-h-[40px]">
-                        {w.description || "Sem descrição."}
-                      </p>
-                      <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
-                        <span className="capitalize">{w.status}</span>
-                        <span>{w.channel}</span>
+                      <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className={`size-1.5 rounded-full ${w.status === "active" ? "bg-primary" : "bg-muted-foreground/40"}`} />
+                          <span className="capitalize">{w.status}</span>
+                        </span>
+                        <span className="text-border">•</span>
+                        <span className="truncate">{w.channel}</span>
                       </div>
                     </CardContent>
                   </Card>

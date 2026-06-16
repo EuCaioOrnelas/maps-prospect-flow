@@ -19,13 +19,18 @@ export default function EquipeList() {
 
   return (
     <EquipePageLayout>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Colaboradores Digitais</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie sua força de trabalho de IA.</p>
+      <div className="flex items-center justify-between mb-6 gap-4">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="w-12 h-12 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
+            <Bot className="size-6" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold tracking-tight">Colaboradores Digitais</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Gerencie sua força de trabalho de IA.</p>
+          </div>
         </div>
         <Button asChild>
-          <Link to="/equipe-ia/novo"><Plus className="size-4 mr-2" /> Novo</Link>
+          <Link to="/equipe-ia/novo"><Plus className="size-4 mr-2" /> Novo colaborador</Link>
         </Button>
       </div>
 
@@ -44,23 +49,41 @@ export default function EquipeList() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {workers.map((w) => (
-            <Card key={w.id} className="hover:border-primary/60 transition-colors">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <Link to={`/equipe-ia/colaboradores/${w.id}`} className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="rounded-lg bg-primary/10 p-2 text-primary"><Bot className="size-5" /></div>
-                    <div className="min-w-0">
-                      <p className="font-semibold truncate">{w.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{w.role || "—"}</p>
+            <Card
+              key={w.id}
+              className="group relative hover:border-primary/60 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+            >
+              <Link
+                to={`/equipe-ia/colaboradores/${w.id}`}
+                className="absolute inset-0 z-0"
+                aria-label={`Abrir ${w.name}`}
+              />
+              <CardContent className="p-5 relative z-10 pointer-events-none">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold truncate">{w.name}</p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">{w.role || "Sem função"}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 pointer-events-auto">
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(w.id, w.name); }}
+                      className="size-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                      title="Excluir"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                    <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary">
+                      <Bot className="size-5" />
                     </div>
-                  </Link>
-                  <button onClick={() => handleDelete(w.id, w.name)} className="text-muted-foreground hover:text-destructive ml-2 p-1" title="Excluir">
-                    <Trash2 className="size-4" />
-                  </button>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground mt-3 line-clamp-2 min-h-[40px]">
-                  {w.description || "Sem descrição."}
-                </p>
+                <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className={`size-1.5 rounded-full ${w.status === "active" ? "bg-primary" : "bg-muted-foreground/40"}`} />
+                    <span className="capitalize">{w.status ?? "—"}</span>
+                  </span>
+                  {w.channel && (<><span className="text-border">•</span><span className="truncate">{w.channel}</span></>)}
+                </div>
               </CardContent>
             </Card>
           ))}
