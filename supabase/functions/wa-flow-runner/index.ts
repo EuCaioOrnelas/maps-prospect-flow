@@ -1438,8 +1438,8 @@ async function runFlow(
           const advanceCriteria: string = (config.advance_criteria || "").trim();
           const loopBehavior: string = config.loop_behavior || "until_collected";
           const maxAttempts: number = Number(config.max_attempts || 3);
-          const dataCollection: Array<{ name: string; description: string; required: boolean }> =
-            Array.isArray(config.data_collection) ? config.data_collection : [];
+          // Obs: coleta estruturada de dados é responsabilidade do bloco "Coletar dados",
+          // que já tem IA dedicada para extrair valores. Não duplicamos aqui.
 
           const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
           if (!OPENAI_API_KEY) {
