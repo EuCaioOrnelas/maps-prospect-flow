@@ -142,6 +142,10 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
 
   // Always render core data as-is (no live score injection).
   const displayNodes = nodes;
+  const displayEdges = useMemo(
+    () => edges.map((e) => ({ ...e, type: "floating", animated: true })),
+    [edges],
+  );
 
   useEffect(() => { onStateChange?.({ nodes, edges }); }, [nodes, edges, onStateChange]);
 
