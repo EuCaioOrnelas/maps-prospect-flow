@@ -3,7 +3,23 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bot, Plus, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Bot, Plus, Trash2, MoreVertical, Pencil } from "lucide-react";
 import { useEquipeList, useDeleteEquipe } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
 import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
@@ -14,11 +30,17 @@ export default function EquipeList() {
   const { data: workers = [], isLoading } = useEquipeList();
   const del = useDeleteEquipe();
   const [createOpen, setCreateOpen] = useState(false);
+  const [toDelete, setToDelete] = useState<{ id: string; name: string } | null>(null);
 
-  async function handleDelete(id: string, name: string) {
-    if (!confirm(`Excluir "${name}"? Esta ação não pode ser desfeita.`)) return;
-    try { await del.mutateAsync(id); toast.success("Colaborador excluído."); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Erro ao excluir"); }
+  async function confirmDelete() {
+    if (!toDelete) return;
+    try {
+      await del.mutateAsync(toDelete.id);
+      toast.success(`"${toDelete.name}" excluído.`);
+      setToDelete(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao excluir");
+    }
   }
 
   return (
@@ -75,13 +97,35 @@ export default function EquipeList() {
                       <p className="font-semibold truncate leading-tight">{w.name}</p>
                       <p className="text-xs text-muted-foreground truncate mt-0.5">{w.role || "Sem função"}</p>
                     </div>
-                    <button
-                      onClick={() => handleDelete(w.id, w.name)}
-                      className="size-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
-                      title="Excluir"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
+                    <div className="relative z-10 shrink-0">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            onClick={(e) => e.stopPropagation()}
+                            className="size-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            title="Opções"
+                          >
+                            <MoreVertical className="size-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem asChild>
+                            <Link to={`/equipe-ia/colaboradores/${w.id}`}>
+                              <Pencil className="size-4 mr-2" /> Editar
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setToDelete({ id: w.id, name: w.name });
+                            }}
+                          >
+                            <Trash2 className="size-4 mr-2" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between gap-2 mt-4">
                     <div className="flex items-center gap-2 min-w-0">
@@ -102,7 +146,7 @@ export default function EquipeList() {
                     </span>
                   </div>
                 </CardContent>
-                <Link to={`/equipe-ia/colaboradores/${w.id}`} className="absolute inset-0" aria-label="Abrir colaborador" />
+                <Link to={`/equipe-ia/colaboradores/${w.id}`} className="absolute inset-0 z-0" aria-label="Abrir colaborador" />
               </Card>
             );
           })}
@@ -110,6 +154,28 @@ export default function EquipeList() {
       )}
 
       <NewWorkforceModal open={createOpen} onOpenChange={setCreateOpen} />
+
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir colaborador</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <span className="font-semibold text-foreground">{toDelete?.name}</span>?
+              Esta ação é permanente e removerá toda a configuração, canvas e histórico.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={del.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              disabled={del.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {del.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </EquipePageLayout>
   );
 }
