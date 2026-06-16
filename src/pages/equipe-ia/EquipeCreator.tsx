@@ -167,11 +167,47 @@ export default function EquipeCreator() {
     } catch (e) { toast.error(e instanceof Error ? e.message : "Erro ao criar"); }
   }
 
-  // AI: send prompt → generate full blueprint → create worker → save canvas → ask for IA
+  // Animated loading steps shown during AI generation
+  const LOADING_STEPS = [
+    "Interpretando seu objetivo…",
+    "Definindo persona e tom de voz…",
+    "Montando memória, regras e contexto…",
+    "Conectando ferramentas e integrações…",
+    "Posicionando os cards no construtor…",
+    "Finalizando seu colaborador…",
+  ];
+  const [loadingStep, setLoadingStep] = useState(0);
+  useEffect(() => {
+    if (!aiLoading) { setLoadingStep(0); return; }
+    const t = setInterval(() => setLoadingStep((s) => Math.min(s + 1, LOADING_STEPS.length - 1)), 1400);
+    return () => clearInterval(t);
+  }, [aiLoading]);
+
+  // AI: send prompt → check daily limit → generate full blueprint → create worker → save canvas → ask for IA
   async function submitAI() {
     if (!prompt.trim()) { toast.error("Descreva o que esse colaborador deve fazer."); return; }
     setAiLoading(true);
     try {
+      // 0. Daily limit of 3 AI-generated workers per user (bypass for caiowiize@gmail.com)
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      const email = (userData.user?.email ?? "").toLowerCase();
+      const BYPASS = email === "caiowiize@gmail.com";
+      if (uid && !BYPASS) {
+        const since = new Date(); since.setHours(0, 0, 0, 0);
+        const { count } = await supabase
+          .from("ai_workforce" as never)
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", uid)
+          .gte("created_at", since.toISOString())
+          .filter("config->>generated_by_ai", "eq", "true");
+        if ((count ?? 0) >= 3) {
+          setAiLoading(false);
+          toast.error("Limite diário atingido: 3 colaboradores criados com IA por dia. Tente novamente amanhã.");
+          return;
+        }
+      }
+
       const p = prompt.trim();
 
       // 1. Generate full blueprint with AI
