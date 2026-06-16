@@ -329,10 +329,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           setTimeout(async () => {
             const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
+            setProfile((prev) => (profilesEqual(prev, profileData) ? prev : profileData));
 
-            // Sync account after login or token refresh to ensure plan/searches are up to date
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            // Sync account after login only. TOKEN_REFRESHED fires periodically
+            // (~hourly) and re-running the full sync was triggering app-wide
+            // re-renders that wiped unsaved state (flow editor drawers, etc.).
+            // The 6h interval below + focus-throttled sync already cover this.
+            if (event === 'SIGNED_IN') {
               setTimeout(() => {
                 syncAccountState(session.user.id, event, session.user.email);
               }, 500);
