@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { WORKFORCE_NODE_META, type WorkforceNodeKind } from "../nodeTypes";
+import { EQUIPE_NODE_META, type EquipeNodeKind } from "../nodeTypes";
 
 interface CollectField {
   key: string;
@@ -14,7 +14,7 @@ interface CollectField {
 }
 
 interface NodeData {
-  kind: WorkforceNodeKind;
+  kind: EquipeNodeKind;
   title?: string;
   summary?: string;
   fields?: CollectField[];
@@ -32,7 +32,7 @@ interface Props {
 export function NodeConfigDrawer({ node, onClose, onChange, onDelete }: Props) {
   const open = !!node;
   const isCollect = node?.data.kind === "data_collection";
-  const meta = node ? WORKFORCE_NODE_META[node.data.kind] : null;
+  const meta = node ? EQUIPE_NODE_META[node.data.kind] : null;
   const fields: CollectField[] = node?.data.fields ?? [];
   const Icon = meta?.icon;
   const isCore = node?.data.kind === "core";
@@ -51,9 +51,7 @@ export function NodeConfigDrawer({ node, onClose, onChange, onDelete }: Props) {
 
   return (
     <>
-      {open && (
-        <div className="absolute inset-0 z-40" onClick={onClose} />
-      )}
+      {open && <div className="absolute inset-0 z-40" onClick={onClose} />}
       <div
         className={cn(
           "absolute top-0 left-0 z-50 h-full w-[400px] sm:w-[440px] bg-card border-r border-border flex flex-col transition-all duration-300 ease-out",
@@ -76,10 +74,7 @@ export function NodeConfigDrawer({ node, onClose, onChange, onDelete }: Props) {
                 />
                 <p className="text-[11px] text-muted-foreground px-1 truncate">{meta.description}</p>
               </div>
-              <button
-                onClick={onClose}
-                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors shrink-0"
-              >
+              <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors shrink-0">
                 <X size={16} className="text-muted-foreground" />
               </button>
             </div>
@@ -101,9 +96,7 @@ export function NodeConfigDrawer({ node, onClose, onChange, onDelete }: Props) {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium">Campos a coletar</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Dados que a IA deve extrair durante a conversa.
-                      </p>
+                      <p className="text-[11px] text-muted-foreground">Dados que a IA deve extrair durante a conversa.</p>
                     </div>
                     <Button size="sm" variant="outline" onClick={addField}>
                       <Plus className="size-3.5 mr-1" /> Campo
@@ -125,9 +118,7 @@ export function NodeConfigDrawer({ node, onClose, onChange, onDelete }: Props) {
 
                   <div className="space-y-2">
                     {fields.length === 0 && (
-                      <p className="text-xs text-muted-foreground italic">
-                        Nenhum campo. Clique em "Campo".
-                      </p>
+                      <p className="text-xs text-muted-foreground italic">Nenhum campo. Clique em "Campo".</p>
                     )}
                     {fields.map((f, i) => (
                       <div key={i} className="rounded-lg border p-3 space-y-2 bg-background/50">
@@ -138,11 +129,7 @@ export function NodeConfigDrawer({ node, onClose, onChange, onDelete }: Props) {
                             value={f.key}
                             onChange={(e) => updateField(i, { key: e.target.value })}
                           />
-                          <button
-                            onClick={() => removeField(i)}
-                            className="text-muted-foreground hover:text-destructive p-1"
-                            aria-label="Remover"
-                          >
+                          <button onClick={() => removeField(i)} className="text-muted-foreground hover:text-destructive p-1" aria-label="Remover">
                             <Trash2 className="size-3.5" />
                           </button>
                         </div>

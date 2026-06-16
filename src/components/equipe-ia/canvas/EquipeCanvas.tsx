@@ -15,12 +15,12 @@ import {
   type EdgeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { WorkforceNode } from "./WorkforceNode";
+import { EquipeNode } from "./EquipeNode";
 import { NodePalette } from "./NodePalette";
 import { NodeConfigDrawer } from "./NodeConfigDrawer";
-import { WORKFORCE_NODE_META, type WorkforceNodeKind } from "../nodeTypes";
+import { EQUIPE_NODE_META, type EquipeNodeKind } from "../nodeTypes";
 
-const nodeTypes = { workforce: WorkforceNode };
+const nodeTypes = { equipe: EquipeNode, workforce: EquipeNode };
 
 export interface CanvasState {
   nodes: Node[];
@@ -55,18 +55,15 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
 
   const addNode = useCallback(
     (kind: string) => {
-      const meta = WORKFORCE_NODE_META[kind as WorkforceNodeKind];
+      const meta = EQUIPE_NODE_META[kind as EquipeNodeKind];
       if (!meta) return;
       const id = uid();
       setNodes((nds) => [
         ...nds,
         {
           id,
-          type: "workforce",
-          position: {
-            x: 200 + Math.random() * 400,
-            y: 100 + Math.random() * 400,
-          },
+          type: "equipe",
+          position: { x: 200 + Math.random() * 400, y: 100 + Math.random() * 400 },
           data: { kind, title: meta.label, summary: "" },
         },
       ]);
@@ -133,7 +130,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
   );
 });
 
-export const WorkforceCanvas = forwardRef<CanvasHandle, Props>(function WorkforceCanvas(props, ref) {
+export const EquipeCanvas = forwardRef<CanvasHandle, Props>(function EquipeCanvas(props, ref) {
   return (
     <ReactFlowProvider>
       <CanvasInner ref={ref} {...props} />

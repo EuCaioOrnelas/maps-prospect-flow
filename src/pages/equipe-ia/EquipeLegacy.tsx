@@ -1,5 +1,4 @@
 import { Navigate } from "react-router-dom";
-export default function AIWorkforceLegacy() {
-  // Versão clássica permanece em /agents — apenas redireciona.
+export default function EquipeLegacy() {
   return <Navigate to="/agents" replace />;
 }

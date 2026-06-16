@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { CanvasState } from "@/components/ai-workforce/canvas/WorkforceCanvas";
-import type { WorkforceNodeKind } from "@/components/ai-workforce/nodeTypes";
+import type { CanvasState } from "@/components/equipe-ia/canvas/EquipeCanvas";
+import type { EquipeNodeKind } from "@/components/equipe-ia/nodeTypes";
 
-export interface Workforce {
+export interface Equipe {
   id: string;
   user_id: string;
   name: string;
@@ -21,60 +21,62 @@ export interface Workforce {
   updated_at: string;
 }
 
-export function useWorkforceList() {
+const TABLE = "ai_workforce" as const; // DB tables remain ai_workforce*
+const CANVAS_TABLE = "ai_workforce_canvas" as const;
+
+export function useEquipeList() {
   return useQuery({
-    queryKey: ["ai-workforce", "list"],
+    queryKey: ["equipe-ia", "list"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("ai_workforce" as never)
+        .from(TABLE as never)
         .select("*")
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as Workforce[];
+      return (data ?? []) as unknown as Equipe[];
     },
   });
 }
 
-export function useWorkforce(id: string | undefined) {
+export function useEquipe(id: string | undefined) {
   return useQuery({
-    queryKey: ["ai-workforce", id],
+    queryKey: ["equipe-ia", id],
     enabled: !!id,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("ai_workforce" as never)
+        .from(TABLE as never)
         .select("*")
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
-      return data as unknown as Workforce | null;
+      return data as unknown as Equipe | null;
     },
   });
 }
 
-export function useWorkforceCanvas(workforceId: string | undefined) {
+export function useEquipeCanvas(equipeId: string | undefined) {
   return useQuery({
-    queryKey: ["ai-workforce", workforceId, "canvas"],
-    enabled: !!workforceId,
+    queryKey: ["equipe-ia", equipeId, "canvas"],
+    enabled: !!equipeId,
     queryFn: async (): Promise<CanvasState> => {
       const { data, error } = await supabase
-        .from("ai_workforce_canvas" as never)
+        .from(CANVAS_TABLE as never)
         .select("nodes,edges")
-        .eq("workforce_id", workforceId!)
+        .eq("workforce_id", equipeId!)
         .maybeSingle();
       if (error) throw error;
       const row = data as { nodes?: unknown; edges?: unknown } | null;
       const nodes = Array.isArray(row?.nodes) ? (row!.nodes as CanvasState["nodes"]) : [];
       const edges = Array.isArray(row?.edges) ? (row!.edges as CanvasState["edges"]) : [];
       if (nodes.length === 0) {
-        // bootstrap with Core node
         return {
           nodes: [
             {
               id: "core",
-              type: "workforce",
+              type: "equipe",
               position: { x: 600, y: 280 },
               data: {
-                kind: "core" as WorkforceNodeKind,
+                kind: "core" as EquipeNodeKind,
                 title: "Núcleo do Colaborador",
                 summary: "Defina identidade, persona e modelo de IA.",
               },
@@ -88,7 +90,7 @@ export function useWorkforceCanvas(workforceId: string | undefined) {
   });
 }
 
-export function useCreateWorkforce() {
+export function useCreateEquipe() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { name: string; role?: string; description?: string }) => {
@@ -96,7 +98,7 @@ export function useCreateWorkforce() {
       const uid = userData.user?.id;
       if (!uid) throw new Error("Não autenticado");
       const { data, error } = await supabase
-        .from("ai_workforce" as never)
+        .from(TABLE as never)
         .insert({
           user_id: uid,
           name: input.name,
@@ -106,39 +108,39 @@ export function useCreateWorkforce() {
         .select("*")
         .single();
       if (error) throw error;
-      return data as unknown as Workforce;
+      return data as unknown as Equipe;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["ai-workforce", "list"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipe-ia", "list"] }),
   });
 }
 
 export function useSaveCanvas() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { workforceId: string; state: CanvasState }) => {
+    mutationFn: async (input: { equipeId: string; state: CanvasState }) => {
       await supabase
-        .from("ai_workforce_canvas" as never)
+        .from(CANVAS_TABLE as never)
         .delete()
-        .eq("workforce_id", input.workforceId);
-      const { error } = await supabase.from("ai_workforce_canvas" as never).insert({
-        workforce_id: input.workforceId,
+        .eq("workforce_id", input.equipeId);
+      const { error } = await supabase.from(CANVAS_TABLE as never).insert({
+        workforce_id: input.equipeId,
         nodes: input.state.nodes,
         edges: input.state.edges,
       } as never);
       if (error) throw error;
     },
     onSuccess: (_d, v) =>
-      qc.invalidateQueries({ queryKey: ["ai-workforce", v.workforceId, "canvas"] }),
+      qc.invalidateQueries({ queryKey: ["equipe-ia", v.equipeId, "canvas"] }),
   });
 }
 
-export function useDeleteWorkforce() {
+export function useDeleteEquipe() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ai_workforce" as never).delete().eq("id", id);
+      const { error } = await supabase.from(TABLE as never).delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["ai-workforce", "list"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipe-ia", "list"] }),
   });
 }

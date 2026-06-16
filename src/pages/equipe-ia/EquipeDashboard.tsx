@@ -3,8 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bot, Bot as BotIcon, Plus, Target, TrendingUp, Users, Activity, Sparkles } from "lucide-react";
-import { useWorkforceList } from "@/hooks/useAIWorkforce";
-import { WorkforcePageLayout } from "@/components/ai-workforce/WorkforcePageLayout";
+import { useEquipeList } from "@/hooks/useEquipeIA";
+import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
 
 function Kpi({ icon: Icon, label, value, hint }: { icon: typeof BotIcon; label: string; value: string; hint?: string }) {
   return (
@@ -21,11 +21,11 @@ function Kpi({ icon: Icon, label, value, hint }: { icon: typeof BotIcon; label: 
   );
 }
 
-export default function AIWorkforceDashboard() {
-  const { data: workers = [], isLoading } = useWorkforceList();
+export default function EquipeDashboard() {
+  const { data: workers = [], isLoading } = useEquipeList();
 
   return (
-    <WorkforcePageLayout>
+    <EquipePageLayout>
       <div className="space-y-8">
         <div>
           <div className="flex items-center gap-2 text-xs font-medium text-primary uppercase tracking-wider">
@@ -47,7 +47,7 @@ export default function AIWorkforceDashboard() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Seus colaboradores</h2>
-            <Link to="/ai-workforce/colaboradores" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link to="/equipe-ia/colaboradores" className="text-sm text-muted-foreground hover:text-foreground">
               Ver todos
             </Link>
           </div>
@@ -62,14 +62,14 @@ export default function AIWorkforceDashboard() {
                 <p className="mt-3 font-medium">Nenhum colaborador ainda</p>
                 <p className="text-sm text-muted-foreground mt-1">Crie seu primeiro colaborador digital para começar.</p>
                 <Button asChild className="mt-4">
-                  <Link to="/ai-workforce/novo"><Plus className="size-4 mr-2" /> Criar colaborador</Link>
+                  <Link to="/equipe-ia/novo"><Plus className="size-4 mr-2" /> Criar colaborador</Link>
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {workers.slice(0, 6).map((w) => (
-                <Link key={w.id} to={`/ai-workforce/colaboradores/${w.id}`}>
+                <Link key={w.id} to={`/equipe-ia/colaboradores/${w.id}`}>
                   <Card className="hover:border-primary/60 transition-colors h-full">
                     <CardContent className="p-5">
                       <div className="flex items-center gap-3">
@@ -96,6 +96,6 @@ export default function AIWorkforceDashboard() {
           )}
         </section>
       </div>
-    </WorkforcePageLayout>
+    </EquipePageLayout>
   );
 }
