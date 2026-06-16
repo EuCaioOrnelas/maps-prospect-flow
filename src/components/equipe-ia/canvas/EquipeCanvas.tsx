@@ -140,35 +140,8 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
     },
   }), [nodes, edges, setNodes, setEdges]);
 
-  // Compute live score + connected count and inject into the core node's data.
-  const liveScore = useMemo(() => {
-    const present = new Set(nodes.map((n) => (n.data as { kind?: string })?.kind ?? ""));
-    let s = 0;
-    for (const item of SCORING) if (present.has(item.kind)) s += item.weight;
-    return Math.min(100, s);
-  }, [nodes]);
-
-  const connectedCount = useMemo(
-    () => nodes.filter((n) => (n.data as { kind?: string })?.kind !== "core").length,
-    [nodes],
-  );
-
-  // Decorate core node with live data without persisting (kept out of saved state).
-  const displayNodes = useMemo(() => {
-    return nodes.map((n) => {
-      if (n.id !== "core") return n;
-      return {
-        ...n,
-        data: {
-          ...n.data,
-          score: liveScore,
-          connectedCount,
-          totalModules: 10,
-          workforceStatus,
-        },
-      };
-    });
-  }, [nodes, liveScore, connectedCount, workforceStatus]);
+  // Always render core data as-is (no live score injection).
+  const displayNodes = nodes;
 
   useEffect(() => { onStateChange?.({ nodes, edges }); }, [nodes, edges, onStateChange]);
 
