@@ -7,7 +7,7 @@ import { Bot, Plus, Trash2 } from "lucide-react";
 import { useEquipeList, useDeleteEquipe } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
 import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
-import { CreateEquipeDialog } from "@/components/equipe-ia/CreateEquipeDialog";
+import { NewWorkforceModal } from "@/components/equipe-ia/wizard/NewWorkforceModal";
 import { getProviderByModel } from "@/lib/aiProviders";
 
 export default function EquipeList() {
@@ -109,7 +109,7 @@ export default function EquipeList() {
         </div>
       )}
 
-      <CreateEquipeDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <NewWorkforceModal open={createOpen} onOpenChange={setCreateOpen} />
     </EquipePageLayout>
   );
 }

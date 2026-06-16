@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Bot, Plus, Users, Activity, Target, TrendingUp } from "lucide-react";
 import { useEquipeList } from "@/hooks/useEquipeIA";
 import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
-import { CreateEquipeDialog } from "@/components/equipe-ia/CreateEquipeDialog";
+import { NewWorkforceModal } from "@/components/equipe-ia/wizard/NewWorkforceModal";
 import { getProviderByModel } from "@/lib/aiProviders";
 
 function Kpi({ icon: Icon, label, value, hint }: { icon: typeof Bot; label: string; value: string; hint?: string }) {
@@ -139,7 +139,7 @@ export default function EquipeDashboard() {
         </section>
       </div>
 
-      <CreateEquipeDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <NewWorkforceModal open={createOpen} onOpenChange={setCreateOpen} />
     </EquipePageLayout>
   );
 }
