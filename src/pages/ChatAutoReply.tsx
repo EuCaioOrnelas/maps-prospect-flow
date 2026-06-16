@@ -163,7 +163,7 @@ export default function ChatAutoReply() {
                 Envie uma mensagem automática quando um cliente escrever fora do horário de atendimento.
               </p>
 
-              {connectionsLoaded && connections.length === 0 ? (
+              {!connectionsLoaded ? null : connections.length === 0 ? (
                 <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
                   Nenhum número conectado. Conecte um número WhatsApp primeiro.
                 </div>
