@@ -86,7 +86,7 @@ export function EquipeTestChatDialog({ open, onOpenChange, equipeId, equipeName 
           <div ref={scrollRef} className="p-4 space-y-3 scrollbar-thin">
             {messages.length === 0 && (
               <div className="text-center py-10 text-muted-foreground">
-                <Brain className="size-8 mx-auto opacity-30" />
+                <img src={coreMarkAsset.url} alt="" className="size-16 mx-auto opacity-30" draggable={false} />
                 <p className="text-xs mt-2">Inicie uma conversa com o colaborador.</p>
               </div>
             )}
