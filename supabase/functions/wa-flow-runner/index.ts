@@ -1438,8 +1438,8 @@ async function runFlow(
           const advanceCriteria: string = (config.advance_criteria || "").trim();
           const loopBehavior: string = config.loop_behavior || "until_collected";
           const maxAttempts: number = Number(config.max_attempts || 3);
-          const dataCollection: Array<{ name: string; description: string; required: boolean }> =
-            Array.isArray(config.data_collection) ? config.data_collection : [];
+          // Obs: coleta estruturada de dados é responsabilidade do bloco "Coletar dados",
+          // que já tem IA dedicada para extrair valores. Não duplicamos aqui.
 
           const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
           if (!OPENAI_API_KEY) {
@@ -1452,18 +1452,6 @@ async function runFlow(
           const attemptKey = `__ai_attempts_${node.id}__`;
           const prevAttempts = Number(ctx.variables[attemptKey] || 0);
           const currentAttempt = prevAttempts + 1;
-
-          // Coleta atual (já preenchida em variables)
-          const collectedSummary = dataCollection.length
-            ? dataCollection.map(f => {
-                const val = ctx.variables[f.name];
-                return `- ${f.name}${f.required ? " (obrigatório)" : ""}: ${val ? `JÁ COLETADO ("${val}")` : "PENDENTE"} — ${f.description || ""}`;
-              }).join("\n")
-            : "";
-
-          const missingRequired = dataCollection
-            .filter(f => f.required && !ctx.variables[f.name])
-            .map(f => f.name);
 
           // Regras de avanço baseado em loop_behavior
           let advanceRule = "";
@@ -1478,21 +1466,14 @@ async function runFlow(
           } else if (loopBehavior === "free_chat") {
             advanceRule = "Converse livremente. Use [AVANCAR] APENAS quando o critério de avanço for claramente atendido. Caso contrário, sempre [CONTINUAR].";
           } else {
-            // until_collected (default)
-            advanceRule = `Insista até coletar todos os dados obrigatórios E atingir o objetivo. ${
-              missingRequired.length > 0
-                ? `Faltam coletar (obrigatórios): ${missingRequired.join(", ")}. Use [CONTINUAR] e peça os dados que faltam.`
-                : "Todos os dados obrigatórios foram coletados — se o objetivo foi atingido, use [AVANCAR]."
-            }`;
+            // until_collected (default) — agora baseado puramente no critério/objetivo
+            advanceRule = "Insista até atingir o objetivo definido. Use [AVANCAR] quando o critério de avanço for atendido, caso contrário [CONTINUAR] e siga a conversa.";
           }
 
           const routeBlock = routes.length > 0
             ? `\n\n## ROTAS DISPONÍVEIS\nAo avançar, classifique a conversa retornando no formato [ROUTE: <UMA_DAS_ROTAS>].\nRotas válidas: ${routes.join(", ")}.`
             : "";
 
-          const dataBlock = dataCollection.length > 0
-            ? `\n\n## DADOS A COLETAR DO LEAD\n${collectedSummary}\n\nQuando o lead informar um dado, registre usando o marcador (invisível ao lead):\n[COLETAR: nome_variavel=valor_informado]\nUm marcador por dado. Use exatamente os nomes acima.`
-            : "";
 
           const contextVars = Object.entries(ctx.variables)
             .filter(([k]) => !k.startsWith("__"))
@@ -1514,7 +1495,7 @@ ${advanceCriteria || "Avance quando sentir que o objetivo foi atingido."}
 
 ## COMPORTAMENTO DE LOOP
 ${advanceRule}
-${dataBlock}${routeBlock}
+${routeBlock}
 
 ## CONTEXTO DO LEAD (variáveis já conhecidas)
 ${contextVars || "(nenhuma informação prévia)"}
@@ -1524,7 +1505,7 @@ ${contextVars || "(nenhuma informação prévia)"}
 - Faça UMA pergunta por vez. Seja natural como WhatsApp real.
 - Não repita perguntas já respondidas (consulte o histórico e o contexto).
 - SEMPRE termine sua mensagem com EXATAMENTE UM marcador de controle: [AVANCAR] ou [CONTINUAR].
-- Os marcadores [AVANCAR], [CONTINUAR], [COLETAR:...] e [ROUTE:...] são INVISÍVEIS para o lead — serão removidos antes do envio.`;
+- Os marcadores [AVANCAR], [CONTINUAR] e [ROUTE:...] são INVISÍVEIS para o lead — serão removidos antes do envio.`;
 
           const openaiModel = (agent?.ai_provider === "openai" && agent?.ai_model)
             ? agent.ai_model
@@ -1591,15 +1572,6 @@ ${contextVars || "(nenhuma informação prévia)"}
           const routeMatch = fullText.match(/\[ROUTE:\s*([^\]]+)\]/i);
           if (routeMatch) chosenRoute = routeMatch[1].trim().toUpperCase();
 
-          // Coletar dados marcados pela IA
-          const collectRegex = /\[COLETAR:\s*([a-zA-Z0-9_]+)\s*=\s*([^\]]+)\]/gi;
-          let collectMatch: RegExpExecArray | null;
-          while ((collectMatch = collectRegex.exec(fullText)) !== null) {
-            const key = collectMatch[1].trim();
-            const val = collectMatch[2].trim();
-            if (key && val) ctx.variables[key] = val;
-          }
-
           // Avanço vs Loop
           const hasAdvance = /\[AVANCAR\]/i.test(fullText);
           const hasContinue = /\[CONTINUAR\]/i.test(fullText);
@@ -1608,13 +1580,9 @@ ${contextVars || "(nenhuma informação prévia)"}
             shouldAdvance = true;
           } else if (loopBehavior === "max_attempts") {
             shouldAdvance = hasAdvance || currentAttempt >= maxAttempts;
-          } else if (loopBehavior === "free_chat") {
-            shouldAdvance = hasAdvance;
           } else {
-            // until_collected: precisa de [AVANCAR] E todos obrigatórios coletados
-            const stillMissing = dataCollection
-              .filter(f => f.required && !ctx.variables[f.name]).length > 0;
-            shouldAdvance = hasAdvance && !stillMissing;
+            // free_chat e until_collected: avança quando a IA decidir, baseado no critério
+            shouldAdvance = hasAdvance;
           }
 
           // Limpar marcadores antes de enviar ao lead
