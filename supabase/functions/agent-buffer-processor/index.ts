@@ -1471,12 +1471,30 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
 
                   if (mediaResponse.ok) {
                     sentCount++;
+                    let wabaMessageId: string | null = null;
+                    try {
+                      const json = await mediaResponse.clone().json();
+                      wabaMessageId = json?.key?.id || json?.messageId || null;
+                    } catch {}
                     await supabase.from('agent_message_logs').insert({
                       agent_id: agent.id,
                       conversation_id: conv.id,
                       direction: 'sent',
                       content: `[${media.type === 'image' ? 'Imagem' : 'PDF'} enviado: ${media.caption || media.url}]`,
                       message_type: media.type === 'image' ? 'image' : 'document',
+                    });
+                    await persistAgentChatMessage(supabase, {
+                      userId: whatsappNumber.user_id,
+                      leadPhone: conv.lead_phone,
+                      leadName: conv.lead_name,
+                      numberPhone: whatsappNumber.phone_number,
+                      wabaMessageId,
+                      messageType: media.type === 'image' ? 'image' : 'document',
+                      content: media.caption || null,
+                      mediaUrl: media.url,
+                      mediaCaption: media.caption || null,
+                      agentId: agent.id,
+                      agentName: agent.name,
                     });
                     console.log(`${media.type} sent successfully`);
                   } else {
