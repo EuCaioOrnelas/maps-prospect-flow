@@ -71,14 +71,14 @@ export default function EquipeCreator() {
   const credsQ = useUserAICredentials();
 
   const urlMode = (searchParams.get("mode") as Mode | null);
-  const [mode, setMode] = useState<Mode>(
-    urlMode && ["blank", "templates", "ai"].includes(urlMode) ? urlMode : "choose",
-  );
+  const validMode = urlMode && ["blank", "templates", "ai"].includes(urlMode) ? urlMode : null;
+  const [mode, setMode] = useState<Mode>(validMode ?? "blank");
 
+  // No "choose" page: if no/invalid mode → redirect to home of Equipe IA.
   useEffect(() => {
-    const m = searchParams.get("mode") as Mode | null;
-    if (m && ["blank", "templates", "ai"].includes(m)) setMode(m);
-  }, [searchParams]);
+    if (!validMode) { navigate("/equipe-ia", { replace: true }); return; }
+    setMode(validMode);
+  }, [validMode, navigate]);
 
   // Blank form
   const [name, setName] = useState("");
