@@ -2759,10 +2759,17 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
   const [config, setConfig] = useState<any>({});
   const [label, setLabel] = useState("");
 
+  // IMPORTANTE: dependência apenas em [node.id] (não em [node]).
+  // O objeto `node` recebe uma nova referência a cada render do canvas
+  // (drag, seleção, refetch, re-render do AuthContext em TOKEN_REFRESHED, etc.).
+  // Se dependêssemos de `node`, qualquer re-render do app sobrescreveria o que
+  // o usuário está digitando no drawer (prompt do agente, mensagens, etc.)
+  // e ele perderia tudo. Só resetamos o formulário quando trocar de bloco.
   useEffect(() => {
     setConfig((node.data as any).config || {});
     setLabel(String((node.data as any).label || ""));
-  }, [node]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [node.id]);
 
   const handleSave = async () => {
     // Validate A/B test sum

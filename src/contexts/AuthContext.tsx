@@ -320,28 +320,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event, newSession) => {
         console.log('[AuthContext] Auth state changed:', event);
-        setSession(session);
-        setUser(session?.user ?? null);
 
-        // Fetch profile after auth state change using setTimeout to avoid deadlock
-        if (session?.user) {
+        // Atualiza session/user de forma estável: só troca a referência se o
+        // user.id realmente mudou. Caso contrário, qualquer TOKEN_REFRESHED
+        // (que ocorre periodicamente) re-renderizaria todos os consumidores
+        // de useAuth e disparava efeitos que limpavam estado não-salvo
+        // (ex.: prompt do agente de IA sendo digitado no drawer).
+        setSession((prev) => {
+          if (prev?.access_token === newSession?.access_token) return prev;
+          return newSession;
+        });
+        setUser((prev) => {
+          const nextId = newSession?.user?.id ?? null;
+          const prevId = prev?.id ?? null;
+          if (prevId === nextId) return prev;
+          return newSession?.user ?? null;
+        });
+
+        // Só buscamos profile / sincronizamos em eventos que realmente exigem.
+        // TOKEN_REFRESHED é silencioso para a UI.
+        const isMeaningful = event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED';
+
+        if (newSession?.user && isMeaningful) {
           setTimeout(async () => {
-            const profileData = await fetchProfile(session.user.id);
+            const profileData = await fetchProfile(newSession.user.id);
             setProfile((prev) => (profilesEqual(prev, profileData) ? prev : profileData));
 
-            // Sync account after login only. TOKEN_REFRESHED fires periodically
-            // (~hourly) and re-running the full sync was triggering app-wide
-            // re-renders that wiped unsaved state (flow editor drawers, etc.).
-            // The 6h interval below + focus-throttled sync already cover this.
             if (event === 'SIGNED_IN') {
               setTimeout(() => {
-                syncAccountState(session.user.id, event, session.user.email);
+                syncAccountState(newSession.user.id, event, newSession.user.email);
               }, 500);
             }
 
-            // Update last_login_at on account_members + register login event for monitoring
             if (event === 'SIGNED_IN') {
               supabase
                 .rpc('account_mark_member_login')
@@ -350,28 +362,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 });
             }
 
-            // Track signup completion for landing page analytics on first SIGNED_IN
-            // This fires after email verification when the user actually becomes authenticated
             if (event === 'SIGNED_IN') {
-              const trackingKey = `signup_tracked_${session.user.id}`;
+              const trackingKey = `signup_tracked_${newSession.user.id}`;
               if (!sessionStorage.getItem(trackingKey)) {
                 sessionStorage.setItem(trackingKey, 'true');
-                
-                // Check database to avoid cross-session duplicates
+
                 const { data: existingSource } = await supabase
                   .from('user_landing_source')
                   .select('id')
-                  .eq('user_id', session.user.id)
+                  .eq('user_id', newSession.user.id)
                   .maybeSingle();
-                
+
                 if (!existingSource) {
-                  // Use slug from user metadata (works across devices) with localStorage fallback
-                  const metaSlug = session.user.user_metadata?.landing_page_slug;
-                  await trackSignupCompleted(session.user.id, metaSlug).catch(console.error);
-                  
-                  // Track for trial automation system
+                  const metaSlug = newSession.user.user_metadata?.landing_page_slug;
+                  await trackSignupCompleted(newSession.user.id, metaSlug).catch(console.error);
+
                   await supabase.from('trial_product_events').insert({
-                    user_id: session.user.id,
+                    user_id: newSession.user.id,
                     event_name: 'user_signed_up',
                     event_source: 'frontend',
                     metadata: { method: 'email' },
@@ -384,12 +391,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   console.log('[AuthContext] Signup already tracked (db check) - skipping');
                 }
 
-                // Partner attribution is independent from landing-page tracking and must never be skipped.
                 try {
                   await attributePartnerLeadOnSignup(
-                    session.user.id,
-                    session.user.email || '',
-                    (session.user.user_metadata?.name as string) || undefined
+                    newSession.user.id,
+                    newSession.user.email || '',
+                    (newSession.user.user_metadata?.name as string) || undefined
                   );
                 } catch (e) {
                   console.error('[AuthContext] Partner attribution failed:', e);
@@ -397,11 +403,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             }
           }, 0);
-        } else {
+        } else if (!newSession?.user) {
           setProfile(null);
         }
 
-        setLoading(false);
+        // loading só pode ir de true → false, nunca voltar a true.
+        setLoading((prev) => (prev ? false : prev));
       }
     );
 
