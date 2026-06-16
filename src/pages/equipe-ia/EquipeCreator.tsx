@@ -69,6 +69,7 @@ export default function EquipeCreator() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const create = useCreateEquipe();
+  const saveCanvas = useSaveCanvas();
   const qc = useQueryClient();
   const credsQ = useUserAICredentials();
 
