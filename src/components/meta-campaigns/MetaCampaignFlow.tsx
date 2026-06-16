@@ -145,14 +145,8 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
         }
         throw new Error(data.error);
       }
-      // Mostra todos os templates (APPROVED, PENDING, REJECTED, PAUSED) para que o user veja o que criou.
-      // A seleção fica bloqueada para não-APPROVED (Meta só permite envio com aprovados).
-      const all = (data?.templates || []) as MetaTemplate[];
-      const sorted = [...all].sort((a, b) => {
-        const rank = (s: string) => (s === "APPROVED" ? 0 : s === "PENDING" ? 1 : 2);
-        return rank(a.status) - rank(b.status);
-      });
-      setTemplates(sorted);
+      // Mostra apenas templates APROVADOS pela Meta (únicos que podem ser disparados).
+      setTemplates((data?.templates || []).filter((t: MetaTemplate) => t.status === "APPROVED"));
     } catch (err: any) {
       console.error("Error fetching templates:", err);
       const errMsg = err?.message || String(err);
