@@ -379,11 +379,13 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
           onNodeClick={(_, n) => setSelectedId(n.id)}
           onPaneClick={() => setSelectedId(null)}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
           fitViewOptions={{ padding: 0.3 }}
           defaultEdgeOptions={{
+            type: "floating",
             animated: true,
-            style: { strokeWidth: 2.5, stroke: "hsl(var(--primary) / 0.5)", strokeLinecap: "round", filter: "drop-shadow(0 0 4px hsl(var(--primary) / 0.35))" },
+            style: { strokeWidth: 1.5, stroke: "hsl(var(--muted-foreground) / 0.5)", strokeLinecap: "round" },
           }}
           proOptions={{ hideAttribution: true }}
           className="bg-transparent"
