@@ -207,7 +207,11 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                             e.dataTransfer.effectAllowed = "move";
                           }}
                           onClick={() => addNode(kind)}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/40 hover:border-primary/30 transition-all duration-200 text-left group shadow-sm cursor-grab active:cursor-grabbing active:shadow-lg active:scale-[1.02] active:border-primary/50"
+                          className={cn(
+                            "w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 text-left group shadow-sm cursor-grab active:cursor-grabbing active:shadow-md active:scale-[1.02]",
+                            tint.bg, tint.border,
+                            "hover:brightness-[1.03] hover:saturate-[1.15]",
+                          )}
                         >
                           <div className={cn(
                             "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border",
