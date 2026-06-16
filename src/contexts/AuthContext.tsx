@@ -234,10 +234,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Shallow-compare profile to avoid re-renders when nothing meaningful changed.
+  // Re-renders on every focus were causing unsaved drawer state (e.g. AI agent
+  // prompt being typed) to be lost across the app.
+  const profilesEqual = (a: Profile | null, b: Profile | null) => {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    const keys = Object.keys({ ...a, ...b }) as (keyof Profile)[];
+    for (const k of keys) {
+      if ((a as any)[k] !== (b as any)[k]) return false;
+    }
+    return true;
+  };
+
+  // Throttle: never run the full account sync more than once per 5 minutes
+  // from focus/visibility events. Login / token refresh still sync immediately.
+  const lastSyncAtRef = useRef<number>(0);
+  const SYNC_MIN_INTERVAL_MS = 5 * 60 * 1000;
+
   // Sincroniza estado da conta (assinatura + reset mensal de buscas) e atualiza o profile.
   const syncAccountState = async (userId: string, reason: string, email?: string | null) => {
     try {
       console.log(`[AuthContext] Sync account state (${reason})...`);
+      lastSyncAtRef.current = Date.now();
 
       const results = await Promise.allSettled([
         supabase.functions.invoke('check-subscription'),
@@ -262,7 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const updatedProfile = await fetchProfile(userId);
-      setProfile(updatedProfile);
+      setProfile((prev) => (profilesEqual(prev, updatedProfile) ? prev : updatedProfile));
     } catch (err) {
       console.error('[AuthContext] Account sync failed:', err);
     }
@@ -271,7 +290,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshProfile = async () => {
     if (user) {
       const profileData = await fetchProfile(user.id);
-      setProfile(profileData);
+      setProfile((prev) => (profilesEqual(prev, profileData) ? prev : profileData));
     }
   };
 
@@ -280,6 +299,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // Only run when page becomes visible / focused
         if (typeof document !== 'undefined' && document.visibilityState && document.visibilityState !== 'visible') {
+          return;
+        }
+
+        // Throttle: avoid hammering check-subscription on every tab switch /
+        // focus, which was causing the whole app to re-render mid-typing and
+        // losing unsaved state in flow editor drawers.
+        if (Date.now() - lastSyncAtRef.current < SYNC_MIN_INTERVAL_MS) {
           return;
         }
 
@@ -303,10 +329,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           setTimeout(async () => {
             const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
+            setProfile((prev) => (profilesEqual(prev, profileData) ? prev : profileData));
 
-            // Sync account after login or token refresh to ensure plan/searches are up to date
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            // Sync account after login only. TOKEN_REFRESHED fires periodically
+            // (~hourly) and re-running the full sync was triggering app-wide
+            // re-renders that wiped unsaved state (flow editor drawers, etc.).
+            // The 6h interval below + focus-throttled sync already cover this.
+            if (event === 'SIGNED_IN') {
               setTimeout(() => {
                 syncAccountState(session.user.id, event, session.user.email);
               }, 500);
