@@ -506,6 +506,109 @@ async function sendViaMeta(
   return JSON.parse(txt || "{}");
 }
 
+async function persistOutboundChatForFlow(
+  supabase: any,
+  params: {
+    userId: string;
+    wabaConnectionId: string;
+    toPhone: string;
+    payload: any;
+    wabaMessageId: string | null;
+    flow: any;
+    nodeConfig?: any;
+  },
+) {
+  try {
+    const phoneDigits = String(params.toPhone).replace(/\D/g, "");
+    if (!phoneDigits) return;
+
+    const p = params.payload || {};
+    const isMedia = ["image", "video", "audio", "document"].includes(p.type);
+    const messageType = isMedia ? p.type : "text";
+    const textContent = p.type === "text"
+      ? (p.content || "")
+      : p.type === "buttons" || p.type === "list"
+        ? (p.body || p.content || "")
+        : (p.caption || p.content || "");
+
+    const last8 = phoneDigits.slice(-8);
+    let { data: conversation } = await supabase
+      .from("chat_conversations")
+      .select("id")
+      .eq("user_id", params.userId)
+      .eq("waba_connection_id", params.wabaConnectionId)
+      .ilike("contact_phone", `%${last8}`)
+      .order("last_message_at", { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nowIso = new Date().toISOString();
+    let convId = conversation?.id as string | undefined;
+
+    if (!convId) {
+      const { data: created } = await supabase
+        .from("chat_conversations")
+        .insert({
+          user_id: params.userId,
+          owner_user_id: params.userId,
+          waba_connection_id: params.wabaConnectionId,
+          contact_phone: phoneDigits,
+          last_message_text: textContent || `[${messageType}]`,
+          last_message_at: nowIso,
+          last_message_type: messageType,
+          last_message_direction: "outbound",
+          unread_count: 0,
+        })
+        .select("id")
+        .single();
+      convId = created?.id;
+    } else {
+      await supabase
+        .from("chat_conversations")
+        .update({
+          last_message_text: textContent || `[${messageType}]`,
+          last_message_at: nowIso,
+          last_message_type: messageType,
+          last_message_direction: "outbound",
+        })
+        .eq("id", convId);
+    }
+
+    if (!convId) return;
+
+    // Dedupe: if Meta later echoes (unlikely), webhook checks waba_message_id.
+    if (params.wabaMessageId) {
+      const { data: existing } = await supabase
+        .from("chat_messages")
+        .select("id")
+        .eq("waba_message_id", params.wabaMessageId)
+        .maybeSingle();
+      if (existing) return;
+    }
+
+    await supabase.from("chat_messages").insert({
+      conversation_id: convId,
+      user_id: params.userId,
+      owner_user_id: params.userId,
+      waba_message_id: params.wabaMessageId,
+      direction: "outbound",
+      message_type: messageType,
+      content: textContent || null,
+      media_url: p.mediaUrl || null,
+      media_caption: isMedia ? (p.caption || null) : null,
+      status: "sent",
+      status_updated_at: nowIso,
+      metadata: {
+        source: "flow",
+        flow_id: params.flow?.id || null,
+        flow_name: params.flow?.name || null,
+      },
+    });
+  } catch (e) {
+    console.error("[wa-flow-runner] persistOutboundChatForFlow failed:", e);
+  }
+}
+
 async function sendMessage(
   supabase: any,
   flow: any,
@@ -525,11 +628,26 @@ async function sendMessage(
   }
   const outOfWindowTemplate = nodeConfig?.out_of_window_template
     || (flow.default_out_of_window_template || null);
-  return sendViaMeta(supabase, flow.waba_connection_id, leadPhone, payload, {
+  const result = await sendViaMeta(supabase, flow.waba_connection_id, leadPhone, payload, {
     userId,
     outOfWindowTemplate,
   });
+
+  // Persist into chat tables so the message appears in the Chat UI
+  // (Meta does not echo outbound messages back through the webhook).
+  await persistOutboundChatForFlow(supabase, {
+    userId,
+    wabaConnectionId: flow.waba_connection_id,
+    toPhone: leadPhone,
+    payload,
+    wabaMessageId: result?.messages?.[0]?.id ?? null,
+    flow,
+    nodeConfig,
+  });
+
+  return result;
 }
+
 
 // ── Action executors ──
 
