@@ -92,5 +92,16 @@ export const AI_PROVIDERS: ProviderInfo[] = [
 
 export const PROVIDER_BY_ID: Record<ProviderId, ProviderInfo> = AI_PROVIDERS.reduce(
   (acc, p) => ({ ...acc, [p.id]: p }),
-  {} as Record<ProviderId, ProviderInfo>,
+  {} as Record<ProviderId, ProviderInfo>
 );
+
+export function getProviderByModel(model: string | null | undefined): ProviderInfo | null {
+  if (!model) return null;
+  const m = model.toLowerCase();
+  if (m.startsWith("gpt-") || m.startsWith("text-") || m.startsWith("o1") || m.startsWith("o3")) return PROVIDER_BY_ID.openai;
+  if (m.startsWith("claude-")) return PROVIDER_BY_ID.claude;
+  if (m.startsWith("gemini-")) return PROVIDER_BY_ID.gemini;
+  if (m.startsWith("deepseek-")) return PROVIDER_BY_ID.deepseek;
+  if (m.startsWith("llama-")) return PROVIDER_BY_ID.meta;
+  return null;
+}
