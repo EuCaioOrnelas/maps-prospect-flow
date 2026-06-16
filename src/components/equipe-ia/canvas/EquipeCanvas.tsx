@@ -219,7 +219,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
       {/* Canvas */}
       <div
         ref={wrapperRef}
-        className="flex-1 relative"
+        className="flex-1 relative overflow-hidden"
         onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
         onDrop={(e) => {
           e.preventDefault();
