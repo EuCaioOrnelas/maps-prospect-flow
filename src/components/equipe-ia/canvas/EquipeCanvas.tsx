@@ -15,7 +15,7 @@ import {
   type EdgeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronDown, PanelLeftClose, PanelLeftOpen, Search, X } from "lucide-react";
 import { EquipeNode } from "./EquipeNode";
 import { NodeConfigDrawer } from "./NodeConfigDrawer";
 import { EQUIPE_NODE_META, type EquipeNodeKind } from "../nodeTypes";
@@ -35,6 +35,7 @@ export interface CanvasHandle {
 
 interface Props {
   initial: CanvasState;
+  workforceStatus?: "draft" | "active" | "inactive";
   onAutoSave?: (state: CanvasState) => void;
   onStateChange?: (state: CanvasState) => void;
 }
@@ -46,22 +47,6 @@ const CATEGORIES: { label: string; kinds: EquipeNodeKind[] }[] = [
   { label: "Execução", kinds: ["tools", "actions", "escalation"] },
 ];
 
-export const KIND_ICON_BG: Record<EquipeNodeKind, string> = {
-  core:            "bg-primary",
-  goal:            "bg-emerald-500",
-  rules:           "bg-rose-500",
-  decision:        "bg-fuchsia-500",
-  memory:          "bg-violet-500",
-  knowledge:       "bg-amber-500",
-  crm_data:        "bg-sky-500",
-  data_collection: "bg-cyan-500",
-  analysis:        "bg-teal-500",
-  tools:           "bg-indigo-500",
-  actions:         "bg-orange-500",
-  escalation:      "bg-yellow-500",
-};
-
-// Sidebar palette accent — mirrors the flow editor (soft tinted chip + colored label).
 const KIND_PALETTE_ACCENT: Record<EquipeNodeKind, { text: string; bg: string }> = {
   core:            { text: "text-primary",     bg: "bg-primary/10" },
   goal:            { text: "text-emerald-400", bg: "bg-emerald-500/10" },
@@ -77,22 +62,56 @@ const KIND_PALETTE_ACCENT: Record<EquipeNodeKind, { text: string; bg: string }> 
   escalation:      { text: "text-yellow-400",  bg: "bg-yellow-500/10" },
 };
 
+// Required/optional flag for the sidebar pill.
+const KIND_REQUIREMENT: Record<EquipeNodeKind, "required" | "recommended" | "optional"> = {
+  core: "required",
+  goal: "required",
+  rules: "required",
+  memory: "recommended",
+  knowledge: "recommended",
+  escalation: "recommended",
+  tools: "recommended",
+  decision: "optional",
+  crm_data: "optional",
+  data_collection: "optional",
+  analysis: "optional",
+  actions: "optional",
+};
+
+const REQ_BADGE: Record<"required" | "recommended" | "optional", { label: string; cls: string }> = {
+  required:    { label: "Obrig.", cls: "text-rose-400" },
+  recommended: { label: "Rec.",   cls: "text-amber-400" },
+  optional:    { label: "Opc.",   cls: "text-muted-foreground" },
+};
+
+// Score weights — mirrored from WorkforceScorePanel.
+const SCORING: { kind: EquipeNodeKind; weight: number }[] = [
+  { kind: "goal", weight: 15 },
+  { kind: "rules", weight: 15 },
+  { kind: "knowledge", weight: 15 },
+  { kind: "escalation", weight: 15 },
+  { kind: "memory", weight: 15 },
+  { kind: "tools", weight: 15 },
+  { kind: "data_collection", weight: 10 },
+];
+
 function uid() {
   return `n_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initial, onAutoSave, onStateChange }, ref) {
+const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initial, workforceStatus = "draft", onAutoSave, onStateChange }, ref) {
   const [nodes, setNodes, onNodesChangeRaw] = useNodesState<Node>(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [search, setSearch] = useState("");
   const [openCats, setOpenCats] = useState<Set<string>>(
     new Set(CATEGORIES.map((c) => c.label)),
   );
   const wrapperRef = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
 
-  // Block deletion of the core node — it's mandatory.
+  // Block deletion of core.
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     const filtered = changes.filter((c) => !(c.type === "remove" && c.id === "core"));
     onNodesChangeRaw(filtered);
@@ -119,11 +138,38 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
     },
   }), [nodes, edges, setNodes, setEdges]);
 
+  // Compute live score + connected count and inject into the core node's data.
+  const liveScore = useMemo(() => {
+    const present = new Set(nodes.map((n) => (n.data as { kind?: string })?.kind ?? ""));
+    let s = 0;
+    for (const item of SCORING) if (present.has(item.kind)) s += item.weight;
+    return Math.min(100, s);
+  }, [nodes]);
+
+  const connectedCount = useMemo(
+    () => nodes.filter((n) => (n.data as { kind?: string })?.kind !== "core").length,
+    [nodes],
+  );
+
+  // Decorate core node with live data without persisting (kept out of saved state).
+  const displayNodes = useMemo(() => {
+    return nodes.map((n) => {
+      if (n.id !== "core") return n;
+      return {
+        ...n,
+        data: {
+          ...n.data,
+          score: liveScore,
+          connectedCount,
+          totalModules: 10,
+          workforceStatus,
+        },
+      };
+    });
+  }, [nodes, liveScore, connectedCount, workforceStatus]);
+
   useEffect(() => { onStateChange?.({ nodes, edges }); }, [nodes, edges, onStateChange]);
 
-  // Stabilize the autosave callback in a ref so re-renders in the parent (e.g.
-  // "Saving…" → "Saved" badge) don't re-trigger the debounce effect and cause a
-  // save loop.
   const autoSaveRef = useRef(onAutoSave);
   useEffect(() => { autoSaveRef.current = onAutoSave; }, [onAutoSave]);
 
@@ -177,6 +223,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
   );
 
   const deleteNode = useCallback((id: string) => {
+    if (id === "core") return;
     setNodes((nds) => nds.filter((n) => n.id !== id));
     setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
     setSelectedId(null);
@@ -189,41 +236,80 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
       return next;
     });
 
+  // Filtered categories by search.
+  const filteredCategories = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return CATEGORIES;
+    return CATEGORIES
+      .map((c) => ({
+        ...c,
+        kinds: c.kinds.filter((k) => {
+          const meta = EQUIPE_NODE_META[k];
+          return (
+            meta.label.toLowerCase().includes(q) ||
+            meta.description.toLowerCase().includes(q)
+          );
+        }),
+      }))
+      .filter((c) => c.kinds.length > 0);
+  }, [search]);
+
   return (
     <div className="flex-1 flex overflow-hidden relative h-full w-full">
-      {/* Sidebar toggle button - appears after sidebar closes */}
       <button
         onClick={() => setSidebarOpen(true)}
         className={cn(
           "absolute top-2 left-2 z-20 w-8 h-8 rounded-lg bg-card border border-border flex items-center justify-center hover:bg-muted shadow-sm transition-all duration-200",
           sidebarOpen ? "opacity-0 pointer-events-none scale-90 delay-0" : "opacity-100 pointer-events-auto scale-100 delay-300",
         )}
-        title="Abrir painel"
+        title="Abrir biblioteca"
       >
         <PanelLeftOpen size={14} />
       </button>
 
-      {/* Sidebar */}
+      {/* Sidebar — Biblioteca de Módulos */}
       <div className={cn(
         "border-r border-border bg-card shrink-0 flex flex-col transition-all duration-300 ease-out overflow-hidden",
-        sidebarOpen ? "w-[240px]" : "w-0 border-r-0",
+        sidebarOpen ? "w-[260px]" : "w-0 border-r-0",
       )}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 min-w-[240px]">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 min-w-[260px]">
           <div>
-            <p className="text-sm font-bold text-foreground">Cards</p>
-            <p className="text-[10px] text-muted-foreground">Arraste ou clique para adicionar</p>
+            <p className="text-sm font-bold text-foreground">Biblioteca</p>
+            <p className="text-[10px] text-muted-foreground">Módulos do colaborador</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
             className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-muted transition-colors"
-            title="Fechar painel"
+            title="Fechar"
           >
             <PanelLeftClose size={14} className="text-muted-foreground" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin min-w-[240px]">
-          {CATEGORIES.map((cat) => {
-            const isOpen = openCats.has(cat.label);
+        <div className="px-3 pt-3 pb-2 min-w-[260px]">
+          <div className="relative">
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Pesquisar módulo..."
+              className="w-full h-8 pl-8 pr-7 text-xs bg-muted/40 border border-border rounded-lg focus:outline-none focus:border-primary/50 focus:bg-card transition-colors"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 size-5 rounded flex items-center justify-center hover:bg-muted text-muted-foreground"
+              >
+                <X size={11} />
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto p-3 pt-1 space-y-4 scrollbar-thin min-w-[260px]">
+          {filteredCategories.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground text-center py-6">Nenhum módulo encontrado</p>
+          ) : filteredCategories.map((cat) => {
+            const isOpen = openCats.has(cat.label) || !!search;
             return (
               <div key={cat.label}>
                 <button
@@ -242,11 +328,13 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                   </p>
                 </button>
                 {isOpen && (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {cat.kinds.map((kind) => {
                       const meta = EQUIPE_NODE_META[kind];
                       const Icon = meta.icon;
                       const accent = KIND_PALETTE_ACCENT[kind] ?? KIND_PALETTE_ACCENT.core;
+                      const req = KIND_REQUIREMENT[kind];
+                      const reqBadge = REQ_BADGE[req];
                       return (
                         <div
                           key={kind}
@@ -256,16 +344,21 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                             e.dataTransfer.effectAllowed = "move";
                           }}
                           onClick={() => addNode(kind)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl border border-border bg-card transition-colors hover:border-foreground/30 hover:bg-muted/40 cursor-grab active:cursor-grabbing"
+                          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl border border-transparent transition-all hover:border-border hover:bg-muted/60 cursor-grab active:cursor-grabbing group"
                         >
-                          <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0", accent.bg)}>
-                            <Icon size={16} className={accent.text} />
+                          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", accent.bg)}>
+                            <Icon size={14} className={accent.text} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-foreground leading-tight truncate">
-                              {meta.label}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2 mt-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-[13px] font-semibold text-foreground leading-tight truncate">
+                                {meta.label}
+                              </p>
+                              <span className={cn("text-[9px] font-bold uppercase tracking-wide shrink-0", reqBadge.cls)}>
+                                {reqBadge.label}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1 mt-0.5">
                               {meta.description}
                             </p>
                           </div>
@@ -280,7 +373,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
         </div>
       </div>
 
-      {/* Canvas */}
+      {/* Canvas surface */}
       <div
         ref={wrapperRef}
         className="flex-1 relative overflow-hidden"
@@ -293,8 +386,17 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
           createNode(kind, position);
         }}
       >
+        {/* Center radial glow + subtle gradient overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none z-0"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 45%, hsl(var(--primary) / 0.10) 0%, transparent 45%), linear-gradient(to bottom, hsl(var(--background)) 0%, hsl(var(--muted) / 0.25) 100%)",
+          }}
+          aria-hidden
+        />
         <ReactFlow
-          nodes={nodes}
+          nodes={displayNodes}
           edges={edges}
           onNodesChange={onNodesChange as (c: NodeChange[]) => void}
           onEdgesChange={onEdgesChange as (c: EdgeChange[]) => void}
@@ -306,13 +408,12 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
           fitViewOptions={{ padding: 0.3 }}
           defaultEdgeOptions={{
             animated: true,
-            style: { strokeWidth: 2, stroke: "hsl(var(--muted-foreground) / 0.45)", strokeLinecap: "round" },
+            style: { strokeWidth: 2.5, stroke: "hsl(var(--primary) / 0.5)", strokeLinecap: "round", filter: "drop-shadow(0 0 4px hsl(var(--primary) / 0.35))" },
           }}
           proOptions={{ hideAttribution: true }}
-          className="bg-background"
+          className="bg-transparent"
         >
-          <Background color="hsl(var(--border) / 0.25)" gap={24} size={1} variant={"dots" as any} />
-          <Background id="grid" color="hsl(var(--border) / 0.08)" gap={24} variant={"lines" as any} />
+          <Background color="hsl(var(--border) / 0.3)" gap={24} size={1} variant={"dots" as any} />
           <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
         </ReactFlow>
         <NodeConfigDrawer
