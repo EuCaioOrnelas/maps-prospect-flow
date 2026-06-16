@@ -500,7 +500,8 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                       ) : null
                     )}
                   </button>
-                ))}
+                  );
+                })}
               </div>
 
               {totalPages > 1 && (
