@@ -419,36 +419,12 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
             </div>
           </div>
 
-          {/* Passo a passo WABA */}
-          <div className="mb-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
-            <div className="flex items-start gap-3">
-              <HelpCircle size={18} className="text-primary mt-0.5 shrink-0" />
-              <div className="text-sm space-y-2">
-                <p className="font-semibold text-foreground">Como funcionam os templates da Meta</p>
-                <ol className="text-muted-foreground space-y-1.5 list-decimal list-inside">
-                  <li>
-                    <strong>O que é WABA?</strong> WhatsApp Business Account é a conta de negócios da Meta onde seus números e templates ficam armazenados. Cada número pertence a uma WABA específica.
-                  </li>
-                  <li>
-                    <strong>Templates são vinculados à WABA</strong> — não ao número diretamente. Se você criou templates em outra conta (ex: "Test WhatsApp Business Account"), eles não aparecerão aqui.
-                  </li>
-                  <li>
-                    <strong>Como criar e vincular:</strong> Clique em <em>Criar template</em> acima ou acesse o gerenciador da Meta. Certifique-se de criar o template na mesma WABA do número selecionado: <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">{selectedConnection?.waba_id}</code>
-                  </li>
-                  <li>
-                    <strong>Aprovação obrigatória:</strong> Após criar, a Meta analisa o template (geralmente em minutos, mas pode levar até 24h). Somente templates com status <strong>APPROVED</strong> aparecem aqui para disparo.
-                  </li>
-                </ol>
-                <a
-                  href="https://business.facebook.com/latest/whatsapp_manager/message_templates"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
-                >
-                  <ExternalLink size={12} /> Abrir gerenciador de templates da Meta
-                </a>
-              </div>
-            </div>
+          {/* Aviso resumido WABA */}
+          <div className="mb-4 p-3 rounded-lg border border-primary/20 bg-primary/5 flex items-start gap-2 text-xs text-muted-foreground">
+            <HelpCircle size={14} className="text-primary mt-0.5 shrink-0" />
+            <p>
+              Templates ficam vinculados à <strong className="text-foreground">WABA</strong> (WhatsApp Business Account) do número selecionado. Crie o template na WABA <code className="font-mono bg-muted px-1 py-0.5 rounded">{selectedConnection?.waba_id}</code> e aguarde o status <strong className="text-foreground">APPROVED</strong> para usá-lo aqui.
+            </p>
           </div>
 
           {templates.length > 0 && (
