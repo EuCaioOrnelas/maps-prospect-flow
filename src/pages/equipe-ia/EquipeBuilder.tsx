@@ -56,7 +56,7 @@ export default function EquipeBuilder() {
       <header className="h-12 flex items-center justify-between px-4 border-b bg-card/80 backdrop-blur-sm shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/equipe-ia/colaboradores"><ChevronLeft className="size-4 mr-1" /> Voltar</Link>
+            <Link to="/equipe-ia"><ChevronLeft className="size-4 mr-1" /> Voltar</Link>
           </Button>
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate leading-tight">{worker?.name ?? "Construtor"}</p>
@@ -106,7 +106,7 @@ export default function EquipeBuilder() {
         open={providerOpen}
         onOpenChange={setProviderOpen}
         onConfigured={() => { /* canvas unlocks via hasIA */ }}
-        onSkip={() => { navigate("/equipe-ia/colaboradores"); }}
+        onSkip={() => { navigate("/equipe-ia"); }}
       />
 
       {id && worker && (

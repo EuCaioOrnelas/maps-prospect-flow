@@ -395,7 +395,7 @@ export default function EquipeCreator() {
         }}
         onSkip={() => {
           toast.message("Colaborador salvo como rascunho. Configure uma IA depois para abrir o construtor.");
-          navigate("/equipe-ia/colaboradores");
+          navigate("/equipe-ia");
         }}
       />
     </EquipePageLayout>
