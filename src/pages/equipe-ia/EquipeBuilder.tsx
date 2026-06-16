@@ -6,8 +6,10 @@ import { ChevronLeft, Save, Loader2, FlaskConical, Sparkles, Check } from "lucid
 import { EquipeCanvas, type CanvasHandle, type CanvasState } from "@/components/equipe-ia/canvas/EquipeCanvas";
 import { EquipeTestChatDialog } from "@/components/equipe-ia/EquipeTestChatDialog";
 import { MandatoryProviderDialog } from "@/components/equipe-ia/MandatoryProviderDialog";
+import { WorkforceScorePanel } from "@/components/equipe-ia/canvas/WorkforceScorePanel";
 import { useUserAICredentials } from "@/hooks/useUserAICredentials";
-import { useEquipe, useEquipeCanvas, useSaveCanvas } from "@/hooks/useEquipeIA";
+import { useEquipe, useEquipeCanvas, useSaveCanvas, buildCanvasFromBlueprint } from "@/hooks/useEquipeIA";
+import type { WorkforceBlueprint } from "@/components/equipe-ia/wizard/workforceTemplates";
 import { toast } from "sonner";
 
 export default function EquipeBuilder() {
@@ -20,6 +22,7 @@ export default function EquipeBuilder() {
   const canvasRef = useRef<CanvasHandle>(null);
   const [testOpen, setTestOpen] = useState(false);
   const [autoState, setAutoState] = useState<"idle" | "saving" | "saved">("idle");
+  const [liveState, setLiveState] = useState<CanvasState | null>(null);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const autoSave = useCallback((state: CanvasState) => {
