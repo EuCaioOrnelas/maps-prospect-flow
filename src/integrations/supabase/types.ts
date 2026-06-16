@@ -988,6 +988,82 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_workforce_test_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          message_count: number
+          title: string | null
+          updated_at: string
+          user_id: string
+          workforce_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_count?: number
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          workforce_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_count?: number
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_test_conversations_workforce_id_fkey"
+            columns: ["workforce_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_test_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+          workforce_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+          workforce_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_test_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce_test_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_workforce_tools: {
         Row: {
           created_at: string
@@ -1016,6 +1092,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_workforce_tools_workforce_id_fkey"
+            columns: ["workforce_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_versions: {
+        Row: {
+          created_at: string
+          edges: Json
+          id: string
+          name: string
+          nodes: Json
+          notes: string | null
+          user_id: string
+          workforce_id: string
+        }
+        Insert: {
+          created_at?: string
+          edges?: Json
+          id?: string
+          name: string
+          nodes?: Json
+          notes?: string | null
+          user_id: string
+          workforce_id: string
+        }
+        Update: {
+          created_at?: string
+          edges?: Json
+          id?: string
+          name?: string
+          nodes?: Json
+          notes?: string | null
+          user_id?: string
+          workforce_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_versions_workforce_id_fkey"
             columns: ["workforce_id"]
             isOneToOne: false
             referencedRelation: "ai_workforce"

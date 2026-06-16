@@ -17,11 +17,13 @@ import {
 import "@xyflow/react/dist/style.css";
 import { ChevronDown, PanelLeftClose, PanelLeftOpen, Search, X } from "lucide-react";
 import { EquipeNode } from "./EquipeNode";
+import { FloatingEdge } from "./FloatingEdge";
 import { NodeConfigDrawer } from "./NodeConfigDrawer";
 import { EQUIPE_NODE_META, type EquipeNodeKind } from "../nodeTypes";
 import { cn } from "@/lib/utils";
 
 const nodeTypes = { equipe: EquipeNode, workforce: EquipeNode };
+const edgeTypes = { floating: FloatingEdge };
 
 export interface CanvasState {
   nodes: Node[];
@@ -84,22 +86,12 @@ const REQ_BADGE: Record<"required" | "recommended" | "optional", { label: string
   optional:    { label: "Opc.",   cls: "text-muted-foreground" },
 };
 
-// Score weights — mirrored from WorkforceScorePanel.
-const SCORING: { kind: EquipeNodeKind; weight: number }[] = [
-  { kind: "goal", weight: 15 },
-  { kind: "rules", weight: 15 },
-  { kind: "knowledge", weight: 15 },
-  { kind: "escalation", weight: 15 },
-  { kind: "memory", weight: 15 },
-  { kind: "tools", weight: 15 },
-  { kind: "data_collection", weight: 10 },
-];
 
 function uid() {
   return `n_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initial, workforceStatus = "draft", onAutoSave, onStateChange }, ref) {
+const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initial, onAutoSave, onStateChange }, ref) {
   const [nodes, setNodes, onNodesChangeRaw] = useNodesState<Node>(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -133,40 +125,17 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
       });
       setEdges((eds) => {
         if (eds.some((e) => e.target === newId)) return eds;
-        return [...eds, { id: `e_core_${newId}`, source: "core", target: newId, animated: true } as Edge];
+        return [...eds, { id: `e_core_${newId}`, source: "core", target: newId, type: "floating", animated: true } as Edge];
       });
     },
   }), [nodes, edges, setNodes, setEdges]);
 
-  // Compute live score + connected count and inject into the core node's data.
-  const liveScore = useMemo(() => {
-    const present = new Set(nodes.map((n) => (n.data as { kind?: string })?.kind ?? ""));
-    let s = 0;
-    for (const item of SCORING) if (present.has(item.kind)) s += item.weight;
-    return Math.min(100, s);
-  }, [nodes]);
-
-  const connectedCount = useMemo(
-    () => nodes.filter((n) => (n.data as { kind?: string })?.kind !== "core").length,
-    [nodes],
+  // Always render core data as-is (no live score injection).
+  const displayNodes = nodes;
+  const displayEdges = useMemo(
+    () => edges.map((e) => ({ ...e, type: "floating", animated: true })),
+    [edges],
   );
-
-  // Decorate core node with live data without persisting (kept out of saved state).
-  const displayNodes = useMemo(() => {
-    return nodes.map((n) => {
-      if (n.id !== "core") return n;
-      return {
-        ...n,
-        data: {
-          ...n.data,
-          score: liveScore,
-          connectedCount,
-          totalModules: 10,
-          workforceStatus,
-        },
-      };
-    });
-  }, [nodes, liveScore, connectedCount, workforceStatus]);
 
   useEffect(() => { onStateChange?.({ nodes, edges }); }, [nodes, edges, onStateChange]);
 
@@ -182,7 +151,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
   }, [nodes, edges]);
 
   const onConnect = useCallback(
-    (c: Connection) => setEdges((eds) => addEdge({ ...c, animated: true }, eds)),
+    (c: Connection) => setEdges((eds) => addEdge({ ...c, type: "floating", animated: true }, eds)),
     [setEdges],
   );
 
@@ -397,18 +366,20 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
         />
         <ReactFlow
           nodes={displayNodes}
-          edges={edges}
+          edges={displayEdges}
           onNodesChange={onNodesChange as (c: NodeChange[]) => void}
           onEdgesChange={onEdgesChange as (c: EdgeChange[]) => void}
           onConnect={onConnect}
           onNodeClick={(_, n) => setSelectedId(n.id)}
           onPaneClick={() => setSelectedId(null)}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
           fitViewOptions={{ padding: 0.3 }}
           defaultEdgeOptions={{
+            type: "floating",
             animated: true,
-            style: { strokeWidth: 2.5, stroke: "hsl(var(--primary) / 0.5)", strokeLinecap: "round", filter: "drop-shadow(0 0 4px hsl(var(--primary) / 0.35))" },
+            style: { strokeWidth: 1.5, stroke: "hsl(var(--muted-foreground) / 0.5)", strokeLinecap: "round" },
           }}
           proOptions={{ hideAttribution: true }}
           className="bg-transparent"

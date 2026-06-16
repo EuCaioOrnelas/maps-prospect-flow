@@ -169,6 +169,39 @@ export function useSaveCanvas() {
   });
 }
 
+export function useSaveCanvasVersion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { equipeId: string; state: CanvasState; name: string; notes?: string }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Não autenticado");
+      // Persist live canvas
+      await supabase.from(CANVAS_TABLE as never).delete().eq("workforce_id", input.equipeId);
+      const { error: cErr } = await supabase.from(CANVAS_TABLE as never).insert({
+        workforce_id: input.equipeId, nodes: input.state.nodes, edges: input.state.edges,
+      } as never);
+      if (cErr) throw cErr;
+      // Save named version snapshot
+      const { error: vErr } = await supabase.from("ai_workforce_versions" as never).insert({
+        workforce_id: input.equipeId,
+        user_id: uid,
+        name: input.name,
+        notes: input.notes ?? null,
+        nodes: input.state.nodes,
+        edges: input.state.edges,
+      } as never);
+      if (vErr) throw vErr;
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["equipe-ia", v.equipeId, "canvas"] });
+      qc.invalidateQueries({ queryKey: ["equipe-ia", v.equipeId, "versions"] });
+    },
+  });
+}
+
+
+
 export function useDeleteEquipe() {
   const qc = useQueryClient();
   return useMutation({
