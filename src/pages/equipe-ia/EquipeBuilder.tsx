@@ -1,20 +1,33 @@
-import { useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, Save, Loader2, FlaskConical } from "lucide-react";
+import { ChevronLeft, Save, Loader2, FlaskConical, Sparkles } from "lucide-react";
 import { EquipeCanvas, type CanvasHandle } from "@/components/equipe-ia/canvas/EquipeCanvas";
 import { EquipeTestChatDialog } from "@/components/equipe-ia/EquipeTestChatDialog";
+import { MandatoryProviderDialog } from "@/components/equipe-ia/MandatoryProviderDialog";
+import { useUserAICredentials } from "@/hooks/useUserAICredentials";
 import { useEquipe, useEquipeCanvas, useSaveCanvas } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
 
 export default function EquipeBuilder() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: worker, isLoading: loadingW } = useEquipe(id);
   const { data: canvas, isLoading: loadingC } = useEquipeCanvas(id);
+  const credsQ = useUserAICredentials();
   const save = useSaveCanvas();
   const canvasRef = useRef<CanvasHandle>(null);
   const [testOpen, setTestOpen] = useState(false);
+
+  const hasIA = useMemo(
+    () => (credsQ.data ?? []).some((c) => c.is_active && c.api_key),
+    [credsQ.data],
+  );
+  const [providerOpen, setProviderOpen] = useState(false);
+  useEffect(() => {
+    if (!credsQ.isLoading && !hasIA) setProviderOpen(true);
+  }, [credsQ.isLoading, hasIA]);
 
   const loading = loadingW || loadingC;
 
@@ -51,10 +64,10 @@ export default function EquipeBuilder() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleTest} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={handleTest} disabled={loading || !hasIA}>
             <FlaskConical className="size-3.5 mr-1.5" /> Testar
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={save.isPending || loading}>
+          <Button size="sm" onClick={handleSave} disabled={save.isPending || loading || !hasIA}>
             {save.isPending ? (
               <Loader2 className="size-3.5 mr-1.5 animate-spin" />
             ) : (
@@ -69,10 +82,32 @@ export default function EquipeBuilder() {
           <div className="p-4 h-full">
             <Skeleton className="h-full w-full rounded-2xl" />
           </div>
+        ) : !hasIA ? (
+          <div className="h-full w-full flex items-center justify-center p-6">
+            <div className="max-w-md text-center space-y-4 rounded-2xl border bg-card p-8 shadow-sm">
+              <div className="mx-auto w-12 h-12 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary">
+                <Sparkles className="size-5" />
+              </div>
+              <div>
+                <p className="font-semibold">Conecte uma IA para abrir o construtor</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  O canvas só fica disponível depois que esse colaborador tiver um provedor de IA conectado.
+                </p>
+              </div>
+              <Button size="sm" onClick={() => setProviderOpen(true)}>Configurar IA</Button>
+            </div>
+          </div>
         ) : (
           <EquipeCanvas ref={canvasRef} initial={canvas} />
         )}
       </div>
+
+      <MandatoryProviderDialog
+        open={providerOpen}
+        onOpenChange={setProviderOpen}
+        onConfigured={() => { /* canvas unlocks via hasIA */ }}
+        onSkip={() => { navigate("/equipe-ia/colaboradores"); }}
+      />
 
       {id && worker && (
         <EquipeTestChatDialog
