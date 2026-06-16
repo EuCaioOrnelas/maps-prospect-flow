@@ -2534,6 +2534,13 @@ serve(async (req) => {
 
       // Match trigger
       let shouldTrigger = false;
+      // In test mode, ANY inbound message from the configured test phone triggers the flow,
+      // regardless of keyword/campaign_reply settings. This lets the user validate the flow
+      // end-to-end on their real phone without having to remember the production trigger.
+      if (isTest && !isProd && body.incoming_text) {
+        shouldTrigger = true;
+        console.log(`[wa-flow-runner] test_mode bypass — triggering flow ${flow.id} regardless of trigger_type='${triggerType}'`);
+      } else
       if (triggerType === "first_message") {
         if (!body.incoming_text) continue;
         shouldTrigger = true;
