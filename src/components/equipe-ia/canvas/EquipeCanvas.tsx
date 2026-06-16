@@ -229,18 +229,16 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                             e.dataTransfer.effectAllowed = "move";
                           }}
                           onClick={() => addNode(kind)}
-                          className="w-full bg-card border border-border rounded-xl shadow-[0_2px_12px_hsl(0_0%_0%/0.18)] overflow-hidden transition-colors hover:border-foreground/30 cursor-grab active:cursor-grabbing"
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl border border-border bg-card transition-colors hover:border-foreground/30 hover:bg-muted/40 cursor-grab active:cursor-grabbing"
                         >
-                          <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
-                            <div className={cn("w-6 h-6 rounded-md flex items-center justify-center shrink-0", accent.bg)}>
-                              <Icon size={13} className={accent.text} />
-                            </div>
-                            <span className={cn("text-[10px] font-semibold uppercase tracking-wider truncate", accent.text)}>
-                              {meta.label}
-                            </span>
+                          <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0", accent.bg)}>
+                            <Icon size={16} className={accent.text} />
                           </div>
-                          <div className="px-3 py-2">
-                            <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-foreground leading-tight truncate">
+                              {meta.label}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2 mt-0.5">
                               {meta.description}
                             </p>
                           </div>
