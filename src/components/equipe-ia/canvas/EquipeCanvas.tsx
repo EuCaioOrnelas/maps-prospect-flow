@@ -33,13 +33,14 @@ export interface CanvasHandle {
 
 interface Props {
   initial: CanvasState;
+  onAutoSave?: (state: CanvasState) => void;
 }
 
 function uid() {
   return `n_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initial }, ref) {
+const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initial, onAutoSave }, ref) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -47,6 +48,15 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
   useImperativeHandle(ref, () => ({
     getState: () => ({ nodes, edges }),
   }), [nodes, edges]);
+
+  // Debounced auto-save: persists changes silently so navigating away never loses work.
+  const firstRun = useRef(true);
+  useEffect(() => {
+    if (!onAutoSave) return;
+    if (firstRun.current) { firstRun.current = false; return; }
+    const t = setTimeout(() => onAutoSave({ nodes, edges }), 800);
+    return () => clearTimeout(t);
+  }, [nodes, edges, onAutoSave]);
 
   const onConnect = useCallback(
     (c: Connection) => setEdges((eds) => addEdge({ ...c, animated: true }, eds)),
