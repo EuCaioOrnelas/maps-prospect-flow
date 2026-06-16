@@ -145,14 +145,8 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
         }
         throw new Error(data.error);
       }
-      // Mostra todos os templates (APPROVED, PENDING, REJECTED, PAUSED) para que o user veja o que criou.
-      // A seleção fica bloqueada para não-APPROVED (Meta só permite envio com aprovados).
-      const all = (data?.templates || []) as MetaTemplate[];
-      const sorted = [...all].sort((a, b) => {
-        const rank = (s: string) => (s === "APPROVED" ? 0 : s === "PENDING" ? 1 : 2);
-        return rank(a.status) - rank(b.status);
-      });
-      setTemplates(sorted);
+      // Mostra apenas templates APROVADOS pela Meta (únicos que podem ser disparados).
+      setTemplates((data?.templates || []).filter((t: MetaTemplate) => t.status === "APPROVED"));
     } catch (err: any) {
       console.error("Error fetching templates:", err);
       const errMsg = err?.message || String(err);
@@ -442,16 +436,21 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : templates.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 px-4 max-w-md mx-auto">
               <MessageSquare size={40} className="text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">Nenhum template encontrado para este número</p>
+              <p className="font-medium">Nenhum template aprovado nesta conta</p>
+              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                Os templates da Meta são vinculados à <strong>WhatsApp Business Account (WABA)</strong> do número selecionado — não ao número em si.
+                Se você criou templates em outra conta (ex: <em>Test WhatsApp Business Account</em>), eles não aparecerão aqui.
+                Crie/mova o template para a WABA conectada e aguarde a aprovação da Meta.
+              </p>
               <a
                 href="https://business.facebook.com/latest/whatsapp_manager/message_templates"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline mt-2 inline-flex items-center gap-1"
+                className="text-sm text-primary hover:underline mt-3 inline-flex items-center gap-1"
               >
-                <ExternalLink size={12} /> Criar template no painel Meta
+                <ExternalLink size={12} /> Abrir gerenciador de templates da Meta
               </a>
             </div>
           ) : (
