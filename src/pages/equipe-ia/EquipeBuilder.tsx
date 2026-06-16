@@ -82,10 +82,32 @@ export default function EquipeBuilder() {
           <div className="p-4 h-full">
             <Skeleton className="h-full w-full rounded-2xl" />
           </div>
+        ) : !hasIA ? (
+          <div className="h-full w-full flex items-center justify-center p-6">
+            <div className="max-w-md text-center space-y-4 rounded-2xl border bg-card p-8 shadow-sm">
+              <div className="mx-auto w-12 h-12 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary">
+                <Sparkles className="size-5" />
+              </div>
+              <div>
+                <p className="font-semibold">Conecte uma IA para abrir o construtor</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  O canvas só fica disponível depois que esse colaborador tiver um provedor de IA conectado.
+                </p>
+              </div>
+              <Button size="sm" onClick={() => setProviderOpen(true)}>Configurar IA</Button>
+            </div>
+          </div>
         ) : (
           <EquipeCanvas ref={canvasRef} initial={canvas} />
         )}
       </div>
+
+      <MandatoryProviderDialog
+        open={providerOpen}
+        onOpenChange={setProviderOpen}
+        onConfigured={() => { /* canvas unlocks via hasIA */ }}
+        onSkip={() => { navigate("/equipe-ia/colaboradores"); }}
+      />
 
       {id && worker && (
         <EquipeTestChatDialog
