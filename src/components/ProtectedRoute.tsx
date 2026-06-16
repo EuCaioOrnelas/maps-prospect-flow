@@ -140,20 +140,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Aguarda a checagem do onboarding antes de decidir o roteamento
-  if (needsOnboarding === null) {
-    return (
-      <DashboardThemeProvider>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 size={40} className="text-primary animate-spin" />
-            <p className="text-muted-foreground">Carregando...</p>
-          </div>
-        </div>
-      </DashboardThemeProvider>
-    );
-  }
-
   // Primeiro login: redireciona para o onboarding inicial (não-admins)
   if (needsOnboarding && !requireAdmin && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
