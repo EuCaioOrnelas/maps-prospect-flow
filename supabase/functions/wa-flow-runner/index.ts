@@ -1572,15 +1572,6 @@ ${contextVars || "(nenhuma informação prévia)"}
           const routeMatch = fullText.match(/\[ROUTE:\s*([^\]]+)\]/i);
           if (routeMatch) chosenRoute = routeMatch[1].trim().toUpperCase();
 
-          // Coletar dados marcados pela IA
-          const collectRegex = /\[COLETAR:\s*([a-zA-Z0-9_]+)\s*=\s*([^\]]+)\]/gi;
-          let collectMatch: RegExpExecArray | null;
-          while ((collectMatch = collectRegex.exec(fullText)) !== null) {
-            const key = collectMatch[1].trim();
-            const val = collectMatch[2].trim();
-            if (key && val) ctx.variables[key] = val;
-          }
-
           // Avanço vs Loop
           const hasAdvance = /\[AVANCAR\]/i.test(fullText);
           const hasContinue = /\[CONTINUAR\]/i.test(fullText);
@@ -1589,13 +1580,9 @@ ${contextVars || "(nenhuma informação prévia)"}
             shouldAdvance = true;
           } else if (loopBehavior === "max_attempts") {
             shouldAdvance = hasAdvance || currentAttempt >= maxAttempts;
-          } else if (loopBehavior === "free_chat") {
-            shouldAdvance = hasAdvance;
           } else {
-            // until_collected: precisa de [AVANCAR] E todos obrigatórios coletados
-            const stillMissing = dataCollection
-              .filter(f => f.required && !ctx.variables[f.name]).length > 0;
-            shouldAdvance = hasAdvance && !stillMissing;
+            // free_chat e until_collected: avança quando a IA decidir, baseado no critério
+            shouldAdvance = hasAdvance;
           }
 
           // Limpar marcadores antes de enviar ao lead
