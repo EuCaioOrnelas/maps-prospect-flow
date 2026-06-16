@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -14,12 +14,12 @@ import { ChevronLeft, Save, Loader2, FlaskConical, Sparkles, Check, MoreVertical
 import { EquipeCanvas, type CanvasHandle, type CanvasState } from "@/components/equipe-ia/canvas/EquipeCanvas";
 import { EquipeTestChatDialog } from "@/components/equipe-ia/EquipeTestChatDialog";
 import { MandatoryProviderDialog } from "@/components/equipe-ia/MandatoryProviderDialog";
-import { WorkforceScorePanel } from "@/components/equipe-ia/canvas/WorkforceScorePanel";
+import { SaveVersionDialog } from "@/components/equipe-ia/SaveVersionDialog";
 import { WorkforceOverview } from "@/components/equipe-ia/builder/WorkforceOverview";
 import { WorkforceAnalytics } from "@/components/equipe-ia/builder/WorkforceAnalytics";
 import { WorkforceVersions } from "@/components/equipe-ia/builder/WorkforceVersions";
 import { useUserAICredentials } from "@/hooks/useUserAICredentials";
-import { useEquipe, useEquipeCanvas, useSaveCanvas, useDeleteEquipe, buildCanvasFromBlueprint } from "@/hooks/useEquipeIA";
+import { useEquipe, useEquipeCanvas, useSaveCanvas, useDeleteEquipe, useSaveCanvasVersion, buildCanvasFromBlueprint } from "@/hooks/useEquipeIA";
 import type { WorkforceBlueprint } from "@/components/equipe-ia/wizard/workforceTemplates";
 import { toast } from "sonner";
 
@@ -30,11 +30,13 @@ export default function EquipeBuilder() {
   const { data: canvas, isLoading: loadingC } = useEquipeCanvas(id);
   const credsQ = useUserAICredentials();
   const save = useSaveCanvas();
+  const saveVersion = useSaveCanvasVersion();
   const del = useDeleteEquipe();
   const canvasRef = useRef<CanvasHandle>(null);
-  const [tab, setTab] = useState<"overview" | "canvas" | "testes" | "analytics" | "versoes">("canvas");
+  const [tab, setTab] = useState<"overview" | "canvas" | "analytics" | "versoes">("canvas");
   const [testOpen, setTestOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [saveVersionOpen, setSaveVersionOpen] = useState(false);
   const [autoState, setAutoState] = useState<"idle" | "saving" | "saved">("idle");
   const [liveState, setLiveState] = useState<CanvasState | null>(null);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -76,13 +78,19 @@ export default function EquipeBuilder() {
   const displayedState = liveState ?? canvas ?? null;
   const workforceStatus = (worker?.status?.toLowerCase() === "active" ? "active" : "draft") as "active" | "draft";
 
-  async function handleSave() {
+  function openSave() {
+    if (!id || !canvasRef.current) return;
+    setSaveVersionOpen(true);
+  }
+
+  async function handleSaveVersion(name: string, notes: string) {
     if (!id || !canvasRef.current) return;
     try {
-      await save.mutateAsync({ equipeId: id, state: canvasRef.current.getState() });
-      toast.success("Construtor salvo.");
+      await saveVersion.mutateAsync({ equipeId: id, state: canvasRef.current.getState(), name, notes });
+      toast.success(`Versão "${name}" salva.`);
+      setSaveVersionOpen(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao salvar");
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar versão");
     }
   }
 
@@ -116,12 +124,10 @@ export default function EquipeBuilder() {
           </div>
         </div>
 
-        {/* Tabs centered */}
         <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="hidden md:block">
           <TabsList className="h-8">
             <TabsTrigger value="overview" className="text-xs px-3">Overview</TabsTrigger>
             <TabsTrigger value="canvas" className="text-xs px-3">Canvas</TabsTrigger>
-            <TabsTrigger value="testes" className="text-xs px-3">Testes</TabsTrigger>
             <TabsTrigger value="analytics" className="text-xs px-3">Analytics</TabsTrigger>
             <TabsTrigger value="versoes" className="text-xs px-3">Versões</TabsTrigger>
           </TabsList>
@@ -141,9 +147,9 @@ export default function EquipeBuilder() {
             <FlaskConical className="size-3.5 mr-1.5" /> Testar
           </Button>
           {tab === "canvas" && (
-            <Button size="sm" onClick={handleSave} disabled={save.isPending || loading || !hasIA}>
-              {save.isPending ? (<Loader2 className="size-3.5 mr-1.5 animate-spin" />) : (<Save className="size-3.5 mr-1.5" />)}
-              Salvar
+            <Button size="sm" onClick={openSave} disabled={save.isPending || loading || !hasIA}>
+              {saveVersion.isPending ? (<Loader2 className="size-3.5 mr-1.5 animate-spin" />) : (<Save className="size-3.5 mr-1.5" />)}
+              Salvar versão
             </Button>
           )}
           <DropdownMenu>
@@ -194,40 +200,16 @@ export default function EquipeBuilder() {
               <WorkforceOverview worker={worker} nodes={displayedState?.nodes ?? canvas.nodes} />
             )}
             {tab === "canvas" && (
-              <>
-                <EquipeCanvas
-                  ref={canvasRef}
-                  initial={canvas}
-                  workforceStatus={workforceStatus}
-                  onAutoSave={autoSave}
-                  onStateChange={setLiveState}
-                />
-                {displayedState && (
-                  <WorkforceScorePanel
-                    nodes={displayedState.nodes}
-                    onAddKind={(k) => canvasRef.current?.addNodeByKind(k)}
-                  />
-                )}
-              </>
-            )}
-            {tab === "testes" && (
-              <div className="h-full flex flex-col items-center justify-center gap-4 p-8 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center text-primary">
-                  <FlaskConical className="size-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">Ambiente de Teste</h3>
-                  <p className="text-sm text-muted-foreground max-w-sm mt-1">
-                    Converse com o seu colaborador digital para validar respostas, regras e objetivos antes de publicar.
-                  </p>
-                </div>
-                <Button onClick={() => setTestOpen(true)}>
-                  <FlaskConical className="size-4 mr-2" /> Abrir chat de teste
-                </Button>
-              </div>
+              <EquipeCanvas
+                ref={canvasRef}
+                initial={canvas}
+                workforceStatus={workforceStatus}
+                onAutoSave={autoSave}
+                onStateChange={setLiveState}
+              />
             )}
             {tab === "analytics" && id && <WorkforceAnalytics equipeId={id} />}
-            {tab === "versoes" && <WorkforceVersions />}
+            {tab === "versoes" && id && <WorkforceVersions workforceId={id} />}
           </>
         )}
       </div>
@@ -247,6 +229,13 @@ export default function EquipeBuilder() {
           equipeName={worker.name}
         />
       )}
+
+      <SaveVersionDialog
+        open={saveVersionOpen}
+        onOpenChange={setSaveVersionOpen}
+        loading={saveVersion.isPending}
+        onConfirm={handleSaveVersion}
+      />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
