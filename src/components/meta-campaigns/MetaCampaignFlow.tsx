@@ -457,7 +457,19 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
           ) : (
             <>
               <div className="grid gap-2">
-                {paginatedTemplates.map((t) => (
+                {paginatedTemplates.map((t) => {
+                  const isApproved = t.status === "APPROVED";
+                  const statusLabel =
+                    t.status === "APPROVED" ? "Aprovado"
+                    : t.status === "PENDING" ? "Em análise"
+                    : t.status === "REJECTED" ? "Rejeitado"
+                    : t.status === "PAUSED" ? "Pausado"
+                    : t.status;
+                  const statusClass =
+                    t.status === "APPROVED" ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                    : t.status === "PENDING" ? "bg-amber-500/15 text-amber-600 border-amber-500/30"
+                    : "bg-red-500/15 text-red-600 border-red-500/30";
+                  return (
                   <button
                     key={t.id}
                     onClick={() => handleSelectTemplate(t)}
@@ -465,11 +477,14 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                       selectedTemplate?.id === t.id
                         ? "border-primary bg-primary/5 ring-1 ring-primary"
                         : "border-border hover:border-primary/30 hover:bg-muted/30"
-                    }`}
+                    } ${!isApproved ? "opacity-60 cursor-not-allowed" : ""}`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm">{t.name}</span>
                       <div className="flex items-center gap-3">
+                        <Badge variant="outline" className={`text-[10px] px-2 py-0.5 border ${statusClass}`}>
+                          {statusLabel}
+                        </Badge>
                         <Badge variant="secondary" className="text-xs px-2 py-0.5">
                           {CATEGORY_LABELS[t.category] || t.category}
                         </Badge>
