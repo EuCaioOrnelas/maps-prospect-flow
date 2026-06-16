@@ -91,7 +91,7 @@ function uid() {
   return `n_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initial, workforceStatus = "draft", onAutoSave, onStateChange }, ref) {
+const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initial, onAutoSave, onStateChange }, ref) {
   const [nodes, setNodes, onNodesChangeRaw] = useNodesState<Node>(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges);
   const [selectedId, setSelectedId] = useState<string | null>(null);
