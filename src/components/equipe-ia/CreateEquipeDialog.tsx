@@ -48,7 +48,7 @@ export function CreateEquipeDialog({ open, onOpenChange }: Props) {
                 key={o.mode}
                 onClick={() => {
                   onOpenChange(false);
-                  navigate(`/equipe-ia/novo?mode=${o.mode}`);
+                  setTimeout(() => navigate(`/equipe-ia/novo?mode=${o.mode}`), 180);
                 }}
                 className={cn(
                   "group relative flex flex-col items-center text-center gap-3 p-5 rounded-2xl border bg-card",
