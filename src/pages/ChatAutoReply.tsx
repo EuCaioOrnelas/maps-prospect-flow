@@ -82,12 +82,10 @@ export default function ChatAutoReply() {
       .then(({ data }) => setProfile(data));
     supabase.from("user_waba_connections")
       .select("id, nickname, display_phone_number")
-      .or(`owner_user_id.eq.${ownerId},user_id.eq.${ownerId}`)
-      .neq("status", "disconnected")
-      .order("created_at", { ascending: false })
+      .eq("owner_user_id", ownerId)
       .then(({ data }) => {
         if (cancelled) return;
-        const list = data ?? [];
+        const list = (data ?? []) as Connection[];
         setConnections(list);
         setSelectedId((current) => list.some((conn) => conn.id === current) ? current : list[0]?.id ?? "");
         setConnectionsLoaded(true);
