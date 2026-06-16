@@ -64,10 +64,10 @@ export default function EquipeBuilder() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleTest} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={handleTest} disabled={loading || !hasIA}>
             <FlaskConical className="size-3.5 mr-1.5" /> Testar
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={save.isPending || loading}>
+          <Button size="sm" onClick={handleSave} disabled={save.isPending || loading || !hasIA}>
             {save.isPending ? (
               <Loader2 className="size-3.5 mr-1.5 animate-spin" />
             ) : (
