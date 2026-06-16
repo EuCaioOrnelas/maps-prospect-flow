@@ -57,12 +57,17 @@ export function AIProvidersConnector({
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setActive(p.id)}
+                    onClick={() => {
+                      setActive(p.id);
+                      // Click already activates the IA — no separate switch needed.
+                      if (!enabled[p.id]) setEnabled({ ...enabled, [p.id]: true });
+                    }}
                     className={cn(
                       "relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
                       isActive
                         ? "bg-card text-foreground shadow-sm ring-1 ring-border"
                         : "text-muted-foreground hover:text-foreground",
+                      enabled[p.id] && !isActive && "text-foreground",
                     )}
                   >
                     <img src={p.logo} alt="" className="size-4 object-contain" />
