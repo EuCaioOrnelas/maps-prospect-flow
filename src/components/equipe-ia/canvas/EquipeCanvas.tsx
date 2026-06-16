@@ -197,7 +197,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                     {cat.kinds.map((kind) => {
                       const meta = EQUIPE_NODE_META[kind];
                       const Icon = meta.icon;
-                      const tint = KIND_TINT[kind] ?? { bg: "bg-muted/60", border: "border-border/40", text: "text-foreground" };
+                      const iconBg = KIND_ICON_BG[kind] ?? "bg-muted";
                       return (
                         <div
                           key={kind}
@@ -207,15 +207,11 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                             e.dataTransfer.effectAllowed = "move";
                           }}
                           onClick={() => addNode(kind)}
-                          className={cn(
-                            "w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 text-left group shadow-sm cursor-grab active:cursor-grabbing active:shadow-md active:scale-[1.02]",
-                            tint.bg, tint.border,
-                            "hover:brightness-[1.03] hover:saturate-[1.15]",
-                          )}
+                          className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-border bg-card transition-all duration-200 text-left shadow-sm cursor-grab active:cursor-grabbing hover:border-foreground/30 hover:shadow-md"
                         >
                           <div className={cn(
-                            "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border bg-card/80",
-                            tint.border, tint.text,
+                            "w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-white",
+                            iconBg,
                           )}>
                             <Icon size={16} />
                           </div>
