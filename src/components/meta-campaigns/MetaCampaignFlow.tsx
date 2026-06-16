@@ -145,7 +145,14 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
         }
         throw new Error(data.error);
       }
-      setTemplates((data?.templates || []).filter((t: MetaTemplate) => t.status === "APPROVED"));
+      // Mostra todos os templates (APPROVED, PENDING, REJECTED, PAUSED) para que o user veja o que criou.
+      // A seleção fica bloqueada para não-APPROVED (Meta só permite envio com aprovados).
+      const all = (data?.templates || []) as MetaTemplate[];
+      const sorted = [...all].sort((a, b) => {
+        const rank = (s: string) => (s === "APPROVED" ? 0 : s === "PENDING" ? 1 : 2);
+        return rank(a.status) - rank(b.status);
+      });
+      setTemplates(sorted);
     } catch (err: any) {
       console.error("Error fetching templates:", err);
       const errMsg = err?.message || String(err);
@@ -202,6 +209,17 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
   };
 
   const handleSelectTemplate = (template: MetaTemplate) => {
+    if (template.status !== "APPROVED") {
+      toast({
+        title: "Template indisponível",
+        description:
+          template.status === "PENDING"
+            ? "Este template está em análise pela Meta. Você poderá usá-lo assim que for aprovado."
+            : `Template com status ${template.status}. Só é possível disparar templates aprovados pela Meta.`,
+        variant: "destructive",
+      });
+      return;
+    }
     setSelectedTemplate(template);
     const vars = extractVariables(template);
     const initVars: Record<string, string> = {};
@@ -426,7 +444,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
           ) : templates.length === 0 ? (
             <div className="text-center py-12">
               <MessageSquare size={40} className="text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">Nenhum template aprovado encontrado</p>
+              <p className="text-muted-foreground">Nenhum template encontrado para este número</p>
               <a
                 href="https://business.facebook.com/latest/whatsapp_manager/message_templates"
                 target="_blank"
@@ -439,7 +457,19 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
           ) : (
             <>
               <div className="grid gap-2">
-                {paginatedTemplates.map((t) => (
+                {paginatedTemplates.map((t) => {
+                  const isApproved = t.status === "APPROVED";
+                  const statusLabel =
+                    t.status === "APPROVED" ? "Aprovado"
+                    : t.status === "PENDING" ? "Em análise"
+                    : t.status === "REJECTED" ? "Rejeitado"
+                    : t.status === "PAUSED" ? "Pausado"
+                    : t.status;
+                  const statusClass =
+                    t.status === "APPROVED" ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                    : t.status === "PENDING" ? "bg-amber-500/15 text-amber-600 border-amber-500/30"
+                    : "bg-red-500/15 text-red-600 border-red-500/30";
+                  return (
                   <button
                     key={t.id}
                     onClick={() => handleSelectTemplate(t)}
@@ -447,11 +477,14 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                       selectedTemplate?.id === t.id
                         ? "border-primary bg-primary/5 ring-1 ring-primary"
                         : "border-border hover:border-primary/30 hover:bg-muted/30"
-                    }`}
+                    } ${!isApproved ? "opacity-60 cursor-not-allowed" : ""}`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm">{t.name}</span>
                       <div className="flex items-center gap-3">
+                        <Badge variant="outline" className={`text-[10px] px-2 py-0.5 border ${statusClass}`}>
+                          {statusLabel}
+                        </Badge>
                         <Badge variant="secondary" className="text-xs px-2 py-0.5">
                           {CATEGORY_LABELS[t.category] || t.category}
                         </Badge>
@@ -467,7 +500,8 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                       ) : null
                     )}
                   </button>
-                ))}
+                  );
+                })}
               </div>
 
               {totalPages > 1 && (
