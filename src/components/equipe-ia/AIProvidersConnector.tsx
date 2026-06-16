@@ -113,7 +113,7 @@ export function AIProvidersConnector({
                 <div className="flex items-start gap-2 text-[11px] rounded-lg px-3 py-2 bg-amber-500/5 text-amber-700 ring-1 ring-amber-500/20">
                   <Info className="size-3.5 mt-0.5 shrink-0" />
                   <span>
-                    A <strong>{cur.name}</strong> cobra direto de você — o plano e o pagamento da API são feitos na conta do provedor.
+                    A <strong>{cur.name}</strong> cobra direto de você. O plano e o pagamento da API são feitos na conta do provedor.
                     Mantenha-o ativo para que seu colaborador continue funcionando na Wiize.
                   </span>
                 </div>
