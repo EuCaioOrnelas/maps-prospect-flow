@@ -2301,12 +2301,16 @@ function AIAgentConfig({ config, updateConfig, renderInfoBanner, renderApiIndica
         )}
       </div>
 
+      {/* LÓGICA E OBJETIVO - per-block */}
+      <AgentLogicSection config={config} updateConfig={updateConfig} />
+
       {/* Per-block context */}
       <div className="space-y-2">
         <Label className="text-xs font-medium">Contexto extra deste bloco (opcional)</Label>
         <Textarea value={config.ai_context || ""} onChange={(e) => updateConfig("ai_context", e.target.value)} placeholder="Informações específicas para este ponto do fluxo..." className="text-sm min-h-[60px]" />
         <p className="text-[10px] text-muted-foreground">Contexto adicional enviado junto com o prompt do agente apenas neste bloco.</p>
       </div>
+
 
       {/* Memory toggle */}
       <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
