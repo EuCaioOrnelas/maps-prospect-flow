@@ -48,12 +48,14 @@ const DEFAULT_CFG: Config = {
 
 export default function ChatAutoReply() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, accountOwnerId, profile: authProfile } = useAuth();
+  const ownerId = accountOwnerId || user?.id || null;
   const [profile, setProfile] = useState<any>(null);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [cfg, setCfg] = useState<Config>(DEFAULT_CFG);
   const [hasActiveFlows, setHasActiveFlows] = useState(false);
+  const [connectionsLoaded, setConnectionsLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const messageRef = useRef<HTMLTextAreaElement>(null);
 
@@ -73,19 +75,25 @@ export default function ChatAutoReply() {
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !ownerId || !authProfile) return;
+    let cancelled = false;
+    setConnectionsLoaded(false);
     supabase.from("profiles").select("plan, name, email, avatar_url").eq("id", user.id).single()
       .then(({ data }) => setProfile(data));
     supabase.from("user_waba_connections")
       .select("id, nickname, display_phone_number")
-      .eq("user_id", user.id)
-      .eq("status", "connected")
+      .or(`owner_user_id.eq.${ownerId},user_id.eq.${ownerId}`)
+      .neq("status", "disconnected")
+      .order("created_at", { ascending: false })
       .then(({ data }) => {
+        if (cancelled) return;
         const list = data ?? [];
         setConnections(list);
-        if (list.length > 0) setSelectedId(list[0].id);
+        setSelectedId((current) => list.some((conn) => conn.id === current) ? current : list[0]?.id ?? "");
+        setConnectionsLoaded(true);
       });
-  }, [user]);
+    return () => { cancelled = true; };
+  }, [user, ownerId, authProfile]);
 
   useEffect(() => {
     if (!selectedId || !user) return;
@@ -107,12 +115,12 @@ export default function ChatAutoReply() {
       });
     supabase.from("wa_automation_flows")
       .select("id")
-      .eq("user_id", user.id)
+      .or(`owner_user_id.eq.${ownerId || user.id},user_id.eq.${ownerId || user.id}`)
       .eq("waba_connection_id", selectedId)
       .eq("status", "active")
       .limit(1)
       .then(({ data }) => setHasActiveFlows((data ?? []).length > 0));
-  }, [selectedId, user]);
+  }, [selectedId, user, ownerId]);
 
   const toggleWeekday = (v: number) => {
     setCfg((c) => ({
@@ -155,7 +163,7 @@ export default function ChatAutoReply() {
                 Envie uma mensagem automática quando um cliente escrever fora do horário de atendimento.
               </p>
 
-              {connections.length === 0 ? (
+              {!connectionsLoaded ? null : connections.length === 0 ? (
                 <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
                   Nenhum número conectado. Conecte um número WhatsApp primeiro.
                 </div>

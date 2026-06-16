@@ -91,9 +91,9 @@ import { ChatComingSoonGate } from "./components/chat/ChatComingSoonGate";
 const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomations"), "WhatsAppAutomations");
 const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEditor"), "WhatsAppFlowEditor");
 const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "CreateFlowAI");
-const ChatSettings = lazyWithRetry(() => import("./pages/ChatSettings"), "ChatSettings");
-const ChatQuickReplies = lazyWithRetry(() => import("./pages/ChatQuickReplies"), "ChatQuickReplies");
-const ChatAutoReply = lazyWithRetry(() => import("./pages/ChatAutoReply"), "ChatAutoReply");
+import ChatSettings from "./pages/ChatSettings";
+import ChatQuickReplies from "./pages/ChatQuickReplies";
+import ChatAutoReply from "./pages/ChatAutoReply";
 
 // Meta Platforms module
 const MetaDashboard = lazyWithRetry(() => import("./pages/meta/MetaDashboard"), "MetaDashboard");
