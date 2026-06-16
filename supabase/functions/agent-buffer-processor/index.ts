@@ -39,126 +39,6 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   }
 }
 
-// Persist agent-sent outbound message into chat_conversations/chat_messages
-// so it appears in the Chat UI. Evolution webhook will dedupe via waba_message_id.
-async function persistAgentChatMessage(
-  supabase: any,
-  params: {
-    userId: string;
-    leadPhone: string;
-    leadName?: string | null;
-    numberPhone?: string | null;
-    wabaMessageId: string | null;
-    messageType: 'text' | 'image' | 'video' | 'audio' | 'document';
-    content: string | null;
-    mediaUrl?: string | null;
-    mediaCaption?: string | null;
-    agentId: string;
-    agentName?: string | null;
-  },
-) {
-  try {
-    const phoneDigits = String(params.leadPhone || '').replace(/\D/g, '');
-    if (!phoneDigits) return;
-
-    const { data: conns } = await supabase
-      .from('user_waba_connections')
-      .select('id, display_phone_number, nickname, business_name, created_at')
-      .eq('user_id', params.userId)
-      .order('created_at', { ascending: true });
-    if (!conns || conns.length === 0) return;
-
-    const tail8 = (s: string) => String(s || '').replace(/\D/g, '').slice(-8);
-    const numberTail = tail8(params.numberPhone || '');
-    let connection: any = null;
-    if (numberTail.length === 8) {
-      connection = conns.find((c: any) =>
-        tail8(c.display_phone_number || c.nickname || c.business_name || '') === numberTail
-      ) || null;
-    }
-    if (!connection) connection = conns[0];
-    if (!connection?.id) return;
-
-    const last8 = phoneDigits.slice(-8);
-    const { data: existingConv } = await supabase
-      .from('chat_conversations')
-      .select('id')
-      .eq('user_id', params.userId)
-      .eq('waba_connection_id', connection.id)
-      .ilike('contact_phone', `%${last8}`)
-      .order('last_message_at', { ascending: false, nullsFirst: false })
-      .limit(1)
-      .maybeSingle();
-
-    const nowIso = new Date().toISOString();
-    const lastText = params.content || `[${params.messageType}]`;
-    let convId = existingConv?.id as string | undefined;
-
-    if (!convId) {
-      const { data: created } = await supabase
-        .from('chat_conversations')
-        .insert({
-          user_id: params.userId,
-          owner_user_id: params.userId,
-          waba_connection_id: connection.id,
-          contact_phone: phoneDigits,
-          contact_name: params.leadName || null,
-          last_message_text: lastText,
-          last_message_at: nowIso,
-          last_message_type: params.messageType,
-          last_message_direction: 'outbound',
-          unread_count: 0,
-        })
-        .select('id')
-        .single();
-      convId = created?.id;
-    } else {
-      await supabase
-        .from('chat_conversations')
-        .update({
-          last_message_text: lastText,
-          last_message_at: nowIso,
-          last_message_type: params.messageType,
-          last_message_direction: 'outbound',
-        })
-        .eq('id', convId);
-    }
-
-    if (!convId) return;
-
-    if (params.wabaMessageId) {
-      const { data: existingMsg } = await supabase
-        .from('chat_messages')
-        .select('id')
-        .eq('conversation_id', convId)
-        .eq('waba_message_id', params.wabaMessageId)
-        .maybeSingle();
-      if (existingMsg) return;
-    }
-
-    await supabase.from('chat_messages').insert({
-      conversation_id: convId,
-      user_id: params.userId,
-      owner_user_id: params.userId,
-      waba_message_id: params.wabaMessageId,
-      direction: 'outbound',
-      message_type: params.messageType,
-      content: params.content || null,
-      media_url: params.mediaUrl || null,
-      media_caption: params.mediaCaption || null,
-      status: 'sent',
-      status_updated_at: nowIso,
-      metadata: {
-        source: 'ai_agent',
-        agent_id: params.agentId,
-        agent_name: params.agentName || null,
-      },
-    });
-  } catch (e) {
-    console.error('[agent-buffer-processor] persistAgentChatMessage failed:', e);
-  }
-}
-
 // Get São Paulo time
 function getSaoPauloTime(): Date {
   return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
@@ -1412,32 +1292,12 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
                 if (sendResponse.ok) {
                   sentCount++;
 
-                  // Extract Evolution message id (key.id) for chat dedupe
-                  let wabaMessageId: string | null = null;
-                  try {
-                    const json = await sendResponse.clone().json();
-                    wabaMessageId = json?.key?.id || json?.messageId || null;
-                  } catch {}
-
                   // Log the message
                   await supabase.from('agent_message_logs').insert({
                     agent_id: agent.id,
                     conversation_id: conv.id,
                     direction: 'sent',
                     content: msgPart,
-                  });
-
-                  // Persist in chat UI tables (Meta-like webhook may not echo)
-                  await persistAgentChatMessage(supabase, {
-                    userId: whatsappNumber.user_id,
-                    leadPhone: conv.lead_phone,
-                    leadName: conv.lead_name,
-                    numberPhone: whatsappNumber.phone_number,
-                    wabaMessageId,
-                    messageType: 'text',
-                    content: msgPart,
-                    agentId: agent.id,
-                    agentName: agent.name,
                   });
                 } else {
                   console.error(`Failed to send message ${i + 1}:`, await sendResponse.text());
@@ -1471,30 +1331,12 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
 
                   if (mediaResponse.ok) {
                     sentCount++;
-                    let wabaMessageId: string | null = null;
-                    try {
-                      const json = await mediaResponse.clone().json();
-                      wabaMessageId = json?.key?.id || json?.messageId || null;
-                    } catch {}
                     await supabase.from('agent_message_logs').insert({
                       agent_id: agent.id,
                       conversation_id: conv.id,
                       direction: 'sent',
                       content: `[${media.type === 'image' ? 'Imagem' : 'PDF'} enviado: ${media.caption || media.url}]`,
                       message_type: media.type === 'image' ? 'image' : 'document',
-                    });
-                    await persistAgentChatMessage(supabase, {
-                      userId: whatsappNumber.user_id,
-                      leadPhone: conv.lead_phone,
-                      leadName: conv.lead_name,
-                      numberPhone: whatsappNumber.phone_number,
-                      wabaMessageId,
-                      messageType: media.type === 'image' ? 'image' : 'document',
-                      content: media.caption || null,
-                      mediaUrl: media.url,
-                      mediaCaption: media.caption || null,
-                      agentId: agent.id,
-                      agentName: agent.name,
                     });
                     console.log(`${media.type} sent successfully`);
                   } else {
