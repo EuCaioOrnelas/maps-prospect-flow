@@ -11,7 +11,7 @@ import {
   Bot, Loader2, Sparkles, ArrowLeft, Wand2, PencilRuler, LayoutTemplate,
   Phone, Headphones, Wallet, SendIcon, CheckCircle2,
 } from "lucide-react";
-import { useCreateEquipe } from "@/hooks/useEquipeIA";
+import { useCreateEquipe, useSaveCanvas } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
 import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
 import { AIProvidersConnector } from "@/components/equipe-ia/AIProvidersConnector";
@@ -20,6 +20,8 @@ import { useUserAICredentials } from "@/hooks/useUserAICredentials";
 import { AI_PROVIDERS, ProviderId } from "@/lib/aiProviders";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { EquipeNodeKind } from "@/components/equipe-ia/nodeTypes";
 
 type Mode = "blank" | "templates" | "ai";
 type TemplateStep = "pick" | "connect";
