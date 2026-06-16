@@ -3,28 +3,27 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bot, Bot as BotIcon, Plus, Target, TrendingUp, Users, Activity, ArrowRight } from "lucide-react";
+import { Bot, Plus, Users, Activity, Target, TrendingUp } from "lucide-react";
 import { useEquipeList } from "@/hooks/useEquipeIA";
 import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
 import { CreateEquipeDialog } from "@/components/equipe-ia/CreateEquipeDialog";
-import { usePrimaryProvider } from "@/hooks/useUserAICredentials";
-import { PROVIDER_BY_ID } from "@/lib/aiProviders";
+import { getProviderByModel } from "@/lib/aiProviders";
 
-function Kpi({ icon: Icon, label, value, hint }: { icon: typeof BotIcon; label: string; value: string; hint?: string }) {
+function Kpi({ icon: Icon, label, value, hint }: { icon: typeof Bot; label: string; value: string; hint?: string }) {
   return (
-    <Card className="bg-card/60 border-border/60">
-      <CardContent className="p-5">
+    <Card className="bg-card/60 border-border/60 rounded-2xl">
+      <div className="p-5 space-y-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
-            <Icon className="size-5" />
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+            <Icon size={18} />
           </div>
-          <div className="min-w-0">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">{label}</span>
-            <p className="text-2xl font-semibold tracking-tight leading-tight mt-0.5">{value}</p>
-          </div>
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
         </div>
-        {hint && <p className="text-xs text-muted-foreground mt-3">{hint}</p>}
-      </CardContent>
+        <div>
+          <p className="text-2xl font-bold leading-none text-foreground">{value}</p>
+          {hint && <p className="text-xs text-muted-foreground/60 mt-1">{hint}</p>}
+        </div>
+      </div>
     </Card>
   );
 }
@@ -40,8 +39,6 @@ export default function EquipeDashboard() {
   const { data: workers = [], isLoading } = useEquipeList();
   const showSeeAll = workers.length > 6;
   const [createOpen, setCreateOpen] = useState(false);
-  const primary = usePrimaryProvider();
-  const providerInfo = primary ? PROVIDER_BY_ID[primary] : null;
 
   return (
     <EquipePageLayout>
@@ -92,39 +89,41 @@ export default function EquipeDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {workers.slice(0, 6).map((w) => {
                   const st = statusMeta(w.status);
+                  const providerInfo = getProviderByModel(w.model);
                   return (
-                    <Card key={w.id} className="hover:border-primary/60 hover:shadow-sm transition-all">
-                      <CardContent className="p-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
-                            <Bot className="size-5" />
+                    <Link key={w.id} to={`/equipe-ia/colaboradores/${w.id}`} className="block">
+                      <Card className="hover:border-primary/60 hover:shadow-sm transition-all cursor-pointer">
+                        <CardContent className="p-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
+                              <Bot className="size-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold truncate leading-tight">{w.name}</p>
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">{w.role || "Sem função definida"}</p>
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold truncate leading-tight">{w.name}</p>
-                            <p className="text-xs text-muted-foreground truncate mt-0.5">{w.role || "Sem função definida"}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between gap-2 mt-4">
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mt-4">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {providerInfo ? (
+                                <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/60 ring-1 ring-border px-2 py-1 rounded-md">
+                                  <img src={providerInfo.logo} alt={providerInfo.name} className="size-3.5 object-contain" />
+                                  {providerInfo.shortName}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/60 ring-1 ring-border px-2 py-1 rounded-md">
+                                  IA não configurada
+                                </span>
+                              )}
+                            </div>
                             <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-md ring-1 ${st.cls}`}>
                               <span className="size-1.5 rounded-full bg-current" />
                               {st.label}
                             </span>
-                            {providerInfo && (
-                              <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/60 ring-1 ring-border px-2 py-1 rounded-md">
-                                <img src={providerInfo.logo} alt={providerInfo.name} className="size-3.5 object-contain" />
-                                {providerInfo.shortName}
-                              </span>
-                            )}
                           </div>
-                          <Button asChild size="sm" variant="ghost" className="h-7 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10">
-                            <Link to={`/equipe-ia/colaboradores/${w.id}`}>
-                              Abrir <ArrowRight className="size-3 ml-1" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   );
                 })}
               </div>
