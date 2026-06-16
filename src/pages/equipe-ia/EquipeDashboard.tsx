@@ -27,14 +27,16 @@ export default function EquipeDashboard() {
   return (
     <EquipePageLayout>
       <div className="space-y-8">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-medium text-primary uppercase tracking-wider">
-            <Sparkles className="size-3.5" /> Novo
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
+            <Bot className="size-6" />
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight mt-1">Equipe IA</h1>
-          <p className="text-muted-foreground mt-1">
-            Colaboradores digitais orientados a objetivos, integrados ao CRM e aos fluxos.
-          </p>
+          <div className="min-w-0">
+            <h1 className="text-3xl font-semibold tracking-tight">Equipe IA</h1>
+            <p className="text-muted-foreground mt-1">
+              Colaboradores digitais orientados a objetivos, integrados ao CRM e aos fluxos.
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
