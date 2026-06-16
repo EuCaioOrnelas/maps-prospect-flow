@@ -15,31 +15,57 @@ interface EquipeNodeData {
 const HEX_CLIP = "polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%)";
 
 /**
- * Meta-inspired infinity hex mark — two interlocked loops inside a hexagonal frame.
- * Pure SVG so it stays crisp at any size.
+ * Meta-AI inspired tech mark — multi-layered ribbon composed of overlapping
+ * orbital arcs, a central nucleus and accent dots. Each layer uses a different
+ * opacity to feel like a built-up vector logo.
  */
 function CoreMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 64 64" className={className} fill="none">
+    <svg viewBox="0 0 80 80" className={className} fill="none">
       <defs>
-        <linearGradient id="coreMarkGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+        <linearGradient id="ribbonA" x1="0" y1="20" x2="80" y2="60" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="currentColor" stopOpacity="1" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0.75" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0.55" />
+        </linearGradient>
+        <linearGradient id="ribbonB" x1="80" y1="20" x2="0" y2="60" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0.4" />
         </linearGradient>
       </defs>
-      {/* hex frame */}
+
+      {/* Outer orbit ring */}
+      <ellipse cx="40" cy="40" rx="32" ry="20" stroke="currentColor" strokeWidth="1.5" opacity="0.25" />
+      {/* Counter orbit ring (rotated) */}
+      <ellipse cx="40" cy="40" rx="32" ry="20" stroke="currentColor" strokeWidth="1.5" opacity="0.25" transform="rotate(60 40 40)" />
+      <ellipse cx="40" cy="40" rx="32" ry="20" stroke="currentColor" strokeWidth="1.5" opacity="0.25" transform="rotate(-60 40 40)" />
+
+      {/* Left ribbon loop */}
       <path
-        d="M32 5 L55 18 L55 46 L32 59 L9 46 L9 18 Z"
-        stroke="currentColor"
-        strokeWidth="2.25"
-        strokeLinejoin="round"
-        opacity="0.55"
+        d="M14 40 C14 26 28 22 36 32 C42 40 46 48 54 48 C62 48 66 42 66 36"
+        stroke="url(#ribbonA)"
+        strokeWidth="6"
+        strokeLinecap="round"
+        fill="none"
       />
-      {/* meta-style infinity loop */}
+      {/* Right ribbon loop (mirrored) */}
       <path
-        d="M19 32 C19 24, 26 20, 32 26 C36 30, 38 34, 42 36 C47 39, 50 35, 50 31 C50 26, 46 23, 42 26 C38 28, 36 32, 32 36 C26 41, 19 38, 19 32 Z"
-        fill="url(#coreMarkGrad)"
+        d="M66 40 C66 54 52 58 44 48 C38 40 34 32 26 32 C18 32 14 38 14 44"
+        stroke="url(#ribbonB)"
+        strokeWidth="6"
+        strokeLinecap="round"
+        fill="none"
+        opacity="0.85"
       />
+
+      {/* Center nucleus */}
+      <circle cx="40" cy="40" r="4" fill="currentColor" />
+      <circle cx="40" cy="40" r="7" stroke="currentColor" strokeWidth="1.25" opacity="0.5" />
+
+      {/* Accent satellites */}
+      <circle cx="14" cy="40" r="2.2" fill="currentColor" />
+      <circle cx="66" cy="40" r="2.2" fill="currentColor" />
+      <circle cx="40" cy="14" r="1.5" fill="currentColor" opacity="0.7" />
+      <circle cx="40" cy="66" r="1.5" fill="currentColor" opacity="0.7" />
     </svg>
   );
 }
