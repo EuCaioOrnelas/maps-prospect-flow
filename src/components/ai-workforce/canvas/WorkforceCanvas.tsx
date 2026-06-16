@@ -85,7 +85,7 @@ function CanvasInner({ initial, onSave, saving }: Props) {
   );
 
   return (
-    <div className="flex h-[calc(100vh-180px)] rounded-2xl border bg-card overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
       <NodePalette onAdd={addNode} />
       <div className="flex-1 relative">
         <div className="absolute top-4 right-4 z-10 flex gap-2">

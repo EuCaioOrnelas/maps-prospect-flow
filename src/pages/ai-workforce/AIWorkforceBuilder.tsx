@@ -5,7 +5,6 @@ import { ChevronLeft } from "lucide-react";
 import { WorkforceCanvas } from "@/components/ai-workforce/canvas/WorkforceCanvas";
 import { useWorkforce, useWorkforceCanvas, useSaveCanvas } from "@/hooks/useAIWorkforce";
 import { toast } from "sonner";
-import { WorkforcePageLayout } from "@/components/ai-workforce/WorkforcePageLayout";
 
 export default function AIWorkforceBuilder() {
   const { id } = useParams<{ id: string }>();
@@ -16,36 +15,39 @@ export default function AIWorkforceBuilder() {
   const loading = loadingW || loadingC;
 
   return (
-    <WorkforcePageLayout wide>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
+    <div className="fixed inset-0 flex flex-col bg-background z-30">
+      <header className="h-12 flex items-center justify-between px-4 border-b bg-card/80 backdrop-blur-sm shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/ai-workforce/colaboradores"><ChevronLeft className="size-4 mr-1" /> Voltar</Link>
           </Button>
-          <div>
-            <h1 className="text-xl font-semibold">{worker?.name ?? "Construtor"}</h1>
-            <p className="text-xs text-muted-foreground">{worker?.role ?? "AI Workforce"}</p>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold truncate leading-tight">{worker?.name ?? "Construtor"}</p>
+            <p className="text-[11px] text-muted-foreground truncate leading-tight">{worker?.role ?? "Equipe IA"}</p>
           </div>
         </div>
+      </header>
+      <div className="flex-1 min-h-0">
+        {loading || !canvas ? (
+          <div className="p-4 h-full">
+            <Skeleton className="h-full w-full rounded-2xl" />
+          </div>
+        ) : (
+          <WorkforceCanvas
+            initial={canvas}
+            saving={save.isPending}
+            onSave={async (state) => {
+              if (!id) return;
+              try {
+                await save.mutateAsync({ workforceId: id, state });
+                toast.success("Construtor salvo.");
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Erro ao salvar");
+              }
+            }}
+          />
+        )}
       </div>
-
-      {loading || !canvas ? (
-        <Skeleton className="h-[calc(100vh-200px)] rounded-2xl" />
-      ) : (
-        <WorkforceCanvas
-          initial={canvas}
-          saving={save.isPending}
-          onSave={async (state) => {
-            if (!id) return;
-            try {
-              await save.mutateAsync({ workforceId: id, state });
-              toast.success("Construtor salvo.");
-            } catch (e) {
-              toast.error(e instanceof Error ? e.message : "Erro ao salvar");
-            }
-          }}
-        />
-      )}
-    </WorkforcePageLayout>
+    </div>
   );
 }

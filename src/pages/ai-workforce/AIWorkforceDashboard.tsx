@@ -27,26 +27,14 @@ export default function AIWorkforceDashboard() {
   return (
     <WorkforcePageLayout>
       <div className="space-y-8">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-primary uppercase tracking-wider">
-              <Sparkles className="size-3.5" /> Novo
-            </div>
-            <h1 className="text-3xl font-semibold tracking-tight mt-1">AI Workforce</h1>
-            <p className="text-muted-foreground mt-1">
-              Colaboradores digitais orientados a objetivos, integrados ao CRM e aos fluxos.
-            </p>
+        <div>
+          <div className="flex items-center gap-2 text-xs font-medium text-primary uppercase tracking-wider">
+            <Sparkles className="size-3.5" /> Novo
           </div>
-          <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link to="/ai-workforce/legacy">Versão Clássica</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/ai-workforce/novo">
-                <Plus className="size-4 mr-2" /> Novo Colaborador
-              </Link>
-            </Button>
-          </div>
+          <h1 className="text-3xl font-semibold tracking-tight mt-1">Equipe IA</h1>
+          <p className="text-muted-foreground mt-1">
+            Colaboradores digitais orientados a objetivos, integrados ao CRM e aos fluxos.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
