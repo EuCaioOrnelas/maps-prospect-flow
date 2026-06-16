@@ -26,6 +26,7 @@ import {
   XCircle,
   ChevronDown,
   HelpCircle,
+  BookOpen,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -419,36 +420,12 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
             </div>
           </div>
 
-          {/* Passo a passo WABA */}
-          <div className="mb-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
-            <div className="flex items-start gap-3">
-              <HelpCircle size={18} className="text-primary mt-0.5 shrink-0" />
-              <div className="text-sm space-y-2">
-                <p className="font-semibold text-foreground">Como funcionam os templates da Meta</p>
-                <ol className="text-muted-foreground space-y-1.5 list-decimal list-inside">
-                  <li>
-                    <strong>O que é WABA?</strong> WhatsApp Business Account é a conta de negócios da Meta onde seus números e templates ficam armazenados. Cada número pertence a uma WABA específica.
-                  </li>
-                  <li>
-                    <strong>Templates são vinculados à WABA</strong> — não ao número diretamente. Se você criou templates em outra conta (ex: "Test WhatsApp Business Account"), eles não aparecerão aqui.
-                  </li>
-                  <li>
-                    <strong>Como criar e vincular:</strong> Clique em <em>Criar template</em> acima ou acesse o gerenciador da Meta. Certifique-se de criar o template na mesma WABA do número selecionado: <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">{selectedConnection?.waba_id}</code>
-                  </li>
-                  <li>
-                    <strong>Aprovação obrigatória:</strong> Após criar, a Meta analisa o template (geralmente em minutos, mas pode levar até 24h). Somente templates com status <strong>APPROVED</strong> aparecem aqui para disparo.
-                  </li>
-                </ol>
-                <a
-                  href="https://business.facebook.com/latest/whatsapp_manager/message_templates"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
-                >
-                  <ExternalLink size={12} /> Abrir gerenciador de templates da Meta
-                </a>
-              </div>
-            </div>
+          {/* Aviso resumido WABA */}
+          <div className="mb-4 p-3 rounded-lg border border-primary/20 bg-primary/5 flex items-start gap-2 text-xs text-muted-foreground">
+            <HelpCircle size={14} className="text-primary mt-0.5 shrink-0" />
+            <p>
+              Templates ficam vinculados à <strong className="text-foreground">WABA</strong> (WhatsApp Business Account) do número selecionado. Crie o template na WABA <code className="font-mono bg-muted px-1 py-0.5 rounded">{selectedConnection?.waba_id}</code> e aguarde o status <strong className="text-foreground">APPROVED</strong> para usá-lo aqui.
+            </p>
           </div>
 
           {templates.length > 0 && (
@@ -471,19 +448,9 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
             <div className="text-center py-12 px-4 max-w-md mx-auto">
               <MessageSquare size={40} className="text-muted-foreground mx-auto mb-3" />
               <p className="font-medium">Nenhum template aprovado nesta conta</p>
-              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                Os templates da Meta são vinculados à <strong>WhatsApp Business Account (WABA)</strong> do número selecionado — não ao número em si.
-                Se você criou templates em outra conta (ex: <em>Test WhatsApp Business Account</em>), eles não aparecerão aqui.
-                Crie/mova o template para a WABA conectada e aguarde a aprovação da Meta.
+              <p className="text-xs text-muted-foreground mt-2">
+                Crie um template na WABA conectada e aguarde a aprovação da Meta. Veja o passo a passo abaixo.
               </p>
-              <a
-                href="https://business.facebook.com/latest/whatsapp_manager/message_templates"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline mt-3 inline-flex items-center gap-1"
-              >
-                <ExternalLink size={12} /> Abrir gerenciador de templates da Meta
-              </a>
             </div>
           ) : (
             <>
@@ -590,6 +557,133 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
               >
                 Próximo <ArrowRight size={16} />
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tutorial: Como cadastrar template na Meta */}
+      {step === "template" && (
+        <div className="glass rounded-2xl p-6 animate-in fade-in mt-4">
+          <div className="flex items-center gap-2 mb-1">
+            <BookOpen size={20} className="text-primary" />
+            <h2 className="text-xl font-bold">Como cadastrar um template de mensagem na Meta</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-5">
+            Guia completo, passo a passo, com links diretos para cada tela do gerenciador da Meta.
+          </p>
+
+          <div className="space-y-5 text-sm">
+            {/* Passo 1 */}
+            <div className="p-4 rounded-lg border border-border bg-muted/20">
+              <p className="font-semibold mb-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">1</span>
+                Acesse o WhatsApp Manager da Meta
+              </p>
+              <p className="text-muted-foreground mb-2">
+                Faça login com o Facebook que administra sua WhatsApp Business Account (WABA) <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">{selectedConnection?.waba_id || "—"}</code>.
+              </p>
+              <a href="https://business.facebook.com/wa/manage/home/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                <ExternalLink size={12} /> Abrir WhatsApp Manager
+              </a>
+            </div>
+
+            {/* Passo 2 */}
+            <div className="p-4 rounded-lg border border-border bg-muted/20">
+              <p className="font-semibold mb-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">2</span>
+                Selecione a WABA correta
+              </p>
+              <p className="text-muted-foreground">
+                No menu superior, troque a conta para a WABA do número que você conectou na Wiize. Templates criados em outra WABA (ex.: <em>Test WhatsApp Business Account</em>) <strong className="text-foreground">não aparecerão</strong> nesta tela de campanha.
+              </p>
+            </div>
+
+            {/* Passo 3 */}
+            <div className="p-4 rounded-lg border border-border bg-muted/20">
+              <p className="font-semibold mb-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">3</span>
+                Vá em "Modelos de mensagem"
+              </p>
+              <p className="text-muted-foreground mb-2">
+                No menu lateral esquerdo, clique em <strong>Modelos de mensagem</strong> e depois no botão azul <strong>Criar modelo</strong>.
+              </p>
+              <a href="https://business.facebook.com/latest/whatsapp_manager/message_templates" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                <ExternalLink size={12} /> Abrir tela de Modelos de mensagem
+              </a>
+            </div>
+
+            {/* Passo 4 */}
+            <div className="p-4 rounded-lg border border-border bg-muted/20">
+              <p className="font-semibold mb-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">4</span>
+                Escolha a categoria do template
+              </p>
+              <ul className="text-muted-foreground space-y-1 list-disc list-inside">
+                <li><strong className="text-foreground">Marketing</strong> — promoções, novidades, convites, recuperação de carrinho.</li>
+                <li><strong className="text-foreground">Utilidade</strong> — confirmações de pedido, atualizações de status, lembretes.</li>
+                <li><strong className="text-foreground">Autenticação</strong> — códigos OTP e verificação em 2 etapas.</li>
+              </ul>
+              <p className="text-xs text-muted-foreground mt-2">
+                A categoria afeta o custo por mensagem cobrado pela Meta. Escolha com atenção.
+              </p>
+            </div>
+
+            {/* Passo 5 */}
+            <div className="p-4 rounded-lg border border-border bg-muted/20">
+              <p className="font-semibold mb-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">5</span>
+                Defina nome, idioma e estrutura
+              </p>
+              <ul className="text-muted-foreground space-y-1 list-disc list-inside">
+                <li><strong className="text-foreground">Nome:</strong> apenas letras minúsculas, números e <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">_</code> (ex.: <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">boas_vindas_cliente</code>).</li>
+                <li><strong className="text-foreground">Idioma:</strong> selecione <em>Português (BR)</em> para envios no Brasil.</li>
+                <li><strong className="text-foreground">Cabeçalho (opcional):</strong> texto, imagem, vídeo ou documento.</li>
+                <li><strong className="text-foreground">Corpo:</strong> mensagem principal. Use variáveis como <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">{"{{1}}"}</code>, <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">{"{{2}}"}</code> para personalizar (ex.: nome do contato).</li>
+                <li><strong className="text-foreground">Rodapé (opcional):</strong> até 60 caracteres.</li>
+                <li><strong className="text-foreground">Botões (opcional):</strong> resposta rápida, link de site ou ligação.</li>
+              </ul>
+            </div>
+
+            {/* Passo 6 */}
+            <div className="p-4 rounded-lg border border-border bg-muted/20">
+              <p className="font-semibold mb-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">6</span>
+                Envie para aprovação
+              </p>
+              <p className="text-muted-foreground">
+                Clique em <strong>Enviar</strong>. A Meta analisa o template em poucos minutos (pode levar até 24h). Evite linguagem promocional agressiva, links suspeitos e variáveis sem contexto — os principais motivos de rejeição.
+              </p>
+            </div>
+
+            {/* Passo 7 */}
+            <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
+              <p className="font-semibold mb-2 flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">7</span>
+                Volte para a Wiize e dispare
+              </p>
+              <p className="text-muted-foreground">
+                Assim que o status virar <strong className="text-foreground">APPROVED</strong>, clique em <strong>Atualizar</strong> no card acima — o template aparecerá pronto para uso na sua campanha.
+              </p>
+            </div>
+
+            {/* Links úteis */}
+            <div className="pt-2 border-t border-border">
+              <p className="font-semibold mb-2 text-foreground">Documentação oficial da Meta</p>
+              <div className="grid sm:grid-cols-2 gap-2">
+                <a href="https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                  <ExternalLink size={12} /> Guia oficial de Message Templates
+                </a>
+                <a href="https://developers.facebook.com/docs/whatsapp/message-templates/guidelines" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                  <ExternalLink size={12} /> Diretrizes e motivos de rejeição
+                </a>
+                <a href="https://business.facebook.com/business/help/2055875911147366" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                  <ExternalLink size={12} /> Categorias de template (Meta Help)
+                </a>
+                <a href="https://business.facebook.com/wa/manage/phone-numbers/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-xs">
+                  <ExternalLink size={12} /> Gerenciar números da WABA
+                </a>
+              </div>
             </div>
           </div>
         </div>
