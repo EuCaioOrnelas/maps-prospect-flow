@@ -96,22 +96,15 @@ export function AIProvidersConnector({
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">{cur.helper}</p>
               </div>
-              {/* Compact switch */}
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isOn}
-                onClick={() => setEnabled({ ...enabled, [cur.id]: !isOn })}
-                className={cn(
-                  "relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0",
-                  isOn ? "bg-primary" : "bg-muted ring-1 ring-border",
-                )}
-              >
-                <span className={cn(
-                  "inline-block size-4 transform rounded-full bg-white shadow transition-transform",
-                  isOn ? "translate-x-[18px]" : "translate-x-0.5",
-                )} />
-              </button>
+              {isOn && (
+                <button
+                  type="button"
+                  onClick={() => setEnabled({ ...enabled, [cur.id]: false })}
+                  className="text-[11px] text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                >
+                  Desativar
+                </button>
+              )}
             </div>
 
             {isOn && (
