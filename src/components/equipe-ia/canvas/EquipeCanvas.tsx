@@ -102,9 +102,9 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
   }, [setNodes, setEdges]);
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden relative">
       <NodePalette onAdd={addNode} />
-      <div className="flex-1 relative">
+      <div className="flex-1 relative bg-[#0a0e1a]">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -117,11 +117,11 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
           fitView
           defaultEdgeOptions={{
             animated: true,
-            style: { strokeWidth: 1.5, stroke: "hsl(var(--primary) / 0.5)" },
+            style: { strokeWidth: 1.5, stroke: "hsl(var(--primary) / 0.6)" },
           }}
           proOptions={{ hideAttribution: true }}
         >
-          <Background gap={20} size={1} color="hsl(var(--border) / 0.4)" />
+          <Background gap={18} size={1.2} color="hsl(var(--primary) / 0.18)" />
           <Controls className="!bg-card !border !rounded-lg" />
           <MiniMap pannable className="!bg-card !border !rounded-lg" />
         </ReactFlow>
@@ -139,6 +139,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
     </div>
   );
 });
+
 
 export const EquipeCanvas = forwardRef<CanvasHandle, Props>(function EquipeCanvas(props, ref) {
   return (
