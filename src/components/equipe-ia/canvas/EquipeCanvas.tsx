@@ -44,19 +44,19 @@ const CATEGORIES: { label: string; kinds: EquipeNodeKind[] }[] = [
   { label: "Execução", kinds: ["tools", "actions", "escalation"] },
 ];
 
-const KIND_TINT: Record<EquipeNodeKind, { bg: string; border: string; text: string }> = {
-  core:            { bg: "bg-primary/15",   border: "border-primary/30",   text: "text-primary" },
-  goal:            { bg: "bg-emerald-500/12", border: "border-emerald-500/30", text: "text-emerald-600 dark:text-emerald-400" },
-  rules:           { bg: "bg-rose-500/12",    border: "border-rose-500/30",    text: "text-rose-600 dark:text-rose-400" },
-  decision:        { bg: "bg-fuchsia-500/12", border: "border-fuchsia-500/30", text: "text-fuchsia-600 dark:text-fuchsia-400" },
-  memory:          { bg: "bg-violet-500/12",  border: "border-violet-500/30",  text: "text-violet-600 dark:text-violet-400" },
-  knowledge:       { bg: "bg-amber-500/12",   border: "border-amber-500/30",   text: "text-amber-600 dark:text-amber-400" },
-  crm_data:        { bg: "bg-sky-500/12",     border: "border-sky-500/30",     text: "text-sky-600 dark:text-sky-400" },
-  data_collection: { bg: "bg-cyan-500/12",    border: "border-cyan-500/30",    text: "text-cyan-600 dark:text-cyan-400" },
-  analysis:        { bg: "bg-teal-500/12",    border: "border-teal-500/30",    text: "text-teal-600 dark:text-teal-400" },
-  tools:           { bg: "bg-indigo-500/12",  border: "border-indigo-500/30",  text: "text-indigo-600 dark:text-indigo-400" },
-  actions:         { bg: "bg-orange-500/12",  border: "border-orange-500/30",  text: "text-orange-600 dark:text-orange-400" },
-  escalation:      { bg: "bg-yellow-500/12",  border: "border-yellow-500/30",  text: "text-yellow-600 dark:text-yellow-400" },
+export const KIND_ICON_BG: Record<EquipeNodeKind, string> = {
+  core:            "bg-primary",
+  goal:            "bg-emerald-500",
+  rules:           "bg-rose-500",
+  decision:        "bg-fuchsia-500",
+  memory:          "bg-violet-500",
+  knowledge:       "bg-amber-500",
+  crm_data:        "bg-sky-500",
+  data_collection: "bg-cyan-500",
+  analysis:        "bg-teal-500",
+  tools:           "bg-indigo-500",
+  actions:         "bg-orange-500",
+  escalation:      "bg-yellow-500",
 };
 
 function uid() {
@@ -197,7 +197,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                     {cat.kinds.map((kind) => {
                       const meta = EQUIPE_NODE_META[kind];
                       const Icon = meta.icon;
-                      const tint = KIND_TINT[kind] ?? { bg: "bg-muted/60", border: "border-border/40", text: "text-foreground" };
+                      const iconBg = KIND_ICON_BG[kind] ?? "bg-muted";
                       return (
                         <div
                           key={kind}
@@ -207,15 +207,11 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                             e.dataTransfer.effectAllowed = "move";
                           }}
                           onClick={() => addNode(kind)}
-                          className={cn(
-                            "w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 text-left group shadow-sm cursor-grab active:cursor-grabbing active:shadow-md active:scale-[1.02]",
-                            tint.bg, tint.border,
-                            "hover:brightness-[1.03] hover:saturate-[1.15]",
-                          )}
+                          className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-border bg-card transition-all duration-200 text-left shadow-sm cursor-grab active:cursor-grabbing hover:border-foreground/30 hover:shadow-md"
                         >
                           <div className={cn(
-                            "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border bg-card/80",
-                            tint.border, tint.text,
+                            "w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-white",
+                            iconBg,
                           )}>
                             <Icon size={16} />
                           </div>
