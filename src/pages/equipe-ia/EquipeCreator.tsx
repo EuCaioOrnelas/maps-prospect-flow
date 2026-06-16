@@ -316,72 +316,102 @@ export default function EquipeCreator() {
 
         {/* AI MODE — design inspired by Flow AI creator */}
         {mode === "ai" && (
-          <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <div className="inline-flex items-center gap-2 text-xs font-medium text-primary uppercase tracking-wider">
-                <Sparkles className="size-3.5" /> Criar com IA
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">Crie seu colaborador em segundos</h1>
-              <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-                Descreva o que esse colaborador deve fazer e a IA monta nome, função, descrição e o construtor pronto pra usar.
-              </p>
-            </div>
+          <div className="min-h-[70vh] flex items-center justify-center px-2 relative overflow-hidden">
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full filter blur-[128px] animate-pulse pointer-events-none" />
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/5 rounded-full filter blur-[128px] animate-pulse pointer-events-none" style={{ animationDelay: "700ms" }} />
 
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="relative rounded-3xl border bg-card shadow-sm p-4 sm:p-5"
-            >
-              <Textarea
-                ref={textareaRef}
-                value={prompt}
-                onChange={(e) => { setPrompt(e.target.value); adjustHeight(); }}
-                placeholder="Ex.: Quero um colaborador que atende clientes de uma clínica de estética, qualifica e agenda avaliação..."
-                className="w-full border-0 bg-transparent resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm placeholder:text-muted-foreground/70 p-0 min-h-[80px] shadow-none"
-                disabled={aiLoading}
-              />
-              <div className="flex items-center justify-between pt-3 mt-3 border-t border-border/50">
-                <p className="text-[11px] text-muted-foreground">
-                  {prompt.length} caracteres
+            <div className="w-full max-w-2xl mx-auto relative z-10 space-y-10">
+              <motion.div
+                className="text-center space-y-3"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-card text-sm text-muted-foreground">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  Descreva. Nós montamos o colaborador.
+                </div>
+
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
+                  Crie seu <span className="text-shimmer-highlight whitespace-nowrap">colaborador IA</span><br />em segundos
+                </h1>
+
+                <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                  Descreva o objetivo e a IA monta nome, função, descrição e o construtor pronto pra usar.
                 </p>
-                <Button onClick={submitAI} disabled={!prompt.trim() || aiLoading || create.isPending} size="sm" className="rounded-full px-4">
-                  {(aiLoading || create.isPending) ? (
-                    <Loader2 className="size-3.5 mr-1.5 animate-spin" />
-                  ) : (
-                    <SendIcon className="size-3.5 mr-1.5" />
+
+                <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/40 tracking-widest uppercase font-medium select-none">
+                  <span>powered by</span>
+                  <span className="text-primary/50 font-bold tracking-wider">Wiize IA</span>
+                </div>
+              </motion.div>
+
+              <motion.div
+                className="relative backdrop-blur-2xl bg-card/50 rounded-2xl border border-border/50 shadow-2xl p-3"
+                initial={{ scale: 0.98, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+              >
+                <textarea
+                  ref={textareaRef}
+                  value={prompt}
+                  onChange={(e) => { setPrompt(e.target.value); adjustHeight(); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      if (prompt.trim() && !aiLoading && !create.isPending) submitAI();
+                    }
+                  }}
+                  placeholder="Quero um colaborador para..."
+                  disabled={aiLoading}
+                  className={cn(
+                    "w-full px-4 py-3 resize-none bg-transparent border-none text-foreground text-sm",
+                    "focus:outline-none placeholder:text-muted-foreground/40 min-h-[56px]",
+                    "[direction:ltr] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full",
                   )}
-                  Enviar prompt
-                </Button>
-              </div>
-            </motion.div>
+                />
 
-            <div>
-              <p className="text-[11px] text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-                <Sparkles className="size-3" /> Sugestões rápidas
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {AI_SUGGESTIONS.map((s) => (
-                  <button
-                    key={s.preview}
-                    onClick={() => { setPrompt(s.full); requestAnimationFrame(() => adjustHeight()); }}
-                    className="text-[11px] px-3 py-1.5 rounded-full border bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
+                <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                  <span className="text-[10px] text-muted-foreground/50">{prompt.length} caracteres</span>
+                  <motion.button
+                    type="button"
+                    onClick={submitAI}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    disabled={!prompt.trim() || aiLoading || create.isPending}
+                    className={cn(
+                      "px-5 py-2.5 rounded-full text-sm font-semibold transition-all flex items-center gap-2 relative overflow-hidden",
+                      prompt.trim() ? "text-white shadow-lg" : "bg-muted text-muted-foreground",
+                    )}
+                    style={prompt.trim() ? {
+                      background: "linear-gradient(135deg, #4285F4, #34A853, #8BC34A)",
+                      boxShadow: "0 4px 16px rgba(66, 133, 244, 0.3)",
+                    } : undefined}
                   >
-                    {s.preview}
-                  </button>
-                ))}
-              </div>
-            </div>
+                    {(aiLoading || create.isPending) ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <motion.svg width="16" height="16" viewBox="0 0 24 24" fill="white"
+                        animate={{ rotate: [0, 360] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}>
+                        <path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41L12 0Z" />
+                      </motion.svg>
+                    )}
+                    <span>Criar colaborador</span>
+                  </motion.button>
+                </div>
+              </motion.div>
 
-            {aiCreatedId && !aiDialogOpen && (
-              <div className="flex items-start gap-2 text-xs rounded-lg px-3 py-2 bg-emerald-500/5 text-emerald-700 ring-1 ring-emerald-500/20">
-                <CheckCircle2 className="size-3.5 mt-0.5 shrink-0" />
-                <span>
-                  Colaborador criado. Conecte uma IA para abrir o construtor.{" "}
-                  <button className="underline" onClick={() => setAiDialogOpen(true)}>Conectar agora</button>
-                </span>
-              </div>
-            )}
+              {aiCreatedId && !aiDialogOpen && (
+                <div className="flex items-start gap-2 text-xs rounded-lg px-3 py-2 bg-emerald-500/5 text-emerald-700 ring-1 ring-emerald-500/20">
+                  <CheckCircle2 className="size-3.5 mt-0.5 shrink-0" />
+                  <span>
+                    Colaborador criado. Conecte uma IA para abrir o construtor.{" "}
+                    <button className="underline" onClick={() => setAiDialogOpen(true)}>Conectar agora</button>
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
