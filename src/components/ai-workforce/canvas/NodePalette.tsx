@@ -7,7 +7,7 @@ interface Props {
 
 export function NodePalette({ onAdd }: Props) {
   return (
-    <aside className="w-64 shrink-0 border-r bg-card/60 backdrop-blur-sm overflow-y-auto">
+    <aside className="w-64 shrink-0 border-r bg-card/60 backdrop-blur-sm overflow-y-auto scrollbar-thin">
       <div className="p-4">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
           Cards disponíveis

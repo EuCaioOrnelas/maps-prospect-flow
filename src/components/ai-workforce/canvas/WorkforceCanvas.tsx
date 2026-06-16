@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useState } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -18,8 +18,6 @@ import "@xyflow/react/dist/style.css";
 import { WorkforceNode } from "./WorkforceNode";
 import { NodePalette } from "./NodePalette";
 import { NodeConfigDrawer } from "./NodeConfigDrawer";
-import { Button } from "@/components/ui/button";
-import { Save, Loader2 } from "lucide-react";
 import { WORKFORCE_NODE_META, type WorkforceNodeKind } from "../nodeTypes";
 
 const nodeTypes = { workforce: WorkforceNode };
@@ -29,24 +27,30 @@ export interface CanvasState {
   edges: Edge[];
 }
 
+export interface CanvasHandle {
+  getState: () => CanvasState;
+}
+
 interface Props {
   initial: CanvasState;
-  onSave: (state: CanvasState) => Promise<void> | void;
-  saving?: boolean;
 }
 
 function uid() {
   return `n_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function CanvasInner({ initial, onSave, saving }: Props) {
+const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initial }, ref) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  useImperativeHandle(ref, () => ({
+    getState: () => ({ nodes, edges }),
+  }), [nodes, edges]);
+
   const onConnect = useCallback(
     (c: Connection) => setEdges((eds) => addEdge({ ...c, animated: true }, eds)),
-    [setEdges]
+    [setEdges],
   );
 
   const addNode = useCallback(
@@ -60,48 +64,40 @@ function CanvasInner({ initial, onSave, saving }: Props) {
           id,
           type: "workforce",
           position: {
-            x: 400 + Math.random() * 300,
+            x: 200 + Math.random() * 400,
             y: 100 + Math.random() * 400,
           },
           data: { kind, title: meta.label, summary: "" },
         },
       ]);
     },
-    [setNodes]
+    [setNodes],
   );
 
   const selectedNode = useMemo(
     () => nodes.find((n) => n.id === selectedId) ?? null,
-    [nodes, selectedId]
+    [nodes, selectedId],
   );
 
   const patchNode = useCallback(
     (id: string, patch: Record<string, unknown>) => {
       setNodes((nds) =>
-        nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n))
+        nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)),
       );
     },
-    [setNodes]
+    [setNodes],
   );
+
+  const deleteNode = useCallback((id: string) => {
+    setNodes((nds) => nds.filter((n) => n.id !== id));
+    setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
+    setSelectedId(null);
+  }, [setNodes, setEdges]);
 
   return (
     <div className="flex h-full w-full overflow-hidden">
       <NodePalette onAdd={addNode} />
       <div className="flex-1 relative">
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <Button
-            onClick={() => onSave({ nodes, edges })}
-            disabled={saving}
-            className="shadow-md"
-          >
-            {saving ? (
-              <Loader2 className="size-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="size-4 mr-2" />
-            )}
-            Salvar
-          </Button>
-        </div>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -112,9 +108,13 @@ function CanvasInner({ initial, onSave, saving }: Props) {
           onPaneClick={() => setSelectedId(null)}
           nodeTypes={nodeTypes}
           fitView
+          defaultEdgeOptions={{
+            animated: true,
+            style: { strokeWidth: 1.5, stroke: "hsl(var(--primary) / 0.5)" },
+          }}
           proOptions={{ hideAttribution: true }}
         >
-          <Background gap={20} size={1} />
+          <Background gap={20} size={1} color="hsl(var(--border) / 0.4)" />
           <Controls className="!bg-card !border !rounded-lg" />
           <MiniMap pannable className="!bg-card !border !rounded-lg" />
         </ReactFlow>
@@ -126,16 +126,17 @@ function CanvasInner({ initial, onSave, saving }: Props) {
           }
           onClose={() => setSelectedId(null)}
           onChange={patchNode}
+          onDelete={deleteNode}
         />
       </div>
     </div>
   );
-}
+});
 
-export function WorkforceCanvas(props: Props) {
+export const WorkforceCanvas = forwardRef<CanvasHandle, Props>(function WorkforceCanvas(props, ref) {
   return (
     <ReactFlowProvider>
-      <CanvasInner {...props} />
+      <CanvasInner ref={ref} {...props} />
     </ReactFlowProvider>
   );
-}
+});

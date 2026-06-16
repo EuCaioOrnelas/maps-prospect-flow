@@ -1,8 +1,13 @@
+import { useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft } from "lucide-react";
-import { WorkforceCanvas } from "@/components/ai-workforce/canvas/WorkforceCanvas";
+import { ChevronLeft, Save, Loader2, FlaskConical } from "lucide-react";
+import {
+  WorkforceCanvas,
+  type CanvasHandle,
+} from "@/components/ai-workforce/canvas/WorkforceCanvas";
+import { WorkforceTestChatDialog } from "@/components/ai-workforce/WorkforceTestChatDialog";
 import { useWorkforce, useWorkforceCanvas, useSaveCanvas } from "@/hooks/useAIWorkforce";
 import { toast } from "sonner";
 
@@ -11,8 +16,31 @@ export default function AIWorkforceBuilder() {
   const { data: worker, isLoading: loadingW } = useWorkforce(id);
   const { data: canvas, isLoading: loadingC } = useWorkforceCanvas(id);
   const save = useSaveCanvas();
+  const canvasRef = useRef<CanvasHandle>(null);
+  const [testOpen, setTestOpen] = useState(false);
 
   const loading = loadingW || loadingC;
+
+  async function handleSave() {
+    if (!id || !canvasRef.current) return;
+    try {
+      await save.mutateAsync({ workforceId: id, state: canvasRef.current.getState() });
+      toast.success("Construtor salvo.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar");
+    }
+  }
+
+  async function handleTest() {
+    if (!id || !canvasRef.current) return;
+    // Auto-save before opening the test so the chat reflects the latest canvas.
+    try {
+      await save.mutateAsync({ workforceId: id, state: canvasRef.current.getState() });
+    } catch {
+      /* silent */
+    }
+    setTestOpen(true);
+  }
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background z-30">
@@ -26,28 +54,38 @@ export default function AIWorkforceBuilder() {
             <p className="text-[11px] text-muted-foreground truncate leading-tight">{worker?.role ?? "Equipe IA"}</p>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleTest} disabled={loading}>
+            <FlaskConical className="size-3.5 mr-1.5" /> Testar
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={save.isPending || loading}>
+            {save.isPending ? (
+              <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Save className="size-3.5 mr-1.5" />
+            )}
+            Salvar
+          </Button>
+        </div>
       </header>
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 relative">
         {loading || !canvas ? (
           <div className="p-4 h-full">
             <Skeleton className="h-full w-full rounded-2xl" />
           </div>
         ) : (
-          <WorkforceCanvas
-            initial={canvas}
-            saving={save.isPending}
-            onSave={async (state) => {
-              if (!id) return;
-              try {
-                await save.mutateAsync({ workforceId: id, state });
-                toast.success("Construtor salvo.");
-              } catch (e) {
-                toast.error(e instanceof Error ? e.message : "Erro ao salvar");
-              }
-            }}
-          />
+          <WorkforceCanvas ref={canvasRef} initial={canvas} />
         )}
       </div>
+
+      {id && worker && (
+        <WorkforceTestChatDialog
+          open={testOpen}
+          onOpenChange={setTestOpen}
+          workforceId={id}
+          workforceName={worker.name}
+        />
+      )}
     </div>
   );
 }
