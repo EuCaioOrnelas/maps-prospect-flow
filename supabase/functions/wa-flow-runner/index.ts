@@ -2203,10 +2203,18 @@ serve(async (req) => {
 
         let startId = exec.current_node_id;
         if (mode === "wait") {
-          // For wait nodes, advance to the next node (default target).
-          const bySource = buildEdgeIndex(edges);
-          const next = getDefaultTarget(bySource, exec.current_node_id);
-          if (next) startId = next;
+          // If we paused mid-message because of an internal delay separator,
+          // re-enter the SAME message node so it can continue with the pending
+          // items. Otherwise (pure "wait" node), advance to the next node.
+          const pending = (exec.collected_data && typeof exec.collected_data === "object")
+            ? (exec.collected_data as any).__pending_message__
+            : null;
+          const hasPending = pending && pending.nodeId === exec.current_node_id && Array.isArray(pending.items);
+          if (!hasPending) {
+            const bySource = buildEdgeIndex(edges);
+            const next = getDefaultTarget(bySource, exec.current_node_id);
+            if (next) startId = next;
+          }
         }
         if (!startId) return;
 
