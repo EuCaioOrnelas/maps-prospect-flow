@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
   Bot, Loader2, Sparkles, ArrowLeft, Wand2, CheckCircle2, AlertCircle,
   PencilRuler, LayoutTemplate, Phone, Headphones, Wallet,
@@ -14,29 +13,23 @@ import {
 import { useCreateEquipe } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
 import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
+import { AIProvidersConnector } from "@/components/equipe-ia/AIProvidersConnector";
+import { useUserAICredentials } from "@/hooks/useUserAICredentials";
+import { AI_PROVIDERS, ProviderId } from "@/lib/aiProviders";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Mode = "choose" | "blank" | "templates" | "ai";
 
-type ProviderId = "openai" | "claude" | "gemini" | "deepseek" | "meta";
-const PROVIDERS: { id: ProviderId; name: string; placeholder: string; helper: string }[] = [
-  { id: "openai",   name: "OpenAI",   placeholder: "sk-...",            helper: "Chave de API da OpenAI (plataform.openai.com)." },
-  { id: "claude",   name: "Claude (Anthropic)", placeholder: "sk-ant-...", helper: "Chave da Anthropic (console.anthropic.com)." },
-  { id: "gemini",   name: "Gemini (Google)",    placeholder: "AIza...",    helper: "Chave do Google AI Studio." },
-  { id: "deepseek", name: "DeepSeek", placeholder: "sk-...",            helper: "Chave da DeepSeek (platform.deepseek.com)." },
-  { id: "meta",     name: "Meta (Llama)", placeholder: "Token...",        helper: "Token de acesso da Meta para Llama API." },
-];
-
 const TEMPLATES = [
-  { id: "sdr", icon: Phone, color: "text-emerald-500", bg: "bg-emerald-500/10",
+  { id: "sdr", icon: Phone,
     name: "SDR IA", role: "Qualificador de leads B2B",
     description: "Qualifica leads, faz perguntas estratégicas e agenda reunião com o time comercial." },
-  { id: "support", icon: Headphones, color: "text-sky-500", bg: "bg-sky-500/10",
+  { id: "support", icon: Headphones,
     name: "Atendimento", role: "Suporte ao cliente",
     description: "Resolve dúvidas frequentes, abre tickets e escala para humano quando necessário." },
-  { id: "billing", icon: Wallet, color: "text-amber-500", bg: "bg-amber-500/10",
+  { id: "billing", icon: Wallet,
     name: "Cobrança Amigável", role: "Negociação de pagamentos",
     description: "Aborda inadimplentes com tom consultivo, negocia e registra acordos no CRM." },
 ];
@@ -48,91 +41,27 @@ const AI_SUGGESTIONS = [
   "Quero um colaborador que recupera carrinhos abandonados",
 ];
 
-function useUserCredentials() {
-  return useQuery({
-    queryKey: ["user_ai_credentials"],
-    refetchOnWindowFocus: false,
-    staleTime: 60_000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_ai_credentials")
-        .select("provider,api_key,is_active");
-      if (error) throw error;
-      return (data ?? []) as { provider: string; api_key: string | null; is_active: boolean }[];
-    },
-  });
-}
-
-function AIProvidersConfig({
-  enabled, setEnabled, keys, setKeys, savedProviders,
-}: {
-  enabled: Record<ProviderId, boolean>;
-  setEnabled: (v: Record<ProviderId, boolean>) => void;
-  keys: Record<ProviderId, string>;
-  setKeys: (v: Record<ProviderId, string>) => void;
-  savedProviders: Set<string>;
-}) {
-  return (
-    <div className="border rounded-xl p-4 bg-muted/30 space-y-3">
-      <div className="flex items-center gap-2">
-        <Sparkles className="size-4 text-primary" />
-        <p className="text-sm font-semibold">Conectar IAs do colaborador</p>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Ative pelo menos uma IA e informe a chave. Sem isso, o colaborador não pode operar.
-      </p>
-      <div className="space-y-2">
-        {PROVIDERS.map((p) => {
-          const isOn = enabled[p.id];
-          const hasSaved = savedProviders.has(p.id);
-          return (
-            <div key={p.id} className="rounded-lg border bg-card p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium">{p.name}</p>
-                    {hasSaved && (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded ring-1 ring-emerald-500/20">
-                        <CheckCircle2 className="size-3" /> conectado
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{p.helper}</p>
-                </div>
-                <Switch
-                  checked={isOn}
-                  onCheckedChange={(v) => setEnabled({ ...enabled, [p.id]: v })}
-                />
-              </div>
-              {isOn && (
-                <div className="mt-3">
-                  <Input
-                    type="password"
-                    placeholder={hasSaved ? "•••••• (chave salva — preencha para substituir)" : p.placeholder}
-                    value={keys[p.id]}
-                    onChange={(e) => setKeys({ ...keys, [p.id]: e.target.value })}
-                  />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 export default function EquipeCreator() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const create = useCreateEquipe();
   const qc = useQueryClient();
-  const credsQ = useUserCredentials();
+  const credsQ = useUserAICredentials();
   const savedProviders = useMemo(
     () => new Set((credsQ.data ?? []).filter((c) => c.is_active && c.api_key).map((c) => c.provider)),
     [credsQ.data],
   );
 
-  const [mode, setMode] = useState<Mode>("choose");
+  const urlMode = (searchParams.get("mode") as Mode | null);
+  const [mode, setMode] = useState<Mode>(
+    urlMode && ["blank", "templates", "ai"].includes(urlMode) ? urlMode : "choose",
+  );
+
+  useEffect(() => {
+    const m = searchParams.get("mode") as Mode | null;
+    if (m && ["blank", "templates", "ai"].includes(m)) setMode(m);
+  }, [searchParams]);
+
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [description, setDescription] = useState("");
@@ -146,7 +75,6 @@ export default function EquipeCreator() {
     openai: "", claude: "", gemini: "", deepseek: "", meta: "",
   });
 
-  // Pre-enable providers the user already saved.
   useEffect(() => {
     if (!credsQ.data) return;
     setEnabled((prev) => {
@@ -159,7 +87,7 @@ export default function EquipeCreator() {
   }, [credsQ.data]);
 
   const validation = useMemo(() => {
-    const active = PROVIDERS.filter((p) => enabled[p.id]);
+    const active = AI_PROVIDERS.filter((p) => enabled[p.id]);
     if (active.length === 0) return { ok: false, msg: "Ative pelo menos uma IA." };
     const missing = active.filter((p) => !savedProviders.has(p.id) && !keys[p.id].trim());
     if (missing.length > 0) return { ok: false, msg: `Informe a chave de: ${missing.map((m) => m.name).join(", ")}.` };
@@ -167,7 +95,7 @@ export default function EquipeCreator() {
   }, [enabled, keys, savedProviders]);
 
   async function persistCredentials(uid: string) {
-    const rows = PROVIDERS
+    const rows = AI_PROVIDERS
       .filter((p) => enabled[p.id] && keys[p.id].trim())
       .map((p) => ({ user_id: uid, provider: p.id, api_key: keys[p.id].trim(), is_active: true }));
     if (rows.length === 0) return;
@@ -286,7 +214,7 @@ export default function EquipeCreator() {
 
         {mode !== "choose" && (
           <button
-            onClick={() => setMode("choose")}
+            onClick={() => { setMode("choose"); navigate("/equipe-ia/novo", { replace: true }); }}
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4"
           >
             <ArrowLeft size={14} /> Voltar
@@ -294,45 +222,46 @@ export default function EquipeCreator() {
         )}
 
         {mode === "blank" && (
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold">Colaborador em branco</h2>
-                <p className="text-xs text-muted-foreground">Defina o básico, conecte as IAs e refine no construtor.</p>
-              </div>
-              <div>
-                <Label>Nome do colaborador</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: SDR IA Wiize" />
-              </div>
-              <div>
-                <Label>Função / cargo</Label>
-                <Input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Ex.: Qualificador de leads B2B" />
-              </div>
-              <div>
-                <Label>Descrição</Label>
-                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="O que esse colaborador faz?" />
-              </div>
-              <AIProvidersConfig enabled={enabled} setEnabled={setEnabled} keys={keys} setKeys={setKeys} savedProviders={savedProviders} />
-              <ValidationBanner />
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="ghost" onClick={() => setMode("choose")}>Cancelar</Button>
-                <Button onClick={submitBlank} disabled={create.isPending || !validation.ok || !name.trim()}>
-                  {create.isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
-                  Criar colaborador
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-5">
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <div>
+                  <h2 className="text-lg font-semibold">Colaborador em branco</h2>
+                  <p className="text-xs text-muted-foreground">Defina o básico e refine no construtor visual.</p>
+                </div>
+                <div>
+                  <Label>Nome do colaborador</Label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: SDR IA Wiize" />
+                </div>
+                <div>
+                  <Label>Função / cargo</Label>
+                  <Input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Ex.: Qualificador de leads B2B" />
+                </div>
+                <div>
+                  <Label>Descrição</Label>
+                  <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="O que esse colaborador faz?" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <AIProvidersConnector enabled={enabled} setEnabled={setEnabled} keys={keys} setKeys={setKeys} savedProviders={savedProviders} />
+            <ValidationBanner />
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="ghost" onClick={() => setMode("choose")}>Cancelar</Button>
+              <Button onClick={submitBlank} disabled={create.isPending || !validation.ok || !name.trim()}>
+                {create.isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
+                Criar colaborador
+              </Button>
+            </div>
+          </div>
         )}
 
         {mode === "templates" && (
           <div className="space-y-5">
             <div>
               <h2 className="text-lg font-semibold">Modelos prontos</h2>
-              <p className="text-xs text-muted-foreground">Conecte as IAs e escolha um modelo para começar.</p>
+              <p className="text-xs text-muted-foreground">Escolha um modelo para começar mais rápido.</p>
             </div>
-            <AIProvidersConfig enabled={enabled} setEnabled={setEnabled} keys={keys} setKeys={setKeys} savedProviders={savedProviders} />
-            <ValidationBanner />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {TEMPLATES.map((t) => {
                 const Icon = t.icon;
@@ -341,10 +270,10 @@ export default function EquipeCreator() {
                     key={t.id}
                     onClick={() => useTemplate(t)}
                     disabled={create.isPending || !validation.ok}
-                    className="text-left rounded-2xl border bg-card hover:border-primary/60 p-5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="text-left rounded-2xl border bg-card hover:border-primary/60 hover:shadow-sm p-5 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", t.bg)}>
-                      <Icon size={22} className={t.color} />
+                    <div className="w-12 h-12 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary">
+                      <Icon size={22} />
                     </div>
                     <p className="font-semibold mt-4">{t.name}</p>
                     <p className="text-xs text-muted-foreground mt-1">{t.role}</p>
@@ -353,56 +282,61 @@ export default function EquipeCreator() {
                 );
               })}
             </div>
+            <AIProvidersConnector enabled={enabled} setEnabled={setEnabled} keys={keys} setKeys={setKeys} savedProviders={savedProviders} />
+            <ValidationBanner />
           </div>
         )}
 
         {mode === "ai" && (
-          <Card>
-            <CardContent className="p-6 space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Wand2 size={20} className="text-primary" />
+          <div className="space-y-5">
+            <Card>
+              <CardContent className="p-6 space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center shrink-0 text-primary">
+                    <Wand2 size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold">Crie um colaborador com IA</h2>
+                    <p className="text-xs text-muted-foreground">Descreva seu objetivo e a IA gera o colaborador.</p>
+                  </div>
                 </div>
+                <Textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Ex: Quero um colaborador que atenda clientes de uma clínica de estética, qualifique e agende avaliação."
+                  className="min-h-[110px] resize-none"
+                />
                 <div>
-                  <h2 className="text-lg font-bold">Crie um colaborador com IA</h2>
-                  <p className="text-xs text-muted-foreground">Descreva seu objetivo, conecte as IAs e a IA gera o colaborador.</p>
+                  <p className="text-[11px] text-muted-foreground font-medium mb-2">💡 Sugestões rápidas</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {AI_SUGGESTIONS.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setPrompt(s)}
+                        className="text-[11px] px-3 py-1.5 rounded-full border bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Ex: Quero um colaborador que atenda clientes de uma clínica de estética, qualifique e agende avaliação."
-                className="min-h-[110px] resize-none"
-              />
-              <div>
-                <p className="text-[11px] text-muted-foreground font-medium mb-2">💡 Sugestões rápidas</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {AI_SUGGESTIONS.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setPrompt(s)}
-                      className="text-[11px] px-3 py-1.5 rounded-full border bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <AIProvidersConfig enabled={enabled} setEnabled={setEnabled} keys={keys} setKeys={setKeys} savedProviders={savedProviders} />
-              <ValidationBanner />
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="ghost" onClick={() => setMode("choose")}>Cancelar</Button>
-                <Button onClick={submitAI} disabled={aiLoading || create.isPending || !prompt.trim() || !validation.ok}>
-                  {(aiLoading || create.isPending) ? (
-                    <Loader2 className="size-4 mr-2 animate-spin" />
-                  ) : (
-                    <Sparkles className="size-4 mr-2" />
-                  )}
-                  Gerar com IA
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            <AIProvidersConnector enabled={enabled} setEnabled={setEnabled} keys={keys} setKeys={setKeys} savedProviders={savedProviders} />
+            <ValidationBanner />
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="ghost" onClick={() => setMode("choose")}>Cancelar</Button>
+              <Button onClick={submitAI} disabled={aiLoading || create.isPending || !prompt.trim() || !validation.ok}>
+                {(aiLoading || create.isPending) ? (
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="size-4 mr-2" />
+                )}
+                Gerar com IA
+              </Button>
+            </div>
+          </div>
         )}
       </div>
     </EquipePageLayout>
