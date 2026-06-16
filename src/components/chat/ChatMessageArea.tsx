@@ -1006,17 +1006,15 @@ export function ChatMessageArea({
                                     </span>
                                   </div>
                                 )}
-                                {isOutbound && (msg.metadata as any)?.source === "flow" && (
-                                  <div className="px-[9px] pb-[4px] -mt-[2px]">
-                                    <span
-                                      title={(msg.metadata as any)?.flow_name ? `Fluxo: ${(msg.metadata as any).flow_name}` : "Enviado pelo fluxo"}
-                                      className="inline-flex items-center justify-center w-[14px] h-[14px] rounded-full bg-foreground/10 text-foreground/60 text-[9px] leading-none"
-                                    >
-                                      ⚡
-                                    </span>
-                                  </div>
-                                )}
-                                <div className="flex items-center justify-end gap-[3px] px-[7px] pb-[5px] -mt-[2px]">
+                                <div className="flex items-center justify-end gap-[4px] px-[7px] pb-[5px] -mt-[2px]">
+                                  {isOutbound && (msg.metadata as any)?.source === "flow" && (
+                                    <Workflow
+                                      size={11}
+                                      strokeWidth={2}
+                                      className="text-foreground/30"
+                                      aria-label={(msg.metadata as any)?.flow_name ? `Fluxo: ${(msg.metadata as any).flow_name}` : "Enviado pelo fluxo"}
+                                    />
+                                  )}
                                   <span className="text-[11px] leading-[15px] wa-text-timestamp select-none">
                                     {format(parseISO(msg.created_at), "HH:mm")}
                                   </span>
