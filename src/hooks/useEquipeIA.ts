@@ -179,3 +179,39 @@ export function useDeleteEquipe() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["equipe-ia", "list"] }),
   });
 }
+
+export function useGenerateWorkforce() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { blueprint: WorkforceBlueprint }): Promise<string> => {
+      const { blueprint } = input;
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Não autenticado");
+
+      const { data: row, error } = await supabase
+        .from(TABLE as never)
+        .insert({
+          user_id: uid,
+          name: blueprint.name,
+          role: blueprint.role,
+          description: blueprint.description,
+          persona: blueprint.persona,
+          config: { system_prompt: blueprint.system_prompt, blueprint, generated_by: "workforce_wizard" },
+        } as never)
+        .select("id")
+        .single();
+      if (error) throw error;
+      const id = (row as { id: string }).id;
+
+      const canvas = buildCanvasFromBlueprint(blueprint);
+      await supabase.from(CANVAS_TABLE as never).delete().eq("workforce_id", id);
+      const { error: cErr } = await supabase.from(CANVAS_TABLE as never).insert({
+        workforce_id: id, nodes: canvas.nodes, edges: canvas.edges,
+      } as never);
+      if (cErr) throw cErr;
+      return id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipe-ia", "list"] }),
+  });
+}
