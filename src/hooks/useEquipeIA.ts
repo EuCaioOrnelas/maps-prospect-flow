@@ -63,6 +63,8 @@ export function useEquipeCanvas(equipeId: string | undefined) {
   return useQuery({
     queryKey: ["equipe-ia", equipeId, "canvas"],
     enabled: !!equipeId,
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
     queryFn: async (): Promise<CanvasState> => {
       const { data, error } = await supabase
         .from(CANVAS_TABLE as never)
