@@ -198,6 +198,9 @@ export function useSaveCanvasVersion() {
       qc.invalidateQueries({ queryKey: ["equipe-ia", v.equipeId, "versions"] });
     },
   });
+}
+
+
 
 export function useDeleteEquipe() {
   const qc = useQueryClient();
