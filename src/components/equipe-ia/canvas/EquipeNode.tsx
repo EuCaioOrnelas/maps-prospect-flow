@@ -15,24 +15,31 @@ interface EquipeNodeData {
 const HEX_CLIP = "polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%)";
 
 /**
- * Tech-clean inner mark: a hexagon outline with three orbiting dots
- * (Meta-AI / Wiize inspired). Pure SVG so it stays crisp at any size.
+ * Meta-inspired infinity hex mark — two interlocked loops inside a hexagonal frame.
+ * Pure SVG so it stays crisp at any size.
  */
 function CoreMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 64 64" className={className} fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round">
-      {/* outer hex */}
-      <path d="M32 6 L54 19 L54 45 L32 58 L10 45 L10 19 Z" />
-      {/* inner hex */}
-      <path d="M32 18 L44 25 L44 39 L32 46 L20 39 L20 25 Z" opacity="0.55" />
-      {/* center */}
-      <circle cx="32" cy="32" r="2.4" fill="currentColor" stroke="none" />
-      {/* orbital dots */}
-      <circle cx="32" cy="10" r="1.8" fill="currentColor" stroke="none" />
-      <circle cx="52" cy="44" r="1.8" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="44" r="1.8" fill="currentColor" stroke="none" />
-      {/* connecting lines (subtle) */}
-      <path d="M32 10 L32 18 M50 43 L44 39 M14 43 L20 39" opacity="0.4" />
+    <svg viewBox="0 0 64 64" className={className} fill="none">
+      <defs>
+        <linearGradient id="coreMarkGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="1" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0.75" />
+        </linearGradient>
+      </defs>
+      {/* hex frame */}
+      <path
+        d="M32 5 L55 18 L55 46 L32 59 L9 46 L9 18 Z"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinejoin="round"
+        opacity="0.55"
+      />
+      {/* meta-style infinity loop */}
+      <path
+        d="M19 32 C19 24, 26 20, 32 26 C36 30, 38 34, 42 36 C47 39, 50 35, 50 31 C50 26, 46 23, 42 26 C38 28, 36 32, 32 36 C26 41, 19 38, 19 32 Z"
+        fill="url(#coreMarkGrad)"
+      />
     </svg>
   );
 }

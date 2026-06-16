@@ -44,6 +44,21 @@ const CATEGORIES: { label: string; kinds: EquipeNodeKind[] }[] = [
   { label: "Execução", kinds: ["tools", "actions", "escalation"] },
 ];
 
+const KIND_TINT: Record<EquipeNodeKind, { bg: string; border: string; text: string }> = {
+  core:            { bg: "bg-primary/15",   border: "border-primary/30",   text: "text-primary" },
+  goal:            { bg: "bg-emerald-500/12", border: "border-emerald-500/30", text: "text-emerald-600 dark:text-emerald-400" },
+  rules:           { bg: "bg-rose-500/12",    border: "border-rose-500/30",    text: "text-rose-600 dark:text-rose-400" },
+  decision:        { bg: "bg-fuchsia-500/12", border: "border-fuchsia-500/30", text: "text-fuchsia-600 dark:text-fuchsia-400" },
+  memory:          { bg: "bg-violet-500/12",  border: "border-violet-500/30",  text: "text-violet-600 dark:text-violet-400" },
+  knowledge:       { bg: "bg-amber-500/12",   border: "border-amber-500/30",   text: "text-amber-600 dark:text-amber-400" },
+  crm_data:        { bg: "bg-sky-500/12",     border: "border-sky-500/30",     text: "text-sky-600 dark:text-sky-400" },
+  data_collection: { bg: "bg-cyan-500/12",    border: "border-cyan-500/30",    text: "text-cyan-600 dark:text-cyan-400" },
+  analysis:        { bg: "bg-teal-500/12",    border: "border-teal-500/30",    text: "text-teal-600 dark:text-teal-400" },
+  tools:           { bg: "bg-indigo-500/12",  border: "border-indigo-500/30",  text: "text-indigo-600 dark:text-indigo-400" },
+  actions:         { bg: "bg-orange-500/12",  border: "border-orange-500/30",  text: "text-orange-600 dark:text-orange-400" },
+  escalation:      { bg: "bg-yellow-500/12",  border: "border-yellow-500/30",  text: "text-yellow-600 dark:text-yellow-400" },
+};
+
 function uid() {
   return `n_${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -182,6 +197,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                     {cat.kinds.map((kind) => {
                       const meta = EQUIPE_NODE_META[kind];
                       const Icon = meta.icon;
+                      const tint = KIND_TINT[kind] ?? { bg: "bg-muted/60", border: "border-border/40", text: "text-foreground" };
                       return (
                         <div
                           key={kind}
@@ -194,8 +210,8 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                           className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/40 hover:border-primary/30 transition-all duration-200 text-left group shadow-sm cursor-grab active:cursor-grabbing active:shadow-lg active:scale-[1.02] active:border-primary/50"
                         >
                           <div className={cn(
-                            "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-muted/60 border border-border/40",
-                            meta.color,
+                            "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border",
+                            tint.bg, tint.border, tint.text,
                           )}>
                             <Icon size={16} />
                           </div>
