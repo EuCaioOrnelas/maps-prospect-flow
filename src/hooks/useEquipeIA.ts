@@ -27,6 +27,9 @@ const CANVAS_TABLE = "ai_workforce_canvas" as const;
 export function useEquipeList() {
   return useQuery({
     queryKey: ["equipe-ia", "list"],
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 60_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from(TABLE as never)
@@ -42,6 +45,8 @@ export function useEquipe(id: string | undefined) {
   return useQuery({
     queryKey: ["equipe-ia", id],
     enabled: !!id,
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from(TABLE as never)
