@@ -91,6 +91,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
   const [phoneNumbers, setPhoneNumbers] = useState("");
   const [campaignName, setCampaignName] = useState("");
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
 
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: number; failed: number } | null>(null);
