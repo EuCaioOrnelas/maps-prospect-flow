@@ -17,11 +17,13 @@ import {
 import "@xyflow/react/dist/style.css";
 import { ChevronDown, PanelLeftClose, PanelLeftOpen, Search, X } from "lucide-react";
 import { EquipeNode } from "./EquipeNode";
+import { FloatingEdge } from "./FloatingEdge";
 import { NodeConfigDrawer } from "./NodeConfigDrawer";
 import { EQUIPE_NODE_META, type EquipeNodeKind } from "../nodeTypes";
 import { cn } from "@/lib/utils";
 
 const nodeTypes = { equipe: EquipeNode, workforce: EquipeNode };
+const edgeTypes = { floating: FloatingEdge };
 
 export interface CanvasState {
   nodes: Node[];
