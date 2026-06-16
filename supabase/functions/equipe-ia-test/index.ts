@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface InMsg { role: "user" | "assistant"; content: string }
-interface Body { workforceId: string; messages: InMsg[] }
+interface Body { equipeId?: string; workforceId?: string; messages: InMsg[] }
 
 function nodeSummary(nodes: any[]): string {
   if (!Array.isArray(nodes) || nodes.length === 0) return "";
@@ -55,8 +55,10 @@ serve(async (req) => {
       });
     }
 
-    const { workforceId, messages } = (await req.json()) as Body;
-    if (!workforceId || !Array.isArray(messages)) {
+    const body = (await req.json()) as Body;
+    const equipeId = body.equipeId ?? body.workforceId;
+    const messages = body.messages;
+    if (!equipeId || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "Parâmetros inválidos" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -65,7 +67,7 @@ serve(async (req) => {
     const { data: worker, error: wErr } = await supabase
       .from("ai_workforce")
       .select("*")
-      .eq("id", workforceId)
+      .eq("id", equipeId)
       .eq("user_id", user.id)
       .maybeSingle();
     if (wErr || !worker) {
@@ -77,7 +79,7 @@ serve(async (req) => {
     const { data: canvas } = await supabase
       .from("ai_workforce_canvas")
       .select("nodes")
-      .eq("workforce_id", workforceId)
+      .eq("workforce_id", equipeId)
       .maybeSingle();
 
     const structure = nodeSummary((canvas?.nodes as any[]) ?? []);

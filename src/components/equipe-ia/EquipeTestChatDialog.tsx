@@ -13,11 +13,11 @@ interface ChatMsg { role: "user" | "assistant"; content: string }
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  workforceId: string;
-  workforceName: string;
+  equipeId: string;
+  equipeName: string;
 }
 
-export function WorkforceTestChatDialog({ open, onOpenChange, workforceId, workforceName }: Props) {
+export function EquipeTestChatDialog({ open, onOpenChange, equipeId, equipeName }: Props) {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -45,8 +45,8 @@ export function WorkforceTestChatDialog({ open, onOpenChange, workforceId, workf
     setInput("");
     setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke("ai-workforce-test", {
-        body: { workforceId, messages: next },
+      const { data, error } = await supabase.functions.invoke("equipe-ia-test", {
+        body: { equipeId, messages: next },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -70,7 +70,7 @@ export function WorkforceTestChatDialog({ open, onOpenChange, workforceId, workf
               <Brain className="size-4 text-primary" />
             </div>
             <div className="min-w-0">
-              <DialogTitle className="text-sm font-semibold truncate">{workforceName}</DialogTitle>
+              <DialogTitle className="text-sm font-semibold truncate">{equipeName}</DialogTitle>
               <p className="text-[11px] text-muted-foreground flex items-center gap-1">
                 <FlaskConical className="size-3" /> Modo teste
               </p>

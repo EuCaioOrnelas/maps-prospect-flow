@@ -3,18 +3,15 @@ import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, Save, Loader2, FlaskConical } from "lucide-react";
-import {
-  WorkforceCanvas,
-  type CanvasHandle,
-} from "@/components/ai-workforce/canvas/WorkforceCanvas";
-import { WorkforceTestChatDialog } from "@/components/ai-workforce/WorkforceTestChatDialog";
-import { useWorkforce, useWorkforceCanvas, useSaveCanvas } from "@/hooks/useAIWorkforce";
+import { EquipeCanvas, type CanvasHandle } from "@/components/equipe-ia/canvas/EquipeCanvas";
+import { EquipeTestChatDialog } from "@/components/equipe-ia/EquipeTestChatDialog";
+import { useEquipe, useEquipeCanvas, useSaveCanvas } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
 
-export default function AIWorkforceBuilder() {
+export default function EquipeBuilder() {
   const { id } = useParams<{ id: string }>();
-  const { data: worker, isLoading: loadingW } = useWorkforce(id);
-  const { data: canvas, isLoading: loadingC } = useWorkforceCanvas(id);
+  const { data: worker, isLoading: loadingW } = useEquipe(id);
+  const { data: canvas, isLoading: loadingC } = useEquipeCanvas(id);
   const save = useSaveCanvas();
   const canvasRef = useRef<CanvasHandle>(null);
   const [testOpen, setTestOpen] = useState(false);
@@ -24,7 +21,7 @@ export default function AIWorkforceBuilder() {
   async function handleSave() {
     if (!id || !canvasRef.current) return;
     try {
-      await save.mutateAsync({ workforceId: id, state: canvasRef.current.getState() });
+      await save.mutateAsync({ equipeId: id, state: canvasRef.current.getState() });
       toast.success("Construtor salvo.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao salvar");
@@ -33,9 +30,8 @@ export default function AIWorkforceBuilder() {
 
   async function handleTest() {
     if (!id || !canvasRef.current) return;
-    // Auto-save before opening the test so the chat reflects the latest canvas.
     try {
-      await save.mutateAsync({ workforceId: id, state: canvasRef.current.getState() });
+      await save.mutateAsync({ equipeId: id, state: canvasRef.current.getState() });
     } catch {
       /* silent */
     }
@@ -47,7 +43,7 @@ export default function AIWorkforceBuilder() {
       <header className="h-12 flex items-center justify-between px-4 border-b bg-card/80 backdrop-blur-sm shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/ai-workforce/colaboradores"><ChevronLeft className="size-4 mr-1" /> Voltar</Link>
+            <Link to="/equipe-ia/colaboradores"><ChevronLeft className="size-4 mr-1" /> Voltar</Link>
           </Button>
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate leading-tight">{worker?.name ?? "Construtor"}</p>
@@ -74,16 +70,16 @@ export default function AIWorkforceBuilder() {
             <Skeleton className="h-full w-full rounded-2xl" />
           </div>
         ) : (
-          <WorkforceCanvas ref={canvasRef} initial={canvas} />
+          <EquipeCanvas ref={canvasRef} initial={canvas} />
         )}
       </div>
 
       {id && worker && (
-        <WorkforceTestChatDialog
+        <EquipeTestChatDialog
           open={testOpen}
           onOpenChange={setTestOpen}
-          workforceId={id}
-          workforceName={worker.name}
+          equipeId={id}
+          equipeName={worker.name}
         />
       )}
     </div>

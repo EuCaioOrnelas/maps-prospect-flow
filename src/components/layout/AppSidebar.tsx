@@ -563,10 +563,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     {can("agents") && (
                     <li data-tour="sidebar-automacao-agentes">
                       <Link
-                        to="/ai-workforce"
+                        to="/equipe-ia"
                         className={cn(
                           "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
-                          currentPath.startsWith("/ai-workforce") || currentPath === "/agents"
+                          currentPath.startsWith("/equipe-ia") || currentPath.startsWith("/ai-workforce") || currentPath === "/agents"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}

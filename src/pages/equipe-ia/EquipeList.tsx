@@ -3,13 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bot, Plus, Trash2 } from "lucide-react";
-import { useWorkforceList, useDeleteWorkforce } from "@/hooks/useAIWorkforce";
+import { useEquipeList, useDeleteEquipe } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
-import { WorkforcePageLayout } from "@/components/ai-workforce/WorkforcePageLayout";
+import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
 
-export default function AIWorkforceList() {
-  const { data: workers = [], isLoading } = useWorkforceList();
-  const del = useDeleteWorkforce();
+export default function EquipeList() {
+  const { data: workers = [], isLoading } = useEquipeList();
+  const del = useDeleteEquipe();
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Excluir "${name}"? Esta ação não pode ser desfeita.`)) return;
@@ -18,14 +18,14 @@ export default function AIWorkforceList() {
   }
 
   return (
-    <WorkforcePageLayout>
+    <EquipePageLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Colaboradores Digitais</h1>
           <p className="text-sm text-muted-foreground mt-1">Gerencie sua força de trabalho de IA.</p>
         </div>
         <Button asChild>
-          <Link to="/ai-workforce/novo"><Plus className="size-4 mr-2" /> Novo</Link>
+          <Link to="/equipe-ia/novo"><Plus className="size-4 mr-2" /> Novo</Link>
         </Button>
       </div>
 
@@ -38,7 +38,7 @@ export default function AIWorkforceList() {
           <CardContent className="p-12 text-center">
             <Bot className="size-10 mx-auto text-muted-foreground/50" />
             <p className="mt-3 font-medium">Sem colaboradores</p>
-            <Button asChild className="mt-4"><Link to="/ai-workforce/novo">Criar o primeiro</Link></Button>
+            <Button asChild className="mt-4"><Link to="/equipe-ia/novo">Criar o primeiro</Link></Button>
           </CardContent>
         </Card>
       ) : (
@@ -47,7 +47,7 @@ export default function AIWorkforceList() {
             <Card key={w.id} className="hover:border-primary/60 transition-colors">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
-                  <Link to={`/ai-workforce/colaboradores/${w.id}`} className="flex items-center gap-3 min-w-0 flex-1">
+                  <Link to={`/equipe-ia/colaboradores/${w.id}`} className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="rounded-lg bg-primary/10 p-2 text-primary"><Bot className="size-5" /></div>
                     <div className="min-w-0">
                       <p className="font-semibold truncate">{w.name}</p>
@@ -66,6 +66,6 @@ export default function AIWorkforceList() {
           ))}
         </div>
       )}
-    </WorkforcePageLayout>
+    </EquipePageLayout>
   );
 }

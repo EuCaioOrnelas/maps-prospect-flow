@@ -1,4 +1,4 @@
-import { WORKFORCE_NODE_LIST } from "../nodeTypes";
+import { EQUIPE_NODE_LIST } from "../nodeTypes";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -16,7 +16,7 @@ export function NodePalette({ onAdd }: Props) {
           Clique para adicionar ao construtor.
         </p>
         <div className="space-y-1.5">
-          {WORKFORCE_NODE_LIST.filter((n) => n.kind !== "core").map((n) => {
+          {EQUIPE_NODE_LIST.filter((n) => n.kind !== "core").map((n) => {
             const Icon = n.icon;
             return (
               <button
@@ -24,14 +24,14 @@ export function NodePalette({ onAdd }: Props) {
                 onClick={() => onAdd(n.kind)}
                 className={cn(
                   "w-full text-left flex items-center gap-3 rounded-lg",
-                  "px-2.5 py-2 hover:bg-accent/60 transition-colors group"
+                  "px-2.5 py-2 hover:bg-accent/60 transition-colors group",
                 )}
               >
                 <div
                   className={cn(
                     "rounded-lg w-9 h-9 flex items-center justify-center shrink-0",
                     "bg-muted/60 group-hover:bg-background border border-border/40",
-                    n.color
+                    n.color,
                   )}
                 >
                   <Icon size={17} />
