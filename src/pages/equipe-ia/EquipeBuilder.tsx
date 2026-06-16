@@ -121,7 +121,7 @@ export default function EquipeBuilder() {
             </div>
           </div>
         ) : (
-          <EquipeCanvas ref={canvasRef} initial={canvas} />
+          <EquipeCanvas ref={canvasRef} initial={canvas} onAutoSave={autoSave} />
         )}
       </div>
 
