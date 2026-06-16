@@ -11,7 +11,7 @@ import {
   Bot, Loader2, Sparkles, ArrowLeft, Wand2, PencilRuler, LayoutTemplate,
   Phone, Headphones, Wallet, SendIcon, CheckCircle2,
 } from "lucide-react";
-import { useCreateEquipe } from "@/hooks/useEquipeIA";
+import { useCreateEquipe, useSaveCanvas } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
 import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
 import { AIProvidersConnector } from "@/components/equipe-ia/AIProvidersConnector";
@@ -20,6 +20,8 @@ import { useUserAICredentials } from "@/hooks/useUserAICredentials";
 import { AI_PROVIDERS, ProviderId } from "@/lib/aiProviders";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { EquipeNodeKind } from "@/components/equipe-ia/nodeTypes";
 
 type Mode = "blank" | "templates" | "ai";
 type TemplateStep = "pick" | "connect";
@@ -67,6 +69,7 @@ export default function EquipeCreator() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const create = useCreateEquipe();
+  const saveCanvas = useSaveCanvas();
   const qc = useQueryClient();
   const credsQ = useUserAICredentials();
 
@@ -164,18 +167,81 @@ export default function EquipeCreator() {
     } catch (e) { toast.error(e instanceof Error ? e.message : "Erro ao criar"); }
   }
 
-  // AI: send prompt → create draft worker → then force mandatory provider dialog
+  // AI: send prompt → generate full blueprint → create worker → save canvas → ask for IA
   async function submitAI() {
     if (!prompt.trim()) { toast.error("Descreva o que esse colaborador deve fazer."); return; }
     setAiLoading(true);
     try {
       const p = prompt.trim();
-      const firstSentence = p.split(/[.!?\n]/)[0].slice(0, 80);
-      const w = await create.mutateAsync({
-        name: "Colaborador IA", role: firstSentence, description: p,
+
+      // 1. Generate full blueprint with AI
+      const { data: gen, error: genErr } = await supabase.functions.invoke("generate-equipe-ai", {
+        body: { prompt: p },
       });
+      if (genErr) throw new Error(genErr.message || "Falha ao gerar colaborador");
+      if (!gen || gen.error) throw new Error(gen?.error || "Falha ao gerar colaborador");
+
+      const aiName: string = gen.name || "Colaborador IA";
+      const aiRole: string = gen.role || p.slice(0, 80);
+      const aiDescription: string = gen.description || p;
+      const aiPersona: string = gen.persona || "";
+      const aiSystemPrompt: string = gen.system_prompt || "";
+      const aiNodes: Array<{ kind: EquipeNodeKind; title: string; summary: string; fields?: unknown[] }> =
+        Array.isArray(gen.nodes) ? gen.nodes : [];
+
+      // 2. Create the equipe row
+      const w = await create.mutateAsync({
+        name: aiName, role: aiRole, description: aiDescription,
+      });
+
+      // 3. Persist persona + system_prompt into the row
+      try {
+        await supabase
+          .from("ai_workforce")
+          .update({
+            persona: aiPersona,
+            config: { system_prompt: aiSystemPrompt, generated_by_ai: true },
+          } as never)
+          .eq("id", w.id);
+      } catch { /* non-fatal */ }
+
+      // 4. Build canvas: core + AI nodes positioned radially
+      const cx = 600, cy = 280;
+      const ring = aiNodes.map((n, i) => {
+        const angle = (i / Math.max(aiNodes.length, 1)) * Math.PI * 2 - Math.PI / 2;
+        const r = 360;
+        return {
+          id: `node_${n.kind}_${i}`,
+          type: "equipe" as const,
+          position: { x: Math.round(cx + Math.cos(angle) * r), y: Math.round(cy + Math.sin(angle) * r) },
+          data: {
+            kind: n.kind,
+            title: n.title || n.kind,
+            summary: n.summary || "",
+            ...(n.fields ? { fields: n.fields } : {}),
+          },
+        };
+      });
+      const nodes = [
+        {
+          id: "core",
+          type: "equipe" as const,
+          position: { x: cx, y: cy },
+          data: { kind: "core" as EquipeNodeKind, title: aiName, summary: aiRole },
+        },
+        ...ring,
+      ];
+      const edges = ring.map((n) => ({
+        id: `e_core_${n.id}`, source: "core", target: n.id, animated: true,
+      }));
+
+      await saveCanvas.mutateAsync({
+        equipeId: w.id,
+        state: { nodes: nodes as never, edges: edges as never },
+      });
+
       setAiCreatedId(w.id);
-      toast.success("Colaborador criado! Agora conecte uma IA para abrir o construtor.");
+      toast.success("Colaborador montado! Agora conecte uma IA para abrir o construtor.");
       setAiDialogOpen(true);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao gerar colaborador");
