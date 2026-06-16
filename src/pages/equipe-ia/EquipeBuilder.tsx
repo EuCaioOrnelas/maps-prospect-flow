@@ -19,6 +19,20 @@ export default function EquipeBuilder() {
   const save = useSaveCanvas();
   const canvasRef = useRef<CanvasHandle>(null);
   const [testOpen, setTestOpen] = useState(false);
+  const [autoState, setAutoState] = useState<"idle" | "saving" | "saved">("idle");
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const autoSave = useCallback((state: CanvasState) => {
+    if (!id) return;
+    setAutoState("saving");
+    save.mutateAsync({ equipeId: id, state })
+      .then(() => {
+        setAutoState("saved");
+        if (autoTimer.current) clearTimeout(autoTimer.current);
+        autoTimer.current = setTimeout(() => setAutoState("idle"), 1500);
+      })
+      .catch(() => setAutoState("idle"));
+  }, [id, save]);
 
   const hasIA = useMemo(
     () => (credsQ.data ?? []).some((c) => c.is_active && c.api_key),
