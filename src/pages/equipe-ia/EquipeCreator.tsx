@@ -184,57 +184,16 @@ export default function EquipeCreator() {
     }
   }
 
-  function MethodCard({
-    icon: Icon, title, subtitle, onClick, accent, badge,
-  }: {
-    icon: typeof Bot; title: string; subtitle: string; onClick: () => void;
-    accent?: string; badge?: string;
-  }) {
-    return (
-      <button
-        onClick={onClick}
-        className={cn(
-          "group relative flex flex-col items-center text-center gap-4 p-6 rounded-2xl border bg-card",
-          "hover:border-primary/40 hover:bg-primary/5 transition-all",
-        )}
-      >
-        {badge && (
-          <Badge className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 shadow-md">
-            {badge}
-          </Badge>
-        )}
-        <div className={cn("w-14 h-14 rounded-xl flex items-center justify-center transition-colors", accent ?? "bg-muted")}>
-          <Icon size={26} className={accent ? "text-primary" : "text-muted-foreground group-hover:text-primary"} />
-        </div>
-        <div>
-          <p className="font-semibold text-sm mb-1">{title}</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">{subtitle}</p>
-        </div>
-      </button>
-    );
-  }
-
   function SectionHeader({ icon: Icon, title, subtitle }: { icon: typeof Bot; title: string; subtitle: string }) {
     return (
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
           <Icon size={20} />
         </div>
         <div>
           <h2 className="text-lg font-semibold leading-tight">{title}</h2>
           <p className="text-xs text-muted-foreground">{subtitle}</p>
         </div>
-      </div>
-    );
-  }
-
-  function InputWithIcon({
-    icon: Icon, ...props
-  }: { icon: typeof Bot } & React.ComponentProps<typeof Input>) {
-    return (
-      <div className="relative">
-        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-        <Input {...props} className={cn("pl-9", props.className)} />
       </div>
     );
   }
