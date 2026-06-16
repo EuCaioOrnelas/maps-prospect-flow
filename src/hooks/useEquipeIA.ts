@@ -2,6 +2,34 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { CanvasState } from "@/components/equipe-ia/canvas/EquipeCanvas";
 import type { EquipeNodeKind } from "@/components/equipe-ia/nodeTypes";
+import type { WorkforceBlueprint } from "@/components/equipe-ia/wizard/workforceTemplates";
+
+export function buildCanvasFromBlueprint(blueprint: WorkforceBlueprint): CanvasState {
+  const cx = 600, cy = 300;
+  const ring = blueprint.nodes.map((n, i) => {
+    const angle = (i / Math.max(blueprint.nodes.length, 1)) * Math.PI * 2 - Math.PI / 2;
+    const r = 380;
+    return {
+      id: `node_${n.kind}_${i}`,
+      type: "equipe" as const,
+      position: { x: Math.round(cx + Math.cos(angle) * r), y: Math.round(cy + Math.sin(angle) * r) },
+      data: {
+        kind: n.kind,
+        title: n.title || n.kind,
+        summary: n.summary || "",
+        ...(n.fields ? { fields: n.fields } : {}),
+      },
+    };
+  });
+  return {
+    nodes: [
+      { id: "core", type: "equipe" as const, position: { x: cx, y: cy },
+        data: { kind: "core" as EquipeNodeKind, title: blueprint.name, summary: blueprint.role } },
+      ...ring,
+    ] as never,
+    edges: ring.map((n) => ({ id: `e_core_${n.id}`, source: "core", target: n.id, animated: true })) as never,
+  };
+}
 
 export interface Equipe {
   id: string;
