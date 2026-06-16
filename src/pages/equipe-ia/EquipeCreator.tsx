@@ -242,37 +242,12 @@ export default function EquipeCreator() {
   return (
     <EquipePageLayout>
       <div className="max-w-4xl mx-auto">
-        {mode === "choose" && (
-          <>
-            <div className="flex items-center gap-2 text-xs font-medium text-primary uppercase tracking-wider">
-              <Sparkles className="size-3.5" /> Novo colaborador
-            </div>
-            <h1 className="text-3xl font-semibold tracking-tight mt-1">Criar colaborador</h1>
-            <p className="text-muted-foreground mt-1">Escolha como deseja começar.</p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-              <MethodCard icon={PencilRuler} title="Em branco"
-                subtitle="Comece do zero e monte tudo no construtor visual."
-                onClick={() => setMode("blank")} />
-              <MethodCard icon={LayoutTemplate} title="Usar modelo pronto"
-                subtitle="Templates prontos para SDR, suporte, cobrança e mais."
-                onClick={() => { setMode("templates"); setTplStep("pick"); }} />
-              <MethodCard icon={Wand2} title="Criar com IA"
-                subtitle="Descreva o que precisa e a IA monta seu colaborador."
-                onClick={() => setMode("ai")}
-                accent="bg-primary/10" badge="Recomendado" />
-            </div>
-          </>
-        )}
-
-        {mode !== "choose" && (
-          <button
-            onClick={() => { setMode("choose"); navigate("/equipe-ia/novo", { replace: true }); }}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4"
-          >
-            <ArrowLeft size={14} /> Voltar
-          </button>
-        )}
+        <button
+          onClick={() => navigate("/equipe-ia")}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4"
+        >
+          <ArrowLeft size={14} /> Voltar para Equipe IA
+        </button>
 
         {/* BLANK MODE */}
         {mode === "blank" && (
