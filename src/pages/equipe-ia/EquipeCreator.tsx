@@ -449,7 +449,7 @@ export default function EquipeCreator() {
               </motion.div>
 
               <motion.div
-                className="relative backdrop-blur-2xl bg-card/50 rounded-2xl border border-border/50 shadow-2xl p-3"
+                className="relative bg-card rounded-2xl border border-border/60 shadow-[0_4px_20px_-8px_hsl(var(--primary)/0.15)] p-3"
                 initial={{ scale: 0.98, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.4 }}
