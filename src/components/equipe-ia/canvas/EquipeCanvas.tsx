@@ -94,13 +94,19 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
     getState: () => ({ nodes, edges }),
   }), [nodes, edges]);
 
+  // Stabilize the autosave callback in a ref so re-renders in the parent (e.g.
+  // "Saving…" → "Saved" badge) don't re-trigger the debounce effect and cause a
+  // save loop.
+  const autoSaveRef = useRef(onAutoSave);
+  useEffect(() => { autoSaveRef.current = onAutoSave; }, [onAutoSave]);
+
   const firstRun = useRef(true);
   useEffect(() => {
-    if (!onAutoSave) return;
+    if (!autoSaveRef.current) return;
     if (firstRun.current) { firstRun.current = false; return; }
-    const t = setTimeout(() => onAutoSave({ nodes, edges }), 800);
+    const t = setTimeout(() => autoSaveRef.current?.({ nodes, edges }), 800);
     return () => clearTimeout(t);
-  }, [nodes, edges, onAutoSave]);
+  }, [nodes, edges]);
 
   const onConnect = useCallback(
     (c: Connection) => setEdges((eds) => addEdge({ ...c, animated: true }, eds)),
