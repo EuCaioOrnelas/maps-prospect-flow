@@ -214,8 +214,8 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
                           )}
                         >
                           <div className={cn(
-                            "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border",
-                            tint.bg, tint.border, tint.text,
+                            "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border bg-card/80",
+                            tint.border, tint.text,
                           )}>
                             <Icon size={16} />
                           </div>
