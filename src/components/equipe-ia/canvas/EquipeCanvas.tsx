@@ -157,7 +157,7 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
   }, [nodes, edges]);
 
   const onConnect = useCallback(
-    (c: Connection) => setEdges((eds) => addEdge({ ...c, animated: true }, eds)),
+    (c: Connection) => setEdges((eds) => addEdge({ ...c, type: "floating", animated: true }, eds)),
     [setEdges],
   );
 
