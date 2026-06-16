@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 import { 
   Search, 
   BarChart3, 
@@ -562,18 +563,23 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     )}
                     {can("agents") && (
                     <li data-tour="sidebar-automacao-agentes">
-                      <Link
-                        to="/equipe-ia"
+                      <button
+                        onClick={() =>
+                          toast({
+                            title: "Em breve",
+                            description: "A Equipe IA estará disponível em breve.",
+                          })
+                        }
                         className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
-                          currentPath.startsWith("/equipe-ia") || currentPath.startsWith("/ai-workforce") || currentPath === "/agents"
-                            ? "bg-sidebar-accent/60 text-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200 w-full text-left opacity-50 cursor-not-allowed"
                         )}
                       >
                         <Bot size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Equipe IA</span>
-                      </Link>
+                        <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                          Em breve
+                        </span>
+                      </button>
                     </li>
                     )}
                     {can("warming") && (
