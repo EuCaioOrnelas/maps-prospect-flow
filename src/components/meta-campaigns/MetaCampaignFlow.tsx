@@ -447,19 +447,9 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
             <div className="text-center py-12 px-4 max-w-md mx-auto">
               <MessageSquare size={40} className="text-muted-foreground mx-auto mb-3" />
               <p className="font-medium">Nenhum template aprovado nesta conta</p>
-              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                Os templates da Meta são vinculados à <strong>WhatsApp Business Account (WABA)</strong> do número selecionado — não ao número em si.
-                Se você criou templates em outra conta (ex: <em>Test WhatsApp Business Account</em>), eles não aparecerão aqui.
-                Crie/mova o template para a WABA conectada e aguarde a aprovação da Meta.
+              <p className="text-xs text-muted-foreground mt-2">
+                Crie um template na WABA conectada e aguarde a aprovação da Meta. Veja o passo a passo abaixo.
               </p>
-              <a
-                href="https://business.facebook.com/latest/whatsapp_manager/message_templates"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline mt-3 inline-flex items-center gap-1"
-              >
-                <ExternalLink size={12} /> Abrir gerenciador de templates da Meta
-              </a>
             </div>
           ) : (
             <>
