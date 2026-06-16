@@ -144,8 +144,8 @@ export default function EquipeEmBreve() {
                   <span className="text-foreground font-medium">
                     colaboradores digitais
                   </span>
-                  . Atendem, qualificam, vendem e movimentam seu CRM 24/7 —
-                  sem precisar contratar mais ninguém.
+                  . Atendem, qualificam, vendem e movimentam seu CRM 24/7 sem
+                  precisar contratar mais ninguém.
                 </motion.p>
 
                 {/* Countdown */}
