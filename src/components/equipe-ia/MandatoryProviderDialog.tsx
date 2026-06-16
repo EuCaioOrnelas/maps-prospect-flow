@@ -29,7 +29,7 @@ export function MandatoryProviderDialog({ open, onOpenChange, onConfigured, onSk
   );
 
   const [enabled, setEnabled] = useState<Record<ProviderId, boolean>>({
-    openai: false, claude: false, gemini: false, deepseek: false, meta: false,
+    openai: true, claude: false, gemini: false, deepseek: false, meta: false,
   });
   const [keys, setKeys] = useState<Record<ProviderId, string>>({
     openai: "", claude: "", gemini: "", deepseek: "", meta: "",

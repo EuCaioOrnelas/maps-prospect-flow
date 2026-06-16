@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, Save, Loader2, FlaskConical, Sparkles } from "lucide-react";
-import { EquipeCanvas, type CanvasHandle } from "@/components/equipe-ia/canvas/EquipeCanvas";
+import { ChevronLeft, Save, Loader2, FlaskConical, Sparkles, Check } from "lucide-react";
+import { EquipeCanvas, type CanvasHandle, type CanvasState } from "@/components/equipe-ia/canvas/EquipeCanvas";
 import { EquipeTestChatDialog } from "@/components/equipe-ia/EquipeTestChatDialog";
 import { MandatoryProviderDialog } from "@/components/equipe-ia/MandatoryProviderDialog";
 import { useUserAICredentials } from "@/hooks/useUserAICredentials";
@@ -19,6 +19,20 @@ export default function EquipeBuilder() {
   const save = useSaveCanvas();
   const canvasRef = useRef<CanvasHandle>(null);
   const [testOpen, setTestOpen] = useState(false);
+  const [autoState, setAutoState] = useState<"idle" | "saving" | "saved">("idle");
+  const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const autoSave = useCallback((state: CanvasState) => {
+    if (!id) return;
+    setAutoState("saving");
+    save.mutateAsync({ equipeId: id, state })
+      .then(() => {
+        setAutoState("saved");
+        if (autoTimer.current) clearTimeout(autoTimer.current);
+        autoTimer.current = setTimeout(() => setAutoState("idle"), 1500);
+      })
+      .catch(() => setAutoState("idle"));
+  }, [id, save]);
 
   const hasIA = useMemo(
     () => (credsQ.data ?? []).some((c) => c.is_active && c.api_key),
@@ -64,6 +78,15 @@ export default function EquipeBuilder() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {autoState !== "idle" && (
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1 mr-1">
+              {autoState === "saving" ? (
+                <><Loader2 className="size-3 animate-spin" /> Salvando…</>
+              ) : (
+                <><Check className="size-3 text-emerald-500" /> Salvo</>
+              )}
+            </span>
+          )}
           <Button variant="outline" size="sm" onClick={handleTest} disabled={loading || !hasIA}>
             <FlaskConical className="size-3.5 mr-1.5" /> Testar
           </Button>
@@ -98,7 +121,7 @@ export default function EquipeBuilder() {
             </div>
           </div>
         ) : (
-          <EquipeCanvas ref={canvasRef} initial={canvas} />
+          <EquipeCanvas ref={canvasRef} initial={canvas} onAutoSave={autoSave} />
         )}
       </div>
 
