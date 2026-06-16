@@ -8,6 +8,7 @@ import {
   addEdge,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   type Connection,
   type Edge,
   type Node,
@@ -44,12 +45,13 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initial.edges);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const { screenToFlowPosition } = useReactFlow();
 
   useImperativeHandle(ref, () => ({
     getState: () => ({ nodes, edges }),
   }), [nodes, edges]);
 
-  // Debounced auto-save: persists changes silently so navigating away never loses work.
   const firstRun = useRef(true);
   useEffect(() => {
     if (!onAutoSave) return;
@@ -63,22 +65,26 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
     [setEdges],
   );
 
-  const addNode = useCallback(
-    (kind: string) => {
+  const createNode = useCallback(
+    (kind: string, position: { x: number; y: number }) => {
       const meta = EQUIPE_NODE_META[kind as EquipeNodeKind];
       if (!meta) return;
-      const id = uid();
       setNodes((nds) => [
         ...nds,
         {
-          id,
+          id: uid(),
           type: "equipe",
-          position: { x: 200 + Math.random() * 400, y: 100 + Math.random() * 400 },
+          position,
           data: { kind, title: meta.label, summary: "" },
         },
       ]);
     },
     [setNodes],
+  );
+
+  const addNode = useCallback(
+    (kind: string) => createNode(kind, { x: 200 + Math.random() * 400, y: 100 + Math.random() * 400 }),
+    [createNode],
   );
 
   const selectedNode = useMemo(
@@ -104,7 +110,18 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
   return (
     <div className="flex h-full w-full overflow-hidden relative">
       <NodePalette onAdd={addNode} />
-      <div className="flex-1 relative bg-[#0a0e1a]">
+      <div
+        ref={wrapperRef}
+        className="flex-1 relative"
+        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+        onDrop={(e) => {
+          e.preventDefault();
+          const kind = e.dataTransfer.getData("application/equipe-node-kind");
+          if (!kind) return;
+          const position = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+          createNode(kind, position);
+        }}
+      >
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -115,15 +132,17 @@ const CanvasInner = forwardRef<CanvasHandle, Props>(function CanvasInner({ initi
           onPaneClick={() => setSelectedId(null)}
           nodeTypes={nodeTypes}
           fitView
+          fitViewOptions={{ padding: 0.3 }}
           defaultEdgeOptions={{
             animated: true,
-            style: { strokeWidth: 1.5, stroke: "hsl(var(--primary) / 0.6)" },
+            style: { strokeWidth: 2, stroke: "hsl(var(--muted-foreground) / 0.45)", strokeLinecap: "round" },
           }}
           proOptions={{ hideAttribution: true }}
+          className="bg-background"
         >
-          <Background gap={18} size={1.2} color="hsl(var(--primary) / 0.18)" />
-          <Controls className="!bg-card !border !rounded-lg" />
-          <MiniMap pannable className="!bg-card !border !rounded-lg" />
+          <Background color="hsl(var(--border) / 0.25)" gap={24} size={1} variant={"dots" as any} />
+          <Background id="grid" color="hsl(var(--border) / 0.08)" gap={24} variant={"lines" as any} />
+          <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
         </ReactFlow>
         <NodeConfigDrawer
           node={
