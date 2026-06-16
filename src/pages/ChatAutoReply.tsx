@@ -48,7 +48,7 @@ const DEFAULT_CFG: Config = {
 
 export default function ChatAutoReply() {
   const navigate = useNavigate();
-  const { user, accountOwnerId } = useAuth();
+  const { user, accountOwnerId, profile: authProfile } = useAuth();
   const ownerId = accountOwnerId || user?.id || null;
   const [profile, setProfile] = useState<any>(null);
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -75,7 +75,7 @@ export default function ChatAutoReply() {
   };
 
   useEffect(() => {
-    if (!user || !ownerId) return;
+    if (!user || !ownerId || !authProfile) return;
     let cancelled = false;
     setConnectionsLoaded(false);
     supabase.from("profiles").select("plan, name, email, avatar_url").eq("id", user.id).single()
@@ -93,7 +93,7 @@ export default function ChatAutoReply() {
         setConnectionsLoaded(true);
       });
     return () => { cancelled = true; };
-  }, [user, ownerId]);
+  }, [user, ownerId, authProfile]);
 
   useEffect(() => {
     if (!selectedId || !user) return;
