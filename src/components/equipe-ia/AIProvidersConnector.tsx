@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, ExternalLink, Info, ChevronDown } from "lucide-react";
+import { CheckCircle2, ExternalLink, Info, ChevronDown, Sparkles } from "lucide-react";
 import { AI_PROVIDERS, ProviderId } from "@/lib/aiProviders";
 import { cn } from "@/lib/utils";
 
