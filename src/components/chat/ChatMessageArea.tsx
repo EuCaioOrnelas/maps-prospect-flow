@@ -1006,27 +1006,16 @@ export function ChatMessageArea({
                                     </span>
                                   </div>
                                 )}
-                                {isOutbound && (() => {
-                                  const src = (msg.metadata as any)?.source;
-                                  if (src !== "flow" && src !== "ai_agent" && src !== "auto_reply" && !(msg.metadata as any)?.auto_reply) return null;
-                                  const label = src === "flow"
-                                    ? `Fluxo${(msg.metadata as any)?.flow_name ? ` · ${(msg.metadata as any).flow_name}` : ""}`
-                                    : src === "ai_agent"
-                                      ? `Agente IA${(msg.metadata as any)?.agent_name ? ` · ${(msg.metadata as any).agent_name}` : ""}`
-                                      : "Resposta automática";
-                                  const cls = src === "flow"
-                                    ? "bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-500/30"
-                                    : src === "ai_agent"
-                                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
-                                      : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
-                                  return (
-                                    <div className="px-[9px] pb-[4px] -mt-[2px]">
-                                      <span className={cn("inline-flex items-center gap-1 text-[10px] leading-[14px] px-1.5 py-[1px] rounded-full border font-medium", cls)}>
-                                        {src === "flow" ? "⚡" : src === "ai_agent" ? "🤖" : "↩"} {label}
-                                      </span>
-                                    </div>
-                                  );
-                                })()}
+                                {isOutbound && (msg.metadata as any)?.source === "flow" && (
+                                  <div className="px-[9px] pb-[4px] -mt-[2px]">
+                                    <span
+                                      title={(msg.metadata as any)?.flow_name ? `Fluxo: ${(msg.metadata as any).flow_name}` : "Enviado pelo fluxo"}
+                                      className="inline-flex items-center justify-center w-[14px] h-[14px] rounded-full bg-foreground/10 text-foreground/60 text-[9px] leading-none"
+                                    >
+                                      ⚡
+                                    </span>
+                                  </div>
+                                )}
                                 <div className="flex items-center justify-end gap-[3px] px-[7px] pb-[5px] -mt-[2px]">
                                   <span className="text-[11px] leading-[15px] wa-text-timestamp select-none">
                                     {format(parseISO(msg.created_at), "HH:mm")}
