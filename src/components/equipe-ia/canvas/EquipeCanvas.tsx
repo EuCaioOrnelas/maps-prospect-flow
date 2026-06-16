@@ -59,6 +59,22 @@ export const KIND_ICON_BG: Record<EquipeNodeKind, string> = {
   escalation:      "bg-yellow-500",
 };
 
+// Sidebar palette accent — mirrors the flow editor (soft tinted chip + colored label).
+const KIND_PALETTE_ACCENT: Record<EquipeNodeKind, { text: string; bg: string }> = {
+  core:            { text: "text-primary",     bg: "bg-primary/10" },
+  goal:            { text: "text-emerald-400", bg: "bg-emerald-500/10" },
+  rules:           { text: "text-rose-400",    bg: "bg-rose-500/10" },
+  decision:        { text: "text-fuchsia-400", bg: "bg-fuchsia-500/10" },
+  memory:          { text: "text-violet-400",  bg: "bg-violet-500/10" },
+  knowledge:       { text: "text-amber-400",   bg: "bg-amber-500/10" },
+  crm_data:        { text: "text-sky-400",     bg: "bg-sky-500/10" },
+  data_collection: { text: "text-cyan-400",    bg: "bg-cyan-500/10" },
+  analysis:        { text: "text-teal-400",    bg: "bg-teal-500/10" },
+  tools:           { text: "text-indigo-400",  bg: "bg-indigo-500/10" },
+  actions:         { text: "text-orange-400",  bg: "bg-orange-500/10" },
+  escalation:      { text: "text-yellow-400",  bg: "bg-yellow-500/10" },
+};
+
 function uid() {
   return `n_${Math.random().toString(36).slice(2, 10)}`;
 }
