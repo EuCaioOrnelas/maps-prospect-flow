@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronDown, ChevronUp, KeyRound, BotMessageSquare, PowerOff, Calendar, Clock, Type, Mail, Bell, UserPlus, ListOrdered, Zap, MousePointerClick, List, Check, Target, ArrowRight, Repeat, ClipboardList } from "lucide-react";
+import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronDown, ChevronUp, KeyRound, BotMessageSquare, Bot, PowerOff, Calendar, Clock, Type, Mail, Bell, UserPlus, ListOrdered, Zap, MousePointerClick, List, Check, Target, ArrowRight, Repeat, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { MessageContentBuilder } from "./MessageContentBuilder";
 import { OutOfWindowTemplateSection } from "./OutOfWindowTemplateSection";
@@ -1937,8 +1937,23 @@ function AgentLogicSection({ config, updateConfig }: { config: any; updateConfig
             <p className="text-[10px] text-muted-foreground">Descreva o critério que o agente deve seguir para encerrar a conversa e seguir o fluxo.</p>
           </div>
 
+          {/* Tom de voz */}
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium flex items-center gap-1.5"><Bot size={12} className="text-muted-foreground" /> Tom de voz do agente</Label>
+            <Select value={config.agent_tone || "neutral"} onValueChange={(v) => updateConfig("agent_tone", v)}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="direct">Direto · objetivo, frases curtas</SelectItem>
+                <SelectItem value="neutral">Neutro · profissional e equilibrado</SelectItem>
+                <SelectItem value="human">Humano · caloroso e conversacional</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">Controla como o agente escreve as respostas neste bloco.</p>
+          </div>
+
           {/* Comportamento de loop */}
           <div className="space-y-1.5">
+
             <Label className="text-[11px] font-medium flex items-center gap-1.5"><Repeat size={12} className="text-muted-foreground" /> Comportamento na conversa</Label>
             <Select value={loopBehavior} onValueChange={(v) => updateConfig("loop_behavior", v)}>
               <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>

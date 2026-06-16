@@ -1554,6 +1554,12 @@ async function runFlow(
           // Lógica & Objetivo (configurada no drawer)
           const agentObjective: string = (config.agent_objective || "").trim();
           const advanceCriteria: string = (config.advance_criteria || "").trim();
+          const agentTone: string = (config.agent_tone || "neutral").toLowerCase();
+          const toneInstruction = agentTone === "direct"
+            ? "Tom: MUITO direto e objetivo. Frases curtas, sem rodeios, sem floreios. Vá ao ponto em 1-2 frases."
+            : agentTone === "human"
+              ? "Tom: humano, caloroso e conversacional, como um amigo experiente no WhatsApp. Pode usar expressões naturais do dia-a-dia (ex.: 'beleza', 'tranquilo'), mas sem bajulação no início da mensagem."
+              : "Tom: profissional, direto e humano. Sem emojis a não ser que o usuário tenha pedido no prompt principal.";
           const loopBehavior: string = config.loop_behavior || "until_collected";
           const maxAttempts: number = Number(config.max_attempts || 3);
           // Obs: coleta estruturada de dados é responsabilidade do bloco "Coletar dados",
@@ -1624,7 +1630,7 @@ ${contextVars || "(nenhuma informação prévia)"}
 - Não repita perguntas já respondidas (consulte o histórico e o contexto).
 - PROIBIDO bajular ou agradecer em excesso. NUNCA inicie a mensagem com elogios, agradecimentos ou reações tipo: "Legal", "Perfeito", "Ótimo", "Maravilha", "Que bom", "Obrigado", "Show", "Bacana", "Top", "Excelente", "Entendi". Vá direto ao ponto.
 - Não chame o lead pelo nome em toda mensagem — use o nome no máximo 1x a cada 4 ou 5 mensagens, e só quando fizer sentido.
-- Tom: profissional, direto, humano. Sem emojis a não ser que o usuário tenha pedido no prompt principal.
+- ${toneInstruction}
 - SEMPRE termine sua mensagem com EXATAMENTE UM marcador de controle: [AVANCAR] ou [CONTINUAR].
 - Os marcadores [AVANCAR], [CONTINUAR] e [ROUTE:...] são INVISÍVEIS para o lead — serão removidos antes do envio.`;
 
