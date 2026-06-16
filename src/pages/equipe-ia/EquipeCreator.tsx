@@ -518,6 +518,69 @@ export default function EquipeCreator() {
         )}
       </div>
 
+      {/* Fullscreen loading overlay while AI is generating */}
+      {aiLoading && (
+        <motion.div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-background/85 backdrop-blur-sm"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        >
+          <div className="relative w-full max-w-md mx-auto px-6 text-center">
+            {/* Orbit animation: core + ring */}
+            <div className="relative mx-auto h-48 w-48 mb-8">
+              <motion.div
+                className="absolute inset-0 rounded-full border border-primary/20"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              >
+                {[0, 60, 120, 180, 240, 300].map((deg, i) => (
+                  <motion.span
+                    key={deg}
+                    className="absolute top-1/2 left-1/2 -mt-2 -ml-2 size-4 rounded-md bg-primary/80 shadow-[0_0_12px_hsl(var(--primary)/0.5)]"
+                    style={{ transform: `rotate(${deg}deg) translateY(-96px)` }}
+                    animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }}
+                    transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.15 }}
+                  />
+                ))}
+              </motion.div>
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-dashed border-primary/30"
+                animate={{ rotate: -360 }}
+                transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+              />
+              <motion.div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-16 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-2xl"
+                animate={{ scale: [1, 1.06, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Bot className="size-8" />
+              </motion.div>
+            </div>
+
+            <p className="text-base font-semibold text-foreground">Construindo seu colaborador</p>
+            <p className="text-xs text-muted-foreground mt-1">A Wiize IA está montando tudo pra você.</p>
+
+            <div className="mt-6 space-y-2 text-left">
+              {LOADING_STEPS.map((step, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs">
+                  {i < loadingStep ? (
+                    <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
+                  ) : i === loadingStep ? (
+                    <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
+                  ) : (
+                    <span className="size-3.5 rounded-full border border-border shrink-0" />
+                  )}
+                  <span className={cn(
+                    "transition-colors",
+                    i <= loadingStep ? "text-foreground" : "text-muted-foreground/60",
+                  )}>{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+
       {/* Mandatory IA dialog for AI mode */}
       <MandatoryProviderDialog
         open={aiDialogOpen}
