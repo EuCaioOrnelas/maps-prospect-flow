@@ -48,45 +48,51 @@ export default function EquipeList() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {workers.map((w) => (
-            <Card
-              key={w.id}
-              className="group relative hover:border-primary/60 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
-            >
-              <Link
-                to={`/equipe-ia/colaboradores/${w.id}`}
-                className="absolute inset-0 z-0"
-                aria-label={`Abrir ${w.name}`}
-              />
-              <CardContent className="p-5 relative z-10 pointer-events-none">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold truncate">{w.name}</p>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">{w.role || "Sem função"}</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0 pointer-events-auto">
+          {workers.map((w) => {
+            const s = (w.status ?? "").toLowerCase();
+            const st = s === "active"
+              ? { label: "Ativo", cls: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/20" }
+              : s === "draft" || s === "rascunho"
+              ? { label: "Rascunho", cls: "bg-amber-500/10 text-amber-600 ring-amber-500/20" }
+              : { label: "Inativo", cls: "bg-muted text-muted-foreground ring-border" };
+            return (
+              <Card
+                key={w.id}
+                className="group relative hover:border-primary/60 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+              >
+                <Link
+                  to={`/equipe-ia/colaboradores/${w.id}`}
+                  className="absolute inset-0 z-0"
+                  aria-label={`Abrir ${w.name}`}
+                />
+                <CardContent className="p-5 relative z-10 pointer-events-none">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 ring-1 ring-primary/15 flex items-center justify-center text-primary/80 shrink-0">
+                      <Bot className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold truncate">{w.name}</p>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">{w.role || "Sem função"}</p>
+                    </div>
                     <button
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(w.id, w.name); }}
-                      className="size-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                      className="pointer-events-auto size-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
                       title="Excluir"
                     >
                       <Trash2 className="size-4" />
                     </button>
-                    <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary">
-                      <Bot className="size-5" />
-                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className={`size-1.5 rounded-full ${w.status === "active" ? "bg-primary" : "bg-muted-foreground/40"}`} />
-                    <span className="capitalize">{w.status ?? "—"}</span>
-                  </span>
-                  {w.channel && (<><span className="text-border">•</span><span className="truncate">{w.channel}</span></>)}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex items-center justify-between gap-2 mt-4">
+                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-md ring-1 ${st.cls}`}>
+                      <span className="size-1.5 rounded-full bg-current" />
+                      {st.label}
+                    </span>
+                    {w.channel && <span className="text-[11px] text-muted-foreground truncate">{w.channel}</span>}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </EquipePageLayout>

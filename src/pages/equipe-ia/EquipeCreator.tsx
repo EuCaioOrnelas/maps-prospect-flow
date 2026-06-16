@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,16 +6,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
-  Bot, Loader2, Sparkles, ArrowLeft, Wand2,
+  Bot, Loader2, Sparkles, ArrowLeft, Wand2, CheckCircle2, AlertCircle,
   PencilRuler, LayoutTemplate, Phone, Headphones, Wallet,
 } from "lucide-react";
 import { useCreateEquipe } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
 import { EquipePageLayout } from "@/components/equipe-ia/EquipePageLayout";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 type Mode = "choose" | "blank" | "templates" | "ai";
+
+type ProviderId = "openai" | "claude" | "gemini" | "deepseek" | "meta";
+const PROVIDERS: { id: ProviderId; name: string; placeholder: string; helper: string }[] = [
+  { id: "openai",   name: "OpenAI",   placeholder: "sk-...",            helper: "Chave de API da OpenAI (plataform.openai.com)." },
+  { id: "claude",   name: "Claude (Anthropic)", placeholder: "sk-ant-...", helper: "Chave da Anthropic (console.anthropic.com)." },
+  { id: "gemini",   name: "Gemini (Google)",    placeholder: "AIza...",    helper: "Chave do Google AI Studio." },
+  { id: "deepseek", name: "DeepSeek", placeholder: "sk-...",            helper: "Chave da DeepSeek (platform.deepseek.com)." },
+  { id: "meta",     name: "Meta (Llama)", placeholder: "Token...",        helper: "Token de acesso da Meta para Llama API." },
+];
 
 const TEMPLATES = [
   { id: "sdr", icon: Phone, color: "text-emerald-500", bg: "bg-emerald-500/10",
@@ -36,9 +48,90 @@ const AI_SUGGESTIONS = [
   "Quero um colaborador que recupera carrinhos abandonados",
 ];
 
+function useUserCredentials() {
+  return useQuery({
+    queryKey: ["user_ai_credentials"],
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_ai_credentials")
+        .select("provider,api_key,is_active");
+      if (error) throw error;
+      return (data ?? []) as { provider: string; api_key: string | null; is_active: boolean }[];
+    },
+  });
+}
+
+function AIProvidersConfig({
+  enabled, setEnabled, keys, setKeys, savedProviders,
+}: {
+  enabled: Record<ProviderId, boolean>;
+  setEnabled: (v: Record<ProviderId, boolean>) => void;
+  keys: Record<ProviderId, string>;
+  setKeys: (v: Record<ProviderId, string>) => void;
+  savedProviders: Set<string>;
+}) {
+  return (
+    <div className="border rounded-xl p-4 bg-muted/30 space-y-3">
+      <div className="flex items-center gap-2">
+        <Sparkles className="size-4 text-primary" />
+        <p className="text-sm font-semibold">Conectar IAs do colaborador</p>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Ative pelo menos uma IA e informe a chave. Sem isso, o colaborador não pode operar.
+      </p>
+      <div className="space-y-2">
+        {PROVIDERS.map((p) => {
+          const isOn = enabled[p.id];
+          const hasSaved = savedProviders.has(p.id);
+          return (
+            <div key={p.id} className="rounded-lg border bg-card p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">{p.name}</p>
+                    {hasSaved && (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded ring-1 ring-emerald-500/20">
+                        <CheckCircle2 className="size-3" /> conectado
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{p.helper}</p>
+                </div>
+                <Switch
+                  checked={isOn}
+                  onCheckedChange={(v) => setEnabled({ ...enabled, [p.id]: v })}
+                />
+              </div>
+              {isOn && (
+                <div className="mt-3">
+                  <Input
+                    type="password"
+                    placeholder={hasSaved ? "•••••• (chave salva — preencha para substituir)" : p.placeholder}
+                    value={keys[p.id]}
+                    onChange={(e) => setKeys({ ...keys, [p.id]: e.target.value })}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function EquipeCreator() {
   const navigate = useNavigate();
   const create = useCreateEquipe();
+  const qc = useQueryClient();
+  const credsQ = useUserCredentials();
+  const savedProviders = useMemo(
+    () => new Set((credsQ.data ?? []).filter((c) => c.is_active && c.api_key).map((c) => c.provider)),
+    [credsQ.data],
+  );
+
   const [mode, setMode] = useState<Mode>("choose");
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
@@ -46,8 +139,52 @@ export default function EquipeCreator() {
   const [prompt, setPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
 
+  const [enabled, setEnabled] = useState<Record<ProviderId, boolean>>({
+    openai: false, claude: false, gemini: false, deepseek: false, meta: false,
+  });
+  const [keys, setKeys] = useState<Record<ProviderId, string>>({
+    openai: "", claude: "", gemini: "", deepseek: "", meta: "",
+  });
+
+  // Pre-enable providers the user already saved.
+  useEffect(() => {
+    if (!credsQ.data) return;
+    setEnabled((prev) => {
+      const next = { ...prev };
+      for (const c of credsQ.data) {
+        if (c.is_active && c.api_key) (next as Record<string, boolean>)[c.provider] = true;
+      }
+      return next;
+    });
+  }, [credsQ.data]);
+
+  const validation = useMemo(() => {
+    const active = PROVIDERS.filter((p) => enabled[p.id]);
+    if (active.length === 0) return { ok: false, msg: "Ative pelo menos uma IA." };
+    const missing = active.filter((p) => !savedProviders.has(p.id) && !keys[p.id].trim());
+    if (missing.length > 0) return { ok: false, msg: `Informe a chave de: ${missing.map((m) => m.name).join(", ")}.` };
+    return { ok: true, msg: "Configuração válida." };
+  }, [enabled, keys, savedProviders]);
+
+  async function persistCredentials(uid: string) {
+    const rows = PROVIDERS
+      .filter((p) => enabled[p.id] && keys[p.id].trim())
+      .map((p) => ({ user_id: uid, provider: p.id, api_key: keys[p.id].trim(), is_active: true }));
+    if (rows.length === 0) return;
+    const { error } = await supabase
+      .from("user_ai_credentials")
+      .upsert(rows as never, { onConflict: "user_id,provider" as never });
+    if (error) throw error;
+  }
+
   async function create_(payload: { name: string; role: string; description: string }) {
     if (!payload.name.trim()) { toast.error("Dê um nome ao colaborador."); return; }
+    if (!validation.ok) { toast.error(validation.msg); return; }
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id;
+    if (!uid) { toast.error("Sessão expirada."); return; }
+    await persistCredentials(uid);
+    qc.invalidateQueries({ queryKey: ["user_ai_credentials"] });
     const w = await create.mutateAsync(payload);
     toast.success("Colaborador criado!");
     navigate(`/equipe-ia/colaboradores/${w.id}`);
@@ -59,6 +196,7 @@ export default function EquipeCreator() {
   }
 
   async function useTemplate(t: (typeof TEMPLATES)[number]) {
+    if (!validation.ok) { toast.error(validation.msg); return; }
     try { await create_({ name: t.name, role: t.role, description: t.description }); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Erro ao criar"); }
   }
@@ -75,6 +213,19 @@ export default function EquipeCreator() {
     } finally {
       setAiLoading(false);
     }
+  }
+
+  function ValidationBanner() {
+    return (
+      <div className={cn(
+        "flex items-start gap-2 text-xs rounded-lg px-3 py-2 ring-1",
+        validation.ok ? "bg-emerald-500/5 text-emerald-700 ring-emerald-500/20"
+                      : "bg-amber-500/5 text-amber-700 ring-amber-500/20",
+      )}>
+        {validation.ok ? <CheckCircle2 className="size-3.5 mt-0.5 shrink-0" /> : <AlertCircle className="size-3.5 mt-0.5 shrink-0" />}
+        <span>{validation.msg}</span>
+      </div>
+    );
   }
 
   function MethodCard({
@@ -147,7 +298,7 @@ export default function EquipeCreator() {
             <CardContent className="p-6 space-y-4">
               <div>
                 <h2 className="text-lg font-semibold">Colaborador em branco</h2>
-                <p className="text-xs text-muted-foreground">Defina o básico e refine no construtor.</p>
+                <p className="text-xs text-muted-foreground">Defina o básico, conecte as IAs e refine no construtor.</p>
               </div>
               <div>
                 <Label>Nome do colaborador</Label>
@@ -161,9 +312,11 @@ export default function EquipeCreator() {
                 <Label>Descrição</Label>
                 <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="O que esse colaborador faz?" />
               </div>
+              <AIProvidersConfig enabled={enabled} setEnabled={setEnabled} keys={keys} setKeys={setKeys} savedProviders={savedProviders} />
+              <ValidationBanner />
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="ghost" onClick={() => setMode("choose")}>Cancelar</Button>
-                <Button onClick={submitBlank} disabled={create.isPending}>
+                <Button onClick={submitBlank} disabled={create.isPending || !validation.ok || !name.trim()}>
                   {create.isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
                   Criar colaborador
                 </Button>
@@ -173,11 +326,13 @@ export default function EquipeCreator() {
         )}
 
         {mode === "templates" && (
-          <div>
-            <div className="mb-5">
+          <div className="space-y-5">
+            <div>
               <h2 className="text-lg font-semibold">Modelos prontos</h2>
-              <p className="text-xs text-muted-foreground">Comece com uma configuração testada e refine depois.</p>
+              <p className="text-xs text-muted-foreground">Conecte as IAs e escolha um modelo para começar.</p>
             </div>
+            <AIProvidersConfig enabled={enabled} setEnabled={setEnabled} keys={keys} setKeys={setKeys} savedProviders={savedProviders} />
+            <ValidationBanner />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {TEMPLATES.map((t) => {
                 const Icon = t.icon;
@@ -185,8 +340,8 @@ export default function EquipeCreator() {
                   <button
                     key={t.id}
                     onClick={() => useTemplate(t)}
-                    disabled={create.isPending}
-                    className="text-left rounded-2xl border bg-card hover:border-primary/60 p-5 transition-colors disabled:opacity-60"
+                    disabled={create.isPending || !validation.ok}
+                    className="text-left rounded-2xl border bg-card hover:border-primary/60 p-5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", t.bg)}>
                       <Icon size={22} className={t.color} />
@@ -210,7 +365,7 @@ export default function EquipeCreator() {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold">Crie um colaborador com IA</h2>
-                  <p className="text-xs text-muted-foreground">Descreva seu objetivo e a IA gera um colaborador pronto pra usar.</p>
+                  <p className="text-xs text-muted-foreground">Descreva seu objetivo, conecte as IAs e a IA gera o colaborador.</p>
                 </div>
               </div>
               <Textarea
@@ -233,9 +388,11 @@ export default function EquipeCreator() {
                   ))}
                 </div>
               </div>
+              <AIProvidersConfig enabled={enabled} setEnabled={setEnabled} keys={keys} setKeys={setKeys} savedProviders={savedProviders} />
+              <ValidationBanner />
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="ghost" onClick={() => setMode("choose")}>Cancelar</Button>
-                <Button onClick={submitAI} disabled={aiLoading || create.isPending || !prompt.trim()}>
+                <Button onClick={submitAI} disabled={aiLoading || create.isPending || !prompt.trim() || !validation.ok}>
                   {(aiLoading || create.isPending) ? (
                     <Loader2 className="size-4 mr-2 animate-spin" />
                   ) : (
