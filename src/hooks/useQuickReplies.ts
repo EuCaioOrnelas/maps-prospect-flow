@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -30,12 +30,14 @@ export function useQuickReplies() {
   const { user, accountOwnerId } = useAuth();
   const [items, setItems] = useState<QuickReply[]>([]);
   const [loading, setLoading] = useState(true);
+  const initialized = useRef(false);
 
   const ownerId = accountOwnerId || user?.id || null;
 
   const load = useCallback(async () => {
     if (!ownerId) return;
-    setLoading(true);
+    // Only show loading on the first fetch; subsequent reloads update silently
+    if (!initialized.current) setLoading(true);
     const { data, error } = await supabase
       .from("chat_quick_replies" as any)
       .select("*")
@@ -47,6 +49,7 @@ export function useQuickReplies() {
     } else {
       setItems((data as any) || []);
     }
+    initialized.current = true;
     setLoading(false);
   }, [ownerId]);
 
