@@ -50,7 +50,7 @@ export function NodePalette({ onAdd }: Props) {
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 min-w-[240px]">
           <div>
             <p className="text-sm font-bold text-foreground">Cards</p>
-            <p className="text-[10px] text-muted-foreground">Clique para adicionar</p>
+            <p className="text-[10px] text-muted-foreground">Arraste ou clique para adicionar</p>
           </div>
           <button
             onClick={() => setOpen(false)}
@@ -87,10 +87,15 @@ export function NodePalette({ onAdd }: Props) {
                       const meta = EQUIPE_NODE_META[kind];
                       const Icon = meta.icon;
                       return (
-                        <button
+                        <div
                           key={kind}
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData("application/equipe-node-kind", kind);
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
                           onClick={() => onAdd(kind)}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/40 hover:border-primary/30 transition-all duration-200 text-left group shadow-sm"
+                          className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/40 hover:border-primary/30 transition-all duration-200 text-left group shadow-sm cursor-grab active:cursor-grabbing active:shadow-lg active:scale-[1.02] active:border-primary/50"
                         >
                           <div className={cn(
                             "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-muted/60 border border-border/40",
@@ -104,7 +109,7 @@ export function NodePalette({ onAdd }: Props) {
                               {meta.description}
                             </p>
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>

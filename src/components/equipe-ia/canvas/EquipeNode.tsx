@@ -26,7 +26,7 @@ function EquipeNodeInner({ data, selected }: NodeProps) {
       <div className="relative" style={{ width: size, height: size }}>
         {/* Outer glow */}
         <div
-          className="absolute inset-0 bg-primary/25 blur-3xl animate-pulse"
+          className="absolute inset-0 bg-primary/20 blur-3xl animate-pulse"
           style={{ clipPath: HEX_CLIP }}
         />
         {/* Outline hex */}
@@ -34,13 +34,9 @@ function EquipeNodeInner({ data, selected }: NodeProps) {
           className="absolute inset-2 bg-gradient-to-br from-primary/40 via-primary/20 to-primary/40"
           style={{ clipPath: HEX_CLIP }}
         />
-        {/* Inner hex (background) */}
+        {/* Inner hex (background) — themed */}
         <div
-          className={cn(
-            "absolute inset-[6px] flex items-center justify-center text-center",
-            "bg-gradient-to-br from-[#1a1f3a] via-[#0f1428] to-[#1a1f3a]",
-            "transition-all",
-          )}
+          className="absolute inset-[6px] flex items-center justify-center text-center bg-card transition-all"
           style={{ clipPath: HEX_CLIP }}
         >
           <div className="flex flex-col items-center gap-2 px-6">
@@ -51,25 +47,23 @@ function EquipeNodeInner({ data, selected }: NodeProps) {
               </div>
             </div>
             <p className="text-sm font-bold text-foreground tracking-tight">
-              {nodeData.title || "Workforce Core"}
+              {nodeData.title || "Núcleo do Colaborador"}
             </p>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
               Núcleo de Inteligência
             </p>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-medium text-emerald-300">Ativo</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">Ativo</span>
             </div>
           </div>
         </div>
-        {/* Selected ring */}
         {selected && (
           <div
             className="absolute inset-0 ring-2 ring-primary/60 pointer-events-none"
             style={{ clipPath: HEX_CLIP }}
           />
         )}
-        {/* Centered handles: edges visually terminate at the hex border because the shape covers them */}
         <Handle
           type="target"
           position={Position.Left}
