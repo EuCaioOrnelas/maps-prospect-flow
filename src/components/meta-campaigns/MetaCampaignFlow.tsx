@@ -444,7 +444,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
           ) : templates.length === 0 ? (
             <div className="text-center py-12">
               <MessageSquare size={40} className="text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">Nenhum template aprovado encontrado</p>
+              <p className="text-muted-foreground">Nenhum template encontrado para este número</p>
               <a
                 href="https://business.facebook.com/latest/whatsapp_manager/message_templates"
                 target="_blank"
