@@ -9,17 +9,12 @@ interface EquipeNodeData {
   title?: string;
   summary?: string;
   status?: string;
-  // Core-only — injected from canvas:
-  score?: number;
-  connectedCount?: number;
-  totalModules?: number;
-  workforceStatus?: "draft" | "active" | "inactive";
 }
 
 const HEX_CLIP = "polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%)";
 
 const KIND_ACCENT: Record<EquipeNodeKind, { text: string; bg: string; dot: string; border: string; glow: string }> = {
-  core:            { text: "text-primary",        bg: "bg-primary/10",        dot: "!bg-primary",         border: "border-primary/40",        glow: "shadow-[0_0_20px_-4px_hsl(var(--primary)/0.4)]" },
+  core:            { text: "text-foreground",     bg: "bg-muted",             dot: "!bg-muted-foreground", border: "border-border",                glow: "" },
   goal:            { text: "text-emerald-400",    bg: "bg-emerald-500/10",    dot: "!bg-emerald-400",     border: "hover:border-emerald-500/40", glow: "hover:shadow-[0_0_20px_-4px_hsl(160_84%_45%/0.35)]" },
   rules:           { text: "text-rose-400",       bg: "bg-rose-500/10",       dot: "!bg-rose-400",        border: "hover:border-rose-500/40",    glow: "hover:shadow-[0_0_20px_-4px_hsl(350_84%_60%/0.35)]" },
   decision:        { text: "text-fuchsia-400",    bg: "bg-fuchsia-500/10",    dot: "!bg-fuchsia-400",     border: "hover:border-fuchsia-500/40", glow: "hover:shadow-[0_0_20px_-4px_hsl(290_84%_60%/0.35)]" },
@@ -42,94 +37,49 @@ function EquipeNodeInner({ data, selected }: NodeProps) {
   const accent = KIND_ACCENT[nodeData.kind] ?? KIND_ACCENT.core;
 
   if (isCore) {
-    const size = 340;
-    const score = typeof nodeData.score === "number" ? nodeData.score : 0;
-    const connected = nodeData.connectedCount ?? 0;
-    const total = nodeData.totalModules ?? 10;
-    const workforceStatus = nodeData.workforceStatus ?? "draft";
-    const scoreTone =
-      score >= 85 ? "text-emerald-400" :
-      score >= 60 ? "text-amber-400" :
-      "text-rose-400";
-    const statusBadge =
-      workforceStatus === "active"
-        ? { label: "Ativo", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/40", dot: "bg-emerald-400" }
-        : workforceStatus === "inactive"
-        ? { label: "Inativo", cls: "bg-muted text-muted-foreground border-border", dot: "bg-muted-foreground" }
-        : { label: score >= 70 ? "Pronto para publicar" : "Rascunho", cls: "bg-primary/15 text-primary border-primary/40", dot: "bg-primary" };
-
+    const size = 280;
     return (
       <div className="relative" style={{ width: size, height: size }}>
-        {/* Outer glow */}
-        <div
-          className="absolute -inset-8 bg-primary/20 blur-3xl rounded-full pointer-events-none"
-          aria-hidden
-        />
-        {/* Hex border */}
+        {/* Subtle soft gray border ring (no strong glow) */}
         <div
           className={cn(
             "absolute inset-0 transition-colors",
-            selected ? "bg-primary" : "bg-primary/80",
+            selected ? "bg-border" : "bg-border/70",
           )}
           style={{ clipPath: HEX_CLIP }}
         />
         {/* Inner hex */}
         <div
-          className="absolute inset-[3px] bg-card flex items-center justify-center"
+          className="absolute inset-[2px] bg-card flex items-center justify-center"
           style={{ clipPath: HEX_CLIP }}
         >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              clipPath: HEX_CLIP,
-              boxShadow: "inset 0 0 60px 8px hsl(var(--primary) / 0.22)",
-            }}
-          />
-          <div className="relative flex flex-col items-center gap-3 px-10 text-center">
-            {/* Logo */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary/40 blur-2xl rounded-full" />
-              <div className="relative w-20 h-20 rounded-2xl bg-primary flex items-center justify-center shadow-[0_10px_30px_-8px_hsl(var(--primary)/0.7)]">
-                <img src={coreMarkAsset.url} alt="" className="size-12 select-none pointer-events-none" draggable={false} />
-              </div>
-            </div>
-
-            {/* Name + role */}
+          <div className="relative flex flex-col items-center gap-3 px-8 text-center">
+            {/* Big logo, no glow */}
+            <img
+              src={coreMarkAsset.url}
+              alt=""
+              className="size-32 select-none pointer-events-none"
+              draggable={false}
+            />
             <div className="space-y-0.5">
               <p className="text-base font-bold text-foreground tracking-tight leading-tight">
                 {nodeData.title || "Núcleo do Colaborador"}
               </p>
               {nodeData.summary && (
-                <p className="text-[11px] text-muted-foreground line-clamp-1 max-w-[220px]">
+                <p className="text-[11px] text-muted-foreground line-clamp-2 max-w-[200px]">
                   {nodeData.summary}
                 </p>
               )}
             </div>
-
-            {/* Score */}
-            <div className="flex items-baseline gap-1">
-              <span className={cn("text-3xl font-bold leading-none tabular-nums", scoreTone)}>{score}</span>
-              <span className="text-xs text-muted-foreground font-medium">/100</span>
-            </div>
-
-            {/* Modules */}
-            <div className="text-[10px] text-muted-foreground uppercase tracking-[0.15em] font-semibold">
-              {connected} de {total} módulos
-            </div>
-
-            {/* Status */}
-            <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full border", statusBadge.cls)}>
-              <span className={cn("w-1.5 h-1.5 rounded-full", statusBadge.dot)} />
-              <span className="text-[10px] font-semibold">{statusBadge.label}</span>
-            </div>
           </div>
         </div>
+        {/* Single hidden handle (floating edges compute closest point) */}
         <Handle
-          type="target" position={Position.Left} id="core-target"
+          type="source" position={Position.Top} id="src"
           style={{ left: "50%", top: "50%", width: 1, height: 1, transform: "translate(-50%, -50%)", background: "transparent", border: "none", opacity: 0, pointerEvents: "none" }}
         />
         <Handle
-          type="source" position={Position.Right} id="core-source"
+          type="target" position={Position.Top} id="tgt"
           style={{ left: "50%", top: "50%", width: 1, height: 1, transform: "translate(-50%, -50%)", background: "transparent", border: "none", opacity: 0, pointerEvents: "none" }}
         />
       </div>
@@ -175,8 +125,9 @@ function EquipeNodeInner({ data, selected }: NodeProps) {
           <p className="text-[11px] text-muted-foreground/60 mt-1 italic">Clique para configurar</p>
         )}
       </div>
-      <Handle type="target" position={Position.Left} className={cn("!w-2.5 !h-2.5 !border-2 !border-card !rounded-full", accent.dot)} />
-      <Handle type="source" position={Position.Right} className={cn("!w-2.5 !h-2.5 !border-2 !border-card !rounded-full", accent.dot)} />
+      {/* Floating edges use closest side — handles centered & hidden */}
+      <Handle type="target" position={Position.Left} id="tgt" className={cn("!w-2.5 !h-2.5 !border-2 !border-card !rounded-full opacity-0", accent.dot)} style={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }} />
+      <Handle type="source" position={Position.Right} id="src" className={cn("!w-2.5 !h-2.5 !border-2 !border-card !rounded-full opacity-0", accent.dot)} style={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }} />
     </div>
   );
 }
