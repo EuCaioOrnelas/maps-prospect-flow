@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Bot, MoreVertical } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import { EQUIPE_NODE_META, type EquipeNodeKind } from "../nodeTypes";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +11,31 @@ interface EquipeNodeData {
   status?: string;
 }
 
-const HEX_CLIP = "polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%)";
+// Sharp hexagon (flat-top). Single clip used by all hex layers so borders stay crisp.
+const HEX_CLIP = "polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%)";
+
+/**
+ * Tech-clean inner mark: a hexagon outline with three orbiting dots
+ * (Meta-AI / Wiize inspired). Pure SVG so it stays crisp at any size.
+ */
+function CoreMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round">
+      {/* outer hex */}
+      <path d="M32 6 L54 19 L54 45 L32 58 L10 45 L10 19 Z" />
+      {/* inner hex */}
+      <path d="M32 18 L44 25 L44 39 L32 46 L20 39 L20 25 Z" opacity="0.55" />
+      {/* center */}
+      <circle cx="32" cy="32" r="2.4" fill="currentColor" stroke="none" />
+      {/* orbital dots */}
+      <circle cx="32" cy="10" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="52" cy="44" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="44" r="1.8" fill="currentColor" stroke="none" />
+      {/* connecting lines (subtle) */}
+      <path d="M32 10 L32 18 M50 43 L44 39 M14 43 L20 39" opacity="0.4" />
+    </svg>
+  );
+}
 
 function EquipeNodeInner({ data, selected }: NodeProps) {
   const nodeData = data as unknown as EquipeNodeData;
@@ -21,70 +45,56 @@ function EquipeNodeInner({ data, selected }: NodeProps) {
   const isCore = meta.kind === "core";
 
   if (isCore) {
-    const size = 240;
+    const size = 260;
     return (
       <div className="relative" style={{ width: size, height: size }}>
-        {/* Outer glow */}
+        {/* Sharp solid border layer (no animation) */}
         <div
-          className="absolute inset-0 bg-primary/20 blur-3xl animate-pulse"
+          className={cn(
+            "absolute inset-0 transition-colors",
+            selected ? "bg-primary" : "bg-primary/70",
+          )}
           style={{ clipPath: HEX_CLIP }}
         />
-        {/* Outline hex */}
+        {/* Card body — 3px gap reveals the border above */}
         <div
-          className="absolute inset-2 bg-gradient-to-br from-primary/40 via-primary/20 to-primary/40"
-          style={{ clipPath: HEX_CLIP }}
-        />
-        {/* Inner hex (background) — themed */}
-        <div
-          className="absolute inset-[6px] flex items-center justify-center text-center bg-card transition-all"
+          className="absolute inset-[3px] bg-card flex items-center justify-center"
           style={{ clipPath: HEX_CLIP }}
         >
-          <div className="flex flex-col items-center gap-2 px-6">
+          {/* Soft inner glow hugging the inner border */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              clipPath: HEX_CLIP,
+              boxShadow: "inset 0 0 36px 4px hsl(var(--primary) / 0.18)",
+            }}
+          />
+          <div className="relative flex flex-col items-center gap-2.5 px-8 text-center">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/40 blur-xl rounded-full" />
-              <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-[0_0_30px_-4px_hsl(var(--primary))]">
-                <Bot className="size-7 text-primary-foreground" />
+              <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full" />
+              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/75 flex items-center justify-center shadow-[0_8px_24px_-8px_hsl(var(--primary)/0.6)]">
+                <CoreMark className="size-9 text-primary-foreground" />
               </div>
             </div>
-            <p className="text-sm font-bold text-foreground tracking-tight">
+            <p className="text-sm font-bold text-foreground tracking-tight leading-tight">
               {nodeData.title || "Núcleo do Colaborador"}
             </p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.18em] font-medium">
               Núcleo de Inteligência
             </p>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/12 border border-emerald-500/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-300">Ativo</span>
             </div>
           </div>
         </div>
-        {selected && (
-          <div
-            className="absolute inset-0 ring-2 ring-primary/60 pointer-events-none"
-            style={{ clipPath: HEX_CLIP }}
-          />
-        )}
         <Handle
-          type="target"
-          position={Position.Left}
-          id="core-target"
-          style={{
-            left: "50%", top: "50%", width: 1, height: 1,
-            transform: "translate(-50%, -50%)",
-            background: "transparent", border: "none", opacity: 0,
-            pointerEvents: "none",
-          }}
+          type="target" position={Position.Left} id="core-target"
+          style={{ left: "50%", top: "50%", width: 1, height: 1, transform: "translate(-50%, -50%)", background: "transparent", border: "none", opacity: 0, pointerEvents: "none" }}
         />
         <Handle
-          type="source"
-          position={Position.Right}
-          id="core-source"
-          style={{
-            left: "50%", top: "50%", width: 1, height: 1,
-            transform: "translate(-50%, -50%)",
-            background: "transparent", border: "none", opacity: 0,
-            pointerEvents: "none",
-          }}
+          type="source" position={Position.Right} id="core-source"
+          style={{ left: "50%", top: "50%", width: 1, height: 1, transform: "translate(-50%, -50%)", background: "transparent", border: "none", opacity: 0, pointerEvents: "none" }}
         />
       </div>
     );
