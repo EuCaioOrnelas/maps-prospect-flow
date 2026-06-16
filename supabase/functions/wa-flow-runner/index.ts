@@ -1626,7 +1626,7 @@ ${contextVars || "(nenhuma informação prévia)"}
 - Não chame o lead pelo nome em toda mensagem — use o nome no máximo 1x a cada 4 ou 5 mensagens, e só quando fizer sentido.
 - Tom: profissional, direto, humano. Sem emojis a não ser que o usuário tenha pedido no prompt principal.
 - SEMPRE termine sua mensagem com EXATAMENTE UM marcador de controle: [AVANCAR] ou [CONTINUAR].
-- Os marcadores [AVANCAR], [CONTINUAR] e [ROUTE:...] são INVISÍVEIS para o lead — serão removidos antes do envio.
+- Os marcadores [AVANCAR], [CONTINUAR] e [ROUTE:...] são INVISÍVEIS para o lead — serão removidos antes do envio.`;
 
           const openaiModel = (agent?.ai_provider === "openai" && agent?.ai_model)
             ? agent.ai_model
