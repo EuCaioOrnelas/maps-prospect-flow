@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, ExternalLink, Info, ChevronDown } from "lucide-react";
+import { CheckCircle2, ExternalLink, Info, ChevronDown, Sparkles } from "lucide-react";
 import { AI_PROVIDERS, ProviderId } from "@/lib/aiProviders";
 import { cn } from "@/lib/utils";
 
@@ -30,8 +30,8 @@ export function AIProvidersConnector({
         className="w-full flex items-center justify-between gap-3 px-5 py-4 hover:bg-muted/30 transition-colors"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-lg bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
-            <CheckCircle2 className="size-4" />
+          <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+            <Sparkles className="size-4" />
           </div>
           <div className="text-left min-w-0">
             <p className="text-sm font-semibold">Conectar IAs</p>
@@ -57,12 +57,17 @@ export function AIProvidersConnector({
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => setActive(p.id)}
+                    onClick={() => {
+                      setActive(p.id);
+                      // Click already activates the IA — no separate switch needed.
+                      if (!enabled[p.id]) setEnabled({ ...enabled, [p.id]: true });
+                    }}
                     className={cn(
                       "relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
                       isActive
                         ? "bg-card text-foreground shadow-sm ring-1 ring-border"
                         : "text-muted-foreground hover:text-foreground",
+                      enabled[p.id] && !isActive && "text-foreground",
                     )}
                   >
                     <img src={p.logo} alt="" className="size-4 object-contain" />
@@ -91,22 +96,15 @@ export function AIProvidersConnector({
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">{cur.helper}</p>
               </div>
-              {/* Compact switch */}
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isOn}
-                onClick={() => setEnabled({ ...enabled, [cur.id]: !isOn })}
-                className={cn(
-                  "relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0",
-                  isOn ? "bg-primary" : "bg-muted ring-1 ring-border",
-                )}
-              >
-                <span className={cn(
-                  "inline-block size-4 transform rounded-full bg-white shadow transition-transform",
-                  isOn ? "translate-x-[18px]" : "translate-x-0.5",
-                )} />
-              </button>
+              {isOn && (
+                <button
+                  type="button"
+                  onClick={() => setEnabled({ ...enabled, [cur.id]: false })}
+                  className="text-[11px] text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                >
+                  Desativar
+                </button>
+              )}
             </div>
 
             {isOn && (

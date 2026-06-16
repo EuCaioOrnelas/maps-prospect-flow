@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Bot, Loader2, Sparkles, ArrowLeft, Wand2, PencilRuler, LayoutTemplate,
-  Phone, Headphones, Wallet, User, Briefcase, FileText, SendIcon, CheckCircle2,
+  Phone, Headphones, Wallet, SendIcon, CheckCircle2,
 } from "lucide-react";
 import { useCreateEquipe } from "@/hooks/useEquipeIA";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ import { AI_PROVIDERS, ProviderId } from "@/lib/aiProviders";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 
-type Mode = "choose" | "blank" | "templates" | "ai";
+type Mode = "blank" | "templates" | "ai";
 type TemplateStep = "pick" | "connect";
 
 const TEMPLATES = [
@@ -71,14 +71,14 @@ export default function EquipeCreator() {
   const credsQ = useUserAICredentials();
 
   const urlMode = (searchParams.get("mode") as Mode | null);
-  const [mode, setMode] = useState<Mode>(
-    urlMode && ["blank", "templates", "ai"].includes(urlMode) ? urlMode : "choose",
-  );
+  const validMode = urlMode && ["blank", "templates", "ai"].includes(urlMode) ? urlMode : null;
+  const [mode, setMode] = useState<Mode>(validMode ?? "blank");
 
+  // No "choose" page: if no/invalid mode → redirect to home of Equipe IA.
   useEffect(() => {
-    const m = searchParams.get("mode") as Mode | null;
-    if (m && ["blank", "templates", "ai"].includes(m)) setMode(m);
-  }, [searchParams]);
+    if (!validMode) { navigate("/equipe-ia", { replace: true }); return; }
+    setMode(validMode);
+  }, [validMode, navigate]);
 
   // Blank form
   const [name, setName] = useState("");
@@ -184,40 +184,10 @@ export default function EquipeCreator() {
     }
   }
 
-  function MethodCard({
-    icon: Icon, title, subtitle, onClick, accent, badge,
-  }: {
-    icon: typeof Bot; title: string; subtitle: string; onClick: () => void;
-    accent?: string; badge?: string;
-  }) {
-    return (
-      <button
-        onClick={onClick}
-        className={cn(
-          "group relative flex flex-col items-center text-center gap-4 p-6 rounded-2xl border bg-card",
-          "hover:border-primary/40 hover:bg-primary/5 transition-all",
-        )}
-      >
-        {badge && (
-          <Badge className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 shadow-md">
-            {badge}
-          </Badge>
-        )}
-        <div className={cn("w-14 h-14 rounded-xl flex items-center justify-center transition-colors", accent ?? "bg-muted")}>
-          <Icon size={26} className={accent ? "text-primary" : "text-muted-foreground group-hover:text-primary"} />
-        </div>
-        <div>
-          <p className="font-semibold text-sm mb-1">{title}</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">{subtitle}</p>
-        </div>
-      </button>
-    );
-  }
-
   function SectionHeader({ icon: Icon, title, subtitle }: { icon: typeof Bot; title: string; subtitle: string }) {
     return (
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
           <Icon size={20} />
         </div>
         <div>
@@ -228,51 +198,15 @@ export default function EquipeCreator() {
     );
   }
 
-  function InputWithIcon({
-    icon: Icon, ...props
-  }: { icon: typeof Bot } & React.ComponentProps<typeof Input>) {
-    return (
-      <div className="relative">
-        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-        <Input {...props} className={cn("pl-9", props.className)} />
-      </div>
-    );
-  }
-
   return (
     <EquipePageLayout>
       <div className="max-w-4xl mx-auto">
-        {mode === "choose" && (
-          <>
-            <div className="flex items-center gap-2 text-xs font-medium text-primary uppercase tracking-wider">
-              <Sparkles className="size-3.5" /> Novo colaborador
-            </div>
-            <h1 className="text-3xl font-semibold tracking-tight mt-1">Criar colaborador</h1>
-            <p className="text-muted-foreground mt-1">Escolha como deseja começar.</p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-              <MethodCard icon={PencilRuler} title="Em branco"
-                subtitle="Comece do zero e monte tudo no construtor visual."
-                onClick={() => setMode("blank")} />
-              <MethodCard icon={LayoutTemplate} title="Usar modelo pronto"
-                subtitle="Templates prontos para SDR, suporte, cobrança e mais."
-                onClick={() => { setMode("templates"); setTplStep("pick"); }} />
-              <MethodCard icon={Wand2} title="Criar com IA"
-                subtitle="Descreva o que precisa e a IA monta seu colaborador."
-                onClick={() => setMode("ai")}
-                accent="bg-primary/10" badge="Recomendado" />
-            </div>
-          </>
-        )}
-
-        {mode !== "choose" && (
-          <button
-            onClick={() => { setMode("choose"); navigate("/equipe-ia/novo", { replace: true }); }}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4"
-          >
-            <ArrowLeft size={14} /> Voltar
-          </button>
-        )}
+        <button
+          onClick={() => navigate("/equipe-ia")}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4"
+        >
+          <ArrowLeft size={14} /> Voltar para Equipe IA
+        </button>
 
         {/* BLANK MODE */}
         {mode === "blank" && (
@@ -287,19 +221,16 @@ export default function EquipeCreator() {
                 <div className="space-y-3">
                   <div>
                     <Label className="text-xs">Nome do colaborador</Label>
-                    <InputWithIcon icon={User} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: SDR IA Wiize" />
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: SDR IA Wiize" />
                   </div>
                   <div>
                     <Label className="text-xs">Função / cargo</Label>
-                    <InputWithIcon icon={Briefcase} value={role} onChange={(e) => setRole(e.target.value)} placeholder="Ex.: Qualificador de leads B2B" />
+                    <Input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Ex.: Qualificador de leads B2B" />
                   </div>
                   <div>
                     <Label className="text-xs">Descrição</Label>
-                    <div className="relative">
-                      <FileText className="absolute left-3 top-3 size-4 text-muted-foreground pointer-events-none" />
-                      <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-                        placeholder="O que esse colaborador faz?" className="pl-9" />
-                    </div>
+                    <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
+                      placeholder="O que esse colaborador faz?" />
                   </div>
                 </div>
               </CardContent>
@@ -308,7 +239,7 @@ export default function EquipeCreator() {
             <AIProvidersConnector enabled={enabled} setEnabled={setEnabled} keys={keys} setKeys={setKeys} savedProviders={savedSet} />
 
             <div className="flex justify-end gap-2 pt-1">
-              <Button variant="ghost" onClick={() => setMode("choose")}>Cancelar</Button>
+              <Button variant="ghost" onClick={() => navigate("/equipe-ia")}>Cancelar</Button>
               <Button onClick={submitBlank} disabled={create.isPending || !name.trim()}>
                 {create.isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
                 Criar colaborador
