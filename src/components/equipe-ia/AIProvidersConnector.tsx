@@ -30,8 +30,8 @@ export function AIProvidersConnector({
         className="w-full flex items-center justify-between gap-3 px-5 py-4 hover:bg-muted/30 transition-colors"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-lg bg-primary/15 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
-            <CheckCircle2 className="size-4" />
+          <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+            <Sparkles className="size-4" />
           </div>
           <div className="text-left min-w-0">
             <p className="text-sm font-semibold">Conectar IAs</p>
