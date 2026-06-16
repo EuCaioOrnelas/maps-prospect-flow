@@ -1,0 +1,2 @@
+ALTER TABLE public.user_ai_credentials DROP CONSTRAINT IF EXISTS user_ai_credentials_user_id_provider_key;
+CREATE INDEX IF NOT EXISTS idx_user_ai_credentials_user_provider ON public.user_ai_credentials(user_id, provider);
