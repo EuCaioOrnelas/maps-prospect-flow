@@ -17,6 +17,9 @@ export function WARandomSplitNode({ data }: NodeProps) {
     { id: "out_0", name: "Saída 1" },
     { id: "out_1", name: "Saída 2" },
   ];
+  const stats = (data as any).stats as
+    | { total: number; variants: Record<string, { picked: number; share: number }> }
+    | undefined;
 
   const nodeRef = useRef<HTMLDivElement>(null);
   const outputRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -33,6 +36,8 @@ export function WARandomSplitNode({ data }: NodeProps) {
     setHandleTops(tops);
   }, [outputs.length]);
 
+  const equalShare = outputs.length > 0 ? 100 / outputs.length : 0;
+
   return (
     <div ref={nodeRef} className="bg-card border border-border rounded-xl shadow-sm w-52 relative">
       <FlowHandle type="target" position={Position.Left} />
@@ -45,22 +50,33 @@ export function WARandomSplitNode({ data }: NodeProps) {
             {String((data as any).label || "Random Split")}
           </p>
           <p className="text-[10px] text-muted-foreground">
-            {outputs.length} saídas aleatórias
+            {stats && stats.total > 0
+              ? `${stats.total} divisões reais`
+              : `${outputs.length} saídas aleatórias`}
           </p>
         </div>
       </div>
 
       <div className="px-3 py-2 space-y-1">
-        {outputs.map((o, i) => (
-          <div
-            key={o.id}
-            ref={(el) => { outputRefs.current[i] = el; }}
-            className="text-[10px] bg-muted/30 border border-border/30 rounded px-2 py-1.5 truncate flex items-center gap-1.5 font-semibold text-foreground"
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${dotColors[i % dotColors.length]} shrink-0`} />
-            {o.name}
-          </div>
-        ))}
+        {outputs.map((o, i) => {
+          const vs = stats?.variants?.[o.id];
+          const pct = vs ? vs.share : equalShare;
+          return (
+            <div
+              key={o.id}
+              ref={(el) => { outputRefs.current[i] = el; }}
+              className="text-[10px] bg-muted/30 border border-border/30 rounded px-2 py-1.5 flex items-center justify-between gap-2 font-semibold text-foreground"
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className={`w-1.5 h-1.5 rounded-full ${dotColors[i % dotColors.length]} shrink-0`} />
+                <span className="truncate">{o.name}</span>
+              </div>
+              <span className="text-[9px] font-bold text-muted-foreground shrink-0">
+                {pct.toFixed(0)}%
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {outputs.map((o, i) => (
