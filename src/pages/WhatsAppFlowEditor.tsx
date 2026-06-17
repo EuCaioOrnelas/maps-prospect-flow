@@ -243,6 +243,16 @@ export default function WhatsAppFlowEditor() {
   const edgesRef = useRef<Edge[]>([]);
   nodesRef.current = nodes;
   edgesRef.current = edges;
+  const { data: flowStats } = useFlowAnalytics(id);
+  const displayNodes = useMemo(() => {
+    if (!flowStats) return nodes;
+    return nodes.map((n) => {
+      if (n.type !== "ln" && n.type !== "random_split") return n;
+      const s = flowStats[n.id];
+      if (!s) return n;
+      return { ...n, data: { ...(n.data as any), stats: s } };
+    });
+  }, [nodes, flowStats]);
   const [flowName, setFlowName] = useState("Novo Fluxo");
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
