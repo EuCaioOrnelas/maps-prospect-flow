@@ -3,6 +3,8 @@ import { FlowHandle } from "./FlowHandle";
 import { FlaskConical, Trophy } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 
+type ObjectiveKey = "response_rate" | "click_rate" | "conversion" | "handoff_rate";
+
 const metricAbbr: Record<string, string> = {
   response_rate: "TR",
   click_rate: "CTR",
