@@ -1,6 +1,95 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { classifyMessage as sharedClassify } from "../_shared/messageClassifier.ts";
+
+// ========== INLINED MESSAGE CLASSIFIER (previously in _shared/messageClassifier.ts) ==========
+const GREETING_LEXICON = [
+  "oi", "ola", "olá", "opa", "eai", "e ai", "e aí",
+  "bom dia", "boa tarde", "boa noite", "bom dia!", "boa tarde!", "boa noite!",
+  "salve", "tudo bem", "tudo bom", "td bem", "tdb",
+];
+const FAREWELL_LEXICON = [
+  "tchau", "ate mais", "até mais", "ate logo", "até logo",
+  "obrigado", "obrigada", "valeu", "vlw", "vlw!", "vlw obrigado",
+  "agradeço", "agradecido", "agradecida", "grato", "grata",
+  "boa noite!", "boa semana", "ate amanha", "até amanhã",
+  "fechou", "show", "👍", "👌", "ok", "ok!", "okay",
+];
+const INTENT_BUY_NOW = [
+  "quero comprar", "quero fechar", "quero contratar", "fechado", "vamos fechar",
+  "pode mandar o pagamento", "como faço pra pagar", "como faço para pagar",
+  "manda o link de pagamento", "manda o pix", "manda o boleto",
+  "to dentro", "tô dentro", "topo", "topei", "manda ver", "bora fechar",
+];
+const INTENT_PRICE = [
+  "quanto custa", "qual o preço", "qual o valor", "valores", "preços",
+  "tabela de preço", "tabela de preços", "investimento", "qual o investimento",
+  "quanto fica", "quanto sai", "qto custa", "quanto é",
+];
+const INTENT_DEMO = [
+  "agendar", "marcar", "demonstração", "demo", "apresentação",
+  "quero ver funcionando", "posso testar", "tem teste", "trial",
+  "agenda", "disponibilidade", "horário", "que horas",
+];
+const OBJECTION_PRICE = [
+  "caro", "está caro", "tá caro", "ta caro", "muito caro",
+  "fora do orçamento", "fora do orcamento", "não tenho como pagar",
+  "nao tenho como pagar", "sem grana", "tá apertado",
+];
+const OBJECTION_TIMING = [
+  "depois", "mais pra frente", "mais para frente", "agora não", "agora nao",
+  "não é o momento", "nao e o momento", "vou pensar", "preciso pensar",
+  "deixa eu pensar", "te aviso", "te falo depois",
+];
+const OPT_OUT = [
+  "para de mandar", "pare de mandar", "não quero mais", "nao quero mais",
+  "remover meu número", "remova meu numero", "desinscrever", "sair da lista",
+  "denunciar", "reportar spam", "spam", "bloquear",
+];
+
+interface ClassifiedMessage {
+  normalized: string;
+  length: number;
+  isSocial: boolean;
+  isGreeting: boolean;
+  isFarewell: boolean;
+  intents: Array<"buy_now" | "price" | "demo">;
+  objections: Array<"price" | "timing">;
+  optOut: boolean;
+  emojiOnly: boolean;
+  isQuestion: boolean;
+}
+
+function _stripAccents(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+function _containsAny(text: string, lexicon: string[]): boolean {
+  return lexicon.some((kw) => text.includes(_stripAccents(kw.toLowerCase())));
+}
+const _EMOJI_REGEX = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F900}-\u{1F9FF}]/u;
+const _ONLY_PUNCT_REGEX = /^[\s\W_]*$/;
+
+function sharedClassify(raw: string | null | undefined): ClassifiedMessage {
+  const original = String(raw ?? "");
+  const length = original.length;
+  const normalized = _stripAccents(original.toLowerCase().trim());
+  const isGreeting = _containsAny(normalized, GREETING_LEXICON.map(_stripAccents).map((s) => s.toLowerCase()));
+  const isFarewell = _containsAny(normalized, FAREWELL_LEXICON.map(_stripAccents).map((s) => s.toLowerCase()));
+  const emojiOnly = !!normalized && (_ONLY_PUNCT_REGEX.test(normalized) || (!normalized.match(/[a-z0-9]/) && _EMOJI_REGEX.test(original)));
+  const intents: ClassifiedMessage["intents"] = [];
+  if (_containsAny(normalized, INTENT_BUY_NOW.map(_stripAccents))) intents.push("buy_now");
+  if (_containsAny(normalized, INTENT_PRICE.map(_stripAccents))) intents.push("price");
+  if (_containsAny(normalized, INTENT_DEMO.map(_stripAccents))) intents.push("demo");
+  const objections: ClassifiedMessage["objections"] = [];
+  if (_containsAny(normalized, OBJECTION_PRICE.map(_stripAccents))) objections.push("price");
+  if (_containsAny(normalized, OBJECTION_TIMING.map(_stripAccents))) objections.push("timing");
+  const optOut = _containsAny(normalized, OPT_OUT.map(_stripAccents));
+  const isQuestion = original.trim().endsWith("?");
+  const hasMeaningfulIntent = intents.length > 0 || objections.length > 0 || optOut;
+  const isShort = length <= 35;
+  const isSocial = !hasMeaningfulIntent && (emojiOnly || ((isGreeting || isFarewell) && isShort));
+  return { normalized, length, isSocial, isGreeting, isFarewell, intents, objections, optOut, emojiOnly, isQuestion };
+}
+// ========== END INLINED CLASSIFIER ==========
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
