@@ -45,6 +45,7 @@ import { WAGmailNode } from "@/components/wa-flow/nodes/WAGmailNode";
 import { WADataCollectNode } from "@/components/wa-flow/nodes/WADataCollectNode";
 import { WARatingNode } from "@/components/wa-flow/nodes/WARatingNode";
 import { WANodeConfigDrawer } from "@/components/wa-flow/WANodeConfigDrawer";
+import { useFlowAnalytics } from "@/hooks/useFlowAnalytics";
 import { FlowInactivityPopover } from "@/components/wa-flow/FlowInactivityPopover";
 import {
   AlertDialog,
