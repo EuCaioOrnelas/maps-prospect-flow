@@ -1094,11 +1094,29 @@ async function runFlow(
   let runError: any = null;
   let overflowed = false;
 
+  // Helper: marca evento (responded/clicked/handoff/converted) em todos os A/B tests
+  // já disparados nesta execução, para metrificar cada objetivo corretamente.
+  const markAbEvent = (kind: "responded" | "clicked" | "handoff" | "converted") => {
+    for (const k of Object.keys(ctx.variables)) {
+      if (!k.startsWith("__ab_")) continue;
+      // Pula chaves auxiliares (já são flags _responded/_clicked/_handoff/_converted/_at)
+      if (k.endsWith("_responded") || k.endsWith("_clicked") || k.endsWith("_handoff")
+        || k.endsWith("_converted") || k.endsWith("_at")) continue;
+      const flagKey = `${k}_${kind}`;
+      if (ctx.variables[flagKey] !== "1") ctx.variables[flagKey] = "1";
+    }
+  };
+
   // ── Capture EVERY user reply tied to the node they were paused on, so partial flow
   //    responses (rating without suggestion, button click, free text) always show up
   //    in collected_data / flow results even if the lead later abandons or hits inactivity.
   try {
     if (ctx.hasFreshUserInput && execution?.current_node_id) {
+      // Métricas A/B: toda mensagem conta como "responded"; se veio botão/list, "clicked".
+      markAbEvent("responded");
+      if (ctx.lastButtonId || (ctx.lastButtonTitle && ctx.lastButtonTitle.trim())) {
+        markAbEvent("clicked");
+      }
       const pausedNode = nodeMap.get(execution.current_node_id);
       if (pausedNode) {
         const rawName = String(pausedNode.name || pausedNode.node_type || "resposta");
@@ -1113,14 +1131,14 @@ async function runFlow(
           || "";
         if (value && ctx.variables[slug] !== value) {
           ctx.variables[slug] = value;
-          try {
-            await supabase
-              .from("wa_flow_executions")
-              .update({ collected_data: ctx.variables, last_user_message_at: new Date().toISOString() })
-              .eq("id", execution.id);
-          } catch (_e) { /* non-fatal */ }
         }
       }
+      try {
+        await supabase
+          .from("wa_flow_executions")
+          .update({ collected_data: ctx.variables, last_user_message_at: new Date().toISOString() })
+          .eq("id", execution.id);
+      } catch (_e) { /* non-fatal */ }
     }
   } catch (e) {
     console.warn("[wa-flow-runner] capture-user-reply failed:", e);
@@ -1409,10 +1427,13 @@ async function runFlow(
           r -= weights[i];
           if (r <= 0) { chosen = variants[i]; break; }
         }
-        // Registra métrica de A/B test selecionado
+        // Registra variante escolhida e timestamp para metrificação por objetivo
+        const variantId = chosen.id || chosen.label;
+        ctx.variables[`__ab_${node.id}`] = String(variantId);
+        ctx.variables[`__ab_${node.id}_at`] = new Date().toISOString();
         try {
           await supabase.from("wa_flow_executions")
-            .update({ collected_data: { ...ctx.variables, [`__ab_${node.id}`]: chosen.id || chosen.label } })
+            .update({ collected_data: ctx.variables })
             .eq("id", execution.id);
         } catch { /* ignore */ }
         currentNodeId = getTargetByHandle(bySource, node.id, chosen.id);
@@ -1432,6 +1453,7 @@ async function runFlow(
       }
 
       case "handoff": {
+        markAbEvent("handoff");
         const result = await executeHandoff(supabase, {
           flow, node, config, ctx, execution,
           userId: body.user_id, leadPhone: body.lead_phone, leadName: body.lead_name,
@@ -1521,6 +1543,11 @@ async function runFlow(
 
 
       case "end": {
+        // Conversão = execução chegou em end positivo. Pula ends negativos (fail/abandon).
+        const endKind = String(config.end_type || config.type || "success").toLowerCase();
+        if (endKind !== "fail" && endKind !== "abandon" && endKind !== "negative") {
+          markAbEvent("converted");
+        }
         if (config.end_message) {
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
             type: "text", content: interpolate(config.end_message, ctx.variables),
