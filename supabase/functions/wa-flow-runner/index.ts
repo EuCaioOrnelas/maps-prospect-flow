@@ -1422,6 +1422,11 @@ async function runFlow(
       case "random_split": {
         const outs: any[] = config.outputs || [{ id: "out_0" }, { id: "out_1" }];
         const chosen = outs[Math.floor(Math.random() * outs.length)];
+        try {
+          await supabase.from("wa_flow_executions")
+            .update({ collected_data: { ...ctx.variables, [`__rs_${node.id}`]: chosen.id } })
+            .eq("id", execution.id);
+        } catch { /* ignore */ }
         currentNodeId = getTargetByHandle(bySource, node.id, chosen.id);
         break;
       }
