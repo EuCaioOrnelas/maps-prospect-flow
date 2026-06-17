@@ -60,9 +60,11 @@ export function WAABTestNode({ data }: NodeProps) {
         {variants.map((v, i) => {
           const rank = v.rank;
           const stats = (data as any).stats as
-            | { variants: Record<string, { picked: number; rate: number }> }
+            | { variants: Record<string, { picked: number; share: number; response_rate: number; click_rate: number; conversion: number; handoff_rate: number }> }
             | undefined;
           const vs = stats?.variants?.[v.id];
+          const primaryObj = (objectives[0] as ObjectiveKey) || "conversion";
+          const rate = vs ? (vs as any)[primaryObj] ?? 0 : 0;
           return (
             <div
               key={v.id}
@@ -75,14 +77,18 @@ export function WAABTestNode({ data }: NodeProps) {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {vs && vs.picked > 0 && (
-                  <span className="text-[9px] font-bold text-emerald-400">
-                    {vs.rate.toFixed(0)}%
-                  </span>
-                )}
-                {vs && (
-                  <span className="text-[9px] text-muted-foreground/70">
-                    ({vs.picked})
-                  </span>
+                  <>
+                    <span className="text-[9px] font-bold text-emerald-400">
+                      {rate.toFixed(0)}%
+                    </span>
+                    <span className="text-[9px] text-muted-foreground/60">·</span>
+                    <span className="text-[9px] font-bold text-muted-foreground">
+                      {vs.share.toFixed(0)}%
+                    </span>
+                    <span className="text-[9px] text-muted-foreground/70">
+                      ({vs.picked})
+                    </span>
+                  </>
                 )}
                 {rank != null && rank <= 3 && (
                   <>
