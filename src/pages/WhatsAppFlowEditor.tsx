@@ -1079,7 +1079,7 @@ export default function WhatsAppFlowEditor() {
           }}
         >
           <ReactFlow
-            nodes={nodes}
+            nodes={displayNodes}
             edges={edges}
             onNodesChange={(changes) => {
               onNodesChange(changes);
