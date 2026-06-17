@@ -1453,6 +1453,7 @@ async function runFlow(
       }
 
       case "handoff": {
+        markAbEvent("handoff");
         const result = await executeHandoff(supabase, {
           flow, node, config, ctx, execution,
           userId: body.user_id, leadPhone: body.lead_phone, leadName: body.lead_name,
