@@ -59,22 +59,38 @@ export function WAABTestNode({ data }: NodeProps) {
       <div className="px-3 py-2 space-y-1">
         {variants.map((v, i) => {
           const rank = v.rank;
+          const stats = (data as any).stats as
+            | { variants: Record<string, { picked: number; rate: number }> }
+            | undefined;
+          const vs = stats?.variants?.[v.id];
           return (
             <div
               key={v.id}
               ref={(el) => { variantRefs.current[i] = el; }}
-              className="text-[10px] bg-muted/40 rounded px-2 py-1.5 truncate flex items-center justify-between"
+              className="text-[10px] bg-muted/40 rounded px-2 py-1.5 flex items-center justify-between gap-2"
             >
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                <span className="font-semibold text-foreground">{v.name}</span>
+                <span className="font-semibold text-foreground truncate">{v.name}</span>
               </div>
-              {rank != null && rank <= 3 && (
-                <div className="flex items-center gap-0.5">
-                  {rank === 1 && <Trophy size={9} className="text-amber-400" />}
-                  <span className="text-[9px] font-bold text-muted-foreground">{rank}°</span>
-                </div>
-              )}
+              <div className="flex items-center gap-1 shrink-0">
+                {vs && vs.picked > 0 && (
+                  <span className="text-[9px] font-bold text-emerald-400">
+                    {vs.rate.toFixed(0)}%
+                  </span>
+                )}
+                {vs && (
+                  <span className="text-[9px] text-muted-foreground/70">
+                    ({vs.picked})
+                  </span>
+                )}
+                {rank != null && rank <= 3 && (
+                  <>
+                    {rank === 1 && <Trophy size={9} className="text-amber-400" />}
+                    <span className="text-[9px] font-bold text-muted-foreground">{rank}°</span>
+                  </>
+                )}
+              </div>
             </div>
           );
         })}
