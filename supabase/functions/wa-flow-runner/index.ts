@@ -1543,6 +1543,11 @@ async function runFlow(
 
 
       case "end": {
+        // Conversão = execução chegou em end positivo. Pula ends negativos (fail/abandon).
+        const endKind = String(config.end_type || config.type || "success").toLowerCase();
+        if (endKind !== "fail" && endKind !== "abandon" && endKind !== "negative") {
+          markAbEvent("converted");
+        }
         if (config.end_message) {
           await sendMessage(supabase, flow, body.user_id, body.lead_phone, {
             type: "text", content: interpolate(config.end_message, ctx.variables),
