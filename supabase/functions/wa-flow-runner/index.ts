@@ -1427,10 +1427,13 @@ async function runFlow(
           r -= weights[i];
           if (r <= 0) { chosen = variants[i]; break; }
         }
-        // Registra métrica de A/B test selecionado
+        // Registra variante escolhida e timestamp para metrificação por objetivo
+        const variantId = chosen.id || chosen.label;
+        ctx.variables[`__ab_${node.id}`] = String(variantId);
+        ctx.variables[`__ab_${node.id}_at`] = new Date().toISOString();
         try {
           await supabase.from("wa_flow_executions")
-            .update({ collected_data: { ...ctx.variables, [`__ab_${node.id}`]: chosen.id || chosen.label } })
+            .update({ collected_data: ctx.variables })
             .eq("id", execution.id);
         } catch { /* ignore */ }
         currentNodeId = getTargetByHandle(bySource, node.id, chosen.id);
