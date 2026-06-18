@@ -74,6 +74,96 @@ serve(async (req) => {
     let failedCount = 0;
     const errors: string[] = [];
 
+    // Build a human-readable preview of the template message for the chat
+    const renderedPreview = (() => {
+      const vars = varKeys.map((k) => template_variables[k]);
+      if (vars.length > 0) return `[${template_name}] ${vars.join(" | ")}`;
+      return `[${template_name}]`;
+    })();
+
+    // Helper: persist outbound message into chat_conversations + chat_messages
+    async function persistOutboundChat(toPhone: string, wabaMessageId: string | null) {
+      try {
+        const phoneDigits = String(toPhone).replace(/\D/g, "");
+        if (!phoneDigits || !connection_id) return;
+        const last8 = phoneDigits.slice(-8);
+        const nowIso = new Date().toISOString();
+
+        const { data: conversation } = await supabase
+          .from("chat_conversations")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("waba_connection_id", connection_id)
+          .ilike("contact_phone", `%${last8}`)
+          .order("last_message_at", { ascending: false, nullsFirst: false })
+          .limit(1)
+          .maybeSingle();
+
+        let convId = conversation?.id as string | undefined;
+
+        if (!convId) {
+          const { data: created } = await supabase
+            .from("chat_conversations")
+            .insert({
+              user_id: user.id,
+              owner_user_id: user.id,
+              waba_connection_id: connection_id,
+              contact_phone: phoneDigits,
+              last_message_text: renderedPreview,
+              last_message_at: nowIso,
+              last_message_type: "text",
+              last_message_direction: "outbound",
+              unread_count: 0,
+            })
+            .select("id")
+            .single();
+          convId = created?.id;
+        } else {
+          await supabase
+            .from("chat_conversations")
+            .update({
+              last_message_text: renderedPreview,
+              last_message_at: nowIso,
+              last_message_type: "text",
+              last_message_direction: "outbound",
+            })
+            .eq("id", convId);
+        }
+
+        if (!convId) return;
+
+        if (wabaMessageId) {
+          const { data: existing } = await supabase
+            .from("chat_messages")
+            .select("id")
+            .eq("waba_message_id", wabaMessageId)
+            .maybeSingle();
+          if (existing) return;
+        }
+
+        await supabase.from("chat_messages").insert({
+          conversation_id: convId,
+          user_id: user.id,
+          owner_user_id: user.id,
+          waba_message_id: wabaMessageId,
+          direction: "outbound",
+          message_type: "text",
+          content: renderedPreview,
+          status: "sent",
+          status_updated_at: nowIso,
+          metadata: {
+            source: "campaign",
+            campaign_name: campaign_name || null,
+            template_name,
+            template_language: template_language || "pt_BR",
+            template_variables: template_variables || {},
+          },
+        });
+      } catch (e) {
+        console.error("[meta-send-campaign] persistOutboundChat failed:", e);
+      }
+    }
+
     // Send messages in batches
     const BATCH_SIZE = 50;
     for (let i = 0; i < phone_numbers.length; i += BATCH_SIZE) {
@@ -109,6 +199,13 @@ serve(async (req) => {
 
           if (response.ok) {
             successCount++;
+            try {
+              const okData = await response.json();
+              const wabaId = okData?.messages?.[0]?.id || null;
+              await persistOutboundChat(phone, wabaId);
+            } catch (persistErr) {
+              console.error("[meta-send-campaign] persist post-success error:", persistErr);
+            }
           } else {
             const errData = await response.json();
             failedCount++;
