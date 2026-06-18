@@ -56,7 +56,7 @@ export const SidebarNavItem = ({
       </div>
       {isExpanded && (
         <>
-          <span className="whitespace-nowrap overflow-hidden flex-1 text-left">
+          <span className="whitespace-nowrap overflow-hidden text-ellipsis flex-1 min-w-0 text-left">
             {title}
           </span>
           {hasSubmenu && (
