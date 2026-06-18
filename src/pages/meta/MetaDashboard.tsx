@@ -63,7 +63,7 @@ function deltaPct(curr: number, prev: number): number | undefined {
 
 export default function MetaDashboard() {
   const [end, setEnd] = useState<Date>(new Date());
-  const [start, setStart] = useState<Date>(subDays(new Date(), 30));
+  const [start, setStart] = useState<Date>(subDays(new Date(), 90));
   const [search, setSearch] = useState("");
 
   const range = useMemo(() => ({ start, end }), [start, end]);

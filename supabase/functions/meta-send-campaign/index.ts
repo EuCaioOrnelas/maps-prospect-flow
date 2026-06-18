@@ -254,7 +254,7 @@ serve(async (req) => {
 
     // Save campaign record
     const campaignNameFinal = campaign_name || `Meta ${new Date().toISOString().split("T")[0]}`;
-    await supabase.from("meta_campaigns").insert({
+    const { error: campaignInsertError } = await supabase.from("meta_campaigns").insert({
       user_id: user.id,
       connection_id: connection_id,
       campaign_name: campaignNameFinal,
@@ -266,6 +266,14 @@ serve(async (req) => {
       status: "completed",
       error_details: errors.length > 0 ? errors.slice(0, 20) : null,
     });
+    if (campaignInsertError) {
+      console.error("[meta-send-campaign] campaign insert failed:", campaignInsertError);
+      return new Response(
+        JSON.stringify({ error: "Campanha enviada, mas não foi salva no histórico", details: campaignInsertError.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    console.log(`[meta-send-campaign] campaign saved user=${user.id} recipients=${phone_numbers.length} success=${successCount} failed=${failedCount}`);
 
     // === Campaign issues notification ===
     // Trigger when campaign fully fails or failure rate is high (>30% with >=5 recipients)
