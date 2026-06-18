@@ -1057,10 +1057,17 @@ export default function OpportunitiesManagement() {
 
       {/* Approach Message Card */}
       <div data-tour="lead-approach-card" className="bg-card border border-border rounded-xl p-4 space-y-3">
-        <h4 className="text-sm font-semibold flex items-center gap-2">
-          <MessageSquare size={14} className="text-primary" />
-          Mensagem de Abordagem
-        </h4>
+        <div className="space-y-1.5">
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <MessageSquare size={14} className="text-primary" />
+            Mensagem de Follow-up (pós-resposta do template)
+          </h4>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            ⚡ <strong>Importante:</strong> esta <strong>NÃO</strong> é a mensagem fria de prospecção — o primeiro contato é feito por um <strong>template oficial da Meta</strong> (curto, pedindo só uma confirmação de interesse).
+            <br />
+            Esta mensagem é a <strong>resposta humana e consultiva</strong> que você manda <strong>depois que o lead respondeu "sim/pode/quero saber"</strong> ao template, já com a janela de 24h aberta. Por isso ela agradece o retorno, entrega valor e propõe o próximo passo.
+          </p>
+        </div>
         {lead.ai_approach_message ? (
           editingMessage ? (
             <div className="space-y-2">
@@ -1096,7 +1103,9 @@ export default function OpportunitiesManagement() {
             </div>
           )
         ) : (
-          <p className="text-sm text-muted-foreground italic py-2">Nenhuma mensagem gerada ainda. Clique em "Gerar abordagem personalizada com IA" para gerar.</p>
+          <p className="text-sm text-muted-foreground italic py-2">
+            Nenhum follow-up gerado ainda. Clique em "Gerar follow-up com IA" para criar a mensagem que será usada após a resposta do lead ao template.
+          </p>
         )}
       </div>
 
