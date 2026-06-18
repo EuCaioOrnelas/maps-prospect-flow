@@ -1861,6 +1861,7 @@ export type Database = {
           last_message_text: string | null
           last_message_type: string | null
           owner_user_id: string | null
+          phone_number_id: string | null
           pinned_at: string | null
           responsible_user_id: string | null
           unread_count: number | null
@@ -1885,6 +1886,7 @@ export type Database = {
           last_message_text?: string | null
           last_message_type?: string | null
           owner_user_id?: string | null
+          phone_number_id?: string | null
           pinned_at?: string | null
           responsible_user_id?: string | null
           unread_count?: number | null
@@ -1909,6 +1911,7 @@ export type Database = {
           last_message_text?: string | null
           last_message_type?: string | null
           owner_user_id?: string | null
+          phone_number_id?: string | null
           pinned_at?: string | null
           responsible_user_id?: string | null
           unread_count?: number | null

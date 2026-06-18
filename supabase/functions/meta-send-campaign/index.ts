@@ -82,11 +82,82 @@ serve(async (req) => {
     let failedCount = 0;
     const errors: string[] = [];
 
-    // Build a human-readable preview of the template message for the chat
+    // Fetch the full template definition from Meta so we can persist the real rendered
+    // message in the chat (instead of just "[template_name]").
+    let templateDef: any = null;
+    try {
+      // Discover waba_id from the connection row
+      const { data: connRow } = await supabase
+        .from("user_waba_connections")
+        .select("waba_id")
+        .eq("id", connection_id)
+        .maybeSingle();
+      const wabaId = connRow?.waba_id;
+      if (wabaId) {
+        const tplResp = await fetch(
+          `https://graph.facebook.com/v21.0/${wabaId}/message_templates?limit=100&fields=name,language,components&name=${encodeURIComponent(template_name)}`,
+          { headers: { Authorization: `Bearer ${access_token}` } }
+        );
+        const tplJson = await tplResp.json();
+        if (tplResp.ok && Array.isArray(tplJson?.data)) {
+          templateDef =
+            tplJson.data.find(
+              (t: any) => t.name === template_name && (!template_language || t.language === template_language)
+            ) || tplJson.data.find((t: any) => t.name === template_name) || null;
+        }
+      }
+    } catch (e) {
+      console.error("[meta-send-campaign] template fetch failed:", e);
+    }
+
+    // Render a human-readable preview of the outbound template message
     const renderedPreview = (() => {
+      // Fallback if we couldn't fetch the template
       const vars = varKeys.map((k) => template_variables[k]);
-      if (vars.length > 0) return `[${template_name}] ${vars.join(" | ")}`;
-      return `[${template_name}]`;
+      if (!templateDef) {
+        return vars.length > 0
+          ? `[${template_name}] ${vars.join(" | ")}`
+          : `[${template_name}]`;
+      }
+
+      const fillVars = (text: string): string =>
+        String(text || "").replace(/\{\{(\d+)\}\}/g, (_m, n) => {
+          const v = template_variables?.[String(n)];
+          return v !== undefined && v !== null && v !== "" ? String(v) : `{{${n}}}`;
+        });
+
+      const components: any[] = Array.isArray(templateDef.components) ? templateDef.components : [];
+      const parts: string[] = [];
+
+      const header = components.find((c) => String(c?.type).toUpperCase() === "HEADER");
+      if (header) {
+        const fmt = String(header.format || "TEXT").toUpperCase();
+        if (fmt === "TEXT" && header.text) parts.push(`*${fillVars(header.text)}*`);
+        else if (fmt === "IMAGE") parts.push("📷 [Imagem]");
+        else if (fmt === "VIDEO") parts.push("🎥 [Vídeo]");
+        else if (fmt === "DOCUMENT") parts.push("📄 [Documento]");
+      }
+
+      const bodyComp = components.find((c) => String(c?.type).toUpperCase() === "BODY");
+      if (bodyComp?.text) parts.push(fillVars(bodyComp.text));
+
+      const footer = components.find((c) => String(c?.type).toUpperCase() === "FOOTER");
+      if (footer?.text) parts.push(`_${footer.text}_`);
+
+      const buttonsComp = components.find((c) => String(c?.type).toUpperCase() === "BUTTONS");
+      if (buttonsComp && Array.isArray(buttonsComp.buttons) && buttonsComp.buttons.length > 0) {
+        const btnLines = buttonsComp.buttons.map((b: any) => {
+          const t = String(b?.type || "").toUpperCase();
+          const label = b?.text || "";
+          if (t === "URL") return `🔗 ${label}${b?.url ? ` (${b.url})` : ""}`;
+          if (t === "PHONE_NUMBER") return `📞 ${label}${b?.phone_number ? ` (${b.phone_number})` : ""}`;
+          return `🔘 ${label}`;
+        });
+        parts.push(btnLines.join("\n"));
+      }
+
+      const rendered = parts.filter(Boolean).join("\n\n").trim();
+      return rendered || `[${template_name}]`;
     })();
 
     // Helper: persist outbound message into chat_conversations + chat_messages
@@ -116,6 +187,7 @@ serve(async (req) => {
               user_id: user.id,
               owner_user_id: accountOwnerId,
               waba_connection_id: connection_id,
+              phone_number_id: phone_number_id,
               contact_phone: phoneDigits,
               last_message_text: renderedPreview,
               last_message_at: nowIso,
