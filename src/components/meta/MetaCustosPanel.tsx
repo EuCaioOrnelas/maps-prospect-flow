@@ -35,10 +35,11 @@ function deltaPct(curr: number, prev: number): number | undefined {
 
 // Preços oficiais Meta para Brasil — modelo PER-MESSAGE (vigente desde 01/07/2025)
 // Fonte: https://developers.facebook.com/docs/whatsapp/pricing (rate card BRL 2026)
+// Mantemos sincronizado com META_COST_PER_MSG em useMetaDashboard.ts
 const META_PRICING_BR: Record<string, number> = {
-  MARKETING: 0.50,       // R$ 0,45 – R$ 0,55 por mensagem entregue
-  UTILITY: 0.175,        // R$ 0,15 – R$ 0,20
-  AUTHENTICATION: 0.225, // R$ 0,20 – R$ 0,25
+  MARKETING: 0.12,       // R$ 0,12 por mensagem de marketing entregue
+  UTILITY: 0.08,         // R$ 0,08 por mensagem de utilidade
+  AUTHENTICATION: 0.10,  // R$ 0,10 por mensagem de autenticação
   SERVICE: 0,            // Mensagens de serviço dentro da CSW = grátis
 };
 

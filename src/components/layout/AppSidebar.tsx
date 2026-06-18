@@ -39,6 +39,7 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 import { useWarmingConnectionAlert } from "@/hooks/useWarmingConnectionAlert";
 import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
+import { useChatUnreadBadge } from "@/hooks/useChatUnreadBadge";
 import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDialog";
 import { SidebarNavItem } from "./SidebarNavItem";
 import logoIconNew from "@/assets/logo-icon-new.png";
@@ -73,6 +74,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const location = useLocation();
   const { signOut, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
+  const chatUnread = useChatUnreadBadge();
   const { role: accountRole } = useAccountRole();
   const canRole = (perm: AccountPermission) => roleHasPermission(accountRole, perm);
   const canSeeUsers = (isAdmin || accountRole === "owner" || accountRole === "admin") && canRole("usuarios");
@@ -512,6 +514,11 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 isActive={currentPath === "/chat"}
                 isExpanded={isExpanded}
                 tooltip="Chat"
+                badge={chatUnread > 0 ? (
+                  <div className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center leading-none">
+                    {chatUnread > 99 ? "99+" : chatUnread}
+                  </div>
+                ) : undefined}
               />
             </li>
             )}

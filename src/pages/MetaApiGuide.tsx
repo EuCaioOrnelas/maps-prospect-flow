@@ -165,7 +165,7 @@ const MetaApiGuide = () => {
                       <tr>
                         <td className="py-3 px-4 font-medium text-foreground">Marketing</td>
                         <td className="py-3 px-4 text-muted-foreground">Promoções, ofertas, novidades de produtos</td>
-                        <td className="py-3 px-4 text-foreground font-mono">~R$ 0,50</td>
+                        <td className="py-3 px-4 text-foreground font-mono">~R$ 0,12</td>
                       </tr>
                       <tr>
                         <td className="py-3 px-4 font-medium text-foreground">Utilidade</td>
@@ -473,7 +473,7 @@ const MetaApiGuide = () => {
                 />
                 <FAQItem
                   q="Preciso pagar algo para a Meta?"
-                  a="Sim. A Meta cobra por conversa iniciada. Os custos variam por categoria (marketing ~R$0,50, utilidade ~R$0,15). Conversas iniciadas pelo cliente são gratuitas. O saldo é gerenciado no Meta Business Suite."
+                  a="Sim. A Meta cobra por mensagem enviada. Os custos variam por categoria (marketing ~R$0,12, utilidade ~R$0,08). Conversas iniciadas pelo cliente são gratuitas. O saldo é gerenciado no Meta Business Suite."
                 />
                 <FAQItem
                   q="Posso conectar mais de um número?"
