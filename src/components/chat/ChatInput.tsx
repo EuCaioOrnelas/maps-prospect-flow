@@ -48,11 +48,14 @@ function fileTypeOf(file: File): "image" | "video" | "document" {
 }
 
 function pickAudioMime(): { mime: string; ext: string } {
+  // Prioriza formatos aceitos pela WhatsApp Cloud API (ogg/opus para voz).
+  // audio/mp4 fica por último (Safari) porque alguns provedores de storage
+  // rejeitam o content-type bruto do MediaRecorder.
   const candidates: Array<{ mime: string; ext: string }> = [
     { mime: "audio/ogg;codecs=opus", ext: "ogg" },
-    { mime: "audio/mp4", ext: "m4a" },
     { mime: "audio/webm;codecs=opus", ext: "webm" },
     { mime: "audio/webm", ext: "webm" },
+    { mime: "audio/mp4", ext: "m4a" },
   ];
   for (const c of candidates) {
     if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.(c.mime)) return c;

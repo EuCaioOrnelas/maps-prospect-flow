@@ -421,9 +421,21 @@ export function useChat() {
     // Upload to storage — path MUST start with user.id (RLS policy)
     const safeName = file.name.replace(/[^\w.\-]+/g, "_");
     const filePath = `${user.id}/${Date.now()}_${safeName}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    let { data: uploadData, error: uploadError } = await supabase.storage
       .from("chat-media")
       .upload(filePath, file, { contentType: file.type, upsert: false });
+
+    // Alguns content-types (ex: audio/mp4 gerado pelo MediaRecorder do Safari)
+    // são rejeitados pelo storage. Refaz o upload com content-type genérico
+    // para garantir o envio — o mime real é preservado em media_mime_type.
+    if (uploadError && /mime type|not supported/i.test(uploadError.message || "")) {
+      const retry = await supabase.storage
+        .from("chat-media")
+        .upload(filePath, file, { contentType: "application/octet-stream", upsert: false });
+      uploadData = retry.data;
+      uploadError = retry.error;
+    }
+
     if (uploadError || !uploadData) {
       console.error("[sendMedia] upload failed", uploadError);
       toast.error("Falha ao enviar arquivo", { description: uploadError?.message });
