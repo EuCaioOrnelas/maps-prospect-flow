@@ -127,9 +127,20 @@ IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se nã
       ? "SERVIÇO: Foque no PORTE e COMPLEXIDADE do negócio do lead. Mostre como o serviço terceirizado otimiza a operação."
       : "GENÉRICO: Use região, tipo de negócio e qualquer dado disponível. Se não há dados suficientes para personalizar, crie um gancho sobre a região e proponha uma conversa.";
 
-    const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Crie uma MENSAGEM DE ABORDAGEM personalizada para WhatsApp.
+    const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Crie uma MENSAGEM DE FOLLOW-UP personalizada para WhatsApp.
 
-CONTEXTO: MENSAGEM FRIA — primeiro contato. O lead NÃO te conhece.
+CONTEXTO CRÍTICO — LEIA COM ATENÇÃO:
+Esta mensagem NÃO é o primeiro contato. O primeiro contato já foi feito por um TEMPLATE oficial da Meta (mensagem curta, padronizada, perguntando se o lead tem interesse em saber mais sobre o que oferecemos).
+O lead JÁ RESPONDEU positivamente a esse template (ex: "sim", "pode", "quero saber", "manda detalhes", etc.) — ou seja, ele AUTORIZOU a conversa e a janela de 24h está aberta.
+Sua tarefa é gerar a SEGUNDA mensagem: a primeira resposta humana, consultiva e personalizada que vai dar continuidade à conversa AGORA que o lead demonstrou interesse.
+
+Por isso:
+- ❌ NÃO se apresente como se fosse um primeiro contato frio
+- ❌ NÃO pergunte se ele tem interesse (ele já disse que tem)
+- ❌ NÃO use frases como "tudo bem te chamar?", "posso te apresentar?", "pode te explicar?"
+- ✅ AGRADEÇA o retorno (de forma natural, em 1 linha) e já entregue VALOR
+- ✅ Fale como quem já foi autorizado: direto, consultivo, mostrando que entendeu o negócio dele
+- ✅ Conduza para o PRÓXIMO PASSO real (uma pergunta qualificadora, agendar uma call rápida, mandar material, etc.)
 
 ${companyContext}
 ${diagnosticContext}
@@ -147,24 +158,25 @@ DADOS DO LEAD:
 ${nicheStrategy}
 
 ═══ VARIAÇÃO NATURAL (SEED: ${uniqueSeed}) ═══
-A mensagem deve parecer escrita à mão, de forma única para ESTE lead específico.
-- Use o NOME DA EMPRESA, a CIDADE, o NICHO e os dados disponíveis como diferenciadores naturais
-- Varie levemente o tom, a forma de abordar e a pergunta de fechamento
-- Mantenha a mensagem natural e humana — nada forçado ou robótico
+A mensagem deve parecer escrita à mão por um vendedor humano, de forma única para ESTE lead específico.
+- Use o NOME DA EMPRESA, a CIDADE, o NICHO e os dados do diagnóstico como diferenciadores naturais
+- Varie levemente o tom, a forma de agradecer e o próximo passo proposto
+- Mantenha humano, consultivo, nada robótico ou genérico
 
-═══ ESTRUTURA OBRIGATÓRIA (4 parágrafos, separados por \\n\\n) ═══
-1. Abertura ATEMPORAL (ex: "Olá!", "Oi!", "E aí!") + GANCHO baseado ${hasDiagnostic && pontosFracos.length > 0 ? "nos PONTOS FRACOS do diagnóstico" : "na REGIÃO e TIPO DE NEGÓCIO do lead"}
-2. Apresentação breve (nome + empresa + o que faz em 1 linha)
-3. Proposta de valor conectada à DOR REAL do lead (use dados do diagnóstico se disponível)
-4. Fechamento gentil com pergunta leve
+═══ ESTRUTURA OBRIGATÓRIA (4 parágrafos curtos, separados por \\n\\n) ═══
+1. Agradecimento curto pelo retorno + reconhecimento de que viu o negócio dele (ex: "Show que respondeu! Dei uma olhada na [empresa] aqui em [cidade]...")
+2. Apresentação rápida (nome + empresa + o que faz em 1 linha, sem rodeios)
+3. Insight/valor real conectado à dor ou oportunidade detectada no diagnóstico — algo que mostre que ele NÃO está falando com um robô genérico
+4. Próximo passo claro e leve: uma pergunta qualificadora OU convite para uma call rápida de 10-15 min OU oferta de enviar um material/proposta
 
 ═══ REGRAS CRÍTICAS ═══
-- ⛔ PROIBIDO usar cumprimentos temporais: "Bom dia", "Boa tarde", "Boa noite" — a mensagem pode ser enviada a QUALQUER hora
-- ⛔ PROIBIDO usar "Tudo bem?", "Como vai?", "Como está?" — vá direto ao gancho
-- ⛔ PROIBIDO aberturas genéricas repetitivas — seja criativo e direto
+- ⛔ PROIBIDO cumprimentos temporais: "Bom dia", "Boa tarde", "Boa noite"
+- ⛔ PROIBIDO "Tudo bem?", "Como vai?", "Como está?" — o lead já respondeu, vá direto
+- ⛔ PROIBIDO pedir permissão de novo ("posso te apresentar?", "tudo bem se eu te explicar?")
+- ⛔ PROIBIDO tratar como mensagem fria — esta é a CONTINUAÇÃO de uma conversa
 - ${companyProfile ? `Represente "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : "Mensagem genérica"}
 - ${companyProfile ? `SOMENTE fale sobre "${companyProfile.company_products}" — NUNCA mencione serviços que a empresa NÃO vende` : ""}
-- ${companyProfile ? `Use "${companyProfile.company_differential}" como argumento` : ""}
+- ${companyProfile ? `Use "${companyProfile.company_differential}" como argumento natural` : ""}
 - Máx 4 parágrafos CURTOS separados por \\n\\n
 - NÃO mencione dados irrelevantes ao nicho (ex: não fale de avaliações se vende internet)
 - ${pontosFracos.length === 0 && hasDiagnostic ? "O diagnóstico não identificou pontos fracos específicos — use região e tipo de negócio como gancho" : ""}
@@ -172,7 +184,7 @@ A mensagem deve parecer escrita à mão, de forma única para ESTE lead específ
 
 Retorne APENAS JSON válido:
 {
-  "mensagem": "mensagem pronta para enviar",
+  "mensagem": "mensagem pronta para enviar como FOLLOW-UP após resposta positiva ao template",
   "analise_nicho": "como o nicho do lead se conecta ao serviço vendido (1-2 frases)",
   "analise_cidade": "mercado e concorrência na região (1-2 frases)",
   "pontos_fracos": ["ponto fraco 1 no contexto do serviço vendido"],
