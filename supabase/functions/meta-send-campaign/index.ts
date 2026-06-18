@@ -256,7 +256,6 @@ serve(async (req) => {
     const campaignNameFinal = campaign_name || `Meta ${new Date().toISOString().split("T")[0]}`;
     const { error: campaignInsertError } = await supabase.from("meta_campaigns").insert({
       user_id: user.id,
-      owner_user_id: user.id,
       connection_id: connection_id,
       campaign_name: campaignNameFinal,
       template_name: template_name,
