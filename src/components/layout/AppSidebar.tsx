@@ -74,6 +74,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const location = useLocation();
   const { signOut, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
+  const chatUnread = useChatUnreadBadge();
   const { role: accountRole } = useAccountRole();
   const canRole = (perm: AccountPermission) => roleHasPermission(accountRole, perm);
   const canSeeUsers = (isAdmin || accountRole === "owner" || accountRole === "admin") && canRole("usuarios");
