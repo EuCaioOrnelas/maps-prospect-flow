@@ -90,6 +90,7 @@ export function useMetaDashboard(
   const { user, accountOwnerId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Omit<MetaDashboardData, "loading">>(() => emptyData());
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const startISO = range.start.toISOString();
   const endISO = range.end.toISOString();
@@ -395,7 +396,27 @@ export function useMetaDashboard(
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [user?.id, accountOwnerId, startISO, endISO, responsibleUserId]);
+  }, [user?.id, accountOwnerId, startISO, endISO, responsibleUserId, refreshTick]);
+
+  useEffect(() => {
+    if (!user) return;
+    const ownerId = accountOwnerId || user.id;
+    const refresh = () => setRefreshTick((v) => v + 1);
+    const metaChannel = supabase
+      .channel(`meta-dashboard-meta-${ownerId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "meta_campaigns", filter: `owner_user_id=eq.${ownerId}` }, refresh)
+      .subscribe();
+    const whatsappChannel = supabase
+      .channel(`meta-dashboard-whatsapp-${ownerId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_campaigns", filter: `owner_user_id=eq.${ownerId}` }, refresh)
+      .subscribe();
+    const interval = setInterval(refresh, 15000);
+    return () => {
+      supabase.removeChannel(metaChannel);
+      supabase.removeChannel(whatsappChannel);
+      clearInterval(interval);
+    };
+  }, [user?.id, accountOwnerId]);
 
   return useMemo(() => ({ loading, ...data }), [loading, data]);
 }
