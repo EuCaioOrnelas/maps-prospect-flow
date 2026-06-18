@@ -488,15 +488,16 @@ const PhaseNumeroContent = () => (
         hint="Fica logo abaixo do nome de exibição do número."
         example="123456789012345"
       />
-      <BigLink href="https://business.facebook.com/wa/manage/phone-numbers/">
+      <BigLink href="https://business.facebook.com/latest/whatsapp_manager/phone_numbers/">
         Ver meus números no WhatsApp Manager
       </BigLink>
     </Step>
 
     <Step number={5} title="Copie o ID da conta WhatsApp (WABA ID)">
       <p>
-        Ainda na mesma página, no topo (em "Informações da conta"), vai aparecer outro número longo.
-        Esse é o <strong>WABA ID</strong>. Copie e guarde junto.
+        Abra as <strong>Configurações da conta do WhatsApp</strong>. No topo da página, em
+        "Informações da conta", vai aparecer um número longo — esse é o <strong>WABA ID</strong>.
+        Copie e guarde junto.
       </p>
       <IdBlock
         icon={<Hash size={16} className="text-[hsl(158_72%_32%)]" />}
@@ -504,8 +505,8 @@ const PhaseNumeroContent = () => (
         hint='Aparece no topo da página, em "Informações da conta".'
         example="987654321098765"
       />
-      <BigLink href="https://business.facebook.com/wa/manage/home/">
-        Abrir WhatsApp Manager
+      <BigLink href="https://business.facebook.com/latest/settings/whatsapp_account">
+        Abrir Configurações da conta WhatsApp
       </BigLink>
     </Step>
 
@@ -522,7 +523,7 @@ const PhaseUsuarioContent = () => (
 
     <Step number={1} title="Abra a página de Usuários do Sistema">
       <p>Clique no botão abaixo e faça login se pedir.</p>
-      <BigLink href="https://business.facebook.com/settings/system-users">
+      <BigLink href="https://business.facebook.com/latest/settings/system_users">
         Abrir Usuários do Sistema
       </BigLink>
     </Step>
@@ -542,7 +543,7 @@ const PhaseUsuarioContent = () => (
         <strong>"Atribuir ativos"</strong> e escolha <strong>"Aplicativos"</strong>. Selecione o app
         que você criou na Etapa 1, marque <strong>CONTROLE TOTAL</strong> e salve.
       </p>
-      <BigLink href="https://business.facebook.com/settings/system-users">
+      <BigLink href="https://business.facebook.com/latest/settings/system_users">
         Abrir Usuários do Sistema
       </BigLink>
     </Step>
