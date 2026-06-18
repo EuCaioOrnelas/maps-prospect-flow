@@ -75,7 +75,12 @@ export default function MetaCampanhas() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - 90);
+    return { from, to };
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [detailsCampaign, setDetailsCampaign] = useState<CampaignRow | null>(null);
   const webhookGate = useWebhookGate();
