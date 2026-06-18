@@ -480,6 +480,7 @@ serve(async (req) => {
                     user_id: userId,
                     owner_user_id: ownerUserId,
                     waba_connection_id: connectionId,
+                    phone_number_id: phoneNumberId,
                     contact_phone: from,
                     contact_name: contactName,
                     last_message_text: lastText,
