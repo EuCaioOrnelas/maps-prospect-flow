@@ -110,6 +110,8 @@ export function useMetaDashboard(
       const [
         campaignsRes,
         prevCampaignsRes,
+        metaCampaignsRes,
+        prevMetaCampaignsRes,
         leadsRes,
         prevLeadsRes,
         answeredLeadsRes,
@@ -123,6 +125,8 @@ export function useMetaDashboard(
       ] = await Promise.all([
         supabase.from("whatsapp_campaigns").select("id,name,status,sent_count,failed_count,total_responses,total_leads,created_at").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO).order("created_at", { ascending: false }),
         supabase.from("whatsapp_campaigns").select("sent_count,failed_count,total_responses,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
+        supabase.from("meta_campaigns").select("id,campaign_name,status,success_count,failed_count,total_recipients,created_at").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO).order("created_at", { ascending: false }),
+        supabase.from("meta_campaigns").select("success_count,failed_count,total_recipients,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
         withResp(supabase.from("leads").select("id,first_message_sent,has_responded,pipeline_stage_id,estimated_value,opportunity_level,created_at,responded_at").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO)),
         withResp(supabase.from("leads").select("id,estimated_value,opportunity_level,first_message_sent,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString())),
         withResp(supabase.from("leads").select("id", { count: "exact", head: true }).eq("owner_user_id", ownerId).eq("has_responded", true).gte("responded_at", startISO).lte("responded_at", endISO)),
@@ -137,7 +141,7 @@ export function useMetaDashboard(
       if (cancelled) return;
 
 
-      const campaigns = (campaignsRes.data || []).map((c: any) => ({
+      const whatsappCampaigns = (campaignsRes.data || []).map((c: any) => ({
         id: c.id,
         name: c.name,
         status: c.status,
@@ -148,6 +152,19 @@ export function useMetaDashboard(
         cost: (c.sent_count || 0) * META_COST_PER_MSG,
         created_at: c.created_at,
       })) as MetaCampaignRow[];
+      const officialMetaCampaigns = (metaCampaignsRes.data || []).map((c: any) => ({
+        id: c.id,
+        name: c.campaign_name,
+        status: c.status,
+        sent: c.success_count || 0,
+        failed: c.failed_count || 0,
+        replies: 0,
+        total_leads: c.total_recipients || 0,
+        cost: (c.success_count || 0) * META_COST_PER_MSG,
+        created_at: c.created_at,
+      })) as MetaCampaignRow[];
+      const campaigns = [...officialMetaCampaigns, ...whatsappCampaigns]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       const messagesSent = campaigns.reduce((s, c) => s + c.sent, 0);
       const messagesFailed = campaigns.reduce((s, c) => s + c.failed, 0);
@@ -155,8 +172,12 @@ export function useMetaDashboard(
       const responses = campaigns.reduce((s, c) => s + c.replies, 0);
       const deliveryRate = messagesSent > 0 ? ((messagesSent - messagesFailed) / messagesSent) * 100 : 0;
 
-      const prevSent = (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.sent_count || 0), 0);
-      const prevFailed = (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.failed_count || 0), 0);
+      const prevSent =
+        (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.sent_count || 0), 0) +
+        (prevMetaCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.success_count || 0), 0);
+      const prevFailed =
+        (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.failed_count || 0), 0) +
+        (prevMetaCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.failed_count || 0), 0);
       const prevResponses = (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.total_responses || 0), 0);
       const prevDeliveryRate = prevSent > 0 ? ((prevSent - prevFailed) / prevSent) * 100 : 0;
 
