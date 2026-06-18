@@ -75,7 +75,12 @@ export default function MetaCampanhas() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - 90);
+    return { from, to };
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [detailsCampaign, setDetailsCampaign] = useState<CampaignRow | null>(null);
   const webhookGate = useWebhookGate();
@@ -106,7 +111,24 @@ export default function MetaCampanhas() {
     setLoading(false);
   };
 
-  useEffect(() => { loadCampaigns(); }, [user?.id]);
+  useEffect(() => {
+    loadCampaigns();
+    if (!accountOwnerId) return;
+    const channel = supabase
+      .channel(`whatsapp-campaigns-${accountOwnerId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "whatsapp_campaigns", filter: `owner_user_id=eq.${accountOwnerId}` },
+        () => loadCampaigns()
+      )
+      .subscribe();
+    const interval = setInterval(loadCampaigns, 15000);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, accountOwnerId]);
 
   // Filtros (busca, status, intervalo de datas)
   const filteredCampaigns = useMemo(() => {
