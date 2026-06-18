@@ -25,6 +25,11 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const externalSupabaseUrl = Deno.env.get("EXTERNAL_SUPABASE_URL");
+    const externalServiceRoleKey = Deno.env.get("EXTERNAL_SUPABASE_SERVICE_ROLE_KEY");
+    const externalSupabase = externalSupabaseUrl && externalServiceRoleKey
+      ? createClient(externalSupabaseUrl, externalServiceRoleKey)
+      : null;
 
     // Get user from token
     const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
@@ -37,6 +42,13 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id,parent_owner_id")
+      .eq("id", user.id)
+      .maybeSingle();
+    const accountOwnerId = profile?.parent_owner_id || profile?.id || user.id;
 
     const body = await req.json();
     const {
@@ -82,17 +94,17 @@ serve(async (req) => {
     })();
 
     // Helper: persist outbound message into chat_conversations + chat_messages
-    async function persistOutboundChat(toPhone: string, wabaMessageId: string | null) {
+    async function persistOutboundChat(db: any, toPhone: string, wabaMessageId: string | null) {
       try {
         const phoneDigits = String(toPhone).replace(/\D/g, "");
         if (!phoneDigits || !connection_id) return;
         const last8 = phoneDigits.slice(-8);
         const nowIso = new Date().toISOString();
 
-        const { data: conversation } = await supabase
+        const { data: conversation } = await db
           .from("chat_conversations")
           .select("id")
-          .eq("user_id", user.id)
+          .eq("owner_user_id", accountOwnerId)
           .eq("waba_connection_id", connection_id)
           .ilike("contact_phone", `%${last8}`)
           .order("last_message_at", { ascending: false, nullsFirst: false })
@@ -102,11 +114,11 @@ serve(async (req) => {
         let convId = conversation?.id as string | undefined;
 
         if (!convId) {
-          const { data: created } = await supabase
+          const { data: created } = await db
             .from("chat_conversations")
             .insert({
               user_id: user.id,
-              owner_user_id: user.id,
+              owner_user_id: accountOwnerId,
               waba_connection_id: connection_id,
               contact_phone: phoneDigits,
               last_message_text: renderedPreview,
@@ -119,7 +131,7 @@ serve(async (req) => {
             .single();
           convId = created?.id;
         } else {
-          await supabase
+          await db
             .from("chat_conversations")
             .update({
               last_message_text: renderedPreview,
@@ -133,7 +145,7 @@ serve(async (req) => {
         if (!convId) return;
 
         if (wabaMessageId) {
-          const { data: existing } = await supabase
+          const { data: existing } = await db
             .from("chat_messages")
             .select("id")
             .eq("waba_message_id", wabaMessageId)
@@ -141,10 +153,10 @@ serve(async (req) => {
           if (existing) return;
         }
 
-        await supabase.from("chat_messages").insert({
+        await db.from("chat_messages").insert({
           conversation_id: convId,
           user_id: user.id,
-          owner_user_id: user.id,
+          owner_user_id: accountOwnerId,
           waba_message_id: wabaMessageId,
           direction: "outbound",
           message_type: "text",
