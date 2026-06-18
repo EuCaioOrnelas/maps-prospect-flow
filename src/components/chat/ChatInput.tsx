@@ -103,15 +103,39 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   // Quick replies
   const { items: quickReplies } = useQuickReplies();
   const quickReplyCtx = useQuickReplyContext(conversation);
+  const { message: aiApproachMessage, leadName: aiApproachLeadName } = useContactAIApproach(conversation);
+
+  const aiApproachQR = useMemo<QuickReply | null>(() => {
+    if (!aiApproachMessage) return null;
+    return {
+      id: AI_APPROACH_QR_ID,
+      account_owner_id: "",
+      created_by_user_id: "",
+      shortcut: "ia",
+      title: aiApproachLeadName ? `Abordagem IA · ${aiApproachLeadName}` : "Abordagem IA",
+      content: aiApproachMessage,
+      media_url: null,
+      media_type: null,
+      media_filename: null,
+      created_at: "",
+      updated_at: "",
+    };
+  }, [aiApproachMessage, aiApproachLeadName]);
+
   const qrMatch = useMemo(() => {
     const m = text.match(/^\/([a-zA-Z0-9_\-]*)$/);
     return m ? m[1].toLowerCase() : null;
   }, [text]);
   const qrFiltered = useMemo(() => {
     if (qrMatch === null) return [];
-    if (qrMatch === "") return quickReplies.slice(0, 8);
-    return quickReplies.filter(q => q.shortcut.toLowerCase().startsWith(qrMatch)).slice(0, 8);
-  }, [qrMatch, quickReplies]);
+    const base = qrMatch === ""
+      ? quickReplies.slice(0, 8)
+      : quickReplies.filter(q => q.shortcut.toLowerCase().startsWith(qrMatch)).slice(0, 8);
+    if (aiApproachQR && (qrMatch === "" || "ia".startsWith(qrMatch))) {
+      return [aiApproachQR, ...base.filter(q => q.id !== AI_APPROACH_QR_ID)];
+    }
+    return base;
+  }, [qrMatch, quickReplies, aiApproachQR]);
   const qrOpen = qrMatch !== null && qrFiltered.length > 0;
 
   useEffect(() => { setQrIdx(0); }, [qrMatch, qrFiltered.length]);
