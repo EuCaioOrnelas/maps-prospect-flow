@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,10 @@ import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerConte
 import { ChatMessage } from "@/hooks/useChat";
 import { useQuickReplies, applyQuickReplyVariables, type QuickReply } from "@/hooks/useQuickReplies";
 import { useQuickReplyContext } from "@/hooks/useQuickReplyContext";
+import { useContactAIApproach } from "@/hooks/useContactAIApproach";
 import { QuickReplyPicker } from "./QuickReplyPicker";
+
+const AI_APPROACH_QR_ID = "__ai_approach__";
 
 interface ChatInputProps {
   onSendMessage: (text: string, replyToId?: string) => void;
@@ -100,15 +103,39 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   // Quick replies
   const { items: quickReplies } = useQuickReplies();
   const quickReplyCtx = useQuickReplyContext(conversation);
+  const { message: aiApproachMessage, leadName: aiApproachLeadName } = useContactAIApproach(conversation);
+
+  const aiApproachQR = useMemo<QuickReply | null>(() => {
+    if (!aiApproachMessage) return null;
+    return {
+      id: AI_APPROACH_QR_ID,
+      account_owner_id: "",
+      created_by_user_id: "",
+      shortcut: "ia",
+      title: aiApproachLeadName ? `Abordagem IA · ${aiApproachLeadName}` : "Abordagem IA",
+      content: aiApproachMessage,
+      media_url: null,
+      media_type: null,
+      media_filename: null,
+      created_at: "",
+      updated_at: "",
+    };
+  }, [aiApproachMessage, aiApproachLeadName]);
+
   const qrMatch = useMemo(() => {
     const m = text.match(/^\/([a-zA-Z0-9_\-]*)$/);
     return m ? m[1].toLowerCase() : null;
   }, [text]);
   const qrFiltered = useMemo(() => {
     if (qrMatch === null) return [];
-    if (qrMatch === "") return quickReplies.slice(0, 8);
-    return quickReplies.filter(q => q.shortcut.toLowerCase().startsWith(qrMatch)).slice(0, 8);
-  }, [qrMatch, quickReplies]);
+    const base = qrMatch === ""
+      ? quickReplies.slice(0, 8)
+      : quickReplies.filter(q => q.shortcut.toLowerCase().startsWith(qrMatch)).slice(0, 8);
+    if (aiApproachQR && (qrMatch === "" || "ia".startsWith(qrMatch))) {
+      return [aiApproachQR, ...base.filter(q => q.id !== AI_APPROACH_QR_ID)];
+    }
+    return base;
+  }, [qrMatch, quickReplies, aiApproachQR]);
   const qrOpen = qrMatch !== null && qrFiltered.length > 0;
 
   useEffect(() => { setQrIdx(0); }, [qrMatch, qrFiltered.length]);
@@ -556,11 +583,24 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
       {!attachments.length && (
         <div className="wa-composer-surface border-t wa-border-light">
-          {quickReplies.length > 0 && !qrOpen && (
+          {(quickReplies.length > 0 || aiApproachQR) && !qrOpen && (
             <div className="relative">
               <div className="absolute left-0 top-0 bottom-0 w-4 wa-composer-fade-left pointer-events-none z-10" />
               <div className="absolute right-0 top-0 bottom-0 w-10 wa-composer-fade-right pointer-events-none z-10" />
               <div className="flex gap-2 overflow-x-auto px-3 pt-2 pb-1 no-scrollbar scroll-smooth snap-x snap-mandatory">
+                {aiApproachQR && (
+                  <button
+                    type="button"
+                    onClick={() => void applyQuickReply(aiApproachQR)}
+                    title={aiApproachQR.title || "Abordagem IA"}
+                    className="shrink-0 snap-start inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-primary/50 bg-primary/10 hover:bg-primary/20 transition-colors"
+                  >
+                    <Sparkles size={13} className="text-primary shrink-0" />
+                    <span className="text-[12px] font-semibold text-primary whitespace-nowrap max-w-[180px] truncate">
+                      {aiApproachQR.title}
+                    </span>
+                  </button>
+                )}
                 {quickReplies.map((qr) => (
                   <button
                     key={qr.id}
