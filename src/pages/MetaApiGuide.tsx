@@ -165,7 +165,7 @@ const MetaApiGuide = () => {
                       <tr>
                         <td className="py-3 px-4 font-medium text-foreground">Marketing</td>
                         <td className="py-3 px-4 text-muted-foreground">Promoções, ofertas, novidades de produtos</td>
-                        <td className="py-3 px-4 text-foreground font-mono">~R$ 0,50</td>
+                        <td className="py-3 px-4 text-foreground font-mono">~R$ 0,12</td>
                       </tr>
                       <tr>
                         <td className="py-3 px-4 font-medium text-foreground">Utilidade</td>
