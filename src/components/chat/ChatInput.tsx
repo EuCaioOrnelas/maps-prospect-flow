@@ -523,12 +523,18 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
           {/* Caption + send */}
           <div className="flex items-end gap-3 px-4 py-3 border-t wa-border-light">
-            <input
+            <textarea
               value={caption}
               onChange={e => setCaption(e.target.value)}
               placeholder="Adicionar legenda..."
-              className="flex-1 bg-transparent wa-text-primary text-[14px] px-[12px] py-[10px] rounded-lg outline-none border-none placeholder:wa-text-muted"
-              onKeyDown={e => e.key === "Enter" && handleSend()}
+              rows={1}
+              className="flex-1 bg-transparent wa-text-primary text-[14px] px-[12px] py-[10px] rounded-lg outline-none border-none resize-none placeholder:wa-text-muted max-h-[120px]"
+              onKeyDown={e => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
             />
             <button onClick={handleSend} className="w-[44px] h-[44px] wa-accent-bg rounded-full flex items-center justify-center transition-colors shrink-0">
               <Send size={18} className="text-white ml-[2px]" />
