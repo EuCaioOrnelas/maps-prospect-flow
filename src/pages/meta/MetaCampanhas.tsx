@@ -530,16 +530,29 @@ export default function MetaCampanhas() {
       {/* Fluxo da campanha */}
       <Card className="p-6 border-border/60">
         <div className="mb-5">
-          <h3 className="text-sm font-semibold text-foreground">Fluxo da campanha Meta</h3>
-          <p className="text-xs text-muted-foreground">Como cada lead percorre a campanha</p>
+          <h3 className="text-sm font-semibold text-foreground">Fluxo atual da campanha</h3>
+          <p className="text-xs text-muted-foreground">
+            Como cada lead percorre a campanha hoje — do template até o atendimento humano ou um fluxo automatizado de IA.
+          </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {[
-            { icon: MessageSquare, title: "Template Wiize", desc: "Template aprovado é enviado ao lead pela Meta Cloud API." },
-            { icon: Reply, title: "Lead responde", desc: "A resposta abre a janela de 24h e habilita o próximo passo." },
-            { icon: Bot, title: "IA envia CTA", desc: "Mensagem gerada por IA é enviada como CTA para validar interesse." },
-            { icon: UserCheck, title: "Handoff humano", desc: "Quando o lead demonstra interesse, o operador assume na inbox." },
-          ].map((s, i) => (
+            {
+              icon: MessageSquare,
+              title: "Template Wiize",
+              desc: "Template aprovado é disparado pela Meta Cloud API para a base de leads selecionada.",
+            },
+            {
+              icon: Reply,
+              title: "Lead responde",
+              desc: "A resposta abre a janela de 24h e a conversa entra no Chat já vinculada ao número.",
+            },
+            {
+              icon: UserCheck,
+              title: "Atendimento humano ou Fluxo IA",
+              desc: "O operador assume na inbox ou, se houver um fluxo de IA ativo para esse número, a IA continua a conversa.",
+            },
+          ].map((s, i, arr) => (
             <div key={s.title} className="relative">
               <div className="rounded-xl border border-border/60 p-4 bg-card h-full">
                 <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-2">
@@ -548,7 +561,7 @@ export default function MetaCampanhas() {
                 <p className="text-sm font-medium text-foreground">{s.title}</p>
                 <p className="text-xs text-muted-foreground mt-1">{s.desc}</p>
               </div>
-              {i < 3 && (
+              {i < arr.length - 1 && (
                 <ArrowRight className="hidden md:block absolute top-1/2 -right-2.5 -translate-y-1/2 text-muted-foreground" size={14} />
               )}
             </div>
