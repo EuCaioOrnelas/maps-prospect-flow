@@ -43,7 +43,11 @@ interface CampaignRow {
   failed_count: number;
   total_responses: number | null;
   created_at: string;
-  whatsapp_number_id: string | null;
+  connection_id: string | null;
+  whatsapp_number_id?: string | null;
+  template_name?: string | null;
+  template_language?: string | null;
+  error_details?: any;
   messages: any;
   leads: any;
   current_lead_index: number | null;
@@ -89,24 +93,48 @@ export default function MetaCampanhas() {
   const loadCampaigns = async () => {
     if (!user || !accountOwnerId) return;
     setLoading(true);
-    const { data } = await supabase
-      .from("whatsapp_campaigns")
-      .select("id,name,status,total_leads,sent_count,failed_count,total_responses,created_at,whatsapp_number_id,messages,leads,current_lead_index")
+    const { data, error } = await supabase
+      .from("meta_campaigns")
+      .select("id,campaign_name,status,total_recipients,success_count,failed_count,created_at,connection_id,template_name,template_language,error_details")
       .eq("owner_user_id", accountOwnerId)
       .order("created_at", { ascending: false })
       .limit(500);
-    const rows = (data as CampaignRow[]) || [];
+    if (error) {
+      console.error("Error loading Meta campaigns:", error);
+      setCampaigns([]);
+      setLoading(false);
+      return;
+    }
+    const rows = ((data as any[]) || []).map((c) => ({
+      id: c.id,
+      name: c.campaign_name,
+      status: c.status,
+      total_leads: c.total_recipients || 0,
+      sent_count: c.success_count || 0,
+      failed_count: c.failed_count || 0,
+      total_responses: 0,
+      created_at: c.created_at,
+      connection_id: c.connection_id,
+      template_name: c.template_name,
+      template_language: c.template_language,
+      error_details: c.error_details,
+      messages: c.template_name ? [`Template Meta: ${c.template_name}`] : [],
+      leads: [],
+      current_lead_index: null,
+    })) as CampaignRow[];
     setCampaigns(rows);
 
-    const numIds = Array.from(new Set(rows.map(r => r.whatsapp_number_id).filter(Boolean))) as string[];
+    const numIds = Array.from(new Set(rows.map(r => r.connection_id).filter(Boolean))) as string[];
     if (numIds.length) {
       const { data: nums } = await supabase
-        .from("whatsapp_numbers")
-        .select("id,phone_number,label")
+        .from("user_waba_connections")
+        .select("id,display_phone_number,nickname,phone_number_id")
         .in("id", numIds);
       const map: Record<string, { phone: string; label: string | null }> = {};
-      (nums || []).forEach((n: any) => { map[n.id] = { phone: n.phone_number, label: n.label }; });
+      (nums || []).forEach((n: any) => { map[n.id] = { phone: n.display_phone_number || n.phone_number_id, label: n.nickname }; });
       setNumberMap(map);
+    } else {
+      setNumberMap({});
     }
     setLoading(false);
   };
@@ -115,10 +143,10 @@ export default function MetaCampanhas() {
     loadCampaigns();
     if (!accountOwnerId) return;
     const channel = supabase
-      .channel(`whatsapp-campaigns-${accountOwnerId}`)
+      .channel(`meta-campaigns-table-${accountOwnerId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "whatsapp_campaigns", filter: `owner_user_id=eq.${accountOwnerId}` },
+        { event: "*", schema: "public", table: "meta_campaigns", filter: `owner_user_id=eq.${accountOwnerId}` },
         () => loadCampaigns()
       )
       .subscribe();
