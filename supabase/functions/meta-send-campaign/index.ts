@@ -187,6 +187,7 @@ serve(async (req) => {
               user_id: user.id,
               owner_user_id: accountOwnerId,
               waba_connection_id: connection_id,
+              phone_number_id: phone_number_id,
               contact_phone: phoneDigits,
               last_message_text: renderedPreview,
               last_message_at: nowIso,
