@@ -164,12 +164,25 @@ serve(async (req) => {
       }
     }
 
+    // Normaliza número BR: garante o 9º dígito após DDD (Meta NÃO adiciona; sem isso a entrega falha silenciosamente)
+    const normalizeBrMobile = (raw: string): string => {
+      const digits = String(raw).replace(/\D/g, "");
+      // 55 + DDD(2) + 8 dígitos = 12  → falta o 9
+      if (digits.startsWith("55") && digits.length === 12) {
+        const ddd = digits.slice(2, 4);
+        const rest = digits.slice(4); // 8 dígitos
+        return `55${ddd}9${rest}`;
+      }
+      return digits;
+    };
+
     // Send messages in batches
     const BATCH_SIZE = 50;
     for (let i = 0; i < phone_numbers.length; i += BATCH_SIZE) {
       const batch = phone_numbers.slice(i, i + BATCH_SIZE);
 
-      const promises = batch.map(async (phone: string) => {
+      const promises = batch.map(async (rawPhone: string) => {
+        const phone = normalizeBrMobile(rawPhone);
         try {
           const messageBody: any = {
             messaging_product: "whatsapp",
@@ -197,22 +210,36 @@ serve(async (req) => {
             }
           );
 
+          const responseText = await response.text();
+          let parsed: any = null;
+          try { parsed = responseText ? JSON.parse(responseText) : null; } catch { /* keep text */ }
+
           if (response.ok) {
+            const wabaId = parsed?.messages?.[0]?.id || null;
+            const wppContact = parsed?.contacts?.[0]?.wa_id || null;
+            console.log(`[meta-send-campaign] ✅ ${phone} → wa_id=${wppContact} msg_id=${wabaId}`);
+            // Meta às vezes responde 200 mesmo quando o número NÃO existe no WhatsApp.
+            // Quando isso acontece, `messages[0].id` vem ausente — tratamos como falha real.
+            if (!wabaId) {
+              failedCount++;
+              errors.push(`${phone}: aceito pela Meta sem messageId (número provavelmente sem WhatsApp)`);
+              return;
+            }
             successCount++;
             try {
-              const okData = await response.json();
-              const wabaId = okData?.messages?.[0]?.id || null;
               await persistOutboundChat(phone, wabaId);
             } catch (persistErr) {
               console.error("[meta-send-campaign] persist post-success error:", persistErr);
             }
           } else {
-            const errData = await response.json();
             failedCount++;
-            errors.push(`${phone}: ${JSON.stringify(errData?.error?.message || "Unknown error")}`);
+            const apiMsg = parsed?.error?.message || responseText || `HTTP ${response.status}`;
+            console.error(`[meta-send-campaign] ❌ ${phone} → ${apiMsg}`);
+            errors.push(`${phone}: ${apiMsg}`);
           }
         } catch (err) {
           failedCount++;
+          console.error(`[meta-send-campaign] 💥 ${phone}:`, err);
           errors.push(`${phone}: ${err.message}`);
         }
       });
