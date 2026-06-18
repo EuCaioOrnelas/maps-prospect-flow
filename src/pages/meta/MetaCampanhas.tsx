@@ -423,7 +423,7 @@ export default function MetaCampanhas() {
                   const responses = c.total_responses ?? 0;
                   const cost = (c.sent_count || 0) * COST_PER_MESSAGE;
                   const sendRate = c.total_leads > 0 ? (c.sent_count / c.total_leads) * 100 : 0;
-                  const num = c.whatsapp_number_id ? numberMap[c.whatsapp_number_id] : null;
+                  const num = c.connection_id ? numberMap[c.connection_id] : null;
                   const phoneTail = num?.phone ? `•••• ${num.phone.replace(/\D/g, "").slice(-4)}` : "—";
                   const numberLabel = num ? (num.label ? `${num.label} · ${phoneTail}` : phoneTail) : "—";
 
@@ -598,7 +598,7 @@ function CampaignDetailsDialog({
   const sendRate = total > 0 ? (sent / total) * 100 : 0;
   const responseRate = sent > 0 ? (responses / sent) * 100 : 0;
   const failRate = total > 0 ? (failed / total) * 100 : 0;
-  const num = c?.whatsapp_number_id ? numberMap[c.whatsapp_number_id] : null;
+  const num = c?.connection_id ? numberMap[c.connection_id] : null;
   const phoneFull = num?.phone ? num.phone : "—";
 
   // messages may be array of {body, ...} or { items: [...] } or string
