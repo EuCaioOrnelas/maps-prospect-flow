@@ -236,12 +236,10 @@ serve(async (req) => {
             successCount++;
             try {
               await persistOutboundChat(supabase, phone, wabaId);
-              if (externalSupabase) {
-                await persistOutboundChat(externalSupabase, phone, wabaId);
-              }
             } catch (persistErr) {
               console.error("[meta-send-campaign] persist post-success error:", persistErr);
             }
+
           } else {
             failedCount++;
             const apiMsg = parsed?.error?.message || responseText || `HTTP ${response.status}`;
@@ -286,16 +284,7 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    if (externalSupabase) {
-      const { error: externalCampaignInsertError } = await externalSupabase.from("meta_campaigns").insert(campaignPayload);
-      if (externalCampaignInsertError) {
-        console.error("[meta-send-campaign] external campaign insert failed:", externalCampaignInsertError);
-        return new Response(
-          JSON.stringify({ error: "Campanha enviada, mas não foi salva no banco externo", details: externalCampaignInsertError.message }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
+
     console.log(`[meta-send-campaign] campaign saved user=${user.id} recipients=${phone_numbers.length} success=${successCount} failed=${failedCount}`);
 
     // === Campaign issues notification ===
