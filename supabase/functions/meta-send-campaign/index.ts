@@ -239,7 +239,10 @@ serve(async (req) => {
             }
             successCount++;
             try {
-              await persistOutboundChat(phone, wabaId);
+              await persistOutboundChat(supabase, phone, wabaId);
+              if (externalSupabase) {
+                await persistOutboundChat(externalSupabase, phone, wabaId);
+              }
             } catch (persistErr) {
               console.error("[meta-send-campaign] persist post-success error:", persistErr);
             }
@@ -266,8 +269,9 @@ serve(async (req) => {
 
     // Save campaign record
     const campaignNameFinal = campaign_name || `Meta ${new Date().toISOString().split("T")[0]}`;
-    const { error: campaignInsertError } = await supabase.from("meta_campaigns").insert({
+    const campaignPayload = {
       user_id: user.id,
+      owner_user_id: accountOwnerId,
       connection_id: connection_id,
       campaign_name: campaignNameFinal,
       template_name: template_name,
@@ -277,13 +281,24 @@ serve(async (req) => {
       failed_count: failedCount,
       status: "completed",
       error_details: errors.length > 0 ? errors.slice(0, 20) : null,
-    });
+    };
+    const { error: campaignInsertError } = await supabase.from("meta_campaigns").insert(campaignPayload);
     if (campaignInsertError) {
       console.error("[meta-send-campaign] campaign insert failed:", campaignInsertError);
       return new Response(
         JSON.stringify({ error: "Campanha enviada, mas não foi salva no histórico", details: campaignInsertError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+    if (externalSupabase) {
+      const { error: externalCampaignInsertError } = await externalSupabase.from("meta_campaigns").insert(campaignPayload);
+      if (externalCampaignInsertError) {
+        console.error("[meta-send-campaign] external campaign insert failed:", externalCampaignInsertError);
+        return new Response(
+          JSON.stringify({ error: "Campanha enviada, mas não foi salva no banco externo", details: externalCampaignInsertError.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
     console.log(`[meta-send-campaign] campaign saved user=${user.id} recipients=${phone_numbers.length} success=${successCount} failed=${failedCount}`);
 
