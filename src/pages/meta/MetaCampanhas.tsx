@@ -111,7 +111,24 @@ export default function MetaCampanhas() {
     setLoading(false);
   };
 
-  useEffect(() => { loadCampaigns(); }, [user?.id]);
+  useEffect(() => {
+    loadCampaigns();
+    if (!accountOwnerId) return;
+    const channel = supabase
+      .channel(`whatsapp-campaigns-${accountOwnerId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "whatsapp_campaigns", filter: `owner_user_id=eq.${accountOwnerId}` },
+        () => loadCampaigns()
+      )
+      .subscribe();
+    const interval = setInterval(loadCampaigns, 15000);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, accountOwnerId]);
 
   // Filtros (busca, status, intervalo de datas)
   const filteredCampaigns = useMemo(() => {
