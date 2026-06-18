@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,10 @@ import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerConte
 import { ChatMessage } from "@/hooks/useChat";
 import { useQuickReplies, applyQuickReplyVariables, type QuickReply } from "@/hooks/useQuickReplies";
 import { useQuickReplyContext } from "@/hooks/useQuickReplyContext";
+import { useContactAIApproach } from "@/hooks/useContactAIApproach";
 import { QuickReplyPicker } from "./QuickReplyPicker";
+
+const AI_APPROACH_QR_ID = "__ai_approach__";
 
 interface ChatInputProps {
   onSendMessage: (text: string, replyToId?: string) => void;
