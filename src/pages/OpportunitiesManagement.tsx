@@ -1118,7 +1118,7 @@ export default function OpportunitiesManagement() {
             className="w-full gap-2"
           >
             {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-            Gerar abordagem personalizada com IA
+            Gerar follow-up com IA (pós-resposta do template)
           </Button>
         )}
         {lead.ai_approach_message && !lead.first_message_sent && (
