@@ -1068,9 +1068,11 @@ export function ChatMessageArea({
               </div>
             ) : (() => {
               const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
+              // Se nunca houve inbound (contato importado sem resposta), a janela de 24h NÃO está aberta.
+              // Só consideramos a janela aberta se houver uma inbound nas últimas 24h.
               const isWindowExpired = lastInbound
                 ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) >= 24
-                : false;
+                : true;
 
               if (isWindowExpired && onReopenConversation) {
                   return (
