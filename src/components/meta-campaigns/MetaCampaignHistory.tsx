@@ -53,20 +53,38 @@ export const MetaCampaignHistory = ({ connections }: MetaCampaignHistoryProps) =
   const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null);
   const [errorPage, setErrorPage] = useState(1);
 
-  useEffect(() => { fetchHistory(); }, []);
+  useEffect(() => {
+    fetchHistory();
+    if (!accountOwnerId) return;
+    const channel = supabase
+      .channel(`meta-campaigns-${accountOwnerId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "meta_campaigns", filter: `owner_user_id=eq.${accountOwnerId}` },
+        () => fetchHistory()
+      )
+      .subscribe();
+    const interval = setInterval(fetchHistory, 15000);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountOwnerId]);
 
   useEffect(() => { setErrorPage(1); }, [selectedCampaign]);
 
   const fetchHistory = async () => {
     if (!user || !accountOwnerId) return;
-    setLoading(true);
     try {
+      const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
       const { data } = await supabase
         .from("meta_campaigns")
         .select("*")
         .eq("owner_user_id", accountOwnerId)
+        .gte("created_at", since)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(200);
       setCampaigns(data || []);
     } catch (err) {
       console.error("Error fetching history:", err);
