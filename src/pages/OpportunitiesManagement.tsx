@@ -1174,10 +1174,10 @@ export default function OpportunitiesManagement() {
                       variant="outline"
                       size="sm"
                       className="gap-2"
-                      onClick={() => setShowNumbersManager(true)}
+                      onClick={() => navigate("/meta/numeros")}
                     >
                       <Wifi size={14} />
-                      Gerenciar Números
+                      Números WhatsApp (Meta)
                     </Button>
                     <Button
                       variant="outline"

@@ -402,49 +402,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             )}
 
 
-            {/* Campanhas with submenu — Evolution só para usuários legacy */}
-            {can("campaigns") && canEvolution && (
-            <li data-tour="sidebar-campanhas">
-              <SidebarNavItem
-                title="Campanha"
-                icon={Megaphone}
-                onClick={handleCampaignsClick}
-                isActive={isOnCampaignsPage}
-                isExpanded={isExpanded}
-                hasSubmenu
-                isSubmenuOpen={isCampaignsOpen}
-                tooltip="Campanha"
-              />
+            {/* Campanhas Evolution removida do menu — página continua acessível via /whatsapp */}
 
-              {isExpanded && (
-                <div
-                  className={cn(
-                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    isCampaignsOpen
-                      ? "max-h-28 opacity-100 mt-1"
-                      : "max-h-0 opacity-0"
-                  )}
-                >
-                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
-                    <li data-tour="sidebar-campanhas-prospeccao">
-                      <Link
-                        to="/whatsapp"
-                        className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-lg transition-colors duration-200",
-                          currentPath === "/whatsapp"
-                            ? "bg-sidebar-accent/60 text-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <Send size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Prospecção</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              )}
-            </li>
-            )}
 
             {/* CRM with submenu */}
             {can("crm") && (
