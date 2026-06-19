@@ -142,6 +142,23 @@ export default function OpportunitiesManagement() {
   const { numbers, maxNumbers, fetchNumbers } = useWhatsAppNumbers();
   const [showNumbersManager, setShowNumbersManager] = useState(false);
 
+  // Dual scroll refs for table
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const bottomScrollRef = useRef<HTMLDivElement>(null);
+  const tableContentRef = useRef<HTMLDivElement>(null);
+
+  const syncTopScroll = () => {
+    if (topScrollRef.current && bottomScrollRef.current) {
+      topScrollRef.current.scrollLeft = bottomScrollRef.current.scrollLeft;
+    }
+  };
+  const syncBottomScroll = () => {
+    if (topScrollRef.current && bottomScrollRef.current) {
+      bottomScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+    }
+  };
+
+
   // Check company profile on mount
   useEffect(() => {
     if (user) {
@@ -567,6 +584,19 @@ export default function OpportunitiesManagement() {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (bottomScrollRef.current && tableContentRef.current) {
+        tableContentRef.current.style.width = `${bottomScrollRef.current.scrollWidth}px`;
+      }
+    };
+    updateWidth();
+    const ro = new ResizeObserver(updateWidth);
+    if (bottomScrollRef.current) ro.observe(bottomScrollRef.current);
+    window.addEventListener('resize', updateWidth);
+    return () => { ro.disconnect(); window.removeEventListener('resize', updateWidth); };
+  }, [filteredLeads.length, paginatedLeads.length]);
 
   const getScoreBadge = (score: number | null) => {
     if (!score && score !== 0) return <Badge variant="outline" className="text-xs">—</Badge>;
@@ -1462,9 +1492,23 @@ export default function OpportunitiesManagement() {
               />
 
 
-              {/* Table */}
+              {/* Table with dual scroll */}
               <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <Table>
+                {/* Top scroll bar */}
+                <div
+                  ref={topScrollRef}
+                  onScroll={syncBottomScroll}
+                  className="overflow-x-auto scrollbar-thin"
+                  style={{ scrollbarWidth: 'thin' }}
+                >
+                  <div ref={tableContentRef} className="min-w-max" />
+                </div>
+                <div
+                  ref={bottomScrollRef}
+                  onScroll={syncTopScroll}
+                  className="overflow-x-auto"
+                >
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[40px]">
@@ -1482,8 +1526,8 @@ export default function OpportunitiesManagement() {
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Star size={14} />Avaliação</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5 whitespace-nowrap"><BarChart3 size={14} />Índ. Fech.</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><TrendingUp size={14} />Intenção</div></TableHead>
-                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><CheckCircle2 size={14} />Status</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Users size={14} />Resp.</div></TableHead>
+                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><CheckCircle2 size={14} />Status</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Map size={14} />Maps</div></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1622,6 +1666,7 @@ export default function OpportunitiesManagement() {
                     )}
                   </TableBody>
                 </Table>
+                </div>
               </div>
 
               {/* Pagination */}
