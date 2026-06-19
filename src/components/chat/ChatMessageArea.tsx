@@ -909,6 +909,12 @@ export function ChatMessageArea({
                   <Search size={15} /> Pesquisar mensagens
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  onClick={() => { setHeaderMenuOpen(false); setSelectionMode(true); setSelectedIds(new Set()); }}
+                  className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
+                  <CheckSquare size={15} /> Selecionar mensagens
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={() => { setHeaderMenuOpen(false); setSummaryOpen(true); }}
                   className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                 >
