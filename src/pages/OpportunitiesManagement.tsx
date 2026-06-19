@@ -1604,20 +1604,59 @@ export default function OpportunitiesManagement() {
                             )}
                           </TableCell>
                           <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                             {(() => {
                               const m = responsibleMembers.find(x => x.user_id === lead.responsible_user_id);
-                              const label = m ? (m.name || m.email || "?") : "—";
-                              const initial = m ? (m.name || m.email || "?").trim().charAt(0).toUpperCase() : "—";
-                              return (
-                                <span
-                                  title={`Responsável: ${label}`}
-                                  className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold border border-border/60 ${m ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}
+                              const label = m ? (m.name || m.email || "?") : "Sem responsável";
+                              const initial = m ? (m.name || m.email || "?").trim().charAt(0).toUpperCase() : "?";
+                              const trigger = (
+                                <button
+                                  type="button"
+                                  title={`Responsável: ${label}${canChangeResponsible ? " — clique para alterar" : ""}`}
+                                  className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-semibold border border-border/60 transition hover:ring-2 hover:ring-primary/40 ${m ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"} ${canChangeResponsible ? "cursor-pointer" : "cursor-default"}`}
+                                  disabled={!canChangeResponsible}
                                 >
                                   {m?.avatar_url ? (
                                     <img src={m.avatar_url} alt={label} className="h-full w-full rounded-full object-cover" />
                                   ) : initial}
-                                </span>
+                                </button>
+                              );
+                              if (!canChangeResponsible) return trigger;
+                              return (
+                                <Popover>
+                                  <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+                                  <PopoverContent className="w-60 p-1" align="center" onClick={(e) => e.stopPropagation()}>
+                                    <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                                      Alterar responsável
+                                    </div>
+                                    <button
+                                      className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${!lead.responsible_user_id ? "bg-muted/60 font-medium" : "text-muted-foreground"}`}
+                                      onClick={() => assignSingle(lead.id, null)}
+                                    >
+                                      Sem responsável
+                                    </button>
+                                    <div className="max-h-56 overflow-y-auto">
+                                      {responsibleMembers.length === 0 ? (
+                                        <div className="px-2 py-2 text-xs text-muted-foreground">Nenhum membro disponível.</div>
+                                      ) : responsibleMembers.map((mm) => {
+                                        const active = mm.user_id === lead.responsible_user_id;
+                                        return (
+                                          <button
+                                            key={mm.user_id}
+                                            className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted flex items-center gap-2 ${active ? "bg-muted/60 font-medium" : ""}`}
+                                            onClick={() => assignSingle(lead.id, mm.user_id)}
+                                          >
+                                            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary text-[10px] font-semibold overflow-hidden">
+                                              {mm.avatar_url ? <img src={mm.avatar_url} alt="" className="h-full w-full object-cover" /> : (mm.name || mm.email || "?").trim().charAt(0).toUpperCase()}
+                                            </span>
+                                            <span className="truncate">{mm.name || mm.email || mm.user_id.slice(0, 8)}</span>
+                                            {active && <Check className="h-3.5 w-3.5 ml-auto text-primary" />}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
                               );
                             })()}
                           </TableCell>
