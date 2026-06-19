@@ -158,6 +158,19 @@ export default function OpportunitiesManagement() {
     }
   };
 
+  useEffect(() => {
+    const updateWidth = () => {
+      if (bottomScrollRef.current && tableContentRef.current) {
+        tableContentRef.current.style.width = `${bottomScrollRef.current.scrollWidth}px`;
+      }
+    };
+    updateWidth();
+    const ro = new ResizeObserver(updateWidth);
+    if (bottomScrollRef.current) ro.observe(bottomScrollRef.current);
+    window.addEventListener('resize', updateWidth);
+    return () => { ro.disconnect(); window.removeEventListener('resize', updateWidth); };
+  }, [filteredLeads.length, paginatedLeads.length]);
+
   // Check company profile on mount
   useEffect(() => {
     if (user) {
