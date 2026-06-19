@@ -17,7 +17,7 @@ interface MetaConnection {
   id: string;
   phone_number_id: string | null;
   display_phone_number: string | null;
-  verified_name: string | null;
+  business_name: string | null;
   status: string | null;
 }
 
@@ -83,7 +83,7 @@ export function SendMessageDialog({
       const [{ data: conns }, { data: tpls }] = await Promise.all([
         supabase
           .from("user_waba_connections")
-          .select("id, phone_number_id, display_phone_number, verified_name, status")
+          .select("id, phone_number_id, display_phone_number, business_name, status")
           .eq("user_id", userId)
           .eq("status", "connected"),
         supabase
@@ -264,7 +264,7 @@ export function SendMessageDialog({
                     <SelectContent>
                       {connections.map(c => (
                         <SelectItem key={c.id} value={c.id}>
-                          {c.verified_name || "WABA"} {c.display_phone_number ? `(${c.display_phone_number})` : ""}
+                          {c.business_name || "WABA"} {c.display_phone_number ? `(${c.display_phone_number})` : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
