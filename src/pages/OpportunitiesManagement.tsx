@@ -142,6 +142,22 @@ export default function OpportunitiesManagement() {
   const { numbers, maxNumbers, fetchNumbers } = useWhatsAppNumbers();
   const [showNumbersManager, setShowNumbersManager] = useState(false);
 
+  // Dual scroll refs for table
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const bottomScrollRef = useRef<HTMLDivElement>(null);
+  const tableContentRef = useRef<HTMLDivElement>(null);
+
+  const syncTopScroll = () => {
+    if (topScrollRef.current && bottomScrollRef.current) {
+      topScrollRef.current.scrollLeft = bottomScrollRef.current.scrollLeft;
+    }
+  };
+  const syncBottomScroll = () => {
+    if (topScrollRef.current && bottomScrollRef.current) {
+      bottomScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+    }
+  };
+
   // Check company profile on mount
   useEffect(() => {
     if (user) {
