@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useMemo } from "react";
-import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles, Workflow } from "lucide-react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles, Workflow, CheckSquare } from "lucide-react";
 import { ConversationSummaryDialog } from "./ConversationSummaryDialog";
 import { cn } from "@/lib/utils";
 import { ContactDetailsPanel } from "./ContactDetailsPanel";
@@ -53,6 +53,7 @@ interface ChatMessageAreaProps {
   onToggleBlock?: (conversationId: string) => Promise<void>;
   onSaveContactName?: (conversationId: string, name: string) => Promise<void>;
   onForwardMessages?: (targetPhone: string, targetName: string | undefined, msgs: ChatMessage[], templateName?: string) => Promise<{ requiresTemplate?: boolean }>;
+  onDeleteMessages?: (messageIds: string[]) => Promise<void>;
 }
 
 
@@ -280,13 +281,15 @@ function SearchMessagesBar({ messages, onClose }: { messages: ChatMessage[]; onC
   );
 }
 
-// Message action menu (reply, copy, forward) — rendered OUTSIDE the bubble
+// Message action menu (reply, copy, forward, delete) — rendered OUTSIDE the bubble
 function MessageActions({
-  msg, onReply, onForward, isOutbound,
+  msg, onReply, onForward, onDelete, onSelect, isOutbound,
 }: {
   msg: ChatMessage;
   onReply: () => void;
   onForward: () => void;
+  onDelete: () => void;
+  onSelect: () => void;
   isOutbound: boolean;
 }) {
   return (
@@ -304,7 +307,7 @@ function MessageActions({
           <ChevronDown size={18} strokeWidth={2.5} />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+      <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[190px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
         <DropdownMenuItem onClick={onReply} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Reply size={14} /> Responder
         </DropdownMenuItem>
@@ -324,6 +327,13 @@ function MessageActions({
         <DropdownMenuItem onClick={onForward} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Forward size={14} /> Encaminhar
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={onSelect} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+          <CheckSquare size={14} /> Selecionar várias
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="mx-3 my-1 wa-border-light" />
+        <DropdownMenuItem onClick={onDelete} className="wa-dropdown-item-destructive flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+          <Trash2 size={14} /> Apagar mensagem
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -332,7 +342,7 @@ function MessageActions({
 export function ChatMessageArea({
   conversation, conversations = [], messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
   members = [], canChangeResponsible = false, onTransferResponsible, currentUserId, onBack,
-  onDeleteConversation, onToggleBlock, onSaveContactName, onForwardMessages,
+  onDeleteConversation, onToggleBlock, onSaveContactName, onForwardMessages, onDeleteMessages,
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -342,6 +352,8 @@ export function ChatMessageArea({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [forwardOpen, setForwardOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmDeleteMessagesOpen, setConfirmDeleteMessagesOpen] = useState(false);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [contactPanelOpen, setContactPanelOpen] = useState(false);
@@ -466,6 +478,35 @@ export function ChatMessageArea({
   const startForwardFromMessage = (msg: ChatMessage) => {
     setSelectionMode(true);
     setSelectedIds(new Set([msg.id]));
+  };
+
+  const startSelectionFromMessage = (msg: ChatMessage) => {
+    setSelectionMode(true);
+    setSelectedIds(new Set([msg.id]));
+  };
+
+  const requestDeleteSingle = (msg: ChatMessage) => {
+    setPendingDeleteIds([msg.id]);
+    setConfirmDeleteMessagesOpen(true);
+  };
+
+  const requestDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    setPendingDeleteIds(Array.from(selectedIds));
+    setConfirmDeleteMessagesOpen(true);
+  };
+
+  const handleConfirmDeleteMessages = async () => {
+    if (!onDeleteMessages || pendingDeleteIds.length === 0) return;
+    try {
+      await onDeleteMessages(pendingDeleteIds);
+      toast.success(pendingDeleteIds.length === 1 ? "Mensagem apagada" : `${pendingDeleteIds.length} mensagens apagadas`);
+      setConfirmDeleteMessagesOpen(false);
+      setPendingDeleteIds([]);
+      exitSelection();
+    } catch {
+      toast.error("Erro ao apagar mensagens");
+    }
   };
 
   const openForwardDialog = () => {
@@ -868,6 +909,12 @@ export function ChatMessageArea({
                   <Search size={15} /> Pesquisar mensagens
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  onClick={() => { setHeaderMenuOpen(false); setSelectionMode(true); setSelectedIds(new Set()); }}
+                  className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                >
+                  <CheckSquare size={15} /> Selecionar mensagens
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={() => { setHeaderMenuOpen(false); setSummaryOpen(true); }}
                   className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                 >
@@ -970,6 +1017,8 @@ export function ChatMessageArea({
                                     isOutbound={isOutbound}
                                     onReply={() => setReplyingTo(msg)}
                                     onForward={() => startForwardFromMessage(msg)}
+                                    onSelect={() => startSelectionFromMessage(msg)}
+                                    onDelete={() => requestDeleteSingle(msg)}
                                   />
                                 )}
                                 {isForwarded && (
@@ -1058,13 +1107,24 @@ export function ChatMessageArea({
                 <span className="text-sm font-medium wa-text-primary">
                   {selectedIds.size} {selectedIds.size === 1 ? "selecionada" : "selecionadas"}
                 </span>
-                <button
-                  onClick={openForwardDialog}
-                  disabled={selectedIds.size === 0}
-                  className="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-lg wa-accent-bg text-white disabled:opacity-40 transition-colors"
-                >
-                  <Forward size={16} /> Encaminhar
-                </button>
+                <div className="flex items-center gap-2">
+                  {onDeleteMessages && (
+                    <button
+                      onClick={requestDeleteSelected}
+                      disabled={selectedIds.size === 0}
+                      className="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-40 transition-colors"
+                    >
+                      <Trash2 size={16} /> Excluir
+                    </button>
+                  )}
+                  <button
+                    onClick={openForwardDialog}
+                    disabled={selectedIds.size === 0}
+                    className="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-lg wa-accent-bg text-white disabled:opacity-40 transition-colors"
+                  >
+                    <Forward size={16} /> Encaminhar
+                  </button>
+                </div>
               </div>
             ) : (() => {
               const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
@@ -1159,6 +1219,31 @@ export function ChatMessageArea({
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Confirm delete one or more messages */}
+      <AlertDialog open={confirmDeleteMessagesOpen} onOpenChange={(v) => { setConfirmDeleteMessagesOpen(v); if (!v) setPendingDeleteIds([]); }}>
+        <AlertDialogContent className="bg-popover">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingDeleteIds.length === 1 ? "Apagar mensagem?" : `Apagar ${pendingDeleteIds.length} mensagens?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDeleteIds.length === 1
+                ? "Esta mensagem será removida apenas no seu sistema. O contato continuará vendo no WhatsApp dele."
+                : `${pendingDeleteIds.length} mensagens serão removidas apenas no seu sistema. Esta ação não pode ser desfeita.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteMessages}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Forward dialog */}
       {onForwardMessages && (
         <ForwardDialog
@@ -1176,6 +1261,9 @@ export function ChatMessageArea({
         onOpenChange={setSummaryOpen}
         conversationId={conversation?.id ?? null}
         contactName={conversation?.contact_name}
+        contactPhone={conversation?.contact_phone}
+        contactAvatar={conversation?.contact_profile_pic}
+        messages={messages}
       />
 
       <ContactDetailsPanel
