@@ -585,6 +585,19 @@ export default function OpportunitiesManagement() {
     currentPage * pageSize
   );
 
+  useEffect(() => {
+    const updateWidth = () => {
+      if (bottomScrollRef.current && tableContentRef.current) {
+        tableContentRef.current.style.width = `${bottomScrollRef.current.scrollWidth}px`;
+      }
+    };
+    updateWidth();
+    const ro = new ResizeObserver(updateWidth);
+    if (bottomScrollRef.current) ro.observe(bottomScrollRef.current);
+    window.addEventListener('resize', updateWidth);
+    return () => { ro.disconnect(); window.removeEventListener('resize', updateWidth); };
+  }, [filteredLeads.length, paginatedLeads.length]);
+
   const getScoreBadge = (score: number | null) => {
     if (!score && score !== 0) return <Badge variant="outline" className="text-xs">—</Badge>;
     if (score >= 61) return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">{score}/100</Badge>;
