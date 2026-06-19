@@ -352,6 +352,7 @@ export function ChatMessageArea({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [forwardOpen, setForwardOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmDeleteMessagesOpen, setConfirmDeleteMessagesOpen] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
