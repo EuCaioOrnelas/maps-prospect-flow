@@ -1,7 +1,7 @@
 import React from 'react';
 import { isRuntimeAssetError, recoverFromRuntimeAssetError } from '@/lib/runtimeRecovery';
-import wiizeLogo from '@/assets/logos/wiize-logo-white.png';
-
+import wiizeLogoLight from '@/assets/logos/wiize-logo.png';
+import wiizeLogoDark from '@/assets/logos/wiize-logo-white.png';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -33,78 +33,40 @@ export class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          minHeight: '100vh',
-          background: 'radial-gradient(ellipse at top, #0f1a14 0%, #050807 60%, #000 100%)',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '2rem',
-          fontFamily: "'Outfit', 'Inter', system-ui, sans-serif",
-        }}>
-          <div style={{
-            maxWidth: '460px',
-            width: '100%',
-            textAlign: 'center',
-            background: 'rgba(20, 28, 24, 0.6)',
-            border: '1px solid rgba(34, 197, 94, 0.18)',
-            borderRadius: '20px',
-            padding: '2.5rem 2rem',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(34,197,94,0.08)',
-          }}>
+        <div className="min-h-screen flex items-center justify-center p-8 bg-background text-foreground font-sans">
+          <div className="max-w-[460px] w-full text-center bg-card border border-border rounded-2xl p-10 shadow-lg">
             <img
-              src={wiizeLogo}
+              src={wiizeLogoLight}
               alt="Wiize"
-              style={{ width: '100px', height: 'auto', margin: '0 auto 1.25rem', filter: 'drop-shadow(0 0 18px rgba(34,197,94,0.45))' }}
+              className="w-24 h-auto mx-auto mb-5 block dark:hidden"
             />
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.75rem', color: '#fff', letterSpacing: '-0.02em' }}>
+            <img
+              src={wiizeLogoDark}
+              alt="Wiize"
+              className="w-24 h-auto mx-auto mb-5 hidden dark:block"
+            />
+            <h1 className="text-2xl font-semibold mb-3 tracking-tight text-foreground">
               Algo deu errado
             </h1>
-            <p style={{ color: '#a1a1aa', marginBottom: '1.75rem', fontSize: '0.95rem', lineHeight: 1.55 }}>
+            <p className="text-muted-foreground mb-7 text-[0.95rem] leading-relaxed">
               Encontramos um erro inesperado na aplicação. Por favor, recarregue a página para continuar. Se o problema persistir, entre em contato com nosso suporte.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+            <div className="flex flex-col gap-2.5">
               <button
                 onClick={() => window.location.reload()}
-                style={{
-                  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '0.85rem 1.5rem',
-                  borderRadius: '999px',
-                  cursor: 'pointer',
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  boxShadow: '0 8px 24px rgba(34,197,94,0.35)',
-                  transition: 'transform 0.15s ease',
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
+                className="bg-primary text-primary-foreground hover:opacity-90 transition-opacity px-6 py-3 rounded-full font-semibold text-[0.95rem] shadow-md"
               >
                 Recarregar página
               </button>
               <a
                 href="/contact"
-                style={{
-                  background: 'transparent',
-                  color: '#e4e4e7',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  padding: '0.8rem 1.5rem',
-                  borderRadius: '999px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: 500,
-                  textDecoration: 'none',
-                  display: 'inline-block',
-                }}
+                className="bg-transparent text-foreground border border-border hover:bg-accent transition-colors px-6 py-3 rounded-full font-medium text-sm no-underline inline-block"
               >
                 Entrar em contato com o suporte
               </a>
             </div>
             {this.state.error?.message && (
-              <p style={{ color: '#52525b', marginTop: '1.5rem', fontSize: '0.72rem', fontFamily: 'monospace', wordBreak: 'break-word' }}>
+              <p className="text-muted-foreground/70 mt-6 text-[0.72rem] font-mono break-words">
                 {this.state.error.message}
               </p>
             )}
