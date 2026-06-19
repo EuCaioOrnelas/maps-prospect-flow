@@ -1478,9 +1478,23 @@ export default function OpportunitiesManagement() {
               />
 
 
-              {/* Table */}
+              {/* Table with dual scroll */}
               <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <Table>
+                {/* Top scroll bar */}
+                <div
+                  ref={topScrollRef}
+                  onScroll={syncBottomScroll}
+                  className="overflow-x-auto scrollbar-thin"
+                  style={{ scrollbarWidth: 'thin' }}
+                >
+                  <div ref={tableContentRef} className="min-w-max" />
+                </div>
+                <div
+                  ref={bottomScrollRef}
+                  onScroll={syncTopScroll}
+                  className="overflow-x-auto"
+                >
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[40px]">
