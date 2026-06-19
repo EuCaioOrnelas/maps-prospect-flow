@@ -1234,28 +1234,40 @@ export function ChatMessageArea({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirm delete one or more messages */}
+      {/* Confirm delete one or more messages (WhatsApp style) */}
       <AlertDialog open={confirmDeleteMessagesOpen} onOpenChange={(v) => { setConfirmDeleteMessagesOpen(v); if (!v) setPendingDeleteIds([]); }}>
-        <AlertDialogContent className="bg-popover">
+        <AlertDialogContent className="bg-popover max-w-[400px]">
           <AlertDialogHeader>
             <AlertDialogTitle>
               {pendingDeleteIds.length === 1 ? "Apagar mensagem?" : `Apagar ${pendingDeleteIds.length} mensagens?`}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingDeleteIds.length === 1
-                ? "Esta mensagem será removida apenas no seu sistema. O contato continuará vendo no WhatsApp dele."
-                : `${pendingDeleteIds.length} mensagens serão removidas apenas no seu sistema. Esta ação não pode ser desfeita.`}
+              Você pode apagar mensagens somente para você ou para todos. Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDeleteMessages}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Apagar
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          {(() => {
+            const pendingMsgs = messages.filter(m => pendingDeleteIds.includes(m.id));
+            const allOutbound = pendingMsgs.length > 0 && pendingMsgs.every(m => m.direction === "outbound");
+            return (
+              <AlertDialogFooter className="flex-col sm:flex-col gap-2 sm:space-x-0">
+                {allOutbound && (
+                  <button
+                    onClick={() => handleConfirmDeleteMessages("all")}
+                    className="w-full px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 text-sm font-medium transition-colors"
+                  >
+                    Apagar para todos
+                  </button>
+                )}
+                <button
+                  onClick={() => handleConfirmDeleteMessages("me")}
+                  className="w-full px-4 py-2.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 text-sm font-medium transition-colors"
+                >
+                  Apagar para mim
+                </button>
+                <AlertDialogCancel className="w-full mt-0">Cancelar</AlertDialogCancel>
+              </AlertDialogFooter>
+            );
+          })()}
         </AlertDialogContent>
       </AlertDialog>
 
