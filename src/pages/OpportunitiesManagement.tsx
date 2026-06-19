@@ -513,6 +513,21 @@ export default function OpportunitiesManagement() {
     clearSelection();
   };
 
+  const assignSingle = async (leadId: string, responsibleUserId: string | null) => {
+    const { error } = await supabase
+      .from("leads")
+      .update({ responsible_user_id: responsibleUserId })
+      .eq("id", leadId);
+    if (error) {
+      console.error(error);
+      toast({ title: "Erro ao atualizar responsável", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, responsible_user_id: responsibleUserId } : l));
+    const m = responsibleMembers.find(x => x.user_id === responsibleUserId);
+    toast({ title: "Responsável atualizado", description: responsibleUserId ? `Atribuído a ${m?.name || m?.email || "membro"}.` : "Removido." });
+  };
+
   const bulkArchive = async () => {
     if (selectedIds.size === 0) return;
     const ids = Array.from(selectedIds);
