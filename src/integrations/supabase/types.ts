@@ -3604,9 +3604,15 @@ export type Database = {
           estimated_value: number | null
           first_message_sent: boolean | null
           first_message_sent_at: string | null
+          follow_up_delay_seconds: number | null
+          follow_up_message: string | null
+          follow_up_scheduled_at: string | null
+          follow_up_sent_at: string | null
+          follow_up_status: string | null
           google_maps_link: string | null
           has_responded: boolean | null
           id: string
+          initial_template_id: string | null
           last_message_sent: string | null
           last_message_sent_at: string | null
           last_response: string | null
@@ -3653,9 +3659,15 @@ export type Database = {
           estimated_value?: number | null
           first_message_sent?: boolean | null
           first_message_sent_at?: string | null
+          follow_up_delay_seconds?: number | null
+          follow_up_message?: string | null
+          follow_up_scheduled_at?: string | null
+          follow_up_sent_at?: string | null
+          follow_up_status?: string | null
           google_maps_link?: string | null
           has_responded?: boolean | null
           id?: string
+          initial_template_id?: string | null
           last_message_sent?: string | null
           last_message_sent_at?: string | null
           last_response?: string | null
@@ -3702,9 +3714,15 @@ export type Database = {
           estimated_value?: number | null
           first_message_sent?: boolean | null
           first_message_sent_at?: string | null
+          follow_up_delay_seconds?: number | null
+          follow_up_message?: string | null
+          follow_up_scheduled_at?: string | null
+          follow_up_sent_at?: string | null
+          follow_up_status?: string | null
           google_maps_link?: string | null
           has_responded?: boolean | null
           id?: string
+          initial_template_id?: string | null
           last_message_sent?: string | null
           last_message_sent_at?: string | null
           last_response?: string | null
