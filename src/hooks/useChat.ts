@@ -44,6 +44,7 @@ export interface ChatMessage {
   reply_to_message_id: string | null;
   metadata: any;
   created_at: string;
+  deleted_for_all_at?: string | null;
 }
 
 export interface WabaConnection {
