@@ -1011,7 +1011,7 @@ export function ChatMessageArea({
                                 showTail && isOutbound && "!rounded-tr-none",
                                 showTail && !isOutbound && "!rounded-tl-none"
                               )}>
-                                {!selectionMode && (
+                                {!selectionMode && !msg.deleted_for_all_at && (
                                   <MessageActions
                                     msg={msg}
                                     isOutbound={isOutbound}
@@ -1021,6 +1021,15 @@ export function ChatMessageArea({
                                     onDelete={() => requestDeleteSingle(msg)}
                                   />
                                 )}
+                                {msg.deleted_for_all_at ? (
+                                  <div className="px-[10px] pt-[7px] pb-[6px] pr-[36px] flex items-center gap-1.5 italic">
+                                    <Ban size={14} className="wa-text-muted shrink-0" />
+                                    <span className="text-[13.5px] wa-text-muted leading-[19px]">
+                                      {isOutbound ? "Você apagou esta mensagem" : "Esta mensagem foi apagada"}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <>
                                 {isForwarded && (
                                   <div className="flex items-center gap-1 px-[10px] pt-[6px] -mb-[2px] wa-text-muted">
                                     <Forward size={12} className="rotate-180 scale-x-[-1]" />
@@ -1054,6 +1063,8 @@ export function ChatMessageArea({
                                       {msg.content}
                                     </span>
                                   </div>
+                                )}
+                                  </>
                                 )}
                                 <div className="flex items-center justify-end gap-[4px] px-[7px] pb-[5px] -mt-[2px]">
                                   {isOutbound && (msg.metadata as any)?.source === "flow" && (
