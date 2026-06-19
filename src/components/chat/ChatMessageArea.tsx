@@ -281,13 +281,15 @@ function SearchMessagesBar({ messages, onClose }: { messages: ChatMessage[]; onC
   );
 }
 
-// Message action menu (reply, copy, forward) — rendered OUTSIDE the bubble
+// Message action menu (reply, copy, forward, delete) — rendered OUTSIDE the bubble
 function MessageActions({
-  msg, onReply, onForward, isOutbound,
+  msg, onReply, onForward, onDelete, onSelect, isOutbound,
 }: {
   msg: ChatMessage;
   onReply: () => void;
   onForward: () => void;
+  onDelete: () => void;
+  onSelect: () => void;
   isOutbound: boolean;
 }) {
   return (
@@ -305,7 +307,7 @@ function MessageActions({
           <ChevronDown size={18} strokeWidth={2.5} />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[180px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+      <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[190px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
         <DropdownMenuItem onClick={onReply} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Reply size={14} /> Responder
         </DropdownMenuItem>
@@ -324,6 +326,13 @@ function MessageActions({
         )}
         <DropdownMenuItem onClick={onForward} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
           <Forward size={14} /> Encaminhar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onSelect} className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+          <CheckSquare size={14} /> Selecionar várias
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="mx-3 my-1 wa-border-light" />
+        <DropdownMenuItem onClick={onDelete} className="wa-dropdown-item-destructive flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+          <Trash2 size={14} /> Apagar mensagem
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
