@@ -1101,13 +1101,24 @@ export function ChatMessageArea({
                 <span className="text-sm font-medium wa-text-primary">
                   {selectedIds.size} {selectedIds.size === 1 ? "selecionada" : "selecionadas"}
                 </span>
-                <button
-                  onClick={openForwardDialog}
-                  disabled={selectedIds.size === 0}
-                  className="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-lg wa-accent-bg text-white disabled:opacity-40 transition-colors"
-                >
-                  <Forward size={16} /> Encaminhar
-                </button>
+                <div className="flex items-center gap-2">
+                  {onDeleteMessages && (
+                    <button
+                      onClick={requestDeleteSelected}
+                      disabled={selectedIds.size === 0}
+                      className="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-40 transition-colors"
+                    >
+                      <Trash2 size={16} /> Excluir
+                    </button>
+                  )}
+                  <button
+                    onClick={openForwardDialog}
+                    disabled={selectedIds.size === 0}
+                    className="flex items-center gap-2 text-sm font-medium px-4 py-1.5 rounded-lg wa-accent-bg text-white disabled:opacity-40 transition-colors"
+                  >
+                    <Forward size={16} /> Encaminhar
+                  </button>
+                </div>
               </div>
             ) : (() => {
               const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
