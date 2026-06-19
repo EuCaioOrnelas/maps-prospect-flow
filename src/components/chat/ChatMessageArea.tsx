@@ -479,6 +479,35 @@ export function ChatMessageArea({
     setSelectedIds(new Set([msg.id]));
   };
 
+  const startSelectionFromMessage = (msg: ChatMessage) => {
+    setSelectionMode(true);
+    setSelectedIds(new Set([msg.id]));
+  };
+
+  const requestDeleteSingle = (msg: ChatMessage) => {
+    setPendingDeleteIds([msg.id]);
+    setConfirmDeleteMessagesOpen(true);
+  };
+
+  const requestDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    setPendingDeleteIds(Array.from(selectedIds));
+    setConfirmDeleteMessagesOpen(true);
+  };
+
+  const handleConfirmDeleteMessages = async () => {
+    if (!onDeleteMessages || pendingDeleteIds.length === 0) return;
+    try {
+      await onDeleteMessages(pendingDeleteIds);
+      toast.success(pendingDeleteIds.length === 1 ? "Mensagem apagada" : `${pendingDeleteIds.length} mensagens apagadas`);
+      setConfirmDeleteMessagesOpen(false);
+      setPendingDeleteIds([]);
+      exitSelection();
+    } catch {
+      toast.error("Erro ao apagar mensagens");
+    }
+  };
+
   const openForwardDialog = () => {
     if (selectedIds.size === 0) return;
     setForwardOpen(true);
