@@ -1219,6 +1219,31 @@ export function ChatMessageArea({
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Confirm delete one or more messages */}
+      <AlertDialog open={confirmDeleteMessagesOpen} onOpenChange={(v) => { setConfirmDeleteMessagesOpen(v); if (!v) setPendingDeleteIds([]); }}>
+        <AlertDialogContent className="bg-popover">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingDeleteIds.length === 1 ? "Apagar mensagem?" : `Apagar ${pendingDeleteIds.length} mensagens?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDeleteIds.length === 1
+                ? "Esta mensagem será removida apenas no seu sistema. O contato continuará vendo no WhatsApp dele."
+                : `${pendingDeleteIds.length} mensagens serão removidas apenas no seu sistema. Esta ação não pode ser desfeita.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteMessages}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Forward dialog */}
       {onForwardMessages && (
         <ForwardDialog
