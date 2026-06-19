@@ -1261,6 +1261,9 @@ export function ChatMessageArea({
         onOpenChange={setSummaryOpen}
         conversationId={conversation?.id ?? null}
         contactName={conversation?.contact_name}
+        contactPhone={conversation?.contact_phone}
+        contactAvatar={conversation?.contact_profile_pic}
+        messages={messages}
       />
 
       <ContactDetailsPanel
