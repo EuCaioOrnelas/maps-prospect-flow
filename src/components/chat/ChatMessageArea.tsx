@@ -342,7 +342,7 @@ function MessageActions({
 export function ChatMessageArea({
   conversation, conversations = [], messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
   members = [], canChangeResponsible = false, onTransferResponsible, currentUserId, onBack,
-  onDeleteConversation, onToggleBlock, onSaveContactName, onForwardMessages,
+  onDeleteConversation, onToggleBlock, onSaveContactName, onForwardMessages, onDeleteMessages,
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -352,6 +352,7 @@ export function ChatMessageArea({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [forwardOpen, setForwardOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [contactPanelOpen, setContactPanelOpen] = useState(false);
