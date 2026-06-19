@@ -848,6 +848,7 @@ export function useChat() {
     handleReconnect,
     transferConversation,
     deleteConversation,
+    deleteMessages,
     toggleBlock,
     saveContactName,
     forwardMessages,
