@@ -655,14 +655,28 @@ export function useChat() {
     if (activeConversationId === conversationId) setActiveConversationId(null);
   }, [activeConversationId]);
 
-  // Delete one or more messages (local + DB). Removes only on our side.
-  const deleteMessages = useCallback(async (messageIds: string[]) => {
+  // Delete messages. mode 'me' = remove locally (hard delete row).
+  // mode 'all' = soft-delete: mark deleted_for_all_at so UI renders "Esta mensagem foi apagada" (WhatsApp style).
+  const deleteMessages = useCallback(async (messageIds: string[], mode: "me" | "all" = "me") => {
     if (!messageIds.length) return;
     const idSet = new Set(messageIds);
-    // Optimistic removal
-    setMessages(prev => prev.filter(m => !idSet.has(m.id)));
-    const { error } = await supabase.from("chat_messages").delete().in("id", messageIds);
-    if (error) throw error;
+    if (mode === "all") {
+      const ts = new Date().toISOString();
+      // Optimistic update
+      setMessages(prev => prev.map(m => idSet.has(m.id)
+        ? { ...m, deleted_for_all_at: ts, content: null, media_url: null, media_caption: null }
+        : m));
+      const { error } = await supabase
+        .from("chat_messages")
+        .update({ deleted_for_all_at: ts, content: null, media_url: null, media_caption: null } as any)
+        .in("id", messageIds);
+      if (error) throw error;
+    } else {
+      // Optimistic removal
+      setMessages(prev => prev.filter(m => !idSet.has(m.id)));
+      const { error } = await supabase.from("chat_messages").delete().in("id", messageIds);
+      if (error) throw error;
+    }
   }, []);
 
   // Toggle block: bloqueia/desbloqueia contato; mensagens recebidas ficam silenciadas
