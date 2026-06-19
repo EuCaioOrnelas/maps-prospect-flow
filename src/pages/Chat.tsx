@@ -439,6 +439,7 @@ const Chat = () => {
                     onToggleBlock={chat.toggleBlock}
                     onSaveContactName={chat.saveContactName}
                     onForwardMessages={chat.forwardMessages}
+                    onDeleteMessages={chat.deleteMessages}
                   />
                 </div>
               </>
