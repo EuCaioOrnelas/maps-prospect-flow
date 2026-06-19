@@ -53,7 +53,7 @@ interface ChatMessageAreaProps {
   onToggleBlock?: (conversationId: string) => Promise<void>;
   onSaveContactName?: (conversationId: string, name: string) => Promise<void>;
   onForwardMessages?: (targetPhone: string, targetName: string | undefined, msgs: ChatMessage[], templateName?: string) => Promise<{ requiresTemplate?: boolean }>;
-  onDeleteMessages?: (messageIds: string[]) => Promise<void>;
+  onDeleteMessages?: (messageIds: string[], mode?: "me" | "all") => Promise<void>;
 }
 
 
