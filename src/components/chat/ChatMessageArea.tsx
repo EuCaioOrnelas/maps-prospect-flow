@@ -1011,6 +1011,8 @@ export function ChatMessageArea({
                                     isOutbound={isOutbound}
                                     onReply={() => setReplyingTo(msg)}
                                     onForward={() => startForwardFromMessage(msg)}
+                                    onSelect={() => startSelectionFromMessage(msg)}
+                                    onDelete={() => requestDeleteSingle(msg)}
                                   />
                                 )}
                                 {isForwarded && (
