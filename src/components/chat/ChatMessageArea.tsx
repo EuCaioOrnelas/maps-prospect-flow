@@ -496,11 +496,15 @@ export function ChatMessageArea({
     setConfirmDeleteMessagesOpen(true);
   };
 
-  const handleConfirmDeleteMessages = async () => {
+  const handleConfirmDeleteMessages = async (mode: "me" | "all") => {
     if (!onDeleteMessages || pendingDeleteIds.length === 0) return;
     try {
-      await onDeleteMessages(pendingDeleteIds);
-      toast.success(pendingDeleteIds.length === 1 ? "Mensagem apagada" : `${pendingDeleteIds.length} mensagens apagadas`);
+      await (onDeleteMessages as any)(pendingDeleteIds, mode);
+      toast.success(
+        mode === "all"
+          ? (pendingDeleteIds.length === 1 ? "Mensagem apagada para todos" : `${pendingDeleteIds.length} mensagens apagadas para todos`)
+          : (pendingDeleteIds.length === 1 ? "Mensagem apagada" : `${pendingDeleteIds.length} mensagens apagadas`)
+      );
       setConfirmDeleteMessagesOpen(false);
       setPendingDeleteIds([]);
       exitSelection();
