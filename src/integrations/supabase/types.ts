@@ -1934,6 +1934,7 @@ export type Database = {
           content: string | null
           conversation_id: string
           created_at: string
+          deleted_for_all_at: string | null
           direction: string
           id: string
           media_caption: string | null
@@ -1953,6 +1954,7 @@ export type Database = {
           content?: string | null
           conversation_id: string
           created_at?: string
+          deleted_for_all_at?: string | null
           direction: string
           id?: string
           media_caption?: string | null
@@ -1972,6 +1974,7 @@ export type Database = {
           content?: string | null
           conversation_id?: string
           created_at?: string
+          deleted_for_all_at?: string | null
           direction?: string
           id?: string
           media_caption?: string | null

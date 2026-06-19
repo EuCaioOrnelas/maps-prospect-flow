@@ -53,7 +53,7 @@ interface ChatMessageAreaProps {
   onToggleBlock?: (conversationId: string) => Promise<void>;
   onSaveContactName?: (conversationId: string, name: string) => Promise<void>;
   onForwardMessages?: (targetPhone: string, targetName: string | undefined, msgs: ChatMessage[], templateName?: string) => Promise<{ requiresTemplate?: boolean }>;
-  onDeleteMessages?: (messageIds: string[]) => Promise<void>;
+  onDeleteMessages?: (messageIds: string[], mode?: "me" | "all") => Promise<void>;
 }
 
 
@@ -496,11 +496,15 @@ export function ChatMessageArea({
     setConfirmDeleteMessagesOpen(true);
   };
 
-  const handleConfirmDeleteMessages = async () => {
+  const handleConfirmDeleteMessages = async (mode: "me" | "all") => {
     if (!onDeleteMessages || pendingDeleteIds.length === 0) return;
     try {
-      await onDeleteMessages(pendingDeleteIds);
-      toast.success(pendingDeleteIds.length === 1 ? "Mensagem apagada" : `${pendingDeleteIds.length} mensagens apagadas`);
+      await (onDeleteMessages as any)(pendingDeleteIds, mode);
+      toast.success(
+        mode === "all"
+          ? (pendingDeleteIds.length === 1 ? "Mensagem apagada para todos" : `${pendingDeleteIds.length} mensagens apagadas para todos`)
+          : (pendingDeleteIds.length === 1 ? "Mensagem apagada" : `${pendingDeleteIds.length} mensagens apagadas`)
+      );
       setConfirmDeleteMessagesOpen(false);
       setPendingDeleteIds([]);
       exitSelection();
@@ -1011,7 +1015,7 @@ export function ChatMessageArea({
                                 showTail && isOutbound && "!rounded-tr-none",
                                 showTail && !isOutbound && "!rounded-tl-none"
                               )}>
-                                {!selectionMode && (
+                                {!selectionMode && !msg.deleted_for_all_at && (
                                   <MessageActions
                                     msg={msg}
                                     isOutbound={isOutbound}
@@ -1021,6 +1025,15 @@ export function ChatMessageArea({
                                     onDelete={() => requestDeleteSingle(msg)}
                                   />
                                 )}
+                                {msg.deleted_for_all_at ? (
+                                  <div className="px-[10px] pt-[7px] pb-[6px] pr-[36px] flex items-center gap-1.5 italic">
+                                    <Ban size={14} className="wa-text-muted shrink-0" />
+                                    <span className="text-[13.5px] wa-text-muted leading-[19px]">
+                                      {isOutbound ? "Você apagou esta mensagem" : "Esta mensagem foi apagada"}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <>
                                 {isForwarded && (
                                   <div className="flex items-center gap-1 px-[10px] pt-[6px] -mb-[2px] wa-text-muted">
                                     <Forward size={12} className="rotate-180 scale-x-[-1]" />
@@ -1054,6 +1067,8 @@ export function ChatMessageArea({
                                       {msg.content}
                                     </span>
                                   </div>
+                                )}
+                                  </>
                                 )}
                                 <div className="flex items-center justify-end gap-[4px] px-[7px] pb-[5px] -mt-[2px]">
                                   {isOutbound && (msg.metadata as any)?.source === "flow" && (
@@ -1219,28 +1234,40 @@ export function ChatMessageArea({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirm delete one or more messages */}
+      {/* Confirm delete one or more messages (WhatsApp style) */}
       <AlertDialog open={confirmDeleteMessagesOpen} onOpenChange={(v) => { setConfirmDeleteMessagesOpen(v); if (!v) setPendingDeleteIds([]); }}>
-        <AlertDialogContent className="bg-popover">
+        <AlertDialogContent className="bg-popover max-w-[400px]">
           <AlertDialogHeader>
             <AlertDialogTitle>
               {pendingDeleteIds.length === 1 ? "Apagar mensagem?" : `Apagar ${pendingDeleteIds.length} mensagens?`}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingDeleteIds.length === 1
-                ? "Esta mensagem será removida apenas no seu sistema. O contato continuará vendo no WhatsApp dele."
-                : `${pendingDeleteIds.length} mensagens serão removidas apenas no seu sistema. Esta ação não pode ser desfeita.`}
+              Você pode apagar mensagens somente para você ou para todos. Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDeleteMessages}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Apagar
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          {(() => {
+            const pendingMsgs = messages.filter(m => pendingDeleteIds.includes(m.id));
+            const allOutbound = pendingMsgs.length > 0 && pendingMsgs.every(m => m.direction === "outbound");
+            return (
+              <AlertDialogFooter className="flex-col sm:flex-col gap-2 sm:space-x-0">
+                {allOutbound && (
+                  <button
+                    onClick={() => handleConfirmDeleteMessages("all")}
+                    className="w-full px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 text-sm font-medium transition-colors"
+                  >
+                    Apagar para todos
+                  </button>
+                )}
+                <button
+                  onClick={() => handleConfirmDeleteMessages("me")}
+                  className="w-full px-4 py-2.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 text-sm font-medium transition-colors"
+                >
+                  Apagar para mim
+                </button>
+                <AlertDialogCancel className="w-full mt-0">Cancelar</AlertDialogCancel>
+              </AlertDialogFooter>
+            );
+          })()}
         </AlertDialogContent>
       </AlertDialog>
 
