@@ -1652,6 +1652,7 @@ export default function OpportunitiesManagement() {
                     )}
                   </TableBody>
                 </Table>
+                </div>
               </div>
 
               {/* Pagination */}
