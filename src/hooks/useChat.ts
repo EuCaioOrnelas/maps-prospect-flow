@@ -654,6 +654,16 @@ export function useChat() {
     if (activeConversationId === conversationId) setActiveConversationId(null);
   }, [activeConversationId]);
 
+  // Delete one or more messages (local + DB). Removes only on our side.
+  const deleteMessages = useCallback(async (messageIds: string[]) => {
+    if (!messageIds.length) return;
+    const idSet = new Set(messageIds);
+    // Optimistic removal
+    setMessages(prev => prev.filter(m => !idSet.has(m.id)));
+    const { error } = await supabase.from("chat_messages").delete().in("id", messageIds);
+    if (error) throw error;
+  }, []);
+
   // Toggle block: bloqueia/desbloqueia contato; mensagens recebidas ficam silenciadas
   const toggleBlock = useCallback(async (conversationId: string) => {
     const conv = conversations.find(c => c.id === conversationId);
