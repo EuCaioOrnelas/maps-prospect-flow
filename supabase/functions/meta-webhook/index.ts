@@ -291,7 +291,7 @@ serve(async (req) => {
 
           const { data: leads } = await supabase
             .from('leads')
-            .select('id, whatsapp_status, first_message_sent')
+            .select('id, whatsapp_status, first_message_sent, follow_up_status, follow_up_delay_seconds')
             .eq('user_id', params.user_id)
             .ilike('phone', `%${tail}`)
             .limit(5);
@@ -306,6 +306,33 @@ serve(async (req) => {
               updates.has_responded = true;
               updates.last_response_at = params.timestamp;
               updates.responded_at = params.timestamp;
+
+              // === FOLLOW-UP CAMPAIGN: schedule the auto-reply after the configured delay ===
+              if ((lead as any).follow_up_status === 'pending') {
+                const delayMs = Math.max(30, (lead as any).follow_up_delay_seconds || 90) * 1000;
+                const scheduledAt = new Date(Date.now() + delayMs).toISOString();
+                updates.follow_up_scheduled_at = scheduledAt;
+                try {
+                  // @ts-ignore - EdgeRuntime is available at runtime
+                  EdgeRuntime.waitUntil(
+                    new Promise<void>((resolve) =>
+                      setTimeout(async () => {
+                        try {
+                          await supabase.functions.invoke('opportunity-followup-send', {
+                            body: { leadId: lead.id },
+                          });
+                        } catch (e) {
+                          console.error('[meta-webhook] follow-up invoke failed:', e);
+                        }
+                        resolve();
+                      }, delayMs)
+                    )
+                  );
+                  console.log(`[meta-webhook] ⏰ Follow-up scheduled for lead ${lead.id} in ${delayMs}ms`);
+                } catch (e) {
+                  console.error('[meta-webhook] schedule follow-up failed:', e);
+                }
+              }
             } else {
               // outbound: mark as message_sent if not already in a deeper state
               const current = lead.whatsapp_status || 'never_contacted';
