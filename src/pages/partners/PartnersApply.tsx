@@ -915,7 +915,7 @@ export default function PartnersApply() {
                 Continuar <ArrowRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={submitting} size="lg" className="gap-2 ml-auto">
+              <Button onClick={handleSubmit} disabled={submitting || !form.terms_accepted || !form.info_accuracy_confirmed || !form.contact_authorized} size="lg" className="gap-2 ml-auto">
                 {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando…</> : <>Enviar candidatura <Check className="h-4 w-4" /></>}
               </Button>
             )}
