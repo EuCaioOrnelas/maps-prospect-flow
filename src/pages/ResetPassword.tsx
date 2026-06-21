@@ -148,8 +148,10 @@ const ResetPassword = () => {
     });
 
     setTimeout(() => {
-      navigate("/dashboard");
+      // Vai para a raiz; o ProtectedRoute redireciona cada cargo para sua home (operacional → /oportunidades, demais → /dashboard)
+      navigate("/");
     }, 2000);
+
   };
 
   return (
