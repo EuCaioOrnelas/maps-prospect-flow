@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
       .from("user_waba_connections")
       .select("id, phone_number_id, access_token")
       .eq("user_id", lead.user_id)
-      .eq("status", "connected")
+      .eq("status", "active")
       .limit(1)
       .maybeSingle();
 
@@ -57,7 +57,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    const phone = (lead.phone || "").replace(/\D/g, "");
+    // Normalize BR phone to E.164 (must include DDI 55 for Meta Cloud API)
+    const normalizeBrMobile = (raw: string) => {
+      let p = (raw || "").replace(/\D/g, "");
+      if (p.startsWith("55") && (p.length === 12 || p.length === 13)) return p;
+      if (p.length === 10 || p.length === 11) return `55${p}`;
+      return p;
+    };
+    const phone = normalizeBrMobile(lead.phone || "");
 
     const resp = await fetch(
       `https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`,

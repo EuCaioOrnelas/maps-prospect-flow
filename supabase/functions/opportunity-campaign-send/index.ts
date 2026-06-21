@@ -62,8 +62,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Normalize phone (Meta requires E164 without +)
-    const phone = (lead.phone || "").replace(/\D/g, "");
+    // Normalize phone — Meta requires E.164 without "+". BR numbers MUST include DDI 55.
+    const normalizeBrMobile = (raw: string) => {
+      let p = (raw || "").replace(/\D/g, "");
+      if (p.startsWith("55") && (p.length === 12 || p.length === 13)) return p;
+      if (p.length === 10 || p.length === 11) return `55${p}`;
+      return p;
+    };
+    const phone = normalizeBrMobile(lead.phone || "");
 
     // Send free-form text via Meta Cloud API
     const sendResp = await fetch(

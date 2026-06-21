@@ -85,7 +85,7 @@ export function SendMessageDialog({
           .from("user_waba_connections")
           .select("id, phone_number_id, display_phone_number, business_name, status")
           .eq("user_id", userId)
-          .eq("status", "connected"),
+          .eq("status", "active"),
         supabase
           .from("wiize_message_templates")
           .select("id, name, body, language, category_id")
