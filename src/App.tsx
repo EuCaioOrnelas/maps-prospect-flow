@@ -192,14 +192,23 @@ const queryClient = new QueryClient({
   },
 });
 
-const PageLoader = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="flex flex-col items-center gap-4 animate-fade-in">
-      <div className="h-10 w-10 rounded-full border-[3px] border-[hsl(158,72%,38%)]/20 border-t-[hsl(158,72%,38%)] animate-spin" />
-      <p className="text-sm text-muted-foreground font-medium">Carregando...</p>
+const PageLoader = () => {
+  // Branco por padrão; escuro apenas se o usuário escolheu tema dark explicitamente.
+  let isDark = false;
+  try {
+    isDark = typeof window !== "undefined" && localStorage.getItem("dashboard-theme") === "dark";
+  } catch {}
+  const bg = isDark ? "hsl(220 18% 8%)" : "#ffffff";
+  const fg = isDark ? "hsl(220 10% 70%)" : "hsl(220 10% 40%)";
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: bg }}>
+      <div className="flex flex-col items-center gap-4 animate-fade-in">
+        <div className="h-10 w-10 rounded-full border-[3px] border-[hsl(158,72%,38%)]/20 border-t-[hsl(158,72%,38%)] animate-spin" />
+        <p className="text-sm font-medium" style={{ color: fg }}>Carregando...</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const PasswordRecoveryRedirect = () => {
   useEffect(() => {
