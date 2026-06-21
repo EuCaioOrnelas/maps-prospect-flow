@@ -348,12 +348,12 @@ export default function PartnerWithdrawals() {
             <button
               type="button"
               onClick={() => setAmount(String(balance.available_cents / 100))}
-              className="group relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 via-primary/8 to-transparent p-4 text-left transition-all hover:border-primary/50 hover:shadow-[0_8px_24px_hsl(158_72%_38%_/0.18)] active:scale-[0.99]"
+              className="group relative w-full overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.12] via-primary/[0.06] to-transparent p-4 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-[0_8px_28px_hsl(158_72%_38%_/0.14)]"
             >
-              <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full blur-2xl opacity-40 bg-primary/30 group-hover:opacity-60 transition-opacity" />
+              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full blur-2xl opacity-30 bg-primary/25 group-hover:opacity-50 transition-opacity duration-500" />
               <div className="relative flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <div className="text-[10px] font-semibold uppercase tracking-widest text-primary/80">Saldo disponível</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-widest text-primary/70">Saldo disponível</div>
                   <div className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums">
                     {fmtBRL(balance.available_cents)}
                   </div>
@@ -361,8 +361,8 @@ export default function PartnerWithdrawals() {
                     Toque para resgatar tudo · Mín. {fmtBRL(minCents)}
                   </div>
                 </div>
-                <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center ring-1 ring-primary/30 group-hover:bg-primary/30 transition-colors">
-                  <ArrowUpRight size={18} className="text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center ring-1 ring-primary/25 group-hover:bg-primary/25 transition-colors duration-300">
+                  <ArrowUpRight size={18} className="text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
                 </div>
               </div>
             </button>
