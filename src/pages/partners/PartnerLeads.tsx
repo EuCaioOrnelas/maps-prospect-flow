@@ -23,18 +23,23 @@ export default function PartnerLeads() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [dateRange, setDateRange] = useState<DateFilter>("all");
   const [linkFilter, setLinkFilter] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchLeads = async () => {
+    if (!partner?.id) return;
+    setRefreshing(true);
+    const { data } = await supabase
+      .from("partner_leads")
+      .select("*")
+      .eq("partner_id", partner.id)
+      .order("attributed_at", { ascending: false });
+    setLeads(data || []);
+    setLoading(false);
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    if (!partner?.id) return;
-    (async () => {
-      const { data } = await supabase
-        .from("partner_leads")
-        .select("*")
-        .eq("partner_id", partner.id)
-        .order("attributed_at", { ascending: false });
-      setLeads(data || []);
-      setLoading(false);
-    })();
+    fetchLeads();
   }, [partner?.id]);
 
   const statusBadge = (l: any) => {
