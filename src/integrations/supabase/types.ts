@@ -9058,6 +9058,14 @@ export type Database = {
         }
         Returns: Json
       }
+      cancel_partner_commissions_for_customer: {
+        Args: {
+          p_customer_user_id: string
+          p_only_recurring?: boolean
+          p_reason?: string
+        }
+        Returns: Json
+      }
       check_and_reset_monthly_searches: {
         Args: { user_id: string }
         Returns: Json
@@ -9180,6 +9188,10 @@ export type Database = {
         Returns: {
           link_id: string
         }[]
+      }
+      mark_partner_sale_refunded: {
+        Args: { p_external_reference: string; p_kind?: string }
+        Returns: Json
       }
       match_faqs: {
         Args: {
