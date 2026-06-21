@@ -357,6 +357,64 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
     onClose();
   };
 
+  const daysSince = (iso: string | null | undefined) => {
+    if (!iso) return null;
+    const diff = (Date.now() - new Date(iso).getTime()) / 86400000;
+    return Math.max(0, Math.floor(diff));
+  };
+
+  const exportXlsx = (scope: "composing" | "all") => {
+    const list = scope === "composing" ? composing : commissions;
+    const rows = list.map((c) => {
+      const cust = c.sale?.customer_user_id ? customers[c.sale.customer_user_id] : null;
+      return {
+        "Comissão ID": c.id,
+        "Plano": c.sale?.plan || "",
+        "Valor da venda (R$)": (c.sale?.amount_cents || 0) / 100,
+        "% Comissão": c.commission_percent,
+        "Comissão (R$)": c.commission_amount_cents / 100,
+        "Status comissão": c.status,
+        "Provedor pagamento": c.sale?.payment_provider || "",
+        "Recorrente": c.sale?.is_recurring ? "Sim" : "Não",
+        "Pago em (venda)": c.sale?.paid_at ? fmtDateTime(c.sale.paid_at) : "",
+        "Liberada em": fmtDate(c.available_at),
+        "Reembolso em": c.sale?.refunded_at ? fmtDate(c.sale.refunded_at) : "",
+        "Chargeback em": c.sale?.chargeback_at ? fmtDate(c.sale.chargeback_at) : "",
+        "Cliente (nome)": cust?.name || "",
+        "Cliente (email)": cust?.email || "",
+        "Cliente desde": cust?.created_at ? fmtDate(cust.created_at) : "",
+        "Dias de acesso": cust?.created_at ? daysSince(cust.created_at) : "",
+        "Plano atual cliente": cust?.plan || "",
+        "Validade assinatura": cust?.subscription_current_period_end ? fmtDate(cust.subscription_current_period_end) : "",
+        "Periodicidade": cust?.billing_period || "",
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Comissões");
+
+    const summary = [
+      ["Saque", withdrawal.id],
+      ["Parceiro", withdrawal.partner.full_name],
+      ["Email parceiro", withdrawal.partner.email],
+      ["Solicitado em", fmtDateTime(withdrawal.requested_at)],
+      ["Valor pedido (R$)", withdrawal.amount_cents / 100],
+      ["Comissões cobertas (R$)", composedTotal / 100],
+      ["Saldo disponível (R$)", balance ? balance.available_cents / 100 : ""],
+      ["Status", withdrawal.status],
+      ["PIX", bank.pix_key || ""],
+      ["Banco", `${bank.bank_code || ""} ${bank.bank_name || ""}`.trim()],
+      ["Agência", bank.bank_branch || ""],
+      ["Conta", bank.bank_account || ""],
+      ["Titular", bank.holder_name || ""],
+      ["CPF/CNPJ", bank.holder_tax_id || ""],
+    ];
+    const ws2 = XLSX.utils.aoa_to_sheet(summary);
+    XLSX.utils.book_append_sheet(wb, ws2, "Resumo");
+
+    XLSX.writeFile(wb, `saque-${withdrawal.id.substring(0, 8)}-${scope}.xlsx`);
+  };
+
   return (
     <Dialog open={!!withdrawal} onOpenChange={(o) => !o && !loading && onClose()}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
