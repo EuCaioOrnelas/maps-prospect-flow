@@ -147,13 +147,14 @@ export function installRuntimeRecovery() {
   window.__wiizeRuntimeRecoveryInstalled = true;
 }
 
-export function lazyWithRetry<T extends ComponentType<any>>(
-  importer: () => Promise<ComponentModule<T>>,
+export function lazyWithRetry<T extends ComponentType<any> = ComponentType<any>>(
+  importer: () => Promise<any>,
   label: string,
 ) {
+  const load = importer as () => Promise<ComponentModule<T>>;
   return lazy(async () => {
     try {
-      return await importer();
+      return await load();
     } catch (firstError) {
       if (!isRuntimeAssetError(firstError)) {
         throw firstError;
