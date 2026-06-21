@@ -119,12 +119,22 @@ export default function PartnerDashboard() {
             Cockpit de indicações — receita recorrente, conversões e materiais.
           </p>
         </div>
-        <Link
-          to="/partners/niveis"
-          className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-        >
-          <Sparkles size={16} /> Ver níveis & progresso
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={fetchDashboard}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg border border-border hover:bg-muted/40 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /> Atualizar
+          </button>
+          <Link
+            to="/partners/niveis"
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            <Sparkles size={16} /> Ver níveis & progresso
+          </Link>
+        </div>
       </div>
       {/* Headline KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
