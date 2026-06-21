@@ -10,6 +10,118 @@ const logStep = (step: string, details?: any) => {
   console.log(`[ASAAS-WEBHOOK] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
+// ============ PARTNER PROGRAM HELPERS ============
+async function registerPartnerSale(
+  supabase: any,
+  input: {
+    userId: string;
+    amountCents: number;
+    plan: string | null;
+    asaasPaymentId: string;
+    subscriptionRef?: string | null;
+    paidAt?: string;
+  }
+): Promise<{ ok: boolean; reason?: string; saleId?: string; isRecurring?: boolean }> {
+  try {
+    if (!input.userId || !input.amountCents || input.amountCents <= 0) {
+      return { ok: false, reason: 'invalid_input' };
+    }
+
+    const { data: lead } = await supabase
+      .from('partner_leads')
+      .select('id, partner_id')
+      .eq('user_id', input.userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!lead?.partner_id) return { ok: false, reason: 'not_attributed' };
+
+    // Idempotência por payment id
+    const { data: existing } = await supabase
+      .from('partner_sales')
+      .select('id')
+      .eq('external_reference', input.asaasPaymentId)
+      .maybeSingle();
+    if (existing?.id) return { ok: true, reason: 'duplicate', saleId: existing.id };
+
+    // Detecta recorrência: já existe venda anterior para este customer (com este subscription/auth)?
+    let isRecurring = false;
+    const { data: prior } = await supabase
+      .from('partner_sales')
+      .select('id')
+      .eq('customer_user_id', input.userId)
+      .eq('partner_id', lead.partner_id)
+      .limit(1);
+    if (prior && prior.length > 0) isRecurring = true;
+
+    const { data: sale, error: saleErr } = await supabase
+      .from('partner_sales')
+      .insert({
+        partner_id: lead.partner_id,
+        partner_lead_id: lead.id,
+        customer_user_id: input.userId,
+        plan: input.plan,
+        amount_cents: input.amountCents,
+        payment_provider: 'asaas',
+        payment_method: 'asaas_pix',
+        external_reference: input.asaasPaymentId,
+        is_recurring: isRecurring,
+        paid_at: input.paidAt || new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+
+    if (saleErr) {
+      console.error('[registerPartnerSale-asaas] insert error:', saleErr);
+      return { ok: false, reason: saleErr.message };
+    }
+
+    await supabase
+      .from('partner_leads')
+      .update({
+        is_paid: true,
+        paid_at: input.paidAt || new Date().toISOString(),
+        current_plan: input.plan ?? null,
+        last_activity_at: new Date().toISOString(),
+      })
+      .eq('id', lead.id)
+      .eq('is_paid', false);
+
+    return { ok: true, saleId: sale.id, isRecurring };
+  } catch (e) {
+    console.error('[registerPartnerSale-asaas] exception:', e);
+    return { ok: false, reason: e instanceof Error ? e.message : 'unknown' };
+  }
+}
+
+async function cancelPartnerCommissionsForRefund(
+  supabase: any,
+  customerUserId: string | null,
+  asaasPaymentId: string | null,
+  reason: string,
+) {
+  try {
+    if (asaasPaymentId) {
+      const { data: refRes } = await supabase.rpc('mark_partner_sale_refunded', {
+        p_external_reference: asaasPaymentId,
+        p_kind: 'refund',
+      });
+      logStep('Partner sale refunded (asaas)', refRes);
+    }
+    if (customerUserId) {
+      const { data: cancelRes } = await supabase.rpc('cancel_partner_commissions_for_customer', {
+        p_customer_user_id: customerUserId,
+        p_reason: reason,
+        p_only_recurring: false,
+      });
+      logStep('Partner commissions cancelled (asaas)', cancelRes);
+    }
+  } catch (e) {
+    logStep('Failed to cancel partner commissions (asaas)', { error: String(e) });
+  }
+}
+
 function getPlanSearchesLimit(planKey: string): number {
   const limits: Record<string, number> = { start: 1000, growth: 3000, scale: 10000 };
   return limits[planKey] || 1000;
@@ -336,6 +448,21 @@ serve(async (req) => {
         billingPeriod: value >= 2000 ? "annual" : "monthly",
       });
 
+      // [PARTNERS] Registra venda (primeira ou recorrente) — comissão só é gerada porque o pagamento foi confirmado de fato
+      try {
+        const partnerResult = await registerPartnerSale(supabaseClient, {
+          userId: profile.id,
+          amountCents: Math.round(value * 100),
+          plan: planKey,
+          asaasPaymentId: payment.id,
+          subscriptionRef: subscriptionId || pixAutoAuthId || null,
+          paidAt: new Date().toISOString(),
+        });
+        logStep("Partner sale check (asaas payment)", partnerResult);
+      } catch (e) {
+        logStep("Partner sale registration failed (asaas)", { error: String(e) });
+      }
+
       return new Response(
         JSON.stringify({ received: true, plan: planKey, userId: profile.id, action: "activated" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -354,12 +481,14 @@ serve(async (req) => {
     // ============ PAYMENT REFUNDED / DELETED ============
     if (event === "PAYMENT_REFUNDED" || event === "PAYMENT_DELETED") {
       const externalReference = payment?.externalReference;
-      logStep("Payment refunded/deleted", { event, externalReference });
+      const paymentId = payment?.id || null;
+      logStep("Payment refunded/deleted", { event, externalReference, paymentId });
 
+      let profileId: string | null = null;
       if (externalReference) {
         const profile = await findProfile(supabaseClient, externalReference, null);
-
         if (profile) {
+          profileId = profile.id;
           await supabaseClient.from("profiles").update({
             plan: "free",
             searches_limit: 10,
@@ -370,6 +499,14 @@ serve(async (req) => {
           logStep("User downgraded to free", { userId: profile.id });
         }
       }
+
+      // [PARTNERS] Marca venda como estornada + cancela comissões pendentes/disponíveis (dentro da janela de 30 dias)
+      await cancelPartnerCommissionsForRefund(
+        supabaseClient,
+        profileId,
+        paymentId,
+        event === "PAYMENT_REFUNDED" ? "payment_refunded" : "payment_deleted",
+      );
 
       return new Response(
         JSON.stringify({ received: true, action: "refunded_downgraded" }),
