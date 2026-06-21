@@ -70,6 +70,7 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
   const [balance, setBalance] = useState<any>(null);
   const [bankAccount, setBankAccount] = useState<any>(null);
+  const [customers, setCustomers] = useState<Record<string, CustomerProfile>>({});
   const [loadingData, setLoadingData] = useState(false);
   const { toast } = useToast();
 
@@ -86,9 +87,25 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
         supabase.rpc("compute_partner_balance", { p_partner_id: withdrawal.partner_id }),
         supabase.from("partner_bank_accounts").select("*").eq("partner_id", withdrawal.partner_id).maybeSingle(),
       ]);
-      setCommissions((commRes.data as any) || []);
+      const comms = (commRes.data as any) || [];
+      setCommissions(comms);
       setBalance(balRes.data || null);
       setBankAccount(baRes.data || null);
+
+      const userIds = Array.from(new Set(
+        comms.map((c: any) => c.sale?.customer_user_id).filter(Boolean)
+      )) as string[];
+      if (userIds.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, email, name, plan, created_at, subscription_current_period_end, billing_period, payment_provider")
+          .in("id", userIds);
+        const map: Record<string, CustomerProfile> = {};
+        (profs || []).forEach((p: any) => { map[p.id] = p; });
+        setCustomers(map);
+      } else {
+        setCustomers({});
+      }
       setLoadingData(false);
     })();
   }, [withdrawal?.id, withdrawal?.partner_id]);
