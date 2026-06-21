@@ -18,7 +18,7 @@ import type { WabaConnection } from "@/pages/MetaCampaigns";
 const META_APP_ID = "988774494328539";
 
 interface MetaAccountSetupProps {
-  onConnectionSaved: (connection: WabaConnection) => void;
+  onConnectionSaved: (connection: WabaConnection | null) => void;
   existingConnection?: WabaConnection | null;
   isAddingExtra?: boolean;
 }
