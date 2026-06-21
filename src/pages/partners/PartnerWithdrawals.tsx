@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Wallet, Clock, CheckCircle2, ShieldAlert, Building2, KeyRound, User, ShieldCheck, Save } from "lucide-react";
+import { Loader2, Wallet, Clock, CheckCircle2, ShieldAlert, Building2, KeyRound, User, ShieldCheck, Save, ArrowUpRight, Landmark, Zap, Lock, CreditCard } from "lucide-react";
 import { fmtBRL, fmtDate, withdrawalStatusColors, withdrawalStatusLabel } from "@/lib/partnerFormat";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/partners/PageHeader";
