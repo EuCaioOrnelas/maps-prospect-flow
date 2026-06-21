@@ -16,6 +16,18 @@ const REQUIRED_KEYS = [
   "pix_key", "pix_key_type",
 ] as const;
 
+const FIELD_LABELS: Record<(typeof REQUIRED_KEYS)[number], string> = {
+  holder_name: "Nome do titular",
+  holder_tax_id: "CPF / CNPJ do titular",
+  bank_name: "Banco",
+  bank_code: "Número do banco",
+  bank_branch: "Agência",
+  bank_account: "Conta",
+  account_type: "Tipo de conta",
+  pix_key: "Chave PIX",
+  pix_key_type: "Tipo de chave PIX",
+};
+
 export default function PartnerBankAccount() {
   const { partner } = useOutletContext<any>();
   const [form, setForm] = useState<any>({
@@ -41,17 +53,18 @@ export default function PartnerBankAccount() {
     })();
   }, [partner?.id]);
 
-  const missing = REQUIRED_KEYS.filter((k) => !String(form[k] || "").trim());
+  const normalizedForm = { ...form, account_type: form.account_type || "checking", pix_key_type: form.pix_key_type || "cpf" };
+  const missing = REQUIRED_KEYS.filter((k) => !String(normalizedForm[k] || "").trim());
 
   const save = async () => {
     if (missing.length > 0) {
-      toast({ title: "Campos obrigatórios", description: `Preencha: ${missing.join(", ")}`, variant: "destructive" });
+      toast({ title: "Campos obrigatórios", description: `Preencha: ${missing.map((k) => FIELD_LABELS[k]).join(", ")}.`, variant: "destructive" });
       return;
     }
     setSaving(true);
     const { error } = await supabase.from("partner_bank_accounts").upsert({
       partner_id: partner.id,
-      ...REQUIRED_KEYS.reduce((acc, k) => ({ ...acc, [k]: form[k] }), {} as Record<string, string>),
+      ...REQUIRED_KEYS.reduce((acc, k) => ({ ...acc, [k]: normalizedForm[k] }), {} as Record<string, string>),
     }, { onConflict: "partner_id" });
     setSaving(false);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
