@@ -317,6 +317,69 @@ function buildEmail(type: string, data: any): { subject: string; html: string } 
       );
       return { subject: "Recebemos sua candidatura — Programa Wiize Parceiros", html };
     }
+
+    case "partner_daily_summary": {
+      const dateLabel: string = data.date_label || new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+      const leadsCount: number = data.leads_count || 0;
+      const newClientsCount: number = data.new_clients_count || 0;
+      const newClientsCents: number = data.new_clients_cents || 0;
+      const renewalsCount: number = data.renewals_count || 0;
+      const renewalsCents: number = data.renewals_cents || 0;
+      const releasedCount: number = data.released_count || 0;
+      const releasedCents: number = data.released_cents || 0;
+      const availableCents: number = data.available_balance_cents || 0;
+      const leadsList: Array<{ email?: string; name?: string }> = data.leads_list || [];
+
+      const metric = (label: string, value: string, accent = false) =>
+        `<td align="center" valign="top" style="padding:14px 8px;border:1px solid #e4e4e7;border-radius:8px;width:33%;">
+          <p style="margin:0;font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.4px;">${label}</p>
+          <p style="margin:6px 0 0;font-size:20px;font-weight:700;color:${accent ? BRAND.color : "#18181b"};">${value}</p>
+         </td>`;
+
+      const grid = `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="6" style="margin:18px 0 8px;">
+          <tr>
+            ${metric("Novos leads", String(leadsCount), leadsCount > 0)}
+            ${metric("Novos clientes", String(newClientsCount), newClientsCount > 0)}
+            ${metric("Renovações", String(renewalsCount))}
+          </tr>
+        </table>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="6" style="margin:0 0 8px;">
+          <tr>
+            ${metric("Vendas novas", fmtBRL(newClientsCents))}
+            ${metric("Renovações (R$)", fmtBRL(renewalsCents))}
+            ${metric("Liberado hoje", fmtBRL(releasedCents), releasedCount > 0)}
+          </tr>
+        </table>`;
+
+      const balanceBox = box(
+        `<p style="margin:0;font-size:13px;color:#71717a;">Saldo disponível para saque</p>
+         <p style="margin:6px 0 0;font-size:24px;font-weight:700;color:${BRAND.color};">${fmtBRL(availableCents)}</p>`
+      );
+
+      const leadsBlock = leadsList.length
+        ? box(
+            small(`Leads do dia (${leadsList.length})`) +
+            `<ul style="margin:10px 0 0;padding:0 0 0 18px;color:#3f3f46;font-size:13px;line-height:1.7;">` +
+            leadsList.slice(0, 15).map((l) => `<li>${l.email || l.name || "—"}</li>`).join("") +
+            (leadsList.length > 15 ? `<li style="color:#71717a;">+ ${leadsList.length - 15} outros…</li>` : "") +
+            `</ul>`
+          )
+        : "";
+
+      const html = layout(`Resumo diário Wiize Parceiros — ${dateLabel}`,
+        h(`Seu resumo de hoje, ${data.first_name} 📊`) +
+        p(`Veja tudo que aconteceu na sua operação de parceiro em <strong>${dateLabel}</strong>.`) +
+        grid +
+        balanceBox +
+        leadsBlock +
+        btn(portal, "Abrir meu painel") +
+        small("Você recebe este resumo todos os dias às 21h. Para desativar, fale com o suporte."),
+        `Resumo do dia — ${leadsCount} leads · ${newClientsCount + renewalsCount} vendas`
+      );
+      return { subject: `📊 Wiize Parceiros — resumo de ${dateLabel}`, html };
+    }
+
     default:
       return null;
   }
