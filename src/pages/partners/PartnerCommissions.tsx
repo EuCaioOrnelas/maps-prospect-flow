@@ -61,7 +61,21 @@ export default function PartnerCommissions() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
-      <PageHeader title="Minhas comissões" subtitle="Histórico e status de cada comissão gerada" icon={DollarSign} />
+      <PageHeader
+        title="Minhas comissões"
+        subtitle="Histórico e status de cada comissão gerada"
+        icon={DollarSign}
+        actions={
+          <button
+            type="button"
+            onClick={fetchCommissions}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg border border-border hover:bg-muted/40 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /> Atualizar
+          </button>
+        }
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {cards.map((c) => <StatCard key={c.label} {...c} />)}
