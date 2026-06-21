@@ -1,6 +1,11 @@
 import { lazy, type ComponentType } from "react";
 
-type ComponentModule<T extends ComponentType<any>> = { default: T };
+// Permissivo: aceita qualquer módulo cujo `default` seja um componente React.
+// Evita erros de tipagem em ambientes (VS Code/CI) onde o TS não infere
+// corretamente o `default` do `import()` dinâmico.
+type ComponentModule<T extends ComponentType<any> = ComponentType<any>> = {
+  default: T;
+} & Record<string, any>;
 
 const RETRY_DELAY_MS = 250;
 const RECOVERY_COOLDOWN_MS = 15_000;
@@ -142,13 +147,14 @@ export function installRuntimeRecovery() {
   window.__wiizeRuntimeRecoveryInstalled = true;
 }
 
-export function lazyWithRetry<T extends ComponentType<any>>(
-  importer: () => Promise<ComponentModule<T>>,
+export function lazyWithRetry<T extends ComponentType<any> = ComponentType<any>>(
+  importer: () => Promise<any>,
   label: string,
 ) {
+  const load = importer as () => Promise<ComponentModule<T>>;
   return lazy(async () => {
     try {
-      return await importer();
+      return await load();
     } catch (firstError) {
       if (!isRuntimeAssetError(firstError)) {
         throw firstError;
@@ -157,7 +163,7 @@ export function lazyWithRetry<T extends ComponentType<any>>(
       await wait(RETRY_DELAY_MS);
 
       try {
-        return await importer();
+        return await load();
       } catch (secondError) {
         if (await recoverFromRuntimeAssetError(`lazy:${label}`, secondError)) {
           return await new Promise<never>(() => {
