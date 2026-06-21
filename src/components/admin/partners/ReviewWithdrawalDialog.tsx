@@ -458,6 +458,15 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
           </div>
         )}
 
+        <div className="flex items-center justify-end gap-2 -mb-1">
+          <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => exportXlsx("composing")} disabled={loadingData || composing.length === 0}>
+            <FileSpreadsheet size={13} className="text-emerald-600" /> Exportar saque (Excel)
+          </Button>
+          <Button size="sm" variant="ghost" className="h-8 gap-1.5 text-xs" onClick={() => exportXlsx("all")} disabled={loadingData || commissions.length === 0}>
+            <FileSpreadsheet size={13} /> Exportar todas
+          </Button>
+        </div>
+
         <Tabs defaultValue="sales" className="mt-2">
           <TabsList>
             <TabsTrigger value="sales" className="gap-2"><Receipt size={14} /> Vendas que compõem ({composing.length})</TabsTrigger>
