@@ -980,6 +980,17 @@ serve(async (req) => {
                   previousSearchesUsed: profile.searches_used 
                 }
               );
+
+              // [PARTNERS] Cancela comissões pendentes ao perder a assinatura
+              try {
+                const { data: cancelRes } = await supabaseClient.rpc(
+                  "cancel_partner_commissions_for_customer",
+                  { p_customer_user_id: profile.id, p_reason: `subscription_${subscription.status}`, p_only_recurring: false }
+                );
+                logStep("Partner commissions cancelled (status update)", cancelRes);
+              } catch (e) {
+                logStep("Failed cancelling partner commissions (status update)", { error: String(e) });
+              }
             }
           }
         }
@@ -1057,6 +1068,17 @@ serve(async (req) => {
                 previousSearchesUsed: profile.searches_used 
               }
             );
+
+            // [PARTNERS] Cancela comissões pendentes/disponíveis deste cliente
+            try {
+              const { data: cancelRes } = await supabaseClient.rpc(
+                "cancel_partner_commissions_for_customer",
+                { p_customer_user_id: profile.id, p_reason: "subscription_cancelled", p_only_recurring: false }
+              );
+              logStep("Partner commissions cancelled on subscription delete", cancelRes);
+            } catch (e) {
+              logStep("Failed to cancel partner commissions on subscription delete", { error: String(e) });
+            }
           }
         }
         break;
@@ -1279,6 +1301,27 @@ serve(async (req) => {
                 action: "downgraded_to_free",
               }
             );
+
+            // [PARTNERS] Marca venda como estornada + cancela comissão correspondente
+            try {
+              const invId = (charge.invoice as string | null) || null;
+              if (invId) {
+                const { data: refRes } = await supabaseClient.rpc("mark_partner_sale_refunded", {
+                  p_external_reference: invId,
+                  p_kind: "refund",
+                });
+                logStep("Partner sale refunded (charge.refunded)", refRes);
+              }
+              if (profile) {
+                const { data: cancelRes } = await supabaseClient.rpc(
+                  "cancel_partner_commissions_for_customer",
+                  { p_customer_user_id: profile.id, p_reason: "charge_refunded", p_only_recurring: false }
+                );
+                logStep("Partner commissions cancelled (charge.refunded)", cancelRes);
+              }
+            } catch (e) {
+              logStep("Failed cancelling partner commissions on refund", { error: String(e) });
+            }
 
             logStep("Refund processed: user downgraded to free", { 
               email: customer.email, 
