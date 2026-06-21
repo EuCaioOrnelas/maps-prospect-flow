@@ -417,7 +417,7 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
 
   return (
     <Dialog open={!!withdrawal} onOpenChange={(o) => !o && !loading && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wallet size={18} className="text-primary" /> Saque #{withdrawal.id.substring(0, 8)}
