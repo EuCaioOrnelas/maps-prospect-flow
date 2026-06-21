@@ -337,7 +337,7 @@ export default function PartnerWithdrawals() {
               <div>
                 <DialogTitle className="text-base font-bold tracking-tight">Resgatar comissões</DialogTitle>
                 <DialogDescription className="text-[11px] text-muted-foreground">
-                  Saque via PIX em até 1 dia útil
+                  Saque via PIX em até 3 dias úteis
                 </DialogDescription>
               </div>
             </div>
@@ -348,12 +348,12 @@ export default function PartnerWithdrawals() {
             <button
               type="button"
               onClick={() => setAmount(String(balance.available_cents / 100))}
-              className="group relative w-full overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 via-primary/8 to-transparent p-4 text-left transition-all hover:border-primary/50 hover:shadow-[0_8px_24px_hsl(158_72%_38%_/0.18)] active:scale-[0.99]"
+              className="group relative w-full overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.12] via-primary/[0.06] to-transparent p-4 text-left transition-all duration-300 hover:border-primary/40 hover:shadow-[0_8px_28px_hsl(158_72%_38%_/0.14)]"
             >
-              <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full blur-2xl opacity-40 bg-primary/30 group-hover:opacity-60 transition-opacity" />
+              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full blur-2xl opacity-30 bg-primary/25 group-hover:opacity-50 transition-opacity duration-500" />
               <div className="relative flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <div className="text-[10px] font-semibold uppercase tracking-widest text-primary/80">Saldo disponível</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-widest text-primary/70">Saldo disponível</div>
                   <div className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums">
                     {fmtBRL(balance.available_cents)}
                   </div>
@@ -361,8 +361,8 @@ export default function PartnerWithdrawals() {
                     Toque para resgatar tudo · Mín. {fmtBRL(minCents)}
                   </div>
                 </div>
-                <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center ring-1 ring-primary/30 group-hover:bg-primary/30 transition-colors">
-                  <ArrowUpRight size={18} className="text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center ring-1 ring-primary/25 group-hover:bg-primary/25 transition-colors duration-300">
+                  <ArrowUpRight size={18} className="text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
                 </div>
               </div>
             </button>
@@ -384,11 +384,16 @@ export default function PartnerWithdrawals() {
                 />
               </div>
               {Number(amount) > 0 && (
-                <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-500"
-                    style={{ width: `${Math.min((Number(amount) * 100) / (balance.available_cents || 1) * 100, 100)}%` }}
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 flex-1 rounded-full bg-muted/80 border border-border/40 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-[0_0_8px_hsl(158_72%_38%_/0.35)] transition-all duration-700 ease-out"
+                      style={{ width: `${Math.min((Number(amount) * 100) / (balance.available_cents || 1) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-semibold text-primary tabular-nums">
+                    {Math.min(Math.round((Number(amount) * 100) / (balance.available_cents || 1) * 100), 100)}%
+                  </span>
                 </div>
               )}
             </div>
@@ -398,7 +403,7 @@ export default function PartnerWithdrawals() {
               <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <span className="flex items-center gap-1.5"><Landmark size={11} /> Destino</span>
                 <span className="flex items-center gap-1 text-primary/80 normal-case tracking-normal font-medium">
-                  <Clock size={10} /> até 1 dia útil
+                  <Clock size={10} /> até 3 dias úteis
                 </span>
               </div>
               <div className="space-y-1 text-[13px]">
