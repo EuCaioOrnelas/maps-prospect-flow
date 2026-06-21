@@ -139,20 +139,10 @@ async function registerPartnerSale(
       .select('id')
       .maybeSingle();
 
-    if (leadUpdate?.id) {
-      const { data: commission } = await supabase
-        .from('partner_commissions')
-        .select('commission_amount_cents, commission_percent')
-        .eq('partner_sale_id', sale.id)
-        .maybeSingle();
+    // NOTE: e-mail imediato de primeira venda desativado.
+    // A venda entra no resumo diário enviado por partner-daily-summary.
+    void leadUpdate;
 
-      sendPartnerEmail(supabase, lead.partner_id, 'partner_first_sale', {
-        amount_cents: input.amountCents,
-        commission_cents: commission?.commission_amount_cents || 0,
-        commission_percent: commission?.commission_percent || 0,
-        release_days: 30,
-      }).catch(() => {});
-    }
 
     return { ok: true, saleId: sale.id };
   } catch (e) {
