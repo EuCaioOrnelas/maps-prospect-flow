@@ -398,7 +398,7 @@ export default function PartnerWithdrawals() {
               <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <span className="flex items-center gap-1.5"><Landmark size={11} /> Destino</span>
                 <span className="flex items-center gap-1 text-primary/80 normal-case tracking-normal font-medium">
-                  <Clock size={10} /> até 1 dia útil
+                  <Clock size={10} /> até 3 dias úteis
                 </span>
               </div>
               <div className="space-y-1 text-[13px]">
