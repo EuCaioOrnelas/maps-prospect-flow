@@ -22,6 +22,21 @@ const REQUIRED_BANK_KEYS = [
   "pix_key", "pix_key_type",
 ] as const;
 
+const BANK_FIELD_LABELS: Record<(typeof REQUIRED_BANK_KEYS)[number], string> = {
+  holder_name: "Nome do titular",
+  holder_tax_id: "CPF / CNPJ do titular",
+  bank_name: "Banco",
+  bank_code: "Número do banco",
+  bank_branch: "Agência",
+  bank_account: "Conta",
+  account_type: "Tipo de conta",
+  pix_key: "Chave PIX",
+  pix_key_type: "Tipo de chave PIX",
+};
+
+const cleanBankAccountData = (data: Record<string, unknown>) =>
+  Object.fromEntries(Object.entries(data).filter(([_, value]) => value !== null && value !== undefined));
+
 export default function PartnerWithdrawals() {
   const { partner } = useOutletContext<any>();
   const [balance, setBalance] = useState<any>({ pending_cents: 0, available_cents: 0, requested_cents: 0, paid_cents: 0 });
@@ -51,8 +66,8 @@ export default function PartnerWithdrawals() {
     ]);
     setBalance(b.data || { pending_cents: 0, available_cents: 0, requested_cents: 0, paid_cents: 0 });
     setWithdrawals(w.data || []);
-    setBankAccount(ba.data);
-    if (ba.data) setBankForm((f: any) => ({ ...f, ...ba.data }));
+    setBankAccount(ba.data ? { account_type: "checking", pix_key_type: "cpf", ...cleanBankAccountData(ba.data) } : null);
+    if (ba.data) setBankForm((f: any) => ({ ...f, ...cleanBankAccountData(ba.data) }));
     setSettings(s.data);
     setLoading(false);
   };
@@ -73,7 +88,7 @@ export default function PartnerWithdrawals() {
 
   const saveBank = async () => {
     if (missingBank.length > 0) {
-      toast({ title: "Campos obrigatórios", description: `Preencha todos os campos marcados.`, variant: "destructive" });
+      toast({ title: "Campos obrigatórios", description: `Preencha: ${missingBank.map((k) => BANK_FIELD_LABELS[k]).join(", ")}.`, variant: "destructive" });
       return;
     }
     setSavingBank(true);
