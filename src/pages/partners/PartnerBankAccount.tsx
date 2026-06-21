@@ -31,7 +31,12 @@ export default function PartnerBankAccount() {
     if (!partner?.id) return;
     (async () => {
       const { data } = await supabase.from("partner_bank_accounts").select("*").eq("partner_id", partner.id).maybeSingle();
-      if (data) setForm((f: any) => ({ ...f, ...data }));
+      if (data) {
+        const clean = Object.fromEntries(
+          Object.entries(data).filter(([_, v]) => v !== null && v !== undefined)
+        );
+        setForm((f: any) => ({ ...f, ...clean }));
+      }
       setLoading(false);
     })();
   }, [partner?.id]);
