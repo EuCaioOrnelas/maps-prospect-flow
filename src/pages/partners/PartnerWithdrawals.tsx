@@ -337,7 +337,7 @@ export default function PartnerWithdrawals() {
               <div>
                 <DialogTitle className="text-base font-bold tracking-tight">Resgatar comissões</DialogTitle>
                 <DialogDescription className="text-[11px] text-muted-foreground">
-                  Saque via PIX em até 1 dia útil
+                  Saque via PIX em até 3 dias úteis
                 </DialogDescription>
               </div>
             </div>
