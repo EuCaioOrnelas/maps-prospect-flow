@@ -320,7 +320,7 @@ const _legacyCategories = [
     questions: [
       {
         question: "Qual plano é ideal para mim?",
-        answer: "O plano Start (R$197/mês) é ideal para freelancers e autônomos com 200 buscas e 1 número WhatsApp. O Growth (R$497/mês) é perfeito para vendedores e pequenas equipes com 600 buscas e 2 números. O Enterprise (investimento personalizado) é indicado para agências e operações de alto volume — fale com nosso time para uma proposta sob medida."
+        answer: "O plano Start (R$196/mês) é ideal para freelancers e autônomos com 200 buscas e 1 número WhatsApp. O Growth (R$696/mês) é perfeito para vendedores e pequenas equipes com 600 buscas e 2 números. O Enterprise (investimento personalizado) é indicado para agências e operações de alto volume — fale com nosso time para uma proposta sob medida."
       },
       {
         question: "Posso cancelar minha assinatura a qualquer momento?",
