@@ -484,25 +484,47 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/40">
+                      <TableHead>Cliente</TableHead>
                       <TableHead>Plano</TableHead>
                       <TableHead className="text-right">Venda</TableHead>
-                      <TableHead className="text-right">%</TableHead>
                       <TableHead className="text-right">Comissão</TableHead>
-                      <TableHead>Pago em</TableHead>
-                      <TableHead>Liberou em</TableHead>
+                      <TableHead>Acesso</TableHead>
+                      <TableHead>Validade</TableHead>
+                      <TableHead>Liberou</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {composing.map((c) => {
                       const refunded = !!c.sale?.refunded_at || !!c.sale?.chargeback_at;
+                      const cust = c.sale?.customer_user_id ? customers[c.sale.customer_user_id] : null;
+                      const days = cust?.created_at ? daysSince(cust.created_at) : null;
+                      const validity = cust?.subscription_current_period_end;
+                      const expired = validity ? new Date(validity).getTime() < Date.now() : false;
                       return (
                         <TableRow key={c.id} className={refunded ? "bg-destructive/5" : ""}>
-                          <TableCell className="capitalize text-sm">{c.sale?.plan || "—"}</TableCell>
+                          <TableCell className="text-xs max-w-[220px]">
+                            <div className="font-medium text-foreground truncate flex items-center gap-1">
+                              <UserIcon size={11} className="text-muted-foreground shrink-0" />
+                              {cust?.name || "—"}
+                            </div>
+                            <div className="text-muted-foreground truncate flex items-center gap-1">
+                              <Mail size={10} className="shrink-0" />
+                              {cust?.email || "—"}
+                            </div>
+                          </TableCell>
+                          <TableCell className="capitalize text-sm">{c.sale?.plan || "—"} <span className="text-[10px] text-muted-foreground">({c.commission_percent}%)</span></TableCell>
                           <TableCell className="text-right text-sm">{fmtBRL(c.base_amount_cents)}</TableCell>
-                          <TableCell className="text-right text-sm">{c.commission_percent}%</TableCell>
                           <TableCell className="text-right font-semibold">{fmtBRL(c.commission_amount_cents)}</TableCell>
-                          <TableCell className="text-xs">{c.sale?.paid_at ? fmtDate(c.sale.paid_at) : "—"}</TableCell>
+                          <TableCell className="text-xs">
+                            <div className="flex items-center gap-1"><Clock size={11} className="text-muted-foreground" /> {days != null ? `${days} dias` : "—"}</div>
+                            <div className="text-[10px] text-muted-foreground">desde {cust?.created_at ? fmtDate(cust.created_at) : "—"}</div>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {validity ? (
+                              <span className={expired ? "text-destructive font-medium" : "text-foreground"}>{fmtDate(validity)}</span>
+                            ) : <span className="text-muted-foreground">—</span>}
+                          </TableCell>
                           <TableCell className="text-xs flex items-center gap-1">
                             <CalendarClock size={12} className="text-muted-foreground" />
                             {fmtDate(c.available_at)}
