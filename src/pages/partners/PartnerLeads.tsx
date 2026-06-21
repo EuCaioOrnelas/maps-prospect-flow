@@ -141,16 +141,15 @@ export default function PartnerLeads() {
                   <TableHead>Nome / Email</TableHead>
                   <TableHead>Plano</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">MRR</TableHead>
                   <TableHead>Cadastrado</TableHead>
                   <TableHead>Pago em</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Carregando...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Carregando...</TableCell></TableRow>
                 ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                  <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
                     {leads.length === 0 ? "Você ainda não tem leads — compartilhe seu link!" : "Nenhum lead corresponde aos filtros."}
                   </TableCell></TableRow>
                 ) : filtered.map((l) => (
@@ -161,9 +160,6 @@ export default function PartnerLeads() {
                     </TableCell>
                     <TableCell><span className="text-sm capitalize">{l.current_plan || "—"}</span></TableCell>
                     <TableCell>{statusBadge(l)}</TableCell>
-                    <TableCell className="text-right text-sm font-medium">
-                      {l.is_paid && !l.is_cancelled && l.current_plan_amount_cents ? fmtBRL(l.current_plan_amount_cents) : "—"}
-                    </TableCell>
                     <TableCell className="text-sm">{fmtDate(l.attributed_at)}</TableCell>
                     <TableCell className="text-sm">{fmtDate(l.paid_at)}</TableCell>
                   </TableRow>
@@ -171,6 +167,7 @@ export default function PartnerLeads() {
               </TableBody>
             </Table>
           </div>
+
         </CardContent>
       </Card>
     </div>
