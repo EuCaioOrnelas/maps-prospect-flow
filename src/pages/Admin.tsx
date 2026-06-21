@@ -83,7 +83,7 @@ import { Badge } from "@/components/ui/badge";
 // Preços dos planos (fallback caso Stripe falhe)
 const PLAN_PRICES: { [key: string]: number } = {
   free: 0,
-  start: 197,
+  start: 196,
   growth: 497,
   scale: 897,
 };
@@ -298,7 +298,7 @@ const Admin = () => {
   // Fetch PIX MRR from database
   const loadPixMRR = useCallback(async () => {
     try {
-      const planPrices: Record<string, number> = { start: 197, growth: 497, scale: 897 };
+      const planPrices: Record<string, number> = { start: 196, growth: 497, scale: 897 };
       const planNameToKey: Record<string, string> = { 'Wiize Start': 'start', 'Wiize Growth': 'growth', 'Wiize Scale': 'scale' };
       
       // Get PIX user IDs
@@ -355,7 +355,7 @@ const Admin = () => {
         const userId = c.user_id;
         const hasInvoice = (pixInvoiceUsers || []).some((p: any) => p.user_id === userId);
         if (!hasInvoice) {
-          pixSalesValue += planPrices[planKey] || 197;
+          pixSalesValue += planPrices[planKey] || 196;
         }
       }
 
@@ -370,7 +370,7 @@ const Admin = () => {
         if (!pixMonthlySalesMap[key]) pixMonthlySalesMap[key] = { sales: 0, salesValue: 0, cancellations: 0 };
         pixMonthlySalesMap[key].sales++;
         const planKey = planNameToKey[c.plan_attempted] || 'start';
-        pixMonthlySalesMap[key].salesValue += planPrices[planKey] || 197;
+        pixMonthlySalesMap[key].salesValue += planPrices[planKey] || 196;
       }
 
       // From paid pix_invoices (renewals)
@@ -480,7 +480,7 @@ const Admin = () => {
         let count = 0;
         for (const tl of pixUserTimelines) {
           if (tl.startMonth <= month && (!tl.endMonth || tl.endMonth > month)) {
-            mrr += planPrices[tl.planKey] || 197;
+            mrr += planPrices[tl.planKey] || 196;
             count++;
           }
         }

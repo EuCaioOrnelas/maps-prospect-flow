@@ -42,7 +42,7 @@ const plans: Plan[] = [
   {
     name: "Start",
     key: "start",
-    price: 197,
+    price: 196,
     originalPrice: 397,
     searches: "100",
     whatsappNumbers: 2,
