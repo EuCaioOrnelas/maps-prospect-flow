@@ -20,22 +20,27 @@ export default function PartnerCommissions() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchCommissions = async () => {
+    if (!partner?.id) return;
+    setRefreshing(true);
+    const [c, b] = await Promise.all([
+      supabase
+        .from("partner_commissions")
+        .select("*, sale:partner_sales(plan, paid_at, customer_user_id), lead:partner_sales!partner_commissions_partner_sale_id_fkey(partner_lead_id)")
+        .eq("partner_id", partner.id)
+        .order("created_at", { ascending: false }),
+      supabase.rpc("compute_partner_balance", { p_partner_id: partner.id }),
+    ]);
+    setItems(c.data || []);
+    setBalance(b.data || { pending_cents: 0, available_cents: 0, requested_cents: 0, paid_cents: 0 });
+    setLoading(false);
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    if (!partner?.id) return;
-    (async () => {
-      const [c, b] = await Promise.all([
-        supabase
-          .from("partner_commissions")
-          .select("*, sale:partner_sales(plan, paid_at, customer_user_id), lead:partner_sales!partner_commissions_partner_sale_id_fkey(partner_lead_id)")
-          .eq("partner_id", partner.id)
-          .order("created_at", { ascending: false }),
-        supabase.rpc("compute_partner_balance", { p_partner_id: partner.id }),
-      ]);
-      setItems(c.data || []);
-      setBalance(b.data || { pending_cents: 0, available_cents: 0, requested_cents: 0, paid_cents: 0 });
-      setLoading(false);
-    })();
+    fetchCommissions();
   }, [partner?.id]);
 
   const filtered = useMemo(() => items.filter((c) => {
