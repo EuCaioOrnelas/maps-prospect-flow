@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Wallet, Clock, CheckCircle2, ShieldAlert, Building2, KeyRound, User, ShieldCheck, Save } from "lucide-react";
+import { Loader2, Wallet, Clock, CheckCircle2, ShieldAlert, Building2, KeyRound, User, ShieldCheck, Save, ArrowUpRight, Landmark, Zap, Lock, CreditCard } from "lucide-react";
 import { fmtBRL, fmtDate, withdrawalStatusColors, withdrawalStatusLabel } from "@/lib/partnerFormat";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/partners/PageHeader";
@@ -325,47 +325,145 @@ export default function PartnerWithdrawals() {
       </Tabs>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Solicitar saque</DialogTitle>
-            <DialogDescription>
-              Saldo disponível: <strong className="text-foreground">{fmtBRL(balance.available_cents)}</strong> · Mínimo: {fmtBRL(minCents)}
+        <DialogContent className="sm:max-w-md overflow-hidden">
+          {/* Ambient top glow */}
+          <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-48 w-48 rounded-full blur-3xl opacity-40 bg-emerald-500/20" />
+
+          <DialogHeader className="relative text-center space-y-1 pb-2">
+            <div className="mx-auto h-12 w-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/5 flex items-center justify-center ring-1 ring-emerald-500/20 mb-2">
+              <Wallet size={22} className="text-emerald-400" />
+            </div>
+            <DialogTitle className="text-lg font-bold tracking-tight">Resgatar comissões</DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Solicite o resgate do seu saldo disponível
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
+
+          <div className="space-y-5 py-1 relative">
+            {/* Saldo disponível — destaque premium */}
+            <div className="relative overflow-hidden rounded-2xl border border-emerald-500/15 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent p-5">
+              <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full blur-2xl opacity-30 bg-emerald-400/20" />
+              <div className="relative flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400/80">Saldo disponível</div>
+                  <div className="text-3xl font-extrabold tracking-tight text-emerald-50 tabular-nums">
+                    {fmtBRL(balance.available_cents)}
+                  </div>
+                  <div className="text-[11px] text-emerald-300/60">
+                    Mínimo para saque: <span className="font-semibold text-emerald-300/80">{fmtBRL(minCents)}</span>
+                  </div>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center ring-1 ring-emerald-500/20">
+                  <ArrowUpRight size={18} className="text-emerald-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Input de valor */}
             <div className="space-y-2">
-              <Label>Valor (R$)</Label>
-              <Input
-                type="number"
-                min="0"
-                step="10"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder={String(minCents / 100)}
-                onKeyDown={(e) => e.key === "Enter" && submit()}
-              />
-              <button
-                type="button"
-                onClick={() => setAmount(String(balance.available_cents / 100))}
-                className="text-xs text-primary hover:underline"
-              >
-                Usar saldo total disponível
-              </button>
+              <Label className="text-xs font-medium text-muted-foreground">Valor do resgate (R$)</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">R$</span>
+                <Input
+                  type="number"
+                  min="0"
+                  step="10"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder={String(minCents / 100)}
+                  onKeyDown={(e) => e.key === "Enter" && submit()}
+                  className="pl-8 pr-4 h-11 text-base font-semibold tabular-nums"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setAmount(String(balance.available_cents / 100))}
+                  className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+                >
+                  Usar saldo total disponível
+                </button>
+                {Number(amount) > 0 && Number(amount) * 100 <= balance.available_cents && (
+                  <span className="text-[11px] text-muted-foreground">
+                    Restará: {fmtBRL(balance.available_cents - Number(amount) * 100)}
+                  </span>
+                )}
+              </div>
+              {/* Mini progress bar */}
+              {Number(amount) > 0 && (
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                    style={{ width: `${Math.min((Number(amount) * 100) / (balance.available_cents || 1) * 100, 100)}%` }}
+                  />
+                </div>
+              )}
             </div>
-            <div className="bg-muted/40 p-3 rounded-md text-xs space-y-1.5">
-              <div className="font-semibold text-foreground text-[11px] uppercase tracking-wider">Destino do saque</div>
-              <div><span className="text-muted-foreground">PIX:</span> <strong>{bankAccount?.pix_key}</strong> ({bankAccount?.pix_key_type})</div>
-              <div><span className="text-muted-foreground">Titular:</span> {bankAccount?.holder_name} · {bankAccount?.holder_tax_id}</div>
-              <div><span className="text-muted-foreground">Banco:</span> {bankAccount?.bank_code} - {bankAccount?.bank_name} · Ag {bankAccount?.bank_branch} · Cc {bankAccount?.bank_account}</div>
+
+            {/* Destino do saque — card visual */}
+            <div className="rounded-xl border border-border/50 bg-muted/30 p-4 space-y-3">
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <Landmark size={12} />
+                Destino do resgate
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs flex items-center gap-1.5">
+                    <Zap size={12} className="text-amber-400" /> PIX
+                  </span>
+                  <span className="font-semibold">{bankAccount?.pix_key}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">Tipo</span>
+                  <span className="font-medium capitalize">{bankAccount?.pix_key_type}</span>
+                </div>
+                <div className="h-px bg-border/40 my-2" />
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">Titular</span>
+                  <span className="font-medium">{bankAccount?.holder_name}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">CPF/CNPJ</span>
+                  <span className="font-medium tabular-nums">{bankAccount?.holder_tax_id}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">Banco</span>
+                  <span className="font-medium">{bankAccount?.bank_code} — {bankAccount?.bank_name}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">Agência</span>
+                  <span className="font-medium tabular-nums">{bankAccount?.bank_branch}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">Conta</span>
+                  <span className="font-medium tabular-nums">{bankAccount?.bank_account}</span>
+                </div>
+              </div>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              ✅ Validação executada no servidor. O saldo é recalculado e travado no momento da solicitação para impedir falsificação.
-            </p>
+
+            {/* Badge de segurança */}
+            <div className="flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/10 px-3 py-2.5">
+              <Lock size={14} className="text-primary shrink-0 mt-0.5" />
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                <span className="font-semibold text-foreground">Validação no servidor.</span> O saldo é recalculado e travado no momento da solicitação para impedir falsificação.
+              </p>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Cancelar</Button>
-            <Button onClick={submit} disabled={submitting}>
-              {submitting ? <><Loader2 className="animate-spin mr-2" size={16} />Enviando...</> : "Confirmar"}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting} className="flex-1">
+              Cancelar
+            </Button>
+            <Button
+              onClick={submit}
+              disabled={submitting || !amount || Number(amount) * 100 < minCents || Number(amount) * 100 > balance.available_cents}
+              className="flex-1 gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-[0_4px_16px_hsl(158_72%_38%_/0.25)] border-0"
+            >
+              {submitting ? (
+                <><Loader2 className="animate-spin" size={16} /> Enviando...</>
+              ) : (
+                <><ArrowUpRight size={16} /> Confirmar resgate</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
