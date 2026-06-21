@@ -137,7 +137,7 @@ function extractPlanFromDescription(description: string): string | null {
 
 function extractPlanFromValue(value: number): string | null {
   // Support old and new prices
-  if (value === 196 || value === 197 || value === 296) return "start";
+  if (value === 196 || value === 197 || value === 296) return "start"; // 197 legado
   if (value === 497 || value === 696) return "growth";
   if (value === 897 || value === 1496) return "scale";
   return null;
