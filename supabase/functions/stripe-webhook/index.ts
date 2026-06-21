@@ -1302,6 +1302,27 @@ serve(async (req) => {
               }
             );
 
+            // [PARTNERS] Marca venda como estornada + cancela comissão correspondente
+            try {
+              const invId = (charge.invoice as string | null) || null;
+              if (invId) {
+                const { data: refRes } = await supabaseClient.rpc("mark_partner_sale_refunded", {
+                  p_external_reference: invId,
+                  p_kind: "refund",
+                });
+                logStep("Partner sale refunded (charge.refunded)", refRes);
+              }
+              if (profile) {
+                const { data: cancelRes } = await supabaseClient.rpc(
+                  "cancel_partner_commissions_for_customer",
+                  { p_customer_user_id: profile.id, p_reason: "charge_refunded", p_only_recurring: false }
+                );
+                logStep("Partner commissions cancelled (charge.refunded)", cancelRes);
+              }
+            } catch (e) {
+              logStep("Failed cancelling partner commissions on refund", { error: String(e) });
+            }
+
             logStep("Refund processed: user downgraded to free", { 
               email: customer.email, 
               amount: refundAmount,
