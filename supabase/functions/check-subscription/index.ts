@@ -348,11 +348,41 @@ serve(async (req) => {
       logStep("User authenticated via getClaims", { userId, email: userEmail });
     }
 
+    // Sub-usuários herdam a assinatura do owner. Não tocar Stripe com o email deles.
+    const { data: subUserCheck } = await supabaseClient
+      .from('profiles')
+      .select('parent_owner_id')
+      .eq('id', userId)
+      .maybeSingle();
+    const parentOwnerId = (subUserCheck as any)?.parent_owner_id as string | null | undefined;
+    if (parentOwnerId) {
+      logStep("Sub-user detected, returning owner's subscription state", { userId, parentOwnerId });
+      const { data: ownerProfile } = await supabaseClient
+        .from('profiles')
+        .select('plan, searches_limit, subscription_current_period_end, subscription_status, is_blocked, trial_end_at, trial_will_charge_at')
+        .eq('id', parentOwnerId)
+        .maybeSingle();
+      const ownerPlan = (ownerProfile as any)?.plan || 'free';
+      return new Response(JSON.stringify({
+        subscribed: ownerPlan !== 'free',
+        plan: ownerPlan,
+        searches_limit: (ownerProfile as any)?.searches_limit ?? PLAN_LIMITS[ownerPlan] ?? PLAN_LIMITS['free'],
+        subscription_current_period_end: (ownerProfile as any)?.subscription_current_period_end ?? null,
+        subscription_status: (ownerProfile as any)?.subscription_status ?? null,
+        is_sub_user: true,
+        owner_user_id: parentOwnerId,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     const { data: existingProfile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen')
       .eq('id', userId)
       .maybeSingle();
+
 
     let currentProfile = (existingProfile as BillingProfileState | null) ?? null;
 

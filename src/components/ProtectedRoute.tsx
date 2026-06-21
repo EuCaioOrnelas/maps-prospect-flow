@@ -58,6 +58,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
       return;
     }
     (async () => {
+      // Sub-usuários (account_role !== 'owner' OU possuem parent_owner_id) herdam
+      // a conta do owner e NÃO devem passar pelo onboarding inicial.
+      const { data: roleData } = await supabase
+        .from('profiles')
+        .select('account_role, parent_owner_id')
+        .eq('id', user.id)
+        .maybeSingle();
+      const isSubUser =
+        !!(roleData as any)?.parent_owner_id ||
+        ((roleData as any)?.account_role && (roleData as any).account_role !== 'owner');
+      if (isSubUser) {
+        if (!cancelled) setNeedsOnboarding(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('user_onboarding')
         .select('id, role, completed_at, skipped')
@@ -74,6 +89,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
         !!data && (!!data.completed_at || (data.skipped === true && !!data.role));
       setNeedsOnboarding(!done);
     })();
+
     return () => {
       cancelled = true;
     };
