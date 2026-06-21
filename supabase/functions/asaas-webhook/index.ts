@@ -481,12 +481,14 @@ serve(async (req) => {
     // ============ PAYMENT REFUNDED / DELETED ============
     if (event === "PAYMENT_REFUNDED" || event === "PAYMENT_DELETED") {
       const externalReference = payment?.externalReference;
-      logStep("Payment refunded/deleted", { event, externalReference });
+      const paymentId = payment?.id || null;
+      logStep("Payment refunded/deleted", { event, externalReference, paymentId });
 
+      let profileId: string | null = null;
       if (externalReference) {
         const profile = await findProfile(supabaseClient, externalReference, null);
-
         if (profile) {
+          profileId = profile.id;
           await supabaseClient.from("profiles").update({
             plan: "free",
             searches_limit: 10,
@@ -497,6 +499,14 @@ serve(async (req) => {
           logStep("User downgraded to free", { userId: profile.id });
         }
       }
+
+      // [PARTNERS] Marca venda como estornada + cancela comissões pendentes/disponíveis (dentro da janela de 30 dias)
+      await cancelPartnerCommissionsForRefund(
+        supabaseClient,
+        profileId,
+        paymentId,
+        event === "PAYMENT_REFUNDED" ? "payment_refunded" : "payment_deleted",
+      );
 
       return new Response(
         JSON.stringify({ received: true, action: "refunded_downgraded" }),
