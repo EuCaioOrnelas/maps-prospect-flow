@@ -86,6 +86,16 @@ export default function PartnerLeads() {
         title="Meus leads"
         subtitle={`${counts.all} indicados · ${counts.paid} pagos · ${counts.trial} em trial`}
         icon={Users}
+        actions={
+          <button
+            type="button"
+            onClick={fetchLeads}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 h-9 rounded-lg border border-border hover:bg-muted/40 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /> Atualizar
+          </button>
+        }
       />
 
       <ReferralLinksCard partner={partner} showFilters onSelectFilter={setLinkFilter} selectedLinkId={linkFilter} />
