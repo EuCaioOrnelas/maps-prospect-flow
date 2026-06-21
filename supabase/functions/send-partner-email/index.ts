@@ -218,17 +218,29 @@ function buildEmail(type: string, data: any): { subject: string; html: string } 
       return { subject: "🟢 Comissão liberada para saque", html };
     }
     case "partner_withdrawal_approved": {
+      const pixKey = data.pix_key ? `${data.pix_key}${data.pix_key_type ? ` (${data.pix_key_type})` : ""}` : null;
       const html = layout("Saque aprovado",
         h(`Saque aprovado, ${data.first_name}! ✅`) +
-        p("O seu pedido de saque foi aprovado e entrou na fila de pagamento.") +
+        p("Boas notícias: nosso time financeiro validou todas as comissões da sua solicitação e o seu saque foi <strong>aprovado</strong>. Agora ele entra na fila de pagamento via Pix.") +
         box(
-          `<p style="margin:0;font-size:13px;color:#71717a;">Valor aprovado</p><p style="margin:4px 0 0;font-size:22px;font-weight:700;color:#18181b;">${fmtBRL(data.amount_cents)}</p>`
+          `<p style="margin:0;font-size:13px;color:#71717a;">Valor aprovado</p><p style="margin:4px 0 12px;font-size:24px;font-weight:700;color:${BRAND.color};">${fmtBRL(data.amount_cents)}</p>` +
+          (pixKey ? `<p style="margin:0;font-size:13px;color:#71717a;">Pix de destino</p><p style="margin:4px 0 0;font-size:14px;font-weight:600;color:#18181b;word-break:break-all;">${pixKey}</p>` : "")
         ) +
-        p("O pagamento será processado nos próximos dias úteis via Pix nos dados bancários cadastrados. Você receberá outro e-mail assim que o valor for transferido.") +
+        `<div style="background:#ecfdf5;border-left:3px solid ${BRAND.color};border-radius:6px;padding:14px 18px;margin:20px 0;">
+          <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:0.4px;">Prazo de pagamento</p>
+          <p style="margin:0;font-size:15px;color:#065f46;line-height:1.5;">O Pix é executado em até <strong>3 dias úteis</strong> a partir desta aprovação. Assim que a transferência for concluída, você recebe outro e-mail com o comprovante anexado.</p>
+        </div>` +
+        p("<strong>O que acontece agora:</strong>") +
+        `<ul style="margin:0 0 16px;padding-left:20px;color:#3f3f46;font-size:14px;line-height:1.7;">
+          <li>O valor já foi <strong>reservado</strong> e travado no seu saldo — não há risco de duplicidade.</li>
+          <li>Nosso time aciona o pagamento na conta Pix cadastrada acima.</li>
+          <li>Você recebe o comprovante por e-mail e pode baixá-lo dentro do portal.</li>
+        </ul>` +
+        small("Dica: confira se a chave Pix acima está correta. Se houver qualquer divergência, responda este e-mail nas próximas horas para que possamos atualizar antes do pagamento.") +
         btn(portal + "/saques", "Acompanhar saque"),
-        "Seu saque foi aprovado"
+        "Seu saque foi aprovado — pagamento em até 3 dias úteis"
       );
-      return { subject: "✅ Saque aprovado", html };
+      return { subject: "✅ Saque aprovado — pagamento em até 3 dias úteis", html };
     }
     case "partner_withdrawal_paid": {
       const html = layout("Saque pago",
