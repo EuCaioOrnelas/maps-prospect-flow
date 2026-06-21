@@ -1057,6 +1057,17 @@ serve(async (req) => {
                 previousSearchesUsed: profile.searches_used 
               }
             );
+
+            // [PARTNERS] Cancela comissões pendentes/disponíveis deste cliente
+            try {
+              const { data: cancelRes } = await supabaseClient.rpc(
+                "cancel_partner_commissions_for_customer",
+                { p_customer_user_id: profile.id, p_reason: "subscription_cancelled", p_only_recurring: false }
+              );
+              logStep("Partner commissions cancelled on subscription delete", cancelRes);
+            } catch (e) {
+              logStep("Failed to cancel partner commissions on subscription delete", { error: String(e) });
+            }
           }
         }
         break;
