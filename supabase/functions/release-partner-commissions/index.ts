@@ -97,16 +97,10 @@ Deno.serve(async (req) => {
       perPartner.set(c.partner_id, (perPartner.get(c.partner_id) || 0) + (c.commission_amount_cents || 0));
     }
 
-    // Send one email per partner with this batch's released amount + new total available
-    for (const [partnerId, releasedCents] of perPartner.entries()) {
-      const { data: balance } = await supabase.rpc("compute_partner_balance", { p_partner_id: partnerId });
-      const totalAvailable = (balance as { available_cents?: number } | null)?.available_cents || 0;
+    // NOTE: emails imediatos desativados. As liberações entram no resumo diário
+    // enviado por partner-daily-summary (1 e-mail/dia para economizar volume).
+    void perPartner;
 
-      sendPartnerEmail(supabase, partnerId, "partner_commission_ready", {
-        commission_cents: releasedCents,
-        total_available_cents: totalAvailable,
-      }).catch(() => {});
-    }
 
     return new Response(JSON.stringify({ released: ready.length, partners_notified: perPartner.size }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
