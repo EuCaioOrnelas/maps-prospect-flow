@@ -84,7 +84,8 @@ export default function PartnerWithdrawals() {
   const minCents = settings?.minimum_withdrawal_cents || 10000;
   const canRequest = isBankComplete && balance.available_cents >= minCents && (settings?.allow_multiple_pending_withdrawals || !hasPending);
 
-  const missingBank = REQUIRED_BANK_KEYS.filter((k) => !String(bankForm[k] || "").trim());
+  const normalizedBankForm = { ...bankForm, account_type: bankForm.account_type || "checking", pix_key_type: bankForm.pix_key_type || "cpf" };
+  const missingBank = REQUIRED_BANK_KEYS.filter((k) => !String(normalizedBankForm[k] || "").trim());
 
   const saveBank = async () => {
     if (missingBank.length > 0) {
@@ -94,7 +95,7 @@ export default function PartnerWithdrawals() {
     setSavingBank(true);
     const { error } = await supabase.from("partner_bank_accounts").upsert({
       partner_id: partner.id,
-      ...REQUIRED_BANK_KEYS.reduce((acc, k) => ({ ...acc, [k]: bankForm[k] }), {} as Record<string, string>),
+      ...REQUIRED_BANK_KEYS.reduce((acc, k) => ({ ...acc, [k]: normalizedBankForm[k] }), {} as Record<string, string>),
     }, { onConflict: "partner_id" });
     setSavingBank(false);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
