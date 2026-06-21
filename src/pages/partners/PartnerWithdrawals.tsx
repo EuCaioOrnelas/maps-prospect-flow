@@ -384,11 +384,16 @@ export default function PartnerWithdrawals() {
                 />
               </div>
               {Number(amount) > 0 && (
-                <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-500"
-                    style={{ width: `${Math.min((Number(amount) * 100) / (balance.available_cents || 1) * 100, 100)}%` }}
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 flex-1 rounded-full bg-muted/80 border border-border/40 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-[0_0_8px_hsl(158_72%_38%_/0.35)] transition-all duration-700 ease-out"
+                      style={{ width: `${Math.min((Number(amount) * 100) / (balance.available_cents || 1) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-semibold text-primary tabular-nums">
+                    {Math.min(Math.round((Number(amount) * 100) / (balance.available_cents || 1) * 100), 100)}%
+                  </span>
                 </div>
               )}
             </div>
