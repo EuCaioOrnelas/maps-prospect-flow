@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, Search, X } from "lucide-react";
+import { Users, Search, X, RefreshCw } from "lucide-react";
 import { fmtDate, fmtBRL } from "@/lib/partnerFormat";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { ReferralLinksCard } from "@/components/partners/ReferralLinksCard";

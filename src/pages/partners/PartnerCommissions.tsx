@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DollarSign, Search, Wallet, Clock, TrendingUp, CheckCircle2 } from "lucide-react";
+import { DollarSign, Search, Wallet, Clock, TrendingUp, CheckCircle2, RefreshCw } from "lucide-react";
 import { fmtBRL, fmtDate, commissionStatusColors, commissionStatusLabel } from "@/lib/partnerFormat";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { StatCard } from "@/components/partners/StatCard";
