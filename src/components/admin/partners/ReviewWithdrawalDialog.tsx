@@ -542,7 +542,7 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
                     <TableRow className="bg-muted/30 font-semibold">
                       <TableCell colSpan={3} className="text-right">Total coberto</TableCell>
                       <TableCell className="text-right">{fmtBRL(composedTotal)}</TableCell>
-                      <TableCell colSpan={3} />
+                      <TableCell colSpan={4} />
                     </TableRow>
                   </TableBody>
                 </Table>
