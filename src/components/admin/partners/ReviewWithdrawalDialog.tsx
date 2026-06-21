@@ -10,11 +10,23 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Loader2, Upload, Check, X, AlertTriangle, ShieldCheck, CalendarClock,
-  Wallet, Receipt, Landmark, Info,
+  Wallet, Receipt, Landmark, Info, FileSpreadsheet, Mail, User as UserIcon, Clock,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { fmtBRL, fmtDate, fmtDateTime } from "@/lib/partnerFormat";
+
+interface CustomerProfile {
+  id: string;
+  email: string | null;
+  name: string | null;
+  plan: string | null;
+  created_at: string | null;
+  subscription_current_period_end: string | null;
+  billing_period: string | null;
+  payment_provider: string | null;
+}
 
 interface Props {
   withdrawal: any | null;
@@ -58,6 +70,7 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
   const [balance, setBalance] = useState<any>(null);
   const [bankAccount, setBankAccount] = useState<any>(null);
+  const [customers, setCustomers] = useState<Record<string, CustomerProfile>>({});
   const [loadingData, setLoadingData] = useState(false);
   const { toast } = useToast();
 
@@ -74,9 +87,25 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
         supabase.rpc("compute_partner_balance", { p_partner_id: withdrawal.partner_id }),
         supabase.from("partner_bank_accounts").select("*").eq("partner_id", withdrawal.partner_id).maybeSingle(),
       ]);
-      setCommissions((commRes.data as any) || []);
+      const comms = (commRes.data as any) || [];
+      setCommissions(comms);
       setBalance(balRes.data || null);
       setBankAccount(baRes.data || null);
+
+      const userIds = Array.from(new Set(
+        comms.map((c: any) => c.sale?.customer_user_id).filter(Boolean)
+      )) as string[];
+      if (userIds.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, email, name, plan, created_at, subscription_current_period_end, billing_period, payment_provider")
+          .in("id", userIds);
+        const map: Record<string, CustomerProfile> = {};
+        (profs || []).forEach((p: any) => { map[p.id] = p; });
+        setCustomers(map);
+      } else {
+        setCustomers({});
+      }
       setLoadingData(false);
     })();
   }, [withdrawal?.id, withdrawal?.partner_id]);
@@ -328,6 +357,64 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
     onClose();
   };
 
+  const daysSince = (iso: string | null | undefined) => {
+    if (!iso) return null;
+    const diff = (Date.now() - new Date(iso).getTime()) / 86400000;
+    return Math.max(0, Math.floor(diff));
+  };
+
+  const exportXlsx = (scope: "composing" | "all") => {
+    const list = scope === "composing" ? composing : commissions;
+    const rows = list.map((c) => {
+      const cust = c.sale?.customer_user_id ? customers[c.sale.customer_user_id] : null;
+      return {
+        "Comissão ID": c.id,
+        "Plano": c.sale?.plan || "",
+        "Valor da venda (R$)": (c.sale?.amount_cents || 0) / 100,
+        "% Comissão": c.commission_percent,
+        "Comissão (R$)": c.commission_amount_cents / 100,
+        "Status comissão": c.status,
+        "Provedor pagamento": c.sale?.payment_provider || "",
+        "Recorrente": c.sale?.is_recurring ? "Sim" : "Não",
+        "Pago em (venda)": c.sale?.paid_at ? fmtDateTime(c.sale.paid_at) : "",
+        "Liberada em": fmtDate(c.available_at),
+        "Reembolso em": c.sale?.refunded_at ? fmtDate(c.sale.refunded_at) : "",
+        "Chargeback em": c.sale?.chargeback_at ? fmtDate(c.sale.chargeback_at) : "",
+        "Cliente (nome)": cust?.name || "",
+        "Cliente (email)": cust?.email || "",
+        "Cliente desde": cust?.created_at ? fmtDate(cust.created_at) : "",
+        "Dias de acesso": cust?.created_at ? daysSince(cust.created_at) : "",
+        "Plano atual cliente": cust?.plan || "",
+        "Validade assinatura": cust?.subscription_current_period_end ? fmtDate(cust.subscription_current_period_end) : "",
+        "Periodicidade": cust?.billing_period || "",
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Comissões");
+
+    const summary = [
+      ["Saque", withdrawal.id],
+      ["Parceiro", withdrawal.partner.full_name],
+      ["Email parceiro", withdrawal.partner.email],
+      ["Solicitado em", fmtDateTime(withdrawal.requested_at)],
+      ["Valor pedido (R$)", withdrawal.amount_cents / 100],
+      ["Comissões cobertas (R$)", composedTotal / 100],
+      ["Saldo disponível (R$)", balance ? balance.available_cents / 100 : ""],
+      ["Status", withdrawal.status],
+      ["PIX", bank.pix_key || ""],
+      ["Banco", `${bank.bank_code || ""} ${bank.bank_name || ""}`.trim()],
+      ["Agência", bank.bank_branch || ""],
+      ["Conta", bank.bank_account || ""],
+      ["Titular", bank.holder_name || ""],
+      ["CPF/CNPJ", bank.holder_tax_id || ""],
+    ];
+    const ws2 = XLSX.utils.aoa_to_sheet(summary);
+    XLSX.utils.book_append_sheet(wb, ws2, "Resumo");
+
+    XLSX.writeFile(wb, `saque-${withdrawal.id.substring(0, 8)}-${scope}.xlsx`);
+  };
+
   return (
     <Dialog open={!!withdrawal} onOpenChange={(o) => !o && !loading && onClose()}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
@@ -371,6 +458,15 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
           </div>
         )}
 
+        <div className="flex items-center justify-end gap-2 -mb-1">
+          <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => exportXlsx("composing")} disabled={loadingData || composing.length === 0}>
+            <FileSpreadsheet size={13} className="text-emerald-600" /> Exportar saque (Excel)
+          </Button>
+          <Button size="sm" variant="ghost" className="h-8 gap-1.5 text-xs" onClick={() => exportXlsx("all")} disabled={loadingData || commissions.length === 0}>
+            <FileSpreadsheet size={13} /> Exportar todas
+          </Button>
+        </div>
+
         <Tabs defaultValue="sales" className="mt-2">
           <TabsList>
             <TabsTrigger value="sales" className="gap-2"><Receipt size={14} /> Vendas que compõem ({composing.length})</TabsTrigger>
@@ -388,25 +484,47 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/40">
+                      <TableHead>Cliente</TableHead>
                       <TableHead>Plano</TableHead>
                       <TableHead className="text-right">Venda</TableHead>
-                      <TableHead className="text-right">%</TableHead>
                       <TableHead className="text-right">Comissão</TableHead>
-                      <TableHead>Pago em</TableHead>
-                      <TableHead>Liberou em</TableHead>
+                      <TableHead>Acesso</TableHead>
+                      <TableHead>Validade</TableHead>
+                      <TableHead>Liberou</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {composing.map((c) => {
                       const refunded = !!c.sale?.refunded_at || !!c.sale?.chargeback_at;
+                      const cust = c.sale?.customer_user_id ? customers[c.sale.customer_user_id] : null;
+                      const days = cust?.created_at ? daysSince(cust.created_at) : null;
+                      const validity = cust?.subscription_current_period_end;
+                      const expired = validity ? new Date(validity).getTime() < Date.now() : false;
                       return (
                         <TableRow key={c.id} className={refunded ? "bg-destructive/5" : ""}>
-                          <TableCell className="capitalize text-sm">{c.sale?.plan || "—"}</TableCell>
+                          <TableCell className="text-xs max-w-[220px]">
+                            <div className="font-medium text-foreground truncate flex items-center gap-1">
+                              <UserIcon size={11} className="text-muted-foreground shrink-0" />
+                              {cust?.name || "—"}
+                            </div>
+                            <div className="text-muted-foreground truncate flex items-center gap-1">
+                              <Mail size={10} className="shrink-0" />
+                              {cust?.email || "—"}
+                            </div>
+                          </TableCell>
+                          <TableCell className="capitalize text-sm">{c.sale?.plan || "—"} <span className="text-[10px] text-muted-foreground">({c.commission_percent}%)</span></TableCell>
                           <TableCell className="text-right text-sm">{fmtBRL(c.base_amount_cents)}</TableCell>
-                          <TableCell className="text-right text-sm">{c.commission_percent}%</TableCell>
                           <TableCell className="text-right font-semibold">{fmtBRL(c.commission_amount_cents)}</TableCell>
-                          <TableCell className="text-xs">{c.sale?.paid_at ? fmtDate(c.sale.paid_at) : "—"}</TableCell>
+                          <TableCell className="text-xs">
+                            <div className="flex items-center gap-1"><Clock size={11} className="text-muted-foreground" /> {days != null ? `${days} dias` : "—"}</div>
+                            <div className="text-[10px] text-muted-foreground">desde {cust?.created_at ? fmtDate(cust.created_at) : "—"}</div>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {validity ? (
+                              <span className={expired ? "text-destructive font-medium" : "text-foreground"}>{fmtDate(validity)}</span>
+                            ) : <span className="text-muted-foreground">—</span>}
+                          </TableCell>
                           <TableCell className="text-xs flex items-center gap-1">
                             <CalendarClock size={12} className="text-muted-foreground" />
                             {fmtDate(c.available_at)}
@@ -424,7 +542,7 @@ export const ReviewWithdrawalDialog = ({ withdrawal, onClose, onUpdated }: Props
                     <TableRow className="bg-muted/30 font-semibold">
                       <TableCell colSpan={3} className="text-right">Total coberto</TableCell>
                       <TableCell className="text-right">{fmtBRL(composedTotal)}</TableCell>
-                      <TableCell colSpan={3} />
+                      <TableCell colSpan={4} />
                     </TableRow>
                   </TableBody>
                 </Table>
