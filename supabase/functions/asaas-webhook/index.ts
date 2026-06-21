@@ -448,6 +448,21 @@ serve(async (req) => {
         billingPeriod: value >= 2000 ? "annual" : "monthly",
       });
 
+      // [PARTNERS] Registra venda (primeira ou recorrente) — comissão só é gerada porque o pagamento foi confirmado de fato
+      try {
+        const partnerResult = await registerPartnerSale(supabaseClient, {
+          userId: profile.id,
+          amountCents: Math.round(value * 100),
+          plan: planKey,
+          asaasPaymentId: payment.id,
+          subscriptionRef: subscriptionId || pixAutoAuthId || null,
+          paidAt: new Date().toISOString(),
+        });
+        logStep("Partner sale check (asaas payment)", partnerResult);
+      } catch (e) {
+        logStep("Partner sale registration failed (asaas)", { error: String(e) });
+      }
+
       return new Response(
         JSON.stringify({ received: true, plan: planKey, userId: profile.id, action: "activated" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
