@@ -1,6 +1,11 @@
 import { lazy, type ComponentType } from "react";
 
-type ComponentModule<T extends ComponentType<any>> = { default: T };
+// Permissivo: aceita qualquer módulo cujo `default` seja um componente React.
+// Evita erros de tipagem em ambientes (VS Code/CI) onde o TS não infere
+// corretamente o `default` do `import()` dinâmico.
+type ComponentModule<T extends ComponentType<any> = ComponentType<any>> = {
+  default: T;
+} & Record<string, any>;
 
 const RETRY_DELAY_MS = 250;
 const RECOVERY_COOLDOWN_MS = 15_000;
