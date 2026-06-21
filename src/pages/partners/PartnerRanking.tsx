@@ -16,13 +16,6 @@ const levelGradients: Record<string, string> = {
   platinum: "from-foreground/90 to-foreground/70 text-background",
 };
 
-const tierThresholds = [
-  { level: "bronze", min: 0, max: 500000, label: "Select", percent: 10 },
-  { level: "silver", min: 500000, max: 2500000, label: "Signature", percent: 15 },
-  { level: "gold", min: 2500000, max: 10000000, label: "Prime", percent: 20 },
-  { level: "platinum", min: 10000000, max: Infinity, label: "Exclusive", percent: 25 },
-];
-
 interface RankRow {
   id: string;
   full_name: string;
@@ -34,66 +27,83 @@ interface RankRow {
 export default function PartnerRanking() {
   const { partner } = useOutletContext<any>();
   const [rows, setRows] = useState<RankRow[]>([]);
+  const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("partners")
-        .select("id, full_name, level, lifetime_revenue_cents, total_paid_clients")
-        .eq("status", "active")
-        .order("lifetime_revenue_cents", { ascending: false })
-        .limit(20);
-      setRows((data as any) || []);
+      const [r, s] = await Promise.all([
+        supabase
+          .from("partners")
+          .select("id, full_name, level, lifetime_revenue_cents, total_paid_clients")
+          .eq("status", "active")
+          .order("lifetime_revenue_cents", { ascending: false })
+          .limit(20),
+        supabase.from("partner_settings").select("*").eq("id", 1).maybeSingle(),
+      ]);
+      setRows((r.data as any) || []);
+      setSettings(s.data);
       setLoading(false);
     })();
   }, []);
 
+  const tierThresholds = settings ? [
+    { level: "bronze", minClients: 0, label: "Select", percent: Number(settings.bronze_commission_percent) },
+    { level: "silver", minClients: settings.silver_threshold_clients, label: "Signature", percent: Number(settings.silver_commission_percent) },
+    { level: "gold", minClients: settings.gold_threshold_clients, label: "Prime", percent: Number(settings.gold_commission_percent) },
+    { level: "platinum", minClients: settings.platinum_threshold_clients ?? 500, label: "Exclusive", percent: Number(settings.platinum_commission_percent) },
+  ] : [];
+
   const me = rows.find((r) => r.id === partner.id);
   const myIndex = me ? rows.indexOf(me) : -1;
+  const myClients = me?.total_paid_clients || 0;
   const myRevenue = me?.lifetime_revenue_cents || 0;
-  const currentTier = tierThresholds.find((t) => myRevenue >= t.min && myRevenue < t.max) || tierThresholds[0];
-  const nextTier = tierThresholds.find((t) => t.min > myRevenue);
-  const progressPct = nextTier ? Math.min(100, ((myRevenue - currentTier.min) / (nextTier.min - currentTier.min)) * 100) : 100;
+  const currentTier = tierThresholds.slice().reverse().find((t) => myClients >= t.minClients) || tierThresholds[0];
+  const nextTier = tierThresholds.find((t) => t.minClients > myClients);
+  const progressPct = nextTier && currentTier
+    ? Math.min(100, ((myClients - currentTier.minClients) / Math.max(1, nextTier.minClients - currentTier.minClients)) * 100)
+    : 100;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl font-semibold">Ranking de parceiros</h1>
         <p className="text-sm text-muted-foreground mt-1">Veja onde você está e o que falta para o próximo nível.</p>
       </div>
 
       {/* My progress */}
-      <Card className={cn("bg-gradient-to-br border", levelGradients[currentTier.level])}>
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <div className="text-xs uppercase tracking-wide opacity-70">Sua posição</div>
-              <div className="text-3xl font-bold mt-1">{myIndex >= 0 ? `#${myIndex + 1}` : "—"}</div>
-              <div className="text-sm mt-1">
-                Nível atual: <strong>{levelLabel[currentTier.level]}</strong> ({currentTier.percent}%)
+      {currentTier && (
+        <Card className={cn("bg-gradient-to-br border", levelGradients[currentTier.level])}>
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <div className="text-xs uppercase tracking-wide opacity-70">Sua posição</div>
+                <div className="text-3xl font-bold mt-1">{myIndex >= 0 ? `#${myIndex + 1}` : "—"}</div>
+                <div className="text-sm mt-1">
+                  Nível atual: <strong>{currentTier.label}</strong> ({currentTier.percent}%)
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs uppercase tracking-wide opacity-70">Clientes pagos</div>
+                <div className="text-2xl font-bold mt-1">{myClients}</div>
+                <div className="text-sm mt-1">{fmtBRL(myRevenue)} de receita gerada</div>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-xs uppercase tracking-wide opacity-70">Receita gerada</div>
-              <div className="text-2xl font-bold mt-1">{fmtBRL(myRevenue)}</div>
-              <div className="text-sm mt-1">{me?.total_paid_clients || 0} clientes pagos</div>
-            </div>
-          </div>
 
-          {nextTier && (
-            <div className="mt-6">
-              <div className="flex justify-between text-xs mb-2">
-                <span>Faltam <strong>{fmtBRL(nextTier.min - myRevenue)}</strong> para {levelLabel[nextTier.level]}</span>
-                <span className="opacity-70">{Math.round(progressPct)}%</span>
+            {nextTier && (
+              <div className="mt-6">
+                <div className="flex justify-between text-xs mb-2">
+                  <span>Faltam <strong>{Math.max(0, nextTier.minClients - myClients)} clientes</strong> para {nextTier.label}</span>
+                  <span className="opacity-70">{Math.round(progressPct)}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-background/60 overflow-hidden">
+                  <div className="h-full bg-current opacity-70 transition-all" style={{ width: `${progressPct}%` }} />
+                </div>
               </div>
-              <div className="h-2 rounded-full bg-background/60 overflow-hidden">
-                <div className="h-full bg-current opacity-70 transition-all" style={{ width: `${progressPct}%` }} />
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Top 20 ranking */}
       <Card>
@@ -121,7 +131,6 @@ export default function PartnerRanking() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm truncate">
-                        {/* Anonymize others — first name + last initial */}
                         {isMe ? r.full_name + " (você)" : anonymize(r.full_name)}
                       </div>
                       <div className="text-xs text-muted-foreground capitalize">{levelLabel[r.level]} · {r.total_paid_clients} clientes</div>
