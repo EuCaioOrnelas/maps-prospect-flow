@@ -17,61 +17,66 @@ export default function PartnerDashboard() {
   const [mrrCents, setMrrCents] = useState<number>(0);
   const [mrrSeries, setMrrSeries] = useState<Array<{ month: string; mrr_cents: number }>>([]);
   const [planDist, setPlanDist] = useState<Array<{ plan: string; count: number }>>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchDashboard = async () => {
+    if (!partner?.id) return;
+    setRefreshing(true);
+    const [balRes, leadsRes, partnerData, mrrRes, salesRes] = await Promise.all([
+      supabase.rpc("compute_partner_balance", { p_partner_id: partner.id }),
+      supabase.from("partner_leads").select("id, is_trial, is_paid, is_cancelled, current_plan, attributed_at").eq("partner_id", partner.id),
+      supabase.from("partners").select("total_clicks, total_leads, total_paid_clients, lifetime_revenue_cents").eq("id", partner.id).maybeSingle(),
+      supabase.rpc("compute_partner_mrr", { p_partner_id: partner.id }),
+      supabase.from("partner_sales").select("plan, amount_cents, paid_at, is_recurring, refunded_at, chargeback_at").eq("partner_id", partner.id).order("paid_at", { ascending: true }),
+    ]);
+
+    const leads = leadsRes.data || [];
+    const sales = salesRes.data || [];
+
+    // Plan distribution among active paid clients
+    const planMap = new Map<string, number>();
+    leads.filter((l: any) => l.is_paid && !l.is_cancelled).forEach((l: any) => {
+      const k = (l.current_plan || "—").toLowerCase();
+      planMap.set(k, (planMap.get(k) || 0) + 1);
+    });
+    setPlanDist(Array.from(planMap.entries()).map(([plan, count]) => ({ plan, count })));
+
+    // MRR series last 6 months
+    const now = new Date();
+    const series: Array<{ month: string; mrr_cents: number }> = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const next = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+      const label = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+      // estimate: MRR = sum of recurring sales whose first paid_at <= end of month and not refunded/charged back before that
+      const monthly = sales
+        .filter((s: any) => s.is_recurring && new Date(s.paid_at) < next && !(s.refunded_at && new Date(s.refunded_at) < next) && !(s.chargeback_at && new Date(s.chargeback_at) < next))
+        .reduce((acc: number, s: any) => acc + (s.amount_cents || 0), 0);
+      series.push({ month: label, mrr_cents: monthly });
+    }
+    setMrrSeries(series);
+
+    const totalLeads = leads.length;
+    const trials = leads.filter((l: any) => l.is_trial && !l.is_paid).length;
+    const paid = leads.filter((l: any) => l.is_paid).length;
+    const cancelled = leads.filter((l: any) => l.is_cancelled).length;
+    const conv = totalLeads > 0 ? (paid / totalLeads) * 100 : 0;
+
+    setStats({
+      ...(balRes.data as any || {}),
+      total_leads: totalLeads,
+      trials,
+      paid,
+      cancelled,
+      conversion_rate: conv,
+      ...(partnerData.data || {}),
+    });
+    setMrrCents(Number(mrrRes.data || 0));
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    if (!partner?.id) return;
-    (async () => {
-      const [balRes, leadsRes, partnerData, mrrRes, salesRes] = await Promise.all([
-        supabase.rpc("compute_partner_balance", { p_partner_id: partner.id }),
-        supabase.from("partner_leads").select("id, is_trial, is_paid, is_cancelled, current_plan, attributed_at").eq("partner_id", partner.id),
-        supabase.from("partners").select("total_clicks, total_leads, total_paid_clients, lifetime_revenue_cents").eq("id", partner.id).maybeSingle(),
-        supabase.rpc("compute_partner_mrr", { p_partner_id: partner.id }),
-        supabase.from("partner_sales").select("plan, amount_cents, paid_at, is_recurring, refunded_at, chargeback_at").eq("partner_id", partner.id).order("paid_at", { ascending: true }),
-      ]);
-
-      const leads = leadsRes.data || [];
-      const sales = salesRes.data || [];
-
-      // Plan distribution among active paid clients
-      const planMap = new Map<string, number>();
-      leads.filter((l: any) => l.is_paid && !l.is_cancelled).forEach((l: any) => {
-        const k = (l.current_plan || "—").toLowerCase();
-        planMap.set(k, (planMap.get(k) || 0) + 1);
-      });
-      setPlanDist(Array.from(planMap.entries()).map(([plan, count]) => ({ plan, count })));
-
-      // MRR series last 6 months
-      const now = new Date();
-      const series: Array<{ month: string; mrr_cents: number }> = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const next = new Date(d.getFullYear(), d.getMonth() + 1, 1);
-        const label = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
-        // estimate: MRR = sum of recurring sales whose first paid_at <= end of month and not refunded/charged back before that
-        const monthly = sales
-          .filter((s: any) => s.is_recurring && new Date(s.paid_at) < next && !(s.refunded_at && new Date(s.refunded_at) < next) && !(s.chargeback_at && new Date(s.chargeback_at) < next))
-          .reduce((acc: number, s: any) => acc + (s.amount_cents || 0), 0);
-        series.push({ month: label, mrr_cents: monthly });
-      }
-      setMrrSeries(series);
-
-      const totalLeads = leads.length;
-      const trials = leads.filter((l: any) => l.is_trial && !l.is_paid).length;
-      const paid = leads.filter((l: any) => l.is_paid).length;
-      const cancelled = leads.filter((l: any) => l.is_cancelled).length;
-      const conv = totalLeads > 0 ? (paid / totalLeads) * 100 : 0;
-
-      setStats({
-        ...(balRes.data as any || {}),
-        total_leads: totalLeads,
-        trials,
-        paid,
-        cancelled,
-        conversion_rate: conv,
-        ...(partnerData.data || {}),
-      });
-      setMrrCents(Number(mrrRes.data || 0));
-    })();
+    fetchDashboard();
   }, [partner?.id]);
 
   const headlineCards = useMemo(() => stats ? [
