@@ -10,11 +10,23 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Loader2, Upload, Check, X, AlertTriangle, ShieldCheck, CalendarClock,
-  Wallet, Receipt, Landmark, Info,
+  Wallet, Receipt, Landmark, Info, FileSpreadsheet, Mail, User as UserIcon, Clock,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { fmtBRL, fmtDate, fmtDateTime } from "@/lib/partnerFormat";
+
+interface CustomerProfile {
+  id: string;
+  email: string | null;
+  name: string | null;
+  plan: string | null;
+  created_at: string | null;
+  subscription_current_period_end: string | null;
+  billing_period: string | null;
+  payment_provider: string | null;
+}
 
 interface Props {
   withdrawal: any | null;
