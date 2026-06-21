@@ -980,6 +980,17 @@ serve(async (req) => {
                   previousSearchesUsed: profile.searches_used 
                 }
               );
+
+              // [PARTNERS] Cancela comissões pendentes ao perder a assinatura
+              try {
+                const { data: cancelRes } = await supabaseClient.rpc(
+                  "cancel_partner_commissions_for_customer",
+                  { p_customer_user_id: profile.id, p_reason: `subscription_${subscription.status}`, p_only_recurring: false }
+                );
+                logStep("Partner commissions cancelled (status update)", cancelRes);
+              } catch (e) {
+                logStep("Failed cancelling partner commissions (status update)", { error: String(e) });
+              }
             }
           }
         }
