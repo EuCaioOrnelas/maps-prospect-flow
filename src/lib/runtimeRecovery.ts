@@ -163,7 +163,7 @@ export function lazyWithRetry<T extends ComponentType<any> = ComponentType<any>>
       await wait(RETRY_DELAY_MS);
 
       try {
-        return await importer();
+        return await load();
       } catch (secondError) {
         if (await recoverFromRuntimeAssetError(`lazy:${label}`, secondError)) {
           return await new Promise<never>(() => {
