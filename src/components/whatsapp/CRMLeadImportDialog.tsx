@@ -483,7 +483,7 @@ export const CRMLeadImportDialog = ({
         {/* Footer */}
         <div className="flex items-center justify-between pt-3 border-t border-border">
           <p className="text-xs text-muted-foreground">
-            DDI +55 será adicionado automaticamente
+            Formatação automática: DDI, 9º dígito BR e E.164 internacional
           </p>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={() => onOpenChange(false)}>
