@@ -122,17 +122,11 @@ export const CRMLeadImportDialog = ({
     }
   }, [open]);
 
-  const normalizePhone = (phone: string): string => {
-    let digits = String(phone || "").replace(/\D/g, "");
-    if (!digits) return "";
-    // Remove leading 00
-    if (digits.startsWith("00") && digits.length > 4) digits = digits.slice(2);
-    // Add 55 if missing
-    if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith("55")) {
-      digits = "55" + digits;
-    }
-    return digits;
-  };
+  // Formatação Meta — global, com 9º dígito BR automático
+  // (importado de @/lib/phoneUtils para garantir consistência com o envio).
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { formatPhoneForMeta } = require("@/lib/phoneUtils") as typeof import("@/lib/phoneUtils");
+  const normalizePhone = (phone: string): string => formatPhoneForMeta(phone);
 
   const getPhoneKey = (phone: string) => phone.replace(/\D/g, "").slice(-8);
 
