@@ -25,21 +25,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const PAID_PLANS = ["start", "growth", "scale"];
-
-function getEvolutionCredsFromTier(tier: string | null | undefined) {
-  const normalized = (tier || "free").toLowerCase();
-  if (normalized === "paid" || PAID_PLANS.includes(normalized)) {
-    const url = Deno.env.get("EVOLUTION_API_URL_PAID");
-    const apiKey = Deno.env.get("EVOLUTION_API_KEY_PAID");
-    if (url && apiKey) return { url, apiKey, tier: "paid" as const };
-  }
-  return {
-    url: Deno.env.get("EVOLUTION_API_URL")!,
-    apiKey: Deno.env.get("EVOLUTION_API_KEY")!,
-    tier: "free" as const,
-  };
-}
+// Evolution API removida (junho/2026). Envio é exclusivamente via Meta Cloud API.
 
 function normalizeHandle(value: any): string | null {
   if (!value) return null;
@@ -205,109 +191,7 @@ type SendPayload =
       sections: Array<{ title?: string; rows: Array<{ id: string; title: string; description?: string }> }>;
     };
 
-async function sendViaEvolution(
-  supabase: any,
-  numberId: string,
-  userId: string,
-  toPhone: string,
-  payload: SendPayload,
-) {
-  const { data: numberRow } = await supabase
-    .from("whatsapp_numbers")
-    .select("instance_name, api_tier, phone_number")
-    .eq("id", numberId)
-    .maybeSingle();
-  if (!numberRow?.instance_name) {
-    throw new Error(`Evolution instance not found for number ${numberId}`);
-  }
-
-  let tier = numberRow.api_tier as string | null;
-  if (!tier) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("plan")
-      .eq("id", userId)
-      .maybeSingle();
-    tier = profile?.plan || "free";
-  }
-  const creds = getEvolutionCredsFromTier(tier);
-
-  const formattedPhone = toPhone.replace(/\D/g, "");
-
-  let endpoint = "";
-  let body: any = { number: formattedPhone };
-
-  switch (payload.type) {
-    case "text":
-      endpoint = `/message/sendText/${numberRow.instance_name}`;
-      body.text = payload.content || "";
-      break;
-    case "image":
-      endpoint = `/message/sendMedia/${numberRow.instance_name}`;
-      body = { ...body, mediatype: "image", media: payload.mediaUrl, caption: payload.caption || "" };
-      break;
-    case "video":
-      endpoint = `/message/sendMedia/${numberRow.instance_name}`;
-      body = { ...body, mediatype: "video", media: payload.mediaUrl, caption: payload.caption || "" };
-      break;
-    case "audio":
-      endpoint = `/message/sendWhatsAppAudio/${numberRow.instance_name}`;
-      body = { ...body, audio: payload.mediaUrl };
-      break;
-    case "document":
-      endpoint = `/message/sendMedia/${numberRow.instance_name}`;
-      body = { ...body, mediatype: "document", media: payload.mediaUrl, fileName: payload.filename || "document.pdf" };
-      break;
-    case "buttons": {
-      // Evolution API v2: /message/sendButtons
-      endpoint = `/message/sendButtons/${numberRow.instance_name}`;
-      body = {
-        ...body,
-        title: payload.header || "",
-        description: payload.body || "",
-        footer: payload.footer || "",
-        buttons: (payload.buttons || []).slice(0, 3).map((b) => ({
-          type: "reply",
-          displayText: b.title,
-          id: b.id,
-        })),
-      };
-      break;
-    }
-    case "list": {
-      endpoint = `/message/sendList/${numberRow.instance_name}`;
-      body = {
-        ...body,
-        title: payload.header || "",
-        description: payload.body || "",
-        footerText: payload.footer || "",
-        buttonText: payload.buttonText || "Ver opções",
-        sections: (payload.sections || []).map((s) => ({
-          title: s.title || "Opções",
-          rows: (s.rows || []).slice(0, 10).map((r) => ({
-            rowId: r.id,
-            title: r.title,
-            description: r.description || "",
-          })),
-        })),
-      };
-      break;
-    }
-  }
-
-  const res = await fetch(`${creds.url}${endpoint}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", apikey: creds.apiKey },
-    body: JSON.stringify(body),
-  });
-  const txt = await res.text();
-  if (!res.ok) {
-    console.error(`[wa-flow-runner] Evolution send failed (${res.status}):`, txt);
-    throw new Error(`Evolution API error ${res.status}: ${txt.slice(0, 200)}`);
-  }
-  console.log(`[wa-flow-runner] Sent ${payload.type} via Evolution to ${formattedPhone}`);
-  return JSON.parse(txt || "{}");
-}
+// sendViaEvolution removida (junho/2026) — todo envio passa por sendViaMeta.
 
 // Check whether the conversation with `phone` is currently inside Meta's free-form 24h window.
 // We consider the window OPEN when the lead sent any inbound message within the last 24h.

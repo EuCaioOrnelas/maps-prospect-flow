@@ -206,12 +206,6 @@ interface ApiStatus {
     errorCount: number;
     keys: ApiKeyStatus[];
   };
-  evolutionApi: {
-    status: 'ok' | 'warning' | 'error';
-    message: string;
-    lastCheck: Date;
-    errorCount: number;
-  };
 }
 
 const Admin = () => {
@@ -250,7 +244,7 @@ const Admin = () => {
         { name: 'Chave 6 (Backup)', status: 'unknown', message: 'Não verificada' },
       ]
     },
-    evolutionApi: { status: 'ok', message: 'Funcionando normalmente', lastCheck: new Date(), errorCount: 0 },
+    
   });
   const [revenueHistory, setRevenueHistory] = useState<{ date: string; mrr: number; users: number }[]>([]);
   const [checkingApis, setCheckingApis] = useState(false);
@@ -820,60 +814,7 @@ const Admin = () => {
     // Run the edge function to check SerpAPI keys
     await runKeyCheck();
     
-    // Check Evolution API - verificar números conectados
-    try {
-      setApiStatus(prev => ({
-        ...prev,
-        evolutionApi: {
-          ...prev.evolutionApi,
-          message: 'Verificando...',
-          lastCheck: new Date(),
-        }
-      }));
-      
-      // Verificar se há números WhatsApp conectados no banco
-      const { data: connectedNumbers, error: numbersError } = await supabase
-        .from('whatsapp_numbers')
-        .select('id, is_connected')
-        .eq('is_connected', true)
-        .limit(10);
-      
-      if (!numbersError) {
-        const connectedCount = connectedNumbers?.length || 0;
-        setApiStatus(prev => ({
-          ...prev,
-          evolutionApi: {
-            status: 'ok',
-            message: connectedCount > 0 
-              ? `${connectedCount} número(s) conectado(s)` 
-              : 'Nenhum número conectado',
-            lastCheck: new Date(),
-            errorCount: 0,
-          }
-        }));
-      } else {
-        setApiStatus(prev => ({
-          ...prev,
-          evolutionApi: {
-            status: 'warning',
-            message: 'Erro ao verificar números',
-            lastCheck: new Date(),
-            errorCount: prev.evolutionApi.errorCount + 1,
-          }
-        }));
-      }
-    } catch (error) {
-      console.log('Evolution API check error:', error);
-      setApiStatus(prev => ({
-        ...prev,
-        evolutionApi: {
-          status: 'warning',
-          message: 'Não foi possível verificar',
-          lastCheck: new Date(),
-          errorCount: prev.evolutionApi.errorCount + 1,
-        }
-      }));
-    }
+    // Evolution API removida — nada a verificar aqui.
     
     setCheckingApis(false);
   }, [runKeyCheck]);
@@ -1513,22 +1454,6 @@ const Admin = () => {
                 </div>
               </div>
 
-              {/* Evolution API Status Card */}
-              <div className={`rounded-xl p-4 border ${getStatusColor(apiStatus.evolutionApi.status)} animate-fade-in`} style={{ animationDelay: '0.1s' }}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Server size={18} />
-                    <span className="font-semibold">Evolution API (WhatsApp)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(apiStatus.evolutionApi.status)}
-                  </div>
-                </div>
-                <p className="text-sm opacity-80">{apiStatus.evolutionApi.message}</p>
-                <p className="text-xs mt-2 opacity-50">
-                  Última verificação: {apiStatus.evolutionApi.lastCheck.toLocaleTimeString('pt-BR')}
-                </p>
-              </div>
             </div>
 
             {/* Financial Stats - Combined MRR */}
