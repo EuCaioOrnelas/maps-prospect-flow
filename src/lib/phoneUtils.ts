@@ -168,19 +168,25 @@ export const isLikelyPlaceholderPhone = (phone: string): boolean => {
 };
 
 /**
- * Normalize phone number - supports international numbers
- * For Brazilian numbers (10-11 digits without country code), adds 55
- * For international numbers (already has country code), keeps as-is
+ * Normalize phone number — suporta prospecção GLOBAL.
+ *
+ * Regras:
+ * - Remove tudo que não é dígito.
+ * - Se vier com 10–11 dígitos SEM código de país, assume Brasil (prefixa 55).
+ *   Usuários BR raramente digitam o DDI; números internacionais sempre
+ *   chegam com 12+ dígitos (DDI + área + assinante).
+ * - Se já tiver 12+ dígitos, mantém como está (qualquer país).
+ *
+ * Padrão E.164: 10–15 dígitos totais.
  */
 export const normalizePhone = (phone: string): string => {
-  let digits = phone.replace(/\D/g, '');
-  
-  // If number has 10-11 digits without country code, assume Brazil (55)
-  // International numbers should already have country code (12+ digits)
+  let digits = (phone || '').replace(/\D/g, '');
+
+  // BR sem DDI → adiciona 55
   if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith('55')) {
     digits = '55' + digits;
   }
-  
+
   return digits;
 };
 

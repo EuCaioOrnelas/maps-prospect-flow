@@ -685,6 +685,39 @@ serve(async (req) => {
                   console.log(`[meta-webhook] ✅ Message ${status.id} status → ${newStatus}`);
                 }
               }
+
+              // === Auto-tag non-WhatsApp numbers (Meta error 131026) ===
+              const errCode = Number(status.errors?.[0]?.code || 0);
+              const recipient = status.recipient_id;
+              if (status.status === 'failed' && errCode === 131026 && recipient) {
+                try {
+                  const tail = phoneTail8(recipient);
+                  const { data: matchedLeads } = await supabase
+                    .from('leads')
+                    .select('id, user_id, phone, whatsapp_status')
+                    .or(`phone.eq.${recipient},phone.ilike.%${tail}`)
+                    .neq('whatsapp_status', 'not_whatsapp')
+                    .limit(20);
+
+                  for (const ld of matchedLeads || []) {
+                    await supabase
+                      .from('leads')
+                      .update({ whatsapp_status: 'not_whatsapp' } as any)
+                      .eq('id', ld.id);
+
+                    await supabase.from('lead_activities').insert({
+                      lead_id: ld.id,
+                      user_id: ld.user_id,
+                      owner_user_id: ld.user_id,
+                      activity_type: 'whatsapp_invalid',
+                      description: 'Meta retornou 131026: número não está no WhatsApp. Marcado como não-WhatsApp para evitar novos disparos.',
+                    });
+                  }
+                  console.log(`[meta-webhook] 🚫 131026: ${matchedLeads?.length || 0} lead(s) marcados como not_whatsapp (${recipient})`);
+                } catch (e) {
+                  console.error('[meta-webhook] 131026 tag error:', e);
+                }
+              }
             }
           } else {
             console.log(`[meta-webhook] 📋 Event field=${field}:`, JSON.stringify(value).substring(0, 300));
