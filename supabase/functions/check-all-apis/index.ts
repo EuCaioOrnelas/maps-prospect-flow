@@ -70,20 +70,6 @@ async function checkResend(): Promise<ApiResult> {
   }
 }
 
-async function checkEvolution(): Promise<ApiResult> {
-  const url = Deno.env.get('EVOLUTION_API_URL');
-  const key = Deno.env.get('EVOLUTION_API_KEY');
-  if (!url || !key) return { service: 'Evolution API', category: 'whatsapp', status: 'not_configured', message: 'Não configurada' };
-  try {
-    const r = await fetch(`${url}/instance/fetchInstances`, { headers: { apikey: key } });
-    if (!r.ok) return { service: 'Evolution API', category: 'whatsapp', status: 'error', message: `HTTP ${r.status}` };
-    const d = await r.json();
-    const count = Array.isArray(d) ? d.length : 0;
-    return { service: 'Evolution API', category: 'whatsapp', status: 'ok', message: `${count} instâncias ativas` };
-  } catch (e) {
-    return { service: 'Evolution API', category: 'whatsapp', status: 'error', message: e instanceof Error ? e.message : 'Erro' };
-  }
-}
 
 async function checkMeta(): Promise<ApiResult> {
   const secret = Deno.env.get('META_APP_SECRET');
