@@ -259,6 +259,7 @@ serve(async (req) => {
           console.warn(`[meta-send-campaign] Telefone inválido descartado: ${rawPhone}`);
           return;
         }
+        try {
           const messageBody: any = {
             messaging_product: "whatsapp",
             to: phone,
