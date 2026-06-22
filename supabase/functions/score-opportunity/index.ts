@@ -1472,22 +1472,24 @@ ${socialPages.length > 0
     - Nichos de infraestrutura (internet, solar, segurança): acessibilidade e potencial_venda são mais importantes, estrutura_digital é menos relevante
     - Nichos de serviço local (mecânica, manutenção, pet): reputação e acessibilidade são mais importantes
 
-11. ⚠️ REGRA CRÍTICA — FIT DE PERSONA (PRIORIDADE MÁXIMA):
-    Antes de qualquer análise, avalie se o LEAD (categoria: "${categoria || "não informada"}") realmente se encaixa no PÚBLICO-ALVO da empresa prospectora ("${companyProfile?.company_target_audience || "não informado"}") considerando seus produtos ("${companyProfile?.company_products || "não informado"}") e nicho ("${companyProfile?.company_niche || "não informado"}").
+11. ⚠️ REGRA — FIT DE PERSONA (use com PARCIMÔNIA, prefira analisar normalmente):
+    Antes de qualquer análise, avalie se o LEAD (categoria: "${categoria || "não informada"}") tem FIT com o PÚBLICO-ALVO da empresa prospectora ("${companyProfile?.company_target_audience || "não informado"}") considerando seus produtos ("${companyProfile?.company_products || "não informado"}") e nicho ("${companyProfile?.company_niche || "não informado"}").
 
-    Pergunte-se: "Uma empresa que vende ${companyProfile?.company_products || "esse produto"} venderia naturalmente para um(a) ${categoria || "negócio desse tipo"}?"
+    IMPORTANTE — esta regra é EXCEÇÃO, não padrão. Só acione quando o desencaixe for MANIFESTAMENTE INCOMPATÍVEL (ex.: vende software jurídico B2B e o lead é uma residência particular; vende ração para gado e o lead é um salão de beleza urbano). Casos "duvidosos", "adjacentes" ou apenas "fora do nicho principal" NÃO devem ativar esta regra — siga a análise normal.
 
-    Se a resposta for NÃO ou DUVIDOSA (ex: vende cardápio digital e o lead é uma academia; vende software jurídico e o lead é uma padaria; vende uniforme escolar e o lead é uma oficina mecânica):
-    a) NÃO INVENTE encaixes forçados ou genéricos (ex: "pode ajudar a melhorar a experiência do cliente"). Isso é PROIBIDO.
-    b) PONTUAÇÃO: você PODE preencher normalmente as 5 dimensões (estrutura_digital, reputacao, acessibilidade, engajamento_atividade, potencial_venda) com base nos dados reais do lead — afinal o lead pode ter boa estrutura digital mesmo não sendo persona ideal. O "score" deve ser a soma exata dessas dimensões. Apenas force nivel_oportunidade = "Baixa" e probabilidade_fechamento = "Baixa" (independente do score numérico), pois o lead NÃO é persona ideal para o produto vendido.
-    c) pontos_fortes = [] e pontos_fracos = [] (não liste, pois não há fit comercial real, mesmo que existam qualidades digitais).
-    d) diagnostico DEVE ser EXATAMENTE neste formato (adaptando os nomes), SEM inventar encaixe:
-       "Com base nos seus produtos atuais (${companyProfile?.company_products || "—"}), este lead (${categoria || "categoria não informada"}) provavelmente NÃO faz parte da sua persona ideal. Recomendamos: 1) prospectar nichos mais alinhados ao seu público-alvo (${companyProfile?.company_target_audience || "defina em Perfil"}); ou 2) acessar Perfil > Empresa e atualizar seus produtos/serviços e público-alvo para ampliar a precisão dos diagnósticos da IA."
-    e) acao_recomendada DEVE ser: "Reavalie a segmentação da prospecção ou enriqueça o perfil da sua empresa em Perfil > Dados da Empresa para que a IA gere diagnósticos mais precisos para nichos adjacentes."
-    f) analise_site, analise_redes_sociais, analise_reputacao_detalhada, analise_concorrencia_regional, analise_demanda_regional DEVEM iniciar com: "Não aplicável — lead fora da persona ideal."
-    g) justificativa_score: "Lead fora da persona ideal definida no perfil da empresa."
+    Pergunte-se: "Existe ALGUMA chance plausível de uma empresa que vende ${companyProfile?.company_products || "esse produto"} fechar negócio com um(a) ${categoria || "negócio desse tipo"}?" Se houver qualquer chance razoável (mesmo que não seja o ICP principal), prossiga com a análise normal e atribua score conforme os dados reais — o usuário decide se vale a pena abordar.
 
-    SOMENTE se houver encaixe REAL e plausível entre o produto vendido e o lead, prossiga com a análise normal acima.
+    Apenas quando for CLARAMENTE incompatível (zero fit comercial possível):
+    a) NÃO INVENTE encaixes forçados ou genéricos. Isso é PROIBIDO.
+    b) PONTUAÇÃO: preencha as 5 dimensões (estrutura_digital, reputacao, acessibilidade, engajamento_atividade, potencial_venda) com base nos dados reais do lead. O "score" deve ser a soma exata. Force nivel_oportunidade = "Baixa" e probabilidade_fechamento = "Baixa".
+    c) pontos_fortes = [] e pontos_fracos = [] (não há fit comercial).
+    d) diagnostico DEVE ser EXATAMENTE neste formato (mais curto e construtivo):
+       "Este lead (${categoria || "categoria não informada"}) parece estar fora do seu público-alvo principal (${companyProfile?.company_target_audience || "defina em Perfil"}). Se você atende nichos adjacentes, edite o Perfil da Empresa para que a IA reconheça isso. Caso contrário, foque a prospecção em segmentos mais alinhados."
+    e) acao_recomendada DEVE ser: "Revise o Perfil da Empresa (Dados da Empresa) caso atenda nichos adjacentes, ou ajuste a segmentação da próxima prospecção."
+    f) analise_site, analise_redes_sociais, analise_reputacao_detalhada, analise_concorrencia_regional, analise_demanda_regional DEVEM iniciar com: "Não aplicável — lead fora do público-alvo principal."
+    g) justificativa_score: "Lead fora do público-alvo principal definido no perfil da empresa."
+
+    SEMPRE prefira a análise normal quando houver qualquer fit possível.
 
 Retorne APENAS um JSON válido:
 {

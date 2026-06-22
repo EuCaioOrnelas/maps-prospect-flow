@@ -32,6 +32,9 @@ import {
   Zap,
   ThermometerSnowflake,
   Snowflake,
+  Calendar as CalendarIcon,
+  Tag,
+  MapPin,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatPhoneForMeta } from "@/lib/phoneUtils";
@@ -44,6 +47,11 @@ interface CRMLeadItem {
   pipeline_stage_id: string | null;
   tags: string[];
   ai_score: number;
+  category: string | null;
+  city: string | null;
+  region: string | null;
+  prospected_at: string | null;
+  created_at: string | null;
 }
 
 interface PipelineStage {
@@ -101,6 +109,10 @@ export const CRMLeadImportDialog = ({
   const [stageFilter, setStageFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState<ScoreFilter>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [cityFilter, setCityFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState<string>(""); // yyyy-mm-dd
+  const [dateTo, setDateTo] = useState<string>("");
 
   // Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -120,6 +132,10 @@ export const CRMLeadImportDialog = ({
       setStageFilter("all");
       setScoreFilter("all");
       setSearchTerm("");
+      setCategoryFilter("all");
+      setCityFilter("all");
+      setDateFrom("");
+      setDateTo("");
     }
   }, [open]);
 
@@ -133,7 +149,7 @@ export const CRMLeadImportDialog = ({
     try {
       let leadsQuery = supabase
         .from("leads")
-        .select("id, company_name, contact_name, phone, pipeline_stage_id, tags, ai_score")
+        .select("id, company_name, contact_name, phone, pipeline_stage_id, tags, ai_score, category, city, region, prospected_at, created_at")
         .eq("owner_user_id", accountOwnerId)
         .not("phone", "is", null)
         .limit(5000);
@@ -224,8 +240,57 @@ export const CRMLeadImportDialog = ({
       });
     }
 
+    // Category filter
+    if (categoryFilter !== "all") {
+      result = result.filter((l) => (l.category || "").trim() === categoryFilter);
+    }
+
+    // City filter (matches city OR region)
+    if (cityFilter !== "all") {
+      result = result.filter(
+        (l) => (l.city || "").trim() === cityFilter || (l.region || "").trim() === cityFilter,
+      );
+    }
+
+    // Date range (prospected_at preferred, falls back to created_at)
+    if (dateFrom) {
+      const fromTs = new Date(dateFrom + "T00:00:00").getTime();
+      result = result.filter((l) => {
+        const ts = new Date(l.prospected_at || l.created_at || 0).getTime();
+        return ts >= fromTs;
+      });
+    }
+    if (dateTo) {
+      const toTs = new Date(dateTo + "T23:59:59").getTime();
+      result = result.filter((l) => {
+        const ts = new Date(l.prospected_at || l.created_at || 0).getTime();
+        return ts <= toTs;
+      });
+    }
+
     return result;
-  }, [leads, searchTerm, stageFilter, scoreFilter, scoreMap]);
+  }, [leads, searchTerm, stageFilter, scoreFilter, scoreMap, categoryFilter, cityFilter, dateFrom, dateTo]);
+
+  // Distinct values for selects
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    leads.forEach((l) => {
+      const c = (l.category || "").trim();
+      if (c) set.add(c);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [leads]);
+
+  const cityOptions = useMemo(() => {
+    const set = new Set<string>();
+    leads.forEach((l) => {
+      const c = (l.city || "").trim();
+      const r = (l.region || "").trim();
+      if (c) set.add(c);
+      if (r && r !== c) set.add(r);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [leads]);
 
   // Select all toggle
   useEffect(() => {
@@ -384,6 +449,70 @@ export const CRMLeadImportDialog = ({
                 </SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Category + City */}
+          <div className="flex gap-2">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Tag size={14} className="text-muted-foreground" />
+                  <SelectValue placeholder="Categoria" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                {categoryOptions.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={cityFilter} onValueChange={setCityFilter}>
+              <SelectTrigger className="flex-1">
+                <div className="flex items-center gap-2">
+                  <MapPin size={14} className="text-muted-foreground" />
+                  <SelectValue placeholder="Cidade/Estado" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as localidades</SelectItem>
+                {cityOptions.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Date range — data de prospecção */}
+          <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0 px-1">
+              <CalendarIcon size={14} />
+              <span>Prospecção:</span>
+            </div>
+            <div className="flex gap-2 flex-1">
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="flex-1"
+                placeholder="De"
+                aria-label="Data inicial de prospecção"
+              />
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="flex-1"
+                placeholder="Até"
+                aria-label="Data final de prospecção"
+              />
+              {(dateFrom || dateTo) && (
+                <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); }} className="shrink-0">
+                  Limpar
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 

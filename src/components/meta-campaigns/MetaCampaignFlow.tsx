@@ -61,11 +61,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   AUTHENTICATION: "Autenticação",
 };
 
-const CATEGORY_COST: Record<string, string> = {
-  MARKETING: "~R$ 0,50",
-  UTILITY: "~R$ 0,15",
-  AUTHENTICATION: "~R$ 0,15",
-};
+// Custo por mensagem varia conforme rate card da Meta (categoria, país, volume e câmbio).
+// Não exibimos valor fixo aqui para não desinformar — consulte:
+// https://developers.facebook.com/docs/whatsapp/pricing/
+const PRICING_DOC_URL = "https://developers.facebook.com/docs/whatsapp/pricing/";
 
 const TEMPLATES_PER_PAGE = 6;
 
@@ -423,10 +422,19 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
           </div>
 
           {/* Aviso resumido WABA */}
-          <div className="mb-4 p-3 rounded-lg border border-primary/20 bg-primary/5 flex items-start gap-2 text-xs text-muted-foreground">
+          <div className="mb-3 p-3 rounded-lg border border-primary/20 bg-primary/5 flex items-start gap-2 text-xs text-muted-foreground">
             <HelpCircle size={14} className="text-primary mt-0.5 shrink-0" />
             <p>
               Templates ficam vinculados à <strong className="text-foreground">WABA</strong> (WhatsApp Business Account) do número selecionado. Crie o template na WABA <code className="font-mono bg-muted px-1 py-0.5 rounded">{selectedConnection?.waba_id}</code> e aguarde o status <strong className="text-foreground">APPROVED</strong> para usá-lo aqui.
+            </p>
+          </div>
+
+          {/* Disclaimer de custo */}
+          <div className="mb-4 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 flex items-start gap-2 text-xs text-muted-foreground">
+            <Info size={14} className="text-amber-500 mt-0.5 shrink-0" />
+            <p>
+              <strong className="text-foreground">Custo por mensagem varia conforme a Meta</strong> — depende da categoria (Marketing/Utility/Authentication), país de destino, volume mensal e câmbio. Utility dentro da janela de atendimento de 24h é grátis.{" "}
+              <a href={PRICING_DOC_URL} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">Consulte a tabela oficial</a>.
             </p>
           </div>
 
@@ -488,9 +496,6 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                         <Badge variant="secondary" className="text-xs px-2 py-0.5">
                           {CATEGORY_LABELS[t.category] || t.category}
                         </Badge>
-                        <span className="text-xs font-medium text-primary">
-                          {CATEGORY_COST[t.category] || "—"}/msg
-                        </span>
                         <span className="text-xs text-muted-foreground">{t.language}</span>
                       </div>
                     </div>
@@ -873,9 +878,6 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                 <p className="text-xs text-muted-foreground">Categoria</p>
                 <p className="text-sm font-medium">
                   {CATEGORY_LABELS[selectedTemplate?.category || ""] || selectedTemplate?.category}
-                  <span className="text-xs text-muted-foreground ml-2">
-                    ({CATEGORY_COST[selectedTemplate?.category || ""] || "—"}/msg)
-                  </span>
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">

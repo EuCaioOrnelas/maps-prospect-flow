@@ -32,6 +32,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
+import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
 import { NumbersManager } from "@/components/whatsapp/NumbersManager";
 import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
@@ -1236,6 +1237,14 @@ export default function OpportunitiesManagement() {
                   </div>
                 )}
               </div>
+
+              {/* Banner: muitos leads vindo "fora do público" */}
+              {companyProfile && (
+                <IdealAudienceMismatchBanner
+                  accountOwnerId={accountOwnerId}
+                  onEditProfile={() => setShowOnboarding(true)}
+                />
+              )}
 
               {/* Batch scoring progress */}
               {batchScoring && (
