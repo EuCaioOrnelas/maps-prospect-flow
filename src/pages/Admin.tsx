@@ -814,60 +814,7 @@ const Admin = () => {
     // Run the edge function to check SerpAPI keys
     await runKeyCheck();
     
-    // Check Evolution API - verificar números conectados
-    try {
-      setApiStatus(prev => ({
-        ...prev,
-        evolutionApi: {
-          ...prev.evolutionApi,
-          message: 'Verificando...',
-          lastCheck: new Date(),
-        }
-      }));
-      
-      // Verificar se há números WhatsApp conectados no banco
-      const { data: connectedNumbers, error: numbersError } = await supabase
-        .from('whatsapp_numbers')
-        .select('id, is_connected')
-        .eq('is_connected', true)
-        .limit(10);
-      
-      if (!numbersError) {
-        const connectedCount = connectedNumbers?.length || 0;
-        setApiStatus(prev => ({
-          ...prev,
-          evolutionApi: {
-            status: 'ok',
-            message: connectedCount > 0 
-              ? `${connectedCount} número(s) conectado(s)` 
-              : 'Nenhum número conectado',
-            lastCheck: new Date(),
-            errorCount: 0,
-          }
-        }));
-      } else {
-        setApiStatus(prev => ({
-          ...prev,
-          evolutionApi: {
-            status: 'warning',
-            message: 'Erro ao verificar números',
-            lastCheck: new Date(),
-            errorCount: prev.evolutionApi.errorCount + 1,
-          }
-        }));
-      }
-    } catch (error) {
-      console.log('Evolution API check error:', error);
-      setApiStatus(prev => ({
-        ...prev,
-        evolutionApi: {
-          status: 'warning',
-          message: 'Não foi possível verificar',
-          lastCheck: new Date(),
-          errorCount: prev.evolutionApi.errorCount + 1,
-        }
-      }));
-    }
+    // Evolution API removida — nada a verificar aqui.
     
     setCheckingApis(false);
   }, [runKeyCheck]);
