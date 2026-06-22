@@ -70,7 +70,7 @@ const AgentReports = lazyWithRetry(() => import("./pages/AgentReports"), "AgentR
 const EquipeEmBreve = lazyWithRetry(() => import("./pages/equipe-ia/EquipeEmBreve"), "EquipeEmBreve");
 const Consultoria = lazyWithRetry(() => import("./pages/Consultoria"), "Consultoria");
 const ThankYou = lazyWithRetry(() => import("./pages/ThankYou"), "ThankYou");
-const ProductionTests = lazyWithRetry(() => import("./pages/ProductionTests"), "ProductionTests");
+
 const UpgradePromo = lazyWithRetry(() => import("./pages/UpgradePromo"), "UpgradePromo");
 const AdminEmailTests = lazyWithRetry(() => import("./pages/AdminEmailTests"), "AdminEmailTests");
 const AdminTrialAutomation = lazyWithRetry(() => import("./pages/AdminTrialAutomation"), "AdminTrialAutomation");
