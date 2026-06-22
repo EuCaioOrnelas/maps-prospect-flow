@@ -1238,6 +1238,14 @@ export default function OpportunitiesManagement() {
                 )}
               </div>
 
+              {/* Banner: muitos leads vindo "fora do público" */}
+              {companyProfile && (
+                <IdealAudienceMismatchBanner
+                  accountOwnerId={accountOwnerId}
+                  onEditProfile={() => setShowOnboarding(true)}
+                />
+              )}
+
               {/* Batch scoring progress */}
               {batchScoring && (
                 <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3 animate-in fade-in">
