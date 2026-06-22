@@ -293,8 +293,8 @@ const App = () => (
                 <Route path="/prospeccao" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/oportunidades" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/oportunidades/gestao" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><OpportunitiesManagement /></Suspense></ProtectedRoute>} />
-                <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppCampaign /></ProtectedRoute>} />
-                <Route path="/whatsapp/reports" element={<ProtectedRoute><WhatsAppReports /></ProtectedRoute>} />
+                <Route path="/whatsapp" element={<Navigate to="/meta-campaigns" replace />} />
+                <Route path="/whatsapp/reports" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/meta-campaigns" element={<ProtectedRoute><MetaCampaigns /></ProtectedRoute>} />
                 <Route path="/meta-api-guide" element={<ProtectedRoute><MetaApiGuide /></ProtectedRoute>} />
                 <Route path="/crm" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
