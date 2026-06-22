@@ -1029,14 +1029,6 @@ const WhatsAppCampaign = () => {
       <BackgroundGlow />
       <DisclaimerModal />
 
-      {/* Warming Warning Modal */}
-      <WarmingWarningModal
-        isOpen={showWarmingWarningModal}
-        onClose={() => setShowWarmingWarningModal(false)}
-        onConfirm={handleShowWindowModal}
-        warmingLevel={warmingInfo?.level || 0}
-        warmingStatus={warmingInfo?.status || "cold"}
-      />
       <AppSidebar profile={profile} />
       <AppHeader profile={profile} />
 
