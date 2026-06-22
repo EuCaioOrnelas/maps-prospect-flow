@@ -85,6 +85,7 @@ export const CRMLeadImportDialog = ({
   onOpenChange,
   onImportLeads,
   onImportPhones,
+  source = "crm",
 }: CRMLeadImportDialogProps) => {
   const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
