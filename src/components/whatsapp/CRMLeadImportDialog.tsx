@@ -450,6 +450,70 @@ export const CRMLeadImportDialog = ({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Category + City */}
+          <div className="flex gap-2">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Tag size={14} className="text-muted-foreground" />
+                  <SelectValue placeholder="Categoria" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                {categoryOptions.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={cityFilter} onValueChange={setCityFilter}>
+              <SelectTrigger className="flex-1">
+                <div className="flex items-center gap-2">
+                  <MapPin size={14} className="text-muted-foreground" />
+                  <SelectValue placeholder="Cidade/Estado" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as localidades</SelectItem>
+                {cityOptions.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Date range — data de prospecção */}
+          <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0 px-1">
+              <CalendarIcon size={14} />
+              <span>Prospecção:</span>
+            </div>
+            <div className="flex gap-2 flex-1">
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="flex-1"
+                placeholder="De"
+                aria-label="Data inicial de prospecção"
+              />
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="flex-1"
+                placeholder="Até"
+                aria-label="Data final de prospecção"
+              />
+              {(dateFrom || dateTo) && (
+                <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); }} className="shrink-0">
+                  Limpar
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Results */}
