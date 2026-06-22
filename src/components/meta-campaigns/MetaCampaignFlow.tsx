@@ -421,21 +421,22 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
             </div>
           </div>
 
-          {/* Aviso resumido WABA */}
-          <div className="mb-3 p-3 rounded-lg border border-primary/20 bg-primary/5 flex items-start gap-2 text-xs text-muted-foreground">
-            <HelpCircle size={14} className="text-primary mt-0.5 shrink-0" />
-            <p>
-              Templates ficam vinculados à <strong className="text-foreground">WABA</strong> (WhatsApp Business Account) do número selecionado. Crie o template na WABA <code className="font-mono bg-muted px-1 py-0.5 rounded">{selectedConnection?.waba_id}</code> e aguarde o status <strong className="text-foreground">APPROVED</strong> para usá-lo aqui.
-            </p>
-          </div>
-
-          {/* Disclaimer de custo */}
-          <div className="mb-4 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 flex items-start gap-2 text-xs text-muted-foreground">
-            <Info size={14} className="text-amber-500 mt-0.5 shrink-0" />
-            <p>
-              <strong className="text-foreground">Custo por mensagem varia conforme a Meta</strong> — depende da categoria (Marketing/Utility/Authentication), país de destino, volume mensal e câmbio. Utility dentro da janela de atendimento de 24h é grátis.{" "}
-              <a href={PRICING_DOC_URL} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">Consulte a tabela oficial</a>.
-            </p>
+          {/* Aviso unificado: WABA + custo + Cloud API */}
+          <div className="mb-4 rounded-lg border border-border bg-muted/30">
+            <div className="flex items-start gap-2.5 p-3 text-xs text-muted-foreground">
+              <Info size={14} className="text-primary mt-0.5 shrink-0" />
+              <div className="space-y-1.5 leading-relaxed">
+                <p>
+                  Templates vinculados à WABA <code className="font-mono bg-muted px-1 py-0.5 rounded text-[11px]">{selectedConnection?.waba_id}</code> — só aparecem aqui após status <strong className="text-foreground">APPROVED</strong> pela Meta.
+                </p>
+                <p>
+                  Tarifação por <strong className="text-foreground">conversa de 24h</strong> cobrada pela Meta (varia por categoria, país e câmbio; Utility na janela de 24h é grátis).{" "}
+                  <a href={PRICING_DOC_URL} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">Tabela oficial</a>
+                  {" · "}
+                  <a href="https://developers.facebook.com/docs/whatsapp/overview" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">Documentação Cloud API</a>
+                </p>
+              </div>
+            </div>
           </div>
 
           {templates.length > 0 && (
@@ -929,24 +930,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
         </div>
       )}
 
-      {/* Footer info - always visible */}
-      <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5 mt-2">
-        <Info size={18} className="text-primary mt-0.5 shrink-0" />
-        <div className="text-sm">
-          <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
-          <p className="text-muted-foreground mt-0.5">
-            Disparo via WhatsApp Cloud API utilizando <strong>HSM templates</strong> pré-aprovados pela Meta (categorias: marketing, utility e authentication). O envio é tarifado por <strong>conversa de 24h</strong> conforme a tabela oficial da Meta por país e categoria, com cobrança realizada diretamente pela Meta na conta de billing vinculada ao WABA — independente da assinatura da plataforma.
-          </p>
-          <a
-            href="https://developers.facebook.com/docs/whatsapp/overview"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline inline-flex items-center gap-1 mt-1 text-xs"
-          >
-            <ExternalLink size={10} /> Documentação oficial da Meta
-          </a>
-        </div>
-      </div>
+      {/* Footer info removido — consolidado no aviso unificado do seletor de template */}
 
       {/* CRM Import Dialog */}
       <CRMLeadImportDialog
