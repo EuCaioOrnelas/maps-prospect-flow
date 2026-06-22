@@ -11,13 +11,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
 
 export function QuickActions() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [showCampaignDialog, setShowCampaignDialog] = useState(false);
-  const prospeccaoRoute = isLegacyEvolutionUser(profile as any) ? "/whatsapp" : "/meta-campaigns";
+  const prospeccaoRoute = "/meta-campaigns";
 
   const actions = [
     { label: "Nova campanha", icon: <Rocket size={14} />, action: () => setShowCampaignDialog(true), primary: true },
