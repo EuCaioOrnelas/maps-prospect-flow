@@ -37,14 +37,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 
-import { useWarmingConnectionAlert } from "@/hooks/useWarmingConnectionAlert";
+
 import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
 import { useChatUnreadBadge } from "@/hooks/useChatUnreadBadge";
 import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDialog";
 import { SidebarNavItem } from "./SidebarNavItem";
 import logoIconNew from "@/assets/logo-icon-new.png";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
-import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
+
 import { planHasFeature } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { roleHasPermission, type AccountPermission } from "@/lib/accountPermissions";
@@ -81,9 +81,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const can = (key: FeatureKey) =>
     isAdmin ||
     (profileHasFeature(authProfile as any, key) && planHasFeature(authProfile as any, key));
-  const canEvolution = isAdmin || isLegacyEvolutionUser(authProfile as any);
-  
-  const { hasDisconnectedWarming, disconnectedNumbers } = useWarmingConnectionAlert();
+
+  const hasDisconnectedWarming = false;
+  const disconnectedNumbers: any[] = [];
   const { unreadCount: unreadAnnouncements, disconnectedNumbers: disconnectedNumberAlerts, dismissDisconnectionAlert } = useUnreadAnnouncements();
   const expandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -483,7 +483,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             )}
 
             {/* Automação with submenu */}
-            {(can("flows") || can("agents") || can("warming")) && (
+            {(can("flows") || can("agents")) && (
             <li data-tour="sidebar-automacao">
               <SidebarNavItem
                 title="Automação"

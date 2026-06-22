@@ -40,7 +40,7 @@ import { useCampaignDrafts, CampaignDraft } from "@/hooks/useCampaignDrafts";
 import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { FreeTrialLimitModal } from "@/components/whatsapp/FreeTrialLimitModal";
-import { WarmingWarningModal } from "@/components/whatsapp/WarmingWarningModal";
+
 
 import { CampaignDrafts } from "@/components/whatsapp/CampaignDrafts";
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -156,12 +156,6 @@ const WhatsAppCampaign = () => {
   // Show upgrade modal only if trial expired (not for free trial users who can still use)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showTrialLimitModal, setShowTrialLimitModal] = useState(false);
-  const [showWarmingWarningModal, setShowWarmingWarningModal] = useState(false);
-  
-  const [warmingInfo, setWarmingInfo] = useState<{
-    level: number;
-    status: "cold" | "warm" | "hot";
-  } | null>(null);
 
   useEffect(() => {
     // If trial expired, show upgrade modal
@@ -356,7 +350,6 @@ const WhatsAppCampaign = () => {
     }
   };
 
-  // Check warming status and show warning if not heated, then proceed to start
   const checkWarmingAndProceed = async () => {
     if (!selectedNumberId) {
       toast({
@@ -366,42 +359,9 @@ const WhatsAppCampaign = () => {
       });
       return;
     }
-
-    // Check warming session for selected number
-    const { data: warmingSession } = await supabase
-      .from("warming_sessions")
-      .select("warming_level, status")
-      .eq("whatsapp_number_id", selectedNumberId)
-      .maybeSingle();
-
-    // Determine warming status based on level and completion
-    let warmingStatus: "cold" | "warm" | "hot" = "cold";
-    const warmingLevel = warmingSession?.warming_level || 0;
-
-    if (warmingSession?.status === "completed") {
-      warmingStatus = "hot";
-    } else if (warmingLevel >= 3) {
-      warmingStatus = "warm";
-    } else {
-      warmingStatus = "cold";
-    }
-
-    // If not fully heated, show warning modal
-    if (warmingStatus !== "hot" && warmingLevel > 0) {
-      setWarmingInfo({ level: warmingLevel, status: warmingStatus });
-      setShowWarmingWarningModal(true);
-      return;
-    }
-
-    // Proceed directly to start campaign (no window modal)
     handleStartCampaign();
   };
 
-  // Called after warming warning is accepted - proceed to start campaign directly
-  const handleShowWindowModal = () => {
-    setShowWarmingWarningModal(false);
-    handleStartCampaign();
-  };
 
   const handleStartCampaign = async () => {
     // Prevent double-submit
@@ -1069,14 +1029,6 @@ const WhatsAppCampaign = () => {
       <BackgroundGlow />
       <DisclaimerModal />
 
-      {/* Warming Warning Modal */}
-      <WarmingWarningModal
-        isOpen={showWarmingWarningModal}
-        onClose={() => setShowWarmingWarningModal(false)}
-        onConfirm={handleShowWindowModal}
-        warmingLevel={warmingInfo?.level || 0}
-        warmingStatus={warmingInfo?.status || "cold"}
-      />
       <AppSidebar profile={profile} />
       <AppHeader profile={profile} />
 

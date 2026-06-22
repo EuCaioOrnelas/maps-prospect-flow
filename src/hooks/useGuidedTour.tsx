@@ -469,7 +469,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const steps = useMemo<TourStep[]>(() => {
     const skipOpps = !hasOpportunitiesAccess(profile as any);
     const skipAgents = !hasAIAgentsAccess(profile as any);
-    const skipWarming = !planHasFeature(profile as any, "warming");
+    const skipWarming = true;
     // Atendimento (novo "start") não tem Cockpit/Dashboard com as métricas
     // de receita/funil — pulamos esses passos para evitar tela vazia.
     const skipCockpit = skipOpps;

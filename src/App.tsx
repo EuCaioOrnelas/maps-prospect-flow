@@ -67,8 +67,6 @@ const Profile = lazyWithRetry(() => import("./pages/Profile"), "Profile");
 const CRM = lazyWithRetry(() => import("./pages/CRM"), "CRM");
 const CRMSales = lazyWithRetry(() => import("./pages/CRMSales"), "CRMSales");
 const CRMScore = lazyWithRetry(() => import("./pages/CRMScore"), "CRMScore");
-const Warming = lazyWithRetry(() => import("./pages/Warming"), "Warming");
-const WarmingReports = lazyWithRetry(() => import("./pages/WarmingReports"), "WarmingReports");
 const AIAgents = lazyWithRetry(() => import("./pages/AIAgents"), "AIAgents");
 const AgentReports = lazyWithRetry(() => import("./pages/AgentReports"), "AgentReports");
 const EquipeEmBreve = lazyWithRetry(() => import("./pages/equipe-ia/EquipeEmBreve"), "EquipeEmBreve");
@@ -317,8 +315,6 @@ const App = () => (
                 <Route path="/fluxos" element={<ProtectedRoute><WhatsAppAutomations /></ProtectedRoute>} />
                 <Route path="/fluxos/novo" element={<ProtectedRoute><CreateFlowAI /></ProtectedRoute>} />
                 <Route path="/fluxos/:id" element={<ProtectedRoute><WhatsAppFlowEditor /></ProtectedRoute>} />
-                <Route path="/warming" element={<ProtectedRoute><Warming /></ProtectedRoute>} />
-                <Route path="/warming/reports" element={<ProtectedRoute><WarmingReports /></ProtectedRoute>} />
                 <Route path="/consultoria" element={<ProtectedRoute><Consultoria /></ProtectedRoute>} />
                 {/* Meta Platforms */}
                 <Route path="/meta" element={<ProtectedRoute><MetaDashboard /></ProtectedRoute>} />
