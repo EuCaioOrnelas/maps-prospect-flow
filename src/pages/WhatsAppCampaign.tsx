@@ -156,12 +156,6 @@ const WhatsAppCampaign = () => {
   // Show upgrade modal only if trial expired (not for free trial users who can still use)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showTrialLimitModal, setShowTrialLimitModal] = useState(false);
-  const [showWarmingWarningModal, setShowWarmingWarningModal] = useState(false);
-  
-  const [warmingInfo, setWarmingInfo] = useState<{
-    level: number;
-    status: "cold" | "warm" | "hot";
-  } | null>(null);
 
   useEffect(() => {
     // If trial expired, show upgrade modal
