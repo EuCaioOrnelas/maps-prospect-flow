@@ -487,9 +487,6 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                         <Badge variant="secondary" className="text-xs px-2 py-0.5">
                           {CATEGORY_LABELS[t.category] || t.category}
                         </Badge>
-                        <span className="text-xs font-medium text-primary">
-                          {CATEGORY_COST[t.category] || "—"}/msg
-                        </span>
                         <span className="text-xs text-muted-foreground">{t.language}</span>
                       </div>
                     </div>
