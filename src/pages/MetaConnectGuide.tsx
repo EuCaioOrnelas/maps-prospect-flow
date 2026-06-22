@@ -625,18 +625,29 @@ const PhaseUsuarioContent = () => (
       8 passos.
     </Intro>
 
-    <Step number={1} title="Abra a página de Usuários do Sistema do Meta Business">
+    <Step number={1} title="Abra as Configurações do Negócio e vá em Usuários do Sistema">
       <p>
-        Clique no botão abaixo. Vai abrir o <strong>Meta Business Suite → Configurações do Negócio</strong>,
-        já na aba certa.
+        O link direto para "Usuários do Sistema" <strong>não funciona</strong> sem o ID da sua conta de
+        negócios (a Meta mostra a mensagem "Esse conteúdo não está disponível no momento"). Então vamos
+        abrir as Configurações e navegar de dentro — leva 10 segundos.
       </p>
       <p>
-        Se pedir para escolher uma <strong>Conta de Negócios</strong>, escolha a mesma que você usou na
-        Etapa 1 (passo 5). Se pedir login, faça login com a mesma conta Facebook usada até agora.
+        <strong>1.</strong> Clique no botão abaixo para abrir as <strong>Configurações do Meta Business Suite</strong>.
+        Se pedir login, use a mesma conta Facebook usada até aqui.
       </p>
-      <BigLink href="https://business.facebook.com/latest/settings/system_users">
-        Abrir Usuários do Sistema
+      <BigLink href="https://business.facebook.com/latest/settings">
+        Abrir Configurações do Meta Business
       </BigLink>
+      <p>
+        <strong>2.</strong> Se você tiver mais de uma conta de negócios, abra o seletor no canto
+        <strong> superior esquerdo</strong> e escolha a <strong>mesma conta de negócios</strong> que você
+        usou na Etapa 1 (passo 5).
+      </p>
+      <p>
+        <strong>3.</strong> Na <strong>barra lateral esquerda</strong>, role até a seção{" "}
+        <strong>"Usuários"</strong> e clique em <strong>"Usuários do sistema"</strong> (em inglês:{" "}
+        <em>"System users"</em>). Pronto — é nessa tela que vamos trabalhar nos próximos passos.
+      </p>
     </Step>
 
     <Step number={2} title='Clique no botão azul "Adicionar" e crie o usuário "Wiize"'>
