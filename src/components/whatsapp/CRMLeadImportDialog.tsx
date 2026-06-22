@@ -47,6 +47,11 @@ interface CRMLeadItem {
   pipeline_stage_id: string | null;
   tags: string[];
   ai_score: number;
+  category: string | null;
+  city: string | null;
+  region: string | null;
+  prospected_at: string | null;
+  created_at: string | null;
 }
 
 interface PipelineStage {
