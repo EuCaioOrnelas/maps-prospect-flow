@@ -66,6 +66,9 @@ interface CRMLeadImportDialogProps {
   onImportLeads?: (leads: { name: string; phone: string }[]) => void;
   /** For Meta campaign flow: receives phone strings */
   onImportPhones?: (phones: string[]) => void;
+  /** Fonte dos contatos. Default: 'crm' (todos os leads do CRM).
+   *  'opportunities' filtra somente leads de prospecção/oportunidades. */
+  source?: "crm" | "opportunities";
 }
 
 const SCORE_LABELS: Record<string, string> = {
