@@ -483,7 +483,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             )}
 
             {/* Automação with submenu */}
-            {(can("flows") || can("agents") || can("warming")) && (
+            {(can("flows") || can("agents")) && (
             <li data-tour="sidebar-automacao">
               <SidebarNavItem
                 title="Automação"
