@@ -131,13 +131,22 @@ export const CRMLeadImportDialog = ({
     if (!user || !accountOwnerId) return;
     setLoading(true);
     try {
+      let leadsQuery = supabase
+        .from("leads")
+        .select("id, company_name, contact_name, phone, pipeline_stage_id, tags, ai_score")
+        .eq("owner_user_id", accountOwnerId)
+        .not("phone", "is", null)
+        .limit(5000);
+
+      // Oportunidades = leads originados de prospecção / oportunidades, não arquivados
+      if (source === "opportunities") {
+        leadsQuery = leadsQuery
+          .in("origin", ["oportunidades", "prospeccao"])
+          .is("archived_at", null);
+      }
+
       const [leadsRes, stagesRes, scoresRes] = await Promise.all([
-        supabase
-          .from("leads")
-          .select("id, company_name, contact_name, phone, pipeline_stage_id, tags, ai_score")
-          .eq("owner_user_id", accountOwnerId)
-          .not("phone", "is", null)
-          .limit(5000),
+        leadsQuery,
         supabase
           .from("pipeline_stages")
           .select("id, name, color")
