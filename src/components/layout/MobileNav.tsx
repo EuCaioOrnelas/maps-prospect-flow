@@ -27,7 +27,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
 import { planHasFeature } from "@/lib/planAccess";
-import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
+
 import { cn } from "@/lib/utils";
 
 interface MobileNavProps {
