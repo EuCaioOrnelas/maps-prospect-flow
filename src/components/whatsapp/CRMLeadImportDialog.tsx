@@ -240,8 +240,57 @@ export const CRMLeadImportDialog = ({
       });
     }
 
+    // Category filter
+    if (categoryFilter !== "all") {
+      result = result.filter((l) => (l.category || "").trim() === categoryFilter);
+    }
+
+    // City filter (matches city OR region)
+    if (cityFilter !== "all") {
+      result = result.filter(
+        (l) => (l.city || "").trim() === cityFilter || (l.region || "").trim() === cityFilter,
+      );
+    }
+
+    // Date range (prospected_at preferred, falls back to created_at)
+    if (dateFrom) {
+      const fromTs = new Date(dateFrom + "T00:00:00").getTime();
+      result = result.filter((l) => {
+        const ts = new Date(l.prospected_at || l.created_at || 0).getTime();
+        return ts >= fromTs;
+      });
+    }
+    if (dateTo) {
+      const toTs = new Date(dateTo + "T23:59:59").getTime();
+      result = result.filter((l) => {
+        const ts = new Date(l.prospected_at || l.created_at || 0).getTime();
+        return ts <= toTs;
+      });
+    }
+
     return result;
-  }, [leads, searchTerm, stageFilter, scoreFilter, scoreMap]);
+  }, [leads, searchTerm, stageFilter, scoreFilter, scoreMap, categoryFilter, cityFilter, dateFrom, dateTo]);
+
+  // Distinct values for selects
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    leads.forEach((l) => {
+      const c = (l.category || "").trim();
+      if (c) set.add(c);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [leads]);
+
+  const cityOptions = useMemo(() => {
+    const set = new Set<string>();
+    leads.forEach((l) => {
+      const c = (l.city || "").trim();
+      const r = (l.region || "").trim();
+      if (c) set.add(c);
+      if (r && r !== c) set.add(r);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [leads]);
 
   // Select all toggle
   useEffect(() => {
