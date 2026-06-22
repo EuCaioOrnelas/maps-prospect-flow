@@ -751,7 +751,11 @@ export function useChat() {
     templateName?: string,
   ): Promise<{ requiresTemplate?: boolean }> => {
     if (!user || !activeConnectionId) return {};
-    const clean = targetPhone.replace(/\D/g, "");
+    const clean = formatPhoneForMeta(targetPhone);
+    if (!clean) {
+      toast.error("Telefone destino inválido.");
+      return {};
+    }
     const last8 = clean.slice(-8);
 
     // Find or create conversation
