@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     // Get lead phone
     const { data: lead } = await supabase
       .from("leads")
-      .select("id, phone, company_name, contact_name")
+      .select("id, phone, company_name, contact_name, whatsapp_status")
       .eq("id", leadId)
       .maybeSingle();
 
@@ -46,6 +46,13 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
+    }
+
+    if ((lead as any).whatsapp_status === "not_whatsapp") {
+      return new Response(
+        JSON.stringify({ success: false, error: "Número marcado como não-WhatsApp (Meta 131026). Disparo bloqueado." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
     }
 
     // Get WABA connection
