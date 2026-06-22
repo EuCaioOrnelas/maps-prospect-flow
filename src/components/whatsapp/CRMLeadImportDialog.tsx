@@ -281,7 +281,7 @@ export const CRMLeadImportDialog = ({
 
     toast({
       title: `${normalized.length} contatos importados do CRM`,
-      description: `Todos com DDI +55 aplicado automaticamente`,
+      description: `DDI, 9º dígito BR e padrão internacional aplicados automaticamente`,
     });
     onOpenChange(false);
   };
