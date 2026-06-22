@@ -96,6 +96,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: number; failed: number } | null>(null);
   const [crmDialogOpen, setCrmDialogOpen] = useState(false);
+  const [oppsDialogOpen, setOppsDialogOpen] = useState(false);
 
   // Fetch templates when connection changes (and connection is selected)
   useEffect(() => {
@@ -724,15 +725,26 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Números de telefone</Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCrmDialogOpen(true)}
-                  className="gap-1.5 text-xs"
-                >
-                  <Users size={14} />
-                  Importar do CRM
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setOppsDialogOpen(true)}
+                    className="gap-1.5 text-xs"
+                  >
+                    <Rocket size={14} />
+                    Importar Oportunidades
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCrmDialogOpen(true)}
+                    className="gap-1.5 text-xs"
+                  >
+                    <Users size={14} />
+                    Importar do CRM
+                  </Button>
+                </div>
               </div>
               <Textarea
                 value={phoneNumbers}
@@ -938,6 +950,19 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
       <CRMLeadImportDialog
         open={crmDialogOpen}
         onOpenChange={setCrmDialogOpen}
+        source="crm"
+        onImportPhones={(phones) => {
+          const current = phoneNumbers.trim();
+          const newNumbers = phones.join("\n");
+          setPhoneNumbers(current ? current + "\n" + newNumbers : newNumbers);
+        }}
+      />
+
+      {/* Opportunities Import Dialog */}
+      <CRMLeadImportDialog
+        open={oppsDialogOpen}
+        onOpenChange={setOppsDialogOpen}
+        source="opportunities"
         onImportPhones={(phones) => {
           const current = phoneNumbers.trim();
           const newNumbers = phones.join("\n");

@@ -34,6 +34,7 @@ import {
   Snowflake,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatPhoneForMeta } from "@/lib/phoneUtils";
 
 interface CRMLeadItem {
   id: string;
@@ -66,6 +67,9 @@ interface CRMLeadImportDialogProps {
   onImportLeads?: (leads: { name: string; phone: string }[]) => void;
   /** For Meta campaign flow: receives phone strings */
   onImportPhones?: (phones: string[]) => void;
+  /** Fonte dos contatos. Default: 'crm' (todos os leads do CRM).
+   *  'opportunities' filtra somente leads de prospecção/oportunidades. */
+  source?: "crm" | "opportunities";
 }
 
 const SCORE_LABELS: Record<string, string> = {
@@ -82,6 +86,7 @@ export const CRMLeadImportDialog = ({
   onOpenChange,
   onImportLeads,
   onImportPhones,
+  source = "crm",
 }: CRMLeadImportDialogProps) => {
   const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
@@ -105,7 +110,7 @@ export const CRMLeadImportDialog = ({
     if (open && user && accountOwnerId) {
       loadData();
     }
-  }, [open, user, accountOwnerId]);
+  }, [open, user, accountOwnerId, source]);
 
   // Reset on close
   useEffect(() => {
@@ -118,17 +123,7 @@ export const CRMLeadImportDialog = ({
     }
   }, [open]);
 
-  const normalizePhone = (phone: string): string => {
-    let digits = String(phone || "").replace(/\D/g, "");
-    if (!digits) return "";
-    // Remove leading 00
-    if (digits.startsWith("00") && digits.length > 4) digits = digits.slice(2);
-    // Add 55 if missing
-    if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith("55")) {
-      digits = "55" + digits;
-    }
-    return digits;
-  };
+  const normalizePhone = (phone: string): string => formatPhoneForMeta(phone);
 
   const getPhoneKey = (phone: string) => phone.replace(/\D/g, "").slice(-8);
 
@@ -136,13 +131,22 @@ export const CRMLeadImportDialog = ({
     if (!user || !accountOwnerId) return;
     setLoading(true);
     try {
+      let leadsQuery = supabase
+        .from("leads")
+        .select("id, company_name, contact_name, phone, pipeline_stage_id, tags, ai_score")
+        .eq("owner_user_id", accountOwnerId)
+        .not("phone", "is", null)
+        .limit(5000);
+
+      // Oportunidades = leads originados de prospecção / oportunidades, não arquivados
+      if (source === "opportunities") {
+        leadsQuery = leadsQuery
+          .in("origin", ["oportunidades", "prospeccao"])
+          .is("archived_at", null);
+      }
+
       const [leadsRes, stagesRes, scoresRes] = await Promise.all([
-        supabase
-          .from("leads")
-          .select("id, company_name, contact_name, phone, pipeline_stage_id, tags, ai_score")
-          .eq("owner_user_id", accountOwnerId)
-          .not("phone", "is", null)
-          .limit(5000),
+        leadsQuery,
         supabase
           .from("pipeline_stages")
           .select("id, name, color")
@@ -257,7 +261,7 @@ export const CRMLeadImportDialog = ({
         name: l.contact_name || l.company_name || "Sem nome",
         phone: normalizePhone(l.phone),
       }))
-      .filter((l) => l.phone.length >= 12); // 55 + DDD + number = at least 12
+      .filter((l) => l.phone.length >= 10 && l.phone.length <= 15); // E.164 global
 
     if (normalized.length === 0) {
       toast({
@@ -277,7 +281,7 @@ export const CRMLeadImportDialog = ({
 
     toast({
       title: `${normalized.length} contatos importados do CRM`,
-      description: `Todos com DDI +55 aplicado automaticamente`,
+      description: `DDI, 9º dígito BR e padrão internacional aplicados automaticamente`,
     });
     onOpenChange(false);
   };
@@ -313,10 +317,12 @@ export const CRMLeadImportDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users size={20} className="text-primary" />
-            Importar contatos do CRM
+            {source === "opportunities" ? "Importar Oportunidades" : "Importar contatos do CRM"}
           </DialogTitle>
           <DialogDescription>
-            Selecione contatos com base em filtros de pipeline, score e tendências
+            {source === "opportunities"
+              ? "Selecione leads vindos de prospecção/oportunidades. Números são formatados automaticamente (DDI, 9º dígito BR e padrão internacional)."
+              : "Selecione contatos com base em filtros de pipeline, score e tendências"}
           </DialogDescription>
         </DialogHeader>
 
@@ -418,7 +424,7 @@ export const CRMLeadImportDialog = ({
                   const isSelected = selectedIds.has(lead.id);
                   const stage = getStageName(lead.pipeline_stage_id);
                   const phoneNorm = normalizePhone(lead.phone);
-                  const isValidPhone = phoneNorm.length >= 12;
+                  const isValidPhone = phoneNorm.length >= 10 && phoneNorm.length <= 15;
 
                   return (
                     <div
@@ -477,7 +483,7 @@ export const CRMLeadImportDialog = ({
         {/* Footer */}
         <div className="flex items-center justify-between pt-3 border-t border-border">
           <p className="text-xs text-muted-foreground">
-            DDI +55 será adicionado automaticamente
+            Formatação automática: DDI, 9º dígito BR e E.164 internacional
           </p>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={() => onOpenChange(false)}>
