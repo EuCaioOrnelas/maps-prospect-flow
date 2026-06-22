@@ -11,6 +11,8 @@ interface Props {
 const FORA_PUBLICO_PATTERNS = [
   "NÃO faz parte da sua persona ideal",
   "fora da persona ideal",
+  "parece estar fora do seu público-alvo",
+  "fora do público-alvo principal",
 ];
 
 /**
