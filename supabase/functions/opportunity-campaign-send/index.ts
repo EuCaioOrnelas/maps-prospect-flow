@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { formatPhoneForMeta } from "../_shared/phoneFormat.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,14 +70,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Normalize phone — Meta requires E.164 without "+". BR numbers MUST include DDI 55.
-    const normalizeBrMobile = (raw: string) => {
-      let p = (raw || "").replace(/\D/g, "");
-      if (p.startsWith("55") && (p.length === 12 || p.length === 13)) return p;
-      if (p.length === 10 || p.length === 11) return `55${p}`;
-      return p;
-    };
-    const phone = normalizeBrMobile(lead.phone || "");
+    // Normalize phone — Meta requires E.164 without "+". Suporta global (BR + intl).
+    const phone = formatPhoneForMeta(lead.phone || "");
+    if (!phone) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Telefone do lead inválido (E.164 esperado)." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
 
     // Send free-form text via Meta Cloud API
     const sendResp = await fetch(

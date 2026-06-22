@@ -193,31 +193,38 @@ export const normalizePhone = (phone: string): string => {
 /**
  * Formata número para envio via Meta Cloud API — pronto para E.164 sem "+".
  *
- * Regras:
- * - Remove tudo que não é dígito; remove prefixo internacional "00".
- * - BR: se tiver 10–11 dígitos sem DDI, prefixa 55.
- * - BR mobile: se for 55 + DDD + 8 dígitos (12 totais), insere o 9º dígito
- *   após o DDD → 55 + DDD + 9 + 8 dígitos (13 totais). Cobre números
- *   antigos importados sem o 9.
- * - Internacional (12+ dígitos não-BR): mantém como está. Padrão E.164 (10–15).
- * - Retorna string vazia se inválido (fora de 10–15 dígitos).
+ * Suporta prospecção GLOBAL. Regras:
+ * - Se input começa com "+" → tratamos como E.164 explícito; só limpa dígitos,
+ *   NÃO prefixa 55 (evita transformar US +1 555... em 55 555...).
+ * - Se input começa com "00" → prefixo internacional, remove e trata como E.164.
+ * - Se restou 10–11 dígitos sem código de país → assume Brasil, prefixa 55.
+ * - BR antigo sem 9º dígito (55 + DDD + 8 = 12 dígitos) → insere o 9 após DDD.
+ * - Internacional (12+ dígitos não-BR ou já com "+") → mantém intacto.
+ * - Retorna "" se fora do padrão E.164 (10–15 dígitos).
  */
 export const formatPhoneForMeta = (phone: string): string => {
-  let digits = (phone || '').replace(/\D/g, '');
+  const raw = String(phone || '').trim();
+  if (!raw) return '';
+
+  const hasPlus = raw.startsWith('+');
+  let digits = raw.replace(/\D/g, '');
   if (!digits) return '';
 
-  // Remove prefixo internacional "00" → ex: "005511..." vira "5511..."
-  if (digits.startsWith('00') && digits.length > 4) digits = digits.slice(2);
+  // "00" prefixo internacional → trata como E.164
+  let explicitIntl = hasPlus;
+  if (!hasPlus && digits.startsWith('00') && digits.length > 4) {
+    digits = digits.slice(2);
+    explicitIntl = true;
+  }
 
-  // BR sem DDI → adiciona 55
-  if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith('55')) {
+  // BR sem DDI → adiciona 55 (somente quando NÃO é internacional explícito)
+  if (!explicitIntl && digits.length >= 10 && digits.length <= 11 && !digits.startsWith('55')) {
     digits = '55' + digits;
   }
 
   // BR antigo sem 9º dígito: 55 + DDD(2) + 8 = 12 → insere 9 após DDD
   if (digits.startsWith('55') && digits.length === 12) {
     const ddd = parseInt(digits.slice(2, 4), 10);
-    // DDDs BR válidos vão de 11 a 99
     if (ddd >= 11 && ddd <= 99) {
       digits = digits.slice(0, 4) + '9' + digits.slice(4);
     }

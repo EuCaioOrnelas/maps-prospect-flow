@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { formatPhoneForMeta } from "@/lib/phoneUtils";
 
 export interface ChatConversation {
   id: string;
@@ -560,19 +561,23 @@ export function useChat() {
   // Start new conversation
   const startNewConversation = useCallback(async (phone: string, name?: string) => {
     if (!user || !activeConnectionId) return;
-    
-    // Check if conversation already exists
-    const cleanPhone = phone.replace(/\D/g, "");
-    const existing = conversations.find(c => 
+
+    // E.164 global (BR + intl, com 9º dígito BR automático)
+    const cleanPhone = formatPhoneForMeta(phone);
+    if (!cleanPhone) {
+      toast.error("Telefone inválido. Use formato internacional (ex: +55 11 99999-9999).");
+      return;
+    }
+
+    const existing = conversations.find(c =>
       c.contact_phone.replace(/\D/g, "").endsWith(cleanPhone.slice(-8))
     );
-    
+
     if (existing) {
       setActiveConversationId(existing.id);
       return;
     }
 
-    // Create new conversation
     const { data } = await supabase.from("chat_conversations").insert({
       user_id: user.id,
       waba_connection_id: activeConnectionId,
@@ -746,7 +751,11 @@ export function useChat() {
     templateName?: string,
   ): Promise<{ requiresTemplate?: boolean }> => {
     if (!user || !activeConnectionId) return {};
-    const clean = targetPhone.replace(/\D/g, "");
+    const clean = formatPhoneForMeta(targetPhone);
+    if (!clean) {
+      toast.error("Telefone destino inválido.");
+      return {};
+    }
     const last8 = clean.slice(-8);
 
     // Find or create conversation
