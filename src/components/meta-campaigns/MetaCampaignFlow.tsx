@@ -869,9 +869,6 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                 <p className="text-xs text-muted-foreground">Categoria</p>
                 <p className="text-sm font-medium">
                   {CATEGORY_LABELS[selectedTemplate?.category || ""] || selectedTemplate?.category}
-                  <span className="text-xs text-muted-foreground ml-2">
-                    ({CATEGORY_COST[selectedTemplate?.category || ""] || "—"}/msg)
-                  </span>
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 border border-border">
