@@ -261,7 +261,7 @@ export const CRMLeadImportDialog = ({
         name: l.contact_name || l.company_name || "Sem nome",
         phone: normalizePhone(l.phone),
       }))
-      .filter((l) => l.phone.length >= 12); // 55 + DDD + number = at least 12
+      .filter((l) => l.phone.length >= 10 && l.phone.length <= 15); // E.164 global
 
     if (normalized.length === 0) {
       toast({
