@@ -365,7 +365,7 @@ const App = () => (
                   <Route path="email-flows/:id" element={<AdminEmailFlowEditor />} />
                   <Route path="user-scoring" element={<AdminUserScoring />} />
                   <Route path="trial-automation" element={<AdminTrialAutomation />} />
-                  <Route path="tests" element={<ProductionTests />} />
+                  
                   {/* Admin */}
                   <Route path="announcements" element={<AdminAnnouncements />} />
                   <Route path="termos" element={<AdminTermos />} />
