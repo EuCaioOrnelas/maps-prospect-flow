@@ -315,8 +315,6 @@ const App = () => (
                 <Route path="/fluxos" element={<ProtectedRoute><WhatsAppAutomations /></ProtectedRoute>} />
                 <Route path="/fluxos/novo" element={<ProtectedRoute><CreateFlowAI /></ProtectedRoute>} />
                 <Route path="/fluxos/:id" element={<ProtectedRoute><WhatsAppFlowEditor /></ProtectedRoute>} />
-                <Route path="/warming" element={<ProtectedRoute><Warming /></ProtectedRoute>} />
-                <Route path="/warming/reports" element={<ProtectedRoute><WarmingReports /></ProtectedRoute>} />
                 <Route path="/consultoria" element={<ProtectedRoute><Consultoria /></ProtectedRoute>} />
                 {/* Meta Platforms */}
                 <Route path="/meta" element={<ProtectedRoute><MetaDashboard /></ProtectedRoute>} />
