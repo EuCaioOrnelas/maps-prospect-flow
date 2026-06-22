@@ -244,7 +244,7 @@ const Admin = () => {
         { name: 'Chave 6 (Backup)', status: 'unknown', message: 'Não verificada' },
       ]
     },
-    evolutionApi: { status: 'ok', message: 'Funcionando normalmente', lastCheck: new Date(), errorCount: 0 },
+    
   });
   const [revenueHistory, setRevenueHistory] = useState<{ date: string; mrr: number; users: number }[]>([]);
   const [checkingApis, setCheckingApis] = useState(false);
