@@ -656,14 +656,7 @@ serve(async (req) => {
                   logStep("Failed to mark checkout lead", { error: String(e) });
                 }
 
-                // If upgrading from free to paid, cleanup all free tier instances
-                if (transitionType === "upgrade" && (profile.plan === "free" || !profile.plan)) {
-                  logStep("Triggering free tier cleanup on upgrade", { 
-                    previousPlan: profile.plan, 
-                    newPlan: plan 
-                  });
-                  await cleanupFreeInstances(supabaseClient, profile.id, customerEmail);
-                }
+                // Evolution API removida — não há mais limpeza de instâncias free no upgrade.
 
                 // Partner program: register sale if user came from a referral
                 // IMPORTANT: amountCents uses session.amount_total which is THE FINAL AMOUNT CHARGED
