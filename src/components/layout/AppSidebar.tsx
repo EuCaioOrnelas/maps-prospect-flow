@@ -159,12 +159,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       icon: LayoutDashboard,
       active: currentPath === "/dashboard"
     },
-    {
-      title: "Disparos",
-      url: "/whatsapp/reports",
-      icon: Send,
-      active: currentPath === "/whatsapp/reports"
-    },
     ...(can("agents") ? [{
       title: "Agentes IA",
       url: "/agents/reports",
