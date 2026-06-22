@@ -424,7 +424,7 @@ export const CRMLeadImportDialog = ({
                   const isSelected = selectedIds.has(lead.id);
                   const stage = getStageName(lead.pipeline_stage_id);
                   const phoneNorm = normalizePhone(lead.phone);
-                  const isValidPhone = phoneNorm.length >= 12;
+                  const isValidPhone = phoneNorm.length >= 10 && phoneNorm.length <= 15;
 
                   return (
                     <div
