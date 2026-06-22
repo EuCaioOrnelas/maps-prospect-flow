@@ -32,6 +32,9 @@ import {
   Zap,
   ThermometerSnowflake,
   Snowflake,
+  Calendar as CalendarIcon,
+  Tag,
+  MapPin,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatPhoneForMeta } from "@/lib/phoneUtils";
