@@ -930,24 +930,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
         </div>
       )}
 
-      {/* Footer info - always visible */}
-      <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5 mt-2">
-        <Info size={18} className="text-primary mt-0.5 shrink-0" />
-        <div className="text-sm">
-          <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
-          <p className="text-muted-foreground mt-0.5">
-            Disparo via WhatsApp Cloud API utilizando <strong>HSM templates</strong> pré-aprovados pela Meta (categorias: marketing, utility e authentication). O envio é tarifado por <strong>conversa de 24h</strong> conforme a tabela oficial da Meta por país e categoria, com cobrança realizada diretamente pela Meta na conta de billing vinculada ao WABA — independente da assinatura da plataforma.
-          </p>
-          <a
-            href="https://developers.facebook.com/docs/whatsapp/overview"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline inline-flex items-center gap-1 mt-1 text-xs"
-          >
-            <ExternalLink size={10} /> Documentação oficial da Meta
-          </a>
-        </div>
-      </div>
+      {/* Footer info removido — consolidado no aviso unificado do seletor de template */}
 
       {/* CRM Import Dialog */}
       <CRMLeadImportDialog
