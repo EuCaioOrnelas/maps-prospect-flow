@@ -17,6 +17,8 @@ const RUNTIME_ASSET_ERROR_PATTERNS = [
   /Loading chunk [\w-]+ failed/i,
   /ChunkLoadError/i,
   /Unable to preload CSS/i,
+  /Minified React error #306/i,
+  /invariant=306/i,
 ];
 
 declare global {
