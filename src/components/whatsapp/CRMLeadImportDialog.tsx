@@ -132,6 +132,10 @@ export const CRMLeadImportDialog = ({
       setStageFilter("all");
       setScoreFilter("all");
       setSearchTerm("");
+      setCategoryFilter("all");
+      setCityFilter("all");
+      setDateFrom("");
+      setDateTo("");
     }
   }, [open]);
 
