@@ -383,7 +383,7 @@ export default function MetaConnectGuide() {
 
 /* ---------------- Conteúdo das fases ---------------- */
 
-const PhaseAppContent = ({ copy }: { copy: (v: string, l: string) => void }) => (
+const PhaseAppContent = ({ copy: _copy }: { copy: (v: string, l: string) => void }) => (
   <>
     <Intro>
       Vamos criar um "aplicativo" na Meta. É só um cadastro que ela exige. Você faz uma vez e nunca mais mexe.
@@ -420,25 +420,12 @@ const PhaseAppContent = ({ copy }: { copy: (v: string, l: string) => void }) => 
       </BigLink>
     </Step>
 
-    <Step number={4} title='Coloque o app no ar (modo "Ativo")'>
-      <p>
-        Dentro do seu app, no menu lateral esquerdo, vá em{" "}
-        <strong>Configurações → Básico</strong>. No topo tem um botão{" "}
-        <strong>"Em desenvolvimento"</strong>. Clique nele e mude para <strong>"Ativo"</strong>.
-      </p>
-      <BigLink href="https://developers.facebook.com/apps/">
-        Abrir meu app
-      </BigLink>
-      <p className="text-sm">A Meta vai pedir 2 endereços. Use estes (já estão prontos):</p>
-      <CopyRow
-        label="Política de privacidade"
-        value="https://wiize.com.br/privacidade"
-        onCopy={copy}
-      />
-      <CopyRow label="Site" value="https://wiize.com.br" onCopy={copy} />
-    </Step>
+    <Hint type="info">
+      Pode deixar o app em <strong>"Em desenvolvimento"</strong>. Não precisa publicar, nem
+      preencher política de privacidade — para uso interno via Cloud API funciona normal assim.
+    </Hint>
 
-    <FinishBox>App criado e ativo. Pode passar para a Etapa 2.</FinishBox>
+    <FinishBox>App criado. Pode passar para a Etapa 2.</FinishBox>
   </>
 );
 
