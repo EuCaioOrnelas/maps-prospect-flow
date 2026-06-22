@@ -71,7 +71,7 @@ export const FEATURE_CATALOG: FeatureDef[] = [
     key: "reports",
     label: "Relatórios",
     description: "Relatórios de campanhas e agentes.",
-    routes: ["/whatsapp/reports", "/agents/reports"],
+    routes: ["/agents/reports"],
   },
   {
     key: "consultoria",
