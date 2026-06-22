@@ -40,7 +40,7 @@ import { useCampaignDrafts, CampaignDraft } from "@/hooks/useCampaignDrafts";
 import { DisclaimerModal } from "@/components/whatsapp/DisclaimerModal";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { FreeTrialLimitModal } from "@/components/whatsapp/FreeTrialLimitModal";
-import { WarmingWarningModal } from "@/components/whatsapp/WarmingWarningModal";
+
 
 import { CampaignDrafts } from "@/components/whatsapp/CampaignDrafts";
 import { AppSidebar } from "@/components/layout/AppSidebar";
