@@ -422,10 +422,19 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
           </div>
 
           {/* Aviso resumido WABA */}
-          <div className="mb-4 p-3 rounded-lg border border-primary/20 bg-primary/5 flex items-start gap-2 text-xs text-muted-foreground">
+          <div className="mb-3 p-3 rounded-lg border border-primary/20 bg-primary/5 flex items-start gap-2 text-xs text-muted-foreground">
             <HelpCircle size={14} className="text-primary mt-0.5 shrink-0" />
             <p>
               Templates ficam vinculados à <strong className="text-foreground">WABA</strong> (WhatsApp Business Account) do número selecionado. Crie o template na WABA <code className="font-mono bg-muted px-1 py-0.5 rounded">{selectedConnection?.waba_id}</code> e aguarde o status <strong className="text-foreground">APPROVED</strong> para usá-lo aqui.
+            </p>
+          </div>
+
+          {/* Disclaimer de custo */}
+          <div className="mb-4 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 flex items-start gap-2 text-xs text-muted-foreground">
+            <Info size={14} className="text-amber-500 mt-0.5 shrink-0" />
+            <p>
+              <strong className="text-foreground">Custo por mensagem varia conforme a Meta</strong> — depende da categoria (Marketing/Utility/Authentication), país de destino, volume mensal e câmbio. Utility dentro da janela de atendimento de 24h é grátis.{" "}
+              <a href={PRICING_DOC_URL} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:no-underline">Consulte a tabela oficial</a>.
             </p>
           </div>
 
