@@ -390,34 +390,98 @@ const PhaseAppContent = ({ copy: _copy }: { copy: (v: string, l: string) => void
     </Intro>
 
     <Step number={1} title="Abra a página de aplicativos da Meta">
-      <p>Clique no botão abaixo. Faça login com a sua conta do Facebook que cuida da empresa.</p>
+      <p>Clique no botão abaixo. A página vai abrir em uma nova aba. Faça login com a sua conta do Facebook que é administradora da empresa.</p>
       <BigLink href="https://developers.facebook.com/apps/">
         Abrir Meta for Developers
       </BigLink>
-    </Step>
-
-    <Step number={2} title='Clique em "Criar aplicativo"'>
-      <p>O botão verde fica no canto superior direito. A Meta vai te perguntar algumas coisas — responda assim:</p>
-      <AnswerCard>
-        <Answer q="Qual é o seu caso de uso?" a='Marque "Outro" e clique em Avançar.' />
-        <Answer q="Tipo de aplicativo" a='Selecione "Negócios" e clique em Avançar.' />
-        <Answer q="Nome do aplicativo" a='Qualquer nome, ex: "Wiize Minha Empresa". Só você vê.' />
-        <Answer q="Email de contato" a="O seu email." />
-        <Answer q="Conta do Business" a="A conta da sua empresa. Se não tiver, a Meta cria na hora." />
-      </AnswerCard>
-      <BigLink href="https://developers.facebook.com/apps/creation/">
-        Ir direto para "Criar aplicativo"
-      </BigLink>
-    </Step>
-
-    <Step number={3} title='Adicione o produto "WhatsApp" ao app'>
-      <p>
-        Depois de criar o app, você cai numa página com vários cards. Encontre o card{" "}
-        <strong>"WhatsApp"</strong> e clique em <strong>"Configurar"</strong> dentro dele.
+      <p className="text-xs text-zinc-500">
+        Dica: se você já estiver logado no Facebook no mesmo navegador, a Meta reconhece automaticamente.
       </p>
-      <BigLink href="https://developers.facebook.com/apps/">
-        Abrir meu app (lista de apps)
-      </BigLink>
+    </Step>
+
+    <Step number={2} title='Clique no botão verde "Criar aplicativo"'>
+      <p>
+        Na página que abrir, olhe para o <strong>canto superior direito</strong> da tela. 
+        Você vai ver um botão verde escrito <strong>"Criar aplicativo"</strong>. Clique nele.
+      </p>
+      <p>
+        Se você já tiver aplicativos criados, o botão continua no mesmo lugar, à direita do título "Meus apps".
+      </p>
+    </Step>
+
+    <Step number={3} title='Escolha "Outro" no tipo de caso de uso'>
+      <p>
+        A Meta vai abrir um assistente com a pergunta: <em>"Qual é o seu caso de uso?"</em>
+      </p>
+      <p>
+        Role a lista até encontrar a opção <strong>"Outro"</strong>. Clique nela — ela costuma ficar no final da lista.
+        Depois clique no botão <strong>"Avançar"</strong> que aparece no canto inferior direito da janela.
+      </p>
+    </Step>
+
+    <Step number={4} title='Selecione "Negócios" como tipo de aplicativo'>
+      <p>
+        Na próxima tela, a Meta pergunta: <em>"Que tipo de aplicativo você está criando?"</em>
+      </p>
+      <p>
+        Clique na opção <strong>"Negócios"</strong> — é a que tem um ícone de maletinha. 
+        Depois clique em <strong>"Avançar"</strong> novamente.
+      </p>
+    </Step>
+
+    <Step number={5} title="Preencha os dados do aplicativo">
+      <p>
+        Agora você cai numa tela com um formulário. Preencha cada campo com cuidado:
+      </p>
+      <AnswerCard>
+        <Answer
+          q="Nome de exibição do aplicativo"
+          a='Digite qualquer nome que você vá reconhecer depois. Sugestão: "Wiize Minha Empresa" ou "Bot WhatsApp [Nome da Empresa]". Só você vê esse nome.'
+        />
+        <Answer
+          q="Email de contato do aplicativo"
+          a="Use o mesmo email que você usa para administrar a página do Facebook / Instagram da empresa."
+        />
+        <Answer
+          q="Conta comercial do Facebook"
+          a='Selecione a conta da sua empresa no dropdown. Se não aparecer nenhuma, clique em "Criar conta comercial" — a Meta cria uma na hora, é rápido.'
+        />
+      </AnswerCard>
+      <p>
+        Depois de preencher tudo, clique no botão <strong>"Criar aplicativo"</strong> no canto inferior direito.
+      </p>
+    </Step>
+
+    <Step number={6} title="Confirme a verificação de segurança (se aparecer)">
+      <p>
+        Às vezes a Meta pede que você confirme que não é um robô. Pode ser um captcha ou uma verificação por SMS no seu celular.
+      </p>
+      <p>
+        Siga as instruções na tela e clique em <strong>"Continuar"</strong> ou <strong>"Enviar"</strong> quando terminar.
+      </p>
+    </Step>
+
+    <Step number={7} title='Adicione o produto "WhatsApp" ao app'>
+      <p>
+        Depois de criar o app, a Meta te leva para uma página com vários cards de produtos (API de Anúncios, Messenger, WhatsApp, etc.).
+      </p>
+      <p>
+        Role a página até encontrar o card escrito <strong>"WhatsApp"</strong> (tem o ícone verde do WhatsApp).
+        Dentro desse card, clique no botão <strong>"Configurar"</strong>.
+      </p>
+      <p className="text-xs text-zinc-500">
+        Se não encontrar o card, use a barra de busca no topo da página e digite "WhatsApp".
+      </p>
+    </Step>
+
+    <Step number={8} title="Aguarde a Meta ativar o produto WhatsApp">
+      <p>
+        Depois de clicar em "Configurar", a Meta pode levar alguns segundos para ativar o produto no seu app.
+        Você vai ver uma tela de carregamento — espere até aparecer a mensagem <em>"WhatsApp adicionado ao seu aplicativo"</em>.
+      </p>
+      <p>
+        Pronto. O app está criado e o WhatsApp já está vinculado a ele.
+      </p>
     </Step>
 
     <Hint type="info">
@@ -425,7 +489,7 @@ const PhaseAppContent = ({ copy: _copy }: { copy: (v: string, l: string) => void
       preencher política de privacidade — para uso interno via Cloud API funciona normal assim.
     </Hint>
 
-    <FinishBox>App criado. Pode passar para a Etapa 2.</FinishBox>
+    <FinishBox>App criado e WhatsApp configurado. Pode passar para a Etapa 2.</FinishBox>
   </>
 );
 
