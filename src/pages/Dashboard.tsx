@@ -41,7 +41,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useNotifications } from "@/hooks/useNotifications";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { hasSDRAccess } from "@/lib/planAccess";
-import { Lock } from "lucide-react";
+import { Lock, Settings } from "lucide-react";
 
 // Onboarding modal removido — apenas o GuidedTour orienta novos usuários.
 import { AppSidebar } from "@/components/layout/AppSidebar";
