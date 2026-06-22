@@ -58,14 +58,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Normalize BR phone to E.164 (must include DDI 55 for Meta Cloud API)
-    const normalizeBrMobile = (raw: string) => {
-      let p = (raw || "").replace(/\D/g, "");
-      if (p.startsWith("55") && (p.length === 12 || p.length === 13)) return p;
-      if (p.length === 10 || p.length === 11) return `55${p}`;
-      return p;
-    };
-    const phone = normalizeBrMobile(lead.phone || "");
+    // Normalize phone (E.164 global, sem "+")
+    const phone = formatPhoneForMeta(lead.phone || "");
+    if (!phone) {
+      return new Response(JSON.stringify({ success: false, error: "Telefone do lead inválido (E.164)." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     const resp = await fetch(
       `https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`,
