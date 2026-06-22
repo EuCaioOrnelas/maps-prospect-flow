@@ -44,10 +44,8 @@ const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"), "Rese
 const Reports = lazyWithRetry(() => import("./pages/Reports"), "Reports");
 const CRMComingSoon = lazyWithRetry(() => import("./pages/CRMComingSoon"), "CRMComingSoon");
 const SharedReport = lazyWithRetry(() => import("./pages/SharedReport"), "SharedReport");
-const WhatsAppCampaign = lazyWithRetry(() => import("./pages/WhatsAppCampaign"), "WhatsAppCampaign");
 const MetaCampaigns = lazyWithRetry(() => import("./pages/MetaCampaigns"), "MetaCampaigns");
 const UserInsights = lazyWithRetry(() => import("./pages/UserInsights"), "UserInsights");
-const WhatsAppReports = lazyWithRetry(() => import("./pages/WhatsAppReports"), "WhatsAppReports");
 const Terms = lazyWithRetry(() => import("./pages/Terms"), "Terms");
 const Privacy = lazyWithRetry(() => import("./pages/Privacy"), "Privacy");
 const SupportRating = lazyWithRetry(() => import("./pages/SupportRating"), "SupportRating");
