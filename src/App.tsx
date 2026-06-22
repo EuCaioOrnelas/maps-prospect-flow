@@ -44,10 +44,8 @@ const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"), "Rese
 const Reports = lazyWithRetry(() => import("./pages/Reports"), "Reports");
 const CRMComingSoon = lazyWithRetry(() => import("./pages/CRMComingSoon"), "CRMComingSoon");
 const SharedReport = lazyWithRetry(() => import("./pages/SharedReport"), "SharedReport");
-const WhatsAppCampaign = lazyWithRetry(() => import("./pages/WhatsAppCampaign"), "WhatsAppCampaign");
 const MetaCampaigns = lazyWithRetry(() => import("./pages/MetaCampaigns"), "MetaCampaigns");
 const UserInsights = lazyWithRetry(() => import("./pages/UserInsights"), "UserInsights");
-const WhatsAppReports = lazyWithRetry(() => import("./pages/WhatsAppReports"), "WhatsAppReports");
 const Terms = lazyWithRetry(() => import("./pages/Terms"), "Terms");
 const Privacy = lazyWithRetry(() => import("./pages/Privacy"), "Privacy");
 const SupportRating = lazyWithRetry(() => import("./pages/SupportRating"), "SupportRating");
@@ -72,7 +70,7 @@ const AgentReports = lazyWithRetry(() => import("./pages/AgentReports"), "AgentR
 const EquipeEmBreve = lazyWithRetry(() => import("./pages/equipe-ia/EquipeEmBreve"), "EquipeEmBreve");
 const Consultoria = lazyWithRetry(() => import("./pages/Consultoria"), "Consultoria");
 const ThankYou = lazyWithRetry(() => import("./pages/ThankYou"), "ThankYou");
-const ProductionTests = lazyWithRetry(() => import("./pages/ProductionTests"), "ProductionTests");
+
 const UpgradePromo = lazyWithRetry(() => import("./pages/UpgradePromo"), "UpgradePromo");
 const AdminEmailTests = lazyWithRetry(() => import("./pages/AdminEmailTests"), "AdminEmailTests");
 const AdminTrialAutomation = lazyWithRetry(() => import("./pages/AdminTrialAutomation"), "AdminTrialAutomation");
@@ -295,8 +293,8 @@ const App = () => (
                 <Route path="/prospeccao" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/oportunidades" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/oportunidades/gestao" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><OpportunitiesManagement /></Suspense></ProtectedRoute>} />
-                <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppCampaign /></ProtectedRoute>} />
-                <Route path="/whatsapp/reports" element={<ProtectedRoute><WhatsAppReports /></ProtectedRoute>} />
+                <Route path="/whatsapp" element={<Navigate to="/meta-campaigns" replace />} />
+                <Route path="/whatsapp/reports" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/meta-campaigns" element={<ProtectedRoute><MetaCampaigns /></ProtectedRoute>} />
                 <Route path="/meta-api-guide" element={<ProtectedRoute><MetaApiGuide /></ProtectedRoute>} />
                 <Route path="/crm" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
@@ -367,7 +365,7 @@ const App = () => (
                   <Route path="email-flows/:id" element={<AdminEmailFlowEditor />} />
                   <Route path="user-scoring" element={<AdminUserScoring />} />
                   <Route path="trial-automation" element={<AdminTrialAutomation />} />
-                  <Route path="tests" element={<ProductionTests />} />
+                  
                   {/* Admin */}
                   <Route path="announcements" element={<AdminAnnouncements />} />
                   <Route path="termos" element={<AdminTermos />} />

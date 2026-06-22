@@ -111,7 +111,7 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Fluxos", url: "/admin/email-flows", icon: Workflow },
       { title: "Score Usuários", url: "/admin/user-scoring", icon: Trophy },
       { title: "Trial Automação", url: "/admin/trial-automation", icon: Zap },
-      { title: "Testes", url: "/admin/tests", icon: FlaskConical },
+      
     ],
   },
   {

@@ -53,7 +53,7 @@ export const FEATURE_CATALOG: FeatureDef[] = [
     key: "campaigns",
     label: "Campanhas WhatsApp",
     description: "Disparos em massa via Meta Cloud API.",
-    routes: ["/whatsapp", "/meta-campaigns", "/meta-api-guide"],
+    routes: ["/meta-campaigns", "/meta-api-guide"],
   },
   {
     key: "agents",
@@ -71,7 +71,7 @@ export const FEATURE_CATALOG: FeatureDef[] = [
     key: "reports",
     label: "Relatórios",
     description: "Relatórios de campanhas e agentes.",
-    routes: ["/whatsapp/reports", "/agents/reports"],
+    routes: ["/agents/reports"],
   },
   {
     key: "consultoria",

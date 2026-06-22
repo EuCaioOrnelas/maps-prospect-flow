@@ -90,11 +90,11 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isFreePlan = !profile?.plan || profile.plan === 'free';
   const currentPath = location.pathname;
 
-  const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/whatsapp/reports" || currentPath === "/warming/reports" || currentPath === "/agents/reports";
-  const isOnCampaignsPage = currentPath === "/whatsapp";
+  const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/agents/reports";
+  const isOnCampaignsPage = currentPath === "/meta-campaigns";
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
   const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
-  const isOnAutomationPage = currentPath === "/agents" || currentPath.startsWith("/fluxos") || currentPath === "/warming";
+  const isOnAutomationPage = currentPath === "/agents" || currentPath.startsWith("/fluxos");
   const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/") || currentPath === "/meta-campaigns";
 
   // Watch body class to force expand and select active submenu during guided tour
@@ -158,12 +158,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       url: "/dashboard",
       icon: LayoutDashboard,
       active: currentPath === "/dashboard"
-    },
-    {
-      title: "Disparos",
-      url: "/whatsapp/reports",
-      icon: Send,
-      active: currentPath === "/whatsapp/reports"
     },
     ...(can("agents") ? [{
       title: "Agentes IA",
