@@ -578,7 +578,20 @@ const Dashboard = () => {
               </div>
             ) : (
             <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8 sm:mb-12">
+          <div className="text-center mb-8 sm:mb-12 relative">
+            {companyProfile && (
+              <div className="absolute right-0 top-0 hidden sm:block">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setShowCompanyOnboarding(true)}
+                >
+                  <Settings size={14} />
+                  Editar Perfil
+                </Button>
+              </div>
+            )}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
               <Brain size={18} className="text-primary" />
               <span className="text-sm font-medium text-primary">Oportunidades Inteligentes com IA</span>
@@ -589,7 +602,29 @@ const Dashboard = () => {
             <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
               Nossa IA analisa e entrega até <span className="text-primary font-semibold">60 oportunidades estratégicas</span> por busca
             </p>
+            {companyProfile && (
+              <div className="mt-3 sm:hidden">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setShowCompanyOnboarding(true)}
+                >
+                  <Settings size={14} />
+                  Editar Perfil
+                </Button>
+              </div>
+            )}
           </div>
+
+          {companyProfile && (
+            <div className="mb-6">
+              <IdealAudienceMismatchBanner
+                accountOwnerId={accountOwnerId}
+                onEditProfile={() => setShowCompanyOnboarding(true)}
+              />
+            </div>
+          )}
 
           {/* Search Card */}
           <div className="relative mb-10">
