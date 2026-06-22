@@ -2414,10 +2414,6 @@ const Admin = () => {
               <ProxyManagerPanel />
             </div>
 
-            {/* Campaign Debug Panel */}
-            <div className="mt-8">
-              <CampaignDebugPanel />
-            </div>
 
             {/* Agents Monitor Panel */}
             <div className="mt-8">
