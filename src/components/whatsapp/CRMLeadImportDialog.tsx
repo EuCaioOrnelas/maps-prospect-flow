@@ -109,6 +109,10 @@ export const CRMLeadImportDialog = ({
   const [stageFilter, setStageFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState<ScoreFilter>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [cityFilter, setCityFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState<string>(""); // yyyy-mm-dd
+  const [dateTo, setDateTo] = useState<string>("");
 
   // Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
