@@ -950,6 +950,19 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
       <CRMLeadImportDialog
         open={crmDialogOpen}
         onOpenChange={setCrmDialogOpen}
+        source="crm"
+        onImportPhones={(phones) => {
+          const current = phoneNumbers.trim();
+          const newNumbers = phones.join("\n");
+          setPhoneNumbers(current ? current + "\n" + newNumbers : newNumbers);
+        }}
+      />
+
+      {/* Opportunities Import Dialog */}
+      <CRMLeadImportDialog
+        open={oppsDialogOpen}
+        onOpenChange={setOppsDialogOpen}
+        source="opportunities"
         onImportPhones={(phones) => {
           const current = phoneNumbers.trim();
           const newNumbers = phones.join("\n");
