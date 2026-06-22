@@ -12,7 +12,6 @@ export type FeatureKey =
   | "crm"
   | "chat"
   | "campaigns"
-  | "warming"
   | "agents"
   | "flows"
   | "reports"
