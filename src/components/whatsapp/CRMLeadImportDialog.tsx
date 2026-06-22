@@ -149,7 +149,7 @@ export const CRMLeadImportDialog = ({
     try {
       let leadsQuery = supabase
         .from("leads")
-        .select("id, company_name, contact_name, phone, pipeline_stage_id, tags, ai_score")
+        .select("id, company_name, contact_name, phone, pipeline_stage_id, tags, ai_score, category, city, region, prospected_at, created_at")
         .eq("owner_user_id", accountOwnerId)
         .not("phone", "is", null)
         .limit(5000);
