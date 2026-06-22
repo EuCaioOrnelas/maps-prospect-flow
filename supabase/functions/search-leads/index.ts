@@ -152,86 +152,8 @@ function getPhoneVariations(phone: string): string[] {
   return ['55' + withoutCountry];
 }
 
-// Dedicated WhatsApp instance for validating numbers in prospecting
-const VALIDATOR_INSTANCE = 'wiizeprospect_03f5ad6b_1767801176186_k4t5eh';
-
-// Validate if phone number exists on WhatsApp using dedicated validator instance
-// For landlines, tries both formats (with and without 9)
-async function validateWhatsAppNumber(phoneNumber: string): Promise<boolean> {
-  if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
-    console.log('Evolution API not configured, skipping validation');
-    return true;
-  }
-
-  try {
-    const variations = getPhoneVariations(phoneNumber);
-    const isLandline = isLandlineNumber(phoneNumber);
-    
-    console.log(`Validating WhatsApp for: ${phoneNumber} (${isLandline ? 'landline' : 'mobile'}) - trying: ${variations.join(', ')}`);
-    
-    // Try all variations
-    for (const normalized of variations) {
-      const response = await fetch(`${EVOLUTION_API_URL}/chat/whatsappNumbers/${VALIDATOR_INSTANCE}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': EVOLUTION_API_KEY!
-        },
-        body: JSON.stringify({
-          numbers: [normalized]
-        })
-      });
-      
-      if (!response.ok) {
-        console.error(`Validation API error: ${response.status}`);
-        continue;
-      }
-      
-      const result = await response.json();
-      
-      if (result && Array.isArray(result) && result.length > 0) {
-        const exists = result[0]?.exists === true;
-        if (exists) {
-          console.log(`WhatsApp validation for ${phoneNumber}: EXISTS ✓ (found as ${normalized})`);
-          return true;
-        }
-      }
-    }
-    
-    console.log(`WhatsApp validation for ${phoneNumber}: NOT FOUND ✗`);
-    return false;
-  } catch (error) {
-    console.error('WhatsApp validation error:', error);
-    return true; // Assume valid on error
-  }
-}
-
-// Validate multiple numbers in parallel (batch of 5)
-async function validatePhonesBatch(phones: string[]): Promise<Map<string, boolean>> {
-  const results = new Map<string, boolean>();
-  
-  // Process in batches of 5 with small delay
-  for (let i = 0; i < phones.length; i += 5) {
-    const batch = phones.slice(i, i + 5);
-    const validations = await Promise.all(
-      batch.map(async phone => {
-        const isValid = await validateWhatsAppNumber(phone);
-        return { phone, isValid };
-      })
-    );
-    
-    for (const { phone, isValid } of validations) {
-      results.set(phone, isValid);
-    }
-    
-    // Small delay between batches to avoid rate limiting
-    if (i + 5 < phones.length) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-  }
-  
-  return results;
-}
+// NOTE: Validação de número via Evolution API foi removida (junho/2026).
+// O sistema agora confia na validação de formato (normalizePhone) e na entrega real via Meta API.
 
 // Helper function to check if API key has reached its limit
 function isApiKeyExhausted(response: Response, responseData: any): boolean {
