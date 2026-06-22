@@ -37,7 +37,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 
-import { useWarmingConnectionAlert } from "@/hooks/useWarmingConnectionAlert";
+
 import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
 import { useChatUnreadBadge } from "@/hooks/useChatUnreadBadge";
 import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDialog";
