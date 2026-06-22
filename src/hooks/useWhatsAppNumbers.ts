@@ -186,53 +186,12 @@ export const useWhatsAppNumbers = () => {
     }
   }, [user, hasMassMessagingAccess, fetchNumbers]);
 
-  // Verify and update connection status from Evolution API
-  // IMPORTANT: This function should NEVER flip is_connected to false
-  // Only webhooks from WhatsApp can trigger real disconnections
-  const verifyAndUpdateConnectionStatus = async (numberId: string, instanceName: string): Promise<boolean> => {
-    try {
-      console.log(`Verifying connection status for ${instanceName}...`);
+  // Evolution API foi descontinuada. Mantemos a função apenas como no-op
+  // para preservar a assinatura usada por outros componentes legados.
+  const verifyAndUpdateConnectionStatus = async (_numberId: string, _instanceName: string): Promise<boolean> => {
+    return true;
+  };
 
-      const { data, error } = await invokeWithRetry<{
-        connected: boolean | null;
-        requiresReauth?: boolean;
-      }>('evolution-check-status', {
-        body: { instanceName, numberId },
-      }, {
-        maxRetries: 1,
-      });
-
-      if (error) {
-        console.log(`[useWhatsAppNumbers] Could not verify status for ${instanceName}:`, error);
-        // Keep previous state on errors - never disconnect
-        return true;
-      }
-
-      // If API couldn't determine state (null), keep previous state
-      if (data?.connected === null) {
-        console.log(`[useWhatsAppNumbers] Uncertain status for ${instanceName}, keeping previous state`);
-        return true;
-      }
-
-      // If evolution-check-status returns false, it already updated the DB
-      // We just need to update local state to reflect the disconnection
-      const isReallyConnected = data?.connected === true;
-      
-      if (!isReallyConnected) {
-        console.log(`[useWhatsAppNumbers] ${instanceName} not connected — updating local state`);
-        setNumbers(prev => prev.map(n => 
-          n.instance_name === instanceName 
-            ? { ...n, is_connected: false, phone_number: null } 
-            : n
-        ));
-      }
-      
-      return isReallyConnected;
-    } catch (err) {
-      console.error('Error verifying connection status:', err);
-      // Keep previous state on unexpected errors
-      return true;
-    }
   };
 
   // Alias para manter compatibilidade
