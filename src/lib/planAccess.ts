@@ -78,7 +78,7 @@ export function getContactLimit(profile: ProfileLike): number {
  * assinaturas customizadas — é uma camada paralela). Retorna `false` se
  * o plano do usuário não pode acessar a feature.
  */
-const NEW_START_BLOCKED: FeatureKey[] = ["oportunidades", "agents", "warming"];
+const NEW_START_BLOCKED: FeatureKey[] = ["oportunidades", "agents"];
 
 export function planHasFeature(profile: ProfileLike, key: FeatureKey): boolean {
   if (!profile) return true;
