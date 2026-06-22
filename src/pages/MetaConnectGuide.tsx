@@ -383,7 +383,7 @@ export default function MetaConnectGuide() {
 
 /* ---------------- Conteúdo das fases ---------------- */
 
-const PhaseAppContent = ({ copy }: { copy: (v: string, l: string) => void }) => (
+const PhaseAppContent = ({ copy: _copy }: { copy: (v: string, l: string) => void }) => (
   <>
     <Intro>
       Vamos criar um "aplicativo" na Meta. É só um cadastro que ela exige. Você faz uma vez e nunca mais mexe.
