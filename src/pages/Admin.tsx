@@ -206,12 +206,6 @@ interface ApiStatus {
     errorCount: number;
     keys: ApiKeyStatus[];
   };
-  evolutionApi: {
-    status: 'ok' | 'warning' | 'error';
-    message: string;
-    lastCheck: Date;
-    errorCount: number;
-  };
 }
 
 const Admin = () => {
