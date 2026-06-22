@@ -192,7 +192,6 @@ export const useWhatsAppNumbers = () => {
     return true;
   };
 
-  };
 
   // Alias para manter compatibilidade
   const verifyConnectionStatus = verifyAndUpdateConnectionStatus;
