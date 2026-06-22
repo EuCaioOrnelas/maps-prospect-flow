@@ -44,7 +44,7 @@ import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDia
 import { SidebarNavItem } from "./SidebarNavItem";
 import logoIconNew from "@/assets/logo-icon-new.png";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
-import { isLegacyEvolutionUser } from "@/lib/legacyAccess";
+
 import { planHasFeature } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { roleHasPermission, type AccountPermission } from "@/lib/accountPermissions";
