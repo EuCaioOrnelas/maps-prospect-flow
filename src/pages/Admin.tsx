@@ -1454,22 +1454,6 @@ const Admin = () => {
                 </div>
               </div>
 
-              {/* Evolution API Status Card */}
-              <div className={`rounded-xl p-4 border ${getStatusColor(apiStatus.evolutionApi.status)} animate-fade-in`} style={{ animationDelay: '0.1s' }}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Server size={18} />
-                    <span className="font-semibold">Evolution API (WhatsApp)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(apiStatus.evolutionApi.status)}
-                  </div>
-                </div>
-                <p className="text-sm opacity-80">{apiStatus.evolutionApi.message}</p>
-                <p className="text-xs mt-2 opacity-50">
-                  Última verificação: {apiStatus.evolutionApi.lastCheck.toLocaleTimeString('pt-BR')}
-                </p>
-              </div>
             </div>
 
             {/* Financial Stats - Combined MRR */}
