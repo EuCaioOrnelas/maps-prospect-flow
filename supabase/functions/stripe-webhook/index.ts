@@ -151,19 +151,7 @@ async function registerPartnerSale(
   }
 }
 
-// --- Evolution API credentials helper (inlined) ---
-interface EvolutionCredentials { url: string; apiKey: string; tier: 'free' | 'paid'; }
-const PAID_PLANS = ['start', 'growth', 'scale'];
-function getEvolutionCredentials(tierOrPlan: string | null | undefined): EvolutionCredentials {
-  const normalized = (tierOrPlan || 'free').toLowerCase();
-  if (normalized === 'paid' || PAID_PLANS.includes(normalized)) {
-    const url = Deno.env.get('EVOLUTION_API_URL_PAID'), apiKey = Deno.env.get('EVOLUTION_API_KEY_PAID');
-    if (url && apiKey) return { url, apiKey, tier: 'paid' };
-  }
-  const url = Deno.env.get('EVOLUTION_API_URL'), apiKey = Deno.env.get('EVOLUTION_API_KEY');
-  if (!url || !apiKey) throw new Error('Evolution API credentials not configured');
-  return { url, apiKey, tier: 'free' };
-}
+// Evolution API removida (junho/2026). Sistema usa apenas Meta Cloud API.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
