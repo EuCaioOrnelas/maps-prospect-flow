@@ -25,21 +25,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const PAID_PLANS = ["start", "growth", "scale"];
-
-function getEvolutionCredsFromTier(tier: string | null | undefined) {
-  const normalized = (tier || "free").toLowerCase();
-  if (normalized === "paid" || PAID_PLANS.includes(normalized)) {
-    const url = Deno.env.get("EVOLUTION_API_URL_PAID");
-    const apiKey = Deno.env.get("EVOLUTION_API_KEY_PAID");
-    if (url && apiKey) return { url, apiKey, tier: "paid" as const };
-  }
-  return {
-    url: Deno.env.get("EVOLUTION_API_URL")!,
-    apiKey: Deno.env.get("EVOLUTION_API_KEY")!,
-    tier: "free" as const,
-  };
-}
+// Evolution API removida (junho/2026). Envio é exclusivamente via Meta Cloud API.
 
 function normalizeHandle(value: any): string | null {
   if (!value) return null;
