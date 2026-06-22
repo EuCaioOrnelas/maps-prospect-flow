@@ -61,11 +61,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   AUTHENTICATION: "Autenticação",
 };
 
-const CATEGORY_COST: Record<string, string> = {
-  MARKETING: "~R$ 0,50",
-  UTILITY: "~R$ 0,15",
-  AUTHENTICATION: "~R$ 0,15",
-};
+// Custo por mensagem varia conforme rate card da Meta (categoria, país, volume e câmbio).
+// Não exibimos valor fixo aqui para não desinformar — consulte:
+// https://developers.facebook.com/docs/whatsapp/pricing/
+const PRICING_DOC_URL = "https://developers.facebook.com/docs/whatsapp/pricing/";
 
 const TEMPLATES_PER_PAGE = 6;
 
