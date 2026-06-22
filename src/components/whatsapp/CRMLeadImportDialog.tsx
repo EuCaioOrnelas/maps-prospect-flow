@@ -110,7 +110,7 @@ export const CRMLeadImportDialog = ({
     if (open && user && accountOwnerId) {
       loadData();
     }
-  }, [open, user, accountOwnerId]);
+  }, [open, user, accountOwnerId, source]);
 
   // Reset on close
   useEffect(() => {
