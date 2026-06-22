@@ -50,6 +50,7 @@ import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
+import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 interface Lead {
   name: string;
   category: string;
