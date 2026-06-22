@@ -123,10 +123,6 @@ export const CRMLeadImportDialog = ({
     }
   }, [open]);
 
-  // Formatação Meta — global, com 9º dígito BR automático
-  // (importado de @/lib/phoneUtils para garantir consistência com o envio).
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { formatPhoneForMeta } = require("@/lib/phoneUtils") as typeof import("@/lib/phoneUtils");
   const normalizePhone = (phone: string): string => formatPhoneForMeta(phone);
 
   const getPhoneKey = (phone: string) => phone.replace(/\D/g, "").slice(-8);
