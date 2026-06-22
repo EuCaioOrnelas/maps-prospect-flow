@@ -687,14 +687,18 @@ serve(async (req) => {
               }
 
               // === Auto-tag non-WhatsApp numbers (Meta error 131026) ===
+              // Scopes the update to the WABA owner's account (owner_user_id),
+              // which naturally includes sub-users (account_members share owner_user_id).
               const errCode = Number(status.errors?.[0]?.code || 0);
               const recipient = status.recipient_id;
-              if (status.status === 'failed' && errCode === 131026 && recipient) {
+              const tagOwnerId = wabaConn?.owner_user_id || wabaConn?.user_id;
+              if (status.status === 'failed' && errCode === 131026 && recipient && tagOwnerId) {
                 try {
                   const tail = phoneTail8(recipient);
                   const { data: matchedLeads } = await supabase
                     .from('leads')
-                    .select('id, user_id, phone, whatsapp_status')
+                    .select('id, user_id, owner_user_id, phone, whatsapp_status')
+                    .eq('owner_user_id', tagOwnerId)
                     .or(`phone.eq.${recipient},phone.ilike.%${tail}`)
                     .neq('whatsapp_status', 'not_whatsapp')
                     .limit(20);
@@ -708,12 +712,12 @@ serve(async (req) => {
                     await supabase.from('lead_activities').insert({
                       lead_id: ld.id,
                       user_id: ld.user_id,
-                      owner_user_id: ld.user_id,
+                      owner_user_id: ld.owner_user_id || tagOwnerId,
                       activity_type: 'whatsapp_invalid',
                       description: 'Meta retornou 131026: número não está no WhatsApp. Marcado como não-WhatsApp para evitar novos disparos.',
                     });
                   }
-                  console.log(`[meta-webhook] 🚫 131026: ${matchedLeads?.length || 0} lead(s) marcados como not_whatsapp (${recipient})`);
+                  console.log(`[meta-webhook] 🚫 131026: ${matchedLeads?.length || 0} lead(s) marcados como not_whatsapp (owner=${tagOwnerId}, recipient=${recipient})`);
                 } catch (e) {
                   console.error('[meta-webhook] 131026 tag error:', e);
                 }
