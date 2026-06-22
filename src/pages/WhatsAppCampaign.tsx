@@ -350,7 +350,6 @@ const WhatsAppCampaign = () => {
     }
   };
 
-  // Check warming status and show warning if not heated, then proceed to start
   const checkWarmingAndProceed = async () => {
     if (!selectedNumberId) {
       toast({
@@ -360,42 +359,9 @@ const WhatsAppCampaign = () => {
       });
       return;
     }
-
-    // Check warming session for selected number
-    const { data: warmingSession } = await supabase
-      .from("warming_sessions")
-      .select("warming_level, status")
-      .eq("whatsapp_number_id", selectedNumberId)
-      .maybeSingle();
-
-    // Determine warming status based on level and completion
-    let warmingStatus: "cold" | "warm" | "hot" = "cold";
-    const warmingLevel = warmingSession?.warming_level || 0;
-
-    if (warmingSession?.status === "completed") {
-      warmingStatus = "hot";
-    } else if (warmingLevel >= 3) {
-      warmingStatus = "warm";
-    } else {
-      warmingStatus = "cold";
-    }
-
-    // If not fully heated, show warning modal
-    if (warmingStatus !== "hot" && warmingLevel > 0) {
-      setWarmingInfo({ level: warmingLevel, status: warmingStatus });
-      setShowWarmingWarningModal(true);
-      return;
-    }
-
-    // Proceed directly to start campaign (no window modal)
     handleStartCampaign();
   };
 
-  // Called after warming warning is accepted - proceed to start campaign directly
-  const handleShowWindowModal = () => {
-    setShowWarmingWarningModal(false);
-    handleStartCampaign();
-  };
 
   const handleStartCampaign = async () => {
     // Prevent double-submit
