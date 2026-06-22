@@ -317,10 +317,12 @@ export const CRMLeadImportDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users size={20} className="text-primary" />
-            Importar contatos do CRM
+            {source === "opportunities" ? "Importar Oportunidades" : "Importar contatos do CRM"}
           </DialogTitle>
           <DialogDescription>
-            Selecione contatos com base em filtros de pipeline, score e tendências
+            {source === "opportunities"
+              ? "Selecione leads vindos de prospecção/oportunidades. Números são formatados automaticamente (DDI, 9º dígito BR e padrão internacional)."
+              : "Selecione contatos com base em filtros de pipeline, score e tendências"}
           </DialogDescription>
         </DialogHeader>
 
