@@ -245,17 +245,8 @@ serve(async (req) => {
       }
     }
 
-    // Normaliza número BR: garante o 9º dígito após DDD (Meta NÃO adiciona; sem isso a entrega falha silenciosamente)
-    const normalizeBrMobile = (raw: string): string => {
-      const digits = String(raw).replace(/\D/g, "");
-      // 55 + DDD(2) + 8 dígitos = 12  → falta o 9
-      if (digits.startsWith("55") && digits.length === 12) {
-        const ddd = digits.slice(2, 4);
-        const rest = digits.slice(4); // 8 dígitos
-        return `55${ddd}9${rest}`;
-      }
-      return digits;
-    };
+    // Normalização E.164 global (BR + internacional). formatPhoneForMeta
+    // garante 9º dígito BR e respeita números internacionais (não força DDI 55).
 
     // Send messages in batches
     const BATCH_SIZE = 50;
@@ -263,8 +254,11 @@ serve(async (req) => {
       const batch = phone_numbers.slice(i, i + BATCH_SIZE);
 
       const promises = batch.map(async (rawPhone: string) => {
-        const phone = normalizeBrMobile(rawPhone);
-        try {
+        const phone = formatPhoneForMeta(rawPhone);
+        if (!phone) {
+          console.warn(`[meta-send-campaign] Telefone inválido descartado: ${rawPhone}`);
+          return;
+        }
           const messageBody: any = {
             messaging_product: "whatsapp",
             to: phone,
