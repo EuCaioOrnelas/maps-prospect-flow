@@ -1888,7 +1888,7 @@ export default function OpportunitiesManagement() {
           }}
           message={sendingLead.ai_approach_message || ""}
           userId={accountOwnerId || user.id}
-          availableNumbers={numbers}
+          availableNumbers={[]}
           onSent={() => {
             setSendCooldown(120);
             setLeads(prev => prev.map(l => l.id === sendingLead.id ? { ...l, first_message_sent: true } : l));
@@ -1898,21 +1898,10 @@ export default function OpportunitiesManagement() {
             setSendingLead(null);
             setSendDialogOpen(true);
           }}
-          onRequestConnect={() => { setSendingLead(null); setSendDialogOpen(true); setShowNumbersManager(true); }}
+          onRequestConnect={() => { setSendingLead(null); setSendDialogOpen(true); }}
         />
       )}
 
-      {/* Numbers Manager Dialog */}
-      {showNumbersManager && (
-        <NumbersManager
-          numbers={numbers}
-          onNumbersChange={() => { void fetchNumbers(); }}
-          maxNumbers={maxNumbers}
-          onConnect={() => { void fetchNumbers(); }}
-          forceOpen={true}
-          onClose={() => setShowNumbersManager(false)}
-        />
-      )}
     </SidebarProvider>
   );
 }
