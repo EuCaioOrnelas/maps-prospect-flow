@@ -565,7 +565,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [userId, location.pathname]);
+  }, [userId, location.pathname, onboardingTick]);
 
   useEffect(() => {
     const step = steps[currentStepIndex];
