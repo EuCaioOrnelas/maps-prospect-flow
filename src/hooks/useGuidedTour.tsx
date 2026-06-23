@@ -154,6 +154,15 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const startedRef = useRef(false);
+  const [onboardingTick, setOnboardingTick] = useState(0);
+
+  // Re-check tour eligibility when onboarding modal closes
+  useEffect(() => {
+    const handler = () => setOnboardingTick((t) => t + 1);
+    window.addEventListener("wiize:onboarding-done", handler);
+    return () => window.removeEventListener("wiize:onboarding-done", handler);
+  }, []);
+
 
   const allSteps: TourStep[] = [
     {
