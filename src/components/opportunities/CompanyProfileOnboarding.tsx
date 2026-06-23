@@ -287,6 +287,24 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
                 </div>
               </div>
 
+              {["company_niche", "company_products", "company_target_audience"].includes(currentProfileStep.key) && (
+                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-foreground/85 flex gap-2">
+                  <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-semibold text-foreground">
+                      Esse campo define o seu público ideal para a IA
+                    </p>
+                    <p>
+                      {currentProfileStep.key === "company_target_audience"
+                        ? <>Liste <strong>todos os segmentos que você atende</strong>, separados por vírgula (ex.: <em>"restaurantes, pizzarias, hamburguerias, lanchonetes, cafeterias"</em>). A IA usa esse texto para decidir se um lead está dentro do seu público — campos genéricos ou incompletos fazem leads do seu nicho serem marcados como <strong>"fora do público ideal"</strong>.</>
+                        : currentProfileStep.key === "company_products"
+                        ? <>Seja específico nos produtos/serviços (ex.: <em>"cardápio digital, sistema próprio de pedidos online para delivery"</em>). A IA cruza isso com o lead para gerar score, diagnóstico e abordagem.</>
+                        : <>Use termos abrangentes do seu nicho (ex.: <em>"Tecnologia para restaurantes e delivery"</em>). Esse campo, junto com Produtos e Público-alvo, define quem é o seu cliente ideal para a IA.</>}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {isLongField ? (
                 <Textarea
                   value={currentValue}
@@ -309,6 +327,7 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
                   className="text-sm"
                 />
               )}
+
             </>
           )}
 
