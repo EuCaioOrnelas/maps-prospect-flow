@@ -137,9 +137,6 @@ export default function OpportunitiesManagement() {
   const [sendDialogOpen, setSendDialogOpen] = useState(true);
   const [sendCooldown, setSendCooldown] = useState(0);
 
-  // WhatsApp numbers management
-  const { numbers, maxNumbers, fetchNumbers } = useWhatsAppNumbers();
-  const [showNumbersManager, setShowNumbersManager] = useState(false);
 
   // Dual scroll refs for table
   const topScrollRef = useRef<HTMLDivElement>(null);
