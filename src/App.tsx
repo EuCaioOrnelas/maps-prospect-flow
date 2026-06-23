@@ -303,8 +303,8 @@ const App = () => (
                 <Route path="/chat/configuracoes" element={<ProtectedRoute><ChatSettings /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes/mensagens-rapidas" element={<ProtectedRoute><ChatQuickReplies /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes/resposta-automatica" element={<ProtectedRoute><ChatAutoReply /></ProtectedRoute>} />
-                <Route path="/agents" element={<ProtectedRoute><AIAgents /></ProtectedRoute>} />
-                <Route path="/agents/reports" element={<ProtectedRoute><AgentReports /></ProtectedRoute>} />
+                <Route path="/agents" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/agents/reports" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/equipe-ia" element={<ProtectedRoute><EquipeEmBreve /></ProtectedRoute>} />
                 <Route path="/equipe-ia/*" element={<Navigate to="/equipe-ia" replace />} />
                 <Route path="/ai-workforce/*" element={<Navigate to="/equipe-ia" replace />} />
