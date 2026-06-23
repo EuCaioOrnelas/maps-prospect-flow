@@ -15,39 +15,33 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 // =============== WIAN TOOLS (function calling) ===============
 // Schema enviado ao OpenAI; só é incluído quando o user está autenticado.
 const WIAN_TOOLS = [
-  { type: "function", function: { name: "get_account_overview", description: "Plano, créditos, status do trial, dados básicos da conta.", parameters: { type: "object", properties: {} } } },
-  { type: "function", function: { name: "get_whatsapp_connections", description: "Lista todos os números conectados (Evolution e Meta WABA), status, último envio, expiração de token.", parameters: { type: "object", properties: {} } } },
-  { type: "function", function: { name: "get_warming_status", description: "Status de aquecimento dos números: nível, mensagens hoje, limite, erros.", parameters: { type: "object", properties: {} } } },
-  { type: "function", function: { name: "get_active_campaigns", description: "Últimas campanhas: status, total/enviados/falhas, agendamento.", parameters: { type: "object", properties: {} } } },
-  { type: "function", function: { name: "get_campaign_details", description: "Detalhes de UMA campanha + incidentes recentes.", parameters: { type: "object", properties: { campaignId: { type: "string" } }, required: ["campaignId"] } } },
-  { type: "function", function: { name: "get_crm_summary", description: "Resumo do CRM: total leads, leads sem follow-up 7d, distribuição por estágio, score médio.", parameters: { type: "object", properties: {} } } },
-  { type: "function", function: { name: "get_recent_leads", description: "Últimos leads: contato, empresa, score, telefone mascarado.", parameters: { type: "object", properties: { limit: { type: "number" } } } } },
-  { type: "function", function: { name: "get_active_flows", description: "Lista de flows de WhatsApp do user: status, API, número.", parameters: { type: "object", properties: {} } } },
-  { type: "function", function: { name: "get_ai_agents_status", description: "Agentes de IA configurados: nome, modelo, limites.", parameters: { type: "object", properties: {} } } },
-  { type: "function", function: { name: "get_recent_errors", description: "Incidentes recentes em campanhas (erros de envio, números inválidos).", parameters: { type: "object", properties: {} } } },
-  { type: "function", function: { name: "get_recent_frontend_errors", description: "Erros JavaScript que aconteceram no NAVEGADOR do usuário (com arquivo, linha, stack trace e rota). Use SEMPRE quando o user reclamar de tela travada, botão que não funciona, erro visual, página em branco, qualquer bug de interface.", parameters: { type: "object", properties: { limit: { type: "number" }, route: { type: "string", description: "Filtrar por rota específica, ex: /whatsapp" } } } } },
-  { type: "function", function: { name: "pause_campaign", description: "Pausa uma campanha. SEM confirmed=true só retorna preview; com confirmed=true executa.", parameters: { type: "object", properties: { campaignId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["campaignId"] } } },
-  { type: "function", function: { name: "resume_campaign", description: "Retoma uma campanha pausada. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { campaignId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["campaignId"] } } },
-  { type: "function", function: { name: "reconnect_whatsapp", description: "RESET TOTAL de um número Evolution: desconecta, deleta a instância antiga (com cascade), recria com o MESMO telefone e gera nova instância pra QR. Use quando user diz 'não consigo conectar', 'instance travada', 'QR não aparece'. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { numberId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["numberId"] } } },
-  { type: "function", function: { name: "delete_whatsapp_connection", description: "Exclui DEFINITIVAMENTE um número (sem recriar). Apaga campanhas vinculadas, desconecta e remove a linha. Retorna lista de cuidados pro user reconfigurar manualmente. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { numberId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["numberId"] } } },
-  { type: "function", function: { name: "silence_ai_agent", description: "Silencia o agente IA em uma conversa específica. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { conversationId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["conversationId"] } } },
-  { type: "function", function: { name: "unsilence_ai_agent", description: "Reativa o agente IA em uma conversa que estava silenciada. Use quando user diz 'reativar IA', 'voltar o bot', 'a IA parou de responder essa conversa'. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { conversationId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["conversationId"] } } },
-  { type: "function", function: { name: "cancel_campaign", description: "Cancela DEFINITIVAMENTE uma campanha (status=failed). Diferente de pause: não pode ser retomada. Use quando user quer parar de vez. Mesmo padrão de confirmação.", parameters: { type: "object", properties: { campaignId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["campaignId"] } } },
+  { type: "function", function: { name: "get_account_overview", description: "Plano, créditos de oportunidades, status do trial, dados básicos da conta.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_whatsapp_connections", description: "Lista todos os números Meta WABA conectados, status, último health check.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_meta_campaigns", description: "Últimas 10 campanhas Meta API oficial: status, enviados, entregues, lidos, respondidos, falhas.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_crm_summary", description: "Resumo do CRM: total de leads, mensagens enviadas, respondidos, distribuição por estágio.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_recent_leads", description: "Últimos 10 leads: contato, empresa, score, telefone mascarado, status WhatsApp.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_active_flows", description: "Flows de WhatsApp do user: status, número WABA vinculado.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_recent_errors", description: "Incidentes/erros recentes da conta.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_recent_frontend_errors", description: "Erros JavaScript no NAVEGADOR do usuário (arquivo, linha, stack trace, rota). Use SEMPRE quando reclamar de tela travada, botão sem ação, página em branco, bug visual.", parameters: { type: "object", properties: { limit: { type: "number" }, route: { type: "string" } } } } },
+  { type: "function", function: { name: "get_user_score", description: "Score do usuário na plataforma: pontuação total, tier, badges, última atividade.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_subscription_info", description: "Detalhes de assinatura: plano, status, provedor (Stripe/Asaas), fim do trial, fim do período.", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "silence_ai_agent", description: "Silencia o agente IA em uma conversa específica. Padrão de confirmação.", parameters: { type: "object", properties: { conversationId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["conversationId"] } } },
+  { type: "function", function: { name: "unsilence_ai_agent", description: "Reativa o agente IA em uma conversa silenciada. Use quando user diz 'reativar IA', 'voltar o bot'. Padrão de confirmação.", parameters: { type: "object", properties: { conversationId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["conversationId"] } } },
 ];
 
 // Knowledge compacto por categoria de triagem — injetado no prompt.
 const WIAN_KB: Record<string, string> = {
-  campanhas: "CAMPANHAS: disparo via Meta (Outbound) ou CRM (Relational). Status: pending→running→paused/completed/failed. DDI 55 obrigatório. Delays de segurança automáticos. Pode pausar/retomar a qualquer momento.",
-  conexoes: "CONEXÕES: 2 APIs — Evolution (aquecimento, QR Code) e Meta WABA (campanhas+chat, OAuth). Tokens Meta podem expirar; reconectar pelo painel WhatsApp→Conexões.",
-  aquecimento: "AQUECIMENTO: cresce por nível (1→hot). Limite diário reseta 08:00. Forçar volume = risco de ban. Se sessão Evolution cair, aquecimento para.",
-  crm: "CRM: Kanban progressivo, leads só avançam. Estágio 'Prospectado' protegido. Score 0-1000 recalculado por evento. Tags centralizadas em Configurações.",
-  ia_agents: "IA AGENTS: agente é silenciado quando humano responde (handoff). Limite/dia varia por aquecimento. Modelo padrão gpt-4o-mini.",
-  chat: "CHAT: inbox unificado por WABA. Mídias: imagem 5MB, vídeo 16MB. Humano respondendo silencia o agente IA naquela conversa.",
-  flows: "FLOWS: builder visual com nós (mensagem, IA, dados, espera). 3 gerações por IA/dia. Filtro por WABA. Sem dead-ends na geração IA.",
-  oportunidades: "OPORTUNIDADES: 1 busca = 3 créditos = ~60 leads. Perfil da empresa OBRIGATÓRIO. Score adapta por nicho. Outreach IA monta msg em 4 parágrafos.",
-  conta: "CONTA: Auth Supabase nativo (email/senha + Google). Reset de senha exige email validado. Google Drive/Calendar via OAuth próprio.",
-  financeiro: "BILLING: planos Start/Growth/Enterprise (UI), Stripe (cartão internacional) ou Asaas (PIX/cartão BR). Trial 7 dias. Cobrança é em 'Oportunidades'. Cancelamento via portal.",
-  cancelamento: "CANCELAMENTO: feito no portal Conta→Assinatura→Cancelar (com formulário de feedback). Plano segue ativo até fim do período pago.",
+  campanhas: "CAMPANHAS: 100% via Meta API oficial. Modos: Outbound (lista de telefones) ou Relational (via CRM). Status: pending→running→paused/completed/failed. DDI 55 obrigatório. Delays de segurança automáticos. Modos AI (mensagem gerada por IA) ou Custom (template/texto fixo). Templates Meta aprovados quando fora da janela 24h.",
+  conexoes: "CONEXÕES: 100% Meta WABA oficial via OAuth (Embedded Signup). Token longa duração, renovado automaticamente. Health check a cada 2h. Reconectar em WhatsApp→Conexões caso token expire. Cada conta pode ter múltiplos números.",
+  crm: "CRM: Kanban progressivo, leads só avançam de estágio. Estágio 'Prospectado' é protegido (entrada). Score 0-1000 recalculado por evento (mensagem enviada, resposta, agendamento, fechamento). Tags centralizadas em Configurações. Limite contatos: 1k (Atendimento) / 10k (Growth IA).",
+  chat: "CHAT: inbox unificado por número WABA. Mídias: imagem 5MB, vídeo 16MB, áudio 16MB, documento 100MB. Humano respondendo silencia o agente IA naquela conversa automaticamente. Resposta automática fora do horário comercial configurável.",
+  flows: "FLOWS: builder visual com nós (mensagem, IA, dados, espera, condição, A/B, integração Google). Geração por IA: 3/dia. Filtro de execução por WABA. Sem dead-ends na geração IA. Triggers: primeiro contato, palavra-chave, manual.",
+  oportunidades: "OPORTUNIDADES: 1 busca SerpAPI = 3 créditos = ~60 leads. Perfil da empresa OBRIGATÓRIO para scoring adaptativo por nicho. Outreach IA monta mensagem em 4 parágrafos. Plano Atendimento NÃO inclui Oportunidades.",
+  score: "SCORE: 0-1000 com tiers (frio/morno/quente/altíssima). Decay automático configurado. Regras de pontuação: envio msg, resposta, clique link, conversão, agendamento. Recalculado por evento + cron diário 03:00.",
+  ia_agents: "AGENTES IA: agente é silenciado quando humano responde (handoff). Limite/dia configurado por agente. Modelo padrão gpt-4o-mini. Plano Atendimento NÃO inclui Agentes IA.",
+  conta: "CONTA: Auth Supabase nativo (email/senha + Google). Reset de senha exige email validado. Google Drive/Calendar/Sheets via OAuth próprio. Workspaces com members (owner/admin/operational).",
+  financeiro: "BILLING: planos Atendimento (R$197/mês, sem SDR IA — só Chat+CRM 1k contatos) e Growth IA (com Oportunidades, Agentes IA, CRM 10k). Stripe (cartão internacional) ou Asaas (PIX/cartão BR). Trial 7 dias. Cobrança em 'Oportunidades'. Cancelamento via portal.",
+  cancelamento: "CANCELAMENTO: Conta→Assinatura→Cancelar (com formulário de feedback). Plano segue ativo até fim do período pago. Não há reembolso de créditos.",
 };
 
 async function callWianTool(authHeader: string, tool: string, params: any) {
@@ -69,7 +63,7 @@ async function callWianTool(authHeader: string, tool: string, params: any) {
   }
 }
 
-const SYSTEM_BASE = `Você é **Wian**, o atendente virtual oficial da **Wiize** — uma plataforma B2B brasileira de prospecção de leads, aquecimento e automação de WhatsApp, campanhas (Evolution + Meta Cloud), CRM Kanban com scoring, chat com IA e Flow Builder, com planos Start, Growth e Enterprise.
+const SYSTEM_BASE = `Você é **Wian**, o atendente virtual oficial da **Wiize** — uma plataforma B2B brasileira de prospecção de leads (Oportunidades), campanhas e chat via Meta API oficial, CRM Kanban com scoring 0-1000, Flow Builder visual e Agentes IA, com planos Atendimento e Growth IA.
 
 Sua missão é resolver dúvidas e problemas de clientes e usuários da Wiize com agilidade, clareza e simpatia, e só passar o caso para um humano quando realmente for necessário.
 
@@ -473,7 +467,7 @@ REGRAS OBRIGATÓRIAS POR CAUSA DA TRIAGEM:
 2. NUNCA ofereça opções fora desse tema (ex: se categoria é "WhatsApp e conexões", não pergunte se é sobre leads/CRM/financeiro).
    Exceção: se a mensagem atual citar excluir/remover/deletar número ou conexão WhatsApp, trate como problema de WhatsApp/conexões e use get_whatsapp_connections + ação apropriada.
 3. Se a mensagem do user for vaga ("não consigo gerar nada", "não funciona", "como faço"), interprete-a DENTRO de "${category}" e:
-   a) Se autenticado: chame as tools relacionadas a "${category}" ANTES de perguntar (ex: categoria conexões → get_whatsapp_connections; campanhas → get_active_campaigns; aquecimento → get_warming_status).
+   a) Se autenticado: chame as tools relacionadas a "${category}" ANTES de perguntar (ex: categoria conexões → get_whatsapp_connections; campanhas → get_meta_campaigns; crm → get_crm_summary; score → get_user_score; financeiro → get_subscription_info).
    b) Só depois faça no MÁXIMO 1 pergunta curta e específica do tema.
 4. Faça UMA pergunta por vez. Não dispare 3 blocos de perguntas seguidos.`;
     }
@@ -501,7 +495,7 @@ REGRAS OBRIGATÓRIAS POR CAUSA DA TRIAGEM:
     const askAgentToDo = /\b(consegue|pode|poderia|conseguiria|da pra voce|da pra vc|faz pra mim|faca pra mim|excluir pra mim|deletar pra mim|resolve pra mim)\b/.test(normalizedMessage);
     const actionableIntent = destructiveWhatsappIntent || (askAgentToDo && !!userId);
     const intentBlock = destructiveWhatsappIntent || askAgentToDo
-      ? `\n\n--- INTENÇÃO OPERACIONAL DETECTADA ---\nO usuário está pedindo AÇÃO direta na conta dele${askAgentToDo ? " (\"consegue fazer pra mim?\")" : ""}. NÃO escale para humano. NÃO abra chamado. Use as tools AGORA:\n1. Chame get_whatsapp_connections para identificar o número.\n2. Em seguida, com base na intenção:\n   - excluir/remover/deletar/apagar/desconectar de vez → delete_whatsapp_connection (sem confirmed primeiro → mostra summary → user confirma → re-chama com confirmed:true);\n   - recriar/resetar/reconectar para novo QR → reconnect_whatsapp (mesmo fluxo de confirmação);\n3. Se houver mais de uma conexão e não der para identificar o número, pergunte qual número antes de agir.\nNão responda com dica genérica nem abra chamado quando a tool resolve.`
+      ? `\n\n--- INTENÇÃO OPERACIONAL DETECTADA ---\nO usuário está pedindo AÇÃO direta na conta dele${askAgentToDo ? " (\"consegue fazer pra mim?\")" : ""}. Use get_whatsapp_connections para diagnóstico e oriente o usuário a:\n• Excluir/reconectar número Meta WABA → WhatsApp → Conexões → botão correspondente.\n• Caso o token Meta tenha expirado, ele deve clicar em "Reconectar" e refazer o OAuth Embedded Signup.\nNão escale para humano se for orientação operacional.`
       : "";
 
     // Tools só para usuários autenticados
@@ -512,25 +506,20 @@ Você tem TOOLS pra investigar a conta REAL do usuário e executar ações. RESO
 
 ## REGRAS DE OURO
 1. **DIAGNOSTIQUE ANTES DE RESPONDER**: pra qualquer reclamação concreta, chame as tools relevantes ANTES de propor solução.
-   - "campanha não envia" → get_active_campaigns + get_campaign_details + get_whatsapp_connections + get_warming_status
-   - "não consigo conectar número" / "QR não aparece" → get_whatsapp_connections (identifica o número travado)
+   - "campanha não envia" → get_meta_campaigns + get_whatsapp_connections
+   - "não consigo conectar número" / "token expirou" → get_whatsapp_connections
    - "tela travada" / "botão não funciona" / "página em branco" → get_recent_frontend_errors PRIMEIRO
-   - "agente respondendo errado" → get_ai_agents_status
    - "leads sumiram" → get_crm_summary + get_recent_leads
+   - "qual meu plano / quanto pago" → get_subscription_info
+   - "meu score" / "minha posição" → get_user_score
 2. **NUNCA INVENTE** dados. Se não chamou tool, não afirme estado da conta.
-3. **AÇÕES (mutações)**: chame SEM confirmed primeiro → mostre o summary retornado → aguarde "sim/confirmo" do user → só então re-chame com confirmed:true.
-   - Se o usuário pedir "excluir número", "deletar conexão", "remover WhatsApp" ou disser que não consegue excluir: use delete_whatsapp_connection quando a intenção for exclusão definitiva; use reconnect_whatsapp quando a intenção for limpar a instância antiga e criar outra para novo QR.
-   - Antes dessas ações, chame get_whatsapp_connections para identificar o número. Se houver só 1 conexão compatível, pode pedir confirmação direta. Se houver várias, pergunte qual número antes de executar.
-   - NÃO substitua uma ação disponível por orientação genérica de cache/navegador.
+3. **AÇÕES (mutações)**: as únicas ações que você executa são silence_ai_agent e unsilence_ai_agent. Chame SEM confirmed primeiro → mostre o summary → aguarde "sim/confirmo" → re-chame com confirmed:true.
 4. Telefones nas tools vêm mascarados; é normal.
+5. **Operações em números WABA** (excluir, reconectar, trocar) → orientar o usuário a fazer em WhatsApp → Conexões. Você NÃO executa essas ações.
 
 ## QUANDO USAR CADA AÇÃO
-- **reconnect_whatsapp** → user diz "não consigo conectar", "instance travou", "QR sumiu", "diz que está conectado mas não envia". É reset destrutivo: deleta campanhas vinculadas e recria. Sempre alerte no summary.
-- **delete_whatsapp_connection** → user quer EXCLUIR de vez (não reconectar). Mesma destruição mas sem recriar.
-- **pause_campaign / resume_campaign** → controle de envio em andamento.
-- **silence_ai_agent** → user quer assumir manualmente uma conversa.
+- **silence_ai_agent** → user quer assumir manualmente uma conversa do chat.
 - **unsilence_ai_agent** → user pede para reativar a IA numa conversa silenciada.
-- **cancel_campaign** → user quer encerrar campanha definitivamente (não só pausar).
 
 ## DIAGNÓSTICO DE BUGS DE INTERFACE (CRÍTICO)
 Quando user reclama de bug visual/funcional do APP (não do WhatsApp), SEMPRE chame get_recent_frontend_errors primeiro. Se voltar erro com arquivo:linha, isso é um BUG REAL do código:

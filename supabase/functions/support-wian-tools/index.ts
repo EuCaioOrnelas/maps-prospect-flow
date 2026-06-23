@@ -5,6 +5,9 @@
 // Padrão para AÇÕES (mutações): primeira chamada sem `confirmed: true`
 // retorna { requires_confirmation: true, summary }. Frontend mostra o
 // resumo, pede confirmação, e re-chama com `confirmed: true`.
+//
+// Stack atual: 100% Meta Cloud API oficial. Sem Evolution, sem warming,
+// sem campanhas Evolution. Campanhas saem por MetaCampaigns + meta-send-campaign.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -60,545 +63,192 @@ async function get_account_overview({ sb, userId }: Ctx) {
   const { data: p } = await sb
     .from("profiles")
     .select(
-      "name, email, plan, searches_used, searches_limit, trial_start_at, is_custom_subscription, custom_searches_limit, custom_whatsapp_numbers_limit, requires_payment_setup",
+      "full_name, email, plan, subscription_status, trial_started_at, trial_ends_at, created_at, opportunity_credits, opportunities_used_this_period",
     )
     .eq("id", userId)
     .maybeSingle();
+  if (!p) return { error: "perfil não encontrado" };
   return {
-    plan: p?.plan,
-    is_custom: !!p?.is_custom_subscription,
-    searches_used: p?.searches_used,
-    searches_limit: p?.is_custom_subscription
-      ? p?.custom_searches_limit
-      : p?.searches_limit,
-    trial_start_at: p?.trial_start_at,
-    needs_payment_setup: p?.requires_payment_setup,
-    name: p?.name,
-    email: p?.email,
+    nome: p.full_name,
+    email: p.email,
+    plano: p.plan,
+    status_assinatura: p.subscription_status,
+    trial_started_at: p.trial_started_at,
+    trial_ends_at: p.trial_ends_at,
+    criado_em: p.created_at,
+    creditos_oportunidades: p.opportunity_credits,
+    oportunidades_usadas_periodo: p.opportunities_used_this_period,
   };
 }
 
-async function get_whatsapp_connections({ sb }: Ctx) {
-  const [{ data: evo }, { data: meta }] = await Promise.all([
-    sb
-      .from("whatsapp_numbers")
-      .select(
-        "id, name, phone_number, is_connected, daily_sent_count, last_sent_at, last_health_check_at, api_tier",
-      )
-      .order("created_at", { ascending: false })
-      .limit(20),
-    sb
-      .from("user_waba_connections")
-      .select(
-        "id, nickname, business_name, display_phone_number, status, token_expires_at, created_at",
-      )
-      .order("created_at", { ascending: false })
-      .limit(20),
-  ]);
+async function get_whatsapp_connections({ sb, userId }: Ctx) {
+  const { data: meta } = await sb
+    .from("user_waba_connections")
+    .select(
+      "id, phone_number, display_phone_number, waba_id, phone_number_id, status, last_health_check, created_at",
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
   return {
-    evolution: (evo || []).map((n) => ({
-      id: n.id,
-      nome: n.name,
-      telefone: maskPhone(n.phone_number),
-      conectado: n.is_connected,
-      enviados_hoje: n.daily_sent_count,
-      ultimo_envio: n.last_sent_at,
-      ultimo_health_check: n.last_health_check_at,
-      tier: n.api_tier,
-    })),
-    meta: (meta || []).map((w) => ({
+    total: meta?.length || 0,
+    conexoes: (meta || []).map((w) => ({
       id: w.id,
-      apelido: w.nickname || w.business_name,
-      telefone: maskPhone(w.display_phone_number),
+      telefone: maskPhone(w.display_phone_number || w.phone_number),
+      waba_id: w.waba_id,
+      phone_number_id: w.phone_number_id,
       status: w.status,
-      token_expira: w.token_expires_at,
-      conectado_em: w.created_at,
+      ultimo_health_check: w.last_health_check,
+      conectada_em: w.created_at,
     })),
   };
 }
 
-async function get_warming_status({ sb }: Ctx) {
+async function get_meta_campaigns({ sb, userId }: Ctx) {
   const { data } = await sb
-    .from("warming_sessions")
+    .from("meta_campaigns")
     .select(
-      "id, whatsapp_number_id, status, warming_level, warming_status, leads_used, leads_limit, current_day, messages_sent_today, last_message_at, error_message",
+      "id, name, status, total_recipients, sent_count, delivered_count, read_count, replied_count, failed_count, started_at, completed_at, scheduled_at, created_at",
     )
-    .order("updated_at", { ascending: false })
-    .limit(10);
-  return { sessions: data || [] };
-}
-
-async function get_active_campaigns({ sb }: Ctx) {
-  const { data } = await sb
-    .from("whatsapp_campaigns")
-    .select(
-      "id, name, status, total_leads, sent_count, failed_count, started_at, completed_at, scheduled_at, paused_at_limit",
-    )
+    .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(10);
   return {
-    campaigns: (data || []).map((c) => ({
+    campanhas: (data || []).map((c) => ({
       id: c.id,
       nome: c.name,
       status: c.status,
-      total: c.total_leads,
+      total: c.total_recipients,
       enviados: c.sent_count,
+      entregues: c.delivered_count,
+      lidos: c.read_count,
+      respondidos: c.replied_count,
       falhas: c.failed_count,
-      taxa_falha:
-        c.total_leads > 0
-          ? `${Math.round((c.failed_count / Math.max(c.sent_count + c.failed_count, 1)) * 100)}%`
+      taxa_resposta:
+        c.sent_count > 0
+          ? `${Math.round((c.replied_count / c.sent_count) * 100)}%`
           : "0%",
       iniciada_em: c.started_at,
       concluida_em: c.completed_at,
       agendada_para: c.scheduled_at,
-      pausada_por_limite: c.paused_at_limit,
     })),
   };
 }
 
-async function get_campaign_details({ sb }: Ctx, params: { campaignId: string }) {
-  if (!params?.campaignId) return { error: "campaignId obrigatório" };
-  const [{ data: c }, { data: incidents }] = await Promise.all([
-    sb
-      .from("whatsapp_campaigns")
-      .select(
-        "id, name, status, total_leads, sent_count, failed_count, delay_seconds, pause_after_contacts, pause_minutes, started_at, completed_at",
-      )
-      .eq("id", params.campaignId)
-      .maybeSingle(),
-    sb
-      .from("campaign_incidents")
-      .select("incident_type, contact_phone, detected_at")
-      .eq("campaign_id", params.campaignId)
-      .order("detected_at", { ascending: false })
-      .limit(10),
-  ]);
-  if (!c) return { error: "campanha não encontrada" };
-  return {
-    campanha: {
-      id: c.id,
-      nome: c.name,
-      status: c.status,
-      total: c.total_leads,
-      enviados: c.sent_count,
-      falhas: c.failed_count,
-      delay_segundos: c.delay_seconds,
-      pausa_apos: c.pause_after_contacts,
-      pausa_min: c.pause_minutes,
-      iniciada_em: c.started_at,
-      concluida_em: c.completed_at,
-    },
-    incidentes_recentes: (incidents || []).map((i) => ({
-      tipo: i.incident_type,
-      contato: maskPhone(i.contact_phone),
-      detectado_em: i.detected_at,
-    })),
-  };
-}
-
-async function get_crm_summary({ sb }: Ctx) {
+async function get_crm_summary({ sb, userId }: Ctx) {
   const { data: stages } = await sb
     .from("pipeline_stages")
-    .select("id, name, position")
-    .order("position", { ascending: true });
+    .select("id, name, sort_order")
+    .eq("user_id", userId)
+    .order("sort_order", { ascending: true });
   const { data: leads } = await sb
     .from("leads")
-    .select("id, pipeline_stage_id, ai_score, last_message_sent_at");
-  const byStage: Record<string, { name: string; count: number; avg_score: number }> = {};
-  (stages || []).forEach((s) => {
-    byStage[s.id] = { name: s.name, count: 0, avg_score: 0 };
-  });
-  let totalNoFollow = 0;
-  const now = Date.now();
-  (leads || []).forEach((l) => {
-    if (l.pipeline_stage_id && byStage[l.pipeline_stage_id]) {
-      byStage[l.pipeline_stage_id].count++;
-      byStage[l.pipeline_stage_id].avg_score += l.ai_score || 0;
-    }
-    if (
-      !l.last_message_sent_at ||
-      now - new Date(l.last_message_sent_at).getTime() > 7 * 24 * 60 * 60 * 1000
-    )
-      totalNoFollow++;
-  });
-  const stagesOut = Object.values(byStage).map((s) => ({
+    .select("stage_id, opportunity_level, has_responded, first_message_sent")
+    .eq("user_id", userId);
+  const total = leads?.length || 0;
+  const responderam = (leads || []).filter((l) => l.has_responded).length;
+  const enviados = (leads || []).filter((l) => l.first_message_sent).length;
+  const por_estagio = (stages || []).map((s) => ({
     estagio: s.name,
-    leads: s.count,
-    score_medio: s.count ? Math.round(s.avg_score / s.count) : 0,
+    total: (leads || []).filter((l) => l.stage_id === s.id).length,
   }));
-  return {
-    total_leads: leads?.length || 0,
-    sem_follow_up_7d: totalNoFollow,
-    por_estagio: stagesOut,
-  };
+  return { total_leads: total, mensagens_enviadas: enviados, responderam, por_estagio };
 }
 
-async function get_recent_leads({ sb }: Ctx, params?: { limit?: number }) {
-  const lim = Math.min(params?.limit || 10, 30);
+async function get_recent_leads({ sb, userId }: Ctx) {
   const { data } = await sb
     .from("leads")
-    .select(
-      "id, contact_name, company_name, phone, ai_score, pipeline_stage_id, last_message_sent_at, last_response, prospected_at",
-    )
-    .order("prospected_at", { ascending: false })
-    .limit(lim);
+    .select("id, contact_name, company_name, phone, opportunity_level, ai_score, whatsapp_status, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(10);
   return {
     leads: (data || []).map((l) => ({
       id: l.id,
       contato: l.contact_name,
       empresa: l.company_name,
       telefone: maskPhone(l.phone),
+      oportunidade: l.opportunity_level,
       score: l.ai_score,
-      ultima_msg_enviada_em: l.last_message_sent_at,
-      ultima_resposta: l.last_response?.slice(0, 80),
-      prospectado_em: l.prospected_at,
+      status_whatsapp: l.whatsapp_status,
+      criado_em: l.created_at,
     })),
   };
 }
 
-async function get_active_flows({ sb }: Ctx) {
-  const { data: flows } = await sb
+async function get_active_flows({ sb, userId }: Ctx) {
+  const { data } = await sb
     .from("wa_automation_flows")
-    .select("id, name, status, api_type, whatsapp_number_id, waba_connection_id, updated_at")
-    .order("updated_at", { ascending: false })
-    .limit(20);
-  return { flows: flows || [] };
-}
-
-async function get_ai_agents_status({ sb }: Ctx) {
-  const { data: agents } = await sb
-    .from("user_ai_agents")
-    .select("id, name, ai_model, max_chars, ai_output_type, updated_at")
+    .select("id, name, status, waba_connection_id, created_at, updated_at")
+    .eq("user_id", userId)
     .order("updated_at", { ascending: false })
     .limit(10);
-  return { agents: agents || [] };
-}
-
-async function get_recent_errors({ sb }: Ctx) {
-  const { data } = await sb
-    .from("campaign_incidents")
-    .select("incident_type, contact_phone, detected_at, campaign_id")
-    .order("detected_at", { ascending: false })
-    .limit(15);
   return {
-    incidentes: (data || []).map((i) => ({
-      tipo: i.incident_type,
-      contato: maskPhone(i.contact_phone),
-      campanha_id: i.campaign_id,
-      detectado_em: i.detected_at,
+    flows: (data || []).map((f) => ({
+      id: f.id,
+      nome: f.name,
+      status: f.status,
+      waba_connection_id: f.waba_connection_id,
+      criado_em: f.created_at,
+      atualizado_em: f.updated_at,
     })),
   };
 }
 
-// Lê erros JS reais que aconteceram no navegador do usuário.
-// Wian usa isso para identificar arquivo:linha do bug e montar
-// um diagnóstico pronto pra escalada humana.
-async function get_recent_frontend_errors(
-  { sb }: Ctx,
-  params?: { limit?: number; route?: string },
-) {
-  const lim = Math.min(params?.limit || 10, 25);
-  let q = sb
+async function get_recent_errors({ sb, userId }: Ctx) {
+  const { data } = await sb
     .from("frontend_errors")
-    .select("id, message, source_file, line_no, col_no, stack, route, created_at")
+    .select("error_message, error_stack, route, created_at")
+    .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .limit(lim);
-  if (params?.route) q = q.eq("route", params.route);
-  const { data, error } = await q;
-  if (error) return { error: error.message };
+    .limit(15);
+  return { errors: data || [] };
+}
+
+async function get_recent_frontend_errors(ctx: Ctx) {
+  return get_recent_errors(ctx);
+}
+
+async function get_user_score({ sb, userId }: Ctx) {
+  const { data } = await sb
+    .from("user_scores")
+    .select("total_score, score_tier, badges, last_activity_at, updated_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data ? {
+    score_total: data.total_score,
+    tier: data.score_tier,
+    badges: data.badges,
+    ultima_atividade: data.last_activity_at,
+    atualizado_em: data.updated_at,
+  } : { info: "Sem score registrado ainda." };
+}
+
+async function get_subscription_info({ sb, userId }: Ctx) {
+  const { data: p } = await sb
+    .from("profiles")
+    .select("plan, subscription_status, trial_ends_at, subscription_ends_at, payment_provider")
+    .eq("id", userId)
+    .maybeSingle();
+  const { data: lastEvent } = await sb
+    .from("subscription_events")
+    .select("event_type, amount, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
   return {
-    errors: (data || []).map((e) => ({
-      id: e.id,
-      mensagem: e.message,
-      arquivo: e.source_file,
-      linha: e.line_no,
-      coluna: e.col_no,
-      rota: e.route,
-      ocorreu_em: e.created_at,
-      stack_resumido: (e.stack || "").split("\n").slice(0, 5).join("\n"),
-    })),
-    total: data?.length || 0,
+    plano: p?.plan,
+    status: p?.subscription_status,
+    provedor: p?.payment_provider,
+    trial_termina_em: p?.trial_ends_at,
+    assinatura_termina_em: p?.subscription_ends_at,
+    ultimo_evento: lastEvent,
   };
 }
 
 // =================================================================
 // Tool handlers (ACTION) — exigem `confirmed: true`
 // =================================================================
-
-async function pause_campaign({ sb }: Ctx, params: { campaignId: string; confirmed?: boolean }) {
-  if (!params?.campaignId) return { error: "campaignId obrigatório" };
-  const { data: c } = await sb
-    .from("whatsapp_campaigns")
-    .select("id, name, status, total_leads, sent_count")
-    .eq("id", params.campaignId)
-    .maybeSingle();
-  if (!c) return { error: "campanha não encontrada" };
-  if (c.status === "paused") return { ok: true, info: "campanha já está pausada", campanha: c.name };
-  if (!params.confirmed) {
-    const pendentes = (c.total_leads || 0) - (c.sent_count || 0);
-    return {
-      requires_confirmation: true,
-      action: "pause_campaign",
-      action_params: { campaignId: c.id },
-      summary: `Pausar campanha "${c.name}"? (${pendentes} contatos pendentes)`,
-    };
-  }
-  const { error } = await sb
-    .from("whatsapp_campaigns")
-    .update({ status: "paused" })
-    .eq("id", c.id);
-  if (error) return { error: error.message };
-  return { ok: true, info: `campanha "${c.name}" pausada` };
-}
-
-async function resume_campaign({ sb }: Ctx, params: { campaignId: string; confirmed?: boolean }) {
-  if (!params?.campaignId) return { error: "campaignId obrigatório" };
-  const { data: c } = await sb
-    .from("whatsapp_campaigns")
-    .select("id, name, status")
-    .eq("id", params.campaignId)
-    .maybeSingle();
-  if (!c) return { error: "campanha não encontrada" };
-  if (!params.confirmed) {
-    return {
-      requires_confirmation: true,
-      action: "resume_campaign",
-      action_params: { campaignId: c.id },
-      summary: `Retomar campanha "${c.name}"?`,
-    };
-  }
-  const { error } = await sb
-    .from("whatsapp_campaigns")
-    .update({ status: "running", paused_at_limit: false })
-    .eq("id", c.id);
-  if (error) return { error: error.message };
-  return { ok: true, info: `campanha "${c.name}" retomada` };
-}
-
-// Helper: chama outra edge function preservando o JWT do user
-async function callEdge(authHeader: string, fn: string, body: any) {
-  try {
-    const r = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: authHeader,
-        apikey: ANON_KEY,
-      },
-      body: JSON.stringify(body),
-    });
-    const txt = await r.text();
-    let j: any = null;
-    try { j = JSON.parse(txt); } catch { j = { raw: txt }; }
-    return { ok: r.ok, status: r.status, body: j };
-  } catch (e: any) {
-    return { ok: false, status: 0, body: { error: e?.message || "fetch_failed" } };
-  }
-}
-
-// RECONNECT: desconecta + deleta instância Evolution + remove linha + cria
-// nova linha com o mesmo telefone/nome + cria nova instância pra QR.
-async function reconnect_whatsapp(
-  { sb, userId, authHeader }: Ctx,
-  params: { numberId: string; confirmed?: boolean },
-) {
-  if (!params?.numberId) return { error: "numberId obrigatório" };
-  const { data: n } = await sb
-    .from("whatsapp_numbers")
-    .select("id, name, phone_number, instance_name, api_tier")
-    .eq("id", params.numberId)
-    .maybeSingle();
-  if (!n) return { error: "número não encontrado" };
-
-  const [{ count: campCount }, { count: warmCount }] = await Promise.all([
-    sb.from("whatsapp_campaigns").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
-    sb.from("warming_sessions").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
-  ]);
-
-  if (!params.confirmed) {
-    const lines = [
-      `Reconectar "${n.name}" via reset completo:`,
-      `• Vou desconectar e excluir a instância antiga`,
-      `• Vou recriar com o MESMO telefone (${maskPhone(n.phone_number)})`,
-      `• Você lerá um novo QR Code logo depois`,
-      campCount ? `⚠️ ${campCount} campanha(s) vinculada(s) serão removida(s)` : null,
-      warmCount ? `⚠️ ${warmCount} sessão(ões) de aquecimento serão removida(s)` : null,
-    ].filter(Boolean);
-    return {
-      requires_confirmation: true,
-      action: "reconnect_whatsapp",
-      action_params: { numberId: n.id },
-      summary: lines.join("\n"),
-    };
-  }
-
-  const oldName = n.name;
-  const oldPhone = n.phone_number;
-  const oldTier = n.api_tier || "free";
-  const oldInstance = n.instance_name;
-
-  if (campCount && campCount > 0) {
-    const { error: cErr } = await sb
-      .from("whatsapp_campaigns")
-      .delete()
-      .eq("whatsapp_number_id", n.id);
-    if (cErr) return { error: `Falha ao limpar campanhas vinculadas: ${cErr.message}` };
-  }
-
-  const disc = await callEdge(authHeader, "evolution-disconnect", {
-    instanceName: oldInstance,
-    numberId: n.id,
-    deleteInstance: true,
-    cascadeDelete: true,
-  });
-  if (!disc.ok) {
-    return { error: `Falha ao remover instância antiga: ${disc.body?.error || disc.status}` };
-  }
-
-  const { data: created, error: insErr } = await sb
-    .from("whatsapp_numbers")
-    .insert({
-      user_id: userId,
-      name: oldName,
-      phone_number: oldPhone,
-      api_tier: oldTier,
-      is_connected: false,
-    })
-    .select("id")
-    .single();
-  if (insErr || !created) {
-    return { error: `Falha ao recriar registro: ${insErr?.message}` };
-  }
-
-  const newInstanceName = `wiize_${created.id.replace(/-/g, "").slice(0, 16)}`;
-  const create = await callEdge(authHeader, "evolution-create-instance", {
-    numberId: created.id,
-    instanceName: newInstanceName,
-  });
-  if (!create.ok) {
-    return {
-      ok: true,
-      partial: true,
-      info: `Linha recriada mas a nova instância falhou. Vá em WhatsApp → Conexões e clique em Reconectar para gerar o QR. (detalhe: ${create.body?.error || create.status})`,
-      next_route: "/whatsapp",
-      new_number_id: created.id,
-    };
-  }
-
-  return {
-    ok: true,
-    info: `"${oldName}" foi resetado. Abra WhatsApp → Conexões e leia o novo QR Code (válido por ~40 segundos).`,
-    next_route: "/whatsapp",
-    new_number_id: created.id,
-  };
-}
-
-// DELETE: remove campanhas vinculadas + desconecta + deleta instância +
-// cascade da linha. Retorna lista de cuidados pro user reconfigurar manualmente.
-async function delete_whatsapp_connection(
-  { sb, authHeader }: Ctx,
-  params: { numberId: string; confirmed?: boolean },
-) {
-  if (!params?.numberId) return { error: "numberId obrigatório" };
-  const { data: n } = await sb
-    .from("whatsapp_numbers")
-    .select("id, name, phone_number, instance_name")
-    .eq("id", params.numberId)
-    .maybeSingle();
-  if (!n) return { error: "número não encontrado" };
-
-  const [{ count: campCount }, { count: warmCount }, { count: agentCount }, { count: flowCount }] =
-    await Promise.all([
-      sb.from("whatsapp_campaigns").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
-      sb.from("warming_sessions").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
-      sb.from("ai_agents").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
-      sb.from("wa_automation_flows").select("id", { count: "exact", head: true }).eq("whatsapp_number_id", n.id),
-    ]);
-
-  if (!params.confirmed) {
-    const impacto = [
-      campCount ? `${campCount} campanha(s)` : null,
-      warmCount ? `${warmCount} aquecimento(s)` : null,
-      agentCount ? `${agentCount} agente(s) IA vinculado(s)` : null,
-      flowCount ? `${flowCount} flow(s)` : null,
-    ].filter(Boolean);
-    return {
-      requires_confirmation: true,
-      action: "delete_whatsapp_connection",
-      action_params: { numberId: n.id },
-      summary:
-        `Excluir DEFINITIVAMENTE "${n.name}" (${maskPhone(n.phone_number)})?\n` +
-        (impacto.length ? `Impacto: ${impacto.join(", ")} serão removidos junto.` : `Sem dependências vinculadas.`) +
-        `\nEssa ação é irreversível.`,
-    };
-  }
-
-  if (campCount && campCount > 0) {
-    const { error: cErr } = await sb
-      .from("whatsapp_campaigns")
-      .delete()
-      .eq("whatsapp_number_id", n.id);
-    if (cErr) return { error: `Falha ao limpar campanhas: ${cErr.message}` };
-  }
-
-  const disc = await callEdge(authHeader, "evolution-disconnect", {
-    instanceName: n.instance_name,
-    numberId: n.id,
-    deleteInstance: true,
-    cascadeDelete: true,
-  });
-  if (!disc.ok) {
-    return { error: `Falha ao excluir: ${disc.body?.error || disc.status}` };
-  }
-
-  const cuidados: string[] = [
-    "Verifique se algum agente IA usava esse número e revincule a outro",
-    "Confira flows ativos que apontavam para esse número",
-    "Se tinha aquecimento rodando, recrie em outro número",
-    "Campanhas agendadas vinculadas foram removidas — recrie se necessário",
-  ];
-
-  return {
-    ok: true,
-    info: `"${n.name}" excluído com sucesso.`,
-    cuidados,
-    next_route: "/whatsapp",
-  };
-}
-
-async function cancel_campaign(
-  { sb }: Ctx,
-  params: { campaignId: string; confirmed?: boolean },
-) {
-  if (!params?.campaignId) return { error: "campaignId obrigatório" };
-  const { data: c } = await sb
-    .from("whatsapp_campaigns")
-    .select("id, name, status, total_leads, sent_count, failed_count")
-    .eq("id", params.campaignId)
-    .maybeSingle();
-  if (!c) return { error: "campanha não encontrada" };
-  if (c.status === "failed" || c.status === "completed") {
-    return { ok: true, info: `campanha "${c.name}" já está finalizada (${c.status})` };
-  }
-  const pendentes = (c.total_leads || 0) - (c.sent_count || 0) - (c.failed_count || 0);
-  if (!params.confirmed) {
-    return {
-      requires_confirmation: true,
-      action: "cancel_campaign",
-      action_params: { campaignId: c.id },
-      summary:
-        `Cancelar DEFINITIVAMENTE a campanha "${c.name}"?\n` +
-        `Status atual: ${c.status} • Enviados: ${c.sent_count || 0} • Pendentes: ${pendentes}\n` +
-        `Essa ação marca a campanha como "failed" e não pode ser retomada.`,
-    };
-  }
-  const { error } = await sb
-    .from("whatsapp_campaigns")
-    .update({ status: "failed", completed_at: new Date().toISOString() })
-    .eq("id", c.id);
-  if (error) return { error: error.message };
-  return { ok: true, info: `Campanha "${c.name}" cancelada definitivamente.` };
-}
 
 async function unsilence_ai_agent(
   { sb }: Ctx,
@@ -656,22 +306,16 @@ async function silence_ai_agent(
 const HANDLERS: Record<string, (ctx: Ctx, params: any) => Promise<any>> = {
   get_account_overview,
   get_whatsapp_connections,
-  get_warming_status,
-  get_active_campaigns,
-  get_campaign_details,
+  get_meta_campaigns,
   get_crm_summary,
   get_recent_leads,
   get_active_flows,
-  get_ai_agents_status,
   get_recent_errors,
   get_recent_frontend_errors,
-  pause_campaign,
-  resume_campaign,
-  reconnect_whatsapp,
-  delete_whatsapp_connection,
+  get_user_score,
+  get_subscription_info,
   silence_ai_agent,
   unsilence_ai_agent,
-  cancel_campaign,
 };
 
 // =================================================================
