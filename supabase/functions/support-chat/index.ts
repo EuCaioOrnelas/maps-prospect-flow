@@ -31,17 +31,17 @@ const WIAN_TOOLS = [
 
 // Knowledge compacto por categoria de triagem — injetado no prompt.
 const WIAN_KB: Record<string, string> = {
-  campanhas: "CAMPANHAS: disparo via Meta (Outbound) ou CRM (Relational). Status: pending→running→paused/completed/failed. DDI 55 obrigatório. Delays de segurança automáticos. Pode pausar/retomar a qualquer momento.",
-  conexoes: "CONEXÕES: 2 APIs — Evolution (aquecimento, QR Code) e Meta WABA (campanhas+chat, OAuth). Tokens Meta podem expirar; reconectar pelo painel WhatsApp→Conexões.",
-  aquecimento: "AQUECIMENTO: cresce por nível (1→hot). Limite diário reseta 08:00. Forçar volume = risco de ban. Se sessão Evolution cair, aquecimento para.",
-  crm: "CRM: Kanban progressivo, leads só avançam. Estágio 'Prospectado' protegido. Score 0-1000 recalculado por evento. Tags centralizadas em Configurações.",
-  ia_agents: "IA AGENTS: agente é silenciado quando humano responde (handoff). Limite/dia varia por aquecimento. Modelo padrão gpt-4o-mini.",
-  chat: "CHAT: inbox unificado por WABA. Mídias: imagem 5MB, vídeo 16MB. Humano respondendo silencia o agente IA naquela conversa.",
-  flows: "FLOWS: builder visual com nós (mensagem, IA, dados, espera). 3 gerações por IA/dia. Filtro por WABA. Sem dead-ends na geração IA.",
-  oportunidades: "OPORTUNIDADES: 1 busca = 3 créditos = ~60 leads. Perfil da empresa OBRIGATÓRIO. Score adapta por nicho. Outreach IA monta msg em 4 parágrafos.",
-  conta: "CONTA: Auth Supabase nativo (email/senha + Google). Reset de senha exige email validado. Google Drive/Calendar via OAuth próprio.",
-  financeiro: "BILLING: planos Start/Growth/Enterprise (UI), Stripe (cartão internacional) ou Asaas (PIX/cartão BR). Trial 7 dias. Cobrança é em 'Oportunidades'. Cancelamento via portal.",
-  cancelamento: "CANCELAMENTO: feito no portal Conta→Assinatura→Cancelar (com formulário de feedback). Plano segue ativo até fim do período pago.",
+  campanhas: "CAMPANHAS: 100% via Meta API oficial. Modos: Outbound (lista de telefones) ou Relational (via CRM). Status: pending→running→paused/completed/failed. DDI 55 obrigatório. Delays de segurança automáticos. Modos AI (mensagem gerada por IA) ou Custom (template/texto fixo). Templates Meta aprovados quando fora da janela 24h.",
+  conexoes: "CONEXÕES: 100% Meta WABA oficial via OAuth (Embedded Signup). Token longa duração, renovado automaticamente. Health check a cada 2h. Reconectar em WhatsApp→Conexões caso token expire. Cada conta pode ter múltiplos números.",
+  crm: "CRM: Kanban progressivo, leads só avançam de estágio. Estágio 'Prospectado' é protegido (entrada). Score 0-1000 recalculado por evento (mensagem enviada, resposta, agendamento, fechamento). Tags centralizadas em Configurações. Limite contatos: 1k (Atendimento) / 10k (Growth IA).",
+  chat: "CHAT: inbox unificado por número WABA. Mídias: imagem 5MB, vídeo 16MB, áudio 16MB, documento 100MB. Humano respondendo silencia o agente IA naquela conversa automaticamente. Resposta automática fora do horário comercial configurável.",
+  flows: "FLOWS: builder visual com nós (mensagem, IA, dados, espera, condição, A/B, integração Google). Geração por IA: 3/dia. Filtro de execução por WABA. Sem dead-ends na geração IA. Triggers: primeiro contato, palavra-chave, manual.",
+  oportunidades: "OPORTUNIDADES: 1 busca SerpAPI = 3 créditos = ~60 leads. Perfil da empresa OBRIGATÓRIO para scoring adaptativo por nicho. Outreach IA monta mensagem em 4 parágrafos. Plano Atendimento NÃO inclui Oportunidades.",
+  score: "SCORE: 0-1000 com tiers (frio/morno/quente/altíssima). Decay automático configurado. Regras de pontuação: envio msg, resposta, clique link, conversão, agendamento. Recalculado por evento + cron diário 03:00.",
+  ia_agents: "AGENTES IA: agente é silenciado quando humano responde (handoff). Limite/dia configurado por agente. Modelo padrão gpt-4o-mini. Plano Atendimento NÃO inclui Agentes IA.",
+  conta: "CONTA: Auth Supabase nativo (email/senha + Google). Reset de senha exige email validado. Google Drive/Calendar/Sheets via OAuth próprio. Workspaces com members (owner/admin/operational).",
+  financeiro: "BILLING: planos Atendimento (R$197/mês, sem SDR IA — só Chat+CRM 1k contatos) e Growth IA (com Oportunidades, Agentes IA, CRM 10k). Stripe (cartão internacional) ou Asaas (PIX/cartão BR). Trial 7 dias. Cobrança em 'Oportunidades'. Cancelamento via portal.",
+  cancelamento: "CANCELAMENTO: Conta→Assinatura→Cancelar (com formulário de feedback). Plano segue ativo até fim do período pago. Não há reembolso de créditos.",
 };
 
 async function callWianTool(authHeader: string, tool: string, params: any) {
