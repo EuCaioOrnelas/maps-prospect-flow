@@ -71,22 +71,15 @@ export function useAutoScoreTracking(pageName: string) {
       case "chat":
         trackScoreEvent("chat_page_viewed");
         break;
-      case "ai_agents":
-        trackScoreEvent("ai_agent_page_viewed");
-        break;
       case "crm_score":
         trackScoreEvent("crm_score_page_viewed");
         break;
-      case "agents":
       case "crm":
-      case "warming":
       case "reports":
       case "whatsapp":
       case "revenue":
       case "consultoria":
-      case "warming_reports":
       case "whatsapp_reports":
-      case "agent_reports":
         trackScoreEvent("feature_page_viewed", { page: pageName });
         break;
     }
