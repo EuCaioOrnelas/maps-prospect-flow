@@ -154,6 +154,15 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const startedRef = useRef(false);
+  const [onboardingTick, setOnboardingTick] = useState(0);
+
+  // Re-check tour eligibility when onboarding modal closes
+  useEffect(() => {
+    const handler = () => setOnboardingTick((t) => t + 1);
+    window.addEventListener("wiize:onboarding-done", handler);
+    return () => window.removeEventListener("wiize:onboarding-done", handler);
+  }, []);
+
 
   const allSteps: TourStep[] = [
     {
@@ -504,17 +513,26 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      // Aguarda o onboarding (modal inicial) terminar antes de iniciar o tour,
+      // senão o guia aparece por cima do onboarding em novos usuários.
+      const { data: ob } = await supabase
         .from("user_onboarding")
-        .select("tour_completed_at")
+        .select("tour_completed_at, completed_at, skipped")
         .eq("user_id", userId)
         .maybeSingle();
       if (cancelled) return;
-      if (data?.tour_completed_at) {
+      const onboardingDone = !!ob && (!!ob.completed_at || ob.skipped === true);
+      if (!onboardingDone) {
+        // não marca startedRef — vai re-tentar quando o usuário concluir o onboarding
+        // (esse efeito roda novamente em mudanças de rota / userId)
+        return;
+      }
+      if (ob?.tour_completed_at) {
         startedRef.current = true;
         localStorage.setItem(LS_KEY, "1");
         return;
       }
+
 
       // Preload pages used in the tour for instant transitions
       try {
@@ -547,7 +565,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [userId, location.pathname]);
+  }, [userId, location.pathname, onboardingTick]);
 
   useEffect(() => {
     const step = steps[currentStepIndex];

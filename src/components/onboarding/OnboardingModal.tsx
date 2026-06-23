@@ -128,6 +128,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       
       await trackEvent('onboarding_skipped');
       onClose();
+      try { window.dispatchEvent(new Event("wiize:onboarding-done")); } catch {}
+
     } catch (error) {
       console.error('Error skipping onboarding:', error);
     } finally {
@@ -148,8 +150,10 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         team_size: teamSize,
         previous_experience: previousExperience || null,
         previous_tool: previousTool || null,
-        skipped: false
+        skipped: false,
+        completed_at: new Date().toISOString(),
       });
+
 
       if (error) throw error;
 
@@ -365,12 +369,21 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
           </div>
         ) : (
           <div className="flex justify-center pt-4 border-t">
-            <Button onClick={onClose} className="px-8">
+            <Button
+              onClick={() => {
+                onClose();
+                try {
+                  window.dispatchEvent(new Event("wiize:onboarding-done"));
+                } catch {}
+              }}
+              className="px-8"
+            >
               <Sparkles className="h-4 w-4 mr-2" />
               Começar
             </Button>
           </div>
         )}
+
       </DialogContent>
     </Dialog>
   );
