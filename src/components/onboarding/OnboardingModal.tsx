@@ -128,6 +128,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       
       await trackEvent('onboarding_skipped');
       onClose();
+      try { window.dispatchEvent(new Event("wiize:onboarding-done")); } catch {}
+
     } catch (error) {
       console.error('Error skipping onboarding:', error);
     } finally {
