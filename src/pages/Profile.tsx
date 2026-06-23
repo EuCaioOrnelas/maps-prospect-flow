@@ -673,12 +673,26 @@ const Profile = () => {
                 </div>
               ) : isEditingCompany ? (
                 <div className="space-y-5">
-                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-foreground/80 flex gap-2">
-                    <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-foreground">Importante:</strong> preencha o <strong>Nicho</strong>, <strong>Produtos/Serviços</strong> e principalmente o <strong>Público-alvo</strong> com TODOS os segmentos que você atende (ex: "pizzarias, restaurantes, hamburguerias, lanchonetes"). A IA usa esses campos para julgar se um lead está dentro do seu público ideal. Se você deixar vazio ou incompleto, leads de nichos que você atende podem ser marcados como "fora do público" no score.
+                  <div className="rounded-xl border-2 border-amber-500/50 bg-amber-500/10 p-4 text-sm flex gap-3">
+                    <div className="shrink-0 w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center">
+                      <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="space-y-2 text-foreground/90">
+                      <p className="font-semibold text-foreground text-base">
+                        Atenção: esses campos definem o que a IA considera o seu público ideal
+                      </p>
+                      <p>
+                        Se algum lead apareceu com diagnóstico <strong>"fora do público ideal"</strong> mesmo sendo do seu nicho, é porque o <strong>Nicho</strong>, <strong>Produtos/Serviços</strong> ou <strong>Público-alvo</strong> abaixo estão incompletos ou genéricos demais.
+                      </p>
+                      <p>
+                        Liste <strong>todos os segmentos que você atende</strong>, separados por vírgula. Exemplo para cardápio digital: <em>"restaurantes, pizzarias, hamburguerias, lanchonetes, cafeterias, bares, dark kitchens, food trucks"</em>. Quanto mais específico e completo, mais precisos serão o score, o diagnóstico e a abordagem gerada pela IA.
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Depois de salvar, abra o lead em Oportunidades e clique em <strong>Re-analisar</strong> para atualizar o diagnóstico antigo.
+                      </p>
                     </div>
                   </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
                     <div className="space-y-1.5">
