@@ -100,7 +100,7 @@ function useChecklistState() {
     if (isFreePlan) {
       setShowUpgradePopup(true);
     } else {
-      navigate("/agents");
+      navigate("/crm");
     }
   };
 
