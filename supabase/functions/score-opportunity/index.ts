@@ -1472,30 +1472,33 @@ ${socialPages.length > 0
     - Nichos de infraestrutura (internet, solar, segurança): acessibilidade e potencial_venda são mais importantes, estrutura_digital é menos relevante
     - Nichos de serviço local (mecânica, manutenção, pet): reputação e acessibilidade são mais importantes
 
-11. ⚠️ REGRA — FIT DE PERSONA (EXCEÇÃO RARÍSSIMA — padrão é SEMPRE analisar normalmente):
+11. ⚠️ REGRA — FIT DE PERSONA (baseada no PÚBLICO IDEAL definido pelo usuário):
     LEAD: categoria "${categoria || "não informada"}"
-    EMPRESA PROSPECTORA: público-alvo "${companyProfile?.company_target_audience || "não informado"}", produtos "${companyProfile?.company_products || "não informado"}", nicho "${companyProfile?.company_niche || "não informado"}".
+    EMPRESA PROSPECTORA: público-alvo (ICP definido pelo usuário) "${companyProfile?.company_target_audience || "não informado"}", produtos "${companyProfile?.company_products || "não informado"}", nicho "${companyProfile?.company_niche || "não informado"}".
 
-    🛑 BLOQUEIO DURO — NÃO ative esta regra se QUALQUER uma das condições abaixo for verdadeira:
-    - A categoria do lead aparece (mesmo parcialmente, sinônimo ou plural) no público-alvo, produtos ou nicho da empresa.
-    - O produto/serviço da empresa é genericamente útil para qualquer negócio (ex.: cardápio digital → restaurantes/bares/lanchonetes/pizzarias/cafeterias; sistema de gestão → qualquer PME; marketing/tráfego/sites → qualquer negócio; telefonia/internet → qualquer empresa; uniformes → qualquer empresa com funcionários; embalagens → qualquer comércio/indústria).
-    - Existe QUALQUER cenário plausível em que o lead poderia comprar o produto, mesmo que não seja o ICP perfeito.
-    Em TODOS esses casos, IGNORE esta regra e siga a análise normal — atribua o score real conforme os dados.
+    A REGRA É SIMPLES E SE BASEIA NO QUE O USUÁRIO DECLAROU COMO PÚBLICO IDEAL:
 
-    Só acione esta exceção quando for INDISCUTIVELMENTE INCOMPATÍVEL — zero chance comercial. Exemplos válidos: vende ração para gado e o lead é um salão de beleza urbano; vende software jurídico B2B enterprise e o lead é uma residência particular sem CNPJ; vende equipamento médico hospitalar e o lead é uma barbearia.
+    ✅ DENTRO DO PÚBLICO IDEAL → faça análise NORMAL (atribua o score real):
+       - A categoria do lead aparece (mesmo em sinônimo, plural, variação ou termo relacionado) no público-alvo, produtos ou nicho declarado pela empresa.
+       - Exemplos: público-alvo "pizzarias" e lead = pizzaria ✅ | público-alvo "restaurantes" e lead = pizzaria/hamburgueria/lanchonete ✅ | público-alvo "clínicas" e lead = clínica odontológica ✅.
+       - Em caso de dúvida razoável sobre fit, considere DENTRO do público e analise normalmente.
 
-    Pergunte-se DUAS VEZES: "Existe alguma chance, ainda que pequena, desse lead comprar?" Se a resposta for "talvez" ou "depende", a resposta é SIM — siga análise normal.
+    🚫 FORA DO PÚBLICO IDEAL → ative o bloqueio abaixo:
+       - A categoria do lead NÃO tem relação com o público-alvo, produtos ou nicho declarado.
+       - Exemplos: público-alvo "pizzarias / restaurantes" e lead = loja de roupas / academia / oficina mecânica 🚫 | público-alvo "clínicas estéticas" e lead = autopeças 🚫.
+       - Regra do usuário: ele declarou o ICP — RESPEITE. Não invente encaixes forçados em nichos que ele não pediu.
 
-    Apenas quando for CLARAMENTE incompatível (zero fit comercial possível):
+    Quando estiver FORA DO PÚBLICO IDEAL, faça o seguinte (e SOMENTE nesse caso):
     a) NÃO INVENTE encaixes forçados ou genéricos. Isso é PROIBIDO.
     b) PONTUAÇÃO: preencha as 5 dimensões com base nos dados reais. Force nivel_oportunidade = "Baixa" e probabilidade_fechamento = "Baixa".
     c) pontos_fortes = [] e pontos_fracos = [].
-    d) diagnostico EXATAMENTE: "Este lead (${categoria || "categoria não informada"}) parece estar fora do seu público-alvo principal (${companyProfile?.company_target_audience || "defina em Perfil"}). Se você atende nichos adjacentes, edite o Perfil da Empresa para que a IA reconheça isso. Caso contrário, foque a prospecção em segmentos mais alinhados."
-    e) acao_recomendada: "Revise o Perfil da Empresa (Dados da Empresa) caso atenda nichos adjacentes, ou ajuste a segmentação da próxima prospecção."
-    f) analise_site, analise_redes_sociais, analise_reputacao_detalhada, analise_concorrencia_regional, analise_demanda_regional iniciam com: "Não aplicável — lead fora do público-alvo principal."
-    g) justificativa_score: "Lead fora do público-alvo principal definido no perfil da empresa."
+    d) diagnostico EXATAMENTE: "Este lead (${categoria || "categoria não informada"}) está fora do seu público ideal declarado (${companyProfile?.company_target_audience || "defina em Perfil"}). Se você também atende esse nicho, edite o Perfil da Empresa para incluí-lo. Caso contrário, foque a prospecção em segmentos alinhados ao ICP."
+    e) acao_recomendada: "Revise o Perfil da Empresa (Dados da Empresa) caso atenda esse nicho, ou ajuste a segmentação da próxima prospecção para focar no público ideal."
+    f) analise_site, analise_redes_sociais, analise_reputacao_detalhada, analise_concorrencia_regional, analise_demanda_regional iniciam com: "Não aplicável — lead fora do público ideal declarado."
+    g) justificativa_score: "Lead fora do público ideal declarado no perfil da empresa."
 
-    SEMPRE prefira a análise normal. Na dúvida, analise normalmente.
+    Importante: se o público-alvo, produtos e nicho estiverem TODOS vazios/não informados, NÃO ative o bloqueio — analise normalmente.
+
 
 Retorne APENAS um JSON válido:
 {
