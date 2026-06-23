@@ -117,9 +117,6 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         supabase.from('whatsapp_numbers')
           .select('id, name, phone_number, is_connected, daily_sent_count, last_sent_at')
           .eq('owner_user_id', accountOwnerId),
-        supabase.from('warming_sessions')
-          .select('id, whatsapp_number_id, warming_level, warming_status, status, messages_sent_today, error_message')
-          .eq('owner_user_id', accountOwnerId),
         supabase.from('campaign_incidents')
           .select('id, incident_type, detected_at, contact_phone')
           .eq('owner_user_id', accountOwnerId)
