@@ -65,8 +65,6 @@ const Profile = lazyWithRetry(() => import("./pages/Profile"), "Profile");
 const CRM = lazyWithRetry(() => import("./pages/CRM"), "CRM");
 const CRMSales = lazyWithRetry(() => import("./pages/CRMSales"), "CRMSales");
 const CRMScore = lazyWithRetry(() => import("./pages/CRMScore"), "CRMScore");
-const AIAgents = lazyWithRetry(() => import("./pages/AIAgents"), "AIAgents");
-const AgentReports = lazyWithRetry(() => import("./pages/AgentReports"), "AgentReports");
 const EquipeEmBreve = lazyWithRetry(() => import("./pages/equipe-ia/EquipeEmBreve"), "EquipeEmBreve");
 const Consultoria = lazyWithRetry(() => import("./pages/Consultoria"), "Consultoria");
 const ThankYou = lazyWithRetry(() => import("./pages/ThankYou"), "ThankYou");
