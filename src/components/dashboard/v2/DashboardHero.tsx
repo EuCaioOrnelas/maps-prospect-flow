@@ -249,7 +249,7 @@ export function DashboardHero({
               className="group relative w-full text-left p-5 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/[0.08] transition-all duration-300 overflow-hidden"
               onClick={() => {
                 setShowCampaignDialog(false);
-                navigate('/whatsapp-campaign');
+                navigate('/meta-campaigns');
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -273,7 +273,7 @@ export function DashboardHero({
               className="group relative w-full text-left p-5 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/[0.08] transition-all duration-300 overflow-hidden"
               onClick={() => {
                 setShowCampaignDialog(false);
-                navigate('/whatsapp-campaign');
+                navigate('/meta-campaigns');
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

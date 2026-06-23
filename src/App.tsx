@@ -65,8 +65,6 @@ const Profile = lazyWithRetry(() => import("./pages/Profile"), "Profile");
 const CRM = lazyWithRetry(() => import("./pages/CRM"), "CRM");
 const CRMSales = lazyWithRetry(() => import("./pages/CRMSales"), "CRMSales");
 const CRMScore = lazyWithRetry(() => import("./pages/CRMScore"), "CRMScore");
-const AIAgents = lazyWithRetry(() => import("./pages/AIAgents"), "AIAgents");
-const AgentReports = lazyWithRetry(() => import("./pages/AgentReports"), "AgentReports");
 const EquipeEmBreve = lazyWithRetry(() => import("./pages/equipe-ia/EquipeEmBreve"), "EquipeEmBreve");
 const Consultoria = lazyWithRetry(() => import("./pages/Consultoria"), "Consultoria");
 const ThankYou = lazyWithRetry(() => import("./pages/ThankYou"), "ThankYou");
@@ -305,8 +303,8 @@ const App = () => (
                 <Route path="/chat/configuracoes" element={<ProtectedRoute><ChatSettings /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes/mensagens-rapidas" element={<ProtectedRoute><ChatQuickReplies /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes/resposta-automatica" element={<ProtectedRoute><ChatAutoReply /></ProtectedRoute>} />
-                <Route path="/agents" element={<ProtectedRoute><AIAgents /></ProtectedRoute>} />
-                <Route path="/agents/reports" element={<ProtectedRoute><AgentReports /></ProtectedRoute>} />
+                <Route path="/agents" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/agents/reports" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/equipe-ia" element={<ProtectedRoute><EquipeEmBreve /></ProtectedRoute>} />
                 <Route path="/equipe-ia/*" element={<Navigate to="/equipe-ia" replace />} />
                 <Route path="/ai-workforce/*" element={<Navigate to="/equipe-ia" replace />} />

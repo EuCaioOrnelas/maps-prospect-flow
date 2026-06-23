@@ -21,7 +21,7 @@ const ROUTE_EVENTS: Record<string, string> = {
   '/dashboard': 'visited_dashboard',
   '/crm': 'visited_crm',
   '/upgrade': 'visited_pricing_page',
-  '/whatsapp-campaign': 'visited_campaigns',
+  '/meta-campaigns': 'visited_campaigns',
   '/ai-agents': 'visited_ai_agents',
   '/warming': 'visited_warming',
   '/reports': 'visited_reports',

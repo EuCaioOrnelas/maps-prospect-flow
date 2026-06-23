@@ -401,26 +401,6 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       sidebarSection: "automacao",
       waitMs: 600,
     },
-    {
-      id: "sidebar-automacao-agentes",
-      route: "/dashboard",
-      target: '[data-tour="sidebar-automacao-agentes"]',
-      title: "Agentes de IA",
-      body: "Configure um atendente virtual que conversa, qualifica e marca reuniões 24 horas por dia, mantendo o tom da sua marca.",
-      placement: "right",
-      sidebarSection: "automacao",
-      waitMs: 600,
-    },
-    {
-      id: "sidebar-automacao-aquecimento",
-      route: "/dashboard",
-      target: '[data-tour="sidebar-automacao-aquecimento"]',
-      title: "Aquecimento de números",
-      body: "Aqueça novos chips de WhatsApp com conversas naturais geradas por IA antes de iniciar campanhas em volume, reduzindo riscos de bloqueio.",
-      placement: "right",
-      sidebarSection: "automacao",
-      waitMs: 500,
-    },
 
     // ---- Gestão (CRM) ----
     {

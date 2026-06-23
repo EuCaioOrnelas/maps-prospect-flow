@@ -57,7 +57,7 @@ import jsPDF from "jspdf";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
-import { AgentMetricsDashboard } from "@/components/agents/AgentMetricsDashboard";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
@@ -616,9 +616,8 @@ const Reports = () => {
             {/* Tabs for different report sections */}
             <div className="max-w-7xl mx-auto">
               <Tabs defaultValue="prospecting" className="space-y-6">
-                <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsList className="grid w-full max-w-md grid-cols-1">
                   <TabsTrigger value="prospecting">Prospecção</TabsTrigger>
-                  <TabsTrigger value="agents">Agentes IA</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="prospecting" className="space-y-6">
@@ -944,10 +943,6 @@ const Reports = () => {
           </div>
                   </>
                   )}
-                </TabsContent>
-
-                <TabsContent value="agents">
-                  <AgentMetricsDashboard dateFilter={dateFilter} />
                 </TabsContent>
               </Tabs>
             </div>

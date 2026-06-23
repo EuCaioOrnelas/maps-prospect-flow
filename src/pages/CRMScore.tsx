@@ -1502,12 +1502,6 @@ const ScoreRulesTab = ({ userId }: { userId: string }) => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Buscar regra..." className="pl-9 rounded-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
-        <Link to="/warming">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Smartphone className="h-4 w-4" />
-            Conectar WhatsApp
-          </Button>
-        </Link>
       </div>
 
       {Object.entries(RULE_CATEGORIES).map(([catKey, cat]) => {

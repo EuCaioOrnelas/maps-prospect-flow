@@ -300,7 +300,6 @@ export default function EquipeEmBreve() {
                     {[
                       { label: "Prospecção IA", path: "/oportunidades" },
                       { label: "Fluxos", path: "/fluxos" },
-                      { label: "Aquecimento", path: "/warming" },
                       { label: "Chat", path: "/chat" },
                     ].map((link) => (
                       <a

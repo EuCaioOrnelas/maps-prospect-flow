@@ -82,19 +82,17 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     isAdmin ||
     (profileHasFeature(authProfile as any, key) && planHasFeature(authProfile as any, key));
 
-  const hasDisconnectedWarming = false;
-  const disconnectedNumbers: any[] = [];
   const { unreadCount: unreadAnnouncements, disconnectedNumbers: disconnectedNumberAlerts, dismissDisconnectionAlert } = useUnreadAnnouncements();
   const expandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isFreePlan = !profile?.plan || profile.plan === 'free';
   const currentPath = location.pathname;
 
-  const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao" || currentPath === "/agents/reports";
+  const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao";
   const isOnCampaignsPage = currentPath === "/meta-campaigns";
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
   const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
-  const isOnAutomationPage = currentPath === "/agents" || currentPath.startsWith("/fluxos");
+  const isOnAutomationPage = currentPath.startsWith("/fluxos");
   const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/") || currentPath === "/meta-campaigns";
 
   // Watch body class to force expand and select active submenu during guided tour
@@ -159,12 +157,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       icon: LayoutDashboard,
       active: currentPath === "/dashboard"
     },
-    ...(can("agents") ? [{
-      title: "Agentes IA",
-      url: "/agents/reports",
-      icon: Bot,
-      active: currentPath === "/agents/reports"
-    }] : []),
   ];
 
   const handleLogout = async () => {
@@ -487,11 +479,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 isExpanded={isExpanded}
                 hasSubmenu
                 isSubmenuOpen={isAutomationOpen}
-                badge={hasDisconnectedWarming ? (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full flex items-center justify-center animate-pulse">
-                    <AlertTriangle size={8} className="text-destructive-foreground" />
-                  </div>
-                ) : undefined}
+                badge={undefined}
                 tooltip="Automação"
               />
 

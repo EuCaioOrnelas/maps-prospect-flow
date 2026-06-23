@@ -17,8 +17,6 @@ import { MobileNav } from '@/components/layout/MobileNav';
 import { BackgroundGlow } from '@/components/layout/BackgroundGlow';
 import { SEO } from '@/components/SEO';
 import { Users, Plus, Trash2, FlaskConical, MessageCircle, Settings2, Eye, EyeOff, Smartphone } from 'lucide-react';
-import { NumbersManager } from '@/components/whatsapp/NumbersManager';
-import { useWhatsAppNumbers } from '@/hooks/useWhatsAppNumbers';
 import { usePhonePrivacy } from '@/hooks/usePhonePrivacy';
 import { useAuth } from '@/contexts/AuthContext';
 import { useContactLimit } from '@/hooks/useContactLimit';
@@ -51,7 +49,6 @@ export default function CRM() {
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
   useAutoScoreTracking("crm");
   const { hidden: phoneHidden, toggle: togglePhonePrivacy } = usePhonePrivacy();
-  const { numbers: waNumbers, setNumbers: setWaNumbers, maxNumbers: waMaxNumbers, fetchNumbers: refetchWaNumbers } = useWhatsAppNumbers();
 
   const { role } = useAccountRole();
   const { members: accountMembers } = useAccountMembers();
@@ -507,15 +504,6 @@ export default function CRM() {
                       {phoneHidden ? "Mostrar finais dos telefones" : "Ocultar finais dos telefones"}
                     </TooltipContent>
                   </Tooltip>
-                  <NumbersManager
-                    numbers={waNumbers}
-                    onNumbersChange={setWaNumbers}
-                    maxNumbers={waMaxNumbers}
-                    onConnect={() => { refetchWaNumbers(); }}
-                    hideButtons
-                    forceOpen={numbersManagerOpen}
-                    onClose={() => setNumbersManagerOpen(false)}
-                  />
 
                   <Tooltip>
                     <TooltipTrigger asChild>

@@ -383,7 +383,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
             type: 'info',
             icon: React.createElement(Clock, { size: 14 }),
             text: `Pico de atividade dos leads: ${peakHour[0].toString().padStart(2, '0')}:00 — melhor horário para envios`,
-            route: '/whatsapp-campaign',
+            route: '/meta-campaigns',
           });
         }
       }

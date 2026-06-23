@@ -34,8 +34,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
-import { NumbersManager } from "@/components/whatsapp/NumbersManager";
-import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { buildTourDemoLead } from "@/lib/tourDemoLead";
@@ -139,9 +137,6 @@ export default function OpportunitiesManagement() {
   const [sendDialogOpen, setSendDialogOpen] = useState(true);
   const [sendCooldown, setSendCooldown] = useState(0);
 
-  // WhatsApp numbers management
-  const { numbers, maxNumbers, fetchNumbers } = useWhatsAppNumbers();
-  const [showNumbersManager, setShowNumbersManager] = useState(false);
 
   // Dual scroll refs for table
   const topScrollRef = useRef<HTMLDivElement>(null);
@@ -1893,7 +1888,7 @@ export default function OpportunitiesManagement() {
           }}
           message={sendingLead.ai_approach_message || ""}
           userId={accountOwnerId || user.id}
-          availableNumbers={numbers}
+          availableNumbers={[]}
           onSent={() => {
             setSendCooldown(120);
             setLeads(prev => prev.map(l => l.id === sendingLead.id ? { ...l, first_message_sent: true } : l));
@@ -1903,21 +1898,10 @@ export default function OpportunitiesManagement() {
             setSendingLead(null);
             setSendDialogOpen(true);
           }}
-          onRequestConnect={() => { setSendingLead(null); setSendDialogOpen(true); setShowNumbersManager(true); }}
+          onRequestConnect={() => { setSendingLead(null); setSendDialogOpen(true); }}
         />
       )}
 
-      {/* Numbers Manager Dialog */}
-      {showNumbersManager && (
-        <NumbersManager
-          numbers={numbers}
-          onNumbersChange={() => { void fetchNumbers(); }}
-          maxNumbers={maxNumbers}
-          onConnect={() => { void fetchNumbers(); }}
-          forceOpen={true}
-          onClose={() => setShowNumbersManager(false)}
-        />
-      )}
     </SidebarProvider>
   );
 }
