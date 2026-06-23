@@ -87,7 +87,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         searchCurrent, searchPrev,
         campaignsCurrent, campaignsPrev,
         responsesCurrent, responsesPrev,
-        numbersRes, warmingRes, incidentsRes, cplRes,
+        numbersRes, incidentsRes, cplRes,
         allTimeSearchRes, profileRes,
         allTimeCampaignsRes,
         leadsFunnelRes,
