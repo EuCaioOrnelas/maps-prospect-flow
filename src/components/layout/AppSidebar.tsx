@@ -157,12 +157,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       icon: LayoutDashboard,
       active: currentPath === "/dashboard"
     },
-    ...(can("agents") ? [{
-      title: "Agentes IA",
-      url: "/agents/reports",
-      icon: Bot,
-      active: currentPath === "/agents/reports"
-    }] : []),
   ];
 
   const handleLogout = async () => {
