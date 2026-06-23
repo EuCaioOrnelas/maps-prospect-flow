@@ -148,8 +148,10 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         team_size: teamSize,
         previous_experience: previousExperience || null,
         previous_tool: previousTool || null,
-        skipped: false
+        skipped: false,
+        completed_at: new Date().toISOString(),
       });
+
 
       if (error) throw error;
 
