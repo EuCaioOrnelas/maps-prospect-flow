@@ -58,10 +58,10 @@ const STEPS = [
   },
   {
     key: "step_explore_ai_crm_completed",
-    title: "Explorar agentes de IA e CRM",
+    title: "Explorar CRM e fluxos",
     description: "Descubra recursos avançados do produto",
     icon: Bot,
-    action: "/agents",
+    action: "/crm",
     actionLabel: "Explorar",
   },
 ] as const;
