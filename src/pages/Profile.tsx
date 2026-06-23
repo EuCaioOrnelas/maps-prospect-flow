@@ -673,7 +673,14 @@ const Profile = () => {
                 </div>
               ) : isEditingCompany ? (
                 <div className="space-y-5">
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-foreground/80 flex gap-2">
+                    <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="text-foreground">Importante:</strong> preencha o <strong>Nicho</strong>, <strong>Produtos/Serviços</strong> e principalmente o <strong>Público-alvo</strong> com TODOS os segmentos que você atende (ex: "pizzarias, restaurantes, hamburguerias, lanchonetes"). A IA usa esses campos para julgar se um lead está dentro do seu público ideal. Se você deixar vazio ou incompleto, leads de nichos que você atende podem ser marcados como "fora do público" no score.
+                    </div>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                         <Building2 className="h-3.5 w-3.5" /> Nome da empresa
