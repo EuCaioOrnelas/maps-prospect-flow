@@ -479,11 +479,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 isExpanded={isExpanded}
                 hasSubmenu
                 isSubmenuOpen={isAutomationOpen}
-                badge={hasDisconnectedWarming ? (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full flex items-center justify-center animate-pulse">
-                    <AlertTriangle size={8} className="text-destructive-foreground" />
-                  </div>
-                ) : undefined}
+                badge={undefined}
                 tooltip="Automação"
               />
 
