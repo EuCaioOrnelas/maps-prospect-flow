@@ -258,7 +258,7 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         totalResponses, prevTotalResponses,
         campaigns,
         numbers: numbersRes.data || [],
-        warmingSessions: warmingRes.data || [],
+        warmingSessions: [],
         incidents: incidentsRes.data || [],
         responsesByDay,
         cplBenchmark: cplValue?.value || 50,
