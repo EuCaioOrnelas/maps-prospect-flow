@@ -944,10 +944,6 @@ const Reports = () => {
                   </>
                   )}
                 </TabsContent>
-
-                <TabsContent value="agents">
-                  <AgentMetricsDashboard dateFilter={dateFilter} />
-                </TabsContent>
               </Tabs>
             </div>
           </main>
