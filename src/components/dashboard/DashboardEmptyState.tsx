@@ -15,16 +15,9 @@ export function DashboardEmptyState() {
     {
       icon: <MessageCircle size={20} />,
       title: "Inicie campanhas",
-      description: "Envie mensagens em escala para os leads prospectados.",
-      link: "/whatsapp-campaign",
+      description: "Envie mensagens em escala via Meta API oficial.",
+      link: "/meta-campaigns",
       linkLabel: "Criar campanha",
-    },
-    {
-      icon: <Zap size={20} />,
-      title: "Configure agentes IA",
-      description: "Automatize respostas e qualificação de leads.",
-      link: "/agents",
-      linkLabel: "Criar agente",
     },
   ];
 
