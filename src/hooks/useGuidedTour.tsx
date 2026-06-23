@@ -504,17 +504,26 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      // Aguarda o onboarding (modal inicial) terminar antes de iniciar o tour,
+      // senão o guia aparece por cima do onboarding em novos usuários.
+      const { data: ob } = await supabase
         .from("user_onboarding")
-        .select("tour_completed_at")
+        .select("tour_completed_at, completed_at, skipped")
         .eq("user_id", userId)
         .maybeSingle();
       if (cancelled) return;
-      if (data?.tour_completed_at) {
+      const onboardingDone = !!ob && (!!ob.completed_at || ob.skipped === true);
+      if (!onboardingDone) {
+        // não marca startedRef — vai re-tentar quando o usuário concluir o onboarding
+        // (esse efeito roda novamente em mudanças de rota / userId)
+        return;
+      }
+      if (ob?.tour_completed_at) {
         startedRef.current = true;
         localStorage.setItem(LS_KEY, "1");
         return;
       }
+
 
       // Preload pages used in the tour for instant transitions
       try {
