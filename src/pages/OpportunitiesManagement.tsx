@@ -34,8 +34,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
-import { NumbersManager } from "@/components/whatsapp/NumbersManager";
-import { useWhatsAppNumbers } from "@/hooks/useWhatsAppNumbers";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { buildTourDemoLead } from "@/lib/tourDemoLead";
