@@ -616,9 +616,8 @@ const Reports = () => {
             {/* Tabs for different report sections */}
             <div className="max-w-7xl mx-auto">
               <Tabs defaultValue="prospecting" className="space-y-6">
-                <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsList className="grid w-full max-w-md grid-cols-1">
                   <TabsTrigger value="prospecting">Prospecção</TabsTrigger>
-                  <TabsTrigger value="agents">Agentes IA</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="prospecting" className="space-y-6">
