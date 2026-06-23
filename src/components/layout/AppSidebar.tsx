@@ -82,8 +82,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     isAdmin ||
     (profileHasFeature(authProfile as any, key) && planHasFeature(authProfile as any, key));
 
-  const hasDisconnectedWarming = false;
-  const disconnectedNumbers: any[] = [];
   const { unreadCount: unreadAnnouncements, disconnectedNumbers: disconnectedNumberAlerts, dismissDisconnectionAlert } = useUnreadAnnouncements();
   const expandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
