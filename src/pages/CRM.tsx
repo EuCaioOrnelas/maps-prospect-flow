@@ -504,15 +504,6 @@ export default function CRM() {
                       {phoneHidden ? "Mostrar finais dos telefones" : "Ocultar finais dos telefones"}
                     </TooltipContent>
                   </Tooltip>
-                  <NumbersManager
-                    numbers={waNumbers}
-                    onNumbersChange={setWaNumbers}
-                    maxNumbers={waMaxNumbers}
-                    onConnect={() => { refetchWaNumbers(); }}
-                    hideButtons
-                    forceOpen={numbersManagerOpen}
-                    onClose={() => setNumbersManagerOpen(false)}
-                  />
 
                   <Tooltip>
                     <TooltipTrigger asChild>
