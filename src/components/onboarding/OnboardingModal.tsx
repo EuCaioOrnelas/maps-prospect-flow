@@ -367,12 +367,21 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
           </div>
         ) : (
           <div className="flex justify-center pt-4 border-t">
-            <Button onClick={onClose} className="px-8">
+            <Button
+              onClick={() => {
+                onClose();
+                try {
+                  window.dispatchEvent(new Event("wiize:onboarding-done"));
+                } catch {}
+              }}
+              className="px-8"
+            >
               <Sparkles className="h-4 w-4 mr-2" />
               Começar
             </Button>
           </div>
         )}
+
       </DialogContent>
     </Dialog>
   );
