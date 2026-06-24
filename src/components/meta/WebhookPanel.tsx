@@ -246,39 +246,42 @@ export function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "
               </TabsContent>
 
               <TabsContent value="video" className="mt-4">
-                <div className="relative w-full overflow-hidden rounded-lg border border-border/60 bg-black group" style={{ paddingTop: "56.25%" }}>
-                  {!videoPlaying ? (
-                    <button
-                      type="button"
-                      onClick={() => setVideoPlaying(true)}
-                      className="absolute inset-0 h-full w-full cursor-pointer"
-                      aria-label="Reproduzir vídeo do webhook"
-                    >
-                      <img
-                        src={WEBHOOK_GUIDE_VIDEO_THUMBNAIL}
-                        alt="Guia de conexão de Webhook Meta API"
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="relative">
-                          <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
-                          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
-                            <PlayCircle className="h-7 w-7" strokeWidth={1.75} />
+                <div className="w-full p-[3px] rounded-2xl bg-white border border-white">
+                  <div className="relative w-full rounded-[0.875rem] overflow-hidden bg-white group" style={{ aspectRatio: "16 / 9" }}>
+                    {!videoPlaying ? (
+                      <button
+                        type="button"
+                        onClick={() => setVideoPlaying(true)}
+                        className="absolute inset-0 h-full w-full cursor-pointer"
+                        aria-label="Reproduzir vídeo do webhook"
+                      >
+                        <img
+                          src={WEBHOOK_GUIDE_VIDEO_THUMBNAIL}
+                          alt="Guia de conexão de Webhook Meta API"
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="relative">
+                            <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
+                            <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                              <PlayCircle className="h-[22px] w-[22px] ml-0.5" strokeWidth={1.75} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  ) : (
-                    <iframe
-                      src={`https://www.youtube.com/embed/${WEBHOOK_GUIDE_VIDEO_ID}?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1`}
-                      title="Passo a passo do webhook"
-                      className="absolute inset-0 h-full w-full border-0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  )}
+                      </button>
+                    ) : (
+                      <iframe
+                        src={`https://www.youtube.com/embed/${WEBHOOK_GUIDE_VIDEO_ID}?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1`}
+                        title="Passo a passo do webhook"
+                        className="absolute inset-0 h-full w-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    )}
+                  </div>
                 </div>
               </TabsContent>
+
 
             </Tabs>
           </div>
