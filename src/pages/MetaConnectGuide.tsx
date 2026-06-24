@@ -157,8 +157,8 @@ export default function MetaConnectGuide() {
         </section>
 
         {/* Video */}
-        <section className="rounded-2xl overflow-hidden border border-zinc-200 bg-white shadow-sm animate-fade-in">
-          <div className="relative aspect-video bg-black group">
+        <section className="w-full p-[3px] rounded-2xl bg-white border border-white shadow-sm animate-fade-in">
+          <div className="relative w-full rounded-[0.875rem] overflow-hidden bg-white group" style={{ aspectRatio: "16 / 9" }}>
             {!videoPlaying ? (
               <button
                 type="button"
@@ -173,9 +173,9 @@ export default function MetaConnectGuide() {
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
-                    <div className="absolute inset-0 rounded-2xl bg-[hsl(158_72%_42%)]/40 blur-2xl group-hover:bg-[hsl(158_72%_42%)]/60 transition" />
-                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[hsl(158_72%_42%)] text-white flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
-                      <PlayCircle size={28} strokeWidth={1.75} />
+                    <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
+                    <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                      <PlayCircle size={22} strokeWidth={1.75} className="ml-0.5" />
                     </div>
                   </div>
                 </div>
@@ -191,6 +191,7 @@ export default function MetaConnectGuide() {
             )}
           </div>
         </section>
+
 
 
         {/* Antes de começar */}
