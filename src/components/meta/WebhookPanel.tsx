@@ -10,8 +10,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Defina aqui a URL do vídeo (embed do YouTube/Vimeo/Loom). Deixe vazio para exibir o estado "Vídeo em breve".
-const WEBHOOK_GUIDE_VIDEO_URL = "";
+import webhookGuideCoverAsset from "@/assets/webhook-guide-cover.png.asset.json";
+
+// ID do vídeo do YouTube com o passo a passo do webhook.
+const WEBHOOK_GUIDE_VIDEO_ID = "suwAEoYW33E";
+const WEBHOOK_GUIDE_VIDEO_THUMBNAIL = webhookGuideCoverAsset.url;
 
 export type WebhookData = {
   callback_url: string;
