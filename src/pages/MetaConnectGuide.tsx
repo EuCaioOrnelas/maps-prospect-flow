@@ -66,6 +66,7 @@ export default function MetaConnectGuide() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [openPhase, setOpenPhase] = useState<string>("app");
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
 
   const copy = (text: string, label: string) => {
