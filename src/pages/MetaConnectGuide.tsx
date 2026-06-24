@@ -31,7 +31,9 @@ import { SEO } from "@/components/SEO";
  *
  * Quando o vídeo estiver pronto, basta colar a URL aqui:
  */
-const TUTORIAL_VIDEO_URL: string | null = null;
+const TUTORIAL_VIDEO_ID: string = "5TsqZv4whyU";
+const TUTORIAL_VIDEO_THUMBNAIL = metaConnectCoverAsset.url;
+
 
 const PHASES = [
   {
