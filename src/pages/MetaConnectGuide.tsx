@@ -157,32 +157,41 @@ export default function MetaConnectGuide() {
         </section>
 
         {/* Video */}
-        <section className="rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-50 shadow-sm animate-fade-in">
-          {TUTORIAL_VIDEO_URL ? (
-            <div className="aspect-video bg-black">
+        <section className="rounded-2xl overflow-hidden border border-zinc-200 bg-white shadow-sm animate-fade-in">
+          <div className="relative aspect-video bg-black group">
+            {!videoPlaying ? (
+              <button
+                type="button"
+                onClick={() => setVideoPlaying(true)}
+                className="absolute inset-0 h-full w-full cursor-pointer"
+                aria-label="Reproduzir vídeo tutorial"
+              >
+                <img
+                  src={TUTORIAL_VIDEO_THUMBNAIL}
+                  alt="Guia de conexão Meta API"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 rounded-2xl bg-[hsl(158_72%_42%)]/40 blur-2xl group-hover:bg-[hsl(158_72%_42%)]/60 transition" />
+                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[hsl(158_72%_42%)] text-white flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                      <PlayCircle size={28} strokeWidth={1.75} />
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ) : (
               <iframe
-                className="w-full h-full"
-                src={TUTORIAL_VIDEO_URL}
-                title="Tutorial em vídeo"
+                className="absolute inset-0 h-full w-full border-0"
+                src={`https://www.youtube.com/embed/${TUTORIAL_VIDEO_ID}?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1`}
+                title="Tutorial em vídeo — Conexão Meta API"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
-            </div>
-          ) : (
-            <div className="aspect-video flex flex-col items-center justify-center text-center px-6">
-              <div className="w-14 h-14 rounded-2xl bg-white border border-zinc-200 flex items-center justify-center mb-4 shadow-sm">
-                <FileVideo size={24} className="text-zinc-400" />
-              </div>
-              <p className="font-semibold text-base">Vídeo tutorial em produção</p>
-              <p className="text-sm text-zinc-500 mt-1.5 max-w-md">
-                Em breve um vídeo mostrando cada tela. Por enquanto, o passo a passo escrito abaixo te leva até o fim.
-              </p>
-              <div className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-zinc-400">
-                <PlayCircle size={12} /> Aguarde
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </section>
+
 
         {/* Antes de começar */}
         <section className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 animate-fade-in">
