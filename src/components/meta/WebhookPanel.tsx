@@ -10,8 +10,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Defina aqui a URL do vídeo (embed do YouTube/Vimeo/Loom). Deixe vazio para exibir o estado "Vídeo em breve".
-const WEBHOOK_GUIDE_VIDEO_URL = "";
+import webhookGuideCoverAsset from "@/assets/webhook-guide-cover.png.asset.json";
+
+// ID do vídeo do YouTube com o passo a passo do webhook.
+const WEBHOOK_GUIDE_VIDEO_ID = "suwAEoYW33E";
+const WEBHOOK_GUIDE_VIDEO_THUMBNAIL = webhookGuideCoverAsset.url;
 
 export type WebhookData = {
   callback_url: string;
@@ -64,6 +67,7 @@ export function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "
   const [results, setResults] = useState<Record<string, ValidationState>>({});
   const [testingAll, setTestingAll] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -242,28 +246,40 @@ export function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "
               </TabsContent>
 
               <TabsContent value="video" className="mt-4">
-                {WEBHOOK_GUIDE_VIDEO_URL ? (
-                  <div className="relative w-full overflow-hidden rounded-lg border border-border/60 bg-muted/30" style={{ paddingTop: "56.25%" }}>
+                <div className="relative w-full overflow-hidden rounded-lg border border-border/60 bg-black group" style={{ paddingTop: "56.25%" }}>
+                  {!videoPlaying ? (
+                    <button
+                      type="button"
+                      onClick={() => setVideoPlaying(true)}
+                      className="absolute inset-0 h-full w-full cursor-pointer"
+                      aria-label="Reproduzir vídeo do webhook"
+                    >
+                      <img
+                        src={WEBHOOK_GUIDE_VIDEO_THUMBNAIL}
+                        alt="Guia de conexão de Webhook Meta API"
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="relative">
+                          <div className="absolute inset-0 rounded-2xl bg-primary/40 blur-2xl group-hover:bg-primary/60 transition" />
+                          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                            <PlayCircle className="h-7 w-7" strokeWidth={1.75} />
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ) : (
                     <iframe
-                      src={WEBHOOK_GUIDE_VIDEO_URL}
+                      src={`https://www.youtube.com/embed/${WEBHOOK_GUIDE_VIDEO_ID}?rel=0&modestbranding=1&autoplay=1&playsinline=1&vq=hd1080&hd=1`}
                       title="Passo a passo do webhook"
-                      className="absolute inset-0 h-full w-full"
+                      className="absolute inset-0 h-full w-full border-0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                     />
-                  </div>
-                ) : (
-                  <div className="relative w-full overflow-hidden rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center" style={{ paddingTop: "56.25%" }}>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4">
-                      <PlayCircle className="h-10 w-10 text-muted-foreground/60" />
-                      <p className="text-sm font-medium">Vídeo em breve</p>
-                      <p className="text-xs text-muted-foreground max-w-sm">
-                        Estamos gravando o tutorial em vídeo da configuração do webhook. Enquanto isso, siga o guia escrito ao lado.
-                      </p>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </TabsContent>
+
             </Tabs>
           </div>
         )}

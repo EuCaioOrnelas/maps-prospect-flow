@@ -46,7 +46,7 @@ const stagger = {
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
 };
 
-const VIDEO_ID = "ZRzK42SYNFc";
+const VIDEO_ID = "xdYY5yUY6xk";
 const VIDEO_THUMBNAIL = demoCoverAsset.url;
 const VIDEO_OVERSCAN_X = 1.06;
 
