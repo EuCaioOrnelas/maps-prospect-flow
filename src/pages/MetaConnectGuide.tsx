@@ -1,4 +1,5 @@
 import { useState } from "react";
+import metaConnectCoverAsset from "@/assets/meta-connect-guide-cover.png.asset.json";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
