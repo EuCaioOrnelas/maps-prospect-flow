@@ -67,6 +67,7 @@ export function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "
   const [results, setResults] = useState<Record<string, ValidationState>>({});
   const [testingAll, setTestingAll] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
   const load = async () => {
     setLoading(true);
