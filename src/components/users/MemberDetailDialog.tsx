@@ -157,22 +157,24 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
               <KpiCard icon={<Calendar size={14} />} label="Dias ativos" value={String(totals.days)} />
               <KpiCard icon={<BarChart3 size={14} />} label="Média/dia" value={fmtDuration(totals.avg)} />
             </div>
-            <div className="rounded-lg border border-border/60 overflow-hidden">
-              <div className="grid grid-cols-4 px-3 py-2 text-xs font-medium bg-muted/40 text-muted-foreground">
-                <span>Data</span><span>Entrou</span><span>Saiu</span><span className="text-right">Tempo</span>
-              </div>
-              {loading && <div className="p-6 text-center"><Loader2 className="animate-spin mx-auto" size={16} /></div>}
-              {!loading && sessions.length === 0 && (
-                <div className="p-6 text-center text-sm text-muted-foreground">Sem atividade no período.</div>
-              )}
-              {!loading && sessions.map((s, i) => (
-                <div key={i} className="grid grid-cols-4 px-3 py-2 text-sm border-t border-border/40">
-                  <span>{new Date(s.day).toLocaleDateString("pt-BR")}</span>
-                  <span className="text-muted-foreground">{new Date(s.session_start).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-                  <span className="text-muted-foreground">{new Date(s.session_end).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-                  <span className="text-right font-medium">{fmtDuration(s.active_seconds)}</span>
+            <div className="rounded-lg border border-border/60 overflow-x-auto">
+              <div className="min-w-[480px]">
+                <div className="grid grid-cols-4 px-3 py-2 text-xs font-medium bg-muted/40 text-muted-foreground">
+                  <span>Data</span><span>Entrou</span><span>Saiu</span><span className="text-right">Tempo</span>
                 </div>
-              ))}
+                {loading && <div className="p-6 text-center"><Loader2 className="animate-spin mx-auto" size={16} /></div>}
+                {!loading && sessions.length === 0 && (
+                  <div className="p-6 text-center text-sm text-muted-foreground">Sem atividade no período.</div>
+                )}
+                {!loading && sessions.map((s, i) => (
+                  <div key={i} className="grid grid-cols-4 px-3 py-2 text-sm border-t border-border/40">
+                    <span>{new Date(s.day).toLocaleDateString("pt-BR")}</span>
+                    <span className="text-muted-foreground">{new Date(s.session_start).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                    <span className="text-muted-foreground">{new Date(s.session_end).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                    <span className="text-right font-medium">{fmtDuration(s.active_seconds)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </TabsContent>
 
