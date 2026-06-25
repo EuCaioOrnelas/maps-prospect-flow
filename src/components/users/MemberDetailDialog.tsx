@@ -95,12 +95,12 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <Tabs defaultValue="info" className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 overflow-x-auto wa-scrollbar px-3 py-3 sm:px-6">
-            <TabsList className="inline-flex min-w-max max-w-none gap-1">
-              <TabsTrigger value="info" className="shrink-0 whitespace-nowrap px-2 text-[11px] sm:px-3 sm:text-sm">Perfil</TabsTrigger>
-              <TabsTrigger value="availability" className="shrink-0 whitespace-nowrap px-2 text-[11px] sm:px-3 sm:text-sm">Disponibilidade</TabsTrigger>
-              <TabsTrigger value="time" className="shrink-0 whitespace-nowrap px-2 text-[11px] sm:px-3 sm:text-sm">Tempo de uso</TabsTrigger>
-              <TabsTrigger value="ops" className="shrink-0 whitespace-nowrap px-2 text-[11px] sm:px-3 sm:text-sm">Operacional</TabsTrigger>
+          <div className="shrink-0 px-3 py-3 sm:px-6">
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:w-auto sm:grid-cols-none">
+              <TabsTrigger value="info" className="min-w-0 whitespace-normal px-2 text-[11px] leading-tight sm:whitespace-nowrap sm:px-3 sm:text-sm">Perfil</TabsTrigger>
+              <TabsTrigger value="availability" className="min-w-0 whitespace-normal px-2 text-[11px] leading-tight sm:whitespace-nowrap sm:px-3 sm:text-sm">Disponibilidade</TabsTrigger>
+              <TabsTrigger value="time" className="min-w-0 whitespace-normal px-2 text-[11px] leading-tight sm:whitespace-nowrap sm:px-3 sm:text-sm">Tempo de uso</TabsTrigger>
+              <TabsTrigger value="ops" className="min-w-0 whitespace-normal px-2 text-[11px] leading-tight sm:whitespace-nowrap sm:px-3 sm:text-sm">Operacional</TabsTrigger>
             </TabsList>
           </div>
 
