@@ -521,7 +521,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
       style={{ zIndex: 2147483647 }}
     >
-      <div className="relative w-full max-w-md bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
         <div
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full opacity-40 pointer-events-none blur-3xl"
           style={{
@@ -558,7 +558,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           </p>
 
           {/* Next step card */}
-          <div className="text-left bg-muted/30 border border-border/60 rounded-2xl p-4 sm:p-5 mb-6">
+          <div className="text-left bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 mb-6">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <MessageCircle size={20} strokeWidth={2.2} />
@@ -595,10 +595,11 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           <Button
             size="xl"
             onClick={handleConnect}
-            className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
+            className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold uppercase tracking-wider"
           >
             <MessageCircle size={20} />
-            Conectar WhatsApp na Meta API agora
+            CONECTAR WHATSAPP NA META API AGORA
+
           </Button>
 
           <button
