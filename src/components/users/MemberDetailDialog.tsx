@@ -105,7 +105,7 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
           </div>
 
           <TabsContent value="info" className="space-y-3 mt-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <InfoCard icon={<Users size={14} />} label="Cargo" value={ROLE_LABEL[member.role]} />
               <InfoCard
                 icon={<Activity size={14} />}
