@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -77,34 +77,35 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-full sm:max-w-3xl max-h-[88vh] overflow-y-auto overflow-x-hidden p-3 sm:p-6 rounded-2xl gap-3 sm:gap-4">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
+      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:w-full sm:max-w-3xl">
+        <DialogHeader className="shrink-0 border-b border-border/60 px-3 pb-3 pt-3 sm:px-6 sm:pt-6">
+          <DialogTitle className="flex min-w-0 items-center gap-3 pr-8">
             <Avatar className="h-10 w-10">
               {member.avatar_url && <AvatarImage src={member.avatar_url} />}
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2 text-base font-semibold">
+            <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex min-w-0 items-center gap-2 text-base font-semibold">
                 {member.role === "owner" && <Crown size={14} className="text-amber-500" />}
-                {member.name || member.email}
+                <span className="min-w-0 truncate">{member.name || member.email}</span>
               </div>
-              <span className="text-xs text-muted-foreground font-normal">{member.email}</span>
+              <span className="min-w-0 truncate text-xs font-normal text-muted-foreground">{member.email}</span>
             </div>
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="info" className="mt-2">
-          <div className="-mx-1 overflow-x-auto wa-scrollbar">
-            <TabsList className="inline-flex w-max min-w-full gap-1">
-              <TabsTrigger value="info" className="text-xs sm:text-sm whitespace-nowrap px-3">Perfil</TabsTrigger>
-              <TabsTrigger value="availability" className="text-xs sm:text-sm whitespace-nowrap px-3">Disponibilidade</TabsTrigger>
-              <TabsTrigger value="time" className="text-xs sm:text-sm whitespace-nowrap px-3">Tempo de uso</TabsTrigger>
-              <TabsTrigger value="ops" className="text-xs sm:text-sm whitespace-nowrap px-3">Operacional</TabsTrigger>
+        <Tabs defaultValue="info" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="shrink-0 px-3 py-3 sm:px-6">
+            <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:w-auto sm:grid-cols-none">
+              <TabsTrigger value="info" className="min-w-0 whitespace-normal px-2 text-[11px] leading-tight sm:whitespace-nowrap sm:px-3 sm:text-sm">Perfil</TabsTrigger>
+              <TabsTrigger value="availability" className="min-w-0 whitespace-normal px-2 text-[11px] leading-tight sm:whitespace-nowrap sm:px-3 sm:text-sm">Disponibilidade</TabsTrigger>
+              <TabsTrigger value="time" className="min-w-0 whitespace-normal px-2 text-[11px] leading-tight sm:whitespace-nowrap sm:px-3 sm:text-sm">Tempo de uso</TabsTrigger>
+              <TabsTrigger value="ops" className="min-w-0 whitespace-normal px-2 text-[11px] leading-tight sm:whitespace-nowrap sm:px-3 sm:text-sm">Operacional</TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="info" className="space-y-3 mt-4">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3 sm:px-6 sm:pb-6">
+          <TabsContent value="info" className="mt-0 min-w-0 space-y-3 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <InfoCard icon={<Users size={14} />} label="Cargo" value={ROLE_LABEL[member.role]} />
               <InfoCard
@@ -129,11 +130,11 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
             </div>
           </TabsContent>
 
-          <TabsContent value="availability" className="space-y-4 mt-4">
+          <TabsContent value="availability" className="mt-0 min-w-0 space-y-4 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0">
             <MemberAvailabilityCard userId={member.user_id} title={`Disponibilidade de ${member.name || member.email}`} />
           </TabsContent>
 
-          <TabsContent value="time" className="space-y-4 mt-4">
+          <TabsContent value="time" className="mt-0 min-w-0 space-y-4 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <RangePicker value={range} onChange={setRange} from={customFrom} to={customTo} onFromChange={setCustomFrom} onToChange={setCustomTo} />
               <Button
@@ -157,8 +158,7 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
               <KpiCard icon={<Calendar size={14} />} label="Dias ativos" value={String(totals.days)} />
               <KpiCard icon={<BarChart3 size={14} />} label="Média/dia" value={fmtDuration(totals.avg)} />
             </div>
-            <div className="rounded-lg border border-border/60 overflow-x-auto">
-              <div className="min-w-[480px]">
+            <SyncedHorizontalTable minWidth={520}>
                 <div className="grid grid-cols-4 px-3 py-2 text-xs font-medium bg-muted/40 text-muted-foreground">
                   <span>Data</span><span>Entrou</span><span>Saiu</span><span className="text-right">Tempo</span>
                 </div>
@@ -174,11 +174,10 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
                     <span className="text-right font-medium">{fmtDuration(s.active_seconds)}</span>
                   </div>
                 ))}
-              </div>
-            </div>
+            </SyncedHorizontalTable>
           </TabsContent>
 
-          <TabsContent value="ops" className="space-y-4 mt-4">
+          <TabsContent value="ops" className="mt-0 min-w-0 space-y-4 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <RangePicker value={range} onChange={setRange} from={customFrom} to={customTo} onFromChange={setCustomFrom} onToChange={setCustomTo} />
               <Button
@@ -216,6 +215,7 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
               </div>
             )}
           </TabsContent>
+          </div>
         </Tabs>
       </DialogContent>
     </Dialog>
@@ -224,24 +224,57 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
 
 function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-background/60 p-3">
+    <div className="min-w-0 overflow-hidden rounded-lg border border-border/60 bg-background/60 p-3">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">{icon}</span>
         {label}
       </div>
-      <div className="mt-2 text-sm font-medium">{value}</div>
+      <div className="mt-2 min-w-0 break-words text-sm font-medium">{value}</div>
     </div>
   );
 }
 
 function KpiCard({ icon, label, value }: { icon?: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-background/60 p-3">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="min-w-0 overflow-hidden rounded-lg border border-border/60 bg-background/60 p-3">
+      <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
         {icon && <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">{icon}</span>}
-        {label}
+        <span className="min-w-0 break-words">{label}</span>
       </div>
-      <div className="mt-2 text-lg font-semibold">{value}</div>
+      <div className="mt-2 min-w-0 break-words text-base font-semibold sm:text-lg">{value}</div>
+    </div>
+  );
+}
+
+function SyncedHorizontalTable({ children, minWidth }: { children: React.ReactNode; minWidth: number }) {
+  const topRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  const syncScroll = (source: "top" | "body") => {
+    const top = topRef.current;
+    const body = bodyRef.current;
+    if (!top || !body) return;
+    if (source === "top") body.scrollLeft = top.scrollLeft;
+    if (source === "body") top.scrollLeft = body.scrollLeft;
+  };
+
+  return (
+    <div data-scroll-table="true" className="min-w-0 max-w-full overflow-hidden rounded-lg border border-border/60">
+      <div
+        ref={topRef}
+        className="h-3 max-w-full overflow-x-auto overflow-y-hidden wa-scrollbar bg-muted/20"
+        onScroll={() => syncScroll("top")}
+        aria-hidden="true"
+      >
+        <div style={{ width: minWidth }} className="h-1" />
+      </div>
+      <div
+        ref={bodyRef}
+        className="max-w-full overflow-x-auto wa-scrollbar"
+        onScroll={() => syncScroll("body")}
+      >
+        <div style={{ minWidth }}>{children}</div>
+      </div>
     </div>
   );
 }
@@ -269,8 +302,8 @@ function RangePicker({
     { v: "custom", label: "Personalizado" },
   ];
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5">
+      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5">
         {opts.map((o) => (
           <Button
             key={o.v}
@@ -284,10 +317,10 @@ function RangePicker({
         ))}
       </div>
       {value === "custom" && (
-        <div className="flex items-center gap-1.5">
-          <Input type="date" value={from} onChange={(e) => onFromChange(e.target.value)} className="h-8 w-[132px] text-xs" />
+        <div className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5">
+          <Input type="date" value={from} onChange={(e) => onFromChange(e.target.value)} className="h-8 w-[132px] max-w-full text-xs" />
           <span className="text-xs text-muted-foreground">até</span>
-          <Input type="date" value={to} onChange={(e) => onToChange(e.target.value)} className="h-8 w-[132px] text-xs" />
+          <Input type="date" value={to} onChange={(e) => onToChange(e.target.value)} className="h-8 w-[132px] max-w-full text-xs" />
         </div>
       )}
     </div>

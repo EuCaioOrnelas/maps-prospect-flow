@@ -30,21 +30,21 @@ export function MemberAvailabilityCard({ userId, title = "Disponibilidade" }: Pr
   };
 
   return (
-    <Card className="p-3 sm:p-4 space-y-4 overflow-hidden">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <Card className="w-full min-w-0 max-w-full space-y-4 overflow-hidden rounded-lg p-3 sm:p-4">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold break-words">{title}</h3>
-          <p className="text-xs text-muted-foreground">
+          <h3 className="break-words text-sm font-semibold">{title}</h3>
+          <p className="break-words text-xs text-muted-foreground">
             Define quando este colaborador pode receber novos atendimentos por distribuição automática.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+        <div className="flex min-w-0 w-full items-center gap-2 sm:w-auto sm:shrink-0">
           <StatusDot status={availability.status} />
           <Select
             value={availability.status}
             onValueChange={(v) => save({ status: v as AvailabilityStatus })}
           >
-            <SelectTrigger className="h-9 flex-1 sm:flex-none sm:w-32 text-xs">
+            <SelectTrigger className="h-9 min-w-0 flex-1 text-xs sm:w-32 sm:flex-none">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -58,7 +58,7 @@ export function MemberAvailabilityCard({ userId, title = "Disponibilidade" }: Pr
 
       <div className="space-y-2">
         <Label className="text-xs">Dias de trabalho</Label>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="grid min-w-0 grid-cols-3 gap-1.5 min-[420px]:grid-cols-4 sm:flex sm:flex-wrap">
           {WEEK_DAYS.map((d) => {
             const active = availability.work_days.includes(d.value);
             return (
@@ -67,7 +67,7 @@ export function MemberAvailabilityCard({ userId, title = "Disponibilidade" }: Pr
                 size="sm"
                 type="button"
                 variant={active ? "default" : "outline"}
-                className="h-8 px-3 text-xs"
+                className="h-8 min-w-0 px-2 text-xs sm:px-3"
                 onClick={() => toggleDay(d.value)}
                 disabled={saving}
               >
@@ -78,8 +78,8 @@ export function MemberAvailabilityCard({ userId, title = "Disponibilidade" }: Pr
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
+      <div className="grid min-w-0 grid-cols-1 gap-3 min-[360px]:grid-cols-2">
+        <div className="min-w-0 space-y-1">
           <Label className="text-xs">Início</Label>
           <Input
             type="time"
@@ -89,7 +89,7 @@ export function MemberAvailabilityCard({ userId, title = "Disponibilidade" }: Pr
             className="h-9 text-sm"
           />
         </div>
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <Label className="text-xs">Fim</Label>
           <Input
             type="time"
@@ -101,7 +101,7 @@ export function MemberAvailabilityCard({ userId, title = "Disponibilidade" }: Pr
         </div>
       </div>
 
-      <p className="text-[10px] text-muted-foreground">
+      <p className="break-words text-[10px] text-muted-foreground">
         Fora do horário ou com status diferente de Online, este colaborador é ignorado pela distribuição automática.
       </p>
     </Card>
