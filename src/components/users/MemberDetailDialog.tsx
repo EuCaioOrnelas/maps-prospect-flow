@@ -259,7 +259,7 @@ function SyncedHorizontalTable({ children, minWidth }: { children: React.ReactNo
   };
 
   return (
-    <div className="min-w-0 max-w-full overflow-hidden rounded-lg border border-border/60">
+    <div data-scroll-table="true" className="min-w-0 max-w-full overflow-hidden rounded-lg border border-border/60">
       <div
         ref={topRef}
         className="h-3 max-w-full overflow-x-auto overflow-y-hidden wa-scrollbar bg-muted/20"
