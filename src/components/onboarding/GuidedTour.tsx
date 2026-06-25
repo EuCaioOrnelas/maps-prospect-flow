@@ -584,9 +584,10 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
                   }}
                 />
               </div>
-              <span className="text-xs font-bold text-green-700 tabular-nums whitespace-nowrap">
+              <span className="text-xs font-bold text-primary tabular-nums whitespace-nowrap">
                 Última etapa
               </span>
+
             </div>
             <p className="text-[11px] sm:text-xs text-muted-foreground mt-3">
               Falta pouco! Conecte sua conta Meta para começar a escalar.
