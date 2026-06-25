@@ -105,7 +105,7 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-3 sm:px-6 sm:pb-6">
-          <TabsContent value="info" className="mt-0 min-w-0 space-y-3 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="info" className="mt-0 min-w-0 space-y-3 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <InfoCard icon={<Users size={14} />} label="Cargo" value={ROLE_LABEL[member.role]} />
               <InfoCard
@@ -130,11 +130,11 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
             </div>
           </TabsContent>
 
-          <TabsContent value="availability" className="mt-0 min-w-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="availability" className="mt-0 min-w-0 space-y-4 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0">
             <MemberAvailabilityCard userId={member.user_id} title={`Disponibilidade de ${member.name || member.email}`} />
           </TabsContent>
 
-          <TabsContent value="time" className="mt-0 min-w-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="time" className="mt-0 min-w-0 space-y-4 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <RangePicker value={range} onChange={setRange} from={customFrom} to={customTo} onFromChange={setCustomFrom} onToChange={setCustomTo} />
               <Button
@@ -177,7 +177,7 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
             </SyncedHorizontalTable>
           </TabsContent>
 
-          <TabsContent value="ops" className="mt-0 min-w-0 space-y-4 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="ops" className="mt-0 min-w-0 space-y-4 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <RangePicker value={range} onChange={setRange} from={customFrom} to={customTo} onFromChange={setCustomFrom} onToChange={setCustomTo} />
               <Button
