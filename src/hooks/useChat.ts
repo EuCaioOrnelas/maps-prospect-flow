@@ -921,6 +921,7 @@ export function useChat() {
     toggleBlock,
     saveContactName,
     forwardMessages,
+    reopenConversation,
   };
 }
 
