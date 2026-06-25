@@ -152,7 +152,7 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
                 <Download size={14} className="mr-1.5" /> Exportar
               </Button>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <KpiCard icon={<TimerReset size={14} />} label="Tempo ativo" value={fmtDuration(totals.totalSec)} />
               <KpiCard icon={<Calendar size={14} />} label="Dias ativos" value={String(totals.days)} />
               <KpiCard icon={<BarChart3 size={14} />} label="Média/dia" value={fmtDuration(totals.avg)} />
