@@ -521,7 +521,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
       style={{ zIndex: 2147483647 }}
     >
-      <div className="relative w-full max-w-md bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
         <div
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full opacity-40 pointer-events-none blur-3xl"
           style={{
