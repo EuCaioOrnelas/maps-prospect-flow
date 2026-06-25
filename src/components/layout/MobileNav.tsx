@@ -44,6 +44,7 @@ type SectionKey = "dashboard" | "oportunidades" | "campanhas" | "crm" | "automac
 export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [openSection, setOpenSection] = useState<SectionKey | null>(null);
+  const location = useLocation();
   const { trialDaysRemaining, isTrialing, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
   const can = (key: FeatureKey) =>
