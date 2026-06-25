@@ -31,20 +31,20 @@ export function MemberAvailabilityCard({ userId, title = "Disponibilidade" }: Pr
 
   return (
     <Card className="p-4 space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h3 className="text-sm font-semibold">{title}</h3>
           <p className="text-xs text-muted-foreground">
             Define quando este colaborador pode receber novos atendimentos por distribuição automática.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <StatusDot status={availability.status} />
           <Select
             value={availability.status}
             onValueChange={(v) => save({ status: v as AvailabilityStatus })}
           >
-            <SelectTrigger className="h-9 w-32 text-xs">
+            <SelectTrigger className="h-9 w-28 sm:w-32 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
