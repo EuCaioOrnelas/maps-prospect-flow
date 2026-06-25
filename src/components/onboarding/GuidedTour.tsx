@@ -561,7 +561,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           {/* Next step card */}
           <div className="text-left bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 mb-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#25D366]/10 text-[#25D366]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-50 border border-green-200 text-primary">
                 <FaWhatsapp size={30} />
               </div>
               <div className="min-w-0 flex-1">
