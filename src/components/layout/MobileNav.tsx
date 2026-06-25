@@ -198,7 +198,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                 </p>
                 <TopLink to="/dashboard" icon={LayoutDashboard} label="Cockpit" />
                 {can("chat") && (
-                  <TopLink to="/chat" icon={MessageCircle} label="Chat" highlight />
+                  <TopLink to="/chat" icon={MessageCircle} label="Chat" />
                 )}
                 {can("crm") && (
                   <TopLink to="/crm/score" icon={Trophy} label="Score de leads" />
