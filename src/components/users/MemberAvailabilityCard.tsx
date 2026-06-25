@@ -30,7 +30,7 @@ export function MemberAvailabilityCard({ userId, title = "Disponibilidade" }: Pr
   };
 
   return (
-    <Card className="p-4 space-y-4">
+    <Card className="p-3 sm:p-4 space-y-4 overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold">{title}</h3>
