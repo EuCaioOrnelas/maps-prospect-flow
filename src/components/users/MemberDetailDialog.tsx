@@ -95,12 +95,14 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <Tabs defaultValue="info" className="mt-2">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="info">Perfil</TabsTrigger>
-            <TabsTrigger value="availability">Disponibilidade</TabsTrigger>
-            <TabsTrigger value="time">Tempo de uso</TabsTrigger>
-            <TabsTrigger value="ops">Operacional</TabsTrigger>
-          </TabsList>
+          <div className="-mx-1 overflow-x-auto wa-scrollbar">
+            <TabsList className="inline-flex w-max min-w-full gap-1">
+              <TabsTrigger value="info" className="text-xs sm:text-sm whitespace-nowrap px-3">Perfil</TabsTrigger>
+              <TabsTrigger value="availability" className="text-xs sm:text-sm whitespace-nowrap px-3">Disponibilidade</TabsTrigger>
+              <TabsTrigger value="time" className="text-xs sm:text-sm whitespace-nowrap px-3">Tempo de uso</TabsTrigger>
+              <TabsTrigger value="ops" className="text-xs sm:text-sm whitespace-nowrap px-3">Operacional</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="info" className="space-y-3 mt-4">
             <div className="grid grid-cols-2 gap-3">
