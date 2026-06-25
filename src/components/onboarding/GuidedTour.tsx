@@ -607,7 +607,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
             onClick={handleConnect}
             className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
           >
-            <FaWhatsapp size={28} />
+            <FaWhatsapp size={40} className="!h-7 !w-7" />
             Conectar WhatsApp na Meta API Agora
           </Button>
 
