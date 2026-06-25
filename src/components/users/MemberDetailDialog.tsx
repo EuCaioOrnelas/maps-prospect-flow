@@ -202,11 +202,11 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
               </Button>
             </div>
             {loading || !stats ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-20" />)}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 <KpiCard icon={<Users size={14} />} label="Leads prospectados" value={String(stats.leads || 0)} />
                 <KpiCard icon={<DollarSign size={14} />} label="Vendas (valor)" value={fmtMoney(Number(stats.sales_value || 0))} />
                 <KpiCard icon={<DollarSign size={14} />} label="Vendas (quantidade)" value={String(stats.sales_count || 0)} />
