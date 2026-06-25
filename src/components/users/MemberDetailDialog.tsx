@@ -77,7 +77,7 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[88vh] overflow-y-auto overflow-x-hidden p-3 sm:p-6 rounded-2xl sm:rounded-2xl">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-full sm:max-w-3xl max-h-[88vh] overflow-y-auto overflow-x-hidden p-3 sm:p-6 rounded-2xl gap-3 sm:gap-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
@@ -105,7 +105,7 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
           </div>
 
           <TabsContent value="info" className="space-y-3 mt-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <InfoCard icon={<Users size={14} />} label="Cargo" value={ROLE_LABEL[member.role]} />
               <InfoCard
                 icon={<Activity size={14} />}
@@ -152,7 +152,7 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
                 <Download size={14} className="mr-1.5" /> Exportar
               </Button>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <KpiCard icon={<TimerReset size={14} />} label="Tempo ativo" value={fmtDuration(totals.totalSec)} />
               <KpiCard icon={<Calendar size={14} />} label="Dias ativos" value={String(totals.days)} />
               <KpiCard icon={<BarChart3 size={14} />} label="Média/dia" value={fmtDuration(totals.avg)} />
@@ -202,11 +202,11 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
               </Button>
             </div>
             {loading || !stats ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-20" />)}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 <KpiCard icon={<Users size={14} />} label="Leads prospectados" value={String(stats.leads || 0)} />
                 <KpiCard icon={<DollarSign size={14} />} label="Vendas (valor)" value={fmtMoney(Number(stats.sales_value || 0))} />
                 <KpiCard icon={<DollarSign size={14} />} label="Vendas (quantidade)" value={String(stats.sales_count || 0)} />
