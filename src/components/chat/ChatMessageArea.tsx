@@ -237,14 +237,14 @@ function ReplyQuote({ replyMsg }: { replyMsg: ChatMessage | undefined }) {
   );
 }
 
-function SearchMessagesBar({ messages, onClose }: { messages: ChatMessage[]; onClose: () => void }) {
+function SearchMessagesBar({ messages, onClose, onJumpToMessage }: { messages: ChatMessage[]; onClose: () => void; onJumpToMessage?: (messageId: string) => void }) {
   const [query, setQuery] = useState("");
   const results = query.trim().length >= 2
     ? messages.filter(m => m.content?.toLowerCase().includes(query.toLowerCase()))
     : [];
 
   return (
-    <div className="wa-search-panel flex flex-col border-l wa-border-light w-[360px] shrink-0 h-full">
+    <div className="wa-search-panel flex flex-col border-l wa-border-light w-full md:w-[360px] md:shrink-0 h-full absolute inset-0 md:relative md:inset-auto z-30 bg-background">
       <div className="h-[59px] flex items-center gap-3 px-4 wa-header-bg border-b wa-border-light">
         <button onClick={onClose} className="wa-icon-button p-2">
           <X size={20} className="wa-icon-header" />
@@ -270,10 +270,15 @@ function SearchMessagesBar({ messages, onClose }: { messages: ChatMessage[]; onC
           <p className="text-center text-[13px] wa-text-muted py-8">Nenhuma mensagem encontrada</p>
         ) : (
           results.map(msg => (
-            <div key={msg.id} className="py-3 border-b wa-border-light">
+            <button
+              key={msg.id}
+              type="button"
+              onClick={() => { onJumpToMessage?.(msg.id); onClose(); }}
+              className="w-full text-left py-3 border-b wa-border-light hover:bg-muted/30 transition-colors px-1 rounded"
+            >
               <p className="text-[11px] wa-text-timestamp mb-1">{format(parseISO(msg.created_at), "dd/MM/yyyy HH:mm")}</p>
               <p className="text-[13px] wa-text-primary leading-[18px] line-clamp-2">{msg.content}</p>
-            </div>
+            </button>
           ))
         )}
       </div>
