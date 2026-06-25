@@ -981,7 +981,7 @@ export function ChatMessageArea({
                     const quickForward = (m: ChatMessage) => startForwardFromMessage(m);
 
                     return (
-                      <div key={msg.id}>
+                      <div key={msg.id} id={`msg-${msg.id}`}>
                         {showDate && <DateDivider date={parseISO(msg.created_at)} />}
                         <div
                           className={cn(
