@@ -503,7 +503,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
   useEffect(() => {
     const tConfetti = setTimeout(() => fireSides(), 250);
     // Animate progress bar from 0 to 80% after mount
-    const tProgress = setTimeout(() => setProgress(92), 400);
+    const tProgress = setTimeout(() => setProgress(6), 400);
     return () => {
       clearTimeout(tConfetti);
       clearTimeout(tProgress);
