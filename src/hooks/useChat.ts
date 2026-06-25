@@ -840,6 +840,51 @@ export function useChat() {
     return {};
   }, [user, accountOwnerId, activeConnectionId, conversations, connections]);
 
+  // Reopen an expired conversation by sending an approved Meta template
+  const reopenConversation = useCallback(async (templateName: string) => {
+    if (!user || !activeConversation) {
+      toast.error("Selecione uma conversa");
+      return;
+    }
+    const connection = connections.find(c => c.id === activeConversation.waba_connection_id);
+    if (!connection) {
+      toast.error("Conexão Meta não encontrada");
+      return;
+    }
+    const to = formatPhoneForMeta(activeConversation.contact_phone);
+    if (!to) {
+      toast.error("Telefone do contato inválido");
+      return;
+    }
+    try {
+      const { data: inserted } = await supabase.from("chat_messages").insert({
+        conversation_id: activeConversation.id,
+        user_id: user.id,
+        owner_user_id: accountOwnerId || user.id,
+        direction: "outbound",
+        message_type: "text",
+        content: `[Template] ${templateName}`,
+        status: "pending",
+        metadata: { template_name: templateName, reopen: true },
+      } as any).select().single();
+
+      const { error } = await supabase.functions.invoke("send-chat-message", {
+        body: {
+          message_id: (inserted as any)?.id,
+          phone_number_id: connection.phone_number_id,
+          to,
+          type: "template",
+          template_name: templateName,
+          waba_connection_id: connection.id,
+        },
+      });
+      if (error) throw error;
+      toast.success("Template enviado. Janela reaberta após resposta do contato.");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao reabrir conversa");
+    }
+  }, [user, accountOwnerId, activeConversation, connections]);
+
   return {
     conversations: filteredConversations,
     messages,
