@@ -41,15 +41,6 @@ function getCategoryLabel(cat: string) {
   }
 }
 
-function getCategoryCost(cat: string) {
-  switch (cat) {
-    case "utility": return "~R$ 0,25";
-    case "marketing": return "~R$ 0,62";
-    case "authentication": return "~R$ 0,15";
-    default: return "~R$ 0,25";
-  }
-}
-
 function getTemplatePreview(template: MetaTemplate): string {
   const bodyComp = template.components?.find((c: any) => c.type === "BODY");
   return bodyComp?.text || template.name;
