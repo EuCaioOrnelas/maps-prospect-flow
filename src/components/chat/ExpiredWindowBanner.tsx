@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Clock, Info, MessageSquare, Send, Loader2 } from "lucide-react";
+import { Clock, MessageSquare, Send, Loader2 } from "lucide-react";
 
 interface MetaTemplate {
   id: string;
@@ -38,15 +38,6 @@ function getCategoryLabel(cat: string) {
     case "marketing": return "Marketing";
     case "authentication": return "Autenticação";
     default: return cat;
-  }
-}
-
-function getCategoryCost(cat: string) {
-  switch (cat) {
-    case "utility": return "~R$ 0,25";
-    case "marketing": return "~R$ 0,62";
-    case "authentication": return "~R$ 0,15";
-    default: return "~R$ 0,25";
   }
 }
 
@@ -148,16 +139,11 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
                       : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <p className="text-[13px] font-medium text-foreground">{template.name}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                        {getCategoryLabel(template.category)}
-                      </span>
-                      <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                        {getCategoryCost(template.category)}
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[13px] font-medium text-foreground truncate">{template.name}</p>
+                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
+                      {getCategoryLabel(template.category)}
+                    </span>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">{template.language}</p>
                   <div className="mt-2 bg-muted/50 rounded-md px-3 py-2">
@@ -168,15 +154,6 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
             )}
           </div>
 
-          <div className="mx-5 mb-3 p-3 rounded-lg bg-muted/40 border border-border">
-            <div className="flex items-start gap-2">
-              <Info size={14} className="text-muted-foreground mt-0.5 shrink-0" />
-              <p className="text-[10px] text-muted-foreground leading-[15px]">
-                O custo exibido é cobrado diretamente pela <span className="font-medium text-foreground">Meta (WhatsApp)</span>, não pela Wiize.
-                O valor varia conforme a categoria do template e o país do destinatário.
-              </p>
-            </div>
-          </div>
 
           <div className="px-5 py-4 border-t border-border flex items-center justify-between gap-3">
             <Button

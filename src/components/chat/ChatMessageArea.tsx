@@ -237,14 +237,14 @@ function ReplyQuote({ replyMsg }: { replyMsg: ChatMessage | undefined }) {
   );
 }
 
-function SearchMessagesBar({ messages, onClose }: { messages: ChatMessage[]; onClose: () => void }) {
+function SearchMessagesBar({ messages, onClose, onJumpToMessage }: { messages: ChatMessage[]; onClose: () => void; onJumpToMessage?: (messageId: string) => void }) {
   const [query, setQuery] = useState("");
   const results = query.trim().length >= 2
     ? messages.filter(m => m.content?.toLowerCase().includes(query.toLowerCase()))
     : [];
 
   return (
-    <div className="wa-search-panel flex flex-col border-l wa-border-light w-[360px] shrink-0 h-full">
+    <div className="wa-search-panel flex flex-col border-l wa-border-light w-full md:w-[360px] md:shrink-0 h-full absolute inset-0 md:relative md:inset-auto z-30 bg-background">
       <div className="h-[59px] flex items-center gap-3 px-4 wa-header-bg border-b wa-border-light">
         <button onClick={onClose} className="wa-icon-button p-2">
           <X size={20} className="wa-icon-header" />
@@ -270,10 +270,15 @@ function SearchMessagesBar({ messages, onClose }: { messages: ChatMessage[]; onC
           <p className="text-center text-[13px] wa-text-muted py-8">Nenhuma mensagem encontrada</p>
         ) : (
           results.map(msg => (
-            <div key={msg.id} className="py-3 border-b wa-border-light">
+            <button
+              key={msg.id}
+              type="button"
+              onClick={() => { onJumpToMessage?.(msg.id); onClose(); }}
+              className="w-full text-left py-3 border-b wa-border-light hover:bg-muted/30 transition-colors px-1 rounded"
+            >
               <p className="text-[11px] wa-text-timestamp mb-1">{format(parseISO(msg.created_at), "dd/MM/yyyy HH:mm")}</p>
               <p className="text-[13px] wa-text-primary leading-[18px] line-clamp-2">{msg.content}</p>
-            </div>
+            </button>
           ))
         )}
       </div>
@@ -358,6 +363,7 @@ export function ChatMessageArea({
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [contactPanelOpen, setContactPanelOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const [mobileSubOpen, setMobileSubOpen] = useState<"stage" | "resp" | null>(null);
   const [pipelineStages, setPipelineStages] = useState<{ id: string; name: string; color: string | null; position: number }[]>([]);
   const [leadInfo, setLeadInfo] = useState<{ id: string; pipeline_stage_id: string | null } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -804,7 +810,7 @@ export function ChatMessageArea({
             <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
               <Search size={20} className="wa-chat-header-icon" />
             </button>
-            <DropdownMenu open={headerMenuOpen} onOpenChange={setHeaderMenuOpen}>
+            <DropdownMenu open={headerMenuOpen} onOpenChange={(o) => { setHeaderMenuOpen(o); if (!o) setMobileSubOpen(null); }}>
               <DropdownMenuTrigger asChild>
 
                 <button className="wa-icon-button p-1">
@@ -823,13 +829,16 @@ export function ChatMessageArea({
                   const stageColor = currentStage?.color || "#10b981";
                   return (
                     <div className="md:hidden">
-                      <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+                      <DropdownMenuItem
+                        onSelect={(e) => { e.preventDefault(); setMobileSubOpen(mobileSubOpen === "stage" ? null : "stage"); }}
+                        className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                      >
                         <span className="w-[14px] h-[14px] rounded-full inline-flex items-center justify-center shrink-0" style={{ backgroundColor: leadInfo ? stageColor : "transparent", border: leadInfo ? "none" : "1.5px solid currentColor" }} />
                         <span className="flex-1 truncate">Coluna CRM: {leadInfo ? (currentStage?.name || "Sem coluna") : "Não está no CRM"}</span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent className="wa-dropdown-menu border wa-border min-w-[220px] max-h-[60vh] overflow-y-auto rounded-xl shadow-2xl py-1.5">
+                        <ChevronDown size={14} className={cn("transition-transform", mobileSubOpen === "stage" && "rotate-180")} />
+                      </DropdownMenuItem>
+                      {mobileSubOpen === "stage" && (
+                        <div className="ml-3 mr-1 mb-1 max-h-[40vh] overflow-y-auto border-l-2 wa-border-light pl-1">
                           {!leadInfo && (
                             <div className="px-3 py-2 text-[11px] text-muted-foreground">Salve o contato no CRM para mover entre colunas.</div>
                           )}
@@ -840,7 +849,7 @@ export function ChatMessageArea({
                               <DropdownMenuItem
                                 key={s.id}
                                 disabled={!leadInfo}
-                                onClick={() => { setHeaderMenuOpen(false); handleChangeStage(s.id); }}
+                                onClick={() => { setHeaderMenuOpen(false); setMobileSubOpen(null); handleChangeStage(s.id); }}
                                 className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                               >
                                 <span className="w-[10px] h-[10px] rounded-full shrink-0" style={{ backgroundColor: color }} />
@@ -849,9 +858,8 @@ export function ChatMessageArea({
                               </DropdownMenuItem>
                             );
                           })}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                      </DropdownMenuSub>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -860,16 +868,19 @@ export function ChatMessageArea({
                   const respLabel = respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || "Atribuir";
                   return (
                     <div className="md:hidden">
-                      <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+                      <DropdownMenuItem
+                        onSelect={(e) => { e.preventDefault(); setMobileSubOpen(mobileSubOpen === "resp" ? null : "resp"); }}
+                        className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                      >
                         <UserCog size={15} />
                         <span className="flex-1 truncate">Responsável: {respLabel}</span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent className="wa-dropdown-menu border wa-border min-w-[240px] max-h-[60vh] overflow-y-auto rounded-xl shadow-2xl py-1.5">
+                        <ChevronDown size={14} className={cn("transition-transform", mobileSubOpen === "resp" && "rotate-180")} />
+                      </DropdownMenuItem>
+                      {mobileSubOpen === "resp" && (
+                        <div className="ml-3 mr-1 mb-1 max-h-[40vh] overflow-y-auto border-l-2 wa-border-light pl-1">
                           <DropdownMenuItem
                             onClick={async () => {
-                              try { await onTransferResponsible(conversation.id, null); setHeaderMenuOpen(false); toast.success("Sem responsável"); }
+                              try { await onTransferResponsible(conversation.id, null); setHeaderMenuOpen(false); setMobileSubOpen(null); toast.success("Sem responsável"); }
                               catch { toast.error("Erro ao transferir"); }
                             }}
                             className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
@@ -885,7 +896,7 @@ export function ChatMessageArea({
                               <DropdownMenuItem
                                 key={m.user_id}
                                 onClick={async () => {
-                                  try { await onTransferResponsible(conversation.id, m.user_id); setHeaderMenuOpen(false); toast.success("Conversa transferida"); }
+                                  try { await onTransferResponsible(conversation.id, m.user_id); setHeaderMenuOpen(false); setMobileSubOpen(null); toast.success("Conversa transferida"); }
                                   catch { toast.error("Erro ao transferir"); }
                                 }}
                                 className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
@@ -899,9 +910,8 @@ export function ChatMessageArea({
                               </DropdownMenuItem>
                             );
                           })}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                      </DropdownMenuSub>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -976,7 +986,7 @@ export function ChatMessageArea({
                     const quickForward = (m: ChatMessage) => startForwardFromMessage(m);
 
                     return (
-                      <div key={msg.id}>
+                      <div key={msg.id} id={`msg-${msg.id}`}>
                         {showDate && <DateDivider date={parseISO(msg.created_at)} />}
                         <div
                           className={cn(
@@ -1179,7 +1189,20 @@ export function ChatMessageArea({
 
       {/* Search panel */}
       {showSearch && (
-        <SearchMessagesBar messages={messages} onClose={() => setShowSearch(false)} />
+        <SearchMessagesBar
+          messages={messages}
+          onClose={() => setShowSearch(false)}
+          onJumpToMessage={(id) => {
+            requestAnimationFrame(() => {
+              const el = document.getElementById(`msg-${id}`);
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                el.classList.add("ring-2", "ring-primary/60", "rounded-lg");
+                setTimeout(() => el.classList.remove("ring-2", "ring-primary/60", "rounded-lg"), 1800);
+              }
+            });
+          }}
+        />
       )}
 
       {/* Image lightbox */}

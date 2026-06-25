@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Menu,
   X,
@@ -44,6 +44,7 @@ type SectionKey = "dashboard" | "oportunidades" | "campanhas" | "crm" | "automac
 export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [openSection, setOpenSection] = useState<SectionKey | null>(null);
+  const location = useLocation();
   const { trialDaysRemaining, isTrialing, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
   const can = (key: FeatureKey) =>
@@ -126,18 +127,22 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
     icon: typeof LayoutDashboard;
     label: string;
     highlight?: boolean;
-  }) => (
-    <Link to={to} onClick={close}>
-      <Button
-        variant={highlight ? "default" : "ghost"}
-        size="sm"
-        className="w-full justify-start gap-2"
-      >
-        <Icon size={16} />
-        {label}
-      </Button>
-    </Link>
-  );
+  }) => {
+    const isActive = location.pathname === to || location.pathname.startsWith(to + "/");
+    const useActive = highlight ?? isActive;
+    return (
+      <Link to={to} onClick={close}>
+        <Button
+          variant={useActive ? "default" : "ghost"}
+          size="sm"
+          className="w-full justify-start gap-2"
+        >
+          <Icon size={16} />
+          {label}
+        </Button>
+      </Link>
+    );
+  };
 
   return (
     <div className="lg:hidden">
@@ -193,7 +198,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                 </p>
                 <TopLink to="/dashboard" icon={LayoutDashboard} label="Cockpit" />
                 {can("chat") && (
-                  <TopLink to="/chat" icon={MessageCircle} label="Chat" highlight />
+                  <TopLink to="/chat" icon={MessageCircle} label="Chat" />
                 )}
                 {can("crm") && (
                   <TopLink to="/crm/score" icon={Trophy} label="Score de leads" />

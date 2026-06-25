@@ -426,9 +426,7 @@ const Chat = () => {
                     onSendMessage={chat.sendMessage}
                     onSendMedia={chat.sendMedia}
                     messagesEndRef={chat.messagesEndRef as React.RefObject<HTMLDivElement>}
-                    onReopenConversation={(templateName) => {
-                      console.log("Reabrir conversa com template:", templateName);
-                    }}
+                    onReopenConversation={chat.reopenConversation}
                     fetchTemplates={chat.fetchTemplates}
                     members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
                     canChangeResponsible={canChangeResponsible}
