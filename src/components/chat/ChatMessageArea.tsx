@@ -828,13 +828,16 @@ export function ChatMessageArea({
                   const stageColor = currentStage?.color || "#10b981";
                   return (
                     <div className="md:hidden">
-                      <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+                      <DropdownMenuItem
+                        onSelect={(e) => { e.preventDefault(); setMobileSubOpen(mobileSubOpen === "stage" ? null : "stage"); }}
+                        className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                      >
                         <span className="w-[14px] h-[14px] rounded-full inline-flex items-center justify-center shrink-0" style={{ backgroundColor: leadInfo ? stageColor : "transparent", border: leadInfo ? "none" : "1.5px solid currentColor" }} />
                         <span className="flex-1 truncate">Coluna CRM: {leadInfo ? (currentStage?.name || "Sem coluna") : "Não está no CRM"}</span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent className="wa-dropdown-menu border wa-border min-w-[220px] max-h-[60vh] overflow-y-auto rounded-xl shadow-2xl py-1.5">
+                        <ChevronDown size={14} className={cn("transition-transform", mobileSubOpen === "stage" && "rotate-180")} />
+                      </DropdownMenuItem>
+                      {mobileSubOpen === "stage" && (
+                        <div className="ml-3 mr-1 mb-1 max-h-[40vh] overflow-y-auto border-l-2 wa-border-light pl-1">
                           {!leadInfo && (
                             <div className="px-3 py-2 text-[11px] text-muted-foreground">Salve o contato no CRM para mover entre colunas.</div>
                           )}
@@ -845,7 +848,7 @@ export function ChatMessageArea({
                               <DropdownMenuItem
                                 key={s.id}
                                 disabled={!leadInfo}
-                                onClick={() => { setHeaderMenuOpen(false); handleChangeStage(s.id); }}
+                                onClick={() => { setHeaderMenuOpen(false); setMobileSubOpen(null); handleChangeStage(s.id); }}
                                 className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                               >
                                 <span className="w-[10px] h-[10px] rounded-full shrink-0" style={{ backgroundColor: color }} />
@@ -854,9 +857,8 @@ export function ChatMessageArea({
                               </DropdownMenuItem>
                             );
                           })}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                      </DropdownMenuSub>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -865,16 +867,19 @@ export function ChatMessageArea({
                   const respLabel = respMember?.name?.split(" ")[0] || respMember?.email?.split("@")[0] || "Atribuir";
                   return (
                     <div className="md:hidden">
-                      <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer">
+                      <DropdownMenuItem
+                        onSelect={(e) => { e.preventDefault(); setMobileSubOpen(mobileSubOpen === "resp" ? null : "resp"); }}
+                        className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                      >
                         <UserCog size={15} />
                         <span className="flex-1 truncate">Responsável: {respLabel}</span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent className="wa-dropdown-menu border wa-border min-w-[240px] max-h-[60vh] overflow-y-auto rounded-xl shadow-2xl py-1.5">
+                        <ChevronDown size={14} className={cn("transition-transform", mobileSubOpen === "resp" && "rotate-180")} />
+                      </DropdownMenuItem>
+                      {mobileSubOpen === "resp" && (
+                        <div className="ml-3 mr-1 mb-1 max-h-[40vh] overflow-y-auto border-l-2 wa-border-light pl-1">
                           <DropdownMenuItem
                             onClick={async () => {
-                              try { await onTransferResponsible(conversation.id, null); setHeaderMenuOpen(false); toast.success("Sem responsável"); }
+                              try { await onTransferResponsible(conversation.id, null); setHeaderMenuOpen(false); setMobileSubOpen(null); toast.success("Sem responsável"); }
                               catch { toast.error("Erro ao transferir"); }
                             }}
                             className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
@@ -890,7 +895,7 @@ export function ChatMessageArea({
                               <DropdownMenuItem
                                 key={m.user_id}
                                 onClick={async () => {
-                                  try { await onTransferResponsible(conversation.id, m.user_id); setHeaderMenuOpen(false); toast.success("Conversa transferida"); }
+                                  try { await onTransferResponsible(conversation.id, m.user_id); setHeaderMenuOpen(false); setMobileSubOpen(null); toast.success("Conversa transferida"); }
                                   catch { toast.error("Erro ao transferir"); }
                                 }}
                                 className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
@@ -904,9 +909,8 @@ export function ChatMessageArea({
                               </DropdownMenuItem>
                             );
                           })}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                      </DropdownMenuSub>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
