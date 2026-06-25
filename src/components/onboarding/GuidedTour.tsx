@@ -502,7 +502,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
   useEffect(() => {
     const tConfetti = setTimeout(() => fireSides(), 250);
     // Animate progress bar from 0 to 80% after mount
-    const tProgress = setTimeout(() => setProgress(80), 400);
+    const tProgress = setTimeout(() => setProgress(92), 400);
     return () => {
       clearTimeout(tConfetti);
       clearTimeout(tProgress);
@@ -521,7 +521,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
       style={{ zIndex: 2147483647 }}
     >
-      <div className="relative w-full max-w-3xl bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
         <div
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full opacity-40 pointer-events-none blur-3xl"
           style={{
@@ -576,7 +576,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
             <div className="mt-4 flex items-center gap-3">
               <div className="relative h-3.5 flex-1 overflow-hidden rounded-full bg-gray-100 border border-gray-200">
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-[linear-gradient(90deg,#22c55e_0%,#10b981_50%,#0ea5e9_100%)] shadow-[0_0_16px_rgba(16,185,129,0.55)]"
+                  className="absolute inset-y-0 left-0 rounded-full bg-[linear-gradient(90deg,#15803d_0%,#16a34a_55%,#22c55e_100%)] shadow-[0_0_16px_rgba(34,197,94,0.55)]"
                   style={{
                     width: `${progress}%`,
                     transition: "width 1600ms cubic-bezier(0.22, 1, 0.36, 1)",
