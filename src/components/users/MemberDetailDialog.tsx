@@ -77,7 +77,7 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[88vh] overflow-y-auto overflow-x-hidden p-3 sm:p-6 rounded-2xl sm:rounded-2xl">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-full sm:max-w-3xl max-h-[88vh] overflow-y-auto overflow-x-hidden p-3 sm:p-6 rounded-2xl gap-3 sm:gap-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
