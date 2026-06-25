@@ -595,10 +595,11 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           <Button
             size="xl"
             onClick={handleConnect}
-            className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
+            className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold uppercase tracking-wider"
           >
             <MessageCircle size={20} />
-            Conectar WhatsApp na Meta API agora
+            CONECTAR WHATSAPP NA META API AGORA
+
           </Button>
 
           <button
