@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Headphones, Kanban, MessageCircle, Rocket, Search, Send, Sparkles, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Clock, Headphones, Kanban, MessageCircle, Rocket, Search, Send, Sparkles, Zap } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
 import { Button } from "@/components/ui/button";
 import { useConfetti } from "@/components/ui/confetti";
