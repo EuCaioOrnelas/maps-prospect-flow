@@ -810,7 +810,7 @@ export function ChatMessageArea({
             <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
               <Search size={20} className="wa-chat-header-icon" />
             </button>
-            <DropdownMenu open={headerMenuOpen} onOpenChange={setHeaderMenuOpen}>
+            <DropdownMenu open={headerMenuOpen} onOpenChange={(o) => { setHeaderMenuOpen(o); if (!o) setMobileSubOpen(null); }}>
               <DropdownMenuTrigger asChild>
 
                 <button className="wa-icon-button p-1">
