@@ -246,7 +246,7 @@ export function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "
               </TabsContent>
 
               <TabsContent value="video" className="mt-4">
-                <div className="w-full p-[3px] rounded-2xl bg-white border border-white">
+                <div className="w-full max-w-2xl mx-auto p-[3px] rounded-2xl bg-white border border-white">
                   <div className="relative w-full rounded-[0.875rem] overflow-hidden bg-white group" style={{ aspectRatio: "16 / 9" }}>
                     {!videoPlaying ? (
                       <button
