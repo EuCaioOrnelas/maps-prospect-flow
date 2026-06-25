@@ -521,7 +521,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
       style={{ zIndex: 2147483647 }}
     >
-      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+      <div className="relative w-full max-w-3xl bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
         <div
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full opacity-40 pointer-events-none blur-3xl"
           style={{
@@ -574,9 +574,9 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
             </div>
 
             <div className="mt-4 flex items-center gap-3">
-              <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-primary/10">
+              <div className="relative h-3.5 flex-1 overflow-hidden rounded-full bg-gray-100 border border-gray-200">
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary/80 to-primary shadow-[0_0_12px_hsl(var(--primary)/0.55)]"
+                  className="absolute inset-y-0 left-0 rounded-full bg-[linear-gradient(90deg,#22c55e_0%,#10b981_50%,#0ea5e9_100%)] shadow-[0_0_16px_rgba(16,185,129,0.55)]"
                   style={{
                     width: `${progress}%`,
                     transition: "width 1600ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -595,11 +595,10 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           <Button
             size="xl"
             onClick={handleConnect}
-            className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold uppercase tracking-wider"
+            className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
           >
             <MessageCircle size={20} />
-            CONECTAR WHATSAPP NA META API AGORA
-
+            Conectar WhatsApp na Meta API Agora
           </Button>
 
           <button
