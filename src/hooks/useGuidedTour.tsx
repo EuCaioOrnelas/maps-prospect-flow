@@ -447,7 +447,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       id: "final",
       route: "/dashboard",
       title: "Tudo pronto para escalar",
-      body: "Você já conhece toda a operação Wiize. Agora é com você: capte, prospecte, atenda e feche mais negócios com inteligência.",
+      body: "Você já conhece toda a operação Wiize. Falta apenas uma etapa para começar a gerar resultados reais.",
       placement: "center",
     },
   ];

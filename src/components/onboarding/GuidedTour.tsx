@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Headphones, Kanban, MessageCircle, Rocket, Search, Send, Sparkles, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Clock, Headphones, Kanban, MessageCircle, Rocket, Search, Send, Sparkles, Zap } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
 import { Button } from "@/components/ui/button";
 import { useConfetti } from "@/components/ui/confetti";
@@ -502,7 +503,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
   useEffect(() => {
     const tConfetti = setTimeout(() => fireSides(), 250);
     // Animate progress bar from 0 to 80% after mount
-    const tProgress = setTimeout(() => setProgress(92), 400);
+    const tProgress = setTimeout(() => setProgress(6), 400);
     return () => {
       clearTimeout(tConfetti);
       clearTimeout(tProgress);
@@ -558,14 +559,14 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           </p>
 
           {/* Next step card */}
-          <div className="text-left bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 mb-6">
+          <div className="text-left bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 mb-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <MessageCircle size={20} strokeWidth={2.2} />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#25D366]/10 text-[#25D366]">
+                <FaWhatsapp size={22} />
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="text-sm sm:text-base font-bold text-foreground leading-tight">
-                  Próximo passo: conectar WhatsApp na Meta API
+                  Última etapa: conectar seu WhatsApp Oficial
                 </h4>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
                   Conecte sua conta oficial via Meta API para começar a prospectar, atender e fechar mais negócios.
@@ -578,13 +579,13 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
                 <div
                   className="absolute inset-y-0 left-0 rounded-full bg-[linear-gradient(90deg,#15803d_0%,#16a34a_55%,#22c55e_100%)] shadow-[0_0_16px_rgba(34,197,94,0.55)]"
                   style={{
-                    width: `${progress}%`,
+                    width: `${(progress / 7) * 100}%`,
                     transition: "width 1600ms cubic-bezier(0.22, 1, 0.36, 1)",
                   }}
                 />
               </div>
-              <span className="text-xs font-bold text-primary tabular-nums w-9 text-right">
-                {progress}%
+              <span className="text-xs font-bold text-primary tabular-nums w-10 text-right">
+                {progress}/7
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-muted-foreground mt-3">
@@ -592,12 +593,20 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
             </p>
           </div>
 
+          {/* Estimated time card */}
+          <div className="flex items-center justify-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-6">
+            <Clock size={16} className="text-green-700" />
+            <span className="text-xs sm:text-sm font-semibold text-green-800">
+              Tempo estimado: 15 a 25 minutos
+            </span>
+          </div>
+
           <Button
             size="xl"
             onClick={handleConnect}
             className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
           >
-            <MessageCircle size={20} />
+            <FaWhatsapp size={20} />
             Conectar WhatsApp na Meta API Agora
           </Button>
 
