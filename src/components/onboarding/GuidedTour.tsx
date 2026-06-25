@@ -496,23 +496,24 @@ interface FinalStepProps {
 
 function FinalStep({ title, body, onFinish }: FinalStepProps) {
   const { fireRealistic, fireSides } = useConfetti();
-  const [celebrated, setCelebrated] = useState(false);
+  const navigate = useNavigate();
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const t = setTimeout(() => fireSides(), 250);
-    return () => clearTimeout(t);
+    const tConfetti = setTimeout(() => fireSides(), 250);
+    // Animate progress bar from 0 to 80% after mount
+    const tProgress = setTimeout(() => setProgress(80), 400);
+    return () => {
+      clearTimeout(tConfetti);
+      clearTimeout(tProgress);
+    };
   }, [fireSides]);
 
-  const handleFinish = () => {
-    if (celebrated) {
-      onFinish();
-      return;
-    }
-    setCelebrated(true);
-    // Fire confetti and close the tour immediately so the user sees the full burst
+  const handleConnect = () => {
     fireRealistic();
     setTimeout(() => fireSides(), 150);
     onFinish();
+    navigate("/meta-campaigns");
   };
 
   return (
@@ -552,17 +553,52 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 leading-tight">
             {title}
           </h3>
-          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-8">
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
             {body}
           </p>
 
+          {/* Next step card */}
+          <div className="text-left bg-muted/30 border border-border/60 rounded-2xl p-4 sm:p-5 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <MessageCircle size={20} strokeWidth={2.2} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm sm:text-base font-bold text-foreground leading-tight">
+                  Próximo passo: conectar WhatsApp na Meta API
+                </h4>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
+                  Conecte sua conta oficial via Meta API para começar a prospectar, atender e fechar mais negócios.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center gap-3">
+              <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-primary/10">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary/80 to-primary shadow-[0_0_12px_hsl(var(--primary)/0.55)]"
+                  style={{
+                    width: `${progress}%`,
+                    transition: "width 1600ms cubic-bezier(0.22, 1, 0.36, 1)",
+                  }}
+                />
+              </div>
+              <span className="text-xs font-bold text-primary tabular-nums w-9 text-right">
+                {progress}%
+              </span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-3">
+              Falta pouco! Conecte sua conta Meta para começar a escalar.
+            </p>
+          </div>
+
           <Button
             size="xl"
-            onClick={handleFinish}
+            onClick={handleConnect}
             className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
           >
-            <Rocket size={20} />
-            Escalar minha operação
+            <MessageCircle size={20} />
+            Conectar WhatsApp na Meta API agora
           </Button>
 
           <button
