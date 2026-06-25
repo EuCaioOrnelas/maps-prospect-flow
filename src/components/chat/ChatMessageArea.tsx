@@ -1184,7 +1184,20 @@ export function ChatMessageArea({
 
       {/* Search panel */}
       {showSearch && (
-        <SearchMessagesBar messages={messages} onClose={() => setShowSearch(false)} />
+        <SearchMessagesBar
+          messages={messages}
+          onClose={() => setShowSearch(false)}
+          onJumpToMessage={(id) => {
+            requestAnimationFrame(() => {
+              const el = document.getElementById(`msg-${id}`);
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                el.classList.add("ring-2", "ring-primary/60", "rounded-lg");
+                setTimeout(() => el.classList.remove("ring-2", "ring-primary/60", "rounded-lg"), 1800);
+              }
+            });
+          }}
+        />
       )}
 
       {/* Image lightbox */}
