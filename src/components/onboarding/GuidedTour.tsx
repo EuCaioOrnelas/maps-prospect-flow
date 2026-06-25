@@ -561,8 +561,8 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           {/* Next step card */}
           <div className="text-left bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 mb-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#25D366]/10 text-[#25D366]">
-                <FaWhatsapp size={22} />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#25D366]/10 text-[#25D366]">
+                <FaWhatsapp size={30} />
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="text-sm sm:text-base font-bold text-foreground leading-tight">
@@ -575,7 +575,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
             </div>
 
             <div className="mt-4 flex items-center gap-3">
-              <div className="relative h-3.5 flex-1 overflow-hidden rounded-full bg-gray-100 border border-gray-200">
+              <div className="relative h-3.5 flex-1 max-w-[75%] overflow-hidden rounded-full bg-gray-100 border border-gray-200">
                 <div
                   className="absolute inset-y-0 left-0 rounded-full bg-[linear-gradient(90deg,#15803d_0%,#16a34a_55%,#22c55e_100%)] shadow-[0_0_16px_rgba(34,197,94,0.55)]"
                   style={{
@@ -584,8 +584,8 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
                   }}
                 />
               </div>
-              <span className="text-xs font-bold text-primary tabular-nums w-10 text-right">
-                {progress}/7
+              <span className="text-xs font-bold text-green-700 tabular-nums whitespace-nowrap">
+                Última etapa
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-muted-foreground mt-3">
@@ -606,9 +606,10 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
             onClick={handleConnect}
             className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
           >
-            <FaWhatsapp size={20} />
+            <FaWhatsapp size={28} />
             Conectar WhatsApp na Meta API Agora
           </Button>
+
 
           <button
             onClick={onFinish}
