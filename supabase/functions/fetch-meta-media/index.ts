@@ -73,6 +73,23 @@ Deno.serve(async (req) => {
     });
     if (!metaRes.ok) {
       const t = await metaRes.text();
+      // Meta media IDs expire after ~30 days. code 100 / subcode 33 = object missing.
+      // Return 410 Gone so the <img>/<audio> tag fails silently instead of crashing the UI.
+      let isExpired = false;
+      try {
+        const j = JSON.parse(t);
+        const code = j?.error?.code;
+        const subcode = j?.error?.error_subcode;
+        if (code === 100 && (subcode === 33 || subcode === undefined)) isExpired = true;
+      } catch (_) { /* ignore */ }
+
+      if (isExpired) {
+        console.warn(`[fetch-meta-media] media ${mediaId} expired/missing on Meta`);
+        return new Response(JSON.stringify({ error: "media_expired", message: "Mídia não está mais disponível no WhatsApp (expirada após ~30 dias)." }), {
+          status: 410,
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=86400" },
+        });
+      }
       return new Response(JSON.stringify({ error: `Meta lookup failed (${metaRes.status})`, detail: t }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
