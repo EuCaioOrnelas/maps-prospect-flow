@@ -127,18 +127,22 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
     icon: typeof LayoutDashboard;
     label: string;
     highlight?: boolean;
-  }) => (
-    <Link to={to} onClick={close}>
-      <Button
-        variant={highlight ? "default" : "ghost"}
-        size="sm"
-        className="w-full justify-start gap-2"
-      >
-        <Icon size={16} />
-        {label}
-      </Button>
-    </Link>
-  );
+  }) => {
+    const isActive = location.pathname === to || location.pathname.startsWith(to + "/");
+    const useActive = highlight ?? isActive;
+    return (
+      <Link to={to} onClick={close}>
+        <Button
+          variant={useActive ? "default" : "ghost"}
+          size="sm"
+          className="w-full justify-start gap-2"
+        >
+          <Icon size={16} />
+          {label}
+        </Button>
+      </Link>
+    );
+  };
 
   return (
     <div className="lg:hidden">
