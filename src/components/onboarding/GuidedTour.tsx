@@ -558,7 +558,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           </p>
 
           {/* Next step card */}
-          <div className="text-left bg-muted/30 border border-border/60 rounded-2xl p-4 sm:p-5 mb-6">
+          <div className="text-left bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 mb-6">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <MessageCircle size={20} strokeWidth={2.2} />
