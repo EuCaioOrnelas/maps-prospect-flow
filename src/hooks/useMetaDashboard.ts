@@ -18,8 +18,13 @@ export interface MetaCampaignRow {
   replies: number;
   total_leads: number;
   cost: number;
+  real_cost: number;
+  estimated_cost: number;
+  cost_source: "real" | "mixed" | "estimated" | "pending" | "legacy";
+  template_category: string | null;
   created_at: string;
 }
+
 
 export interface MetaDashboardData {
   loading: boolean;
