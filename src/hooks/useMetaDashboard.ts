@@ -73,6 +73,7 @@ export interface MetaDashboardData {
   };
   funnel: { stage: string; value: number }[];
   templateCategories: { name: string; value: number; color: string }[];
+  costByCategory: { name: string; value: number; color: string }[];
   heatmap: { day: number; hour: number; value: number }[][];
   campaigns: MetaCampaignRow[];
   insights: { tone: "positive" | "neutral" | "warning" | "tip"; title: string; description: string }[];
