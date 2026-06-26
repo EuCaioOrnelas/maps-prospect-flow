@@ -438,7 +438,8 @@ export function useMetaDashboard(
       }
 
       setData({
-        totalCost, prevTotalCost: prevSent * META_COST_PER_MSG,
+        totalCost, prevTotalCost,
+        realCost, estimatedCost, costRealRatio,
         messagesSent, prevMessagesSent: prevSent,
         messagesFailed, prevMessagesFailed: prevFailed,
         deliveryRate, prevDeliveryRate,
@@ -455,10 +456,12 @@ export function useMetaDashboard(
         sparks,
         funnel,
         templateCategories,
+        costByCategory,
         heatmap,
         campaigns,
         insights,
       });
+
       setLoading(false);
     })();
     return () => { cancelled = true; };
