@@ -242,7 +242,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground">Simulador de custos Meta</h3>
-              <p className="text-xs text-muted-foreground">Estime custo, CPR e CPO com preços oficiais Meta (BR) por categoria de template.</p>
+              <p className="text-xs text-muted-foreground">Informe o custo por mensagem da sua conta Meta e estime o investimento total, CPR e CPO.</p>
             </div>
           </div>
           <Badge variant="outline" className="text-[10px] gap-1 shrink-0">
