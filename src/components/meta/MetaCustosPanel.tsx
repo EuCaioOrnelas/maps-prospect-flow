@@ -246,7 +246,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
             </div>
           </div>
           <Badge variant="outline" className="text-[10px] gap-1 shrink-0">
-            <DollarSign size={10} /> Tabela Meta BR {currentYear}
+            <DollarSign size={10} /> Simulação personalizada
           </Badge>
         </div>
 
