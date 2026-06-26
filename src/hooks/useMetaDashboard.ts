@@ -215,6 +215,10 @@ export function useMetaDashboard(
         (prevMetaCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.failed_count || 0), 0);
       const prevResponses = (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.total_responses || 0), 0);
       const prevDeliveryRate = prevSent > 0 ? ((prevSent - prevFailed) / prevSent) * 100 : 0;
+      const prevTotalCost =
+        (prevMetaCampaignsRes.data || []).reduce((s: number, c: any) => s + Number(c.total_cost || ((c.success_count || 0) * META_COST_PER_MSG)), 0) +
+        ((prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.sent_count || 0), 0) * META_COST_PER_MSG);
+
 
       const leadsRows = leadsRes.data || [];
       const leadsInFunnel = leadsRes.count ?? leadsRows.length;
