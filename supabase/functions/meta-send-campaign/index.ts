@@ -293,12 +293,16 @@ serve(async (req) => {
           status_updated_at: nowIso,
           metadata: {
             source: "campaign",
-            campaign_name: campaign_name || null,
+            campaign_id: campaignId,
+            campaign_name: campaignNameFinal,
             template_name,
+            template_category: templateCategory,
             template_language: template_language || "pt_BR",
             template_variables: template_variables || {},
           },
+          billing_category: templateCategory,
         });
+
       } catch (e) {
         console.error("[meta-send-campaign] persistOutboundChat failed:", e);
       }
