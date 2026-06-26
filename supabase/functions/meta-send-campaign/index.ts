@@ -185,6 +185,41 @@ serve(async (req) => {
       return rendered || `[${template_name}]`;
     })();
 
+    // Extract template category (MARKETING/UTILITY/AUTHENTICATION/SERVICE) when available
+    const templateCategory: string | null =
+      (templateDef?.category && String(templateDef.category).toUpperCase()) || null;
+
+    // ===== Create campaign row FIRST so we can link messages to it (campaign_id) =====
+    const campaignNameFinal = campaign_name || `Meta ${new Date().toISOString().split("T")[0]}`;
+    const { data: campaignRow, error: campaignPreInsertError } = await supabase
+      .from("meta_campaigns")
+      .insert({
+        user_id: user.id,
+        owner_user_id: accountOwnerId,
+        connection_id: connection_id,
+        campaign_name: campaignNameFinal,
+        template_name: template_name,
+        template_language: template_language || "pt_BR",
+        template_category: templateCategory,
+        total_recipients: phone_numbers.length,
+        success_count: 0,
+        failed_count: 0,
+        status: "running",
+        cost_source: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (campaignPreInsertError || !campaignRow?.id) {
+      console.error("[meta-send-campaign] campaign pre-insert failed:", campaignPreInsertError);
+      return new Response(
+        JSON.stringify({ error: "Falha ao registrar campanha", details: campaignPreInsertError?.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const campaignId: string = campaignRow.id;
+
+
     // Helper: persist outbound message into chat_conversations + chat_messages
     async function persistOutboundChat(db: any, toPhone: string, wabaMessageId: string | null) {
       try {
