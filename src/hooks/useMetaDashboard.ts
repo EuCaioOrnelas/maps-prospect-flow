@@ -134,8 +134,9 @@ export function useMetaDashboard(
       ] = await Promise.all([
         supabase.from("whatsapp_campaigns").select("id,name,status,sent_count,failed_count,total_responses,total_leads,created_at").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO).order("created_at", { ascending: false }),
         supabase.from("whatsapp_campaigns").select("sent_count,failed_count,total_responses,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
-        supabase.from("meta_campaigns").select("id,campaign_name,status,success_count,failed_count,total_recipients,created_at").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO).order("created_at", { ascending: false }),
-        supabase.from("meta_campaigns").select("success_count,failed_count,total_recipients,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
+        supabase.from("meta_campaigns").select("id,campaign_name,status,success_count,failed_count,total_recipients,created_at,total_cost,real_cost,estimated_cost,cost_source,template_category,template_name").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO).order("created_at", { ascending: false }),
+        supabase.from("meta_campaigns").select("success_count,failed_count,total_recipients,total_cost,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
+
         withResp(supabase.from("leads").select("id,first_message_sent,has_responded,pipeline_stage_id,estimated_value,opportunity_level,created_at,responded_at").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO)),
         withResp(supabase.from("leads").select("id,estimated_value,opportunity_level,first_message_sent,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString())),
         withResp(supabase.from("leads").select("id", { count: "exact", head: true }).eq("owner_user_id", ownerId).eq("has_responded", true).gte("responded_at", startISO).lte("responded_at", endISO)),
