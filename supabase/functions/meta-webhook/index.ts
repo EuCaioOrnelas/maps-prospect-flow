@@ -761,6 +761,16 @@ serve(async (req) => {
                 }
               }
             }
+
+            // Recompute campaign costs once per batch (deduped)
+            for (const cid of campaignsToRecompute) {
+              try {
+                await supabase.rpc('recompute_meta_campaign_cost', { p_campaign_id: cid });
+              } catch (e) {
+                console.error('[meta-webhook] recompute_meta_campaign_cost error:', e);
+              }
+            }
+
           } else {
             console.log(`[meta-webhook] 📋 Event field=${field}:`, JSON.stringify(value).substring(0, 300));
             await supabase.from('meta_webhook_events').insert({
