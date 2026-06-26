@@ -106,7 +106,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
 
   const selectedTpl = templates.find((t) => t.id === selectedTplId);
   const selectedCategory = selectedTpl?.category?.toUpperCase() || tipoManual;
-  const costPerMsg = META_PRICING_BR[selectedCategory] ?? META_PRICING_BR.MARKETING;
+  const costPerMsg = typeof pricePerMsg === "number" ? pricePerMsg : 0;
 
   const sim = useMemo(() => {
     const leadsN = typeof leads === "number" ? leads : 0;
