@@ -30,6 +30,9 @@ export interface MetaDashboardData {
   loading: boolean;
   totalCost: number;
   prevTotalCost: number;
+  realCost: number;
+  estimatedCost: number;
+  costRealRatio: number;
   messagesSent: number;
   prevMessagesSent: number;
   conversationsStarted: number;
