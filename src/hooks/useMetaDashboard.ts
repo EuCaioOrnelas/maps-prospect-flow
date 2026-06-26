@@ -513,6 +513,6 @@ function emptyData(): Omit<MetaDashboardData, "loading"> {
       leadsInFunnel: [], leadsAnswered: [], responseRate: [], costPerResponse: [],
       opportunities: [], pipelineEstimated: [], roiProjected: [],
     },
-    funnel: [], templateCategories: [], heatmap: [], campaigns: [], insights: [],
+    funnel: [], templateCategories: [], costByCategory: [], heatmap: [], campaigns: [], insights: [],
   };
 }
