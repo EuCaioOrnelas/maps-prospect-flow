@@ -392,28 +392,25 @@ serve(async (req) => {
       }
     }
 
-    // Save campaign record
-    const campaignNameFinal = campaign_name || `Meta ${new Date().toISOString().split("T")[0]}`;
-    const campaignPayload = {
-      user_id: user.id,
-      owner_user_id: accountOwnerId,
-      connection_id: connection_id,
-      campaign_name: campaignNameFinal,
-      template_name: template_name,
-      template_language: template_language || "pt_BR",
-      total_recipients: phone_numbers.length,
-      success_count: successCount,
-      failed_count: failedCount,
-      status: "completed",
-      error_details: errors.length > 0 ? errors.slice(0, 20) : null,
-    };
-    const { error: campaignInsertError } = await supabase.from("meta_campaigns").insert(campaignPayload);
-    if (campaignInsertError) {
-      console.error("[meta-send-campaign] campaign insert failed:", campaignInsertError);
-      return new Response(
-        JSON.stringify({ error: "Campanha enviada, mas não foi salva no histórico", details: campaignInsertError.message }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Finalize campaign record (created at the start; now updates totals + initial cost)
+    const { error: campaignUpdateError } = await supabase
+      .from("meta_campaigns")
+      .update({
+        success_count: successCount,
+        failed_count: failedCount,
+        status: "completed",
+        error_details: errors.length > 0 ? errors.slice(0, 20) : null,
+      })
+      .eq("id", campaignId);
+    if (campaignUpdateError) {
+      console.error("[meta-send-campaign] campaign update failed:", campaignUpdateError);
+    }
+
+    // Initial cost computation (uses estimates while real pricing webhooks haven't arrived)
+    try {
+      await supabase.rpc("recompute_meta_campaign_cost", { p_campaign_id: campaignId });
+    } catch (e) {
+      console.error("[meta-send-campaign] initial recompute failed:", e);
     }
 
     console.log(`[meta-send-campaign] campaign saved user=${user.id} recipients=${phone_numbers.length} success=${successCount} failed=${failedCount}`);
