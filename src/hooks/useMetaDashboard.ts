@@ -151,36 +151,61 @@ export function useMetaDashboard(
       if (cancelled) return;
 
 
-      const whatsappCampaigns = (campaignsRes.data || []).map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        status: c.status,
-        sent: c.sent_count || 0,
-        failed: c.failed_count || 0,
-        replies: c.total_responses || 0,
-        total_leads: c.total_leads || 0,
-        cost: (c.sent_count || 0) * META_COST_PER_MSG,
-        created_at: c.created_at,
-      })) as MetaCampaignRow[];
-      const officialMetaCampaigns = (metaCampaignsRes.data || []).map((c: any) => ({
-        id: c.id,
-        name: c.campaign_name,
-        status: c.status,
-        sent: c.success_count || 0,
-        failed: c.failed_count || 0,
-        replies: 0,
-        total_leads: c.total_recipients || 0,
-        cost: (c.success_count || 0) * META_COST_PER_MSG,
-        created_at: c.created_at,
-      })) as MetaCampaignRow[];
+      const whatsappCampaigns = (campaignsRes.data || []).map((c: any) => {
+        const est = (c.sent_count || 0) * META_COST_PER_MSG;
+        return {
+          id: c.id,
+          name: c.name,
+          status: c.status,
+          sent: c.sent_count || 0,
+          failed: c.failed_count || 0,
+          replies: c.total_responses || 0,
+          total_leads: c.total_leads || 0,
+          cost: est,
+          real_cost: 0,
+          estimated_cost: est,
+          cost_source: "legacy" as const,
+          template_category: null,
+          created_at: c.created_at,
+        };
+      }) as MetaCampaignRow[];
+
+      const officialMetaCampaigns = (metaCampaignsRes.data || []).map((c: any) => {
+        const total = Number(c.total_cost ?? 0);
+        const real = Number(c.real_cost ?? 0);
+        const est = Number(c.estimated_cost ?? 0);
+        const sent = c.success_count || 0;
+        // Fallback antigo (campanhas pré-pipeline): se nada gravado, estima na hora.
+        const cost = total > 0 ? total : sent * META_COST_PER_MSG;
+        return {
+          id: c.id,
+          name: c.campaign_name,
+          status: c.status,
+          sent,
+          failed: c.failed_count || 0,
+          replies: 0,
+          total_leads: c.total_recipients || 0,
+          cost,
+          real_cost: real,
+          estimated_cost: total > 0 ? est : cost,
+          cost_source: (c.cost_source as MetaCampaignRow["cost_source"]) || "pending",
+          template_category: c.template_category || null,
+          created_at: c.created_at,
+        };
+      }) as MetaCampaignRow[];
+
       const campaigns = [...officialMetaCampaigns, ...whatsappCampaigns]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       const messagesSent = campaigns.reduce((s, c) => s + c.sent, 0);
       const messagesFailed = campaigns.reduce((s, c) => s + c.failed, 0);
-      const totalCost = messagesSent * META_COST_PER_MSG;
+      const totalCost = campaigns.reduce((s, c) => s + (c.cost || 0), 0);
+      const realCost = campaigns.reduce((s, c) => s + (c.real_cost || 0), 0);
+      const estimatedCost = Math.max(totalCost - realCost, 0);
+      const costRealRatio = totalCost > 0 ? realCost / totalCost : 0;
       const responses = campaigns.reduce((s, c) => s + c.replies, 0);
       const deliveryRate = messagesSent > 0 ? ((messagesSent - messagesFailed) / messagesSent) * 100 : 0;
+
 
       const prevSent =
         (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.sent_count || 0), 0) +
