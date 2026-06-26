@@ -324,6 +324,34 @@ export function useMetaDashboard(
         ...(catCounts["_uncat"] ? [{ name: "Sem categoria", value: catCounts["_uncat"], color: "hsl(var(--muted-foreground))" }] : []),
       ].filter((c) => c.value > 0);
 
+      // Cost grouped by Meta template category (MARKETING/UTILITY/AUTHENTICATION/SERVICE)
+      const categoryColor: Record<string, string> = {
+        MARKETING: "hsl(346 77% 60%)",
+        UTILITY: "hsl(199 89% 48%)",
+        AUTHENTICATION: "hsl(38 92% 50%)",
+        SERVICE: "hsl(158 72% 38%)",
+      };
+      const categoryLabel: Record<string, string> = {
+        MARKETING: "Marketing",
+        UTILITY: "Utilidade",
+        AUTHENTICATION: "Autenticação",
+        SERVICE: "Serviço",
+      };
+      const costByCategoryMap: Record<string, number> = {};
+      campaigns.forEach((c) => {
+        const k = (c.template_category || "OUTROS").toUpperCase();
+        costByCategoryMap[k] = (costByCategoryMap[k] || 0) + (c.cost || 0);
+      });
+      const costByCategory = Object.entries(costByCategoryMap)
+        .filter(([, v]) => v > 0)
+        .map(([k, v]) => ({
+          name: categoryLabel[k] || "Outros",
+          value: Number(v.toFixed(2)),
+          color: categoryColor[k] || "hsl(var(--muted-foreground))",
+        }))
+        .sort((a, b) => b.value - a.value);
+
+
       const heatmap: { day: number; hour: number; value: number }[][] = Array.from({ length: 7 }, (_, day) =>
         Array.from({ length: 14 }, (_, h) => ({ day, hour: h + 7, value: 0 }))
       );
