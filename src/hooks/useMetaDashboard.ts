@@ -494,6 +494,7 @@ export function useMetaDashboard(
 function emptyData(): Omit<MetaDashboardData, "loading"> {
   return {
     totalCost: 0, prevTotalCost: 0,
+    realCost: 0, estimatedCost: 0, costRealRatio: 0,
     messagesSent: 0, prevMessagesSent: 0,
     messagesFailed: 0, prevMessagesFailed: 0,
     deliveryRate: 0, prevDeliveryRate: 0,
