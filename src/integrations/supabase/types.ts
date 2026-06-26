@@ -9265,6 +9265,10 @@ export type Database = {
           title: string
         }[]
       }
+      meta_fx_to_brl: {
+        Args: { p_amount: number; p_currency: string }
+        Returns: number
+      }
       normalize_brazilian_phone: {
         Args: { phone_input: string }
         Returns: string
