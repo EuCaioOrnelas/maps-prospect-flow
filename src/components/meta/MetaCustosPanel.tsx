@@ -63,6 +63,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
   const [tipoManual, setTipoManual] = useState<keyof typeof META_PRICING_BR>("MARKETING");
   const [leads, setLeads] = useState<number | "">("");
   const [taxa, setTaxa] = useState<number | "">("");
+  const [pricePerMsg, setPricePerMsg] = useState<number | "">(0.12);
 
   // Carrega templates reais da primeira WABA conectada
   useEffect(() => {
