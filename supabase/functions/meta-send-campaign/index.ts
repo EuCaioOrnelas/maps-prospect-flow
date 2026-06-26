@@ -185,6 +185,41 @@ serve(async (req) => {
       return rendered || `[${template_name}]`;
     })();
 
+    // Extract template category (MARKETING/UTILITY/AUTHENTICATION/SERVICE) when available
+    const templateCategory: string | null =
+      (templateDef?.category && String(templateDef.category).toUpperCase()) || null;
+
+    // ===== Create campaign row FIRST so we can link messages to it (campaign_id) =====
+    const campaignNameFinal = campaign_name || `Meta ${new Date().toISOString().split("T")[0]}`;
+    const { data: campaignRow, error: campaignPreInsertError } = await supabase
+      .from("meta_campaigns")
+      .insert({
+        user_id: user.id,
+        owner_user_id: accountOwnerId,
+        connection_id: connection_id,
+        campaign_name: campaignNameFinal,
+        template_name: template_name,
+        template_language: template_language || "pt_BR",
+        template_category: templateCategory,
+        total_recipients: phone_numbers.length,
+        success_count: 0,
+        failed_count: 0,
+        status: "running",
+        cost_source: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (campaignPreInsertError || !campaignRow?.id) {
+      console.error("[meta-send-campaign] campaign pre-insert failed:", campaignPreInsertError);
+      return new Response(
+        JSON.stringify({ error: "Falha ao registrar campanha", details: campaignPreInsertError?.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const campaignId: string = campaignRow.id;
+
+
     // Helper: persist outbound message into chat_conversations + chat_messages
     async function persistOutboundChat(db: any, toPhone: string, wabaMessageId: string | null) {
       try {
@@ -258,12 +293,16 @@ serve(async (req) => {
           status_updated_at: nowIso,
           metadata: {
             source: "campaign",
-            campaign_name: campaign_name || null,
+            campaign_id: campaignId,
+            campaign_name: campaignNameFinal,
             template_name,
+            template_category: templateCategory,
             template_language: template_language || "pt_BR",
             template_variables: template_variables || {},
           },
+          billing_category: templateCategory,
         });
+
       } catch (e) {
         console.error("[meta-send-campaign] persistOutboundChat failed:", e);
       }
@@ -353,28 +392,25 @@ serve(async (req) => {
       }
     }
 
-    // Save campaign record
-    const campaignNameFinal = campaign_name || `Meta ${new Date().toISOString().split("T")[0]}`;
-    const campaignPayload = {
-      user_id: user.id,
-      owner_user_id: accountOwnerId,
-      connection_id: connection_id,
-      campaign_name: campaignNameFinal,
-      template_name: template_name,
-      template_language: template_language || "pt_BR",
-      total_recipients: phone_numbers.length,
-      success_count: successCount,
-      failed_count: failedCount,
-      status: "completed",
-      error_details: errors.length > 0 ? errors.slice(0, 20) : null,
-    };
-    const { error: campaignInsertError } = await supabase.from("meta_campaigns").insert(campaignPayload);
-    if (campaignInsertError) {
-      console.error("[meta-send-campaign] campaign insert failed:", campaignInsertError);
-      return new Response(
-        JSON.stringify({ error: "Campanha enviada, mas não foi salva no histórico", details: campaignInsertError.message }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Finalize campaign record (created at the start; now updates totals + initial cost)
+    const { error: campaignUpdateError } = await supabase
+      .from("meta_campaigns")
+      .update({
+        success_count: successCount,
+        failed_count: failedCount,
+        status: "completed",
+        error_details: errors.length > 0 ? errors.slice(0, 20) : null,
+      })
+      .eq("id", campaignId);
+    if (campaignUpdateError) {
+      console.error("[meta-send-campaign] campaign update failed:", campaignUpdateError);
+    }
+
+    // Initial cost computation (uses estimates while real pricing webhooks haven't arrived)
+    try {
+      await supabase.rpc("recompute_meta_campaign_cost", { p_campaign_id: campaignId });
+    } catch (e) {
+      console.error("[meta-send-campaign] initial recompute failed:", e);
     }
 
     console.log(`[meta-send-campaign] campaign saved user=${user.id} recipients=${phone_numbers.length} success=${successCount} failed=${failedCount}`);

@@ -612,6 +612,7 @@ serve(async (req) => {
 
             // Handle statuses
             const statuses = value.statuses || [];
+            const campaignsToRecompute = new Set<string>();
             for (const status of statuses) {
               console.log(`[meta-webhook] 📊 Status: ${status.status} for msg ${status.id}`);
 
@@ -626,7 +627,26 @@ serve(async (req) => {
                 received_at: new Date(parseInt(status.timestamp) * 1000).toISOString(),
               });
 
-              // Update chat message status
+              // ===== Captura de PRICING real Meta =====
+              // status.pricing = { billable, pricing_model, category, type }
+              // Meta envia também status.pricing.price (amount) em algumas contas/regiões.
+              const pricing = status.pricing || null;
+              const priceRaw =
+                pricing?.price?.amount ??
+                pricing?.price ??
+                pricing?.amount ??
+                null;
+              const priceCurrency =
+                pricing?.price?.currency_code ??
+                pricing?.currency ??
+                pricing?.currency_code ??
+                null;
+              const priceAmount = priceRaw != null ? Number(priceRaw) : null;
+              const billingCategory = (pricing?.category || '').toString().toUpperCase() || null;
+              const pricingModel = (pricing?.pricing_model || '').toString() || null;
+              const isBillable = pricing?.billable;
+
+              // Update chat message status (e pricing quando vier)
               if (status.id && status.status) {
                 const statusMap: Record<string, string> = {
                   'sent': 'sent',
@@ -639,7 +659,7 @@ serve(async (req) => {
                   const rank: Record<string, number> = { pending: 0, sent: 1, delivered: 2, read: 3, failed: 4 };
                   const { data: existingMessages } = await supabase
                     .from('chat_messages')
-                    .select('id, status')
+                    .select('id, status, metadata, billing_amount')
                     .eq('waba_message_id', status.id);
 
                   let messagesToUpdate = existingMessages || [];
@@ -658,7 +678,7 @@ serve(async (req) => {
                     if (fallbackConversation) {
                       const { data: fallbackMessages } = await supabase
                         .from('chat_messages')
-                        .select('id, status')
+                        .select('id, status, metadata, billing_amount')
                         .eq('conversation_id', fallbackConversation.id)
                         .eq('direction', 'outbound')
                         .lte('created_at', statusTimeIso)
@@ -674,17 +694,35 @@ serve(async (req) => {
                   for (const existing of messagesToUpdate) {
                     const currentRank = rank[existing.status || 'pending'] ?? 0;
                     const nextRank = rank[newStatus] ?? 0;
-                    if (newStatus !== 'failed' && currentRank > nextRank) continue;
-                    await supabase.from('chat_messages')
-                      .update({
-                        status: newStatus,
-                        status_updated_at: new Date(parseInt(status.timestamp) * 1000).toISOString(),
-                      })
-                      .eq('id', existing.id);
+                    const patch: any = {};
+                    if (newStatus === 'failed' || currentRank <= nextRank) {
+                      patch.status = newStatus;
+                      patch.status_updated_at = new Date(parseInt(status.timestamp) * 1000).toISOString();
+                    }
+                    // Salva pricing real quando disponível
+                    if (pricing && existing.billing_amount == null) {
+                      if (priceAmount != null && isFinite(priceAmount)) {
+                        patch.billing_amount = priceAmount;
+                        patch.billing_source = 'real';
+                      } else if (isBillable === false) {
+                        patch.billing_amount = 0;
+                        patch.billing_source = 'real';
+                      }
+                      if (priceCurrency) patch.billing_currency = priceCurrency;
+                      if (billingCategory) patch.billing_category = billingCategory;
+                      if (pricingModel) patch.pricing_model = pricingModel;
+                    }
+                    if (Object.keys(patch).length > 0) {
+                      await supabase.from('chat_messages').update(patch).eq('id', existing.id);
+                    }
+                    // Marca campanha p/ recomputar custo
+                    const cid = (existing as any)?.metadata?.campaign_id;
+                    if (cid && pricing) campaignsToRecompute.add(String(cid));
                   }
-                  console.log(`[meta-webhook] ✅ Message ${status.id} status → ${newStatus}`);
+                  console.log(`[meta-webhook] ✅ Message ${status.id} status → ${newStatus}${pricing ? ` | pricing(${billingCategory || '?'}: ${priceAmount ?? 'n/a'} ${priceCurrency || ''})` : ''}`);
                 }
               }
+
 
               // === Auto-tag non-WhatsApp numbers (Meta error 131026) ===
               // Scopes the update to the WABA owner's account (owner_user_id),
@@ -723,6 +761,16 @@ serve(async (req) => {
                 }
               }
             }
+
+            // Recompute campaign costs once per batch (deduped)
+            for (const cid of campaignsToRecompute) {
+              try {
+                await supabase.rpc('recompute_meta_campaign_cost', { p_campaign_id: cid });
+              } catch (e) {
+                console.error('[meta-webhook] recompute_meta_campaign_cost error:', e);
+              }
+            }
+
           } else {
             console.log(`[meta-webhook] 📋 Event field=${field}:`, JSON.stringify(value).substring(0, 300));
             await supabase.from('meta_webhook_events').insert({

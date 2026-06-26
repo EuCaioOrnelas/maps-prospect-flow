@@ -1931,6 +1931,10 @@ export type Database = {
       }
       chat_messages: {
         Row: {
+          billing_amount: number | null
+          billing_category: string | null
+          billing_currency: string | null
+          billing_source: string | null
           content: string | null
           conversation_id: string
           created_at: string
@@ -1944,6 +1948,7 @@ export type Database = {
           message_type: string
           metadata: Json | null
           owner_user_id: string | null
+          pricing_model: string | null
           reply_to_message_id: string | null
           status: string | null
           status_updated_at: string | null
@@ -1951,6 +1956,10 @@ export type Database = {
           waba_message_id: string | null
         }
         Insert: {
+          billing_amount?: number | null
+          billing_category?: string | null
+          billing_currency?: string | null
+          billing_source?: string | null
           content?: string | null
           conversation_id: string
           created_at?: string
@@ -1964,6 +1973,7 @@ export type Database = {
           message_type?: string
           metadata?: Json | null
           owner_user_id?: string | null
+          pricing_model?: string | null
           reply_to_message_id?: string | null
           status?: string | null
           status_updated_at?: string | null
@@ -1971,6 +1981,10 @@ export type Database = {
           waba_message_id?: string | null
         }
         Update: {
+          billing_amount?: number | null
+          billing_category?: string | null
+          billing_currency?: string | null
+          billing_source?: string | null
           content?: string | null
           conversation_id?: string
           created_at?: string
@@ -1984,6 +1998,7 @@ export type Database = {
           message_type?: string
           metadata?: Json | null
           owner_user_id?: string | null
+          pricing_model?: string | null
           reply_to_message_id?: string | null
           status?: string | null
           status_updated_at?: string | null
@@ -3813,15 +3828,22 @@ export type Database = {
         Row: {
           campaign_name: string
           connection_id: string | null
+          cost_currency: string
+          cost_source: string
+          cost_updated_at: string | null
           created_at: string
           error_details: Json | null
+          estimated_cost: number
           failed_count: number
           id: string
           owner_user_id: string | null
+          real_cost: number
           status: string
           success_count: number
+          template_category: string | null
           template_language: string
           template_name: string
+          total_cost: number
           total_recipients: number
           updated_at: string
           user_id: string
@@ -3829,15 +3851,22 @@ export type Database = {
         Insert: {
           campaign_name: string
           connection_id?: string | null
+          cost_currency?: string
+          cost_source?: string
+          cost_updated_at?: string | null
           created_at?: string
           error_details?: Json | null
+          estimated_cost?: number
           failed_count?: number
           id?: string
           owner_user_id?: string | null
+          real_cost?: number
           status?: string
           success_count?: number
+          template_category?: string | null
           template_language?: string
           template_name: string
+          total_cost?: number
           total_recipients?: number
           updated_at?: string
           user_id: string
@@ -3845,15 +3874,22 @@ export type Database = {
         Update: {
           campaign_name?: string
           connection_id?: string | null
+          cost_currency?: string
+          cost_source?: string
+          cost_updated_at?: string | null
           created_at?: string
           error_details?: Json | null
+          estimated_cost?: number
           failed_count?: number
           id?: string
           owner_user_id?: string | null
+          real_cost?: number
           status?: string
           success_count?: number
+          template_category?: string | null
           template_language?: string
           template_name?: string
+          total_cost?: number
           total_recipients?: number
           updated_at?: string
           user_id?: string
@@ -9141,6 +9177,10 @@ export type Database = {
         Returns: number
       }
       get_phone_key: { Args: { phone_input: string }; Returns: string }
+      get_template_avg_cost: {
+        Args: { p_category: string; p_owner: string; p_template: string }
+        Returns: number
+      }
       has_feature_access: {
         Args: { _feature: string; _user_id: string }
         Returns: boolean
@@ -9232,6 +9272,10 @@ export type Database = {
       partner_application_pre_check: {
         Args: { p_cpf: string; p_email: string }
         Returns: Json
+      }
+      recompute_meta_campaign_cost: {
+        Args: { p_campaign_id: string }
+        Returns: undefined
       }
       recompute_partner_level: {
         Args: { p_partner_id: string }

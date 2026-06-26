@@ -18,13 +18,21 @@ export interface MetaCampaignRow {
   replies: number;
   total_leads: number;
   cost: number;
+  real_cost: number;
+  estimated_cost: number;
+  cost_source: "real" | "mixed" | "estimated" | "pending" | "legacy";
+  template_category: string | null;
   created_at: string;
 }
+
 
 export interface MetaDashboardData {
   loading: boolean;
   totalCost: number;
   prevTotalCost: number;
+  realCost: number;
+  estimatedCost: number;
+  costRealRatio: number;
   messagesSent: number;
   prevMessagesSent: number;
   conversationsStarted: number;
@@ -65,6 +73,7 @@ export interface MetaDashboardData {
   };
   funnel: { stage: string; value: number }[];
   templateCategories: { name: string; value: number; color: string }[];
+  costByCategory: { name: string; value: number; color: string }[];
   heatmap: { day: number; hour: number; value: number }[][];
   campaigns: MetaCampaignRow[];
   insights: { tone: "positive" | "neutral" | "warning" | "tip"; title: string; description: string }[];
@@ -126,8 +135,9 @@ export function useMetaDashboard(
       ] = await Promise.all([
         supabase.from("whatsapp_campaigns").select("id,name,status,sent_count,failed_count,total_responses,total_leads,created_at").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO).order("created_at", { ascending: false }),
         supabase.from("whatsapp_campaigns").select("sent_count,failed_count,total_responses,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
-        supabase.from("meta_campaigns").select("id,campaign_name,status,success_count,failed_count,total_recipients,created_at").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO).order("created_at", { ascending: false }),
-        supabase.from("meta_campaigns").select("success_count,failed_count,total_recipients,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
+        supabase.from("meta_campaigns").select("id,campaign_name,status,success_count,failed_count,total_recipients,created_at,total_cost,real_cost,estimated_cost,cost_source,template_category,template_name").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO).order("created_at", { ascending: false }),
+        supabase.from("meta_campaigns").select("success_count,failed_count,total_recipients,total_cost,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString()),
+
         withResp(supabase.from("leads").select("id,first_message_sent,has_responded,pipeline_stage_id,estimated_value,opportunity_level,created_at,responded_at").eq("owner_user_id", ownerId).gte("created_at", startISO).lte("created_at", endISO)),
         withResp(supabase.from("leads").select("id,estimated_value,opportunity_level,first_message_sent,created_at").eq("owner_user_id", ownerId).gte("created_at", prevStart.toISOString()).lt("created_at", prevEnd.toISOString())),
         withResp(supabase.from("leads").select("id", { count: "exact", head: true }).eq("owner_user_id", ownerId).eq("has_responded", true).gte("responded_at", startISO).lte("responded_at", endISO)),
@@ -142,36 +152,61 @@ export function useMetaDashboard(
       if (cancelled) return;
 
 
-      const whatsappCampaigns = (campaignsRes.data || []).map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        status: c.status,
-        sent: c.sent_count || 0,
-        failed: c.failed_count || 0,
-        replies: c.total_responses || 0,
-        total_leads: c.total_leads || 0,
-        cost: (c.sent_count || 0) * META_COST_PER_MSG,
-        created_at: c.created_at,
-      })) as MetaCampaignRow[];
-      const officialMetaCampaigns = (metaCampaignsRes.data || []).map((c: any) => ({
-        id: c.id,
-        name: c.campaign_name,
-        status: c.status,
-        sent: c.success_count || 0,
-        failed: c.failed_count || 0,
-        replies: 0,
-        total_leads: c.total_recipients || 0,
-        cost: (c.success_count || 0) * META_COST_PER_MSG,
-        created_at: c.created_at,
-      })) as MetaCampaignRow[];
+      const whatsappCampaigns = (campaignsRes.data || []).map((c: any) => {
+        const est = (c.sent_count || 0) * META_COST_PER_MSG;
+        return {
+          id: c.id,
+          name: c.name,
+          status: c.status,
+          sent: c.sent_count || 0,
+          failed: c.failed_count || 0,
+          replies: c.total_responses || 0,
+          total_leads: c.total_leads || 0,
+          cost: est,
+          real_cost: 0,
+          estimated_cost: est,
+          cost_source: "legacy" as const,
+          template_category: null,
+          created_at: c.created_at,
+        };
+      }) as MetaCampaignRow[];
+
+      const officialMetaCampaigns = (metaCampaignsRes.data || []).map((c: any) => {
+        const total = Number(c.total_cost ?? 0);
+        const real = Number(c.real_cost ?? 0);
+        const est = Number(c.estimated_cost ?? 0);
+        const sent = c.success_count || 0;
+        // Fallback antigo (campanhas pré-pipeline): se nada gravado, estima na hora.
+        const cost = total > 0 ? total : sent * META_COST_PER_MSG;
+        return {
+          id: c.id,
+          name: c.campaign_name,
+          status: c.status,
+          sent,
+          failed: c.failed_count || 0,
+          replies: 0,
+          total_leads: c.total_recipients || 0,
+          cost,
+          real_cost: real,
+          estimated_cost: total > 0 ? est : cost,
+          cost_source: (c.cost_source as MetaCampaignRow["cost_source"]) || "pending",
+          template_category: c.template_category || null,
+          created_at: c.created_at,
+        };
+      }) as MetaCampaignRow[];
+
       const campaigns = [...officialMetaCampaigns, ...whatsappCampaigns]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       const messagesSent = campaigns.reduce((s, c) => s + c.sent, 0);
       const messagesFailed = campaigns.reduce((s, c) => s + c.failed, 0);
-      const totalCost = messagesSent * META_COST_PER_MSG;
+      const totalCost = campaigns.reduce((s, c) => s + (c.cost || 0), 0);
+      const realCost = campaigns.reduce((s, c) => s + (c.real_cost || 0), 0);
+      const estimatedCost = Math.max(totalCost - realCost, 0);
+      const costRealRatio = totalCost > 0 ? realCost / totalCost : 0;
       const responses = campaigns.reduce((s, c) => s + c.replies, 0);
       const deliveryRate = messagesSent > 0 ? ((messagesSent - messagesFailed) / messagesSent) * 100 : 0;
+
 
       const prevSent =
         (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.sent_count || 0), 0) +
@@ -181,6 +216,10 @@ export function useMetaDashboard(
         (prevMetaCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.failed_count || 0), 0);
       const prevResponses = (prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.total_responses || 0), 0);
       const prevDeliveryRate = prevSent > 0 ? ((prevSent - prevFailed) / prevSent) * 100 : 0;
+      const prevTotalCost =
+        (prevMetaCampaignsRes.data || []).reduce((s: number, c: any) => s + Number(c.total_cost || ((c.success_count || 0) * META_COST_PER_MSG)), 0) +
+        ((prevCampaignsRes.data || []).reduce((s: number, c: any) => s + (c.sent_count || 0), 0) * META_COST_PER_MSG);
+
 
       const leadsRows = leadsRes.data || [];
       const leadsInFunnel = leadsRes.count ?? leadsRows.length;
@@ -286,6 +325,34 @@ export function useMetaDashboard(
         ...(catCounts["_uncat"] ? [{ name: "Sem categoria", value: catCounts["_uncat"], color: "hsl(var(--muted-foreground))" }] : []),
       ].filter((c) => c.value > 0);
 
+      // Cost grouped by Meta template category (MARKETING/UTILITY/AUTHENTICATION/SERVICE)
+      const categoryColor: Record<string, string> = {
+        MARKETING: "hsl(346 77% 60%)",
+        UTILITY: "hsl(199 89% 48%)",
+        AUTHENTICATION: "hsl(38 92% 50%)",
+        SERVICE: "hsl(158 72% 38%)",
+      };
+      const categoryLabel: Record<string, string> = {
+        MARKETING: "Marketing",
+        UTILITY: "Utilidade",
+        AUTHENTICATION: "Autenticação",
+        SERVICE: "Serviço",
+      };
+      const costByCategoryMap: Record<string, number> = {};
+      campaigns.forEach((c) => {
+        const k = (c.template_category || "OUTROS").toUpperCase();
+        costByCategoryMap[k] = (costByCategoryMap[k] || 0) + (c.cost || 0);
+      });
+      const costByCategory = Object.entries(costByCategoryMap)
+        .filter(([, v]) => v > 0)
+        .map(([k, v]) => ({
+          name: categoryLabel[k] || "Outros",
+          value: Number(v.toFixed(2)),
+          color: categoryColor[k] || "hsl(var(--muted-foreground))",
+        }))
+        .sort((a, b) => b.value - a.value);
+
+
       const heatmap: { day: number; hour: number; value: number }[][] = Array.from({ length: 7 }, (_, day) =>
         Array.from({ length: 14 }, (_, h) => ({ day, hour: h + 7, value: 0 }))
       );
@@ -372,7 +439,8 @@ export function useMetaDashboard(
       }
 
       setData({
-        totalCost, prevTotalCost: prevSent * META_COST_PER_MSG,
+        totalCost, prevTotalCost,
+        realCost, estimatedCost, costRealRatio,
         messagesSent, prevMessagesSent: prevSent,
         messagesFailed, prevMessagesFailed: prevFailed,
         deliveryRate, prevDeliveryRate,
@@ -389,10 +457,12 @@ export function useMetaDashboard(
         sparks,
         funnel,
         templateCategories,
+        costByCategory,
         heatmap,
         campaigns,
         insights,
       });
+
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -424,6 +494,7 @@ export function useMetaDashboard(
 function emptyData(): Omit<MetaDashboardData, "loading"> {
   return {
     totalCost: 0, prevTotalCost: 0,
+    realCost: 0, estimatedCost: 0, costRealRatio: 0,
     messagesSent: 0, prevMessagesSent: 0,
     messagesFailed: 0, prevMessagesFailed: 0,
     deliveryRate: 0, prevDeliveryRate: 0,
@@ -442,6 +513,6 @@ function emptyData(): Omit<MetaDashboardData, "loading"> {
       leadsInFunnel: [], leadsAnswered: [], responseRate: [], costPerResponse: [],
       opportunities: [], pipelineEstimated: [], roiProjected: [],
     },
-    funnel: [], templateCategories: [], heatmap: [], campaigns: [], insights: [],
+    funnel: [], templateCategories: [], costByCategory: [], heatmap: [], campaigns: [], insights: [],
   };
 }
