@@ -258,28 +258,24 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
               <div className="space-y-4">
                 <div className="space-y-1.5 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <Label className="text-xs text-muted-foreground">Categoria</Label>
+                    <Label className="text-xs text-muted-foreground">Valor por mensagem (R$)</Label>
                     <span className="text-[11px] font-medium text-primary tabular-nums">
-                      {costPerMsg > 0 ? `${fmtBRL(costPerMsg)} / msg` : "Grátis"}
+                      {costPerMsg > 0 ? `${fmtBRL(costPerMsg)} / msg` : "—"}
                     </span>
                   </div>
-                  <Select
-                    value={tipoManual}
-                    onValueChange={(v) => setTipoManual(v as keyof typeof META_PRICING_BR)}
-                  >
-                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MARKETING">Marketing · {fmtBRL(META_PRICING_BR.MARKETING)}</SelectItem>
-                      <SelectItem value="UTILITY">Utilidade · {fmtBRL(META_PRICING_BR.UTILITY)}</SelectItem>
-                      <SelectItem value="AUTHENTICATION">Autenticação · {fmtBRL(META_PRICING_BR.AUTHENTICATION)}</SelectItem>
-                      <SelectItem value="SERVICE">Serviço · Grátis</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    value={pricePerMsg}
+                    placeholder="Ex.: 0,12"
+                    onChange={(e) => setPricePerMsg(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5 min-w-0">
-                    <Label className="text-xs text-muted-foreground">Leads</Label>
+                    <Label className="text-xs text-muted-foreground">Quantidade de mensagens</Label>
                     <Input type="number" value={leads} min={0} placeholder="Ex.: 1000" onChange={(e) => setLeads(e.target.value === "" ? "" : Math.max(0, Number(e.target.value) || 0))} />
                   </div>
 
@@ -294,7 +290,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
             <div className="rounded-lg border border-border/40 bg-muted/30 px-3 py-2.5 text-[11px] text-muted-foreground flex items-start gap-2">
               <Info size={12} className="mt-0.5 shrink-0 text-primary" />
               <span>
-                Custo aplicado: <span className="font-medium text-foreground">{fmtBRL(costPerMsg)}/msg</span> (categoria {selectedCategory}).
+                Consulte o valor exato por mensagem no painel da sua conta Meta WhatsApp Business — varia por país e categoria do template.
               </span>
             </div>
           </div>
