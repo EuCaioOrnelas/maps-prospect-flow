@@ -253,6 +253,7 @@ export default function AdminSupportTickets() {
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
       if (statusFilter === "open") q = q.in("status", ACTIVE_STATUSES);
+      else if (statusFilter === "resolved") q = q.eq("status", "resolved");
       else if (statusFilter === "closed") q = q.in("status", ["resolved", "closed"]);
       else if (statusFilter === "incomplete") {
         // Chats abandonados: conversas abertas sem resolução e sem interação recente.
@@ -859,7 +860,8 @@ export default function AdminSupportTickets() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="open">Abertos</SelectItem>
-              <SelectItem value="closed">Fechados</SelectItem>
+              <SelectItem value="resolved">Resolvidos</SelectItem>
+              <SelectItem value="closed">Fechados (resolvidos + fechados)</SelectItem>
               <SelectItem value="incomplete">Incompletos (chat abandonado)</SelectItem>
               <SelectItem value="all">Todos</SelectItem>
             </SelectContent>
