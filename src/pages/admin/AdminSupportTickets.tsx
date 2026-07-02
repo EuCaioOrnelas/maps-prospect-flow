@@ -860,7 +860,8 @@ export default function AdminSupportTickets() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="open">Abertos</SelectItem>
-              <SelectItem value="closed">Fechados</SelectItem>
+              <SelectItem value="resolved">Resolvidos</SelectItem>
+              <SelectItem value="closed">Fechados (resolvidos + fechados)</SelectItem>
               <SelectItem value="incomplete">Incompletos (chat abandonado)</SelectItem>
               <SelectItem value="all">Todos</SelectItem>
             </SelectContent>
