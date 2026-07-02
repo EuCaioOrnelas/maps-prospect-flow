@@ -139,11 +139,40 @@ Deno.serve(async (req) => {
     const content = extracted || "(mensagem sem texto)";
     console.log("[support-email-inbound] extracted body length:", extracted.length);
 
+    // ─── DEDUP: provider email_id ────────────────────────────────────────────
+    // Resend pode retryar o webhook (5xx transitório, timeout) e a mesma resposta
+    // do cliente cairia várias vezes na conversa. Usamos metadata->>'provider_email_id'
+    // como fingerprint. Fallback para (from + subject + first 200 chars + minute-bucket)
+    // quando o provedor não manda um id estável.
+    const providerEmailId =
+      String(data.id || data.email_id || data.message_id || data?.headers?.["Message-Id"] || "")
+        .trim()
+        .toLowerCase();
+    const dedupFingerprint =
+      providerEmailId ||
+      `${from}::${subject}::${content.slice(0, 200)}::${new Date().toISOString().slice(0, 16)}`;
+
+    const { data: existingDup } = await sb
+      .from("support_messages")
+      .select("id")
+      .eq("ticket_id", ticket.id)
+      .eq("role", "user")
+      .contains("metadata", { source: "email_inbound", dedup_key: dedupFingerprint })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingDup) {
+      console.log("[support-email-inbound] duplicate webhook ignored", { ticketId: ticket.id, dedupFingerprint });
+      return new Response(JSON.stringify({ ok: true, duplicate: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     await sb.from("support_messages").insert({
       ticket_id: ticket.id,
       role: "user",
       content,
-      metadata: { source: "email_inbound", from, subject },
+      metadata: { source: "email_inbound", from, subject, dedup_key: dedupFingerprint, provider_email_id: providerEmailId || null },
     });
 
     const update: any = {
