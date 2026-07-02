@@ -697,6 +697,41 @@ Deno.serve(async (req) => {
       html = result.html;
     }
 
+    // ─── GLOBAL SAFETY FUSE (anti-spam) ──────────────────────────────────────
+    // Bloqueia envio se o MESMO (recipient + email_type + subject) já foi
+    // enviado nas últimas 6h — protege contra bugs em cron/webhook que gerem
+    // idempotency_keys rotativas. Não bloqueia notificações operacionais
+    // críticas onde múltiplos envios em curto período são legítimos.
+    const COOLDOWN_BYPASS = new Set<string>([
+      "CAMPAIGN_STARTED",
+      "CAMPAIGN_FAILED",
+      "NUMBER_DISCONNECTED",
+      "SUPPORT_TICKET_REPLY",
+      "SUPPORT_TICKET_NEW",
+      "ADMIN_BROADCAST",
+    ]);
+    if (!COOLDOWN_BYPASS.has(email_type)) {
+      const COOLDOWN_MINUTES = 360; // 6h
+      const cooldownCutoff = new Date(Date.now() - COOLDOWN_MINUTES * 60_000).toISOString();
+      const { data: recentDup } = await supabase
+        .from("email_logs")
+        .select("id, created_at")
+        .eq("to_email", toEmail)
+        .eq("email_type", email_type)
+        .eq("subject", subject)
+        .in("status", ["queued", "sent"])
+        .gte("created_at", cooldownCutoff)
+        .limit(1)
+        .maybeSingle();
+      if (recentDup) {
+        console.log(`[send-email] Cooldown block: ${email_type} → ${toEmail} last=${recentDup.created_at}`);
+        return new Response(
+          JSON.stringify({ success: true, skipped: true, reason: "cooldown_active", last_sent: recentDup.created_at }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // Insert log as queued (with subject).
     // CRITICAL: this is the second idempotency gate. If two concurrent callers
     // both passed the SELECT above, the unique index on idempotency_key will
