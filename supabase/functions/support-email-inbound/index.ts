@@ -84,9 +84,24 @@ async function fetchReceivedEmail(data: any) {
 }
 
 function isOwnSupportEmail(from: string, subject: string) {
-  const lower = `${from} ${subject}`.toLowerCase();
-  return /suporte@wiize\.com\.br/.test(lower) && /(confirmação de abertura|novo chamado|avaliação do seu atendimento|encerrado por inatividade|suporte wiize)/i.test(subject);
+  const lowerFrom = (from || "").toLowerCase();
+  // Qualquer coisa que venha do próprio suporte@wiize.com.br é loop-back (rating, receipt, etc.) e deve ser ignorada.
+  if (/suporte(\+[^@]+)?@wiize\.com\.br/.test(lowerFrom)) return true;
+  return /(confirmação de abertura|novo chamado|avaliação do seu atendimento|como foi o seu atendimento|encerrado por inatividade|suporte wiize)/i.test(subject || "");
 }
+
+function isAutoReply(data: any, subject: string): boolean {
+  const h = data?.headers || {};
+  const get = (k: string) => String(h[k] ?? h[k.toLowerCase()] ?? h[k.toUpperCase()] ?? "").toLowerCase();
+  const autoSubmitted = get("Auto-Submitted");
+  if (autoSubmitted && autoSubmitted !== "no") return true;
+  if (get("X-Autoreply") === "yes" || get("X-Autorespond")) return true;
+  const precedence = get("Precedence");
+  if (["auto_reply", "bulk", "junk", "list"].includes(precedence)) return true;
+  if (/^(auto[- ]?reply|out of office|ausência|resposta automática|automatic reply|delivery status notification|undeliverable|mail delivery|returned mail)/i.test(subject || "")) return true;
+  return false;
+}
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -121,6 +136,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (isAutoReply(data, subject)) {
+      console.log("[support-email-inbound] ignored auto-reply", { from, subject, ticketNumber });
+      return new Response(JSON.stringify({ ok: true, ignored: "auto_reply" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: ticket } = await sb
       .from("support_tickets")
@@ -135,15 +157,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    const extracted = extractBody(text, html);
-    const content = extracted || "(mensagem sem texto)";
+    let extracted = extractBody(text, html);
+
+    // Se veio vazio, tenta re-buscar o e-mail completo no Resend antes de desistir.
+    if (!extracted || extracted.length < 2) {
+      const refreshed = await fetchReceivedEmail(data);
+      const rText = String(refreshed?.text || refreshed?.body_plain || refreshed?.plain || "");
+      const rHtml = String(refreshed?.html || refreshed?.body_html || "");
+      const retry = extractBody(rText, rHtml);
+      if (retry && retry.length >= 2) extracted = retry;
+    }
+
+    if (!extracted || extracted.length < 2) {
+      console.warn("[support-email-inbound] empty body ignored", { ticketId: ticket.id, from, subject });
+      return new Response(JSON.stringify({ ok: true, ignored: "empty_body" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const content = extracted;
     console.log("[support-email-inbound] extracted body length:", extracted.length);
 
     // ─── DEDUP: provider email_id ────────────────────────────────────────────
-    // Resend pode retryar o webhook (5xx transitório, timeout) e a mesma resposta
-    // do cliente cairia várias vezes na conversa. Usamos metadata->>'provider_email_id'
-    // como fingerprint. Fallback para (from + subject + first 200 chars + minute-bucket)
-    // quando o provedor não manda um id estável.
     const providerEmailId =
       String(data.id || data.email_id || data.message_id || data?.headers?.["Message-Id"] || "")
         .trim()
@@ -151,6 +186,7 @@ Deno.serve(async (req) => {
     const dedupFingerprint =
       providerEmailId ||
       `${from}::${subject}::${content.slice(0, 200)}::${new Date().toISOString().slice(0, 16)}`;
+
 
     const { data: existingDup } = await sb
       .from("support_messages")
