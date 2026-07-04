@@ -84,9 +84,24 @@ async function fetchReceivedEmail(data: any) {
 }
 
 function isOwnSupportEmail(from: string, subject: string) {
-  const lower = `${from} ${subject}`.toLowerCase();
-  return /suporte@wiize\.com\.br/.test(lower) && /(confirmação de abertura|novo chamado|avaliação do seu atendimento|encerrado por inatividade|suporte wiize)/i.test(subject);
+  const lowerFrom = (from || "").toLowerCase();
+  // Qualquer coisa que venha do próprio suporte@wiize.com.br é loop-back (rating, receipt, etc.) e deve ser ignorada.
+  if (/suporte(\+[^@]+)?@wiize\.com\.br/.test(lowerFrom)) return true;
+  return /(confirmação de abertura|novo chamado|avaliação do seu atendimento|como foi o seu atendimento|encerrado por inatividade|suporte wiize)/i.test(subject || "");
 }
+
+function isAutoReply(data: any, subject: string): boolean {
+  const h = data?.headers || {};
+  const get = (k: string) => String(h[k] ?? h[k.toLowerCase()] ?? h[k.toUpperCase()] ?? "").toLowerCase();
+  const autoSubmitted = get("Auto-Submitted");
+  if (autoSubmitted && autoSubmitted !== "no") return true;
+  if (get("X-Autoreply") === "yes" || get("X-Autorespond")) return true;
+  const precedence = get("Precedence");
+  if (["auto_reply", "bulk", "junk", "list"].includes(precedence)) return true;
+  if (/^(auto[- ]?reply|out of office|ausência|resposta automática|automatic reply|delivery status notification|undeliverable|mail delivery|returned mail)/i.test(subject || "")) return true;
+  return false;
+}
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
