@@ -20,7 +20,30 @@ export default function PartnerLogin() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // anti-duplo-clique
     setLoading(true);
+
+    // Rate limit: 5 tentativas / 15 min por e-mail
+    const rlKey = (email || "").trim().toLowerCase();
+    if (rlKey) {
+      const { data: rl } = await supabase.rpc("check_rate_limit", {
+        p_identifier: rlKey,
+        p_endpoint: "partner_login",
+        p_max_requests: 5,
+        p_window_seconds: 900,
+      });
+      if (rl && (rl as any).allowed === false) {
+        const { formatRetryAfter } = await import("@/lib/rateLimitFormat");
+        setLoading(false);
+        toast({
+          title: "Muitas tentativas de login",
+          description: `Aguarde ${formatRetryAfter((rl as any).retry_after)} antes de tentar novamente.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error || !data.user) {
       setLoading(false);
@@ -33,6 +56,9 @@ export default function PartnerLogin() {
       setLoading(false);
       toast({ title: "Acesso negado", description: "Esta conta não é um parceiro Wiize.", variant: "destructive" });
       return;
+    }
+    if (rlKey) {
+      await supabase.rpc("reset_rate_limit", { p_identifier: rlKey, p_endpoint: "partner_login" });
     }
     navigate("/partners", { replace: true });
   };
