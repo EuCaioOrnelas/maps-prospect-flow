@@ -178,8 +178,15 @@ export default function WhatsAppAutomations() {
       queryClient.invalidateQueries({ queryKey: ["wa-automation-flows"] });
       toast.success("Status atualizado");
     },
-    onError: (e: any) => {
-      toast.error(e?.message || "Erro ao atualizar status");
+    onError: async (e: any) => {
+      const m = String(e?.message || "");
+      const rl = m.match(/RATE_LIMIT_WA_FLOW_PUBLISH:(\d+)/);
+      if (rl) {
+        const { formatRetryAfter } = await import("@/lib/rateLimitFormat");
+        toast.error(`Muitas ativações seguidas. Aguarde ${formatRetryAfter(Number(rl[1]))} antes de ativar outro fluxo.`);
+        return;
+      }
+      toast.error(m || "Erro ao atualizar status");
     },
   });
 
