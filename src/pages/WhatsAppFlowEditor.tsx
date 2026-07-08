@@ -940,7 +940,17 @@ export default function WhatsAppFlowEditor() {
               }
 
               const { error } = await supabase.from("wa_automation_flows").update({ status: newStatus }).eq("id", id!);
-              if (error) { toast.error("Erro ao atualizar status"); return; }
+              if (error) {
+                const m = String(error.message || "");
+                const rl = m.match(/RATE_LIMIT_WA_FLOW_PUBLISH:(\d+)/);
+                if (rl) {
+                  const { formatRetryAfter } = await import("@/lib/rateLimitFormat");
+                  toast.error(`Muitas ativações seguidas. Aguarde ${formatRetryAfter(Number(rl[1]))} antes de ativar outro fluxo.`);
+                } else {
+                  toast.error("Erro ao atualizar status");
+                }
+                return;
+              }
               queryClient.invalidateQueries({ queryKey: ["wa-flow", id] });
               toast.success(checked ? "Fluxo ativado em produção!" : "Fluxo desativado");
             }}
