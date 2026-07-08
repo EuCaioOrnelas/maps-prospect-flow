@@ -64,6 +64,29 @@ serve(async (req) => {
       });
     }
 
+    // Per-user rate limit: 1 disparo / 60s (chave = auth.uid, isolado por usuário)
+    try {
+      const { data: rl } = await supabase.rpc("check_rate_limit", {
+        p_identifier: user.id,
+        p_endpoint: "meta_send_campaign_user",
+        p_max_requests: 1,
+        p_window_seconds: 60,
+      });
+      if (rl && (rl as any).allowed === false) {
+        const retry = (rl as any).retry_after || 60;
+        return new Response(
+          JSON.stringify({
+            error: "rate_limited",
+            message: `Aguarde ${retry} segundos antes de disparar uma nova campanha.`,
+            retry_after: retry,
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": String(retry) } }
+        );
+      }
+    } catch (e) {
+      console.error("[meta-send-campaign] rate limit check failed (fail-open):", e);
+    }
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("id,parent_owner_id")

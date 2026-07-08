@@ -286,6 +286,19 @@ serve(async (req) => {
 
     console.log('User authenticated:', user.id);
 
+    // Per-user rate limit: 1 prospecção / 60s (chave = auth.uid, isolado por usuário)
+    const userRl = await checkRateLimit(supabase, user.id, 'search_leads_user', 1, 60);
+    if (!userRl.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: 'rate_limited',
+          message: `Aguarde ${userRl.retryAfter || 60} segundos antes de realizar uma nova prospecção.`,
+          retry_after: userRl.retryAfter || 60,
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(userRl.retryAfter || 60) } }
+      );
+    }
+
     // Get user profile to check opportunity limits
     const { data: profile, error: profileError } = await supabase
       .from('profiles')

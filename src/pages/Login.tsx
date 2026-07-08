@@ -110,7 +110,29 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return; // anti-duplo-clique
     setIsLoading(true);
+
+    // Rate limit: 5 tentativas / 15 min por e-mail (chave pública normalizada)
+    const rlKey = (email || "").trim().toLowerCase();
+    if (rlKey) {
+      const { data: rl } = await supabase.rpc("check_rate_limit", {
+        p_identifier: rlKey,
+        p_endpoint: "login",
+        p_max_requests: 5,
+        p_window_seconds: 900,
+      });
+      if (rl && (rl as any).allowed === false) {
+        const { formatRetryAfter } = await import("@/lib/rateLimitFormat");
+        setIsLoading(false);
+        toast({
+          title: "Muitas tentativas de login",
+          description: `Aguarde ${formatRetryAfter((rl as any).retry_after)} antes de tentar novamente.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
 
     const { error } = await signIn(email, password);
 
@@ -119,6 +141,11 @@ const Login = () => {
       const { title, description } = getLoginErrorMessage(error);
       toast({ title, description, variant: "destructive" });
       return;
+    }
+
+    // Sucesso: zera contador para não punir o usuário legítimo
+    if (rlKey) {
+      await supabase.rpc("reset_rate_limit", { p_identifier: rlKey, p_endpoint: "login" });
     }
 
     toast({

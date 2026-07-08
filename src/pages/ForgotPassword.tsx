@@ -17,7 +17,29 @@ const ForgotPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return; // anti-duplo-clique
     setIsLoading(true);
+
+    // Rate limit: 1 pedido / 15 min por e-mail
+    const rlKey = (email || "").trim().toLowerCase();
+    if (rlKey) {
+      const { data: rl } = await supabase.rpc("check_rate_limit", {
+        p_identifier: rlKey,
+        p_endpoint: "forgot_password",
+        p_max_requests: 1,
+        p_window_seconds: 900,
+      });
+      if (rl && (rl as any).allowed === false) {
+        const { formatRetryAfter } = await import("@/lib/rateLimitFormat");
+        setIsLoading(false);
+        toast({
+          title: "Aguarde antes de solicitar novamente",
+          description: `Você já pediu um link recentemente. Tente novamente em ${formatRetryAfter((rl as any).retry_after)}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
 
     const redirectUrl = `${window.location.origin}/reset-password`;
     console.log("Reset password redirectTo:", redirectUrl);

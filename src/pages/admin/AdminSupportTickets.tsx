@@ -226,6 +226,9 @@ export default function AdminSupportTickets() {
       supabase.from("support_ratings").select("ticket_id"),
       supabase.from("support_tickets").select("*", { count: "exact", head: true }).in("status", ["resolved", "closed"]),
     ]);
+    // Compatibilidade histórica: avaliações antigas usavam `stars` (escala 0–5).
+    // O sistema atual usa `nps_score` (escala 0–10). Multiplicamos `stars * 2` para
+    // normalizar tudo na mesma escala 0–10 e permitir uma média única de satisfação.
     const scores = (ratings || [])
       .map((r: any) => (r.nps_score != null ? r.nps_score : (r.stars != null ? r.stars * 2 : null)))
       .filter((n: number | null): n is number => n != null);

@@ -9314,6 +9314,10 @@ export type Database = {
         Args: { p_amount_cents: number }
         Returns: Json
       }
+      reset_rate_limit: {
+        Args: { p_endpoint: string; p_identifier: string }
+        Returns: undefined
+      }
       revenue_score_to_bucket: {
         Args: { p_score: number }
         Returns: Database["public"]["Enums"]["revenue_status_bucket"]
