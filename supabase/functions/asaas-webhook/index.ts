@@ -166,6 +166,47 @@ async function getPlanFromCheckoutLead(supabaseClient: any, checkoutIdPrefix: st
   return null;
 }
 
+/**
+ * Localiza um checkout_lead pelo identificador de conciliação Asaas.
+ * Ordem de prioridade:
+ *  1. asaas_conciliation_id (fonte primária — txid do QR Code, independente do pagador)
+ *  2. asaas_authorization_id (fallback legado)
+ *  3. stripe_session_id (compat com registros antigos)
+ */
+async function findCheckoutLead(
+  supabaseClient: any,
+  ids: { conciliationId?: string | null; authorizationId?: string | null; subscriptionId?: string | null }
+): Promise<any | null> {
+  if (ids.conciliationId) {
+    const { data } = await supabaseClient
+      .from("checkout_leads")
+      .select("id, user_id, email, phone, tax_id, plan_attempted, asaas_conciliation_id, asaas_authorization_id, asaas_payment_id, checkout_completed, stripe_session_id")
+      .eq("asaas_conciliation_id", ids.conciliationId)
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+  if (ids.authorizationId) {
+    const { data } = await supabaseClient
+      .from("checkout_leads")
+      .select("id, user_id, email, phone, tax_id, plan_attempted, asaas_conciliation_id, asaas_authorization_id, asaas_payment_id, checkout_completed, stripe_session_id")
+      .or(`asaas_authorization_id.eq.${ids.authorizationId},stripe_session_id.eq.asaas_pixauto_${ids.authorizationId}`)
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+  if (ids.subscriptionId) {
+    const { data } = await supabaseClient
+      .from("checkout_leads")
+      .select("id, user_id, email, phone, tax_id, plan_attempted, asaas_conciliation_id, asaas_authorization_id, asaas_payment_id, checkout_completed, stripe_session_id")
+      .eq("stripe_session_id", `asaas_sub_${ids.subscriptionId}`)
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+  return null;
+}
+
 async function findProfile(supabaseClient: any, externalReference: string | null, checkoutIdPrefix: string | null) {
   let profile: any = null;
 
@@ -220,6 +261,27 @@ async function findProfile(supabaseClient: any, externalReference: string | null
 
   return null;
 }
+
+async function findProfileForLead(supabaseClient: any, lead: any): Promise<any | null> {
+  if (lead?.user_id) {
+    const { data } = await supabaseClient
+      .from("profiles")
+      .select("id, plan, email, subscription_current_period_end")
+      .eq("id", lead.user_id)
+      .maybeSingle();
+    if (data) return data;
+  }
+  if (lead?.email) {
+    const { data } = await supabaseClient
+      .from("profiles")
+      .select("id, plan, email, subscription_current_period_end")
+      .eq("email", lead.email)
+      .maybeSingle();
+    if (data) return data;
+  }
+  return null;
+}
+
 
 async function activatePlan(
   supabaseClient: any,
@@ -394,7 +456,7 @@ serve(async (req) => {
       );
     }
 
-    // ============ PAYMENT CONFIRMED (recurring charges) ============
+    // ============ PAYMENT CONFIRMED (PIX QR Code + recurring charges) ============
     const payment = body.payment;
     if (event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED") {
       if (!payment) {
@@ -404,40 +466,98 @@ serve(async (req) => {
         });
       }
 
-      const externalReference = payment.externalReference;
+      const paymentId: string = payment.id;
+      const externalReference = payment.externalReference || null;
       const description = payment.description || "";
       const value = payment.value;
-      const subscriptionId = payment.subscription;
-      const pixAutoAuthId = payment.pixAutomaticAuthorizationId;
+      const subscriptionId = payment.subscription || null;
+      const pixAutoAuthId = payment.pixAutomaticAuthorizationId || null;
+      // FONTE PRIMÁRIA DE VERDADE: txid do QR Code, independe do CPF/CNPJ do pagador.
+      const conciliationId: string | null =
+        payment.pixQrCodeId ||
+        payment.conciliationIdentifier ||
+        payment.pixTransaction?.qrCodeId ||
+        null;
 
-      logStep("Processing payment", { externalReference, description, value, subscriptionId, pixAutoAuthId });
+      logStep("CONCILIATION-TRACE payment webhook received", {
+        event,
+        paymentId,
+        conciliationId,
+        pixAutoAuthId,
+        subscriptionId,
+        externalReference,
+        value,
+        payerCpfCnpj: payment.customerCpfCnpj || null,
+      });
 
-      let planKey = extractPlanFromDescription(description) || extractPlanFromValue(value);
-
-      // Fallback: buscar plano via checkout_leads
-      const checkoutPrefix = pixAutoAuthId
-        ? `asaas_pixauto_${pixAutoAuthId}`
-        : subscriptionId
-          ? `asaas_sub_${subscriptionId}`
-          : null;
-
-      if (!planKey && checkoutPrefix) {
-        logStep("Value/description doesn't match, checking checkout_leads", { description, value });
-        planKey = await getPlanFromCheckoutLead(supabaseClient, checkoutPrefix);
+      // --- Idempotência: se já processamos esse payment.id, ignora reentrega. ---
+      const { data: alreadyProcessed } = await supabaseClient
+        .from("checkout_leads")
+        .select("id, checkout_completed")
+        .eq("asaas_payment_id", paymentId)
+        .maybeSingle();
+      if (alreadyProcessed?.checkout_completed) {
+        logStep("CONCILIATION-TRACE duplicate payment webhook ignored", { paymentId });
+        return new Response(
+          JSON.stringify({ received: true, action: "duplicate_ignored", paymentId }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
+      // --- Localiza checkout_lead via conciliation → authorization → subscription ---
+      const lead = await findCheckoutLead(supabaseClient, {
+        conciliationId,
+        authorizationId: pixAutoAuthId,
+        subscriptionId,
+      });
+
+      const matchedVia = lead
+        ? (lead.asaas_conciliation_id === conciliationId && conciliationId
+            ? "conciliation"
+            : lead.asaas_authorization_id === pixAutoAuthId && pixAutoAuthId
+              ? "authorization"
+              : "legacy_session_id")
+        : "none";
+
+      logStep("CONCILIATION-TRACE lead lookup", {
+        paymentId,
+        conciliationId,
+        pixAutoAuthId,
+        matchedVia,
+        checkoutLeadId: lead?.id || null,
+      });
+
+      // Determina plano
+      let planKey = extractPlanFromDescription(description) || extractPlanFromValue(value);
+      if (!planKey && lead?.plan_attempted) {
+        planKey = planNameToKey(lead.plan_attempted);
+      }
+      const checkoutPrefix = lead?.stripe_session_id
+        || (pixAutoAuthId ? `asaas_pixauto_${pixAutoAuthId}` : subscriptionId ? `asaas_sub_${subscriptionId}` : null);
+
       if (!planKey) {
-        logStep("Could not determine plan from any source", { description, value });
-        return new Response(JSON.stringify({ received: true, warning: "unknown_plan" }), {
+        logStep("CONCILIATION-TRACE unknown plan", { paymentId, description, value });
+        return new Response(JSON.stringify({ received: true, warning: "unknown_plan", paymentId }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Find profile via multiple methods
-      const profile = await findProfile(supabaseClient, externalReference, checkoutPrefix);
+
+      // Localiza profile — SEMPRE via checkout_lead (nunca via dados do pagador).
+      // externalReference é fallback legado apenas.
+      let profile = lead ? await findProfileForLead(supabaseClient, lead) : null;
+      if (!profile) {
+        profile = await findProfile(supabaseClient, externalReference, checkoutPrefix);
+      }
 
       if (!profile) {
-        logStep("No profile found for payment", { externalReference, subscriptionId, pixAutoAuthId });
-        return new Response(JSON.stringify({ received: true, warning: "no_profile" }), {
+        logStep("CONCILIATION-TRACE no profile matched — payment orphan", {
+          paymentId,
+          conciliationId,
+          pixAutoAuthId,
+          externalReference,
+          checkoutLeadId: lead?.id || null,
+        });
+        return new Response(JSON.stringify({ received: true, warning: "no_profile", paymentId }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -448,13 +568,30 @@ serve(async (req) => {
         billingPeriod: value >= 2000 ? "annual" : "monthly",
       });
 
-      // [PARTNERS] Registra venda (primeira ou recorrente) — comissão só é gerada porque o pagamento foi confirmado de fato
+      // Persiste payment.id no lead para idempotência + auditoria futura.
+      if (lead?.id) {
+        await supabaseClient
+          .from("checkout_leads")
+          .update({ asaas_payment_id: paymentId })
+          .eq("id", lead.id);
+      }
+
+      logStep("CONCILIATION-TRACE activation success", {
+        paymentId,
+        conciliationId,
+        pixAutoAuthId,
+        matchedVia,
+        userId: profile.id,
+        planKey,
+      });
+
+      // [PARTNERS] Registra venda
       try {
         const partnerResult = await registerPartnerSale(supabaseClient, {
           userId: profile.id,
           amountCents: Math.round(value * 100),
           plan: planKey,
-          asaasPaymentId: payment.id,
+          asaasPaymentId: paymentId,
           subscriptionRef: subscriptionId || pixAutoAuthId || null,
           paidAt: new Date().toISOString(),
         });
@@ -464,10 +601,11 @@ serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ received: true, plan: planKey, userId: profile.id, action: "activated" }),
+        JSON.stringify({ received: true, plan: planKey, userId: profile.id, action: "activated", matchedVia, paymentId }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
 
     // ============ PAYMENT OVERDUE ============
     if (event === "PAYMENT_OVERDUE") {

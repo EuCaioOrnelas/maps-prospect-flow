@@ -2068,6 +2068,9 @@ export type Database = {
         Row: {
           address: string | null
           address_number: string | null
+          asaas_authorization_id: string | null
+          asaas_conciliation_id: string | null
+          asaas_payment_id: string | null
           checkout_completed: boolean
           checkout_completed_at: string | null
           checkout_started_at: string
@@ -2087,6 +2090,9 @@ export type Database = {
         Insert: {
           address?: string | null
           address_number?: string | null
+          asaas_authorization_id?: string | null
+          asaas_conciliation_id?: string | null
+          asaas_payment_id?: string | null
           checkout_completed?: boolean
           checkout_completed_at?: string | null
           checkout_started_at?: string
@@ -2106,6 +2112,9 @@ export type Database = {
         Update: {
           address?: string | null
           address_number?: string | null
+          asaas_authorization_id?: string | null
+          asaas_conciliation_id?: string | null
+          asaas_payment_id?: string | null
           checkout_completed?: boolean
           checkout_completed_at?: string | null
           checkout_started_at?: string
