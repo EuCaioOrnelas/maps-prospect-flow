@@ -17,6 +17,62 @@ function getPlanSearchesLimit(planKey: string): number {
   return limits[planKey] || 1000;
 }
 
+/**
+ * Busca um pagamento CONFIRMED/RECEIVED vinculado ao QR Code por seu
+ * conciliationIdentifier (txid). Essa é a fonte primária de verdade:
+ * independe de CPF/CNPJ/conta do pagador — quem paga o QR pode ser
+ * qualquer pessoa/empresa. Retorna o `id` do payment se encontrado.
+ */
+async function findPaymentByConciliation(
+  apiKey: string,
+  conciliationId: string,
+): Promise<{ paymentId: string; status: string } | null> {
+  if (!conciliationId) return null;
+  const statuses = ["CONFIRMED", "RECEIVED"];
+  for (const status of statuses) {
+    try {
+      const url = `${ASAAS_API}/payments?pixQrCodeId=${encodeURIComponent(conciliationId)}&status=${status}&limit=1`;
+      const res = await fetch(url, {
+        headers: { "access_token": apiKey, "Accept": "application/json" },
+      });
+      const json = await res.json();
+      if (json?.data?.length > 0) {
+        return { paymentId: json.data[0].id, status: json.data[0].status };
+      }
+    } catch (e) {
+      logStep("findPaymentByConciliation error", { status, error: String(e) });
+    }
+  }
+  return null;
+}
+
+/**
+ * Fallback legado (retrocompatibilidade). Só é usado quando NÃO temos
+ * conciliationId. Amarra o pagamento à autorização — funciona apenas
+ * quando o CPF do pagador bate com o do customer no Asaas.
+ */
+async function findPaymentByAuthorization(
+  apiKey: string,
+  authorizationId: string,
+): Promise<{ paymentId: string; status: string } | null> {
+  const statuses = ["CONFIRMED", "RECEIVED"];
+  for (const status of statuses) {
+    try {
+      const url = `${ASAAS_API}/payments?pixAutomaticAuthorizationId=${encodeURIComponent(authorizationId)}&status=${status}&limit=1`;
+      const res = await fetch(url, {
+        headers: { "access_token": apiKey, "Accept": "application/json" },
+      });
+      const json = await res.json();
+      if (json?.data?.length > 0) {
+        return { paymentId: json.data[0].id, status: json.data[0].status };
+      }
+    } catch (e) {
+      logStep("findPaymentByAuthorization error", { status, error: String(e) });
+    }
+  }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -34,100 +90,97 @@ serve(async (req) => {
     const { pixId } = await req.json();
     if (!pixId) throw new Error("pixId is required");
 
-    logStep("Checking authorization status", { pixId });
+    // `pixId` continua sendo o `authorizationId` (compat com o frontend).
+    const authorizationId = pixId as string;
 
-    // pixId is actually the PIX Automático authorization ID
-    const authRes = await fetch(`${ASAAS_API}/pix/automatic/authorizations/${pixId}`, {
-      headers: {
-        "access_token": apiKey,
-        "Accept": "application/json",
-      },
+    // 1) Busca o checkout_lead para obter conciliationId (fonte primária).
+    const { data: leadRow } = await supabaseClient
+      .from("checkout_leads")
+      .select("id, asaas_conciliation_id, asaas_authorization_id, asaas_payment_id, checkout_completed")
+      .or(`asaas_authorization_id.eq.${authorizationId},stripe_session_id.eq.asaas_pixauto_${authorizationId}`)
+      .maybeSingle();
+
+    const conciliationId = leadRow?.asaas_conciliation_id || null;
+
+    logStep("CONCILIATION-TRACE polling start", {
+      authorizationId,
+      conciliationId,
+      checkoutLeadId: leadRow?.id || null,
+      alreadyCompleted: leadRow?.checkout_completed || false,
+      existingPaymentId: leadRow?.asaas_payment_id || null,
     });
 
-    const authJson = await authRes.json();
-    if (!authRes.ok) {
-      throw new Error(`Authorization check failed: ${JSON.stringify(authJson)}`);
+    // 2) Se o webhook já processou, retorna PAID imediatamente.
+    if (leadRow?.checkout_completed) {
+      logStep("CONCILIATION-TRACE already completed via webhook", {
+        authorizationId,
+        conciliationId,
+        paymentId: leadRow.asaas_payment_id,
+      });
+      return new Response(
+        JSON.stringify({ status: "PAID" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const status = authJson.status;
-    logStep("Authorization status", { pixId, status });
-
-    // Map status: ACTIVE means the customer paid and authorized recurrence
-    let mappedStatus = status;
-    if (status === "ACTIVE") {
-      mappedStatus = "PAID";
+    // 3) Verifica status da autorização (informativo).
+    let authStatus: string | null = null;
+    try {
+      const authRes = await fetch(`${ASAAS_API}/pix/automatic/authorizations/${authorizationId}`, {
+        headers: { "access_token": apiKey, "Accept": "application/json" },
+      });
+      const authJson = await authRes.json();
+      if (authRes.ok) authStatus = authJson.status;
+    } catch (e) {
+      logStep("Auth status fetch failed", { error: String(e) });
     }
 
-    // If authorization was REFUSED/CANCELLED, the bank rejected recurrence
-    // BUT the immediate QR Code payment may still have gone through
-    // Check payments endpoint to confirm if money was actually received
-    if (status === "REFUSED" || status === "CANCELLED" || status === "AWAITING_AUTHORIZATION") {
-      logStep("Authorization not active, checking if immediate payment was received", { pixId, status });
-      
-      try {
-        // Check payments linked to this authorization
-        const paymentsRes = await fetch(
-          `${ASAAS_API}/payments?pixAutomaticAuthorizationId=${pixId}&status=CONFIRMED&limit=1`,
-          {
-            headers: {
-              "access_token": apiKey,
-              "Accept": "application/json",
-            },
-          }
-        );
-        
-        const paymentsJson = await paymentsRes.json();
-        
-        if (paymentsJson.data && paymentsJson.data.length > 0) {
-          logStep("Immediate payment found despite authorization status", { 
-            pixId, 
-            authStatus: status, 
-            paymentStatus: paymentsJson.data[0].status,
-            paymentId: paymentsJson.data[0].id 
-          });
-          mappedStatus = "PAID";
-        } else {
-          // Also check RECEIVED status
-          const receivedRes = await fetch(
-            `${ASAAS_API}/payments?pixAutomaticAuthorizationId=${pixId}&status=RECEIVED&limit=1`,
-            {
-              headers: {
-                "access_token": apiKey,
-                "Accept": "application/json",
-              },
-            }
-          );
-          const receivedJson = await receivedRes.json();
-          
-          if (receivedJson.data && receivedJson.data.length > 0) {
-            logStep("Received payment found despite authorization status", {
-              pixId,
-              authStatus: status,
-              paymentId: receivedJson.data[0].id
-            });
-            mappedStatus = "PAID";
-          }
-        }
-      } catch (paymentCheckError) {
-        logStep("Error checking payments fallback", { error: String(paymentCheckError) });
-      }
+    // 4) Fonte primária: conciliationIdentifier do QR Code.
+    let matched = conciliationId
+      ? await findPaymentByConciliation(apiKey, conciliationId)
+      : null;
+    let matchedVia: "conciliation" | "authorization" | "auth_active" | null = matched ? "conciliation" : null;
+
+    // 5) Fallback legado: autorização (retrocompat; depende de CPF do pagador).
+    if (!matched) {
+      matched = await findPaymentByAuthorization(apiKey, authorizationId);
+      if (matched) matchedVia = "authorization";
     }
 
-    // If authorization is ACTIVE, activate the plan
-    if (mappedStatus === "PAID") {
+    // 6) Fallback extra: autorização ACTIVE (fluxo feliz — sem duvida foi paga).
+    if (!matched && authStatus === "ACTIVE") {
+      matchedVia = "auth_active";
+    }
+
+    const mappedStatus = matched || authStatus === "ACTIVE" ? "PAID" : (authStatus || "PENDING");
+
+    logStep("CONCILIATION-TRACE conciliation result", {
+      authorizationId,
+      conciliationId,
+      authStatus,
+      matchedVia,
+      paymentId: matched?.paymentId || null,
+      paymentStatus: matched?.status || null,
+      mappedStatus,
+    });
+
+    // 7) Se pago, ativa o plano (o webhook faz o mesmo — este caminho é redundância defensiva).
+    if (mappedStatus === "PAID" && leadRow) {
       const { data: leads } = await supabaseClient
         .from("checkout_leads")
-        .select("user_id, email, plan_attempted")
-        .eq("stripe_session_id", `asaas_pixauto_${pixId}`)
-        .eq("checkout_completed", false)
+        .select("user_id, email, plan_attempted, checkout_completed")
+        .eq("id", leadRow.id)
         .limit(1);
 
-      if (leads && leads.length > 0) {
+      if (leads && leads.length > 0 && !leads[0].checkout_completed) {
         const lead = leads[0];
         const planNameToKey: Record<string, string> = {
           "Wiize Start": "start",
+          "Wiize Atendimento": "start",
           "Wiize Growth": "growth",
+          "Wiize Growth IA": "growth",
           "Wiize Scale": "scale",
+          "Wiize Enterprise": "scale",
         };
         const planKey = planNameToKey[lead.plan_attempted] || "start";
         const searchesLimit = getPlanSearchesLimit(planKey);
@@ -135,7 +188,6 @@ serve(async (req) => {
         periodEnd.setDate(periodEnd.getDate() + 30);
 
         let targetId = lead.user_id || null;
-
         if (!targetId && lead.email) {
           const { data: profileByEmail } = await supabaseClient
             .from("profiles")
@@ -146,7 +198,6 @@ serve(async (req) => {
         }
 
         if (targetId) {
-          // Check if this is an admin-assigned account - don't overwrite
           const { data: targetProfile } = await supabaseClient
             .from("profiles")
             .select("admin_assigned_plan")
@@ -164,19 +215,32 @@ serve(async (req) => {
               payment_provider: "asaas",
               updated_at: new Date().toISOString(),
             }).eq("id", targetId);
-
-            logStep("Profile updated", { userId: targetId, planKey });
+            logStep("CONCILIATION-TRACE profile activated via polling", {
+              userId: targetId,
+              planKey,
+              matchedVia,
+              paymentId: matched?.paymentId || null,
+            });
           }
         }
 
-        await supabaseClient.from("checkout_leads").update({
-          checkout_completed: true,
-          checkout_completed_at: new Date().toISOString(),
-          user_id: targetId,
-        }).eq("stripe_session_id", `asaas_pixauto_${pixId}`)
+        await supabaseClient
+          .from("checkout_leads")
+          .update({
+            checkout_completed: true,
+            checkout_completed_at: new Date().toISOString(),
+            user_id: targetId,
+            asaas_payment_id: matched?.paymentId || null,
+          })
+          .eq("id", leadRow.id)
           .eq("checkout_completed", false);
 
-        logStep("Checkout completed via polling", { pixId });
+        logStep("CONCILIATION-TRACE checkout completed via polling", {
+          authorizationId,
+          conciliationId,
+          paymentId: matched?.paymentId || null,
+          matchedVia,
+        });
       }
     }
 
