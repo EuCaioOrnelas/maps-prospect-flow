@@ -191,14 +191,18 @@ serve(async (req) => {
       throw new Error(`Asaas PIX Automático error: ${JSON.stringify(authJson.errors || authJson)}`);
     }
 
-    logStep("Authorization created", { 
-      authorizationId: authJson.id, 
-      status: authJson.status,
-    });
-
     const qrCodePayload = authJson.payload || authJson.immediateQrCode?.payload || "";
     const qrCodeImage = authJson.encodedImage || authJson.immediateQrCode?.encodedImage || "";
     const conciliationId = authJson.immediateQrCode?.conciliationIdentifier || "";
+
+    logStep("CONCILIATION-TRACE authorization created", {
+      authorizationId: authJson.id,
+      conciliationId,
+      status: authJson.status,
+      value: finalPrice,
+      userId,
+      email: customerData.email,
+    });
 
     // 4. Persiste bumps em profiles + auditoria
     if (userId) {
@@ -226,6 +230,7 @@ serve(async (req) => {
         }
       }
     }
+
 
     // 5. Track checkout lead
     try {
