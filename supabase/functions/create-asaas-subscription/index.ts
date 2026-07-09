@@ -232,23 +232,35 @@ serve(async (req) => {
     }
 
 
-    // 5. Track checkout lead
+    // 5. Track checkout lead (persistindo IDs de conciliação Asaas — fonte primária de verdade)
     try {
-      await supabaseClient.from("checkout_leads").insert({
-        user_id: userId || null,
-        email: customerData.email,
-        name: customerData.name,
-        phone: customerData.phone || null,
-        tax_id: customerData.taxId || null,
-        plan_attempted: plan.name,
-        stripe_session_id: `asaas_pixauto_${authJson.id}`,
-        checkout_started_at: new Date().toISOString(),
-        checkout_completed: false,
+      const { data: leadRow, error: leadErr } = await supabaseClient
+        .from("checkout_leads")
+        .insert({
+          user_id: userId || null,
+          email: customerData.email,
+          name: customerData.name,
+          phone: customerData.phone || null,
+          tax_id: customerData.taxId || null,
+          plan_attempted: plan.name,
+          stripe_session_id: `asaas_pixauto_${authJson.id}`,
+          asaas_authorization_id: authJson.id,
+          asaas_conciliation_id: conciliationId || null,
+          checkout_started_at: new Date().toISOString(),
+          checkout_completed: false,
+        })
+        .select("id")
+        .single();
+      if (leadErr) throw leadErr;
+      logStep("CONCILIATION-TRACE checkout_lead persisted", {
+        checkoutLeadId: leadRow?.id,
+        authorizationId: authJson.id,
+        conciliationId,
       });
-      logStep("Checkout lead tracked");
     } catch (e) {
       logStep("Failed to track checkout lead", { error: String(e) });
     }
+
 
     return new Response(
       JSON.stringify({
