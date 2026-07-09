@@ -166,6 +166,47 @@ async function getPlanFromCheckoutLead(supabaseClient: any, checkoutIdPrefix: st
   return null;
 }
 
+/**
+ * Localiza um checkout_lead pelo identificador de conciliação Asaas.
+ * Ordem de prioridade:
+ *  1. asaas_conciliation_id (fonte primária — txid do QR Code, independente do pagador)
+ *  2. asaas_authorization_id (fallback legado)
+ *  3. stripe_session_id (compat com registros antigos)
+ */
+async function findCheckoutLead(
+  supabaseClient: any,
+  ids: { conciliationId?: string | null; authorizationId?: string | null; subscriptionId?: string | null }
+): Promise<any | null> {
+  if (ids.conciliationId) {
+    const { data } = await supabaseClient
+      .from("checkout_leads")
+      .select("id, user_id, email, phone, tax_id, plan_attempted, asaas_conciliation_id, asaas_authorization_id, asaas_payment_id, checkout_completed, stripe_session_id")
+      .eq("asaas_conciliation_id", ids.conciliationId)
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+  if (ids.authorizationId) {
+    const { data } = await supabaseClient
+      .from("checkout_leads")
+      .select("id, user_id, email, phone, tax_id, plan_attempted, asaas_conciliation_id, asaas_authorization_id, asaas_payment_id, checkout_completed, stripe_session_id")
+      .or(`asaas_authorization_id.eq.${ids.authorizationId},stripe_session_id.eq.asaas_pixauto_${ids.authorizationId}`)
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+  if (ids.subscriptionId) {
+    const { data } = await supabaseClient
+      .from("checkout_leads")
+      .select("id, user_id, email, phone, tax_id, plan_attempted, asaas_conciliation_id, asaas_authorization_id, asaas_payment_id, checkout_completed, stripe_session_id")
+      .eq("stripe_session_id", `asaas_sub_${ids.subscriptionId}`)
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+  return null;
+}
+
 async function findProfile(supabaseClient: any, externalReference: string | null, checkoutIdPrefix: string | null) {
   let profile: any = null;
 
@@ -220,6 +261,27 @@ async function findProfile(supabaseClient: any, externalReference: string | null
 
   return null;
 }
+
+async function findProfileForLead(supabaseClient: any, lead: any): Promise<any | null> {
+  if (lead?.user_id) {
+    const { data } = await supabaseClient
+      .from("profiles")
+      .select("id, plan, email, subscription_current_period_end")
+      .eq("id", lead.user_id)
+      .maybeSingle();
+    if (data) return data;
+  }
+  if (lead?.email) {
+    const { data } = await supabaseClient
+      .from("profiles")
+      .select("id, plan, email, subscription_current_period_end")
+      .eq("email", lead.email)
+      .maybeSingle();
+    if (data) return data;
+  }
+  return null;
+}
+
 
 async function activatePlan(
   supabaseClient: any,
