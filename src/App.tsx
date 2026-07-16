@@ -413,21 +413,8 @@ const App = () => (
                   <Route path="partners/materiais" element={<AdminPartnersMaterials />} />
                   <Route path="partners/metas" element={<AdminPartnersGoals />} />
                   <Route path="partners/links" element={<AdminPartnersLinks />} />
-                  {/* Integration Layer — Developer Portal */}
-                  <Route path="integration" element={<IntegrationLayout />}>
-                    <Route index element={<IntegrationOverview />} />
-                    <Route path="developer-center" element={<IntegrationDeveloperCenter />} />
-                    <Route path="providers" element={<IntegrationProviders />} />
-                    <Route path="registry" element={<IntegrationRegistry />} />
-                    <Route path="endpoints" element={<IntegrationEndpoints />} />
-                    <Route path="filters" element={<IntegrationFilters />} />
-                    <Route path="errors" element={<IntegrationErrors />} />
-                    <Route path="security" element={<IntegrationSecurity />} />
-                    <Route path="rate-limits" element={<IntegrationRateLimits />} />
-                    <Route path="audit" element={<IntegrationAudit />} />
-                    <Route path="playground" element={<IntegrationPlayground />} />
-                    <Route path="changelog" element={<IntegrationChangelog />} />
-                  </Route>
+                  {/* Integration Layer — movida para rota pública abaixo (acesso temporário sem auth) */}
+
                 </Route>
 
                 {/* Integration Layer — Acesso público temporário (sem auth) para compartilhamento externo.
