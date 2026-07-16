@@ -430,6 +430,23 @@ const App = () => (
                   </Route>
                 </Route>
 
+                {/* Integration Layer — Acesso público temporário (sem auth) para compartilhamento externo.
+                    TODO: reproteger com senha 10052006 após o compartilhamento. */}
+                <Route path="/integration" element={<IntegrationLayout />}>
+                  <Route index element={<IntegrationOverview />} />
+                  <Route path="developer-center" element={<IntegrationDeveloperCenter />} />
+                  <Route path="providers" element={<IntegrationProviders />} />
+                  <Route path="registry" element={<IntegrationRegistry />} />
+                  <Route path="endpoints" element={<IntegrationEndpoints />} />
+                  <Route path="filters" element={<IntegrationFilters />} />
+                  <Route path="errors" element={<IntegrationErrors />} />
+                  <Route path="security" element={<IntegrationSecurity />} />
+                  <Route path="rate-limits" element={<IntegrationRateLimits />} />
+                  <Route path="audit" element={<IntegrationAudit />} />
+                  <Route path="playground" element={<IntegrationPlayground />} />
+                  <Route path="changelog" element={<IntegrationChangelog />} />
+                </Route>
+
                 {/* Portal do Parceiro */}
                 <Route path="/parceiros" element={<LightThemeWrapper><PartnersLanding /></LightThemeWrapper>} />
                 <Route path="/partners/apply" element={<LightThemeWrapper><PartnersApply /></LightThemeWrapper>} />
