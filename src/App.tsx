@@ -186,6 +186,7 @@ const IntegrationRateLimits = lazyWithRetry(() => import("./pages/admin/integrat
 const IntegrationAudit = lazyWithRetry(() => import("./pages/admin/integration/pages/Audit"), "IntegrationAudit");
 const IntegrationPlayground = lazyWithRetry(() => import("./pages/admin/integration/pages/Playground"), "IntegrationPlayground");
 const IntegrationChangelog = lazyWithRetry(() => import("./pages/admin/integration/pages/Changelog"), "IntegrationChangelog");
+const IntegrationRegistry = lazyWithRetry(() => import("./pages/admin/integration/pages/Registry"), "IntegrationRegistry");
 
 const queryClient = new QueryClient({
   defaultOptions: {
