@@ -174,6 +174,18 @@ const AdminBlogAnalytics = lazyWithRetry(() => import("./pages/admin/AdminBlogAn
 const AdminBlogAnalyticsDetail = lazyWithRetry(() => import("./pages/admin/AdminBlogAnalyticsDetail"), "AdminBlogAnalyticsDetail");
 const AdminBlogLogin = lazyWithRetry(() => import("./pages/admin/AdminBlogLogin"), "AdminBlogLogin");
 const BlogAdminGuard = lazyWithRetry(() => import("./components/admin/BlogAdminGuard"), "BlogAdminGuard");
+// Integration Layer — Developer Portal (admin only)
+const IntegrationLayout = lazyWithRetry(() => import("./pages/admin/integration/IntegrationLayout"), "IntegrationLayout");
+const IntegrationOverview = lazyWithRetry(() => import("./pages/admin/integration/pages/Overview"), "IntegrationOverview");
+const IntegrationProviders = lazyWithRetry(() => import("./pages/admin/integration/pages/Providers"), "IntegrationProviders");
+const IntegrationEndpoints = lazyWithRetry(() => import("./pages/admin/integration/pages/Endpoints"), "IntegrationEndpoints");
+const IntegrationFilters = lazyWithRetry(() => import("./pages/admin/integration/pages/Filters"), "IntegrationFilters");
+const IntegrationErrors = lazyWithRetry(() => import("./pages/admin/integration/pages/Errors"), "IntegrationErrors");
+const IntegrationSecurity = lazyWithRetry(() => import("./pages/admin/integration/pages/Security"), "IntegrationSecurity");
+const IntegrationRateLimits = lazyWithRetry(() => import("./pages/admin/integration/pages/RateLimits"), "IntegrationRateLimits");
+const IntegrationAudit = lazyWithRetry(() => import("./pages/admin/integration/pages/Audit"), "IntegrationAudit");
+const IntegrationPlayground = lazyWithRetry(() => import("./pages/admin/integration/pages/Playground"), "IntegrationPlayground");
+const IntegrationChangelog = lazyWithRetry(() => import("./pages/admin/integration/pages/Changelog"), "IntegrationChangelog");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -399,6 +411,19 @@ const App = () => (
                   <Route path="partners/materiais" element={<AdminPartnersMaterials />} />
                   <Route path="partners/metas" element={<AdminPartnersGoals />} />
                   <Route path="partners/links" element={<AdminPartnersLinks />} />
+                  {/* Integration Layer — Developer Portal */}
+                  <Route path="integration" element={<IntegrationLayout />}>
+                    <Route index element={<IntegrationOverview />} />
+                    <Route path="providers" element={<IntegrationProviders />} />
+                    <Route path="endpoints" element={<IntegrationEndpoints />} />
+                    <Route path="filters" element={<IntegrationFilters />} />
+                    <Route path="errors" element={<IntegrationErrors />} />
+                    <Route path="security" element={<IntegrationSecurity />} />
+                    <Route path="rate-limits" element={<IntegrationRateLimits />} />
+                    <Route path="audit" element={<IntegrationAudit />} />
+                    <Route path="playground" element={<IntegrationPlayground />} />
+                    <Route path="changelog" element={<IntegrationChangelog />} />
+                  </Route>
                 </Route>
 
                 {/* Portal do Parceiro */}
