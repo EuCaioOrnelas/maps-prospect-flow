@@ -1,187 +1,205 @@
+# Refatoração da Integration Layer — Provider Registry Architecture
 
-# Integration Layer — Fase 1 (Fundação)
+## Objetivo
 
-Camada enterprise desacoplada para que o Wian (e futuros produtos) consuma dados da Wiize sem conhecer o banco. Nenhuma funcionalidade atual é alterada — só adição.
+Transformar `/api/v1/context` em um **orquestrador puro**, extrair a lógica dos providers para **20 endpoints privados** (`/api/v1/providers/*`) e introduzir um **Provider Registry** como núcleo de descoberta, orquestração, cache e paralelismo.
 
-## O que será entregue
-
-- 1 endpoint versionado `POST /api/v1/context` (edge function `integration-v1-context`)
-- Context Builder que orquestra Providers conforme os módulos pedidos
-- 3 Providers: **CRM** (leads + pipeline), **Meta Campaigns**, **KPIs/Forecast**
-- Autenticação dupla: `client_id` + `client_secret` do Wian **+** JWT do usuário Wiize
-- Rate limit por IP / empresa / usuário / endpoint
-- Auditoria completa em tabela `integration_audit_log`
-- Contrato de resposta padronizado + catálogo de erros
-- Portal admin oculto `/admin/integration` com documentação navegável e endpoint de teste (playground read-only)
-
-## Fora do escopo desta fase (fica para fase 2+)
-
-- Cache Redis (arquitetura preparada, mas MVP usa cache em memória por request)
-- Auto-descoberta de docs via registro central (docs manuais versionadas)
-- Providers para chat, warming, score, agentes, fluxos, receita, oportunidades
-- Eventos em tempo real (webhooks Wiize→Wian)
-- Changelog automático (manual em MDX)
-- OAuth 2.0 formal
-
-## Arquitetura
+## Arquitetura alvo
 
 ```text
-supabase/functions/integration-v1-context/
-  index.ts                    # entrypoint HTTP, CORS, router
-  auth.ts                     # valida client_id/secret + JWT
-  rateLimit.ts                # reutiliza check_rate_limit RPC existente
-  audit.ts                    # grava integration_audit_log
-  response.ts                 # contrato padrão + erros
-  contextBuilder.ts           # orquestra providers
-  providers/
-    crmProvider.ts            # leads, pipeline_stages, tags
-    metaCampaignsProvider.ts  # meta_campaigns + métricas agregadas
-    kpisProvider.ts           # reutiliza lógica do Growth Cockpit
-  dto/
-    crm.ts
-    campaigns.ts
-    kpis.ts
-    context.ts
-  filters/
-    filterSchema.ts           # Zod: período, paginação, ordenação, tags, etc
-  errors/
-    catalog.ts                # códigos: AUTH_*, PERM_*, RATE_*, VALIDATION_*, PROVIDER_*
+Wian → POST /api/v1/context
+          ↓
+       Auth (client_id/secret + JWT)
+          ↓
+       Context Builder (orquestrador puro)
+          ↓
+       Provider Registry (descoberta + dependências + paralelismo + cache)
+          ↓
+       Providers (Cockpit, CRM, Meta, Pipeline, Forecast, ...)
+          ↓
+       Consolidação + Metadata + Cache
+          ↓
+       Resposta única
+
+Wian/Internal → POST /api/v1/providers/<name>
+          ↓
+       Auth → Registry.resolve(name) → Provider.execute() → Response
 ```
 
-## Contrato de request
+## Estrutura de pastas
 
-```json
-POST /functions/v1/integration-v1-context
-Headers:
-  Authorization: Bearer <JWT do usuário Wiize>
-  x-integration-client-id: <wian>
-  x-integration-client-secret: <secret>
-  x-request-id: <uuid opcional>
-Body:
-{
-  "version": "v1",
-  "modules": ["crm.leads", "crm.pipeline", "campaigns.meta", "kpis.forecast"],
-  "filters": {
-    "period": { "from": "2026-01-01", "to": "2026-01-31" },
-    "pagination": { "page": 1, "size": 50 },
-    "tags": ["quente"],
-    "stage_id": "uuid|null",
-    "sort": "created_at:desc"
-  }
+```text
+supabase/functions/
+├── _integration-core/                 (código compartilhado — importado via caminho relativo)
+│   ├── auth.ts
+│   ├── rateLimit.ts
+│   ├── audit.ts
+│   ├── response.ts
+│   ├── cache.ts                       (novo — cache por provider, TTL configurável)
+│   ├── errors/catalog.ts
+│   ├── filters/filterSchema.ts
+│   ├── registry/
+│   │   ├── ProviderRegistry.ts        (núcleo: register, resolve, execute, parallel, deps)
+│   │   ├── ProviderInterface.ts       (contrato: metadata + execute)
+│   │   └── index.ts                   (registra todos os providers ao importar)
+│   └── providers/
+│       ├── cockpitProvider.ts
+│       ├── crmProvider.ts
+│       ├── opportunitiesProvider.ts
+│       ├── pipelineProvider.ts
+│       ├── metaProvider.ts
+│       ├── campaignsProvider.ts
+│       ├── forecastProvider.ts
+│       ├── contactsProvider.ts
+│       ├── analyticsProvider.ts
+│       ├── dashboardProvider.ts
+│       ├── financeProvider.ts
+│       ├── automationProvider.ts
+│       ├── conversationsProvider.ts
+│       ├── leadsProvider.ts
+│       ├── scoresProvider.ts
+│       ├── usersProvider.ts
+│       ├── companyProvider.ts
+│       ├── settingsProvider.ts
+│       ├── permissionsProvider.ts
+│       └── insightsProvider.ts
+│
+├── integration-v1-context/            (refatorado — orquestrador puro)
+│   └── index.ts
+│
+└── integration-v1-provider/           (endpoint único, roteia via ?name= ou path suffix)
+    └── index.ts
+```
+
+> **Nota técnica:** Supabase Edge Functions não permitem paths dinâmicos por função. Usaremos **uma única função** `integration-v1-provider` que resolve o provider via body (`{ provider: "crm", ... }`) ou header `x-provider-name`. Isso expõe a URL pública como `POST /functions/v1/integration-v1-provider` e simula os 20 endpoints logicamente. O Developer Center documentará cada um como se fosse uma rota independente (`/api/v1/providers/<name>`), com o Playground preenchendo `provider` automaticamente.
+
+## Contrato do Provider
+
+```ts
+interface Provider {
+  metadata: {
+    name: string;              // "crm"
+    description: string;
+    version: string;           // "1.0.0"
+    requiredPermissions: string[];
+    minimumPlan: "start" | "growth" | "scale";
+    supportedFilters: string[];
+    defaultCacheTTL: number;   // segundos
+    priority: number;          // 1-10 (menor = mais crítico)
+    dependencies: string[];    // outros providers
+    inputDTO: ZodSchema;
+    outputDTO: ZodSchema;
+  };
+  execute(ctx: ProviderContext): Promise<ProviderResult>;
+}
+
+interface ProviderContext {
+  company_id: string;
+  user_id: string;
+  permissions: string[];
+  plan: string;
+  filters: Record<string, unknown>;
+  pagination: { page: number; limit: number };
+  sort: { field: string; direction: "asc" | "desc" };
+  registry: ProviderRegistry;   // permite acesso a deps resolvidas pelo Registry
+}
+
+interface ProviderResult {
+  data: unknown;
+  metadata: {
+    version: string;
+    processing_time_ms: number;
+    cache: { hit: boolean; ttl: number };
+    filters_applied: Record<string, unknown>;
+    records_count: number;
+  };
 }
 ```
 
-## Contrato de response (padrão único)
+## Provider Registry
 
-```json
-{
-  "status": 200,
-  "success": true,
-  "timestamp": "2026-07-16T...",
-  "request_id": "uuid",
-  "company_id": "uuid",
-  "version": "v1",
-  "processing_time_ms": 142,
-  "cache": { "hit": false, "ttl_s": 0 },
-  "filters_applied": { ... },
-  "context": {
-    "crm.leads": { data: [...DTOs...], meta: {total, page, size} },
-    "campaigns.meta": { ... },
-    "kpis.forecast": { ... }
-  },
-  "errors": []
-}
+Responsabilidades:
+- `register(provider)` — indexa por nome
+- `resolve(name)` — retorna provider ou lança `PROVIDER_NOT_FOUND`
+- `list()` — retorna todas as metadatas (usado pelo Developer Center)
+- `executeMany(names, ctx)` — resolve grafo de dependências, executa em paralelo os independentes, sequencial nos dependentes, consulta cache antes de cada execução
+- `getCatalog()` — snapshot serializável para UI
+
+## Context Builder (novo `integration-v1-context/index.ts`)
+
+Puro orquestrador — nenhuma regra de domínio:
+
+```ts
+1. auth() → { company_id, user_id, permissions, plan }
+2. rateLimit()
+3. parse body → { modules: string[], filters, pagination, sort }
+4. registry.executeMany(modules, ctx)   // Registry cuida de deps + paralelismo + cache
+5. consolidate() → merge results por module name
+6. audit()
+7. respond()
 ```
 
-Erros sempre no mesmo envelope, com `error.code` do catálogo (nunca stack trace, nunca SQL).
+## Cache
 
-## Segurança (defense in depth)
+- Módulo `_integration-core/cache.ts` — em memória por instância (Map com TTL). Suficiente para MVP e coerente com edge functions.
+- Chave: `provider:<name>:<company_id>:<hash(filters+pagination+sort)>`
+- Cada provider declara `defaultCacheTTL`; Registry consulta antes de executar.
+- `x-integration-cache-bypass: true` força refresh.
 
-1. HTTPS (Supabase edge nativo)
-2. `client_id` + `client_secret` — secrets `INTEGRATION_WIAN_CLIENT_ID` e `INTEGRATION_WIAN_CLIENT_SECRET` (compare com `timingSafeEqual`)
-3. JWT do usuário validado com `supabase.auth.getUser()` — daí extraímos `user_id` e `company_id` (via profile). Isolamento tenant é **derivado do JWT**, nunca do body.
-4. Rate limit por chave `client_id + user_id + endpoint` (reutiliza `check_rate_limit`)
-5. Auditoria de toda requisição (sucesso ou falha) com IP, UA, filtros, tempo
-6. Zero exposição de IDs internos sensíveis, tokens Meta, secrets
+## Novos endpoints do Developer Center
 
-## Banco (1 migration nova)
+- Nova página **Provider Registry** em `/admin/integration/registry`:
+  - Tabela com todos os providers (metadata + status + última execução — via `integration_audit_log`)
+  - Detalhe expandido: dependências, filtros, permissões, cache TTL
+- Playground atualizado: dropdown "Endpoint" com `/context` + 20 providers; body dinâmico conforme provider selecionado.
+- Registry no frontend (`src/pages/admin/integration/registry/providers.ts`) sincronizado manualmente com as metadatas do backend (fonte da verdade continua no backend; frontend serve para docs).
 
-```sql
-CREATE TABLE public.integration_audit_log (
-  id uuid PK,
-  request_id uuid,
-  client_id text,
-  user_id uuid,
-  company_id uuid,
-  endpoint text,
-  version text,
-  modules text[],
-  filters jsonb,
-  status_code int,
-  success bool,
-  error_code text,
-  processing_time_ms int,
-  records_returned int,
-  ip inet,
-  user_agent text,
-  created_at timestamptz
-);
--- GRANTs + RLS: só service_role escreve; admins leem.
--- Índices por (created_at desc), (user_id), (client_id, created_at).
-```
+## Migrations
 
-Nenhuma tabela existente é alterada.
+Nenhuma. `integration_audit_log` já cobre — apenas passaremos `endpoint = "provider:<name>"` ou `"context"` no campo existente.
 
-## Portal de documentação (frontend)
+## Compatibilidade
 
-Rota **`/admin/integration`** protegida por `useAdminCheck`, com sidebar:
+- URL pública de `/api/v1/context` **não muda**.
+- Comportamento observável do endpoint `/context` permanece idêntico (mesmo response shape).
+- Adiciona nova função `integration-v1-provider`.
 
-- Visão Geral · Arquitetura · Autenticação · Versionamento
-- Providers (uma página por provider, gerada de um objeto TS `PROVIDER_DOCS`)
-- Endpoints · Filtros · DTOs · Respostas · Erros
-- Rate Limits · Cache · Auditoria · Segurança · Limites operacionais
-- **Playground** (formulário que monta o body e chama a edge function real usando o JWT do admin logado, mostrando request/response/tempo)
-- Changelog (MDX manual) · Roadmap
+## Arquivos a criar
 
-Docs vivem em `src/pages/admin/integration/docs/*.tsx` como componentes React (não markdown externo, para bater com o padrão do projeto).
+- `supabase/functions/_integration-core/cache.ts`
+- `supabase/functions/_integration-core/registry/ProviderRegistry.ts`
+- `supabase/functions/_integration-core/registry/ProviderInterface.ts`
+- `supabase/functions/_integration-core/registry/index.ts`
+- `supabase/functions/_integration-core/providers/*.ts` (20 arquivos — 3 migrados dos atuais + 17 novos com implementação mínima real usando as tabelas existentes)
+- `supabase/functions/integration-v1-provider/index.ts`
+- `src/pages/admin/integration/pages/Registry.tsx`
 
-## Arquivos criados
+## Arquivos a mover/remover
 
-Frontend (portal):
-- `src/pages/admin/integration/IntegrationLayout.tsx`
-- `src/pages/admin/integration/IntegrationHome.tsx`
-- `src/pages/admin/integration/pages/Overview.tsx`, `Architecture.tsx`, `Auth.tsx`, `Versioning.tsx`, `Providers.tsx`, `Endpoints.tsx`, `Filters.tsx`, `Dtos.tsx`, `Responses.tsx`, `Errors.tsx`, `RateLimits.tsx`, `Cache.tsx`, `Audit.tsx`, `Security.tsx`, `Limits.tsx`, `Playground.tsx`, `Changelog.tsx`, `Roadmap.tsx`
-- `src/pages/admin/integration/registry/providers.ts` (metadata dos providers)
-- `src/pages/admin/integration/registry/endpoints.ts`
-- `src/pages/admin/integration/registry/filters.ts`
-- `src/pages/admin/integration/registry/errors.ts`
+- Mover código de `integration-v1-context/{auth,rateLimit,audit,response,errors,filters,contextBuilder,providers}` para `_integration-core/*`. Deletar duplicatas.
+- Reescrever `integration-v1-context/index.ts` como orquestrador puro.
 
-Backend (edge function):
-- `supabase/functions/integration-v1-context/index.ts` + arquivos irmãos listados acima
+## Arquivos a editar
 
-Rota registrada em `src/App.tsx` (adição pontual, admin-only).
-Secrets criados: `INTEGRATION_WIAN_CLIENT_ID`, `INTEGRATION_WIAN_CLIENT_SECRET`.
+- `src/pages/admin/integration/IntegrationLayout.tsx` (adicionar link Registry)
+- `src/pages/admin/integration/registry/providers.ts` (expandir para 20 providers)
+- `src/pages/admin/integration/pages/Playground.tsx` (suporte a provider endpoints)
+- `src/pages/admin/integration/pages/Endpoints.tsx` (listar 21 endpoints)
+- `src/App.tsx` (rota `/admin/integration/registry`)
 
-## Arquivos alterados
+## Riscos e mitigação
 
-- `src/App.tsx` — 1 rota nova aninhada em `/admin/integration/*`
-- `src/components/admin/AdminSidebar.tsx` (ou equivalente) — 1 item de menu novo, se existir sidebar admin
-- `supabase/migrations/<timestamp>_integration_audit_log.sql` (nova, não altera tabelas existentes)
+- **Import compartilhado entre edge functions:** Supabase suporta imports relativos entre pastas irmãs dentro de `supabase/functions/`. Já usado em outros projetos. Validaremos no deploy.
+- **20 providers com implementação real:** MVP entrega os 3 já existentes (CRM, Meta/Campaigns via split, KPIs→Cockpit) totalmente funcionais + 17 stubs que retornam schema válido com `status: "not_implemented"` na metadata, permitindo o Registry funcionar end-to-end e serem preenchidos incrementalmente sem quebrar contrato.
+- **Cache in-memory por instância:** aceitável para MVP; documentado como limitação; futuro upgrade para Redis/Deno KV.
 
-## Riscos e como mitigo
+## Escopo desta entrega
 
-- **Regressão zero**: nenhum arquivo funcional atual é modificado. Só adições + 1 rota admin + 1 migration aditiva.
-- **Multi-tenant**: `company_id` sempre derivado do JWT do usuário, nunca do body. Testado no playground.
-- **Custo de tempo**: MVP focado em 3 providers; adicionar novos é copiar o padrão.
-- **Compatibilidade futura**: versão no path (`/api/v1/`) e no body (`version: "v1"`), permitindo v2 lado a lado.
+1. Core compartilhado (`_integration-core/`) + Registry + Cache
+2. 20 providers registrados (3 completos + 17 stubs consistentes)
+3. Endpoint único `integration-v1-provider` roteando via Registry
+4. `integration-v1-context` refatorado como orquestrador puro
+5. Página `Registry` no Developer Center + Playground atualizado
+6. Sem migration nova, sem novos secrets
 
-## Próximos passos após aprovação
-
-1. Migration + GRANTs + RLS (`supabase--migration`)
-2. Registrar os 2 secrets (`INTEGRATION_WIAN_CLIENT_ID` random via `generate_secret`, `INTEGRATION_WIAN_CLIENT_SECRET` random via `generate_secret`)
-3. Edge function completa (arquivos backend acima)
-4. Portal admin (todos os arquivos frontend acima)
-5. Deploy + smoke test via `supabase--curl_edge_functions`
-6. Documentar no portal como o Wian deve chamar (com exemplos curl e fetch)
-
-Confirma para eu prosseguir?
+Após aprovação, executo tudo em paralelo.
