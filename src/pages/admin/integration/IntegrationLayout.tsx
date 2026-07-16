@@ -2,11 +2,12 @@ import { NavLink, Outlet } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   BookOpen, Boxes, Radio, Filter, Shield, Gauge, ScrollText,
-  PlayCircle, History, AlertOctagon, Layers,
+  PlayCircle, History, AlertOctagon, Layers, Rocket,
 } from "lucide-react";
 
 const NAV = [
   { to: ".", label: "Visão geral", icon: BookOpen, end: true },
+  { to: "developer-center", label: "Developer Center", icon: Rocket },
   { to: "registry", label: "Provider Registry", icon: Layers },
   { to: "providers", label: "Providers", icon: Boxes },
   { to: "endpoints", label: "Endpoints", icon: Radio },
