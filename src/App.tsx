@@ -416,6 +416,7 @@ const App = () => (
                   <Route path="integration" element={<IntegrationLayout />}>
                     <Route index element={<IntegrationOverview />} />
                     <Route path="providers" element={<IntegrationProviders />} />
+                    <Route path="registry" element={<IntegrationRegistry />} />
                     <Route path="endpoints" element={<IntegrationEndpoints />} />
                     <Route path="filters" element={<IntegrationFilters />} />
                     <Route path="errors" element={<IntegrationErrors />} />
