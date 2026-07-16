@@ -1,99 +1,187 @@
-# AI Workforce — Refatoração Completa + Exclusão
 
-## 1. Exclusão de colaboradores (faltante)
-- `EquipeList.tsx`: adicionar botão de menu (`MoreVertical`) em cada card com opção **Excluir** (AlertDialog de confirmação).
-- `useEquipeIA.ts`: novo hook `useDeleteWorkforce` — deleta `ai_workforce_canvas` e `ai_workforce` (cascade por FK) com `confirm` + toast.
-- Também disponível dentro do Builder (menu no header).
+# Integration Layer — Fase 1 (Fundação)
 
-## 2. Nova arquitetura do Builder (abas)
-Substituir o Builder atual por shell com abas no topo:
+Camada enterprise desacoplada para que o Wian (e futuros produtos) consuma dados da Wiize sem conhecer o banco. Nenhuma funcionalidade atual é alterada — só adição.
+
+## O que será entregue
+
+- 1 endpoint versionado `POST /api/v1/context` (edge function `integration-v1-context`)
+- Context Builder que orquestra Providers conforme os módulos pedidos
+- 3 Providers: **CRM** (leads + pipeline), **Meta Campaigns**, **KPIs/Forecast**
+- Autenticação dupla: `client_id` + `client_secret` do Wian **+** JWT do usuário Wiize
+- Rate limit por IP / empresa / usuário / endpoint
+- Auditoria completa em tabela `integration_audit_log`
+- Contrato de resposta padronizado + catálogo de erros
+- Portal admin oculto `/admin/integration` com documentação navegável e endpoint de teste (playground read-only)
+
+## Fora do escopo desta fase (fica para fase 2+)
+
+- Cache Redis (arquitetura preparada, mas MVP usa cache em memória por request)
+- Auto-descoberta de docs via registro central (docs manuais versionadas)
+- Providers para chat, warming, score, agentes, fluxos, receita, oportunidades
+- Eventos em tempo real (webhooks Wiize→Wian)
+- Changelog automático (manual em MDX)
+- OAuth 2.0 formal
+
+## Arquitetura
+
+```text
+supabase/functions/integration-v1-context/
+  index.ts                    # entrypoint HTTP, CORS, router
+  auth.ts                     # valida client_id/secret + JWT
+  rateLimit.ts                # reutiliza check_rate_limit RPC existente
+  audit.ts                    # grava integration_audit_log
+  response.ts                 # contrato padrão + erros
+  contextBuilder.ts           # orquestra providers
+  providers/
+    crmProvider.ts            # leads, pipeline_stages, tags
+    metaCampaignsProvider.ts  # meta_campaigns + métricas agregadas
+    kpisProvider.ts           # reutiliza lógica do Growth Cockpit
+  dto/
+    crm.ts
+    campaigns.ts
+    kpis.ts
+    context.ts
+  filters/
+    filterSchema.ts           # Zod: período, paginação, ordenação, tags, etc
+  errors/
+    catalog.ts                # códigos: AUTH_*, PERM_*, RATE_*, VALIDATION_*, PROVIDER_*
 ```
-[ Overview ] [ Canvas ] [ Testes ] [ Analytics ] [ Versões ]
+
+## Contrato de request
+
+```json
+POST /functions/v1/integration-v1-context
+Headers:
+  Authorization: Bearer <JWT do usuário Wiize>
+  x-integration-client-id: <wian>
+  x-integration-client-secret: <secret>
+  x-request-id: <uuid opcional>
+Body:
+{
+  "version": "v1",
+  "modules": ["crm.leads", "crm.pipeline", "campaigns.meta", "kpis.forecast"],
+  "filters": {
+    "period": { "from": "2026-01-01", "to": "2026-01-31" },
+    "pagination": { "page": 1, "size": 50 },
+    "tags": ["quente"],
+    "stage_id": "uuid|null",
+    "sort": "created_at:desc"
+  }
+}
 ```
-- `EquipeBuilder.tsx` vira shell com `Tabs`.
-- **Overview** (`WorkforceOverview.tsx`) — resumo: objetivo, performance, módulos conectados, conhecimentos, ferramentas, score grande, status de publicação.
-- **Canvas** — experiência refatorada (abaixo).
-- **Testes** (`WorkforceTestPanel.tsx`) — chat lateral + painel de explicabilidade (memória usada, conhecimento usado, objetivo atual, próxima ação).
-- **Analytics** (`WorkforceAnalytics.tsx`) — KPIs (conversas, taxa de sucesso, objetivos, transferências, leads, custo, uso IA).
-- **Versões** — placeholder com histórico de salvamentos.
 
-## 3. Canvas premium
-### Core dominante (`CoreNode.tsx`)
-- 2.5x tamanho dos cards normais (~280×280).
-- Glow verde Wiize (`shadow-[0_0_80px_-10px_hsl(var(--primary)/0.4)]`).
-- Conteúdo: logo Wiize grande, nome do Workforce, badge de função (ex: "SDR Qualificador"), **Score 0-100**, "8 módulos conectados", status (Ativo/Rascunho), CTA "Pronto para publicar".
-- Não deletável (já implementado).
-- Mini-painel inline com critérios do score (objetivo ✓, regras ✓, conhecimento ✗…) e sugestão automática.
+## Contrato de response (padrão único)
 
-### Background do canvas
-- Grid sutil (`bg-[radial-gradient(circle,hsl(var(--border)/0.15)_1px,transparent_1px)] bg-[size:24px_24px]`).
-- Glow radial no centro (verde Wiize, baixa opacidade).
-- Gradiente sutil top→bottom.
+```json
+{
+  "status": 200,
+  "success": true,
+  "timestamp": "2026-07-16T...",
+  "request_id": "uuid",
+  "company_id": "uuid",
+  "version": "v1",
+  "processing_time_ms": 142,
+  "cache": { "hit": false, "ttl_s": 0 },
+  "filters_applied": { ... },
+  "context": {
+    "crm.leads": { data: [...DTOs...], meta: {total, page, size} },
+    "campaigns.meta": { ... },
+    "kpis.forecast": { ... }
+  },
+  "errors": []
+}
+```
 
-### Conexões inteligentes
-- Edge type custom (`PremiumEdge.tsx`): bezier suave, `strokeWidth: 2.5`, glow via `filter: drop-shadow`.
-- Animação opcional de pulso (dot percorrendo) quando workforce está "ativo".
+Erros sempre no mesmo envelope, com `error.code` do catálogo (nunca stack trace, nunca SQL).
 
-### Cards por categoria (cores semânticas)
-Adicionar tokens em `index.css`:
-- `--category-estrategia`: verde
-- `--category-contexto`: roxo
-- `--category-conhecimento`: amarelo
-- `--category-dados`: azul
-- `--category-inteligencia`: ciano
-- `--category-acoes`: laranja
-- `--category-escalonamento`: vermelho
+## Segurança (defense in depth)
 
-Cada card (`ModuleNode.tsx`):
-- Borda cinza, ícone com fundo quadrado arredondado na cor da categoria.
-- Estrutura: ícone | nome (bold) | descrição curta (muted) | badge status (✓ Configurado / ⚠ Pendente) | dot de obrigatoriedade (Obrigatório/Recomendado/Opcional).
-- Hover: leve lift + glow da categoria.
+1. HTTPS (Supabase edge nativo)
+2. `client_id` + `client_secret` — secrets `INTEGRATION_WIAN_CLIENT_ID` e `INTEGRATION_WIAN_CLIENT_SECRET` (compare com `timingSafeEqual`)
+3. JWT do usuário validado com `supabase.auth.getUser()` — daí extraímos `user_id` e `company_id` (via profile). Isolamento tenant é **derivado do JWT**, nunca do body.
+4. Rate limit por chave `client_id + user_id + endpoint` (reutiliza `check_rate_limit`)
+5. Auditoria de toda requisição (sucesso ou falha) com IP, UA, filtros, tempo
+6. Zero exposição de IDs internos sensíveis, tokens Meta, secrets
 
-### Sidebar = Biblioteca de Módulos
-`NodeCategorySidebar.tsx`:
-- Campo de busca no topo (`Pesquisar módulo…`).
-- Accordion por categoria: Estratégia, Contexto, Dados, Interação, Ações.
-- Cada módulo: ícone categoria + nome + dot obrigatoriedade.
-- Layout compacto (h-9 por item).
+## Banco (1 migration nova)
 
-### Painel de configuração (canto direito)
-`WorkforceStatusPanel.tsx`:
-- "8 de 10 módulos configurados" com barra.
-- Lista de checks (Objetivo ✓, Memória ✓, Escalonamento ✓, Conhecimento ⚠, CRM ✓).
-- Sugestões IA contextuais.
+```sql
+CREATE TABLE public.integration_audit_log (
+  id uuid PK,
+  request_id uuid,
+  client_id text,
+  user_id uuid,
+  company_id uuid,
+  endpoint text,
+  version text,
+  modules text[],
+  filters jsonb,
+  status_code int,
+  success bool,
+  error_code text,
+  processing_time_ms int,
+  records_returned int,
+  ip inet,
+  user_agent text,
+  created_at timestamptz
+);
+-- GRANTs + RLS: só service_role escreve; admins leem.
+-- Índices por (created_at desc), (user_id), (client_id, created_at).
+```
 
-## 4. Arquivos
-**Criar:**
-- `src/components/equipe-ia/canvas/CoreNode.tsx`
-- `src/components/equipe-ia/canvas/ModuleNode.tsx`
-- `src/components/equipe-ia/canvas/PremiumEdge.tsx`
-- `src/components/equipe-ia/canvas/categoryConfig.ts` (mapping categoria→cor/icone/obrigatoriedade)
-- `src/components/equipe-ia/builder/WorkforceOverview.tsx`
-- `src/components/equipe-ia/builder/WorkforceTestPanel.tsx`
-- `src/components/equipe-ia/builder/WorkforceAnalytics.tsx`
-- `src/components/equipe-ia/builder/WorkforceVersions.tsx`
-- `src/components/equipe-ia/builder/DeleteWorkforceDialog.tsx`
+Nenhuma tabela existente é alterada.
 
-**Editar:**
-- `src/pages/equipe-ia/EquipeBuilder.tsx` (shell com tabs)
-- `src/pages/equipe-ia/EquipeList.tsx` (botão excluir + ações)
-- `src/components/equipe-ia/canvas/EquipeCanvas.tsx` (grid, glow, novos nodes/edges)
-- `src/components/equipe-ia/canvas/EquipeNode.tsx` (refatorar p/ usar categoryConfig)
-- `src/components/equipe-ia/canvas/WorkforceScorePanel.tsx` (mover lógica de score p/ Core, deixar painel de sugestões)
-- `src/hooks/useEquipeIA.ts` (hook delete + tipos de categoria)
-- `src/index.css` (tokens de categorias)
+## Portal de documentação (frontend)
 
-## 5. Ordem de execução
-1. Hook + UI de exclusão (rápido, libera limpeza).
-2. Tokens de categoria + categoryConfig.
-3. Refator do canvas (background, edges, ModuleNode, CoreNode dominante).
-4. Sidebar busca + agrupamento.
-5. Shell de abas no Builder + Overview/Testes/Analytics.
-6. Polimento de microinterações.
+Rota **`/admin/integration`** protegida por `useAdminCheck`, com sidebar:
 
-## 6. Fora de escopo
-- Não criar versionamento real agora (aba Versões = placeholder).
-- Analytics usa dados reais existentes (`agent_conversations`, `handoff_assignments`) ou empty state.
-- Modo teste integra com edge function `chat-with-equipe` já existente; sem novas tabelas.
+- Visão Geral · Arquitetura · Autenticação · Versionamento
+- Providers (uma página por provider, gerada de um objeto TS `PROVIDER_DOCS`)
+- Endpoints · Filtros · DTOs · Respostas · Erros
+- Rate Limits · Cache · Auditoria · Segurança · Limites operacionais
+- **Playground** (formulário que monta o body e chama a edge function real usando o JWT do admin logado, mostrando request/response/tempo)
+- Changelog (MDX manual) · Roadmap
 
-Aprovar para implementar nessa ordem?
+Docs vivem em `src/pages/admin/integration/docs/*.tsx` como componentes React (não markdown externo, para bater com o padrão do projeto).
+
+## Arquivos criados
+
+Frontend (portal):
+- `src/pages/admin/integration/IntegrationLayout.tsx`
+- `src/pages/admin/integration/IntegrationHome.tsx`
+- `src/pages/admin/integration/pages/Overview.tsx`, `Architecture.tsx`, `Auth.tsx`, `Versioning.tsx`, `Providers.tsx`, `Endpoints.tsx`, `Filters.tsx`, `Dtos.tsx`, `Responses.tsx`, `Errors.tsx`, `RateLimits.tsx`, `Cache.tsx`, `Audit.tsx`, `Security.tsx`, `Limits.tsx`, `Playground.tsx`, `Changelog.tsx`, `Roadmap.tsx`
+- `src/pages/admin/integration/registry/providers.ts` (metadata dos providers)
+- `src/pages/admin/integration/registry/endpoints.ts`
+- `src/pages/admin/integration/registry/filters.ts`
+- `src/pages/admin/integration/registry/errors.ts`
+
+Backend (edge function):
+- `supabase/functions/integration-v1-context/index.ts` + arquivos irmãos listados acima
+
+Rota registrada em `src/App.tsx` (adição pontual, admin-only).
+Secrets criados: `INTEGRATION_WIAN_CLIENT_ID`, `INTEGRATION_WIAN_CLIENT_SECRET`.
+
+## Arquivos alterados
+
+- `src/App.tsx` — 1 rota nova aninhada em `/admin/integration/*`
+- `src/components/admin/AdminSidebar.tsx` (ou equivalente) — 1 item de menu novo, se existir sidebar admin
+- `supabase/migrations/<timestamp>_integration_audit_log.sql` (nova, não altera tabelas existentes)
+
+## Riscos e como mitigo
+
+- **Regressão zero**: nenhum arquivo funcional atual é modificado. Só adições + 1 rota admin + 1 migration aditiva.
+- **Multi-tenant**: `company_id` sempre derivado do JWT do usuário, nunca do body. Testado no playground.
+- **Custo de tempo**: MVP focado em 3 providers; adicionar novos é copiar o padrão.
+- **Compatibilidade futura**: versão no path (`/api/v1/`) e no body (`version: "v1"`), permitindo v2 lado a lado.
+
+## Próximos passos após aprovação
+
+1. Migration + GRANTs + RLS (`supabase--migration`)
+2. Registrar os 2 secrets (`INTEGRATION_WIAN_CLIENT_ID` random via `generate_secret`, `INTEGRATION_WIAN_CLIENT_SECRET` random via `generate_secret`)
+3. Edge function completa (arquivos backend acima)
+4. Portal admin (todos os arquivos frontend acima)
+5. Deploy + smoke test via `supabase--curl_edge_functions`
+6. Documentar no portal como o Wian deve chamar (com exemplos curl e fetch)
+
+Confirma para eu prosseguir?

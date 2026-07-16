@@ -3188,6 +3188,69 @@ export type Database = {
           },
         ]
       }
+      integration_audit_log: {
+        Row: {
+          client_id: string | null
+          company_id: string | null
+          created_at: string
+          endpoint: string
+          error_code: string | null
+          error_message: string | null
+          filters: Json | null
+          id: string
+          ip: unknown
+          modules: string[] | null
+          processing_time_ms: number | null
+          records_returned: number | null
+          request_id: string | null
+          status_code: number
+          success: boolean
+          user_agent: string | null
+          user_id: string | null
+          version: string
+        }
+        Insert: {
+          client_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          endpoint: string
+          error_code?: string | null
+          error_message?: string | null
+          filters?: Json | null
+          id?: string
+          ip?: unknown
+          modules?: string[] | null
+          processing_time_ms?: number | null
+          records_returned?: number | null
+          request_id?: string | null
+          status_code: number
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+          version?: string
+        }
+        Update: {
+          client_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          endpoint?: string
+          error_code?: string | null
+          error_message?: string | null
+          filters?: Json | null
+          id?: string
+          ip?: unknown
+          modules?: string[] | null
+          processing_time_ms?: number | null
+          records_returned?: number | null
+          request_id?: string | null
+          status_code?: number
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
       knowledge_base: {
         Row: {
           active: boolean | null
