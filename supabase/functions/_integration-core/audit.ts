@@ -1,6 +1,4 @@
-// Grava auditoria de toda requisição — sucesso ou falha.
-// Escrita sempre com service_role. Falha silenciosa (nunca derruba o request).
-
+// Grava auditoria de toda requisição — sucesso ou falha. Falha silenciosa.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;

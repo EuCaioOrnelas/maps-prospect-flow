@@ -1,15 +1,6 @@
 // Contrato oficial de filtros aceitos pela Integration Layer.
-// Cada Provider aplica apenas o que faz sentido para seu domínio.
-
-export interface Period {
-  from?: string | null; // ISO date
-  to?: string | null;
-}
-
-export interface Pagination {
-  page: number;
-  size: number;
-}
+export interface Period { from?: string | null; to?: string | null; }
+export interface Pagination { page: number; size: number; }
 
 export interface IntegrationFilters {
   period?: Period;
@@ -17,7 +8,7 @@ export interface IntegrationFilters {
   tags?: string[];
   stage_id?: string | null;
   campaign_id?: string | null;
-  sort?: string; // "field:asc|desc"
+  sort?: string;
 }
 
 const MAX_PAGE_SIZE = 200;
@@ -32,10 +23,7 @@ export function parseFilters(raw: unknown): { ok: true; filters: IntegrationFilt
   if (f.period !== undefined) {
     if (typeof f.period !== "object" || f.period === null) return { ok: false, reason: "period must be object" };
     const p = f.period as Record<string, unknown>;
-    out.period = {
-      from: typeof p.from === "string" ? p.from : null,
-      to: typeof p.to === "string" ? p.to : null,
-    };
+    out.period = { from: typeof p.from === "string" ? p.from : null, to: typeof p.to === "string" ? p.to : null };
     if (out.period.from && Number.isNaN(Date.parse(out.period.from))) return { ok: false, reason: "period.from invalid ISO date" };
     if (out.period.to && Number.isNaN(Date.parse(out.period.to))) return { ok: false, reason: "period.to invalid ISO date" };
   }
@@ -56,17 +44,14 @@ export function parseFilters(raw: unknown): { ok: true; filters: IntegrationFilt
     if (!Array.isArray(f.tags) || f.tags.some((t) => typeof t !== "string")) return { ok: false, reason: "tags must be string[]" };
     out.tags = f.tags as string[];
   }
-
   if (f.stage_id !== undefined) {
     if (f.stage_id !== null && typeof f.stage_id !== "string") return { ok: false, reason: "stage_id must be string or null" };
     out.stage_id = (f.stage_id as string | null) ?? null;
   }
-
   if (f.campaign_id !== undefined) {
     if (f.campaign_id !== null && typeof f.campaign_id !== "string") return { ok: false, reason: "campaign_id must be string or null" };
     out.campaign_id = (f.campaign_id as string | null) ?? null;
   }
-
   if (f.sort !== undefined) {
     if (typeof f.sort !== "string" || !/^[a-z_]+:(asc|desc)$/i.test(f.sort)) return { ok: false, reason: "sort must be 'field:asc|desc'" };
     out.sort = f.sort;

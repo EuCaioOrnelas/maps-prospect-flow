@@ -186,6 +186,7 @@ const IntegrationRateLimits = lazyWithRetry(() => import("./pages/admin/integrat
 const IntegrationAudit = lazyWithRetry(() => import("./pages/admin/integration/pages/Audit"), "IntegrationAudit");
 const IntegrationPlayground = lazyWithRetry(() => import("./pages/admin/integration/pages/Playground"), "IntegrationPlayground");
 const IntegrationChangelog = lazyWithRetry(() => import("./pages/admin/integration/pages/Changelog"), "IntegrationChangelog");
+const IntegrationRegistry = lazyWithRetry(() => import("./pages/admin/integration/pages/Registry"), "IntegrationRegistry");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -415,6 +416,7 @@ const App = () => (
                   <Route path="integration" element={<IntegrationLayout />}>
                     <Route index element={<IntegrationOverview />} />
                     <Route path="providers" element={<IntegrationProviders />} />
+                    <Route path="registry" element={<IntegrationRegistry />} />
                     <Route path="endpoints" element={<IntegrationEndpoints />} />
                     <Route path="filters" element={<IntegrationFilters />} />
                     <Route path="errors" element={<IntegrationErrors />} />

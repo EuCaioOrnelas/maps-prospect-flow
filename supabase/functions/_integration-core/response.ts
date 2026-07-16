@@ -1,10 +1,10 @@
 // Contrato de resposta padrão da Integration Layer.
-// Todas as respostas — sucesso ou erro — passam por aqui.
+// Toda resposta — sucesso ou erro — passa por aqui.
 
 export const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-integration-client-id, x-integration-client-secret, x-request-id",
+    "authorization, x-client-info, apikey, content-type, x-integration-client-id, x-integration-client-secret, x-request-id, x-provider-name, x-integration-cache-bypass",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 

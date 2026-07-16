@@ -20,8 +20,8 @@ export default function Providers() {
           <CardContent className="space-y-4 text-sm">
             <p className="text-muted-foreground">{p.description}</p>
             <div>
-              <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Módulos</div>
-              <div className="flex flex-wrap gap-1">{p.modules.map((m) => <Badge key={m} variant="secondary">{m}</Badge>)}</div>
+              <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Endpoint</div>
+              <code className="text-xs">POST /api/v1/providers/{p.key}</code>
             </div>
             <div>
               <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Filtros aceitos</div>
