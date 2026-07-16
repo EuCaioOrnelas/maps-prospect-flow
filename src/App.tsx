@@ -411,6 +411,19 @@ const App = () => (
                   <Route path="partners/materiais" element={<AdminPartnersMaterials />} />
                   <Route path="partners/metas" element={<AdminPartnersGoals />} />
                   <Route path="partners/links" element={<AdminPartnersLinks />} />
+                  {/* Integration Layer — Developer Portal */}
+                  <Route path="integration" element={<IntegrationLayout />}>
+                    <Route index element={<IntegrationOverview />} />
+                    <Route path="providers" element={<IntegrationProviders />} />
+                    <Route path="endpoints" element={<IntegrationEndpoints />} />
+                    <Route path="filters" element={<IntegrationFilters />} />
+                    <Route path="errors" element={<IntegrationErrors />} />
+                    <Route path="security" element={<IntegrationSecurity />} />
+                    <Route path="rate-limits" element={<IntegrationRateLimits />} />
+                    <Route path="audit" element={<IntegrationAudit />} />
+                    <Route path="playground" element={<IntegrationPlayground />} />
+                    <Route path="changelog" element={<IntegrationChangelog />} />
+                  </Route>
                 </Route>
 
                 {/* Portal do Parceiro */}
