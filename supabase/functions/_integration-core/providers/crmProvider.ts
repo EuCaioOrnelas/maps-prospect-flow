@@ -22,18 +22,26 @@ async function execute(ctx: ProviderContext) {
   const size = ctx.filters.pagination?.size ?? 50;
   const from = (page - 1) * size;
   const to = from + size - 1;
+  const sortMap: Record<string, string> = {
+    created_at: "created_at",
+    ai_score: "ai_score",
+    opportunity_level: "opportunity_level",
+    contact_name: "contact_name",
+    company_name: "company_name",
+    stage_id: "pipeline_stage_id",
+  };
 
   let q = admin
     .from("leads")
-    .select("id, contact_name, company_name, opportunity_level, ai_score, stage_id, has_responded, created_at", { count: "exact" })
+    .select("id, contact_name, company_name, opportunity_level, ai_score, pipeline_stage_id, has_responded, created_at", { count: "exact" })
     .eq("user_id", ctx.companyId);
 
-  if (ctx.filters.stage_id) q = q.eq("stage_id", ctx.filters.stage_id);
+  if (ctx.filters.stage_id) q = q.eq("pipeline_stage_id", ctx.filters.stage_id);
   if (ctx.filters.period?.from) q = q.gte("created_at", ctx.filters.period.from);
   if (ctx.filters.period?.to) q = q.lte("created_at", ctx.filters.period.to);
 
   const [sortField, sortDir] = (ctx.filters.sort ?? "created_at:desc").split(":");
-  q = q.order(sortField, { ascending: sortDir === "asc" });
+  q = q.order(sortMap[sortField] ?? "created_at", { ascending: sortDir === "asc" });
   q = q.range(from, to);
 
   const { data, error, count } = await q;
@@ -45,7 +53,7 @@ async function execute(ctx: ProviderContext) {
     company_name: l.company_name,
     opportunity_level: l.opportunity_level,
     ai_score: l.ai_score,
-    stage_id: l.stage_id,
+    stage_id: l.pipeline_stage_id,
     responded: Boolean(l.has_responded),
     created_at: l.created_at,
   }));

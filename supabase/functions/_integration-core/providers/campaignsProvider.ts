@@ -11,11 +11,20 @@ async function execute(ctx: ProviderContext) {
   const size = ctx.filters.pagination?.size ?? 50;
   const from = (page - 1) * size;
   const to = from + size - 1;
+  const sortMap: Record<string, string> = {
+    created_at: "created_at",
+    status: "status",
+    name: "campaign_name",
+    campaign_name: "campaign_name",
+    total_recipients: "total_recipients",
+    sent_count: "success_count",
+    success_count: "success_count",
+  };
 
   let q = admin
     .from("meta_campaigns")
     .select(
-      "id, name, status, total_recipients, sent_count, delivered_count, read_count, replied_count, failed_count, started_at, completed_at, scheduled_at, created_at",
+      "id, campaign_name, status, total_recipients, success_count, failed_count, created_at",
       { count: "exact" },
     )
     .eq("user_id", ctx.companyId);
@@ -25,22 +34,22 @@ async function execute(ctx: ProviderContext) {
   if (ctx.filters.campaign_id) q = q.eq("id", ctx.filters.campaign_id);
 
   const [sortField, sortDir] = (ctx.filters.sort ?? "created_at:desc").split(":");
-  q = q.order(sortField, { ascending: sortDir === "asc" });
+  q = q.order(sortMap[sortField] ?? "created_at", { ascending: sortDir === "asc" });
   q = q.range(from, to);
 
   const { data, error, count } = await q;
   if (error) throw new Error(error.message);
 
   const items = (data ?? []).map((c: any) => {
-    const sent = c.sent_count ?? 0;
-    const replied = c.replied_count ?? 0;
+    const sent = c.success_count ?? 0;
+    const replied = 0;
     return {
-      id: c.id, name: c.name, status: c.status,
+      id: c.id, name: c.campaign_name, status: c.status,
       total_recipients: c.total_recipients ?? 0,
-      sent, delivered: c.delivered_count ?? 0, read: c.read_count ?? 0,
+      sent, delivered: sent, read: 0,
       replied, failed: c.failed_count ?? 0,
       reply_rate: sent > 0 ? Number((replied / sent).toFixed(4)) : 0,
-      started_at: c.started_at, completed_at: c.completed_at, scheduled_at: c.scheduled_at,
+      started_at: c.created_at, completed_at: null, scheduled_at: null,
     };
   });
 
