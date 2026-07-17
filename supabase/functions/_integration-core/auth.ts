@@ -12,6 +12,36 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const EXPECTED_CLIENT_ID = Deno.env.get("INTEGRATION_WIAN_CLIENT_ID") ?? "";
 const EXPECTED_CLIENT_SECRET = Deno.env.get("INTEGRATION_WIAN_CLIENT_SECRET") ?? "";
 
+async function getVerifiedJwtIdentity(token: string): Promise<{ userId: string; email: string | null } | null> {
+  const sb = createClient(SUPABASE_URL, ANON_KEY);
+
+  // getClaims is only available in newer supabase-js runtimes / signing-key setups.
+  // Keep it as an optimization, but always fall back to getUser so older edge bundles
+  // return structured auth errors instead of crashing with "getClaims is not a function".
+  const auth = sb.auth as unknown as {
+    getClaims?: (jwt: string) => Promise<{ data?: { claims?: { sub?: string; email?: string } }; error?: unknown }>;
+    getUser: (jwt: string) => Promise<{ data?: { user?: { id?: string; email?: string | null } }; error?: unknown }>;
+  };
+
+  if (typeof auth.getClaims === "function") {
+    const { data, error } = await auth.getClaims(token);
+    if (!error && data?.claims?.sub) {
+      return {
+        userId: data.claims.sub,
+        email: data.claims.email ?? null,
+      };
+    }
+  }
+
+  const { data, error } = await auth.getUser(token);
+  if (error || !data?.user?.id) return null;
+
+  return {
+    userId: data.user.id,
+    email: data.user.email ?? null,
+  };
+}
+
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let mismatch = 0;
@@ -48,12 +78,10 @@ export async function verifyUser(req: Request): Promise<
   if (!authHeader.startsWith("Bearer ")) return { ok: false, code: "AUTH_MISSING_USER_TOKEN" };
   const token = authHeader.slice(7);
 
-  const sb = createClient(SUPABASE_URL, ANON_KEY);
-  const { data, error } = await sb.auth.getClaims(token);
-  if (error || !data?.claims?.sub) return { ok: false, code: "AUTH_INVALID_USER_TOKEN" };
+  const identity = await getVerifiedJwtIdentity(token);
+  if (!identity) return { ok: false, code: "AUTH_INVALID_USER_TOKEN" };
 
-  const userId = data.claims.sub as string;
-  const email = (data.claims.email as string | undefined) ?? null;
+  const { userId, email } = identity;
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   const { data: member } = await admin
