@@ -11,11 +11,11 @@ async function execute(ctx: ProviderContext) {
   const from = ctx.filters.period?.from ?? null;
   const to = ctx.filters.period?.to ?? null;
 
-  let leadsQ = admin.from("leads").select("id, has_responded, stage_id", { count: "exact" }).eq("user_id", ctx.companyId);
+  let leadsQ = admin.from("leads").select("id, has_responded, pipeline_stage_id", { count: "exact" }).eq("user_id", ctx.companyId);
   if (from) leadsQ = leadsQ.gte("created_at", from);
   if (to) leadsQ = leadsQ.lte("created_at", to);
 
-  let campQ = admin.from("meta_campaigns").select("id, sent_count, replied_count", { count: "exact" }).eq("user_id", ctx.companyId);
+  let campQ = admin.from("meta_campaigns").select("id, success_count", { count: "exact" }).eq("user_id", ctx.companyId);
   if (from) campQ = campQ.gte("created_at", from);
   if (to) campQ = campQ.lte("created_at", to);
 
@@ -27,8 +27,8 @@ async function execute(ctx: ProviderContext) {
   const leadsTotal = leadsRes.count ?? leads.length;
   const leadsResponded = leads.filter((l: any) => l.has_responded).length;
 
-  let sent = 0, replied = 0;
-  for (const c of campRes.data ?? []) { sent += c.sent_count ?? 0; replied += c.replied_count ?? 0; }
+  let sent = 0;
+  for (const c of campRes.data ?? []) sent += c.success_count ?? 0;
 
   const data = {
     period: { from, to },
@@ -37,8 +37,8 @@ async function execute(ctx: ProviderContext) {
     leads_conversion_rate: leadsTotal > 0 ? Number((leadsResponded / leadsTotal).toFixed(4)) : 0,
     campaigns_total: campRes.count ?? (campRes.data ?? []).length,
     campaigns_messages_sent: sent,
-    campaigns_reply_rate: sent > 0 ? Number((replied / sent).toFixed(4)) : 0,
-    pipeline_open_leads: leads.filter((l: any) => l.stage_id).length,
+    campaigns_reply_rate: 0,
+    pipeline_open_leads: leads.filter((l: any) => l.pipeline_stage_id).length,
   };
   return { data, recordsCount: 1 };
 }

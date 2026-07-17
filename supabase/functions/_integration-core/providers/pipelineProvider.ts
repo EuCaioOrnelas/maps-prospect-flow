@@ -9,17 +9,17 @@ async function execute(ctx: ProviderContext) {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   const { data: stages, error } = await admin
     .from("pipeline_stages")
-    .select("id, name, sort_order")
+    .select("id, name, position")
     .eq("user_id", ctx.companyId)
-    .order("sort_order", { ascending: true });
+    .order("position", { ascending: true });
   if (error) throw new Error(error.message);
 
-  const { data: leads } = await admin.from("leads").select("stage_id").eq("user_id", ctx.companyId);
+  const { data: leads } = await admin.from("leads").select("pipeline_stage_id").eq("user_id", ctx.companyId);
   const byStage = new Map<string, number>();
-  for (const l of leads ?? []) byStage.set(l.stage_id, (byStage.get(l.stage_id) ?? 0) + 1);
+  for (const l of leads ?? []) byStage.set(l.pipeline_stage_id, (byStage.get(l.pipeline_stage_id) ?? 0) + 1);
 
   const items = (stages ?? []).map((s: any) => ({
-    id: s.id, name: s.name, sort_order: s.sort_order, leads_count: byStage.get(s.id) ?? 0,
+    id: s.id, name: s.name, sort_order: s.position, leads_count: byStage.get(s.id) ?? 0,
   }));
   return { data: { items, meta: { total: items.length } }, recordsCount: items.length };
 }
