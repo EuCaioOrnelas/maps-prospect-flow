@@ -7,9 +7,11 @@ import { crmProvider } from "../providers/crmProvider.ts";
 import { pipelineProvider } from "../providers/pipelineProvider.ts";
 import { campaignsProvider, metaProvider } from "../providers/campaignsProvider.ts";
 import { cockpitProvider } from "../providers/cockpitProvider.ts";
+import { opportunitiesProvider } from "../providers/opportunitiesProvider.ts";
+import { financeProvider } from "../providers/financeProvider.ts";
 import {
-  opportunitiesProvider, forecastProvider, contactsProvider, analyticsProvider,
-  dashboardProvider, financeProvider, automationProvider, conversationsProvider,
+  forecastProvider, contactsProvider, analyticsProvider,
+  dashboardProvider, automationProvider, conversationsProvider,
   leadsProvider, scoresProvider, usersProvider, companyProvider,
   settingsProvider, permissionsProvider, insightsProvider,
 } from "../providers/stubs.ts";

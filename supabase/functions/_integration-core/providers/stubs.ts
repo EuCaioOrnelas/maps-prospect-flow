@@ -23,13 +23,7 @@ function stub(meta: Omit<ProviderMetadata, "status">): Provider {
   };
 }
 
-export const opportunitiesProvider = stub({
-  name: "opportunities",
-  description: "Oportunidades quentes, score e nível de negócio.",
-  version: "0.1.0", requiredPermissions: [], minimumPlan: "growth",
-  supportedFilters: ["period", "pagination", "sort"], defaultCacheTTL: 60, priority: 2,
-  dependencies: [], inputSchema: {}, outputSchema: {},
-});
+// opportunitiesProvider real: providers/opportunitiesProvider.ts
 
 export const forecastProvider = stub({
   name: "forecast",
@@ -63,13 +57,7 @@ export const dashboardProvider = stub({
   dependencies: ["cockpit", "pipeline"], inputSchema: {}, outputSchema: {},
 });
 
-export const financeProvider = stub({
-  name: "finance",
-  description: "Assinatura, plano, cobranças e MRR da empresa.",
-  version: "0.1.0", requiredPermissions: ["role:admin"], minimumPlan: "start",
-  supportedFilters: [], defaultCacheTTL: 300, priority: 4,
-  dependencies: [], inputSchema: {}, outputSchema: {},
-});
+// financeProvider real: providers/financeProvider.ts
 
 export const automationProvider = stub({
   name: "automation",
