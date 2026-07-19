@@ -4,9 +4,8 @@
 // exemplos e recomendações. Toda a documentação em um único fluxo — sem tabs.
 
 import { PROVIDER_DOCS } from "../registry/providers";
-import { ERRORS } from "../registry/errors";
-import { FILTERS } from "../registry/filters";
-import { ENDPOINTS } from "../registry/endpoints";
+import { ERROR_DOCS } from "../registry/errors";
+import { FILTER_DOCS } from "../registry/filters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
