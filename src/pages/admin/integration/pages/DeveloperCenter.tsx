@@ -378,13 +378,14 @@ const newJwt = r.session!.access_token;`;
           <p>Todos os filtros vão em <code>body.filters</code>. Regras:</p>
           <div className="space-y-3">
             {FILTER_DOCS.map(f => (
-              <div key={f.key} className="rounded-lg border border-border/60 p-3">
+              <div key={f.name} className="rounded-lg border border-border/60 p-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <code className="text-sm font-semibold">{f.key}</code>
+                  <code className="text-sm font-semibold">{f.name}</code>
                   <Badge variant="outline" className="text-[10px]">{f.type}</Badge>
+                  <span className="text-[10px] text-muted-foreground">{f.format}</span>
                 </div>
-                <p className="text-muted-foreground text-xs">{f.description}</p>
-                {f.example && <div className="mt-2"><CodeBlock code={JSON.stringify(f.example, null, 2)} /></div>}
+                <p className="text-muted-foreground text-xs">Aplica-se a: {f.applies_to.join(", ")}</p>
+                {f.example && <div className="mt-2"><CodeBlock code={f.example} /></div>}
               </div>
             ))}
           </div>
@@ -543,7 +544,7 @@ const newJwt = r.session!.access_token;`;
                 <tr key={e.code}>
                   <td className="p-2 font-mono">{e.code}</td>
                   <td className="p-2"><Badge variant="outline" className="text-[10px]">{e.status}</Badge></td>
-                  <td className="p-2 text-muted-foreground">{e.description}</td>
+                  <td className="p-2 text-muted-foreground">{e.meaning} <span className="text-foreground/80">— {e.action}</span></td>
                 </tr>
               ))}
             </tbody>
