@@ -377,7 +377,7 @@ const newJwt = r.session!.access_token;`;
         <Card><CardContent className="pt-6 space-y-4 text-sm">
           <p>Todos os filtros vão em <code>body.filters</code>. Regras:</p>
           <div className="space-y-3">
-            {FILTERS.map(f => (
+            {FILTER_DOCS.map(f => (
               <div key={f.key} className="rounded-lg border border-border/60 p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <code className="text-sm font-semibold">{f.key}</code>
@@ -539,7 +539,7 @@ const newJwt = r.session!.access_token;`;
               <tr><th className="text-left p-2">Código</th><th className="text-left p-2">HTTP</th><th className="text-left p-2">Descrição</th></tr>
             </thead>
             <tbody className="[&>tr]:border-t [&>tr]:border-border/40">
-              {ERRORS.map(e => (
+              {ERROR_DOCS.map(e => (
                 <tr key={e.code}>
                   <td className="p-2 font-mono">{e.code}</td>
                   <td className="p-2"><Badge variant="outline" className="text-[10px]">{e.status}</Badge></td>
