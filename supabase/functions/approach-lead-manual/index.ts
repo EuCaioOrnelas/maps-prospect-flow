@@ -287,6 +287,7 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ Ao terminar a apresentação, dá pra responder: quem é? de qual empresa? por que entende disso? por que veio falar comigo?
   ✓ Está personalizada ao ICP "${lead.category || "N/A"}"?
 
+  ✓ O GANCHO e o INSIGHT têm ligação direta com "${companyProfile?.company_products || "o serviço vendido"}"? (se não, reescreva)
   ✓ Parece consultoria, não venda?
   ✓ Evita clichês de IA/marketing?
   ✓ Segue Meta (sem spam, sem manipulação)?
