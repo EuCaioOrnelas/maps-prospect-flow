@@ -353,14 +353,29 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
 
     const parsed = JSON.parse(content);
 
-    // Sanitiza a saída: remove travessões e normaliza espaçamentos (regra dura do produto).
-    const sanitize = (s: string) =>
-      (s || "")
+    // Sanitiza a saída: remove travessões, normaliza espaçamentos e capitaliza início de bloco/frase.
+    const capFirst = (s: string) => s.replace(/^(\s*)([a-zà-ÿ])/, (_m, sp, ch) => sp + ch.toUpperCase());
+    const sanitize = (s: string) => {
+      let out = (s || "")
         .replace(/\s*--\s*/g, ", ")                          // "palavra -- palavra" -> "palavra, palavra"
         .replace(/([^\n])\s+—\s+([^\n])/g, "$1, $2")        // travessão longo no meio de frase -> vírgula
         .replace(/[ \t]+\n/g, "\n")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
+
+      // Capitaliza a primeira letra de cada parágrafo (separados por \n\n) e de cada frase após . ! ?
+      out = out
+        .split(/\n{2,}/)
+        .map((block) => {
+          const capBlock = capFirst(block);
+          // dentro do bloco, capitaliza após ponto final/exclamação/interrogação seguidos de espaço
+          return capBlock.replace(/([.!?]\s+)([a-zà-ÿ])/g, (_m, p, ch) => p + ch.toUpperCase());
+        })
+        .join("\n\n");
+
+      return out;
+    };
+
 
     const finalMessage = sanitize(parsed.mensagem || "");
 
