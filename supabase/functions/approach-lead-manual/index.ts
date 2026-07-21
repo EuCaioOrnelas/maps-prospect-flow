@@ -199,12 +199,22 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • Complementa o contexto (não repete). Ex.: "achei que fazia sentido te chamar rapidinho pra compartilhar uma percepção."
    • Nunca robótico.
 
-5) INSIGHT CONSULTIVO — o maior diferencial
+5) INSIGHT CONSULTIVO — o maior diferencial (REGRA DE CONEXÃO OBRIGATÓRIA)
    • Só aparece DEPOIS do contexto + identificação + motivo. Nunca antes.
-   • Uma percepção inteligente. NUNCA apontar defeito de forma direta.
-   • Foque em UM tema: oportunidade perdida, processo otimizável, presença digital, atendimento, geração de demanda, posicionamento, anúncios, CRM, automação, experiência do cliente.
+   • ⚠️ REGRA DE OURO — CONEXÃO COM O SERVIÇO OFERECIDO:
+     O insight PRECISA ter relação direta com o que "${companyProfile?.company_name || "sua empresa"}" REALMENTE vende:
+     "${companyProfile?.company_products || "-"}" (nicho: ${companyProfile?.company_niche || "-"}, diferencial: ${companyProfile?.company_differential || "-"}).
+     NUNCA levante um ponto de atenção genérico (ex.: "reputação boa mas...") se ele não conversa com a solução que você entrega.
+     Antes de escrever o insight, se pergunte: "esse ponto que vou levantar tem ligação natural com o que eu vendo?".
+     Se a resposta for NÃO, troque o ângulo — escolha um ponto do diagnóstico do lead que se conecte com "${companyProfile?.company_products || "seu serviço"}".
+   • ANCORAGEM: use os dados do "DIAGNÓSTICO DESTE LEAD" (pontos fracos, análise de site, redes, concorrência, demanda) e cruze com o produto da sua empresa.
+     Exemplo mental: se você vende "sistema de delivery próprio" e o lead não tem site com pedido online → insight sobre canal de vendas direto.
+     Se você vende "gestão de tráfego" e o lead tem baixa presença em redes → insight sobre captação previsível.
+     Se você vende "CRM/WhatsApp" e o lead tem muitos reviews mas fluxo desorganizado → insight sobre pós-venda/retenção.
+   • Uma percepção inteligente, específica ao NEGÓCIO DELE. NUNCA apontar defeito de forma direta.
    • SEMPRE em linguagem consultiva e cautelosa: "talvez", "parece existir", "pode haver", "é possível", "percebi um ponto interessante".
    • NUNCA dizer que a empresa "faz errado", "está ruim", "precisa melhorar urgentemente".
+   • PROIBIDO insight solto que não plante a semente do que você vende — o leitor precisa terminar com curiosidade sobre uma área em que VOCÊ resolve.
 
 6) CURIOSIDADE
    • NÃO revelar a solução. NÃO explicar o serviço. NÃO apresentar produto.
