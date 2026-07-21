@@ -881,6 +881,12 @@ export default function OpportunitiesManagement() {
           )}
         </div>
 
+        {/* Análises detalhadas do score */}
+        <CollapsibleAnalysis icon={<Globe size={14} className="text-primary" />} title="Análise de Redes Sociais" content={lead.enrichment_data?.analise_redes_sociais} />
+        <CollapsibleAnalysis icon={<Globe size={14} className="text-primary" />} title="Análise do Site" content={lead.enrichment_data?.analise_site} />
+        <CollapsibleAnalysis icon={<Target size={14} className="text-primary" />} title="Concorrência Regional (raio de 5km)" content={lead.enrichment_data?.analise_concorrencia_regional} />
+        <CollapsibleAnalysis icon={<MapPin size={14} className="text-primary" />} title="Demanda Regional" content={lead.enrichment_data?.analise_demanda_regional} />
+
         {/* Edit / View toggle button */}
         <div className="flex justify-end">
           {!editingDiagnostic ? (
@@ -1166,11 +1172,6 @@ export default function OpportunitiesManagement() {
         })()}
       </div>
 
-      {/* Análises colapsáveis */}
-      <CollapsibleAnalysis icon={<Globe size={14} className="text-primary" />} title="Análise de Redes Sociais" content={lead.enrichment_data?.analise_redes_sociais} />
-      <CollapsibleAnalysis icon={<Globe size={14} className="text-primary" />} title="Análise do Site" content={lead.enrichment_data?.analise_site} />
-      <CollapsibleAnalysis icon={<Target size={14} className="text-primary" />} title="Concorrência Regional (raio de 5km)" content={lead.enrichment_data?.analise_concorrencia_regional} />
-      <CollapsibleAnalysis icon={<MapPin size={14} className="text-primary" />} title="Demanda Regional" content={lead.enrichment_data?.analise_demanda_regional} />
 
       {/* Market Analysis - each item as collapsible */}
       {lead.enrichment_data?.approach_analysis && (
@@ -1895,7 +1896,7 @@ export default function OpportunitiesManagement() {
                                 return <span className="text-muted-foreground text-xs">—</span>;
                               }
                               const openMeta = () => { setSendingLead(lead); setSendDialogOpen(true); };
-                              const sendBtnClass = "inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#25D366] hover:bg-[#20BA5A] text-white shadow-sm shadow-emerald-900/20 transition-all hover:scale-105 active:scale-95";
+                              const sendBtnClass = "inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95";
                               // Só uma opção → ação direta (manual abre popover de web/app; meta abre dialog)
                               if (hasManual && !hasMeta) {
                                 return (
