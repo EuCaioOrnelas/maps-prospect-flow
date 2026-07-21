@@ -1775,14 +1775,14 @@ export default function OpportunitiesManagement() {
                     {loading ? (
                       Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                          {Array.from({ length: 8 }).map((_, j) => (
+                          {Array.from({ length: 7 }).map((_, j) => (
                             <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
                           ))}
                         </TableRow>
                       ))
                     ) : paginatedLeads.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
+                        <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                           {searchTerm || filterLevel !== "all"
                             ? "Nenhuma oportunidade encontrada com esses filtros"
                             : "Nenhuma oportunidade ainda. Faça uma busca em Oportunidades → Buscar"}
