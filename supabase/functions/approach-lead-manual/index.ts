@@ -157,9 +157,43 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • 1 a 2 frases. Nunca genérico demais.
    • TESTE DE NATURALIDADE: se o empresário NÃO entender naturalmente por que você entrou em contato antes de você falar sobre o negócio dele, este bloco falhou — reescreva com mais contexto.
 
-3) IDENTIFICAÇÃO — curta e simples
-   • "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}." (ou variação natural equivalente)
-   • Sem autopromoção. Sem "somos líderes". Sem anos de mercado. Sem lista de diferenciais.
+3) IDENTIFICAÇÃO + AUTORIDADE CONTEXTUAL — obrigatoriamente com 3 elementos
+   • A apresentação simples ("Sou X, da Y.") NÃO É SUFICIENTE. Ela deixa o empresário pensando "quem é você?" e "por que eu deveria te ouvir?".
+   • ESTRUTURA OBRIGATÓRIA (nesta ordem, em 1 a 2 frases naturais):
+       (a) Nome: "${companyProfile?.attendant_name || "[nome]"}"
+       (b) Empresa: "${companyProfile?.company_name || "[empresa]"}"
+       (c) Contexto de autoridade — UMA frase curta que justifique NATURALMENTE por que essa pessoa entende do assunto que vai comentar em seguida.
+   • Exemplo estrutural (adaptar, nunca copiar literal):
+       "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. Trabalhamos diariamente com empresas do setor ${lead.category || "..."} ajudando a fortalecer os canais próprios de venda."
+   • O objetivo do contexto de autoridade NÃO é impressionar nem vender — é apenas explicar por que faz sentido essa pessoa estar comentando sobre aquele tema.
+   • A autoridade deve parecer INCIDENTAL, nunca propaganda. O leitor deve pensar: "faz sentido essa pessoa entender desse assunto."
+
+   FONTES DE AUTORIDADE PERMITIDAS (use apenas o que for verdadeiro, com base no PERFIL DA EMPRESA acima):
+     • especialização declarada da empresa (${companyProfile?.company_niche || "nicho da empresa"})
+     • nicho / segmento atendido (${companyProfile?.company_target_audience || "público declarado"})
+     • tipo de serviço prestado (${companyProfile?.company_products || "serviços declarados"})
+     • diferencial real declarado (${companyProfile?.company_differential || "-"})
+     • rotina de análise daquele segmento ("costumo acompanhar…", "trabalho analisando…", "faço parte de uma equipe especializada em…")
+     • propósito recorrente do contato (mapear negócios locais, entender presença digital, etc.)
+   Frases modelo (adaptar ao ICP "${lead.category || "N/A"}", nunca copiar):
+     – "Trabalho analisando estratégias digitais de ${lead.category || "negócios locais"}."
+     – "Atuo com empresas que buscam fortalecer as vendas diretas."
+     – "Faço parte de uma equipe especializada em presença digital para negócios locais."
+     – "Costumo acompanhar como ${lead.category || "empresas desse segmento"} utilizam seus canais digitais."
+
+   PROIBIÇÕES ABSOLUTAS (a IA NUNCA pode inventar):
+     • quantidade de clientes • faturamento • anos de mercado • prêmios • certificações
+     • liderança • rankings • participações • resultados numéricos • posições no mercado
+   PROIBIDO escrever frases como: "somos referência", "somos líderes", "somos especialistas reconhecidos",
+   "somos a maior/melhor", "temos milhares de clientes", "mais de X clientes", "mais de X anos",
+   "empresa premiada", "resultados extraordinários". Essas frases DERRUBAM a credibilidade quando não podem ser comprovadas.
+
+   SE o PERFIL DA EMPRESA acima trouxer dados reais e verificáveis (anos de atuação, região, certificações, especialização, reconhecimento público, diferencial concreto), a IA PODE usá-los — sempre de forma natural, jamais como propaganda.
+
+   TESTE FINAL DA APRESENTAÇÃO: ao terminar este bloco, o empresário precisa entender naturalmente:
+     (1) quem entrou em contato; (2) de qual empresa; (3) por que essa pessoa entende do assunto; (4) por que decidiu falar com ele.
+   Se qualquer uma dessas 4 perguntas ficar sem resposta, REESCREVA o bloco.
+
 
 4) MOTIVO DO CONTATO — natural, espontâneo
    • Complementa o contexto (não repete). Ex.: "achei que fazia sentido te chamar rapidinho pra compartilhar uma percepção."
@@ -237,7 +271,11 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ Tem transparência (quem, por quê)?
   ✓ Existe um CONTEXTO DA ABORDAGEM entre o gancho e o insight? (obrigatório)
   ✓ Se eu fosse o dono e recebesse essa mensagem de um desconhecido, entenderia naturalmente por que ele entrou em contato ANTES de ele falar do meu negócio?
+  ✓ A IDENTIFICAÇÃO contém os 3 elementos (nome + empresa + contexto de autoridade natural)?
+  ✓ A autoridade usa apenas fatos verdadeiros (especialização, nicho, serviço, rotina) — sem inventar números, anos, prêmios, liderança ou clientes?
+  ✓ Ao terminar a apresentação, dá pra responder: quem é? de qual empresa? por que entende disso? por que veio falar comigo?
   ✓ Está personalizada ao ICP "${lead.category || "N/A"}"?
+
   ✓ Parece consultoria, não venda?
   ✓ Evita clichês de IA/marketing?
   ✓ Segue Meta (sem spam, sem manipulação)?
