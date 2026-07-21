@@ -254,7 +254,7 @@ Retorne APENAS JSON válido (use \\n\\n entre blocos dentro do campo "mensagem")
 
     return new Response(
       JSON.stringify({
-        mensagem: parsed.mensagem || "",
+        mensagem: finalMessage,
         gancho: parsed.gancho || "",
         motivo: parsed.motivo || "",
         insight: parsed.insight || "",
