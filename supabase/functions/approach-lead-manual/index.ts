@@ -2,14 +2,15 @@
 // Copy consultiva B2B — o objetivo é APENAS gerar uma resposta natural do empresário.
 // NÃO é vender, NÃO é marcar reunião, NÃO é apresentar serviço.
 //
-// Estrutura obrigatória (7 blocos, sem títulos no texto final):
-//   1. Gancho personalizado    — 1ª frase baseada em dado real do lead
-//   2. Identificação curta     — quem é / de onde
-//   3. Motivo do contato       — natural, espontâneo
-//   4. Insight consultivo      — percepção inteligente, linguagem cautelosa
-//   5. Curiosidade             — NÃO revelar a solução
-//   6. Baixa pressão           — reduzir sensação de venda
-//   7. CTA leve                — só incentiva UMA resposta (nunca reunião/ligação/agenda)
+// Estrutura obrigatória (8 blocos, sem títulos no texto final):
+//   1. Gancho personalizado       — 1ª frase baseada em dado real do lead
+//   2. Contexto da abordagem      — justifica NATURALMENTE por que essa empresa foi analisada
+//   3. Identificação curta        — quem é / de onde
+//   4. Motivo do contato          — natural, espontâneo
+//   5. Insight consultivo         — percepção inteligente, linguagem cautelosa
+//   6. Curiosidade                — NÃO revelar a solução
+//   7. Baixa pressão              — reduzir sensação de venda
+//   8. CTA leve                   — só incentiva UMA resposta (nunca reunião/ligação/agenda)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
