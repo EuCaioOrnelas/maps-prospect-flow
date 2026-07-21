@@ -229,7 +229,9 @@ POLÍTICAS META (cumprir sempre)
 AUTO-AVALIAÇÃO ANTES DE RESPONDER
 ═══════════════════════════════════════════
 Avalie mentalmente antes de me devolver o JSON:
-  ✓ Parece escrita por humano?
+  ✓ Começa com uma saudação curta, natural e variada (nunca "bom dia/tarde/noite", nunca gíria)?
+  ✓ A saudação está adaptada ao ICP e não fica isolada (é seguida pelo gancho)?
+  ✓ Parece uma conversa real iniciada por uma pessoa no WhatsApp — não uma carta comercial?
   ✓ Demonstra pesquisa real sobre a empresa?
   ✓ Gera curiosidade sem revelar a solução?
   ✓ Tem transparência (quem, por quê)?
