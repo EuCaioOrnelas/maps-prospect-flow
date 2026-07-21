@@ -75,10 +75,9 @@ interface OpportunityLead {
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 60] as const;
 
 // Ícone de "enviar" (paper plane) branco, usado no botão verde de envio manual
-const WhatsAppIcon = ({ size = 16 }: { size?: number }) => (
-  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M22 2 11 13" />
-    <path d="M22 2 15 22l-4-9-9-4 20-7z" />
+const WhatsAppIcon = ({ size = 18 }: { size?: number }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" aria-hidden="true">
+    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
   </svg>
 );
 
