@@ -222,12 +222,22 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • O leitor precisa terminar essa parte pensando: "o que será que ele encontrou?".
 
 7) BAIXA PRESSÃO
-   • Reduzir por completo a sensação de venda.
-   • Use frases como: "nem sei se faz sentido pra vocês", "não é pra vender nada agora", "queria só compartilhar uma percepção", "talvez eu esteja enganado".
+   • UMA linha curta, humilde, para reduzir sensação de venda.
+   • Use frases como: "posso estar enganado", "talvez não seja o momento", "só compartilhando uma percepção".
+   • PROIBIDO frases genéricas soltas tipo "achei interessante dar uma olhada nessa questão" — precisa amarrar com o insight anterior.
 
-8) CTA FINAL
-   • PROIBIDO pedir: reunião, ligação, apresentação, demonstração, agenda, horário, "5 minutinhos".
-   • Só pode incentivar UMA resposta curta. Ex.: "posso te mandar?", "faz sentido?", "você também percebe isso?", "vale a pena eu explicar melhor por aqui?".
+8) CTA FINAL — SEMPRE OFERECENDO EXPLICAR MELHOR (regra dura)
+   • O CTA DEVE convidar o empresário a receber uma explicação mais detalhada sobre o ponto levantado no insight — nunca uma pergunta vaga.
+   • Estrutura obrigatória: referenciar o TEMA do insight (ex.: canal próprio de vendas, agenda, retenção, captação, delivery) + oferecer explicar melhor ali no WhatsApp.
+   • Exemplos (adaptar ao insight real, nunca copiar literal):
+       – "Se quiser, posso te explicar melhor por aqui como a gente costuma resolver isso."
+       – "Faz sentido eu te mandar rapidamente como isso funciona na prática?"
+       – "Posso te explicar melhor em 2 mensagens como a gente ajuda restaurantes nesse ponto?"
+       – "Se fizer sentido, te explico com calma como funciona — sem compromisso."
+   • PROIBIDO absolutamente: pedir reunião, ligação, apresentação, demonstração, agenda, horário, "5 minutinhos", "call".
+   • PROIBIDO CTA morto/vago: "faz sentido?", "você também percebe isso?", "faz sentido pra você?", "concorda?" — SEM referência ao serviço soam sem contexto e fracos.
+   • O CTA precisa amarrar naturalmente com o insight anterior. Se o insight foi sobre "site/pedido online", o CTA fala em explicar melhor como resolver o canal próprio. Se foi sobre "agenda", explica melhor como organizam a agenda. Nunca desconecte.
+
 
 REGRA DE FLUXO (INEGOCIÁVEL):
 Saudação → Gancho → Contexto → Identificação → Motivo → Insight → Curiosidade → Baixa pressão → CTA.
@@ -259,8 +269,10 @@ LINGUAGEM E ESTILO
 - SEM emojis. SEM listas. SEM hashtags. SEM links. SEM caixa alta. SEM negrito/markdown.
 - SEM travessão duplo "--". SEM travessão longo "—" no meio de frase (use vírgula ou quebra de linha).
 - Frases curtas, PT-BR natural.
+- ORTOGRAFIA: TODA frase começa com letra MAIÚSCULA. Todo parágrafo/bloco (após \\n\\n) começa com maiúscula. Nunca inicie um bloco com minúscula (ex.: NUNCA "estava pesquisando" — sempre "Estava pesquisando").
 - Use QUEBRAS DE LINHA em branco (\\n\\n) entre os blocos para dar respiro no WhatsApp.
 - Extensão-alvo: 90 a 160 palavras. Nunca ultrapasse 180.
+
 
 ═══════════════════════════════════════════
 POLÍTICAS META (cumprir sempre)
@@ -288,6 +300,9 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ Está personalizada ao ICP "${lead.category || "N/A"}"?
 
   ✓ O GANCHO e o INSIGHT têm ligação direta com "${companyProfile?.company_products || "o serviço vendido"}"? (se não, reescreva)
+  ✓ O CTA oferece EXPLICAR MELHOR o tema do insight (nunca é pergunta vaga tipo "faz sentido?")?
+  ✓ O CTA amarra explicitamente com o tema do insight (canal próprio, agenda, retenção, etc.)?
+  ✓ Toda frase e todo bloco começam com letra MAIÚSCULA?
   ✓ Parece consultoria, não venda?
   ✓ Evita clichês de IA/marketing?
   ✓ Segue Meta (sem spam, sem manipulação)?
@@ -341,14 +356,29 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
 
     const parsed = JSON.parse(content);
 
-    // Sanitiza a saída: remove travessões e normaliza espaçamentos (regra dura do produto).
-    const sanitize = (s: string) =>
-      (s || "")
+    // Sanitiza a saída: remove travessões, normaliza espaçamentos e capitaliza início de bloco/frase.
+    const capFirst = (s: string) => s.replace(/^(\s*)([a-zà-ÿ])/, (_m, sp, ch) => sp + ch.toUpperCase());
+    const sanitize = (s: string) => {
+      let out = (s || "")
         .replace(/\s*--\s*/g, ", ")                          // "palavra -- palavra" -> "palavra, palavra"
         .replace(/([^\n])\s+—\s+([^\n])/g, "$1, $2")        // travessão longo no meio de frase -> vírgula
         .replace(/[ \t]+\n/g, "\n")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
+
+      // Capitaliza a primeira letra de cada parágrafo (separados por \n\n) e de cada frase após . ! ?
+      out = out
+        .split(/\n{2,}/)
+        .map((block) => {
+          const capBlock = capFirst(block);
+          // dentro do bloco, capitaliza após ponto final/exclamação/interrogação seguidos de espaço
+          return capBlock.replace(/([.!?]\s+)([a-zà-ÿ])/g, (_m, p, ch) => p + ch.toUpperCase());
+        })
+        .join("\n\n");
+
+      return out;
+    };
+
 
     const finalMessage = sanitize(parsed.mensagem || "");
 
