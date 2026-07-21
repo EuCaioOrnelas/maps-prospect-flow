@@ -881,6 +881,12 @@ export default function OpportunitiesManagement() {
           )}
         </div>
 
+        {/* Análises detalhadas do score */}
+        <CollapsibleAnalysis icon={<Globe size={14} className="text-primary" />} title="Análise de Redes Sociais" content={lead.enrichment_data?.analise_redes_sociais} />
+        <CollapsibleAnalysis icon={<Globe size={14} className="text-primary" />} title="Análise do Site" content={lead.enrichment_data?.analise_site} />
+        <CollapsibleAnalysis icon={<Target size={14} className="text-primary" />} title="Concorrência Regional (raio de 5km)" content={lead.enrichment_data?.analise_concorrencia_regional} />
+        <CollapsibleAnalysis icon={<MapPin size={14} className="text-primary" />} title="Demanda Regional" content={lead.enrichment_data?.analise_demanda_regional} />
+
         {/* Edit / View toggle button */}
         <div className="flex justify-end">
           {!editingDiagnostic ? (
