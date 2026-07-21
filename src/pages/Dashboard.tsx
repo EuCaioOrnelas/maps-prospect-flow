@@ -946,7 +946,7 @@ const Dashboard = () => {
 
           {/* Results Section — aparece apenas quando o usuário clica em uma busca do histórico */}
           {hasSearched && (
-            <div className="animate-fade-in mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border/50">
+            <div ref={resultsRef} className="animate-fade-in mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border/50 scroll-mt-24">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
