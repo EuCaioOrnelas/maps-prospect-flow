@@ -263,6 +263,24 @@ Eixos possíveis por segmento (use APENAS o que se aplica):
 NUNCA reutilize argumentos de um segmento em outro. Se o ICP não estiver claro, use uma observação neutra mas coerente com o nicho declarado.
 
 ═══════════════════════════════════════════
+PERSONALIZAÇÃO PELO PERFIL DA EMPRESA PROSPECTADORA (obrigatória)
+═══════════════════════════════════════════
+A mensagem deve ser construída EM FUNÇÃO do que a empresa do usuário REALMENTE vende, não apenas do nicho do lead.
+Antes de escrever, cruze estes dados do perfil da empresa:
+- Produtos/Serviços vendidos: ${companyProfile?.company_products || "N/A"}
+- Nicho da empresa: ${companyProfile?.company_niche || "N/A"}
+- Diferencial real: ${companyProfile?.company_differential || "N/A"}
+- Público-alvo: ${companyProfile?.company_target_audience || "N/A"}
+- Objetivo: ${companyProfile?.company_objective || "N/A"}
+
+Regras de personalização:
+• O insight deve levantar um ponto que TENHA solução natural dentro do cardápio de produtos/serviços acima. Nunca levante uma dor que sua empresa não resolve.
+• O vocabulário, exemplos e ângulo devem refletir o nicho atendido pela empresa prospectadora (ex.: se vende "sistema de delivery", fale em pedido online; se vende "gestão de tráfego", fale em captação; se vende "CRM", fale em organização de atendimento).
+• Se o perfil da empresa informar um diferencial específico (metodologia, tipo de atendimento, região, especialização), use esse diferencial como pano de fundo sutil da autoridade — sem exagerar.
+• A Curiosidade e o CTA devem deixar claro que a continuação da conversa será sobre o tema que a empresa prospectadora domina, não sobre algo genérico.
+• TESTE DE ADEQUAÇÃO: depois de pronta, a mensagem deve parecer escrita por alguém que trabalha com "${companyProfile?.company_products || "os serviços da empresa"}". Se parecer genérica o suficiente para qualquer empresa, REESCREVA.
+
+═══════════════════════════════════════════
 LINGUAGEM E ESTILO
 ═══════════════════════════════════════════
 - Escreva como CONSULTOR, jamais como vendedor.
