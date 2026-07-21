@@ -402,32 +402,23 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
     };
 
     // Garante que o CTA final seja uma pergunta fechada terminada em "?"
-    const ensureClosedQuestionCTA = (s: string, insightHint: string) => {
+    const ensureClosedQuestionCTA = (s: string) => {
       const blocks = s.split(/\n{2,}/).filter(Boolean);
       if (blocks.length === 0) return s;
       let last = blocks[blocks.length - 1].trim();
-      // Se já termina com ?, remove apenas espaços excessivos e mantém
+      // Se já termina com ?, apenas normaliza espaços
       if (/\?\s*$/.test(last)) {
         blocks[blocks.length - 1] = last.replace(/\s+\?$/, "?");
         return blocks.join("\n\n");
       }
       // Remove pontuação final declarativa e transforma em pergunta fechada
       last = last.replace(/[.!,;:]\s*$/, "").trim();
-      // Se soou como oferta de explicar, transforma em pergunta direta
-      if (/explicar|mostrar|enviar|mandar|contar|falar/i.test(last)) {
-        last = last.replace(/^(.*)(?:por aqui|por mensagem|rapidamente|com calma|melhor)?$/i, "$1?");
-        if (!/\?\s*$/.test(last)) last = last + "?";
-      } else {
-        // Fallback: pergunta fechada baseada no insight
-        const theme = (insightHint || "isso").toLowerCase();
-        const cleanTheme = theme.replace(/\b(gestão|sistema|canal|processo|organização|capitação|retenção|agenda|delivery|site|tráfego|crm|whatsapp|atendimento|vendas)\b/gi, (m) => m);
-        last = `Quer que eu te explique melhor como isso funciona por aqui?`;
-      }
+      if (!/\?\s*$/.test(last)) last = last + "?";
       blocks[blocks.length - 1] = last;
       return blocks.join("\n\n");
     };
 
-    const finalMessage = ensureClosedQuestionCTA(sanitize(parsed.mensagem || ""), parsed.insight || "");
+    const finalMessage = ensureClosedQuestionCTA(sanitize(parsed.mensagem || ""));
 
     const newEnrichment = {
       ...(typeof lead.enrichment_data === "object" && lead.enrichment_data ? lead.enrichment_data : {}),
