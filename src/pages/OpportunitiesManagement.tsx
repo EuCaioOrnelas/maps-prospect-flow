@@ -1735,7 +1735,7 @@ export default function OpportunitiesManagement() {
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><TrendingUp size={14} />Intenção</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Users size={14} />Resp.</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><CheckCircle2 size={14} />Status</div></TableHead>
-                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Map size={14} />Maps</div></TableHead>
+                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Send size={14} />Enviar</div></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
