@@ -221,6 +221,24 @@ Retorne APENAS JSON válido (use \\n\\n entre blocos dentro do campo "mensagem")
         gancho: parsed.gancho || "",
         motivo: parsed.motivo || "",
         insight: parsed.insight || "",
+    // Sanitiza: remove travessões duplos "--" e "—" no meio de frases (regra dura do produto)
+    const sanitize = (s: string) =>
+      (s || "")
+        .replace(/\s*--\s*/g, ", ")           // "palavra -- palavra"  ->  "palavra, palavra"
+        .replace(/([^\n])\s+—\s+([^\n])/g, "$1, $2") // travessão longo no meio de frase -> vírgula
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+
+    const finalMessage = sanitize(parsed.mensagem || "");
+
+    const newEnrichment = {
+      ...(typeof lead.enrichment_data === "object" && lead.enrichment_data ? lead.enrichment_data : {}),
+      manual_approach: {
+        message: finalMessage,
+        gancho: parsed.gancho || "",
+        motivo: parsed.motivo || "",
+        insight: parsed.insight || "",
         estrategia: parsed.estrategia || "",
         generated_at: new Date().toISOString(),
       },
