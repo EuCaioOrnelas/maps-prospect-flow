@@ -1896,7 +1896,7 @@ export default function OpportunitiesManagement() {
                                 return <span className="text-muted-foreground text-xs">—</span>;
                               }
                               const openMeta = () => { setSendingLead(lead); setSendDialogOpen(true); };
-                              const sendBtnClass = "inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#25D366] hover:bg-[#20BA5A] text-white shadow-sm shadow-emerald-900/20 transition-all hover:scale-105 active:scale-95";
+                              const sendBtnClass = "inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95";
                               // Só uma opção → ação direta (manual abre popover de web/app; meta abre dialog)
                               if (hasManual && !hasMeta) {
                                 return (
