@@ -279,7 +279,8 @@ const Dashboard = () => {
     }
 
     setIsSearching(true);
-    setHasSearched(true);
+    // Nota: não marcamos hasSearched=true aqui — a lista de resultados só aparece
+    // ao clicar em uma busca do histórico. Novas buscas redirecionam para /oportunidades/gestao.
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -736,133 +737,7 @@ const Dashboard = () => {
             </form>
           </div>
 
-          {/* Results Section */}
-          {hasSearched && (
-            <div className="animate-fade-in mb-10">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Target size={20} className="text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="font-display text-xl sm:text-2xl font-bold">
-                      {leads.length > 0 
-                        ? `${leads.length} leads encontrados`
-                        : "Nenhum lead encontrado"
-                      }
-                    </h2>
-                    {leads.length > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        Busca por "{keyword}" em {location}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {leads.length > 0 && (
-                  <Button variant="outline" onClick={handleExport} className="gap-2 h-11">
-                    <Download size={18} />
-                    Exportar Excel
-                  </Button>
-                )}
-              </div>
-
-              {leads.length > 0 && (
-                <>
-                  <div className="space-y-3">
-                    {paginatedLeads.map((lead, index) => (
-                      <div
-                        key={index}
-                        className="bg-card border border-border/50 rounded-xl p-4 sm:p-5 hover:border-primary/30 hover:bg-card/90 transition-all duration-300"
-                      >
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start gap-3">
-                              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/10">
-                                <Building2 size={20} className="text-primary" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h3 className="font-semibold text-base sm:text-lg truncate">{lead.name}</h3>
-                                <p className="text-sm text-primary/80 font-medium">{lead.category}</p>
-                                <p className="text-sm text-muted-foreground mt-1 truncate">
-                                  {lead.address} • {lead.city}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm pl-14 lg:pl-0">
-                            {lead.phone !== '-' && (
-                              <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-lg">
-                                <Phone size={14} className="text-primary" />
-                                <span className="font-medium">{lead.phone}</span>
-                              </div>
-                            )}
-                            {lead.website !== "-" && lead.website !== '-' && (
-                              <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-lg max-w-[180px]">
-                                <Globe size={14} className="text-primary flex-shrink-0" />
-                                <span className="truncate">{lead.website}</span>
-                              </div>
-                            )}
-                            {lead.rating > 0 && (
-                              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-warning/10 rounded-lg">
-                                <Star size={14} className="text-warning" fill="currentColor" />
-                                <span className="font-semibold text-warning">{lead.rating}</span>
-                                <span className="text-muted-foreground text-xs">({lead.reviewCount})</span>
-                              </div>
-                            )}
-                            {lead.mapsLink !== '-' && (
-                              <a
-                                href={lead.mapsLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors font-medium"
-                              >
-                                <ExternalLink size={14} />
-                                Maps
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Results Pagination */}
-                  {totalResultPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 sm:gap-4 mt-8 p-4 bg-card/50 rounded-xl border border-border/50">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentResultPage(prev => Math.max(1, prev - 1))}
-                        disabled={currentResultPage === 1}
-                        className="gap-1 sm:gap-2 h-10"
-                      >
-                        <ChevronLeft size={16} />
-                        <span className="hidden sm:inline">Anterior</span>
-                      </Button>
-                      <div className="flex items-center gap-2 px-4">
-                        <span className="text-sm font-medium">
-                          Página {currentResultPage}
-                        </span>
-                        <span className="text-muted-foreground">/</span>
-                        <span className="text-sm text-muted-foreground">{totalResultPages}</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentResultPage(prev => Math.min(totalResultPages, prev + 1))}
-                        disabled={currentResultPage === totalResultPages}
-                        className="gap-1 sm:gap-2 h-10"
-                      >
-                        <span className="hidden sm:inline">Próxima</span>
-                        <ChevronRight size={16} />
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+          {/* Results Section movida para baixo do histórico — renderizada mais adiante */}
 
           {/* Empty state - when no search has been done yet */}
           {!hasSearched && (
@@ -1055,6 +930,134 @@ const Dashboard = () => {
                         disabled={currentHistoryPage === totalHistoryPages}
                         className="h-9 px-3"
                       >
+                        <ChevronRight size={16} />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Results Section — aparece apenas quando o usuário clica em uma busca do histórico */}
+          {hasSearched && (
+            <div className="animate-fade-in mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border/50">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Target size={20} className="text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-xl sm:text-2xl font-bold">
+                      {leads.length > 0 
+                        ? `${leads.length} leads encontrados`
+                        : "Nenhum lead encontrado"
+                      }
+                    </h2>
+                    {leads.length > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        Busca por "{keyword}" em {location}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {leads.length > 0 && (
+                  <Button variant="outline" onClick={handleExport} className="gap-2 h-11">
+                    <Download size={18} />
+                    Exportar Excel
+                  </Button>
+                )}
+              </div>
+
+              {leads.length > 0 && (
+                <>
+                  <div className="space-y-3">
+                    {paginatedLeads.map((lead, index) => (
+                      <div
+                        key={index}
+                        className="bg-card border border-border/50 rounded-xl p-4 sm:p-5 hover:border-primary/30 hover:bg-card/90 transition-all duration-300"
+                      >
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-3">
+                              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/10">
+                                <Building2 size={20} className="text-primary" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-base sm:text-lg truncate">{lead.name}</h3>
+                                <p className="text-sm text-primary/80 font-medium">{lead.category}</p>
+                                <p className="text-sm text-muted-foreground mt-1 truncate">
+                                  {lead.address} • {lead.city}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm pl-14 lg:pl-0">
+                            {lead.phone !== '-' && (
+                              <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-lg">
+                                <Phone size={14} className="text-primary" />
+                                <span className="font-medium">{lead.phone}</span>
+                              </div>
+                            )}
+                            {lead.website !== "-" && lead.website !== '-' && (
+                              <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-lg max-w-[180px]">
+                                <Globe size={14} className="text-primary flex-shrink-0" />
+                                <span className="truncate">{lead.website}</span>
+                              </div>
+                            )}
+                            {lead.rating > 0 && (
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-warning/10 rounded-lg">
+                                <Star size={14} className="text-warning" fill="currentColor" />
+                                <span className="font-semibold text-warning">{lead.rating}</span>
+                                <span className="text-muted-foreground text-xs">({lead.reviewCount})</span>
+                              </div>
+                            )}
+                            {lead.mapsLink !== '-' && (
+                              <a
+                                href={lead.mapsLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors font-medium"
+                              >
+                                <ExternalLink size={14} />
+                                Maps
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Results Pagination */}
+                  {totalResultPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 sm:gap-4 mt-8 p-4 bg-card/50 rounded-xl border border-border/50">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentResultPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentResultPage === 1}
+                        className="gap-1 sm:gap-2 h-10"
+                      >
+                        <ChevronLeft size={16} />
+                        <span className="hidden sm:inline">Anterior</span>
+                      </Button>
+                      <div className="flex items-center gap-2 px-4">
+                        <span className="text-sm font-medium">
+                          Página {currentResultPage}
+                        </span>
+                        <span className="text-muted-foreground">/</span>
+                        <span className="text-sm text-muted-foreground">{totalResultPages}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentResultPage(prev => Math.min(totalResultPages, prev + 1))}
+                        disabled={currentResultPage === totalResultPages}
+                        className="gap-1 sm:gap-2 h-10"
+                      >
+                        <span className="hidden sm:inline">Próxima</span>
                         <ChevronRight size={16} />
                       </Button>
                     </div>
