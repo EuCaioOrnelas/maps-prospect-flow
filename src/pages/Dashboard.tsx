@@ -279,7 +279,8 @@ const Dashboard = () => {
     }
 
     setIsSearching(true);
-    setHasSearched(true);
+    // Nota: não marcamos hasSearched=true aqui — a lista de resultados só aparece
+    // ao clicar em uma busca do histórico. Novas buscas redirecionam para /oportunidades/gestao.
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
