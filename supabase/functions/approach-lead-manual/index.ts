@@ -300,6 +300,9 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ Está personalizada ao ICP "${lead.category || "N/A"}"?
 
   ✓ O GANCHO e o INSIGHT têm ligação direta com "${companyProfile?.company_products || "o serviço vendido"}"? (se não, reescreva)
+  ✓ O CTA oferece EXPLICAR MELHOR o tema do insight (nunca é pergunta vaga tipo "faz sentido?")?
+  ✓ O CTA amarra explicitamente com o tema do insight (canal próprio, agenda, retenção, etc.)?
+  ✓ Toda frase e todo bloco começam com letra MAIÚSCULA?
   ✓ Parece consultoria, não venda?
   ✓ Evita clichês de IA/marketing?
   ✓ Segue Meta (sem spam, sem manipulação)?
