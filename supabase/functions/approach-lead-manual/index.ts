@@ -185,9 +185,10 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • Só pode incentivar UMA resposta curta. Ex.: "posso te mandar?", "faz sentido?", "você também percebe isso?", "vale a pena eu explicar melhor por aqui?".
 
 REGRA DE FLUXO (INEGOCIÁVEL):
-Gancho → Contexto → Identificação → Motivo → Insight → Curiosidade → Baixa pressão → CTA.
+Saudação → Gancho → Contexto → Identificação → Motivo → Insight → Curiosidade → Baixa pressão → CTA.
+A saudação NUNCA fica isolada — sempre é seguida imediatamente pelo gancho no bloco seguinte.
 JAMAIS pular do gancho direto para o insight/diagnóstico. Sempre precisa existir a transição contextual.
-A leitura tem que fluir como uma conversa entre dois profissionais, nunca como um relatório de auditoria.
+A leitura tem que fluir como uma conversa real no WhatsApp entre dois profissionais, nunca como um relatório de auditoria ou carta comercial.
 
 ═══════════════════════════════════════════
 PERSONALIZAÇÃO POR ICP (regra mais importante)
