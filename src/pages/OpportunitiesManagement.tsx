@@ -727,7 +727,17 @@ export default function OpportunitiesManagement() {
   const getLevelBadge = (level: string | null, score?: number | null) => {
     // Use score-derived level to avoid AI inconsistency
     const correctedLevel = score != null && score > 0 ? getIntentionFromScore(score) : level;
-    if (!correctedLevel) return null;
+    if (!correctedLevel) {
+      return (
+        <Badge className="bg-primary/10 text-primary border-primary/30 text-xs inline-flex items-center gap-1.5">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
+          </span>
+          Gerando...
+        </Badge>
+      );
+    }
     const colors: Record<string, string> = {
       Alta: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
       Média: "bg-amber-500/20 text-amber-400 border-amber-500/30",
