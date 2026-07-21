@@ -226,17 +226,19 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • Use frases como: "posso estar enganado", "talvez não seja o momento", "só compartilhando uma percepção".
    • PROIBIDO frases genéricas soltas tipo "achei interessante dar uma olhada nessa questão" — precisa amarrar com o insight anterior.
 
-8) CTA FINAL — SEMPRE OFERECENDO EXPLICAR MELHOR (regra dura)
-   • O CTA DEVE convidar o empresário a receber uma explicação mais detalhada sobre o ponto levantado no insight — nunca uma pergunta vaga.
-   • Estrutura obrigatória: referenciar o TEMA do insight (ex.: canal próprio de vendas, agenda, retenção, captação, delivery) + oferecer explicar melhor ali no WhatsApp.
-   • Exemplos (adaptar ao insight real, nunca copiar literal):
-       – "Se quiser, posso te explicar melhor por aqui como a gente costuma resolver isso."
-       – "Faz sentido eu te mandar rapidamente como isso funciona na prática?"
-       – "Posso te explicar melhor em 2 mensagens como a gente ajuda restaurantes nesse ponto?"
-       – "Se fizer sentido, te explico com calma como funciona — sem compromisso."
-   • PROIBIDO absolutamente: pedir reunião, ligação, apresentação, demonstração, agenda, horário, "5 minutinhos", "call".
-   • PROIBIDO CTA morto/vago: "faz sentido?", "você também percebe isso?", "faz sentido pra você?", "concorda?" — SEM referência ao serviço soam sem contexto e fracos.
-   • O CTA precisa amarrar naturalmente com o insight anterior. Se o insight foi sobre "site/pedido online", o CTA fala em explicar melhor como resolver o canal próprio. Se foi sobre "agenda", explica melhor como organizam a agenda. Nunca desconecte.
+8) CTA FINAL — SEMPRE UMA PERGUNTA FECHADA (regra absoluta)
+    • O CTA DEVE ser obrigatoriamente uma PERGUNTA FECHADA que convide o empresário a receber uma explicação mais detalhada sobre o ponto levantado no insight.
+    • A pergunta deve ser de resposta fácil (sim/não ou uma resposta curta) e deve terminar SEMPRE com o caractere "?".
+    • Estrutura obrigatória: referenciar o TEMA do insight (ex.: canal próprio de vendas, agenda, retenção, captação, delivery) + perguntar se ele quer que você explique melhor por ali no WhatsApp.
+    • Exemplos (adaptar ao insight real, nunca copiar literal):
+        – "Quer que eu te explique melhor como funciona um canal próprio de vendas por aqui?"
+        – "Posso te mostrar rapidamente como isso resolveria o ponto da agenda?"
+        – "Quer que eu te envie um exemplo prático de como a gente organiza isso?"
+        – "Posso te explicar em 2 mensagens como isso funciona na prática?"
+    • PROIBIDO absolutamente: CTA em forma de afirmação/frase declarativa (ex.: "Se quiser, posso te explicar melhor por aqui.").
+    • PROIBIDO absolutamente: pedir reunião, ligação, apresentação, demonstração, agenda, horário, "5 minutinhos", "call".
+    • PROIBIDO CTA morto/vago: "faz sentido?", "você também percebe isso?", "faz sentido pra você?", "concorda?" — SEM referência ao serviço soam sem contexto e fracos.
+    • O CTA precisa amarrar naturalmente com o insight anterior. Se o insight foi sobre "site/pedido online", a pergunta fala em explicar melhor o canal próprio. Se foi sobre "agenda", pergunta se quer entender como organizam a agenda. Nunca desconecte.
 
 
 REGRA DE FLUXO (INEGOCIÁVEL):
@@ -259,6 +261,24 @@ Eixos possíveis por segmento (use APENAS o que se aplica):
 - Agência/distribuidora/indústria/transportadora: previsibilidade comercial, funil B2B, CRM, follow-up.
 - Loja/e-commerce: recompra, tráfego, conversão, CRM/WhatsApp, remarketing.
 NUNCA reutilize argumentos de um segmento em outro. Se o ICP não estiver claro, use uma observação neutra mas coerente com o nicho declarado.
+
+═══════════════════════════════════════════
+PERSONALIZAÇÃO PELO PERFIL DA EMPRESA PROSPECTADORA (obrigatória)
+═══════════════════════════════════════════
+A mensagem deve ser construída EM FUNÇÃO do que a empresa do usuário REALMENTE vende, não apenas do nicho do lead.
+Antes de escrever, cruze estes dados do perfil da empresa:
+- Produtos/Serviços vendidos: ${companyProfile?.company_products || "N/A"}
+- Nicho da empresa: ${companyProfile?.company_niche || "N/A"}
+- Diferencial real: ${companyProfile?.company_differential || "N/A"}
+- Público-alvo: ${companyProfile?.company_target_audience || "N/A"}
+- Objetivo: ${companyProfile?.company_objective || "N/A"}
+
+Regras de personalização:
+• O insight deve levantar um ponto que TENHA solução natural dentro do cardápio de produtos/serviços acima. Nunca levante uma dor que sua empresa não resolve.
+• O vocabulário, exemplos e ângulo devem refletir o nicho atendido pela empresa prospectadora (ex.: se vende "sistema de delivery", fale em pedido online; se vende "gestão de tráfego", fale em captação; se vende "CRM", fale em organização de atendimento).
+• Se o perfil da empresa informar um diferencial específico (metodologia, tipo de atendimento, região, especialização), use esse diferencial como pano de fundo sutil da autoridade — sem exagerar.
+• A Curiosidade e o CTA devem deixar claro que a continuação da conversa será sobre o tema que a empresa prospectadora domina, não sobre algo genérico.
+• TESTE DE ADEQUAÇÃO: depois de pronta, a mensagem deve parecer escrita por alguém que trabalha com "${companyProfile?.company_products || "os serviços da empresa"}". Se parecer genérica o suficiente para qualquer empresa, REESCREVA.
 
 ═══════════════════════════════════════════
 LINGUAGEM E ESTILO
@@ -298,9 +318,11 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ A autoridade usa apenas fatos verdadeiros (especialização, nicho, serviço, rotina) — sem inventar números, anos, prêmios, liderança ou clientes?
   ✓ Ao terminar a apresentação, dá pra responder: quem é? de qual empresa? por que entende disso? por que veio falar comigo?
   ✓ Está personalizada ao ICP "${lead.category || "N/A"}"?
+  ✓ Está personalizada ao PERFIL DA EMPRESA que prospecta: produtos/serviços = "${companyProfile?.company_products || "N/A"}", nicho = "${companyProfile?.company_niche || "N/A"}"? A mensagem parece escrita por quem vende isso?
 
   ✓ O GANCHO e o INSIGHT têm ligação direta com "${companyProfile?.company_products || "o serviço vendido"}"? (se não, reescreva)
-  ✓ O CTA oferece EXPLICAR MELHOR o tema do insight (nunca é pergunta vaga tipo "faz sentido?")?
+  ✓ O CTA é obrigatoriamente uma PERGUNTA FECHADA que termina com "?"?
+  ✓ O CTA pergunta se o empresário quer que você explique melhor o tema do insight (nunca é pergunta vaga tipo "faz sentido?")?
   ✓ O CTA amarra explicitamente com o tema do insight (canal próprio, agenda, retenção, etc.)?
   ✓ Toda frase e todo bloco começam com letra MAIÚSCULA?
   ✓ Parece consultoria, não venda?
@@ -379,8 +401,24 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
       return out;
     };
 
+    // Garante que o CTA final seja uma pergunta fechada terminada em "?"
+    const ensureClosedQuestionCTA = (s: string) => {
+      const blocks = s.split(/\n{2,}/).filter(Boolean);
+      if (blocks.length === 0) return s;
+      let last = blocks[blocks.length - 1].trim();
+      // Se já termina com ?, apenas normaliza espaços
+      if (/\?\s*$/.test(last)) {
+        blocks[blocks.length - 1] = last.replace(/\s+\?$/, "?");
+        return blocks.join("\n\n");
+      }
+      // Remove pontuação final declarativa e transforma em pergunta fechada
+      last = last.replace(/[.!,;:]\s*$/, "").trim();
+      if (!/\?\s*$/.test(last)) last = last + "?";
+      blocks[blocks.length - 1] = last;
+      return blocks.join("\n\n");
+    };
 
-    const finalMessage = sanitize(parsed.mensagem || "");
+    const finalMessage = ensureClosedQuestionCTA(sanitize(parsed.mensagem || ""));
 
     const newEnrichment = {
       ...(typeof lead.enrichment_data === "object" && lead.enrichment_data ? lead.enrichment_data : {}),
