@@ -1821,13 +1821,7 @@ export default function OpportunitiesManagement() {
                               </div>
                             ) : "-"}
                           </TableCell>
-                          <TableCell className="text-center">
-                            {batchScoring && (lead.ai_score == null || lead.ai_score === 0) ? (
-                              <Loader2 size={14} className="animate-spin text-muted-foreground mx-auto" />
-                            ) : (
-                              getScoreBadge(lead.ai_score)
-                            )}
-                          </TableCell>
+                          {/* Célula "Índ. Fech." removida — visível apenas no card do lead */}
                           <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>
                           <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                             {(() => {
