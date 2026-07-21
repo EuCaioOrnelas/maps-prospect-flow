@@ -2,8 +2,9 @@
 // Copy consultiva B2B — o objetivo é APENAS gerar uma resposta natural do empresário.
 // NÃO é vender, NÃO é marcar reunião, NÃO é apresentar serviço.
 //
-// Estrutura obrigatória (8 blocos, sem títulos no texto final):
-//   1. Gancho personalizado       — 1ª frase baseada em dado real do lead
+// Estrutura obrigatória (9 blocos, sem títulos no texto final):
+//   0. Saudação humanizada        — curta, natural, variada, adaptada ao ICP; NUNCA "bom dia/tarde/noite"
+//   1. Gancho personalizado       — 1ª frase após a saudação, baseada em dado real do lead
 //   2. Contexto da abordagem      — justifica NATURALMENTE por que essa empresa foi analisada
 //   3. Identificação curta        — quem é / de onde
 //   4. Motivo do contato          — natural, espontâneo
