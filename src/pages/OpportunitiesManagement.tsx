@@ -539,6 +539,15 @@ export default function OpportunitiesManagement() {
       result = [...result].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0));
     } else if (sortOrder === "score_asc") {
       result = [...result].sort((a, b) => (a.ai_score ?? 0) - (b.ai_score ?? 0));
+    } else {
+      // Ordem padrão estável: created_at desc, com id como desempate para nunca reordenar
+      // ao atualizar enrichment_data (evita "lead sumir" ao fechar popup).
+      result = [...result].sort((a, b) => {
+        const da = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const db = b.created_at ? new Date(b.created_at).getTime() : 0;
+        if (db !== da) return db - da;
+        return String(b.id).localeCompare(String(a.id));
+      });
     }
     return result;
   }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity, responsibleFilter, user?.id]);
