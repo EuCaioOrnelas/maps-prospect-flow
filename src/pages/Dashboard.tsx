@@ -492,6 +492,10 @@ const Dashboard = () => {
         title: "Resultados carregados",
         description: `${item.leads.length} leads da busca anterior`,
       });
+      // Rola até o topo da lista ("X leads encontrados")
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
     } else {
       // Fallback for old history items without saved leads
       setLeads([]);
