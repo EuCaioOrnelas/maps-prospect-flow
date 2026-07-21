@@ -1,14 +1,15 @@
 // Gera a MENSAGEM DE PRIMEIRO CONTATO manual (não é template Meta, não é follow-up).
-// Copy pensada para ser enviada à mão (WhatsApp/e-mail) e gerar desejo nos primeiros segundos,
-// pois donos de empresa são ocupados e descartam mensagens genéricas.
+// Copy consultiva B2B — o objetivo é APENAS gerar uma resposta natural do empresário.
+// NÃO é vender, NÃO é marcar reunião, NÃO é apresentar serviço.
 //
-// Estrutura obrigatória (6 blocos):
-//   1. Gancho    (40% do impacto) — primeira frase gera curiosidade/desejo IMEDIATAMENTE
-//   2. Apresentação (15%)         — quem é / de onde, em 1 linha, sem crachá corporativo
-//   3. Motivo    (20%)            — por que ESTA empresa foi escolhida (personalização real)
-//   4. Insight   (15%)            — 1 dado/observação consultiva que mostra que estudou
-//   5. Baixa pressão (5%)         — deixa claro que não é abordagem invasiva
-//   6. CTA leve  (5%)             — pergunta simples que exige resposta curta ("sim" / "faz sentido?")
+// Estrutura obrigatória (7 blocos, sem títulos no texto final):
+//   1. Gancho personalizado    — 1ª frase baseada em dado real do lead
+//   2. Identificação curta     — quem é / de onde
+//   3. Motivo do contato       — natural, espontâneo
+//   4. Insight consultivo      — percepção inteligente, linguagem cautelosa
+//   5. Curiosidade             — NÃO revelar a solução
+//   6. Baixa pressão           — reduzir sensação de venda
+//   7. CTA leve                — só incentiva UMA resposta (nunca reunião/ligação/agenda)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -81,11 +82,11 @@ serve(async (req) => {
 - Objetivo: ${companyProfile.company_objective}
 - Público-alvo: ${companyProfile.company_target_audience}
 
-REGRA ABSOLUTA: A mensagem DEVE girar em torno de "${companyProfile.company_products}". NUNCA mencione algo que a empresa NÃO vende.
+REGRA ABSOLUTA: A mensagem NUNCA deve mencionar algo que "${companyProfile.company_name}" NÃO vende. Não ofereça a solução — só plante a semente.
 ` : "";
 
     const diagnosticContext = (lead.ai_score || lead.ai_diagnosis) ? `
-═══ DIAGNÓSTICO DESTE LEAD (use como munição para o insight) ═══
+═══ DIAGNÓSTICO DESTE LEAD (matéria-prima do gancho e do insight) ═══
 - Score: ${lead.ai_score || "N/A"} | Nível: ${lead.opportunity_level || "N/A"}
 - Diagnóstico: ${lead.ai_diagnosis || "N/A"}
 ${pontosFortes.length ? `- Pontos fortes: ${pontosFortes.join("; ")}` : ""}
@@ -98,85 +99,121 @@ ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 
     const uniqueSeed = crypto.randomUUID().slice(0, 8);
 
-    const prompt = `Você é um copywriter sênior de vendas B2B especializado em COLD OUTREACH manual pelo WhatsApp.
-Sua missão: escrever a PRIMEIRA mensagem que o vendedor vai enviar À MÃO para este lead.
+    const prompt = `Você é um CONSULTOR B2B sênior escrevendo a PRIMEIRA mensagem no WhatsApp para o dono/gestor de uma empresa que você acabou de analisar.
 
-CONTEXTO CRÍTICO:
-- Envio manual, humano, natural. Precisa parecer escrita por uma pessoa real, não um robô.
-- O dono/gestor é OCUPADO. Mensagem tem que ser educada, respeitosa e ao mesmo tempo interessante.
-- Precisa gerar CURIOSIDADE e DESEJO, mas sem parecer venda agressiva ou copy pronta.
-- A mensagem deve ter RITMO, com QUEBRAS DE LINHA que facilitem a leitura no WhatsApp.
+▸ OBJETIVO ÚNICO: gerar UMA RESPOSTA natural do empresário.
+▸ NÃO é vender. NÃO é marcar reunião. NÃO é apresentar serviço.
+▸ A mensagem tem que parecer 100% humana, como se você tivesse acabado de olhar a operação dele.
+▸ Sensação-alvo do leitor: "essa pessoa realmente olhou meu negócio", nunca "mais uma tentando me vender algo".
 
 ${companyContext}
 ${diagnosticContext}
 
-DADOS DO LEAD:
+DADOS DO LEAD (use como matéria-prima do gancho e do insight):
 - Empresa: ${lead.company_name || "N/A"}
 - Contato: ${lead.contact_name || "responsável"}
-- Nicho: ${lead.category || "N/A"}
+- Nicho / ICP: ${lead.category || "N/A"}
 - Cidade: ${lead.city || "N/A"}
 - Endereço: ${lead.address || "N/A"}
 - Avaliação Google: ${lead.rating || 0}/5 (${lead.review_count || 0} avaliações)
-- Site: ${hasSite ? lead.website : "não tem"}
-- Redes: ${socialMedia.length ? socialMedia.join(", ") : "não localizadas"}
+- Site: ${hasSite ? lead.website : "não localizado"}
+- Redes sociais: ${socialMedia.length ? socialMedia.join(", ") : "não localizadas"}
 
-═══ ESTRUTURA DA MENSAGEM (respeite a ordem e as quebras de linha) ═══
+═══════════════════════════════════════════
+ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto final)
+═══════════════════════════════════════════
 
-BLOCO 1 — SAUDAÇÃO CURTA E EDUCADA (1 linha)
-- Comece com "Olá!" ou "Oi, tudo bem?" ou "Olá, [nome do contato se souber]!"
-- Nada de "Bom dia/Boa tarde/Boa noite" (a hora do envio é imprevisível).
-- Uma linha só. Depois quebre linha em branco.
+1) GANCHO PERSONALIZADO — 1ª FRASE
+   • Baseada em algo REAL do lead: avaliações Google, nº de reviews, especialidade, localização, diferencial, redes sociais, presença digital, reputação, horário.
+   • Precisa gerar interesse IMEDIATO.
+   • PROIBIDO começar com: "Olá", "Oi", "Tudo bem", "Como vai", "Bom dia", "Boa tarde", "Meu nome é", "Somos uma empresa". Essas frases só podem aparecer DEPOIS do gancho.
 
-BLOCO 2 — APRESENTAÇÃO CURTA (1 a 2 linhas)
-- "Meu nome é ${companyProfile?.attendant_name || "[nome]"}, sou da ${companyProfile?.company_name || "[empresa]"}."
-- Se fizer sentido, complemente em UMA frase o que a empresa faz (foco em ${companyProfile?.company_products || "solução"}).
-- Sem crachá, sem títulos pomposos. Depois quebre linha em branco.
+2) IDENTIFICAÇÃO — curta e simples
+   • "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}." (ou variação natural equivalente)
+   • Sem autopromoção. Sem "somos líderes". Sem anos de mercado. Sem lista de diferenciais.
 
-BLOCO 3 — GANCHO PERSONALIZADO / MOTIVO (2 a 3 linhas)
-- Aqui está o coração da mensagem. Explique por que está falando com ESTA empresa.
-- Use algo específico: cidade, nicho, algo do site/redes, um ponto forte notado ou uma oportunidade real detectada no diagnóstico.
-- Deve gerar identificação: "vi que...", "reparei que...", "acompanhei um pouco...".
-- Nunca diga "estou entrando em contato com empresas do seu segmento" (genérico, mata a conversa).
-- Depois quebre linha em branco.
+3) MOTIVO DO CONTATO — natural, espontâneo
+   • Ex.: "Estava analisando empresas do segmento aqui em ${lead.city || "sua região"}..." / "Costumo mapear negócios da região pra identificar oportunidades..."
+   • Nunca robótico.
 
-BLOCO 4 — INSIGHT CONSULTIVO (1 a 2 linhas)
-- Uma observação de consultor, não de vendedor.
-- Pode ser uma tendência do nicho, um dado da região, ou algo que a empresa poderia estar aproveitando melhor.
-- Não ofereça a solução aqui ainda. Só planta a ideia.
-- Depois quebre linha em branco.
+4) INSIGHT CONSULTIVO — o maior diferencial
+   • Uma percepção inteligente. NUNCA apontar defeito de forma direta.
+   • Foque em UM tema: oportunidade perdida, processo otimizável, presença digital, atendimento, geração de demanda, posicionamento, anúncios, CRM, automação, experiência do cliente.
+   • SEMPRE em linguagem consultiva e cautelosa: "talvez", "parece existir", "pode haver", "é possível", "percebi um ponto interessante".
+   • NUNCA dizer que a empresa "faz errado", "está ruim", "precisa melhorar urgentemente".
 
-BLOCO 5 — CTA LEVE COM BAIXA PRESSÃO (1 a 2 linhas)
-- Deixe claro que não é pra vender nada agora. Ex: "sem compromisso", "só queria trocar uma ideia rápida".
-- Faça uma pergunta simples que exija resposta CURTA. Ex: "Faz sentido eu te mandar um exemplo rápido?", "Posso te explicar em 2 minutinhos como funciona?".
-- Nunca peça reunião longa, agenda, ligação imediata ou formulário.
-- Depois quebre linha em branco.
+5) CURIOSIDADE
+   • NÃO revelar a solução. NÃO explicar o serviço. NÃO apresentar produto.
+   • O leitor precisa terminar essa parte pensando: "o que será que ele encontrou?".
 
-BLOCO 6 — ASSINATURA (1 linha)
-- Encerre com o nome: "${companyProfile?.attendant_name || "[seu nome]"} | ${companyProfile?.company_name || "[empresa]"}"
+6) BAIXA PRESSÃO
+   • Reduzir por completo a sensação de venda.
+   • Use frases como: "nem sei se faz sentido pra vocês", "não é pra vender nada agora", "queria só compartilhar uma percepção", "talvez eu esteja enganado".
 
-═══ REGRAS DE FORMATAÇÃO (OBRIGATÓRIAS) ═══
-- Use \\n\\n (linha em branco) entre CADA bloco. A mensagem final DEVE ter respiros visíveis.
-- Frases curtas e diretas. Sem parágrafos longos.
-- ⛔ NUNCA use travessão duplo "--" no meio de frases. Se precisar pausar, use vírgula ou ponto.
-- ⛔ NUNCA use travessão "—" no meio da frase. Reserve o "—" apenas para a assinatura final se quiser.
-- ⛔ NUNCA use "Bom dia", "Boa tarde", "Boa noite", "Espero que esteja tudo bem".
-- ⛔ NUNCA use MAIÚSCULAS gritando, "!!!!", "??", venda agressiva, urgência falsa.
-- ⛔ NUNCA fale de nada que ${companyProfile?.company_name || "a empresa"} NÃO vende.
-- ⛔ NUNCA peça "atenção", "5 minutinhos", nem se desculpe por incomodar.
-- ✅ Máximo 1 emoji na mensagem inteira, e SÓ se ficar natural. Pode não usar nenhum.
-- ✅ Tom: consultor experiente, educado, humano, curioso pelo negócio do outro.
+7) CTA FINAL
+   • PROIBIDO pedir: reunião, ligação, apresentação, demonstração, agenda, horário, "5 minutinhos".
+   • Só pode incentivar UMA resposta curta. Ex.: "posso te mandar?", "faz sentido?", "você também percebe isso?", "vale a pena eu explicar melhor por aqui?".
 
-VARIAÇÃO NATURAL (SEED: ${uniqueSeed}) — a mensagem deve ser única para ESTE lead, variando saudação, gancho e CTA.
+═══════════════════════════════════════════
+PERSONALIZAÇÃO POR ICP (regra mais importante)
+═══════════════════════════════════════════
+Antes de escrever, identifique o ICP a partir do nicho "${lead.category || "N/A"}". Adapte VOCABULÁRIO, ARGUMENTOS, OBSERVAÇÕES, GATILHOS e CTA a esse ICP.
+Eixos possíveis por segmento (use APENAS o que se aplica):
+- Restaurante/bar: fluxo, delivery, ticket médio, avaliações, retenção, horário de pico.
+- Clínica/consultório: agenda, no-show, retorno de paciente, reputação, primeira consulta.
+- Academia: retenção mensal, evasão, novos alunos, prova social.
+- Advocacia/contabilidade: autoridade, geração previsível de casos/clientes, presença digital sóbria.
+- Imobiliária/corretora/construtora: captação, qualificação de lead, tempo de resposta, funil.
+- Auto elétrica/oficina/serviço técnico: recorrência, agenda, orçamentos que não fecham.
+- Agência/distribuidora/indústria/transportadora: previsibilidade comercial, funil B2B, CRM, follow-up.
+- Loja/e-commerce: recompra, tráfego, conversão, CRM/WhatsApp, remarketing.
+NUNCA reutilize argumentos de um segmento em outro. Se o ICP não estiver claro, use uma observação neutra mas coerente com o nicho declarado.
 
-Retorne APENAS JSON válido (use \\n\\n entre blocos dentro do campo "mensagem"):
+═══════════════════════════════════════════
+LINGUAGEM E ESTILO
+═══════════════════════════════════════════
+- Escreva como CONSULTOR, jamais como vendedor.
+- Tom conversacional, natural, sem excesso de formalidade.
+- PROIBIDO clichês de IA/marketing: "mercado competitivo", "potencial de crescimento", "solução inovadora", "empresa líder", "transformar resultados", "impulsionar vendas", "maximizar resultados", "otimizar processos" (como frase pronta), "revolucionar", "alavancar", "escalar".
+- SEM emojis. SEM listas. SEM hashtags. SEM links. SEM caixa alta. SEM negrito/markdown.
+- SEM travessão duplo "--". SEM travessão longo "—" no meio de frase (use vírgula ou quebra de linha).
+- Frases curtas, PT-BR natural.
+- Use QUEBRAS DE LINHA em branco (\\n\\n) entre os blocos para dar respiro no WhatsApp.
+- Extensão-alvo: 90 a 160 palavras. Nunca ultrapasse 180.
+
+═══════════════════════════════════════════
+POLÍTICAS META (cumprir sempre)
+═══════════════════════════════════════════
+- Identifique claramente quem envia (nome + empresa).
+- Explique o motivo do contato.
+- Nada de informação falsa, indução ao erro, manipulação, urgência artificial ou aparência de spam.
+- Transparência total.
+
+═══════════════════════════════════════════
+AUTO-AVALIAÇÃO ANTES DE RESPONDER
+═══════════════════════════════════════════
+Avalie mentalmente antes de me devolver o JSON:
+  ✓ Parece escrita por humano?
+  ✓ Demonstra pesquisa real sobre a empresa?
+  ✓ Gera curiosidade sem revelar a solução?
+  ✓ Tem transparência (quem, por quê)?
+  ✓ Está personalizada ao ICP "${lead.category || "N/A"}"?
+  ✓ Parece consultoria, não venda?
+  ✓ Evita clichês de IA/marketing?
+  ✓ Segue Meta (sem spam, sem manipulação)?
+  ✓ Se eu fosse o dono, eu responderia?
+Se QUALQUER resposta for "não", REESCREVA internamente e só então devolva a versão final.
+
+VARIAÇÃO NATURAL (SEED: ${uniqueSeed}) — a mensagem deve ser única para ESTE lead.
+
+Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste formato:
 {
-  "mensagem": "mensagem completa já formatada com quebras de linha, pronta para colar no WhatsApp",
-  "gancho": "a frase de gancho do bloco 3 (para auditoria)",
-  "motivo": "por que este lead foi escolhido (1 frase)",
-  "insight": "o insight consultivo usado (1 frase)",
-  "estrategia": "estratégia geral da copy (1 frase)"
+  "mensagem": "mensagem final pronta para colar no WhatsApp, com quebras \\n\\n entre os blocos, seguindo TODAS as regras acima",
+  "gancho": "a primeira frase da mensagem",
+  "motivo": "por que este lead foi escolhido (1 frase interna, para auditoria)",
+  "insight": "o insight consultivo usado (1 frase interna)",
+  "estrategia": "ICP identificado e ângulo escolhido (1 frase interna)"
 }`;
-
 
     const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -187,7 +224,7 @@ Retorne APENAS JSON válido (use \\n\\n entre blocos dentro do campo "mensagem")
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.85,
+        temperature: 0.9,
         max_tokens: 1200,
         response_format: { type: "json_object" },
       }),
@@ -214,18 +251,11 @@ Retorne APENAS JSON válido (use \\n\\n entre blocos dentro do campo "mensagem")
 
     const parsed = JSON.parse(content);
 
-    const newEnrichment = {
-      ...(typeof lead.enrichment_data === "object" && lead.enrichment_data ? lead.enrichment_data : {}),
-      manual_approach: {
-        message: parsed.mensagem || "",
-        gancho: parsed.gancho || "",
-        motivo: parsed.motivo || "",
-        insight: parsed.insight || "",
-    // Sanitiza: remove travessões duplos "--" e "—" no meio de frases (regra dura do produto)
+    // Sanitiza a saída: remove travessões e normaliza espaçamentos (regra dura do produto).
     const sanitize = (s: string) =>
       (s || "")
-        .replace(/\s*--\s*/g, ", ")           // "palavra -- palavra"  ->  "palavra, palavra"
-        .replace(/([^\n])\s+—\s+([^\n])/g, "$1, $2") // travessão longo no meio de frase -> vírgula
+        .replace(/\s*--\s*/g, ", ")                          // "palavra -- palavra" -> "palavra, palavra"
+        .replace(/([^\n])\s+—\s+([^\n])/g, "$1, $2")        // travessão longo no meio de frase -> vírgula
         .replace(/[ \t]+\n/g, "\n")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
