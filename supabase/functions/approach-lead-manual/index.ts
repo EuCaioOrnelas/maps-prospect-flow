@@ -218,6 +218,8 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ Demonstra pesquisa real sobre a empresa?
   ✓ Gera curiosidade sem revelar a solução?
   ✓ Tem transparência (quem, por quê)?
+  ✓ Existe um CONTEXTO DA ABORDAGEM entre o gancho e o insight? (obrigatório)
+  ✓ Se eu fosse o dono e recebesse essa mensagem de um desconhecido, entenderia naturalmente por que ele entrou em contato ANTES de ele falar do meu negócio?
   ✓ Está personalizada ao ICP "${lead.category || "N/A"}"?
   ✓ Parece consultoria, não venda?
   ✓ Evita clichês de IA/marketing?
