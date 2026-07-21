@@ -1137,73 +1137,164 @@ export default function OpportunitiesManagement() {
         </>
       )}
 
-      {/* Approach Message Card */}
+      {/* Approach Message Card com toggle Manual / Meta API */}
       <div data-tour="lead-approach-card" className="bg-card border border-border rounded-xl p-4 space-y-3">
-        <div className="space-y-1.5">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <MessageSquare size={14} className="text-primary" />
-            Mensagem de Follow-up (pós-resposta do template)
-          </h4>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            ⚡ <strong>Importante:</strong> esta <strong>NÃO</strong> é a mensagem fria de prospecção — o primeiro contato é feito por um <strong>template oficial da Meta</strong> (curto, pedindo só uma confirmação de interesse).
-            <br />
-            Esta mensagem é a <strong>resposta humana e consultiva</strong> que você manda <strong>depois que o lead respondeu "sim/pode/quero saber"</strong> ao template, já com a janela de 24h aberta. Por isso ela agradece o retorno, entrega valor e propõe o próximo passo.
-          </p>
+        {/* Toggle segmentado full-width */}
+        <div className="w-full bg-muted/50 p-1 rounded-full flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => { setMessageMode("manual"); setEditingMessage(false); }}
+            className={`flex-1 text-xs sm:text-sm font-medium py-2 rounded-full transition-all ${
+              messageMode === "manual"
+                ? "bg-background shadow text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Mensagem para envio manual
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMessageMode("meta"); setEditingMessage(false); }}
+            className={`flex-1 text-xs sm:text-sm font-medium py-2 rounded-full transition-all ${
+              messageMode === "meta"
+                ? "bg-background shadow text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Follow-up p/ Meta API
+          </button>
         </div>
-        {lead.ai_approach_message ? (
-          editingMessage ? (
-            <div className="space-y-2">
-              <Textarea
-                value={editedMessage}
-                onChange={(e) => setEditedMessage(e.target.value)}
-                rows={6}
-                className="text-sm"
-              />
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => saveEditedMessage(lead)} className="gap-1">
-                  <Check size={14} /> Salvar
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setEditingMessage(false)}>
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
-                {lead.ai_approach_message}
+
+        {messageMode === "manual" ? (
+          <>
+            <div className="space-y-1.5">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <MessageSquare size={14} className="text-primary" />
+                Mensagem de Primeiro Contato (envio manual)
+              </h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                📩 Copy pensada para <strong>o PRIMEIRO envio manual</strong> (WhatsApp, e-mail, etc.). O objetivo é gerar
+                desejo nos primeiros segundos, com gancho forte, insight consultivo e baixa pressão — evitando ser
+                descartada por donos ocupados.
               </p>
-              <div className="flex gap-2 mt-3">
-                <Button size="sm" variant="outline" onClick={() => copyMessage(lead.ai_approach_message!, lead.id)} className="gap-1.5 text-xs">
-                  {copiedId === lead.id ? <Check size={12} /> : <Copy size={12} />}
-                  {copiedId === lead.id ? "Copiada" : "Copiar"}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => { setEditedMessage(lead.ai_approach_message || ""); setEditingMessage(true); }} className="gap-1.5 text-xs">
-                  <Pencil size={12} /> Editar
+            </div>
+            {lead.enrichment_data?.manual_approach?.message ? (
+              editingMessage ? (
+                <div className="space-y-2">
+                  <Textarea value={editedMessage} onChange={(e) => setEditedMessage(e.target.value)} rows={8} className="text-sm" />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => saveEditedMessage(lead)} className="gap-1">
+                      <Check size={14} /> Salvar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditingMessage(false)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
+                    {lead.enrichment_data.manual_approach.message}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <Button size="sm" variant="outline" onClick={() => copyMessage(lead.enrichment_data.manual_approach.message, lead.id)} className="gap-1.5 text-xs">
+                      {copiedId === lead.id ? <Check size={12} /> : <Copy size={12} />}
+                      {copiedId === lead.id ? "Copiada" : "Copiar"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setEditedMessage(lead.enrichment_data.manual_approach.message || ""); setEditingMessage(true); }} className="gap-1.5 text-xs">
+                      <Pencil size={12} /> Editar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => approachLead(lead, "manual")} disabled={approachingLeadId === lead.id} className="gap-1.5 text-xs">
+                      {approachingLeadId === lead.id && approachingMode === "manual" ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                      Regenerar
+                    </Button>
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground italic py-2">
+                  Nenhuma mensagem manual gerada ainda. Quer criar uma copy de primeiro contato de alta conversão para este lead?
+                </p>
+                <Button
+                  onClick={() => approachLead(lead, "manual")}
+                  disabled={approachingLeadId === lead.id}
+                  className="w-full gap-2"
+                >
+                  {approachingLeadId === lead.id && approachingMode === "manual" ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                  Gerar mensagem manual com IA
                 </Button>
               </div>
-            </div>
-          )
+            )}
+          </>
         ) : (
-          <p className="text-sm text-muted-foreground italic py-2">
-            Nenhum follow-up gerado ainda. Clique em "Gerar follow-up com IA" para criar a mensagem que será usada após a resposta do lead ao template.
-          </p>
+          <>
+            <div className="space-y-1.5">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <MessageSquare size={14} className="text-primary" />
+                Mensagem de Follow-up (pós-resposta do template)
+              </h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                ⚡ <strong>Importante:</strong> esta <strong>NÃO</strong> é a mensagem fria — o primeiro contato é feito por um <strong>template oficial da Meta</strong>.
+                <br />
+                Esta é a <strong>resposta humana e consultiva</strong> enviada <strong>depois que o lead respondeu "sim/pode/quero saber"</strong> ao template, já com a janela de 24h aberta.
+              </p>
+            </div>
+            {lead.ai_approach_message ? (
+              editingMessage ? (
+                <div className="space-y-2">
+                  <Textarea value={editedMessage} onChange={(e) => setEditedMessage(e.target.value)} rows={6} className="text-sm" />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => saveEditedMessage(lead)} className="gap-1">
+                      <Check size={14} /> Salvar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditingMessage(false)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
+                    {lead.ai_approach_message}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <Button size="sm" variant="outline" onClick={() => copyMessage(lead.ai_approach_message!, lead.id)} className="gap-1.5 text-xs">
+                      {copiedId === lead.id ? <Check size={12} /> : <Copy size={12} />}
+                      {copiedId === lead.id ? "Copiada" : "Copiar"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setEditedMessage(lead.ai_approach_message || ""); setEditingMessage(true); }} className="gap-1.5 text-xs">
+                      <Pencil size={12} /> Editar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => approachLead(lead, "meta")} disabled={approachingLeadId === lead.id} className="gap-1.5 text-xs">
+                      {approachingLeadId === lead.id && approachingMode === "meta" ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                      Regenerar
+                    </Button>
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground italic py-2">
+                  Nenhum follow-up gerado ainda. Clique abaixo para gerar a mensagem usada após a resposta ao template.
+                </p>
+                <Button
+                  onClick={() => approachLead(lead, "meta")}
+                  disabled={approachingLeadId === lead.id}
+                  className="w-full gap-2"
+                >
+                  {approachingLeadId === lead.id && approachingMode === "meta" ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                  Gerar follow-up com IA (pós-resposta do template)
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-          {/* Action buttons */}
+      {/* Action buttons (envio via API Meta — apenas no modo Meta) */}
       <div className="flex flex-col gap-2 pt-1">
-        {!lead.ai_approach_message && (
-          <Button
-            onClick={() => approachLead(lead)}
-            disabled={approachingLeadId === lead.id}
-            className="w-full gap-2"
-          >
-            {approachingLeadId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-            Gerar follow-up com IA (pós-resposta do template)
-          </Button>
-        )}
-        {lead.ai_approach_message && !lead.first_message_sent && (
+        {messageMode === "meta" && lead.ai_approach_message && !lead.first_message_sent && (
           <Button
             onClick={() => {
               setSelectedLead(null);
@@ -1225,7 +1316,7 @@ export default function OpportunitiesManagement() {
             )}
           </Button>
         )}
-        {lead.first_message_sent && (
+        {messageMode === "meta" && lead.first_message_sent && (
           <Badge variant="outline" className="flex items-center justify-center gap-1 text-primary border-primary/30 px-3 py-2 w-full">
             <Send size={12} />
             Enviado
