@@ -1222,16 +1222,38 @@ export default function OpportunitiesManagement() {
                     {lead.enrichment_data.manual_approach.message}
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button size="sm" className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
+                          <Send size={12} /> Enviar via WhatsApp
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-56 p-2">
+                        <p className="text-xs text-muted-foreground px-2 pt-1 pb-2">Abrir conversa com a mensagem já escrita:</p>
+                        <button
+                          type="button"
+                          onClick={() => openWhatsApp(lead, lead.enrichment_data.manual_approach.message, "web")}
+                          className="w-full text-left px-2 py-2 rounded-md hover:bg-muted text-sm flex items-center gap-2"
+                        >
+                          <Globe size={14} className="text-emerald-500" />
+                          WhatsApp Web
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openWhatsApp(lead, lead.enrichment_data.manual_approach.message, "app")}
+                          className="w-full text-left px-2 py-2 rounded-md hover:bg-muted text-sm flex items-center gap-2"
+                        >
+                          <MessageSquare size={14} className="text-emerald-500" />
+                          Aplicativo (Desktop/Celular)
+                        </button>
+                      </PopoverContent>
+                    </Popover>
                     <Button size="sm" variant="outline" onClick={() => copyMessage(lead.enrichment_data.manual_approach.message, lead.id)} className="gap-1.5 text-xs">
                       {copiedId === lead.id ? <Check size={12} /> : <Copy size={12} />}
                       {copiedId === lead.id ? "Copiada" : "Copiar"}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => { setEditedMessage(lead.enrichment_data.manual_approach.message || ""); setEditingMessage(true); }} className="gap-1.5 text-xs">
                       <Pencil size={12} /> Editar
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => approachLead(lead, "manual")} disabled={approachingLeadId === lead.id} className="gap-1.5 text-xs">
-                      {approachingLeadId === lead.id && approachingMode === "manual" ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                      Regenerar
                     </Button>
                   </div>
                 </div>
