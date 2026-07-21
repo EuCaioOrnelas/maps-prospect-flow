@@ -271,7 +271,11 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ Tem transparência (quem, por quê)?
   ✓ Existe um CONTEXTO DA ABORDAGEM entre o gancho e o insight? (obrigatório)
   ✓ Se eu fosse o dono e recebesse essa mensagem de um desconhecido, entenderia naturalmente por que ele entrou em contato ANTES de ele falar do meu negócio?
+  ✓ A IDENTIFICAÇÃO contém os 3 elementos (nome + empresa + contexto de autoridade natural)?
+  ✓ A autoridade usa apenas fatos verdadeiros (especialização, nicho, serviço, rotina) — sem inventar números, anos, prêmios, liderança ou clientes?
+  ✓ Ao terminar a apresentação, dá pra responder: quem é? de qual empresa? por que entende disso? por que veio falar comigo?
   ✓ Está personalizada ao ICP "${lead.category || "N/A"}"?
+
   ✓ Parece consultoria, não venda?
   ✓ Evita clichês de IA/marketing?
   ✓ Segue Meta (sem spam, sem manipulação)?
