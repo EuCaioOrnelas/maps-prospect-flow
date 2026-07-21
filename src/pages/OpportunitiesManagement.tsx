@@ -106,9 +106,12 @@ export default function OpportunitiesManagement() {
   const [scoring, setScoring] = useState(false);
   const [scoringLeadId, setScoringLeadId] = useState<string | null>(null);
   const [approachingLeadId, setApproachingLeadId] = useState<string | null>(null);
+  const [approachingMode, setApproachingMode] = useState<"manual" | "meta">("manual");
   const [editingMessage, setEditingMessage] = useState(false);
   const [editedMessage, setEditedMessage] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  // Toggle da aba de mensagem: manual (envio 1º contato) vs meta (follow-up após template)
+  const [messageMode, setMessageMode] = useState<"manual" | "meta">("manual");
   // Batch scoring state
   const [batchScoring, setBatchScoring] = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
