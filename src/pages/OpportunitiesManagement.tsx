@@ -1764,7 +1764,7 @@ export default function OpportunitiesManagement() {
                       <TableHead><div className="flex items-center gap-1.5"><Tag size={14} />Categoria</div></TableHead>
                       <TableHead><div className="flex items-center gap-1.5"><MapPin size={14} />Cidade</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Star size={14} />Avaliação</div></TableHead>
-                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5 whitespace-nowrap"><BarChart3 size={14} />Índ. Fech.</div></TableHead>
+                      {/* Coluna "Índ. Fech." removida — o índice de fechamento fica dentro do card do lead */}
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><TrendingUp size={14} />Intenção</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Users size={14} />Resp.</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><CheckCircle2 size={14} />Status</div></TableHead>
