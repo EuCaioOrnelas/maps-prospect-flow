@@ -248,25 +248,47 @@ export default function OpportunitiesManagement() {
     }
   };
 
-  // Realtime — refetch on any account-scoped lead change (throttled)
+  // Realtime — merge row-level changes in place (no full refetch, no reorder)
   useEffect(() => {
     if (!user) return;
-    let pending = false;
-    let timer: any = null;
-    const scheduleRefetch = () => {
-      if (pending) return;
-      pending = true;
-      timer = setTimeout(() => { pending = false; fetchLeads(); }, 1500);
-    };
     const channel = supabase
       .channel(`opps-leads-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "leads" },
-        () => { scheduleRefetch(); }
+        { event: "UPDATE", schema: "public", table: "leads" },
+        (payload) => {
+          const updated = payload.new as OpportunityLead;
+          if (!updated?.id) return;
+          setLeads((prev) => {
+            const idx = prev.findIndex((l) => l.id === updated.id);
+            if (idx === -1) return prev;
+            const next = prev.slice();
+            next[idx] = { ...prev[idx], ...updated };
+            return next;
+          });
+          setSelectedLead((prev) => (prev && prev.id === updated.id ? { ...prev, ...updated } : prev));
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        (payload) => {
+          const inserted = payload.new as OpportunityLead;
+          if (!inserted?.id) return;
+          setLeads((prev) => (prev.some((l) => l.id === inserted.id) ? prev : [inserted, ...prev]));
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "leads" },
+        (payload) => {
+          const removed = payload.old as { id?: string };
+          if (!removed?.id) return;
+          setLeads((prev) => prev.filter((l) => l.id !== removed.id));
+        }
       )
       .subscribe();
-    return () => { if (timer) clearTimeout(timer); supabase.removeChannel(channel); };
+    return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
@@ -1742,7 +1764,7 @@ export default function OpportunitiesManagement() {
                       <TableHead><div className="flex items-center gap-1.5"><Tag size={14} />Categoria</div></TableHead>
                       <TableHead><div className="flex items-center gap-1.5"><MapPin size={14} />Cidade</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Star size={14} />Avaliação</div></TableHead>
-                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5 whitespace-nowrap"><BarChart3 size={14} />Índ. Fech.</div></TableHead>
+                      {/* Coluna "Índ. Fech." removida — o índice de fechamento fica dentro do card do lead */}
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><TrendingUp size={14} />Intenção</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Users size={14} />Resp.</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><CheckCircle2 size={14} />Status</div></TableHead>
@@ -1753,14 +1775,14 @@ export default function OpportunitiesManagement() {
                     {loading ? (
                       Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                          {Array.from({ length: 8 }).map((_, j) => (
+                          {Array.from({ length: 7 }).map((_, j) => (
                             <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>
                           ))}
                         </TableRow>
                       ))
                     ) : paginatedLeads.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
+                        <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                           {searchTerm || filterLevel !== "all"
                             ? "Nenhuma oportunidade encontrada com esses filtros"
                             : "Nenhuma oportunidade ainda. Faça uma busca em Oportunidades → Buscar"}
@@ -1799,13 +1821,7 @@ export default function OpportunitiesManagement() {
                               </div>
                             ) : "-"}
                           </TableCell>
-                          <TableCell className="text-center">
-                            {batchScoring && (lead.ai_score == null || lead.ai_score === 0) ? (
-                              <Loader2 size={14} className="animate-spin text-muted-foreground mx-auto" />
-                            ) : (
-                              getScoreBadge(lead.ai_score)
-                            )}
-                          </TableCell>
+                          {/* Célula "Índ. Fech." removida — visível apenas no card do lead */}
                           <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>
                           <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                             {(() => {
