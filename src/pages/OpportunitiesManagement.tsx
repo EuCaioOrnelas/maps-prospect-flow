@@ -370,27 +370,47 @@ export default function OpportunitiesManagement() {
     }
   };
 
-  const approachLead = async (lead: OpportunityLead) => {
+  const approachLead = async (lead: OpportunityLead, mode: "manual" | "meta" = "meta") => {
     setApproachingLeadId(lead.id);
+    setApproachingMode(mode);
     try {
-      const { data, error } = await supabase.functions.invoke("approach-lead", {
+      const fnName = mode === "manual" ? "approach-lead-manual" : "approach-lead";
+      const { data, error } = await supabase.functions.invoke(fnName, {
         body: { lead_id: lead.id },
       });
       if (error) throw error;
-      toast({ title: "Mensagem gerada!", description: "Mensagem de abordagem criada com sucesso" });
-      const updatedLead = {
-        ...lead,
-        ai_approach_message: data.mensagem,
-        enrichment_data: {
-          ...(lead.enrichment_data || {}),
-          approach_analysis: {
-            analise_nicho: data.analise_nicho,
-            analise_cidade: data.analise_cidade,
-            pontos_fracos: data.pontos_fracos,
-            estrategia: data.estrategia,
+      toast({ title: "Mensagem gerada!", description: mode === "manual" ? "Mensagem de primeiro contato criada" : "Mensagem de follow-up criada" });
+
+      let updatedLead: OpportunityLead;
+      if (mode === "manual") {
+        updatedLead = {
+          ...lead,
+          enrichment_data: {
+            ...(lead.enrichment_data || {}),
+            manual_approach: {
+              message: data.mensagem,
+              estrategia: data.estrategia,
+              gancho: data.gancho,
+              insight: data.insight,
+              generated_at: new Date().toISOString(),
+            },
           },
-        },
-      };
+        };
+      } else {
+        updatedLead = {
+          ...lead,
+          ai_approach_message: data.mensagem,
+          enrichment_data: {
+            ...(lead.enrichment_data || {}),
+            approach_analysis: {
+              analise_nicho: data.analise_nicho,
+              analise_cidade: data.analise_cidade,
+              pontos_fracos: data.pontos_fracos,
+              estrategia: data.estrategia,
+            },
+          },
+        };
+      }
       setLeads(prev => prev.map(l => l.id === lead.id ? updatedLead : l));
       if (selectedLead?.id === lead.id) setSelectedLead(updatedLead);
     } catch (err: any) {
@@ -403,14 +423,32 @@ export default function OpportunitiesManagement() {
 
   const saveEditedMessage = async (lead: OpportunityLead) => {
     try {
-      const { error } = await supabase
-        .from("leads")
-        .update({ ai_approach_message: editedMessage } as any)
-        .eq("id", lead.id);
-      if (error) throw error;
-      const updated = { ...lead, ai_approach_message: editedMessage };
-      setLeads(prev => prev.map(l => l.id === lead.id ? updated : l));
-      if (selectedLead?.id === lead.id) setSelectedLead(updated);
+      if (messageMode === "manual") {
+        const newEnrichment = {
+          ...(lead.enrichment_data || {}),
+          manual_approach: {
+            ...((lead.enrichment_data?.manual_approach) || {}),
+            message: editedMessage,
+          },
+        };
+        const { error } = await supabase
+          .from("leads")
+          .update({ enrichment_data: newEnrichment } as any)
+          .eq("id", lead.id);
+        if (error) throw error;
+        const updated = { ...lead, enrichment_data: newEnrichment };
+        setLeads(prev => prev.map(l => l.id === lead.id ? updated : l));
+        if (selectedLead?.id === lead.id) setSelectedLead(updated);
+      } else {
+        const { error } = await supabase
+          .from("leads")
+          .update({ ai_approach_message: editedMessage } as any)
+          .eq("id", lead.id);
+        if (error) throw error;
+        const updated = { ...lead, ai_approach_message: editedMessage };
+        setLeads(prev => prev.map(l => l.id === lead.id ? updated : l));
+        if (selectedLead?.id === lead.id) setSelectedLead(updated);
+      }
       setEditingMessage(false);
       toast({ title: "Mensagem atualizada!" });
     } catch (err: any) {
