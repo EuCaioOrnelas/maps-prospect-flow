@@ -539,6 +539,15 @@ export default function OpportunitiesManagement() {
       result = [...result].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0));
     } else if (sortOrder === "score_asc") {
       result = [...result].sort((a, b) => (a.ai_score ?? 0) - (b.ai_score ?? 0));
+    } else {
+      // Ordem padrão estável: created_at desc, com id como desempate para nunca reordenar
+      // ao atualizar enrichment_data (evita "lead sumir" ao fechar popup).
+      result = [...result].sort((a, b) => {
+        const da = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const db = b.created_at ? new Date(b.created_at).getTime() : 0;
+        if (db !== da) return db - da;
+        return String(b.id).localeCompare(String(a.id));
+      });
     }
     return result;
   }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity, responsibleFilter, user?.id]);
@@ -1726,7 +1735,7 @@ export default function OpportunitiesManagement() {
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><TrendingUp size={14} />Intenção</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Users size={14} />Resp.</div></TableHead>
                       <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><CheckCircle2 size={14} />Status</div></TableHead>
-                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Map size={14} />Maps</div></TableHead>
+                      <TableHead className="text-center"><div className="flex items-center justify-center gap-1.5"><Send size={14} />Enviar</div></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1882,21 +1891,81 @@ export default function OpportunitiesManagement() {
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-center">
-                            {lead.google_maps_link && lead.google_maps_link !== "-" ? (
-                              <a
-                                href={lead.google_maps_link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={e => e.stopPropagation()}
-                                className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
-                                title="Ver no Google Maps"
-                              >
-                                <Map size={16} />
-                              </a>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
-                            )}
+                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                            {(() => {
+                              const manualMsg: string = lead.enrichment_data?.manual_approach?.message || "";
+                              const metaMsg: string = lead.ai_approach_message || "";
+                              const hasManual = !!manualMsg.trim();
+                              const hasMeta = !!metaMsg.trim() && !lead.first_message_sent;
+                              if (!hasManual && !hasMeta) {
+                                return <span className="text-muted-foreground text-xs">—</span>;
+                              }
+                              const openMeta = () => { setSendingLead(lead); setSendDialogOpen(true); };
+                              const sendBtnClass = "inline-flex items-center justify-center w-8 h-8 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 transition-colors";
+                              // Só uma opção → ação direta (manual abre popover de web/app; meta abre dialog)
+                              if (hasManual && !hasMeta) {
+                                return (
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <button className={sendBtnClass} title="Enviar via WhatsApp (manual)">
+                                        <Send size={14} />
+                                      </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-52 p-1" align="center">
+                                      <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">Abrir WhatsApp</div>
+                                      <button className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted" onClick={() => openWhatsApp(lead, manualMsg, "web")}>WhatsApp Web</button>
+                                      <button className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted" onClick={() => openWhatsApp(lead, manualMsg, "app")}>Aplicativo</button>
+                                    </PopoverContent>
+                                  </Popover>
+                                );
+                              }
+                              if (hasMeta && !hasManual) {
+                                return (
+                                  <button
+                                    className={sendBtnClass}
+                                    title={sendCooldown > 0 ? `Aguarde ${sendCooldown}s` : "Enviar via Meta API"}
+                                    disabled={sendCooldown > 0}
+                                    onClick={openMeta}
+                                  >
+                                    <Send size={14} />
+                                  </button>
+                                );
+                              }
+                              // Ambas geradas → mini-popup perguntando qual enviar
+                              return (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <button className={sendBtnClass} title="Enviar mensagem">
+                                      <Send size={14} />
+                                    </button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-64 p-1" align="center">
+                                    <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">Qual mensagem enviar?</div>
+                                    <button
+                                      className="w-full text-left px-2 py-2 text-sm rounded hover:bg-muted flex flex-col gap-0.5"
+                                      onClick={openMeta}
+                                      disabled={sendCooldown > 0}
+                                    >
+                                      <span className="font-medium">Meta API</span>
+                                      <span className="text-[11px] text-muted-foreground">Envio oficial pela Meta Cloud</span>
+                                    </button>
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <button className="w-full text-left px-2 py-2 text-sm rounded hover:bg-muted flex flex-col gap-0.5">
+                                          <span className="font-medium">Manual (link WhatsApp)</span>
+                                          <span className="text-[11px] text-muted-foreground">Abre conversa com texto pronto</span>
+                                        </button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-52 p-1" align="center">
+                                        <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">Abrir WhatsApp</div>
+                                        <button className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted" onClick={() => openWhatsApp(lead, manualMsg, "web")}>WhatsApp Web</button>
+                                        <button className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted" onClick={() => openWhatsApp(lead, manualMsg, "app")}>Aplicativo</button>
+                                      </PopoverContent>
+                                    </Popover>
+                                  </PopoverContent>
+                                </Popover>
+                              );
+                            })()}
                           </TableCell>
                         </TableRow>
                       ))

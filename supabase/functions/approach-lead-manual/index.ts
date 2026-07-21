@@ -2,14 +2,15 @@
 // Copy consultiva B2B — o objetivo é APENAS gerar uma resposta natural do empresário.
 // NÃO é vender, NÃO é marcar reunião, NÃO é apresentar serviço.
 //
-// Estrutura obrigatória (7 blocos, sem títulos no texto final):
-//   1. Gancho personalizado    — 1ª frase baseada em dado real do lead
-//   2. Identificação curta     — quem é / de onde
-//   3. Motivo do contato       — natural, espontâneo
-//   4. Insight consultivo      — percepção inteligente, linguagem cautelosa
-//   5. Curiosidade             — NÃO revelar a solução
-//   6. Baixa pressão           — reduzir sensação de venda
-//   7. CTA leve                — só incentiva UMA resposta (nunca reunião/ligação/agenda)
+// Estrutura obrigatória (8 blocos, sem títulos no texto final):
+//   1. Gancho personalizado       — 1ª frase baseada em dado real do lead
+//   2. Contexto da abordagem      — justifica NATURALMENTE por que essa empresa foi analisada
+//   3. Identificação curta        — quem é / de onde
+//   4. Motivo do contato          — natural, espontâneo
+//   5. Insight consultivo         — percepção inteligente, linguagem cautelosa
+//   6. Curiosidade                — NÃO revelar a solução
+//   7. Baixa pressão              — reduzir sensação de venda
+//   8. CTA leve                   — só incentiva UMA resposta (nunca reunião/ligação/agenda)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -128,31 +129,51 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • Precisa gerar interesse IMEDIATO.
    • PROIBIDO começar com: "Olá", "Oi", "Tudo bem", "Como vai", "Bom dia", "Boa tarde", "Meu nome é", "Somos uma empresa". Essas frases só podem aparecer DEPOIS do gancho.
 
-2) IDENTIFICAÇÃO — curta e simples
+2) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após o gancho
+   • Explica de forma orgânica POR QUE essa empresa foi analisada, antes de qualquer diagnóstico.
+   • NUNCA pule direto do gancho para insight/diagnóstico. O empresário precisa entender IMEDIATAMENTE por que recebeu a mensagem.
+   • Deve soar verdadeiro, natural, conversacional — nunca como desculpa.
+   • Exemplos de fraseado (adaptar, nunca copiar literal):
+       – "estava pesquisando empresas do segmento aqui em ${lead.city || "sua região"}"
+       – "estou fazendo um levantamento sobre ${lead.category || "negócios locais"} da região"
+       – "costumo mapear negócios locais pra entender como estão usando os canais digitais"
+       – "recentemente venho estudando como ${lead.category || "empresas desse setor"} estão captando clientes"
+       – "durante uma pesquisa sobre empresas de ${lead.city || "sua cidade"}, a sua apareceu como referência"
+       – "enquanto analisava alguns negócios do setor, encontrei o de vocês"
+   • 1 a 2 frases. Nunca genérico demais.
+   • TESTE DE NATURALIDADE: se o empresário NÃO entender naturalmente por que você entrou em contato antes de você falar sobre o negócio dele, este bloco falhou — reescreva com mais contexto.
+
+3) IDENTIFICAÇÃO — curta e simples
    • "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}." (ou variação natural equivalente)
    • Sem autopromoção. Sem "somos líderes". Sem anos de mercado. Sem lista de diferenciais.
 
-3) MOTIVO DO CONTATO — natural, espontâneo
-   • Ex.: "Estava analisando empresas do segmento aqui em ${lead.city || "sua região"}..." / "Costumo mapear negócios da região pra identificar oportunidades..."
+4) MOTIVO DO CONTATO — natural, espontâneo
+   • Complementa o contexto (não repete). Ex.: "achei que fazia sentido te chamar rapidinho pra compartilhar uma percepção."
    • Nunca robótico.
 
-4) INSIGHT CONSULTIVO — o maior diferencial
+5) INSIGHT CONSULTIVO — o maior diferencial
+   • Só aparece DEPOIS do contexto + identificação + motivo. Nunca antes.
    • Uma percepção inteligente. NUNCA apontar defeito de forma direta.
    • Foque em UM tema: oportunidade perdida, processo otimizável, presença digital, atendimento, geração de demanda, posicionamento, anúncios, CRM, automação, experiência do cliente.
    • SEMPRE em linguagem consultiva e cautelosa: "talvez", "parece existir", "pode haver", "é possível", "percebi um ponto interessante".
    • NUNCA dizer que a empresa "faz errado", "está ruim", "precisa melhorar urgentemente".
 
-5) CURIOSIDADE
+6) CURIOSIDADE
    • NÃO revelar a solução. NÃO explicar o serviço. NÃO apresentar produto.
    • O leitor precisa terminar essa parte pensando: "o que será que ele encontrou?".
 
-6) BAIXA PRESSÃO
+7) BAIXA PRESSÃO
    • Reduzir por completo a sensação de venda.
    • Use frases como: "nem sei se faz sentido pra vocês", "não é pra vender nada agora", "queria só compartilhar uma percepção", "talvez eu esteja enganado".
 
-7) CTA FINAL
+8) CTA FINAL
    • PROIBIDO pedir: reunião, ligação, apresentação, demonstração, agenda, horário, "5 minutinhos".
    • Só pode incentivar UMA resposta curta. Ex.: "posso te mandar?", "faz sentido?", "você também percebe isso?", "vale a pena eu explicar melhor por aqui?".
+
+REGRA DE FLUXO (INEGOCIÁVEL):
+Gancho → Contexto → Identificação → Motivo → Insight → Curiosidade → Baixa pressão → CTA.
+JAMAIS pular do gancho direto para o insight/diagnóstico. Sempre precisa existir a transição contextual.
+A leitura tem que fluir como uma conversa entre dois profissionais, nunca como um relatório de auditoria.
 
 ═══════════════════════════════════════════
 PERSONALIZAÇÃO POR ICP (regra mais importante)
@@ -197,6 +218,8 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ Demonstra pesquisa real sobre a empresa?
   ✓ Gera curiosidade sem revelar a solução?
   ✓ Tem transparência (quem, por quê)?
+  ✓ Existe um CONTEXTO DA ABORDAGEM entre o gancho e o insight? (obrigatório)
+  ✓ Se eu fosse o dono e recebesse essa mensagem de um desconhecido, entenderia naturalmente por que ele entrou em contato ANTES de ele falar do meu negócio?
   ✓ Está personalizada ao ICP "${lead.category || "N/A"}"?
   ✓ Parece consultoria, não venda?
   ✓ Evita clichês de IA/marketing?
