@@ -2,8 +2,9 @@
 // Copy consultiva B2B — o objetivo é APENAS gerar uma resposta natural do empresário.
 // NÃO é vender, NÃO é marcar reunião, NÃO é apresentar serviço.
 //
-// Estrutura obrigatória (8 blocos, sem títulos no texto final):
-//   1. Gancho personalizado       — 1ª frase baseada em dado real do lead
+// Estrutura obrigatória (9 blocos, sem títulos no texto final):
+//   0. Saudação humanizada        — curta, natural, variada, adaptada ao ICP; NUNCA "bom dia/tarde/noite"
+//   1. Gancho personalizado       — 1ª frase após a saudação, baseada em dado real do lead
 //   2. Contexto da abordagem      — justifica NATURALMENTE por que essa empresa foi analisada
 //   3. Identificação curta        — quem é / de onde
 //   4. Motivo do contato          — natural, espontâneo
@@ -124,10 +125,23 @@ DADOS DO LEAD (use como matéria-prima do gancho e do insight):
 ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto final)
 ═══════════════════════════════════════════
 
-1) GANCHO PERSONALIZADO — 1ª FRASE
-   • Baseada em algo REAL do lead: avaliações Google, nº de reviews, especialidade, localização, diferencial, redes sociais, presença digital, reputação, horário.
+0) SAUDAÇÃO HUMANIZADA — PRIMEIRA LINHA, OBRIGATÓRIA
+   • Toda mensagem DEVE começar com uma saudação curta, natural, conversacional — como um humano abriria uma conversa no WhatsApp.
+   • Escolha UMA das opções abaixo (ou variação equivalente natural), evitando repetição entre mensagens diferentes:
+     "Olá, tudo bem?" · "Oi, tudo bem?" · "Olá!" · "Oi!" · "Oi, tudo certo?" · "Olá, tudo certo?" · "Oi, como vai?" · "Olá, como vai?" · "Tudo certo?" · "Tudo bem?"
+   • Adapte ao ICP "${lead.category || "N/A"}":
+       – Segmento tradicional (advocacia, contabilidade, clínica, indústria): prefira "Olá, tudo bem?", "Olá!", "Como vai?"
+       – Segmento descontraído (restaurante, bar, academia, loja, e-commerce): pode usar "Oi, tudo certo?", "Oi!", "Tudo certo?"
+       – Segmento muito formal: "Olá, tudo bem?", "Como vai?"
+   • PROIBIDO ABSOLUTAMENTE: "Bom dia", "Boa tarde", "Boa noite" (o horário real de envio é desconhecido — usar isso pode soar errado).
+   • PROIBIDO gírias: "E aí", "Fala", "Beleza", "Show", "Tudo joia", "Opa".
+   • A saudação vai em UMA linha, seguida de \\n\\n. Nunca fica isolada — o próximo bloco (Gancho) vem logo depois.
+   • Use a SEED (${uniqueSeed}) para variar a saudação — não repita sempre a mesma.
+
+1) GANCHO PERSONALIZADO — logo após a saudação
+   • Baseado em algo REAL do lead: avaliações Google, nº de reviews, especialidade, localização, diferencial, redes sociais, presença digital, reputação, horário.
    • Precisa gerar interesse IMEDIATO.
-   • PROIBIDO começar com: "Olá", "Oi", "Tudo bem", "Como vai", "Bom dia", "Boa tarde", "Meu nome é", "Somos uma empresa". Essas frases só podem aparecer DEPOIS do gancho.
+   • PROIBIDO repetir a saudação aqui. Também PROIBIDO começar o gancho com "Meu nome é" ou "Somos uma empresa" (isso é da identificação, mais adiante).
 
 2) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após o gancho
    • Explica de forma orgânica POR QUE essa empresa foi analisada, antes de qualquer diagnóstico.
@@ -171,9 +185,10 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • Só pode incentivar UMA resposta curta. Ex.: "posso te mandar?", "faz sentido?", "você também percebe isso?", "vale a pena eu explicar melhor por aqui?".
 
 REGRA DE FLUXO (INEGOCIÁVEL):
-Gancho → Contexto → Identificação → Motivo → Insight → Curiosidade → Baixa pressão → CTA.
+Saudação → Gancho → Contexto → Identificação → Motivo → Insight → Curiosidade → Baixa pressão → CTA.
+A saudação NUNCA fica isolada — sempre é seguida imediatamente pelo gancho no bloco seguinte.
 JAMAIS pular do gancho direto para o insight/diagnóstico. Sempre precisa existir a transição contextual.
-A leitura tem que fluir como uma conversa entre dois profissionais, nunca como um relatório de auditoria.
+A leitura tem que fluir como uma conversa real no WhatsApp entre dois profissionais, nunca como um relatório de auditoria ou carta comercial.
 
 ═══════════════════════════════════════════
 PERSONALIZAÇÃO POR ICP (regra mais importante)
@@ -214,7 +229,9 @@ POLÍTICAS META (cumprir sempre)
 AUTO-AVALIAÇÃO ANTES DE RESPONDER
 ═══════════════════════════════════════════
 Avalie mentalmente antes de me devolver o JSON:
-  ✓ Parece escrita por humano?
+  ✓ Começa com uma saudação curta, natural e variada (nunca "bom dia/tarde/noite", nunca gíria)?
+  ✓ A saudação está adaptada ao ICP e não fica isolada (é seguida pelo gancho)?
+  ✓ Parece uma conversa real iniciada por uma pessoa no WhatsApp — não uma carta comercial?
   ✓ Demonstra pesquisa real sobre a empresa?
   ✓ Gera curiosidade sem revelar a solução?
   ✓ Tem transparência (quem, por quê)?
