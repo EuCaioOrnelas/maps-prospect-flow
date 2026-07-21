@@ -1863,27 +1863,11 @@ export default function OpportunitiesManagement() {
                                 <Loader2 size={10} className="animate-spin" />
                                 Enviando...
                               </Badge>
-                            ) : lead.ai_approach_message ? (
-                              <div className="flex items-center justify-center gap-1">
-                                <Badge variant="outline" className="text-xs gap-1 text-blue-400 border-blue-400/30">
-                                  <MessageSquare size={10} />
-                                  Msg Gerada
-                                </Badge>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 w-7 p-0"
-                                  title={sendCooldown > 0 ? `Aguarde ${sendCooldown}s` : "Enviar mensagem"}
-                                  disabled={sendCooldown > 0}
-                                  onClick={(e) => { e.stopPropagation(); setSendingLead(lead); setSendDialogOpen(true); }}
-                                >
-                                  {sendCooldown > 0 ? (
-                                    <Clock size={12} className="text-muted-foreground" />
-                                  ) : (
-                                    <Send size={12} className="text-primary" />
-                                  )}
-                                </Button>
-                              </div>
+                            ) : (lead.ai_approach_message || lead.enrichment_data?.manual_approach?.message) ? (
+                              <Badge variant="outline" className="text-xs gap-1 text-blue-400 border-blue-400/30">
+                                <MessageSquare size={10} />
+                                Msg Gerada
+                              </Badge>
                             ) : (
                               <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
                                 <Clock size={10} />
