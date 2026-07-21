@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,6 +82,7 @@ const Dashboard = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -491,6 +492,10 @@ const Dashboard = () => {
         title: "Resultados carregados",
         description: `${item.leads.length} leads da busca anterior`,
       });
+      // Rola até o topo da lista ("X leads encontrados")
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
     } else {
       // Fallback for old history items without saved leads
       setLeads([]);
@@ -941,7 +946,7 @@ const Dashboard = () => {
 
           {/* Results Section — aparece apenas quando o usuário clica em uma busca do histórico */}
           {hasSearched && (
-            <div className="animate-fade-in mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border/50">
+            <div ref={resultsRef} className="animate-fade-in mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border/50 scroll-mt-24">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">

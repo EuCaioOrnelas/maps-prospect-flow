@@ -463,6 +463,31 @@ export default function OpportunitiesManagement() {
     toast({ title: "Mensagem copiada!" });
   };
 
+  // Normaliza telefone para wa.me (só dígitos, garantindo DDI 55 quando faltar)
+  const normalizePhoneForWa = (raw: string | null | undefined): string => {
+    const digits = (raw || "").replace(/\D/g, "");
+    if (!digits) return "";
+    if (digits.startsWith("55")) return digits;
+    // Brasil: 10 ou 11 dígitos -> prefixa 55
+    if (digits.length === 10 || digits.length === 11) return "55" + digits;
+    return digits;
+  };
+
+  // Abre WhatsApp Web ou App reutilizando SEMPRE a mesma aba (target nomeado)
+  const openWhatsApp = (lead: OpportunityLead, message: string, target: "web" | "app") => {
+    const phone = normalizePhoneForWa(lead.phone);
+    if (!phone) {
+      toast({ title: "Telefone inválido", description: "Não foi possível abrir o WhatsApp para este lead.", variant: "destructive" });
+      return;
+    }
+    const encoded = encodeURIComponent(message || "");
+    const url = target === "web"
+      ? `https://web.whatsapp.com/send?phone=${phone}&text=${encoded}`
+      : `https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`; // abre o app nativo (mobile) ou o desktop se instalado
+    window.open(url, "wiize_wa_send");
+  };
+
+
   // Derive correct level from score to fix inconsistency
   const getIntentionFromScore = (score: number | null): string | null => {
     if (score == null || score === 0) return null;
@@ -1197,16 +1222,38 @@ export default function OpportunitiesManagement() {
                     {lead.enrichment_data.manual_approach.message}
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button size="sm" className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
+                          <Send size={12} /> Enviar via WhatsApp
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-56 p-2">
+                        <p className="text-xs text-muted-foreground px-2 pt-1 pb-2">Abrir conversa com a mensagem já escrita:</p>
+                        <button
+                          type="button"
+                          onClick={() => openWhatsApp(lead, lead.enrichment_data.manual_approach.message, "web")}
+                          className="w-full text-left px-2 py-2 rounded-md hover:bg-muted text-sm flex items-center gap-2"
+                        >
+                          <Globe size={14} className="text-emerald-500" />
+                          WhatsApp Web
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openWhatsApp(lead, lead.enrichment_data.manual_approach.message, "app")}
+                          className="w-full text-left px-2 py-2 rounded-md hover:bg-muted text-sm flex items-center gap-2"
+                        >
+                          <MessageSquare size={14} className="text-emerald-500" />
+                          Aplicativo (Desktop/Celular)
+                        </button>
+                      </PopoverContent>
+                    </Popover>
                     <Button size="sm" variant="outline" onClick={() => copyMessage(lead.enrichment_data.manual_approach.message, lead.id)} className="gap-1.5 text-xs">
                       {copiedId === lead.id ? <Check size={12} /> : <Copy size={12} />}
                       {copiedId === lead.id ? "Copiada" : "Copiar"}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => { setEditedMessage(lead.enrichment_data.manual_approach.message || ""); setEditingMessage(true); }} className="gap-1.5 text-xs">
                       <Pencil size={12} /> Editar
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => approachLead(lead, "manual")} disabled={approachingLeadId === lead.id} className="gap-1.5 text-xs">
-                      {approachingLeadId === lead.id && approachingMode === "manual" ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                      Regenerar
                     </Button>
                   </div>
                 </div>
