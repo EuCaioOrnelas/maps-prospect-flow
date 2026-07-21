@@ -125,10 +125,23 @@ DADOS DO LEAD (use como matéria-prima do gancho e do insight):
 ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto final)
 ═══════════════════════════════════════════
 
-1) GANCHO PERSONALIZADO — 1ª FRASE
-   • Baseada em algo REAL do lead: avaliações Google, nº de reviews, especialidade, localização, diferencial, redes sociais, presença digital, reputação, horário.
+0) SAUDAÇÃO HUMANIZADA — PRIMEIRA LINHA, OBRIGATÓRIA
+   • Toda mensagem DEVE começar com uma saudação curta, natural, conversacional — como um humano abriria uma conversa no WhatsApp.
+   • Escolha UMA das opções abaixo (ou variação equivalente natural), evitando repetição entre mensagens diferentes:
+     "Olá, tudo bem?" · "Oi, tudo bem?" · "Olá!" · "Oi!" · "Oi, tudo certo?" · "Olá, tudo certo?" · "Oi, como vai?" · "Olá, como vai?" · "Tudo certo?" · "Tudo bem?"
+   • Adapte ao ICP "${lead.category || "N/A"}":
+       – Segmento tradicional (advocacia, contabilidade, clínica, indústria): prefira "Olá, tudo bem?", "Olá!", "Como vai?"
+       – Segmento descontraído (restaurante, bar, academia, loja, e-commerce): pode usar "Oi, tudo certo?", "Oi!", "Tudo certo?"
+       – Segmento muito formal: "Olá, tudo bem?", "Como vai?"
+   • PROIBIDO ABSOLUTAMENTE: "Bom dia", "Boa tarde", "Boa noite" (o horário real de envio é desconhecido — usar isso pode soar errado).
+   • PROIBIDO gírias: "E aí", "Fala", "Beleza", "Show", "Tudo joia", "Opa".
+   • A saudação vai em UMA linha, seguida de \\n\\n. Nunca fica isolada — o próximo bloco (Gancho) vem logo depois.
+   • Use a SEED (${uniqueSeed}) para variar a saudação — não repita sempre a mesma.
+
+1) GANCHO PERSONALIZADO — logo após a saudação
+   • Baseado em algo REAL do lead: avaliações Google, nº de reviews, especialidade, localização, diferencial, redes sociais, presença digital, reputação, horário.
    • Precisa gerar interesse IMEDIATO.
-   • PROIBIDO começar com: "Olá", "Oi", "Tudo bem", "Como vai", "Bom dia", "Boa tarde", "Meu nome é", "Somos uma empresa". Essas frases só podem aparecer DEPOIS do gancho.
+   • PROIBIDO repetir a saudação aqui. Também PROIBIDO começar o gancho com "Meu nome é" ou "Somos uma empresa" (isso é da identificação, mais adiante).
 
 2) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após o gancho
    • Explica de forma orgânica POR QUE essa empresa foi analisada, antes de qualquer diagnóstico.
