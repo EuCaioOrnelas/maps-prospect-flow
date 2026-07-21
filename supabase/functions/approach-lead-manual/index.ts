@@ -226,17 +226,19 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • Use frases como: "posso estar enganado", "talvez não seja o momento", "só compartilhando uma percepção".
    • PROIBIDO frases genéricas soltas tipo "achei interessante dar uma olhada nessa questão" — precisa amarrar com o insight anterior.
 
-8) CTA FINAL — SEMPRE OFERECENDO EXPLICAR MELHOR (regra dura)
-   • O CTA DEVE convidar o empresário a receber uma explicação mais detalhada sobre o ponto levantado no insight — nunca uma pergunta vaga.
-   • Estrutura obrigatória: referenciar o TEMA do insight (ex.: canal próprio de vendas, agenda, retenção, captação, delivery) + oferecer explicar melhor ali no WhatsApp.
-   • Exemplos (adaptar ao insight real, nunca copiar literal):
-       – "Se quiser, posso te explicar melhor por aqui como a gente costuma resolver isso."
-       – "Faz sentido eu te mandar rapidamente como isso funciona na prática?"
-       – "Posso te explicar melhor em 2 mensagens como a gente ajuda restaurantes nesse ponto?"
-       – "Se fizer sentido, te explico com calma como funciona — sem compromisso."
-   • PROIBIDO absolutamente: pedir reunião, ligação, apresentação, demonstração, agenda, horário, "5 minutinhos", "call".
-   • PROIBIDO CTA morto/vago: "faz sentido?", "você também percebe isso?", "faz sentido pra você?", "concorda?" — SEM referência ao serviço soam sem contexto e fracos.
-   • O CTA precisa amarrar naturalmente com o insight anterior. Se o insight foi sobre "site/pedido online", o CTA fala em explicar melhor como resolver o canal próprio. Se foi sobre "agenda", explica melhor como organizam a agenda. Nunca desconecte.
+8) CTA FINAL — SEMPRE UMA PERGUNTA FECHADA (regra absoluta)
+    • O CTA DEVE ser obrigatoriamente uma PERGUNTA FECHADA que convide o empresário a receber uma explicação mais detalhada sobre o ponto levantado no insight.
+    • A pergunta deve ser de resposta fácil (sim/não ou uma resposta curta) e deve terminar SEMPRE com o caractere "?".
+    • Estrutura obrigatória: referenciar o TEMA do insight (ex.: canal próprio de vendas, agenda, retenção, captação, delivery) + perguntar se ele quer que você explique melhor por ali no WhatsApp.
+    • Exemplos (adaptar ao insight real, nunca copiar literal):
+        – "Quer que eu te explique melhor como funciona um canal próprio de vendas por aqui?"
+        – "Posso te mostrar rapidamente como isso resolveria o ponto da agenda?"
+        – "Quer que eu te envie um exemplo prático de como a gente organiza isso?"
+        – "Posso te explicar em 2 mensagens como isso funciona na prática?"
+    • PROIBIDO absolutamente: CTA em forma de afirmação/frase declarativa (ex.: "Se quiser, posso te explicar melhor por aqui.").
+    • PROIBIDO absolutamente: pedir reunião, ligação, apresentação, demonstração, agenda, horário, "5 minutinhos", "call".
+    • PROIBIDO CTA morto/vago: "faz sentido?", "você também percebe isso?", "faz sentido pra você?", "concorda?" — SEM referência ao serviço soam sem contexto e fracos.
+    • O CTA precisa amarrar naturalmente com o insight anterior. Se o insight foi sobre "site/pedido online", a pergunta fala em explicar melhor o canal próprio. Se foi sobre "agenda", pergunta se quer entender como organizam a agenda. Nunca desconecte.
 
 
 REGRA DE FLUXO (INEGOCIÁVEL):
