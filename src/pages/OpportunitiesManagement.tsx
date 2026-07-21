@@ -248,25 +248,47 @@ export default function OpportunitiesManagement() {
     }
   };
 
-  // Realtime — refetch on any account-scoped lead change (throttled)
+  // Realtime — merge row-level changes in place (no full refetch, no reorder)
   useEffect(() => {
     if (!user) return;
-    let pending = false;
-    let timer: any = null;
-    const scheduleRefetch = () => {
-      if (pending) return;
-      pending = true;
-      timer = setTimeout(() => { pending = false; fetchLeads(); }, 1500);
-    };
     const channel = supabase
       .channel(`opps-leads-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "leads" },
-        () => { scheduleRefetch(); }
+        { event: "UPDATE", schema: "public", table: "leads" },
+        (payload) => {
+          const updated = payload.new as OpportunityLead;
+          if (!updated?.id) return;
+          setLeads((prev) => {
+            const idx = prev.findIndex((l) => l.id === updated.id);
+            if (idx === -1) return prev;
+            const next = prev.slice();
+            next[idx] = { ...prev[idx], ...updated };
+            return next;
+          });
+          setSelectedLead((prev) => (prev && prev.id === updated.id ? { ...prev, ...updated } : prev));
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        (payload) => {
+          const inserted = payload.new as OpportunityLead;
+          if (!inserted?.id) return;
+          setLeads((prev) => (prev.some((l) => l.id === inserted.id) ? prev : [inserted, ...prev]));
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "leads" },
+        (payload) => {
+          const removed = payload.old as { id?: string };
+          if (!removed?.id) return;
+          setLeads((prev) => prev.filter((l) => l.id !== removed.id));
+        }
       )
       .subscribe();
-    return () => { if (timer) clearTimeout(timer); supabase.removeChannel(channel); };
+    return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
