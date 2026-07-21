@@ -1892,7 +1892,7 @@ export default function OpportunitiesManagement() {
                                   <Popover>
                                     <PopoverTrigger asChild>
                                       <button className={sendBtnClass} title="Enviar via WhatsApp (manual)">
-                                        <Send size={14} />
+                                        <WhatsAppIcon />
                                       </button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-52 p-1" align="center">
@@ -1911,7 +1911,7 @@ export default function OpportunitiesManagement() {
                                     disabled={sendCooldown > 0}
                                     onClick={openMeta}
                                   >
-                                    <Send size={14} />
+                                    <WhatsAppIcon />
                                   </button>
                                 );
                               }
@@ -1920,7 +1920,7 @@ export default function OpportunitiesManagement() {
                                 <Popover>
                                   <PopoverTrigger asChild>
                                     <button className={sendBtnClass} title="Enviar mensagem">
-                                      <Send size={14} />
+                                      <WhatsAppIcon />
                                     </button>
                                   </PopoverTrigger>
                                   <PopoverContent className="w-64 p-1" align="center">
