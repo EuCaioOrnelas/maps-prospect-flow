@@ -113,7 +113,7 @@ const LeadCardComponent = ({
       started = true;
       suppressNextClickRef.current = true;
       moveEvent.preventDefault();
-      onDragStartRef.current({ clientX: moveEvent.clientX, clientY: moveEvent.clientY, currentTarget: card });
+      onDragStartRef.current(leadIdRef.current, { clientX: moveEvent.clientX, clientY: moveEvent.clientY, currentTarget: card });
       document.removeEventListener('pointermove', handlePointerMove);
     };
 
@@ -140,7 +140,7 @@ const LeadCardComponent = ({
           e.stopPropagation();
           return;
         }
-        onClick();
+        onSelect(lead);
       }}
       draggable={false}
       onPointerDown={handlePointerDown}
