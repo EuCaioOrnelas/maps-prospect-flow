@@ -98,6 +98,7 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
 
 export const MechanismSection = () => {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.05, rootMargin: '0px 0px -10% 0px' });
+  const { ref: liveRef, isVisible: isInViewport } = useScrollAnimation({ threshold: 0, rootMargin: '100px 0px', triggerOnce: false });
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative overflow-hidden">
