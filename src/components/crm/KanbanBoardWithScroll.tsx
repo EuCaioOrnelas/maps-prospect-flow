@@ -140,8 +140,11 @@ const KanbanBoardWithScrollComponent = ({
         offsetY,
         width: previewWidth,
       });
+      // Position the preview synchronously on the next frame so it appears
+      // exactly under the pointer without waiting for the effect to attach.
       scheduleDragPreviewPosition(event.clientX, event.clientY);
     }
+    lastPointerRef.current = { x: event.clientX, y: event.clientY };
   }, [leads, scheduleDragPreviewPosition]);
 
   const handleDragEnd = useCallback(() => {

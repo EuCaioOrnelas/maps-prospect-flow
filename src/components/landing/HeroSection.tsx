@@ -712,6 +712,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const sectionRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
   const animationStartRef = useRef<number>(0);
+  const pausedElapsedRef = useRef<number>(0);
 
   useEffect(() => {
     // Parallax desligado em mobile — recomputo do transform a cada frame causava
@@ -780,7 +781,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   // Handle manual jump
   useEffect(() => {
     if (jumpTarget !== null) {
-      animationStartRef.current = performance.now() - jumpTarget * STAGE_DURATION;
+      pausedElapsedRef.current = jumpTarget * STAGE_DURATION;
+      animationStartRef.current = performance.now() - pausedElapsedRef.current;
       setCurrentStage(jumpTarget);
       setStageProgress(0);
       setJumpTarget(null);
@@ -791,14 +793,14 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
     if (!isAnimating) return;
 
     const totalDuration = STAGE_DURATION * stages.length;
-    if (!animationStartRef.current) {
-      animationStartRef.current = performance.now();
-    }
+    // Resume from where we paused (keeps position stable when out of view).
+    animationStartRef.current = performance.now() - pausedElapsedRef.current;
     let frameId = 0;
 
     const update = (now: number) => {
       const elapsed = now - animationStartRef.current;
       const cycleElapsed = ((elapsed % totalDuration) + totalDuration) % totalDuration;
+      pausedElapsedRef.current = cycleElapsed;
       const nextStage = Math.floor(cycleElapsed / STAGE_DURATION);
       const nextProgress = (cycleElapsed % STAGE_DURATION) / STAGE_DURATION;
 
