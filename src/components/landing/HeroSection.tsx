@@ -712,6 +712,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const sectionRef = useRef<HTMLElement>(null);
   const demoRef = useRef<HTMLDivElement>(null);
   const animationStartRef = useRef<number>(0);
+  const pausedElapsedRef = useRef<number>(0);
 
   useEffect(() => {
     // Parallax desligado em mobile — recomputo do transform a cada frame causava
