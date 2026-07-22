@@ -85,15 +85,17 @@ const TestimonialsColumn = ({
   className,
   testimonials,
   duration = 20,
+  isActive = true,
 }: {
   className?: string;
   testimonials: Testimonial[];
   duration?: number;
+  isActive?: boolean;
 }) => {
   return (
     <div className={`relative overflow-hidden ${className}`}>
       <motion.div
-        animate={{ translateY: "-50%" }}
+        animate={isActive ? { translateY: "-50%" } : {}}
         transition={{
           duration,
           repeat: Infinity,
@@ -101,6 +103,7 @@ const TestimonialsColumn = ({
           repeatType: "loop",
         }}
         className="flex flex-col gap-6"
+        style={{ willChange: isActive ? "transform" : "auto" }}
       >
         {[...new Array(2)].map((_, index) => (
           <div key={index} className="flex flex-col gap-6">
