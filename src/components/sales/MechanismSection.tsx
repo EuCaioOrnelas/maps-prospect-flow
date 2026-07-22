@@ -98,9 +98,10 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
 
 export const MechanismSection = () => {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.05, rootMargin: '0px 0px -10% 0px' });
+  const { ref: liveRef, isVisible: isInViewport } = useScrollAnimation({ threshold: 0, rootMargin: '100px 0px', triggerOnce: false });
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative overflow-hidden">
+    <section ref={(node) => { (ref as any).current = node; (liveRef as any).current = node; }} className="py-12 sm:py-20 w-full relative overflow-hidden">
       {/* Background ambient */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[10%] -left-[5%] w-[350px] h-[350px] bg-primary/[0.04] rounded-full blur-[100px]" />
@@ -120,6 +121,7 @@ export const MechanismSection = () => {
               left: (el as any).left,
               right: (el as any).right,
               animation: isVisible ? `float-gentle ${3 + i * 0.5}s ease-in-out infinite` : undefined,
+              animationPlayState: isInViewport ? 'running' : 'paused',
             }}
           >
             <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
@@ -148,7 +150,7 @@ export const MechanismSection = () => {
               transition={{ duration: 2.5, delay: 0.3, ease: "easeOut" }}
               className="w-full h-full origin-top bg-gradient-to-b from-primary/40 via-primary/20 to-primary/40"
             />
-            {isVisible && (
+            {isVisible && isInViewport && (
               <motion.div
                 initial={{ top: "0%" }}
                 animate={{ top: ["0%", "100%"] }}
@@ -170,7 +172,7 @@ export const MechanismSection = () => {
                   "linear-gradient(to bottom, transparent 0%, hsl(var(--primary)/0.35) 12%, hsl(var(--primary)/0.2) 50%, hsl(var(--primary)/0.35) 88%, transparent 100%)",
               }}
             />
-            {isVisible && (
+            {isVisible && isInViewport && (
               <motion.div
                 initial={{ top: "0%" }}
                 animate={{ top: ["0%", "100%"] }}

@@ -873,7 +873,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                   </Button>
                 </Link>
               )}
-              <button onClick={() => setVideoOpen(true)} className="group shrink-0">
+              <Link to="/demonstracao" className="group shrink-0">
                 <Button
                   variant="ghost"
                   size="lg"
@@ -881,7 +881,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
                 >
                   Ver Demonstração
                 </Button>
-              </button>
+              </Link>
             </div>
           </div>
 
