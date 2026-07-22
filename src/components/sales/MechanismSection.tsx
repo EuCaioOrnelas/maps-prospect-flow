@@ -172,7 +172,7 @@ export const MechanismSection = () => {
                   "linear-gradient(to bottom, transparent 0%, hsl(var(--primary)/0.35) 12%, hsl(var(--primary)/0.2) 50%, hsl(var(--primary)/0.35) 88%, transparent 100%)",
               }}
             />
-            {isVisible && (
+            {isVisible && isInViewport && (
               <motion.div
                 initial={{ top: "0%" }}
                 animate={{ top: ["0%", "100%"] }}
