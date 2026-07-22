@@ -94,6 +94,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
 
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ success: number; failed: number } | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
   const [crmDialogOpen, setCrmDialogOpen] = useState(false);
   const [oppsDialogOpen, setOppsDialogOpen] = useState(false);
 
@@ -297,6 +298,8 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
   };
 
   const handleReset = () => {
+    if (isResetting) return;
+    setIsResetting(true);
     setStep(connections.length === 1 ? "template" : "number");
     setSelectedTemplate(null);
     setTemplateVariables({});
@@ -305,6 +308,8 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
     setSendResult(null);
     setTemplateSearch("");
     setTemplatePage(1);
+    // Reset the lock after the next paint to prevent double-clicks while state flushes.
+    requestAnimationFrame(() => setIsResetting(false));
   };
 
   if (sendResult) {
@@ -318,8 +323,9 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
           {sendResult.success} mensagens enviadas com sucesso
           {sendResult.failed > 0 && `, ${sendResult.failed} falharam`}
         </p>
-        <Button onClick={handleReset} className="gap-2">
-          <Rocket size={16} /> Nova campanha
+        <Button onClick={handleReset} disabled={isResetting} className="gap-2">
+          {isResetting ? <Loader2 size={16} className="animate-spin" /> : <Rocket size={16} />}
+          Nova campanha
         </Button>
       </div>
     );
