@@ -101,7 +101,7 @@ export const MechanismSection = () => {
   const { ref: liveRef, isVisible: isInViewport } = useScrollAnimation({ threshold: 0, rootMargin: '100px 0px', triggerOnce: false });
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative overflow-hidden">
+    <section ref={(node) => { (ref as any).current = node; (liveRef as any).current = node; }} className="py-12 sm:py-20 w-full relative overflow-hidden">
       {/* Background ambient */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[10%] -left-[5%] w-[350px] h-[350px] bg-primary/[0.04] rounded-full blur-[100px]" />
