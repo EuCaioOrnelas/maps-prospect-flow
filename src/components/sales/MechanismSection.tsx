@@ -150,7 +150,7 @@ export const MechanismSection = () => {
               transition={{ duration: 2.5, delay: 0.3, ease: "easeOut" }}
               className="w-full h-full origin-top bg-gradient-to-b from-primary/40 via-primary/20 to-primary/40"
             />
-            {isVisible && (
+            {isVisible && isInViewport && (
               <motion.div
                 initial={{ top: "0%" }}
                 animate={{ top: ["0%", "100%"] }}
