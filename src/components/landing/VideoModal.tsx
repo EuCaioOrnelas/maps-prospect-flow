@@ -43,7 +43,39 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
-  const videoSrc = "https://www.youtube.com/embed/ZRzK42SYNFc?si=LrJuZKLrktuhBMLa&rel=0&modestbranding=1&disablekb=1&autoplay=1&playsinline=1&vq=hd1080&hd=1";
+  // enablejsapi=1 lets us postMessage pause/play commands to the iframe.
+  const videoSrc = "https://www.youtube.com/embed/ZRzK42SYNFc?si=LrJuZKLrktuhBMLa&rel=0&modestbranding=1&disablekb=1&autoplay=1&playsinline=1&vq=hd1080&hd=1&enablejsapi=1";
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Pause the YouTube player when the iframe is scrolled out of view;
+  // resume when it becomes visible again. Reduces CPU/network cost.
+  useEffect(() => {
+    if (!open) return;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const post = (func: "pauseVideo" | "playVideo") => {
+      iframe.contentWindow?.postMessage(
+        JSON.stringify({ event: "command", func, args: [] }),
+        "*"
+      );
+    };
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.2) {
+          post("playVideo");
+        } else {
+          post("pauseVideo");
+        }
+      },
+      { threshold: [0, 0.2, 0.5] }
+    );
+
+    io.observe(iframe);
+    return () => io.disconnect();
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -82,11 +114,13 @@ export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }
 
         <div className="relative w-full overflow-hidden bg-card" style={{ aspectRatio: "16 / 9" }}>
           <iframe
+            ref={iframeRef}
             className="absolute inset-0 block h-full w-full origin-center"
             style={{ transform: `scaleX(${videoScaleX})` }}
             src={videoSrc}
             title="Wiize — Demonstração"
             frameBorder="0"
+            loading="lazy"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerPolicy="strict-origin-when-cross-origin"
             allowFullScreen
