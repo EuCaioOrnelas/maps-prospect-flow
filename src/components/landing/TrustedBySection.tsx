@@ -1,3 +1,4 @@
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import googleLogo from "@/assets/logos/google.svg";
 import metaLogo from "@/assets/logos/meta.svg";
 import instagramLogo from "@/assets/logos/instagram.svg";
@@ -21,10 +22,15 @@ const brands = [
 ];
 
 export const TrustedBySection = () => {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0, rootMargin: "150px 0px", triggerOnce: false });
+
   return (
-    <section className="relative border-y border-muted-foreground/15 overflow-hidden">
+    <section ref={ref as React.RefObject<HTMLElement>} className="relative border-y border-muted-foreground/15 overflow-hidden">
       <div className="relative py-4 overflow-hidden marquee-mask">
-        <div className="marquee-track">
+        <div
+          className="marquee-track"
+          style={{ animationPlayState: isVisible ? "running" : "paused" }}
+        >
           {[0, 1].map((copy) => (
             <div key={copy} className="marquee-content" aria-hidden={copy === 1}>
               {brands.map((brand) => (
