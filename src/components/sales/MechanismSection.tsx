@@ -121,6 +121,7 @@ export const MechanismSection = () => {
               left: (el as any).left,
               right: (el as any).right,
               animation: isVisible ? `float-gentle ${3 + i * 0.5}s ease-in-out infinite` : undefined,
+              animationPlayState: isInViewport ? 'running' : 'paused',
             }}
           >
             <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
