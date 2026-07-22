@@ -946,7 +946,7 @@ export const cockpitProvider: Provider = {
     },
     status: "stable",
   },
-  execute_cockpit,
+  execute: execute_cockpit,
 };
 
 
@@ -1118,7 +1118,7 @@ export const crmProvider: Provider = {
     },
     status: "stable",
   },
-  execute_crm,
+  execute: execute_crm,
 };
 
 
@@ -1213,7 +1213,7 @@ export const pipelineProvider: Provider = {
     },
     status: "stable",
   },
-  execute_pipeline,
+  execute: execute_pipeline,
 };
 
 
@@ -1289,7 +1289,7 @@ export const campaignsProvider: Provider = {
     outputSchema: { items: "CampaignDTO[]", "meta.total": "number" },
     status: "stable",
   },
-  execute_campaigns,
+  execute: execute_campaigns,
 };
 
 // "meta" provider = alias focado em métricas agregadas (sem paginação detalhada).
@@ -1496,7 +1496,7 @@ export const opportunitiesProvider: Provider = {
     },
     status: "stable",
   },
-  execute_opportunities,
+  execute: execute_opportunities,
 };
 
 
@@ -1622,7 +1622,7 @@ export const financeProvider: Provider = {
     },
     status: "stable",
   },
-  execute_finance,
+  execute: execute_finance,
 };
 
 
