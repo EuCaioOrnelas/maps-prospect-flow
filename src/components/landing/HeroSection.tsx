@@ -781,7 +781,8 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   // Handle manual jump
   useEffect(() => {
     if (jumpTarget !== null) {
-      animationStartRef.current = performance.now() - jumpTarget * STAGE_DURATION;
+      pausedElapsedRef.current = jumpTarget * STAGE_DURATION;
+      animationStartRef.current = performance.now() - pausedElapsedRef.current;
       setCurrentStage(jumpTarget);
       setStageProgress(0);
       setJumpTarget(null);
