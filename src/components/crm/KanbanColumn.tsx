@@ -153,8 +153,8 @@ const KanbanColumnComponent = ({
               )}
               <LeadCard
                 lead={lead}
-                onClick={() => onLeadClick(lead)}
-                onDragStart={(event) => onDragStart(lead.id, event)}
+                onSelect={onLeadClick}
+                onDragStart={onDragStart}
                 isDragging={draggedLeadId === lead.id}
                 isSelected={bulkSelectMode ? selectedLeadIds?.has(lead.id) : selectedLeadId === lead.id}
                 onUpdateName={onUpdateLeadName}
