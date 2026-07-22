@@ -143,12 +143,17 @@ const TestimonialsColumn = ({
 
 export const TestimonialsSection = () => {
   const { ref, isVisible } = useScrollAnimation();
+  // Independent observer that toggles on/off so the marquee pauses when off-screen.
+  const { ref: activeRef, isVisible: isActive } = useScrollAnimation({ triggerOnce: false, threshold: 0.05 });
 
   return (
     <section
       id="testimonials"
       className="py-16 md:py-24 relative overflow-hidden w-full"
-      ref={ref as React.RefObject<HTMLElement>}
+      ref={(node) => {
+        (ref as React.MutableRefObject<HTMLElement | null>).current = node;
+        (activeRef as React.MutableRefObject<HTMLElement | null>).current = node;
+      }}
     >
       <div className="absolute inset-0 bg-gradient-glow opacity-20" />
 
@@ -163,20 +168,20 @@ export const TestimonialsSection = () => {
 
         {/* Desktop: 3 columns */}
         <div className="hidden lg:grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto h-[600px] mask-gradient">
-          <TestimonialsColumn testimonials={firstColumn} duration={25} />
-          <TestimonialsColumn testimonials={secondColumn} duration={30} />
-          <TestimonialsColumn testimonials={thirdColumn} duration={22} />
+          <TestimonialsColumn testimonials={firstColumn} duration={25} isActive={isActive} />
+          <TestimonialsColumn testimonials={secondColumn} duration={30} isActive={isActive} />
+          <TestimonialsColumn testimonials={thirdColumn} duration={22} isActive={isActive} />
         </div>
 
         {/* Tablet: 2 columns */}
         <div className="hidden md:grid md:grid-cols-2 lg:hidden gap-6 max-w-4xl mx-auto h-[500px] mask-gradient">
-          <TestimonialsColumn testimonials={firstColumn} duration={25} />
-          <TestimonialsColumn testimonials={secondColumn} duration={30} />
+          <TestimonialsColumn testimonials={firstColumn} duration={25} isActive={isActive} />
+          <TestimonialsColumn testimonials={secondColumn} duration={30} isActive={isActive} />
         </div>
 
         {/* Mobile: 1 column */}
         <div className="md:hidden w-full h-[400px] mask-gradient px-2">
-          <TestimonialsColumn testimonials={firstColumn} duration={20} />
+          <TestimonialsColumn testimonials={firstColumn} duration={20} isActive={isActive} />
         </div>
       </div>
 
