@@ -239,8 +239,6 @@ const KanbanBoardWithScrollComponent = ({
     }
   }, [smoothScroll]);
 
-  const pointerFrameRef = useRef<number | null>(null);
-  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
 
   const handlePointerMove = useCallback((e: PointerEvent) => {
     if (!draggedLead) return;
