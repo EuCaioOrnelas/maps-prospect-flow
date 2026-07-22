@@ -157,6 +157,10 @@ const KanbanBoardWithScrollComponent = ({
       cancelAnimationFrame(dragPreviewAnimationRef.current);
       dragPreviewAnimationRef.current = null;
     }
+    if (pointerFrameRef.current) {
+      cancelAnimationFrame(pointerFrameRef.current);
+      pointerFrameRef.current = null;
+    }
   }, []);
 
   const handleDragOver = useCallback((stageId: string) => {
