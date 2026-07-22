@@ -16,8 +16,8 @@ import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 
 interface LeadCardProps {
   lead: Lead;
-  onClick: () => void;
-  onDragStart: (event: { clientX: number; clientY: number; currentTarget: HTMLDivElement }) => void;
+  onSelect: (lead: Lead) => void;
+  onDragStart: (leadId: string, event: { clientX: number; clientY: number; currentTarget: HTMLDivElement }) => void;
   isDragging?: boolean;
   isSelected?: boolean;
   onUpdateName?: (leadId: string, newName: string) => Promise<void>;
@@ -29,7 +29,7 @@ interface LeadCardProps {
 
 const LeadCardComponent = ({
   lead,
-  onClick,
+  onSelect,
   onDragStart,
   isDragging,
   isSelected,
@@ -44,6 +44,7 @@ const LeadCardComponent = ({
   const [isHovered, setIsHovered] = useState(false);
   const suppressNextClickRef = useRef(false);
   const onDragStartRef = useRef(onDragStart);
+  const leadIdRef = useRef(lead.id);
   const navigate = useNavigate();
   const { getScoreForPhone } = useLeadScores();
   const { hidden: phoneHidden } = usePhonePrivacy();
@@ -54,6 +55,7 @@ const LeadCardComponent = ({
   const displayName = lead.contact_name || lead.company_name || phoneDisplay;
   const hasResponse = !!lead.last_response_at;
   onDragStartRef.current = onDragStart;
+  leadIdRef.current = lead.id;
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
