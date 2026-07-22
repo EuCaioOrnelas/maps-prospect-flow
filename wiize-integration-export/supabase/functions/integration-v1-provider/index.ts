@@ -1,5 +1,5 @@
 // AUTO-BUNDLED — do not edit by hand.
-// Everything inlined so this file can be pasted into Supabase Web Editor.
+// All shared _integration-core modules inlined so this file works via Supabase Web Editor.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -242,8 +242,8 @@ export async function writeAudit(entry: AuditEntry): Promise<void> {
 // ================= _integration-core/rateLimit.ts =================
 // Reutiliza a RPC public.check_rate_limit já existente. Chave: <client>:<user>:<endpoint>.
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;  // deduped
+// const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;  // deduped
 
 export interface RateLimitResult { allowed: boolean; retryAfterSeconds: number; }
 
@@ -285,9 +285,9 @@ export async function checkRateLimit(params: {
 // company_id NUNCA vem do body — sempre derivado do JWT.
 
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+// const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;  // deduped
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;  // deduped
 
 const EXPECTED_CLIENT_ID = Deno.env.get("INTEGRATION_WIAN_CLIENT_ID") ?? "";
 const EXPECTED_CLIENT_SECRET = Deno.env.get("INTEGRATION_WIAN_CLIENT_SECRET") ?? "";
@@ -642,8 +642,8 @@ export class ProviderRegistry {
 //   filters.period.from / filters.period.to  -> ISO 8601. Se ausente, considera
 //   histórico total da conta (fallback documentado).
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;  // deduped
+// const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;  // deduped
 
 // Buckets espelham exatamente src/hooks/useCockpitForecast.ts
 const SCORE_BUCKETS = [
@@ -964,8 +964,8 @@ export const cockpitProvider: Provider = {
 //   stage_id  (uuid)
 //   sort=field:asc|desc
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;  // deduped
+// const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;  // deduped
 
 export interface LeadDTO {
   id: string;
@@ -1125,8 +1125,8 @@ export const crmProvider: Provider = {
 // ================= _integration-core/providers/pipelineProvider.ts =================
 // Provider Pipeline — estágios do kanban com contagem e valor por coluna.
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;  // deduped
+// const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;  // deduped
 
 async function execute(ctx: ProviderContext) {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -1220,8 +1220,8 @@ export const pipelineProvider: Provider = {
 // ================= _integration-core/providers/campaignsProvider.ts =================
 // Provider Meta Campaigns — campanhas WhatsApp via Meta Cloud API. Sem tokens.
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;  // deduped
+// const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;  // deduped
 
 async function execute(ctx: ProviderContext) {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -1338,8 +1338,8 @@ export const metaProvider: Provider = {
 //   period.from / period.to  -> ISO 8601. Ausente = histórico total.
 //   pagination.page / .size  -> aplica-se somente ao array items[].
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;  // deduped
+// const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;  // deduped
 
 function bucketize<T>(arr: T[], keyFn: (v: T) => string | null): Record<string, number> {
   const out: Record<string, number> = {};
@@ -1508,8 +1508,8 @@ export const opportunitiesProvider: Provider = {
 //   period.from / period.to -> aplica sobre created_at das vendas.
 //   Ausente = histórico total (fallback).
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;  // deduped
+// const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;  // deduped
 
 async function execute(ctx: ProviderContext) {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -1796,7 +1796,7 @@ export function getRegistry(): ProviderRegistry {
   return r;
 }
 
-export { ProviderRegistry };
+// export { ProviderRegistry };
 
 
 // ================= integration-v1-provider/index.ts =================
