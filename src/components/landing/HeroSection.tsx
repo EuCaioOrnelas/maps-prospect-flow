@@ -792,14 +792,14 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
     if (!isAnimating) return;
 
     const totalDuration = STAGE_DURATION * stages.length;
-    if (!animationStartRef.current) {
-      animationStartRef.current = performance.now();
-    }
+    // Resume from where we paused (keeps position stable when out of view).
+    animationStartRef.current = performance.now() - pausedElapsedRef.current;
     let frameId = 0;
 
     const update = (now: number) => {
       const elapsed = now - animationStartRef.current;
       const cycleElapsed = ((elapsed % totalDuration) + totalDuration) % totalDuration;
+      pausedElapsedRef.current = cycleElapsed;
       const nextStage = Math.floor(cycleElapsed / STAGE_DURATION);
       const nextProgress = (cycleElapsed % STAGE_DURATION) / STAGE_DURATION;
 
