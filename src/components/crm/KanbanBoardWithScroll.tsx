@@ -73,6 +73,8 @@ const KanbanBoardWithScrollComponent = ({
   const syncingRef = useRef<'top' | 'bottom' | null>(null);
   const animationRef = useRef<number | null>(null);
   const dragPreviewAnimationRef = useRef<number | null>(null);
+  const pointerFrameRef = useRef<number | null>(null);
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
   const scrollVelocity = useRef(0);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
