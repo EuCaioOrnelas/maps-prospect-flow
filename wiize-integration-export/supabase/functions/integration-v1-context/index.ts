@@ -660,7 +660,7 @@ function daysBetween(from: string | null, to: string | null): number {
   return Math.max(1, Math.round(d));
 }
 
-async function execute(ctx: ProviderContext) {
+async function execute_cockpit(ctx: ProviderContext) {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   const owner = ctx.companyId;
   const from = ctx.filters.period?.from ?? null;
@@ -763,9 +763,9 @@ async function execute(ctx: ProviderContext) {
   const totalCrmLeads = leadsAll.length;
   const scores = revLeads.map((r: any) => Number(r.score_total || 0));
   const avgScore = scores.length ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : 0;
-  const hotCount = scores.filter(s => s >= 601).length;
-  const coldCount = scores.filter(s => s <= 200).length;
-  const readyForSale = scores.filter(s => s >= 801).length;
+  const hotCount = scores.filter((s: number) => s >= 601).length;
+  const coldCount = scores.filter((s: number) => s <= 200).length;
+  const readyForSale = scores.filter((s: number) => s >= 801).length;
 
   const hasEnoughData = totalProspected >= 300 && totalCrmLeads >= 50;
   let healthStatus = "Dados Insuficientes";
@@ -791,7 +791,7 @@ async function execute(ctx: ProviderContext) {
 
   // --------- Forecast (conservador / realista / agressivo) ---------
   const buckets = SCORE_BUCKETS.map(b => {
-    const inB = scores.filter(s => s >= b.min && s <= b.max).length;
+    const inB = scores.filter((s: number) => s >= b.min && s <= b.max).length;
     const low = Math.round(inB * b.low);
     const high = Math.round(inB * b.high);
     const mid = Math.round(inB * (b.low + b.high) / 2);
@@ -946,7 +946,7 @@ export const cockpitProvider: Provider = {
     },
     status: "stable",
   },
-  execute,
+  execute_cockpit,
 };
 
 
@@ -989,7 +989,7 @@ export interface LeadDTO {
   created_at: string;
 }
 
-async function execute(ctx: ProviderContext) {
+async function execute_crm(ctx: ProviderContext) {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   const owner = ctx.companyId;
   const page = ctx.filters.pagination?.page ?? 1;
@@ -1118,7 +1118,7 @@ export const crmProvider: Provider = {
     },
     status: "stable",
   },
-  execute,
+  execute_crm,
 };
 
 
@@ -1128,7 +1128,7 @@ export const crmProvider: Provider = {
 // const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;  // deduped
 // const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;  // deduped
 
-async function execute(ctx: ProviderContext) {
+async function execute_pipeline(ctx: ProviderContext) {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   const owner = ctx.companyId;
   const from = ctx.filters.period?.from ?? null;
@@ -1213,7 +1213,7 @@ export const pipelineProvider: Provider = {
     },
     status: "stable",
   },
-  execute,
+  execute_pipeline,
 };
 
 
@@ -1223,7 +1223,7 @@ export const pipelineProvider: Provider = {
 // const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;  // deduped
 // const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;  // deduped
 
-async function execute(ctx: ProviderContext) {
+async function execute_campaigns(ctx: ProviderContext) {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   const page = ctx.filters.pagination?.page ?? 1;
   const size = ctx.filters.pagination?.size ?? 50;
@@ -1289,7 +1289,7 @@ export const campaignsProvider: Provider = {
     outputSchema: { items: "CampaignDTO[]", "meta.total": "number" },
     status: "stable",
   },
-  execute,
+  execute_campaigns,
 };
 
 // "meta" provider = alias focado em métricas agregadas (sem paginação detalhada).
@@ -1354,7 +1354,7 @@ function avg(arr: number[]): number {
   return arr.length ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2)) : 0;
 }
 
-async function execute(ctx: ProviderContext) {
+async function execute_opportunities(ctx: ProviderContext) {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   const owner = ctx.companyId;
   const from = ctx.filters.period?.from ?? null;
@@ -1496,7 +1496,7 @@ export const opportunitiesProvider: Provider = {
     },
     status: "stable",
   },
-  execute,
+  execute_opportunities,
 };
 
 
@@ -1511,7 +1511,7 @@ export const opportunitiesProvider: Provider = {
 // const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;  // deduped
 // const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;  // deduped
 
-async function execute(ctx: ProviderContext) {
+async function execute_finance(ctx: ProviderContext) {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   const owner = ctx.companyId;
   const from = ctx.filters.period?.from ?? null;
@@ -1622,7 +1622,7 @@ export const financeProvider: Provider = {
     },
     status: "stable",
   },
-  execute,
+  execute_finance,
 };
 
 
