@@ -233,17 +233,28 @@ const KanbanBoardWithScrollComponent = ({
     }
   }, [smoothScroll]);
 
+  const pointerFrameRef = useRef<number | null>(null);
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+
   const handlePointerMove = useCallback((e: PointerEvent) => {
-    if (draggedLead) {
-      e.preventDefault();
-      scheduleDragPreviewPosition(e.clientX, e.clientY);
-      const nextStageId = getStageIdFromPoint(e.clientX, e.clientY);
+    if (!draggedLead) return;
+    e.preventDefault();
+    lastPointerRef.current = { x: e.clientX, y: e.clientY };
+    // Update the visual preview transform every frame (cheap).
+    scheduleDragPreviewPosition(e.clientX, e.clientY);
+    // Throttle the expensive work (elementFromPoint + edge scroll) to one RAF.
+    if (pointerFrameRef.current !== null) return;
+    pointerFrameRef.current = requestAnimationFrame(() => {
+      pointerFrameRef.current = null;
+      const p = lastPointerRef.current;
+      if (!p) return;
+      const nextStageId = getStageIdFromPoint(p.x, p.y);
       if (dragOverStageRef.current !== nextStageId) {
         dragOverStageRef.current = nextStageId;
         setDragOverStage(nextStageId);
       }
-      calculateScrollVelocity(e.clientX);
-    }
+      calculateScrollVelocity(p.x);
+    });
   }, [draggedLead, calculateScrollVelocity, getStageIdFromPoint, scheduleDragPreviewPosition]);
 
   const handlePointerUp = useCallback((e: PointerEvent) => {
