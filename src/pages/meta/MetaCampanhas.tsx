@@ -89,6 +89,7 @@ export default function MetaCampanhas() {
   const [detailsCampaign, setDetailsCampaign] = useState<CampaignRow | null>(null);
   const webhookGate = useWebhookGate();
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   const loadCampaigns = async () => {
     if (!user || !accountOwnerId) return;
@@ -202,10 +203,12 @@ export default function MetaCampanhas() {
   }, [campaigns]);
 
   const startNewCampaign = () => {
+    if (isCreating) return;
     if (webhookGate.blocked) {
       setWebhookDialogOpen(true);
       return;
     }
+    setIsCreating(true);
     sessionStorage.setItem(
       "meta_campaign_preset",
       JSON.stringify({ source: "meta_platform" })
@@ -236,8 +239,9 @@ export default function MetaCampanhas() {
 
         <TabsContent value="campanhas" className="space-y-4 mt-0">
           <div className="flex justify-end">
-            <Button size="sm" onClick={startNewCampaign}>
-              <Plus size={14} className="mr-1.5" /> Nova campanha
+            <Button size="sm" onClick={startNewCampaign} disabled={isCreating}>
+              {isCreating ? <Loader2 size={14} className="mr-1.5 animate-spin" /> : <Plus size={14} className="mr-1.5" />}
+              Nova campanha
             </Button>
           </div>
 
@@ -260,8 +264,9 @@ export default function MetaCampanhas() {
           <MessageSquare className="mx-auto mb-3 text-muted-foreground" size={28} />
           <p className="font-medium">Nenhuma campanha ainda</p>
           <p className="text-sm text-muted-foreground mt-1">Crie sua primeira campanha a partir de um template.</p>
-          <Button className="mt-4" size="sm" onClick={startNewCampaign}>
-            <Plus size={14} className="mr-1.5" /> Nova campanha
+          <Button className="mt-4" size="sm" onClick={startNewCampaign} disabled={isCreating}>
+            {isCreating ? <Loader2 size={14} className="mr-1.5 animate-spin" /> : <Plus size={14} className="mr-1.5" />}
+            Nova campanha
           </Button>
         </Card>
       ) : (

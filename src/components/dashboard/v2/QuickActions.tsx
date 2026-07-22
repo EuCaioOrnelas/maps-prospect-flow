@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Flame, LayoutGrid, Bot, Zap, Rocket, Megaphone, Users } from "lucide-react";
+import { Flame, LayoutGrid, Bot, Zap, Rocket, Megaphone, Users, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
@@ -16,6 +16,7 @@ export function QuickActions() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [showCampaignDialog, setShowCampaignDialog] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const prospeccaoRoute = "/meta-campaigns";
 
   const actions = [
@@ -73,8 +74,11 @@ export function QuickActions() {
           </div>
           <div className="grid gap-3 p-6 pt-2">
             <button
-              className="group relative w-full text-left p-5 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/[0.08] transition-all duration-300 overflow-hidden"
+              className="group relative w-full text-left p-5 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/[0.08] transition-all duration-300 overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:border-border/50"
+              disabled={isNavigating}
               onClick={() => {
+                if (isNavigating) return;
+                setIsNavigating(true);
                 setShowCampaignDialog(false);
                 navigate(prospeccaoRoute);
               }}
@@ -82,7 +86,7 @@ export function QuickActions() {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="relative flex items-start gap-4">
                 <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
-                  <Megaphone size={20} className="text-primary" />
+                  {isNavigating ? <Loader2 size={20} className="text-primary animate-spin" /> : <Megaphone size={20} className="text-primary" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground text-base mb-1">Prospecção Fria</h3>
@@ -97,8 +101,11 @@ export function QuickActions() {
             </button>
 
             <button
-              className="group relative w-full text-left p-5 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/[0.08] transition-all duration-300 overflow-hidden"
+              className="group relative w-full text-left p-5 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/[0.08] transition-all duration-300 overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:border-border/50"
+              disabled={isNavigating}
               onClick={() => {
+                if (isNavigating) return;
+                setIsNavigating(true);
                 setShowCampaignDialog(false);
                 navigate('/meta-campaigns');
               }}
@@ -106,7 +113,7 @@ export function QuickActions() {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="relative flex items-start gap-4">
                 <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
-                  <Users size={20} className="text-primary" />
+                  {isNavigating ? <Loader2 size={20} className="text-primary animate-spin" /> : <Users size={20} className="text-primary" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground text-base mb-1">Relacionamento Interno</h3>

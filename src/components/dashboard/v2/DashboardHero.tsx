@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, ArrowRight, Rocket, Info, Megaphone, Users, BarChart3 } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowRight, Rocket, Info, Megaphone, Users, BarChart3, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { cn } from "@/lib/utils";
@@ -71,6 +71,7 @@ export function DashboardHero({
   const { count: contactCount, limit: contactLimit, hasLimit: hasContactLimit } = useContactLimit();
   const hasChange = financialChange !== 0;
   const [showCampaignDialog, setShowCampaignDialog] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const chartData = buildChartData(cumulativeByMonth, periodDays, leadsByDay);
 
