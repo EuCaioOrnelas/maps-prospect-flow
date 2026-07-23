@@ -178,6 +178,7 @@ serve(async (req) => {
   return new Response(JSON.stringify({
     success: failed === 0,
     summary: { total: tests.length, passed, failed, auth_provided: hasAuth },
+    real_data: realDataSample,
     tests,
     checked_at: new Date().toISOString(),
   }, null, 2), {
