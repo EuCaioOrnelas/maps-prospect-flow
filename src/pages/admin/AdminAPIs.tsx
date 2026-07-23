@@ -33,12 +33,22 @@ const STATUS_META = {
   not_configured: { label: "Não configurado", icon: HelpCircle, color: "text-muted-foreground", bg: "bg-muted/30", border: "border-border" },
 };
 
+interface SelftestResult {
+  success: boolean;
+  summary: { total: number; passed: number; failed: number; auth_provided: boolean };
+  real_data?: { company_id?: string; request_id?: string; processing_time_ms?: number; modules_returned?: string[]; cache_hit?: boolean } | null;
+  tests: { name: string; passed: boolean; detail?: string }[];
+  checked_at: string;
+}
+
 export default function AdminAPIs() {
   const [results, setResults] = useState<ApiResult[]>([]);
   const [summary, setSummary] = useState<{ total: number; ok: number; warning: number; error: number; not_configured: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastChecked, setLastChecked] = useState<string | null>(null);
+  const [selftest, setSelftest] = useState<SelftestResult | null>(null);
+  const [selftestRunning, setSelftestRunning] = useState(false);
 
   const load = useCallback(async (showToast = false) => {
     if (showToast) setRefreshing(true);
