@@ -119,7 +119,8 @@ serve(async (req) => {
     if (json.success !== false) throw new Error("success != false");
   }));
 
-  // 3. Contrato de sucesso (só se creds fornecidas)
+  // 3. Contrato de sucesso + dados reais (só se creds fornecidas)
+  let realDataSample: any = null;
   if (hasAuth) {
     tests.push(await run("POST /context autenticado → envelope de sucesso", async () => {
       const { res, json } = await post(CTX, {
@@ -127,7 +128,7 @@ serve(async (req) => {
         "x-integration-client-secret": CLIENT_SECRET,
         "Authorization": `Bearer ${USER_JWT}`,
         "apikey": ANON,
-      }, { version: "v1", modules: ["cockpit"] });
+      }, { version: "v1", modules: ["cockpit", "crm"] });
       if (res.status !== 200) throw new Error(`status ${res.status} body=${JSON.stringify(json).slice(0, 200)}`);
       const err = checkEnvelope(json);
       if (err) throw new Error(err);
@@ -135,6 +136,19 @@ serve(async (req) => {
       if (json.errors.length !== 0) throw new Error("errors não vazio");
       if (typeof json.request_id !== "string") throw new Error("request_id inválido");
       if (typeof json.processing_time_ms !== "number") throw new Error("processing_time_ms inválido");
+      realDataSample = {
+        company_id: json.company_id,
+        request_id: json.request_id,
+        processing_time_ms: json.processing_time_ms,
+        modules_returned: json.context ? Object.keys(json.context) : [],
+        cache_hit: json.cache?.hit,
+      };
+    }));
+
+    tests.push(await run("Dados reais foram retornados (context populado)", async () => {
+      if (!realDataSample) throw new Error("teste anterior falhou");
+      if (!realDataSample.company_id) throw new Error("company_id ausente — JWT não vinculou conta");
+      if (!realDataSample.modules_returned?.length) throw new Error("nenhum módulo retornado");
     }));
 
     tests.push(await run("POST /provider desconhecido → erro estruturado", async () => {
