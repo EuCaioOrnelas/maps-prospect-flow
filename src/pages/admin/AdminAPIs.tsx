@@ -69,6 +69,32 @@ export default function AdminAPIs() {
     }
   }, []);
 
+  const runSelftest = useCallback(async () => {
+    setSelftestRunning(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user_jwt = sessionData.session?.access_token;
+      if (!user_jwt) {
+        toast.error("Você precisa estar logado para rodar o teste");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("integration-v1-selftest", {
+        body: { user_jwt },
+      });
+      if (error) throw error;
+      setSelftest(data as SelftestResult);
+      if (data?.success) {
+        toast.success(`Teste passou: ${data.summary.passed}/${data.summary.total}`);
+      } else {
+        toast.error(`Teste falhou: ${data?.summary?.failed ?? "?"} erro(s)`);
+      }
+    } catch (e: any) {
+      toast.error("Erro ao rodar selftest: " + e.message);
+    } finally {
+      setSelftestRunning(false);
+    }
+  }, []);
+
   useEffect(() => {
     load();
     const interval = setInterval(() => load(false), 5 * 60 * 1000); // refresh a cada 5min
