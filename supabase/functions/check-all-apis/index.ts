@@ -187,11 +187,11 @@ serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const [stripe, asaas, openai, resend, meta, serpKeys] = await Promise.all([
-      checkStripe(), checkAsaas(), checkOpenAI(), checkResend(), checkMeta(), checkSerpKeys(),
+    const [stripe, asaas, openai, resend, meta, serpKeys, integration] = await Promise.all([
+      checkStripe(), checkAsaas(), checkOpenAI(), checkResend(), checkMeta(), checkSerpKeys(), checkIntegrationLayer(),
     ]);
 
-    const all: ApiResult[] = [stripe, asaas, openai, resend, meta, ...serpKeys];
+    const all: ApiResult[] = [stripe, asaas, openai, resend, meta, ...serpKeys, ...integration];
 
     // Update SerpAPI keys in api_key_status table
     for (let i = 0; i < serpKeys.length; i++) {
