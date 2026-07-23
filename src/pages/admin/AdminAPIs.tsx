@@ -123,6 +123,67 @@ export default function AdminAPIs() {
         </Button>
       </div>
 
+      {/* Wiize Integration API — Selftest */}
+      <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-transparent">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Share2 size={16} className="text-cyan-500" />
+            Wiize Integration API — Teste completo
+            <Button
+              onClick={runSelftest}
+              disabled={selftestRunning}
+              size="sm"
+              className="ml-auto gap-2"
+            >
+              {selftestRunning ? <Loader2 size={14} className="animate-spin" /> : <PlayCircle size={14} />}
+              Rodar selftest com meu login
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Executa contract tests (CORS, envelope, 401) e faz uma chamada real ao <code className="text-foreground">/context</code> usando SEU JWT de admin — valida se dados reais retornam vinculados à sua conta.
+          </p>
+          {selftest && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <Badge className={cn("border-0", selftest.success ? "bg-emerald-500/15 text-emerald-500" : "bg-red-500/15 text-red-500")}>
+                  {selftest.success ? "Tudo OK" : "Falha detectada"}
+                </Badge>
+                <span className="text-muted-foreground">
+                  {selftest.summary.passed}/{selftest.summary.total} passaram · {selftest.summary.failed} falha(s)
+                </span>
+                <span className="text-muted-foreground ml-auto">
+                  {new Date(selftest.checked_at).toLocaleTimeString("pt-BR")}
+                </span>
+              </div>
+
+              {selftest.real_data && (
+                <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 text-xs space-y-1">
+                  <p className="font-medium text-foreground">Dados reais retornados</p>
+                  <p className="text-muted-foreground">company_id: <code className="text-foreground">{selftest.real_data.company_id || "—"}</code></p>
+                  <p className="text-muted-foreground">módulos: <code className="text-foreground">{(selftest.real_data.modules_returned || []).join(", ") || "—"}</code></p>
+                  <p className="text-muted-foreground">tempo: {selftest.real_data.processing_time_ms}ms · cache: {String(selftest.real_data.cache_hit)}</p>
+                  <p className="text-muted-foreground">request_id: <code className="text-foreground">{selftest.real_data.request_id}</code></p>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                {selftest.tests.map((t, i) => (
+                  <div key={i} className={cn("flex items-start gap-2 rounded-md border p-2 text-xs", t.passed ? "border-emerald-500/20 bg-emerald-500/5" : "border-red-500/20 bg-red-500/5")}>
+                    {t.passed ? <CheckCircle size={14} className="text-emerald-500 shrink-0 mt-0.5" /> : <XCircle size={14} className="text-red-500 shrink-0 mt-0.5" />}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground">{t.name}</p>
+                      {t.detail && <p className="text-muted-foreground mt-0.5 break-words">{t.detail}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Summary KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {loading || !summary ? (
