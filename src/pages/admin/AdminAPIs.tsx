@@ -23,6 +23,7 @@ const CATEGORY_META: Record<string, { label: string; icon: typeof CreditCard; co
   email: { label: "Email", icon: Mail, color: "text-blue-500" },
   whatsapp: { label: "WhatsApp", icon: MessageSquare, color: "text-green-500" },
   leads: { label: "SerpAPI / Leads", icon: Search, color: "text-amber-500" },
+  integration: { label: "Wiize Integration API (Compartilhamento de dados)", icon: Share2, color: "text-cyan-500" },
 };
 
 const STATUS_META = {
