@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle, XCircle, AlertTriangle, RefreshCw, Loader2, CreditCard, Sparkles, Mail, MessageSquare, Search, HelpCircle } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, RefreshCw, Loader2, CreditCard, Sparkles, Mail, MessageSquare, Search, HelpCircle, Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
