@@ -77,6 +77,70 @@ async function checkMeta(): Promise<ApiResult> {
   return { service: 'Meta WhatsApp API', category: 'whatsapp', status: 'ok', message: 'Webhook configurado' };
 }
 
+async function checkIntegrationLayer(): Promise<ApiResult[]> {
+  const clientId = Deno.env.get('INTEGRATION_WIAN_CLIENT_ID');
+  const clientSecret = Deno.env.get('INTEGRATION_WIAN_CLIENT_SECRET');
+  const results: ApiResult[] = [];
+
+  const credsOk = !!(clientId && clientSecret);
+  results.push({
+    service: 'Credenciais Wian (Client ID/Secret)',
+    category: 'integration',
+    status: credsOk ? 'ok' : 'not_configured',
+    message: credsOk ? 'Credenciais configuradas' : 'INTEGRATION_WIAN_CLIENT_ID/SECRET ausentes',
+  });
+
+  const endpoints = [
+    { name: 'integration-v1-context', label: 'Endpoint /context (Orquestrador)' },
+    { name: 'integration-v1-provider', label: 'Endpoint /provider (Individual)' },
+  ];
+  for (const ep of endpoints) {
+    try {
+      // Ping via OPTIONS preflight (no auth required, valida deploy + CORS)
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/${ep.name}`, {
+        method: 'OPTIONS',
+        headers: { 'Access-Control-Request-Method': 'POST' },
+      });
+      if (r.ok || r.status === 204) {
+        results.push({ service: ep.label, category: 'integration', status: 'ok', message: `Ativo (HTTP ${r.status})` });
+      } else {
+        results.push({ service: ep.label, category: 'integration', status: 'error', message: `HTTP ${r.status}` });
+      }
+    } catch (e) {
+      results.push({ service: ep.label, category: 'integration', status: 'error', message: e instanceof Error ? e.message : 'Erro' });
+    }
+  }
+
+  // Contract test: POST sem credenciais deve retornar 401 com envelope { success:false, errors:[{code}] }
+  try {
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/integration-v1-context`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ version: 'v1', modules: ['cockpit'] }),
+    });
+    const body = await r.json().catch(() => null);
+    const contractOk =
+      r.status === 401 &&
+      body && body.success === false &&
+      Array.isArray(body.errors) && body.errors.length > 0 && typeof body.errors[0]?.code === 'string';
+    results.push({
+      service: 'Contract test (401 sem auth)',
+      category: 'integration',
+      status: contractOk ? 'ok' : 'warning',
+      message: contractOk ? `Envelope de erro OK (code=${body.errors[0].code})` : `Contrato divergente (HTTP ${r.status})`,
+    });
+  } catch (e) {
+    results.push({
+      service: 'Contract test (401 sem auth)',
+      category: 'integration',
+      status: 'error',
+      message: e instanceof Error ? e.message : 'Erro',
+    });
+  }
+
+  return results;
+}
+
 async function checkSerpKeys(): Promise<ApiResult[]> {
   const KEYS = [
     { name: 'SERP_API_KEY', label: 'SerpAPI #1 (Principal)' },
@@ -123,11 +187,11 @@ serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const [stripe, asaas, openai, resend, meta, serpKeys] = await Promise.all([
-      checkStripe(), checkAsaas(), checkOpenAI(), checkResend(), checkMeta(), checkSerpKeys(),
+    const [stripe, asaas, openai, resend, meta, serpKeys, integration] = await Promise.all([
+      checkStripe(), checkAsaas(), checkOpenAI(), checkResend(), checkMeta(), checkSerpKeys(), checkIntegrationLayer(),
     ]);
 
-    const all: ApiResult[] = [stripe, asaas, openai, resend, meta, ...serpKeys];
+    const all: ApiResult[] = [stripe, asaas, openai, resend, meta, ...serpKeys, ...integration];
 
     // Update SerpAPI keys in api_key_status table
     for (let i = 0; i < serpKeys.length; i++) {
