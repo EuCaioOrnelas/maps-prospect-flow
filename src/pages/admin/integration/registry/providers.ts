@@ -1,6 +1,6 @@
 // Registry: metadados dos Providers da Integration Layer.
 // Fonte única para renderizar docs no portal admin.
-// Sincronizado manualmente com _integration-core/providers/*.ts
+// Sincronizado manualmente com providers inlined em supabase/functions/integration-v1-*/index.ts
 
 export type ProviderStatus = "stable" | "beta" | "not_implemented";
 
