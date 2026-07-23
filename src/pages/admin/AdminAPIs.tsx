@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { CheckCircle, XCircle, AlertTriangle, RefreshCw, Loader2, CreditCard, Sparkles, Mail, MessageSquare, Search, HelpCircle, Share2 } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, RefreshCw, Loader2, CreditCard, Sparkles, Mail, MessageSquare, Search, HelpCircle, Share2, PlayCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,12 +33,22 @@ const STATUS_META = {
   not_configured: { label: "Não configurado", icon: HelpCircle, color: "text-muted-foreground", bg: "bg-muted/30", border: "border-border" },
 };
 
+interface SelftestResult {
+  success: boolean;
+  summary: { total: number; passed: number; failed: number; auth_provided: boolean };
+  real_data?: { company_id?: string; request_id?: string; processing_time_ms?: number; modules_returned?: string[]; cache_hit?: boolean } | null;
+  tests: { name: string; passed: boolean; detail?: string }[];
+  checked_at: string;
+}
+
 export default function AdminAPIs() {
   const [results, setResults] = useState<ApiResult[]>([]);
   const [summary, setSummary] = useState<{ total: number; ok: number; warning: number; error: number; not_configured: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastChecked, setLastChecked] = useState<string | null>(null);
+  const [selftest, setSelftest] = useState<SelftestResult | null>(null);
+  const [selftestRunning, setSelftestRunning] = useState(false);
 
   const load = useCallback(async (showToast = false) => {
     if (showToast) setRefreshing(true);
@@ -56,6 +66,32 @@ export default function AdminAPIs() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  }, []);
+
+  const runSelftest = useCallback(async () => {
+    setSelftestRunning(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user_jwt = sessionData.session?.access_token;
+      if (!user_jwt) {
+        toast.error("Você precisa estar logado para rodar o teste");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("integration-v1-selftest", {
+        body: { user_jwt },
+      });
+      if (error) throw error;
+      setSelftest(data as SelftestResult);
+      if (data?.success) {
+        toast.success(`Teste passou: ${data.summary.passed}/${data.summary.total}`);
+      } else {
+        toast.error(`Teste falhou: ${data?.summary?.failed ?? "?"} erro(s)`);
+      }
+    } catch (e: any) {
+      toast.error("Erro ao rodar selftest: " + e.message);
+    } finally {
+      setSelftestRunning(false);
     }
   }, []);
 
@@ -86,6 +122,67 @@ export default function AdminAPIs() {
           Verificar agora
         </Button>
       </div>
+
+      {/* Wiize Integration API — Selftest */}
+      <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-transparent">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Share2 size={16} className="text-cyan-500" />
+            Wiize Integration API — Teste completo
+            <Button
+              onClick={runSelftest}
+              disabled={selftestRunning}
+              size="sm"
+              className="ml-auto gap-2"
+            >
+              {selftestRunning ? <Loader2 size={14} className="animate-spin" /> : <PlayCircle size={14} />}
+              Rodar selftest com meu login
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Executa contract tests (CORS, envelope, 401) e faz uma chamada real ao <code className="text-foreground">/context</code> usando SEU JWT de admin — valida se dados reais retornam vinculados à sua conta.
+          </p>
+          {selftest && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <Badge className={cn("border-0", selftest.success ? "bg-emerald-500/15 text-emerald-500" : "bg-red-500/15 text-red-500")}>
+                  {selftest.success ? "Tudo OK" : "Falha detectada"}
+                </Badge>
+                <span className="text-muted-foreground">
+                  {selftest.summary.passed}/{selftest.summary.total} passaram · {selftest.summary.failed} falha(s)
+                </span>
+                <span className="text-muted-foreground ml-auto">
+                  {new Date(selftest.checked_at).toLocaleTimeString("pt-BR")}
+                </span>
+              </div>
+
+              {selftest.real_data && (
+                <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3 text-xs space-y-1">
+                  <p className="font-medium text-foreground">Dados reais retornados</p>
+                  <p className="text-muted-foreground">company_id: <code className="text-foreground">{selftest.real_data.company_id || "—"}</code></p>
+                  <p className="text-muted-foreground">módulos: <code className="text-foreground">{(selftest.real_data.modules_returned || []).join(", ") || "—"}</code></p>
+                  <p className="text-muted-foreground">tempo: {selftest.real_data.processing_time_ms}ms · cache: {String(selftest.real_data.cache_hit)}</p>
+                  <p className="text-muted-foreground">request_id: <code className="text-foreground">{selftest.real_data.request_id}</code></p>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                {selftest.tests.map((t, i) => (
+                  <div key={i} className={cn("flex items-start gap-2 rounded-md border p-2 text-xs", t.passed ? "border-emerald-500/20 bg-emerald-500/5" : "border-red-500/20 bg-red-500/5")}>
+                    {t.passed ? <CheckCircle size={14} className="text-emerald-500 shrink-0 mt-0.5" /> : <XCircle size={14} className="text-red-500 shrink-0 mt-0.5" />}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground">{t.name}</p>
+                      {t.detail && <p className="text-muted-foreground mt-0.5 break-words">{t.detail}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Summary KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
