@@ -69,8 +69,14 @@ serve(async (req) => {
   if (req.method === "POST") {
     creds = await req.json().catch(() => ({}));
   }
-  const CLIENT_ID = creds.client_id ?? Deno.env.get("INTEGRATION_TEST_CLIENT_ID") ?? "";
-  const CLIENT_SECRET = creds.client_secret ?? Deno.env.get("INTEGRATION_TEST_CLIENT_SECRET") ?? "";
+  const CLIENT_ID = creds.client_id
+    ?? Deno.env.get("INTEGRATION_TEST_CLIENT_ID")
+    ?? Deno.env.get("INTEGRATION_WIAN_CLIENT_ID")
+    ?? "";
+  const CLIENT_SECRET = creds.client_secret
+    ?? Deno.env.get("INTEGRATION_TEST_CLIENT_SECRET")
+    ?? Deno.env.get("INTEGRATION_WIAN_CLIENT_SECRET")
+    ?? "";
   const USER_JWT = creds.user_jwt ?? Deno.env.get("INTEGRATION_TEST_JWT") ?? "";
   const hasAuth = !!(CLIENT_ID && CLIENT_SECRET && USER_JWT);
 
