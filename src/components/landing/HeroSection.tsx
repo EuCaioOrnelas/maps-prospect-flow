@@ -719,13 +719,13 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   // Ganho de performance > efeito visual sutil de parallax.
 
   useEffect(() => {
-    // Em mobile (<768px) ou com prefers-reduced-motion, não animar o demo.
-    // O loop de requestAnimationFrame era o principal causador de jank/travamento na sales.
+    // Só anima o demo em telas xl+ (onde ele é visível — hidden xl:flex).
+    // Também respeita prefers-reduced-motion. Isso remove o RAF em tablets/mobile,
+    // onde o componente é montado mas invisível.
     if (typeof window !== "undefined") {
-      const isMobile = window.matchMedia("(max-width: 767px)").matches;
+      const isBelowXl = window.matchMedia("(max-width: 1279px)").matches;
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (isMobile || reducedMotion) {
-        // Mostra um frame estático representativo (estágio "IA conduzindo a conversa")
+      if (isBelowXl || reducedMotion) {
         setCurrentStage(4);
         setStageProgress(0.5);
         return;
