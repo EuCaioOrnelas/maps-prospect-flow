@@ -1,248 +1,248 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
 import {
-  Search,
-  MessageCircle,
-  Send,
-  LayoutDashboard,
-  Zap,
-  Bot,
-  ChevronRight,
-  Clock,
-  RefreshCw,
-  Target,
-  CheckCircle,
+ Search,
+ MessageCircle,
+ Send,
+ LayoutDashboard,
+ Zap,
+ Bot,
+ ChevronRight,
+ Clock,
+ RefreshCw,
+ Target,
+ CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import flowBuilderPreview from "@/assets/flow-builder-preview.png";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const cardBase =
-  "group rounded-2xl border border-border/70 bg-card/95 transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-primary/5";
+ "group rounded-2xl border border-border/70 bg-card/95 transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-primary/5";
 const cardGlowMain =
-  "absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] blur-[44px] pointer-events-none";
+ "absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] soft-glow pointer-events-none";
 const cardGlowSecondary =
-  "absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] blur-[36px] pointer-events-none";
+ "absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] soft-glow pointer-events-none";
 
 /* Pipeline steps for horizontal flow inside Operação Comercial */
 const pipelineSteps = [
-  { icon: Clock, label: "Follow-up automático" },
-  { icon: RefreshCw, label: "Pipeline atualizado" },
-  { icon: Target, label: "Lead qualificado" },
-  { icon: CheckCircle, label: "Venda fechada" },
+ { icon: Clock, label: "Follow-up automático" },
+ { icon: RefreshCw, label: "Pipeline atualizado" },
+ { icon: Target, label: "Lead qualificado" },
+ { icon: CheckCircle, label: "Venda fechada" },
 ];
 
 const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
-  },
+ hidden: { opacity: 0 },
+ visible: {
+ opacity: 1,
+ transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+ },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, stiffness: 100, damping: 10 },
-  },
+ hidden: { opacity: 0, y: 20 },
+ visible: {
+ opacity: 1,
+ y: 0,
+ transition: { type: "spring" as const, stiffness: 100, damping: 10 },
+ },
 };
 
 export const FeaturesOverviewSection = () => {
-  const { ref, isVisible } = useScrollAnimation();
+ const { ref, isVisible } = useScrollAnimation();
 
-  return (
-    <section
-      id="features"
-      ref={ref as React.RefObject<HTMLElement>}
-      className="py-12 sm:py-20 w-full relative scroll-mt-24"
-    >
-      <div className="container mx-auto px-4 max-w-6xl">
-        <SectionHeading
-          eyebrow="Plataforma completa"
-          title="Uma máquina integrada de"
-          highlight="geração de oportunidades"
-          highlightFit="tight"
-          description="Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação, sem depender de operação manual."
-          isVisible={isVisible}
-        />
+ return (
+ <section
+ id="features"
+ ref={ref as React.RefObject<HTMLElement>}
+ className="py-12 sm:py-20 w-full relative scroll-mt-24"
+ >
+ <div className="container mx-auto px-4 max-w-6xl">
+ <SectionHeading
+ eyebrow="Plataforma completa"
+ title="Uma máquina integrada de"
+ highlight="geração de oportunidades"
+ highlightFit="tight"
+ description="Da captação ao fechamento, cada etapa do processo comercial conectada por dados, IA e automação, sem depender de operação manual."
+ isVisible={isVisible}
+ />
 
-        {isVisible && (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className={cn(
-              "grid w-full grid-cols-1 gap-4 md:grid-cols-[2fr_2fr_3fr]",
-              "md:grid-rows-3",
-              "auto-rows-[minmax(110px,auto)]"
-            )}
-          >
-            {/* Top-left: Prospecção */}
-            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
-              <div className={cardBase}>
-                <div className={cardGlowSecondary} />
-                <div className={cardGlowMain} />
-                <div className="relative z-10">
-                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Prospecção Inteligente</span>
-                  <div className="flex items-center gap-2.5 mb-1">
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <MessageCircle size={16} className="text-primary" />
-                    </div>
-                     <h3 className="font-semibold text-foreground text-base">Abordagem Contextual em Escala</h3>
-                   </div>
-                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Cada lead recebe uma mensagem construída a partir do seu nicho, porte e diagnóstico real. Isso aumenta taxa de resposta e acelera a entrada no pipeline.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
+ {isVisible && (
+ <motion.div
+ variants={containerVariants}
+ initial="hidden"
+ animate="visible"
+ className={cn(
+ "grid w-full grid-cols-1 gap-4 md:grid-cols-[2fr_2fr_3fr]",
+ "md:grid-rows-3",
+ "auto-rows-[minmax(110px,auto)]"
+ )}
+ >
+ {/* Top-left: Prospecção */}
+ <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
+ <div className={cardBase}>
+ <div className={cardGlowSecondary} />
+ <div className={cardGlowMain} />
+ <div className="relative z-10">
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Prospecção Inteligente</span>
+ <div className="flex items-center gap-2.5 mb-1">
+ <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+ <MessageCircle size={16} className="text-primary" />
+ </div>
+ <h3 className="font-semibold text-foreground text-base">Abordagem Contextual em Escala</h3>
+ </div>
+ <p className="text-sm text-muted-foreground leading-relaxed">
+ Cada lead recebe uma mensagem construída a partir do seu nicho, porte e diagnóstico real. Isso aumenta taxa de resposta e acelera a entrada no pipeline.
+ </p>
+ </div>
+ </div>
+ </motion.div>
 
-            {/* Top-center: Campanhas */}
-            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
-              <div className={cardBase}>
-                <div className={cardGlowSecondary} />
-                <div className={cardGlowMain} />
-                <div className="relative z-10">
-                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">API Oficial & Segurança</span>
-                  <div className="flex items-center gap-2.5 mb-1">
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Send size={16} className="text-primary" />
-                    </div>
-                     <h3 className="font-semibold text-foreground text-base">Campanhas via API Oficial Meta</h3>
-                   </div>
-                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Envios outbound e inbound pela API oficial do WhatsApp Business, com conformidade total às políticas da Meta. Escala sem risco de bloqueio.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
+ {/* Top-center: Campanhas */}
+ <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
+ <div className={cardBase}>
+ <div className={cardGlowSecondary} />
+ <div className={cardGlowMain} />
+ <div className="relative z-10">
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">API Oficial & Segurança</span>
+ <div className="flex items-center gap-2.5 mb-1">
+ <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+ <Send size={16} className="text-primary" />
+ </div>
+ <h3 className="font-semibold text-foreground text-base">Campanhas via API Oficial Meta</h3>
+ </div>
+ <p className="text-sm text-muted-foreground leading-relaxed">
+ Envios outbound e inbound pela API oficial do WhatsApp Business, com conformidade total às políticas da Meta. Escala sem risco de bloqueio.
+ </p>
+ </div>
+ </div>
+ </motion.div>
 
-            {/* Right tall: Agente de IA - with flow builder image */}
-            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-3">
-              <div className={`${cardBase} !p-0`}>
-                <div className={cardGlowSecondary} />
-                <div className={cardGlowMain} />
-                <div className="relative z-10 p-3 sm:p-3.5 flex flex-col">
-                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider w-fit">Conversas humanas em escala</span>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Bot size={20} className="text-primary" />
-                    </div>
-                    <h3 className="font-semibold text-foreground text-base">Fluxos Operacionais com IA</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Estruture fluxos operacionais que guiam cada conversa. A IA entra quando necessário para qualificar, conduzir e avançar o lead até o momento de decisão com naturalidade, sem depender de operação manual.
-                  </p>
-                </div>
-                {/* Flow builder background image */}
-                <div className="pointer-events-none relative flex-1 min-h-[240px] overflow-hidden mt-6">
-                  <img
-                    src={flowBuilderPreview}
-                    alt="Visualização do editor de fluxos"
-                    loading="eager"
-                    decoding="async"
-                    className="w-[110%] ml-[2%] object-contain drop-shadow-lg"
-                  />
-                </div>
-              </div>
-            </motion.div>
+ {/* Right tall: Agente de IA - with flow builder image */}
+ <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-3">
+ <div className={`${cardBase} !p-0`}>
+ <div className={cardGlowSecondary} />
+ <div className={cardGlowMain} />
+ <div className="relative z-10 p-3 sm:p-3.5 flex flex-col">
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider w-fit">Conversas humanas em escala</span>
+ <div className="flex items-center gap-3 mb-2">
+ <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+ <Bot size={20} className="text-primary" />
+ </div>
+ <h3 className="font-semibold text-foreground text-base">Fluxos Operacionais com IA</h3>
+ </div>
+ <p className="text-sm text-muted-foreground leading-relaxed">
+ Estruture fluxos operacionais que guiam cada conversa. A IA entra quando necessário para qualificar, conduzir e avançar o lead até o momento de decisão com naturalidade, sem depender de operação manual.
+ </p>
+ </div>
+ {/* Flow builder background image */}
+ <div className="pointer-events-none relative flex-1 min-h-[240px] overflow-hidden mt-6">
+ <img
+ src={flowBuilderPreview}
+ alt="Visualização do editor de fluxos"
+ loading="eager"
+ decoding="async"
+ className="w-[110%] ml-[2%] object-contain drop-shadow-lg"
+ />
+ </div>
+ </div>
+ </motion.div>
 
-            {/* Mid-left: CRM */}
-            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
-              <div className={cardBase}>
-                <div className={cardGlowSecondary} />
-                <div className={cardGlowMain} />
-                <div className="relative z-10">
-                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Gestão & Intenção de Compra</span>
-                  <div className="flex items-center gap-2.5 mb-1">
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <LayoutDashboard size={16} className="text-primary" />
-                    </div>
-                     <h3 className="font-semibold text-foreground text-base">CRM com IA de Intenção de Compra</h3>
-                   </div>
-                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Pipeline visual que organiza cada lead por estágio, com IA que detecta intenção de compra em tempo real. Sua equipe sabe exatamente quem priorizar.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
+ {/* Mid-left: CRM */}
+ <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
+ <div className={cardBase}>
+ <div className={cardGlowSecondary} />
+ <div className={cardGlowMain} />
+ <div className="relative z-10">
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Gestão & Intenção de Compra</span>
+ <div className="flex items-center gap-2.5 mb-1">
+ <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+ <LayoutDashboard size={16} className="text-primary" />
+ </div>
+ <h3 className="font-semibold text-foreground text-base">CRM com IA de Intenção de Compra</h3>
+ </div>
+ <p className="text-sm text-muted-foreground leading-relaxed">
+ Pipeline visual que organiza cada lead por estágio, com IA que detecta intenção de compra em tempo real. Sua equipe sabe exatamente quem priorizar.
+ </p>
+ </div>
+ </div>
+ </motion.div>
 
-            {/* Mid-center: Captação */}
-            <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
-              <div className={cardBase}>
-                <div className={cardGlowSecondary} />
-                <div className={cardGlowMain} />
-                <div className="relative z-10">
-                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">SDR IA de Captação + Diagnóstico</span>
-                  <div className="flex items-center gap-2.5 mb-1">
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Search size={16} className="text-primary" />
-                    </div>
-                     <h3 className="font-semibold text-foreground text-base">SDR IA de Captação com Diagnóstico Automático</h3>
-                   </div>
-                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Capta empresas no Google Maps, analisa cada uma em profundidade e faz diagnóstico automático de necessidades, dores e oportunidades reais de vendas. Leads priorizados por potencial de conversão.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
+ {/* Mid-center: Captação */}
+ <motion.div variants={itemVariants} className="md:col-span-1 md:row-span-1">
+ <div className={cardBase}>
+ <div className={cardGlowSecondary} />
+ <div className={cardGlowMain} />
+ <div className="relative z-10">
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">SDR IA de Captação + Diagnóstico</span>
+ <div className="flex items-center gap-2.5 mb-1">
+ <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+ <Search size={16} className="text-primary" />
+ </div>
+ <h3 className="font-semibold text-foreground text-base">SDR IA de Captação com Diagnóstico Automático</h3>
+ </div>
+ <p className="text-sm text-muted-foreground leading-relaxed">
+ Capta empresas no Google Maps, analisa cada uma em profundidade e faz diagnóstico automático de necessidades, dores e oportunidades reais de vendas. Leads priorizados por potencial de conversão.
+ </p>
+ </div>
+ </div>
+ </motion.div>
 
-            {/* Bottom wide: Automação with horizontal timeline */}
-            <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-1 md:col-start-1">
-              <div className={`${cardBase} !flex-col`}>
-                <div className={cardGlowSecondary} />
-                <div className={cardGlowMain} />
-                <div className="relative z-10">
-                  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Automação Comercial</span>
-                  <div className="flex items-center gap-2.5 mb-1.5">
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Zap size={16} className="text-primary" />
-                    </div>
-                     <h3 className="font-semibold text-foreground text-base">Operação Comercial Autônoma</h3>
-                   </div>
-                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida, 24 horas por dia.
-                  </p>
-                </div>
+ {/* Bottom wide: Automação with horizontal timeline */}
+ <motion.div variants={itemVariants} className="md:col-span-2 md:row-span-1 md:col-start-1">
+ <div className={`${cardBase} !flex-col`}>
+ <div className={cardGlowSecondary} />
+ <div className={cardGlowMain} />
+ <div className="relative z-10">
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Automação Comercial</span>
+ <div className="flex items-center gap-2.5 mb-1.5">
+ <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+ <Zap size={16} className="text-primary" />
+ </div>
+ <h3 className="font-semibold text-foreground text-base">Operação Comercial Autônoma</h3>
+ </div>
+ <p className="text-sm text-muted-foreground leading-relaxed">
+ Follow-ups, atualizações de pipeline e tarefas repetitivas executadas automaticamente. Nenhum lead fica sem resposta, nenhuma oportunidade é esquecida, 24 horas por dia.
+ </p>
+ </div>
 
-                {/* Horizontal pipeline sequence with arrows */}
-                <div className="relative z-10 mt-4 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-0 px-1">
-                  {pipelineSteps.map((step, i) => {
-                    const StepIcon = step.icon;
-                    return (
-                      <div key={i} className="flex items-center flex-1 min-w-0 last:flex-none">
-                        <motion.div
-                          className="flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded-lg px-2 sm:px-2.5 py-1.5 sm:py-2 whitespace-nowrap"
-                          initial={{ opacity: 0, x: -15, scale: 0.9 }}
-                          animate={isVisible ? { opacity: 1, x: 0, scale: 1 } : {}}
-                          transition={{ duration: 0.5, delay: 0.6 + i * 0.25, ease: [0.22, 1, 0.36, 1] }}
-                        >
-                          <StepIcon size={13} className="text-primary flex-shrink-0" />
-                          <span className="text-[9px] sm:text-[11px] font-medium text-foreground/80">{step.label}</span>
-                        </motion.div>
-                        {i < pipelineSteps.length - 1 && (
-                          <motion.div
-                            className="hidden sm:flex items-center justify-center flex-1 mx-0.5"
-                            initial={{ opacity: 0, scaleX: 0 }}
-                            animate={isVisible ? { opacity: 1, scaleX: 1 } : {}}
-                            transition={{ duration: 0.35, delay: 0.75 + i * 0.25 }}
-                            style={{ transformOrigin: "left" }}
-                          >
-                            <div className="flex-1 h-px bg-primary/20" />
-                            <ChevronRight size={14} className="text-primary/40 -mx-0.5 flex-shrink-0" />
-                          </motion.div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </div>
-    </section>
-  );
+ {/* Horizontal pipeline sequence with arrows */}
+ <div className="relative z-10 mt-4 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-0 px-1">
+ {pipelineSteps.map((step, i) => {
+ const StepIcon = step.icon;
+ return (
+ <div key={i} className="flex items-center flex-1 min-w-0 last:flex-none">
+ <motion.div
+ className="flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded-lg px-2 sm:px-2.5 py-1.5 sm:py-2 whitespace-nowrap"
+ initial={{ opacity: 0, x: -15, scale: 0.9 }}
+ animate={isVisible ? { opacity: 1, x: 0, scale: 1 } : {}}
+ transition={{ duration: 0.5, delay: 0.6 + i * 0.25, ease: [0.22, 1, 0.36, 1] }}
+ >
+ <StepIcon size={13} className="text-primary flex-shrink-0" />
+ <span className="text-[9px] sm:text-[11px] font-medium text-foreground/80">{step.label}</span>
+ </motion.div>
+ {i < pipelineSteps.length - 1 && (
+ <motion.div
+ className="hidden sm:flex items-center justify-center flex-1 mx-0.5"
+ initial={{ opacity: 0, scaleX: 0 }}
+ animate={isVisible ? { opacity: 1, scaleX: 1 } : {}}
+ transition={{ duration: 0.35, delay: 0.75 + i * 0.25 }}
+ style={{ transformOrigin: "left" }}
+ >
+ <div className="flex-1 h-px bg-primary/20" />
+ <ChevronRight size={14} className="text-primary/40 -mx-0.5 flex-shrink-0" />
+ </motion.div>
+ )}
+ </div>
+ );
+ })}
+ </div>
+ </div>
+ </motion.div>
+ </motion.div>
+ )}
+ </div>
+ </section>
+ );
 };

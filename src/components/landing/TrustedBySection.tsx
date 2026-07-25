@@ -10,47 +10,47 @@ import whatsappLogo from "@/assets/logos/whatsapp.svg";
 import notionLogo from "@/assets/logos/notion.svg";
 
 const brands = [
-  { name: "Google", logo: googleLogo, className: "" },
-  { name: "Meta", logo: metaLogo, className: "" },
-  { name: "Instagram", logo: instagramLogo, className: "" },
-  { name: "Stripe", logo: stripeLogo, className: "" },
-  { name: "Asaas", logo: asaasLogo, className: "" },
-  { name: "Vercel", logo: vercelLogo, className: "!h-20 sm:!h-28" },
-  { name: "OpenAI", logo: openaiLogo, className: "" },
-  { name: "WhatsApp", logo: whatsappLogo, className: "" },
-  { name: "Notion", logo: notionLogo, className: "" },
+ { name: "Google", logo: googleLogo, className: "" },
+ { name: "Meta", logo: metaLogo, className: "" },
+ { name: "Instagram", logo: instagramLogo, className: "" },
+ { name: "Stripe", logo: stripeLogo, className: "" },
+ { name: "Asaas", logo: asaasLogo, className: "" },
+ { name: "Vercel", logo: vercelLogo, className: "!h-20 sm:!h-28" },
+ { name: "OpenAI", logo: openaiLogo, className: "" },
+ { name: "WhatsApp", logo: whatsappLogo, className: "" },
+ { name: "Notion", logo: notionLogo, className: "" },
 ];
 
 export const TrustedBySection = () => {
-  const { ref, isVisible } = useScrollAnimation({ threshold: 0, rootMargin: "150px 0px", triggerOnce: false });
+ const { ref, isVisible } = useScrollAnimation({ threshold: 0, rootMargin: "150px 0px", triggerOnce: false });
 
-  return (
-    <section ref={ref as React.RefObject<HTMLElement>} className="relative border-y border-muted-foreground/15 overflow-hidden">
-      <div className="relative py-4 overflow-hidden marquee-mask">
-        <div
-          className="marquee-track"
-          style={{ animationPlayState: isVisible ? "running" : "paused" }}
-        >
-          {[0, 1].map((copy) => (
-            <div key={copy} className="marquee-content" aria-hidden={copy === 1}>
-              {brands.map((brand) => (
-                <div
-                  key={brand.name}
-                  className="inline-flex items-center justify-center px-8 sm:px-12 shrink-0 opacity-70 hover:opacity-100 transition-opacity duration-500"
-                  title={brand.name}
-                >
-                  <img
-                    src={brand.logo}
-                    alt={brand.name}
-                    loading="lazy"
-                    className={`h-7 sm:h-9 w-auto max-w-[140px] sm:max-w-[180px] object-contain ${brand.className}`}
-                  />
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+ return (
+ <section ref={ref as React.RefObject<HTMLElement>} className="relative border-y border-muted-foreground/15 overflow-hidden">
+ <div className="relative py-4 overflow-hidden marquee-mask">
+ <div
+ className="marquee-track"
+ style={{ animationPlayState: isVisible ? "running" : "paused" }}
+ >
+ {[0, 1].map((copy) => (
+ <div key={copy} className="marquee-content" aria-hidden={copy === 1}>
+ {brands.map((brand) => (
+ <div
+ key={brand.name}
+ className="inline-flex items-center justify-center px-8 sm:px-12 shrink-0 opacity-70 hover:opacity-100 transition-opacity duration-500"
+ title={brand.name}
+ >
+ <img
+ src={brand.logo}
+ alt={brand.name}
+ loading="lazy"
+ className={`h-7 sm:h-9 w-auto max-w-[140px] sm:max-w-[180px] object-contain ${brand.className}`}
+ />
+ </div>
+ ))}
+ </div>
+ ))}
+ </div>
+ </div>
+ </section>
+ );
 };

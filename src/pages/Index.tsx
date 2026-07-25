@@ -136,16 +136,19 @@ const Index = () => {
           <TrustedBySection />
 
           <Suspense fallback={<SectionFallback />}>
-            <ProblemSection />
-            <OpportunitySection />
-            <MechanismSection />
-            <FeaturesOverviewSection />
-            <WhyItWorksSection />
-            <TestimonialsSection />
-            <PricingSection />
-            <FAQSection />
-            <CTASection onSignupClick={trackSignupClick} />
+            {/* content-visibility: auto — navegador pula renderização das seções
+                fora do viewport, reduzindo custo de layout/paint no scroll. */}
+            <div className="cv-auto"><ProblemSection /></div>
+            <div className="cv-auto"><OpportunitySection /></div>
+            <div className="cv-auto"><MechanismSection /></div>
+            <div className="cv-auto"><FeaturesOverviewSection /></div>
+            <div className="cv-auto"><WhyItWorksSection /></div>
+            <div className="cv-auto"><TestimonialsSection /></div>
+            <div className="cv-auto"><PricingSection /></div>
+            <div className="cv-auto"><FAQSection /></div>
+            <div className="cv-auto"><CTASection onSignupClick={trackSignupClick} /></div>
           </Suspense>
+
 
           <Footer />
           <FloatingChatButton />
