@@ -874,10 +874,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </div>
           </div>
 
-          {/* RIGHT: 8-stage demo */}
-          <div className="animate-slide-up will-change-transform w-full hidden xl:flex xl:justify-end" style={{ animationDelay: "0.5s", transform: `translateY(${-parallaxOffset * 0.05}px)`, opacity: imageOpacity }}>
+          {/* RIGHT: 8-stage demo (sem parallax — scroll passa liso) */}
+          <div className="animate-slide-up w-full hidden xl:flex xl:justify-end" style={{ animationDelay: "0.5s" }}>
             <div className="relative w-full max-w-[28rem] 2xl:max-w-[30rem]">
-              <div className="absolute -inset-4 bg-primary/8 blur-3xl rounded-3xl will-change-transform" style={{ transform: `scale(${1 + scrollY * 0.0001})` }} />
+              <div className="absolute -inset-4 bg-primary/8 blur-3xl rounded-3xl" />
 
               {/* Floating cards */}
               {floatingCards.map((card, i) => (
