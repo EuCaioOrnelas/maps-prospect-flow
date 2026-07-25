@@ -842,7 +842,8 @@ async function execute_cockpit(ctx: ProviderContext) {
   // --------- Sales / MRR (all-time + no período) ---------
   const today = new Date().toISOString().slice(0, 10);
   const isActive = (d: any) => d.status === "active" && (!d.expiration_date || d.expiration_date >= today);
-  const revenueTotalAllTime = dealsAll.reduce((s: number, d: any) => {
+  // TCV histórico (todos os contratos, valor cheio)
+  const tcvHistorico = dealsAll.reduce((s: number, d: any) => {
     const val = Number(d.value || 0);
     return s + (d.sale_type === "one_time" ? val : val * Number(d.contract_months || 1));
   }, 0);
@@ -855,6 +856,63 @@ async function execute_cockpit(ctx: ProviderContext) {
       const months = Math.max(0, Math.min(12, Math.ceil((new Date(d.expiration_date).getTime() - Date.now()) / (30 * 86_400_000))));
       return s + Number(d.value || 0) * months;
     }, 0);
+
+  // --------- Receita realizada NO PERÍODO (não TCV) ---------
+  // one_time: valor cheio se closed_at (ou created_at) no período.
+  // recurring: value × meses do contrato contidos em [from,to]. Sem período = MRR × meses passados.
+  const periodFromMs = from ? new Date(from).getTime() : null;
+  const periodToMs = to ? new Date(to).getTime() : Date.now();
+  const monthMs = 30 * 86_400_000;
+  const receitaRealizadaPeriodo = dealsAll.reduce((s: number, d: any) => {
+    const val = Number(d.value || 0);
+    if (d.sale_type === "one_time") {
+      const closedTs = d.closed_at ? new Date(d.closed_at).getTime() : null;
+      if (closedTs && (!periodFromMs || closedTs >= periodFromMs) && closedTs <= periodToMs) return s + val;
+      return s;
+    }
+    // recurring: interseção do contrato com o período
+    const startTs = d.closed_at ? new Date(d.closed_at).getTime() : null;
+    if (!startTs) return s;
+    const endTs = d.expiration_date ? new Date(d.expiration_date).getTime() : Date.now();
+    const winStart = Math.max(startTs, periodFromMs ?? startTs);
+    const winEnd = Math.min(endTs, periodToMs);
+    if (winEnd <= winStart) return s;
+    const months = (winEnd - winStart) / monthMs;
+    return s + val * months;
+  }, 0);
+
+  // --------- Dashboard mirror: "Seu comercial gerou R$ X em oportunidades" ---------
+  // Espelha src/hooks/useCockpitForecast.ts para o card de hero do dashboard.
+  const searchP = searchPeriod.data ?? [];
+  const totalProspectedPeriodo = searchP.reduce((s: number, r: any) => s + (r.results_count || 0), 0);
+  const prospectedPhonesPeriodo = new Set<string>();
+  for (const search of searchP) {
+    const arr = Array.isArray(search.leads) ? search.leads : [];
+    for (const lead of arr) {
+      const phone = String(lead?.phone || lead?.telefone || "").replace(/\D/g, "").slice(-8);
+      if (phone.length >= 8) prospectedPhonesPeriodo.add(phone);
+    }
+  }
+  const scoredLeadsPeriodo = (revLeads as any[]).filter((r: any) => {
+    if (!from) return true;
+    const ts = r.created_at ? new Date(r.created_at).getTime() : 0;
+    return ts >= new Date(from).getTime() && ts <= periodToMs;
+  }).map((r: any) => ({
+    phoneKey: String(r.phone_e164 || "").replace(/\D/g, "").slice(-8),
+    score: Number(r.score_total || 0),
+  }));
+  const scoredPhoneKeys = new Set(scoredLeadsPeriodo.map(l => l.phoneKey));
+  const overlap = Array.from(prospectedPhonesPeriodo).filter(p => scoredPhoneKeys.has(p)).length;
+  const pureOppCount = Math.max(0, totalProspectedPeriodo - overlap);
+  const oppSales = Math.round(pureOppCount * 0.01);
+  let scoreSales = 0;
+  for (const b of SCORE_BUCKETS) {
+    const inB = scoredLeadsPeriodo.filter(l => l.score >= b.min && l.score <= b.max).length;
+    scoreSales += Math.round(inB * (b.low + b.high) / 2);
+  }
+  const dashboardEstimatedSales = oppSales + scoreSales;
+  const dashboardGeradoOportunidades = Math.round(dashboardEstimatedSales * averageTicket);
+
 
   // --------- Campanhas (dashboard cross-check) ---------
   const campaignsSent = camps.reduce((s: number, c: any) => s + (c.success_count || 0), 0);
