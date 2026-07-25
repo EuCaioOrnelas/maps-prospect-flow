@@ -1591,30 +1591,62 @@ async function execute_finance(ctx: ProviderContext) {
   const from = ctx.filters.period?.from ?? null;
   const to = ctx.filters.period?.to ?? null;
 
-  let q = admin.from("lead_deals")
+  // Buscamos SEMPRE todos os deals; a filtragem "no período" acontece por closed_at,
+  // não por created_at (contrato recorrente antigo ainda gera receita hoje).
+  const { data, error } = await admin.from("lead_deals")
     .select("id, lead_id, title, value, sale_type, contract_months, status, payment_method, start_date, expiration_date, closed_at, created_at")
     .eq("owner_user_id", owner)
     .order("created_at", { ascending: false });
-  if (from) q = q.gte("created_at", from);
-  if (to)   q = q.lte("created_at", to);
-  const { data, error } = await q;
   if (error) throw new Error(error.message);
 
-  const sales: any[] = data ?? [];
+  const allSales: any[] = data ?? [];
   const today = new Date().toISOString().slice(0, 10);
   const isActive = (s: any) => s.status === "active" && (!s.expiration_date || s.expiration_date >= today);
 
-  const receitaTotal = sales.reduce((acc, s) => {
+  const periodFromMs = from ? new Date(from).getTime() : null;
+  const periodToMs = to ? new Date(to).getTime() : Date.now();
+  const monthMs = 30 * 86_400_000;
+
+  // Vendas assinadas dentro do período (por closed_at)
+  const signedInPeriod = allSales.filter(s => {
+    const ts = s.closed_at ? new Date(s.closed_at).getTime() : (s.created_at ? new Date(s.created_at).getTime() : null);
+    if (!ts) return false;
+    if (periodFromMs && ts < periodFromMs) return false;
+    if (ts > periodToMs) return false;
+    return true;
+  });
+
+  // TCV assinado no período (valor cheio dos contratos fechados neste intervalo)
+  const tcvSignedInPeriod = signedInPeriod.reduce((acc, s) => {
     const val = Number(s.value || 0);
     return acc + (s.sale_type === "one_time" ? val : val * Number(s.contract_months || 1));
   }, 0);
 
-  const mrrAtivo = sales.filter(s => s.sale_type === "recurring" && isActive(s))
+  // Receita REALIZADA no período (proporcional; interseção do contrato com o período)
+  const receitaRealizadaPeriodo = allSales.reduce((acc, s) => {
+    const val = Number(s.value || 0);
+    if (s.sale_type === "one_time") {
+      const ts = s.closed_at ? new Date(s.closed_at).getTime() : null;
+      if (ts && (!periodFromMs || ts >= periodFromMs) && ts <= periodToMs) return acc + val;
+      return acc;
+    }
+    const startTs = s.closed_at ? new Date(s.closed_at).getTime() : (s.start_date ? new Date(s.start_date).getTime() : null);
+    if (!startTs) return acc;
+    const endTs = s.expiration_date ? new Date(s.expiration_date).getTime() : Date.now();
+    const winStart = Math.max(startTs, periodFromMs ?? startTs);
+    const winEnd = Math.min(endTs, periodToMs);
+    if (winEnd <= winStart) return acc;
+    const months = (winEnd - winStart) / monthMs;
+    return acc + val * months;
+  }, 0);
+
+  const mrrAtivo = allSales.filter(s => s.sale_type === "recurring" && isActive(s))
     .reduce((acc, s) => acc + Number(s.value || 0), 0);
 
-  const vendasAtivas = sales.filter(isActive).length;
+  const vendasAtivas = allSales.filter(isActive).length;
+  const vendasFechadasNoPeriodo = signedInPeriod.length;
 
-  const projected12mo = sales.filter(s => s.sale_type === "recurring" && isActive(s))
+  const projected12mo = allSales.filter(s => s.sale_type === "recurring" && isActive(s))
     .reduce((acc, s) => {
       if (!s.expiration_date) return acc + Number(s.value || 0) * 12;
       const months = Math.max(0, Math.min(12, Math.ceil(
@@ -1623,39 +1655,47 @@ async function execute_finance(ctx: ProviderContext) {
       return acc + Number(s.value || 0) * months;
     }, 0);
 
-  const expiringSoon = sales.filter(s => {
+  const expiringSoon = allSales.filter(s => {
     if (!isActive(s) || !s.expiration_date) return false;
     const days = (new Date(s.expiration_date).getTime() - Date.now()) / 86_400_000;
     return days >= 0 && days <= 30;
   }).length;
 
-  // Distribuição por meio de pagamento
   const byPayment: Record<string, number> = {};
-  for (const s of sales) {
+  for (const s of allSales) {
     const k = s.payment_method || "desconhecido";
     byPayment[k] = (byPayment[k] ?? 0) + 1;
   }
 
+  const itemsForResponse = from || to ? signedInPeriod : allSales;
+
   return {
     data: {
       period: { from, to, fallback_all_time: !from && !to },
+      // IMPORTANTE (IA consumidora): use SEMPRE o campo mais específico à pergunta.
+      // Para "quanto meu comercial gerou em X dias" no dashboard,
+      // o campo canônico é cockpit.comercial.gerado_em_oportunidades — não este.
       summary: {
-        receita_total: Math.round(receitaTotal),
+        receita_realizada_no_periodo: Math.round(receitaRealizadaPeriodo),
+        receita_realizada_no_periodo_descricao: "Receita REAL entregue no período: contratos one_time fechados no período + fatia dos recurring proporcional aos meses dentro de [from,to].",
+        tcv_assinado_no_periodo: Math.round(tcvSignedInPeriod),
+        tcv_assinado_no_periodo_descricao: "Valor total dos contratos que foram ASSINADOS dentro do período (value × contract_months). É valor de contrato, não caixa entrando no período.",
+        vendas_fechadas_no_periodo: vendasFechadasNoPeriodo,
         mrr_ativo: Math.round(mrrAtivo),
         vendas_ativas: vendasAtivas,
         projecao_12_meses: Math.round(projected12mo),
         vendas_expirando_30d: expiringSoon,
-        total_registros: sales.length,
+        total_registros: itemsForResponse.length,
         currency: "BRL",
       },
       breakdowns: {
         by_payment_method: byPayment,
         by_type: {
-          one_time: sales.filter(s => s.sale_type === "one_time").length,
-          recurring: sales.filter(s => s.sale_type === "recurring").length,
+          one_time: itemsForResponse.filter(s => s.sale_type === "one_time").length,
+          recurring: itemsForResponse.filter(s => s.sale_type === "recurring").length,
         },
       },
-      items: sales.map(s => ({
+      items: itemsForResponse.map(s => ({
         id: s.id,
         lead_id: s.lead_id,
         title: s.title,
@@ -1671,33 +1711,36 @@ async function execute_finance(ctx: ProviderContext) {
         is_active: isActive(s),
       })),
     },
-    recordsCount: sales.length,
+    recordsCount: itemsForResponse.length,
   };
 }
 
 export const financeProvider: Provider = {
   metadata: {
     name: "finance",
-    description: "Vendas fechadas e métricas financeiras: receita total, MRR ativo, vendas ativas, projeção 12 meses.",
-    version: "1.0.0",
+    description: "Vendas fechadas (lead_deals) e métricas financeiras REAIS. Para responder 'quanto meu comercial gerou' use cockpit.comercial.gerado_em_oportunidades (campo canônico do dashboard); use este provider quando o usuário perguntar sobre receita realizada, MRR, contratos assinados ou vendas fechadas.",
+    version: "2.0.0",
     requiredPermissions: [],
     minimumPlan: "start",
     supportedFilters: ["period"],
     defaultCacheTTL: 60,
     priority: 4,
     dependencies: [],
-    inputSchema: { "filters.period": "{from,to}?" },
+    inputSchema: { "filters.period": "{from,to}? — filtra por closed_at (não por created_at)" },
     outputSchema: {
-      "summary.receita_total": "number BRL acumulado",
-      "summary.mrr_ativo": "number BRL/mês",
-      "summary.vendas_ativas": "number",
+      "summary.receita_realizada_no_periodo": "number BRL — receita real ENTREGUE no período (proporcional para recurring). ESTE é o campo correto para 'quanto entrou no mês'.",
+      "summary.tcv_assinado_no_periodo": "number BRL — valor de contratos ASSINADOS no período (value × meses). NÃO é receita 'do mês'; é valor de contrato futuro.",
+      "summary.mrr_ativo": "number BRL/mês — MRR atual dos contratos ativos",
+      "summary.vendas_ativas": "number — contratos ativos hoje",
+      "summary.vendas_fechadas_no_periodo": "number — deals fechados dentro do período",
       "summary.projecao_12_meses": "number BRL",
-      items: "SaleDTO[]",
+      items: "SaleDTO[] (deals fechados no período quando há filtro, senão todos)",
     },
     status: "stable",
   },
   execute: execute_finance,
 };
+
 
 
 // ================= _integration-core/providers/stubs.ts =================
