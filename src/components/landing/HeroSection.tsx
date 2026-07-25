@@ -702,7 +702,7 @@ const floatingCards = [
 interface HeroSectionProps { onSignupClick?: () => void; }
 
 export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
-  const [scrollY, setScrollY] = useState(0);
+  // scrollY removido — parallax do Hero desligado por performance.
   const [currentStage, setCurrentStage] = useState(0);
   const [stageProgress, setStageProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -714,28 +714,18 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const animationStartRef = useRef<number>(0);
   const pausedElapsedRef = useRef<number>(0);
 
-  useEffect(() => {
-    // Parallax desligado em mobile — recomputo do transform a cada frame causava
-    // jank pesado em touch scroll. Desktop mantém efeito.
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
-      return;
-    }
-    let ticking = false;
-    const handleScroll = () => {
-      if (!ticking) { requestAnimationFrame(() => { setScrollY(window.scrollY); ticking = false; }); ticking = true; }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  // Parallax removido: cada scroll forçava re-render do Hero inteiro + recomposição
+  // de 4 camadas grandes (gradient base, textura de dots, glow, demo card).
+  // Ganho de performance > efeito visual sutil de parallax.
 
   useEffect(() => {
-    // Em mobile (<768px) ou com prefers-reduced-motion, não animar o demo.
-    // O loop de requestAnimationFrame era o principal causador de jank/travamento na sales.
+    // Só anima o demo em telas xl+ (onde ele é visível — hidden xl:flex).
+    // Também respeita prefers-reduced-motion. Isso remove o RAF em tablets/mobile,
+    // onde o componente é montado mas invisível.
     if (typeof window !== "undefined") {
-      const isMobile = window.matchMedia("(max-width: 767px)").matches;
+      const isBelowXl = window.matchMedia("(max-width: 1279px)").matches;
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (isMobile || reducedMotion) {
-        // Mostra um frame estático representativo (estágio "IA conduzindo a conversa")
+      if (isBelowXl || reducedMotion) {
         setCurrentStage(4);
         setStageProgress(0.5);
         return;
@@ -813,23 +803,20 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
     return () => cancelAnimationFrame(frameId);
   }, [isAnimating]);
 
-  const parallaxOffset = scrollY * 0.3;
-  const imageOpacity = Math.max(1 - scrollY * 0.001, 0.7);
   const CurrentStageRenderer = stageRenderers[currentStage];
   const stage = stages[currentStage];
 
   return (
     <section ref={sectionRef} className="relative -mt-[72px] sm:-mt-[80px] min-h-[85vh] flex items-center justify-center pt-[104px] sm:pt-[120px] pb-16 sm:pb-20 overflow-x-clip overflow-y-visible w-full">
-      {/* Base gradient backdrop */}
-      <div className="absolute inset-0 will-change-transform" style={{ transform: `translateY(${parallaxOffset * 0.5}px)`, background: "linear-gradient(180deg, hsl(158 35% 97.5%) 0%, hsl(210 30% 99%) 60%, hsl(var(--background)) 100%)" }} />
-      {/* Dotted texture */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.18] will-change-transform" style={{ transform: `translateY(${parallaxOffset * 0.2}px)`, backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`, backgroundSize: '18px 18px', maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`, WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`, maskSize: 'cover', WebkitMaskSize: 'cover', maskPosition: 'center', WebkitMaskPosition: 'center' }} />
-      {/* Soft primary glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1000px] md:w-[1200px] h-[1000px] md:h-[1200px] will-change-transform pointer-events-none" style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)`, background: "radial-gradient(ellipse at center, hsl(158 60% 55% / 0.06) 0%, hsl(158 60% 55% / 0.02) 45%, transparent 70%)" }} />
-      {/* Top-right accent blob */}
-      <div className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full pointer-events-none opacity-50" style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.05) 0%, transparent 65%)" }} />
-      {/* Bottom-left accent blob */}
-      <div className="absolute -bottom-40 -left-32 w-[700px] h-[700px] rounded-full pointer-events-none opacity-40" style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.04) 0%, transparent 65%)" }} />
+      {/* Base gradient backdrop (estático — sem parallax) */}
+      <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(158 35% 97.5%) 0%, hsl(210 30% 99%) 60%, hsl(var(--background)) 100%)" }} />
+      {/* Dotted texture (estático) */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.14]" style={{ backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`, backgroundSize: '18px 18px' }} />
+      {/* Soft primary glow (estático, reduzido) */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[900px] pointer-events-none" style={{ transform: 'translate(-50%, 0)', background: "radial-gradient(ellipse at center, hsl(158 60% 55% / 0.06) 0%, hsl(158 60% 55% / 0.02) 45%, transparent 70%)" }} />
+      {/* Bottom-left accent blob (único blob decorativo restante) */}
+      <div className="absolute -bottom-40 -left-32 w-[600px] h-[600px] rounded-full pointer-events-none opacity-40" style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.04) 0%, transparent 65%)" }} />
+
 
       <div className="container mx-auto px-6 sm:px-10 lg:px-16 relative z-10 max-w-[90rem] w-full">
         <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-2 xl:gap-4 items-center">
@@ -887,10 +874,10 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
             </div>
           </div>
 
-          {/* RIGHT: 8-stage demo */}
-          <div className="animate-slide-up will-change-transform w-full hidden xl:flex xl:justify-end" style={{ animationDelay: "0.5s", transform: `translateY(${-parallaxOffset * 0.05}px)`, opacity: imageOpacity }}>
+          {/* RIGHT: 8-stage demo (sem parallax — scroll passa liso) */}
+          <div className="animate-slide-up w-full hidden xl:flex xl:justify-end" style={{ animationDelay: "0.5s" }}>
             <div className="relative w-full max-w-[28rem] 2xl:max-w-[30rem]">
-              <div className="absolute -inset-4 bg-primary/8 blur-3xl rounded-3xl will-change-transform" style={{ transform: `scale(${1 + scrollY * 0.0001})` }} />
+              <div className="absolute -inset-4 bg-primary/8 blur-3xl rounded-3xl" />
 
               {/* Floating cards */}
               {floatingCards.map((card, i) => (

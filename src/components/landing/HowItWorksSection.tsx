@@ -116,7 +116,7 @@ export const HowItWorksSection = () => {
                   )}
 
                   {/* Card */}
-                  <div className="relative bg-card/50 backdrop-blur-sm rounded-2xl p-5 lg:p-6 border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+                  <div className="relative bg-card/95 rounded-2xl p-5 lg:p-6 border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
                     {/* Step number badge */}
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                       <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full bg-gradient-to-br ${step.color} text-white text-xs font-bold shadow-lg`}>
@@ -152,7 +152,7 @@ export const HowItWorksSection = () => {
               style={{ transitionDelay: `${index * 150 + 200}ms` }}
             >
               {/* Card with icon inside */}
-              <div className="relative bg-card/50 backdrop-blur-sm rounded-2xl p-5 border border-border/50">
+              <div className="relative bg-card/95 rounded-2xl p-5 border border-border/50">
                 {/* Step badge - centered */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full bg-gradient-to-br ${step.color} text-white text-xs font-bold shadow-lg`}>

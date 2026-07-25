@@ -82,7 +82,7 @@ export const AIAgentsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.12 }}
-              className="group relative rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-7 hover:border-primary/30 hover:bg-card/80 transition-all duration-300"
+              className="group relative rounded-2xl border border-border/60 bg-card/95 p-7 hover:border-primary/30 hover:bg-card/80 transition-all duration-300"
             >
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
                 <pillar.icon className="w-6 h-6 text-primary" />
@@ -207,7 +207,7 @@ export const AIAgentsSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm overflow-hidden"
+          className="rounded-2xl border border-border/60 bg-card/95 overflow-hidden"
         >
           <div className="p-6 md:p-8 border-b border-border/30">
             <div className="flex items-center gap-3 mb-2">
