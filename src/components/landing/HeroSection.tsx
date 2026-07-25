@@ -714,19 +714,9 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
   const animationStartRef = useRef<number>(0);
   const pausedElapsedRef = useRef<number>(0);
 
-  useEffect(() => {
-    // Parallax desligado em mobile — recomputo do transform a cada frame causava
-    // jank pesado em touch scroll. Desktop mantém efeito.
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
-      return;
-    }
-    let ticking = false;
-    const handleScroll = () => {
-      if (!ticking) { requestAnimationFrame(() => { setScrollY(window.scrollY); ticking = false; }); ticking = true; }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  // Parallax removido: cada scroll forçava re-render do Hero inteiro + recomposição
+  // de 4 camadas grandes (gradient base, textura de dots, glow, demo card).
+  // Ganho de performance > efeito visual sutil de parallax.
 
   useEffect(() => {
     // Em mobile (<768px) ou com prefers-reduced-motion, não animar o demo.
