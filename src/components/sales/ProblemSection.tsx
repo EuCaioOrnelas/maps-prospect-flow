@@ -18,9 +18,9 @@ export const ProblemSection = () => {
  const cardBase =
  "group rounded-2xl border border-border/70 bg-card/95 transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-md";
  const cardGlowMain =
- "absolute -bottom-16 -right-16 w-44 h-44 rounded-full bg-destructive/14 blur-[48px] pointer-events-none opacity-100";
+ "absolute -bottom-16 -right-16 w-44 h-44 rounded-full bg-destructive/14 soft-glow pointer-events-none opacity-100";
  const cardGlowSecondary =
- "absolute -top-12 -left-12 w-32 h-32 rounded-full bg-destructive/10 blur-[28px] pointer-events-none opacity-90";
+ "absolute -top-12 -left-12 w-32 h-32 rounded-full bg-destructive/10 soft-glow pointer-events-none opacity-90";
 
  return (
  <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative">
@@ -50,7 +50,7 @@ export const ProblemSection = () => {
  integration={
  <div className={`${cardBase} !p-0 min-h-[360px] sm:min-h-[340px]`}>
  <div className={cardGlowSecondary} />
- <div className="absolute bottom-[-5rem] left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-destructive/14 blur-[48px] pointer-events-none opacity-100" />
+ <div className="absolute bottom-[-5rem] left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-destructive/14 soft-glow pointer-events-none opacity-100" />
 
  <div className="relative z-20 p-3 sm:p-3.5 pb-44 sm:pb-32">
  <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">

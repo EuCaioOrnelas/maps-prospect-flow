@@ -68,8 +68,8 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
  }`}
  >
  {/* Glow */}
- <div className="absolute -bottom-14 -right-14 w-40 h-40 rounded-full bg-primary/10 blur-[28px] pointer-events-none" />
- <div className="absolute -top-10 -left-10 w-28 h-28 rounded-full bg-primary/8 blur-[36px] pointer-events-none" />
+ <div className="absolute -bottom-14 -right-14 w-40 h-40 rounded-full bg-primary/10 soft-glow pointer-events-none" />
+ <div className="absolute -top-10 -left-10 w-28 h-28 rounded-full bg-primary/8 soft-glow pointer-events-none" />
 
  {/* Content */}
  <div className={`relative z-10 flex items-start gap-3 ${isLeft ? "md:flex-row-reverse md:text-right" : ""}`}>
@@ -104,9 +104,9 @@ export const MechanismSection = () => {
  <section ref={(node) => { (ref as any).current = node; (liveRef as any).current = node; }} className="py-12 sm:py-20 w-full relative overflow-hidden">
  {/* Background ambient */}
  <div className="absolute inset-0 pointer-events-none overflow-hidden">
- <div className="absolute top-[10%] -left-[5%] w-[350px] h-[350px] bg-primary/[0.04] rounded-full blur-[36px]" />
- <div className="absolute top-[50%] -right-[8%] w-[400px] h-[400px] bg-primary/[0.03] rounded-full blur-[28px]" />
- <div className="absolute bottom-[10%] left-[10%] w-[300px] h-[300px] bg-primary/[0.03] rounded-full blur-[36px]" />
+ <div className="absolute top-[10%] -left-[5%] w-[350px] h-[350px] bg-primary/[0.04] rounded-full soft-glow" />
+ <div className="absolute top-[50%] -right-[8%] w-[400px] h-[400px] bg-primary/[0.03] rounded-full soft-glow" />
+ <div className="absolute bottom-[10%] left-[10%] w-[300px] h-[300px] bg-primary/[0.03] rounded-full soft-glow" />
 
  {/* Floating stat cards */}
  {floatingElements.map((el, i) => (

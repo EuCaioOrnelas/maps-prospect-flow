@@ -20,9 +20,9 @@ import { SectionHeading } from "@/components/landing/SectionHeading";
 const cardBase =
  "group rounded-2xl border border-border/70 bg-card/95 transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-primary/5";
 const cardGlowMain =
- "absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] blur-[44px] pointer-events-none";
+ "absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] soft-glow pointer-events-none";
 const cardGlowSecondary =
- "absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] blur-[36px] pointer-events-none";
+ "absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] soft-glow pointer-events-none";
 
 /* Pipeline steps for horizontal flow inside Operação Comercial */
 const pipelineSteps = [
