@@ -1018,22 +1018,29 @@ input::placeholder, textarea::placeholder {
 .marquee-track {
   display: flex;
   width: max-content;
-  will-change: transform;
-  animation: marquee-scroll 30s linear infinite;
+  animation: marquee-scroll 45s linear infinite;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  contain: layout paint style;
+}
+
+.marquee-track[style*="running"] {
+  will-change: transform;
 }
 
 .marquee-content {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  transform: translateZ(0);
 }
 
 .marquee-mask {
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
 }
+
 
 /* CPU Architecture animations */
 .cpu-architecture {
