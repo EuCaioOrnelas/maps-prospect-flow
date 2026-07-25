@@ -702,7 +702,7 @@ const floatingCards = [
 interface HeroSectionProps { onSignupClick?: () => void; }
 
 export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
-  const [scrollY, setScrollY] = useState(0);
+  // scrollY removido — parallax do Hero desligado por performance.
   const [currentStage, setCurrentStage] = useState(0);
   const [stageProgress, setStageProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
