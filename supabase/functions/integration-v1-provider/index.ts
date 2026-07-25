@@ -959,9 +959,22 @@ async function execute_cockpit(ctx: ProviderContext) {
     // Card: Alertas Executivos
     alertas: alerts,
     // Card: Comercial (Sales / MRR)
+    // IMPORTANTE (para consumidores de IA):
+    //  - "gerado_em_oportunidades" é o VALOR OFICIAL que aparece no card de hero
+    //    do dashboard ("Seu comercial gerou R$ X em oportunidades"). Use este
+    //    campo quando o usuário perguntar "quanto meu comercial gerou".
+    //  - "receita_realizada_no_periodo" = receita real (deals fechados)
+    //    proporcional ao período consultado (não confundir com TCV).
+    //  - "tcv_historico" = soma value×contract_months de TODOS os contratos
+    //    (histórico total), NUNCA use como "quanto gerou no mês".
     comercial: {
-      receita_total_acumulada: revenueTotalAllTime,
-      mrr_ativo: mrrActive,
+      gerado_em_oportunidades: dashboardGeradoOportunidades,
+      gerado_em_oportunidades_descricao: "Mirror exato do card 'Seu comercial gerou' do dashboard: (leads prospectados sem score × 1% + leads com score × conversão por faixa) × ticket médio. Este é o número que o usuário vê na home.",
+      receita_realizada_no_periodo: Math.round(receitaRealizadaPeriodo),
+      receita_realizada_no_periodo_descricao: "Receita real de contratos fechados, proporcional ao período filtrado. one_time = valor cheio se fechado no período; recurring = valor × meses do contrato dentro do período.",
+      tcv_historico: Math.round(tcvHistorico),
+      tcv_historico_descricao: "TCV acumulado de todos os contratos (value × contract_months). É histórico total, não representa receita 'no período'.",
+      mrr_ativo: Math.round(mrrActive),
       vendas_ativas: activeSalesCount,
       projecao_12_meses: Math.round(projected12mo),
       currency: "BRL",
@@ -983,8 +996,8 @@ async function execute_cockpit(ctx: ProviderContext) {
 export const cockpitProvider: Provider = {
   metadata: {
     name: "cockpit",
-    description: "Snapshot completo do Growth Cockpit: receita potencial, leads quentes, gargalo/health, IA economizada, forecast, funil, radar, alertas, comercial e campanhas.",
-    version: "2.0.0",
+    description: "Snapshot completo do Growth Cockpit (dashboard executivo). CAMPO CANÔNICO para 'quanto meu comercial gerou': cockpit.comercial.gerado_em_oportunidades — espelha exatamente o card de hero do dashboard. NÃO use finance.receita_total (TCV) para responder essa pergunta.",
+    version: "2.1.0",
     requiredPermissions: [],
     minimumPlan: "start",
     supportedFilters: ["period"],
@@ -993,7 +1006,7 @@ export const cockpitProvider: Provider = {
     dependencies: [],
     inputSchema: { "filters.period": "{from,to}? — se ausente, retorna histórico total" },
     outputSchema: {
-      receita_potencial: "{ total, no_periodo, currency }",
+      receita_potencial: "{ total, no_periodo, currency } — valor SOMADO das oportunidades em negociação no CRM (pipeline), não receita realizada",
       leads_quentes_hoje: "number",
       gargalo: "{ status, detail, health_score, ... }",
       ia_economizou_min: "number",
@@ -1001,13 +1014,14 @@ export const cockpitProvider: Provider = {
       funil_operacional: "{ stage, value, pct }[]",
       radar: "{ lead_id, score_growth_7d }[]",
       alertas: "{ type, text, route? }[]",
-      comercial: "{ receita_total_acumulada, mrr_ativo, vendas_ativas, projecao_12_meses, currency }",
+      comercial: "{ gerado_em_oportunidades (canônico do dashboard), receita_realizada_no_periodo, tcv_historico, mrr_ativo, vendas_ativas, projecao_12_meses, currency } — leia as descrições *_descricao antes de responder ao usuário",
       campanhas: "{ total, recipients, sent, failed, delivery_rate }",
     },
     status: "stable",
   },
   execute: execute_cockpit,
 };
+
 
 
 // ================= _integration-core/providers/crmProvider.ts =================
