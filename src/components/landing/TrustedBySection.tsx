@@ -22,7 +22,7 @@ const brands = [
 ];
 
 export const TrustedBySection = () => {
- const { ref, isVisible } = useScrollAnimation({ threshold: 0, rootMargin: "150px 0px", triggerOnce: false });
+ const { ref, isVisible } = useScrollAnimation({ threshold: 0, rootMargin: "200px 0px", triggerOnce: false });
 
  return (
  <section ref={ref as React.RefObject<HTMLElement>} className="relative border-y border-muted-foreground/15 overflow-hidden">
@@ -36,13 +36,15 @@ export const TrustedBySection = () => {
  {brands.map((brand) => (
  <div
  key={brand.name}
- className="inline-flex items-center justify-center px-8 sm:px-12 shrink-0 opacity-70 hover:opacity-100 transition-opacity duration-500"
+ className="inline-flex items-center justify-center px-8 sm:px-12 shrink-0 opacity-70"
  title={brand.name}
  >
  <img
  src={brand.logo}
  alt={brand.name}
  loading="lazy"
+ decoding="async"
+ draggable={false}
  className={`h-7 sm:h-9 w-auto max-w-[140px] sm:max-w-[180px] object-contain ${brand.className}`}
  />
  </div>
@@ -54,3 +56,4 @@ export const TrustedBySection = () => {
  </section>
  );
 };
+
