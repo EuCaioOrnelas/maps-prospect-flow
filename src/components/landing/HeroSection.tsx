@@ -803,23 +803,20 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
     return () => cancelAnimationFrame(frameId);
   }, [isAnimating]);
 
-  const parallaxOffset = scrollY * 0.3;
-  const imageOpacity = Math.max(1 - scrollY * 0.001, 0.7);
   const CurrentStageRenderer = stageRenderers[currentStage];
   const stage = stages[currentStage];
 
   return (
     <section ref={sectionRef} className="relative -mt-[72px] sm:-mt-[80px] min-h-[85vh] flex items-center justify-center pt-[104px] sm:pt-[120px] pb-16 sm:pb-20 overflow-x-clip overflow-y-visible w-full">
-      {/* Base gradient backdrop */}
-      <div className="absolute inset-0 will-change-transform" style={{ transform: `translateY(${parallaxOffset * 0.5}px)`, background: "linear-gradient(180deg, hsl(158 35% 97.5%) 0%, hsl(210 30% 99%) 60%, hsl(var(--background)) 100%)" }} />
-      {/* Dotted texture */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.18] will-change-transform" style={{ transform: `translateY(${parallaxOffset * 0.2}px)`, backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`, backgroundSize: '18px 18px', maskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`, WebkitMaskImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600'%3E%3Cellipse cx='350' cy='220' rx='180' ry='200' fill='white'/%3E%3Cellipse cx='370' cy='420' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='550' cy='180' rx='200' ry='180' fill='white'/%3E%3Cellipse cx='560' cy='380' rx='100' ry='100' fill='white'/%3E%3Cellipse cx='750' cy='250' rx='180' ry='150' fill='white'/%3E%3Cellipse cx='800' cy='400' rx='60' ry='80' fill='white'/%3E%3Cellipse cx='900' cy='300' rx='120' ry='100' fill='white'/%3E%3Cellipse cx='1000' cy='350' rx='80' ry='120' fill='white'/%3E%3Cellipse cx='200' cy='250' rx='100' ry='80' fill='white'/%3E%3C/svg%3E")`, maskSize: 'cover', WebkitMaskSize: 'cover', maskPosition: 'center', WebkitMaskPosition: 'center' }} />
-      {/* Soft primary glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[1000px] md:w-[1200px] h-[1000px] md:h-[1200px] will-change-transform pointer-events-none" style={{ transform: `translate(-50%, ${parallaxOffset * 0.3}px)`, background: "radial-gradient(ellipse at center, hsl(158 60% 55% / 0.06) 0%, hsl(158 60% 55% / 0.02) 45%, transparent 70%)" }} />
-      {/* Top-right accent blob */}
-      <div className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full pointer-events-none opacity-50" style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.05) 0%, transparent 65%)" }} />
-      {/* Bottom-left accent blob */}
-      <div className="absolute -bottom-40 -left-32 w-[700px] h-[700px] rounded-full pointer-events-none opacity-40" style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.04) 0%, transparent 65%)" }} />
+      {/* Base gradient backdrop (estático — sem parallax) */}
+      <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(158 35% 97.5%) 0%, hsl(210 30% 99%) 60%, hsl(var(--background)) 100%)" }} />
+      {/* Dotted texture (estático) */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.14]" style={{ backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`, backgroundSize: '18px 18px' }} />
+      {/* Soft primary glow (estático, reduzido) */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[900px] pointer-events-none" style={{ transform: 'translate(-50%, 0)', background: "radial-gradient(ellipse at center, hsl(158 60% 55% / 0.06) 0%, hsl(158 60% 55% / 0.02) 45%, transparent 70%)" }} />
+      {/* Bottom-left accent blob (único blob decorativo restante) */}
+      <div className="absolute -bottom-40 -left-32 w-[600px] h-[600px] rounded-full pointer-events-none opacity-40" style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.04) 0%, transparent 65%)" }} />
+
 
       <div className="container mx-auto px-6 sm:px-10 lg:px-16 relative z-10 max-w-[90rem] w-full">
         <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-2 xl:gap-4 items-center">
