@@ -63,7 +63,7 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
       {/* Card */}
       <div className={`w-full pl-12 md:pl-0 md:w-[calc(50%-28px)] ${isLeft ? "md:mr-auto" : "md:ml-auto"}`}>
         <div
-          className={`group relative rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm p-4 sm:p-5 overflow-hidden hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.15)] hover:border-primary/30 transition-all duration-300 cursor-default text-left ${
+          className={`group relative rounded-2xl border border-border/70 bg-card/95 p-4 sm:p-5 overflow-hidden hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.15)] hover:border-primary/30 transition-all duration-300 cursor-default text-left ${
             isLeft ? "md:text-right" : ""
           }`}
         >
@@ -115,7 +115,7 @@ export const MechanismSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={isVisible ? { opacity: 0.7, y: 0 } : {}}
             transition={{ duration: 0.8, delay: el.delay }}
-            className="hidden lg:flex absolute items-center gap-2 px-3 py-1.5 rounded-lg border border-border/40 bg-card/30 backdrop-blur-sm"
+            className="hidden lg:flex absolute items-center gap-2 px-3 py-1.5 rounded-lg border border-border/40 bg-card/80"
             style={{
               top: el.top,
               left: (el as any).left,

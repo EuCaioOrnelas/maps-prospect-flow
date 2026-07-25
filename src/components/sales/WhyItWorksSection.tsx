@@ -63,7 +63,7 @@ export const WhyItWorksSection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.12 }}
-                className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/80 backdrop-blur-sm p-4 sm:p-5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+                className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-4 sm:p-5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
               >
                 <div className="absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] blur-[70px] pointer-events-none" />
                 <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] blur-[56px] pointer-events-none" />
@@ -88,7 +88,7 @@ export const WhyItWorksSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="relative mt-4 sm:mt-6 overflow-hidden rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm p-5 sm:p-8 md:p-10"
+          className="relative mt-4 sm:mt-6 overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-5 sm:p-8 md:p-10"
         >
           <div className="absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] blur-[70px] pointer-events-none" />
           <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] blur-[56px] pointer-events-none" />
