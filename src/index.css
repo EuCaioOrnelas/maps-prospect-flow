@@ -1741,3 +1741,19 @@ body.tour-active [role="dialog"][data-state="open"] {
     }
   }
 }
+
+/* ============================================================
+   Performance: soft radial fade sem filter:blur
+   Substitui blur-[Npx] em blobs decorativos.
+   Mask GPU-cheap, não força re-composite no scroll.
+   ============================================================ */
+@layer utilities {
+  .soft-glow {
+    -webkit-mask-image: radial-gradient(circle, #000 0%, #000 25%, transparent 72%);
+    mask-image: radial-gradient(circle, #000 0%, #000 25%, transparent 72%);
+  }
+  .cv-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 900px;
+  }
+}
