@@ -13,12 +13,14 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
  
  return (
  <section 
- className="py-16 sm:py-24 relative overflow-hidden w-full"
+ className="py-16 sm:py-24 relative overflow-hidden w-full cv-auto"
  ref={ref as React.RefObject<HTMLElement>}
+ style={{
+ background:
+ "radial-gradient(ellipse 60% 55% at 50% 50%, hsl(var(--primary) / 0.10) 0%, hsl(var(--primary) / 0.04) 40%, transparent 75%), radial-gradient(ellipse 45% 40% at 10% 100%, hsl(var(--primary) / 0.07) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 95% 100%, hsl(var(--primary) / 0.05) 0%, transparent 70%)",
+ }}
  >
- <div className="absolute left-1/2 top-1/2 h-72 w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-glow opacity-20 soft-glow" />
- <div className="absolute bottom-0 left-0 w-[40rem] h-[20rem] rounded-full bg-primary/[0.06] soft-glow pointer-events-none" />
- <div className="absolute bottom-0 right-0 w-[30rem] h-[16rem] rounded-full bg-primary/[0.04] soft-glow pointer-events-none" />
+ 
  
  <div className="container mx-auto px-4 relative z-10 max-w-6xl">
  <div 
