@@ -707,8 +707,8 @@ async function execute_cockpit(ctx: ProviderContext) {
     admin.from("revenue_score_logs").select("lead_id, points_applied, created_at")
       .eq("owner_user_id", owner)
       .gte("created_at", new Date(Date.now() - 7 * 86_400_000).toISOString()),
-    admin.from("revenue_leads").select("id, score_total, status_bucket").eq("owner_user_id", owner),
-    inPeriod(admin.from("search_history").select("results_count, created_at").eq("owner_user_id", owner)),
+    admin.from("revenue_leads").select("id, phone_e164, score_total, status_bucket, created_at").eq("owner_user_id", owner),
+    inPeriod(admin.from("search_history").select("results_count, leads, created_at").eq("owner_user_id", owner)),
     admin.from("search_history").select("results_count").eq("owner_user_id", owner),
     inPeriod(admin.from("agent_message_logs").select("content").eq("owner_user_id", owner).eq("direction", "outbound")),
     inPeriod(admin.from("wa_flow_executions" as any).select("node_history").eq("owner_user_id", owner)),
@@ -716,6 +716,7 @@ async function execute_cockpit(ctx: ProviderContext) {
     admin.from("company_services").select("average_ticket").eq("owner_user_id", owner),
     admin.from("pipeline_stages").select("id, name, position").eq("user_id", owner),
   ]) as any;
+
 
   const leadsP = leadsPeriod.data ?? [];
   const leadsAll = leadsAllTime.data ?? [];
