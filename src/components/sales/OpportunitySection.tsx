@@ -62,7 +62,7 @@ export const OpportunitySection = () => {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="rounded-t-2xl border border-b-0 border-primary/20 bg-white dark:bg-card px-8 pt-8 pb-5 relative overflow-hidden"
             >
-              <div className="absolute -top-10 -right-10 w-48 h-48 bg-primary/[0.08] rounded-full blur-[60px] pointer-events-none" />
+              <div className="absolute -top-10 -right-10 w-48 h-48 bg-primary/[0.08] rounded-full blur-[28px] pointer-events-none" />
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-primary/10 text-primary border border-primary/15 mb-4">
                 <Sparkles size={12} />
                 Mais eficiente
@@ -126,7 +126,7 @@ export const OpportunitySection = () => {
                 </h3>
               </div>
               <div className="bg-white dark:bg-card px-3 py-3 relative overflow-hidden">
-                <div className="absolute -top-8 -right-8 w-24 h-24 bg-primary/[0.08] rounded-full blur-[40px] pointer-events-none" />
+                <div className="absolute -top-8 -right-8 w-24 h-24 bg-primary/[0.08] rounded-full blur-[28px] pointer-events-none" />
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider bg-primary/10 text-primary mb-1.5 relative">
                   <Sparkles size={9} />
                   Com Wiize
