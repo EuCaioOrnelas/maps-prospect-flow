@@ -63,13 +63,16 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
  {/* Card */}
  <div className={`w-full pl-12 md:pl-0 md:w-[calc(50%-28px)] ${isLeft ? "md:mr-auto" : "md:ml-auto"}`}>
  <div
- className={`group relative rounded-2xl border border-border/70 bg-card/95 p-4 sm:p-5 overflow-hidden hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.15)] hover:border-primary/30 transition-all duration-300 cursor-default text-left ${
+ className={`group relative rounded-2xl border border-border/70 p-4 sm:p-5 overflow-hidden hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.15)] hover:border-primary/30 transition-all duration-300 cursor-default text-left ${
  isLeft ? "md:text-right" : ""
  }`}
+ style={{
+ background: isLeft
+ ? "linear-gradient(225deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--card)) 55%, hsl(var(--card)) 100%)"
+ : "linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card)) 45%, hsl(var(--primary) / 0.06) 100%)",
+ }}
  >
- {/* Glow */}
- <div className="absolute -bottom-14 -right-14 w-40 h-40 rounded-full bg-primary/10 soft-glow pointer-events-none" />
- <div className="absolute -top-10 -left-10 w-28 h-28 rounded-full bg-primary/8 soft-glow pointer-events-none" />
+
 
  {/* Content */}
  <div className={`relative z-10 flex items-start gap-3 ${isLeft ? "md:flex-row-reverse md:text-right" : ""}`}>

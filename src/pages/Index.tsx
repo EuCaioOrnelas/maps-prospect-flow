@@ -140,7 +140,7 @@ const Index = () => {
                 fora do viewport, reduzindo custo de layout/paint no scroll. */}
             <div className="cv-auto"><ProblemSection /></div>
             <div className="cv-auto"><OpportunitySection /></div>
-            <div className="cv-auto"><MechanismSection /></div>
+            <MechanismSection />
             <div className="cv-auto"><FeaturesOverviewSection /></div>
             <div className="cv-auto"><WhyItWorksSection /></div>
             <div className="cv-auto"><TestimonialsSection /></div>
