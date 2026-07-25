@@ -707,8 +707,8 @@ async function execute_cockpit(ctx: ProviderContext) {
     admin.from("revenue_score_logs").select("lead_id, points_applied, created_at")
       .eq("owner_user_id", owner)
       .gte("created_at", new Date(Date.now() - 7 * 86_400_000).toISOString()),
-    admin.from("revenue_leads").select("id, score_total, status_bucket").eq("owner_user_id", owner),
-    inPeriod(admin.from("search_history").select("results_count, created_at").eq("owner_user_id", owner)),
+    admin.from("revenue_leads").select("id, phone_e164, score_total, status_bucket, created_at").eq("owner_user_id", owner),
+    inPeriod(admin.from("search_history").select("results_count, leads, created_at").eq("owner_user_id", owner)),
     admin.from("search_history").select("results_count").eq("owner_user_id", owner),
     inPeriod(admin.from("agent_message_logs").select("content").eq("owner_user_id", owner).eq("direction", "outbound")),
     inPeriod(admin.from("wa_flow_executions" as any).select("node_history").eq("owner_user_id", owner)),
@@ -716,6 +716,7 @@ async function execute_cockpit(ctx: ProviderContext) {
     admin.from("company_services").select("average_ticket").eq("owner_user_id", owner),
     admin.from("pipeline_stages").select("id, name, position").eq("user_id", owner),
   ]) as any;
+
 
   const leadsP = leadsPeriod.data ?? [];
   const leadsAll = leadsAllTime.data ?? [];
@@ -841,7 +842,8 @@ async function execute_cockpit(ctx: ProviderContext) {
   // --------- Sales / MRR (all-time + no período) ---------
   const today = new Date().toISOString().slice(0, 10);
   const isActive = (d: any) => d.status === "active" && (!d.expiration_date || d.expiration_date >= today);
-  const revenueTotalAllTime = dealsAll.reduce((s: number, d: any) => {
+  // TCV histórico (todos os contratos, valor cheio)
+  const tcvHistorico = dealsAll.reduce((s: number, d: any) => {
     const val = Number(d.value || 0);
     return s + (d.sale_type === "one_time" ? val : val * Number(d.contract_months || 1));
   }, 0);
@@ -854,6 +856,63 @@ async function execute_cockpit(ctx: ProviderContext) {
       const months = Math.max(0, Math.min(12, Math.ceil((new Date(d.expiration_date).getTime() - Date.now()) / (30 * 86_400_000))));
       return s + Number(d.value || 0) * months;
     }, 0);
+
+  // --------- Receita realizada NO PERÍODO (não TCV) ---------
+  // one_time: valor cheio se closed_at (ou created_at) no período.
+  // recurring: value × meses do contrato contidos em [from,to]. Sem período = MRR × meses passados.
+  const periodFromMs = from ? new Date(from).getTime() : null;
+  const periodToMs = to ? new Date(to).getTime() : Date.now();
+  const monthMs = 30 * 86_400_000;
+  const receitaRealizadaPeriodo = dealsAll.reduce((s: number, d: any) => {
+    const val = Number(d.value || 0);
+    if (d.sale_type === "one_time") {
+      const closedTs = d.closed_at ? new Date(d.closed_at).getTime() : null;
+      if (closedTs && (!periodFromMs || closedTs >= periodFromMs) && closedTs <= periodToMs) return s + val;
+      return s;
+    }
+    // recurring: interseção do contrato com o período
+    const startTs = d.closed_at ? new Date(d.closed_at).getTime() : null;
+    if (!startTs) return s;
+    const endTs = d.expiration_date ? new Date(d.expiration_date).getTime() : Date.now();
+    const winStart = Math.max(startTs, periodFromMs ?? startTs);
+    const winEnd = Math.min(endTs, periodToMs);
+    if (winEnd <= winStart) return s;
+    const months = (winEnd - winStart) / monthMs;
+    return s + val * months;
+  }, 0);
+
+  // --------- Dashboard mirror: "Seu comercial gerou R$ X em oportunidades" ---------
+  // Espelha src/hooks/useCockpitForecast.ts para o card de hero do dashboard.
+  const searchP = searchPeriod.data ?? [];
+  const totalProspectedPeriodo = searchP.reduce((s: number, r: any) => s + (r.results_count || 0), 0);
+  const prospectedPhonesPeriodo = new Set<string>();
+  for (const search of searchP) {
+    const arr = Array.isArray(search.leads) ? search.leads : [];
+    for (const lead of arr) {
+      const phone = String(lead?.phone || lead?.telefone || "").replace(/\D/g, "").slice(-8);
+      if (phone.length >= 8) prospectedPhonesPeriodo.add(phone);
+    }
+  }
+  const scoredLeadsPeriodo = (revLeads as any[]).filter((r: any) => {
+    if (!from) return true;
+    const ts = r.created_at ? new Date(r.created_at).getTime() : 0;
+    return ts >= new Date(from).getTime() && ts <= periodToMs;
+  }).map((r: any) => ({
+    phoneKey: String(r.phone_e164 || "").replace(/\D/g, "").slice(-8),
+    score: Number(r.score_total || 0),
+  }));
+  const scoredPhoneKeys = new Set(scoredLeadsPeriodo.map(l => l.phoneKey));
+  const overlap = Array.from(prospectedPhonesPeriodo).filter(p => scoredPhoneKeys.has(p)).length;
+  const pureOppCount = Math.max(0, totalProspectedPeriodo - overlap);
+  const oppSales = Math.round(pureOppCount * 0.01);
+  let scoreSales = 0;
+  for (const b of SCORE_BUCKETS) {
+    const inB = scoredLeadsPeriodo.filter(l => l.score >= b.min && l.score <= b.max).length;
+    scoreSales += Math.round(inB * (b.low + b.high) / 2);
+  }
+  const dashboardEstimatedSales = oppSales + scoreSales;
+  const dashboardGeradoOportunidades = Math.round(dashboardEstimatedSales * averageTicket);
+
 
   // --------- Campanhas (dashboard cross-check) ---------
   const campaignsSent = camps.reduce((s: number, c: any) => s + (c.success_count || 0), 0);
@@ -900,9 +959,22 @@ async function execute_cockpit(ctx: ProviderContext) {
     // Card: Alertas Executivos
     alertas: alerts,
     // Card: Comercial (Sales / MRR)
+    // IMPORTANTE (para consumidores de IA):
+    //  - "gerado_em_oportunidades" é o VALOR OFICIAL que aparece no card de hero
+    //    do dashboard ("Seu comercial gerou R$ X em oportunidades"). Use este
+    //    campo quando o usuário perguntar "quanto meu comercial gerou".
+    //  - "receita_realizada_no_periodo" = receita real (deals fechados)
+    //    proporcional ao período consultado (não confundir com TCV).
+    //  - "tcv_historico" = soma value×contract_months de TODOS os contratos
+    //    (histórico total), NUNCA use como "quanto gerou no mês".
     comercial: {
-      receita_total_acumulada: revenueTotalAllTime,
-      mrr_ativo: mrrActive,
+      gerado_em_oportunidades: dashboardGeradoOportunidades,
+      gerado_em_oportunidades_descricao: "Mirror exato do card 'Seu comercial gerou' do dashboard: (leads prospectados sem score × 1% + leads com score × conversão por faixa) × ticket médio. Este é o número que o usuário vê na home.",
+      receita_realizada_no_periodo: Math.round(receitaRealizadaPeriodo),
+      receita_realizada_no_periodo_descricao: "Receita real de contratos fechados, proporcional ao período filtrado. one_time = valor cheio se fechado no período; recurring = valor × meses do contrato dentro do período.",
+      tcv_historico: Math.round(tcvHistorico),
+      tcv_historico_descricao: "TCV acumulado de todos os contratos (value × contract_months). É histórico total, não representa receita 'no período'.",
+      mrr_ativo: Math.round(mrrActive),
       vendas_ativas: activeSalesCount,
       projecao_12_meses: Math.round(projected12mo),
       currency: "BRL",
@@ -924,8 +996,8 @@ async function execute_cockpit(ctx: ProviderContext) {
 export const cockpitProvider: Provider = {
   metadata: {
     name: "cockpit",
-    description: "Snapshot completo do Growth Cockpit: receita potencial, leads quentes, gargalo/health, IA economizada, forecast, funil, radar, alertas, comercial e campanhas.",
-    version: "2.0.0",
+    description: "Snapshot completo do Growth Cockpit (dashboard executivo). CAMPO CANÔNICO para 'quanto meu comercial gerou': cockpit.comercial.gerado_em_oportunidades — espelha exatamente o card de hero do dashboard. NÃO use finance.receita_total (TCV) para responder essa pergunta.",
+    version: "2.1.0",
     requiredPermissions: [],
     minimumPlan: "start",
     supportedFilters: ["period"],
@@ -934,7 +1006,7 @@ export const cockpitProvider: Provider = {
     dependencies: [],
     inputSchema: { "filters.period": "{from,to}? — se ausente, retorna histórico total" },
     outputSchema: {
-      receita_potencial: "{ total, no_periodo, currency }",
+      receita_potencial: "{ total, no_periodo, currency } — valor SOMADO das oportunidades em negociação no CRM (pipeline), não receita realizada",
       leads_quentes_hoje: "number",
       gargalo: "{ status, detail, health_score, ... }",
       ia_economizou_min: "number",
@@ -942,13 +1014,14 @@ export const cockpitProvider: Provider = {
       funil_operacional: "{ stage, value, pct }[]",
       radar: "{ lead_id, score_growth_7d }[]",
       alertas: "{ type, text, route? }[]",
-      comercial: "{ receita_total_acumulada, mrr_ativo, vendas_ativas, projecao_12_meses, currency }",
+      comercial: "{ gerado_em_oportunidades (canônico do dashboard), receita_realizada_no_periodo, tcv_historico, mrr_ativo, vendas_ativas, projecao_12_meses, currency } — leia as descrições *_descricao antes de responder ao usuário",
       campanhas: "{ total, recipients, sent, failed, delivery_rate }",
     },
     status: "stable",
   },
   execute: execute_cockpit,
 };
+
 
 
 // ================= _integration-core/providers/crmProvider.ts =================
@@ -1518,30 +1591,62 @@ async function execute_finance(ctx: ProviderContext) {
   const from = ctx.filters.period?.from ?? null;
   const to = ctx.filters.period?.to ?? null;
 
-  let q = admin.from("lead_deals")
+  // Buscamos SEMPRE todos os deals; a filtragem "no período" acontece por closed_at,
+  // não por created_at (contrato recorrente antigo ainda gera receita hoje).
+  const { data, error } = await admin.from("lead_deals")
     .select("id, lead_id, title, value, sale_type, contract_months, status, payment_method, start_date, expiration_date, closed_at, created_at")
     .eq("owner_user_id", owner)
     .order("created_at", { ascending: false });
-  if (from) q = q.gte("created_at", from);
-  if (to)   q = q.lte("created_at", to);
-  const { data, error } = await q;
   if (error) throw new Error(error.message);
 
-  const sales: any[] = data ?? [];
+  const allSales: any[] = data ?? [];
   const today = new Date().toISOString().slice(0, 10);
   const isActive = (s: any) => s.status === "active" && (!s.expiration_date || s.expiration_date >= today);
 
-  const receitaTotal = sales.reduce((acc, s) => {
+  const periodFromMs = from ? new Date(from).getTime() : null;
+  const periodToMs = to ? new Date(to).getTime() : Date.now();
+  const monthMs = 30 * 86_400_000;
+
+  // Vendas assinadas dentro do período (por closed_at)
+  const signedInPeriod = allSales.filter(s => {
+    const ts = s.closed_at ? new Date(s.closed_at).getTime() : (s.created_at ? new Date(s.created_at).getTime() : null);
+    if (!ts) return false;
+    if (periodFromMs && ts < periodFromMs) return false;
+    if (ts > periodToMs) return false;
+    return true;
+  });
+
+  // TCV assinado no período (valor cheio dos contratos fechados neste intervalo)
+  const tcvSignedInPeriod = signedInPeriod.reduce((acc, s) => {
     const val = Number(s.value || 0);
     return acc + (s.sale_type === "one_time" ? val : val * Number(s.contract_months || 1));
   }, 0);
 
-  const mrrAtivo = sales.filter(s => s.sale_type === "recurring" && isActive(s))
+  // Receita REALIZADA no período (proporcional; interseção do contrato com o período)
+  const receitaRealizadaPeriodo = allSales.reduce((acc, s) => {
+    const val = Number(s.value || 0);
+    if (s.sale_type === "one_time") {
+      const ts = s.closed_at ? new Date(s.closed_at).getTime() : null;
+      if (ts && (!periodFromMs || ts >= periodFromMs) && ts <= periodToMs) return acc + val;
+      return acc;
+    }
+    const startTs = s.closed_at ? new Date(s.closed_at).getTime() : (s.start_date ? new Date(s.start_date).getTime() : null);
+    if (!startTs) return acc;
+    const endTs = s.expiration_date ? new Date(s.expiration_date).getTime() : Date.now();
+    const winStart = Math.max(startTs, periodFromMs ?? startTs);
+    const winEnd = Math.min(endTs, periodToMs);
+    if (winEnd <= winStart) return acc;
+    const months = (winEnd - winStart) / monthMs;
+    return acc + val * months;
+  }, 0);
+
+  const mrrAtivo = allSales.filter(s => s.sale_type === "recurring" && isActive(s))
     .reduce((acc, s) => acc + Number(s.value || 0), 0);
 
-  const vendasAtivas = sales.filter(isActive).length;
+  const vendasAtivas = allSales.filter(isActive).length;
+  const vendasFechadasNoPeriodo = signedInPeriod.length;
 
-  const projected12mo = sales.filter(s => s.sale_type === "recurring" && isActive(s))
+  const projected12mo = allSales.filter(s => s.sale_type === "recurring" && isActive(s))
     .reduce((acc, s) => {
       if (!s.expiration_date) return acc + Number(s.value || 0) * 12;
       const months = Math.max(0, Math.min(12, Math.ceil(
@@ -1550,39 +1655,47 @@ async function execute_finance(ctx: ProviderContext) {
       return acc + Number(s.value || 0) * months;
     }, 0);
 
-  const expiringSoon = sales.filter(s => {
+  const expiringSoon = allSales.filter(s => {
     if (!isActive(s) || !s.expiration_date) return false;
     const days = (new Date(s.expiration_date).getTime() - Date.now()) / 86_400_000;
     return days >= 0 && days <= 30;
   }).length;
 
-  // Distribuição por meio de pagamento
   const byPayment: Record<string, number> = {};
-  for (const s of sales) {
+  for (const s of allSales) {
     const k = s.payment_method || "desconhecido";
     byPayment[k] = (byPayment[k] ?? 0) + 1;
   }
 
+  const itemsForResponse = from || to ? signedInPeriod : allSales;
+
   return {
     data: {
       period: { from, to, fallback_all_time: !from && !to },
+      // IMPORTANTE (IA consumidora): use SEMPRE o campo mais específico à pergunta.
+      // Para "quanto meu comercial gerou em X dias" no dashboard,
+      // o campo canônico é cockpit.comercial.gerado_em_oportunidades — não este.
       summary: {
-        receita_total: Math.round(receitaTotal),
+        receita_realizada_no_periodo: Math.round(receitaRealizadaPeriodo),
+        receita_realizada_no_periodo_descricao: "Receita REAL entregue no período: contratos one_time fechados no período + fatia dos recurring proporcional aos meses dentro de [from,to].",
+        tcv_assinado_no_periodo: Math.round(tcvSignedInPeriod),
+        tcv_assinado_no_periodo_descricao: "Valor total dos contratos que foram ASSINADOS dentro do período (value × contract_months). É valor de contrato, não caixa entrando no período.",
+        vendas_fechadas_no_periodo: vendasFechadasNoPeriodo,
         mrr_ativo: Math.round(mrrAtivo),
         vendas_ativas: vendasAtivas,
         projecao_12_meses: Math.round(projected12mo),
         vendas_expirando_30d: expiringSoon,
-        total_registros: sales.length,
+        total_registros: itemsForResponse.length,
         currency: "BRL",
       },
       breakdowns: {
         by_payment_method: byPayment,
         by_type: {
-          one_time: sales.filter(s => s.sale_type === "one_time").length,
-          recurring: sales.filter(s => s.sale_type === "recurring").length,
+          one_time: itemsForResponse.filter(s => s.sale_type === "one_time").length,
+          recurring: itemsForResponse.filter(s => s.sale_type === "recurring").length,
         },
       },
-      items: sales.map(s => ({
+      items: itemsForResponse.map(s => ({
         id: s.id,
         lead_id: s.lead_id,
         title: s.title,
@@ -1598,33 +1711,36 @@ async function execute_finance(ctx: ProviderContext) {
         is_active: isActive(s),
       })),
     },
-    recordsCount: sales.length,
+    recordsCount: itemsForResponse.length,
   };
 }
 
 export const financeProvider: Provider = {
   metadata: {
     name: "finance",
-    description: "Vendas fechadas e métricas financeiras: receita total, MRR ativo, vendas ativas, projeção 12 meses.",
-    version: "1.0.0",
+    description: "Vendas fechadas (lead_deals) e métricas financeiras REAIS. Para responder 'quanto meu comercial gerou' use cockpit.comercial.gerado_em_oportunidades (campo canônico do dashboard); use este provider quando o usuário perguntar sobre receita realizada, MRR, contratos assinados ou vendas fechadas.",
+    version: "2.0.0",
     requiredPermissions: [],
     minimumPlan: "start",
     supportedFilters: ["period"],
     defaultCacheTTL: 60,
     priority: 4,
     dependencies: [],
-    inputSchema: { "filters.period": "{from,to}?" },
+    inputSchema: { "filters.period": "{from,to}? — filtra por closed_at (não por created_at)" },
     outputSchema: {
-      "summary.receita_total": "number BRL acumulado",
-      "summary.mrr_ativo": "number BRL/mês",
-      "summary.vendas_ativas": "number",
+      "summary.receita_realizada_no_periodo": "number BRL — receita real ENTREGUE no período (proporcional para recurring). ESTE é o campo correto para 'quanto entrou no mês'.",
+      "summary.tcv_assinado_no_periodo": "number BRL — valor de contratos ASSINADOS no período (value × meses). NÃO é receita 'do mês'; é valor de contrato futuro.",
+      "summary.mrr_ativo": "number BRL/mês — MRR atual dos contratos ativos",
+      "summary.vendas_ativas": "number — contratos ativos hoje",
+      "summary.vendas_fechadas_no_periodo": "number — deals fechados dentro do período",
       "summary.projecao_12_meses": "number BRL",
-      items: "SaleDTO[]",
+      items: "SaleDTO[] (deals fechados no período quando há filtro, senão todos)",
     },
     status: "stable",
   },
   execute: execute_finance,
 };
+
 
 
 // ================= _integration-core/providers/stubs.ts =================
