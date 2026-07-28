@@ -138,7 +138,6 @@ const Contact = () => {
                       alt="Wian"
                       className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover"
                     />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-green-500 rounded-full border-2 border-card" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground text-sm sm:text-base">Wian suporte</p>
