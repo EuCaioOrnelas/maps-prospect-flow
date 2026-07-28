@@ -127,12 +127,12 @@ function saveState(s: { ticketId: string | null; messages: Msg[]; phase: Phase; 
 
 const GREETING_MSG: Msg = {
   role: "ai",
-  content: "Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.\n\nToque no menu abaixo para selecionar a área onde precisa de ajuda.",
+  content: "Olá! Eu sou o **Wian** 👋, suporte inteligente da Wiize.\n\nToque no menu abaixo para selecionar a área onde precisa de ajuda.",
 };
 
 const ASK_NAME_MSG: Msg = {
   role: "ai",
-  content: "Olá! Eu sou o **Wian** 👋, atendente virtual da Wiize.\n\nAntes da gente começar, como posso te chamar? 😊",
+  content: "Olá! Eu sou o **Wian** 👋, suporte inteligente da Wiize.\n\nAntes da gente começar, como posso te chamar? 😊",
 };
 
 // Quebra a resposta longa do AI em vários "balões" curtos (estilo WhatsApp).
