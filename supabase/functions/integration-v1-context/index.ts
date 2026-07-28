@@ -480,6 +480,9 @@ export async function verifyHmac(
   }
   if (!matches) return { ok: false, code: "AUTH_INVALID_SIGNATURE" };
   NONCE_CACHE.set(nonce, Date.now());
+  const cid = req.headers.get("x-integration-client-id") ?? "unknown";
+  const persisted = await consumeNonceDb(cid, nonce);
+  if (!persisted) return { ok: false, code: "AUTH_REPLAYED_NONCE" };
   return { ok: true };
 }
 
