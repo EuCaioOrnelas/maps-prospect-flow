@@ -14,46 +14,26 @@ export const WIAN_KNOWLEDGE: Record<string, ModuleKnowledge> = {
   // -------------------------------------------------- WhatsApp / Conexões
   whatsapp: {
     description:
-      "Módulo de conexões de números. A Wiize tem 2 APIs: Evolution (usada para Aquecimento) e Meta Cloud / WABA (usada para Chat e Campanhas).",
+      "Módulo de conexões de números WhatsApp via API Oficial da Meta (WhatsApp Cloud API / WABA). É a única API usada hoje pela Wiize para chat, campanhas e agentes de IA.",
     keyRules: [
       "Todo número Meta Cloud precisa de DDI 55 obrigatório.",
-      "Conexão Evolution exige leitura de QR Code; reconectar invalida a sessão antiga.",
+      "Conexão é feita via Embedded Signup oficial da Meta (OAuth).",
       "Tokens Meta podem expirar; o sistema faz health checks periódicos e marca status.",
-      "Para campanhas e chat use WABA. Para aquecimento use Evolution.",
+      "Só é possível operar com números aprovados na sua conta Meta Business.",
     ],
     commonFlows: [
-      "Conectar Evolution: WhatsApp → Conexões → 'Conectar Evolution' → ler QR.",
       "Conectar Meta: WhatsApp → Conexões → 'Conectar Meta WhatsApp' → fluxo OAuth da Meta.",
       "Reconectar número desconectado: card do número → botão 'Reconectar'.",
     ],
     troubleshooting: [
-      "Status vermelho/amarelo = sessão caiu; clicar em Reconectar.",
-      "Token Meta expirado: refazer fluxo OAuth ('Conectar Meta WhatsApp').",
+      "Status vermelho/amarelo = token expirado; refazer OAuth ('Conectar Meta WhatsApp').",
       "Número não aparece após conectar: aguardar 30s e dar refresh.",
+      "Envio bloqueado: verificar limite de tier da conta Meta e templates aprovados.",
     ],
     relatedRoutes: ["/whatsapp", "/whatsapp/conexoes"],
   },
 
-  // -------------------------------------------------- Aquecimento
-  warming: {
-    description:
-      "Aquece números do WhatsApp via Evolution para liberar volumes maiores de envio com segurança.",
-    keyRules: [
-      "Limites diários crescem por nível de aquecimento. Reset acontece às 08:00.",
-      "Cada nível libera mais mensagens/dia até atingir 'hot'.",
-      "Pular etapas ou forçar volume aumenta risco de banimento do número.",
-    ],
-    commonFlows: [
-      "Iniciar aquecimento: WhatsApp → Aquecimento → escolher número → Iniciar.",
-      "Pausar/retomar: cards no painel de aquecimento.",
-    ],
-    troubleshooting: [
-      "Aquecimento parado: checar se o número Evolution está conectado.",
-      "Mensagens/dia abaixo do esperado: nível ainda baixo, é proposital.",
-      "Erro de envio: pode ser proxy degradado, sistema reatribui automático.",
-    ],
-    relatedRoutes: ["/whatsapp/aquecimento"],
-  },
+
 
   // -------------------------------------------------- Campanhas
   campaigns: {
@@ -133,7 +113,7 @@ export const WIAN_KNOWLEDGE: Record<string, ModuleKnowledge> = {
       "Modelo padrão é gpt-4o-mini. Custos são suportados pelo plano do user.",
       "Agente é silenciado automaticamente se humano responder (handoff).",
       "Silenciamento dura por estágio do CRM e cooldowns configurados.",
-      "Limites de mensagens/dia variam por nível de aquecimento do número.",
+      "Limites de mensagens/dia respeitam as políticas e tier da conta Meta Business.",
     ],
     commonFlows: [
       "Configurar agente: IA Agents → Novo → preencher prompt → vincular WABA.",
@@ -234,8 +214,7 @@ export const WIAN_KNOWLEDGE: Record<string, ModuleKnowledge> = {
 // Mapeia categoria da triagem -> chave do knowledge
 const CATEGORY_TO_KNOWLEDGE: Record<string, string[]> = {
   campanhas: ["campaigns", "whatsapp"],
-  conexoes: ["whatsapp", "warming"],
-  aquecimento: ["warming", "whatsapp"],
+  conexoes: ["whatsapp"],
   crm: ["crm"],
   ia_agents: ["aiAgents", "chat"],
   chat: ["chat", "aiAgents"],

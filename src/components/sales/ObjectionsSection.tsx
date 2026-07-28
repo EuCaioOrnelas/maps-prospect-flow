@@ -14,7 +14,7 @@ const objections = [
  },
  {
  q: "Qual a diferença entre prospecção outbound e campanhas inbound?",
- a: "Prospecção outbound são mensagens enviadas proativamente para leads novos (via Evolution API com aquecimento de chips). Campanhas inbound são mensagens de relacionamento para quem já interagiu com você (via Meta API Oficial com templates aprovados). O Wiize integra ambos os modelos em uma única plataforma.",
+ a: "Prospecção outbound são mensagens enviadas proativamente para leads novos e campanhas inbound são mensagens de relacionamento para quem já interagiu com você. Ambas operam via API Oficial da Meta (WhatsApp Cloud API) com templates aprovados e total conformidade — tudo integrado em uma única plataforma.",
  },
  {
  q: "Como funcionam os Fluxos de Automação (Flows)?",
@@ -30,7 +30,7 @@ const objections = [
  },
  {
  q: "O sistema é seguro para enviar mensagens em escala?",
- a: "Sim. Para outbound, o Wiize implementa aquecimento progressivo de chips em 4 níveis (20 dias), delays aleatórios, variações automáticas de texto e pausas inteligentes. Para inbound, operamos via API oficial do Meta com total conformidade. A combinação dessas camadas reduz drasticamente riscos de bloqueio.",
+ a: "Sim. O Wiize opera 100% via API Oficial da Meta (WhatsApp Cloud API), com templates aprovados, criptografia de ponta a ponta e total conformidade com as políticas do WhatsApp. Isso garante máxima confiabilidade e segurança nos envios.",
  },
  {
  q: "Preciso de equipe técnica para implementar?",

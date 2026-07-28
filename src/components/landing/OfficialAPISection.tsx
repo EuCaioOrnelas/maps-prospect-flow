@@ -164,8 +164,7 @@ export const OfficialAPISection = () => {
 
  {/* Disclaimer */}
  <p className="text-xs text-muted-foreground/60 text-center mt-8 max-w-2xl mx-auto">
- *A API oficial da Meta é utilizada para campanhas de relacionamento (inbound). 
- Campanhas de prospecção ativa utilizam a Evolution API com estratégias de proteção e limites diários inteligentes.
+ *Todas as campanhas do Wiize — inbound e outbound — operam via API Oficial da Meta (WhatsApp Cloud API), com templates aprovados e total conformidade com as políticas do WhatsApp.
  </p>
  </div>
  </section>

@@ -81,28 +81,24 @@ const SecurityFAQ = () => {
       ]
     },
     {
-      title: "Bloqueios e Riscos do WhatsApp",
+      title: "Segurança nos Envios via WhatsApp",
       icon: AlertTriangle,
       questions: [
         {
-          question: "O Wiize pode causar o bloqueio do meu número?",
-          answer: "O Wiize é uma ferramenta que facilita o envio de mensagens, mas quem decide sobre bloqueios é exclusivamente o WhatsApp. Bloqueios geralmente ocorrem devido ao envio de mensagens em grande volume, denúncias de spam por contatos, ou comportamentos que o WhatsApp identifica como não orgânicos. Oferecemos recursos de aquecimento para ajudar a reduzir esses riscos."
+          question: "O Wiize opera com a API Oficial da Meta?",
+          answer: "Sim. O Wiize opera 100% via API Oficial da Meta (WhatsApp Cloud API), com templates aprovados e total conformidade com as políticas do WhatsApp Business. Isso garante criptografia de ponta a ponta, alta entregabilidade e segurança máxima nos envios."
         },
         {
-          question: "O que é o aquecimento de números e como funciona?",
-          answer: "O aquecimento é um processo gradual de preparação do seu número para campanhas de maior volume. Através de conversas simuladas com IA e aumento progressivo do volume de mensagens ao longo de 20 dias, ajudamos a criar um histórico de uso mais natural para o seu número, reduzindo significativamente as chances de bloqueio."
+          question: "Existe risco de bloqueio de número na API Oficial?",
+          answer: "Como operamos via API Oficial da Meta, o risco de bloqueio arbitrário é mínimo. Ainda assim, o WhatsApp pode aplicar restrições em casos de violação das políticas oficiais (spam, conteúdo proibido, denúncias em massa). Seguir as boas práticas e nossas Diretrizes de Envio mantém sua conta saudável."
         },
         {
-          question: "O aquecimento garante que meu número não será bloqueado?",
-          answer: "Não. O aquecimento ajuda a reduzir significativamente o risco de bloqueio, mas não elimina completamente essa possibilidade. O WhatsApp utiliza algoritmos próprios para detectar comportamentos suspeitos, e nenhuma ferramenta pode garantir 100% de proteção contra bloqueios. Recomendamos sempre seguir as boas práticas de uso."
+          question: "O que acontece se minha conta Meta Business for restringida?",
+          answer: "Restrições e limites são decisões exclusivas da Meta. Se sua conta for restringida, você pode solicitar revisão diretamente pelo Meta Business Suite. O Wiize não se responsabiliza por decisões da Meta, mas nossa equipe pode orientá-lo sobre boas práticas para manter a conta em conformidade."
         },
         {
-          question: "O que acontece se meu número for bloqueado?",
-          answer: "Bloqueios são decisões do WhatsApp e não temos controle sobre eles. Se seu número for bloqueado, você pode tentar o recurso de apelação diretamente no WhatsApp. O Wiize não se responsabiliza por bloqueios, conforme descrito em nossos Termos de Uso, mas nossa equipe de suporte pode orientá-lo sobre as melhores práticas para evitar futuros bloqueios."
-        },
-        {
-          question: "Quais práticas devo evitar para não ser bloqueado?",
-          answer: "Evite: enviar mensagens para contatos que não conhecem você, usar textos muito comerciais ou com muitos links, enviar o mesmo texto para muitas pessoas, ignorar solicitações de parada, e enviar mensagens fora do horário comercial. Prefira sempre uma abordagem personalizada e respeitosa."
+          question: "Quais práticas devo evitar para manter minha conta saudável?",
+          answer: "Evite: enviar mensagens para contatos que não conhecem você, usar templates não aprovados, ignorar solicitações de parada (opt-out), enviar conteúdo proibido (apostas, adulto, esquemas financeiros) e volumes muito acima do tier atual da sua conta Meta. Prefira sempre uma abordagem personalizada e respeitosa."
         }
       ]
     },

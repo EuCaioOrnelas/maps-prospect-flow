@@ -11,9 +11,8 @@ const HelpCenter = () => {
   const usefulLinks = [
     { label: "Blog Wiize", path: "/blog" },
     { label: "Segurança e Proteção de Dados", hash: "seguranca" },
-    { label: "API Oficial do Meta (Inbound)", hash: "meta-api" },
-    { label: "Prospecção Outbound via Evolution API", hash: "whatsapp" },
-    { label: "Bloqueios de WhatsApp e Prevenção", hash: "aquecimento" },
+    { label: "WhatsApp via API Oficial da Meta", hash: "meta-api" },
+    { label: "Campanhas e Disparos Oficiais", hash: "whatsapp" },
     { label: "Prospecção Inteligente e Buscas", hash: "plataforma" },
     { label: "Agentes de IA e Automação", hash: "agentes-ia" },
     { label: "Planos, Pagamentos e Reembolso", hash: "planos" },
