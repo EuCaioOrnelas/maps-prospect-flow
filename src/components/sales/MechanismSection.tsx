@@ -27,7 +27,7 @@ const floatingElements = [
 
 function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: number; isLeft: boolean }) {
  const cardRef = useRef<HTMLDivElement>(null);
- const inView = useInView(cardRef, { once: true, amount: 0.05 });
+ const inView = useInView(cardRef, { once: true, amount: 0.2 });
  const Icon = step.icon;
 
  return (
