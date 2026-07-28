@@ -4,27 +4,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Copy, ShieldCheck, Fingerprint } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-function CodeBlock({ code, lang }: { code: string; lang?: string }) {
-  const { toast } = useToast();
-  return (
-    <div className="relative group">
-      <pre className="bg-muted/50 border border-border/60 rounded-lg p-4 text-xs overflow-x-auto font-mono leading-relaxed">
-        {lang && <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">{lang}</div>}
-        <code className="text-foreground/90">{code}</code>
-      </pre>
-      <button
-        onClick={() => { navigator.clipboard.writeText(code); toast({ title: "Copiado" }); }}
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1.5 bg-background/80 hover:bg-background rounded border border-border/60"
-        aria-label="Copiar"
-      >
-        <Copy className="w-3.5 h-3.5" />
-      </button>
-    </div>
-  );
-}
+import { ShieldCheck, Fingerprint } from "lucide-react";
+import { CodeBlock } from "../components/CodeBlock";
 
 export default function HmacGuide() {
   const tsSnippet = `// TypeScript / Deno / Node 18+ — assinatura HMAC-SHA256 para chamar a Wiize
