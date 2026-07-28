@@ -66,7 +66,7 @@ export const OfficialAPISection = () => {
  <motion.div
  initial={{ opacity: 0, scale: 0.95 }}
  whileInView={{ opacity: 1, scale: 1 }}
-  viewport={{ once: true, amount: 0.05 }}
+  viewport={{ once: true, amount: 0.2 }}
  transition={{ duration: 0.6 }}
  className="glass rounded-2xl p-6 md:p-10 mb-10 md:mb-14 border border-primary/20 relative overflow-hidden"
  >
@@ -125,7 +125,7 @@ export const OfficialAPISection = () => {
  key={index}
  initial={{ opacity: 0, y: 20 }}
  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ once: true, amount: 0.05 }}
+  viewport={{ once: true, amount: 0.2 }}
  transition={{ duration: 0.5, delay: index * 0.1 }}
  className="glass rounded-xl p-5 md:p-6 hover:bg-card/90 transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/20"
  >
