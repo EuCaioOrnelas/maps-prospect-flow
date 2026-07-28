@@ -135,7 +135,7 @@ export default function Playground() {
           <CardContent>
             {error && <p className="text-sm text-destructive">{error}</p>}
             {response && (
-              <pre className="max-h-[500px] overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(response, null, 2)}</pre>
+              <CodeBlock lang="json" code={JSON.stringify(response, null, 2)} />
             )}
           </CardContent>
         </Card>
