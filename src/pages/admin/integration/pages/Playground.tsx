@@ -3,11 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, PlayCircle } from "lucide-react";
+import { ShieldCheck, PlayCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PROVIDER_DOCS } from "../registry/providers";
 
@@ -23,18 +22,20 @@ function providerBody(name: string) {
   );
 }
 
+type Endpoint = { id: string; label: string; target: "integration-v1-context" | "integration-v1-provider"; body: string };
+
 export default function Playground() {
-  const endpoints = useMemo(() => [
-    { id: "context", label: "POST /api/v1/context (Orquestrador)", fn: "integration-v1-context", body: CONTEXT_BODY },
-    ...PROVIDER_DOCS.map((p) => ({
-      id: `provider:${p.key}`, label: `POST /api/v1/providers/${p.key}`, fn: "integration-v1-provider",
+  const endpoints = useMemo<Endpoint[]>(() => [
+    { id: "context", label: "POST /api/v1/context (Orquestrador)", target: "integration-v1-context", body: CONTEXT_BODY },
+    ...PROVIDER_DOCS.map<Endpoint>((p) => ({
+      id: `provider:${p.key}`,
+      label: `POST /api/v1/providers/${p.key}`,
+      target: "integration-v1-provider",
       body: providerBody(p.key),
     })),
   ], []);
 
   const [endpointId, setEndpointId] = useState("context");
-  const [clientId, setClientId] = useState("");
-  const [clientSecret, setClientSecret] = useState("");
   const [body, setBody] = useState(CONTEXT_BODY);
   const [bypassCache, setBypassCache] = useState(false);
   const [response, setResponse] = useState<any>(null);
@@ -54,23 +55,21 @@ export default function Playground() {
     try {
       const parsed = JSON.parse(body);
       const ep = endpoints.find((e) => e.id === endpointId)!;
-      const { data: sess } = await supabase.auth.getSession();
-      const jwt = sess.session?.access_token;
-      if (!jwt) { setError("Nenhuma sessão ativa — faça login."); return; }
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${ep.fn}`;
-      const headers: Record<string, string> = {
-        "Authorization": `Bearer ${jwt}`,
-        "Content-Type": "application/json",
-        "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        "x-integration-client-id": clientId,
-        "x-integration-client-secret": clientSecret,
-      };
-      if (bypassCache) headers["x-integration-cache-bypass"] = "true";
+
+      // Call the backend proxy — client_id/secret NEVER leave the server.
       const started = performance.now();
-      const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(parsed) });
-      setElapsed(Math.round(performance.now() - started));
-      setStatus(res.status);
-      setResponse(await res.json());
+      const { data, error: fnErr } = await supabase.functions.invoke("integration-portal-proxy", {
+        body: { target: ep.target, body: parsed, bypass_cache: bypassCache },
+      });
+      const total = Math.round(performance.now() - started);
+
+      if (fnErr) {
+        setError(fnErr.message || "Falha ao invocar proxy");
+        return;
+      }
+      setElapsed((data as any)?.proxy?.elapsed_ms ?? total);
+      setStatus((data as any)?.proxy?.upstream_status ?? 200);
+      setResponse((data as any)?.response ?? data);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -82,14 +81,17 @@ export default function Playground() {
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold">Playground</h1>
-        <p className="mt-1 text-muted-foreground">Teste o orquestrador ou qualquer Provider individual com seu JWT de admin.</p>
+        <p className="mt-1 text-muted-foreground">
+          Teste o orquestrador ou qualquer Provider individual. Credenciais são injetadas no backend — nunca ficam no browser.
+        </p>
       </header>
 
       <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Credenciais sensíveis</AlertTitle>
+        <ShieldCheck className="h-4 w-4" />
+        <AlertTitle>Modo seguro ativo</AlertTitle>
         <AlertDescription>
-          <code>INTEGRATION_WIAN_CLIENT_ID</code> e <code>INTEGRATION_WIAN_CLIENT_SECRET</code> ficam apenas em memória neste browser.
+          Este playground roda através do <code>integration-portal-proxy</code> (edge function admin-only).
+          Seu JWT é validado como admin no backend e o <code>client_secret</code> nunca é enviado pelo navegador.
         </AlertDescription>
       </Alert>
 
@@ -105,16 +107,6 @@ export default function Playground() {
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div>
-              <Label htmlFor="cid">Client ID</Label>
-              <Input id="cid" value={clientId} onChange={(e) => setClientId(e.target.value)} placeholder="INTEGRATION_WIAN_CLIENT_ID" />
-            </div>
-            <div>
-              <Label htmlFor="csec">Client Secret</Label>
-              <Input id="csec" type="password" value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} placeholder="INTEGRATION_WIAN_CLIENT_SECRET" />
-            </div>
-          </div>
           <div className="flex items-center gap-2">
             <Switch id="bypass" checked={bypassCache} onCheckedChange={setBypassCache} />
             <Label htmlFor="bypass" className="cursor-pointer">Ignorar cache do Provider (força re-execução)</Label>
@@ -123,7 +115,7 @@ export default function Playground() {
             <Label htmlFor="body">Body</Label>
             <Textarea id="body" value={body} onChange={(e) => setBody(e.target.value)} rows={14} className="font-mono text-xs" />
           </div>
-          <Button onClick={run} disabled={loading || !clientId || !clientSecret}>
+          <Button onClick={run} disabled={loading}>
             <PlayCircle className="mr-2 h-4 w-4" />
             {loading ? "Executando…" : "Executar"}
           </Button>
