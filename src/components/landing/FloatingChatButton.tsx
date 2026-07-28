@@ -47,24 +47,29 @@ export const FloatingChatButton = () => {
                 <X size={14} />
               </button>
 
-              {/* Header */}
-              <div className="px-4 pt-4 pb-3 bg-gradient-to-br from-primary/10 to-transparent">
-                <div className="flex items-center gap-2.5">
+              {/* Header with avatar + gradient */}
+              <div className="relative px-4 pt-4 pb-3 bg-gradient-to-b from-primary/15 via-primary/5 to-transparent">
+                <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-semibold text-sm">
-                      W
-                    </div>
+                    <img
+                      src={wianAvatar}
+                      alt="Wian"
+                      className="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-sm"
+                    />
                     <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-neutral-900 leading-tight">Wian</p>
-                    <p className="text-[11px] text-green-600 leading-tight">Online agora</p>
+                    <p className="text-[11px] text-green-600 leading-tight">Assistente virtual • Online</p>
                   </div>
                 </div>
               </div>
 
+              {/* Divider */}
+              <div className="h-px bg-gradient-to-r from-transparent via-black/10 to-transparent" />
+
               {/* Chat bubbles */}
-              <div className="px-4 py-3 space-y-2">
+              <div className="px-4 py-4 space-y-2 bg-white">
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -82,7 +87,7 @@ export const FloatingChatButton = () => {
                   className="bg-neutral-100 rounded-2xl rounded-tl-sm px-3 py-2 max-w-[90%]"
                 >
                   <p className="text-sm text-neutral-800 leading-snug">
-                    Posso tirar suas dúvidas sobre planos, funcionalidades e integrações.
+                    Posso responder suas dúvidas sobre planos, funcionalidades e integrações.
                   </p>
                 </motion.div>
                 <motion.div
@@ -92,7 +97,7 @@ export const FloatingChatButton = () => {
                   className="bg-neutral-100 rounded-2xl rounded-tl-sm px-3 py-2 max-w-[90%]"
                 >
                   <p className="text-sm text-neutral-800 leading-snug">
-                    Quer conversar agora? 😊
+                    Como posso ajudar você? 😊
                   </p>
                 </motion.div>
               </div>
