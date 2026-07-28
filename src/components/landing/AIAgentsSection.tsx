@@ -80,7 +80,7 @@ export const AIAgentsSection = () => {
  key={index}
  initial={{ opacity: 0, y: 30 }}
  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ once: true, amount: 0.2 }}
+  viewport={{ once: true, amount: 0.05 }}
  transition={{ duration: 0.5, delay: index * 0.12 }}
  className="group relative rounded-2xl border border-border/60 bg-card/95 p-7 hover:border-primary/30 hover:bg-card/80 transition-all duration-300"
  >
@@ -100,7 +100,7 @@ export const AIAgentsSection = () => {
  <motion.div
  initial={{ opacity: 0, x: -30 }}
  whileInView={{ opacity: 1, x: 0 }}
-  viewport={{ once: true, amount: 0.2 }}
+  viewport={{ once: true, amount: 0.05 }}
  transition={{ duration: 0.6 }}
  >
  <div className="rounded-2xl border border-border/60 bg-card/80 overflow-hidden">
@@ -168,7 +168,7 @@ export const AIAgentsSection = () => {
  <motion.div
  initial={{ opacity: 0, x: 30 }}
  whileInView={{ opacity: 1, x: 0 }}
-  viewport={{ once: true, amount: 0.2 }}
+  viewport={{ once: true, amount: 0.05 }}
  transition={{ duration: 0.6 }}
  className="space-y-6"
  >
@@ -187,7 +187,7 @@ export const AIAgentsSection = () => {
  key={index}
  initial={{ opacity: 0, x: 20 }}
  whileInView={{ opacity: 1, x: 0 }}
-  viewport={{ once: true, amount: 0.2 }}
+  viewport={{ once: true, amount: 0.05 }}
  transition={{ duration: 0.4, delay: index * 0.08 }}
  className="flex items-center gap-4 p-3.5 rounded-xl bg-card/50 border border-border/30 hover:border-primary/20 transition-colors"
  >
@@ -205,7 +205,7 @@ export const AIAgentsSection = () => {
  <motion.div
  initial={{ opacity: 0, y: 30 }}
  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ once: true, amount: 0.2 }}
+  viewport={{ once: true, amount: 0.05 }}
  transition={{ duration: 0.6 }}
  className="rounded-2xl border border-border/60 bg-card/95 overflow-hidden"
  >

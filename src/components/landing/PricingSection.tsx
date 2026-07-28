@@ -415,7 +415,7 @@ export const PricingSection = () => {
  key={plan.key}
  initial={{ opacity: 0, y: 50, scale: 0.9 }}
  whileInView={{ opacity: 1, y: 0, scale: 1 }}
-  viewport={{ once: true, amount: 0.2 }}
+  viewport={{ once: true, amount: 0.05 }}
  transition={{ 
  duration: 0.6, 
  delay: index * 0.15,
@@ -513,7 +513,7 @@ export const PricingSection = () => {
  key="enterprise"
  initial={{ opacity: 0, y: 50, scale: 0.9 }}
  whileInView={{ opacity: 1, y: 0, scale: 1 }}
-  viewport={{ once: true, amount: 0.2 }}
+  viewport={{ once: true, amount: 0.05 }}
  transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
  className="group relative col-span-2 md:col-span-1 rounded-2xl flex flex-col overflow-hidden glass p-3 sm:p-5 md:p-6 transition-transform duration-300 md:hover:-translate-y-2 md:hover:scale-[1.03]"
  style={{
