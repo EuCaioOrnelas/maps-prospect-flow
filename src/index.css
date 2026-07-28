@@ -1763,5 +1763,12 @@ body.tour-active [role="dialog"][data-state="open"] {
     content-visibility: auto;
     contain-intrinsic-size: auto 1200px;
   }
+  /* Variante com placeholder maior para seções longas (features, pricing, FAQ),
+     evita que o Footer suba prematuramente durante o scroll inicial. */
+  .cv-auto-lg {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 2000px;
+  }
+
 
 }
