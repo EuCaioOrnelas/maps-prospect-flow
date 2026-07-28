@@ -292,7 +292,8 @@ const newJwt = r.session!.access_token;`;
             ["examples", "7. Exemplos por card do dashboard"],
             ["errors", "8. Erros"],
             ["rate-limits", "9. Rate limits & Cache"],
-            ["best-practices", "10. Boas práticas"],
+            ["arquitetura", "10. Arquitetura interna (guia do dev)"],
+            ["best-practices", "11. Boas práticas"],
           ].map(([id, label]) => (
             <li key={id}>
               <a href={`#${id}`} className="text-primary hover:underline">{label}</a>
@@ -565,8 +566,116 @@ const newJwt = r.session!.access_token;`;
         </CardContent></Card>
       </Section>
 
-      {/* 10. BEST PRACTICES */}
-      <Section id="best-practices" icon={ShieldCheck} title="10. Boas práticas">
+      {/* 10. ARQUITETURA INTERNA */}
+      <Section id="arquitetura" icon={Layers} title="10. Arquitetura interna (guia do dev)">
+        <Card><CardContent className="pt-6 text-sm space-y-4 leading-relaxed">
+          <p>
+            Esta seção descreve, em formato contínuo, <strong>como a Integration Layer funciona por dentro</strong> —
+            arquivos, variáveis de ambiente, fluxo de uma requisição e onde tocar quando for evoluir. É a leitura
+            obrigatória de qualquer dev que for editar o backend da API.
+          </p>
+
+          <h3 className="font-semibold text-base pt-2">10.1. Layout dos arquivos</h3>
+          <p>
+            Todo o backend vive em <code>supabase/functions/</code>. Existem quatro funções relevantes:
+            <code> integration-v1-context</code> (orquestrador que executa vários providers em paralelo),
+            <code> integration-v1-provider</code> (executor de um único provider — usado no Playground e para
+            chamadas cirúrgicas), <code> integration-v1-selftest</code> (roda um contrato E2E com cada provider e
+            devolve um relatório usado pela tela <em>Admin → APIs</em>) e <code> integration-portal-proxy</code>
+            (proxy admin-only que injeta CLIENT_ID/SECRET no server, para o Playground nunca expor credencial no
+            browser). No frontend, a documentação e o painel vivem em <code>src/pages/admin/integration/</code>
+            protegidos por <code>&lt;ProtectedRoute requireAdmin&gt;</code> em <code>src/App.tsx</code>.
+          </p>
+
+          <h3 className="font-semibold text-base pt-2">10.2. Variáveis de ambiente (secrets)</h3>
+          <p>
+            Todas configuradas em <em>Backend → Edge Function Secrets</em>. Nenhuma delas pode voltar a viver no
+            código-fonte.
+          </p>
+          <ul className="pl-5 list-disc space-y-1">
+            <li><code>INTEGRATION_WIAN_CLIENT_ID</code> / <code>INTEGRATION_WIAN_CLIENT_SECRET</code> — credenciais primárias do consumidor "Wian". Um par por app registrado no <code>CLIENT_REGISTRY</code>.</li>
+            <li><code>INTEGRATION_WIAN_CLIENT_SECRET_PREVIOUS</code> — secret anterior, aceita em paralelo durante rotação (P1). Remova depois que o consumidor migrar.</li>
+            <li><code>INTEGRATION_REQUIRE_HMAC</code> — <code>"true"</code> exige assinatura HMAC (P2). Padrão <code>"false"</code>.</li>
+            <li><code>INTEGRATION_IP_RATE_LIMIT</code> — override do limite por IP (padrão 300 req/min, P3).</li>
+            <li><code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code> — injetadas pela plataforma; usadas pelos providers para consultar dados com contexto de <code>company_id</code> derivado do JWT.</li>
+          </ul>
+
+          <h3 className="font-semibold text-base pt-2">10.3. Ciclo de vida de uma requisição</h3>
+          <p>
+            Quando uma chamada chega em <code>/functions/v1/integration-v1-context</code>, o handler executa
+            <strong> nesta ordem exata</strong>, e qualquer falha aborta antes do próximo passo:
+          </p>
+          <ol className="pl-5 list-decimal space-y-1">
+            <li><strong>CORS preflight</strong> — devolve os headers permitidos, incluindo <code>x-integration-signature</code>, <code>x-integration-timestamp</code>, <code>x-integration-nonce</code>, <code>x-idempotency-key</code>, <code>x-correlation-id</code>.</li>
+            <li><strong>Versão da API</strong> (P5) — lê <code>x-integration-api-version</code>; hoje só aceita <code>v1</code>. Diferente ⇒ <code>API_VERSION_UNSUPPORTED</code>.</li>
+            <li><strong>Rate limit por IP</strong> (P3) — chama a RPC <code>public.check_rate_limit(ip, action, 300, 60)</code>. Estourou ⇒ 429 com header <code>Retry-After</code>.</li>
+            <li><strong>verifyClient</strong> (P1) — compara <code>x-integration-client-id/secret</code> contra o par primário e o "previous". Match nenhum ⇒ <code>AUTH_INVALID_CLIENT</code>.</li>
+            <li><strong>verifyHmac</strong> (P2, condicional) — se <code>INTEGRATION_REQUIRE_HMAC=true</code>, valida timestamp (±300s), nonce (cache in-memory de 5 min) e assinatura em tempo constante.</li>
+            <li><strong>Escopos</strong> (P5) — cruza <code>CLIENT_REGISTRY[client_id].scopes</code> com os providers pedidos; sem escopo ⇒ <code>SCOPE_FORBIDDEN</code>.</li>
+            <li><strong>Idempotência</strong> (P4) — se veio <code>x-idempotency-key</code>, checa cache de 60s. Hit ⇒ devolve a resposta anterior com <code>x-idempotent-replay: true</code>.</li>
+            <li><strong>JWT do usuário</strong> — chama <code>supabase.auth.getUser(access_token)</code>. Deriva <code>company_id</code> do perfil (jamais do body).</li>
+            <li><strong>Execução dos providers</strong> — para cada módulo pedido, roda o provider correspondente em paralelo (<code>Promise.allSettled</code>), com <em>timeout</em> de 15s (context) ou 20s (provider único), envolto em <em>circuit breaker</em> (<code>breakerIsOpen</code>/<code>breakerRecord</code>). Falha de um provider vira item em <code>errors[]</code> sem derrubar o resto.</li>
+            <li><strong>Audit log</strong> — grava em <code>public.integration_audit_log</code> com <code>correlation_id</code>, <code>request_id</code>, <code>client_id</code>, <code>company_id</code>, providers e duração.</li>
+            <li><strong>Envelope</strong> — devolve JSON conforme seção 5, com <code>processing_time_ms</code> e <code>cache</code>.</li>
+          </ol>
+
+          <h3 className="font-semibold text-base pt-2">10.4. Provider Registry (como adicionar um novo domínio)</h3>
+          <p>
+            O <code>CLIENT_REGISTRY</code> mapeia <em>client_id → scopes[]</em>. Já o <strong>Provider Registry</strong>
+            vive dentro do próprio <code>integration-v1-provider/index.ts</code> como um objeto:
+            <code> {'{ cockpit: async (ctx) => {...}, crm: async (ctx) => {...} }'}</code>. Para adicionar um novo
+            domínio (ex.: <code>ads</code>): 1) crie a função assíncrona que recebe <code>{"{ supabase, companyId, filters }"}</code>
+            e retorna <code>{"{ data, metadata }"}</code>; 2) registre no dicionário; 3) declare em
+            <code> src/pages/admin/integration/registry/providers.ts</code> (status, minimum_plan, filtros suportados,
+            cache TTL); 4) opcional: descreva os campos em <code>PROVIDER_METRICS</code> no Developer Center para
+            gerar a doc automaticamente. O selftest passa a incluir o novo provider sem mudança adicional.
+          </p>
+
+          <h3 className="font-semibold text-base pt-2">10.5. Filtros, período e paginação</h3>
+          <p>
+            Filtros chegam em <code>body.filters</code>. Cada provider decide quais consome — o registro em
+            <code> registry/filters.ts</code> serve apenas de documentação viva (renderizado na seção 4).
+            <strong> period</strong> deve ser ISO 8601; ausente = histórico total. <strong>pagination.size</strong>
+            é capado em 200 no server. <strong>sort</strong> é uma string <code>campo:asc|desc</code>; providers
+            que não suportam ordenação ignoram silenciosamente.
+          </p>
+
+          <h3 className="font-semibold text-base pt-2">10.6. Rate limit, cache e circuit breaker</h3>
+          <p>
+            Três camadas: <strong>IP</strong> (300/min via <code>check_rate_limit</code>),
+            <strong> par (client_id, user_id)</strong> — 60/min no context, 120/min no provider único —
+            e <strong>cache por provider</strong> (TTL definido no registry, 30-300s). O bypass é feito com
+            <code> x-integration-cache-bypass: true</code>. O <em>breaker</em> abre depois de 5 falhas seguidas
+            no mesmo provider em 60s e responde <code>PROVIDER_UNAVAILABLE</code> por 30s, evitando cascata.
+          </p>
+
+          <h3 className="font-semibold text-base pt-2">10.7. Segurança adicional — HMAC</h3>
+          <p>
+            Detalhado na página <a href="/admin/integration/hmac" className="text-primary hover:underline">Assinatura HMAC</a>.
+            Ativa quando <code>INTEGRATION_REQUIRE_HMAC=true</code>. A verificação está em <code>verifyHmac()</code>
+            dentro dos dois handlers e usa <code>timingSafeEqual</code> para evitar timing attacks.
+          </p>
+
+          <h3 className="font-semibold text-base pt-2">10.8. Auditoria e correlação</h3>
+          <p>
+            Toda chamada gera 1 registro em <code>public.integration_audit_log</code>. Se o consumidor enviar
+            <code> x-correlation-id</code> (recomendado — mesmo ID em toda a jornada, ex.: um chat do Wian),
+            o campo é copiado; caso contrário é gerado. <code>x-request-id</code> identifica a chamada individual.
+            A tela <em>Auditoria</em> filtra por qualquer um dos dois.
+          </p>
+
+          <h3 className="font-semibold text-base pt-2">10.9. Como evoluir a Layer sem quebrar consumidores</h3>
+          <p>
+            A regra é: <strong>versão nova = endpoint novo</strong> (<code>integration-v2-context</code>). O header
+            <code> x-integration-api-version</code> é validado explicitamente para forçar o consumidor a se declarar.
+            Mudanças de shape em <code>v1</code> só são permitidas se forem <em>aditivas</em> (novos campos opcionais).
+            Nunca remover ou renomear campos existentes — atualize o Registry e o Changelog primeiro.
+          </p>
+        </CardContent></Card>
+      </Section>
+
+      {/* 11. BEST PRACTICES */}
+      <Section id="best-practices" icon={ShieldCheck} title="11. Boas práticas">
         <Card><CardContent className="pt-6 text-sm space-y-3">
           <ul className="pl-5 list-disc space-y-2">
             <li>Prefira o <strong>endpoint orquestrador</strong> quando precisar de múltiplos providers na mesma tela — evita rate-limit em cascata.</li>
