@@ -161,7 +161,7 @@ export async function wiizeContext(
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <CodeBlock language="text" code={systemPrompt} />
+          <CodeBlock lang="text" code={systemPrompt} />
         </CardContent>
       </Card>
 
@@ -201,7 +201,7 @@ export async function wiizeContext(
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <CodeBlock language="bash" code={contextCurl} />
+          <CodeBlock lang="bash" code={contextCurl} />
         </CardContent>
       </Card>
 
@@ -212,7 +212,7 @@ export async function wiizeContext(
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <CodeBlock language="bash" code={providerCurl} />
+          <CodeBlock lang="bash" code={providerCurl} />
         </CardContent>
       </Card>
 
@@ -224,7 +224,7 @@ export async function wiizeContext(
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <CodeBlock language="typescript" code={tsClient} />
+          <CodeBlock lang="typescript" code={tsClient} />
         </CardContent>
       </Card>
 
@@ -240,7 +240,7 @@ export async function wiizeContext(
             Todas as respostas de sucesso seguem este envelope. <strong>Nunca</strong> derive campos
             que não estão presentes. Valores monetários são em BRL. Percentuais são 0–100.
           </p>
-          <CodeBlock language="json" code={responseShape} />
+          <CodeBlock lang="json" code={responseShape} />
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Regra crítica para o modelo</AlertTitle>
@@ -265,7 +265,7 @@ export async function wiizeContext(
             Registre este schema como tool. Serve tal e qual para Anthropic (tools), OpenAI (function calling)
             e Google (function declarations). Meta Llama consome o mesmo shape via wrapper compatível com OpenAI.
           </p>
-          <CodeBlock language="json" code={toolSchema} />
+          <CodeBlock lang="json" code={toolSchema} />
         </CardContent>
       </Card>
 
