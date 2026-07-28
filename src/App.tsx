@@ -189,6 +189,7 @@ const IntegrationChangelog = lazyWithRetry(() => import("./pages/admin/integrati
 const IntegrationRegistry = lazyWithRetry(() => import("./pages/admin/integration/pages/Registry"), "IntegrationRegistry");
 const IntegrationDeveloperCenter = lazyWithRetry(() => import("./pages/admin/integration/pages/DeveloperCenter"), "IntegrationDeveloperCenter");
 const IntegrationHmacGuide = lazyWithRetry(() => import("./pages/admin/integration/pages/HmacGuide"), "IntegrationHmacGuide");
+const IntegrationAiGuide = lazyWithRetry(() => import("./pages/admin/integration/pages/AiGuide"), "IntegrationAiGuide");
 
 const queryClient = new QueryClient({
   defaultOptions: {
