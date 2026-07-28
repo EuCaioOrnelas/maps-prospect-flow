@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { ShieldCheck, PlayCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PROVIDER_DOCS } from "../registry/providers";
+import { CodeBlock } from "../components/CodeBlock";
 
 const CONTEXT_BODY = JSON.stringify(
   { version: "v1", modules: ["cockpit", "crm", "pipeline"], filters: { pagination: { page: 1, size: 20 } } },
