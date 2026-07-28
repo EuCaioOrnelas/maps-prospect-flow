@@ -234,6 +234,15 @@ export interface AuditEntry {
   records_returned: number;
   ip: string | null;
   user_agent: string | null;
+  // P1→P5 hardening columns
+  correlation_id?: string | null;
+  circuit_state?: string | null;
+  cache_hit?: boolean | null;
+  signature_verified?: boolean | null;
+  scopes_matched?: boolean | null;
+  blocked_reason?: string | null;
+  rate_limited?: boolean | null;
+  ban_applied?: boolean | null;
 }
 
 export async function writeAudit(entry: AuditEntry): Promise<void> {
@@ -243,6 +252,79 @@ export async function writeAudit(entry: AuditEntry): Promise<void> {
   } catch (e) {
     console.warn("[integration] audit write failed:", (e as Error).message);
   }
+}
+
+// ---- P1→P5 DB persistence helpers ----
+export async function checkIntegrationBan(
+  ip: string, clientId: string | null,
+): Promise<{ banned: boolean; reason?: string; until?: string }> {
+  if ((!ip || ip === "unknown") && !clientId) return { banned: false };
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { data, error } = await admin.rpc("check_integration_ban", {
+      p_ip: ip || null, p_client_id: clientId,
+    });
+    if (error || !data) return { banned: false };
+    const d = data as any;
+    return { banned: Boolean(d?.banned), reason: d?.reason, until: d?.until };
+  } catch { return { banned: false }; }
+}
+
+export function recordAbuse(
+  ip: string, clientId: string | null, eventType: string,
+  severity = 1, details: Record<string, unknown> = {},
+): void {
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    admin.rpc("record_abuse_event", {
+      p_ip: ip && ip !== "unknown" ? ip : null,
+      p_client_id: clientId,
+      p_event_type: eventType,
+      p_severity: severity,
+      p_details: details,
+    }).then(() => {}, () => {});
+  } catch { /* noop */ }
+}
+
+export async function consumeNonceDb(clientId: string, nonce: string): Promise<boolean> {
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { data, error } = await admin.rpc("consume_nonce", {
+      p_client_id: clientId, p_nonce: nonce, p_ttl_seconds: 600,
+    });
+    if (error) return true;
+    return Boolean(data);
+  } catch { return true; }
+}
+
+export async function checkIdempotencyDb(
+  clientId: string, key: string, requestHash: string,
+): Promise<{ replay: boolean; body?: string; status?: number }> {
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { data, error } = await admin.rpc("check_idempotency", {
+      p_client_id: clientId, p_key: key, p_request_hash: requestHash,
+    });
+    if (error || !data) return { replay: false };
+    const d = data as any;
+    if (!d.replay) return { replay: false };
+    const body = typeof d.response === "string" ? d.response : JSON.stringify(d.response ?? {});
+    return { replay: true, body, status: Number(d.status ?? 200) };
+  } catch { return { replay: false }; }
+}
+
+export async function storeIdempotencyDb(
+  clientId: string, key: string, requestHash: string, body: string, status: number,
+): Promise<void> {
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    let parsed: unknown = body;
+    try { parsed = JSON.parse(body); } catch { /* keep raw */ }
+    await admin.rpc("store_idempotency", {
+      p_client_id: clientId, p_key: key, p_request_hash: requestHash,
+      p_body: parsed, p_status: status, p_ttl_seconds: 600,
+    });
+  } catch { /* noop */ }
 }
 
 
