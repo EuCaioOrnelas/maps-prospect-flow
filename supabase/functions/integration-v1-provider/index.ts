@@ -2178,11 +2178,16 @@ Deno.serve(async (req) => {
   const ip = clientIp(req) ?? "unknown";
   const ua = req.headers.get("user-agent");
 
+  const correlationId = req.headers.get("x-correlation-id") ?? req.headers.get("x-request-id") ?? null;
+
   const audit = (name: string, data: {
     status: number; success: boolean;
     errorCode?: string | null; errorMessage?: string | null;
     clientId?: string | null; userId?: string | null; companyId?: string | null;
     filters?: Record<string, unknown>; records?: number;
+    cacheHit?: boolean | null; signatureVerified?: boolean | null; scopesMatched?: boolean | null;
+    blockedReason?: string | null; rateLimited?: boolean | null; banApplied?: boolean | null;
+    circuitState?: string | null;
   }) => writeAudit({
     request_id: requestId, client_id: data.clientId ?? null, user_id: data.userId ?? null,
     company_id: data.companyId ?? null,
@@ -2192,6 +2197,14 @@ Deno.serve(async (req) => {
     error_code: data.errorCode ?? null, error_message: data.errorMessage ?? null,
     processing_time_ms: Date.now() - started, records_returned: data.records ?? 0,
     ip, user_agent: ua,
+    correlation_id: correlationId,
+    cache_hit: data.cacheHit ?? null,
+    signature_verified: data.signatureVerified ?? null,
+    scopes_matched: data.scopesMatched ?? null,
+    blocked_reason: data.blockedReason ?? null,
+    rate_limited: data.rateLimited ?? null,
+    ban_applied: data.banApplied ?? null,
+    circuit_state: data.circuitState ?? null,
   });
 
   if (req.method !== "POST") {
