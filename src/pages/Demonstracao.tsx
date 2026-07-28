@@ -8,6 +8,7 @@ import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { Button } from "@/components/ui/button";
+import { ProblemSection } from "@/components/sales/ProblemSection";
 
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
@@ -15,9 +16,6 @@ import avatar3 from "@/assets/avatars/avatar3.jpg";
 import avatar4 from "@/assets/avatars/avatar4.jpg";
 import demoCoverAsset from "@/assets/demo-cover-v2.png.asset.json";
 
-const ProblemSection = lazy(() =>
-  import("@/components/sales/ProblemSection").then((m) => ({ default: m.ProblemSection })),
-);
 const OpportunitySection = lazy(() =>
   import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
 );
@@ -300,8 +298,8 @@ export default function Demonstracao() {
         <main>
           <Hero />
           <TrustedBySection />
+          <ProblemSection />
           <Suspense fallback={<SectionFallback />}>
-            <ProblemSection />
             <OpportunitySection />
             <FeaturesOverviewSection />
           </Suspense>
