@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Clock, UserX, MessageSquareOff, AlertTriangle, BarChart3, TrendingDown } from "lucide-react";
 import { BentoGridShowcase } from "@/components/ui/bento-product-features";
 import whatsappPhoneMockup from "@/assets/whatsapp-phone-mockup-v2.png";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Preload the image immediately
 const preloadLink = document.createElement('link');
@@ -12,7 +12,24 @@ preloadLink.href = whatsappPhoneMockup;
 document.head.appendChild(preloadLink);
 
 export const ProblemSection = () => {
- const isVisible = true;
+ const sectionRef = useRef<HTMLElement>(null);
+ const [isVisible, setIsVisible] = useState(false);
+
+ useEffect(() => {
+  const el = sectionRef.current;
+  if (!el) return;
+  const observer = new IntersectionObserver(
+   ([entry]) => {
+    if (entry.isIntersecting) {
+     setIsVisible(true);
+     observer.disconnect();
+    }
+   },
+   { threshold: 0.15, rootMargin: "0px 0px -15% 0px" }
+  );
+  observer.observe(el);
+  return () => observer.disconnect();
+ }, []);
 
  const cardBase =
  "group rounded-2xl border border-border/70 bg-card/95 transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-md";
