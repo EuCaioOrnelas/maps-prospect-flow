@@ -2,6 +2,7 @@ import { MessageCircle, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import wianAvatar from "@/assets/wian-avatar.png";
 
 const DISMISS_KEY = "wiize_wian_popup_dismissed";
 
