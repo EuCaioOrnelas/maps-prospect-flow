@@ -97,7 +97,7 @@ export const FloatingChatButton = () => {
                   className="bg-neutral-100 rounded-2xl rounded-tl-sm px-3 py-2 max-w-[90%]"
                 >
                   <p className="text-sm text-neutral-800 leading-snug">
-                    👋 Olá! Sou a Wian, assistente virtual da Wiize.
+                    👋 Olá! Sou a Wian, Suporte Inteligente da Wiize.
                   </p>
                 </motion.div>
                 <motion.div
