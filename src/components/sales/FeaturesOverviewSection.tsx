@@ -232,14 +232,14 @@ export const FeaturesOverviewSection = () => {
  <div className="flex-1 h-px bg-primary/20" />
  <ChevronRight size={14} className="text-primary/40 -mx-0.5 flex-shrink-0" />
   </motion.div>
+  )}
  </div>
  );
  })}
  </div>
  </div>
  </motion.div>
- </motion.div>
- )}
+  </motion.div>
  </div>
  </section>
  );
