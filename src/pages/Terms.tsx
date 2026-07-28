@@ -9,10 +9,10 @@ const Terms = () => {
 
   return (
     <>
-      <SEO 
+      <SEO
         title="Termos de Uso"
-        description="Leia os Termos de Uso da plataforma Wiize. Saiba como usar nossos serviços de prospecção de leads de forma ética e legal."
-        keywords="termos de uso, termos de serviço, regras, wiize"
+        description="Termos de Uso da plataforma Wiize: prospecção B2B, IA, CRM, campanhas Meta e integrações. Regras, responsabilidades e conformidade legal."
+        keywords="termos de uso, termos de serviço, wiize, B2B, LGPD, whatsapp business, meta"
       />
       <div className="min-h-screen bg-background">
         <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
@@ -26,9 +26,9 @@ const Terms = () => {
                 <ArrowLeft size={16} className="sm:w-[18px] sm:h-[18px]" />
                 <span className="hidden xs:inline">Voltar</span>
               </Button>
-              
+
               <Logo size="md" />
-              
+
               <div className="w-16 sm:w-20" />
             </div>
           </div>
@@ -41,167 +41,223 @@ const Terms = () => {
 
           <div className="prose prose-invert max-w-none space-y-4 sm:space-y-6 text-muted-foreground text-sm sm:text-base">
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Última atualização: {new Date().toLocaleDateString('pt-BR')}
+              Última atualização: {new Date().toLocaleDateString("pt-BR")}
             </p>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">1. Aceitação dos Termos</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">1. Aceitação</h2>
               <p>
-                Ao acessar e usar a plataforma Wiize, você concorda em cumprir e estar vinculado a estes Termos de Uso. 
-                Se você não concordar com qualquer parte destes termos, não deverá usar nossos serviços.
+                Ao criar uma conta, acessar ou usar a plataforma <strong>Wiize</strong>, o cliente concorda
+                integralmente com estes Termos de Uso e com a{" "}
+                <Link to="/privacidade" className="text-primary hover:underline">Política de Privacidade</Link>.
+                Caso não concorde, o uso deve ser descontinuado imediatamente.
               </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">2. Descrição do Serviço</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">2. Natureza do serviço (B2B)</h2>
               <p>
-                O Wiize é uma plataforma de geração de leads que permite aos usuários buscar e coletar informações 
-                de empresas e contatos comerciais disponíveis publicamente na internet para fins de prospecção comercial.
+                A Wiize é uma plataforma <strong>estritamente B2B</strong> destinada a pessoas jurídicas
+                para: prospecção de oportunidades comerciais, gestão de leads (CRM), campanhas e
+                atendimento via WhatsApp (API Oficial da Meta), aquecimento de números, fluxos
+                automatizados, agentes de IA, integrações com Google (Sheets, Calendar, Gmail, Drive),
+                relatórios e APIs (Integration Layer).
+              </p>
+              <p>
+                É vedado o uso da plataforma para finalidades pessoais, de consumo (B2C) ou para tratar
+                dados de titulares fora de contexto profissional/comercial legítimo.
               </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">3. Uso Aceitável</h2>
-              <p>Você concorda em usar o serviço apenas para fins legais e de acordo com estes termos. É proibido:</p>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">3. Cadastro, conta e segurança</h2>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
-                <li>Usar o serviço para enviar spam ou comunicações não solicitadas em massa</li>
-                <li>Violar leis de proteção de dados aplicáveis</li>
-                <li>Coletar dados para fins ilegais ou antiéticos</li>
-                <li>Compartilhar credenciais de acesso com terceiros</li>
-                <li>Tentar burlar limitações do sistema ou acessar áreas não autorizadas</li>
+                <li>O cliente deve ser maior de 18 anos e ter poderes para representar a pessoa jurídica contratante.</li>
+                <li>As informações de cadastro devem ser verdadeiras, completas e atualizadas.</li>
+                <li>Credenciais são pessoais e intransferíveis. O cliente é responsável por todas as ações realizadas em sua conta.</li>
+                <li>Suspeitas de acesso não autorizado devem ser reportadas imediatamente pelos canais oficiais.</li>
               </ul>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">4. Conta e Segurança</h2>
-              <p>
-                Você é responsável por manter a confidencialidade de sua conta e senha. Você concorda em notificar 
-                imediatamente sobre qualquer uso não autorizado de sua conta.
-              </p>
-            </section>
-
-            <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">5. Pagamentos, Assinaturas e Reembolsos</h2>
-              <p>
-                Os planos pagos são cobrados mensalmente. Você pode cancelar sua assinatura a qualquer momento através 
-                do portal de gerenciamento. Para informações detalhadas sobre reembolsos, consulte nossa{" "}
-                <Link to="/refund-policy" className="text-primary hover:underline">
-                  Política de Reembolso
-                </Link>.
-              </p>
-              <p>
-                Ao utilizar a plataforma, você declara ciência de que o uso gera custos operacionais imediatos e não recuperáveis, 
-                e que o reembolso está condicionado ao não uso da plataforma ou a falhas técnicas comprovadas, conforme descrito 
-                em nossa Política de Reembolso.
-              </p>
-            </section>
-
-            <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">6. Propriedade Intelectual</h2>
-              <p>
-                Todo o conteúdo, marcas, logos e software da plataforma são de propriedade exclusiva do Wiize. 
-                É proibida a reprodução sem autorização prévia.
-              </p>
-            </section>
-
-            <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">7. Limitação de Responsabilidade</h2>
-              <p>
-                O Wiize não se responsabiliza por danos indiretos, incidentais ou consequentes resultantes do uso 
-                ou impossibilidade de uso do serviço. Os dados fornecidos são obtidos de fontes públicas e podem 
-                conter imprecisões.
-              </p>
-            </section>
-
-            <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">8. Uso do WhatsApp e Responsabilidade sobre Bloqueios</h2>
-              <p>
-                O Wiize oferece funcionalidades de integração com o WhatsApp para facilitar a comunicação comercial. 
-                No entanto, é importante ressaltar que:
-              </p>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">4. Uso aceitável</h2>
+              <p>O cliente concorda em <strong>não</strong>:</p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
-                <li>O WhatsApp é uma plataforma de propriedade da Meta Platforms, Inc. e possui suas próprias políticas de uso e termos de serviço.</li>
-                <li>Bloqueios, suspensões ou restrições de números de telefone são decisões exclusivas do WhatsApp, baseadas em seus algoritmos e políticas internas de combate a spam e uso indevido.</li>
-                <li>O Wiize <strong>não possui controle</strong> sobre as ações do WhatsApp e <strong>não se responsabiliza</strong> por bloqueios ou banimentos de números, independentemente de terem sido usados em nossa plataforma.</li>
-                <li>Bloqueios geralmente ocorrem devido ao envio de mensagens em grande volume, contatos que denunciam como spam, ou uso que o WhatsApp identifica como não orgânico.</li>
-                <li>Oferecemos recursos de aquecimento de números para ajudar a reduzir o risco de bloqueios, porém estes não garantem a ausência de restrições por parte do WhatsApp.</li>
+                <li>Enviar spam, mensagens não solicitadas em massa ou conteúdo enganoso.</li>
+                <li>Violar a LGPD, direitos de terceiros ou legislação aplicável.</li>
+                <li>Prospectar, contatar ou tratar dados de consumidores pessoas físicas fora de contexto B2B legítimo.</li>
+                <li>Utilizar a plataforma para fins ilícitos, discriminatórios, difamatórios, de assédio, fraude ou golpe.</li>
+                <li>Compartilhar acessos, revender o serviço, executar engenharia reversa ou tentar burlar limites técnicos, cotas ou controles de segurança.</li>
+                <li>Enviar conteúdo relacionado a itens proibidos pelas políticas do WhatsApp/Meta.</li>
+                <li>Automatizar cadastros, criar múltiplas contas para contornar limites ou explorar o período de avaliação.</li>
               </ul>
               <p>
-                Ao utilizar as funcionalidades de WhatsApp do Wiize, você declara estar ciente destes riscos e assume 
-                total responsabilidade pelo uso de seus números de telefone e pela observância dos termos de uso do WhatsApp.
+                A Wiize pode suspender ou encerrar contas envolvidas em uso indevido, sem prejuízo das
+                medidas legais cabíveis.
               </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9. Integração com a API Oficial do WhatsApp (Meta Business Platform)</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">5. Responsabilidades sobre dados de leads</h2>
               <p>
-                O Wiize oferece a possibilidade de conexão com a API Oficial do WhatsApp Business, fornecida pela Meta Platforms, Inc., 
-                por meio do recurso de Embedded Signup. Ao utilizar esta funcionalidade, você declara estar ciente e de acordo com o seguinte:
+                Nos módulos de prospecção, CRM, campanhas e fluxos, o <strong>cliente é o controlador</strong>
+                dos dados dos leads. Cabe ao cliente:
               </p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
-                <li>
-                  <strong>O Wiize atua exclusivamente como intermediário tecnológico.</strong> A plataforma facilita a conexão entre o 
-                  usuário e a Meta, mas <strong>não é proprietária, co-responsável nem operadora</strong> da conta WhatsApp Business (WABA) do usuário.
-                </li>
-                <li>
-                  <strong>A conta WABA pertence integralmente ao usuário.</strong> Ao conectar sua conta via Embedded Signup, 
-                  você autoriza o Wiize a acessar e gerenciar mensagens e configurações em seu nome, dentro do escopo das permissões concedidas.
-                </li>
-                <li>
-                  <strong>O usuário é o único responsável</strong> pelo conteúdo das mensagens enviadas, pela conformidade com as 
-                  Políticas de Uso do WhatsApp Business, pela Política Comercial da Meta e por todas as leis aplicáveis, incluindo a LGPD.
-                </li>
-                <li>
-                  <strong>Custos de mensagens são de responsabilidade do usuário.</strong> As taxas cobradas pela Meta por mensagens 
-                  enviadas através da API Oficial são faturadas diretamente ao usuário pela Meta, sem qualquer intermediação financeira do Wiize.
-                </li>
-                <li>
-                  <strong>O Wiize não se responsabiliza</strong> por suspensões, restrições, bloqueios ou encerramento de contas WABA 
-                  realizados pela Meta, seja por violação de políticas, denúncias de spam ou qualquer outro motivo.
-                </li>
-                <li>
-                  <strong>Tokens de acesso e credenciais</strong> são armazenados de forma criptografada e utilizados exclusivamente 
-                  para a operação dos serviços contratados. O usuário pode revogar o acesso a qualquer momento.
-                </li>
-                <li>
-                  <strong>O usuário declara possuir</strong> a verificação de empresa (Business Verification) exigida pela Meta e 
-                  compromete-se a manter seus dados cadastrais atualizados junto à plataforma Meta Business.
-                </li>
+                <li>Definir a finalidade e possuir base legal adequada (ex.: legítimo interesse B2B).</li>
+                <li>Fornecer canais de opt-out e atender às solicitações dos titulares.</li>
+                <li>Respeitar as políticas do WhatsApp/Meta, Google e demais canais utilizados.</li>
+                <li>Garantir que dados importados foram obtidos de forma lícita.</li>
               </ul>
               <p>
-                Ao conectar sua conta WhatsApp Business ao Wiize, você confirma ter lido e concordado com os{" "}
-                <a href="https://www.whatsapp.com/legal/business-terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                  Termos de Serviço do WhatsApp Business
-                </a>{" "}e a{" "}
-                <a href="https://www.whatsapp.com/legal/business-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                  Política Comercial do WhatsApp
-                </a>.
+                A Wiize atua como <strong>operadora</strong> desses dados, seguindo instruções do cliente,
+                nos termos da LGPD.
               </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Modificações dos Termos</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">6. Inteligência Artificial (score, agentes e conteúdos)</h2>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li>A plataforma usa modelos de IA para analisar sinais de leads, calcular <strong>score de oportunidade</strong>, sugerir estágio no CRM, gerar mensagens e operar <strong>agentes conversacionais</strong>.</li>
+                <li>Os resultados da IA são <strong>estimativas e recomendações</strong>. Não constituem garantia de conversão, receita ou aderência regulatória do conteúdo gerado.</li>
+                <li>O cliente é responsável por revisar o conteúdo gerado pela IA antes de utilizá-lo em comunicações e por assegurar que as mensagens respeitam a lei e os termos das plataformas utilizadas.</li>
+                <li>Existem limites diários por plano para geração de fluxos, prospecção e outras operações que consomem IA.</li>
+              </ul>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">7. WhatsApp — API Oficial (Meta) e Aquecimento</h2>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li>
+                  A Wiize atua como <strong>intermediário tecnológico</strong>. A conta WhatsApp Business
+                  (WABA) pertence ao cliente, que a conecta via <em>Embedded Signup</em> autorizando a Wiize
+                  a operar mensagens e configurações no escopo autorizado.
+                </li>
+                <li>O cliente é o único responsável pelo conteúdo enviado, pela conformidade com a Política Comercial e as Políticas de Uso do WhatsApp/Meta e pelas leis aplicáveis (inclusive LGPD).</li>
+                <li>Custos de mensagens cobrados pela Meta são faturados diretamente ao cliente pela própria Meta.</li>
+                <li>A Wiize <strong>não se responsabiliza</strong> por suspensões, restrições, bloqueios ou encerramentos de contas WABA ou números realizados pela Meta, seja por violação de políticas, denúncias de spam ou outro motivo.</li>
+                <li>Recursos de <strong>aquecimento</strong> (via Evolution API) ajudam a reduzir riscos, mas não garantem a ausência de bloqueios.</li>
+                <li>Tokens e credenciais são armazenados criptografados e podem ser revogados pelo cliente a qualquer momento.</li>
+              </ul>
               <p>
-                Reservamo-nos o direito de modificar estes termos a qualquer momento. Alterações significativas 
-                serão comunicadas através da plataforma ou por email.
+                Ao conectar sua conta WhatsApp Business, o cliente confirma ter lido e concordado com os{" "}
+                <a href="https://www.whatsapp.com/legal/business-terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Termos do WhatsApp Business</a> e a{" "}
+                <a href="https://www.whatsapp.com/legal/business-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Política Comercial do WhatsApp</a>.
               </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">11. Lei Aplicável</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">8. Integrações Google</h2>
               <p>
-                Estes termos são regidos pelas leis da República Federativa do Brasil. Qualquer disputa será 
-                resolvida nos tribunais competentes do Brasil.
+                Ao conectar contas Google (Sheets, Calendar, Gmail, Drive), o cliente autoriza a Wiize a
+                operar exclusivamente dentro dos escopos concedidos e das funcionalidades ativadas. Tokens
+                OAuth podem ser revogados a qualquer momento nas configurações da plataforma ou na conta
+                Google do cliente.
               </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">12. Contato</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9. Integration Layer e uso de API</h2>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li>O acesso programático à Wiize (Integration Layer, APIs privadas) requer credenciais próprias emitidas para o cliente e uso de <strong>assinatura HMAC</strong>, <em>nonce</em> e controle de <em>timestamp</em>.</li>
+                <li>É vedado compartilhar credenciais, expô-las em código público ou repassá-las a terceiros sem autorização.</li>
+                <li>Aplicam-se limites de taxa (rate limiting) e proteções antiabuso. O uso excessivo, malicioso ou automatizado fora do escopo contratado pode acarretar bloqueio imediato do <em>client</em> e do IP de origem.</li>
+                <li>O cliente é responsável por qualquer aplicação (ex.: assistentes de IA próprios) que integrar à API da Wiize e pelos dados que trafegar por ela.</li>
+              </ul>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Planos, cobrança, teste gratuito e cancelamento</h2>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li>Planos são cobrados de forma recorrente (mensal ou anual) por gateways integrados (Stripe e Asaas), no cartão ou PIX conforme a modalidade.</li>
+                <li>O cliente pode cancelar a assinatura a qualquer momento pelo portal de assinatura; o acesso permanece disponível até o fim do ciclo já pago.</li>
+                <li>O período de <strong>teste gratuito</strong> possui regras específicas informadas no momento da contratação, sujeitas a limites técnicos e comerciais para evitar abuso.</li>
+                <li>Alterações de preço e reajustes seguem a política vigente, com aviso prévio. Preços contratados podem ser mantidos para clientes elegíveis (<em>grandfathering</em>) conforme regras específicas.</li>
+                <li>Impostos, taxas de gateway ou custos externos (ex.: mensagens cobradas pela Meta) não estão inclusos e são de responsabilidade do cliente.</li>
+              </ul>
               <p>
-                Para dúvidas ou sugestões sobre estes termos,{" "}
-                <Link to="/contato" className="text-primary hover:underline">
-                  entre em contato conosco
-                </Link>.
+                Para reembolsos, consulte a{" "}
+                <Link to="/refund-policy" className="text-primary hover:underline">Política de Reembolso</Link>.
+                O uso da plataforma gera custos operacionais imediatos e não recuperáveis; reembolsos
+                observam as regras dessa política.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">11. Propriedade intelectual</h2>
+              <p>
+                Software, marca, identidade visual, textos, documentação e demais elementos da plataforma
+                são de propriedade da Wiize e/ou de seus licenciadores. É concedida ao cliente uma
+                licença limitada, não exclusiva, intransferível e revogável para uso do serviço conforme
+                estes Termos. Conteúdos gerados pelo cliente permanecem de sua titularidade.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">12. Disponibilidade e alterações do serviço</h2>
+              <p>
+                A Wiize busca alta disponibilidade, mas o serviço é fornecido "no estado em que se
+                encontra". Podem ocorrer indisponibilidades por manutenção, incidentes ou falhas de
+                terceiros (Meta, Google, gateways, provedores de IA). Funcionalidades podem ser
+                adicionadas, alteradas ou descontinuadas a qualquer tempo, mediante aviso razoável quando
+                a alteração for material.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">13. Limitação de responsabilidade</h2>
+              <p>
+                Na máxima extensão permitida em lei, a Wiize não responde por danos indiretos,
+                incidentais, lucros cessantes, perda de oportunidade, perda de dados de terceiros ou
+                consequenciais decorrentes do uso ou impossibilidade de uso do serviço, inclusive
+                relacionados a: dados obtidos de fontes públicas que possam conter imprecisões; bloqueios
+                do WhatsApp/Meta; conteúdo gerado por IA; falhas de terceiros; violação de políticas ou
+                leis pelo próprio cliente.
+              </p>
+              <p>
+                A responsabilidade total agregada da Wiize por qualquer reclamação relacionada ao serviço
+                limita-se ao valor efetivamente pago pelo cliente nos 12 (doze) meses anteriores ao evento
+                que originou a reclamação.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">14. Suspensão e encerramento</h2>
+              <p>
+                A Wiize pode suspender ou encerrar o acesso, no todo ou em parte, em caso de: violação
+                destes Termos, inadimplência, risco de segurança, uso abusivo, ordem legal ou
+                descontinuação do serviço. O cliente pode encerrar sua conta a qualquer momento pelos
+                canais oficiais.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">15. Alterações destes Termos</h2>
+              <p>
+                Estes Termos podem ser atualizados periodicamente. A versão vigente é a publicada nesta
+                página. Alterações materiais serão comunicadas pela plataforma ou por e-mail. O uso
+                continuado após a atualização representa aceite da nova versão.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">16. Lei aplicável e foro</h2>
+              <p>
+                Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro
+                da comarca da sede da Wiize para dirimir controvérsias, com renúncia a qualquer outro,
+                por mais privilegiado que seja.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">17. Contato</h2>
+              <p>
+                Dúvidas sobre estes Termos:{" "}
+                <a href="mailto:suporte@wiize.com.br" className="text-primary hover:underline">suporte@wiize.com.br</a>{" "}
+                ou{" "}
+                <Link to="/contato" className="text-primary hover:underline">página de contato</Link>.
+                Assuntos de privacidade e LGPD:{" "}
+                <a href="mailto:privacidade@wiize.com.br" className="text-primary hover:underline">privacidade@wiize.com.br</a>.
               </p>
             </section>
           </div>
