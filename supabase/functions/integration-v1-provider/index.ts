@@ -280,9 +280,13 @@ export async function checkRateLimit(params: {
 
 
 // ================= _integration-core/auth.ts =================
-// Autenticação em duas camadas:
-//   1) client_id + client_secret  -> prova que a chamada vem de um produto autorizado.
-//   2) JWT do usuário Wiize       -> identifica user_id e company_id (multi-tenant).
+// Camadas de segurança:
+//   1) IP rate-limit (anti-flood, antes de autenticar).
+//   2) client_id + client_secret com dual-secret rotation (P1).
+//   3) HMAC opcional (P2) via INTEGRATION_REQUIRE_HMAC=true.
+//   4) Idempotency (P4) via header x-idempotency-key.
+//   5) JWT do usuário Wiize -> user_id + company_id (multi-tenant).
+//   6) Scopes por client + provider (P5).
 // company_id NUNCA vem do body — sempre derivado do JWT.
 
 
@@ -292,35 +296,31 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 const EXPECTED_CLIENT_ID = Deno.env.get("INTEGRATION_WIAN_CLIENT_ID") ?? "";
 const EXPECTED_CLIENT_SECRET = Deno.env.get("INTEGRATION_WIAN_CLIENT_SECRET") ?? "";
+const EXPECTED_CLIENT_SECRET_PREVIOUS = Deno.env.get("INTEGRATION_WIAN_CLIENT_SECRET_PREVIOUS") ?? "";
+const HMAC_SIGNING_KEY = Deno.env.get("INTEGRATION_WIAN_HMAC_KEY") ?? "";
+const HMAC_SIGNING_KEY_PREVIOUS = Deno.env.get("INTEGRATION_WIAN_HMAC_KEY_PREVIOUS") ?? "";
+const REQUIRE_HMAC = (Deno.env.get("INTEGRATION_REQUIRE_HMAC") ?? "false").toLowerCase() === "true";
+const HMAC_MAX_SKEW_S = 300;
+
+// Registry de clients + escopos permitidos (P5). Hoje só existe o Wian.
+// Escopo "*" = acesso total. Escopos futuros: "crm.read", "cockpit.read", etc.
+const CLIENT_REGISTRY: Record<string, { name: string; scopes: string[] }> = EXPECTED_CLIENT_ID
+  ? { [EXPECTED_CLIENT_ID]: { name: "wian", scopes: ["*"] } }
+  : {};
 
 async function getVerifiedJwtIdentity(token: string): Promise<{ userId: string; email: string | null } | null> {
   const sb = createClient(SUPABASE_URL, ANON_KEY);
-
-  // getClaims is only available in newer supabase-js runtimes / signing-key setups.
-  // Keep it as an optimization, but always fall back to getUser so older edge bundles
-  // return structured auth errors instead of crashing with "getClaims is not a function".
   const auth = sb.auth as unknown as {
     getClaims?: (jwt: string) => Promise<{ data?: { claims?: { sub?: string; email?: string } }; error?: unknown }>;
     getUser: (jwt: string) => Promise<{ data?: { user?: { id?: string; email?: string | null } }; error?: unknown }>;
   };
-
   if (typeof auth.getClaims === "function") {
     const { data, error } = await auth.getClaims(token);
-    if (!error && data?.claims?.sub) {
-      return {
-        userId: data.claims.sub,
-        email: data.claims.email ?? null,
-      };
-    }
+    if (!error && data?.claims?.sub) return { userId: data.claims.sub, email: data.claims.email ?? null };
   }
-
   const { data, error } = await auth.getUser(token);
   if (error || !data?.user?.id) return null;
-
-  return {
-    userId: data.user.id,
-    email: data.user.email ?? null,
-  };
+  return { userId: data.user.id, email: data.user.email ?? null };
 }
 
 function safeEqual(a: string, b: string): boolean {
@@ -330,17 +330,145 @@ function safeEqual(a: string, b: string): boolean {
   return mismatch === 0;
 }
 
+// ---- P1: dual-secret rotation ----
 export function verifyClient(
   req: Request,
-): { ok: true; clientId: string } | { ok: false; code: "AUTH_MISSING_CLIENT" | "AUTH_INVALID_CLIENT" } {
+): { ok: true; clientId: string; scopes: string[] } | { ok: false; code: "AUTH_MISSING_CLIENT" | "AUTH_INVALID_CLIENT" } {
   const cid = req.headers.get("x-integration-client-id") ?? "";
   const cse = req.headers.get("x-integration-client-secret") ?? "";
   if (!cid || !cse) return { ok: false, code: "AUTH_MISSING_CLIENT" };
   if (!EXPECTED_CLIENT_ID || !EXPECTED_CLIENT_SECRET) return { ok: false, code: "AUTH_INVALID_CLIENT" };
-  if (!safeEqual(cid, EXPECTED_CLIENT_ID) || !safeEqual(cse, EXPECTED_CLIENT_SECRET)) {
-    return { ok: false, code: "AUTH_INVALID_CLIENT" };
+  if (!safeEqual(cid, EXPECTED_CLIENT_ID)) return { ok: false, code: "AUTH_INVALID_CLIENT" };
+  const matchesCurrent = safeEqual(cse, EXPECTED_CLIENT_SECRET);
+  const matchesPrevious = EXPECTED_CLIENT_SECRET_PREVIOUS.length > 0 && safeEqual(cse, EXPECTED_CLIENT_SECRET_PREVIOUS);
+  if (!matchesCurrent && !matchesPrevious) return { ok: false, code: "AUTH_INVALID_CLIENT" };
+  const reg = CLIENT_REGISTRY[cid] ?? { name: "unknown", scopes: [] };
+  return { ok: true, clientId: cid, scopes: reg.scopes };
+}
+
+// ---- P5: scope check ----
+export function hasScope(scopes: string[], required: string): boolean {
+  if (scopes.includes("*")) return true;
+  if (scopes.includes(required)) return true;
+  // suporte a wildcard por domínio: "crm.*" cobre "crm.read"
+  const [domain] = required.split(".");
+  return scopes.includes(`${domain}.*`);
+}
+
+// ---- P2: HMAC signature (opcional) ----
+// Assinatura = HMAC-SHA256(hex, key = HMAC_SIGNING_KEY, payload = `${timestamp}.${nonce}.${sha256hex(body)}`)
+// Headers: x-integration-timestamp (unix seconds), x-integration-nonce (>=16 chars), x-integration-signature (hex)
+const NONCE_CACHE = new Map<string, number>();
+function pruneNonces() {
+  const cutoff = Date.now() - (HMAC_MAX_SKEW_S + 60) * 1000;
+  for (const [k, v] of NONCE_CACHE) if (v < cutoff) NONCE_CACHE.delete(k);
+}
+async function sha256Hex(input: string): Promise<string> {
+  const buf = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+async function hmacHex(key: string, message: string): Promise<string> {
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, new TextEncoder().encode(message));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+export async function verifyHmac(
+  req: Request, rawBody: string,
+): Promise<{ ok: true } | { ok: false; code: "AUTH_INVALID_SIGNATURE" | "AUTH_STALE_TIMESTAMP" | "AUTH_REPLAYED_NONCE" }> {
+  if (!REQUIRE_HMAC) return { ok: true };
+  if (!HMAC_SIGNING_KEY) return { ok: false, code: "AUTH_INVALID_SIGNATURE" };
+  const ts = req.headers.get("x-integration-timestamp") ?? "";
+  const nonce = req.headers.get("x-integration-nonce") ?? "";
+  const sig = (req.headers.get("x-integration-signature") ?? "").toLowerCase();
+  if (!ts || !nonce || !sig || nonce.length < 16) return { ok: false, code: "AUTH_INVALID_SIGNATURE" };
+  const tsNum = Number(ts);
+  if (!Number.isFinite(tsNum)) return { ok: false, code: "AUTH_STALE_TIMESTAMP" };
+  const nowS = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowS - tsNum) > HMAC_MAX_SKEW_S) return { ok: false, code: "AUTH_STALE_TIMESTAMP" };
+  pruneNonces();
+  if (NONCE_CACHE.has(nonce)) return { ok: false, code: "AUTH_REPLAYED_NONCE" };
+  const bodyHash = await sha256Hex(rawBody);
+  const payload = `${ts}.${nonce}.${bodyHash}`;
+  const expected = await hmacHex(HMAC_SIGNING_KEY, payload);
+  let matches = safeEqual(sig, expected);
+  if (!matches && HMAC_SIGNING_KEY_PREVIOUS) {
+    const expectedPrev = await hmacHex(HMAC_SIGNING_KEY_PREVIOUS, payload);
+    matches = safeEqual(sig, expectedPrev);
   }
-  return { ok: true, clientId: cid };
+  if (!matches) return { ok: false, code: "AUTH_INVALID_SIGNATURE" };
+  NONCE_CACHE.set(nonce, Date.now());
+  return { ok: true };
+}
+
+// ---- P3: IP-level rate limit (pré-auth) ----
+export async function checkIpRateLimit(ip: string, endpoint: string): Promise<RateLimitResult> {
+  if (!ip || ip === "unknown") return { allowed: true, retryAfterSeconds: 0 };
+  const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+  try {
+    const { data, error } = await admin.rpc("check_rate_limit", {
+      p_identifier: `int-ip:${ip}`, p_endpoint: endpoint,
+      p_max_requests: 300, p_window_seconds: 60,
+    });
+    if (error) return { allowed: true, retryAfterSeconds: 0 };
+    if (typeof data === "boolean") return { allowed: data, retryAfterSeconds: data ? 0 : 60 };
+    const allowed = Boolean((data as any)?.allowed);
+    return { allowed, retryAfterSeconds: allowed ? 0 : Number((data as any)?.retry_after ?? 60) };
+  } catch { return { allowed: true, retryAfterSeconds: 0 }; }
+}
+
+// ---- P4: Idempotency in-memory + Correlation ID ----
+interface IdempotencyEntry { body: string; status: number; headers: Record<string, string>; expiresAt: number; }
+const IDEMPOTENCY_STORE = new Map<string, IdempotencyEntry>();
+const IDEMPOTENCY_TTL_MS = 60_000;
+export function idempotencyLookup(clientId: string, userId: string, key: string): Response | null {
+  if (!key) return null;
+  const full = `${clientId}:${userId}:${key}`;
+  const e = IDEMPOTENCY_STORE.get(full);
+  if (!e) return null;
+  if (Date.now() > e.expiresAt) { IDEMPOTENCY_STORE.delete(full); return null; }
+  return new Response(e.body, { status: e.status, headers: { ...e.headers, "x-idempotent-replay": "true" } });
+}
+export async function idempotencyStore(clientId: string, userId: string, key: string, res: Response): Promise<Response> {
+  if (!key) return res;
+  const clone = res.clone();
+  const body = await clone.text();
+  const headers: Record<string, string> = {};
+  clone.headers.forEach((v, k) => { headers[k] = v; });
+  const full = `${clientId}:${userId}:${key}`;
+  IDEMPOTENCY_STORE.set(full, { body, status: clone.status, headers, expiresAt: Date.now() + IDEMPOTENCY_TTL_MS });
+  if (IDEMPOTENCY_STORE.size > 5000) {
+    const now = Date.now();
+    for (const [k, v] of IDEMPOTENCY_STORE) if (now > v.expiresAt) IDEMPOTENCY_STORE.delete(k);
+  }
+  return new Response(body, { status: clone.status, headers });
+}
+
+// ---- P3: circuit breaker + timeout wrapper por provider ----
+interface BreakerState { failures: number; openedAt: number; }
+const BREAKERS = new Map<string, BreakerState>();
+const BREAKER_THRESHOLD = 5;
+const BREAKER_COOLDOWN_MS = 30_000;
+export function breakerIsOpen(name: string): boolean {
+  const b = BREAKERS.get(name); if (!b) return false;
+  if (b.failures < BREAKER_THRESHOLD) return false;
+  if (Date.now() - b.openedAt > BREAKER_COOLDOWN_MS) { BREAKERS.delete(name); return false; }
+  return true;
+}
+export function breakerRecord(name: string, ok: boolean) {
+  if (ok) { BREAKERS.delete(name); return; }
+  const cur = BREAKERS.get(name) ?? { failures: 0, openedAt: 0 };
+  cur.failures += 1;
+  if (cur.failures >= BREAKER_THRESHOLD && cur.openedAt === 0) cur.openedAt = Date.now();
+  BREAKERS.set(name, cur);
+}
+export async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return await Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`TIMEOUT_${ms}MS`)), ms)),
+  ]);
 }
 
 export interface AuthenticatedUser {
