@@ -44,7 +44,6 @@ export const ProblemSection = () => {
  </p>
  </motion.div>
 
- {isVisible && (
  <BentoGridShowcase
  className="auto-rows-[minmax(110px,auto)]"
  integration={
@@ -170,7 +169,6 @@ export const ProblemSection = () => {
  </div>
  }
  />
- )}
  </div>
  </section>
  );

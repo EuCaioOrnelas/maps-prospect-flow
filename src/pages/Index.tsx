@@ -8,15 +8,13 @@ import { Footer } from "@/components/landing/Footer";
 import { useLandingPageTracking } from "@/hooks/useLandingPageTracking";
 import { LandingPageSkeleton } from "@/components/landing/LandingPageSkeleton";
 import { FloatingChatButton } from "@/components/landing/FloatingChatButton";
+import { ProblemSection } from "@/components/sales/ProblemSection";
 
 /**
  * Performance: above the fold (Navbar + Hero + TrustedBy + Footer básico)
  * carrega imediatamente. Tudo abaixo é lazy via dynamic import — reduz JS inicial,
  * melhora LCP/INP e elimina jank de animações que rodavam fora da tela.
  */
-const ProblemSection = lazy(() =>
-  import("@/components/sales/ProblemSection").then((m) => ({ default: m.ProblemSection })),
-);
 const OpportunitySection = lazy(() =>
   import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
 );
@@ -135,11 +133,12 @@ const Index = () => {
           <HeroSection onSignupClick={trackSignupClick} />
           <TrustedBySection />
 
+          {/* A primeira seção pós-hero não fica dentro de Suspense/lazy:
+              evita fallback curto mostrar o Footer antes do bloco de dor. */}
+          <ProblemSection />
+
           <Suspense fallback={<SectionFallback />}>
-            {/* ProblemSection e OpportunitySection ficam sem cv-auto: são as
-                primeiras seções após o hero, precisam estar sempre renderizadas
-                para o scroll inicial não mostrar o footer antes da hora. */}
-            <ProblemSection />
+            {/* Demais seções continuam lazy para preservar performance. */}
             <OpportunitySection />
             <MechanismSection />
             {/* content-visibility: auto — navegador pula renderização das seções
