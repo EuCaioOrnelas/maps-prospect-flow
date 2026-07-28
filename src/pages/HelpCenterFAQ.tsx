@@ -154,7 +154,7 @@ const _legacyCategories = [
       },
       {
         question: "Qual a diferença entre Outbound e Inbound?",
-        answer: "Outbound são disparos proativos que você envia para leads prospectados (via Evolution API). Inbound são mensagens de relacionamento enviadas a contatos que já interagiram com você (via Meta API Oficial). O Wiize oferece ambos os modelos integrados."
+        answer: "Outbound são disparos proativos que você envia para leads prospectados. Inbound são mensagens de relacionamento enviadas a contatos que já interagiram com você. No Wiize, ambos operam via API Oficial da Meta (WhatsApp Cloud API) com templates aprovados."
       },
       {
         question: "Como funciona o sistema de pausas inteligentes?",
@@ -176,8 +176,8 @@ const _legacyCategories = [
         answer: "Sim. O Wiize é integrado como Meta Business Partner, o que garante acesso à API oficial com suporte direto da Meta e total conformidade com as diretrizes de uso da plataforma."
       },
       {
-        question: "Qual a diferença entre API Oficial e Evolution API?",
-        answer: "A API Oficial do Meta é usada para campanhas de relacionamento (inbound), com templates aprovados e máxima segurança. A Evolution API é utilizada para prospecção outbound com estratégias de aquecimento. O Wiize combina ambas para oferecer a melhor experiência em cada cenário."
+        question: "Como a Meta API Oficial garante segurança nas campanhas?",
+        answer: "A API Oficial do Meta é usada em 100% das campanhas do Wiize — tanto inbound (relacionamento) quanto outbound (prospecção). Ela exige templates aprovados, oferece criptografia de ponta a ponta e conformidade total com as políticas do WhatsApp, reduzindo drasticamente o risco de bloqueios."
       },
       {
         question: "Preciso de uma conta Meta Business?",
@@ -196,8 +196,8 @@ const _legacyCategories = [
         answer: "Templates são modelos de mensagem que devem ser aprovados pela Meta antes de serem usados para iniciar conversas. Eles garantem que as mensagens sigam as políticas do WhatsApp. Você pode criar e gerenciar templates diretamente pelo Wiize."
       },
       {
-        question: "Posso usar API Oficial e Evolution API ao mesmo tempo?",
-        answer: "Sim! Essa é uma das grandes vantagens do Wiize. Você pode usar a Meta API Oficial para campanhas de relacionamento e remarketing (inbound), e a Evolution API para prospecção de novos leads (outbound). Ambas funcionam de forma integrada na mesma plataforma."
+        question: "Posso conectar mais de um número na Meta API?",
+        answer: "Sim. Você pode conectar múltiplos números na Meta API Oficial, respeitando o limite do seu plano. Todos operam de forma integrada dentro da mesma conta Wiize, com chat, campanhas e agentes de IA compartilhados."
       },
     ]
   },
@@ -397,8 +397,8 @@ const _legacyCategories = [
         answer: "O uso da Meta API dentro do Wiize está incluído no seu plano. Porém, a Meta cobra por conversa iniciada (conversation-based pricing). Os custos variam por país e tipo de conversa (marketing, utilidade, autenticação). Consulte a tabela de preços da Meta para valores atualizados."
       },
       {
-        question: "Posso usar o mesmo número na API Oficial e nos disparos?",
-        answer: "Não. Um número vinculado à Meta API Oficial não pode ser usado simultaneamente na Evolution API para disparos outbound. Recomendamos usar números diferentes para cada tipo de campanha."
+        question: "Posso usar o mesmo número em várias campanhas?",
+        answer: "Sim. Um mesmo número Meta pode ser usado em múltiplas campanhas (inbound e outbound), respeitando os limites de tier e templates aprovados pela sua conta Meta Business."
       },
     ]
   },
