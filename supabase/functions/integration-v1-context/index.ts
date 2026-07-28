@@ -1931,7 +1931,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   const started = Date.now();
   const requestId = newRequestId(req.headers);
-  const ip = clientIp(req);
+  const ip = clientIp(req) ?? "unknown";
   const ua = req.headers.get("user-agent");
 
   const audit = (data: {
