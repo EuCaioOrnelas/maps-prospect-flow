@@ -55,7 +55,7 @@ export const FloatingChatButton = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed bottom-24 right-6 z-50 w-[calc(100vw-3rem)] max-w-[320px]"
+            className="fixed bottom-20 sm:bottom-24 right-3 sm:right-6 z-50 w-[min(320px,calc(100vw-1.5rem))]"
           >
             <div className="relative rounded-2xl bg-white shadow-2xl shadow-black/20 border border-black/5 overflow-hidden">
               {/* Close */}
