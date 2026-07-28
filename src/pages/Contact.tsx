@@ -18,7 +18,7 @@ const contactInfo = [
   {
     icon: Bot,
     title: "Atendimento com o Wian 24/7",
-    description: "Assistente virtual disponível a qualquer hora para tirar dúvidas e resolver problemas comuns",
+    description: "Suporte inteligente disponível a qualquer hora para tirar dúvidas e resolver problemas comuns",
     color: "text-primary",
     bg: "bg-primary/10"
   },
@@ -90,7 +90,7 @@ const Contact = () => {
               Central de Atendimento
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-xl mx-auto px-4">
-              Converse com o <strong className="text-foreground">Wian</strong>, nosso assistente virtual, para resolver dúvidas na hora. Se precisar, ele abre um chamado para o nosso time humano.
+              Converse com o <strong className="text-foreground">Wian</strong>, nosso suporte inteligente, para resolver dúvidas na hora. Se precisar, ele abre um chamado para o nosso time humano.
             </p>
           </motion.div>
 
@@ -141,7 +141,7 @@ const Contact = () => {
                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-green-500 rounded-full border-2 border-card" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground text-sm sm:text-base">Wian Assistente Virtual</p>
+                    <p className="font-semibold text-foreground text-sm sm:text-base">Wian Suporte Inteligente</p>
                     <div className="flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
                       <span className="text-[10px] sm:text-xs text-green-500">Online</span>
