@@ -12,6 +12,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldCheck, Zap, BookOpen, Filter, Code2, Package, AlertTriangle, Timer, Layers } from "lucide-react";
 import { CodeBlock } from "../components/CodeBlock";
 
+const BASE_URL = "https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1";
+const CONTEXT_URL = `${BASE_URL}/integration-v1-context`;
+const PROVIDER_URL = `${BASE_URL}/integration-v1-provider`;
+
+
 function Section({ id, icon: Icon, title, children }: { id: string; icon: any; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-24 space-y-4">
