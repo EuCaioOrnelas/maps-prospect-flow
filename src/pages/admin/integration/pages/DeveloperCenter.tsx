@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldCheck, Zap, BookOpen, Filter, Code2, Package, AlertTriangle, Timer, Layers } from "lucide-react";
 import { CodeBlock } from "../components/CodeBlock";
 
-const BASE_URL = "https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1";
+const BASE_URL = "https://lqfqnqfeuneorxocybru.supabase.co/functions/v1";
 const CONTEXT_URL = `${BASE_URL}/integration-v1-context`;
 const PROVIDER_URL = `${BASE_URL}/integration-v1-provider`;
 
