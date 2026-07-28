@@ -23,17 +23,8 @@ export const FloatingChatButton = () => {
     // Idle timer: 50s
     const timer = setTimeout(open, 50000);
 
-    // Scroll trigger: ~50% of page
-    const onScroll = () => {
-      const scrolled = window.scrollY + window.innerHeight;
-      const total = document.documentElement.scrollHeight;
-      if (total > 0 && scrolled / total >= 0.5) open();
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-
     return () => {
       clearTimeout(timer);
-      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
