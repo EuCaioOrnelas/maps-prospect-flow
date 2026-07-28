@@ -175,20 +175,21 @@ export function CodeBlock({ code, lang, filename, showLineNumbers = false, class
       )}
     >
       {/* Header — VS Code editor tab */}
-      <div className="flex items-center justify-between bg-[#252526] border-b border-[#1e1e1e] px-3 py-1.5">
+      <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ backgroundColor: "#252526", borderColor: "#1e1e1e" }}>
         <div className="flex items-center gap-2 min-w-0">
           <span className={cn("h-2 w-2 rounded-full shrink-0", langDot(lang))} />
-          <span className="text-[11px] font-mono text-[#cccccc] truncate">
+          <span className="text-[11px] font-mono truncate" style={{ color: "#cccccc" }}>
             {filename ?? langLabel(lang) ?? "code"}
           </span>
         </div>
         <button
           type="button"
           onClick={copy}
-          className="opacity-70 hover:opacity-100 transition text-[#cccccc] hover:text-white p-1 rounded hover:bg-white/5"
+          className="opacity-70 hover:opacity-100 transition p-1 rounded hover:bg-white/5"
+          style={{ color: "#cccccc" }}
           aria-label="Copiar código"
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-[#4EC9B0]" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? <Check className="h-3.5 w-3.5" style={{ color: "#4EC9B0" }} /> : <Copy className="h-3.5 w-3.5" />}
         </button>
       </div>
 
