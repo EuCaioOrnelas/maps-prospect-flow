@@ -511,17 +511,28 @@ export async function checkIpRateLimit(ip: string, endpoint: string): Promise<Ra
   } catch { return { allowed: true, retryAfterSeconds: 0 }; }
 }
 
-// ---- P4: Idempotency in-memory + Correlation ID ----
+// ---- P4: Idempotency DB-backed + in-memory fallback + Correlation ID ----
 interface IdempotencyEntry { body: string; status: number; headers: Record<string, string>; expiresAt: number; }
 const IDEMPOTENCY_STORE = new Map<string, IdempotencyEntry>();
 const IDEMPOTENCY_TTL_MS = 60_000;
-export function idempotencyLookup(clientId: string, userId: string, key: string): Response | null {
+export async function idempotencyLookup(clientId: string, userId: string, key: string): Promise<Response | null> {
   if (!key) return null;
   const full = `${clientId}:${userId}:${key}`;
+  // 1) in-memory cache (fastest)
   const e = IDEMPOTENCY_STORE.get(full);
-  if (!e) return null;
-  if (Date.now() > e.expiresAt) { IDEMPOTENCY_STORE.delete(full); return null; }
-  return new Response(e.body, { status: e.status, headers: { ...e.headers, "x-idempotent-replay": "true" } });
+  if (e && Date.now() <= e.expiresAt) {
+    return new Response(e.body, { status: e.status, headers: { ...e.headers, "x-idempotent-replay": "true" } });
+  }
+  if (e) IDEMPOTENCY_STORE.delete(full);
+  // 2) DB (cross-instance)
+  const db = await checkIdempotencyDb(clientId, `${userId}:${key}`, key);
+  if (db.replay && db.body !== undefined) {
+    return new Response(db.body, {
+      status: db.status ?? 200,
+      headers: { "Content-Type": "application/json", "x-idempotent-replay": "true" },
+    });
+  }
+  return null;
 }
 export async function idempotencyStore(clientId: string, userId: string, key: string, res: Response): Promise<Response> {
   if (!key) return res;
@@ -531,6 +542,7 @@ export async function idempotencyStore(clientId: string, userId: string, key: st
   clone.headers.forEach((v, k) => { headers[k] = v; });
   const full = `${clientId}:${userId}:${key}`;
   IDEMPOTENCY_STORE.set(full, { body, status: clone.status, headers, expiresAt: Date.now() + IDEMPOTENCY_TTL_MS });
+  await storeIdempotencyDb(clientId, `${userId}:${key}`, key, body, clone.status);
   if (IDEMPOTENCY_STORE.size > 5000) {
     const now = Date.now();
     for (const [k, v] of IDEMPOTENCY_STORE) if (now > v.expiresAt) IDEMPOTENCY_STORE.delete(k);
