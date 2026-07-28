@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { ShieldCheck, PlayCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PROVIDER_DOCS } from "../registry/providers";
+import { CodeBlock } from "../components/CodeBlock";
 
 const CONTEXT_BODY = JSON.stringify(
   { version: "v1", modules: ["cockpit", "crm", "pipeline"], filters: { pagination: { page: 1, size: 20 } } },
@@ -135,7 +136,7 @@ export default function Playground() {
           <CardContent>
             {error && <p className="text-sm text-destructive">{error}</p>}
             {response && (
-              <pre className="max-h-[500px] overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(response, null, 2)}</pre>
+              <CodeBlock lang="json" code={JSON.stringify(response, null, 2)} />
             )}
           </CardContent>
         </Card>

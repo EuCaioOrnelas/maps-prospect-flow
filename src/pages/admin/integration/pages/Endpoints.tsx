@@ -1,18 +1,19 @@
 import { ENDPOINT_DOCS } from "../registry/endpoints";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CodeBlock } from "../components/CodeBlock";
 
 export default function Endpoints() {
   return (
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold">Endpoints</h1>
-        <p className="mt-1 text-muted-foreground">Todos os endpoints são versionados. Nesta fase existe apenas o Context Builder.</p>
+        <p className="mt-1 text-muted-foreground">Todos os endpoints são versionados. Cada rota expõe seu próprio rate limit e headers obrigatórios.</p>
       </header>
       {ENDPOINT_DOCS.map((e) => (
         <Card key={e.path}>
           <CardHeader>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge>{e.method}</Badge>
               <code className="text-sm">{e.path}</code>
               <Badge variant="outline">{e.version}</Badge>
@@ -32,11 +33,11 @@ export default function Endpoints() {
             </div>
             <div>
               <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Request</div>
-              <pre className="rounded-md bg-muted p-3 text-xs overflow-x-auto">{e.request_example}</pre>
+              <CodeBlock lang="json" code={e.request_example} />
             </div>
             <div>
               <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Response</div>
-              <pre className="rounded-md bg-muted p-3 text-xs overflow-x-auto">{e.response_example}</pre>
+              <CodeBlock lang="json" code={e.response_example} />
             </div>
           </CardContent>
         </Card>
@@ -44,3 +45,4 @@ export default function Endpoints() {
     </div>
   );
 }
+

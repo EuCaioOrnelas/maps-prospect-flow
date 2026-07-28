@@ -9,31 +9,13 @@ import { FILTER_DOCS } from "../registry/filters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Copy, ShieldCheck, Zap, BookOpen, Filter, Code2, Package, AlertTriangle, Timer, Layers } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { ShieldCheck, Zap, BookOpen, Filter, Code2, Package, AlertTriangle, Timer, Layers } from "lucide-react";
+import { CodeBlock } from "../components/CodeBlock";
 
 const BASE_URL = "https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1";
 const CONTEXT_URL = `${BASE_URL}/integration-v1-context`;
 const PROVIDER_URL = `${BASE_URL}/integration-v1-provider`;
 
-function CodeBlock({ code, lang }: { code: string; lang?: string }) {
-  const { toast } = useToast();
-  return (
-    <div className="relative group">
-      <pre className="bg-muted/50 border border-border/60 rounded-lg p-4 text-xs overflow-x-auto font-mono leading-relaxed">
-        {lang && <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">{lang}</div>}
-        <code className="text-foreground/90">{code}</code>
-      </pre>
-      <button
-        onClick={() => { navigator.clipboard.writeText(code); toast({ title: "Copiado" }); }}
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition p-1.5 bg-background/80 hover:bg-background rounded border border-border/60"
-        aria-label="Copiar"
-      >
-        <Copy className="w-3.5 h-3.5" />
-      </button>
-    </div>
-  );
-}
 
 function Section({ id, icon: Icon, title, children }: { id: string; icon: any; title: string; children: React.ReactNode }) {
   return (
