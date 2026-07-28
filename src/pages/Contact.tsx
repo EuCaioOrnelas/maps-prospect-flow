@@ -141,7 +141,7 @@ const Contact = () => {
                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-green-500 rounded-full border-2 border-card" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground text-sm sm:text-base">Wian Assistente Virtual</p>
+                    <p className="font-semibold text-foreground text-sm sm:text-base">Wian Suporte Inteligente</p>
                     <div className="flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
                       <span className="text-[10px] sm:text-xs text-green-500">Online</span>
