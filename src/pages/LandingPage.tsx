@@ -10,11 +10,9 @@ import { FloatingChatButton } from "@/components/landing/FloatingChatButton";
 import { LandingPageSkeleton } from "@/components/landing/LandingPageSkeleton";
 import { useLandingPageTracking } from "@/hooks/useLandingPageTracking";
 import { supabase } from "@/integrations/supabase/client";
+import { ProblemSection } from "@/components/sales/ProblemSection";
 import NotFound from "./NotFound";
 
-const ProblemSection = lazy(() =>
-  import("@/components/sales/ProblemSection").then((m) => ({ default: m.ProblemSection })),
-);
 const OpportunitySection = lazy(() =>
   import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
 );
@@ -150,8 +148,9 @@ const LandingPage = () => {
           <HeroSection onSignupClick={trackSignupClick} />
           <TrustedBySection />
 
+          <ProblemSection />
+
           <Suspense fallback={<SectionFallback />}>
-            <ProblemSection />
             <OpportunitySection />
             <MechanismSection />
             <FeaturesOverviewSection />
