@@ -201,10 +201,10 @@ export function CodeBlock({ code, lang, filename, showLineNumbers = false, class
             ))}
           </div>
         ) : null}
-        <pre className="flex-1 px-4 py-3 text-[#d4d4d4] whitespace-pre">
+        <pre className="flex-1 px-4 py-3 whitespace-pre" style={{ color: "#d4d4d4" }}>
           <code>
             {tokens.map((t, i) => (
-              <span key={i} className={COLOR[t.type] ?? ""}>{t.value}</span>
+              <span key={i} style={COLOR[t.type] ?? COLOR.text}>{t.value}</span>
             ))}
           </code>
         </pre>
