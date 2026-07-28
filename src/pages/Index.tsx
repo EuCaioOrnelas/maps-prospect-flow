@@ -141,15 +141,12 @@ const Index = () => {
             {/* Demais seções continuam lazy para preservar performance. */}
             <OpportunitySection />
             <MechanismSection />
-            {/* content-visibility: auto — navegador pula renderização das seções
-                fora do viewport, reduzindo custo de layout/paint no scroll.
-                contain-intrinsic-size generoso evita colapso visual do scroll. */}
-            <div className="cv-auto-lg"><FeaturesOverviewSection /></div>
-            <div className="cv-auto-lg"><WhyItWorksSection /></div>
-            <div className="cv-auto-lg"><TestimonialsSection /></div>
-            <div className="cv-auto-lg"><PricingSection /></div>
-            <div className="cv-auto-lg"><FAQSection /></div>
-            <div className="cv-auto-lg"><CTASection onSignupClick={trackSignupClick} /></div>
+            <FeaturesOverviewSection />
+            <WhyItWorksSection />
+            <TestimonialsSection />
+            <PricingSection />
+            <FAQSection />
+            <CTASection onSignupClick={trackSignupClick} />
           </Suspense>
 
 
