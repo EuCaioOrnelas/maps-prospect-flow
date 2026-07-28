@@ -80,7 +80,7 @@ export const FloatingChatButton = () => {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-neutral-900 leading-tight">Wian</p>
-                    <p className="text-[11px] text-green-600 leading-tight">Assistente virtual • Online</p>
+                    <p className="text-[11px] text-green-600 leading-tight">Suporte Inteligente • Online</p>
                   </div>
                 </div>
               </div>
