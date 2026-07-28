@@ -13,8 +13,28 @@ export const FloatingChatButton = () => {
     if (typeof window === "undefined") return;
     if (sessionStorage.getItem(DISMISS_KEY)) return;
 
-    const t = setTimeout(() => setShowPopup(true), 10000);
-    return () => clearTimeout(t);
+    let opened = false;
+    const open = () => {
+      if (opened) return;
+      opened = true;
+      setShowPopup(true);
+    };
+
+    // Idle timer: 50s
+    const timer = setTimeout(open, 50000);
+
+    // Scroll trigger: ~50% of page
+    const onScroll = () => {
+      const scrolled = window.scrollY + window.innerHeight;
+      const total = document.documentElement.scrollHeight;
+      if (total > 0 && scrolled / total >= 0.5) open();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   const handleClose = (e: React.MouseEvent) => {
@@ -35,7 +55,7 @@ export const FloatingChatButton = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed bottom-24 right-6 z-50 w-[calc(100vw-3rem)] max-w-[320px]"
+            className="fixed bottom-20 sm:bottom-24 right-3 sm:right-6 z-50 w-[min(320px,calc(100vw-1.5rem))]"
           >
             <div className="relative rounded-2xl bg-white shadow-2xl shadow-black/20 border border-black/5 overflow-hidden">
               {/* Close */}
@@ -60,7 +80,7 @@ export const FloatingChatButton = () => {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-neutral-900 leading-tight">Wian</p>
-                    <p className="text-[11px] text-green-600 leading-tight">Assistente virtual • Online</p>
+                    <p className="text-[11px] text-green-600 leading-tight">Suporte Inteligente • Online</p>
                   </div>
                 </div>
               </div>
@@ -77,7 +97,7 @@ export const FloatingChatButton = () => {
                   className="bg-neutral-100 rounded-2xl rounded-tl-sm px-3 py-2 max-w-[90%]"
                 >
                   <p className="text-sm text-neutral-800 leading-snug">
-                    👋 Olá! Sou a Wian, assistente virtual da Wiize.
+                    👋 Olá! Sou a Wian, Suporte Inteligente da Wiize.
                   </p>
                 </motion.div>
                 <motion.div
