@@ -2029,11 +2029,16 @@ Deno.serve(async (req) => {
   const ip = clientIp(req) ?? "unknown";
   const ua = req.headers.get("user-agent");
 
+  const correlationId = req.headers.get("x-correlation-id") ?? req.headers.get("x-request-id") ?? null;
+
   const audit = (data: {
     status: number; success: boolean;
     errorCode?: string | null; errorMessage?: string | null;
     clientId?: string | null; userId?: string | null; companyId?: string | null;
     modules?: string[]; filters?: Record<string, unknown>; records?: number;
+    cacheHit?: boolean | null; signatureVerified?: boolean | null; scopesMatched?: boolean | null;
+    blockedReason?: string | null; rateLimited?: boolean | null; banApplied?: boolean | null;
+    circuitState?: string | null;
   }) => writeAudit({
     request_id: requestId, client_id: data.clientId ?? null, user_id: data.userId ?? null,
     company_id: data.companyId ?? null, endpoint: ENDPOINT, version: VERSION,
@@ -2042,6 +2047,14 @@ Deno.serve(async (req) => {
     error_code: data.errorCode ?? null, error_message: data.errorMessage ?? null,
     processing_time_ms: Date.now() - started, records_returned: data.records ?? 0,
     ip, user_agent: ua,
+    correlation_id: correlationId,
+    cache_hit: data.cacheHit ?? null,
+    signature_verified: data.signatureVerified ?? null,
+    scopes_matched: data.scopesMatched ?? null,
+    blocked_reason: data.blockedReason ?? null,
+    rate_limited: data.rateLimited ?? null,
+    ban_applied: data.banApplied ?? null,
+    circuit_state: data.circuitState ?? null,
   });
 
   if (req.method !== "POST") {
@@ -2061,33 +2074,54 @@ Deno.serve(async (req) => {
   // P3: IP rate-limit pré-auth
   const ipRl = await checkIpRateLimit(ip, ENDPOINT);
   if (!ipRl.allowed) {
+    recordAbuse(ip, null, "rate_limit", 1, { layer: "ip", endpoint: ENDPOINT });
     const e = ERROR_CATALOG.IP_RATE_LIMIT;
-    await audit({ status: e.status, success: false, errorCode: "IP_RATE_LIMIT", errorMessage: e.message });
+    await audit({ status: e.status, success: false, errorCode: "IP_RATE_LIMIT", errorMessage: e.message, rateLimited: true, blockedReason: "ip_rate_limit" });
     return fail({ status: e.status, code: "IP_RATE_LIMIT", message: e.message, request_id: requestId, retry_after_s: ipRl.retryAfterSeconds });
+  }
+
+  // Ban persistente (IP)
+  const ban = await checkIntegrationBan(ip, null);
+  if (ban.banned) {
+    const e = ERROR_CATALOG.IP_RATE_LIMIT;
+    await audit({ status: e.status, success: false, errorCode: "IP_RATE_LIMIT", errorMessage: `banned:${ban.reason ?? ""}`, banApplied: true, blockedReason: `ip_ban:${ban.reason ?? ""}` });
+    return fail({ status: e.status, code: "IP_RATE_LIMIT", message: e.message, request_id: requestId, retry_after_s: 300 });
   }
 
   const clientRes = verifyClient(req);
   if (!clientRes.ok) {
+    recordAbuse(ip, null, "auth_fail", 2, { code: clientRes.code });
     const e = ERROR_CATALOG[clientRes.code];
-    await audit({ status: e.status, success: false, errorCode: clientRes.code, errorMessage: e.message });
+    await audit({ status: e.status, success: false, errorCode: clientRes.code, errorMessage: e.message, blockedReason: "auth_fail" });
     return fail({ status: e.status, code: clientRes.code, message: e.message, request_id: requestId });
   }
   const clientId = clientRes.clientId;
   const clientScopes = clientRes.scopes;
 
+  // Ban persistente (client_id)
+  const banClient = await checkIntegrationBan("", clientId);
+  if (banClient.banned) {
+    const e = ERROR_CATALOG.IP_RATE_LIMIT;
+    await audit({ status: e.status, success: false, errorCode: "IP_RATE_LIMIT", errorMessage: `client_banned:${banClient.reason ?? ""}`, clientId, banApplied: true, blockedReason: `client_ban:${banClient.reason ?? ""}` });
+    return fail({ status: e.status, code: "IP_RATE_LIMIT", message: e.message, request_id: requestId, retry_after_s: 300 });
+  }
+
   // P2: HMAC opcional
   const rawBody = await req.text();
   const hmacRes = await verifyHmac(req, rawBody);
   if (!hmacRes.ok) {
+    recordAbuse(ip, clientId, "sig_fail", 3, { code: hmacRes.code });
     const e = ERROR_CATALOG[hmacRes.code];
-    await audit({ status: e.status, success: false, errorCode: hmacRes.code, errorMessage: e.message, clientId });
+    await audit({ status: e.status, success: false, errorCode: hmacRes.code, errorMessage: e.message, clientId, signatureVerified: false, blockedReason: "sig_fail" });
     return fail({ status: e.status, code: hmacRes.code, message: e.message, request_id: requestId });
   }
+  const signatureVerified = (Deno.env.get("INTEGRATION_REQUIRE_HMAC") ?? "false").toLowerCase() === "true";
 
   const userRes = await verifyUser(req);
   if (!userRes.ok) {
+    recordAbuse(ip, clientId, "auth_fail", 2, { code: userRes.code, layer: "user_jwt" });
     const e = ERROR_CATALOG[userRes.code];
-    await audit({ status: e.status, success: false, errorCode: userRes.code, errorMessage: e.message, clientId });
+    await audit({ status: e.status, success: false, errorCode: userRes.code, errorMessage: e.message, clientId, signatureVerified, blockedReason: "user_auth_fail" });
     return fail({ status: e.status, code: userRes.code, message: e.message, request_id: requestId });
   }
   const { userId, companyId, plan, permissions } = userRes.user;
@@ -2095,14 +2129,15 @@ Deno.serve(async (req) => {
   // P4: Idempotency
   const idempotencyKey = req.headers.get("x-idempotency-key") ?? "";
   if (idempotencyKey) {
-    const cached = idempotencyLookup(clientId, userId, idempotencyKey);
+    const cached = await idempotencyLookup(clientId, userId, idempotencyKey);
     if (cached) return cached;
   }
 
   const rl = await checkRateLimit({ clientId, userId, endpoint: ENDPOINT, maxRequests: 60, windowSeconds: 60 });
   if (!rl.allowed) {
+    recordAbuse(ip, clientId, "rate_limit", 1, { layer: "client_user", endpoint: ENDPOINT });
     const e = ERROR_CATALOG.RATE_LIMIT_EXCEEDED;
-    await audit({ status: e.status, success: false, errorCode: "RATE_LIMIT_EXCEEDED", errorMessage: e.message, clientId, userId, companyId });
+    await audit({ status: e.status, success: false, errorCode: "RATE_LIMIT_EXCEEDED", errorMessage: e.message, clientId, userId, companyId, signatureVerified, rateLimited: true, blockedReason: "client_user_rate_limit" });
     return fail({
       status: e.status, code: "RATE_LIMIT_EXCEEDED", message: e.message,
       request_id: requestId, company_id: companyId, retry_after_s: rl.retryAfterSeconds,
