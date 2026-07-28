@@ -10,26 +10,28 @@ import { cn } from "@/lib/utils";
 type Rule = [RegExp, string];
 
 // ---- Palette (VS Code Dark+) ----
-const COLOR: Record<string, string> = {
-  comment: "text-[#6A9955] italic",
-  string: "text-[#CE9178]",
-  number: "text-[#B5CEA8]",
-  keyword: "text-[#C586C0]",
-  control: "text-[#569CD6]",
-  type: "text-[#4EC9B0]",
-  function: "text-[#DCDCAA]",
-  property: "text-[#9CDCFE]",
-  variable: "text-[#9CDCFE]",
-  boolean: "text-[#569CD6]",
-  operator: "text-[#D4D4D4]",
-  punctuation: "text-[#D4D4D4]",
-  regex: "text-[#D16969]",
-  tag: "text-[#569CD6]",
-  attr: "text-[#9CDCFE]",
-  header: "text-[#569CD6] font-semibold",
-  flag: "text-[#DCDCAA]",
-  url: "text-[#CE9178] underline decoration-dotted",
-  text: "",
+// Uses inline styles (not Tailwind arbitrary classes) so colors are immune to
+// theme (light/dark), Tailwind purge, and global CSS overrides like `.prose`.
+const COLOR: Record<string, { color: string; fontStyle?: string; fontWeight?: number; textDecoration?: string }> = {
+  comment: { color: "#6A9955", fontStyle: "italic" },
+  string: { color: "#CE9178" },
+  number: { color: "#B5CEA8" },
+  keyword: { color: "#C586C0" },
+  control: { color: "#569CD6" },
+  type: { color: "#4EC9B0" },
+  function: { color: "#DCDCAA" },
+  property: { color: "#9CDCFE" },
+  variable: { color: "#9CDCFE" },
+  boolean: { color: "#569CD6" },
+  operator: { color: "#D4D4D4" },
+  punctuation: { color: "#D4D4D4" },
+  regex: { color: "#D16969" },
+  tag: { color: "#569CD6" },
+  attr: { color: "#9CDCFE" },
+  header: { color: "#569CD6", fontWeight: 600 },
+  flag: { color: "#DCDCAA" },
+  url: { color: "#CE9178", textDecoration: "underline dotted" },
+  text: { color: "#D4D4D4" },
 };
 
 // Fresh regexes per language (must all be /g).
