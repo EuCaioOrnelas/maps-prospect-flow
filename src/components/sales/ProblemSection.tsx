@@ -39,7 +39,7 @@ export const ProblemSection = () => {
  "absolute -top-12 -left-12 w-32 h-32 rounded-full bg-destructive/10 soft-glow pointer-events-none opacity-90";
 
  return (
-  <section className="py-12 sm:py-20 w-full relative">
+  <section ref={sectionRef} className="py-12 sm:py-20 w-full relative">
  <div className="container mx-auto px-4 max-w-6xl">
  <motion.div
  initial={{ opacity: 0, y: 24 }}
