@@ -488,6 +488,10 @@ export async function verifyHmac(
   }
   if (!matches) return { ok: false, code: "AUTH_INVALID_SIGNATURE" };
   NONCE_CACHE.set(nonce, Date.now());
+  // Cross-instance replay protection via DB (fail-open if RPC missing)
+  const cid = req.headers.get("x-integration-client-id") ?? "unknown";
+  const persisted = await consumeNonceDb(cid, nonce);
+  if (!persisted) return { ok: false, code: "AUTH_REPLAYED_NONCE" };
   return { ok: true };
 }
 
