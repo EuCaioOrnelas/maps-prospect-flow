@@ -14,7 +14,7 @@ const objections = [
  },
  {
  q: "Qual a diferença entre prospecção outbound e campanhas inbound?",
- a: "Prospecção outbound são mensagens enviadas proativamente para leads novos (via Evolution API com aquecimento de chips). Campanhas inbound são mensagens de relacionamento para quem já interagiu com você (via Meta API Oficial com templates aprovados). O Wiize integra ambos os modelos em uma única plataforma.",
+ a: "Prospecção outbound são mensagens enviadas proativamente para leads novos e campanhas inbound são mensagens de relacionamento para quem já interagiu com você. Ambas operam via API Oficial da Meta (WhatsApp Cloud API) com templates aprovados e total conformidade — tudo integrado em uma única plataforma.",
  },
  {
  q: "Como funcionam os Fluxos de Automação (Flows)?",
