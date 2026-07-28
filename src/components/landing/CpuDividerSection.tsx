@@ -12,7 +12,7 @@ export const CpuDividerSection = () => {
  <motion.div
  initial={{ opacity: 0, scale: 0.95 }}
  whileInView={{ opacity: 1, scale: 1 }}
-  viewport={{ once: true, margin: "0px 0px -45% 0px", amount: 0.05 }}
+  viewport={{ once: true, margin: "0px 0px -10% 0px", amount: 0.05 }}
  transition={{ duration: 0.8, ease: "easeOut" }}
  className="container mx-auto px-4 max-w-6xl relative"
  >
