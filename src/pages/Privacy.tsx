@@ -70,7 +70,7 @@ const Privacy = () => {
                 <li>
                   <strong>Operadora</strong> — quanto aos dados de leads B2B, contatos, mensagens e
                   automações criados, importados ou geridos pelo cliente dentro da plataforma (CRM,
-                  campanhas Meta, agentes de IA, fluxos, aquecimento), a Wiize atua como operadora,
+                  campanhas Meta, agentes de IA, fluxos), a Wiize atua como operadora,
                   tratando dados em nome e sob instruções do cliente, que é o controlador desses dados.
                 </li>
               </ul>
@@ -135,23 +135,13 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">6. WhatsApp — API Oficial da Meta e Aquecimento</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">6. WhatsApp — API Oficial da Meta</h2>
               <p>
-                A Wiize integra-se ao WhatsApp por duas vias com finalidades e responsabilidades distintas:
+                A Wiize integra-se ao WhatsApp exclusivamente por meio da <strong>API Oficial WhatsApp Business (Meta Cloud)</strong>,
+                usada em chat, campanhas e fluxos. A conta WABA pertence ao cliente. A Wiize processa: ID da WABA,
+                nome comercial, número, tokens de acesso (armazenados criptografados), metadados de mensagens (status,
+                timestamps, IDs) e dados de contatos (número e nome de perfil informados pela API).
               </p>
-              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
-                <li>
-                  <strong>API Oficial WhatsApp Business (Meta Cloud)</strong> — usada em chat, campanhas e
-                  fluxos. A conta WABA pertence ao cliente. A Wiize processa: ID da WABA, nome comercial,
-                  número, tokens de acesso (armazenados criptografados), metadados de mensagens (status,
-                  timestamps, IDs) e dados de contatos (número e nome de perfil informados pela API).
-                </li>
-                <li>
-                  <strong>Evolution API</strong> — usada exclusivamente no módulo de <strong>aquecimento</strong> de números
-                  próprios do cliente, para reduzir riscos de bloqueio. O conteúdo trocado nesse fluxo é
-                  gerado pelo próprio sistema entre os números do cliente.
-                </li>
-              </ul>
               <p>
                 O cliente é o único responsável pelo conteúdo enviado, pela obtenção de base legal para
                 contatar cada destinatário e pela aderência às políticas do WhatsApp/Meta. A Wiize não
@@ -183,7 +173,7 @@ const Privacy = () => {
                 <li><strong>E-mail transacional</strong> — Resend, para notificações de conta, cobrança e suporte.</li>
                 <li><strong>IA</strong> — gateway de IA da Wiize sobre modelos de linguagem de terceiros, sem uso dos dados para treinamento externo.</li>
                 <li><strong>Enriquecimento e busca</strong> — provedores de SERP e sinais públicos.</li>
-                <li><strong>Mensageria</strong> — Meta Platforms, Inc. (WhatsApp Business API) e provedor da Evolution API.</li>
+                <li><strong>Mensageria</strong> — Meta Platforms, Inc. (WhatsApp Business API).</li>
                 <li><strong>Google</strong> — quando integrações Google forem ativadas pelo cliente.</li>
                 <li><strong>Autoridades competentes</strong> — mediante ordem judicial ou requisição legal.</li>
               </ul>
@@ -282,9 +272,8 @@ const Privacy = () => {
                 fale com o Encarregado pelo Tratamento de Dados Pessoais (DPO) da Wiize:
               </p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
-                <li>E-mail: <a href="mailto:privacidade@wiize.com.br" className="text-primary hover:underline">privacidade@wiize.com.br</a></li>
-                <li>Suporte geral: <a href="mailto:suporte@wiize.com.br" className="text-primary hover:underline">suporte@wiize.com.br</a></li>
-                <li>Canal de contato: <Link to="/contato" className="text-primary hover:underline">página de contato</Link></li>
+                <li>E-mail: <a href="mailto:wiize.app@gmail.com" className="text-primary hover:underline">wiize.app@gmail.com</a></li>
+                <li>Suporte geral: <Link to="/contato" className="text-primary hover:underline">página de contato</Link></li>
               </ul>
             </section>
           </div>

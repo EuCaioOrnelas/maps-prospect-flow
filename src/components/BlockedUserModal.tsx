@@ -13,7 +13,7 @@ export const BlockedUserModal = ({ onLogout }: BlockedUserModalProps) => {
   };
 
   const handleEmailSupport = () => {
-    window.location.href = 'mailto:suporte@wiize.com.br?subject=Conta Bloqueada - Solicitação de Revisão&body=Olá! Minha conta foi bloqueada e acredito que foi um erro. Gostaria de solicitar uma revisão.';
+    window.location.href = 'mailto:wiize.app@gmail.com?subject=Conta Bloqueada - Solicitação de Revisão&body=Olá! Minha conta foi bloqueada e acredito que foi um erro. Gostaria de solicitar uma revisão.';
   };
 
   return (

@@ -59,7 +59,7 @@ const Terms = () => {
               <p>
                 A Wiize é uma plataforma <strong>estritamente B2B</strong> destinada a pessoas jurídicas
                 para: prospecção de oportunidades comerciais, gestão de leads (CRM), campanhas e
-                atendimento via WhatsApp (API Oficial da Meta), aquecimento de números, fluxos
+                atendimento via WhatsApp (API Oficial da Meta), fluxos
                 automatizados, agentes de IA, integrações com Google (Sheets, Calendar, Gmail, Drive),
                 relatórios e APIs (Integration Layer).
               </p>
@@ -126,7 +126,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">7. WhatsApp — API Oficial (Meta) e Aquecimento</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">7. WhatsApp — API Oficial (Meta)</h2>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
                 <li>
                   A Wiize atua como <strong>intermediário tecnológico</strong>. A conta WhatsApp Business
@@ -136,7 +136,6 @@ const Terms = () => {
                 <li>O cliente é o único responsável pelo conteúdo enviado, pela conformidade com a Política Comercial e as Políticas de Uso do WhatsApp/Meta e pelas leis aplicáveis (inclusive LGPD).</li>
                 <li>Custos de mensagens cobrados pela Meta são faturados diretamente ao cliente pela própria Meta.</li>
                 <li>A Wiize <strong>não se responsabiliza</strong> por suspensões, restrições, bloqueios ou encerramentos de contas WABA ou números realizados pela Meta, seja por violação de políticas, denúncias de spam ou outro motivo.</li>
-                <li>Recursos de <strong>aquecimento</strong> (via Evolution API) ajudam a reduzir riscos, mas não garantem a ausência de bloqueios.</li>
                 <li>Tokens e credenciais são armazenados criptografados e podem ser revogados pelo cliente a qualquer momento.</li>
               </ul>
               <p>
@@ -252,12 +251,10 @@ const Terms = () => {
             <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">17. Contato</h2>
               <p>
-                Dúvidas sobre estes Termos:{" "}
-                <a href="mailto:suporte@wiize.com.br" className="text-primary hover:underline">suporte@wiize.com.br</a>{" "}
+                Dúvidas sobre estes Termos ou sobre privacidade e LGPD:{" "}
+                <a href="mailto:wiize.app@gmail.com" className="text-primary hover:underline">wiize.app@gmail.com</a>{" "}
                 ou{" "}
                 <Link to="/contato" className="text-primary hover:underline">página de contato</Link>.
-                Assuntos de privacidade e LGPD:{" "}
-                <a href="mailto:privacidade@wiize.com.br" className="text-primary hover:underline">privacidade@wiize.com.br</a>.
               </p>
             </section>
           </div>
