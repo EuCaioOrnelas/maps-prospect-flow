@@ -234,6 +234,15 @@ export interface AuditEntry {
   records_returned: number;
   ip: string | null;
   user_agent: string | null;
+  // P1→P5 hardening columns
+  correlation_id?: string | null;
+  circuit_state?: string | null;
+  cache_hit?: boolean | null;
+  signature_verified?: boolean | null;
+  scopes_matched?: boolean | null;
+  blocked_reason?: string | null;
+  rate_limited?: boolean | null;
+  ban_applied?: boolean | null;
 }
 
 export async function writeAudit(entry: AuditEntry): Promise<void> {
@@ -243,6 +252,79 @@ export async function writeAudit(entry: AuditEntry): Promise<void> {
   } catch (e) {
     console.warn("[integration] audit write failed:", (e as Error).message);
   }
+}
+
+// ---- P1→P5 DB persistence helpers ----
+export async function checkIntegrationBan(
+  ip: string, clientId: string | null,
+): Promise<{ banned: boolean; reason?: string; until?: string }> {
+  if ((!ip || ip === "unknown") && !clientId) return { banned: false };
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { data, error } = await admin.rpc("check_integration_ban", {
+      p_ip: ip || null, p_client_id: clientId,
+    });
+    if (error || !data) return { banned: false };
+    const d = data as any;
+    return { banned: Boolean(d?.banned), reason: d?.reason, until: d?.until };
+  } catch { return { banned: false }; }
+}
+
+export function recordAbuse(
+  ip: string, clientId: string | null, eventType: string,
+  severity = 1, details: Record<string, unknown> = {},
+): void {
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    admin.rpc("record_abuse_event", {
+      p_ip: ip && ip !== "unknown" ? ip : null,
+      p_client_id: clientId,
+      p_event_type: eventType,
+      p_severity: severity,
+      p_details: details,
+    }).then(() => {}, () => {});
+  } catch { /* noop */ }
+}
+
+export async function consumeNonceDb(clientId: string, nonce: string): Promise<boolean> {
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { data, error } = await admin.rpc("consume_nonce", {
+      p_client_id: clientId, p_nonce: nonce, p_ttl_seconds: 600,
+    });
+    if (error) return true; // fail-open if RPC missing
+    return Boolean(data);
+  } catch { return true; }
+}
+
+export async function checkIdempotencyDb(
+  clientId: string, key: string, requestHash: string,
+): Promise<{ replay: boolean; body?: string; status?: number }> {
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { data, error } = await admin.rpc("check_idempotency", {
+      p_client_id: clientId, p_key: key, p_request_hash: requestHash,
+    });
+    if (error || !data) return { replay: false };
+    const d = data as any;
+    if (!d.replay) return { replay: false };
+    const body = typeof d.response === "string" ? d.response : JSON.stringify(d.response ?? {});
+    return { replay: true, body, status: Number(d.status ?? 200) };
+  } catch { return { replay: false }; }
+}
+
+export async function storeIdempotencyDb(
+  clientId: string, key: string, requestHash: string, body: string, status: number,
+): Promise<void> {
+  try {
+    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    let parsed: unknown = body;
+    try { parsed = JSON.parse(body); } catch { /* keep raw */ }
+    await admin.rpc("store_idempotency", {
+      p_client_id: clientId, p_key: key, p_request_hash: requestHash,
+      p_body: parsed, p_status: status, p_ttl_seconds: 600,
+    });
+  } catch { /* noop */ }
 }
 
 
@@ -406,6 +488,10 @@ export async function verifyHmac(
   }
   if (!matches) return { ok: false, code: "AUTH_INVALID_SIGNATURE" };
   NONCE_CACHE.set(nonce, Date.now());
+  // Cross-instance replay protection via DB (fail-open if RPC missing)
+  const cid = req.headers.get("x-integration-client-id") ?? "unknown";
+  const persisted = await consumeNonceDb(cid, nonce);
+  if (!persisted) return { ok: false, code: "AUTH_REPLAYED_NONCE" };
   return { ok: true };
 }
 
@@ -425,17 +511,28 @@ export async function checkIpRateLimit(ip: string, endpoint: string): Promise<Ra
   } catch { return { allowed: true, retryAfterSeconds: 0 }; }
 }
 
-// ---- P4: Idempotency in-memory + Correlation ID ----
+// ---- P4: Idempotency DB-backed + in-memory fallback + Correlation ID ----
 interface IdempotencyEntry { body: string; status: number; headers: Record<string, string>; expiresAt: number; }
 const IDEMPOTENCY_STORE = new Map<string, IdempotencyEntry>();
 const IDEMPOTENCY_TTL_MS = 60_000;
-export function idempotencyLookup(clientId: string, userId: string, key: string): Response | null {
+export async function idempotencyLookup(clientId: string, userId: string, key: string): Promise<Response | null> {
   if (!key) return null;
   const full = `${clientId}:${userId}:${key}`;
+  // 1) in-memory cache (fastest)
   const e = IDEMPOTENCY_STORE.get(full);
-  if (!e) return null;
-  if (Date.now() > e.expiresAt) { IDEMPOTENCY_STORE.delete(full); return null; }
-  return new Response(e.body, { status: e.status, headers: { ...e.headers, "x-idempotent-replay": "true" } });
+  if (e && Date.now() <= e.expiresAt) {
+    return new Response(e.body, { status: e.status, headers: { ...e.headers, "x-idempotent-replay": "true" } });
+  }
+  if (e) IDEMPOTENCY_STORE.delete(full);
+  // 2) DB (cross-instance)
+  const db = await checkIdempotencyDb(clientId, `${userId}:${key}`, key);
+  if (db.replay && db.body !== undefined) {
+    return new Response(db.body, {
+      status: db.status ?? 200,
+      headers: { "Content-Type": "application/json", "x-idempotent-replay": "true" },
+    });
+  }
+  return null;
 }
 export async function idempotencyStore(clientId: string, userId: string, key: string, res: Response): Promise<Response> {
   if (!key) return res;
@@ -445,6 +542,7 @@ export async function idempotencyStore(clientId: string, userId: string, key: st
   clone.headers.forEach((v, k) => { headers[k] = v; });
   const full = `${clientId}:${userId}:${key}`;
   IDEMPOTENCY_STORE.set(full, { body, status: clone.status, headers, expiresAt: Date.now() + IDEMPOTENCY_TTL_MS });
+  await storeIdempotencyDb(clientId, `${userId}:${key}`, key, body, clone.status);
   if (IDEMPOTENCY_STORE.size > 5000) {
     const now = Date.now();
     for (const [k, v] of IDEMPOTENCY_STORE) if (now > v.expiresAt) IDEMPOTENCY_STORE.delete(k);
@@ -2080,11 +2178,16 @@ Deno.serve(async (req) => {
   const ip = clientIp(req) ?? "unknown";
   const ua = req.headers.get("user-agent");
 
+  const correlationId = req.headers.get("x-correlation-id") ?? req.headers.get("x-request-id") ?? null;
+
   const audit = (name: string, data: {
     status: number; success: boolean;
     errorCode?: string | null; errorMessage?: string | null;
     clientId?: string | null; userId?: string | null; companyId?: string | null;
     filters?: Record<string, unknown>; records?: number;
+    cacheHit?: boolean | null; signatureVerified?: boolean | null; scopesMatched?: boolean | null;
+    blockedReason?: string | null; rateLimited?: boolean | null; banApplied?: boolean | null;
+    circuitState?: string | null;
   }) => writeAudit({
     request_id: requestId, client_id: data.clientId ?? null, user_id: data.userId ?? null,
     company_id: data.companyId ?? null,
@@ -2094,6 +2197,14 @@ Deno.serve(async (req) => {
     error_code: data.errorCode ?? null, error_message: data.errorMessage ?? null,
     processing_time_ms: Date.now() - started, records_returned: data.records ?? 0,
     ip, user_agent: ua,
+    correlation_id: correlationId,
+    cache_hit: data.cacheHit ?? null,
+    signature_verified: data.signatureVerified ?? null,
+    scopes_matched: data.scopesMatched ?? null,
+    blocked_reason: data.blockedReason ?? null,
+    rate_limited: data.rateLimited ?? null,
+    ban_applied: data.banApplied ?? null,
+    circuit_state: data.circuitState ?? null,
   });
 
   if (req.method !== "POST") {
@@ -2113,33 +2224,54 @@ Deno.serve(async (req) => {
   // P3: IP rate-limit (pré-auth, anti-flood)
   const ipRl = await checkIpRateLimit(ip, "/api/v1/providers");
   if (!ipRl.allowed) {
+    recordAbuse(ip, null, "rate_limit", 1, { layer: "ip", endpoint: "/api/v1/providers" });
     const e = ERROR_CATALOG.IP_RATE_LIMIT;
-    await audit("", { status: e.status, success: false, errorCode: "IP_RATE_LIMIT", errorMessage: e.message });
+    await audit("", { status: e.status, success: false, errorCode: "IP_RATE_LIMIT", errorMessage: e.message, rateLimited: true, blockedReason: "ip_rate_limit" });
     return fail({ status: e.status, code: "IP_RATE_LIMIT", message: e.message, request_id: requestId, retry_after_s: ipRl.retryAfterSeconds });
+  }
+
+  // P3+: persistent IP ban check (auto-ban / manual bans)
+  const ban = await checkIntegrationBan(ip, null);
+  if (ban.banned) {
+    const e = ERROR_CATALOG.IP_RATE_LIMIT;
+    await audit("", { status: e.status, success: false, errorCode: "IP_RATE_LIMIT", errorMessage: `banned:${ban.reason ?? ""}`, banApplied: true, blockedReason: `ip_ban:${ban.reason ?? ""}` });
+    return fail({ status: e.status, code: "IP_RATE_LIMIT", message: e.message, request_id: requestId, retry_after_s: 300 });
   }
 
   const clientRes = verifyClient(req);
   if (!clientRes.ok) {
+    recordAbuse(ip, null, "auth_fail", 2, { code: clientRes.code });
     const e = ERROR_CATALOG[clientRes.code];
-    await audit("", { status: e.status, success: false, errorCode: clientRes.code, errorMessage: e.message });
+    await audit("", { status: e.status, success: false, errorCode: clientRes.code, errorMessage: e.message, blockedReason: "auth_fail" });
     return fail({ status: e.status, code: clientRes.code, message: e.message, request_id: requestId });
   }
   const clientId = clientRes.clientId;
   const clientScopes = clientRes.scopes;
 
+  // Ban check por client_id também (após identificar o cliente)
+  const banClient = await checkIntegrationBan("", clientId);
+  if (banClient.banned) {
+    const e = ERROR_CATALOG.IP_RATE_LIMIT;
+    await audit("", { status: e.status, success: false, errorCode: "IP_RATE_LIMIT", errorMessage: `client_banned:${banClient.reason ?? ""}`, clientId, banApplied: true, blockedReason: `client_ban:${banClient.reason ?? ""}` });
+    return fail({ status: e.status, code: "IP_RATE_LIMIT", message: e.message, request_id: requestId, retry_after_s: 300 });
+  }
+
   // P2: HMAC opcional (precisa ler raw body antes do JSON.parse)
   const rawBody = await req.text();
   const hmacRes = await verifyHmac(req, rawBody);
   if (!hmacRes.ok) {
+    recordAbuse(ip, clientId, "sig_fail", 3, { code: hmacRes.code });
     const e = ERROR_CATALOG[hmacRes.code];
-    await audit("", { status: e.status, success: false, errorCode: hmacRes.code, errorMessage: e.message, clientId });
+    await audit("", { status: e.status, success: false, errorCode: hmacRes.code, errorMessage: e.message, clientId, signatureVerified: false, blockedReason: "sig_fail" });
     return fail({ status: e.status, code: hmacRes.code, message: e.message, request_id: requestId });
   }
+  const signatureVerified = (Deno.env.get("INTEGRATION_REQUIRE_HMAC") ?? "false").toLowerCase() === "true";
 
   const userRes = await verifyUser(req);
   if (!userRes.ok) {
+    recordAbuse(ip, clientId, "auth_fail", 2, { code: userRes.code, layer: "user_jwt" });
     const e = ERROR_CATALOG[userRes.code];
-    await audit("", { status: e.status, success: false, errorCode: userRes.code, errorMessage: e.message, clientId });
+    await audit("", { status: e.status, success: false, errorCode: userRes.code, errorMessage: e.message, clientId, signatureVerified, blockedReason: "user_auth_fail" });
     return fail({ status: e.status, code: userRes.code, message: e.message, request_id: requestId });
   }
   const { userId, companyId, plan, permissions } = userRes.user;
@@ -2147,36 +2279,38 @@ Deno.serve(async (req) => {
   // P4: Idempotency — replay cached response if same key seen in TTL window
   const idempotencyKey = req.headers.get("x-idempotency-key") ?? "";
   if (idempotencyKey) {
-    const cached = idempotencyLookup(clientId, userId, idempotencyKey);
+    const cached = await idempotencyLookup(clientId, userId, idempotencyKey);
     if (cached) return cached;
   }
 
   let body: any;
   try { body = rawBody ? JSON.parse(rawBody) : {}; } catch {
     const e = ERROR_CATALOG.VALIDATION_BODY;
-    await audit("", { status: e.status, success: false, errorCode: "VALIDATION_BODY", errorMessage: "JSON inválido", clientId, userId, companyId });
+    await audit("", { status: e.status, success: false, errorCode: "VALIDATION_BODY", errorMessage: "JSON inválido", clientId, userId, companyId, signatureVerified });
     return fail({ status: e.status, code: "VALIDATION_BODY", message: e.message, request_id: requestId, company_id: companyId });
   }
 
   const providerName = String(body?.provider ?? req.headers.get("x-provider-name") ?? "").trim().toLowerCase();
   if (!providerName || !/^[a-z_]+$/.test(providerName)) {
     const e = ERROR_CATALOG.VALIDATION_BODY;
-    await audit("", { status: e.status, success: false, errorCode: "VALIDATION_BODY", errorMessage: "provider ausente", clientId, userId, companyId });
+    await audit("", { status: e.status, success: false, errorCode: "VALIDATION_BODY", errorMessage: "provider ausente", clientId, userId, companyId, signatureVerified });
     return fail({ status: e.status, code: "VALIDATION_BODY", message: "Campo 'provider' obrigatório.", request_id: requestId, company_id: companyId });
   }
 
   // P5: scope check por provider (client precisa de `${provider}.read` ou "*")
   if (!hasScope(clientScopes, `${providerName}.read`)) {
+    recordAbuse(ip, clientId, "scope_denied", 2, { provider: providerName });
     const e = ERROR_CATALOG.PERM_SCOPE_MISSING;
-    await audit(providerName, { status: e.status, success: false, errorCode: "PERM_SCOPE_MISSING", errorMessage: e.message, clientId, userId, companyId });
+    await audit(providerName, { status: e.status, success: false, errorCode: "PERM_SCOPE_MISSING", errorMessage: e.message, clientId, userId, companyId, signatureVerified, scopesMatched: false, blockedReason: "scope_missing" });
     return fail({ status: e.status, code: "PERM_SCOPE_MISSING", message: e.message, request_id: requestId, company_id: companyId });
   }
 
   // P3: rate-limit multi-camada (client+user já cobre client e user; adiciona também por company)
   const rl = await checkRateLimit({ clientId, userId, endpoint: `/api/v1/providers/${providerName}`, maxRequests: 120, windowSeconds: 60 });
   if (!rl.allowed) {
+    recordAbuse(ip, clientId, "rate_limit", 1, { layer: "client_user", provider: providerName });
     const e = ERROR_CATALOG.RATE_LIMIT_EXCEEDED;
-    await audit(providerName, { status: e.status, success: false, errorCode: "RATE_LIMIT_EXCEEDED", errorMessage: e.message, clientId, userId, companyId });
+    await audit(providerName, { status: e.status, success: false, errorCode: "RATE_LIMIT_EXCEEDED", errorMessage: e.message, clientId, userId, companyId, signatureVerified, scopesMatched: true, rateLimited: true, blockedReason: "client_user_rate_limit" });
     return fail({
       status: e.status, code: "RATE_LIMIT_EXCEEDED", message: e.message,
       request_id: requestId, company_id: companyId, retry_after_s: rl.retryAfterSeconds,
@@ -2184,8 +2318,9 @@ Deno.serve(async (req) => {
   }
   const companyRl = await checkRateLimit({ clientId: "company", userId: companyId, endpoint: `/api/v1/providers/${providerName}`, maxRequests: 600, windowSeconds: 60 });
   if (!companyRl.allowed) {
+    recordAbuse(ip, clientId, "rate_limit", 1, { layer: "company", provider: providerName });
     const e = ERROR_CATALOG.RATE_LIMIT_EXCEEDED;
-    await audit(providerName, { status: e.status, success: false, errorCode: "RATE_LIMIT_EXCEEDED", errorMessage: "company quota", clientId, userId, companyId });
+    await audit(providerName, { status: e.status, success: false, errorCode: "RATE_LIMIT_EXCEEDED", errorMessage: "company quota", clientId, userId, companyId, signatureVerified, scopesMatched: true, rateLimited: true, blockedReason: "company_rate_limit" });
     return fail({ status: e.status, code: "RATE_LIMIT_EXCEEDED", message: e.message, request_id: requestId, company_id: companyId, retry_after_s: companyRl.retryAfterSeconds });
   }
 
