@@ -61,7 +61,7 @@ export const WhyItWorksSection = () => {
  key={index}
  initial={{ opacity: 0, y: 24 }}
  whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true }}
+ viewport={{ once: true, margin: "0px 0px -45% 0px", amount: 0.05 }}
  transition={{ duration: 0.5, delay: index * 0.12 }}
  className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-4 sm:p-5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
  >
@@ -86,7 +86,7 @@ export const WhyItWorksSection = () => {
  <motion.div
  initial={{ opacity: 0, y: 20 }}
  whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true }}
+ viewport={{ once: true, margin: "0px 0px -45% 0px", amount: 0.05 }}
  transition={{ duration: 0.5, delay: 0.1 }}
  className="relative mt-4 sm:mt-6 overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-5 sm:p-8 md:p-10"
  >
@@ -113,7 +113,7 @@ export const WhyItWorksSection = () => {
  key={index}
  initial={{ opacity: 0, y: 16 }}
  whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true }}
+ viewport={{ once: true, margin: "0px 0px -45% 0px", amount: 0.05 }}
  transition={{ duration: 0.4, delay: index * 0.08 }}
  className="text-center p-3 sm:p-5 rounded-xl border border-border/40 bg-background/40 hover:border-primary/30 hover:bg-card/60 transition-all duration-300"
  >
