@@ -2102,6 +2102,22 @@ Deno.serve(async (req) => {
     return fail({ status: 405, code: "VALIDATION_BODY", message: e.message, request_id: requestId });
   }
 
+  // P5: versioning (aceita apenas v1)
+  const apiVersion = (req.headers.get("x-integration-api-version") ?? "v1").toLowerCase();
+  if (apiVersion !== "v1") {
+    const e = ERROR_CATALOG.VALIDATION_VERSION;
+    await audit("", { status: e.status, success: false, errorCode: "VALIDATION_VERSION", errorMessage: `versão ${apiVersion} não suportada` });
+    return fail({ status: e.status, code: "VALIDATION_VERSION", message: e.message, request_id: requestId });
+  }
+
+  // P3: IP rate-limit (pré-auth, anti-flood)
+  const ipRl = await checkIpRateLimit(ip, "/api/v1/providers");
+  if (!ipRl.allowed) {
+    const e = ERROR_CATALOG.IP_RATE_LIMIT;
+    await audit("", { status: e.status, success: false, errorCode: "IP_RATE_LIMIT", errorMessage: e.message });
+    return fail({ status: e.status, code: "IP_RATE_LIMIT", message: e.message, request_id: requestId, retry_after_s: ipRl.retryAfterSeconds });
+  }
+
   const clientRes = verifyClient(req);
   if (!clientRes.ok) {
     const e = ERROR_CATALOG[clientRes.code];
@@ -2109,6 +2125,16 @@ Deno.serve(async (req) => {
     return fail({ status: e.status, code: clientRes.code, message: e.message, request_id: requestId });
   }
   const clientId = clientRes.clientId;
+  const clientScopes = clientRes.scopes;
+
+  // P2: HMAC opcional (precisa ler raw body antes do JSON.parse)
+  const rawBody = await req.text();
+  const hmacRes = await verifyHmac(req, rawBody);
+  if (!hmacRes.ok) {
+    const e = ERROR_CATALOG[hmacRes.code];
+    await audit("", { status: e.status, success: false, errorCode: hmacRes.code, errorMessage: e.message, clientId });
+    return fail({ status: e.status, code: hmacRes.code, message: e.message, request_id: requestId });
+  }
 
   const userRes = await verifyUser(req);
   if (!userRes.ok) {
@@ -2118,8 +2144,15 @@ Deno.serve(async (req) => {
   }
   const { userId, companyId, plan, permissions } = userRes.user;
 
+  // P4: Idempotency — replay cached response if same key seen in TTL window
+  const idempotencyKey = req.headers.get("x-idempotency-key") ?? "";
+  if (idempotencyKey) {
+    const cached = idempotencyLookup(clientId, userId, idempotencyKey);
+    if (cached) return cached;
+  }
+
   let body: any;
-  try { body = await req.json(); } catch {
+  try { body = rawBody ? JSON.parse(rawBody) : {}; } catch {
     const e = ERROR_CATALOG.VALIDATION_BODY;
     await audit("", { status: e.status, success: false, errorCode: "VALIDATION_BODY", errorMessage: "JSON inválido", clientId, userId, companyId });
     return fail({ status: e.status, code: "VALIDATION_BODY", message: e.message, request_id: requestId, company_id: companyId });
@@ -2132,6 +2165,14 @@ Deno.serve(async (req) => {
     return fail({ status: e.status, code: "VALIDATION_BODY", message: "Campo 'provider' obrigatório.", request_id: requestId, company_id: companyId });
   }
 
+  // P5: scope check por provider (client precisa de `${provider}.read` ou "*")
+  if (!hasScope(clientScopes, `${providerName}.read`)) {
+    const e = ERROR_CATALOG.PERM_SCOPE_MISSING;
+    await audit(providerName, { status: e.status, success: false, errorCode: "PERM_SCOPE_MISSING", errorMessage: e.message, clientId, userId, companyId });
+    return fail({ status: e.status, code: "PERM_SCOPE_MISSING", message: e.message, request_id: requestId, company_id: companyId });
+  }
+
+  // P3: rate-limit multi-camada (client+user já cobre client e user; adiciona também por company)
   const rl = await checkRateLimit({ clientId, userId, endpoint: `/api/v1/providers/${providerName}`, maxRequests: 120, windowSeconds: 60 });
   if (!rl.allowed) {
     const e = ERROR_CATALOG.RATE_LIMIT_EXCEEDED;
@@ -2140,6 +2181,12 @@ Deno.serve(async (req) => {
       status: e.status, code: "RATE_LIMIT_EXCEEDED", message: e.message,
       request_id: requestId, company_id: companyId, retry_after_s: rl.retryAfterSeconds,
     });
+  }
+  const companyRl = await checkRateLimit({ clientId: "company", userId: companyId, endpoint: `/api/v1/providers/${providerName}`, maxRequests: 600, windowSeconds: 60 });
+  if (!companyRl.allowed) {
+    const e = ERROR_CATALOG.RATE_LIMIT_EXCEEDED;
+    await audit(providerName, { status: e.status, success: false, errorCode: "RATE_LIMIT_EXCEEDED", errorMessage: "company quota", clientId, userId, companyId });
+    return fail({ status: e.status, code: "RATE_LIMIT_EXCEEDED", message: e.message, request_id: requestId, company_id: companyId, retry_after_s: companyRl.retryAfterSeconds });
   }
 
   const filtersRes = parseFilters(body?.filters);
@@ -2155,8 +2202,11 @@ Deno.serve(async (req) => {
   const baseCtx = registry.buildContext({ companyId, userId, permissions, plan, filters });
 
   try {
-    // executeMany resolve dependências automaticamente, mesmo pedindo 1 provider.
-    const { results, errors } = await registry.executeMany([providerName], baseCtx, { bypassCache });
+    // P3: timeout global de 15s por chamada de provider
+    const { results, errors } = await withTimeout(
+      registry.executeMany([providerName], baseCtx, { bypassCache }),
+      15_000,
+    );
     const result = results[providerName];
 
     if (!result) {
@@ -2173,7 +2223,7 @@ Deno.serve(async (req) => {
       clientId, userId, companyId, filters: filters as any, records: result.metadata.records_count,
     });
 
-    return ok({
+    const response = ok({
       request_id: requestId, company_id: companyId, version: VERSION,
       processing_time_ms: Date.now() - started,
       cache: result.metadata.cache,
@@ -2181,14 +2231,21 @@ Deno.serve(async (req) => {
       context: { [providerName]: { data: result.data, metadata: result.metadata } },
       errors: errors.map((e) => ({ code: e.code, message: e.message, provider: e.provider })),
     });
+    return idempotencyKey ? await idempotencyStore(clientId, userId, idempotencyKey, response) : response;
   } catch (err) {
+    const msg = (err as Error).message ?? "";
+    if (msg.startsWith("TIMEOUT_")) {
+      const e = ERROR_CATALOG.PROVIDER_TIMEOUT;
+      await audit(providerName, { status: e.status, success: false, errorCode: "PROVIDER_TIMEOUT", errorMessage: msg, clientId, userId, companyId });
+      return fail({ status: e.status, code: "PROVIDER_TIMEOUT", message: e.message, request_id: requestId, company_id: companyId });
+    }
     if (err instanceof ProviderNotFoundError) {
       const e = ERROR_CATALOG.PROVIDER_NOT_FOUND;
       await audit(providerName, { status: e.status, success: false, errorCode: "PROVIDER_NOT_FOUND", errorMessage: e.message, clientId, userId, companyId });
       return fail({ status: e.status, code: "PROVIDER_NOT_FOUND", message: e.message, request_id: requestId, company_id: companyId });
     }
     const e = ERROR_CATALOG.PROVIDER_ERROR;
-    await audit(providerName, { status: e.status, success: false, errorCode: "PROVIDER_ERROR", errorMessage: (err as Error).message, clientId, userId, companyId });
+    await audit(providerName, { status: e.status, success: false, errorCode: "PROVIDER_ERROR", errorMessage: msg, clientId, userId, companyId });
     return fail({ status: e.status, code: "PROVIDER_ERROR", message: e.message, request_id: requestId, company_id: companyId });
   }
 });
