@@ -1344,7 +1344,7 @@ export function WianChat() {
                 <span className="hidden">{blockTick}</span>.
               </p>
               <p className="text-[11px] text-muted-foreground pt-1">
-                Se for urgente, entre em contato pelo email <strong>suporte@wiize.com.br</strong>.
+                Se for urgente, entre em contato pelo email <strong>wiize.app@gmail.com</strong>.
               </p>
             </div>
           </motion.div>
