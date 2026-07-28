@@ -1955,6 +1955,22 @@ Deno.serve(async (req) => {
     return fail({ status: 405, code: "VALIDATION_BODY", message: e.message, request_id: requestId });
   }
 
+  // P5: versioning
+  const apiVersion = (req.headers.get("x-integration-api-version") ?? "v1").toLowerCase();
+  if (apiVersion !== "v1") {
+    const e = ERROR_CATALOG.VALIDATION_VERSION;
+    await audit({ status: e.status, success: false, errorCode: "VALIDATION_VERSION", errorMessage: `versão ${apiVersion} não suportada` });
+    return fail({ status: e.status, code: "VALIDATION_VERSION", message: e.message, request_id: requestId });
+  }
+
+  // P3: IP rate-limit pré-auth
+  const ipRl = await checkIpRateLimit(ip, ENDPOINT);
+  if (!ipRl.allowed) {
+    const e = ERROR_CATALOG.IP_RATE_LIMIT;
+    await audit({ status: e.status, success: false, errorCode: "IP_RATE_LIMIT", errorMessage: e.message });
+    return fail({ status: e.status, code: "IP_RATE_LIMIT", message: e.message, request_id: requestId, retry_after_s: ipRl.retryAfterSeconds });
+  }
+
   const clientRes = verifyClient(req);
   if (!clientRes.ok) {
     const e = ERROR_CATALOG[clientRes.code];
@@ -1962,6 +1978,16 @@ Deno.serve(async (req) => {
     return fail({ status: e.status, code: clientRes.code, message: e.message, request_id: requestId });
   }
   const clientId = clientRes.clientId;
+  const clientScopes = clientRes.scopes;
+
+  // P2: HMAC opcional
+  const rawBody = await req.text();
+  const hmacRes = await verifyHmac(req, rawBody);
+  if (!hmacRes.ok) {
+    const e = ERROR_CATALOG[hmacRes.code];
+    await audit({ status: e.status, success: false, errorCode: hmacRes.code, errorMessage: e.message, clientId });
+    return fail({ status: e.status, code: hmacRes.code, message: e.message, request_id: requestId });
+  }
 
   const userRes = await verifyUser(req);
   if (!userRes.ok) {
@@ -1970,6 +1996,13 @@ Deno.serve(async (req) => {
     return fail({ status: e.status, code: userRes.code, message: e.message, request_id: requestId });
   }
   const { userId, companyId, plan, permissions } = userRes.user;
+
+  // P4: Idempotency
+  const idempotencyKey = req.headers.get("x-idempotency-key") ?? "";
+  if (idempotencyKey) {
+    const cached = idempotencyLookup(clientId, userId, idempotencyKey);
+    if (cached) return cached;
+  }
 
   const rl = await checkRateLimit({ clientId, userId, endpoint: ENDPOINT, maxRequests: 60, windowSeconds: 60 });
   if (!rl.allowed) {
@@ -1980,9 +2013,15 @@ Deno.serve(async (req) => {
       request_id: requestId, company_id: companyId, retry_after_s: rl.retryAfterSeconds,
     });
   }
+  const companyRl = await checkRateLimit({ clientId: "company", userId: companyId, endpoint: ENDPOINT, maxRequests: 300, windowSeconds: 60 });
+  if (!companyRl.allowed) {
+    const e = ERROR_CATALOG.RATE_LIMIT_EXCEEDED;
+    await audit({ status: e.status, success: false, errorCode: "RATE_LIMIT_EXCEEDED", errorMessage: "company quota", clientId, userId, companyId });
+    return fail({ status: e.status, code: "RATE_LIMIT_EXCEEDED", message: e.message, request_id: requestId, company_id: companyId, retry_after_s: companyRl.retryAfterSeconds });
+  }
 
   let body: any;
-  try { body = await req.json(); } catch {
+  try { body = rawBody ? JSON.parse(rawBody) : {}; } catch {
     const e = ERROR_CATALOG.VALIDATION_BODY;
     await audit({ status: e.status, success: false, errorCode: "VALIDATION_BODY", errorMessage: "JSON inválido", clientId, userId, companyId });
     return fail({ status: e.status, code: "VALIDATION_BODY", message: e.message, request_id: requestId, company_id: companyId });
@@ -2004,6 +2043,14 @@ Deno.serve(async (req) => {
     return fail({ status: e.status, code: "VALIDATION_MODULES", message: e.message, request_id: requestId, company_id: companyId });
   }
 
+  // P5: scope check para cada module solicitado
+  const missingScope = modules.find((m) => !hasScope(clientScopes, `${m}.read`));
+  if (missingScope) {
+    const e = ERROR_CATALOG.PERM_SCOPE_MISSING;
+    await audit({ status: e.status, success: false, errorCode: "PERM_SCOPE_MISSING", errorMessage: `escopo ausente para ${missingScope}`, clientId, userId, companyId, modules });
+    return fail({ status: e.status, code: "PERM_SCOPE_MISSING", message: e.message, request_id: requestId, company_id: companyId });
+  }
+
   const filtersRes = parseFilters(body?.filters);
   if (!filtersRes.ok) {
     const e = ERROR_CATALOG.VALIDATION_FILTERS;
@@ -2013,34 +2060,50 @@ Deno.serve(async (req) => {
   const filters = filtersRes.filters;
   const bypassCache = req.headers.get("x-integration-cache-bypass") === "true";
 
-  // Delega TUDO ao Registry. Aqui não há CRM, Cockpit, Meta, nada.
   const baseCtx = registry.buildContext({ companyId, userId, permissions, plan, filters });
-  const { results, errors } = await registry.executeMany(modules, baseCtx, { bypassCache });
 
-  // Consolida: nome do provider vira chave, mantém metadata individual de cada um.
-  const context: Record<string, unknown> = {};
-  let totalRecords = 0;
-  let anyCacheHit = false;
-  for (const [name, r] of Object.entries(results)) {
-    context[name] = { data: r.data, metadata: r.metadata };
-    totalRecords += r.metadata.records_count;
-    if (r.metadata.cache.hit) anyCacheHit = true;
+  try {
+    // P3: timeout global 20s por bundle de módulos
+    const { results, errors } = await withTimeout(
+      registry.executeMany(modules, baseCtx, { bypassCache }),
+      20_000,
+    );
+
+    const context: Record<string, unknown> = {};
+    let totalRecords = 0;
+    let anyCacheHit = false;
+    for (const [name, r] of Object.entries(results)) {
+      context[name] = { data: r.data, metadata: r.metadata };
+      totalRecords += r.metadata.records_count;
+      if (r.metadata.cache.hit) anyCacheHit = true;
+    }
+
+    const elapsed = Date.now() - started;
+    await audit({
+      status: 200, success: errors.length === 0,
+      errorCode: errors[0]?.code ?? null, errorMessage: errors[0]?.message ?? null,
+      clientId, userId, companyId, modules, filters: filters as unknown as Record<string, unknown>,
+      records: totalRecords,
+    });
+
+    const response = ok({
+      request_id: requestId, company_id: companyId, version: VERSION,
+      processing_time_ms: elapsed,
+      cache: { hit: anyCacheHit, ttl_s: 0 },
+      filters_applied: filters as unknown as Record<string, unknown>,
+      context,
+      errors: errors.map((e) => ({ code: e.code, message: e.message, provider: e.provider })),
+    });
+    return idempotencyKey ? await idempotencyStore(clientId, userId, idempotencyKey, response) : response;
+  } catch (err) {
+    const msg = (err as Error).message ?? "";
+    if (msg.startsWith("TIMEOUT_")) {
+      const e = ERROR_CATALOG.PROVIDER_TIMEOUT;
+      await audit({ status: e.status, success: false, errorCode: "PROVIDER_TIMEOUT", errorMessage: msg, clientId, userId, companyId, modules });
+      return fail({ status: e.status, code: "PROVIDER_TIMEOUT", message: e.message, request_id: requestId, company_id: companyId });
+    }
+    const e = ERROR_CATALOG.PROVIDER_ERROR;
+    await audit({ status: e.status, success: false, errorCode: "PROVIDER_ERROR", errorMessage: msg, clientId, userId, companyId, modules });
+    return fail({ status: e.status, code: "PROVIDER_ERROR", message: e.message, request_id: requestId, company_id: companyId });
   }
-
-  const elapsed = Date.now() - started;
-  await audit({
-    status: 200, success: errors.length === 0,
-    errorCode: errors[0]?.code ?? null, errorMessage: errors[0]?.message ?? null,
-    clientId, userId, companyId, modules, filters: filters as unknown as Record<string, unknown>,
-    records: totalRecords,
-  });
-
-  return ok({
-    request_id: requestId, company_id: companyId, version: VERSION,
-    processing_time_ms: elapsed,
-    cache: { hit: anyCacheHit, ttl_s: 0 },
-    filters_applied: filters as unknown as Record<string, unknown>,
-    context,
-    errors: errors.map((e) => ({ code: e.code, message: e.message, provider: e.provider })),
-  });
 });
