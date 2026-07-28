@@ -188,6 +188,7 @@ const IntegrationPlayground = lazyWithRetry(() => import("./pages/admin/integrat
 const IntegrationChangelog = lazyWithRetry(() => import("./pages/admin/integration/pages/Changelog"), "IntegrationChangelog");
 const IntegrationRegistry = lazyWithRetry(() => import("./pages/admin/integration/pages/Registry"), "IntegrationRegistry");
 const IntegrationDeveloperCenter = lazyWithRetry(() => import("./pages/admin/integration/pages/DeveloperCenter"), "IntegrationDeveloperCenter");
+const IntegrationHmacGuide = lazyWithRetry(() => import("./pages/admin/integration/pages/HmacGuide"), "IntegrationHmacGuide");
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -423,6 +424,7 @@ const App = () => (
                 >
                   <Route index element={<IntegrationOverview />} />
                   <Route path="developer-center" element={<IntegrationDeveloperCenter />} />
+                  <Route path="hmac" element={<IntegrationHmacGuide />} />
                   <Route path="providers" element={<IntegrationProviders />} />
                   <Route path="registry" element={<IntegrationRegistry />} />
                   <Route path="endpoints" element={<IntegrationEndpoints />} />
