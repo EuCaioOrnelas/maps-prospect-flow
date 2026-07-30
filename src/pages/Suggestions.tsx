@@ -59,10 +59,7 @@ const IMPORTANCE_ICON_CLASS: Record<SuggestionImportance, string> = {
 
 function RequiredMark() {
   return (
-    <span className="ml-1 inline-flex items-center gap-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-      <Asterisk size={10} className="text-primary" />
-      obrigatório
-    </span>
+    <Asterisk size={11} className="text-primary shrink-0" aria-label="Campo obrigatório" />
   );
 }
 
