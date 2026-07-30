@@ -183,6 +183,8 @@ Deno.serve(async (req) => {
     const wiizeSubIds = new Set(wiizeSubs.map((s: Stripe.Subscription) => s.id));
 
     // --- Process refunds ---
+    // Reembolsos anteriores a 01/07/2026 são ignorados nas métricas (histórico limpo).
+    const REFUND_METRICS_SINCE_MS = Date.UTC(2026, 6, 1);
     const refundedChargeIds = new Set<string>();
     let wiizeRefundCount = 0;
     let wiizeRefundedAmount = 0;
@@ -208,12 +210,18 @@ Deno.serve(async (req) => {
       const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
       if (isAdminEmail(customerEmail)) continue;
 
-      wiizeRefundCount++;
-      wiizeRefundedAmount += refund.amount / 100;
       refundedChargeIds.add(charge.id);
 
-      // Track monthly refunds by refund date
       const refundDate = new Date(refund.created * 1000);
+      if (refundDate.getTime() < REFUND_METRICS_SINCE_MS) {
+        console.log(`[GET-STRIPE-MRR] Refund ignorado (pré-julho/2026): R$ ${refund.amount / 100}`);
+        continue;
+      }
+
+      wiizeRefundCount++;
+      wiizeRefundedAmount += refund.amount / 100;
+
+      // Track monthly refunds by refund date
       const monthKey = `${refundDate.getFullYear()}-${String(refundDate.getMonth() + 1).padStart(2, "0")}`;
       if (!monthlyRefunds[monthKey]) {
         monthlyRefunds[monthKey] = { amount: 0, count: 0 };
@@ -223,6 +231,7 @@ Deno.serve(async (req) => {
       
       console.log(`[GET-STRIPE-MRR] WiizeProspect refund: R$ ${refund.amount / 100}`);
     }
+
 
     // --- Process paid invoices FIRST to know which subs had real payments ---
     const invoicesBySubId: { [subId: string]: Stripe.Invoice[] } = {};
