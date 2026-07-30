@@ -389,6 +389,9 @@ export default function AdminSuggestions() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="Selecionar todos" />
+                    </TableHead>
                     <TableHead>Empresa</TableHead>
                     <TableHead>Usuário</TableHead>
                     <TableHead>Categoria</TableHead>
@@ -401,7 +404,14 @@ export default function AdminSuggestions() {
                 </TableHeader>
                 <TableBody>
                   {rows.map((r) => (
-                    <TableRow key={r.id}>
+                    <TableRow key={r.id} data-state={selectedIds.includes(r.id) ? "selected" : undefined}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(r.id)}
+                          onCheckedChange={() => toggleRow(r.id)}
+                          aria-label={`Selecionar ${r.title}`}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{r.company_name || "—"}</TableCell>
                       <TableCell>
                         <div className="text-sm">{r.user_name || "—"}</div>
