@@ -57,12 +57,14 @@ export type SuggestionStatus =
   | "recebida"
   | "lida"
   | "em_desenvolvimento"
+  | "entregue"
   | "arquivada";
 
 export const SUGGESTION_STATUS_LABEL: Record<SuggestionStatus, string> = {
   recebida: "Recebida",
   lida: "Lida",
   em_desenvolvimento: "Em desenvolvimento",
+  entregue: "Entregue",
   arquivada: "Arquivada",
 };
 
