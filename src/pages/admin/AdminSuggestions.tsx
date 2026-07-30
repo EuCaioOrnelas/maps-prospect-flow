@@ -14,10 +14,13 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Search, Eye, CheckCheck, Archive, Inbox, CalendarDays, TrendingUp, Tag, Hammer, Loader2 } from "lucide-react";
+import { Lightbulb, Search, Eye, CheckCheck, Archive, Inbox, CalendarDays, TrendingUp, Tag, Hammer, Loader2, CircleDot, OctagonAlert, PackageCheck } from "lucide-react";
 import {
   SUGGESTION_CATEGORIES,
   SUGGESTION_PERIODS,
@@ -32,13 +35,34 @@ import {
 
 const PAGE_SIZE = 20;
 
+const IMPORTANCE_ICON: Record<string, typeof CircleDot> = {
+  comodidade: CircleDot,
+  melhoraria: TrendingUp,
+  bloqueio: OctagonAlert,
+};
+
+const IMPORTANCE_SHORT: Record<string, string> = {
+  comodidade: "Comodidade",
+  melhoraria: "Melhoria",
+  bloqueio: "Bloqueio",
+};
+
 function importanceBadge(value: string) {
   const item = IMPORTANCE_MAP[value as keyof typeof IMPORTANCE_MAP];
   if (!item) return <Badge variant="outline">—</Badge>;
+  const Icon = IMPORTANCE_ICON[value] || CircleDot;
   return (
-    <Badge variant="outline" className={item.badgeClass}>
-      {item.emoji} {item.label}
-    </Badge>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className={`${item.badgeClass} gap-1.5 font-medium`}>
+            <Icon size={13} />
+            {IMPORTANCE_SHORT[value] || item.label}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>{item.label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -47,6 +71,13 @@ function statusBadge(value: string) {
   if (value === "em_desenvolvimento") {
     return (
       <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+        {label}
+      </Badge>
+    );
+  }
+  if (value === "entregue") {
+    return (
+      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
         {label}
       </Badge>
     );
