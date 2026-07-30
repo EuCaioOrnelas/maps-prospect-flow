@@ -35,7 +35,7 @@ export const SidebarNavItem = ({
   iconClassName,
 }: SidebarNavItemProps) => {
   const baseClasses = cn(
-    "relative flex items-center rounded-md transition-colors duration-200 overflow-hidden",
+    "relative flex items-center rounded-hover transition-colors duration-200 overflow-hidden",
     "w-10 h-10 justify-center",
     isExpanded && "w-full px-2.5 justify-start gap-3"
   );
