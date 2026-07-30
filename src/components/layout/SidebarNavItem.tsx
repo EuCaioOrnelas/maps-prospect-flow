@@ -50,15 +50,15 @@ export const SidebarNavItem = ({
 
   const content = (
     <>
-      {/* Indicador ativo — linha fina e elegante que desliza suavemente */}
+      {/* Indicador ativo — desliza suavemente da borda e aparece com fade */}
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute left-0 inset-y-0 w-[3px]",
+          "pointer-events-none absolute left-0 inset-y-0 w-[2px]",
           "rounded-r-full bg-gradient-to-b from-primary to-primary/80",
-          "opacity-0 -translate-x-1 scale-y-0 origin-center",
-          "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-          isActive && "opacity-100 translate-x-0 scale-y-100"
+          "opacity-0 -translate-x-[2px]",
+          "transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          isActive && "opacity-100 translate-x-0"
         )}
       />
       <div className="relative shrink-0 flex items-center justify-center w-5 h-5">
