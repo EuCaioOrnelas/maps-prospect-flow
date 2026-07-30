@@ -132,3 +132,24 @@ export function hasProfileUsage(p: any): boolean {
   );
 }
 
+/**
+ * Usuários que REALMENTE pagaram pelo menos uma vez.
+ * Churn só pode considerar essa base — quem cancelou/não renovou ainda no
+ * trial nunca foi receita, então não é churn.
+ */
+export async function fetchPayingUserIds(supabase: any): Promise<Set<string>> {
+  const paying = new Set<string>();
+  const [pix, custom, paid] = await Promise.all([
+    supabase.from("pix_invoices").select("user_id").not("paid_at", "is", null),
+    supabase.from("custom_subscription_payments").select("user_id").not("paid_at", "is", null),
+    supabase.from("profiles").select("id, plan, subscription_price_cents"),
+  ]);
+  ((pix.data as any[]) || []).forEach((r) => r?.user_id && paying.add(r.user_id));
+  ((custom.data as any[]) || []).forEach((r) => r?.user_id && paying.add(r.user_id));
+  ((paid.data as any[]) || []).forEach((p) => {
+    if ((p?.plan && p.plan !== "free") || (p?.subscription_price_cents ?? 0) > 0) paying.add(p.id);
+  });
+  return paying;
+}
+
+
