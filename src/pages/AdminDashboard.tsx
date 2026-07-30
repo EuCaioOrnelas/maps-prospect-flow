@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { hasCompletedTrial, hasConvertedFromTrial, isNewOnboarding } from "@/lib/adminMetrics";
+import { hasCompletedTrial, hasConvertedFromTrial, isNewOnboarding, fetchActivatedUserIds, hasProfileUsage } from "@/lib/adminMetrics";
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -92,10 +92,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const loadExtra = async () => {
-      // Conversão de trial: SOMENTE quem realmente fez o trial e já saiu dele.
+      // Conversão de trial: SOMENTE quem colocou cartão, fez o trial e já saiu dele.
       const { data: allUsers } = await supabase
         .from("profiles")
-        .select("id, plan, trial_start_at, trial_end_at, trial_will_charge_at, created_at");
+        .select(
+          "id, plan, trial_start_at, trial_end_at, trial_will_charge_at, trial_card_last4, trial_asaas_subscription_id, created_at"
+        );
 
       if (allUsers) {
         const trialed = (allUsers as any[]).filter(hasCompletedTrial);
@@ -119,16 +121,14 @@ export default function AdminDashboard() {
           ((onboardingRows as any[]) || []).filter(isNewOnboarding).map((r) => r.user_id)
         );
         const base = activationProfiles.filter((p) => eligible.has(p.id));
+        const activatedIds = await fetchActivatedUserIds(supabase, base.map((p: any) => p.id));
         const total = base.length;
-        const activated = base.filter((p) =>
-          (p.searches_used ?? 0) > 0 ||
-          ((p as any).trial_messages_sent ?? 0) > 0 ||
-          ((p as any).trial_leads_used ?? 0) > 0 ||
-          ((p as any).trial_flows_used ?? 0) > 0 ||
-          ((p as any).trial_campaigns_used ?? 0) > 0
+        const activated = base.filter(
+          (p: any) => hasProfileUsage(p) || activatedIds.has(p.id)
         ).length;
         setActivationData({ total, activated });
       }
+
 
 
       // Upgrade opportunities

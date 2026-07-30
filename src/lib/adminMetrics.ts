@@ -46,17 +46,30 @@ export function isRefundMonthCountable(month: string): boolean {
   return month >= cutoff;
 }
 
-/**
- * Trial "de verdade": usuário iniciou trial E já saiu dele
- * (fim do trial no passado, cobrança já disparada, ou virou pagante).
- */
-export function hasCompletedTrial(p: {
+export type TrialProfile = {
   plan: string | null;
   trial_start_at: string | null;
   trial_end_at?: string | null;
   trial_will_charge_at?: string | null;
-}): boolean {
+  trial_card_last4?: string | null;
+  trial_asaas_subscription_id?: string | null;
+  trial_plan_chosen?: string | null;
+};
+
+/**
+ * Trial REAL = o usuário cadastrou cartão e agendou a cobrança.
+ * `trial_start_at` sozinho não vale: ele é preenchido em todo cadastro.
+ */
+export function startedRealTrial(p: TrialProfile): boolean {
   if (!p.trial_start_at) return false;
+  return !!(p.trial_card_last4 || p.trial_asaas_subscription_id || p.trial_will_charge_at);
+}
+
+/**
+ * Trial "de verdade" concluído: colocou cartão E já saiu do período de teste.
+ */
+export function hasCompletedTrial(p: TrialProfile): boolean {
+  if (!startedRealTrial(p)) return false;
   const now = Date.now();
   const stillInTrial =
     (p.trial_end_at && new Date(p.trial_end_at).getTime() > now) ||
@@ -65,12 +78,78 @@ export function hasCompletedTrial(p: {
   return true;
 }
 
-/** Converteu = passou pelo trial e hoje tem plano pago. */
-export function hasConvertedFromTrial(p: {
-  plan: string | null;
-  trial_start_at: string | null;
-  trial_end_at?: string | null;
-  trial_will_charge_at?: string | null;
-}): boolean {
+/** Converteu = passou pelo trial (com cartão) e hoje tem plano pago. */
+export function hasConvertedFromTrial(p: TrialProfile): boolean {
   return hasCompletedTrial(p) && !!p.plan && p.plan !== "free";
 }
+
+/**
+ * Ativação real: qualquer uso concreto do produto.
+ * Considera prospecção (leads), CRM (negociações), campanhas WhatsApp,
+ * campanhas Meta Ads, conversas no chat, fluxos, agentes de IA e conexões WABA,
+ * além dos contadores agregados do próprio perfil.
+ */
+export async function fetchActivatedUserIds(
+  supabase: any,
+  candidateIds?: string[]
+): Promise<Set<string>> {
+  const sources = [
+    "leads",
+    "lead_deals",
+    "whatsapp_campaigns",
+    "meta_campaigns",
+    "chat_conversations",
+    "wa_automation_flows",
+    "ai_agents",
+    "user_waba_connections",
+  ];
+
+  const activated = new Set<string>();
+  const results = await Promise.all(
+    sources.map(async (table) => {
+      let q = supabase.from(table).select("user_id").not("user_id", "is", null).limit(50000);
+      if (candidateIds && candidateIds.length > 0 && candidateIds.length <= 200) {
+        q = q.in("user_id", candidateIds);
+      }
+      const { data } = await q;
+      return (data as any[]) || [];
+    })
+  );
+  results.flat().forEach((r: any) => {
+    if (r?.user_id) activated.add(r.user_id);
+  });
+  return activated;
+}
+
+/** Contadores agregados no perfil (busca, mensagens, leads, fluxos, campanhas). */
+export function hasProfileUsage(p: any): boolean {
+  return (
+    (p?.searches_used ?? 0) > 0 ||
+    (p?.trial_messages_sent ?? 0) > 0 ||
+    (p?.trial_leads_used ?? 0) > 0 ||
+    (p?.trial_flows_used ?? 0) > 0 ||
+    (p?.trial_campaigns_used ?? 0) > 0
+  );
+}
+
+/**
+ * Usuários que REALMENTE pagaram pelo menos uma vez.
+ * Churn só pode considerar essa base — quem cancelou/não renovou ainda no
+ * trial nunca foi receita, então não é churn.
+ */
+export async function fetchPayingUserIds(supabase: any): Promise<Set<string>> {
+  const paying = new Set<string>();
+  const [pix, custom, paid] = await Promise.all([
+    supabase.from("pix_invoices").select("user_id").not("paid_at", "is", null),
+    supabase.from("custom_subscription_payments").select("user_id").not("paid_at", "is", null),
+    supabase.from("profiles").select("id, plan, subscription_price_cents"),
+  ]);
+  ((pix.data as any[]) || []).forEach((r) => r?.user_id && paying.add(r.user_id));
+  ((custom.data as any[]) || []).forEach((r) => r?.user_id && paying.add(r.user_id));
+  ((paid.data as any[]) || []).forEach((p) => {
+    if ((p?.plan && p.plan !== "free") || (p?.subscription_price_cents ?? 0) > 0) paying.add(p.id);
+  });
+  return paying;
+}
+
+

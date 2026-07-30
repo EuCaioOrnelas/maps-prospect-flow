@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPayingUserIds } from "@/lib/adminMetrics";
 
 interface DashboardStats {
   totalUsers: number;
@@ -386,19 +387,28 @@ export function useAdminDashboard() {
       const alertsList: any[] = [];
 
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: churnEvents } = await supabase
-        .from("subscription_events")
-        .select("id")
-        .in("event_type", ["subscription_canceled", "subscription_deleted", "pix_not_renewed"])
-        .gte("created_at", weekAgo);
+      const [{ data: churnEvents }, payingIds] = await Promise.all([
+        supabase
+          .from("subscription_events")
+          .select("id, user_id")
+          .in("event_type", ["subscription_canceled", "subscription_deleted", "pix_not_renewed"])
+          .gte("created_at", weekAgo),
+        fetchPayingUserIds(supabase),
+      ]);
 
-      if (churnEvents && churnEvents.length > 0) {
+      // Só é churn quem já foi pagante — cancelamento no trial não entra.
+      const realChurnEvents = ((churnEvents as any[]) || []).filter(
+        (e) => e.user_id && payingIds.has(e.user_id)
+      );
+
+      if (realChurnEvents.length > 0) {
         alertsList.push({
           type: "danger",
-          text: `${churnEvents.length} cancelamento(s) nos últimos 7 dias`,
+          text: `${realChurnEvents.length} cancelamento(s) nos últimos 7 dias`,
           route: "/admin/churn",
         });
       }
+
 
       const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
       const { count: trialCount } = await supabase
@@ -437,11 +447,13 @@ export function useAdminDashboard() {
   }, []);
 
   // Carrega cancelamentos Asaas/PIX dos últimos 30 dias.
+  // Só conta quem já foi PAGANTE — cancelamento/não-renovação durante o trial
+  // não é churn (nunca virou receita).
   const loadNewSystemChurn = useCallback(async () => {
     try {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-      const [cancellationsRes, eventsRes] = await Promise.all([
+      const [cancellationsRes, eventsRes, payingIds] = await Promise.all([
         supabase
           .from("subscription_cancellations")
           .select("user_id, provider, cancelled_at")
@@ -453,6 +465,7 @@ export function useAdminDashboard() {
           .eq("event_type", "pix_not_renewed")
           .eq("event_source", "asaas")
           .gte("created_at", thirtyDaysAgo),
+        fetchPayingUserIds(supabase),
       ]);
 
       if (cancellationsRes.error) throw cancellationsRes.error;
@@ -460,10 +473,10 @@ export function useAdminDashboard() {
 
       const asaasUsers = new Set<string>();
       (cancellationsRes.data || []).forEach((item: any) => {
-        if (item.user_id) asaasUsers.add(item.user_id);
+        if (item.user_id && payingIds.has(item.user_id)) asaasUsers.add(item.user_id);
       });
       (eventsRes.data || []).forEach((item: any) => {
-        if (item.user_id) asaasUsers.add(item.user_id);
+        if (item.user_id && payingIds.has(item.user_id)) asaasUsers.add(item.user_id);
       });
 
       setNewSystemChurn({ cancellations30d: asaasUsers.size });
@@ -471,6 +484,7 @@ export function useAdminDashboard() {
       setNewSystemChurn({ cancellations30d: 0 });
     }
   }, []);
+
 
   useEffect(() => {
     (async () => {

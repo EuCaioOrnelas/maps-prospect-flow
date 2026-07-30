@@ -2,7 +2,7 @@ import { UserCheck, ArrowDown, Info, Users, MousePointerClick, Sparkles } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { isNewOnboarding } from "@/lib/adminMetrics";
+import { isNewOnboarding, fetchActivatedUserIds, hasProfileUsage } from "@/lib/adminMetrics";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -63,15 +63,14 @@ export default function AdminAtivacao() {
         return u - c > 60_000; // 1 min de margem
       }).length;
 
-      // Ativados: usaram qualquer feature
-      const activatedProfiles = profiles.filter((p: any) =>
-        (p.searches_used ?? 0) > 0 ||
-        (p.trial_messages_sent ?? 0) > 0 ||
-        (p.trial_leads_used ?? 0) > 0 ||
-        (p.trial_flows_used ?? 0) > 0 ||
-        (p.trial_campaigns_used ?? 0) > 0
+      // Ativados: usaram qualquer feature real (prospecção, CRM, campanhas Meta,
+      // WhatsApp, chat, fluxos, agentes de IA) ou os contadores do perfil.
+      const activatedIds = await fetchActivatedUserIds(supabase, profiles.map((p: any) => p.id));
+      const activatedProfiles = profiles.filter(
+        (p: any) => hasProfileUsage(p) || activatedIds.has(p.id)
       );
       const activated = activatedProfiles.length;
+
 
       // Breakdown de pagantes ativados por provedor (Stripe Cartão / Asaas PIX)
       const activatedStripe = activatedProfiles.filter(
