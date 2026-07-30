@@ -540,16 +540,16 @@ const Profile = () => {
                 {/* Avatar Section */}
                 <div className="flex items-center gap-6">
                   <div className="relative group">
-                    <Avatar className="h-24 w-24 rounded-card border-2 border-border">
-                      <AvatarImage className="rounded-card" src={profile?.avatar_url} />
-                      <AvatarFallback className="rounded-card text-2xl bg-primary/10 text-primary">
+                    <Avatar className="h-24 w-24 rounded-hover border-2 border-border">
+                      <AvatarImage className="rounded-hover" src={profile?.avatar_url} />
+                      <AvatarFallback className="rounded-hover text-2xl bg-primary/10 text-primary">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
                     <button
                       onClick={handlePhotoClick}
                       disabled={isUploadingPhoto}
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-card opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-hover opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     >
                       {isUploadingPhoto ? (
                         <Loader2 className="h-6 w-6 text-white animate-spin" />
