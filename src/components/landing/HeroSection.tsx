@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
+import { HeroDotMap } from "@/components/landing/HeroDotMap";
+
 
 /* ─── Animated counter ─── */
 const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?: number }) => {
@@ -810,8 +812,11 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
  <section ref={sectionRef} className="relative -mt-[72px] sm:-mt-[80px] min-h-[85vh] flex items-center justify-center pt-[104px] sm:pt-[120px] pb-16 sm:pb-20 overflow-x-clip overflow-y-visible w-full">
  {/* Base gradient backdrop (estático — sem parallax) */}
  <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(158 35% 97.5%) 0%, hsl(210 30% 99%) 60%, hsl(var(--background)) 100%)" }} />
- {/* Dotted texture (estático) */}
- <div className="absolute inset-0 pointer-events-none opacity-[0.14]" style={{ backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`, backgroundSize: '18px 18px' }} />
+      {/* Dotted texture (estático) — só mobile/tablet */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.14] lg:hidden" style={{ backgroundImage: `radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)`, backgroundSize: '18px 18px' }} />
+      {/* Mapa-múndi em dots (desktop) */}
+      <HeroDotMap />
+
  {/* Soft primary glow (estático, reduzido) */}
  <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[900px] pointer-events-none" style={{ transform: 'translate(-50%, 0)', background: "radial-gradient(ellipse at center, hsl(158 60% 55% / 0.06) 0%, hsl(158 60% 55% / 0.02) 45%, transparent 70%)" }} />
  {/* Bottom-left accent blob (único blob decorativo restante) */}
