@@ -587,7 +587,8 @@ export default function AdminSuggestions() {
 
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Button
-                    className="flex-1"
+                    variant="outline"
+                    className="flex-1 bg-background border-primary/40 text-primary hover:bg-primary/10 hover:text-primary"
                     disabled={busy || selected.status === "em_desenvolvimento"}
                     onClick={() => updateStatus(selected.id, "em_desenvolvimento")}
                   >
@@ -597,8 +598,7 @@ export default function AdminSuggestions() {
                       : "Em desenvolvimento (avisar cliente)"}
                   </Button>
                   <Button
-                    variant="outline"
-                    className="flex-1 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                     disabled={busy || selected.status === "entregue"}
                     onClick={() => updateStatus(selected.id, "entregue")}
                   >
