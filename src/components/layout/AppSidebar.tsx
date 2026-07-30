@@ -634,8 +634,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 to="/profile"
                 className={cn(
                   "relative flex items-center rounded-hover overflow-hidden transition-[background-color,color,width,padding] duration-300 ease-out",
-                  "w-10 h-10 justify-center",
-                  isExpanded && "w-full h-10 pl-0.5 pr-2.5 justify-start gap-2.5",
+                  "w-10 h-10 justify-center p-0",
+                  isExpanded && "w-full h-10 pl-2.5 pr-2.5 justify-start gap-3",
 
                   currentPath === "/profile"
                     ? "bg-primary/10 text-primary font-medium"
@@ -645,23 +645,25 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 <span
                   aria-hidden
                   className={cn(
-                    "absolute left-0 inset-y-0 w-[3px] rounded-l-hover bg-primary",
+                    "absolute left-0 inset-y-0 w-[3px] bg-primary",
                     "transition-[opacity,transform] duration-300 ease-out origin-left",
                     currentPath === "/profile" && isExpanded
                       ? "opacity-100 scale-x-100"
                       : "opacity-0 scale-x-0"
                   )}
                 />
-                <Avatar className="h-9 w-9 shrink-0 rounded-hover overflow-hidden">
-
-
-
+                <Avatar
+                  className={cn(
+                    "shrink-0 overflow-hidden transition-[width,height,border-radius] duration-300 ease-out",
+                    isExpanded ? "h-6 w-6 rounded-[6px]" : "h-10 w-10 rounded-hover"
+                  )}
+                >
                   <AvatarImage
-                    className="h-full w-full rounded-hover object-cover"
+                    className="h-full w-full object-cover rounded-none"
                     src={profile?.avatar_url || undefined}
                     alt={profile?.name || 'Perfil'}
                   />
-                  <AvatarFallback className="rounded-hover bg-primary/10 text-primary text-xs font-medium">
+                  <AvatarFallback className="rounded-none bg-primary/10 text-primary text-[11px] font-medium">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
