@@ -582,7 +582,15 @@ const Profile = () => {
                       onChange={handlePhotoChange}
                       className="hidden"
                     />
+                    <AvatarCropDialog
+                      open={cropOpen}
+                      imageSrc={cropSrc}
+                      isSaving={isUploadingPhoto}
+                      onCancel={closeCrop}
+                      onConfirm={handleCroppedUpload}
+                    />
                   </div>
+
                   <div className="space-y-1">
                     <h3 className="text-xl font-semibold">{profile?.name || 'Usuário'}</h3>
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
