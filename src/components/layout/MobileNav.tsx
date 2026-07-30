@@ -20,6 +20,7 @@ import {
   Flame,
   Bell,
   HelpCircle,
+  Lightbulb,
   ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -216,6 +217,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
 
               <div className="flex flex-col gap-1 pt-2 border-t border-border">
                 <TopLink to="/profile" icon={Users} label="Meu perfil" />
+                <TopLink to="/sugestoes" icon={Lightbulb} label="Sugestões" />
                 <TopLink to="/ajuda" icon={HelpCircle} label="Central de Ajuda" />
                 {profile?.plan !== "scale" && (
                   <TopLink to="/upgrade" icon={Crown} label="Fazer Upgrade" highlight />
