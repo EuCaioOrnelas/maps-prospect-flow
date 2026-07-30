@@ -14,10 +14,13 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Search, Eye, CheckCheck, Archive, Inbox, CalendarDays, TrendingUp, Tag, Hammer, Loader2 } from "lucide-react";
+import { Lightbulb, Search, Eye, CheckCheck, Archive, Inbox, CalendarDays, TrendingUp, Tag, Hammer, Loader2, CircleDot, OctagonAlert, PackageCheck } from "lucide-react";
 import {
   SUGGESTION_CATEGORIES,
   SUGGESTION_PERIODS,
@@ -32,13 +35,34 @@ import {
 
 const PAGE_SIZE = 20;
 
+const IMPORTANCE_ICON: Record<string, typeof CircleDot> = {
+  comodidade: CircleDot,
+  melhoraria: TrendingUp,
+  bloqueio: OctagonAlert,
+};
+
+const IMPORTANCE_SHORT: Record<string, string> = {
+  comodidade: "Comodidade",
+  melhoraria: "Melhoria",
+  bloqueio: "Bloqueio",
+};
+
 function importanceBadge(value: string) {
   const item = IMPORTANCE_MAP[value as keyof typeof IMPORTANCE_MAP];
   if (!item) return <Badge variant="outline">—</Badge>;
+  const Icon = IMPORTANCE_ICON[value] || CircleDot;
   return (
-    <Badge variant="outline" className={item.badgeClass}>
-      {item.emoji} {item.label}
-    </Badge>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className={`${item.badgeClass} gap-1.5 font-medium`}>
+            <Icon size={13} />
+            {IMPORTANCE_SHORT[value] || item.label}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>{item.label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -47,6 +71,13 @@ function statusBadge(value: string) {
   if (value === "em_desenvolvimento") {
     return (
       <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+        {label}
+      </Badge>
+    );
+  }
+  if (value === "entregue") {
+    return (
+      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
         {label}
       </Badge>
     );
@@ -151,8 +182,22 @@ export default function AdminSuggestions() {
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
-  // Dispara o e-mail "Estamos trabalhando em melhorias..." para o autor da sugestão
-  const notifyInDevelopment = async (row: SuggestionRow) => {
+  // Dispara o e-mail "Estamos trabalhando em melhorias..." — 1x por sugestão
+  const notifyInDevelopment = async (row: SuggestionRow): Promise<"sent" | "skipped"> => {
+    if ((row.metadata as any)?.dev_email_sent_at) return "skipped";
+
+    // Trava no banco: só marca se ainda não houver registro de envio
+    const { data: locked, error: lockError } = await supabase
+      .from("suggestions")
+      .update({
+        metadata: { ...((row.metadata as any) || {}), dev_email_sent_at: new Date().toISOString() },
+      } as any)
+      .eq("id", row.id)
+      .is("metadata->>dev_email_sent_at", null)
+      .select("id");
+    if (lockError) throw lockError;
+    if (!locked || locked.length === 0) return "skipped";
+
     const { error } = await supabase.functions.invoke("send-email", {
       body: {
         user_id: row.user_id,
@@ -165,6 +210,17 @@ export default function AdminSuggestions() {
       },
     });
     if (error) throw error;
+    return "sent";
+  };
+
+  const markNotified = (id: string) => {
+    const stamp = new Date().toISOString();
+    setRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, metadata: { ...(r.metadata || {}), dev_email_sent_at: stamp } } : r))
+    );
+    setSelected((prev) =>
+      prev && prev.id === id ? { ...prev, metadata: { ...(prev.metadata || {}), dev_email_sent_at: stamp } } : prev
+    );
   };
 
   const updateStatus = async (id: string, next: SuggestionStatus) => {
@@ -175,7 +231,10 @@ export default function AdminSuggestions() {
 
       const row = rows.find((r) => r.id === id) || (selected?.id === id ? selected : null);
       if (next === "em_desenvolvimento" && row) {
-        try { await notifyInDevelopment(row); } catch (e: any) {
+        try {
+          const result = await notifyInDevelopment(row);
+          if (result === "sent") markNotified(id);
+        } catch (e: any) {
           toast({ title: "Status atualizado, mas o e-mail falhou", description: e.message, variant: "destructive" });
         }
       }
@@ -209,9 +268,13 @@ export default function AdminSuggestions() {
       if (error) throw error;
 
       let sent = 0;
+      let skipped = 0;
       let failed = 0;
       for (const row of targets) {
-        try { await notifyInDevelopment(row); sent++; } catch { failed++; }
+        try {
+          const result = await notifyInDevelopment(row);
+          if (result === "sent") { sent++; markNotified(row.id); } else skipped++;
+        } catch { failed++; }
       }
 
       setRows((prev) =>
@@ -220,7 +283,7 @@ export default function AdminSuggestions() {
       setSelectedIds([]);
       toast({
         title: `${targets.length} sugestão(ões) em desenvolvimento`,
-        description: `${sent} e-mail(s) enviado(s)${failed ? ` · ${failed} falha(s)` : ""}.`,
+        description: `${sent} e-mail(s) enviado(s)${skipped ? ` · ${skipped} já avisado(s)` : ""}${failed ? ` · ${failed} falha(s)` : ""}.`,
       });
     } catch (e: any) {
       toast({ title: "Erro na ação em massa", description: e.message, variant: "destructive" });
@@ -244,7 +307,8 @@ export default function AdminSuggestions() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
+
       <div className="flex items-start gap-3">
         <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
           <Lightbulb size={22} className="text-primary" />
@@ -322,6 +386,7 @@ export default function AdminSuggestions() {
                   <SelectItem value="recebida">Recebida</SelectItem>
                   <SelectItem value="lida">Lida</SelectItem>
                   <SelectItem value="em_desenvolvimento">Em desenvolvimento</SelectItem>
+                  <SelectItem value="entregue">Entregue</SelectItem>
                   <SelectItem value="arquivada">Arquivada</SelectItem>
                 </SelectContent>
               </Select>
@@ -456,17 +521,17 @@ export default function AdminSuggestions() {
         </div>
       )}
 
-      {/* Drawer lateral */}
-      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+      {/* Modal central */}
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           {selected && (
             <>
-              <SheetHeader>
-                <SheetTitle>{selected.title}</SheetTitle>
-                <SheetDescription>{formatSuggestionDate(selected.created_at)}</SheetDescription>
-              </SheetHeader>
+              <DialogHeader>
+                <DialogTitle className="pr-6">{selected.title}</DialogTitle>
+                <DialogDescription>{formatSuggestionDate(selected.created_at)}</DialogDescription>
+              </DialogHeader>
 
-              <div className="mt-6 space-y-5">
+              <div className="mt-2 space-y-5">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Empresa</p>
@@ -520,18 +585,31 @@ export default function AdminSuggestions() {
                   </Button>
                 </div>
 
-                <Button
-                  className="w-full"
-                  disabled={busy || selected.status === "em_desenvolvimento"}
-                  onClick={() => updateStatus(selected.id, "em_desenvolvimento")}
-                >
-                  <Hammer size={15} className="mr-2" /> Em desenvolvimento (avisar cliente)
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    className="flex-1"
+                    disabled={busy || selected.status === "em_desenvolvimento"}
+                    onClick={() => updateStatus(selected.id, "em_desenvolvimento")}
+                  >
+                    <Hammer size={15} className="mr-2" />
+                    {(selected.metadata as any)?.dev_email_sent_at
+                      ? "Em desenvolvimento (cliente já avisado)"
+                      : "Em desenvolvimento (avisar cliente)"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                    disabled={busy || selected.status === "entregue"}
+                    onClick={() => updateStatus(selected.id, "entregue")}
+                  >
+                    <PackageCheck size={15} className="mr-2" /> Marcar como Entregue
+                  </Button>
+                </div>
               </div>
             </>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
