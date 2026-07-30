@@ -44,8 +44,8 @@ export const SidebarNavItem = ({
     isActive
       ? [
           "bg-primary/10 text-primary font-medium",
-          "before:absolute before:left-0 before:top-0 before:bottom-0",
-          "before:w-[3px] before:bg-primary",
+          isExpanded &&
+            "before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[3px] before:bg-primary",
         ]
       : highlight
       ? "text-primary hover:text-primary hover:bg-primary/10"
