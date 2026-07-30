@@ -35,18 +35,14 @@ export const SidebarNavItem = ({
   iconClassName,
 }: SidebarNavItemProps) => {
   const baseClasses = cn(
-    "relative flex items-center rounded-hover transition-colors duration-200 overflow-hidden",
+    "relative flex items-center rounded-hover transition-[background-color,color,width,padding] duration-300 ease-out overflow-hidden",
     "w-10 h-10 justify-center",
     isExpanded && "w-full px-2.5 justify-start gap-3"
   );
 
   const stateClasses = cn(
     isActive
-      ? [
-          "bg-primary/10 text-primary font-medium",
-          isExpanded &&
-            "before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[3px] before:bg-primary",
-        ]
+      ? "bg-primary/10 text-primary font-medium"
       : highlight
       ? "text-primary hover:text-primary hover:bg-primary/10"
       : "text-sidebar-foreground/60 hover:text-primary hover:bg-primary/[0.07]"
@@ -54,10 +50,22 @@ export const SidebarNavItem = ({
 
   const content = (
     <>
+      {/* Indicador ativo — anima suavemente ao abrir/fechar o sidebar */}
+      <span
+        aria-hidden
+        className={cn(
+          "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-xs bg-primary",
+          "transition-[height,opacity,transform] duration-300 ease-out origin-center",
+          isActive && isExpanded
+            ? "h-6 opacity-100 scale-y-100"
+            : "h-6 opacity-0 scale-y-0"
+        )}
+      />
       <div className="relative shrink-0 flex items-center justify-center w-5 h-5">
         <Icon size={20} className={iconClassName} />
         {badge}
       </div>
+
       {isExpanded && (
         <>
           <span className="whitespace-nowrap overflow-hidden text-ellipsis flex-1 min-w-0 text-left">
