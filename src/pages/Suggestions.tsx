@@ -345,16 +345,10 @@ export default function Suggestions() {
                     rows={8}
                     disabled={limitReached}
                     maxLength={SUGGESTION_DESCRIPTION_MAX}
-                    placeholder={
-                      "1. Situação atual: o que você faz hoje na Wiize para resolver isso?\n" +
-                      "2. Problema: o que trava, demora ou dá retrabalho nesse caminho?\n" +
-                      "3. Solução ideal: como você gostaria que a plataforma se comportasse?\n" +
-                      "4. Impacto: quanto tempo, dinheiro ou oportunidades isso destravaria?\n\n" +
-                      "Se puder, cite a tela exata, a frequência com que acontece e um exemplo real."
-                    }
                     onChange={(e) => setDescription(e.target.value)}
                     className="resize-none text-sm leading-relaxed"
                   />
+
                   <p className="text-[11px] text-muted-foreground text-right">
                     {description.length}/{SUGGESTION_DESCRIPTION_MAX}
                   </p>
