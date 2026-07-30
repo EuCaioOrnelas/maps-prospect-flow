@@ -67,6 +67,7 @@ import { useGuidedTour, resetGuidedTour } from "@/hooks/useGuidedTour";
 import { PlayCircle } from "lucide-react";
 import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
+import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
 
 
 const Profile = () => {
@@ -82,6 +83,8 @@ const Profile = () => {
   const [serviceForm, setServiceForm] = useState<{ name: string; average_ticket: number; description: string }[]>([]);
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
@@ -449,6 +452,7 @@ const Profile = () => {
       });
     } finally {
       setIsUploadingPhoto(false);
+      closeCrop();
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
