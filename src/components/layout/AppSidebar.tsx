@@ -633,17 +633,27 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <Link
                 to="/profile"
                 className={cn(
-                  "flex items-center rounded-hover transition-colors duration-200",
+                  "relative flex items-center rounded-hover overflow-hidden transition-[background-color,color,width,padding] duration-300 ease-out",
                   "w-10 h-10 justify-center",
                   isExpanded && "w-full px-2.5 justify-start gap-3",
                   currentPath === "/profile"
-                    ? "bg-sidebar-accent/60 text-primary"
-                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-sidebar-foreground/60 hover:text-primary hover:bg-primary/[0.07]"
                 )}
               >
-                <Avatar className="h-7 w-7 shrink-0 border border-sidebar-border">
-                  <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute left-0 inset-y-0 w-[3px] rounded-l-hover bg-primary",
+                    "transition-[opacity,transform] duration-300 ease-out origin-left",
+                    currentPath === "/profile" && isExpanded
+                      ? "opacity-100 scale-x-100"
+                      : "opacity-0 scale-x-0"
+                  )}
+                />
+                <Avatar className="h-7 w-7 shrink-0 rounded-xs border border-sidebar-border">
+                  <AvatarImage className="rounded-xs" src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
+                  <AvatarFallback className="rounded-xs bg-primary/10 text-primary text-xs font-medium">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
