@@ -651,9 +651,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   className={cn(
                     "pointer-events-none absolute left-0 inset-y-0 w-[2px]",
                     "rounded-r-full bg-gradient-to-b from-primary to-primary/80",
-                    "opacity-0 -translate-x-[2px]",
                     "transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    currentPath === "/profile" && "opacity-100 translate-x-0"
+                    isExpanded && currentPath === "/profile"
+                      ? "opacity-100 translate-x-0"
+                      : "opacity-0 -translate-x-[2px]"
                   )}
                 />
                 <Avatar
