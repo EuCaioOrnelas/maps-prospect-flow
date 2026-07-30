@@ -99,9 +99,14 @@ const Login = () => {
         return;
       }
 
+      // Rota de origem (ex.: /sugestoes) — volta para lá após o login
+      const fromPath = (location.state as any)?.from?.pathname as string | undefined;
+
       // If trial expired and user is on free plan, redirect to upgrade
       if (isTrialExpired && profile?.plan === 'free') {
         navigate("/upgrade?expired=true");
+      } else if (fromPath && fromPath !== "/login") {
+        navigate(fromPath, { replace: true });
       } else {
         navigate("/dashboard");
       }
