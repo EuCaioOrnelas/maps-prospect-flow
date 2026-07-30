@@ -262,11 +262,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
           </Link>
         </div>
 
-        <SidebarDivider className="my-2" />
-
         {/* Main navigation */}
-        <nav className="flex-1 py-4 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 py-2 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1 px-4">
+
             {/* Dashboard - single page, no submenu */}
             {canRole("dashboard_main") && (
             <li>
