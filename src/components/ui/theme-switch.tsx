@@ -13,11 +13,12 @@ const ThemeSwitch = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
         checked={isDark}
         onCheckedChange={() => toggleTheme()}
         className={cn(
-          "relative h-8 w-[68px] rounded-full transition-all duration-300",
+          "relative h-8 w-[68px] rounded-hover transition-all duration-300",
           isDark
             ? "bg-[hsl(220,18%,12%)] border border-[hsl(220,14%,20%)]"
             : "bg-[hsl(220,16%,28%)] border border-[hsl(220,12%,80%)]",
-          "[&>span]:h-7 [&>span]:w-7 [&>span]:rounded-full [&>span]:shadow-md [&>span]:z-10",
+          "[&>span]:h-7 [&>span]:w-7 [&>span]:rounded-sm [&>span]:shadow-md [&>span]:z-10",
+
           "[&>span]:transition-all [&>span]:duration-300",
           "data-[state=unchecked]:[&>span]:translate-x-0.5",
           "data-[state=checked]:[&>span]:translate-x-[36px]",
