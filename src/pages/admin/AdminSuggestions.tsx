@@ -17,7 +17,7 @@ import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Search, Eye, CheckCheck, Archive, Inbox, CalendarDays, TrendingUp, Tag } from "lucide-react";
+import { Lightbulb, Search, Eye, CheckCheck, Archive, Inbox, CalendarDays, TrendingUp, Tag, Hammer, Loader2 } from "lucide-react";
 import {
   SUGGESTION_CATEGORIES,
   SUGGESTION_PERIODS,
