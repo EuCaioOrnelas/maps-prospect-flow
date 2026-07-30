@@ -651,9 +651,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       : "opacity-0 scale-x-0"
                   )}
                 />
-                <Avatar className="h-7 w-7 shrink-0 rounded-xs border border-sidebar-border">
-                  <AvatarImage className="rounded-xs" src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
-                  <AvatarFallback className="rounded-xs bg-primary/10 text-primary text-xs font-medium">
+                <Avatar className="h-7 w-7 shrink-0 rounded-hover border border-sidebar-border">
+                  <AvatarImage className="rounded-hover" src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
+                  <AvatarFallback className="rounded-hover bg-primary/10 text-primary text-xs font-medium">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>

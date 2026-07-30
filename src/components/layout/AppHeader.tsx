@@ -161,9 +161,9 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="focus:outline-none">
-                  <Avatar className="h-9 w-9 border border-border hover:border-primary/50 transition-colors cursor-pointer">
-                    <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                  <Avatar className="h-9 w-9 rounded-hover border border-border hover:border-primary/50 transition-colors cursor-pointer">
+                    <AvatarImage className="rounded-hover" src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
+                    <AvatarFallback className="rounded-hover bg-primary/10 text-primary text-sm font-medium">
                       {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
@@ -199,9 +199,9 @@ export const AppHeader = ({ profile, onWhatsAppClick }: AppHeaderProps) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="focus:outline-none">
-                  <Avatar className="h-8 w-8 border border-border hover:border-primary/50 transition-colors cursor-pointer">
-                    <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                  <Avatar className="h-8 w-8 rounded-hover border border-border hover:border-primary/50 transition-colors cursor-pointer">
+                    <AvatarImage className="rounded-hover" src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
+                    <AvatarFallback className="rounded-hover bg-primary/10 text-primary text-xs font-medium">
                       {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
