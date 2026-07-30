@@ -17,6 +17,7 @@ import {
   Bell,
   Bot,
   HelpCircle,
+  Lightbulb,
   LayoutDashboard,
   DollarSign,
   Mail,
@@ -602,6 +603,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 />
               </li>
             )}
+
+            {/* Sugestões */}
+            <li>
+              <SidebarNavItem
+                title="Sugestões"
+                icon={Lightbulb}
+                url="/sugestoes"
+                isActive={currentPath === "/sugestoes"}
+                isExpanded={isExpanded}
+                tooltip="Sugestões de Melhorias"
+              />
+            </li>
 
             {/* Ajuda */}
             <li>

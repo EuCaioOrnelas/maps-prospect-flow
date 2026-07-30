@@ -133,6 +133,8 @@ const AdminOnboarding = lazyWithRetry(() => import("./pages/admin/AdminOnboardin
 const AdminSupportTickets = lazyWithRetry(() => import("./pages/admin/AdminSupportTickets"), "AdminSupportTickets");
 const AdminSupportMindIA = lazyWithRetry(() => import("./pages/admin/AdminSupportMindIA"), "AdminSupportMindIA");
 const AdminSupportFAQs = lazyWithRetry(() => import("./pages/admin/AdminSupportFAQs"), "AdminSupportFAQs");
+const AdminSuggestions = lazyWithRetry(() => import("./pages/admin/AdminSuggestions"), "AdminSuggestions");
+const Suggestions = lazyWithRetry(() => import("./pages/Suggestions"), "Suggestions");
 const AdminSupportIntelligence = lazyWithRetry(() => import("./pages/admin/AdminSupportIntelligence"), "AdminSupportIntelligence");
 
 // Partners - Admin (Programa de Parceiros)
@@ -299,6 +301,7 @@ const App = () => (
                 <Route path="/contato" element={<LightThemeWrapper><Contact /></LightThemeWrapper>} />
                <Route path="/profile" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Profile /></Suspense></ProtectedRoute>} />
                <Route path="/usuarios" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Users /></Suspense></ProtectedRoute>} />
+               <Route path="/sugestoes" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Suggestions /></Suspense></ProtectedRoute>} />
                <Route path="/acesso-negado" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><AccessDenied /></Suspense></ProtectedRoute>} />
                 <Route path="/d7x9k2m4-meta-review" element={<LightThemeWrapper><MetaAppDocumentation /></LightThemeWrapper>} />
                 <Route path="/onboarding" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Onboarding /></Suspense></LightThemeWrapper>} />
@@ -400,6 +403,7 @@ const App = () => (
                   <Route path="suporte/tickets" element={<AdminSupportTickets />} />
                   <Route path="suporte/mind-ia" element={<AdminSupportMindIA />} />
                   <Route path="suporte/faqs" element={<AdminSupportFAQs />} />
+                  <Route path="sugestoes" element={<AdminSuggestions />} />
                   <Route path="suporte/inteligencia" element={<AdminSupportIntelligence />} />
                   {/* Partners */}
                   <Route path="partners" element={<AdminPartnersDashboard />} />
