@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { signIn, user, isTrialExpired, profile, loading } = useAuth();
   useAutoScoreTracking("login");
@@ -99,9 +100,14 @@ const Login = () => {
         return;
       }
 
+      // Rota de origem (ex.: /sugestoes) — volta para lá após o login
+      const fromPath = (location.state as any)?.from?.pathname as string | undefined;
+
       // If trial expired and user is on free plan, redirect to upgrade
       if (isTrialExpired && profile?.plan === 'free') {
         navigate("/upgrade?expired=true");
+      } else if (fromPath && fromPath !== "/login") {
+        navigate(fromPath, { replace: true });
       } else {
         navigate("/dashboard");
       }

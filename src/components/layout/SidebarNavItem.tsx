@@ -35,17 +35,21 @@ export const SidebarNavItem = ({
   iconClassName,
 }: SidebarNavItemProps) => {
   const baseClasses = cn(
-    "flex items-center rounded-lg transition-colors duration-200",
+    "relative flex items-center rounded-lg transition-colors duration-200",
     "w-10 h-10 justify-center",
     isExpanded && "w-full px-2.5 justify-start gap-3"
   );
 
   const stateClasses = cn(
     isActive
-      ? "bg-sidebar-accent/60 text-primary"
+      ? [
+          "bg-primary/10 text-primary font-medium",
+          "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
+          "before:h-[60%] before:w-[3px] before:rounded-r-full before:bg-primary",
+        ]
       : highlight
-      ? "text-primary hover:text-primary hover:bg-sidebar-accent/50"
-      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+      ? "text-primary hover:text-primary hover:bg-primary/10"
+      : "text-sidebar-foreground/60 hover:text-primary hover:bg-primary/[0.07]"
   );
 
   const content = (
