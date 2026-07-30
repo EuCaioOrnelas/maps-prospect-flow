@@ -727,7 +727,7 @@ export const PricingSection = () => {
  
  <div className="relative z-10">
  <div className="text-center mb-6 sm:mb-10">
- <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-sm font-medium mb-3 sm:mb-4">
+ <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3.5 py-1.5 rounded-hover text-[11px] sm:text-sm font-medium mb-3 sm:mb-4">
  <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
  Infraestrutura Profissional
  </div>

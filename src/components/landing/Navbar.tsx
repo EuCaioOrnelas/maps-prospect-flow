@@ -102,7 +102,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
  className="mx-auto"
  style={{
  maxWidth: scrolled ? '920px' : '1280px',
- borderRadius: scrolled ? '9999px' : '0px',
+ borderRadius: scrolled ? '18px' : '0px',
  backgroundColor: scrolled ? 'hsl(var(--background) / 0.55)' : 'transparent',
  backdropFilter: scrolled ? 'blur(16px) saturate(180%)' : 'none',
  WebkitBackdropFilter: scrolled ? 'blur(16px) saturate(180%)' : 'none',
