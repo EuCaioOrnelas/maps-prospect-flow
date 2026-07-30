@@ -307,7 +307,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/oportunidades"
                         className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-md transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
                           currentPath === "/oportunidades"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -321,7 +321,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/oportunidades/gestao"
                         className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-md transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
                           currentPath === "/oportunidades/gestao"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -370,7 +370,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                           <Link
                             to={item.url}
                             className={cn(
-                              "flex items-center gap-3 px-2.5 h-10 rounded-md transition-colors duration-200",
+                              "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
                               active
                                 ? "bg-sidebar-accent/60 text-primary font-medium"
                                 : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -420,7 +420,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/crm"
                         className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-md transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
                           currentPath === "/crm"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -434,7 +434,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/crm/score"
                         className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-md transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
                           currentPath === "/crm/score"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -499,7 +499,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/fluxos"
                         className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-md transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
                           currentPath.startsWith("/fluxos")
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -515,7 +515,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       <Link
                         to="/equipe-ia"
                         className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-md transition-colors duration-200",
+                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
                           currentPath.startsWith("/equipe-ia") || currentPath.startsWith("/ai-workforce")
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -633,7 +633,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <Link
                 to="/profile"
                 className={cn(
-                  "flex items-center rounded-md transition-colors duration-200",
+                  "flex items-center rounded-hover transition-colors duration-200",
                   "w-10 h-10 justify-center",
                   isExpanded && "w-full px-2.5 justify-start gap-3",
                   currentPath === "/profile"
