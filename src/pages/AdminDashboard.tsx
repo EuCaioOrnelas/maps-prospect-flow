@@ -8,6 +8,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { hasCompletedTrial, hasConvertedFromTrial, isNewOnboarding } from "@/lib/adminMetrics";
+
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -90,25 +92,35 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const loadExtra = async () => {
-      // Trial conversion: all users who started on free trial, how many upgraded
+      // Conversão de trial: SOMENTE quem realmente fez o trial e já saiu dele.
       const { data: allUsers } = await supabase
         .from("profiles")
-        .select("id, plan, trial_start_at, created_at");
+        .select("id, plan, trial_start_at, trial_end_at, trial_will_charge_at, created_at");
 
       if (allUsers) {
-        const withTrial = allUsers.filter((u) => (u as any).trial_start_at);
-        const converted = withTrial.filter((u) => u.plan !== "free").length;
-        setTrialConversion({ total: withTrial.length, converted });
+        const trialed = (allUsers as any[]).filter(hasCompletedTrial);
+        const converted = trialed.filter(hasConvertedFromTrial).length;
+        setTrialConversion({ total: trialed.length, converted });
       }
 
-      // Activation: users who used any feature
-      const { data: activationProfiles } = await supabase
-        .from("profiles")
-        .select("id, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used");
+      // Ativação: somente usuários que passaram pelo NOVO onboarding
+      // (responderam ou pularam) — os demais ficam fora da base de cálculo.
+      const [{ data: activationProfiles }, { data: onboardingRows }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used"),
+        supabase
+          .from("user_onboarding")
+          .select("user_id, skipped, completed_at, created_at, role"),
+      ]);
 
       if (activationProfiles) {
-        const total = activationProfiles.length;
-        const activated = activationProfiles.filter((p) =>
+        const eligible = new Set(
+          ((onboardingRows as any[]) || []).filter(isNewOnboarding).map((r) => r.user_id)
+        );
+        const base = activationProfiles.filter((p) => eligible.has(p.id));
+        const total = base.length;
+        const activated = base.filter((p) =>
           (p.searches_used ?? 0) > 0 ||
           ((p as any).trial_messages_sent ?? 0) > 0 ||
           ((p as any).trial_leads_used ?? 0) > 0 ||
@@ -117,6 +129,7 @@ export default function AdminDashboard() {
         ).length;
         setActivationData({ total, activated });
       }
+
 
       // Upgrade opportunities
       const { count } = await supabase
