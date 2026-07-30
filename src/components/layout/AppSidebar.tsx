@@ -43,6 +43,7 @@ import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
 import { useChatUnreadBadge } from "@/hooks/useChatUnreadBadge";
 import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDialog";
 import { SidebarNavItem } from "./SidebarNavItem";
+import { SidebarDivider } from "./SidebarDivider";
 import logoIconNew from "@/assets/logo-icon-new.png";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
 
@@ -235,7 +236,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         )}
       >
         {/* Logo area - aligned with navbar height */}
-        <div className="h-[58px] min-h-[58px] flex items-center px-4 mb-3">
+        <div className="h-[58px] min-h-[58px] flex items-center px-4">
           <Link 
             to="/dashboard"
             className="flex items-center gap-0 h-12 group cursor-pointer"
@@ -260,6 +261,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </span>
           </Link>
         </div>
+
+        <SidebarDivider className="my-2" />
 
         {/* Main navigation */}
         <nav className="flex-1 py-4 overflow-y-auto overflow-x-hidden">
@@ -537,8 +540,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
           </ul>
         </nav>
 
+        <SidebarDivider className="my-2" />
+
         {/* Bottom navigation */}
-        <div className="py-4 border-t border-sidebar-border">
+        <div className="py-4">
           <ul className="space-y-1 px-4">
             {/* Upgrade */}
             {/* Upgrade — só para quem tem acesso a assinaturas (esconde para operacional) */}
