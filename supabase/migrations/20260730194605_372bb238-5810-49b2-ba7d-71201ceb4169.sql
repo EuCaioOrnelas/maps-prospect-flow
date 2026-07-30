@@ -1,0 +1,1 @@
+DELETE FROM public.suggestions WHERE user_email = 'caiowiize@gmail.com';
