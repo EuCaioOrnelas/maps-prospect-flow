@@ -44,6 +44,13 @@ function importanceBadge(value: string) {
 
 function statusBadge(value: string) {
   const label = SUGGESTION_STATUS_LABEL[value as SuggestionStatus] || value;
+  if (value === "em_desenvolvimento") {
+    return (
+      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+        {label}
+      </Badge>
+    );
+  }
   return <Badge variant="secondary">{label}</Badge>;
 }
 
