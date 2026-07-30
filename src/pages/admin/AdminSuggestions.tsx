@@ -74,6 +74,8 @@ export default function AdminSuggestions() {
   }>({ total: 0, last7: 0, last30: 0, topCategory: null });
   const [selected, setSelected] = useState<SuggestionRow | null>(null);
   const [busy, setBusy] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const range = useMemo(
     () => periodToRange(period, customFrom, customTo),
