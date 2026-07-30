@@ -33,12 +33,24 @@ export default function AdminAtivacao() {
 
   useEffect(() => {
     const load = async () => {
-      // Pull all profiles with the columns we need
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, created_at, updated_at, payment_provider, plan, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used");
+      // Base de cálculo: SOMENTE usuários que passaram pelo novo onboarding
+      // (responderam ou pularam). Cadastros anteriores ficam fora do funil.
+      const [{ data: allProfiles }, { data: onboardingRows }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, created_at, updated_at, payment_provider, plan, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used"),
+        supabase
+          .from("user_onboarding")
+          .select("user_id, skipped, completed_at, created_at, role"),
+      ]);
 
-      if (!profiles) { setLoading(false); return; }
+      if (!allProfiles) { setLoading(false); return; }
+
+      const eligible = new Set(
+        ((onboardingRows as any[]) || []).filter(isNewOnboarding).map((r) => r.user_id)
+      );
+      const profiles = allProfiles.filter((p: any) => eligible.has(p.id));
+
 
       const total = profiles.length;
 
