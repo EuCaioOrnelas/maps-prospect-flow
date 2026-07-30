@@ -499,6 +499,33 @@ function templateMetaNumberDisconnected(payload: Record<string, unknown>): Templ
   };
 }
 
+function templateSuggestionInDevelopment(payload: Record<string, unknown>): TemplateResult {
+  const area = (payload.area as string) || "a plataforma";
+  const suggestionTitle = (payload.suggestion_title as string) || "";
+  return {
+    subject: `Estamos trabalhando em melhorias para ${area}`,
+    html: baseLayout("Sua sugestão virou desenvolvimento", `
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;font-weight:700;">Sua sugestão entrou em desenvolvimento</h1>
+      <p style="margin:0 0 12px;color:#3f3f46;font-size:15px;line-height:1.7;">
+        Estamos trabalhando em melhorias para ${area} da Wiize.
+      </p>
+      ${suggestionTitle ? `<div style="margin:0 0 16px;padding:14px 16px;background:#f0fdf4;border-left:4px solid ${BRAND.color};border-radius:6px;">
+        <p style="margin:0;font-size:13px;color:#166534;">Sugestão enviada por você</p>
+        <p style="margin:4px 0 0;font-size:14px;font-weight:600;color:#14532d;">${suggestionTitle}</p>
+      </div>` : ""}
+      <p style="margin:0 0 12px;color:#3f3f46;font-size:15px;line-height:1.7;">
+        Sua sugestão ajudou a definir essa evolução.
+      </p>
+      <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.7;">
+        Obrigado por contribuir.
+      </p>
+      <div style="text-align:center;margin:24px 0 0;">
+        <a href="${BRAND.url}/sugestoes" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Ver minhas sugestões</a>
+      </div>
+    `, `Estamos trabalhando em melhorias para ${area} da Wiize`),
+  };
+}
+
 const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateResult> = {
   CAMPAIGN_SCHEDULED_STARTED: templateCampaignStarted,
   WEEKLY_SUMMARY: templateWeeklySummary,
