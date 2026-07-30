@@ -234,8 +234,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
           (isHovered || tourForceOpen) ? "w-[268px]" : "w-[72px]"
         )}
       >
-        {/* Logo area - aligned with navbar height (58px = 57px + 1px border) */}
-        <div className="h-[58px] min-h-[58px] flex items-center border-b border-sidebar-border px-4">
+        {/* Logo area - aligned with navbar height */}
+        <div className="h-[58px] min-h-[58px] flex items-center px-4 mb-3">
           <Link 
             to="/dashboard"
             className="flex items-center gap-0 h-12 group cursor-pointer"
