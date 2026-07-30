@@ -654,8 +654,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 />
                 <Avatar
                   className={cn(
-                    "shrink-0 overflow-hidden transition-[width,height,border-radius] duration-300 ease-out",
-                    isExpanded ? "h-6 w-6 rounded-[6px]" : "h-10 w-10 rounded-hover"
+                    "shrink-0 overflow-hidden transition-[border-radius] duration-300 ease-out",
+                    "h-8 w-8 rounded-hover"
                   )}
                 >
                   <AvatarImage
