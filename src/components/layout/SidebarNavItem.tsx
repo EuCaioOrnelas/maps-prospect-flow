@@ -54,7 +54,7 @@ export const SidebarNavItem = ({
       <span
         aria-hidden
         className={cn(
-          "absolute left-0 inset-y-0 w-[3px] rounded-l-hover bg-primary",
+          "absolute left-0 inset-y-0 w-[3px] bg-primary",
           "transition-[opacity,transform] duration-300 ease-out origin-left",
           isActive && isExpanded
             ? "opacity-100 scale-x-100"
