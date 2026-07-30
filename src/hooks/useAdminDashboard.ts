@@ -331,11 +331,25 @@ export function useAdminDashboard() {
 
       if (customErr) throw customErr;
 
+      // Só soma enquanto o usuário existir e tiver plano ativo (não free, não bloqueado).
+      const userIds = Array.from(new Set(((customSubs || []) as any[]).map((s) => s.user_id).filter(Boolean)));
+      const activeUserIds = new Set<string>();
+      if (userIds.length > 0) {
+        const { data: subProfiles } = await supabase
+          .from("profiles")
+          .select("id, plan, is_blocked")
+          .in("id", userIds);
+        ((subProfiles || []) as any[]).forEach((p) => {
+          if (p.plan && p.plan !== "free" && !p.is_blocked) activeUserIds.add(p.id);
+        });
+      }
+
       const now = new Date();
       let otherMrrTotal = 0;
       let otherSubsTotal = 0;
       const byMethodMap = new Map<string, { mrr: number; count: number }>();
       for (const sub of (customSubs || []) as any[]) {
+        if (!sub.user_id || !activeUserIds.has(sub.user_id)) continue;
         if (!sub.is_lifetime && sub.ends_at && new Date(sub.ends_at) < now) continue;
         const monthly = (sub.monthly_value_cents || 0) / 100;
         if (monthly <= 0) continue;
@@ -347,6 +361,7 @@ export function useAdminDashboard() {
         cur.count += 1;
         byMethodMap.set(key, cur);
       }
+
 
       setOtherMRR({
         otherMrr: otherMrrTotal,
