@@ -45,7 +45,7 @@
     --radius: 1.25rem; /* base radius */
     --radius-input: 0.875rem; /* 14px - inputs */
     --radius-card: 1.25rem; /* 20px - cards */
-    --radius-hover: 0.05rem; /* ~0.8px - hover/sidebar/button items: square with slightly rounded corners */
+    --radius-hover: 0.5rem; /* 8px - hover/sidebar/button items: square with slightly rounded corners */
 
     /* Custom tokens */
     --gradient-primary: linear-gradient(135deg, hsl(158 72% 38%) 0%, hsl(170 65% 32%) 100%);
