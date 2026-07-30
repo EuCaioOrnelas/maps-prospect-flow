@@ -538,6 +538,7 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   CAMPAIGN_COMPLETED: templateCampaignCompleted,
   AGENT_HUMAN_HANDOFF: templateAgentHumanHandoff,
   AGENT_OBJECTIVE_COMPLETED: templateAgentObjectiveCompleted,
+  SUGGESTION_IN_DEVELOPMENT: templateSuggestionInDevelopment,
 };
 
 function htmlToPlainText(html: string): string {
