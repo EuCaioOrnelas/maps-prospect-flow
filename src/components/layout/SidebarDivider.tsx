@@ -11,7 +11,7 @@ export function SidebarDivider({ className }: SidebarDividerProps) {
       viewBox="0 0 240 8"
       preserveAspectRatio="none"
       className={cn(
-        "block h-2 w-[calc(100%-24px)] mx-auto text-sidebar-foreground/25",
+        "block h-2 w-[calc(100%-24px)] mx-auto text-foreground/35 dark:text-foreground/25",
         className
       )}
     >
