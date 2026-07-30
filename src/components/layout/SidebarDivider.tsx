@@ -9,12 +9,13 @@ export function SidebarDivider({ className }: SidebarDividerProps) {
     <div
       aria-hidden="true"
       className={cn(
-        "h-[3px] w-[calc(100%-24px)] mx-auto",
-        "bg-[radial-gradient(ellipse_70%_100%_at_center,hsl(var(--sidebar-border))_0%,transparent_100%)]",
+        "h-[4px] w-[calc(100%-24px)] mx-auto rounded-full",
+        "bg-[linear-gradient(to_right,transparent_0%,hsl(var(--sidebar-border))_20%,hsl(var(--sidebar-border))_80%,transparent_100%)]",
         "opacity-90",
         className
       )}
     />
   );
 }
+
 
