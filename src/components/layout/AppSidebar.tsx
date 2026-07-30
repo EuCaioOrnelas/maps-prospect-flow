@@ -635,7 +635,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 className={cn(
                   "relative flex items-center rounded-hover overflow-hidden transition-[background-color,color,width,padding] duration-300 ease-out",
                   "w-10 h-10 justify-center",
-                  isExpanded && "w-full px-2.5 justify-start gap-3",
+                  isExpanded && "w-full h-12 pl-1 pr-2.5 justify-start gap-2.5",
                   currentPath === "/profile"
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-sidebar-foreground/60 hover:text-primary hover:bg-primary/[0.07]"
@@ -654,9 +654,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 <Avatar
                   className={cn(
                     "shrink-0 rounded-hover overflow-hidden transition-[width,height] duration-300 ease-out",
-                    isExpanded ? "h-7 w-7" : "h-10 w-10"
+                    isExpanded ? "h-10 w-10" : "h-10 w-10"
                   )}
                 >
+
                   <AvatarImage
                     className="h-full w-full rounded-hover object-cover"
                     src={profile?.avatar_url || undefined}
