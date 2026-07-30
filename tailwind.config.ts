@@ -77,11 +77,19 @@ export default {
         },
       },
       borderRadius: {
+        sm: "var(--radius-sm)",
+        md: "var(--radius-hover)",
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        xl: "var(--radius-card)",
+        "2xl": "var(--radius-panel)",
+        "3xl": "1.25rem",
         hover: "var(--radius-hover)",
+        input: "var(--radius-input)",
+        card: "var(--radius-card)",
+        panel: "var(--radius-panel)",
+        xs: "var(--radius-xs)",
       },
+
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
