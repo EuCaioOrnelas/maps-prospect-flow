@@ -649,11 +649,11 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 <span
                   aria-hidden
                   className={cn(
-                    "absolute left-0 inset-y-0 w-[3px] bg-primary",
-                    "transition-[opacity,transform] duration-300 ease-out origin-left",
-                    currentPath === "/profile" && isExpanded
-                      ? "opacity-100 scale-x-100"
-                      : "opacity-0 scale-x-0"
+                    "pointer-events-none absolute left-0 inset-y-0 w-[2px]",
+                    "rounded-r-full bg-gradient-to-b from-primary to-primary/80",
+                    "opacity-0 -translate-x-[2px]",
+                    "transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                    currentPath === "/profile" && "opacity-100 translate-x-0"
                   )}
                 />
                 <Avatar
