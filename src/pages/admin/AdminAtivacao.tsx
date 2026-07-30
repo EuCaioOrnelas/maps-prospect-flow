@@ -2,6 +2,8 @@ import { UserCheck, ArrowDown, Info, Users, MousePointerClick, Sparkles } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { isNewOnboarding } from "@/lib/adminMetrics";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
