@@ -374,11 +374,11 @@ const Profile = () => {
       return;
     }
 
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "Arquivo muito grande",
-        description: "O tamanho máximo é 2MB",
+        description: "O tamanho máximo é 10MB",
         variant: "destructive",
       });
       return;
@@ -540,16 +540,16 @@ const Profile = () => {
                 {/* Avatar Section */}
                 <div className="flex items-center gap-6">
                   <div className="relative group">
-                    <Avatar className="h-24 w-24 border-2 border-border">
-                      <AvatarImage src={profile?.avatar_url} />
-                      <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                    <Avatar className="h-24 w-24 rounded-card border-2 border-border">
+                      <AvatarImage className="rounded-card" src={profile?.avatar_url} />
+                      <AvatarFallback className="rounded-card text-2xl bg-primary/10 text-primary">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
                     <button
                       onClick={handlePhotoClick}
                       disabled={isUploadingPhoto}
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-card opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     >
                       {isUploadingPhoto ? (
                         <Loader2 className="h-6 w-6 text-white animate-spin" />
