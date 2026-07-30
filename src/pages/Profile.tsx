@@ -67,6 +67,7 @@ import { useGuidedTour, resetGuidedTour } from "@/hooks/useGuidedTour";
 import { PlayCircle } from "lucide-react";
 import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
+import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
 
 
 const Profile = () => {
@@ -82,6 +83,8 @@ const Profile = () => {
   const [serviceForm, setServiceForm] = useState<{ name: string; average_ticket: number; description: string }[]>([]);
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
@@ -360,7 +363,7 @@ const Profile = () => {
     fileInputRef.current?.click();
   };
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
@@ -384,16 +387,30 @@ const Profile = () => {
       return;
     }
 
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(URL.createObjectURL(file));
+    setCropOpen(true);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const closeCrop = () => {
+    setCropOpen(false);
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+  };
+
+  const handleCroppedUpload = async (blob: Blob) => {
+    if (!user) return;
     setIsUploadingPhoto(true);
 
     try {
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/avatar-${Date.now()}.jpg`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true, contentType: file.type, cacheControl: '0' });
+        .upload(fileName, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '0' });
+
 
       if (uploadError) throw uploadError;
 
@@ -435,6 +452,7 @@ const Profile = () => {
       });
     } finally {
       setIsUploadingPhoto(false);
+      closeCrop();
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -540,16 +558,16 @@ const Profile = () => {
                 {/* Avatar Section */}
                 <div className="flex items-center gap-6">
                   <div className="relative group">
-                    <Avatar className="h-24 w-24 rounded-card border-2 border-border">
-                      <AvatarImage className="rounded-card" src={profile?.avatar_url} />
-                      <AvatarFallback className="rounded-card text-2xl bg-primary/10 text-primary">
+                    <Avatar className="h-24 w-24 rounded-hover border-2 border-border">
+                      <AvatarImage className="rounded-hover" src={profile?.avatar_url} />
+                      <AvatarFallback className="rounded-hover text-2xl bg-primary/10 text-primary">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
                     <button
                       onClick={handlePhotoClick}
                       disabled={isUploadingPhoto}
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-card opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-hover opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     >
                       {isUploadingPhoto ? (
                         <Loader2 className="h-6 w-6 text-white animate-spin" />
@@ -564,7 +582,15 @@ const Profile = () => {
                       onChange={handlePhotoChange}
                       className="hidden"
                     />
+                    <AvatarCropDialog
+                      open={cropOpen}
+                      imageSrc={cropSrc}
+                      isSaving={isUploadingPhoto}
+                      onCancel={closeCrop}
+                      onConfirm={handleCroppedUpload}
+                    />
                   </div>
+
                   <div className="space-y-1">
                     <h3 className="text-xl font-semibold">{profile?.name || 'Usuário'}</h3>
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
