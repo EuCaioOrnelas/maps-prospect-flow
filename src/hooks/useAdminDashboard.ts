@@ -437,11 +437,13 @@ export function useAdminDashboard() {
   }, []);
 
   // Carrega cancelamentos Asaas/PIX dos últimos 30 dias.
+  // Só conta quem já foi PAGANTE — cancelamento/não-renovação durante o trial
+  // não é churn (nunca virou receita).
   const loadNewSystemChurn = useCallback(async () => {
     try {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-      const [cancellationsRes, eventsRes] = await Promise.all([
+      const [cancellationsRes, eventsRes, payingIds] = await Promise.all([
         supabase
           .from("subscription_cancellations")
           .select("user_id, provider, cancelled_at")
@@ -453,6 +455,7 @@ export function useAdminDashboard() {
           .eq("event_type", "pix_not_renewed")
           .eq("event_source", "asaas")
           .gte("created_at", thirtyDaysAgo),
+        fetchPayingUserIds(supabase),
       ]);
 
       if (cancellationsRes.error) throw cancellationsRes.error;
@@ -460,10 +463,10 @@ export function useAdminDashboard() {
 
       const asaasUsers = new Set<string>();
       (cancellationsRes.data || []).forEach((item: any) => {
-        if (item.user_id) asaasUsers.add(item.user_id);
+        if (item.user_id && payingIds.has(item.user_id)) asaasUsers.add(item.user_id);
       });
       (eventsRes.data || []).forEach((item: any) => {
-        if (item.user_id) asaasUsers.add(item.user_id);
+        if (item.user_id && payingIds.has(item.user_id)) asaasUsers.add(item.user_id);
       });
 
       setNewSystemChurn({ cancellations30d: asaasUsers.size });
@@ -471,6 +474,7 @@ export function useAdminDashboard() {
       setNewSystemChurn({ cancellations30d: 0 });
     }
   }, []);
+
 
   useEffect(() => {
     (async () => {
