@@ -519,6 +519,14 @@ export default function AdminSuggestions() {
                     <Archive size={15} className="mr-2" /> Arquivar
                   </Button>
                 </div>
+
+                <Button
+                  className="w-full"
+                  disabled={busy || selected.status === "em_desenvolvimento"}
+                  onClick={() => updateStatus(selected.id, "em_desenvolvimento")}
+                >
+                  <Hammer size={15} className="mr-2" /> Em desenvolvimento (avisar cliente)
+                </Button>
               </div>
             </>
           )}
