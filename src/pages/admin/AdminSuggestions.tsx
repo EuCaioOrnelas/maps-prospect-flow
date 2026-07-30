@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -16,7 +17,7 @@ import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Search, Eye, CheckCheck, Archive, Inbox, CalendarDays, TrendingUp, Tag } from "lucide-react";
+import { Lightbulb, Search, Eye, CheckCheck, Archive, Inbox, CalendarDays, TrendingUp, Tag, Hammer, Loader2 } from "lucide-react";
 import {
   SUGGESTION_CATEGORIES,
   SUGGESTION_PERIODS,
@@ -43,6 +44,13 @@ function importanceBadge(value: string) {
 
 function statusBadge(value: string) {
   const label = SUGGESTION_STATUS_LABEL[value as SuggestionStatus] || value;
+  if (value === "em_desenvolvimento") {
+    return (
+      <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+        {label}
+      </Badge>
+    );
+  }
   return <Badge variant="secondary">{label}</Badge>;
 }
 
@@ -66,6 +74,8 @@ export default function AdminSuggestions() {
   }>({ total: 0, last7: 0, last30: 0, topCategory: null });
   const [selected, setSelected] = useState<SuggestionRow | null>(null);
   const [busy, setBusy] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const range = useMemo(
     () => periodToRange(period, customFrom, customTo),
@@ -141,11 +151,35 @@ export default function AdminSuggestions() {
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
+  // Dispara o e-mail "Estamos trabalhando em melhorias..." para o autor da sugestão
+  const notifyInDevelopment = async (row: SuggestionRow) => {
+    const { error } = await supabase.functions.invoke("send-email", {
+      body: {
+        user_id: row.user_id,
+        email_type: "SUGGESTION_IN_DEVELOPMENT",
+        idempotency_key: `suggestion-dev-${row.id}`,
+        payload: {
+          area: row.category,
+          suggestion_title: row.title,
+        },
+      },
+    });
+    if (error) throw error;
+  };
+
   const updateStatus = async (id: string, next: SuggestionStatus) => {
     setBusy(true);
     try {
       const { error } = await supabase.from("suggestions").update({ status: next }).eq("id", id);
       if (error) throw error;
+
+      const row = rows.find((r) => r.id === id) || (selected?.id === id ? selected : null);
+      if (next === "em_desenvolvimento" && row) {
+        try { await notifyInDevelopment(row); } catch (e: any) {
+          toast({ title: "Status atualizado, mas o e-mail falhou", description: e.message, variant: "destructive" });
+        }
+      }
+
       setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: next } : r)));
       setSelected((prev) => (prev && prev.id === id ? { ...prev, status: next } : prev));
       toast({ title: `Sugestão marcada como ${SUGGESTION_STATUS_LABEL[next]}` });
@@ -153,6 +187,45 @@ export default function AdminSuggestions() {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
     } finally {
       setBusy(false);
+    }
+  };
+
+  const toggleRow = (id: string) =>
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const allSelected = rows.length > 0 && rows.every((r) => selectedIds.includes(r.id));
+  const toggleAll = () =>
+    setSelectedIds((prev) => (allSelected ? prev.filter((id) => !rows.some((r) => r.id === id)) : [...new Set([...prev, ...rows.map((r) => r.id)])]));
+
+  const bulkMarkInDevelopment = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkBusy(true);
+    try {
+      const targets = rows.filter((r) => selectedIds.includes(r.id));
+      const { error } = await supabase
+        .from("suggestions")
+        .update({ status: "em_desenvolvimento" })
+        .in("id", selectedIds);
+      if (error) throw error;
+
+      let sent = 0;
+      let failed = 0;
+      for (const row of targets) {
+        try { await notifyInDevelopment(row); sent++; } catch { failed++; }
+      }
+
+      setRows((prev) =>
+        prev.map((r) => (selectedIds.includes(r.id) ? { ...r, status: "em_desenvolvimento" } : r))
+      );
+      setSelectedIds([]);
+      toast({
+        title: `${targets.length} sugestão(ões) em desenvolvimento`,
+        description: `${sent} e-mail(s) enviado(s)${failed ? ` · ${failed} falha(s)` : ""}.`,
+      });
+    } catch (e: any) {
+      toast({ title: "Erro na ação em massa", description: e.message, variant: "destructive" });
+    } finally {
+      setBulkBusy(false);
     }
   };
 
@@ -248,6 +321,7 @@ export default function AdminSuggestions() {
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="recebida">Recebida</SelectItem>
                   <SelectItem value="lida">Lida</SelectItem>
+                  <SelectItem value="em_desenvolvimento">Em desenvolvimento</SelectItem>
                   <SelectItem value="arquivada">Arquivada</SelectItem>
                 </SelectContent>
               </Select>
@@ -268,6 +342,26 @@ export default function AdminSuggestions() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Ações em massa */}
+      {selectedIds.length > 0 && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardContent className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p className="text-sm text-foreground">
+              <strong>{selectedIds.length}</strong> sugestão(ões) selecionada(s)
+            </p>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" disabled={bulkBusy} onClick={() => setSelectedIds([])}>
+                Limpar
+              </Button>
+              <Button size="sm" disabled={bulkBusy} onClick={bulkMarkInDevelopment}>
+                {bulkBusy ? <Loader2 size={15} className="mr-2 animate-spin" /> : <Hammer size={15} className="mr-2" />}
+                Marcar como Em desenvolvimento + avisar clientes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabela */}
       <Card className="border-border/60">
@@ -295,6 +389,9 @@ export default function AdminSuggestions() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="Selecionar todos" />
+                    </TableHead>
                     <TableHead>Empresa</TableHead>
                     <TableHead>Usuário</TableHead>
                     <TableHead>Categoria</TableHead>
@@ -307,7 +404,14 @@ export default function AdminSuggestions() {
                 </TableHeader>
                 <TableBody>
                   {rows.map((r) => (
-                    <TableRow key={r.id}>
+                    <TableRow key={r.id} data-state={selectedIds.includes(r.id) ? "selected" : undefined}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(r.id)}
+                          onCheckedChange={() => toggleRow(r.id)}
+                          aria-label={`Selecionar ${r.title}`}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{r.company_name || "—"}</TableCell>
                       <TableCell>
                         <div className="text-sm">{r.user_name || "—"}</div>
@@ -415,6 +519,14 @@ export default function AdminSuggestions() {
                     <Archive size={15} className="mr-2" /> Arquivar
                   </Button>
                 </div>
+
+                <Button
+                  className="w-full"
+                  disabled={busy || selected.status === "em_desenvolvimento"}
+                  onClick={() => updateStatus(selected.id, "em_desenvolvimento")}
+                >
+                  <Hammer size={15} className="mr-2" /> Em desenvolvimento (avisar cliente)
+                </Button>
               </div>
             </>
           )}
