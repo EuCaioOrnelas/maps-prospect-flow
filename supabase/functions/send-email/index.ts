@@ -519,9 +519,7 @@ function templateSuggestionInDevelopment(payload: Record<string, unknown>): Temp
       <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.7;">
         Obrigado por contribuir.
       </p>
-      <div style="text-align:center;margin:24px 0 0;">
-        <a href="${BRAND.url}/sugestoes" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Ver minhas sugestões</a>
-      </div>
+
     `, `Estamos trabalhando em melhorias para ${area} da Wiize`),
   };
 }
