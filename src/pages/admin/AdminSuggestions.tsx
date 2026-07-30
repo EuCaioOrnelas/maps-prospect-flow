@@ -321,6 +321,7 @@ export default function AdminSuggestions() {
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="recebida">Recebida</SelectItem>
                   <SelectItem value="lida">Lida</SelectItem>
+                  <SelectItem value="em_desenvolvimento">Em desenvolvimento</SelectItem>
                   <SelectItem value="arquivada">Arquivada</SelectItem>
                 </SelectContent>
               </Select>
