@@ -182,8 +182,22 @@ export default function AdminSuggestions() {
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
-  // Dispara o e-mail "Estamos trabalhando em melhorias..." para o autor da sugestão
-  const notifyInDevelopment = async (row: SuggestionRow) => {
+  // Dispara o e-mail "Estamos trabalhando em melhorias..." — 1x por sugestão
+  const notifyInDevelopment = async (row: SuggestionRow): Promise<"sent" | "skipped"> => {
+    if ((row.metadata as any)?.dev_email_sent_at) return "skipped";
+
+    // Trava no banco: só marca se ainda não houver registro de envio
+    const { data: locked, error: lockError } = await supabase
+      .from("suggestions")
+      .update({
+        metadata: { ...((row.metadata as any) || {}), dev_email_sent_at: new Date().toISOString() },
+      } as any)
+      .eq("id", row.id)
+      .is("metadata->>dev_email_sent_at", null)
+      .select("id");
+    if (lockError) throw lockError;
+    if (!locked || locked.length === 0) return "skipped";
+
     const { error } = await supabase.functions.invoke("send-email", {
       body: {
         user_id: row.user_id,
@@ -196,6 +210,17 @@ export default function AdminSuggestions() {
       },
     });
     if (error) throw error;
+    return "sent";
+  };
+
+  const markNotified = (id: string) => {
+    const stamp = new Date().toISOString();
+    setRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, metadata: { ...(r.metadata || {}), dev_email_sent_at: stamp } } : r))
+    );
+    setSelected((prev) =>
+      prev && prev.id === id ? { ...prev, metadata: { ...(prev.metadata || {}), dev_email_sent_at: stamp } } : prev
+    );
   };
 
   const updateStatus = async (id: string, next: SuggestionStatus) => {
@@ -206,7 +231,10 @@ export default function AdminSuggestions() {
 
       const row = rows.find((r) => r.id === id) || (selected?.id === id ? selected : null);
       if (next === "em_desenvolvimento" && row) {
-        try { await notifyInDevelopment(row); } catch (e: any) {
+        try {
+          const result = await notifyInDevelopment(row);
+          if (result === "sent") markNotified(id);
+        } catch (e: any) {
           toast({ title: "Status atualizado, mas o e-mail falhou", description: e.message, variant: "destructive" });
         }
       }
@@ -240,9 +268,13 @@ export default function AdminSuggestions() {
       if (error) throw error;
 
       let sent = 0;
+      let skipped = 0;
       let failed = 0;
       for (const row of targets) {
-        try { await notifyInDevelopment(row); sent++; } catch { failed++; }
+        try {
+          const result = await notifyInDevelopment(row);
+          if (result === "sent") { sent++; markNotified(row.id); } else skipped++;
+        } catch { failed++; }
       }
 
       setRows((prev) =>
@@ -251,7 +283,7 @@ export default function AdminSuggestions() {
       setSelectedIds([]);
       toast({
         title: `${targets.length} sugestão(ões) em desenvolvimento`,
-        description: `${sent} e-mail(s) enviado(s)${failed ? ` · ${failed} falha(s)` : ""}.`,
+        description: `${sent} e-mail(s) enviado(s)${skipped ? ` · ${skipped} já avisado(s)` : ""}${failed ? ` · ${failed} falha(s)` : ""}.`,
       });
     } catch (e: any) {
       toast({ title: "Erro na ação em massa", description: e.message, variant: "destructive" });
