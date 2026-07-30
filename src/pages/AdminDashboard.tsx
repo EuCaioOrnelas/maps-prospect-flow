@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { hasCompletedTrial, hasConvertedFromTrial, isNewOnboarding } from "@/lib/adminMetrics";
+import { hasCompletedTrial, hasConvertedFromTrial, isNewOnboarding, fetchActivatedUserIds, hasProfileUsage } from "@/lib/adminMetrics";
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
