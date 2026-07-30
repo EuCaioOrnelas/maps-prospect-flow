@@ -192,7 +192,7 @@ export const MechanismSection = () => {
  transition={{ duration: 0.5, delay: 0.2 }}
  className="flex justify-center mb-10 relative z-10"
  >
- <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-primary/25 bg-card shadow-sm">
+ <div className="flex items-center gap-2.5 px-4 py-2 rounded-hover border border-primary/25 bg-card shadow-sm">
  <span className="relative flex h-2 w-2">
  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-50" />
  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
@@ -215,7 +215,7 @@ export const MechanismSection = () => {
  transition={{ duration: 0.5, delay: 1.6 }}
  className="flex justify-center mt-10 relative z-10"
  >
- <div className="flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-primary/25 bg-primary/10 shadow-sm">
+ <div className="flex items-center gap-2.5 px-4 py-2 rounded-hover border border-primary/25 bg-primary/10 shadow-sm">
  <CalendarCheck size={14} className="text-primary" />
  <span className="text-xs font-medium text-primary">Clientes gerados + pipeline organizado</span>
  </div>

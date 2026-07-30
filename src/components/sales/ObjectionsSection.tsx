@@ -54,7 +54,7 @@ export const ObjectionsSection = () => {
  transition={{ duration: 0.6 }}
  className="text-center mb-12"
  >
- <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary mb-4">
+ <span className="inline-block px-3.5 py-1.5 rounded-hover text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary mb-4">
  Dúvidas frequentes
  </span>
  <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">

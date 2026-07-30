@@ -54,7 +54,7 @@ export const SectionHeading = ({
  className={`max-w-3xl ${alignClass} mb-12 sm:mb-16 ${className}`}
  >
  <span
- className={`inline-block px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold tracking-widest uppercase mb-4 ${toneMap[eyebrowTone]}`}
+ className={`inline-block px-3.5 py-1.5 rounded-hover text-[11px] sm:text-xs font-semibold tracking-widest uppercase mb-4 ${toneMap[eyebrowTone]}`}
  >
  {eyebrow}
  </span>

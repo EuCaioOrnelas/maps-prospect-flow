@@ -823,7 +823,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
 
  {/* LEFT */}
  <div className="text-center xl:text-left">
- <div className="inline-flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-4 py-1 sm:py-2 rounded-full glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
+ <div className="inline-flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-hover glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
  <div className="flex -space-x-1 sm:-space-x-1.5">
  <img src={avatar1} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
  <img src={avatar2} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />

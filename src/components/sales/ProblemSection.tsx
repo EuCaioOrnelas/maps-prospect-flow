@@ -30,7 +30,7 @@ export const ProblemSection = () => {
  transition={{ duration: 0.6 }}
  className="text-center mb-16"
  >
- <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-destructive/10 text-destructive mb-4">
+ <span className="inline-block px-3.5 py-1.5 rounded-hover text-xs font-semibold tracking-widest uppercase bg-destructive/10 text-destructive mb-4">
  O problema
  </span>
  <h2 className="font-display text-[1.75rem] sm:text-4xl md:text-5xl font-bold text-foreground mb-4 leading-[1.15] tracking-tight">

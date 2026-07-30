@@ -57,7 +57,7 @@ export const HowItWorksSection = () => {
  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
  }`}
  >
- <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 mb-4">
+ <span className="inline-block px-3.5 py-1.5 rounded-hover text-xs font-medium bg-primary/10 text-primary border border-primary/20 mb-4">
  Simples e Eficiente
  </span>
  <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">

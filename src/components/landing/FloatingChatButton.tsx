@@ -2,7 +2,7 @@ import { MessageCircle, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import wianAvatar from "@/assets/wian-avatar.png";
+import wianAvatar from "@/assets/wian-avatar-sm.jpg";
 
 const DISMISS_KEY = "wiize_wian_popup_dismissed";
 
@@ -48,7 +48,12 @@ export const FloatingChatButton = () => {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="fixed bottom-20 sm:bottom-24 right-3 sm:right-6 z-50 w-[min(320px,calc(100vw-1.5rem))]"
           >
-            <div className="relative rounded-2xl bg-white shadow-2xl shadow-black/20 border border-black/5 overflow-hidden">
+            <Link
+              to="/contato"
+              onClick={() => setShowPopup(false)}
+              aria-label="Abrir chat com a Wian"
+              className="relative block rounded-2xl bg-white shadow-2xl shadow-black/20 border border-black/5 overflow-hidden cursor-pointer hover:shadow-black/25 transition-shadow"
+            >
               {/* Close */}
               <button
                 onClick={handleClose}
@@ -65,7 +70,10 @@ export const FloatingChatButton = () => {
                     <img
                       src={wianAvatar}
                       alt="Wian"
-                      className="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-sm"
+                      width={44}
+                      height={44}
+                      decoding="async"
+                      className="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-sm bg-neutral-100"
                     />
                     <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                   </div>
@@ -115,16 +123,12 @@ export const FloatingChatButton = () => {
 
               {/* CTA */}
               <div className="px-4 pb-4 pt-1">
-                <Link
-                  to="/contato"
-                  onClick={() => setShowPopup(false)}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors shadow-sm"
-                >
+                <span className="flex items-center justify-center gap-2 w-full py-2.5 rounded-hover bg-primary text-primary-foreground font-medium text-sm shadow-sm">
                   <MessageCircle size={16} />
                   Iniciar conversa
-                </Link>
+                </span>
               </div>
-            </div>
+            </Link>
           </motion.div>
         )}
       </AnimatePresence>
