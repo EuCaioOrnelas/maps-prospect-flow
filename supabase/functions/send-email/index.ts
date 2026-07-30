@@ -12,7 +12,7 @@ const BRAND = {
   name: "Wiize",
   color: "#3daa57",
   url: "https://wiize.com.br",
-  logo: "https://lqfqnqfeuneorxocybru.supabase.co/storage/v1/object/public/avatars/email/logo_wiize.png",
+  logo: "https://wgokhkawjdxsmvfuhazb.supabase.co/storage/v1/object/public/avatars/email/wiize-logo-email.png",
   from: "Wiize <no-reply@wiize.com.br>",
 };
 
@@ -519,9 +519,7 @@ function templateSuggestionInDevelopment(payload: Record<string, unknown>): Temp
       <p style="margin:0;color:#3f3f46;font-size:15px;line-height:1.7;">
         Obrigado por contribuir.
       </p>
-      <div style="text-align:center;margin:24px 0 0;">
-        <a href="${BRAND.url}/sugestoes" style="display:inline-block;padding:14px 32px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Ver minhas sugestões</a>
-      </div>
+
     `, `Estamos trabalhando em melhorias para ${area} da Wiize`),
   };
 }
