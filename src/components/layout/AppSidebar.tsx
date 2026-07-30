@@ -651,12 +651,22 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       : "opacity-0 scale-x-0"
                   )}
                 />
-                <Avatar className="h-7 w-7 shrink-0 rounded-hover border border-sidebar-border">
-                  <AvatarImage className="rounded-hover" src={profile?.avatar_url || undefined} alt={profile?.name || 'Perfil'} />
+                <Avatar
+                  className={cn(
+                    "shrink-0 rounded-hover overflow-hidden transition-[width,height] duration-300 ease-out",
+                    isExpanded ? "h-7 w-7" : "h-10 w-10"
+                  )}
+                >
+                  <AvatarImage
+                    className="h-full w-full rounded-hover object-cover"
+                    src={profile?.avatar_url || undefined}
+                    alt={profile?.name || 'Perfil'}
+                  />
                   <AvatarFallback className="rounded-hover bg-primary/10 text-primary text-xs font-medium">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
+
                 {isExpanded && (
                   <span className="whitespace-nowrap truncate overflow-hidden flex-1">
                     {profile?.name || 'Meu Perfil'}
