@@ -307,7 +307,8 @@ export default function AdminSuggestions() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto">
+
       <div className="flex items-start gap-3">
         <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
           <Lightbulb size={22} className="text-primary" />
