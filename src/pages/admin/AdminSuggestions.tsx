@@ -151,11 +151,35 @@ export default function AdminSuggestions() {
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
+  // Dispara o e-mail "Estamos trabalhando em melhorias..." para o autor da sugestão
+  const notifyInDevelopment = async (row: SuggestionRow) => {
+    const { error } = await supabase.functions.invoke("send-email", {
+      body: {
+        user_id: row.user_id,
+        email_type: "SUGGESTION_IN_DEVELOPMENT",
+        idempotency_key: `suggestion-dev-${row.id}`,
+        payload: {
+          area: row.category,
+          suggestion_title: row.title,
+        },
+      },
+    });
+    if (error) throw error;
+  };
+
   const updateStatus = async (id: string, next: SuggestionStatus) => {
     setBusy(true);
     try {
       const { error } = await supabase.from("suggestions").update({ status: next }).eq("id", id);
       if (error) throw error;
+
+      const row = rows.find((r) => r.id === id) || (selected?.id === id ? selected : null);
+      if (next === "em_desenvolvimento" && row) {
+        try { await notifyInDevelopment(row); } catch (e: any) {
+          toast({ title: "Status atualizado, mas o e-mail falhou", description: e.message, variant: "destructive" });
+        }
+      }
+
       setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: next } : r)));
       setSelected((prev) => (prev && prev.id === id ? { ...prev, status: next } : prev));
       toast({ title: `Sugestão marcada como ${SUGGESTION_STATUS_LABEL[next]}` });
@@ -163,6 +187,45 @@ export default function AdminSuggestions() {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
     } finally {
       setBusy(false);
+    }
+  };
+
+  const toggleRow = (id: string) =>
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const allSelected = rows.length > 0 && rows.every((r) => selectedIds.includes(r.id));
+  const toggleAll = () =>
+    setSelectedIds((prev) => (allSelected ? prev.filter((id) => !rows.some((r) => r.id === id)) : [...new Set([...prev, ...rows.map((r) => r.id)])]));
+
+  const bulkMarkInDevelopment = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkBusy(true);
+    try {
+      const targets = rows.filter((r) => selectedIds.includes(r.id));
+      const { error } = await supabase
+        .from("suggestions")
+        .update({ status: "em_desenvolvimento" })
+        .in("id", selectedIds);
+      if (error) throw error;
+
+      let sent = 0;
+      let failed = 0;
+      for (const row of targets) {
+        try { await notifyInDevelopment(row); sent++; } catch { failed++; }
+      }
+
+      setRows((prev) =>
+        prev.map((r) => (selectedIds.includes(r.id) ? { ...r, status: "em_desenvolvimento" } : r))
+      );
+      setSelectedIds([]);
+      toast({
+        title: `${targets.length} sugestão(ões) em desenvolvimento`,
+        description: `${sent} e-mail(s) enviado(s)${failed ? ` · ${failed} falha(s)` : ""}.`,
+      });
+    } catch (e: any) {
+      toast({ title: "Erro na ação em massa", description: e.message, variant: "destructive" });
+    } finally {
+      setBulkBusy(false);
     }
   };
 
