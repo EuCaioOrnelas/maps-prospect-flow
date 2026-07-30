@@ -54,11 +54,11 @@ export const SidebarNavItem = ({
       <span
         aria-hidden
         className={cn(
-          "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-xs bg-primary",
-          "transition-[height,opacity,transform] duration-300 ease-out origin-center",
+          "absolute left-0 inset-y-0 w-[3px] rounded-l-hover bg-primary",
+          "transition-[opacity,transform] duration-300 ease-out origin-left",
           isActive && isExpanded
-            ? "h-6 opacity-100 scale-y-100"
-            : "h-6 opacity-0 scale-y-0"
+            ? "opacity-100 scale-x-100"
+            : "opacity-0 scale-x-0"
         )}
       />
       <div className="relative shrink-0 flex items-center justify-center w-5 h-5">
