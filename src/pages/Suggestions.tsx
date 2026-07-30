@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Lightbulb, Send, CheckCircle2, Loader2 } from "lucide-react";
-import { AppSidebar } from "@/components/layout/AppSidebar";
-import { AppHeader } from "@/components/layout/AppHeader";
-import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { Link } from "react-router-dom";
+import {
+  Lightbulb, Send, CheckCircle2, Loader2, Type, Tag, Flame, AlignLeft,
+  ArrowLeft, ShieldCheck, Sparkles, MessagesSquare, Rocket,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,12 +17,31 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Logo } from "@/components/Logo";
 import {
   SUGGESTION_CATEGORIES,
   SUGGESTION_IMPORTANCE,
   SUGGESTION_TITLE_MAX,
   SUGGESTION_DESCRIPTION_MAX,
 } from "@/lib/suggestions";
+
+const HIGHLIGHTS = [
+  {
+    icon: MessagesSquare,
+    title: "Lida por gente de verdade",
+    text: "Cada sugestão é revisada pelo time de produto — sem formulário no vácuo.",
+  },
+  {
+    icon: Rocket,
+    title: "Vira roadmap",
+    text: "Ideias recorrentes e bloqueios de trabalho entram na fila de desenvolvimento.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Você é avisado",
+    text: "Quando sua sugestão entrar em desenvolvimento, enviamos um e-mail para você.",
+  },
+];
 
 export default function Suggestions() {
   const { user, profile } = useAuth();
@@ -95,128 +115,194 @@ export default function Suggestions() {
   return (
     <>
       <Helmet>
-        <title>Sugestões de Melhorias · Wiize</title>
+        <title>Central de Sugestões · Wiize</title>
         <meta
           name="description"
-          content="Envie sugestões de melhorias para a Wiize. Analisamos todas as ideias enviadas pelos nossos clientes."
+          content="Envie sugestões de melhorias para a Wiize. Todas as ideias enviadas pelos clientes são analisadas pelo time de produto."
         />
       </Helmet>
-      <div className="min-h-screen bg-background relative">
-        <BackgroundGlow />
-        <AppSidebar profile={profile as any} />
-        <div className="lg:pl-[72px]">
-          <div className="lg:hidden">
-            <AppHeader profile={profile as any} />
+
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        {/* Glow de fundo */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-40 h-[520px] opacity-70"
+          style={{ background: "var(--gradient-glow)" }}
+        />
+
+        {/* Topbar */}
+        <header className="relative z-10 border-b border-border/50">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <Logo />
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+              <Link to="/dashboard">
+                <ArrowLeft size={16} className="mr-2" />
+                Voltar ao painel
+              </Link>
+            </Button>
           </div>
-          <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
-            {/* Cabeçalho */}
-            <div className="flex items-start gap-3">
-              <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <Lightbulb size={22} className="text-primary" />
+        </header>
+
+        <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-8">
+          {/* Hero */}
+          <section className="text-center max-w-2xl mx-auto space-y-4">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <Sparkles size={13} />
+              Central de Sugestões
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight">
+              A próxima melhoria da Wiize{" "}
+              <span className="text-shimmer-highlight">começa com você</span>
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+              Conte o que está faltando, o que trava seu dia a dia ou aquela ideia que
+              deixaria seu comercial mais rápido. Lemos todas as sugestões e priorizamos
+              o que gera mais impacto real para quem usa a plataforma.
+            </p>
+          </section>
+
+          {/* Diferenciais */}
+          <section className="grid gap-3 sm:grid-cols-3">
+            {HIGHLIGHTS.map((h) => (
+              <div
+                key={h.title}
+                className="rounded-xl border border-border/60 bg-card/60 p-4"
+              >
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                  <h.icon size={17} className="text-primary" />
+                </div>
+                <p className="text-sm font-medium text-foreground">{h.title}</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{h.text}</p>
+              </div>
+            ))}
+          </section>
+
+          {success && (
+            <Alert className="border-primary/30 bg-primary/5 animate-fade-in">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <AlertTitle className="text-foreground">Sugestão recebida. Obrigado!</AlertTitle>
+              <AlertDescription className="text-muted-foreground">
+                Sua ideia já está na fila de análise do time de produto. Se ela entrar em
+                desenvolvimento, avisaremos você por e-mail.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Formulário */}
+          <Card className="border-border/60 overflow-hidden">
+            <div className="border-b border-border/60 bg-muted/30 px-5 sm:px-6 py-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Lightbulb size={20} className="text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-foreground">Sugestões de Melhorias</h1>
-                <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-                  Sua opinião é extremamente importante para a evolução da Wiize. Sempre analisamos
-                  todas as sugestões recebidas e priorizamos melhorias que geram maior impacto para
-                  nossos clientes. Obrigado por contribuir com o crescimento da plataforma.
+                <h2 className="text-base font-semibold text-foreground">Sugestão de melhoria</h2>
+                <p className="text-xs text-muted-foreground">
+                  Quanto mais detalhes, maior a chance de priorizarmos rápido.
                 </p>
               </div>
             </div>
 
-            {success && (
-              <Alert className="border-primary/30 bg-primary/5 animate-fade-in">
-                <CheckCircle2 className="h-4 w-4 text-primary" />
-                <AlertTitle className="text-foreground">Obrigado!</AlertTitle>
-                <AlertDescription className="text-muted-foreground">
-                  Recebemos sua sugestão e ela será analisada pela nossa equipe. Sua contribuição
-                  ajuda a tornar a Wiize cada vez melhor.
-                </AlertDescription>
-              </Alert>
-            )}
+            <CardContent className="p-5 sm:p-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="suggestion-title" className="flex items-center gap-2">
+                    <Type size={14} className="text-primary" />
+                    Título da sugestão
+                  </Label>
+                  <Input
+                    id="suggestion-title"
+                    value={title}
+                    maxLength={SUGGESTION_TITLE_MAX}
+                    required
+                    placeholder="Ex.: Importar contatos do CRM por planilha do Excel"
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                  <p className="text-[11px] text-muted-foreground text-right">
+                    {title.length}/{SUGGESTION_TITLE_MAX}
+                  </p>
+                </div>
 
-            <Card className="border-border/60">
-              <CardContent className="p-5 sm:p-6">
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid gap-5 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="suggestion-title">Título da sugestão</Label>
-                    <Input
-                      id="suggestion-title"
-                      value={title}
-                      maxLength={SUGGESTION_TITLE_MAX}
-                      required
-                      placeholder="Ex.: Gostaria de importar contatos por Excel"
-                      onChange={(e) => setTitle(e.target.value)}
-                    />
-                    <p className="text-[11px] text-muted-foreground text-right">
-                      {title.length}/{SUGGESTION_TITLE_MAX}
-                    </p>
-                  </div>
-
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>Categoria</Label>
-                      <Select value={category} onValueChange={setCategory}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SUGGESTION_CATEGORIES.map((c) => (
-                            <SelectItem key={c} value={c}>{c}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Importância</Label>
-                      <Select value={importance} onValueChange={setImportance}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a importância" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SUGGESTION_IMPORTANCE.map((i) => (
-                            <SelectItem key={i.value} value={i.value}>
-                              {i.emoji} {i.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Label className="flex items-center gap-2">
+                      <Tag size={14} className="text-primary" />
+                      Área da plataforma
+                    </Label>
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUGGESTION_CATEGORIES.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="suggestion-description">Descrição</Label>
-                    <Textarea
-                      id="suggestion-description"
-                      value={description}
-                      required
-                      rows={6}
-                      maxLength={SUGGESTION_DESCRIPTION_MAX}
-                      placeholder={"Explique detalhadamente sua sugestão.\nConte como ela ajudaria sua empresa."}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="resize-none"
-                    />
-                    <p className="text-[11px] text-muted-foreground text-right">
-                      {description.length}/{SUGGESTION_DESCRIPTION_MAX}
-                    </p>
+                    <Label className="flex items-center gap-2">
+                      <Flame size={14} className="text-primary" />
+                      Nível de impacto
+                    </Label>
+                    <Select value={importance} onValueChange={setImportance}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Quanto isso te afeta hoje?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUGGESTION_IMPORTANCE.map((i) => (
+                          <SelectItem key={i.value} value={i.value}>
+                            {i.emoji} {i.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                </div>
 
-                  <div className="flex justify-end">
-                    <Button type="submit" disabled={!canSubmit} className="w-full sm:w-auto">
-                      {submitting ? (
-                        <Loader2 size={16} className="mr-2 animate-spin" />
-                      ) : (
-                        <Send size={16} className="mr-2" />
-                      )}
-                      Enviar sugestão
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                <div className="space-y-2">
+                  <Label htmlFor="suggestion-description" className="flex items-center gap-2">
+                    <AlignLeft size={14} className="text-primary" />
+                    Descreva sua ideia
+                  </Label>
+                  <Textarea
+                    id="suggestion-description"
+                    value={description}
+                    required
+                    rows={7}
+                    maxLength={SUGGESTION_DESCRIPTION_MAX}
+                    placeholder={"O que acontece hoje?\nO que você gostaria que acontecesse?\nQual resultado isso traria para a sua operação?"}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="resize-none"
+                  />
+                  <p className="text-[11px] text-muted-foreground text-right">
+                    {description.length}/{SUGGESTION_DESCRIPTION_MAX}
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
+                  <p className="text-[11px] text-muted-foreground">
+                    Enviado como {(profile as any)?.name || user?.email}
+                    {companyName ? ` · ${companyName}` : ""}
+                  </p>
+                  <Button type="submit" disabled={!canSubmit} className="w-full sm:w-auto">
+                    {submitting ? (
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                    ) : (
+                      <Send size={16} className="mr-2" />
+                    )}
+                    Enviar sugestão
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <p className="text-center text-xs text-muted-foreground pb-6">
+            Suas sugestões são usadas apenas para evolução do produto. Nada é compartilhado
+            publicamente.
+          </p>
+        </main>
       </div>
     </>
   );
