@@ -360,7 +360,7 @@ const Profile = () => {
     fileInputRef.current?.click();
   };
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
@@ -384,16 +384,30 @@ const Profile = () => {
       return;
     }
 
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(URL.createObjectURL(file));
+    setCropOpen(true);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const closeCrop = () => {
+    setCropOpen(false);
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+  };
+
+  const handleCroppedUpload = async (blob: Blob) => {
+    if (!user) return;
     setIsUploadingPhoto(true);
 
     try {
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/avatar-${Date.now()}.jpg`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true, contentType: file.type, cacheControl: '0' });
+        .upload(fileName, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '0' });
+
 
       if (uploadError) throw uploadError;
 
