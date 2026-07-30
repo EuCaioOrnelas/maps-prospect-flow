@@ -59,10 +59,7 @@ const IMPORTANCE_ICON_CLASS: Record<SuggestionImportance, string> = {
 
 function RequiredMark() {
   return (
-    <span className="ml-1 inline-flex items-center gap-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-      <Asterisk size={10} className="text-primary" />
-      obrigatório
-    </span>
+    <Asterisk size={11} className="text-primary shrink-0" aria-label="Campo obrigatório" />
   );
 }
 
@@ -215,21 +212,6 @@ export default function Suggestions() {
             </p>
           </section>
 
-          {/* Diferenciais */}
-          <section className="grid gap-3 sm:grid-cols-3">
-            {HIGHLIGHTS.map((h) => (
-              <div
-                key={h.title}
-                className="rounded-xl border border-border/60 bg-card/60 p-4"
-              >
-                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                  <h.icon size={17} className="text-primary" />
-                </div>
-                <p className="text-sm font-medium text-foreground">{h.title}</p>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{h.text}</p>
-              </div>
-            ))}
-          </section>
 
           {success && (
             <Alert className="border-primary/30 bg-primary/5 animate-fade-in">
@@ -255,7 +237,7 @@ export default function Suggestions() {
 
           {/* Formulário */}
           <Card className="border-border/60 overflow-hidden">
-            <div className="relative border-b border-primary/20 px-4 sm:px-6 py-4 flex items-center gap-3 bg-gradient-to-r from-primary/15 via-primary/8 to-transparent">
+            <div className="relative border-b border-border/60 px-4 sm:px-6 py-4 flex items-center gap-3 bg-gradient-to-b from-primary/15 via-primary/5 to-transparent">
               <div className="h-10 w-10 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
                 <Lightbulb size={20} className="text-primary" />
               </div>
@@ -363,16 +345,10 @@ export default function Suggestions() {
                     rows={8}
                     disabled={limitReached}
                     maxLength={SUGGESTION_DESCRIPTION_MAX}
-                    placeholder={
-                      "1. Situação atual: o que você faz hoje na Wiize para resolver isso?\n" +
-                      "2. Problema: o que trava, demora ou dá retrabalho nesse caminho?\n" +
-                      "3. Solução ideal: como você gostaria que a plataforma se comportasse?\n" +
-                      "4. Impacto: quanto tempo, dinheiro ou oportunidades isso destravaria?\n\n" +
-                      "Se puder, cite a tela exata, a frequência com que acontece e um exemplo real."
-                    }
                     onChange={(e) => setDescription(e.target.value)}
                     className="resize-none text-sm leading-relaxed"
                   />
+
                   <p className="text-[11px] text-muted-foreground text-right">
                     {description.length}/{SUGGESTION_DESCRIPTION_MAX}
                   </p>
@@ -397,10 +373,27 @@ export default function Suggestions() {
             </CardContent>
           </Card>
 
+          {/* Diferenciais */}
+          <section className="grid gap-3 sm:grid-cols-3">
+            {HIGHLIGHTS.map((h) => (
+              <div
+                key={h.title}
+                className="rounded-xl border border-border/60 bg-card/60 p-4"
+              >
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                  <h.icon size={17} className="text-primary" />
+                </div>
+                <p className="text-sm font-medium text-foreground">{h.title}</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{h.text}</p>
+              </div>
+            ))}
+          </section>
+
           <p className="text-center text-xs text-muted-foreground pb-6">
             Suas sugestões são usadas apenas para evolução do produto. Nada é compartilhado
             publicamente.
           </p>
+
         </main>
       </div>
     </>
