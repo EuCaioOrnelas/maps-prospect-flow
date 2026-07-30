@@ -12,7 +12,7 @@ const BRAND = {
   name: "Wiize",
   color: "#3daa57",
   url: "https://wiize.com.br",
-  logo: "https://lqfqnqfeuneorxocybru.supabase.co/storage/v1/object/public/avatars/email/logo_wiize.png",
+  logo: "https://wgokhkawjdxsmvfuhazb.supabase.co/storage/v1/object/public/avatars/email/wiize-logo-email.png",
   from: "Wiize <no-reply@wiize.com.br>",
 };
 
