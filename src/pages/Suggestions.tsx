@@ -409,6 +409,7 @@ export default function Suggestions() {
                   </Button>
                 </div>
               </form>
+              )}
             </CardContent>
           </Card>
 
