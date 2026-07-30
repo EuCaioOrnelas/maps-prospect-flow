@@ -343,6 +343,26 @@ export default function AdminSuggestions() {
         </CardContent>
       </Card>
 
+      {/* Ações em massa */}
+      {selectedIds.length > 0 && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardContent className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <p className="text-sm text-foreground">
+              <strong>{selectedIds.length}</strong> sugestão(ões) selecionada(s)
+            </p>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" disabled={bulkBusy} onClick={() => setSelectedIds([])}>
+                Limpar
+              </Button>
+              <Button size="sm" disabled={bulkBusy} onClick={bulkMarkInDevelopment}>
+                {bulkBusy ? <Loader2 size={15} className="mr-2 animate-spin" /> : <Hammer size={15} className="mr-2" />}
+                Marcar como Em desenvolvimento + avisar clientes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Tabela */}
       <Card className="border-border/60">
         <CardContent className="p-0">
