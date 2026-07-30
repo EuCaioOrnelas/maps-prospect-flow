@@ -244,7 +244,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             <img 
               src={logoIconNew} 
               alt="Wiize" 
-              className="h-10 w-10 object-contain rounded-lg transition-all duration-200 ease-out group-hover:scale-105 group-hover:brightness-110 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)] shrink-0"
+              className="h-10 w-10 object-contain rounded-hover transition-all duration-200 ease-out group-hover:scale-105 group-hover:brightness-110 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)] shrink-0"
             />
             {/* Text "wiize" - fade in/out when expanded */}
             <span
