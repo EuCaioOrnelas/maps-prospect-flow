@@ -35,7 +35,7 @@ export const SidebarNavItem = ({
   iconClassName,
 }: SidebarNavItemProps) => {
   const baseClasses = cn(
-    "relative flex items-center rounded-lg transition-colors duration-200",
+    "relative flex items-center rounded-md transition-colors duration-200 overflow-hidden",
     "w-10 h-10 justify-center",
     isExpanded && "w-full px-2.5 justify-start gap-3"
   );
@@ -44,8 +44,8 @@ export const SidebarNavItem = ({
     isActive
       ? [
           "bg-primary/10 text-primary font-medium",
-          "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
-          "before:h-[60%] before:w-[3px] before:rounded-r-full before:bg-primary",
+          "before:absolute before:left-0 before:top-0 before:bottom-0",
+          "before:w-[3px] before:bg-primary",
         ]
       : highlight
       ? "text-primary hover:text-primary hover:bg-primary/10"
