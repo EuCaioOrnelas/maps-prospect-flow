@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
+import { HeroDotMap } from "@/components/landing/HeroDotMap";
+
 
 /* ─── Animated counter ─── */
 const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?: number }) => {
