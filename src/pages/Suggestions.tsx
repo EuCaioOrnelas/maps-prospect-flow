@@ -213,16 +213,8 @@ export default function Suggestions() {
           </section>
 
 
-          {success && (
-            <Alert className="border-primary/30 bg-primary/5 animate-fade-in">
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-              <AlertTitle className="text-foreground">Sugestão recebida. Obrigado!</AlertTitle>
-              <AlertDescription className="text-muted-foreground">
-                Sua ideia já está na fila de análise do time de produto. Se ela entrar em
-                desenvolvimento, avisaremos você por e-mail.
-              </AlertDescription>
-            </Alert>
-          )}
+
+
 
           {limitReached && !success && (
             <Alert className="border-amber-500/30 bg-amber-500/5">
