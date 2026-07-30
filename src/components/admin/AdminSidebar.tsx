@@ -44,6 +44,7 @@ import {
   LifeBuoy,
   MessageSquare,
   HelpCircle,
+  Lightbulb,
 } from "lucide-react";
 
 interface NavItem {
@@ -139,6 +140,7 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Mind IA", url: "/admin/suporte/mind-ia", icon: Bot },
       { title: "FAQs", url: "/admin/suporte/faqs", icon: HelpCircle as any },
       { title: "Inteligência", url: "/admin/suporte/inteligencia", icon: TrendingUp },
+      { title: "Central de Sugestões", url: "/admin/sugestoes", icon: Lightbulb },
     ],
   },
   {
