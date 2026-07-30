@@ -53,11 +53,16 @@ export const IMPORTANCE_MAP = Object.fromEntries(
   SUGGESTION_IMPORTANCE.map((i) => [i.value, i])
 ) as Record<SuggestionImportance, (typeof SUGGESTION_IMPORTANCE)[number]>;
 
-export type SuggestionStatus = "recebida" | "lida" | "arquivada";
+export type SuggestionStatus =
+  | "recebida"
+  | "lida"
+  | "em_desenvolvimento"
+  | "arquivada";
 
 export const SUGGESTION_STATUS_LABEL: Record<SuggestionStatus, string> = {
   recebida: "Recebida",
   lida: "Lida",
+  em_desenvolvimento: "Em desenvolvimento",
   arquivada: "Arquivada",
 };
 
