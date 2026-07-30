@@ -212,21 +212,6 @@ export default function Suggestions() {
             </p>
           </section>
 
-          {/* Diferenciais */}
-          <section className="grid gap-3 sm:grid-cols-3">
-            {HIGHLIGHTS.map((h) => (
-              <div
-                key={h.title}
-                className="rounded-xl border border-border/60 bg-card/60 p-4"
-              >
-                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                  <h.icon size={17} className="text-primary" />
-                </div>
-                <p className="text-sm font-medium text-foreground">{h.title}</p>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{h.text}</p>
-              </div>
-            ))}
-          </section>
 
           {success && (
             <Alert className="border-primary/30 bg-primary/5 animate-fade-in">
