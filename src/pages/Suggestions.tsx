@@ -312,9 +312,12 @@ export default function Suggestions() {
                         {SUGGESTION_IMPORTANCE.map((i) => {
                           const Icon = IMPORTANCE_ICON[i.value];
                           return (
-                            <SelectItem key={i.value} value={i.value}>
+                            <SelectItem key={i.value} value={i.value} className="group">
                               <span className="inline-flex items-center gap-2">
-                                <Icon size={14} className={IMPORTANCE_ICON_CLASS[i.value]} />
+                                <Icon
+                                  size={14}
+                                  className={`${IMPORTANCE_ICON_CLASS[i.value]} group-focus:text-accent-foreground group-data-[highlighted]:text-accent-foreground`}
+                                />
                                 {i.label}
                               </span>
                             </SelectItem>
