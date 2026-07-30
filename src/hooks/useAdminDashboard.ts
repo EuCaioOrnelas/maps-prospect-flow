@@ -387,19 +387,28 @@ export function useAdminDashboard() {
       const alertsList: any[] = [];
 
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: churnEvents } = await supabase
-        .from("subscription_events")
-        .select("id")
-        .in("event_type", ["subscription_canceled", "subscription_deleted", "pix_not_renewed"])
-        .gte("created_at", weekAgo);
+      const [{ data: churnEvents }, payingIds] = await Promise.all([
+        supabase
+          .from("subscription_events")
+          .select("id, user_id")
+          .in("event_type", ["subscription_canceled", "subscription_deleted", "pix_not_renewed"])
+          .gte("created_at", weekAgo),
+        fetchPayingUserIds(supabase),
+      ]);
 
-      if (churnEvents && churnEvents.length > 0) {
+      // Só é churn quem já foi pagante — cancelamento no trial não entra.
+      const realChurnEvents = ((churnEvents as any[]) || []).filter(
+        (e) => e.user_id && payingIds.has(e.user_id)
+      );
+
+      if (realChurnEvents.length > 0) {
         alertsList.push({
           type: "danger",
-          text: `${churnEvents.length} cancelamento(s) nos últimos 7 dias`,
+          text: `${realChurnEvents.length} cancelamento(s) nos últimos 7 dias`,
           route: "/admin/churn",
         });
       }
+
 
       const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
       const { count: trialCount } = await supabase
