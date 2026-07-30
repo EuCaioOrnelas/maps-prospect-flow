@@ -637,9 +637,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <Link
                 to="/profile"
                 className={cn(
-                  "relative flex items-center rounded-hover overflow-hidden transition-[background-color,color,width,padding] duration-300 ease-out",
-                  "w-10 h-10 justify-center p-0",
-                  isExpanded && "w-full h-10 pl-2.5 pr-2.5 justify-start gap-3",
+                  "relative flex items-center rounded-hover overflow-hidden transition-[background-color,color,width] duration-300 ease-out",
+                  "h-10 justify-start",
+                  isExpanded ? "w-full pl-12 pr-2.5" : "w-10",
 
                   currentPath === "/profile"
                     ? "bg-primary/10 text-primary font-medium"
@@ -656,21 +656,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       : "opacity-0 scale-x-0"
                   )}
                 />
-                <Avatar
-                  className={cn(
-                    "shrink-0 overflow-hidden transition-[border-radius] duration-300 ease-out",
-                    "h-8 w-8 rounded-hover"
-                  )}
-                >
-                  <AvatarImage
-                    className="h-full w-full object-cover rounded-none"
-                    src={profile?.avatar_url || undefined}
-                    alt={profile?.name || 'Perfil'}
-                  />
-                  <AvatarFallback className="rounded-none bg-primary/10 text-primary text-[11px] font-medium">
-                    {getUserInitials()}
-                  </AvatarFallback>
-                </Avatar>
+                <span className="absolute left-0 top-0 w-10 h-10 flex items-center justify-center shrink-0">
+                  <Avatar
+                    className="h-8 w-8 rounded-hover overflow-hidden"
+                  >
+                    <AvatarImage
+                      className="h-full w-full object-cover rounded-none"
+                      src={profile?.avatar_url || undefined}
+                      alt={profile?.name || 'Perfil'}
+                    />
+                    <AvatarFallback className="rounded-none bg-primary/10 text-primary text-[11px] font-medium">
+                      {getUserInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+                </span>
 
                 {isExpanded && (
                   <span className="whitespace-nowrap truncate overflow-hidden flex-1">
