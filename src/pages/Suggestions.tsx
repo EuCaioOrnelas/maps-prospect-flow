@@ -237,7 +237,7 @@ export default function Suggestions() {
 
           {/* Formulário */}
           <Card className="border-border/60 overflow-hidden">
-            <div className="relative border-b border-primary/20 px-4 sm:px-6 py-4 flex items-center gap-3 bg-gradient-to-r from-primary/15 via-primary/8 to-transparent">
+            <div className="relative border-b border-border/60 px-4 sm:px-6 py-4 flex items-center gap-3 bg-gradient-to-b from-primary/15 via-primary/5 to-transparent">
               <div className="h-10 w-10 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
                 <Lightbulb size={20} className="text-primary" />
               </div>
