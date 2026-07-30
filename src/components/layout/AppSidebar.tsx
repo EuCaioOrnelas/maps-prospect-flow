@@ -635,7 +635,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 className={cn(
                   "relative flex items-center rounded-hover overflow-hidden transition-[background-color,color,width,padding] duration-300 ease-out",
                   "w-10 h-10 justify-center",
-                  isExpanded && "w-full h-12 pl-1 pr-2.5 justify-start gap-2.5",
+                  isExpanded && "w-full h-10 pl-0.5 pr-2.5 justify-start gap-2.5",
+
                   currentPath === "/profile"
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-sidebar-foreground/60 hover:text-primary hover:bg-primary/[0.07]"
