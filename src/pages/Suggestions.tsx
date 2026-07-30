@@ -213,16 +213,8 @@ export default function Suggestions() {
           </section>
 
 
-          {success && (
-            <Alert className="border-primary/30 bg-primary/5 animate-fade-in">
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-              <AlertTitle className="text-foreground">Sugestão recebida. Obrigado!</AlertTitle>
-              <AlertDescription className="text-muted-foreground">
-                Sua ideia já está na fila de análise do time de produto. Se ela entrar em
-                desenvolvimento, avisaremos você por e-mail.
-              </AlertDescription>
-            </Alert>
-          )}
+
+
 
           {limitReached && !success && (
             <Alert className="border-amber-500/30 bg-amber-500/5">
@@ -252,6 +244,50 @@ export default function Suggestions() {
             </div>
 
             <CardContent className="p-4 sm:p-6">
+              {success ? (
+                <div className="animate-fade-in text-center py-6 sm:py-10 px-2 space-y-5">
+                  <div className="mx-auto h-16 w-16 rounded-2xl bg-primary/10 border border-primary/25 flex items-center justify-center">
+                    <CheckCircle2 size={30} className="text-primary" />
+                  </div>
+                  <div className="space-y-2 max-w-md mx-auto">
+                    <h3 className="text-lg sm:text-xl font-semibold text-foreground">
+                      Sugestão enviada com sucesso
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Recebemos sua ideia e ela já entrou na fila de análise do time de
+                      produto. Obrigado por ajudar a construir a Wiize.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3 max-w-2xl mx-auto text-left pt-2">
+                    {[
+                      { icon: MessagesSquare, title: "Análise", text: "Um humano do time de produto vai ler sua sugestão." },
+                      { icon: Rocket, title: "Priorização", text: "Ideias de maior impacto entram no roadmap." },
+                      { icon: ShieldCheck, title: "Retorno", text: "Avisamos por e-mail se ela entrar em desenvolvimento." },
+                    ].map((s) => (
+                      <div key={s.title} className="rounded-xl border border-border/60 bg-muted/30 p-3">
+                        <s.icon size={16} className="text-primary mb-2" />
+                        <p className="text-xs font-medium text-foreground">{s.title}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{s.text}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+                    <Button asChild className="w-full sm:w-auto">
+                      <Link to="/dashboard">
+                        <ArrowLeft size={16} className="mr-2" />
+                        Voltar ao painel
+                      </Link>
+                    </Button>
+                  </div>
+
+                  <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5 justify-center">
+                    <Clock size={12} />
+                    Você poderá enviar uma nova sugestão em 24 horas.
+                  </p>
+                </div>
+              ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="suggestion-title" className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -312,9 +348,12 @@ export default function Suggestions() {
                         {SUGGESTION_IMPORTANCE.map((i) => {
                           const Icon = IMPORTANCE_ICON[i.value];
                           return (
-                            <SelectItem key={i.value} value={i.value}>
+                            <SelectItem key={i.value} value={i.value} className="group">
                               <span className="inline-flex items-center gap-2">
-                                <Icon size={14} className={IMPORTANCE_ICON_CLASS[i.value]} />
+                                <Icon
+                                  size={14}
+                                  className={`${IMPORTANCE_ICON_CLASS[i.value]} group-focus:text-accent-foreground group-data-[highlighted]:text-accent-foreground`}
+                                />
                                 {i.label}
                               </span>
                             </SelectItem>
@@ -370,6 +409,7 @@ export default function Suggestions() {
                   </Button>
                 </div>
               </form>
+              )}
             </CardContent>
           </Card>
 
