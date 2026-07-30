@@ -50,16 +50,15 @@ export const SidebarNavItem = ({
 
   const content = (
     <>
-      {/* Indicador ativo — aparece suavemente ao expandir o sidebar */}
+      {/* Indicador ativo — anima suavemente ao abrir/fechar o sidebar */}
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute left-0 inset-y-0 w-[2px]",
-          "rounded-r-full bg-gradient-to-b from-primary to-primary/80",
-          "transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-          isExpanded && isActive
-            ? "opacity-100 translate-x-0"
-            : "opacity-0 -translate-x-[2px]"
+          "absolute left-0 inset-y-0 w-[3px] bg-primary",
+          "transition-[opacity,transform] duration-300 ease-out origin-left",
+          isActive && isExpanded
+            ? "opacity-100 scale-x-100"
+            : "opacity-0 scale-x-0"
         )}
       />
       <div className="relative shrink-0 flex items-center justify-center w-5 h-5">
