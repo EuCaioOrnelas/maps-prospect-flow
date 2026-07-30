@@ -519,17 +519,17 @@ export default function AdminSuggestions() {
         </div>
       )}
 
-      {/* Drawer lateral */}
-      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+      {/* Modal central */}
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           {selected && (
             <>
-              <SheetHeader>
-                <SheetTitle>{selected.title}</SheetTitle>
-                <SheetDescription>{formatSuggestionDate(selected.created_at)}</SheetDescription>
-              </SheetHeader>
+              <DialogHeader>
+                <DialogTitle className="pr-6">{selected.title}</DialogTitle>
+                <DialogDescription>{formatSuggestionDate(selected.created_at)}</DialogDescription>
+              </DialogHeader>
 
-              <div className="mt-6 space-y-5">
+              <div className="mt-2 space-y-5">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Empresa</p>
@@ -583,18 +583,31 @@ export default function AdminSuggestions() {
                   </Button>
                 </div>
 
-                <Button
-                  className="w-full"
-                  disabled={busy || selected.status === "em_desenvolvimento"}
-                  onClick={() => updateStatus(selected.id, "em_desenvolvimento")}
-                >
-                  <Hammer size={15} className="mr-2" /> Em desenvolvimento (avisar cliente)
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    className="flex-1"
+                    disabled={busy || selected.status === "em_desenvolvimento"}
+                    onClick={() => updateStatus(selected.id, "em_desenvolvimento")}
+                  >
+                    <Hammer size={15} className="mr-2" />
+                    {(selected.metadata as any)?.dev_email_sent_at
+                      ? "Em desenvolvimento (cliente já avisado)"
+                      : "Em desenvolvimento (avisar cliente)"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                    disabled={busy || selected.status === "entregue"}
+                    onClick={() => updateStatus(selected.id, "entregue")}
+                  >
+                    <PackageCheck size={15} className="mr-2" /> Marcar como Entregue
+                  </Button>
+                </div>
               </div>
             </>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
