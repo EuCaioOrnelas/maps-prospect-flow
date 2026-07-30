@@ -6525,6 +6525,57 @@ export type Database = {
         }
         Relationships: []
       }
+      suggestions: {
+        Row: {
+          account_owner_id: string | null
+          category: string
+          company_name: string | null
+          created_at: string
+          description: string
+          id: string
+          importance: string
+          metadata: Json
+          status: string
+          title: string
+          updated_at: string
+          user_email: string | null
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          account_owner_id?: string | null
+          category: string
+          company_name?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          importance: string
+          metadata?: Json
+          status?: string
+          title: string
+          updated_at?: string
+          user_email?: string | null
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          account_owner_id?: string | null
+          category?: string
+          company_name?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          importance?: string
+          metadata?: Json
+          status?: string
+          title?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       support_incidents: {
         Row: {
           affected_users: number
