@@ -20,12 +20,13 @@ const buttonVariants = cva(
         glass: "backdrop-blur-xl bg-card/80 border border-border/50 text-foreground hover:bg-card/90 transition-all duration-200",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 px-3",
-        lg: "h-12 px-8 text-base",
-        xl: "h-14 px-10 text-lg",
-        icon: "h-10 w-10",
+        default: "h-10 px-4 py-2 rounded-hover",
+        sm: "h-9 px-3 rounded-sm",
+        lg: "h-12 px-8 text-base rounded-lg",
+        xl: "h-14 px-10 text-lg rounded-xl",
+        icon: "h-10 w-10 rounded-hover",
       },
+
     },
     defaultVariants: {
       variant: "default",

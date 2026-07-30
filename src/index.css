@@ -42,10 +42,15 @@
     --input: 220 14% 16%;
     --ring: 158 72% 38%;
 
-    --radius: 1.25rem; /* base radius */
-    --radius-input: 0.875rem; /* 14px - inputs */
-    --radius-card: 1.25rem; /* 20px - cards */
-    --radius-hover: 0.5rem; /* 8px - hover/sidebar/button items: square with slightly rounded corners */
+    /* Escala de raio adaptada ao tamanho do elemento (harmônica em todo o app) */
+    --radius: 0.75rem; /* 12px - base (rounded-lg) */
+    --radius-xs: 0.375rem; /* 6px - chips/ícones pequenos (<=24px) */
+    --radius-sm: 0.5rem; /* 8px - controles pequenos (24-32px) */
+    --radius-hover: 0.625rem; /* 10px - hover/sidebar/botões (h-9/h-10) */
+    --radius-input: 0.625rem; /* 10px - inputs/selects (mesma borda dos botões) */
+    --radius-card: 0.875rem; /* 14px - cards */
+    --radius-panel: 1rem; /* 16px - painéis grandes/modais */
+
 
     /* Custom tokens */
     --gradient-primary: linear-gradient(135deg, hsl(158 72% 38%) 0%, hsl(170 65% 32%) 100%);
