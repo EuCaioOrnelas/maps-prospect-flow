@@ -45,14 +45,30 @@ export default function AdminIACustos() {
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Logs dos últimos 30 dias (limita por segurança a 10k linhas)
-      const [{ data: logs }, { data: measuredLogs }] = await Promise.all([
+      const [{ data: logs }, { data: usageLogs }, { data: legacyLogs }] = await Promise.all([
         supabase.from("agent_message_logs")
           .select("agent_id, direction, content, created_at")
+          .gte("created_at", since).order("created_at", { ascending: false }).limit(10000),
+        supabase.from("ai_usage_logs")
+          .select("feature, tokens_in, tokens_out, cost_usd, created_at")
           .gte("created_at", since).order("created_at", { ascending: false }).limit(10000),
         supabase.from("ai_logs")
           .select("tokens_in, tokens_out, cost_usd, created_at")
           .gte("created_at", since).order("created_at", { ascending: false }).limit(10000),
       ]);
+
+      // ai_logs é a fonte antiga (só suporte). A partir do momento em que
+      // ai_usage_logs passou a receber dados, ele vira a única fonte para
+      // evitar contagem dupla das chamadas do suporte.
+      const centralStart = (usageLogs || []).length
+        ? (usageLogs as any[])[(usageLogs as any[]).length - 1].created_at
+        : null;
+      const measuredLogs = [
+        ...(usageLogs || []).map((l: any) => ({ ...l })),
+        ...(legacyLogs || []).filter((l: any) => !centralStart || l.created_at < centralStart)
+          .map((l: any) => ({ ...l, feature: "support-chat (legado)" })),
+      ];
+
 
       // Mapa agent_id → user_id (para contar usuários distintos)
       const agentIds = Array.from(new Set((logs || []).map((l: any) => l.agent_id))).filter(Boolean);
