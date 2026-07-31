@@ -175,9 +175,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/404" replace />;
   }
 
-  // Check if free trial has expired — redirect to upgrade
+  // Trial expirado ou assinatura paga vencida além da carência de 7 dias.
   const isFreeTrial = profile?.plan === 'free';
-  if (isFreeTrial && isTrialExpired && location.pathname !== '/trial-expired' && location.pathname !== '/upgrade' && location.pathname !== '/consultoria') {
+  if (isTrialExpired && location.pathname !== '/trial-expired' && location.pathname !== '/upgrade' && location.pathname !== '/consultoria') {
     return <Navigate to="/trial-expired" replace />;
   }
 
