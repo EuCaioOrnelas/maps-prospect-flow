@@ -45,9 +45,34 @@ const EVENT_TYPE_ICONS: Record<string, React.ReactNode> = {
   subscription_past_due: <Clock className="h-4 w-4" />,
 };
 
+// Eventos que representam cobrança real (dinheiro entrando).
+// Trials, expirações e mudanças de status NÃO entram na contagem.
+const PAYMENT_EVENT_TYPES = new Set([
+  "checkout_completed",
+  "purchase",
+  "invoice_paid",
+  "payment_confirmed",
+  "subscription_created",
+  "subscription_renewed",
+  "subscription_updated_active",
+]);
+
+const isPaymentEvent = (e: SubscriptionEvent) => {
+  const type = (e.event_type || "").toLowerCase();
+  if (!PAYMENT_EVENT_TYPES.has(type)) return false;
+  // Descarta eventos de trial sem cobrança (plano continua free ou metadata marca trial)
+  if ((e.new_plan || "").toLowerCase() === "free") return false;
+  const meta = e.metadata || {};
+  if (meta.trial === true || meta.is_trial === true) return false;
+  if (typeof meta.amount_cents === "number" && meta.amount_cents <= 0) return false;
+  return true;
+};
+
 export function SubscriptionEventsLog() {
   const [events, setEvents] = useState<SubscriptionEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [onlyPayments, setOnlyPayments] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const fetchEvents = async () => {
@@ -92,12 +117,17 @@ export function SubscriptionEventsLog() {
     };
   }, []);
 
-  const filteredEvents = events.filter(
-    (event) =>
-      event.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.event_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.new_plan.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const paymentEventsCount = events.filter(isPaymentEvent).length;
+
+  const filteredEvents = events
+    .filter((event) => (onlyPayments ? isPaymentEvent(event) : true))
+    .filter(
+      (event) =>
+        event.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.event_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.new_plan.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
 
   const getEventBadge = (eventType: string) => {
     const color = EVENT_TYPE_COLORS[eventType] || "bg-gray-500";
@@ -128,10 +158,23 @@ export function SubscriptionEventsLog() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-semibold">
-          📊 Debug: Eventos de Subscription
-        </CardTitle>
+        <div className="flex flex-col gap-1">
+          <CardTitle className="text-lg font-semibold">
+            📊 Eventos de Subscription
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            {paymentEventsCount} evento(s) de pagamento real
+            {!onlyPayments && ` · ${events.length} no total (inclui trial/expiração)`}
+          </p>
+        </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant={onlyPayments ? "default" : "outline"}
+            size="sm"
+            onClick={() => setOnlyPayments((v) => !v)}
+          >
+            {onlyPayments ? "Somente pagamentos" : "Todos os eventos"}
+          </Button>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -141,6 +184,7 @@ export function SubscriptionEventsLog() {
               className="pl-8 w-64"
             />
           </div>
+
           <Button
             variant="outline"
             size="icon"
