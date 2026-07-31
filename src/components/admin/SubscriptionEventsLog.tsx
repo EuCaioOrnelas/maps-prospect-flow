@@ -117,12 +117,17 @@ export function SubscriptionEventsLog() {
     };
   }, []);
 
-  const filteredEvents = events.filter(
-    (event) =>
-      event.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.event_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.new_plan.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const paymentEventsCount = events.filter(isPaymentEvent).length;
+
+  const filteredEvents = events
+    .filter((event) => (onlyPayments ? isPaymentEvent(event) : true))
+    .filter(
+      (event) =>
+        event.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.event_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.new_plan.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
 
   const getEventBadge = (eventType: string) => {
     const color = EVENT_TYPE_COLORS[eventType] || "bg-gray-500";
