@@ -119,8 +119,9 @@ export default function AdminUserDetail() {
       _to: toISO,
     });
     if (error) {
-      toast.error("Erro ao carregar estatísticas");
+      toast.error(`Erro ao carregar estatísticas: ${error.message}`);
       console.error(error);
+      setStats(null);
     } else {
       setStats(data as any);
     }
@@ -136,8 +137,9 @@ export default function AdminUserDetail() {
       _to: toISO,
     });
     if (error) {
-      toast.error("Erro ao carregar sessões");
+      toast.error(`Erro ao carregar sessões: ${error.message}`);
       console.error(error);
+      setSessions([]);
     } else {
       setSessions((data as any) || []);
     }
