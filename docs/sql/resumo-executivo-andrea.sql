@@ -81,6 +81,7 @@ dias_uteis AS (
   SELECT * FROM por_dia WHERE acoes_reais > 0
 )
 SELECT
+  0                                                AS ord,
   to_char(dia, 'DD/MM/YYYY')                       AS dia,
   acoes_reais                                      AS acoes,
   buscas,
@@ -93,6 +94,7 @@ FROM dias_uteis
 UNION ALL
 
 SELECT
+  1,
   '── TOTAL ──',
   (SELECT COALESCE(sum(acoes_reais), 0) FROM dias_uteis),
   (SELECT COALESCE(sum(buscas), 0)      FROM dias_uteis),
@@ -101,4 +103,4 @@ SELECT
   (SELECT to_char(max(fim), 'DD/MM')    FROM dias_uteis),
   (SELECT COALESCE(sum(minutos_sessao), 0) FROM dias_uteis)
 
-ORDER BY 1;
+ORDER BY ord, dia;
