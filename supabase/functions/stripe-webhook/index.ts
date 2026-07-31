@@ -1101,10 +1101,13 @@ serve(async (req) => {
           subscriptionId: invoice.subscription,
           customerEmail: invoice.customer_email
         });
+        // Marca pagamento real (valor > 0). Invoice de R$ 0 do trial não conta.
+        await markFirstRealPayment(supabaseClient, invoice);
         // Reconcilia bumps a partir dos items atuais da subscription
         await reconcileBumpsFromSubscription(stripe, supabaseClient, invoice.subscription as string | null, "webhook_grant");
         break;
       }
+
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
