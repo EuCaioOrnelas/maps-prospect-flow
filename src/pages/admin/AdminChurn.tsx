@@ -337,7 +337,7 @@ export default function AdminChurn() {
 
   const kpis = [
     { label: "Total Cancelamentos", value: kpiBase.length, subtext: `${churnRateTotal}% da base`, icon: UserX, color: "text-red-500" },
-    { label: hasDateFilter ? "Churn no período" : "Churns 30 dias", value: `${last30dRate}%`, subtext: `(${last30d.length} usuários)`, icon: Calendar, color: "text-amber-500" },
+    { label: hasDateFilter ? "Churn no período" : "Churns últimos 30 dias", value: `${last30dRate}%`, subtext: `(${last30d.length} de ${kpiBase.length} no histórico)`, icon: Calendar, color: "text-amber-500" },
     { label: hasDateFilter ? "Cancelamentos no período" : "Churns 7 dias", value: `${last7dRate}%`, subtext: `(${last7d.length} usuários)`, icon: TrendingDown, color: "text-orange-500" },
     { label: "Taxa Churn Total", value: `${churnRateTotal}%`, icon: Percent, color: "text-red-500" },
     { label: "Principal Motivo", value: topReason ? topReason[0] : "—", icon: AlertTriangle, color: "text-primary", small: true },
@@ -423,7 +423,7 @@ export default function AdminChurn() {
 
       <Card className="border-border/40 bg-card/80">
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-base">Histórico de Cancelamentos</CardTitle>
+              <CardTitle className="text-base">Histórico total desde 01/06/2026</CardTitle>
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input

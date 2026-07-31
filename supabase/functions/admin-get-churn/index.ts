@@ -268,6 +268,29 @@ serve(async (req) => {
       usersWithRealPayment.has(f.user_id)
     );
 
+    const metricRows = [
+      ...filteredCancellations.map((row: any) => ({ ...row, occurred_at: row.cancelled_at })),
+      ...filteredEvents.map((row: any) => ({ ...row, occurred_at: row.created_at })),
+      ...filteredFeedbacks.map((row: any) => ({ ...row, occurred_at: row.created_at })),
+      ...expiredProfiles.map((row: any) => ({ ...row, user_id: row.id, occurred_at: row.subscription_current_period_end })),
+      ...stripeChurns.map((row: any) => ({ ...row, occurred_at: row.cancelled_at })),
+    ].sort((a: any, b: any) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime());
+    const uniqueChurns = new Map<string, any>();
+    for (const row of metricRows) {
+      const key = row.user_id || (row.email ? `email:${String(row.email).toLowerCase()}` : `row:${row.id}`);
+      if (!uniqueChurns.has(key)) uniqueChurns.set(key, row);
+    }
+    const uniqueRows = Array.from(uniqueChurns.values());
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const payingUsersCount = Math.max(payingEmails.size, usersWithRealPayment.size);
+    const churnMetrics = {
+      total: uniqueRows.length,
+      last30d: uniqueRows.filter((row: any) => new Date(row.occurred_at).getTime() > thirtyDaysAgo).length,
+      last7d: uniqueRows.filter((row: any) => new Date(row.occurred_at).getTime() > sevenDaysAgo).length,
+      payingUsersCount,
+    };
+
     logStep("Churn payload ready", {
       cancellationsRaw: cancellationsRes.data?.length || 0,
       cancellationsFiltered: filteredCancellations.length,
@@ -280,6 +303,7 @@ serve(async (req) => {
       stripeChurns: stripeChurns.length,
       usersWithRealPayment: usersWithRealPayment.size,
       payingBase: payingEmails.size,
+      churnMetrics,
     });
 
     return new Response(
@@ -291,7 +315,8 @@ serve(async (req) => {
         expiredProfiles,
         stripeChurns,
         // Base "paying" usada para cálculo correto de churn rate (não inclui trial-only)
-        payingUsersCount: Math.max(payingEmails.size, usersWithRealPayment.size),
+        payingUsersCount,
+        churnMetrics,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

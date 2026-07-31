@@ -577,7 +577,13 @@ Deno.serve(async (req) => {
 
     const { data: customPayments } = await supabaseAdmin
       .from("custom_subscription_payments")
-      .select("amount_cents, paid_at");
+      .select("custom_subscription_id, amount_cents, paid_at");
+
+    const paidCustomSubscriptionIds = new Set(
+      (customPayments || [])
+        .filter((payment: any) => payment.paid_at && (payment.amount_cents || 0) > 0)
+        .map((payment: any) => payment.custom_subscription_id)
+    );
 
     let customMRR = 0;
     let customActiveCount = 0;
@@ -595,6 +601,8 @@ Deno.serve(async (req) => {
         planDistribution[planKey] = (planDistribution[planKey] || 0) + 1;
       } else if (
         (cs.status === "canceled" || cs.status === "expired") &&
+        cs.cancel_reason !== "voided_by_admin" &&
+        paidCustomSubscriptionIds.has(cs.id) &&
         cs.canceled_at &&
         new Date(cs.canceled_at).getTime() >= new Date("2026-06-01T00:00:00Z").getTime()
       ) {

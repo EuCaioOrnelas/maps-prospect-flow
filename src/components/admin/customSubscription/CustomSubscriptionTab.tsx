@@ -4,9 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, RefreshCw, DollarSign, Calendar, History, Receipt, ExternalLink, Infinity as InfinityIcon } from "lucide-react";
+import { FileText, RefreshCw, DollarSign, Calendar, History, Receipt, ExternalLink, Infinity as InfinityIcon, Undo2, Loader2 } from "lucide-react";
 import { formatCents, PAYMENT_METHODS } from "./customSubConfig";
 import { RenewSubscriptionDialog } from "./RenewSubscriptionDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   userId: string;
@@ -28,6 +29,8 @@ export const CustomSubscriptionTab = ({ userId, onChanged }: Props) => {
   const [renewals, setRenewals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [renewOpen, setRenewOpen] = useState(false);
+  const [voiding, setVoiding] = useState(false);
+  const { toast } = useToast();
 
   const load = async () => {
     setLoading(true);
@@ -46,6 +49,24 @@ export const CustomSubscriptionTab = ({ userId, onChanged }: Props) => {
 
   const activeSub = subs.find((s) => s.status === "active");
   const fmtDate = (d: string | null) => d ? new Date(d).toLocaleDateString("pt-BR") : "—";
+
+  const voidSubscription = async () => {
+    if (!activeSub || !window.confirm("Desfazer este contrato? Ele sairá do MRR e não será considerado churn.")) return;
+    setVoiding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-void-custom-subscription", {
+        body: { subscription_id: activeSub.id },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message);
+      toast({ title: "Contrato desfeito", description: "Removido do MRR sem gerar churn." });
+      await load();
+      onChanged?.();
+    } catch (error) {
+      toast({ title: "Erro ao desfazer contrato", description: error instanceof Error ? error.message : "Tente novamente.", variant: "destructive" });
+    } finally {
+      setVoiding(false);
+    }
+  };
 
   if (loading) return <div className="space-y-3"><Skeleton className="h-32 w-full" /><Skeleton className="h-40 w-full" /></div>;
 
@@ -72,9 +93,14 @@ export const CustomSubscriptionTab = ({ userId, onChanged }: Props) => {
                 <Badge variant="secondary" className="text-[10px]">{activeSub.subscription_label}</Badge>
               )}
             </CardTitle>
-            <Button size="sm" onClick={() => setRenewOpen(true)} className="gap-1.5 h-8 text-xs">
-              <RefreshCw className="h-3 w-3" /> Renovar Contrato
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={voidSubscription} disabled={voiding} className="gap-1.5 h-8 text-xs">
+                {voiding ? <Loader2 className="h-3 w-3 animate-spin" /> : <Undo2 className="h-3 w-3" />} Desfazer
+              </Button>
+              <Button size="sm" onClick={() => setRenewOpen(true)} disabled={voiding} className="gap-1.5 h-8 text-xs">
+                <RefreshCw className="h-3 w-3" /> Renovar Contrato
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <Field label="Plano" value={activeSub.plan?.toUpperCase()} />
