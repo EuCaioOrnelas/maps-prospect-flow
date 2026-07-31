@@ -282,7 +282,32 @@ export default function AdminIACustos() {
           )}
         </CardContent>
       </Card>
+
+      <Card className="border-border/40 bg-card/80 rounded-2xl">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">Custo por operação (30 dias)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <Skeleton className="h-32 w-full" />
+          ) : breakdown.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Sem consumo registrado no período.</p>
+          ) : (
+            <div className="divide-y divide-border/40">
+              {breakdown.map((r) => (
+                <div key={r.feature} className="flex items-center justify-between py-2 text-sm">
+                  <span className="text-foreground">{r.feature}</span>
+                  <span className="text-muted-foreground tabular-nums">
+                    ${r.cost.toFixed(4)} · R$ {(r.cost * USD_TO_BRL).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
+
   );
 }
 
