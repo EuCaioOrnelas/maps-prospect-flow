@@ -264,29 +264,8 @@ Deno.serve(async (req) => {
           metadata: { plan: user.plan, daysRemaining },
         });
 
-        // D+1: Downgrade to free if not paid
-        if (currentStage === "D+1" && !user.is_blocked) {
-          await supabaseClient
-            .from("profiles")
-            .update({
-              plan: "free",
-              is_blocked: false,
-              searches_limit: 10,
-              searches_used: 0,
-              subscription_current_period_end: null,
-            })
-            .eq("id", user.id);
-
-          await supabaseClient.from("pix_tracking_events").insert({
-            invoice_id: invoiceId,
-            user_id: user.id,
-            event_type: "access_suspended",
-            renewal_stage: "D+1",
-            metadata: { reason: "subscription_expired_no_payment" },
-          });
-
-          logStep("Access suspended for user", { userId: user.id });
-        }
+        // D+1 é apenas lembrete. O safety-net check-subscription-expiry aplica
+        // o downgrade somente após a carência oficial de 7 dias sem pagamento.
 
         logStep("Processed user", {
           userId: user.id,

@@ -327,7 +327,7 @@ Deno.serve(async (req) => {
       const hadAnyPayment = subsWithPayment.has(sub.id) ||
         (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
 
-      const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-07-01T00:00:00Z").getTime() / 1000);
+      const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-06-01T00:00:00Z").getTime() / 1000);
       const canceledDuringTrial =
         sub.status === "canceled" && sub.trial_end && sub.canceled_at && sub.canceled_at <= sub.trial_end;
 
@@ -551,7 +551,11 @@ Deno.serve(async (req) => {
         customActiveCount++;
         const planKey = `${cs.plan}_custom`;
         planDistribution[planKey] = (planDistribution[planKey] || 0) + 1;
-      } else if (cs.status === "canceled" || cs.status === "expired") {
+      } else if (
+        (cs.status === "canceled" || cs.status === "expired") &&
+        cs.canceled_at &&
+        new Date(cs.canceled_at).getTime() >= new Date("2026-06-01T00:00:00Z").getTime()
+      ) {
         customCanceledCount++;
         if (cs.canceled_at) {
           const canceledMs = new Date(cs.canceled_at).getTime();

@@ -8,12 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
 import { getProviderLabel } from "@/lib/paymentProviderLabel";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminAssinaturas() {
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [category, setCategory] = useState<"paid" | "trial">("paid");
 
   useEffect(() => {
     const load = async () => {
@@ -42,8 +44,10 @@ export default function AdminAssinaturas() {
   const isTrialing = (s: any) =>
     s.trial_will_charge_at && new Date(s.trial_will_charge_at).getTime() > Date.now();
 
-  const filtered = subscribers.filter(s => 
-    s.email?.toLowerCase().includes(search.toLowerCase()) || 
+  const paidSubscribers = subscribers.filter((subscriber) => !isTrialing(subscriber));
+  const trialSubscribers = subscribers.filter(isTrialing);
+  const filtered = (category === "paid" ? paidSubscribers : trialSubscribers).filter(s =>
+    s.email?.toLowerCase().includes(search.toLowerCase()) ||
     s.name?.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -66,6 +70,13 @@ export default function AdminAssinaturas() {
           <Input placeholder="Buscar por email ou nome..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       </div>
+
+      <Tabs value={category} onValueChange={(value) => setCategory(value as "paid" | "trial")}>
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="paid">Pagantes ativos ({paidSubscribers.length})</TabsTrigger>
+          <TabsTrigger value="trial">Trials ({trialSubscribers.length})</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <Card className="border-border/40 bg-card/80">
         <CardContent className="p-0">
@@ -125,6 +136,13 @@ export default function AdminAssinaturas() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                      Nenhuma assinatura nesta categoria.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           )}

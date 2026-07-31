@@ -91,7 +91,8 @@ const hasFuturePaidWindow = (profile?: BillingProfileState | null) => {
   if (!profile?.subscription_current_period_end) return false;
 
   const endsAt = new Date(profile.subscription_current_period_end);
-  return !Number.isNaN(endsAt.getTime()) && endsAt.getTime() > Date.now();
+  const graceEndsAt = endsAt.getTime() + 7 * 24 * 60 * 60 * 1000;
+  return !Number.isNaN(endsAt.getTime()) && graceEndsAt > Date.now();
 };
 
 const shouldPreservePaidAccess = (profile?: BillingProfileState | null) => {
@@ -483,10 +484,15 @@ serve(async (req) => {
           ? new Date(currentProfile.subscription_current_period_end) 
           : null;
         
-        if (subEnd && subEnd > new Date()) {
-          logStep("Subscription still valid (non-Stripe provider, likely Asaas)", { 
+        const graceEnd = subEnd
+          ? new Date(subEnd.getTime() + 7 * 24 * 60 * 60 * 1000)
+          : null;
+
+        if (graceEnd && graceEnd > new Date()) {
+          logStep("Subscription valid or within 7-day grace period", {
             plan: currentProfile.plan,
-            expiresAt: subEnd.toISOString()
+            expiresAt: subEnd?.toISOString(),
+            graceEndsAt: graceEnd.toISOString(),
           });
           
           return new Response(JSON.stringify({ 

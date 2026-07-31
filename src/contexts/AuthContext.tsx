@@ -28,6 +28,8 @@ interface Profile {
   trial_flows_used?: number;
   trial_campaigns_used?: number;
   is_blocked?: boolean;
+  admin_assigned_plan?: boolean;
+  is_custom_subscription?: boolean;
 }
 
 interface AuthContextType {
@@ -84,8 +86,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { isExpired, daysRemaining, isTrialing };
     }
 
-    // Caso 2: plano pago já efetivado (sem trial pendente) — não está em trial
+    // Caso 2: plano pago já efetivado. Para planos comerciais comuns, a data
+    // persistida também funciona como proteção caso o cron de expiração atrase.
     if (profile.plan && profile.plan !== 'free') {
+      if (
+        !profile.admin_assigned_plan &&
+        !profile.is_custom_subscription &&
+        profile.subscription_current_period_end
+      ) {
+        const periodEnd = new Date(profile.subscription_current_period_end).getTime();
+        const graceEnd = periodEnd + 7 * 24 * 60 * 60 * 1000;
+        if (Number.isFinite(periodEnd) && graceEnd <= Date.now()) {
+          return { isExpired: true, daysRemaining: 0, isTrialing: false };
+        }
+      }
       return { isExpired: false, daysRemaining: 0, isTrialing: false };
     }
 
