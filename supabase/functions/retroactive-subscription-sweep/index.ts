@@ -103,6 +103,11 @@ serve(async (req) => {
           searches_used: 0,
           bonus_searches: 0,
           subscription_price_cents: 0,
+          // Add-ons (order bumps) morrem junto com a assinatura.
+          extra_numbers: 0,
+          extra_contacts_packs: 0,
+          extra_opportunities_packs: 0,
+
           updated_at: new Date().toISOString(),
         })
         .eq("id", u.id);

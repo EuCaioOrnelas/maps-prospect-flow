@@ -285,7 +285,7 @@ Deno.serve(async (req) => {
     const thirtyDaysAgoUnix = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
 
     // Dedupe: mesmo customer com múltiplas subs ativas conta apenas a mais cara.
-    const bestSubByCustomer = new Map<string, { subId: string; mrr: number; planName: string; email: string }>();
+    const bestSubByCustomer = new Map<string, { subId: string; mrr: number; bumps: number; planName: string; email: string }>();
 
     for (const sub of wiizeSubs) {
       const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
@@ -293,9 +293,30 @@ Deno.serve(async (req) => {
 
       const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
       const priceObj = sub.items.data[0]?.price;
-      let effectiveAmountCents = priceObj?.unit_amount || 0;
-      const interval = priceObj?.recurring?.interval || "month";
-      const intervalCount = priceObj?.recurring?.interval_count || 1;
+
+      // Soma TODOS os itens recorrentes da assinatura (plano + order bumps),
+      // normalizando cada um para valor mensal e respeitando a quantidade.
+      const normalizeToMonthly = (amountCents: number, price: Stripe.Price | undefined) => {
+        const itv = price?.recurring?.interval || "month";
+        const itvCount = price?.recurring?.interval_count || 1;
+        if (itv === "year") return Math.round(amountCents / (12 * itvCount));
+        if (itv === "week") return Math.round((amountCents * 52) / (12 * itvCount));
+        if (itv === "day") return Math.round((amountCents * 365) / (12 * itvCount));
+        return Math.round(amountCents / itvCount);
+      };
+
+      let planMonthlyCents = 0;
+      let bumpsMonthlyCents = 0;
+      sub.items.data.forEach((item, idx) => {
+        const p = item.price;
+        if (!p?.recurring) return;
+        const qty = item.quantity ?? 1;
+        const monthly = normalizeToMonthly((p.unit_amount || 0) * qty, p);
+        if (idx === 0) planMonthlyCents += monthly;
+        else bumpsMonthlyCents += monthly;
+      });
+
+      let effectiveAmountCents = planMonthlyCents + bumpsMonthlyCents;
 
       const discount = (sub as any).discount;
       if (discount?.coupon?.duration === "forever") {
@@ -307,22 +328,14 @@ Deno.serve(async (req) => {
         }
       }
 
-      let monthlyAmountCents = effectiveAmountCents;
-      if (interval === "year") {
-        monthlyAmountCents = Math.round(effectiveAmountCents / (12 * intervalCount));
-      } else if (interval === "week") {
-        monthlyAmountCents = Math.round((effectiveAmountCents * 52) / (12 * intervalCount));
-      } else if (interval === "day") {
-        monthlyAmountCents = Math.round((effectiveAmountCents * 365) / (12 * intervalCount));
-      } else {
-        monthlyAmountCents = Math.round(effectiveAmountCents / intervalCount);
-      }
-
+      const monthlyAmountCents = effectiveAmountCents;
       const baseAmount = monthlyAmountCents / 100;
       const mrrAmount = Math.round(baseAmount * 100) / 100;
+      const bumpsAmount = Math.round(bumpsMonthlyCents) / 100;
 
-      const priceId = sub.items.data[0]?.price.id;
-      const planName = PRICE_TO_PLAN[priceId] || "unknown";
+      const priceId = priceObj?.id;
+      const planName = (priceId && PRICE_TO_PLAN[priceId]) || "unknown";
+
 
       const hadAnyPayment = subsWithPayment.has(sub.id) ||
         (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
@@ -380,17 +393,22 @@ Deno.serve(async (req) => {
       if (!customerId) continue;
       const existing = bestSubByCustomer.get(customerId);
       if (!existing || mrrAmount > existing.mrr) {
-        bestSubByCustomer.set(customerId, { subId: sub.id, mrr: mrrAmount, planName, email: customerEmail });
+        bestSubByCustomer.set(customerId, { subId: sub.id, mrr: mrrAmount, bumps: bumpsAmount, planName, email: customerEmail });
       }
     }
 
     // Consolidar MRR pós-dedupe
+    let bumpsMRR = 0;
+    let subsWithBumps = 0;
     for (const [, info] of bestSubByCustomer) {
       activeMRR += info.mrr;
       activeCount++;
+      bumpsMRR += info.bumps;
+      if (info.bumps > 0) subsWithBumps++;
       planDistribution[info.planName] = (planDistribution[info.planName] || 0) + 1;
-      console.log(`[GET-STRIPE-MRR] MRR sub (counted): ${info.subId} | ${info.email} | plan=${info.planName} | mrr=R$${info.mrr}`);
+      console.log(`[GET-STRIPE-MRR] MRR sub (counted): ${info.subId} | ${info.email} | plan=${info.planName} | mrr=R$${info.mrr} | addons=R$${info.bumps}`);
     }
+
     console.log(`[GET-STRIPE-MRR] Excluded past_due: ${pastDueCount} subs / R$${pastDueMRR}`);
 
     // Count ALL paid invoices as sales (including renewals)
@@ -508,7 +526,24 @@ Deno.serve(async (req) => {
         const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
         if (wasRefunded) continue;
 
-        let effectiveAmount = subMrr;
+        // Add-ons (order bumps) da assinatura entram no MRR histórico também.
+        let addOnsMonthly = 0;
+        sub.items.data.forEach((item, idx) => {
+          if (idx === 0) return;
+          const p = item.price;
+          if (!p?.recurring) return;
+          const qty = item.quantity ?? 1;
+          const cents = (p.unit_amount || 0) * qty;
+          const itv = p.recurring.interval;
+          const itvCount = p.recurring.interval_count || 1;
+          if (itv === "year") addOnsMonthly += cents / (12 * itvCount) / 100;
+          else if (itv === "week") addOnsMonthly += (cents * 52) / (12 * itvCount) / 100;
+          else if (itv === "day") addOnsMonthly += (cents * 365) / (12 * itvCount) / 100;
+          else addOnsMonthly += cents / itvCount / 100;
+        });
+
+        let effectiveAmount = subMrr + addOnsMonthly;
+
         const discount = (sub as any).discount;
         if (discount?.coupon?.duration === "forever") {
           const coupon = discount.coupon;
@@ -609,6 +644,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         totalMRR: finalMRR,
         stripeMRR: activeMRR,
+        addOnsMRR: Math.round(bumpsMRR * 100) / 100,
+        subscriptionsWithAddOns: subsWithBumps,
         customMRR,
         activeSubscriptions: finalActiveCount,
         stripeActiveSubscriptions: activeCount,
