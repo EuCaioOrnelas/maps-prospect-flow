@@ -61,12 +61,17 @@ async function checkResend(): Promise<ApiResult> {
   const key = Deno.env.get('RESEND_API_KEY');
   if (!key) return { service: 'Resend', category: 'email', status: 'not_configured', message: 'Chave não configurada' };
   try {
-    const r = await fetch('https://api.resend.com/domains', { headers: { Authorization: `Bearer ${key}` } });
-    if (!r.ok) return { service: 'Resend', category: 'email', status: 'error', message: `HTTP ${r.status}` };
-    const d = await r.json();
+    const [domainsRes, keysRes] = await Promise.all([
+      fetch('https://api.resend.com/domains', { headers: { Authorization: `Bearer ${key}` } }),
+      fetch('https://api.resend.com/api_keys', { headers: { Authorization: `Bearer ${key}` } }),
+    ]);
+    if (!domainsRes.ok) return { service: 'Resend', category: 'email', status: 'error', message: `HTTP ${domainsRes.status}` };
+    const d = await domainsRes.json();
     const domains = (d.data || []).map((x: any) => ({ name: x.name, region: x.region, status: x.status }));
     const domainNames = domains.map((x: any) => x.name).join(', ') || 'nenhum';
-    return { service: 'Resend', category: 'email', status: 'ok', message: `${(d.data || []).length} domínio(s) configurado(s): ${domainNames}`, details: { domains } };
+    let keys: any = null;
+    if (keysRes.ok) keys = await keysRes.json();
+    return { service: 'Resend', category: 'email', status: 'ok', message: `${(d.data || []).length} domínio(s) configurado(s): ${domainNames}`, details: { domains, keys } };
   } catch (e) {
     return { service: 'Resend', category: 'email', status: 'error', message: e instanceof Error ? e.message : 'Erro' };
   }
