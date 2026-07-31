@@ -90,6 +90,15 @@ serve(async (req) => {
       return profileUsage || activatedIds.has(profile.id);
     });
 
+    // Coerência com "Conversão de Trial": aquela métrica só considera trials
+    // JÁ ENCERRADOS, então expomos aqui quantos ainda estão em andamento.
+    const stillInTrial = (profile: any) => {
+      const now = Date.now();
+      const end = profile.trial_will_charge_at ? new Date(profile.trial_will_charge_at).getTime() : null;
+      return !!end && end > now;
+    };
+    const inTrial = profiles.filter(stillInTrial).length;
+
     const accessed = profiles.filter((profile: any) =>
       new Date(profile.updated_at).getTime() - new Date(profile.created_at).getTime() > 60_000
     ).length;
@@ -97,6 +106,8 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       total: profiles.length,
+      inTrial,
+      completedTrial: profiles.length - inTrial,
       accessed,
       activated: activatedProfiles.length,
       activatedStripe: activatedProfiles.filter((p: any) => isPaid(p) && p.payment_provider === "stripe").length,
