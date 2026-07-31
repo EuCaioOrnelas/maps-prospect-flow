@@ -327,7 +327,7 @@ Deno.serve(async (req) => {
       const hadAnyPayment = subsWithPayment.has(sub.id) ||
         (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
 
-      const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-04-15T00:00:00-03:00").getTime() / 1000);
+      const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-07-01T00:00:00Z").getTime() / 1000);
       const canceledDuringTrial =
         sub.status === "canceled" && sub.trial_end && sub.canceled_at && sub.canceled_at <= sub.trial_end;
 
