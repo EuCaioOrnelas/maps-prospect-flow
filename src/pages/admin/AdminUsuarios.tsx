@@ -14,6 +14,15 @@ import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
 import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
 import { getProviderLabel, getProviderBucket } from "@/lib/paymentProviderLabel";
 
+type CustomSubInfo = {
+  user_id: string;
+  label: string | null;
+  plan: string;
+  monthly_value_cents: number;
+  is_lifetime: boolean;
+  ends_at: string | null;
+};
+
 export default function AdminUsuarios() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
@@ -24,6 +33,8 @@ export default function AdminUsuarios() {
   const [statusFilter, setStatusFilter] = useState<"active" | "archived" | "all">("active");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [totals, setTotals] = useState<{ active: number; archived: number }>({ active: 0, archived: 0 });
+  const [customSubs, setCustomSubs] = useState<Map<string, CustomSubInfo>>(new Map());
+  const [orphanCustomSubs, setOrphanCustomSubs] = useState<CustomSubInfo[]>([]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -44,6 +55,33 @@ export default function AdminUsuarios() {
       from += pageSize;
     }
 
+    // Assinaturas customizadas ATIVAS — fonte de verdade para a marcação "Custom".
+    // O flag em profiles pode ficar dessincronizado, então cruzamos pela tabela.
+    const { data: subs } = await supabase
+      .from("custom_subscriptions")
+      .select("user_id, subscription_label, plan, monthly_value_cents, is_lifetime, ends_at, status")
+      .eq("status", "active");
+
+    const now = Date.now();
+    const subMap = new Map<string, CustomSubInfo>();
+    const orphans: CustomSubInfo[] = [];
+    const profileIds = new Set(all.map((u) => u.id));
+    (subs || []).forEach((s: any) => {
+      if (!s.is_lifetime && s.ends_at && new Date(s.ends_at).getTime() < now) return;
+      const info: CustomSubInfo = {
+        user_id: s.user_id,
+        label: s.subscription_label,
+        plan: s.plan,
+        monthly_value_cents: s.monthly_value_cents || 0,
+        is_lifetime: !!s.is_lifetime,
+        ends_at: s.ends_at,
+      };
+      if (profileIds.has(s.user_id)) subMap.set(s.user_id, info);
+      else orphans.push(info);
+    });
+    setCustomSubs(subMap);
+    setOrphanCustomSubs(orphans);
+
     // Accurate totals via count queries (independent of fetched rows)
     const [{ count: activeCnt }, { count: archivedCnt }] = await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }).or("is_archived.is.null,is_archived.eq.false"),
@@ -60,6 +98,7 @@ export default function AdminUsuarios() {
   const archivedCount = totals.archived;
   const activeCount = totals.active;
 
+
   const filtered = useMemo(() => {
     return users.filter(u => {
       const matchStatus =
@@ -68,9 +107,14 @@ export default function AdminUsuarios() {
         (statusFilter === "archived" && u.is_archived);
       const matchSearch = !search || u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase());
       const isTrial = !!u.trial_will_charge_at && new Date(u.trial_will_charge_at).getTime() > Date.now();
+      const isCustom = customSubs.has(u.id) || !!u.is_custom_subscription;
       const matchPlan =
         planFilter === "all" ||
-        (planFilter === "trial" ? isTrial : u.plan === planFilter && !isTrial);
+        (planFilter === "trial"
+          ? isTrial
+          : planFilter === "custom"
+            ? isCustom
+            : u.plan === planFilter && !isTrial);
       const bucket = getProviderBucket(u.payment_provider);
       const matchProvider =
         providerFilter === "all" ||
@@ -79,7 +123,8 @@ export default function AdminUsuarios() {
         (providerFilter === "none" && !u.payment_provider);
       return matchStatus && matchSearch && matchPlan && matchProvider;
     });
-  }, [users, statusFilter, search, planFilter, providerFilter]);
+  }, [users, statusFilter, search, planFilter, providerFilter, customSubs]);
+
 
   const planColors: Record<string, string> = {
     free: "bg-muted text-muted-foreground",
@@ -100,9 +145,10 @@ export default function AdminUsuarios() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Usuários</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {activeCount} ativos · {archivedCount} arquivados
+            {activeCount} ativos · {archivedCount} arquivados · {customSubs.size} custom
           </p>
         </div>
+
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="text-xs">
             <Download size={14} className="mr-1.5" /> Exportar
@@ -110,6 +156,28 @@ export default function AdminUsuarios() {
           <CreateUserDialog onUserCreated={loadUsers} />
         </div>
       </div>
+
+      {orphanCustomSubs.length > 0 && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardContent className="p-4 text-sm">
+            <p className="font-medium text-amber-600">
+              {orphanCustomSubs.length} assinatura(s) customizada(s) ativa(s) sem usuário correspondente
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Essas assinaturas continuam somando no MRR do admin mesmo com a conta excluída. Cancele-as para os dados baterem.
+            </p>
+            <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+              {orphanCustomSubs.map((s) => (
+                <li key={s.user_id}>
+                  {s.label || s.plan} · R$ {(s.monthly_value_cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês · user_id {s.user_id}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -127,6 +195,8 @@ export default function AdminUsuarios() {
             <SelectItem value="start">Start</SelectItem>
             <SelectItem value="growth">Growth</SelectItem>
             <SelectItem value="scale">Scale</SelectItem>
+            <SelectItem value="custom">Custom (manual)</SelectItem>
+
           </SelectContent>
         </Select>
         <Select value={providerFilter} onValueChange={setProviderFilter}>
@@ -174,6 +244,8 @@ export default function AdminUsuarios() {
               <TableBody>
                 {filtered.map(user => {
                   const bucket = getProviderBucket(user.payment_provider);
+                  const customSub = customSubs.get(user.id);
+                  const isCustom = !!customSub || !!user.is_custom_subscription;
                   return (
                   <TableRow key={user.id} className="cursor-pointer hover:bg-muted/40" onClick={() => navigate(`/admin/usuarios/${user.id}`)}>
                     <TableCell>
@@ -185,11 +257,21 @@ export default function AdminUsuarios() {
                     <TableCell>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <Badge className={`${planColors[user.plan] || "bg-muted"} border-0 text-xs`}>{user.plan}</Badge>
-                        {user.is_custom_subscription && (
-                          <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 px-1.5 py-0">
+                        {isCustom && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 px-1.5 py-0"
+                            title={
+                              customSub
+                                ? `${customSub.label || customSub.plan} · R$ ${(customSub.monthly_value_cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês${customSub.is_lifetime ? " · vitalício" : customSub.ends_at ? ` · até ${new Date(customSub.ends_at).toLocaleDateString("pt-BR")}` : ""}`
+                                : "Assinatura customizada"
+                            }
+                          >
                             Custom
+                            {customSub ? ` · R$ ${(customSub.monthly_value_cents / 100).toFixed(0)}` : ""}
                           </Badge>
                         )}
+
                         {user.is_archived && (
                           <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border px-1.5 py-0">
                             Arquivado
