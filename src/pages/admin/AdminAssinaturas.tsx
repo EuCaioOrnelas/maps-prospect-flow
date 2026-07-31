@@ -19,12 +19,21 @@ export default function AdminAssinaturas() {
     const load = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_custom_subscription, trial_will_charge_at")
+        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_custom_subscription, trial_will_charge_at, is_blocked")
         .neq("plan", "free")
         .in("payment_provider", ["stripe", "asaas", "manual"])
         .order("created_at", { ascending: false })
         .limit(500);
-      setSubscribers(data || []);
+      const now = Date.now();
+      setSubscribers((data || []).filter((subscriber: any) => {
+        if (subscriber.is_blocked) return false;
+        const trialEnd = subscriber.trial_will_charge_at
+          ? new Date(subscriber.trial_will_charge_at).getTime()
+          : 0;
+        if (trialEnd > now) return true;
+        if (!subscriber.subscription_current_period_end) return false;
+        return new Date(subscriber.subscription_current_period_end).getTime() >= now;
+      }));
       setLoading(false);
     };
     load();

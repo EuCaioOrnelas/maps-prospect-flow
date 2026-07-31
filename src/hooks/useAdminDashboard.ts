@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchPayingUserIds } from "@/lib/adminMetrics";
+import { CHURN_METRICS_SINCE, fetchPayingUserIds } from "@/lib/adminMetrics";
 
 interface DashboardStats {
   totalUsers: number;
@@ -386,7 +386,10 @@ export function useAdminDashboard() {
     try {
       const alertsList: any[] = [];
 
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const weekAgo = new Date(Math.max(
+        Date.now() - 7 * 24 * 60 * 60 * 1000,
+        CHURN_METRICS_SINCE.getTime()
+      )).toISOString();
       const [{ data: churnEvents }, payingIds] = await Promise.all([
         supabase
           .from("subscription_events")
@@ -451,7 +454,10 @@ export function useAdminDashboard() {
   // não é churn (nunca virou receita).
   const loadNewSystemChurn = useCallback(async () => {
     try {
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const thirtyDaysAgo = new Date(Math.max(
+        Date.now() - 30 * 24 * 60 * 60 * 1000,
+        CHURN_METRICS_SINCE.getTime()
+      )).toISOString();
 
       const [cancellationsRes, eventsRes, payingIds] = await Promise.all([
         supabase

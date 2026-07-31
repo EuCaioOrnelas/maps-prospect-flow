@@ -67,7 +67,10 @@ export default function AdminUsuarios() {
         (statusFilter === "active" && !u.is_archived) ||
         (statusFilter === "archived" && u.is_archived);
       const matchSearch = !search || u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase());
-      const matchPlan = planFilter === "all" || u.plan === planFilter;
+      const isTrial = !!u.trial_will_charge_at && new Date(u.trial_will_charge_at).getTime() > Date.now();
+      const matchPlan =
+        planFilter === "all" ||
+        (planFilter === "trial" ? isTrial : u.plan === planFilter && !isTrial);
       const bucket = getProviderBucket(u.payment_provider);
       const matchProvider =
         providerFilter === "all" ||
@@ -119,6 +122,7 @@ export default function AdminUsuarios() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos planos</SelectItem>
+            <SelectItem value="trial">Trial</SelectItem>
             <SelectItem value="free">Free</SelectItem>
             <SelectItem value="start">Start</SelectItem>
             <SelectItem value="growth">Growth</SelectItem>
