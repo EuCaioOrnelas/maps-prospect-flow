@@ -32,6 +32,7 @@ export const RenewSubscriptionDialog = ({ userId, previousSubscription, open, on
     monthly_value_input: "",
     total_value_input: "",
     payment_method: "pix" as typeof PAYMENT_METHODS[number]["value"],
+    payment_confirmed: false,
     payment_notes: "",
     is_lifetime: false,
     contract_months: 12,
@@ -95,6 +96,7 @@ export const RenewSubscriptionDialog = ({ userId, previousSubscription, open, on
           monthly_value_cents: monthlyCents,
           total_value_cents: totalCents,
           payment_method: form.payment_method,
+          payment_confirmed: form.payment_confirmed,
           payment_notes: form.payment_notes || null,
           is_lifetime: form.is_lifetime,
           contract_months: form.is_lifetime ? null : form.contract_months,
@@ -155,6 +157,14 @@ export const RenewSubscriptionDialog = ({ userId, previousSubscription, open, on
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-[var(--radius-input)] border border-border bg-muted/20">
+            <div>
+              <Label className="text-sm">Pagamento recebido</Label>
+              <p className="text-xs text-muted-foreground">Registra receita somente após compensação real.</p>
+            </div>
+            <Switch checked={form.payment_confirmed} onCheckedChange={(v) => set({ payment_confirmed: v })} />
           </div>
 
           {/* Limits */}

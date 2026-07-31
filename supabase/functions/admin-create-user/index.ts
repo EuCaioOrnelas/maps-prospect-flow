@@ -33,6 +33,7 @@ interface CreateUserRequest {
   monthly_value_cents: number;
   total_value_cents: number;
   payment_method: "free" | "pix" | "transfer" | "card" | "cash" | "other";
+  payment_confirmed?: boolean;
   payment_notes?: string;
 
   // Anexos (já uploadados pelo cliente no bucket custom-contracts)
@@ -216,8 +217,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 4) Registra primeiro pagamento (se houver valor > 0 ou comprovante)
-    if (body.total_value_cents > 0 || body.receipt_file_url) {
+    // 4) Só registra receita quando o admin confirmar que houve compensação.
+    // Valor contratado ou comprovante anexado, isoladamente, não provam pagamento.
+    if (body.payment_confirmed === true && body.total_value_cents > 0) {
       await supabaseAdmin.from("custom_subscription_payments").insert({
         custom_subscription_id: customSub.id,
         user_id: newUserId,

@@ -55,6 +55,7 @@ export const CreateUserDialog = ({ onUserCreated }: Props) => {
     monthly_value_input: (PLAN_DEFAULTS.scale.monthly_value_cents / 100).toFixed(2).replace(".", ","),
     total_value_input: "",
     payment_method: "pix" as typeof PAYMENT_METHODS[number]["value"],
+    payment_confirmed: false,
     payment_notes: "",
     is_lifetime: false,
     contract_months: 12,
@@ -122,7 +123,7 @@ export const CreateUserDialog = ({ onUserCreated }: Props) => {
       whatsapp_numbers_limit: PLAN_DEFAULTS.scale.whatsapp_numbers_limit,
       monthly_value_input: (PLAN_DEFAULTS.scale.monthly_value_cents / 100).toFixed(2).replace(".", ","),
       total_value_input: "",
-      payment_method: "pix", payment_notes: "",
+      payment_method: "pix", payment_confirmed: false, payment_notes: "",
       is_lifetime: false, contract_months: 12,
       starts_at: new Date().toISOString().slice(0, 10),
       contract_file_url: null, contract_file_name: null,
@@ -150,6 +151,7 @@ export const CreateUserDialog = ({ onUserCreated }: Props) => {
           monthly_value_cents: monthlyCents,
           total_value_cents: totalCents,
           payment_method: form.payment_method,
+          payment_confirmed: form.payment_confirmed,
           payment_notes: form.payment_notes || undefined,
           is_lifetime: form.is_lifetime,
           contract_months: form.is_lifetime ? undefined : form.contract_months,
@@ -473,6 +475,14 @@ export const CreateUserDialog = ({ onUserCreated }: Props) => {
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">Total: {formatCents(totalCents)}</p>
                 </Field>
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/20">
+                <div>
+                  <div className="text-sm font-medium text-foreground">Pagamento já recebido</div>
+                  <p className="text-[11px] text-muted-foreground">Só ative com valor realmente compensado; isso define receita e elegibilidade para churn.</p>
+                </div>
+                <Switch checked={form.payment_confirmed} onCheckedChange={(v) => set({ payment_confirmed: v })} />
               </div>
 
               <Field icon={NotebookPen} label="Notas de pagamento">

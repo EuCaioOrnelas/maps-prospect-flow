@@ -67,6 +67,7 @@ export default function AdminChurn() {
   const [records, setRecords] = useState<ChurnRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [serverMetrics, setServerMetrics] = useState<{ total: number; last30d: number; last7d: number } | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<ChurnRecord | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -130,6 +131,7 @@ export default function AdminChurn() {
       const payingUsers = data?.payingUsersCount ?? 0;
 
       setTotalUsers(payingUsers || 0);
+      setServerMetrics(data?.churnMetrics ?? null);
 
       const profileMap = new Map<string, any>();
       profiles.forEach((profile: any) => profileMap.set(profile.id, profile));
@@ -315,9 +317,12 @@ export default function AdminChurn() {
   // cancelaram), então a taxa nunca pode passar de 100%.
   const rate = (count: number) =>
     totalUsers > 0 ? Math.min(100, (count / totalUsers) * 100).toFixed(1) : "0";
-  const last30dRate = rate(last30d.length);
-  const last7dRate = rate(last7d.length);
-  const churnRateTotal = rate(kpiBase.length);
+  const totalCount = !hasDateFilter && serverMetrics ? serverMetrics.total : kpiBase.length;
+  const last30dCount = !hasDateFilter && serverMetrics ? serverMetrics.last30d : last30d.length;
+  const last7dCount = !hasDateFilter && serverMetrics ? serverMetrics.last7d : last7d.length;
+  const last30dRate = rate(last30dCount);
+  const last7dRate = rate(last7dCount);
+  const churnRateTotal = rate(totalCount);
 
 
   const reasonCounts: Record<string, number> = {};
@@ -336,9 +341,9 @@ export default function AdminChurn() {
     : null;
 
   const kpis = [
-    { label: "Total Cancelamentos", value: kpiBase.length, subtext: `${churnRateTotal}% da base`, icon: UserX, color: "text-red-500" },
-    { label: hasDateFilter ? "Churn no período" : "Churns últimos 30 dias", value: `${last30dRate}%`, subtext: `(${last30d.length} de ${kpiBase.length} no histórico)`, icon: Calendar, color: "text-amber-500" },
-    { label: hasDateFilter ? "Cancelamentos no período" : "Churns 7 dias", value: `${last7dRate}%`, subtext: `(${last7d.length} usuários)`, icon: TrendingDown, color: "text-orange-500" },
+    { label: "Total Cancelamentos", value: totalCount, subtext: `${churnRateTotal}% da base`, icon: UserX, color: "text-red-500" },
+    { label: hasDateFilter ? "Churn no período" : "Churns últimos 30 dias", value: `${last30dRate}%`, subtext: `(${last30dCount} de ${totalCount} no histórico)`, icon: Calendar, color: "text-amber-500" },
+    { label: hasDateFilter ? "Cancelamentos no período" : "Churns 7 dias", value: `${last7dRate}%`, subtext: `(${last7dCount} usuários)`, icon: TrendingDown, color: "text-orange-500" },
     { label: "Taxa Churn Total", value: `${churnRateTotal}%`, icon: Percent, color: "text-red-500" },
     { label: "Principal Motivo", value: topReason ? topReason[0] : "—", icon: AlertTriangle, color: "text-primary", small: true },
     { label: "Pretendem Voltar", value: returnYes + returnMaybe, subtext: `${returnYes} sim · ${returnMaybe} talvez`, icon: Users, color: "text-emerald-500" },

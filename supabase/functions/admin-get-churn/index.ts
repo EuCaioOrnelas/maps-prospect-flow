@@ -91,7 +91,8 @@ serve(async (req) => {
         .not("user_id", "is", null),
       adminClient
         .from("custom_subscription_payments")
-        .select("user_id")
+        .select("user_id, amount_cents")
+        .gt("amount_cents", 0)
         .not("paid_at", "is", null),
     ]);
 
