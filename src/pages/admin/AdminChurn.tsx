@@ -143,9 +143,13 @@ export default function AdminChurn() {
       const merged: ChurnRecord[] = [];
 
       cancellations.forEach((cancellation: any) => {
+        // Um mesmo usuário pode ter várias linhas de cancelamento (retentativas
+        // de webhook, cancelar/reativar). Conta apenas uma vez.
+        if (cancellation.user_id && addedUserIds.has(cancellation.user_id)) return;
         const feedback = feedbackMap.get(cancellation.user_id);
         const profile = profileMap.get(cancellation.user_id);
         addedUserIds.add(cancellation.user_id);
+
 
         merged.push({
           id: cancellation.id,
@@ -307,9 +311,14 @@ export default function AdminChurn() {
   const last7d = hasDateFilter
     ? dateFilteredRecords
     : records.filter((record) => new Date(record.cancelled_at).getTime() > now - 7 * 86400000);
-  const last30dRate = totalUsers > 0 ? ((last30d.length / totalUsers) * 100).toFixed(1) : "0";
-  const last7dRate = totalUsers > 0 ? ((last7d.length / totalUsers) * 100).toFixed(1) : "0";
-  const churnRateTotal = totalUsers > 0 ? ((kpiBase.length / totalUsers) * 100).toFixed(1) : "0";
+  // A base é o total de usuários que já pagaram pelo menos uma vez (inclui os que
+  // cancelaram), então a taxa nunca pode passar de 100%.
+  const rate = (count: number) =>
+    totalUsers > 0 ? Math.min(100, (count / totalUsers) * 100).toFixed(1) : "0";
+  const last30dRate = rate(last30d.length);
+  const last7dRate = rate(last7d.length);
+  const churnRateTotal = rate(kpiBase.length);
+
 
   const reasonCounts: Record<string, number> = {};
   kpiBase.forEach((record) => {

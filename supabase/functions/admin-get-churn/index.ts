@@ -75,7 +75,7 @@ serve(async (req) => {
         .order("created_at", { ascending: false }),
       adminClient
         .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, admin_assigned_plan")
+        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, admin_assigned_plan")
         .order("created_at", { ascending: false }),
       // Vendas registradas somente após pagamento recebido. Checkout concluído não
       // é prova de pagamento porque também é criado ao iniciar um trial.
@@ -106,6 +106,17 @@ serve(async (req) => {
     (paidSalesRes.data || []).forEach((row: any) => row.customer_user_id && usersWithRealPayment.add(row.customer_user_id));
     (paidInvoicesRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
     (customPaymentsRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
+    // Stripe não tem tabela local de invoices: a evidência de cobrança é o perfil
+    // com provider stripe, preço de assinatura e período contratado registrado.
+    // Sem isso a base de pagantes fica minúscula e a taxa de churn estoura 100%.
+    (profilesRes.data || []).forEach((profile: any) => {
+      if (profile.admin_assigned_plan) return;
+      if (profile.payment_provider !== "stripe") return;
+      if (!profile.subscription_current_period_end) return;
+      if ((profile.subscription_price_cents || 0) <= 0) return;
+      usersWithRealPayment.add(profile.id);
+    });
+
 
     const profiles = profilesRes.data || [];
     const expiredProfiles = profiles.filter((profile) => {
