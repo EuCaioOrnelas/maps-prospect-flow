@@ -129,7 +129,7 @@ export default function AdminChurn() {
       // (não usar profiles.length pois inclui trial-only e nunca-pagantes)
       const payingUsers = data?.payingUsersCount ?? 0;
 
-      setTotalUsers(payingUsers || profiles.length || 0);
+      setTotalUsers(payingUsers || 0);
 
       const profileMap = new Map<string, any>();
       profiles.forEach((profile: any) => profileMap.set(profile.id, profile));
@@ -256,6 +256,7 @@ export default function AdminChurn() {
 
       // Mescla cancelamentos do Stripe feitos fora do nosso fluxo
       stripeChurns.forEach((sc: any) => {
+        if (sc.user_id && addedUserIds.has(sc.user_id)) return;
         const profile = sc.user_id ? profileMap.get(sc.user_id) : null;
         const feedback = sc.user_id ? feedbackMap.get(sc.user_id) : null;
         if (sc.user_id) addedUserIds.add(sc.user_id);
@@ -280,8 +281,8 @@ export default function AdminChurn() {
         });
       });
 
-      // Filtra churns anteriores ao corte de 15/04/2026 (não contar histórico legado)
-      const CHURN_CUTOFF = new Date("2026-04-15T00:00:00-03:00").getTime();
+      // O histórico oficial de churn começa em julho/2026.
+      const CHURN_CUTOFF = new Date("2026-07-01T00:00:00Z").getTime();
       const filtered = merged.filter(
         (record) => new Date(record.cancelled_at).getTime() >= CHURN_CUTOFF
       );

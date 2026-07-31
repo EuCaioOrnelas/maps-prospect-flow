@@ -8,6 +8,9 @@
  */
 export const REFUND_METRICS_SINCE = new Date("2026-07-01T00:00:00Z");
 
+/** Início oficial das métricas de churn após a limpeza do histórico legado. */
+export const CHURN_METRICS_SINCE = new Date("2026-07-01T00:00:00Z");
+
 /**
  * Data em que o NOVO onboarding entrou no ar. Somente usuários que
  * responderam ou pularam o novo onboarding entram no cálculo de ativação.
@@ -139,16 +142,14 @@ export function hasProfileUsage(p: any): boolean {
  */
 export async function fetchPayingUserIds(supabase: any): Promise<Set<string>> {
   const paying = new Set<string>();
-  const [pix, custom, paid] = await Promise.all([
-    supabase.from("pix_invoices").select("user_id").not("paid_at", "is", null),
+  const [pix, custom, checkout] = await Promise.all([
+    supabase.from("pix_invoices").select("user_id").eq("status", "paid"),
     supabase.from("custom_subscription_payments").select("user_id").not("paid_at", "is", null),
-    supabase.from("profiles").select("id, plan, subscription_price_cents"),
+    supabase.from("checkout_leads").select("user_id").eq("checkout_completed", true).not("user_id", "is", null),
   ]);
   ((pix.data as any[]) || []).forEach((r) => r?.user_id && paying.add(r.user_id));
   ((custom.data as any[]) || []).forEach((r) => r?.user_id && paying.add(r.user_id));
-  ((paid.data as any[]) || []).forEach((p) => {
-    if ((p?.plan && p.plan !== "free") || (p?.subscription_price_cents ?? 0) > 0) paying.add(p.id);
-  });
+  ((checkout.data as any[]) || []).forEach((r) => r?.user_id && paying.add(r.user_id));
   return paying;
 }
 

@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { hasCompletedTrial, hasConvertedFromTrial, isNewOnboarding, fetchActivatedUserIds, hasProfileUsage } from "@/lib/adminMetrics";
+import { hasCompletedTrial, hasConvertedFromTrial } from "@/lib/adminMetrics";
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -105,28 +105,17 @@ export default function AdminDashboard() {
         setTrialConversion({ total: trialed.length, converted });
       }
 
-      // Ativação: somente usuários que passaram pelo NOVO onboarding
-      // (responderam ou pularam) — os demais ficam fora da base de cálculo.
-      const [{ data: activationProfiles }, { data: onboardingRows }] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used"),
-        supabase
-          .from("user_onboarding")
-          .select("user_id, skipped, completed_at, created_at, role"),
-      ]);
-
-      if (activationProfiles) {
-        const eligible = new Set(
-          ((onboardingRows as any[]) || []).filter(isNewOnboarding).map((r) => r.user_id)
-        );
-        const base = activationProfiles.filter((p) => eligible.has(p.id));
-        const activatedIds = await fetchActivatedUserIds(supabase, base.map((p: any) => p.id));
-        const total = base.length;
-        const activated = base.filter(
-          (p: any) => hasProfileUsage(p) || activatedIds.has(p.id)
-        ).length;
-        setActivationData({ total, activated });
+      // A apuração roda no backend administrativo para enxergar todas as fontes
+      // de uso, sem ser limitada pelas políticas do usuário logado.
+      const { data: activationMetrics, error: activationError } = await supabase.functions.invoke(
+        "admin-activation-metrics",
+        { body: {} }
+      );
+      if (!activationError && activationMetrics) {
+        setActivationData({
+          total: activationMetrics.total || 0,
+          activated: activationMetrics.activated || 0,
+        });
       }
 
 

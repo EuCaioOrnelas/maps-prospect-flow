@@ -7,8 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Cutoff: ignorar churns anteriores a 15/04/2026 (legado pré-relançamento)
-const CHURN_CUTOFF_MS = new Date("2026-04-15T00:00:00-03:00").getTime();
+// O histórico oficial das métricas de churn começa em julho/2026.
+const CHURN_CUTOFF_MS = new Date("2026-07-01T00:00:00Z").getTime();
 const CHURN_CUTOFF_UNIX = Math.floor(CHURN_CUTOFF_MS / 1000);
 
 const logStep = (step: string, details?: unknown) => {
@@ -118,6 +118,7 @@ serve(async (req) => {
 
     // Filtrar subscription_cancellations: descartar quem nunca pagou nada (trial)
     const filteredCancellations = (cancellationsRes.data || []).filter((c: any) => {
+      if (new Date(c.cancelled_at).getTime() < CHURN_CUTOFF_MS) return false;
       // Stripe: a verificação de trial já é feita abaixo no merge com Stripe API
       // Para nosso fluxo interno (asaas/manual), exigir pagamento real
       if (c.provider === "stripe") return true;
@@ -127,6 +128,7 @@ serve(async (req) => {
 
     // Filtrar subscription_events do mesmo modo
     const filteredEvents = (eventsRes.data || []).filter((e: any) => {
+      if (new Date(e.created_at).getTime() < CHURN_CUTOFF_MS) return false;
       if (!e.user_id) return true;
       // pix_not_renewed e similares: só conta se houve pagamento real prévio
       return usersWithRealPayment.has(e.user_id);
@@ -136,6 +138,7 @@ serve(async (req) => {
     // Sem isso, feedbacks de quem cancelou DURANTE o trial (sem nunca ter pago)
     // entrariam no merge do frontend e gerariam churns falsos.
     const filteredFeedbacks = (feedbacksRes.data || []).filter((f: any) => {
+      if (new Date(f.created_at).getTime() < CHURN_CUTOFF_MS) return false;
       if (!f.user_id) return false;
       return usersWithRealPayment.has(f.user_id);
     });

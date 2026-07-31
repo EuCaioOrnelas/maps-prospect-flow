@@ -2,7 +2,6 @@ import { UserCheck, ArrowDown, Info, Users, MousePointerClick, Sparkles } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { isNewOnboarding, fetchActivatedUserIds, hasProfileUsage } from "@/lib/adminMetrics";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -35,55 +34,16 @@ export default function AdminAtivacao() {
 
   useEffect(() => {
     const load = async () => {
-      // Base de cálculo: SOMENTE usuários que passaram pelo novo onboarding
-      // (responderam ou pularam). Cadastros anteriores ficam fora do funil.
-      const [{ data: allProfiles }, { data: onboardingRows }] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id, created_at, updated_at, payment_provider, plan, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used"),
-        supabase
-          .from("user_onboarding")
-          .select("user_id, skipped, completed_at, created_at, role"),
-      ]);
-
-      if (!allProfiles) { setLoading(false); return; }
-
-      const eligible = new Set(
-        ((onboardingRows as any[]) || []).filter(isNewOnboarding).map((r) => r.user_id)
-      );
-      const profiles = allProfiles.filter((p: any) => eligible.has(p.id));
-
-
-      const total = profiles.length;
-
-      // Acessou dashboard: updated_at é > 1min após created_at (login pós-signup)
-      const accessed = profiles.filter((p: any) => {
-        const c = new Date(p.created_at).getTime();
-        const u = new Date(p.updated_at).getTime();
-        return u - c > 60_000; // 1 min de margem
-      }).length;
-
-      // Ativados: usaram qualquer feature real (prospecção, CRM, campanhas Meta,
-      // WhatsApp, chat, fluxos, agentes de IA) ou os contadores do perfil.
-      const activatedIds = await fetchActivatedUserIds(supabase, profiles.map((p: any) => p.id));
-      const activatedProfiles = profiles.filter(
-        (p: any) => hasProfileUsage(p) || activatedIds.has(p.id)
-      );
-      const activated = activatedProfiles.length;
-
-
-      // Breakdown de pagantes ativados por provedor (Stripe Cartão / Asaas PIX)
-      const activatedStripe = activatedProfiles.filter(
-        (p: any) => p.payment_provider === "stripe" && p.plan && p.plan !== "free"
-      ).length;
-      const activatedAsaas = activatedProfiles.filter(
-        (p: any) =>
-          (p.payment_provider === "asaas" || p.payment_provider === "abacate_pay") &&
-          p.plan &&
-          p.plan !== "free"
-      ).length;
-
-      setStats({ total, accessed, activated, activatedStripe, activatedAsaas });
+      const { data, error } = await supabase.functions.invoke("admin-activation-metrics", { body: {} });
+      if (!error && data) {
+        setStats({
+          total: data.total || 0,
+          accessed: data.accessed || 0,
+          activated: data.activated || 0,
+          activatedStripe: data.activatedStripe || 0,
+          activatedAsaas: data.activatedAsaas || 0,
+        });
+      }
       setLoading(false);
     };
     load();
