@@ -533,26 +533,34 @@ export function useAdminDashboard() {
     return totalSubscribers > 0 ? totalMRR / totalSubscribers : 0;
   }, [totalMRR, totalSubscribers]);
 
-  // LTV: average subscription duration * average ticket
+  // LTV: preferimos a fórmula clássica (ticket médio ÷ churn mensal), que é
+  // estável mesmo com base pequena. Sem churn no período, usamos o tempo real
+  // de assinatura PAGA (o trial não conta como receita).
   const ltvData = useMemo(() => {
     if (payingProfiles.length === 0) return { avgMonths: 0, ltv: 0 };
-    
-    const now = new Date();
+
+    const now = Date.now();
+    const MONTH_MS = 1000 * 60 * 60 * 24 * 30;
+    const TRIAL_MS = 1000 * 60 * 60 * 24 * 7;
+
     let totalMonths = 0;
-    let count = 0;
-    
     for (const p of payingProfiles) {
-      const created = new Date(p.created_at);
-      const months = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 30);
-      totalMonths += months;
-      count++;
+      const willCharge = (p as any).trial_will_charge_at
+        ? new Date((p as any).trial_will_charge_at).getTime()
+        : null;
+      const paidStart = willCharge ?? new Date(p.created_at).getTime() + TRIAL_MS;
+      totalMonths += Math.max(0, (now - paidStart) / MONTH_MS);
     }
-    
-    const avgMonths = count > 0 ? totalMonths / count : 0;
-    const ltv = avgMonths * averageTicket;
-    
+
+    const avgMonths = totalMonths / payingProfiles.length;
+    const ltv =
+      churnRate > 0
+        ? averageTicket / (churnRate / 100)
+        : Math.max(avgMonths, 1) * averageTicket;
+
     return { avgMonths, ltv };
-  }, [payingProfiles, averageTicket]);
+  }, [payingProfiles, averageTicket, churnRate]);
+
 
   // pixMRR efetivo: combina o histórico mensal local com o valor real do Asaas no mês corrente.
   const effectivePixMRR = useMemo(() => {
