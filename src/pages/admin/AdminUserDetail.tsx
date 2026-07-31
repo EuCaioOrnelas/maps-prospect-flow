@@ -119,8 +119,9 @@ export default function AdminUserDetail() {
       _to: toISO,
     });
     if (error) {
-      toast.error("Erro ao carregar estatísticas");
+      toast.error(`Erro ao carregar estatísticas: ${error.message}`);
       console.error(error);
+      setStats(null);
     } else {
       setStats(data as any);
     }
