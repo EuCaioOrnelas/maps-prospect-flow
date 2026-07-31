@@ -416,9 +416,12 @@ Deno.serve(async (req) => {
 
     const totalNewSales = totalSalesCount;
 
-    // Calculate churn rate: canceled / (active + canceled)
-    const totalBase = activeCount + canceledCount;
-    const churnRate = totalBase > 0 ? ((canceledCount / totalBase) * 100) : 0;
+    // Churn MENSAL: cancelamentos dos últimos 30 dias sobre a base do início do
+    // período (ativos + quem saiu). Antes usava o acumulado histórico, o que
+    // inflava a taxa (ex.: 40%) e não batia com a página de churn.
+    const totalBase = activeCount + cancellationsLast30d;
+    const churnRate = totalBase > 0 ? ((cancellationsLast30d / totalBase) * 100) : 0;
+
 
     // --- Compute real monthly MRR by tracking subscription lifecycles ---
     // For each month, calculate which subs were active and sum their monthly value
