@@ -305,7 +305,16 @@ export default function AdminDashboard() {
 
       {/* Primary KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <KPICard label="MRR Total" value={formatCurrency(totalMRR)} icon={DollarSign} />
+        <KPICard
+          label="MRR Total"
+          value={formatCurrency(totalMRR)}
+          icon={DollarSign}
+          sub={
+            addOnsMrrVal > 0
+              ? `inclui ${formatCurrency(addOnsMrrVal)} em add-ons (${stripeMRR?.subscriptionsWithAddOns ?? 0} assin.)`
+              : undefined
+          }
+        />
         <KPICard label="Assinantes" value={totalSubscribers.toString()} icon={CreditCard} />
         <KPICard
           label="Churn"
