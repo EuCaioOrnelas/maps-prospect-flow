@@ -25,6 +25,9 @@ interface StripeMRRData {
   totalRefunded: number;
   refundCount: number;
   canceledSubscriptions: number;
+  /** MRR proveniente de order bumps (itens extras da assinatura). */
+  addOnsMRR?: number;
+  subscriptionsWithAddOns?: number;
 }
 
 interface PixMRRData {

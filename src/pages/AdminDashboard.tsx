@@ -273,6 +273,7 @@ export default function AdminDashboard() {
   const stripeMrrVal = stripeMRR?.totalMRR ?? 0;
   const pixMrrVal = pixMRR?.pixMrr ?? 0;
   const otherMrrVal = otherMRR?.otherMrr ?? 0;
+  const addOnsMrrVal = stripeMRR?.addOnsMRR ?? 0;
   const pctStripe = totalMRR > 0 ? ((stripeMrrVal / totalMRR) * 100).toFixed(1) : "0";
   const pctPix = totalMRR > 0 ? ((pixMrrVal / totalMRR) * 100).toFixed(1) : "0";
   const pctOther = totalMRR > 0 ? ((otherMrrVal / totalMRR) * 100).toFixed(1) : "0";
@@ -305,7 +306,16 @@ export default function AdminDashboard() {
 
       {/* Primary KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <KPICard label="MRR Total" value={formatCurrency(totalMRR)} icon={DollarSign} />
+        <KPICard
+          label="MRR Total"
+          value={formatCurrency(totalMRR)}
+          icon={DollarSign}
+          sub={
+            addOnsMrrVal > 0
+              ? `inclui ${formatCurrency(addOnsMrrVal)} em add-ons (${stripeMRR?.subscriptionsWithAddOns ?? 0} assin.)`
+              : undefined
+          }
+        />
         <KPICard label="Assinantes" value={totalSubscribers.toString()} icon={CreditCard} />
         <KPICard
           label="Churn"
