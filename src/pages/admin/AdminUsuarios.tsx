@@ -219,6 +219,8 @@ export default function AdminUsuarios() {
               <TableBody>
                 {filtered.map(user => {
                   const bucket = getProviderBucket(user.payment_provider);
+                  const customSub = customSubs.get(user.id);
+                  const isCustom = !!customSub || !!user.is_custom_subscription;
                   return (
                   <TableRow key={user.id} className="cursor-pointer hover:bg-muted/40" onClick={() => navigate(`/admin/usuarios/${user.id}`)}>
                     <TableCell>
@@ -230,11 +232,21 @@ export default function AdminUsuarios() {
                     <TableCell>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <Badge className={`${planColors[user.plan] || "bg-muted"} border-0 text-xs`}>{user.plan}</Badge>
-                        {user.is_custom_subscription && (
-                          <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 px-1.5 py-0">
+                        {isCustom && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30 px-1.5 py-0"
+                            title={
+                              customSub
+                                ? `${customSub.label || customSub.plan} · R$ ${(customSub.monthly_value_cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês${customSub.is_lifetime ? " · vitalício" : customSub.ends_at ? ` · até ${new Date(customSub.ends_at).toLocaleDateString("pt-BR")}` : ""}`
+                                : "Assinatura customizada"
+                            }
+                          >
                             Custom
+                            {customSub ? ` · R$ ${(customSub.monthly_value_cents / 100).toFixed(0)}` : ""}
                           </Badge>
                         )}
+
                         {user.is_archived && (
                           <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border px-1.5 py-0">
                             Arquivado
