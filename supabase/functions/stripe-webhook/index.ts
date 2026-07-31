@@ -560,10 +560,7 @@ serve(async (req) => {
               const plan = PRICE_TO_PLAN[priceId] || "free";
               const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
 
-              // Calculate period end from Stripe subscription (CRITICAL for check-subscription)
-              const subscriptionEndIso = newSubscription.current_period_end
-                ? new Date(newSubscription.current_period_end * 1000).toISOString()
-                : null;
+              const isPaidCheckout = session.payment_status === "paid" && (session.amount_total || 0) > 0;
 
               // Calculate new limit based on transition type (upgrade/downgrade/same)
               const { newLimit, carryOver, transitionType } = calculateSearchesForTransition(
@@ -583,10 +580,9 @@ serve(async (req) => {
                 previousPlan: profile.plan
               });
 
-              // On downgrade: reset searches_used to 0
-              // On upgrade with carry-over: keep current usage
-              // On upgrade without carry-over or same: reset to 0
-              const newSearchesUsed = transitionType === "upgrade" && carryOver > 0 ? profile.searches_used : 0;
+              // Checkout de trial apenas cadastra o plano; crédito/vigência só
+              // são concedidos quando há pagamento recebido.
+              const newSearchesUsed = isPaidCheckout && transitionType !== "upgrade" ? 0 : profile.searches_used;
 
               const { error: updateError } = await supabaseClient
                 .from("profiles")
@@ -596,7 +592,9 @@ serve(async (req) => {
                   searches_used: newSearchesUsed,
                   payment_provider: "stripe",
                   subscription_price_cents: stripePriceCents,
-                  subscription_current_period_end: subscriptionEndIso,
+                  ...(isPaidCheckout && newSubscription.current_period_end
+                    ? { subscription_current_period_end: new Date(newSubscription.current_period_end * 1000).toISOString() }
+                    : {}),
                 })
                 .eq("id", profile.id);
 
@@ -637,12 +635,13 @@ serve(async (req) => {
                   }
                 );
 
-                // Track purchase for landing page analytics
-                const amount = PLAN_PRICES[plan] || 0;
-                await trackPurchase(supabaseClient, profile.id, plan, amount);
+                if (isPaidCheckout) {
+                  const amount = PLAN_PRICES[plan] || 0;
+                  await trackPurchase(supabaseClient, profile.id, plan, amount);
+                }
 
                 // Mark checkout lead as completed
-                try {
+                if (isPaidCheckout) try {
                   await supabaseClient
                     .from('checkout_leads')
                     .update({ 
