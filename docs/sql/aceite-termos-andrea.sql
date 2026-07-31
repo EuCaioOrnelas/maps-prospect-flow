@@ -55,11 +55,16 @@ WHERE to_jsonb(cp)::text ILIKE '%andreamoraes05%';
 
 
 -- 5) E-MAILS TRANSACIONAIS ENTREGUES (prova de comunicação recebida)
-SELECT l.created_at, l.email_type, l.status, l.subject
+--    À prova de schema: não referencia colunas específicas.
+SELECT
+  (to_jsonb(l) ->> 'created_at')::timestamptz AS enviado_em,
+  COALESCE(to_jsonb(l) ->> 'email_type', to_jsonb(l) ->> 'template_name', to_jsonb(l) ->> 'type') AS tipo,
+  to_jsonb(l) ->> 'status'  AS status,
+  COALESCE(to_jsonb(l) ->> 'subject', to_jsonb(l) ->> 'assunto', to_jsonb(l) ->> 'title') AS assunto,
+  jsonb_pretty(to_jsonb(l)) AS registro_completo
 FROM public.email_logs l
-WHERE l.recipient_email ILIKE '%andreamoraes05%'
-   OR to_jsonb(l)::text ILIKE '%andreamoraes05%'
-ORDER BY l.created_at;
+WHERE to_jsonb(l)::text ILIKE '%andreamoraes05%'
+ORDER BY 1;
 
 
 -- 6) CANCELAMENTO / MOTIVO DECLARADO (ou ausência dele)
