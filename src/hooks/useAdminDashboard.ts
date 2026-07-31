@@ -16,7 +16,9 @@ interface DashboardStats {
 
 interface StripeMRRData {
   totalMRR: number;
+  stripeMRR?: number;
   activeSubscriptions: number;
+  stripeActiveSubscriptions?: number;
   churnRate: number;
   cancellationsLast30d?: number;
   monthlyMRR: Array<{ month: string; mrr: number; activeCount?: number }>;
@@ -95,7 +97,7 @@ export function useAdminDashboard() {
   const [payingProfiles, setPayingProfiles] = useState<PayingProfile[]>([]);
   // Churn calculado SOMENTE pelo novo sistema de gerenciamento (exclui Stripe).
   // Fonte: tabela subscription_cancellations onde provider != 'stripe', últimos 30 dias.
-  const [newSystemChurn, setNewSystemChurn] = useState<{ cancellations30d: number }>({ cancellations30d: 0 });
+  const [newSystemChurn, setNewSystemChurn] = useState<{ cancellations30d: number; payingUsersCount: number }>({ cancellations30d: 0, payingUsersCount: 0 });
   // Dados em tempo real direto da API do Asaas (fonte de verdade para PIX + cartão Asaas).
   const [asaasLive, setAsaasLive] = useState<AsaasLiveStats | null>(null);
 
@@ -452,45 +454,17 @@ export function useAdminDashboard() {
     }
   }, []);
 
-  // Carrega cancelamentos Asaas/PIX dos últimos 30 dias.
-  // Só conta quem já foi PAGANTE — cancelamento/não-renovação durante o trial
-  // não é churn (nunca virou receita).
+  // Usa exatamente a mesma fonte consolidada da página Churn Intelligence.
   const loadNewSystemChurn = useCallback(async () => {
     try {
-      const thirtyDaysAgo = new Date(Math.max(
-        Date.now() - 30 * 24 * 60 * 60 * 1000,
-        CHURN_METRICS_SINCE.getTime()
-      )).toISOString();
-
-      const [cancellationsRes, eventsRes, payingIds] = await Promise.all([
-        supabase
-          .from("subscription_cancellations")
-          .select("user_id, provider, cancelled_at")
-          .eq("provider", "asaas")
-          .gte("cancelled_at", thirtyDaysAgo),
-        supabase
-          .from("subscription_events")
-          .select("user_id, event_type, event_source, created_at")
-          .eq("event_type", "pix_not_renewed")
-          .eq("event_source", "asaas")
-          .gte("created_at", thirtyDaysAgo),
-        fetchPayingUserIds(supabase),
-      ]);
-
-      if (cancellationsRes.error) throw cancellationsRes.error;
-      if (eventsRes.error) throw eventsRes.error;
-
-      const asaasUsers = new Set<string>();
-      (cancellationsRes.data || []).forEach((item: any) => {
-        if (item.user_id && payingIds.has(item.user_id)) asaasUsers.add(item.user_id);
+      const { data, error } = await supabase.functions.invoke("admin-get-churn", { body: {} });
+      if (error) throw error;
+      setNewSystemChurn({
+        cancellations30d: data?.churnMetrics?.last30d ?? 0,
+        payingUsersCount: data?.churnMetrics?.payingUsersCount ?? data?.payingUsersCount ?? 0,
       });
-      (eventsRes.data || []).forEach((item: any) => {
-        if (item.user_id && payingIds.has(item.user_id)) asaasUsers.add(item.user_id);
-      });
-
-      setNewSystemChurn({ cancellations30d: asaasUsers.size });
     } catch {
-      setNewSystemChurn({ cancellations30d: 0 });
+      setNewSystemChurn({ cancellations30d: 0, payingUsersCount: 0 });
     }
   }, []);
 
@@ -514,28 +488,21 @@ export function useAdminDashboard() {
 
   // Total MRR = Stripe (cartão) + Asaas (PIX) + Asaas (cartão) + Custom subscriptions (manual)
   const totalMRR = useMemo(() => {
-    return (stripeMRR?.totalMRR ?? 0) + effectivePixMrr + effectiveAsaasCardMrr + (otherMRR?.otherMrr ?? 0);
+    return (stripeMRR?.stripeMRR ?? stripeMRR?.totalMRR ?? 0) + effectivePixMrr + effectiveAsaasCardMrr + (otherMRR?.otherMrr ?? 0);
   }, [stripeMRR, effectivePixMrr, effectiveAsaasCardMrr, otherMRR]);
 
   const totalSubscribers = useMemo(() => {
-    return (stripeMRR?.activeSubscriptions ?? 0) + effectivePixSubs + effectiveAsaasCardSubs + (otherMRR?.otherSubscriptions ?? 0);
+    return (stripeMRR?.stripeActiveSubscriptions ?? stripeMRR?.activeSubscriptions ?? 0) + effectivePixSubs + effectiveAsaasCardSubs + (otherMRR?.otherSubscriptions ?? 0);
   }, [stripeMRR, effectivePixSubs, effectiveAsaasCardSubs, otherMRR]);
 
   // Churn = cancelamentos reais no período ÷ base pagante real (todos que já
   // pagaram pelo menos uma vez). Usar só os ativos como denominador infla a taxa
   // e fazia o cockpit divergir da página de Churn Inteligente.
   const churnRate = useMemo(() => {
-    const stripeCancellations30d = stripeMRR?.cancellationsLast30d ?? 0;
-    const cancellations = stripeCancellations30d + newSystemChurn.cancellations30d;
-    const stripePayingEver = (stripeMRR as any)?.payingCustomersEver ?? 0;
-    const periodStartBase = Math.max(
-      totalSubscribers + cancellations,
-      stripePayingEver + newSystemChurn.cancellations30d
-    );
-    if (periodStartBase <= 0) return 0;
-    return Math.min(100, (cancellations / periodStartBase) * 100);
-  }, [newSystemChurn, stripeMRR, totalSubscribers]);
-  const churnCancellations30d = (stripeMRR?.cancellationsLast30d ?? 0) + newSystemChurn.cancellations30d;
+    if (newSystemChurn.payingUsersCount <= 0) return 0;
+    return Math.min(100, (newSystemChurn.cancellations30d / newSystemChurn.payingUsersCount) * 100);
+  }, [newSystemChurn]);
+  const churnCancellations30d = newSystemChurn.cancellations30d;
 
   // Average ticket: uses monthly-equivalent values
   const averageTicket = useMemo(() => {

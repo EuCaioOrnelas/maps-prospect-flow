@@ -159,8 +159,8 @@ Deno.serve(async (req) => {
       notes: body.notes || null,
     });
 
-    // 5) Pagamento da renovação
-    if (body.total_value_cents > 0 || body.receipt_file_url) {
+    // 5) Receita somente após confirmação explícita de compensação.
+    if (body.payment_confirmed === true && body.total_value_cents > 0) {
       await admin.from("custom_subscription_payments").insert({
         custom_subscription_id: newSub.id,
         user_id: body.user_id,

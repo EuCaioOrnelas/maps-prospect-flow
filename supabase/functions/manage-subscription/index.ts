@@ -88,7 +88,7 @@ serve(async (req) => {
     // Get profile
     const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
-      .select("email, cpf, plan, payment_provider, subscription_current_period_end")
+      .select("email, cpf, plan, payment_provider, subscription_current_period_end, is_custom_subscription, admin_assigned_plan, custom_subscription_id")
       .eq("id", userId)
       .single();
 
@@ -96,6 +96,32 @@ serve(async (req) => {
 
     const email = profile.email || userEmail;
     const paymentProvider = profile.payment_provider || "";
+
+    // Contratos administrados manualmente nunca podem cair no fallback Asaas.
+    // O cancelamento/desfazimento é feito pelo admin para manter MRR e churn coerentes.
+    if (profile.is_custom_subscription || profile.admin_assigned_plan || paymentProvider === "manual") {
+      if (action === "get-info") {
+        return new Response(
+          JSON.stringify({
+            provider: "manual",
+            isCustomSubscription: true,
+            canSelfCancel: false,
+            message: "Este contrato é administrado pela equipe Wiize.",
+            plan: profile.plan,
+            currentPeriodEnd: profile.subscription_current_period_end,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          error: "Este contrato é administrado pela equipe Wiize. Solicite o cancelamento pelo suporte.",
+          code: "CUSTOM_SUBSCRIPTION_ADMIN_MANAGED",
+        }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     // Check if Stripe user
     const isStripe = paymentProvider === "stripe";
