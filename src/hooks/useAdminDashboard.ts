@@ -521,13 +521,19 @@ export function useAdminDashboard() {
     return (stripeMRR?.activeSubscriptions ?? 0) + effectivePixSubs + effectiveAsaasCardSubs + (otherMRR?.otherSubscriptions ?? 0);
   }, [stripeMRR, effectivePixSubs, effectiveAsaasCardSubs, otherMRR]);
 
-  // Churn = cancelamentos reais no período ÷ base pagante no início do período
-  // (ativos atuais + quem cancelou). Usar apenas ativos como denominador infla a taxa.
+  // Churn = cancelamentos reais no período ÷ base pagante real (todos que já
+  // pagaram pelo menos uma vez). Usar só os ativos como denominador infla a taxa
+  // e fazia o cockpit divergir da página de Churn Inteligente.
   const churnRate = useMemo(() => {
     const stripeCancellations30d = stripeMRR?.cancellationsLast30d ?? 0;
     const cancellations = stripeCancellations30d + newSystemChurn.cancellations30d;
-    const periodStartBase = totalSubscribers + cancellations;
-    return periodStartBase > 0 ? (cancellations / periodStartBase) * 100 : 0;
+    const stripePayingEver = (stripeMRR as any)?.payingCustomersEver ?? 0;
+    const periodStartBase = Math.max(
+      totalSubscribers + cancellations,
+      stripePayingEver + newSystemChurn.cancellations30d
+    );
+    if (periodStartBase <= 0) return 0;
+    return Math.min(100, (cancellations / periodStartBase) * 100);
   }, [newSystemChurn, stripeMRR, totalSubscribers]);
   const churnCancellations30d = (stripeMRR?.cancellationsLast30d ?? 0) + newSystemChurn.cancellations30d;
 

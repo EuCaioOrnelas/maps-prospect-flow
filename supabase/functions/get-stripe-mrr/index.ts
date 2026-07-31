@@ -286,6 +286,11 @@ Deno.serve(async (req) => {
 
     // Dedupe: mesmo customer com múltiplas subs ativas conta apenas a mais cara.
     const bestSubByCustomer = new Map<string, { subId: string; mrr: number; bumps: number; planName: string; email: string }>();
+    // Valor mensal real (plano + add-ons, já com cupom) por assinatura.
+    // Usado também na série histórica para que MRR do card e do gráfico batam.
+    const subMonthlyById = new Map<string, number>();
+    // Clientes que já pagaram de fato pelo menos uma vez (base de churn).
+    const payingCustomersEver = new Set<string>();
 
     for (const sub of wiizeSubs) {
       const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
@@ -336,9 +341,16 @@ Deno.serve(async (req) => {
       const priceId = priceObj?.id;
       const planName = (priceId && PRICE_TO_PLAN[priceId]) || "unknown";
 
+      subMonthlyById.set(sub.id, mrrAmount);
 
-      const hadAnyPayment = subsWithPayment.has(sub.id) ||
-        (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
+      // Pagamento real = invoice paga e NÃO estornada. Estorno não é receita,
+      // logo não transforma o cliente em pagante nem o cancelamento em churn.
+      const hadAnyPayment = subsWithPayment.has(sub.id);
+      if (hadAnyPayment) {
+        const cid = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+        if (cid) payingCustomersEver.add(cid);
+      }
+
 
       const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-06-01T00:00:00Z").getTime() / 1000);
       const canceledDuringTrial =
@@ -493,16 +505,19 @@ Deno.serve(async (req) => {
       const isCurrentMonth = monthKey === currentMonthKey;
       const snapshotDate = isCurrentMonth ? now : monthEnd;
       
-      let mrrForMonth = 0;
       let activeForMonth = 0;
+      // Mesma regra de dedupe do MRR atual: um customer conta uma única vez.
+      const bestByCustomerMonth = new Map<string, number>();
 
       for (const sub of wiizeSubs) {
         const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
         if (isAdminEmail(customerEmail)) continue;
 
-        const priceId = sub.items.data[0]?.price.id;
-        const subMrr = PLAN_MRR[priceId] || 0;
-        if (subMrr === 0) continue;
+        // Usa o MESMO valor mensal calculado para o MRR atual (plano + add-ons,
+        // com cupom aplicado). A tabela fixa de preços gerava divergência entre
+        // o card de MRR e o gráfico de evolução.
+        const subMrr = subMonthlyById.get(sub.id) || 0;
+        if (subMrr <= 0) continue;
 
         // Sub must have started before or on the snapshot date
         const subStart = new Date(sub.start_date * 1000);
@@ -515,51 +530,40 @@ Deno.serve(async (req) => {
           if (cancelDate <= snapshotDate) continue;
         }
 
-        // For current month active subs, also exclude cancel_at_period_end
-        if (isCurrentMonth && sub.cancel_at_period_end) continue;
+        // No mês corrente vale exatamente a mesma regra do card de MRR:
+        // só entra assinatura ACTIVE, sem cancelamento agendado.
+        if (isCurrentMonth && (sub.cancel_at_period_end || sub.status !== "active")) continue;
 
-        const hadPayment = invoicesBySubId[sub.id] && invoicesBySubId[sub.id].length > 0;
-        if (!hadPayment) continue;
+        const invs = invoicesBySubId[sub.id] || [];
+        if (invs.length === 0) continue;
+
+        // O primeiro pagamento precisa ter ocorrido até o snapshot,
+        // senão meses anteriores ao início da cobrança ficam inflados.
+        const firstPaidMs = Math.min(
+          ...invs.map((inv) => (inv.status_transitions?.paid_at || inv.created) * 1000)
+        );
+        if (firstPaidMs > snapshotDate.getTime()) continue;
 
         const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
         const chargeId = latestInvoice?.charge;
         const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
         if (wasRefunded) continue;
 
-        // Add-ons (order bumps) da assinatura entram no MRR histórico também.
-        let addOnsMonthly = 0;
-        sub.items.data.forEach((item, idx) => {
-          if (idx === 0) return;
-          const p = item.price;
-          if (!p?.recurring) return;
-          const qty = item.quantity ?? 1;
-          const cents = (p.unit_amount || 0) * qty;
-          const itv = p.recurring.interval;
-          const itvCount = p.recurring.interval_count || 1;
-          if (itv === "year") addOnsMonthly += cents / (12 * itvCount) / 100;
-          else if (itv === "week") addOnsMonthly += (cents * 52) / (12 * itvCount) / 100;
-          else if (itv === "day") addOnsMonthly += (cents * 365) / (12 * itvCount) / 100;
-          else addOnsMonthly += cents / itvCount / 100;
-        });
+        const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+        if (!customerId) continue;
+        const prev = bestByCustomerMonth.get(customerId) || 0;
+        if (subMrr > prev) bestByCustomerMonth.set(customerId, subMrr);
+      }
 
-        let effectiveAmount = subMrr + addOnsMonthly;
-
-        const discount = (sub as any).discount;
-        if (discount?.coupon?.duration === "forever") {
-          const coupon = discount.coupon;
-          if (coupon.percent_off) {
-            effectiveAmount = Math.round(effectiveAmount * (1 - coupon.percent_off / 100));
-          } else if (coupon.amount_off) {
-            effectiveAmount = Math.max(0, effectiveAmount - coupon.amount_off / 100);
-          }
-        }
-
-        mrrForMonth += effectiveAmount;
+      let mrrForMonth = 0;
+      for (const [, value] of bestByCustomerMonth) {
+        mrrForMonth += value;
         activeForMonth++;
       }
 
-      monthlyMRR[monthKey] = { mrr: mrrForMonth, activeCount: activeForMonth };
+      monthlyMRR[monthKey] = { mrr: Math.round(mrrForMonth * 100) / 100, activeCount: activeForMonth };
     }
+
 
     // ============================================================
     // Custom subscriptions (admin-managed manual contracts)
@@ -658,6 +662,7 @@ Deno.serve(async (req) => {
         refundCount: wiizeRefundCount,
         canceledSubscriptions: finalCanceledCount,
         cancellationsLast30d,
+        payingCustomersEver: payingCustomersEver.size,
         churnRate: parseFloat(finalChurn.toFixed(1)),
         totalSalesValue: finalSalesValue,
         totalSalesCount: finalSalesCount,

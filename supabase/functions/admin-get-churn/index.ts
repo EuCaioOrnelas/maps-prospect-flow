@@ -158,6 +158,13 @@ serve(async (req) => {
       return usersWithRealPayment.has(f.user_id);
     });
 
+    // Base de pagantes reais, considerando também quem pagou no Stripe mas não
+    // tem evidência local (sem isso a taxa de churn estoura 100%).
+    const payingEmails = new Set<string>();
+    (profilesRes.data || []).forEach((p: any) => {
+      if (usersWithRealPayment.has(p.id) && p.email) payingEmails.add(p.email.toLowerCase());
+    });
+
     // Buscar cancelamentos diretos no Stripe (feitos fora do nosso fluxo)
     // Mescla qualquer subscription canceled pós-01/06 que não esteja já em subscription_cancellations.
     const stripeChurns: any[] = [];
@@ -165,6 +172,27 @@ serve(async (req) => {
       const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
       if (stripeKey) {
         const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+
+        // Todo cliente com invoice paga (valor > 0) é pagante real.
+        let invHasMore = true;
+        let invStartingAfter: string | undefined;
+        let invPages = 0;
+        while (invHasMore && invPages < 10) {
+          const invRes: any = await stripe.invoices.list({
+            status: "paid",
+            limit: 100,
+            ...(invStartingAfter ? { starting_after: invStartingAfter } : {}),
+          });
+          for (const inv of invRes.data) {
+            if (!inv.amount_paid || inv.amount_paid <= 0) continue;
+            const email = inv.customer_email || inv.customer_address?.email;
+            if (email) payingEmails.add(String(email).toLowerCase());
+          }
+          invHasMore = invRes.has_more;
+          invStartingAfter = invRes.data[invRes.data.length - 1]?.id;
+          invPages++;
+        }
+
         const existingStripeIds = new Set(
           (cancellationsRes.data || [])
             .filter((c: any) => c.provider === "stripe")
@@ -252,6 +280,7 @@ serve(async (req) => {
       expiredProfiles: expiredProfiles.length,
       stripeChurns: stripeChurns.length,
       usersWithRealPayment: usersWithRealPayment.size,
+      payingBase: payingEmails.size,
     });
 
     return new Response(
@@ -263,7 +292,7 @@ serve(async (req) => {
         expiredProfiles,
         stripeChurns,
         // Base "paying" usada para cálculo correto de churn rate (não inclui trial-only)
-        payingUsersCount: usersWithRealPayment.size,
+        payingUsersCount: Math.max(payingEmails.size, usersWithRealPayment.size),
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
