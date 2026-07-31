@@ -5394,6 +5394,7 @@ export type Database = {
           extra_contacts_packs: number
           extra_numbers: number
           extra_opportunities_packs: number
+          first_paid_at: string | null
           fraud_flags: Json | null
           id: string
           is_archived: boolean
@@ -5459,6 +5460,7 @@ export type Database = {
           extra_contacts_packs?: number
           extra_numbers?: number
           extra_opportunities_packs?: number
+          first_paid_at?: string | null
           fraud_flags?: Json | null
           id: string
           is_archived?: boolean
@@ -5524,6 +5526,7 @@ export type Database = {
           extra_contacts_packs?: number
           extra_numbers?: number
           extra_opportunities_packs?: number
+          first_paid_at?: string | null
           fraud_flags?: Json | null
           id?: string
           is_archived?: boolean
@@ -9392,6 +9395,10 @@ export type Database = {
         Args: { p_external_reference: string; p_kind?: string }
         Returns: Json
       }
+      mark_user_first_payment: {
+        Args: { _paid_at?: string; _user_id: string }
+        Returns: undefined
+      }
       match_faqs: {
         Args: {
           match_count?: number
@@ -9490,6 +9497,7 @@ export type Database = {
         Args: { p_partner_id: string }
         Returns: undefined
       }
+      user_has_real_payment: { Args: { _user_id: string }; Returns: boolean }
       verify_partner_public: {
         Args: { p_code: string }
         Returns: {
