@@ -45,9 +45,34 @@ const EVENT_TYPE_ICONS: Record<string, React.ReactNode> = {
   subscription_past_due: <Clock className="h-4 w-4" />,
 };
 
+// Eventos que representam cobrança real (dinheiro entrando).
+// Trials, expirações e mudanças de status NÃO entram na contagem.
+const PAYMENT_EVENT_TYPES = new Set([
+  "checkout_completed",
+  "purchase",
+  "invoice_paid",
+  "payment_confirmed",
+  "subscription_created",
+  "subscription_renewed",
+  "subscription_updated_active",
+]);
+
+const isPaymentEvent = (e: SubscriptionEvent) => {
+  const type = (e.event_type || "").toLowerCase();
+  if (!PAYMENT_EVENT_TYPES.has(type)) return false;
+  // Descarta eventos de trial sem cobrança (plano continua free ou metadata marca trial)
+  if ((e.new_plan || "").toLowerCase() === "free") return false;
+  const meta = e.metadata || {};
+  if (meta.trial === true || meta.is_trial === true) return false;
+  if (typeof meta.amount_cents === "number" && meta.amount_cents <= 0) return false;
+  return true;
+};
+
 export function SubscriptionEventsLog() {
   const [events, setEvents] = useState<SubscriptionEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [onlyPayments, setOnlyPayments] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const fetchEvents = async () => {
