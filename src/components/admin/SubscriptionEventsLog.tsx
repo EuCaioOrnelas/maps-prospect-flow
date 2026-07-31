@@ -158,10 +158,23 @@ export function SubscriptionEventsLog() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-semibold">
-          📊 Debug: Eventos de Subscription
-        </CardTitle>
+        <div className="flex flex-col gap-1">
+          <CardTitle className="text-lg font-semibold">
+            📊 Eventos de Subscription
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            {paymentEventsCount} evento(s) de pagamento real
+            {!onlyPayments && ` · ${events.length} no total (inclui trial/expiração)`}
+          </p>
+        </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant={onlyPayments ? "default" : "outline"}
+            size="sm"
+            onClick={() => setOnlyPayments((v) => !v)}
+          >
+            {onlyPayments ? "Somente pagamentos" : "Todos os eventos"}
+          </Button>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -171,6 +184,7 @@ export function SubscriptionEventsLog() {
               className="pl-8 w-64"
             />
           </div>
+
           <Button
             variant="outline"
             size="icon"
