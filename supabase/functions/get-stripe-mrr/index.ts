@@ -526,7 +526,24 @@ Deno.serve(async (req) => {
         const wasRefunded = chargeId && typeof chargeId === "string" && refundedChargeIds.has(chargeId);
         if (wasRefunded) continue;
 
-        let effectiveAmount = subMrr;
+        // Add-ons (order bumps) da assinatura entram no MRR histórico também.
+        let addOnsMonthly = 0;
+        sub.items.data.forEach((item, idx) => {
+          if (idx === 0) return;
+          const p = item.price;
+          if (!p?.recurring) return;
+          const qty = item.quantity ?? 1;
+          const cents = (p.unit_amount || 0) * qty;
+          const itv = p.recurring.interval;
+          const itvCount = p.recurring.interval_count || 1;
+          if (itv === "year") addOnsMonthly += cents / (12 * itvCount) / 100;
+          else if (itv === "week") addOnsMonthly += (cents * 52) / (12 * itvCount) / 100;
+          else if (itv === "day") addOnsMonthly += (cents * 365) / (12 * itvCount) / 100;
+          else addOnsMonthly += cents / itvCount / 100;
+        });
+
+        let effectiveAmount = subMrr + addOnsMonthly;
+
         const discount = (sub as any).discount;
         if (discount?.coupon?.duration === "forever") {
           const coupon = discount.coupon;
