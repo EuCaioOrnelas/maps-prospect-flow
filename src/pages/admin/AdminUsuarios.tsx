@@ -157,6 +157,28 @@ export default function AdminUsuarios() {
         </div>
       </div>
 
+      {orphanCustomSubs.length > 0 && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardContent className="p-4 text-sm">
+            <p className="font-medium text-amber-600">
+              {orphanCustomSubs.length} assinatura(s) customizada(s) ativa(s) sem usuário correspondente
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Essas assinaturas continuam somando no MRR do admin mesmo com a conta excluída. Cancele-as para os dados baterem.
+            </p>
+            <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+              {orphanCustomSubs.map((s) => (
+                <li key={s.user_id}>
+                  {s.label || s.plan} · R$ {(s.monthly_value_cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês · user_id {s.user_id}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+
+
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
