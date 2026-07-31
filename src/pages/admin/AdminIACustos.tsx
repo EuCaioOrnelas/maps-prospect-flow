@@ -108,6 +108,7 @@ export default function AdminIACustos() {
 
       // Custos medidos por chamadas de suporte/Wian e demais operações que
       // registram tokens diretamente. Não usa estimativa quando há valor real.
+      const byFeature: Record<string, { cost: number; tokens: number }> = {};
       (measuredLogs || []).forEach((l: any) => {
         const key = l.created_at.slice(0, 10);
         const tokens = (l.tokens_in || 0) + (l.tokens_out || 0);
@@ -119,9 +120,24 @@ export default function AdminIACustos() {
         }
         totalCost += cost;
         totalTokens += tokens;
+        const f = l.feature || "outros";
+        byFeature[f] = byFeature[f] || { cost: 0, tokens: 0 };
+        byFeature[f].cost += cost;
+        byFeature[f].tokens += tokens;
       });
+      byFeature["agentes de whatsapp (estimado)"] = {
+        cost: Object.values(buckets).reduce((a, b) => a + b.cost, 0) - Object.values(byFeature).reduce((a, b) => a + b.cost, 0),
+        tokens: 0,
+      };
+      setBreakdown(
+        Object.entries(byFeature)
+          .map(([feature, v]) => ({ feature, ...v }))
+          .filter((r) => r.cost > 0)
+          .sort((a, b) => b.cost - a.cost),
+      );
 
       setDaily(Object.values(buckets));
+
       setMonthCost(totalCost);
       setMonthTokens(totalTokens);
       setActiveUsers(userSet.size);
