@@ -644,6 +644,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         totalMRR: finalMRR,
         stripeMRR: activeMRR,
+        addOnsMRR: Math.round(bumpsMRR * 100) / 100,
+        subscriptionsWithAddOns: subsWithBumps,
         customMRR,
         activeSubscriptions: finalActiveCount,
         stripeActiveSubscriptions: activeCount,
