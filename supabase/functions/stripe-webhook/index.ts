@@ -1027,6 +1027,9 @@ serve(async (req) => {
           billingReason: invoice.billing_reason
         });
 
+        await markFirstRealPayment(supabaseClient, invoice);
+
+
         // Only reset searches on subscription renewal (not first payment)
         if (invoice.billing_reason === "subscription_cycle" && invoice.subscription) {
           const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
