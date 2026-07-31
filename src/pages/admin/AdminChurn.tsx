@@ -143,9 +143,13 @@ export default function AdminChurn() {
       const merged: ChurnRecord[] = [];
 
       cancellations.forEach((cancellation: any) => {
+        // Um mesmo usuário pode ter várias linhas de cancelamento (retentativas
+        // de webhook, cancelar/reativar). Conta apenas uma vez.
+        if (cancellation.user_id && addedUserIds.has(cancellation.user_id)) return;
         const feedback = feedbackMap.get(cancellation.user_id);
         const profile = profileMap.get(cancellation.user_id);
         addedUserIds.add(cancellation.user_id);
+
 
         merged.push({
           id: cancellation.id,
