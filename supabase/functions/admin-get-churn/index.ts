@@ -109,6 +109,9 @@ serve(async (req) => {
     (paidInvoicesRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
     (customPaymentsRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
     const profiles = profilesRes.data || [];
+    // first_paid_at é gravado pelo webhook do cartão no 1º pagamento com valor > 0.
+    profiles.forEach((p: any) => { if (p.first_paid_at) usersWithRealPayment.add(p.id); });
+
     const profilesByEmail = new Map(
       profiles
         .filter((profile: any) => profile.email)
