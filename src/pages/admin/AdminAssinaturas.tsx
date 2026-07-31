@@ -17,25 +17,54 @@ export default function AdminAssinaturas() {
 
   useEffect(() => {
     const load = async () => {
-      const { data, error } = await supabase.functions.invoke("audit-mrr", { body: {} });
-      if (!error) {
-        setSubscribers((data?.rows || [])
-          .filter((row: any) => row.counted_in_mrr || row.counted_as_trial)
-          .map((row: any) => ({
-            id: `${row.provider}-${row.subscription_id}`,
-            name: null,
-            email: row.customer_email,
-            plan: row.plan || row.profile_plan,
-            payment_provider: row.provider,
-            subscription_current_period_end: row.current_period_end,
-            trial_will_charge_at: row.counted_as_trial ? row.trial_will_charge_at || row.trial_end : null,
-            counted_as_trial: row.counted_as_trial,
-          })));
-      }
+      const nowIso = new Date().toISOString();
+      const [auditRes, trialRes] = await Promise.all([
+        supabase.functions.invoke("audit-mrr", { body: {} }),
+        supabase
+          .from("profiles")
+          .select("id, email, name, plan, trial_plan_chosen, payment_provider, trial_will_charge_at, trial_end_at, trial_auto_charge_cancelled, subscription_current_period_end")
+          .or(`trial_will_charge_at.gte.${nowIso},trial_end_at.gte.${nowIso}`),
+      ]);
+
+      const { data, error } = auditRes;
+      const fromAudit = !error
+        ? (data?.rows || [])
+            .filter((row: any) => row.counted_in_mrr || row.counted_as_trial)
+            .map((row: any) => ({
+              id: `${row.provider}-${row.subscription_id}`,
+              name: null,
+              email: row.customer_email,
+              plan: row.plan || row.profile_plan,
+              payment_provider: row.provider,
+              subscription_current_period_end: row.current_period_end,
+              trial_will_charge_at: row.counted_as_trial ? row.trial_will_charge_at || row.trial_end : null,
+              counted_as_trial: row.counted_as_trial,
+            }))
+        : [];
+
+      // Fallback: trials locais (perfil com trial ativo) que ainda não têm
+      // assinatura correspondente no Stripe/Asaas — antes a aba ficava vazia.
+      const knownEmails = new Set(fromAudit.map((s: any) => (s.email || "").toLowerCase()));
+      const localTrials = ((trialRes.data as any[]) || [])
+        .filter((p) => !p.trial_auto_charge_cancelled)
+        .filter((p) => !knownEmails.has((p.email || "").toLowerCase()))
+        .map((p) => ({
+          id: `profile-${p.id}`,
+          name: p.name,
+          email: p.email,
+          plan: p.trial_plan_chosen || p.plan,
+          payment_provider: p.payment_provider || "trial",
+          subscription_current_period_end: p.subscription_current_period_end,
+          trial_will_charge_at: p.trial_will_charge_at || p.trial_end_at,
+          counted_as_trial: true,
+        }));
+
+      setSubscribers([...fromAudit, ...localTrials]);
       setLoading(false);
     };
     load();
   }, []);
+
 
   const isTrialing = (s: any) => s.counted_as_trial === true;
 
