@@ -172,6 +172,8 @@ export default function AdminUsuarios() {
             <SelectItem value="start">Start</SelectItem>
             <SelectItem value="growth">Growth</SelectItem>
             <SelectItem value="scale">Scale</SelectItem>
+            <SelectItem value="custom">Custom (manual)</SelectItem>
+
           </SelectContent>
         </Select>
         <Select value={providerFilter} onValueChange={setProviderFilter}>
