@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ONBOARDING_SINCE = new Date("2026-04-24T16:00:00Z").getTime();
+const ACTIVATION_CUTOFF = new Date("2026-06-01T00:00:00Z").getTime();
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -44,10 +44,14 @@ serve(async (req) => {
       if (row.role === "Usuário ativo") continue;
       if (!row.completed_at && !row.skipped) continue;
       const reference = new Date(row.completed_at || row.created_at).getTime();
-      if (Number.isFinite(reference) && reference >= ONBOARDING_SINCE) eligibleIds.add(row.user_id);
+      if (Number.isFinite(reference) && reference >= ACTIVATION_CUTOFF) eligibleIds.add(row.user_id);
     }
 
-    const profiles = (profilesRes.data || []).filter((profile: any) => eligibleIds.has(profile.id));
+    // A coorte de ativação contém somente contas criadas desde 01/06 que
+    // responderam ou pularam o onboarding real. Usuários legados nunca entram.
+    const profiles = (profilesRes.data || []).filter((profile: any) =>
+      eligibleIds.has(profile.id) && new Date(profile.created_at).getTime() >= ACTIVATION_CUTOFF
+    );
     const activatedIds = new Set<string>();
     const activitySources = [
       ["leads", ["user_id", "owner_user_id", "created_by_user_id"]],

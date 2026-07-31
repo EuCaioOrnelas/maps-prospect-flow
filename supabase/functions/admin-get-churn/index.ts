@@ -7,8 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// O histórico oficial das métricas de churn começa em julho/2026.
-const CHURN_CUTOFF_MS = new Date("2026-07-01T00:00:00Z").getTime();
+// O histórico oficial das métricas de churn começa em junho/2026.
+const CHURN_CUTOFF_MS = new Date("2026-06-01T00:00:00Z").getTime();
 const CHURN_CUTOFF_UNIX = Math.floor(CHURN_CUTOFF_MS / 1000);
 
 const logStep = (step: string, details?: unknown) => {
@@ -65,7 +65,7 @@ serve(async (req) => {
 
     const now = Date.now();
 
-    const [cancellationsRes, feedbacksRes, eventsRes, profilesRes, paidLeadsRes, paidInvoicesRes] = await Promise.all([
+    const [cancellationsRes, feedbacksRes, eventsRes, profilesRes, paidLeadsRes, paidInvoicesRes, customPaymentsRes] = await Promise.all([
       adminClient.from("subscription_cancellations").select("*").order("cancelled_at", { ascending: false }),
       adminClient.from("cancellation_feedback").select("*").order("created_at", { ascending: false }),
       adminClient
@@ -89,6 +89,10 @@ serve(async (req) => {
         .select("user_id")
         .eq("status", "paid")
         .not("user_id", "is", null),
+      adminClient
+        .from("custom_subscription_payments")
+        .select("user_id")
+        .not("paid_at", "is", null),
     ]);
 
     if (cancellationsRes.error) throw cancellationsRes.error;
@@ -101,6 +105,7 @@ serve(async (req) => {
     const usersWithRealPayment = new Set<string>();
     (paidLeadsRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
     (paidInvoicesRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
+    (customPaymentsRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
 
     const profiles = profilesRes.data || [];
     const expiredProfiles = profiles.filter((profile) => {
@@ -119,17 +124,16 @@ serve(async (req) => {
     // Filtrar subscription_cancellations: descartar quem nunca pagou nada (trial)
     const filteredCancellations = (cancellationsRes.data || []).filter((c: any) => {
       if (new Date(c.cancelled_at).getTime() < CHURN_CUTOFF_MS) return false;
-      // Stripe: a verificação de trial já é feita abaixo no merge com Stripe API
-      // Para nosso fluxo interno (asaas/manual), exigir pagamento real
-      if (c.provider === "stripe") return true;
-      if (!c.user_id) return true;
+       // Registros locais sempre exigem um usuário vinculado e pagamento confirmado.
+       // Stripe sem user_id só entra pelo lookup direto, que valida invoice paga.
+       if (!c.user_id) return false;
       return usersWithRealPayment.has(c.user_id);
     });
 
     // Filtrar subscription_events do mesmo modo
     const filteredEvents = (eventsRes.data || []).filter((e: any) => {
       if (new Date(e.created_at).getTime() < CHURN_CUTOFF_MS) return false;
-      if (!e.user_id) return true;
+       if (!e.user_id) return false;
       // pix_not_renewed e similares: só conta se houve pagamento real prévio
       return usersWithRealPayment.has(e.user_id);
     });

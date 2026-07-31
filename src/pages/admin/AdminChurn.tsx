@@ -281,8 +281,8 @@ export default function AdminChurn() {
         });
       });
 
-      // O histórico oficial de churn começa em julho/2026.
-      const CHURN_CUTOFF = new Date("2026-07-01T00:00:00Z").getTime();
+      // O histórico oficial de churn começa em junho/2026.
+      const CHURN_CUTOFF = new Date("2026-06-01T00:00:00Z").getTime();
       const filtered = merged.filter(
         (record) => new Date(record.cancelled_at).getTime() >= CHURN_CUTOFF
       );

@@ -4,18 +4,18 @@
 
 /**
  * Reembolsos anteriores a esta data são ignorados em TODAS as métricas do admin
- * (histórico antigo — junho/2026 para trás foi limpo das métricas).
+ * (histórico anterior a junho/2026 foi limpo das métricas).
  */
-export const REFUND_METRICS_SINCE = new Date("2026-07-01T00:00:00Z");
+export const REFUND_METRICS_SINCE = new Date("2026-06-01T00:00:00Z");
 
 /** Início oficial das métricas de churn após a limpeza do histórico legado. */
-export const CHURN_METRICS_SINCE = new Date("2026-07-01T00:00:00Z");
+export const CHURN_METRICS_SINCE = new Date("2026-06-01T00:00:00Z");
 
 /**
  * Data em que o NOVO onboarding entrou no ar. Somente usuários que
  * responderam ou pularam o novo onboarding entram no cálculo de ativação.
  */
-export const NEW_ONBOARDING_SINCE = new Date("2026-04-24T16:00:00Z");
+export const NEW_ONBOARDING_SINCE = new Date("2026-06-01T00:00:00Z");
 
 /** Linhas sintéticas do backfill antigo (não representam onboarding real). */
 const BACKFILL_ROLE = "Usuário ativo";

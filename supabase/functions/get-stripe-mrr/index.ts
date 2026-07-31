@@ -183,8 +183,8 @@ Deno.serve(async (req) => {
     const wiizeSubIds = new Set(wiizeSubs.map((s: Stripe.Subscription) => s.id));
 
     // --- Process refunds ---
-    // Reembolsos anteriores a 01/07/2026 são ignorados nas métricas (histórico limpo).
-    const REFUND_METRICS_SINCE_MS = Date.UTC(2026, 6, 1);
+    // Reembolsos anteriores a 01/06/2026 são ignorados nas métricas (histórico limpo).
+    const REFUND_METRICS_SINCE_MS = Date.UTC(2026, 5, 1);
     const refundedChargeIds = new Set<string>();
     let wiizeRefundCount = 0;
     let wiizeRefundedAmount = 0;
@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
 
       const refundDate = new Date(refund.created * 1000);
       if (refundDate.getTime() < REFUND_METRICS_SINCE_MS) {
-        console.log(`[GET-STRIPE-MRR] Refund ignorado (pré-julho/2026): R$ ${refund.amount / 100}`);
+        console.log(`[GET-STRIPE-MRR] Refund ignorado (pré-junho/2026): R$ ${refund.amount / 100}`);
         continue;
       }
 
@@ -327,7 +327,7 @@ Deno.serve(async (req) => {
       const hadAnyPayment = subsWithPayment.has(sub.id) ||
         (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
 
-      const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-07-01T00:00:00Z").getTime() / 1000);
+      const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-06-01T00:00:00Z").getTime() / 1000);
       const canceledDuringTrial =
         sub.status === "canceled" && sub.trial_end && sub.canceled_at && sub.canceled_at <= sub.trial_end;
 
@@ -551,7 +551,11 @@ Deno.serve(async (req) => {
         customActiveCount++;
         const planKey = `${cs.plan}_custom`;
         planDistribution[planKey] = (planDistribution[planKey] || 0) + 1;
-      } else if (cs.status === "canceled" || cs.status === "expired") {
+      } else if (
+        (cs.status === "canceled" || cs.status === "expired") &&
+        cs.canceled_at &&
+        new Date(cs.canceled_at).getTime() >= new Date("2026-06-01T00:00:00Z").getTime()
+      ) {
         customCanceledCount++;
         if (cs.canceled_at) {
           const canceledMs = new Date(cs.canceled_at).getTime();

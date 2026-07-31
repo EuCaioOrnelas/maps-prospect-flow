@@ -22,18 +22,19 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Find paid users whose subscription expired more than 1 day ago
-    // Grace period: 1 day after expiry before downgrade
+    // Find paid users whose subscription expired more than 7 days ago.
+    // During the grace period access remains available, but no credits are renewed.
     const gracePeriodDate = new Date();
-    gracePeriodDate.setDate(gracePeriodDate.getDate() - 1);
+    gracePeriodDate.setDate(gracePeriodDate.getDate() - 7);
 
     const { data: expiredUsers, error } = await supabaseClient
       .from("profiles")
-      .select("id, email, plan, subscription_current_period_end")
+      .select("id, email, plan, payment_provider, subscription_current_period_end, is_custom_subscription")
       .neq("plan", "free")
       .not("subscription_current_period_end", "is", null)
       .lt("subscription_current_period_end", gracePeriodDate.toISOString())
-      .eq("admin_assigned_plan", false);
+      .eq("admin_assigned_plan", false)
+      .eq("is_custom_subscription", false);
 
     if (error) {
       logStep("Error querying expired users", { error: error.message });
@@ -50,7 +51,9 @@ serve(async (req) => {
           plan: "free",
           searches_limit: 10,
           searches_used: 0,
-          // Keep the expired date so the popup can detect recent expiration
+          bonus_searches: 0,
+          subscription_price_cents: 0,
+          // Keep the expired date so the access guard detects the former subscription.
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);
@@ -66,8 +69,8 @@ serve(async (req) => {
           await supabaseClient.from("subscription_events").insert({
             user_id: user.id,
             email: user.email,
-            event_type: "pix_not_renewed",
-            event_source: "asaas",
+            event_type: user.payment_provider === "asaas" ? "pix_not_renewed" : "subscription_expired",
+            event_source: user.payment_provider || "system",
             previous_plan: user.plan,
             new_plan: "free",
           });
