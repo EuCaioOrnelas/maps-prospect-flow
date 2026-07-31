@@ -31,6 +31,7 @@ type CohortCell = { value: number | null; absolute: number | null };
 type Cohort = { cohortKey: string; cohortLabel: string; cohortSize: number; cells: CohortCell[] };
 
 const MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const RETENTION_CUTOFF = new Date("2026-06-01T00:00:00");
 
 function monthKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -62,7 +63,8 @@ export default function AdminRetencao() {
       return { startDate: s, endDate: e, monthsCount: Math.min(months, 24) };
     }
     const m = parseInt(periodMode === "custom" ? "6" : periodMode);
-    const s = new Date(now.getFullYear(), now.getMonth() - (m - 1), 1);
+    const requestedStart = new Date(now.getFullYear(), now.getMonth() - (m - 1), 1);
+    const s = requestedStart < RETENTION_CUTOFF ? RETENTION_CUTOFF : requestedStart;
     const e = new Date(now.getFullYear(), now.getMonth(), 1);
     return { startDate: s, endDate: e, monthsCount: m };
   }, [periodMode, customStart, customEnd]);
@@ -78,6 +80,7 @@ export default function AdminRetencao() {
 
       if (!profiles) { setLoading(false); return; }
 
+      const eligibleProfiles = profiles.filter((p: any) => new Date(p.created_at) >= RETENTION_CUTOFF);
       const now = new Date();
       const today = now.getTime();
       const sevenAgo = today - 7 * 86400000;
@@ -85,11 +88,11 @@ export default function AdminRetencao() {
       const oneAgo = today - 86400000;
 
       // KPIs gerais (sempre baseados em todos os usuários, independente do range do cohort).
-      const dauCount = profiles.filter((p: any) => new Date(p.updated_at).getTime() >= oneAgo).length;
-      const mauCount = profiles.filter((p: any) => new Date(p.updated_at).getTime() >= thirtyAgo).length;
-      const total = profiles.length || 1;
-      const active7  = profiles.filter((p: any) => new Date(p.updated_at).getTime() >= sevenAgo).length;
-      const active30 = profiles.filter((p: any) => new Date(p.updated_at).getTime() >= thirtyAgo).length;
+      const dauCount = eligibleProfiles.filter((p: any) => new Date(p.updated_at).getTime() >= oneAgo).length;
+      const mauCount = eligibleProfiles.filter((p: any) => new Date(p.updated_at).getTime() >= thirtyAgo).length;
+      const total = eligibleProfiles.length || 1;
+      const active7  = eligibleProfiles.filter((p: any) => new Date(p.updated_at).getTime() >= sevenAgo).length;
+      const active30 = eligibleProfiles.filter((p: any) => new Date(p.updated_at).getTime() >= thirtyAgo).length;
 
       setDau(dauCount);
       setMau(mauCount);
@@ -109,7 +112,7 @@ export default function AdminRetencao() {
         const cohortEnd = new Date(parseInt(yStr), parseInt(mStr), 1);
 
         // Usuários reais cadastrados naquele mês.
-        const cohortUsers = profiles.filter((p: any) => {
+        const cohortUsers = eligibleProfiles.filter((p: any) => {
           const c = new Date(p.created_at);
           return c >= cohortStart && c < cohortEnd;
         });
