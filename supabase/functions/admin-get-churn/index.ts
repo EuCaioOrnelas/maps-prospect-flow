@@ -106,60 +106,15 @@ serve(async (req) => {
     (paidSalesRes.data || []).forEach((row: any) => row.customer_user_id && usersWithRealPayment.add(row.customer_user_id));
     (paidInvoicesRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
     (customPaymentsRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
-    // Stripe não tem tabela local de invoices: a evidência de cobrança é o perfil
-    // com provider stripe, preço de assinatura e período contratado registrado.
-    // Sem isso a base de pagantes fica minúscula e a taxa de churn estoura 100%.
-    (profilesRes.data || []).forEach((profile: any) => {
-      if (profile.admin_assigned_plan) return;
-      if (profile.payment_provider !== "stripe") return;
-      if (!profile.subscription_current_period_end) return;
-      if ((profile.subscription_price_cents || 0) <= 0) return;
-      usersWithRealPayment.add(profile.id);
-    });
-
-
     const profiles = profilesRes.data || [];
-    const expiredProfiles = profiles.filter((profile) => {
-      if (profile.admin_assigned_plan) return false;
-      if (!profile.subscription_current_period_end) return false;
-      if (!["asaas", "stripe", "manual"].includes(profile.payment_provider || "")) return false;
-      // Only include profiles that had a paid plan (not free) — real churn
-      if (!profile.plan || profile.plan === "free") return false;
-      // Excluir quem nunca confirmou um pagamento real (cancelou durante trial)
-      if (!usersWithRealPayment.has(profile.id)) return false;
+    const profilesByEmail = new Map(
+      profiles
+        .filter((profile: any) => profile.email)
+        .map((profile: any) => [String(profile.email).toLowerCase(), profile])
+    );
 
-      const periodEnd = new Date(profile.subscription_current_period_end).getTime();
-      return Number.isFinite(periodEnd) && periodEnd < now;
-    });
-
-    // Filtrar subscription_cancellations: descartar quem nunca pagou nada (trial)
-    const filteredCancellations = (cancellationsRes.data || []).filter((c: any) => {
-      if (new Date(c.cancelled_at).getTime() < CHURN_CUTOFF_MS) return false;
-       // Registros locais sempre exigem um usuário vinculado e pagamento confirmado.
-       // Stripe sem user_id só entra pelo lookup direto, que valida invoice paga.
-       if (!c.user_id) return false;
-      return usersWithRealPayment.has(c.user_id);
-    });
-
-    // Filtrar subscription_events do mesmo modo
-    const filteredEvents = (eventsRes.data || []).filter((e: any) => {
-      if (new Date(e.created_at).getTime() < CHURN_CUTOFF_MS) return false;
-       if (!e.user_id) return false;
-      // pix_not_renewed e similares: só conta se houve pagamento real prévio
-      return usersWithRealPayment.has(e.user_id);
-    });
-
-    // Filtrar feedbacks: só inclui usuários que tiveram pelo menos 1 pagamento real.
-    // Sem isso, feedbacks de quem cancelou DURANTE o trial (sem nunca ter pago)
-    // entrariam no merge do frontend e gerariam churns falsos.
-    const filteredFeedbacks = (feedbacksRes.data || []).filter((f: any) => {
-      if (new Date(f.created_at).getTime() < CHURN_CUTOFF_MS) return false;
-      if (!f.user_id) return false;
-      return usersWithRealPayment.has(f.user_id);
-    });
-
-    // Base de pagantes reais, considerando também quem pagou no Stripe mas não
-    // tem evidência local (sem isso a taxa de churn estoura 100%).
+    // Base de pagantes reais. Campos do perfil (preço/período/provider) NÃO são
+    // prova de pagamento: eles também são preenchidos ao iniciar um trial.
     const payingEmails = new Set<string>();
     (profilesRes.data || []).forEach((p: any) => {
       if (usersWithRealPayment.has(p.id) && p.email) payingEmails.add(p.email.toLowerCase());
@@ -184,9 +139,20 @@ serve(async (req) => {
             ...(invStartingAfter ? { starting_after: invStartingAfter } : {}),
           });
           for (const inv of invRes.data) {
-            if (!inv.amount_paid || inv.amount_paid <= 0) continue;
+            if (
+              !inv.amount_paid ||
+              inv.amount_paid <= 0 ||
+              inv.paid !== true ||
+              !inv.charge ||
+              (inv.amount_remaining && inv.amount_remaining > 0)
+            ) continue;
             const email = inv.customer_email || inv.customer_address?.email;
-            if (email) payingEmails.add(String(email).toLowerCase());
+            if (email) {
+              const normalizedEmail = String(email).toLowerCase();
+              payingEmails.add(normalizedEmail);
+              const paidProfile = profilesByEmail.get(normalizedEmail);
+              if (paidProfile?.id) usersWithRealPayment.add(paidProfile.id);
+            }
           }
           invHasMore = invRes.has_more;
           invStartingAfter = invRes.data[invRes.data.length - 1]?.id;
@@ -199,8 +165,6 @@ serve(async (req) => {
             .map((c: any) => c.stripe_subscription_id)
             .filter(Boolean)
         );
-        const profilesByEmail = new Map(profiles.map((p: any) => [p.email?.toLowerCase(), p]));
-
         let hasMore = true;
         let startingAfter: string | undefined;
         while (hasMore) {
@@ -222,15 +186,24 @@ serve(async (req) => {
               continue;
             }
 
-            // Verificação extra: se nunca houve invoice paga, também não conta como churn
+            // Pagamento real exige valor positivo, cobrança efetiva e quitação
+            // anterior ao cancelamento. Invoice de R$ 0 gerada no trial não vale.
             try {
               const invoices: any = await stripe.invoices.list({
                 subscription: sub.id,
                 status: "paid",
-                limit: 1,
+                limit: 100,
               });
-              if (!invoices.data || invoices.data.length === 0) {
-                logStep("Skipping subscription with no paid invoices", { id: sub.id });
+              const hasRealPaymentBeforeCancellation = (invoices.data || []).some((invoice: any) => {
+                const paidAt = invoice.status_transitions?.paid_at || invoice.created;
+                return invoice.paid === true &&
+                  invoice.amount_paid > 0 &&
+                  invoice.charge &&
+                  (!invoice.amount_remaining || invoice.amount_remaining === 0) &&
+                  paidAt <= sub.canceled_at;
+              });
+              if (!hasRealPaymentBeforeCancellation) {
+                logStep("Skipping trial/unpaid cancellation", { id: sub.id });
                 continue;
               }
             } catch (_) {
@@ -268,6 +241,32 @@ serve(async (req) => {
     } catch (err) {
       logStep("Stripe lookup error", { message: err instanceof Error ? err.message : String(err) });
     }
+
+    const expiredProfiles = profiles.filter((profile: any) => {
+      if (profile.admin_assigned_plan || !profile.subscription_current_period_end) return false;
+      if (!["asaas", "stripe", "manual"].includes(profile.payment_provider || "")) return false;
+      if (!profile.plan || profile.plan === "free" || !usersWithRealPayment.has(profile.id)) return false;
+      const periodEnd = new Date(profile.subscription_current_period_end).getTime();
+      return Number.isFinite(periodEnd) && periodEnd >= CHURN_CUTOFF_MS && periodEnd < now;
+    });
+
+    // Todas as fontes locais também exigem pagamento confirmado. Isso impede
+    // feedback, evento ou perfil expirado de trial de reaparecer como churn.
+    const filteredCancellations = (cancellationsRes.data || []).filter((c: any) =>
+      Boolean(c.user_id) &&
+      new Date(c.cancelled_at).getTime() >= CHURN_CUTOFF_MS &&
+      usersWithRealPayment.has(c.user_id)
+    );
+    const filteredEvents = (eventsRes.data || []).filter((e: any) =>
+      Boolean(e.user_id) &&
+      new Date(e.created_at).getTime() >= CHURN_CUTOFF_MS &&
+      usersWithRealPayment.has(e.user_id)
+    );
+    const filteredFeedbacks = (feedbacksRes.data || []).filter((f: any) =>
+      Boolean(f.user_id) &&
+      new Date(f.created_at).getTime() >= CHURN_CUTOFF_MS &&
+      usersWithRealPayment.has(f.user_id)
+    );
 
     logStep("Churn payload ready", {
       cancellationsRaw: cancellationsRes.data?.length || 0,
