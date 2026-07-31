@@ -93,7 +93,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ checked: expiredUsers?.length || 0, downgraded }),
+      JSON.stringify({ checked: expiredUsers?.length || 0, downgraded, real_payers_checked: realPayers.size }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

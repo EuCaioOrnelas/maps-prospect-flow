@@ -100,7 +100,10 @@ export default function AdminDashboard() {
         );
 
       if (allUsers) {
-        const trialed = (allUsers as any[]).filter(hasCompletedTrial);
+        const trialed = (allUsers as any[]).filter((profile) =>
+          new Date(profile.created_at).getTime() >= new Date("2026-06-01T00:00:00Z").getTime() &&
+          hasCompletedTrial(profile)
+        );
         const converted = trialed.filter(hasConvertedFromTrial).length;
         setTrialConversion({ total: trialed.length, converted });
       }
