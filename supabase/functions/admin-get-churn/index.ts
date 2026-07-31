@@ -156,13 +156,24 @@ serve(async (req) => {
               const normalizedEmail = String(email).toLowerCase();
               payingEmails.add(normalizedEmail);
               const paidProfile = profilesByEmail.get(normalizedEmail);
-              if (paidProfile?.id) usersWithRealPayment.add(paidProfile.id);
+              if (paidProfile?.id) {
+                usersWithRealPayment.add(paidProfile.id);
+                // Persiste a prova de pagamento para o guarda do banco (anti falso churn)
+                if (!paidProfile.first_paid_at) {
+                  const paidAtIso = new Date(
+                    (inv.status_transitions?.paid_at || inv.created) * 1000
+                  ).toISOString();
+                  paidProfile.first_paid_at = paidAtIso;
+                  await adminClient.from("profiles").update({ first_paid_at: paidAtIso }).eq("id", paidProfile.id);
+                }
+              }
             }
           }
           invHasMore = invRes.has_more;
           invStartingAfter = invRes.data[invRes.data.length - 1]?.id;
           invPages++;
         }
+
 
         const existingStripeIds = new Set(
           (cancellationsRes.data || [])
