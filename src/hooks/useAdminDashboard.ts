@@ -509,9 +509,10 @@ export function useAdminDashboard() {
     return totalSubscribers > 0 ? totalMRR / totalSubscribers : 0;
   }, [totalMRR, totalSubscribers]);
 
-  // LTV: preferimos a fórmula clássica (ticket médio ÷ churn mensal), que é
-  // estável mesmo com base pequena. Sem churn no período, usamos o tempo real
-  // de assinatura PAGA (o trial não conta como receita).
+  // LTV: a fórmula clássica (ticket ÷ churn) explode com base pequena — com 4
+  // assinantes, 1 cancelamento vira "15 meses de vida". Então limitamos a
+  // projeção ao horizonte observável: no máximo 12 meses e nunca mais que o
+  // dobro do tempo médio de assinatura PAGA já observado.
   const ltvData = useMemo(() => {
     if (payingProfiles.length === 0) return { avgMonths: 0, ltv: 0 };
 
@@ -529,13 +530,13 @@ export function useAdminDashboard() {
     }
 
     const avgMonths = totalMonths / payingProfiles.length;
-    const ltv =
-      churnRate > 0
-        ? averageTicket / (churnRate / 100)
-        : Math.max(avgMonths, 1) * averageTicket;
+    const observedCap = Math.max(1, avgMonths * 2);
+    const churnMonths = churnRate > 0 ? 100 / churnRate : Infinity;
+    const expectedMonths = Math.min(12, observedCap, Math.max(1, churnMonths));
 
-    return { avgMonths, ltv };
+    return { avgMonths: expectedMonths, ltv: expectedMonths * averageTicket };
   }, [payingProfiles, averageTicket, churnRate]);
+
 
 
   // pixMRR efetivo: combina o histórico mensal local com o valor real do Asaas no mês corrente.
