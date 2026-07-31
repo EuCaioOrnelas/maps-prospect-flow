@@ -341,9 +341,16 @@ Deno.serve(async (req) => {
       const priceId = priceObj?.id;
       const planName = (priceId && PRICE_TO_PLAN[priceId]) || "unknown";
 
+      subMonthlyById.set(sub.id, mrrAmount);
 
-      const hadAnyPayment = subsWithPayment.has(sub.id) ||
-        (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
+      // Pagamento real = invoice paga e NÃO estornada. Estorno não é receita,
+      // logo não transforma o cliente em pagante nem o cancelamento em churn.
+      const hadAnyPayment = subsWithPayment.has(sub.id);
+      if (hadAnyPayment) {
+        const cid = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+        if (cid) payingCustomersEver.add(cid);
+      }
+
 
       const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-06-01T00:00:00Z").getTime() / 1000);
       const canceledDuringTrial =
