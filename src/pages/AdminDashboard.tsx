@@ -83,7 +83,7 @@ export default function AdminDashboard() {
 
   const [trialConversion, setTrialConversion] = useState<{ total: number; converted: number }>({ total: 0, converted: 0 });
   const [upgradeOpportunities, setUpgradeOpportunities] = useState<number>(0);
-  const [activationData, setActivationData] = useState<{ total: number; activated: number }>({ total: 0, activated: 0 });
+  const [activationData, setActivationData] = useState<{ total: number; activated: number; inTrial: number }>({ total: 0, activated: 0, inTrial: 0 });
 
   // Date filter state for MRR chart
   const [dateFilter, setDateFilter] = useState<DateFilterType>("30d");
@@ -126,6 +126,7 @@ export default function AdminDashboard() {
         setActivationData({
           total: activationMetrics.total || 0,
           activated: activationMetrics.activated || 0,
+          inTrial: activationMetrics.inTrial || 0,
         });
       }
 
@@ -333,13 +334,13 @@ export default function AdminDashboard() {
         <KPICard
           label="Conversão Trial"
           value={`${trialRate.toFixed(0)}%`}
-          sub={`${trialConversion.converted}/${trialConversion.total}`}
+          sub={`${trialConversion.converted}/${trialConversion.total} trials encerrados`}
           icon={UserCheck}
         />
         <KPICard
           label="Ativação"
           value={`${activationRate.toFixed(0)}%`}
-          sub={`${activationData.activated}/${activationData.total}`}
+          sub={`${activationData.activated}/${activationData.total} trials${activationData.inTrial > 0 ? ` · ${activationData.inTrial} em andamento` : ""}`}
           icon={Target}
         />
       </div>
