@@ -393,17 +393,22 @@ Deno.serve(async (req) => {
       if (!customerId) continue;
       const existing = bestSubByCustomer.get(customerId);
       if (!existing || mrrAmount > existing.mrr) {
-        bestSubByCustomer.set(customerId, { subId: sub.id, mrr: mrrAmount, planName, email: customerEmail });
+        bestSubByCustomer.set(customerId, { subId: sub.id, mrr: mrrAmount, bumps: bumpsAmount, planName, email: customerEmail });
       }
     }
 
     // Consolidar MRR pós-dedupe
+    let bumpsMRR = 0;
+    let subsWithBumps = 0;
     for (const [, info] of bestSubByCustomer) {
       activeMRR += info.mrr;
       activeCount++;
+      bumpsMRR += info.bumps;
+      if (info.bumps > 0) subsWithBumps++;
       planDistribution[info.planName] = (planDistribution[info.planName] || 0) + 1;
-      console.log(`[GET-STRIPE-MRR] MRR sub (counted): ${info.subId} | ${info.email} | plan=${info.planName} | mrr=R$${info.mrr}`);
+      console.log(`[GET-STRIPE-MRR] MRR sub (counted): ${info.subId} | ${info.email} | plan=${info.planName} | mrr=R$${info.mrr} | addons=R$${info.bumps}`);
     }
+
     console.log(`[GET-STRIPE-MRR] Excluded past_due: ${pastDueCount} subs / R$${pastDueMRR}`);
 
     // Count ALL paid invoices as sales (including renewals)
