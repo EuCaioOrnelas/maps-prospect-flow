@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -77,6 +78,7 @@ ${plain}`;
     }
 
     const aiJson = await aiRes.json();
+    logAiUsage({ feature: 'generate-blog-geo', model: 'gpt-4o-mini', usage: aiJson.usage });
     const raw = aiJson?.choices?.[0]?.message?.content || "{}";
     let parsed: any = {};
     try { parsed = JSON.parse(raw); } catch { /* fallthrough */ }

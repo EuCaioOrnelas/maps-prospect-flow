@@ -31,6 +31,7 @@ const USD_TO_BRL = 5.0; // aprox; usado só para exibição em R$
 
 type DayPoint = { day: string; cost: number; tokens: number };
 type ProjPoint = { month: string; projected: number };
+type FeaturePoint = { feature: string; cost: number; tokens: number };
 
 export default function AdminIACustos() {
   const [loading, setLoading] = useState(true);
@@ -38,6 +39,8 @@ export default function AdminIACustos() {
   const [monthCost, setMonthCost] = useState(0);
   const [monthTokens, setMonthTokens] = useState(0);
   const [activeUsers, setActiveUsers] = useState(0);
+  const [breakdown, setBreakdown] = useState<FeaturePoint[]>([]);
+
 
   useEffect(() => {
     const load = async () => {
@@ -45,14 +48,30 @@ export default function AdminIACustos() {
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Logs dos últimos 30 dias (limita por segurança a 10k linhas)
-      const [{ data: logs }, { data: measuredLogs }] = await Promise.all([
+      const [{ data: logs }, { data: usageLogs }, { data: legacyLogs }] = await Promise.all([
         supabase.from("agent_message_logs")
           .select("agent_id, direction, content, created_at")
+          .gte("created_at", since).order("created_at", { ascending: false }).limit(10000),
+        supabase.from("ai_usage_logs")
+          .select("feature, tokens_in, tokens_out, cost_usd, created_at")
           .gte("created_at", since).order("created_at", { ascending: false }).limit(10000),
         supabase.from("ai_logs")
           .select("tokens_in, tokens_out, cost_usd, created_at")
           .gte("created_at", since).order("created_at", { ascending: false }).limit(10000),
       ]);
+
+      // ai_logs é a fonte antiga (só suporte). A partir do momento em que
+      // ai_usage_logs passou a receber dados, ele vira a única fonte para
+      // evitar contagem dupla das chamadas do suporte.
+      const centralStart = (usageLogs || []).length
+        ? (usageLogs as any[])[(usageLogs as any[]).length - 1].created_at
+        : null;
+      const measuredLogs = [
+        ...(usageLogs || []).map((l: any) => ({ ...l })),
+        ...(legacyLogs || []).filter((l: any) => !centralStart || l.created_at < centralStart)
+          .map((l: any) => ({ ...l, feature: "support-chat (legado)" })),
+      ];
+
 
       // Mapa agent_id → user_id (para contar usuários distintos)
       const agentIds = Array.from(new Set((logs || []).map((l: any) => l.agent_id))).filter(Boolean);
@@ -92,6 +111,7 @@ export default function AdminIACustos() {
 
       // Custos medidos por chamadas de suporte/Wian e demais operações que
       // registram tokens diretamente. Não usa estimativa quando há valor real.
+      const byFeature: Record<string, { cost: number; tokens: number }> = {};
       (measuredLogs || []).forEach((l: any) => {
         const key = l.created_at.slice(0, 10);
         const tokens = (l.tokens_in || 0) + (l.tokens_out || 0);
@@ -103,9 +123,24 @@ export default function AdminIACustos() {
         }
         totalCost += cost;
         totalTokens += tokens;
+        const f = l.feature || "outros";
+        byFeature[f] = byFeature[f] || { cost: 0, tokens: 0 };
+        byFeature[f].cost += cost;
+        byFeature[f].tokens += tokens;
       });
+      byFeature["agentes de whatsapp (estimado)"] = {
+        cost: Object.values(buckets).reduce((a, b) => a + b.cost, 0) - Object.values(byFeature).reduce((a, b) => a + b.cost, 0),
+        tokens: 0,
+      };
+      setBreakdown(
+        Object.entries(byFeature)
+          .map(([feature, v]) => ({ feature, ...v }))
+          .filter((r) => r.cost > 0)
+          .sort((a, b) => b.cost - a.cost),
+      );
 
       setDaily(Object.values(buckets));
+
       setMonthCost(totalCost);
       setMonthTokens(totalTokens);
       setActiveUsers(userSet.size);
@@ -247,7 +282,32 @@ export default function AdminIACustos() {
           )}
         </CardContent>
       </Card>
+
+      <Card className="border-border/40 bg-card/80 rounded-2xl">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">Custo por operação (30 dias)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <Skeleton className="h-32 w-full" />
+          ) : breakdown.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Sem consumo registrado no período.</p>
+          ) : (
+            <div className="divide-y divide-border/40">
+              {breakdown.map((r) => (
+                <div key={r.feature} className="flex items-center justify-between py-2 text-sm">
+                  <span className="text-foreground">{r.feature}</span>
+                  <span className="text-muted-foreground tabular-nums">
+                    ${r.cost.toFixed(4)} · R$ {(r.cost * USD_TO_BRL).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
+
   );
 }
 

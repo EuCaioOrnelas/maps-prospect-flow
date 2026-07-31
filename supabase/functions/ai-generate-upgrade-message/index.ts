@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -113,6 +114,7 @@ Uso: ${user.searches_used}/${user.searches_limit} oportunidades este mês (${usa
     }
 
     const aiJson = await aiRes.json();
+    logAiUsage({ feature: 'ai-generate-upgrade-message', model: 'gpt-4o-mini', usage: aiJson.usage });
     const raw = aiJson?.choices?.[0]?.message?.content || "{}";
     let parsed: any;
     try {

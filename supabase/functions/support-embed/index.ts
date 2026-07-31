@@ -2,6 +2,7 @@
 // Modo single: { table, id, text }
 // Modo bulk:   { table, bulk: true } -> embeda todos os registros sem embedding
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,6 +28,7 @@ async function embedText(text: string): Promise<number[] | null> {
     return null;
   }
   const j = await r.json();
+  logAiUsage({ feature: 'support-embed', model: 'text-embedding-3-small', tokens_in: j.usage?.prompt_tokens ?? 0, tokens_out: 0 });
   return j.data?.[0]?.embedding ?? null;
 }
 

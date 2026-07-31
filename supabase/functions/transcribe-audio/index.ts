@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const GRAPH_VERSION = "v21.0";
 
@@ -143,6 +144,9 @@ Deno.serve(async (req) => {
     }
 
     const data = await whisperRes.json();
+    // Whisper é cobrado por minuto (US$ 0.006/min). Estimamos pelo tamanho do áudio.
+    const estimatedMinutes = Math.max(0.1, (audioBlob.size / (16 * 1024)) / 60);
+    logAiUsage({ feature: 'transcribe-audio', model: 'whisper-1', cost_usd: estimatedMinutes * 0.006, metadata: { estimated_minutes: Number(estimatedMinutes.toFixed(2)), bytes: audioBlob.size } });
     return new Response(JSON.stringify({ text: data.text || "" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

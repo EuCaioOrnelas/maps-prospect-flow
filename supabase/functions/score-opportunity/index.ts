@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1540,6 +1541,7 @@ Retorne APENAS um JSON válido:
 
         if (aiResponse.ok) {
           const aiData = await aiResponse.json();
+          logAiUsage({ feature: 'score-opportunity', model: AI_MODEL, usage: aiData.usage });
           const content = aiData.choices?.[0]?.message?.content;
           if (content) aiResult = JSON.parse(content);
         } else {

@@ -1,6 +1,7 @@
 // Wian — Wiize support AI chat (OpenAI gpt-4o-mini)
 // Fase 1: state machine, frustration score, progressive summary, cost tracking
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -711,6 +712,8 @@ Se decidir escalar (após cumprir as regras acima), termine com [ESCALAR_HUMANO]
       tokens_in: aiJson.usage?.prompt_tokens ?? null,
       tokens_out: aiJson.usage?.completion_tokens ?? null,
     });
+
+    logAiUsage({ feature: 'support-chat', model: 'gpt-4o-mini', usage: aiJson.usage, metadata: { ticket_id: ticketId } });
 
     // Atualiza ticket: frustration, phase, priority (se virou alta), status
     const update: any = {
