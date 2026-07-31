@@ -256,6 +256,7 @@ export default function AdminChurn() {
 
       // Mescla cancelamentos do Stripe feitos fora do nosso fluxo
       stripeChurns.forEach((sc: any) => {
+        if (sc.user_id && addedUserIds.has(sc.user_id)) return;
         const profile = sc.user_id ? profileMap.get(sc.user_id) : null;
         const feedback = sc.user_id ? feedbackMap.get(sc.user_id) : null;
         if (sc.user_id) addedUserIds.add(sc.user_id);
