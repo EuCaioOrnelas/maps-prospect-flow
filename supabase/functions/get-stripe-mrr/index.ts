@@ -662,6 +662,7 @@ Deno.serve(async (req) => {
         refundCount: wiizeRefundCount,
         canceledSubscriptions: finalCanceledCount,
         cancellationsLast30d,
+        payingCustomersEver: payingCustomersEver.size,
         churnRate: parseFloat(finalChurn.toFixed(1)),
         totalSalesValue: finalSalesValue,
         totalSalesCount: finalSalesCount,
