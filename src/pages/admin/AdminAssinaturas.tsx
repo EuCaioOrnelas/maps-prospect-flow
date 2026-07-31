@@ -19,30 +19,27 @@ export default function AdminAssinaturas() {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, created_at, is_custom_subscription, trial_will_charge_at, is_blocked")
-        .neq("plan", "free")
-        .in("payment_provider", ["stripe", "asaas", "manual"])
-        .order("created_at", { ascending: false })
-        .limit(500);
-      const now = Date.now();
-      setSubscribers((data || []).filter((subscriber: any) => {
-        if (subscriber.is_blocked) return false;
-        const trialEnd = subscriber.trial_will_charge_at
-          ? new Date(subscriber.trial_will_charge_at).getTime()
-          : 0;
-        if (trialEnd > now) return true;
-        if (!subscriber.subscription_current_period_end) return false;
-        return new Date(subscriber.subscription_current_period_end).getTime() >= now;
-      }));
+      const { data, error } = await supabase.functions.invoke("audit-mrr", { body: {} });
+      if (!error) {
+        setSubscribers((data?.rows || [])
+          .filter((row: any) => row.counted_in_mrr || row.counted_as_trial)
+          .map((row: any) => ({
+            id: `${row.provider}-${row.subscription_id}`,
+            name: null,
+            email: row.customer_email,
+            plan: row.plan || row.profile_plan,
+            payment_provider: row.provider,
+            subscription_current_period_end: row.current_period_end,
+            trial_will_charge_at: row.counted_as_trial ? row.trial_will_charge_at || row.trial_end : null,
+            counted_as_trial: row.counted_as_trial,
+          })));
+      }
       setLoading(false);
     };
     load();
   }, []);
 
-  const isTrialing = (s: any) =>
-    s.trial_will_charge_at && new Date(s.trial_will_charge_at).getTime() > Date.now();
+  const isTrialing = (s: any) => s.counted_as_trial === true;
 
   const paidSubscribers = subscribers.filter((subscriber) => !isTrialing(subscriber));
   const trialSubscribers = subscribers.filter(isTrialing);
@@ -99,7 +96,7 @@ export default function AdminAssinaturas() {
                   <TableRow
                     key={sub.id}
                     className="cursor-pointer hover:bg-muted/40"
-                    onClick={() => setSelectedUserId(sub.id)}
+                    onClick={() => undefined}
                   >
                     <TableCell>
                       <div>
@@ -149,13 +146,6 @@ export default function AdminAssinaturas() {
         </CardContent>
       </Card>
 
-      {selectedUserId && (
-        <AdminUserInfoDialog
-          userId={selectedUserId}
-          open={!!selectedUserId}
-          onOpenChange={(open) => !open && setSelectedUserId(null)}
-        />
-      )}
     </div>
   );
 }

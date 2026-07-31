@@ -194,7 +194,9 @@ Deno.serve(async (req) => {
 
       const profile = profilesByEmail.get(email.toLowerCase());
       const isTrialing = sub.status === "trialing";
-      const countsForMrr = ["active", "past_due"].includes(sub.status) && !sub.cancel_at_period_end;
+      const latestInvoice = typeof sub.latest_invoice === "object" ? sub.latest_invoice as Stripe.Invoice : null;
+      const hasReceivedPayment = !!latestInvoice && latestInvoice.status === "paid" && (latestInvoice.amount_paid || 0) > 0;
+      const countsForMrr = ["active", "past_due"].includes(sub.status) && !sub.cancel_at_period_end && hasReceivedPayment;
 
       let countedInMrr = false;
       let countedAsTrial = false;
@@ -223,6 +225,8 @@ Deno.serve(async (req) => {
         reason = "Excluído: status Stripe = unpaid (faturas vencidas em aberto)";
       } else if (sub.cancel_at_period_end) {
         reason = "Excluído: cancel_at_period_end = true (não renovará)";
+      } else if (["active", "past_due"].includes(sub.status) && !hasReceivedPayment) {
+        reason = "Excluído: nenhuma fatura paga comprovada na assinatura";
       } else if (countsForMrr) {
         countedInMrr = true;
         activeCount++;
@@ -282,10 +286,13 @@ Deno.serve(async (req) => {
           return all;
         };
 
-        const [asaasSubs, asaasPixAuths] = await Promise.all([
+        const [asaasSubs, asaasPixAuths, receivedPayments, confirmedPayments] = await Promise.all([
           fetchAsaas("/subscriptions"),
           fetchAsaas("/pix/automatic/authorizations").catch(() => []),
+          fetchAsaas("/payments?status=RECEIVED").catch(() => []),
+          fetchAsaas("/payments?status=CONFIRMED").catch(() => []),
         ]);
+        const paidAsaas = [...receivedPayments, ...confirmedPayments];
 
         // Mapa de customers Asaas -> email (via profiles)
         const asaasCustomerIds = new Set<string>([
@@ -329,6 +336,12 @@ Deno.serve(async (req) => {
 
           const status = (s.status || "").toUpperCase();
           const isActive = status === "ACTIVE";
+          const lastPaid = paidAsaas
+            .filter((payment: any) => payment.subscription === s.id || payment.pixAutomaticAuthorization === s.id)
+            .sort((a: any, b: any) => new Date(b.paymentDate || b.confirmedDate || b.clientPaymentDate || 0).getTime() - new Date(a.paymentDate || a.confirmedDate || a.clientPaymentDate || 0).getTime())[0];
+          const paidAt = lastPaid ? new Date(lastPaid.paymentDate || lastPaid.confirmedDate || lastPaid.clientPaymentDate || 0).getTime() : 0;
+          const cycleDays = cycle === "YEARLY" ? 372 : 38;
+          const hasReceivedPayment = Number.isFinite(paidAt) && paidAt > Date.now() - cycleDays * 86400000;
           const planGuess =
             (s.description || "").toLowerCase().includes("growth") ? "growth" :
             (s.description || "").toLowerCase().includes("start") ? "start" :
@@ -355,6 +368,8 @@ Deno.serve(async (req) => {
             trialingCount++;
             totalTrialingMrr += monthlyMrr;
             reason = "Trial Asaas: cartão cadastrado mas ainda não cobrou (não conta no MRR)";
+          } else if (!hasReceivedPayment) {
+            reason = "Excluído: sem pagamento recebido na vigência atual";
           } else {
             countedInMrr = true;
             activeCount++;

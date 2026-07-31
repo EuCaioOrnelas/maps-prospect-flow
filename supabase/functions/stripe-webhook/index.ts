@@ -764,8 +764,9 @@ serve(async (req) => {
                 basePlanLimit
               );
 
-              // On downgrade: reset searches_used to 0
-              const newSearchesUsed = transitionType === "upgrade" && carryOver > 0 ? profile.searches_used : 0;
+              // Eventos de alteração da assinatura NÃO comprovam pagamento.
+              // O saldo só é renovado no evento invoice.paid abaixo.
+              const newSearchesUsed = profile.searches_used;
 
               await supabaseClient
                 .from("profiles")
@@ -775,7 +776,8 @@ serve(async (req) => {
                   searches_used: newSearchesUsed,
                   payment_provider: "stripe",
                   subscription_price_cents: subPriceCents,
-                  subscription_current_period_end: subscriptionEndIso,
+                  // Não avança a vigência aqui: subscription.updated também ocorre
+                  // em trial, falha e simples edição. invoice.paid é a fonte da verdade.
                 })
                 .eq("id", profile.id);
 
@@ -828,7 +830,7 @@ serve(async (req) => {
                   transitionType,
                 }
               );
-            } else if (["canceled", "unpaid", "past_due"].includes(subscription.status)) {
+            } else if (["canceled", "unpaid"].includes(subscription.status)) {
               await supabaseClient
                 .from("profiles")
                 .update({ 
