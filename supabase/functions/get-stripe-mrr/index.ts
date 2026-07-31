@@ -286,6 +286,11 @@ Deno.serve(async (req) => {
 
     // Dedupe: mesmo customer com múltiplas subs ativas conta apenas a mais cara.
     const bestSubByCustomer = new Map<string, { subId: string; mrr: number; bumps: number; planName: string; email: string }>();
+    // Valor mensal real (plano + add-ons, já com cupom) por assinatura.
+    // Usado também na série histórica para que MRR do card e do gráfico batam.
+    const subMonthlyById = new Map<string, number>();
+    // Clientes que já pagaram de fato pelo menos uma vez (base de churn).
+    const payingCustomersEver = new Set<string>();
 
     for (const sub of wiizeSubs) {
       const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
