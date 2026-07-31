@@ -80,7 +80,7 @@ SELECT
   to_jsonb(p) ->> 'terms_accepted_at'    AS aceite_termos,
   to_jsonb(p) ->> 'signup_ip'            AS ip,
   u.last_sign_in_at                      AS ultimo_acesso,
-  (SELECT min(created_at) FROM public.checkout_leads WHERE email ILIKE '%andreamoraes05%')      AS 1a_intencao_compra,
+  (SELECT min(created_at) FROM public.checkout_leads WHERE email ILIKE '%andreamoraes05%')      AS primeira_intencao_compra,
   (SELECT count(*) FROM public.subscription_events WHERE email ILIKE '%andreamoraes05%')        AS eventos_assinatura,
   (SELECT count(*) FROM public.email_logs WHERE to_jsonb(email_logs)::text ILIKE '%andreamoraes05%') AS emails_recebidos
 FROM auth.users u
