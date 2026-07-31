@@ -285,7 +285,7 @@ Deno.serve(async (req) => {
     const thirtyDaysAgoUnix = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
 
     // Dedupe: mesmo customer com múltiplas subs ativas conta apenas a mais cara.
-    const bestSubByCustomer = new Map<string, { subId: string; mrr: number; planName: string; email: string }>();
+    const bestSubByCustomer = new Map<string, { subId: string; mrr: number; bumps: number; planName: string; email: string }>();
 
     for (const sub of wiizeSubs) {
       const customerEmail = getCustomerEmail(sub.customer as Stripe.Customer);
