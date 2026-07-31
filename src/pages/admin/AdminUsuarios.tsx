@@ -107,9 +107,14 @@ export default function AdminUsuarios() {
         (statusFilter === "archived" && u.is_archived);
       const matchSearch = !search || u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase());
       const isTrial = !!u.trial_will_charge_at && new Date(u.trial_will_charge_at).getTime() > Date.now();
+      const isCustom = customSubs.has(u.id) || !!u.is_custom_subscription;
       const matchPlan =
         planFilter === "all" ||
-        (planFilter === "trial" ? isTrial : u.plan === planFilter && !isTrial);
+        (planFilter === "trial"
+          ? isTrial
+          : planFilter === "custom"
+            ? isCustom
+            : u.plan === planFilter && !isTrial);
       const bucket = getProviderBucket(u.payment_provider);
       const matchProvider =
         providerFilter === "all" ||
@@ -118,7 +123,8 @@ export default function AdminUsuarios() {
         (providerFilter === "none" && !u.payment_provider);
       return matchStatus && matchSearch && matchPlan && matchProvider;
     });
-  }, [users, statusFilter, search, planFilter, providerFilter]);
+  }, [users, statusFilter, search, planFilter, providerFilter, customSubs]);
+
 
   const planColors: Record<string, string> = {
     free: "bg-muted text-muted-foreground",
