@@ -273,6 +273,7 @@ export default function AdminDashboard() {
   const stripeMrrVal = stripeMRR?.totalMRR ?? 0;
   const pixMrrVal = pixMRR?.pixMrr ?? 0;
   const otherMrrVal = otherMRR?.otherMrr ?? 0;
+  const addOnsMrrVal = stripeMRR?.addOnsMRR ?? 0;
   const pctStripe = totalMRR > 0 ? ((stripeMrrVal / totalMRR) * 100).toFixed(1) : "0";
   const pctPix = totalMRR > 0 ? ((pixMrrVal / totalMRR) * 100).toFixed(1) : "0";
   const pctOther = totalMRR > 0 ? ((otherMrrVal / totalMRR) * 100).toFixed(1) : "0";
