@@ -64,7 +64,9 @@ async function checkResend(): Promise<ApiResult> {
     const r = await fetch('https://api.resend.com/domains', { headers: { Authorization: `Bearer ${key}` } });
     if (!r.ok) return { service: 'Resend', category: 'email', status: 'error', message: `HTTP ${r.status}` };
     const d = await r.json();
-    return { service: 'Resend', category: 'email', status: 'ok', message: `${(d.data || []).length} domínio(s) configurado(s)` };
+    const domains = (d.data || []).map((x: any) => ({ name: x.name, region: x.region, status: x.status }));
+    const domainNames = domains.map((x: any) => x.name).join(', ') || 'nenhum';
+    return { service: 'Resend', category: 'email', status: 'ok', message: `${(d.data || []).length} domínio(s) configurado(s): ${domainNames}`, details: { domains } };
   } catch (e) {
     return { service: 'Resend', category: 'email', status: 'error', message: e instanceof Error ? e.message : 'Erro' };
   }
