@@ -504,6 +504,42 @@ export type Database = {
           },
         ]
       }
+      ai_usage_logs: {
+        Row: {
+          cost_usd: number
+          created_at: string
+          feature: string
+          id: string
+          metadata: Json
+          model: string
+          tokens_in: number
+          tokens_out: number
+          user_id: string | null
+        }
+        Insert: {
+          cost_usd?: number
+          created_at?: string
+          feature: string
+          id?: string
+          metadata?: Json
+          model: string
+          tokens_in?: number
+          tokens_out?: number
+          user_id?: string | null
+        }
+        Update: {
+          cost_usd?: number
+          created_at?: string
+          feature?: string
+          id?: string
+          metadata?: Json
+          model?: string
+          tokens_in?: number
+          tokens_out?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_workforce: {
         Row: {
           avatar_url: string | null
