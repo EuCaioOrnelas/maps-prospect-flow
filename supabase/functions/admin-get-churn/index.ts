@@ -280,6 +280,7 @@ serve(async (req) => {
       expiredProfiles: expiredProfiles.length,
       stripeChurns: stripeChurns.length,
       usersWithRealPayment: usersWithRealPayment.size,
+      payingBase: payingEmails.size,
     });
 
     return new Response(
@@ -291,7 +292,7 @@ serve(async (req) => {
         expiredProfiles,
         stripeChurns,
         // Base "paying" usada para cálculo correto de churn rate (não inclui trial-only)
-        payingUsersCount: usersWithRealPayment.size,
+        payingUsersCount: Math.max(payingEmails.size, usersWithRealPayment.size),
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
