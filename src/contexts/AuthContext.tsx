@@ -28,6 +28,8 @@ interface Profile {
   trial_flows_used?: number;
   trial_campaigns_used?: number;
   is_blocked?: boolean;
+  admin_assigned_plan?: boolean;
+  is_custom_subscription?: boolean;
 }
 
 interface AuthContextType {
