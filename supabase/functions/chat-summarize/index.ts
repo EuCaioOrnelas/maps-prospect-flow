@@ -2,6 +2,7 @@
 // Enforces a per-user daily limit to protect margin.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -110,6 +111,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "AI request failed" }), { status: 502, headers: corsHeaders });
     }
     const aiJson = await aiRes.json();
+    logAiUsage({ feature: 'chat-summarize', model: 'gpt-4o-mini', usage: aiJson.usage, user_id: userId });
     const summary: string = aiJson?.choices?.[0]?.message?.content?.trim() ?? "";
 
     // Increment usage (upsert)

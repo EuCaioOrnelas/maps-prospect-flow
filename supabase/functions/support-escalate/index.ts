@@ -1,6 +1,7 @@
 // Coleta dados de contato, gera resumo via OpenAI, marca ticket como escalado.
 // Se o email informado já é cliente/usuário, classifica para priorização.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -185,6 +186,7 @@ Deno.serve(async (req) => {
           }),
         });
         const j = await aiRes.json();
+        logAiUsage({ feature: 'support-escalate', model: 'gpt-4o-mini', usage: j.usage });
         const raw = j.choices?.[0]?.message?.content || "";
         const parsed = JSON.parse(raw);
         if (parsed.summary) summary = parsed.summary;

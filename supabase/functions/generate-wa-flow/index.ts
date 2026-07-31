@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -926,6 +927,7 @@ const callOpenAIForFlow = async (apiKey: string, prompt: string, feedback?: stri
   }
 
   const data = await response.json();
+  logAiUsage({ feature: 'generate-wa-flow', model: OPENAI_MODEL, usage: data.usage });
   const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
   if (!toolCall || toolCall.function?.name !== "create_whatsapp_flow") throw new Error("A OpenAI não retornou o fluxo estruturado.");
 

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -311,6 +312,7 @@ Classifique esta conversa agora.`;
   }
 
   const data = await response.json();
+  logAiUsage({ feature: 'anti-loop-classifier', model: 'gpt-4o-mini', usage: data.usage });
   const content = data.choices?.[0]?.message?.content?.trim() || '';
 
   try {

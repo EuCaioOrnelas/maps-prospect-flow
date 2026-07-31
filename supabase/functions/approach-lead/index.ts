@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -223,6 +224,7 @@ Retorne APENAS JSON válido:
     }
 
     const aiData = await aiRes.json();
+    logAiUsage({ feature: 'approach-lead', model: 'gpt-4o-mini', usage: aiData.usage });
     const content = aiData.choices?.[0]?.message?.content;
     if (!content) throw new Error("Resposta vazia da IA");
 

@@ -2,6 +2,7 @@
 // Admin clica "Transformar em conhecimento" → essa função usa GPT-4o-mini para sugerir
 // title, category, pains, solution, tags. Não grava nada — apenas devolve sugestão.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -70,6 +71,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "ai_failed" }), { status: 502, headers: corsHeaders });
     }
     const j = await aiRes.json();
+    logAiUsage({ feature: 'support-kb-suggest', model: 'gpt-4o-mini', usage: j.usage });
     const raw = j.choices?.[0]?.message?.content || "{}";
     let parsed: any = {};
     try { parsed = JSON.parse(raw); } catch { parsed = {}; }

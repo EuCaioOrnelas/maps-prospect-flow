@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logAiUsage } from "../_shared/aiUsage.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -197,6 +198,7 @@ Responda de forma natural. Separe cada assunto em blocos com linha em branco ent
     }
 
     const aiData = await aiResponse.json();
+    logAiUsage({ feature: 'agent-test-chat', model: 'gpt-4o-mini', usage: aiData.usage });
     let replyContent = aiData.choices?.[0]?.message?.content || 'Entendi, obrigado! 👍';
 
     // Detect markers and generate all events
