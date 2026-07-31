@@ -70,7 +70,11 @@ Deno.serve(async (req) => {
       // 1) Marcar contrato como expirado
       await admin
         .from("custom_subscriptions")
-        .update({ status: "expired" })
+        .update({
+          status: "expired",
+          canceled_at: sub.ends_at || now,
+          cancel_reason: "contract_expired_after_paid_period",
+        })
         .eq("id", sub.id);
 
       // 2) Bloquear usuário e remover do MRR (zera o valor mas preserva o vínculo)
