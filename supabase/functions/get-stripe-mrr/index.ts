@@ -595,8 +595,10 @@ Deno.serve(async (req) => {
     const finalCanceledCount = canceledCount + customCanceledCount;
     const finalSalesValue = totalSalesValue + customSalesValue;
     const finalSalesCount = totalSalesCount + customSalesCount;
-    const finalBase = finalActiveCount + finalCanceledCount;
-    const finalChurn = finalBase > 0 ? (finalCanceledCount / finalBase) * 100 : 0;
+    // Churn mensal consolidado (Stripe + custom): saídas dos últimos 30 dias.
+    const finalBase = finalActiveCount + cancellationsLast30d;
+    const finalChurn = finalBase > 0 ? Math.min(100, (cancellationsLast30d / finalBase) * 100) : 0;
+
 
     console.log(
       `[GET-STRIPE-MRR] Stripe MRR: R$ ${activeMRR} (${activeCount}) | Custom MRR: R$ ${customMRR} (${customActiveCount}) | Total: R$ ${finalMRR}`
