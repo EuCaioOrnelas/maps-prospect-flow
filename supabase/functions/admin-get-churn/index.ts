@@ -75,8 +75,9 @@ serve(async (req) => {
         .order("created_at", { ascending: false }),
       adminClient
         .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, admin_assigned_plan")
+        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, admin_assigned_plan, first_paid_at")
         .order("created_at", { ascending: false }),
+
       // Vendas registradas somente após pagamento recebido. Checkout concluído não
       // é prova de pagamento porque também é criado ao iniciar um trial.
       adminClient
@@ -108,6 +109,9 @@ serve(async (req) => {
     (paidInvoicesRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
     (customPaymentsRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
     const profiles = profilesRes.data || [];
+    // first_paid_at é gravado pelo webhook do cartão no 1º pagamento com valor > 0.
+    profiles.forEach((p: any) => { if (p.first_paid_at) usersWithRealPayment.add(p.id); });
+
     const profilesByEmail = new Map(
       profiles
         .filter((profile: any) => profile.email)
@@ -152,13 +156,24 @@ serve(async (req) => {
               const normalizedEmail = String(email).toLowerCase();
               payingEmails.add(normalizedEmail);
               const paidProfile = profilesByEmail.get(normalizedEmail);
-              if (paidProfile?.id) usersWithRealPayment.add(paidProfile.id);
+              if (paidProfile?.id) {
+                usersWithRealPayment.add(paidProfile.id);
+                // Persiste a prova de pagamento para o guarda do banco (anti falso churn)
+                if (!paidProfile.first_paid_at) {
+                  const paidAtIso = new Date(
+                    (inv.status_transitions?.paid_at || inv.created) * 1000
+                  ).toISOString();
+                  paidProfile.first_paid_at = paidAtIso;
+                  await adminClient.from("profiles").update({ first_paid_at: paidAtIso }).eq("id", paidProfile.id);
+                }
+              }
             }
           }
           invHasMore = invRes.has_more;
           invStartingAfter = invRes.data[invRes.data.length - 1]?.id;
           invPages++;
         }
+
 
         const existingStripeIds = new Set(
           (cancellationsRes.data || [])
