@@ -145,9 +145,10 @@ export default function AdminUsuarios() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Usuários</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {activeCount} ativos · {archivedCount} arquivados
+            {activeCount} ativos · {archivedCount} arquivados · {customSubs.size} custom
           </p>
         </div>
+
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="text-xs">
             <Download size={14} className="mr-1.5" /> Exportar
