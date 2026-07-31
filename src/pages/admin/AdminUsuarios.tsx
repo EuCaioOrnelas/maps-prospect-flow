@@ -14,6 +14,15 @@ import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
 import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
 import { getProviderLabel, getProviderBucket } from "@/lib/paymentProviderLabel";
 
+type CustomSubInfo = {
+  user_id: string;
+  label: string | null;
+  plan: string;
+  monthly_value_cents: number;
+  is_lifetime: boolean;
+  ends_at: string | null;
+};
+
 export default function AdminUsuarios() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
@@ -24,6 +33,8 @@ export default function AdminUsuarios() {
   const [statusFilter, setStatusFilter] = useState<"active" | "archived" | "all">("active");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [totals, setTotals] = useState<{ active: number; archived: number }>({ active: 0, archived: 0 });
+  const [customSubs, setCustomSubs] = useState<Map<string, CustomSubInfo>>(new Map());
+  const [orphanCustomSubs, setOrphanCustomSubs] = useState<CustomSubInfo[]>([]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -44,6 +55,33 @@ export default function AdminUsuarios() {
       from += pageSize;
     }
 
+    // Assinaturas customizadas ATIVAS — fonte de verdade para a marcação "Custom".
+    // O flag em profiles pode ficar dessincronizado, então cruzamos pela tabela.
+    const { data: subs } = await supabase
+      .from("custom_subscriptions")
+      .select("user_id, subscription_label, plan, monthly_value_cents, is_lifetime, ends_at, status")
+      .eq("status", "active");
+
+    const now = Date.now();
+    const subMap = new Map<string, CustomSubInfo>();
+    const orphans: CustomSubInfo[] = [];
+    const profileIds = new Set(all.map((u) => u.id));
+    (subs || []).forEach((s: any) => {
+      if (!s.is_lifetime && s.ends_at && new Date(s.ends_at).getTime() < now) return;
+      const info: CustomSubInfo = {
+        user_id: s.user_id,
+        label: s.subscription_label,
+        plan: s.plan,
+        monthly_value_cents: s.monthly_value_cents || 0,
+        is_lifetime: !!s.is_lifetime,
+        ends_at: s.ends_at,
+      };
+      if (profileIds.has(s.user_id)) subMap.set(s.user_id, info);
+      else orphans.push(info);
+    });
+    setCustomSubs(subMap);
+    setOrphanCustomSubs(orphans);
+
     // Accurate totals via count queries (independent of fetched rows)
     const [{ count: activeCnt }, { count: archivedCnt }] = await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }).or("is_archived.is.null,is_archived.eq.false"),
@@ -59,6 +97,7 @@ export default function AdminUsuarios() {
 
   const archivedCount = totals.archived;
   const activeCount = totals.active;
+
 
   const filtered = useMemo(() => {
     return users.filter(u => {
