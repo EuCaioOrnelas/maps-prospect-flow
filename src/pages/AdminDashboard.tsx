@@ -98,7 +98,7 @@ export default function AdminDashboard() {
       const { data: allUsers } = await supabase
         .from("profiles")
         .select(
-          "id, plan, trial_start_at, trial_end_at, trial_will_charge_at, trial_card_last4, trial_asaas_subscription_id, created_at, payment_provider, subscription_price_cents, subscription_current_period_end, admin_assigned_plan"
+          "id, plan, trial_start_at, trial_end_at, trial_will_charge_at, trial_card_last4, trial_card_token, trial_asaas_subscription_id, trial_asaas_customer_id, trial_plan_chosen, trial_billing_period, created_at, payment_provider, subscription_price_cents, subscription_current_period_end, admin_assigned_plan"
         );
 
       if (allUsers) {
@@ -107,11 +107,7 @@ export default function AdminDashboard() {
           !profile.admin_assigned_plan &&
           hasCompletedTrial(profile)
         );
-        const converted = trialed.filter(
-          (profile) =>
-            hasConvertedFromTrial(profile) ||
-            ((profile.subscription_price_cents || 0) > 0 && !!profile.subscription_current_period_end)
-        ).length;
+        const converted = trialed.filter((profile) => hasConvertedFromTrial(profile)).length;
         setTrialConversion({ total: trialed.length, converted });
       }
 

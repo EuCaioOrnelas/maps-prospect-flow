@@ -55,35 +55,64 @@ export type TrialProfile = {
   trial_end_at?: string | null;
   trial_will_charge_at?: string | null;
   trial_card_last4?: string | null;
+  trial_card_token?: string | null;
   trial_asaas_subscription_id?: string | null;
+  trial_asaas_customer_id?: string | null;
+  trial_billing_period?: string | null;
   trial_plan_chosen?: string | null;
+  subscription_price_cents?: number | null;
+  subscription_current_period_end?: string | null;
 };
 
-/**
- * Trial REAL = o usuário cadastrou cartão e agendou a cobrança.
- * `trial_start_at` sozinho não vale: ele é preenchido em todo cadastro.
- */
-export function startedRealTrial(p: TrialProfile): boolean {
-  if (!p.trial_start_at) return false;
-  return !!(p.trial_card_last4 || p.trial_asaas_subscription_id || p.trial_will_charge_at);
+/** Evidência de pagamento real (usada quando o campo `plan` está desatualizado). */
+export function hasPaymentEvidence(p: TrialProfile): boolean {
+  return (p.subscription_price_cents || 0) > 0 && !!p.subscription_current_period_end;
 }
 
 /**
- * Trial "de verdade" concluído: colocou cartão E já saiu do período de teste.
+ * Trial REAL = o usuário escolheu plano e cadastrou meio de pagamento.
+ * IMPORTANTE: ao converter, o webhook limpa `trial_will_charge_at`; por isso
+ * aceitamos qualquer marcador remanescente do trial, senão o convertido
+ * "some" da coorte e a conversão fica travada em 0%.
+ */
+export function startedRealTrial(p: TrialProfile): boolean {
+  if (!p.trial_start_at) return false;
+  return !!(
+    p.trial_card_last4 ||
+    p.trial_card_token ||
+    p.trial_asaas_subscription_id ||
+    p.trial_asaas_customer_id ||
+    p.trial_will_charge_at ||
+    p.trial_end_at ||
+    p.trial_plan_chosen ||
+    p.trial_billing_period
+  );
+}
+
+/**
+ * Trial "de verdade" concluído: entrou no trial com meio de pagamento e já
+ * saiu do período de teste (ou já virou pagante, o que encerra o trial).
  */
 export function hasCompletedTrial(p: TrialProfile): boolean {
   if (!startedRealTrial(p)) return false;
   const now = Date.now();
-  const stillInTrial =
-    (p.trial_end_at && new Date(p.trial_end_at).getTime() > now) ||
-    (p.trial_will_charge_at && new Date(p.trial_will_charge_at).getTime() > now);
-  if (stillInTrial) return false;
-  return true;
+  const isPaying = (!!p.plan && p.plan !== "free") || hasPaymentEvidence(p);
+  if (isPaying) return true;
+
+  const end =
+    (p.trial_end_at && new Date(p.trial_end_at).getTime()) ||
+    (p.trial_will_charge_at && new Date(p.trial_will_charge_at).getTime()) ||
+    // Sem data de fim registrada: assume os 7 dias padrão a partir do início.
+    new Date(p.trial_start_at as string).getTime() + 7 * 24 * 60 * 60 * 1000;
+
+  return end <= now;
 }
 
-/** Converteu = passou pelo trial (com cartão) e hoje tem plano pago. */
+/** Converteu = passou pelo trial e hoje paga (plano pago OU evidência de cobrança). */
 export function hasConvertedFromTrial(p: TrialProfile): boolean {
-  return hasCompletedTrial(p) && !!p.plan && p.plan !== "free";
+  if (!hasCompletedTrial(p)) return false;
+  return (!!p.plan && p.plan !== "free") || hasPaymentEvidence(p);
+
 }
 
 /**

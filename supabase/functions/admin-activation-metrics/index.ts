@@ -33,7 +33,7 @@ serve(async (req) => {
 
     const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
     const [profilesRes, onboardingRes] = await Promise.all([
-      admin.from("profiles").select("id, created_at, updated_at, plan, payment_provider, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used, trial_start_at, trial_will_charge_at, trial_card_last4, trial_asaas_subscription_id"),
+      admin.from("profiles").select("id, created_at, updated_at, plan, payment_provider, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used, trial_start_at, trial_end_at, trial_will_charge_at, trial_card_last4, trial_card_token, trial_asaas_subscription_id, trial_asaas_customer_id, trial_plan_chosen, trial_billing_period, subscription_price_cents, subscription_current_period_end"),
       admin.from("user_onboarding").select("user_id, skipped, completed_at, created_at, role"),
     ]);
     if (profilesRes.error) throw profilesRes.error;
@@ -53,7 +53,11 @@ serve(async (req) => {
       eligibleIds.has(profile.id) &&
       new Date(profile.created_at).getTime() >= ACTIVATION_CUTOFF &&
       !!profile.trial_start_at &&
-      !!(profile.trial_card_last4 || profile.trial_asaas_subscription_id || profile.trial_will_charge_at)
+      // Mesma regra do card "Conversão de Trial": aceita qualquer marcador do
+      // trial, porque a conversão limpa `trial_will_charge_at`.
+      !!(profile.trial_card_last4 || profile.trial_card_token || profile.trial_asaas_subscription_id ||
+         profile.trial_asaas_customer_id || profile.trial_will_charge_at || profile.trial_end_at ||
+         profile.trial_plan_chosen || profile.trial_billing_period)
     );
     const cohortIds = new Set(profiles.map((profile: any) => profile.id));
     const activatedIds = new Set<string>();
