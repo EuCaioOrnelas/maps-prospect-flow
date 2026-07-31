@@ -45,12 +45,14 @@ export default function AdminIACustos() {
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       // Logs dos últimos 30 dias (limita por segurança a 10k linhas)
-      const { data: logs } = await supabase
-        .from("agent_message_logs")
-        .select("agent_id, direction, content, created_at")
-        .gte("created_at", since)
-        .order("created_at", { ascending: false })
-        .limit(10000);
+      const [{ data: logs }, { data: measuredLogs }] = await Promise.all([
+        supabase.from("agent_message_logs")
+          .select("agent_id, direction, content, created_at")
+          .gte("created_at", since).order("created_at", { ascending: false }).limit(10000),
+        supabase.from("ai_logs")
+          .select("tokens_in, tokens_out, cost_usd, created_at")
+          .gte("created_at", since).order("created_at", { ascending: false }).limit(10000),
+      ]);
 
       // Mapa agent_id → user_id (para contar usuários distintos)
       const agentIds = Array.from(new Set((logs || []).map((l: any) => l.agent_id))).filter(Boolean);
@@ -86,6 +88,21 @@ export default function AdminIACustos() {
         totalTokens += tokens;
         const uid = agentUserMap[l.agent_id];
         if (uid) userSet.add(uid);
+      });
+
+      // Custos medidos por chamadas de suporte/Wian e demais operações que
+      // registram tokens diretamente. Não usa estimativa quando há valor real.
+      (measuredLogs || []).forEach((l: any) => {
+        const key = l.created_at.slice(0, 10);
+        const tokens = (l.tokens_in || 0) + (l.tokens_out || 0);
+        const cost = Number(l.cost_usd) ||
+          (l.tokens_in || 0) * PRICE_INPUT + (l.tokens_out || 0) * PRICE_OUTPUT;
+        if (buckets[key]) {
+          buckets[key].cost += cost;
+          buckets[key].tokens += tokens;
+        }
+        totalCost += cost;
+        totalTokens += tokens;
       });
 
       setDaily(Object.values(buckets));
@@ -124,7 +141,7 @@ export default function AdminIACustos() {
           Custos IA
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Custo real baseado em caracteres trafegados nos agentes (gpt-4o-mini · últimos 30d)
+          Custos dos agentes e chamadas com tokens medidos (gpt-4o-mini · últimos 30d)
         </p>
       </div>
 
@@ -146,7 +163,7 @@ export default function AdminIACustos() {
               ? `${(monthTokens / 1_000).toFixed(1)}k`
               : Math.round(monthTokens).toString()
           }
-          sub="≈ caracteres ÷ 4 (heurística PT-BR)"
+          sub="Tokens medidos + estimativa dos agentes legados"
           accent="text-blue-500"
         />
         <KPI

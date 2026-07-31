@@ -142,14 +142,14 @@ export function hasProfileUsage(p: any): boolean {
  */
 export async function fetchPayingUserIds(supabase: any): Promise<Set<string>> {
   const paying = new Set<string>();
-  const [pix, custom, checkout] = await Promise.all([
+  const [pix, custom, sales] = await Promise.all([
     supabase.from("pix_invoices").select("user_id").eq("status", "paid"),
     supabase.from("custom_subscription_payments").select("user_id").not("paid_at", "is", null),
-    supabase.from("checkout_leads").select("user_id").eq("checkout_completed", true).not("user_id", "is", null),
+    supabase.from("partner_sales").select("customer_user_id").not("customer_user_id", "is", null),
   ]);
   ((pix.data as any[]) || []).forEach((r) => r?.user_id && paying.add(r.user_id));
   ((custom.data as any[]) || []).forEach((r) => r?.user_id && paying.add(r.user_id));
-  ((checkout.data as any[]) || []).forEach((r) => r?.user_id && paying.add(r.user_id));
+  ((sales.data as any[]) || []).forEach((r) => r?.customer_user_id && paying.add(r.customer_user_id));
   return paying;
 }
 

@@ -33,7 +33,7 @@ serve(async (req) => {
 
     const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
     const [profilesRes, onboardingRes] = await Promise.all([
-      admin.from("profiles").select("id, created_at, updated_at, plan, payment_provider, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used"),
+      admin.from("profiles").select("id, created_at, updated_at, plan, payment_provider, searches_used, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used, trial_start_at, trial_will_charge_at, trial_card_last4, trial_asaas_subscription_id"),
       admin.from("user_onboarding").select("user_id, skipped, completed_at, created_at, role"),
     ]);
     if (profilesRes.error) throw profilesRes.error;
@@ -47,11 +47,15 @@ serve(async (req) => {
       if (Number.isFinite(reference) && reference >= ACTIVATION_CUTOFF) eligibleIds.add(row.user_id);
     }
 
-    // A coorte de ativação contém somente contas criadas desde 01/06 que
-    // responderam ou pularam o onboarding real. Usuários legados nunca entram.
+    // A coorte contém somente trials reais criados desde 01/06: o usuário
+    // passou pelo novo onboarding e cadastrou um meio de pagamento/agendou cobrança.
     const profiles = (profilesRes.data || []).filter((profile: any) =>
-      eligibleIds.has(profile.id) && new Date(profile.created_at).getTime() >= ACTIVATION_CUTOFF
+      eligibleIds.has(profile.id) &&
+      new Date(profile.created_at).getTime() >= ACTIVATION_CUTOFF &&
+      !!profile.trial_start_at &&
+      !!(profile.trial_card_last4 || profile.trial_asaas_subscription_id || profile.trial_will_charge_at)
     );
+    const cohortIds = new Set(profiles.map((profile: any) => profile.id));
     const activatedIds = new Set<string>();
     const activitySources = [
       ["leads", ["user_id", "owner_user_id", "created_by_user_id"]],
@@ -71,7 +75,7 @@ serve(async (req) => {
       for (const row of data || []) {
         for (const column of columns) {
           const value = (row as Record<string, unknown>)[column];
-          if (typeof value === "string" && eligibleIds.has(value)) activatedIds.add(value);
+          if (typeof value === "string" && cohortIds.has(value)) activatedIds.add(value);
         }
       }
     }));

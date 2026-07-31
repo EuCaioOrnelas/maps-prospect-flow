@@ -30,6 +30,7 @@ interface Profile {
   is_blocked?: boolean;
   admin_assigned_plan?: boolean;
   is_custom_subscription?: boolean;
+  terms_accepted_at?: string;
 }
 
 interface AuthContextType {
@@ -72,6 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // durante a janela de 7 dias com cobrança agendada via trial_will_charge_at.
   const calculateTrialStatus = (profile?: Profile | null) => {
     if (!profile) return { isExpired: false, daysRemaining: 0, isTrialing: false };
+    // Sem aceite dos termos não existe acesso, independentemente de trial/plano.
+    if (!profile.terms_accepted_at) return { isExpired: true, daysRemaining: 0, isTrialing: false };
     const willCharge = profile.trial_will_charge_at;
 
     // Caso 1: trial pago com cartão (Stripe) — usa trial_will_charge_at como fonte da verdade
@@ -112,9 +115,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { isExpired: msRemaining <= 0, daysRemaining, isTrialing: msRemaining > 0 };
     }
 
-    // Caso 4: free sem trial registrado — assume 7 dias
+    // Caso 4: conta free sem trial real não recebe acesso implícito.
     if (!profile.trial_start_at) {
-      return { isExpired: false, daysRemaining: 7, isTrialing: true };
+      return { isExpired: true, daysRemaining: 0, isTrialing: false };
     }
 
     const trialStart = new Date(profile.trial_start_at);

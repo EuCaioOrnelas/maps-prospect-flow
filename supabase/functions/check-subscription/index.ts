@@ -558,14 +558,25 @@ serve(async (req) => {
       })
       .filter((x: { sub: Stripe.Subscription; priceId: string | undefined; mappedPlan: string | undefined }) => !!x.mappedPlan);
 
-    const hasActiveSub = candidateSubs.length > 0;
+    // Status active não basta: exige ao menos uma fatura realmente paga.
+    const paidCandidates: typeof candidateSubs = [];
+    for (const candidate of candidateSubs) {
+      const invoices = await stripe.invoices.list({
+        subscription: candidate.sub.id,
+        status: "paid",
+        limit: 1,
+      });
+      const invoice = invoices.data[0];
+      if (invoice && (invoice.amount_paid || 0) > 0) paidCandidates.push(candidate);
+    }
+    const hasActiveSub = paidCandidates.length > 0;
     let plan = activeTrialAccess?.plan ?? "free";
     let subscriptionEnd: string | null = activeTrialAccess?.subscriptionEnd ?? null;
     let searchesLimit = activeTrialAccess?.searchesLimit ?? PLAN_LIMITS["free"];
 
     if (hasActiveSub) {
-      let best = candidateSubs[0];
-      for (const c of candidateSubs) {
+      let best = paidCandidates[0];
+      for (const c of paidCandidates) {
         const cOrder = getPlanOrder(c.mappedPlan as string);
         const bestOrder = getPlanOrder(best.mappedPlan as string);
 
@@ -597,7 +608,7 @@ serve(async (req) => {
       }
 
       logStep("Active subscription(s) found", {
-        activeCount: candidateSubs.length,
+        activeCount: paidCandidates.length,
         chosenSubscriptionId: subscription.id,
         priceId,
         plan,

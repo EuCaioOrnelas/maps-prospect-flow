@@ -57,7 +57,7 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await adminClient
       .from("profiles")
       .select(
-        "id, email, name, plan, is_blocked, admin_assigned_plan, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_plan_chosen"
+        "id, email, name, plan, is_blocked, admin_assigned_plan, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_plan_chosen, terms_accepted_at"
       )
       .eq("id", signIn.user.id)
       .maybeSingle();
@@ -68,6 +68,10 @@ serve(async (req) => {
 
     if (profile.is_blocked === true) {
       return json({ authorized: false, reason: "blocked" }, 403);
+    }
+
+    if (!profile.terms_accepted_at) {
+      return json({ authorized: false, reason: "terms_not_accepted" }, 403);
     }
 
     const accessPlan = getAccessPlan(profile);
@@ -144,7 +148,8 @@ function hasActiveAccess(profile: Record<string, any>) {
   }
 
   const subscriptionEndsAt = new Date(profile.subscription_current_period_end);
-  return !Number.isNaN(subscriptionEndsAt.getTime()) && subscriptionEndsAt.getTime() > Date.now();
+  const graceEndsAt = subscriptionEndsAt.getTime() + 7 * 24 * 60 * 60 * 1000;
+  return !Number.isNaN(subscriptionEndsAt.getTime()) && graceEndsAt > Date.now();
 }
 
 function json(body: unknown, status = 200) {

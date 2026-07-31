@@ -43,6 +43,16 @@ serve(async (req) => {
 
     logStep("Found expired subscriptions", { count: expiredUsers?.length || 0 });
 
+    const [{ data: paidPix }, { data: paidCustom }, { data: paidSales }] = await Promise.all([
+      supabaseClient.from("pix_invoices").select("user_id").eq("status", "paid"),
+      supabaseClient.from("custom_subscription_payments").select("user_id").not("paid_at", "is", null),
+      supabaseClient.from("partner_sales").select("customer_user_id").not("customer_user_id", "is", null),
+    ]);
+    const realPayers = new Set<string>();
+    for (const row of paidPix || []) if (row.user_id) realPayers.add(row.user_id);
+    for (const row of paidCustom || []) if (row.user_id) realPayers.add(row.user_id);
+    for (const row of paidSales || []) if (row.customer_user_id) realPayers.add(row.customer_user_id);
+
     let downgraded = 0;
     for (const user of expiredUsers || []) {
       const { error: updateError } = await supabaseClient
@@ -64,8 +74,10 @@ serve(async (req) => {
         downgraded++;
         logStep("User downgraded to free", { userId: user.id, email: user.email, previousPlan: user.plan });
 
-        // Log subscription event for churn tracking
+        // Só registra churn quando existe prova de pagamento anterior. Trial
+        // vencido/não cobrado perde acesso, mas nunca entra nas métricas de churn.
         try {
+          if (!realPayers.has(user.id)) continue;
           await supabaseClient.from("subscription_events").insert({
             user_id: user.id,
             email: user.email,
@@ -81,7 +93,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ checked: expiredUsers?.length || 0, downgraded }),
+      JSON.stringify({ checked: expiredUsers?.length || 0, downgraded, real_payers_checked: realPayers.size }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

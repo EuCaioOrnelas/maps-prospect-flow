@@ -65,7 +65,7 @@ serve(async (req) => {
 
     const now = Date.now();
 
-    const [cancellationsRes, feedbacksRes, eventsRes, profilesRes, paidLeadsRes, paidInvoicesRes, customPaymentsRes] = await Promise.all([
+    const [cancellationsRes, feedbacksRes, eventsRes, profilesRes, paidSalesRes, paidInvoicesRes, customPaymentsRes] = await Promise.all([
       adminClient.from("subscription_cancellations").select("*").order("cancelled_at", { ascending: false }),
       adminClient.from("cancellation_feedback").select("*").order("created_at", { ascending: false }),
       adminClient
@@ -77,12 +77,12 @@ serve(async (req) => {
         .from("profiles")
         .select("id, email, name, plan, payment_provider, subscription_current_period_end, admin_assigned_plan")
         .order("created_at", { ascending: false }),
-      // Leads de checkout pagos: identificam usuários que de fato pagaram (não-trial puro)
+      // Vendas registradas somente após pagamento recebido. Checkout concluído não
+      // é prova de pagamento porque também é criado ao iniciar um trial.
       adminClient
-        .from("checkout_leads")
-        .select("user_id")
-        .eq("checkout_completed", true)
-        .not("user_id", "is", null),
+        .from("partner_sales")
+        .select("customer_user_id")
+        .not("customer_user_id", "is", null),
       // Faturas PIX pagas (renovação confirmada)
       adminClient
         .from("pix_invoices")
@@ -103,7 +103,7 @@ serve(async (req) => {
     // Conjunto de user_ids que tiveram pelo menos um pagamento real confirmado.
     // Usado para descartar cancelamentos durante o trial (nunca cobrado de fato).
     const usersWithRealPayment = new Set<string>();
-    (paidLeadsRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
+    (paidSalesRes.data || []).forEach((row: any) => row.customer_user_id && usersWithRealPayment.add(row.customer_user_id));
     (paidInvoicesRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
     (customPaymentsRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
 
@@ -111,7 +111,7 @@ serve(async (req) => {
     const expiredProfiles = profiles.filter((profile) => {
       if (profile.admin_assigned_plan) return false;
       if (!profile.subscription_current_period_end) return false;
-      if (profile.payment_provider !== "asaas") return false;
+      if (!["asaas", "stripe", "manual"].includes(profile.payment_provider || "")) return false;
       // Only include profiles that had a paid plan (not free) — real churn
       if (!profile.plan || profile.plan === "free") return false;
       // Excluir quem nunca confirmou um pagamento real (cancelou durante trial)
@@ -148,7 +148,7 @@ serve(async (req) => {
     });
 
     // Buscar cancelamentos diretos no Stripe (feitos fora do nosso fluxo)
-    // Mescla qualquer subscription canceled pós-15/04 que não esteja já em subscription_cancellations
+    // Mescla qualquer subscription canceled pós-01/06 que não esteja já em subscription_cancellations.
     const stripeChurns: any[] = [];
     try {
       const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -195,7 +195,8 @@ serve(async (req) => {
                 continue;
               }
             } catch (_) {
-              // Se falhar a verificação, segue o fluxo (já passou no filtro de trial)
+              // Falha fechada: sem conseguir comprovar invoice paga, não classifica churn.
+              continue;
             }
 
             let email: string | null = null;

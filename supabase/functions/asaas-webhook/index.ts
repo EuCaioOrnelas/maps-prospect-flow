@@ -427,13 +427,16 @@ serve(async (req) => {
       const profile = await findProfile(supabaseClient, null, checkoutIdPrefix);
 
       if (profile && planKey) {
-        await activatePlan(supabaseClient, profile, planKey, checkoutIdPrefix, authorization.value, {
-          subscriptionId: authorizationId,
-          customerId: authorization.customer || null,
-          billingPeriod: authorization.frequency === "YEARLY" ? "annual" : "monthly",
-        });
+        // Autorização não é pagamento. Persiste somente os identificadores;
+        // plano, vigência e créditos são concedidos em PAYMENT_RECEIVED/CONFIRMED.
+        await supabaseClient.from("profiles").update({
+          asaas_subscription_id: authorizationId,
+          asaas_customer_id: authorization.customer || null,
+          payment_provider: "asaas",
+          updated_at: new Date().toISOString(),
+        }).eq("id", profile.id);
         return new Response(
-          JSON.stringify({ received: true, action: "pix_auto_activated", plan: planKey }),
+          JSON.stringify({ received: true, action: "pix_auto_authorized_waiting_payment", plan: planKey }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
