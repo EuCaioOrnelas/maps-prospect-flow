@@ -293,9 +293,30 @@ Deno.serve(async (req) => {
 
       const latestInvoice = sub.latest_invoice as Stripe.Invoice | null;
       const priceObj = sub.items.data[0]?.price;
-      let effectiveAmountCents = priceObj?.unit_amount || 0;
-      const interval = priceObj?.recurring?.interval || "month";
-      const intervalCount = priceObj?.recurring?.interval_count || 1;
+
+      // Soma TODOS os itens recorrentes da assinatura (plano + order bumps),
+      // normalizando cada um para valor mensal e respeitando a quantidade.
+      const normalizeToMonthly = (amountCents: number, price: Stripe.Price | undefined) => {
+        const itv = price?.recurring?.interval || "month";
+        const itvCount = price?.recurring?.interval_count || 1;
+        if (itv === "year") return Math.round(amountCents / (12 * itvCount));
+        if (itv === "week") return Math.round((amountCents * 52) / (12 * itvCount));
+        if (itv === "day") return Math.round((amountCents * 365) / (12 * itvCount));
+        return Math.round(amountCents / itvCount);
+      };
+
+      let planMonthlyCents = 0;
+      let bumpsMonthlyCents = 0;
+      sub.items.data.forEach((item, idx) => {
+        const p = item.price;
+        if (!p?.recurring) return;
+        const qty = item.quantity ?? 1;
+        const monthly = normalizeToMonthly((p.unit_amount || 0) * qty, p);
+        if (idx === 0) planMonthlyCents += monthly;
+        else bumpsMonthlyCents += monthly;
+      });
+
+      let effectiveAmountCents = planMonthlyCents + bumpsMonthlyCents;
 
       const discount = (sub as any).discount;
       if (discount?.coupon?.duration === "forever") {
@@ -307,22 +328,14 @@ Deno.serve(async (req) => {
         }
       }
 
-      let monthlyAmountCents = effectiveAmountCents;
-      if (interval === "year") {
-        monthlyAmountCents = Math.round(effectiveAmountCents / (12 * intervalCount));
-      } else if (interval === "week") {
-        monthlyAmountCents = Math.round((effectiveAmountCents * 52) / (12 * intervalCount));
-      } else if (interval === "day") {
-        monthlyAmountCents = Math.round((effectiveAmountCents * 365) / (12 * intervalCount));
-      } else {
-        monthlyAmountCents = Math.round(effectiveAmountCents / intervalCount);
-      }
-
+      const monthlyAmountCents = effectiveAmountCents;
       const baseAmount = monthlyAmountCents / 100;
       const mrrAmount = Math.round(baseAmount * 100) / 100;
+      const bumpsAmount = Math.round(bumpsMonthlyCents) / 100;
 
-      const priceId = sub.items.data[0]?.price.id;
-      const planName = PRICE_TO_PLAN[priceId] || "unknown";
+      const priceId = priceObj?.id;
+      const planName = (priceId && PRICE_TO_PLAN[priceId]) || "unknown";
+
 
       const hadAnyPayment = subsWithPayment.has(sub.id) ||
         (latestInvoice?.charge && typeof latestInvoice.charge === "string" && refundedChargeIds.has(latestInvoice.charge));
