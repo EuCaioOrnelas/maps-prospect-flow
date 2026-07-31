@@ -75,7 +75,7 @@ serve(async (req) => {
         .order("created_at", { ascending: false }),
       adminClient
         .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, admin_assigned_plan")
+        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, admin_assigned_plan")
         .order("created_at", { ascending: false }),
       // Vendas registradas somente após pagamento recebido. Checkout concluído não
       // é prova de pagamento porque também é criado ao iniciar um trial.
