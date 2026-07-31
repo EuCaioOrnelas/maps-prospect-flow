@@ -31,6 +31,7 @@ const USD_TO_BRL = 5.0; // aprox; usado só para exibição em R$
 
 type DayPoint = { day: string; cost: number; tokens: number };
 type ProjPoint = { month: string; projected: number };
+type FeaturePoint = { feature: string; cost: number; tokens: number };
 
 export default function AdminIACustos() {
   const [loading, setLoading] = useState(true);
@@ -38,6 +39,8 @@ export default function AdminIACustos() {
   const [monthCost, setMonthCost] = useState(0);
   const [monthTokens, setMonthTokens] = useState(0);
   const [activeUsers, setActiveUsers] = useState(0);
+  const [breakdown, setBreakdown] = useState<FeaturePoint[]>([]);
+
 
   useEffect(() => {
     const load = async () => {
