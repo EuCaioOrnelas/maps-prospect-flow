@@ -163,6 +163,31 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+// Registra o primeiro pagamento real (valor > 0) do usuário.
+// É a prova usada pelo banco/métricas para diferenciar churn real de trial.
+async function markFirstRealPayment(supabase: any, invoice: any): Promise<void> {
+  try {
+    if (!invoice || typeof invoice.amount_paid !== "number" || invoice.amount_paid <= 0) return;
+    const email = invoice.customer_email;
+    if (!email) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, first_paid_at")
+      .eq("email", email)
+      .maybeSingle();
+    if (!profile?.id || profile.first_paid_at) return;
+    const paidAt = invoice.status_transitions?.paid_at
+      ? new Date(invoice.status_transitions.paid_at * 1000).toISOString()
+      : new Date().toISOString();
+    await supabase.from("profiles").update({ first_paid_at: paidAt }).eq("id", profile.id);
+    logStep("First real payment marked", { userId: profile.id, paidAt });
+  } catch (e) {
+    logStep("Failed marking first real payment", { error: String(e) });
+  }
+}
+
+
+
 // ============== ORDER BUMPS — webhook helpers ==============
 
 const BUMP_PRICE_TO_DEF: Record<string, {
