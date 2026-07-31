@@ -1,5 +1,54 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { logAiUsage } from "../_shared/aiUsage.ts";
+// ---- Registro de custo de IA (inline; sem módulo compartilhado) ----
+const AI_PRICES: Record<string, { in: number; out: number }> = {
+  "gpt-4o-mini": { in: 0.15 / 1_000_000, out: 0.6 / 1_000_000 },
+  "gpt-4o": { in: 2.5 / 1_000_000, out: 10 / 1_000_000 },
+  "gpt-4.1-mini": { in: 0.4 / 1_000_000, out: 1.6 / 1_000_000 },
+  "text-embedding-3-small": { in: 0.02 / 1_000_000, out: 0 },
+  "text-embedding-3-large": { in: 0.13 / 1_000_000, out: 0 },
+};
+async function logAiUsage(p: {
+  feature: string;
+  model: string;
+  usage?: { prompt_tokens?: number; completion_tokens?: number } | null;
+  tokens_in?: number;
+  tokens_out?: number;
+  cost_usd?: number;
+  user_id?: string | null;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return;
+    const model = p.model.replace(/^openai\//, "").trim();
+    const tin = p.tokens_in ?? p.usage?.prompt_tokens ?? 0;
+    const tout = p.tokens_out ?? p.usage?.completion_tokens ?? 0;
+    const price = AI_PRICES[model] ?? AI_PRICES["gpt-4o-mini"];
+    const cost = p.cost_usd ?? tin * price.in + tout * price.out;
+    await fetch(`${url}/rest/v1/ai_usage_logs`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        feature: p.feature,
+        model,
+        user_id: p.user_id ?? null,
+        tokens_in: Math.round(tin),
+        tokens_out: Math.round(tout),
+        cost_usd: Number(cost.toFixed(8)),
+        metadata: p.metadata ?? {},
+      }),
+    });
+  } catch (e) {
+    console.error("[aiUsage] log falhou", String(e));
+  }
+}
+// ---- fim registro de custo de IA ----
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
