@@ -92,21 +92,29 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const loadExtra = async () => {
-      // Conversão de trial: SOMENTE quem colocou cartão, fez o trial e já saiu dele.
+      // Conversão de trial: quem colocou cartão, saiu do trial e virou pagante.
+      // "Pagante" = plano pago OU evidência de assinatura cobrada (preço + período),
+      // porque no Stripe o campo `plan` nem sempre é atualizado no perfil.
       const { data: allUsers } = await supabase
         .from("profiles")
         .select(
-          "id, plan, trial_start_at, trial_end_at, trial_will_charge_at, trial_card_last4, trial_asaas_subscription_id, created_at"
+          "id, plan, trial_start_at, trial_end_at, trial_will_charge_at, trial_card_last4, trial_asaas_subscription_id, created_at, payment_provider, subscription_price_cents, subscription_current_period_end, admin_assigned_plan"
         );
 
       if (allUsers) {
         const trialed = (allUsers as any[]).filter((profile) =>
           new Date(profile.created_at).getTime() >= new Date("2026-06-01T00:00:00Z").getTime() &&
+          !profile.admin_assigned_plan &&
           hasCompletedTrial(profile)
         );
-        const converted = trialed.filter(hasConvertedFromTrial).length;
+        const converted = trialed.filter(
+          (profile) =>
+            hasConvertedFromTrial(profile) ||
+            ((profile.subscription_price_cents || 0) > 0 && !!profile.subscription_current_period_end)
+        ).length;
         setTrialConversion({ total: trialed.length, converted });
       }
+
 
       // A apuração roda no backend administrativo para enxergar todas as fontes
       // de uso, sem ser limitada pelas políticas do usuário logado.
