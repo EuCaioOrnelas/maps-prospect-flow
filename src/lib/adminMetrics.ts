@@ -4,9 +4,9 @@
 
 /**
  * Reembolsos anteriores a esta data são ignorados em TODAS as métricas do admin
- * (histórico anterior a junho/2026 foi limpo das métricas).
+ * (histórico anterior a julho/2026 foi limpo das métricas de reembolso).
  */
-export const REFUND_METRICS_SINCE = new Date("2026-06-01T00:00:00Z");
+export const REFUND_METRICS_SINCE = new Date("2026-07-01T00:00:00Z");
 
 /** Início oficial das métricas de churn após a limpeza do histórico legado. */
 export const CHURN_METRICS_SINCE = new Date("2026-06-01T00:00:00Z");

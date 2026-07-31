@@ -50,7 +50,7 @@ export default function AdminAtivacao() {
   }, []);
 
   const funnel: FunnelRow[] = [
-    { label: "Cadastros Totais",   value: stats.total,     color: "hsl(217 91% 60%)",   tooltip: "Todas as contas criadas (tabela profiles)" },
+    { label: "Cadastros desde 01/06", value: stats.total, color: "hsl(217 91% 60%)", tooltip: "Contas criadas desde 01/06 que concluíram ou pularam o novo onboarding" },
     { label: "Acessou o Dashboard", value: stats.accessed, color: "hsl(262 83% 58%)",   tooltip: "Logaram após o cadastro (updated_at > created_at)" },
     { label: "Ativados",           value: stats.activated, color: "hsl(158 72% 38%)",   tooltip: "Usaram pelo menos uma feature: busca, mensagem, lead, fluxo ou campanha" },
   ];
@@ -67,7 +67,7 @@ export default function AdminAtivacao() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Ativação</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              De cadastro a primeiro uso da plataforma
+              Coorte criada desde 01/06: do cadastro ao primeiro uso real
             </p>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
