@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
 import { getProviderLabel } from "@/lib/paymentProviderLabel";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -14,7 +13,6 @@ export default function AdminAssinaturas() {
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [category, setCategory] = useState<"paid" | "trial">("paid");
 
   useEffect(() => {
@@ -95,8 +93,7 @@ export default function AdminAssinaturas() {
                 {filtered.map(sub => (
                   <TableRow
                     key={sub.id}
-                    className="cursor-pointer hover:bg-muted/40"
-                    onClick={() => undefined}
+                    className="hover:bg-muted/40"
                   >
                     <TableCell>
                       <div>
