@@ -506,7 +506,10 @@ function NumbersCombobox({
             <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
           </button>
         </PopoverTrigger>
-        <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+        <PopoverContent
+          className="p-0 w-[--radix-popover-trigger-width] bg-popover text-popover-foreground border-border shadow-lg z-50"
+          align="start"
+        >
           <Command
             filter={(value, search) =>
               value.toLowerCase().includes(search.toLowerCase().trim()) ? 1 : 0
@@ -523,9 +526,14 @@ function NumbersCombobox({
                       key={n.id}
                       value={`${n.nickname ?? ""} ${n.display_phone_number ?? ""} ${n.phone_number_id ?? ""}`}
                       onSelect={() => onToggle(n.id)}
-                      className="gap-2"
+                      className={cn(
+                        "gap-2 cursor-pointer rounded-lg px-2 py-2",
+                        "data-[selected=true]:bg-muted data-[selected=true]:text-foreground",
+                        isOn && "bg-primary/10 text-foreground data-[selected=true]:bg-primary/15",
+                      )}
                     >
                       <Checkbox checked={isOn} className="pointer-events-none" />
+
                       <Phone className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
                       <span className="flex flex-col">
                         <span className="text-sm text-foreground">
@@ -545,30 +553,33 @@ function NumbersCombobox({
           </Command>
         </PopoverContent>
       </Popover>
-      {selected.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selected.map((id) => {
+      <div className="min-h-[38px] rounded-lg border border-dashed border-border/70 bg-muted/30 px-2 py-1.5 flex flex-wrap items-center gap-2">
+        {selected.length === 0 ? (
+          <span className="text-xs text-muted-foreground">Nenhum número selecionado ainda</span>
+        ) : (
+          selected.map((id) => {
             const n = numbers.find((x) => x.id === id);
             if (!n) return null;
             return (
-              <Badge key={id} variant="secondary" className="gap-1.5 pl-2 pr-1 py-1">
+              <Badge key={id} variant="secondary" className="gap-1.5 pl-2 pr-1 py-1 text-foreground">
                 <Phone className="h-3 w-3" />
                 {n.nickname || n.display_phone_number}
                 <button
                   type="button"
                   onClick={() => onToggle(id)}
-                  className="ml-1 rounded-full p-0.5 hover:bg-background/60"
+                  className="ml-1 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>
               </Badge>
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
     </div>
   );
 }
+
 
 /** Shell com header e título fixos; scroll apenas no conteúdo da etapa */
 function OnboardingShell({
