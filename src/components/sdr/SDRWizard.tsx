@@ -2,8 +2,18 @@ import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } fro
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,16 +36,18 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   ArrowRight,
+  ArrowDown,
   Check,
   Loader2,
   CalendarCheck,
+  CalendarDays,
   MonitorPlay,
   FileText,
   ShoppingCart,
   Filter,
   RefreshCw,
-  Shapes,
   Infinity as InfinityIcon,
   SlidersHorizontal,
   MessageCircle,
@@ -61,7 +73,6 @@ import {
   PhoneCall,
   Archive,
   Columns3,
-  ListTodo,
   BellRing,
   Globe,
   Instagram,
@@ -69,17 +80,32 @@ import {
   Phone,
   CalendarClock,
   Tag,
+  Building2,
+  Users,
+  Package,
+  Plus,
+  Trash2,
+  DollarSign,
+  Lock,
+  Lightbulb,
+  Cpu,
+  KeyRound,
+  Info,
+  Sparkle,
   type LucideIcon,
 } from "lucide-react";
 
 import {
+  SDR_ACTIVATION_TRIGGERS,
   SDR_DEFAULT_DRAFT,
   SDR_OBJECTIVES,
   SDR_OBJECTIVE_LABEL,
   SDR_PRIORITIES,
   SDR_SITUATIONS,
+  SDR_SUCCESS_BY_OBJECTIVE,
   SDR_WEEKDAYS,
   type SdrDraft,
+  type SdrObjective,
 } from "@/lib/sdrConfig";
 
 interface Props {
@@ -104,40 +130,58 @@ const STEPS = [
     subtitle: "Escolha os números de WhatsApp e o horário de atendimento.",
   },
   {
-    title: "Quando entra",
-    icon: Clock,
-    headline: "Quando ele deve entrar na conversa?",
-    subtitle: "Defina os gatilhos de entrada e o tempo de resposta.",
+    title: "Ativação",
+    icon: Zap,
+    headline: "Qual o gatilho de ativação?",
+    subtitle: "Escolha quando o SDR assume a conversa e em quanto tempo responde.",
   },
   {
     title: "Como conversa",
     icon: MessageSquare,
     headline: "Como ele deve conversar?",
-    subtitle: "Personalidade, tom de voz e ritmo das mensagens.",
+    subtitle: "Tom de voz, ritmo e estilo das mensagens.",
   },
   {
     title: "Estratégia",
     icon: Brain,
     headline: "Qual a estratégia de vendas?",
-    subtitle: "Prioridades, insistência e tratamento de objeções.",
+    subtitle: "A lógica de prioridades, insistência e objeções.",
   },
   {
-    title: "Conhecimento",
+    title: "Empresa",
+    icon: Building2,
+    headline: "Sobre a sua empresa",
+    subtitle: "Usamos o perfil da empresa para o SDR falar como você.",
+  },
+  {
+    title: "Produtos",
+    icon: Package,
+    headline: "O que ele pode oferecer?",
+    subtitle: "Cadastre cada produto e quando ele deve ser oferecido.",
+  },
+  {
+    title: "Materiais",
     icon: BookOpen,
-    headline: "O que ele precisa saber?",
-    subtitle: "Quanto mais contexto, mais natural e preciso ele responde.",
+    headline: "O que mais ele precisa saber?",
+    subtitle: "FAQ, políticas, provas sociais e links de apoio.",
   },
   {
     title: "Encerramento",
     icon: Flag,
     headline: "Quando encerrar ou insistir?",
-    subtitle: "Critérios de sucesso, parada e follow-up.",
+    subtitle: "Critérios de parada, follow-up e o que fazer com o lead.",
   },
   {
     title: "Situações",
     icon: Sparkles,
     headline: "Como ele deve agir quando...",
     subtitle: "Ajuste comportamentos específicos sem escrever prompts.",
+  },
+  {
+    title: "Inteligência",
+    icon: Cpu,
+    headline: "Qual IA vai pensar por ele?",
+    subtitle: "Escolha o modelo que vai processar o raciocínio do SDR.",
   },
   {
     title: "Revisão",
@@ -149,26 +193,26 @@ const STEPS = [
 
 /** Ícones limpos por id de opção (usados em cards e seletores) */
 const OPTION_ICONS: Record<string, LucideIcon> = {
-  // objetivos
   reuniao: CalendarCheck,
   demonstracao: MonitorPlay,
   proposta: FileText,
   venda_direta: ShoppingCart,
   qualificar: Filter,
   recuperar: RefreshCw,
-  outro: Shapes,
-  // horário / gatilhos
   always: InfinityIcon,
   custom: SlidersHorizontal,
-  first_only: MessageCircle,
+  inbound_all: MessageCircle,
+  first_only: MessageSquare,
   after_flow: GitBranch,
   after_transfer: UserCheck,
+  manual_call: PhoneCall,
+  new_opportunity: Sparkle,
   off: PauseCircle,
   immediate: Zap,
   imediato: Zap,
+  smart: Brain,
   "30s": Timer,
   "1min": Hourglass,
-  // personalidade
   consultivo: Handshake,
   profissional: Briefcase,
   descontraido: Smile,
@@ -192,14 +236,11 @@ const OPTION_ICONS: Record<string, LucideIcon> = {
   explorar: Search,
   validar: ShieldCheck,
   vendedor: PhoneCall,
-  // follow-up / encerramento
   inteligente: Brain,
   manual: SlidersHorizontal,
   arquivar: Archive,
   mover_pipeline: Columns3,
-  criar_tarefa: ListTodo,
   avisar_vendedor: BellRing,
-  // situações
   aguardar: Hourglass,
   uma_pergunta: HelpCircle,
   outro_horario: CalendarClock,
@@ -209,13 +250,13 @@ const OPTION_ICONS: Record<string, LucideIcon> = {
   descobrir: Search,
   comparar: Columns3,
   contexto: Search,
+  nunca_sem_reuniao: Lock,
   enviar: ArrowRight,
   acelerar: Zap,
   recusou: Ban,
   sem_resposta: PauseCircle,
   pediu_parar: Ban,
   venda: ShoppingCart,
-  // prioridades
   conexao: Handshake,
   necessidade: Search,
   objecoes: ShieldCheck,
@@ -226,20 +267,23 @@ function iconFor(id: string): LucideIcon {
   return OPTION_ICONS[id] ?? Tag;
 }
 
+/** Card no padrão do onboarding: ícone em cima, texto centralizado embaixo */
 function OptionCard({
   active,
   onClick,
   title,
   hint,
   id,
+  icon,
 }: {
   active: boolean;
   onClick: () => void;
   title: string;
   hint?: string;
   id?: string;
+  icon?: LucideIcon;
 }) {
-  const Icon = iconFor(id ?? "");
+  const Icon = icon ?? iconFor(id ?? "");
   return (
     <button
       type="button"
@@ -254,9 +298,7 @@ function OptionCard({
       <span
         className={cn(
           "absolute top-3 right-3 h-5 w-5 rounded-full border flex items-center justify-center transition-colors",
-          active
-            ? "bg-primary border-primary"
-            : "border-border group-hover:border-primary/50"
+          active ? "bg-primary border-primary" : "border-border group-hover:border-primary/50"
         )}
       >
         {active && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />}
@@ -285,102 +327,97 @@ function OptionCard({
   );
 }
 
-
-
-function Pills({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: { id: string; label: string }[];
-}) {
+/** Grade de cards no padrão do onboarding */
+function CardGrid({ children, cols = 3 }: { children: ReactNode; cols?: 2 | 3 }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((o) => {
-        const Icon = iconFor(o.id);
-        const selected = value === o.id;
-        return (
-          <button
-            key={o.id}
-            type="button"
-            onClick={() => onChange(o.id)}
-            className={cn(
-              "group inline-flex items-center gap-2 h-10 px-3.5 rounded-lg text-sm border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-              selected
-                ? "border-primary ring-2 ring-primary/20 shadow-md text-foreground font-semibold"
-                : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
-            )}
-          >
-            <Icon
-              className={cn(
-                "h-4 w-4 shrink-0 transition-colors",
-                selected ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-              )}
-              strokeWidth={1.75}
-            />
-            <span className="leading-none">{o.label}</span>
-          </button>
-        );
-      })}
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-4 items-stretch",
+        cols === 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2"
+      )}
+    >
+      {children}
     </div>
   );
 }
 
-/** Linha de checkbox no mesmo padrão visual do onboarding */
-function CheckRow({
-  id,
-  label,
-  checked,
-  onToggle,
+/** Seletor único no formato de cards do onboarding */
+function CardSelect({
+  value,
+  onChange,
+  options,
+  cols = 3,
 }: {
-  id: string;
-  label: string;
-  checked: boolean;
-  onToggle: () => void;
+  value: string;
+  onChange: (v: string) => void;
+  options: { id: string; label: string; hint?: string }[];
+  cols?: 2 | 3;
 }) {
-  const Icon = iconFor(id);
   return (
-    <label
-      className={cn(
-        "group flex items-center gap-3 rounded-xl border bg-card p-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-        checked
-          ? "border-primary ring-2 ring-primary/20 shadow-md"
-          : "border-border hover:border-primary/40"
-      )}
-    >
-      <Checkbox checked={checked} onCheckedChange={onToggle} />
-      <span
-        className={cn(
-          "h-9 w-9 rounded-lg flex items-center justify-center shrink-0 transition-colors",
-          checked
-            ? "bg-primary/10 text-primary"
-            : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
-        )}
-      >
-        <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
-      </span>
-      <span className="text-sm font-medium text-foreground">{label}</span>
-    </label>
+    <CardGrid cols={cols}>
+      {options.map((o) => (
+        <OptionCard
+          key={o.id}
+          id={o.id}
+          title={o.label}
+          hint={o.hint}
+          active={value === o.id}
+          onClick={() => onChange(o.id)}
+        />
+      ))}
+    </CardGrid>
   );
 }
 
-
+/** Seletor múltiplo no formato de cards do onboarding */
+function CardMultiSelect({
+  values,
+  onToggle,
+  options,
+  cols = 3,
+}: {
+  values: string[];
+  onToggle: (v: string) => void;
+  options: { id: string; label: string; hint?: string }[];
+  cols?: 2 | 3;
+}) {
+  return (
+    <CardGrid cols={cols}>
+      {options.map((o) => (
+        <OptionCard
+          key={o.id}
+          id={o.id}
+          title={o.label}
+          hint={o.hint}
+          active={values.includes(o.id)}
+          onClick={() => onToggle(o.id)}
+        />
+      ))}
+    </CardGrid>
+  );
+}
 
 /** Input com ícone à esquerda */
 function IconInput({
   icon: Icon,
   className,
+  suffix,
   ...props
-}: ComponentProps<typeof Input> & { icon: LucideIcon }) {
+}: ComponentProps<typeof Input> & { icon?: LucideIcon; suffix?: string }) {
   return (
     <div className="relative">
-      <Icon
-        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-        strokeWidth={1.75}
-      />
-      <Input className={cn("pl-9", className)} {...props} />
+      {Icon && (
+        <Icon
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+          strokeWidth={1.75}
+        />
+      )}
+      <Input className={cn(Icon && "pl-9", suffix && "pr-8", className)} {...props} />
+      {suffix && (
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+          {suffix}
+        </span>
+      )}
     </div>
   );
 }
@@ -395,12 +432,145 @@ function IconLabel({ icon: Icon, children }: { icon: LucideIcon; children: React
   );
 }
 
+/** Bloco informativo (regras obrigatórias, dicas) */
+function InfoBox({
+  icon: Icon = Info,
+  title,
+  children,
+}: {
+  icon?: LucideIcon;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex gap-3">
+      <span className="h-9 w-9 shrink-0 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+        <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+      </span>
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <div className="text-xs text-muted-foreground leading-relaxed space-y-1">{children}</div>
+      </div>
+    </div>
+  );
+}
 
+function SectionTitle({ icon: Icon, title, hint }: { icon: LucideIcon; title: string; hint?: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="h-9 w-9 shrink-0 rounded-lg bg-muted text-muted-foreground flex items-center justify-center">
+        <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+      </span>
+      <div>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      </div>
+    </div>
+  );
+}
 
+/** Combobox pesquisável de números de WhatsApp */
+function NumbersCombobox({
+  numbers,
+  selected,
+  onToggle,
+}: {
+  numbers: any[];
+  selected: string[];
+  onToggle: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const label =
+    selected.length === 0
+      ? "Selecionar números..."
+      : selected.length === 1
+        ? numbers.find((n) => n.id === selected[0])?.nickname ||
+          numbers.find((n) => n.id === selected[0])?.display_phone_number ||
+          "1 número"
+        : `${selected.length} números selecionados`;
 
+  return (
+    <div className="space-y-2">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex h-11 w-full items-center justify-between rounded-lg border border-border bg-card px-3 text-sm transition-colors hover:border-primary/40"
+          >
+            <span className="flex items-center gap-2 truncate">
+              <Phone className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+              <span className={cn("truncate", selected.length === 0 && "text-muted-foreground")}>
+                {label}
+              </span>
+            </span>
+            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+          <Command
+            filter={(value, search) =>
+              value.toLowerCase().includes(search.toLowerCase().trim()) ? 1 : 0
+            }
+          >
+            <CommandInput placeholder="Buscar por nome ou número..." />
+            <CommandList>
+              <CommandEmpty>Nenhum número encontrado.</CommandEmpty>
+              <CommandGroup>
+                {numbers.map((n) => {
+                  const isOn = selected.includes(n.id);
+                  return (
+                    <CommandItem
+                      key={n.id}
+                      value={`${n.nickname ?? ""} ${n.display_phone_number ?? ""} ${n.phone_number_id ?? ""}`}
+                      onSelect={() => onToggle(n.id)}
+                      className="gap-2"
+                    >
+                      <Checkbox checked={isOn} className="pointer-events-none" />
+                      <Phone className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+                      <span className="flex flex-col">
+                        <span className="text-sm text-foreground">
+                          {n.nickname || n.display_phone_number || n.phone_number_id}
+                        </span>
+                        {n.nickname && n.display_phone_number && (
+                          <span className="text-xs text-muted-foreground">
+                            {n.display_phone_number}
+                          </span>
+                        )}
+                      </span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selected.map((id) => {
+            const n = numbers.find((x) => x.id === id);
+            if (!n) return null;
+            return (
+              <Badge key={id} variant="secondary" className="gap-1.5 pl-2 pr-1 py-1">
+                <Phone className="h-3 w-3" />
+                {n.nickname || n.display_phone_number}
+                <button
+                  type="button"
+                  onClick={() => onToggle(id)}
+                  className="ml-1 rounded-full p-0.5 hover:bg-background/60"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </Badge>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
-
-/** Etapas no padrão do onboarding, porém dentro do portal (sidebar + header) */
+/** Shell com header e título fixos; scroll apenas no conteúdo da etapa */
 function OnboardingShell({
   step,
   total,
@@ -420,61 +590,72 @@ function OnboardingShell({
 }) {
   const progress = Math.round((step / total) * 100);
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Bot className="h-4 w-4 text-primary" />
-          SDR Inteligente
-        </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span>
-            {step} de {total}
-          </span>
-          <div className="w-32 sm:w-40 h-1 rounded-full bg-muted overflow-hidden">
-            <motion.div
-              className="h-full bg-primary"
-              initial={false}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-            />
+    <div className="flex h-full min-h-0 w-full flex-col">
+      {/* Header fixo */}
+      <div className="shrink-0">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Bot className="h-4 w-4 text-primary" />
+            SDR Inteligente
           </div>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span>
+              {step} de {total}
+            </span>
+            <div className="w-32 sm:w-40 h-1 rounded-full bg-muted overflow-hidden">
+              <motion.div
+                className="h-full bg-primary"
+                initial={false}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Título fixo */}
+        <div className="text-center mb-6 max-w-3xl mx-auto">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-2">
+            {headline}
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground">{subtitle}</p>
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.section
-          key={stepKey}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -12 }}
-          transition={{ duration: 0.3 }}
-          className="w-full max-w-3xl mx-auto"
-        >
-          <div className="text-center mb-10">
-            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-3">
-              {headline}
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground">{subtitle}</p>
-          </div>
+      {/* Conteúdo com scroll */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+        <AnimatePresence mode="wait">
+          <motion.section
+            key={stepKey}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25 }}
+            className="w-full max-w-3xl mx-auto pb-6"
+          >
+            {children}
+          </motion.section>
+        </AnimatePresence>
+      </div>
 
-          <div>{children}</div>
-
-          <div className="mt-12">{footer}</div>
-        </motion.section>
-      </AnimatePresence>
+      {/* Footer fixo */}
+      <div className="shrink-0 pt-4 bg-background">
+        <div className="max-w-3xl mx-auto">{footer}</div>
+      </div>
     </div>
   );
 }
 
-
-
 export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog" }: Props) {
   const { user, accountOwnerId } = useAuth();
+  const { members } = useAccountMembers();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<SdrDraft>(SDR_DEFAULT_DRAFT);
   const [numbers, setNumbers] = useState<any[]>([]);
-
+  const [stages, setStages] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -486,6 +667,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         objective: editing.objective ?? "reuniao",
         objective_custom: editing.objective_custom ?? "",
         whatsapp_number_ids: editing.whatsapp_number_ids ?? [],
+        ai: { ...SDR_DEFAULT_DRAFT.ai, ...(editing.ai || {}) },
         schedule: { ...SDR_DEFAULT_DRAFT.schedule, ...(editing.schedule || {}) },
         triggers: { ...SDR_DEFAULT_DRAFT.triggers, ...(editing.triggers || {}) },
         personality: { ...SDR_DEFAULT_DRAFT.personality, ...(editing.personality || {}) },
@@ -506,7 +688,63 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
       .select("id,nickname,display_phone_number,phone_number_id")
       .eq("owner_user_id", accountOwnerId)
       .then(({ data }) => setNumbers(data ?? []));
+
+    supabase
+      .from("pipeline_stages")
+      .select("id,name,position")
+      .eq("owner_user_id", accountOwnerId)
+      .order("position")
+      .then(({ data }) => setStages(data ?? []));
+
+    supabase
+      .from("wiize_message_templates")
+      .select("id,name,body")
+      .eq("owner_user_id", accountOwnerId)
+      .eq("archived", false)
+      .then(({ data }) => setTemplates(data ?? []));
   }, [open, accountOwnerId]);
+
+  /** Puxa o perfil da empresa (e produtos) para pré-preencher o conhecimento */
+  useEffect(() => {
+    if (!open || !accountOwnerId || editing || profileLoaded) return;
+    (async () => {
+      const [{ data: profileData }, { data: services }] = await Promise.all([
+        supabase
+          .from("company_profiles" as any)
+          .select("*")
+          .eq("user_id", accountOwnerId)
+          .maybeSingle(),
+        supabase
+          .from("company_services")
+          .select("name, average_ticket, description")
+          .eq("owner_user_id", accountOwnerId),
+      ]);
+      const p: any = profileData || {};
+      setDraft((d) => ({
+        ...d,
+        knowledge: {
+          ...d.knowledge,
+          company: d.knowledge.company || p.company_name
+            ? [p.company_name, p.company_objective].filter(Boolean).join(" — ") || d.knowledge.company
+            : d.knowledge.company,
+          niche: d.knowledge.niche || p.company_niche || "",
+          audience: d.knowledge.audience || p.company_target_audience || "",
+          differentials: d.knowledge.differentials || p.company_differential || "",
+          products: d.knowledge.products || p.company_products || "",
+          products_list:
+            services && services.length
+              ? services.map((s: any) => ({
+                  name: s.name || "",
+                  description: s.description || "",
+                  when_to_offer: "",
+                  price: s.average_ticket ? `R$ ${Number(s.average_ticket).toLocaleString("pt-BR")}` : "",
+                }))
+              : d.knowledge.products_list,
+        },
+      }));
+      setProfileLoaded(true);
+    })();
+  }, [open, accountOwnerId, editing, profileLoaded]);
 
   const set = <K extends keyof SdrDraft>(key: K, value: SdrDraft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -514,18 +752,43 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   const patch = <K extends keyof SdrDraft>(key: K, value: Partial<SdrDraft[K]>) =>
     setDraft((d) => ({ ...d, [key]: { ...(d[key] as any), ...(value as any) } }));
 
+  const toggleArray = (arr: string[], id: string) =>
+    arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
+
+  const productsValid = draft.knowledge.products_list.every(
+    (p) => p.name.trim().length >= 2 && p.description.trim().length >= 5 && p.when_to_offer.trim().length >= 5
+  );
+
   const canProceed = useMemo(() => {
     switch (step) {
       case 1:
         return draft.name.trim().length >= 2;
       case 2:
         return draft.whatsapp_number_ids.length > 0;
+      case 3:
+        return draft.triggers.activation.length > 0;
       case 6:
-        return draft.knowledge.company.trim().length > 0;
+        return (
+          draft.knowledge.company.trim().length >= 5 &&
+          draft.knowledge.niche.trim().length >= 2 &&
+          draft.knowledge.audience.trim().length >= 3 &&
+          draft.knowledge.differentials.trim().length >= 3
+        );
+      case 7:
+        return draft.knowledge.products_list.length > 0 && productsValid;
+      case 9:
+        return (
+          draft.closing.notify_seller_email.trim().length > 3 &&
+          draft.closing.after_limit_actions.length > 0 &&
+          (!draft.closing.after_limit_actions.includes("mover_pipeline") ||
+            !!draft.closing.after_limit_stage_id)
+        );
+      case 11:
+        return draft.ai.api_key.trim().length >= 10;
       default:
         return true;
     }
-  }, [step, draft]);
+  }, [step, draft, productsValid]);
 
   const handleSave = async () => {
     if (!user || !accountOwnerId) return;
@@ -536,14 +799,17 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         created_by: user.id,
         name: draft.name.trim(),
         objective: draft.objective,
-        objective_custom: draft.objective_custom || null,
+        objective_custom: null,
         whatsapp_number_ids: draft.whatsapp_number_ids,
         schedule: draft.schedule,
         triggers: draft.triggers,
-        personality: draft.personality,
+        personality: { ...draft.personality, leads_conversation: true, never_wait_lead: true },
         strategy: draft.strategy,
-        knowledge: draft.knowledge,
-        closing: draft.closing,
+        knowledge: { ...draft.knowledge, ai: undefined },
+        closing: {
+          ...draft.closing,
+          success_criteria: [SDR_SUCCESS_BY_OBJECTIVE[draft.objective as SdrObjective]],
+        },
         situations: draft.situations,
       };
       const q = editing
@@ -561,594 +827,1050 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
     }
   };
 
-  const toggleArray = (arr: string[], id: string) =>
-    arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
-
   const StepIcon = STEPS[step - 1].icon;
   const stepDef = STEPS[step - 1];
 
+  const updateProduct = (i: number, field: string, value: string) =>
+    setDraft((d) => ({
+      ...d,
+      knowledge: {
+        ...d.knowledge,
+        products_list: d.knowledge.products_list.map((p, idx) =>
+          idx === i ? { ...p, [field]: value } : p
+        ),
+      },
+    }));
+
+  const updateLink = (i: number, field: string, value: string) =>
+    setDraft((d) => ({
+      ...d,
+      knowledge: {
+        ...d.knowledge,
+        links_list: d.knowledge.links_list.map((l, idx) =>
+          idx === i ? { ...l, [field]: value } : l
+        ),
+      },
+    }));
+
   const body = (
-    <div className="py-2 space-y-5">
+    <div className="py-1 space-y-6">
+      {/* 1 - Objetivo */}
+      {step === 1 && (
+        <>
+          <div className="space-y-2">
+            <IconLabel icon={Bot}>Nome do SDR</IconLabel>
+            <IconInput
+              icon={Bot}
+              value={draft.name}
+              onChange={(e) => set("name", e.target.value)}
+              placeholder="Ex.: SDR Comercial"
+            />
+          </div>
+          <div className="space-y-3">
+            <IconLabel icon={Target}>Objetivo principal</IconLabel>
+            <CardSelect
+              value={draft.objective}
+              onChange={(v) => set("objective", v as SdrObjective)}
+              options={SDR_OBJECTIVES}
+            />
+            <p className="text-xs text-muted-foreground">
+              Esse será o objetivo buscado em todas as conversas e também o critério de sucesso do SDR.
+            </p>
+          </div>
+        </>
+      )}
 
-          {/* 1 - Objetivo */}
-          {step === 1 && (
-            <>
-              <div className="space-y-2">
-                <IconLabel icon={Bot}>Nome do SDR</IconLabel>
-                <IconInput
-                  icon={Bot}
-                  value={draft.name}
-                  onChange={(e) => set("name", e.target.value)}
-                  placeholder="Ex.: SDR Comercial"
-                />
-              </div>
-              <div className="space-y-2">
-                <IconLabel icon={Target}>Objetivo principal</IconLabel>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
-                  {SDR_OBJECTIVES.map((o) => (
-                    <OptionCard
-                      key={o.id}
-                      id={o.id}
-                      active={draft.objective === o.id}
-                      onClick={() => set("objective", o.id)}
-                      title={o.label}
-                      hint={o.hint}
-                    />
-                  ))}
-                </div>
-                {draft.objective === "outro" && (
-                  <IconInput
-                    icon={Shapes}
-                    className="mt-2"
-                    value={draft.objective_custom}
-                    onChange={(e) => set("objective_custom", e.target.value)}
-                    placeholder="Descreva o objetivo"
-                  />
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Esse será o principal objetivo buscado em todas as conversas.
-                </p>
-              </div>
-            </>
-          )}
+      {/* 2 - Onde atua */}
+      {step === 2 && (
+        <>
+          <div className="space-y-2">
+            <IconLabel icon={Phone}>Números de WhatsApp (Meta)</IconLabel>
+            {numbers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhum número conectado. Conecte um número Meta em Meta → Números.
+              </p>
+            ) : (
+              <NumbersCombobox
+                numbers={numbers}
+                selected={draft.whatsapp_number_ids}
+                onToggle={(id) =>
+                  set("whatsapp_number_ids", toggleArray(draft.whatsapp_number_ids, id))
+                }
+              />
+            )}
+          </div>
 
-          {/* 2 - Onde atua */}
-          {step === 2 && (
-            <>
-              <div className="space-y-2">
-                <IconLabel icon={Phone}>Números de WhatsApp (Meta)</IconLabel>
-                {numbers.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum número conectado. Conecte um número Meta em Meta → Números.
-                  </p>
-                )}
+          <div className="space-y-4">
+            <IconLabel icon={Clock}>Horário de atendimento</IconLabel>
+            <CardSelect
+              cols={2}
+              value={draft.schedule.mode}
+              onChange={(v) => patch("schedule", { mode: v as any })}
+              options={[
+                { id: "always", label: "Sempre ativo", hint: "24 horas, todos os dias" },
+                { id: "custom", label: "Personalizado", hint: "Dias e horários definidos" },
+              ]}
+            />
+            {draft.schedule.mode === "custom" && (
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  {numbers.map((n) => (
-                    <label
-                      key={n.id}
-                      className={cn(
-                        "group flex items-center gap-3 rounded-xl border bg-card p-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-                        draft.whatsapp_number_ids.includes(n.id)
-                          ? "border-primary ring-2 ring-primary/20 shadow-md"
-                          : "border-border hover:border-primary/40"
-                      )}
-                    >
-                      <Checkbox
-                        checked={draft.whatsapp_number_ids.includes(n.id)}
-                        onCheckedChange={() =>
-                          set("whatsapp_number_ids", toggleArray(draft.whatsapp_number_ids, n.id))
-                        }
-                      />
-                      <span
-                        className={cn(
-                          "h-9 w-9 rounded-lg flex items-center justify-center shrink-0 transition-colors",
-                          draft.whatsapp_number_ids.includes(n.id)
-                            ? "bg-primary/10 text-primary"
-                            : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
-                        )}
-                      >
-                        <Phone className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                      </span>
-                      <span className="text-sm font-medium text-foreground">
-                        {n.nickname || n.display_phone_number || n.phone_number_id}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <IconLabel icon={Clock}>Horário de atendimento</IconLabel>
-                <Pills
-                  value={draft.schedule.mode}
-                  onChange={(v) => patch("schedule", { mode: v as any })}
-                  options={[
-                    { id: "always", label: "Sempre" },
-                    { id: "custom", label: "Personalizado" },
-                  ]}
-                />
-                {draft.schedule.mode === "custom" && (
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap gap-2">
-                      {SDR_WEEKDAYS.map((d) => (
+                  <IconLabel icon={CalendarDays}>Dias da semana</IconLabel>
+                  <div className="flex flex-wrap gap-2">
+                    {SDR_WEEKDAYS.map((d) => {
+                      const on = draft.schedule.days.includes(d.id);
+                      return (
                         <button
                           key={d.id}
                           type="button"
                           onClick={() =>
                             patch("schedule", {
-                              days: draft.schedule.days.includes(d.id)
+                              days: on
                                 ? draft.schedule.days.filter((x) => x !== d.id)
                                 : [...draft.schedule.days, d.id],
                             })
                           }
                           className={cn(
-                            "h-10 min-w-[3.25rem] px-3 rounded-lg text-sm border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-                            draft.schedule.days.includes(d.id)
+                            "inline-flex items-center gap-2 h-10 px-3 rounded-lg text-sm border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+                            on
                               ? "border-primary ring-2 ring-primary/20 shadow-md text-foreground font-semibold"
                               : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
                           )}
                         >
+                          <CalendarDays
+                            className={cn("h-4 w-4", on ? "text-primary" : "text-muted-foreground")}
+                            strokeWidth={1.75}
+                          />
                           {d.label}
                         </button>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <IconLabel icon={Clock}>Início</IconLabel>
-                        <IconInput
-                          icon={Clock}
-                          type="time"
-                          value={draft.schedule.start}
-                          onChange={(e) => patch("schedule", { start: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <IconLabel icon={Clock}>Fim</IconLabel>
-                        <IconInput
-                          icon={Clock}
-                          type="time"
-                          value={draft.schedule.end}
-                          onChange={(e) => patch("schedule", { end: e.target.value })}
-                        />
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
-                )}
-                <div className="flex items-center justify-between rounded-xl border border-border p-3">
-                  <div>
-                    <p className="text-sm font-medium">Fila fora do horário</p>
-                    <p className="text-xs text-muted-foreground">
-                      Mensagens fora do horário são enviadas no próximo horário útil.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={draft.schedule.queue_outside_hours}
-                    onCheckedChange={(v) => patch("schedule", { queue_outside_hours: v })}
-                  />
                 </div>
-              </div>
-            </>
-          )}
-
-          {/* 3 - Quando entra */}
-          {step === 3 && (
-            <>
-              <div className="space-y-2">
-                <Label>Mensagem recebida</Label>
-                <Pills
-                  value={draft.triggers.inbound}
-                  onChange={(v) => patch("triggers", { inbound: v as any })}
-                  options={[
-                    { id: "always", label: "Sempre" },
-                    { id: "first_only", label: "Apenas primeira mensagem" },
-                    { id: "after_flow", label: "Após fluxo" },
-                    { id: "after_transfer", label: "Após transferência" },
-                    { id: "off", label: "Não assumir" },
-                  ]}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Conversa iniciada pelo SDR</Label>
-                {[
-                  { key: "outbound_prospect", label: "Prospectar automaticamente", icon: Search },
-                  { key: "outbound_followup", label: "Fazer follow-up", icon: Repeat },
-                  { key: "outbound_reactivate", label: "Reativar oportunidades", icon: RefreshCw },
-                ].map((o) => (
-                  <div
-                    key={o.key}
-                    className="flex items-center justify-between rounded-xl border border-border p-3"
-                  >
-                    <span className="flex items-center gap-2 text-sm text-foreground">
-                      <o.icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
-                      {o.label}
-                    </span>
-                    <Switch
-                      checked={(draft.triggers as any)[o.key]}
-                      onCheckedChange={(v) => patch("triggers", { [o.key]: v } as any)}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <IconLabel icon={Clock}>Início</IconLabel>
+                    <IconInput
+                      type="time"
+                      suffix="h"
+                      value={draft.schedule.start}
+                      onChange={(e) => patch("schedule", { start: e.target.value })}
                     />
                   </div>
-                ))}
+                  <div className="space-y-1.5">
+                    <Label className="flex items-center gap-2">
+                      <span className="h-4 w-4" />
+                      Fim
+                    </Label>
+                    <IconInput
+                      type="time"
+                      suffix="h"
+                      value={draft.schedule.end}
+                      onChange={(e) => patch("schedule", { end: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Tempo para responder</Label>
-                <Pills
-                  value={draft.triggers.reply_delay}
-                  onChange={(v) => patch("triggers", { reply_delay: v as any })}
-                  options={[
-                    { id: "immediate", label: "Imediatamente" },
-                    { id: "30s", label: "30 segundos" },
-                    { id: "1min", label: "1 minuto" },
-                    { id: "custom", label: "Personalizado" },
-                  ]}
+            )}
+            <div className="flex items-center justify-between rounded-xl border border-border p-3">
+              <div>
+                <p className="text-sm font-medium">Fila fora do horário</p>
+                <p className="text-xs text-muted-foreground">
+                  Mensagens fora do horário são enviadas no próximo horário útil.
+                </p>
+              </div>
+              <Switch
+                checked={draft.schedule.queue_outside_hours}
+                onCheckedChange={(v) => patch("schedule", { queue_outside_hours: v })}
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 3 - Ativação */}
+      {step === 3 && (
+        <>
+          <div className="space-y-3">
+            <SectionTitle
+              icon={Zap}
+              title="Gatilhos de ativação"
+              hint="Pode marcar mais de um. Por padrão o SDR atua livre no WhatsApp."
+            />
+            <CardMultiSelect
+              values={draft.triggers.activation}
+              onToggle={(id) =>
+                patch("triggers", { activation: toggleArray(draft.triggers.activation, id) })
+              }
+              options={SDR_ACTIVATION_TRIGGERS}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle icon={Timer} title="Tempo para responder" />
+            <CardSelect
+              value={draft.triggers.reply_delay}
+              onChange={(v) => patch("triggers", { reply_delay: v as any })}
+              options={[
+                { id: "smart", label: "Pausa inteligente", hint: "A IA calcula o tempo humano real" },
+                { id: "immediate", label: "Imediatamente", hint: "Responde na hora" },
+                { id: "30s", label: "30 segundos" },
+                { id: "1min", label: "1 minuto" },
+                { id: "custom", label: "Personalizado", hint: "Você define os segundos" },
+              ]}
+            />
+            {draft.triggers.reply_delay === "smart" && (
+              <InfoBox icon={Brain} title="Como a pausa inteligente funciona">
+                <p>
+                  A IA soma o tempo de leitura da mensagem do contato (20 a 30 segundos para "abrir e
+                  ler") com o tempo que um humano levaria para digitar a resposta, com base no tamanho
+                  e na complexidade do texto.
+                </p>
+                <p>
+                  O resultado é usado como atraso real do envio — conversas ficam naturais e evitam
+                  cara de robô.
+                </p>
+              </InfoBox>
+            )}
+            {draft.triggers.reply_delay === "custom" && (
+              <IconInput
+                icon={Timer}
+                type="number"
+                min={0}
+                suffix="s"
+                value={draft.triggers.reply_delay_custom_seconds}
+                onChange={(e) =>
+                  patch("triggers", { reply_delay_custom_seconds: Number(e.target.value) })
+                }
+                placeholder="Segundos"
+              />
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <SectionTitle icon={Repeat} title="Conversas iniciadas pelo SDR" />
+            {[
+              { key: "outbound_prospect", label: "Prospectar automaticamente", icon: Search },
+              { key: "outbound_followup", label: "Fazer follow-up", icon: Repeat },
+              { key: "outbound_reactivate", label: "Reativar oportunidades", icon: RefreshCw },
+            ].map((o) => (
+              <div
+                key={o.key}
+                className="flex items-center justify-between rounded-xl border border-border p-3"
+              >
+                <span className="flex items-center gap-2 text-sm text-foreground">
+                  <o.icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+                  {o.label}
+                </span>
+                <Switch
+                  checked={(draft.triggers as any)[o.key]}
+                  onCheckedChange={(v) => patch("triggers", { [o.key]: v } as any)}
                 />
-                {draft.triggers.reply_delay === "custom" && (
-                  <Input
-                    type="number"
-                    min={0}
-                    value={draft.triggers.reply_delay_custom_seconds}
-                    onChange={(e) =>
-                      patch("triggers", { reply_delay_custom_seconds: Number(e.target.value) })
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* 4 - Como conversa */}
+      {step === 4 && (
+        <>
+          <div className="space-y-3">
+            <SectionTitle icon={MessageSquare} title="Tom de voz" hint="Define a forma como ele fala." />
+            <CardSelect
+              value={draft.personality.tone}
+              onChange={(v) => patch("personality", { tone: v as any })}
+              options={[
+                { id: "consultivo", label: "Consultivo", hint: "Pergunta, escuta e orienta" },
+                { id: "profissional", label: "Profissional", hint: "Sério, técnico e direto" },
+                { id: "descontraido", label: "Descontraído", hint: "Leve, próximo e informal" },
+                { id: "objetivo", label: "Objetivo", hint: "Curto, prático, sem rodeios" },
+              ]}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle icon={Gauge} title="Formalidade" />
+            <CardSelect
+              cols={3}
+              value={draft.personality.formality}
+              onChange={(v) => patch("personality", { formality: v as any })}
+              options={[
+                { id: "baixo", label: "Baixa", hint: "Você, linguagem do dia a dia" },
+                { id: "medio", label: "Média", hint: "Cordial e profissional" },
+                { id: "alto", label: "Alta", hint: "Formal, sem gírias" },
+              ]}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle icon={AlignLeft} title="Tamanho das respostas" />
+            <CardSelect
+              cols={3}
+              value={draft.personality.length}
+              onChange={(v) => patch("personality", { length: v as any })}
+              options={[
+                { id: "curtas", label: "Curtas", hint: "Até 2 linhas por mensagem" },
+                { id: "medias", label: "Médias", hint: "3 a 4 linhas" },
+                { id: "longas", label: "Longas", hint: "Explicações completas" },
+              ]}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle icon={Smile} title="Uso de emojis" />
+            <CardSelect
+              cols={3}
+              value={draft.personality.emojis}
+              onChange={(v) => patch("personality", { emojis: v as any })}
+              options={[
+                { id: "nunca", label: "Nunca" },
+                { id: "pouco", label: "Pouco", hint: "Só quando faz sentido" },
+                { id: "normal", label: "Normal", hint: "Conversa mais leve" },
+              ]}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle icon={HelpCircle} title="Perguntas ao lead" />
+            <CardSelect
+              cols={3}
+              value={draft.personality.questions}
+              onChange={(v) => patch("personality", { questions: v as any })}
+              options={[
+                { id: "sempre", label: "Sempre", hint: "Termina toda mensagem perguntando" },
+                { id: "quando_necessario", label: "Quando necessário" },
+                { id: "evitar", label: "Evitar", hint: "Só afirma e conduz" },
+              ]}
+            />
+          </div>
+
+          <InfoBox icon={ShieldCheck} title="Regras obrigatórias do SDR">
+            <p>• O SDR sempre conduz a conversa — nunca devolve o comando ao lead.</p>
+            <p>• Ele nunca espera o lead decidir sozinho: toda mensagem termina com um próximo passo.</p>
+            <p>• Uma pergunta por vez, sem textão e sem inventar informação.</p>
+          </InfoBox>
+        </>
+      )}
+
+      {/* 5 - Estratégia */}
+      {step === 5 && (
+        <>
+          <div className="space-y-3">
+            <SectionTitle
+              icon={Brain}
+              title="Lógica de prioridades da IA"
+              hint="É assim que ele conduz toda conversa, na ordem."
+            />
+            <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+              <div className="flex flex-col gap-2">
+                {SDR_PRIORITIES.map((p, i) => {
+                  const Icon = iconFor(p.id);
+                  return (
+                    <div key={p.id} className="flex flex-col">
+                      <div className="flex items-center gap-3 rounded-xl border border-border p-3">
+                        <span className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground">
+                            {i + 1}. {p.label}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{p.hint}</p>
+                        </div>
+                      </div>
+                      {i < SDR_PRIORITIES.length - 1 && (
+                        <div className="flex justify-center py-1">
+                          <ArrowDown className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle icon={TrendingUp} title="Pode insistir?" />
+            <CardSelect
+              cols={3}
+              value={draft.strategy.insistence}
+              onChange={(v) => patch("strategy", { insistence: v as any })}
+              options={[
+                { id: "pouco", label: "Pouco", hint: "Respeita o ritmo do lead" },
+                { id: "medio", label: "Médio", hint: "Equilibrado" },
+                { id: "muito", label: "Muito", hint: "Persistente até o objetivo" },
+              ]}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle icon={Target} title="Quando voltar ao objetivo?" />
+            <CardSelect
+              cols={3}
+              value={draft.strategy.return_to_goal}
+              onChange={(v) => patch("strategy", { return_to_goal: v as any })}
+              options={[
+                { id: "imediato", label: "Imediatamente" },
+                { id: "natural", label: "Naturalmente" },
+                { id: "abertura", label: "Só com abertura" },
+              ]}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle icon={ShieldCheck} title="Se surgir objeção" />
+            <CardSelect
+              value={draft.strategy.on_objection}
+              onChange={(v) => patch("strategy", { on_objection: v as any })}
+              options={[
+                { id: "contornar", label: "Contornar" },
+                { id: "explorar", label: "Explorar" },
+                { id: "validar", label: "Validar" },
+                { id: "vendedor", label: "Chamar vendedor" },
+              ]}
+            />
+          </div>
+        </>
+      )}
+
+      {/* 6 - Empresa */}
+      {step === 6 && (
+        <>
+          <InfoBox icon={Sparkles} title="Preenchemos com o perfil da sua empresa">
+            <p>
+              Puxamos o que já existe no seu perfil da Wiize. Complete o que faltar — esses dados também
+              deixam sua prospecção mais precisa.
+            </p>
+          </InfoBox>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <IconLabel icon={Building2}>Sobre a empresa</IconLabel>
+              <Textarea
+                rows={4}
+                value={draft.knowledge.company}
+                onChange={(e) => patch("knowledge", { company: e.target.value })}
+                placeholder="O que a empresa faz, há quanto tempo e qual resultado entrega"
+              />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <IconLabel icon={Target}>Nicho</IconLabel>
+                <IconInput
+                  icon={Target}
+                  value={draft.knowledge.niche}
+                  onChange={(e) => patch("knowledge", { niche: e.target.value })}
+                  placeholder="Ex.: Marketing digital"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <IconLabel icon={Users}>Público-alvo</IconLabel>
+                <IconInput
+                  icon={Users}
+                  value={draft.knowledge.audience}
+                  onChange={(e) => patch("knowledge", { audience: e.target.value })}
+                  placeholder="Ex.: Clínicas e consultórios"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <IconLabel icon={Sparkles}>Diferenciais</IconLabel>
+              <Textarea
+                rows={3}
+                value={draft.knowledge.differentials}
+                onChange={(e) => patch("knowledge", { differentials: e.target.value })}
+                placeholder="Por que escolher a sua empresa e não a concorrência"
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 7 - Produtos */}
+      {step === 7 && (
+        <div className="space-y-4">
+          <InfoBox icon={Package} title="Cada produto precisa de contexto">
+            <p>
+              Descreva o produto e, principalmente, <strong>quando ele deve ser oferecido</strong>. É
+              assim que o SDR escolhe a oferta certa para cada lead.
+            </p>
+          </InfoBox>
+          {draft.knowledge.products_list.map((p, i) => (
+            <div key={i} className="rounded-2xl border border-border bg-card p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <SectionTitle icon={Package} title={`Produto ${i + 1}`} />
+                {draft.knowledge.products_list.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      patch("knowledge", {
+                        products_list: draft.knowledge.products_list.filter((_, idx) => idx !== i),
+                      })
                     }
-                    placeholder="Segundos"
-                  />
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
-            </>
-          )}
-
-          {/* 4 - Como conversa */}
-          {step === 4 && (
-            <>
-              <div className="space-y-2">
-                <Label>Tom</Label>
-                <Pills
-                  value={draft.personality.tone}
-                  onChange={(v) => patch("personality", { tone: v as any })}
-                  options={[
-                    { id: "consultivo", label: "Consultivo" },
-                    { id: "profissional", label: "Profissional" },
-                    { id: "descontraido", label: "Descontraído" },
-                    { id: "objetivo", label: "Objetivo" },
-                  ]}
-                />
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Formalidade</Label>
-                  <Pills
-                    value={draft.personality.formality}
-                    onChange={(v) => patch("personality", { formality: v as any })}
-                    options={[
-                      { id: "baixo", label: "Baixa" },
-                      { id: "medio", label: "Média" },
-                      { id: "alto", label: "Alta" },
-                    ]}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Tamanho das respostas</Label>
-                  <Pills
-                    value={draft.personality.length}
-                    onChange={(v) => patch("personality", { length: v as any })}
-                    options={[
-                      { id: "curtas", label: "Curtas" },
-                      { id: "medias", label: "Médias" },
-                      { id: "longas", label: "Longas" },
-                    ]}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Emojis</Label>
-                  <Pills
-                    value={draft.personality.emojis}
-                    onChange={(v) => patch("personality", { emojis: v as any })}
-                    options={[
-                      { id: "nunca", label: "Nunca" },
-                      { id: "pouco", label: "Pouco" },
-                      { id: "normal", label: "Normal" },
-                    ]}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Pode fazer perguntas?</Label>
-                  <Pills
-                    value={draft.personality.questions}
-                    onChange={(v) => patch("personality", { questions: v as any })}
-                    options={[
-                      { id: "sempre", label: "Sempre" },
-                      { id: "quando_necessario", label: "Quando necessário" },
-                      { id: "evitar", label: "Evitar" },
-                    ]}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between rounded-xl border border-border p-3">
-                  <span className="text-sm">O SDR sempre conduz a conversa</span>
-                  <Switch
-                    checked={draft.personality.leads_conversation}
-                    onCheckedChange={(v) => patch("personality", { leads_conversation: v })}
-                  />
-                </div>
-                <div className="flex items-center justify-between rounded-xl border border-border p-3">
-                  <span className="text-sm">Nunca esperar o lead decidir sozinho</span>
-                  <Switch
-                    checked={draft.personality.never_wait_lead}
-                    onCheckedChange={(v) => patch("personality", { never_wait_lead: v })}
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* 5 - Estratégia */}
-          {step === 5 && (
-            <>
-              <div className="space-y-2">
-                <Label>Prioridades (clique para ordenar)</Label>
-                <div className="space-y-2">
-                  {draft.strategy.priorities.map((p, i) => (
-                    <div
-                      key={p}
-                      className="flex items-center justify-between rounded-xl border border-border p-3"
-                    >
-                      <span className="text-sm">
-                        <span className="text-primary font-semibold mr-2">{i + 1}.</span>
-                        {SDR_PRIORITIES.find((x) => x.id === p)?.label ?? p}
-                      </span>
-                      <div className="flex gap-1">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          disabled={i === 0}
-                          onClick={() => {
-                            const arr = [...draft.strategy.priorities];
-                            [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
-                            patch("strategy", { priorities: arr });
-                          }}
-                        >
-                          ↑
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          disabled={i === draft.strategy.priorities.length - 1}
-                          onClick={() => {
-                            const arr = [...draft.strategy.priorities];
-                            [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]];
-                            patch("strategy", { priorities: arr });
-                          }}
-                        >
-                          ↓
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Pode insistir?</Label>
-                <Pills
-                  value={draft.strategy.insistence}
-                  onChange={(v) => patch("strategy", { insistence: v as any })}
-                  options={[
-                    { id: "pouco", label: "Pouco" },
-                    { id: "medio", label: "Médio" },
-                    { id: "muito", label: "Muito" },
-                  ]}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Quando voltar ao objetivo?</Label>
-                <Pills
-                  value={draft.strategy.return_to_goal}
-                  onChange={(v) => patch("strategy", { return_to_goal: v as any })}
-                  options={[
-                    { id: "imediato", label: "Imediatamente" },
-                    { id: "natural", label: "Naturalmente" },
-                    { id: "abertura", label: "Somente com abertura" },
-                  ]}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Se surgir objeção</Label>
-                <Pills
-                  value={draft.strategy.on_objection}
-                  onChange={(v) => patch("strategy", { on_objection: v as any })}
-                  options={[
-                    { id: "contornar", label: "Contornar" },
-                    { id: "explorar", label: "Explorar" },
-                    { id: "validar", label: "Validar" },
-                    { id: "vendedor", label: "Chamar vendedor" },
-                  ]}
-                />
-              </div>
-            </>
-          )}
-
-          {/* 6 - Conhecimento */}
-          {step === 6 && (
-            <div className="space-y-3">
-              {[
-                { key: "company", label: "Empresa", ph: "O que a empresa faz, para quem, diferenciais gerais" },
-                { key: "products", label: "Produtos e serviços", ph: "Ofertas, preços, condições" },
-                { key: "faq", label: "FAQ", ph: "Perguntas frequentes e respostas" },
-                { key: "policies", label: "Políticas", ph: "Garantia, cancelamento, prazos" },
-                { key: "cases", label: "Cases", ph: "Resultados e provas sociais" },
-                { key: "differentials", label: "Diferenciais", ph: "Por que escolher a empresa" },
-                { key: "competitors", label: "Concorrentes", ph: "Como se comparar" },
-              ].map((f) => (
-                <div key={f.key} className="space-y-1.5">
-                  <Label>{f.label}</Label>
-                  <Textarea
-                    rows={f.key === "company" ? 4 : 3}
-                    value={(draft.knowledge as any)[f.key]}
-                    onChange={(e) => patch("knowledge", { [f.key]: e.target.value } as any)}
-                    placeholder={f.ph}
-                  />
-                </div>
-              ))}
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <IconLabel icon={Globe}>Site</IconLabel>
+                  <IconLabel icon={Tag}>Nome</IconLabel>
                   <IconInput
-                    icon={Globe}
-                    value={draft.knowledge.site}
-                    onChange={(e) => patch("knowledge", { site: e.target.value })}
-                    placeholder="https://"
+                    icon={Tag}
+                    value={p.name}
+                    onChange={(e) => updateProduct(i, "name", e.target.value)}
+                    placeholder="Ex.: Gestão de tráfego"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <IconLabel icon={Instagram}>Instagram</IconLabel>
+                  <IconLabel icon={DollarSign}>Preço / ticket</IconLabel>
                   <IconInput
-                    icon={Instagram}
-                    value={draft.knowledge.instagram}
-                    onChange={(e) => patch("knowledge", { instagram: e.target.value })}
-                    placeholder="@empresa"
+                    icon={DollarSign}
+                    value={p.price}
+                    onChange={(e) => updateProduct(i, "price", e.target.value)}
+                    placeholder="Ex.: R$ 1.500/mês"
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <IconLabel icon={Link2}>Links de apoio</IconLabel>
+                <IconLabel icon={FileText}>O que é e o que resolve</IconLabel>
                 <Textarea
                   rows={2}
-                  value={draft.knowledge.links}
-                  onChange={(e) => patch("knowledge", { links: e.target.value })}
-                  placeholder="Um link por linha"
+                  value={p.description}
+                  onChange={(e) => updateProduct(i, "description", e.target.value)}
+                  placeholder="Explique de forma simples o que entrega"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <IconLabel icon={Lightbulb}>Quando oferecer</IconLabel>
+                <Textarea
+                  rows={2}
+                  value={p.when_to_offer}
+                  onChange={(e) => updateProduct(i, "when_to_offer", e.target.value)}
+                  placeholder="Ex.: quando o lead diz que não tem clientes suficientes"
                 />
               </div>
             </div>
-          )}
-
-          {/* 7 - Encerramento */}
-          {step === 7 && (
-            <>
-              <div className="space-y-2">
-                <Label>Quando considerar sucesso?</Label>
-                {[
-                  { id: "reuniao", label: "Reunião marcada" },
-                  { id: "venda", label: "Venda" },
-                  { id: "proposta", label: "Proposta enviada" },
-                  { id: "qualificado", label: "Lead qualificado" },
-                ].map((o) => (
-                  <CheckRow
-                    key={o.id}
-                    id={o.id}
-                    label={o.label}
-                    checked={draft.closing.success_criteria.includes(o.id)}
-                    onToggle={() =>
-                      patch("closing", {
-                        success_criteria: toggleArray(draft.closing.success_criteria, o.id),
-                      })
-                    }
-                  />
-                ))}
-              </div>
-              <div className="space-y-2">
-                <Label>Quando parar?</Label>
-                {[
-                  { id: "recusou", label: "Cliente recusou" },
-                  { id: "sem_resposta", label: "Sem resposta" },
-                  { id: "pediu_parar", label: "Solicitou parar" },
-                ].map((o) => (
-                  <CheckRow
-                    key={o.id}
-                    id={o.id}
-                    label={o.label}
-                    checked={draft.closing.stop_criteria.includes(o.id)}
-                    onToggle={() =>
-                      patch("closing", {
-                        stop_criteria: toggleArray(draft.closing.stop_criteria, o.id),
-                      })
-                    }
-                  />
-                ))}
-              </div>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Máximo de follow-ups</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={10}
-                    value={draft.closing.followup_max}
-                    onChange={(e) => patch("closing", { followup_max: Number(e.target.value) })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Intervalo (horas)</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={draft.closing.followup_interval_hours}
-                    onChange={(e) =>
-                      patch("closing", { followup_interval_hours: Number(e.target.value) })
-                    }
-                    disabled={draft.closing.followup_mode === "inteligente"}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Modo de follow-up</Label>
-                <Pills
-                  value={draft.closing.followup_mode}
-                  onChange={(v) => patch("closing", { followup_mode: v as any })}
-                  options={[
-                    { id: "inteligente", label: "Inteligente" },
-                    { id: "manual", label: "Manual" },
-                  ]}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Após atingir o limite</Label>
-                <Pills
-                  value={draft.closing.after_limit}
-                  onChange={(v) => patch("closing", { after_limit: v as any })}
-                  options={[
-                    { id: "arquivar", label: "Arquivar" },
-                    { id: "mover_pipeline", label: "Mover no pipeline" },
-                    { id: "criar_tarefa", label: "Criar tarefa" },
-                    { id: "avisar_vendedor", label: "Avisar vendedor" },
-                  ]}
-                />
-              </div>
-            </>
-          )}
-
-          {/* 8 - Situações */}
-          {step === 8 && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Como ele deve agir quando... Personalize os comportamentos sem escrever prompts.
-              </p>
-              {SDR_SITUATIONS.map((s) => (
-                <div key={s.id} className="space-y-2">
-                  <Label>{s.label}</Label>
-                  <Pills
-                    value={draft.situations[s.id] ?? s.options[0].id}
-                    onChange={(v) => set("situations", { ...draft.situations, [s.id]: v })}
-                    options={s.options}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 9 - Revisão */}
-          {step === 9 && (
-            <div className="rounded-2xl border border-border p-5 space-y-3">
-              {[
-                ["Nome", draft.name || "Não definido"],
-                [
-                  "Objetivo",
-                  draft.objective === "outro"
-                    ? draft.objective_custom || "Outro"
-                    : SDR_OBJECTIVE_LABEL(draft.objective),
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() =>
+              patch("knowledge", {
+                products_list: [
+                  ...draft.knowledge.products_list,
+                  { name: "", description: "", when_to_offer: "", price: "" },
                 ],
-                [
-                  "Onde atua",
+              })
+            }
+          >
+            <Plus className="h-4 w-4 mr-2" /> Adicionar produto
+          </Button>
+          {!productsValid && (
+            <p className="text-xs text-muted-foreground text-center">
+              Todos os campos de produto são obrigatórios (exceto preço).
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* 8 - Materiais */}
+      {step === 8 && (
+        <div className="space-y-5">
+          {[
+            { key: "faq", label: "FAQ", icon: HelpCircle, ph: "Perguntas frequentes e respostas" },
+            { key: "policies", label: "Políticas", icon: ShieldCheck, ph: "Garantia, cancelamento, prazos" },
+            { key: "cases", label: "Cases e provas sociais", icon: TrendingUp, ph: "Resultados de clientes" },
+            { key: "competitors", label: "Concorrentes", icon: Columns3, ph: "Como se comparar" },
+          ].map((f) => (
+            <div key={f.key} className="space-y-1.5">
+              <IconLabel icon={f.icon}>{f.label}</IconLabel>
+              <Textarea
+                rows={3}
+                value={(draft.knowledge as any)[f.key]}
+                onChange={(e) => patch("knowledge", { [f.key]: e.target.value } as any)}
+                placeholder={f.ph}
+              />
+            </div>
+          ))}
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <IconLabel icon={Globe}>Site</IconLabel>
+              <IconInput
+                icon={Globe}
+                value={draft.knowledge.site}
+                onChange={(e) => patch("knowledge", { site: e.target.value })}
+                placeholder="https://"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <IconLabel icon={Instagram}>Instagram</IconLabel>
+              <IconInput
+                icon={Instagram}
+                value={draft.knowledge.instagram}
+                onChange={(e) => patch("knowledge", { instagram: e.target.value })}
+                placeholder="@empresa"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle icon={Link2} title="Links de apoio" hint="Informe o link e quando usá-lo." />
+            {draft.knowledge.links_list.map((l, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <IconInput
+                    icon={Link2}
+                    className="flex-1"
+                    value={l.url}
+                    onChange={(e) => updateLink(i, "url", e.target.value)}
+                    placeholder="https://..."
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      patch("knowledge", {
+                        links_list: draft.knowledge.links_list.filter((_, idx) => idx !== i),
+                      })
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <IconInput
+                  icon={Lightbulb}
+                  value={l.when_to_use}
+                  onChange={(e) => updateLink(i, "when_to_use", e.target.value)}
+                  placeholder="Quando usar esse link"
+                />
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() =>
+                patch("knowledge", {
+                  links_list: [...draft.knowledge.links_list, { url: "", when_to_use: "" }],
+                })
+              }
+            >
+              <Plus className="h-4 w-4 mr-2" /> Adicionar link
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* 9 - Encerramento */}
+      {step === 9 && (
+        <>
+          <div className="space-y-3">
+            <SectionTitle icon={Flag} title="Critério de sucesso" hint="Definido pelo objetivo do SDR." />
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex items-center gap-3">
+              <span className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Lock className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {SDR_SUCCESS_BY_OBJECTIVE[draft.objective as SdrObjective]}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Para alterar, mude o objetivo na primeira etapa.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle icon={Ban} title="Quando parar" />
+            <CardMultiSelect
+              values={draft.closing.stop_criteria}
+              onToggle={(id) =>
+                patch("closing", { stop_criteria: toggleArray(draft.closing.stop_criteria, id) })
+              }
+              options={[
+                { id: "recusou", label: "Recusou o serviço", hint: "Disse claramente que não quer" },
+                { id: "sem_resposta", label: "Ficou sem resposta", hint: "Silêncio por X horas" },
+                { id: "pediu_parar", label: "Pediu para parar", hint: "Solicitou não ser contatado" },
+              ]}
+            />
+            {draft.closing.stop_criteria.includes("sem_resposta") && (
+              <div className="space-y-1.5">
+                <IconLabel icon={Hourglass}>Parar após quantas horas sem resposta?</IconLabel>
+                <IconInput
+                  icon={Hourglass}
+                  type="number"
+                  min={1}
+                  suffix="h"
+                  value={draft.closing.stop_no_reply_hours}
+                  onChange={(e) =>
+                    patch("closing", { stop_no_reply_hours: Number(e.target.value) })
+                  }
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle icon={Repeat} title="Modo de follow-up" />
+            <CardSelect
+              cols={2}
+              value={draft.closing.followup_mode}
+              onChange={(v) => patch("closing", { followup_mode: v as any })}
+              options={[
+                {
+                  id: "inteligente",
+                  label: "Inteligente",
+                  hint: "A IA escreve e decide o melhor momento",
+                },
+                { id: "manual", label: "Manual", hint: "Você define intervalos e templates" },
+              ]}
+            />
+            {draft.closing.followup_mode === "inteligente" ? (
+              <>
+                <InfoBox icon={Brain} title="Como funciona o follow-up inteligente">
+                  <p>
+                    A IA escolhe o intervalo dentro da faixa configurada, varia o horário para parecer
+                    humano e envia sempre dentro do horário de atendimento.
+                  </p>
+                  <p>As mensagens são criadas por ela conforme o contexto da conversa.</p>
+                </InfoBox>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <IconLabel icon={Hourglass}>Intervalo mínimo</IconLabel>
+                    <IconInput
+                      icon={Hourglass}
+                      type="number"
+                      min={1}
+                      suffix="h"
+                      value={draft.closing.followup_min_hours}
+                      onChange={(e) =>
+                        patch("closing", { followup_min_hours: Number(e.target.value) })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <IconLabel icon={Hourglass}>Intervalo máximo</IconLabel>
+                    <IconInput
+                      icon={Hourglass}
+                      type="number"
+                      min={1}
+                      suffix="h"
+                      value={draft.closing.followup_max_hours}
+                      onChange={(e) =>
+                        patch("closing", { followup_max_hours: Number(e.target.value) })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <IconLabel icon={Repeat}>Máximo de follow-ups</IconLabel>
+                    <IconInput
+                      icon={Repeat}
+                      type="number"
+                      min={0}
+                      max={10}
+                      value={draft.closing.followup_max}
+                      onChange={(e) => patch("closing", { followup_max: Number(e.target.value) })}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <IconLabel icon={Repeat}>Máximo de follow-ups</IconLabel>
+                    <IconInput
+                      icon={Repeat}
+                      type="number"
+                      min={0}
+                      max={10}
+                      value={draft.closing.followup_max}
+                      onChange={(e) => patch("closing", { followup_max: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <IconLabel icon={Hourglass}>Intervalo entre eles</IconLabel>
+                    <IconInput
+                      icon={Hourglass}
+                      type="number"
+                      min={1}
+                      suffix="h"
+                      value={draft.closing.followup_interval_hours}
+                      onChange={(e) =>
+                        patch("closing", { followup_interval_hours: Number(e.target.value) })
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <IconLabel icon={FileText}>Templates aprovados da Meta</IconLabel>
+                  {templates.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      Nenhum template encontrado. Cadastre em Meta → Templates.
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                      {templates.map((t) => {
+                        const on = draft.closing.followup_templates.includes(t.id);
+                        return (
+                          <label
+                            key={t.id}
+                            className={cn(
+                              "flex items-start gap-3 rounded-xl border bg-card p-3 cursor-pointer transition-all",
+                              on
+                                ? "border-primary ring-2 ring-primary/20"
+                                : "border-border hover:border-primary/40"
+                            )}
+                          >
+                            <Checkbox
+                              checked={on}
+                              onCheckedChange={() =>
+                                patch("closing", {
+                                  followup_templates: toggleArray(
+                                    draft.closing.followup_templates,
+                                    t.id
+                                  ),
+                                })
+                              }
+                            />
+                            <span className="min-w-0">
+                              <span className="block text-sm font-medium text-foreground">
+                                {t.name}
+                              </span>
+                              <span className="block text-xs text-muted-foreground line-clamp-2">
+                                {t.body}
+                              </span>
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle
+              icon={BellRing}
+              title="Avisar vendedor ao encerrar"
+              hint="Obrigatório. Ele recebe um e-mail com o resumo e o próximo passo."
+            />
+            <div className="grid sm:grid-cols-1 gap-2">
+              {members
+                .filter((m) => m.email)
+                .map((m) => {
+                  const on = draft.closing.notify_seller_email === m.email;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => patch("closing", { notify_seller_email: m.email! })}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl border bg-card p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
+                        on
+                          ? "border-primary ring-2 ring-primary/20 shadow-md"
+                          : "border-border hover:border-primary/40"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "h-9 w-9 rounded-lg flex items-center justify-center shrink-0",
+                          on ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        <UserCheck className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-foreground">
+                          {m.name || m.email}
+                        </span>
+                        <span className="block text-xs text-muted-foreground truncate">{m.email}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+            </div>
+            <IconInput
+              icon={BellRing}
+              value={draft.closing.notify_seller_email}
+              onChange={(e) => patch("closing", { notify_seller_email: e.target.value })}
+              placeholder="Ou digite outro e-mail"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle
+              icon={Archive}
+              title="O que fazer com o lead"
+              hint="Pode combinar arquivar e mover no pipeline."
+            />
+            <CardMultiSelect
+              cols={2}
+              values={draft.closing.after_limit_actions}
+              onToggle={(id) =>
+                patch("closing", {
+                  after_limit_actions: toggleArray(draft.closing.after_limit_actions, id),
+                })
+              }
+              options={[
+                { id: "arquivar", label: "Arquivar", hint: "Some da lista ativa" },
+                { id: "mover_pipeline", label: "Mover no pipeline", hint: "Escolha a coluna" },
+              ]}
+            />
+            {draft.closing.after_limit_actions.includes("mover_pipeline") && (
+              <div className="space-y-2">
+                <IconLabel icon={Columns3}>Coluna de destino</IconLabel>
+                <div className="flex flex-wrap gap-2">
+                  {stages.map((s) => {
+                    const on = draft.closing.after_limit_stage_id === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => patch("closing", { after_limit_stage_id: s.id })}
+                        className={cn(
+                          "inline-flex items-center gap-2 h-10 px-3.5 rounded-lg text-sm border bg-card transition-all hover:-translate-y-0.5 hover:shadow-md",
+                          on
+                            ? "border-primary ring-2 ring-primary/20 shadow-md text-foreground font-semibold"
+                            : "border-border text-muted-foreground hover:border-primary/40"
+                        )}
+                      >
+                        <Columns3
+                          className={cn("h-4 w-4", on ? "text-primary" : "text-muted-foreground")}
+                          strokeWidth={1.75}
+                        />
+                        {s.name}
+                      </button>
+                    );
+                  })}
+                  {stages.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Nenhuma coluna encontrada no CRM.</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* 10 - Situações */}
+      {step === 10 && (
+        <div className="space-y-6">
+          {SDR_SITUATIONS.map((s) => (
+            <div key={s.id} className="space-y-3">
+              <SectionTitle icon={iconFor(s.options[0].id)} title={s.label} />
+              <CardSelect
+                value={draft.situations[s.id] ?? s.options[0].id}
+                onChange={(v) => set("situations", { ...draft.situations, [s.id]: v })}
+                options={s.options}
+              />
+            </div>
+          ))}
+          <InfoBox icon={Lock} title="Regra fixa de preço">
+            <p>
+              Quando "Nunca falar preço sem marcar reunião" está ativo, o SDR só apresenta valores
+              depois que a reunião estiver agendada.
+            </p>
+          </InfoBox>
+        </div>
+      )}
+
+      {/* 11 - Inteligência */}
+      {step === 11 && (
+        <div className="space-y-5">
+          <CardGrid cols={3}>
+            <OptionCard
+              icon={Cpu}
+              active
+              onClick={() => {}}
+              title="GPT (OpenAI)"
+              hint="Modelo padrão do SDR"
+            />
+            {[
+              { label: "Claude", hint: "Em breve" },
+              { label: "Gemini", hint: "Em breve" },
+              { label: "DeepSeek", hint: "Em breve" },
+              { label: "Llama", hint: "Em breve" },
+            ].map((p) => (
+              <div
+                key={p.label}
+                className="relative flex h-full w-full flex-col items-center justify-start gap-4 p-6 rounded-xl border border-dashed border-border bg-muted/30 opacity-70"
+              >
+                <Badge variant="secondary" className="absolute top-3 right-3 text-[10px]">
+                  Em breve
+                </Badge>
+                <span className="h-12 w-12 rounded-lg bg-muted text-muted-foreground flex items-center justify-center">
+                  <Cpu className="h-6 w-6" strokeWidth={1.75} />
+                </span>
+                <span className="flex flex-col items-center gap-1">
+                  <span className="text-sm font-medium text-foreground">{p.label}</span>
+                  <span className="text-xs text-muted-foreground">{p.hint}</span>
+                </span>
+              </div>
+            ))}
+          </CardGrid>
+
+          <div className="space-y-2">
+            <IconLabel icon={KeyRound}>Chave de API da OpenAI</IconLabel>
+            <IconInput
+              icon={KeyRound}
+              type="password"
+              value={draft.ai.api_key}
+              onChange={(e) => patch("ai", { api_key: e.target.value })}
+              placeholder="sk-..."
+            />
+            <p className="text-xs text-muted-foreground">
+              A chave fica salva de forma segura e é usada apenas pelo cérebro deste SDR.
+            </p>
+          </div>
+
+          <InfoBox icon={Info} title="Modelo utilizado">
+            <p>O SDR usa o modelo gpt-4o-mini, otimizado para conversas rápidas e baixo custo.</p>
+          </InfoBox>
+        </div>
+      )}
+
+      {/* 12 - Revisão */}
+      {step === 12 && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-border bg-card p-5 flex items-center gap-4">
+            <span className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Bot className="h-6 w-6" strokeWidth={1.75} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-lg font-semibold text-foreground truncate">
+                {draft.name || "SDR sem nome"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {SDR_OBJECTIVE_LABEL(draft.objective)} · tom {draft.personality.tone}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[
+              {
+                icon: Target,
+                label: "Objetivo",
+                value: SDR_OBJECTIVE_LABEL(draft.objective),
+              },
+              {
+                icon: Flag,
+                label: "Sucesso",
+                value: SDR_SUCCESS_BY_OBJECTIVE[draft.objective as SdrObjective],
+              },
+              {
+                icon: Phone,
+                label: "Números",
+                value:
                   draft.whatsapp_number_ids
                     .map(
                       (id) =>
@@ -1157,19 +1879,68 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                         "Número"
                     )
                     .join(", ") || "Nenhum número",
-                ],
-                [
-                  "Horário",
+              },
+              {
+                icon: Clock,
+                label: "Horário",
+                value:
                   draft.schedule.mode === "always"
-                    ? "Sempre"
+                    ? "Sempre ativo"
                     : `${draft.schedule.days
                         .map((d) => SDR_WEEKDAYS.find((w) => w.id === d)?.label)
-                        .join(", ")} · ${draft.schedule.start}–${draft.schedule.end}`,
-                ],
-                ["Tom", draft.personality.tone],
-                ["Follow-up", `Até ${draft.closing.followup_max} tentativas`],
-                [
-                  "Conhecimento",
+                        .join(", ")} · ${draft.schedule.start}h–${draft.schedule.end}h`,
+              },
+              {
+                icon: Zap,
+                label: "Ativação",
+                value:
+                  draft.triggers.activation
+                    .map((a) => SDR_ACTIVATION_TRIGGERS.find((t) => t.id === a)?.label)
+                    .filter(Boolean)
+                    .join(", ") || "Não definido",
+              },
+              {
+                icon: Timer,
+                label: "Tempo de resposta",
+                value:
+                  draft.triggers.reply_delay === "smart"
+                    ? "Pausa inteligente"
+                    : draft.triggers.reply_delay === "custom"
+                      ? `${draft.triggers.reply_delay_custom_seconds}s`
+                      : draft.triggers.reply_delay,
+              },
+              {
+                icon: Package,
+                label: "Produtos",
+                value: `${draft.knowledge.products_list.filter((p) => p.name).length} cadastrados`,
+              },
+              {
+                icon: Repeat,
+                label: "Follow-up",
+                value: `${draft.closing.followup_mode === "inteligente" ? "Inteligente" : "Manual"} · até ${draft.closing.followup_max}`,
+              },
+              {
+                icon: BellRing,
+                label: "Avisar vendedor",
+                value: draft.closing.notify_seller_email || "Não definido",
+              },
+              {
+                icon: Archive,
+                label: "Ao encerrar",
+                value:
+                  draft.closing.after_limit_actions
+                    .map((a) =>
+                      a === "arquivar"
+                        ? "Arquivar"
+                        : `Mover para ${stages.find((s) => s.id === draft.closing.after_limit_stage_id)?.name || "pipeline"}`
+                    )
+                    .join(" + ") || "Não definido",
+              },
+              { icon: Cpu, label: "Inteligência", value: "GPT · gpt-4o-mini" },
+              {
+                icon: BookOpen,
+                label: "Conhecimento",
+                value:
                   [
                     draft.knowledge.company && "Empresa",
                     draft.knowledge.faq && "FAQ",
@@ -1178,22 +1949,33 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                   ]
                     .filter(Boolean)
                     .join(" + ") || "Não informado",
-                ],
-              ].map(([k, v]) => (
-                <div key={k as string} className="flex items-start justify-between gap-6">
-                  <span className="text-xs uppercase tracking-wide text-muted-foreground">{k}</span>
-                  <span className="text-sm font-medium text-right">{v as string}</span>
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-xl border border-border bg-card p-4 flex items-start gap-3"
+              >
+                <span className="h-9 w-9 rounded-lg bg-muted text-muted-foreground flex items-center justify-center shrink-0">
+                  <item.icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    {item.label}
+                  </p>
+                  <p className="text-sm font-medium text-foreground break-words">{item.value}</p>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 
   const isPage = variant === "page";
 
   const footer = isPage ? (
-    <div className="flex items-center justify-between border-t border-border pt-6">
+    <div className="flex items-center justify-between border-t border-border pt-5">
       <Button
         variant="ghost"
         onClick={() => (step === 1 ? onClose() : setStep(step - 1))}
@@ -1219,7 +2001,6 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         </Button>
       )}
     </div>
-
   ) : (
     <div className="flex items-center justify-between pt-2 border-t border-border">
       <Button
@@ -1244,7 +2025,6 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   );
 
   if (isPage) {
-
     return (
       <OnboardingShell
         step={step}
@@ -1297,4 +2077,3 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
     </Dialog>
   );
 }
-
