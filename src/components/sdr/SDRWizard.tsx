@@ -506,7 +506,10 @@ function NumbersCombobox({
             <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
           </button>
         </PopoverTrigger>
-        <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+        <PopoverContent
+          className="p-0 w-[--radix-popover-trigger-width] bg-popover text-popover-foreground border-border shadow-lg z-50"
+          align="start"
+        >
           <Command
             filter={(value, search) =>
               value.toLowerCase().includes(search.toLowerCase().trim()) ? 1 : 0
