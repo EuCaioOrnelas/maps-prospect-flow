@@ -606,6 +606,30 @@ serve(async (req) => {
                   } catch (e) {
                     console.error('[meta-webhook] wa-flow-runner error:', e);
                   }
+
+                  // === SDR INTELIGENTE (cérebro de 9 camadas) ===
+                  try {
+                    const SB_URL2 = Deno.env.get('SUPABASE_URL')!;
+                    const SB_KEY2 = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+                    await fetch(`${SB_URL2}/functions/v1/sdr-dispatch`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SB_KEY2}` },
+                      body: JSON.stringify({
+                        owner_user_id: ownerUserId,
+                        user_id: userId,
+                        waba_connection_id: connectionId,
+                        phone_number_id: value.metadata?.phone_number_id || phoneNumberId,
+                        conversation_id: conversation.id,
+                        contact_phone: from,
+                        contact_name: contactName,
+                        message: textContent || null,
+                        trigger_type: 'inbound',
+                      }),
+                    }).catch((e) => console.error('[meta-webhook] sdr-dispatch failed:', e));
+                  } catch (e) {
+                    console.error('[meta-webhook] sdr-dispatch error:', e);
+                  }
+
                 }
               }
             }
