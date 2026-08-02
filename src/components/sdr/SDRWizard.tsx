@@ -555,7 +555,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           {step === 2 && (
             <>
               <div className="space-y-2">
-                <Label>Números de WhatsApp (Meta)</Label>
+                <IconLabel icon={Phone}>Números de WhatsApp (Meta)</IconLabel>
                 {numbers.length === 0 && (
                   <p className="text-sm text-muted-foreground">
                     Nenhum número conectado. Conecte um número Meta em Meta → Números.
@@ -565,7 +565,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                   {numbers.map((n) => (
                     <label
                       key={n.id}
-                      className="flex items-center gap-3 rounded-xl border border-border p-3 cursor-pointer hover:bg-muted/50"
+                      className="flex items-center gap-3 rounded-xl border border-border p-3 cursor-pointer hover:bg-muted/40 transition-colors"
                     >
                       <Checkbox
                         checked={draft.whatsapp_number_ids.includes(n.id)}
@@ -573,7 +573,10 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                           set("whatsapp_number_ids", toggleArray(draft.whatsapp_number_ids, n.id))
                         }
                       />
-                      <span className="text-sm">
+                      <span className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Phone className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+                      </span>
+                      <span className="text-sm text-foreground">
                         {n.nickname || n.phone_number || n.phone_number_id}
                       </span>
                     </label>
@@ -582,7 +585,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               </div>
 
               <div className="space-y-3">
-                <Label>Horário de atendimento</Label>
+                <IconLabel icon={Clock}>Horário de atendimento</IconLabel>
                 <Pills
                   value={draft.schedule.mode}
                   onChange={(v) => patch("schedule", { mode: v as any })}
@@ -606,10 +609,10 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                             })
                           }
                           className={cn(
-                            "px-3 py-1.5 rounded-lg text-sm border transition-colors",
+                            "h-10 min-w-[3.25rem] px-3 rounded-lg text-sm border transition-colors",
                             draft.schedule.days.includes(d.id)
-                              ? "border-primary bg-primary/10 text-foreground font-medium"
-                              : "border-border text-muted-foreground hover:bg-muted/50"
+                              ? "border-primary/60 bg-primary/10 text-primary font-medium"
+                              : "border-border bg-card text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                           )}
                         >
                           {d.label}
@@ -618,16 +621,18 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Início</Label>
-                        <Input
+                        <IconLabel icon={Clock}>Início</IconLabel>
+                        <IconInput
+                          icon={Clock}
                           type="time"
                           value={draft.schedule.start}
                           onChange={(e) => patch("schedule", { start: e.target.value })}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Fim</Label>
-                        <Input
+                        <IconLabel icon={Clock}>Fim</IconLabel>
+                        <IconInput
+                          icon={Clock}
                           type="time"
                           value={draft.schedule.end}
                           onChange={(e) => patch("schedule", { end: e.target.value })}
