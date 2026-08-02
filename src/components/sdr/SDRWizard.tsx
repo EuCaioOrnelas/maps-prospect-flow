@@ -147,37 +147,129 @@ const STEPS = [
   },
 ];
 
+/** Ícones limpos por id de opção (usados em cards e seletores) */
+const OPTION_ICONS: Record<string, LucideIcon> = {
+  // objetivos
+  reuniao: CalendarCheck,
+  demonstracao: MonitorPlay,
+  proposta: FileText,
+  venda_direta: ShoppingCart,
+  qualificar: Filter,
+  recuperar: RefreshCw,
+  outro: Shapes,
+  // horário / gatilhos
+  always: InfinityIcon,
+  custom: SlidersHorizontal,
+  first_only: MessageCircle,
+  after_flow: GitBranch,
+  after_transfer: UserCheck,
+  off: PauseCircle,
+  immediate: Zap,
+  imediato: Zap,
+  "30s": Timer,
+  "1min": Hourglass,
+  // personalidade
+  consultivo: Handshake,
+  profissional: Briefcase,
+  descontraido: Smile,
+  objetivo: Target,
+  baixo: Gauge,
+  medio: Gauge,
+  alto: Gauge,
+  curtas: AlignLeft,
+  medias: AlignCenter,
+  longas: AlignJustify,
+  nunca: Ban,
+  pouco: Smile,
+  normal: Smile,
+  sempre: HelpCircle,
+  quando_necessario: HelpCircle,
+  evitar: Ban,
+  muito: TrendingUp,
+  natural: MessageCircle,
+  abertura: Search,
+  contornar: Repeat,
+  explorar: Search,
+  validar: ShieldCheck,
+  vendedor: PhoneCall,
+  // follow-up / encerramento
+  inteligente: Brain,
+  manual: SlidersHorizontal,
+  arquivar: Archive,
+  mover_pipeline: Columns3,
+  criar_tarefa: ListTodo,
+  avisar_vendedor: BellRing,
+  // situações
+  aguardar: Hourglass,
+  uma_pergunta: HelpCircle,
+  outro_horario: CalendarClock,
+  followup: Repeat,
+  encerrar: Flag,
+  avisar: BellRing,
+  descobrir: Search,
+  comparar: Columns3,
+  contexto: Search,
+  enviar: ArrowRight,
+  acelerar: Zap,
+  recusou: Ban,
+  sem_resposta: PauseCircle,
+  pediu_parar: Ban,
+  venda: ShoppingCart,
+  // prioridades
+  conexao: Handshake,
+  necessidade: Search,
+  objecoes: ShieldCheck,
+  valor: TrendingUp,
+};
+
+function iconFor(id: string): LucideIcon {
+  return OPTION_ICONS[id] ?? Tag;
+}
 
 function OptionCard({
   active,
   onClick,
   title,
   hint,
+  id,
 }: {
   active: boolean;
   onClick: () => void;
   title: string;
   hint?: string;
+  id?: string;
 }) {
+  const Icon = iconFor(id ?? "");
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative w-full text-left rounded-xl border bg-card p-4 pr-10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-        active ? "border-primary ring-2 ring-primary/20 shadow-md" : "border-border hover:border-primary/40"
+        "group relative w-full text-left rounded-xl border border-border bg-card p-4 pr-10 transition-colors duration-200",
+        active ? "bg-muted/40" : "hover:bg-muted/40"
       )}
     >
-      <span
-        className={cn(
-          "absolute top-3 right-3 h-5 w-5 rounded-full border flex items-center justify-center transition-colors",
-          active ? "bg-primary border-primary" : "border-border group-hover:border-primary/50"
-        )}
-      >
-        {active && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />}
-      </span>
-      <span className="text-sm font-medium text-foreground">{title}</span>
-      {hint && <span className="block text-xs text-muted-foreground mt-0.5">{hint}</span>}
+      {active && (
+        <span className="absolute top-3 right-3 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+          <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
+        </span>
+      )}
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center transition-colors",
+            active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+          )}
+        >
+          <Icon className="h-4 w-4" strokeWidth={1.75} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-medium text-foreground leading-5">{title}</span>
+          {hint && (
+            <span className="block text-xs text-muted-foreground mt-1 leading-4">{hint}</span>
+          )}
+        </span>
+      </div>
     </button>
   );
 }
@@ -194,25 +286,30 @@ function Pills({
 }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {options.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          onClick={() => onChange(o.id)}
-          className={cn(
-            "px-3.5 py-2 rounded-lg text-sm border bg-card transition-all",
-            value === o.id
-              ? "border-primary ring-2 ring-primary/20 text-foreground font-medium"
-              : "border-border text-muted-foreground hover:border-primary/40"
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
+      {options.map((o) => {
+        const Icon = iconFor(o.id);
+        const selected = value === o.id;
+        return (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => onChange(o.id)}
+            className={cn(
+              "inline-flex items-center gap-2 h-10 px-3.5 rounded-lg text-sm border transition-colors",
+              selected
+                ? "border-primary/60 bg-primary/10 text-primary font-medium"
+                : "border-border bg-card text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+            )}
+          >
+            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+            <span className="leading-none">{o.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
-
 }
+
 
 
 
