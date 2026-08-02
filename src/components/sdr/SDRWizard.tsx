@@ -516,19 +516,21 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           {step === 1 && (
             <>
               <div className="space-y-2">
-                <Label>Nome do SDR</Label>
-                <Input
+                <IconLabel icon={Bot}>Nome do SDR</IconLabel>
+                <IconInput
+                  icon={Bot}
                   value={draft.name}
                   onChange={(e) => set("name", e.target.value)}
                   placeholder="Ex.: SDR Comercial"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Objetivo principal</Label>
+                <IconLabel icon={Target}>Objetivo principal</IconLabel>
                 <div className="grid sm:grid-cols-2 gap-2">
                   {SDR_OBJECTIVES.map((o) => (
                     <OptionCard
                       key={o.id}
+                      id={o.id}
                       active={draft.objective === o.id}
                       onClick={() => set("objective", o.id)}
                       title={o.label}
@@ -537,7 +539,8 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                   ))}
                 </div>
                 {draft.objective === "outro" && (
-                  <Input
+                  <IconInput
+                    icon={Shapes}
                     className="mt-2"
                     value={draft.objective_custom}
                     onChange={(e) => set("objective_custom", e.target.value)}
