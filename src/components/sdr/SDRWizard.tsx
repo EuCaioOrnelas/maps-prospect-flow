@@ -325,6 +325,45 @@ function Pills({
   );
 }
 
+/** Linha de checkbox no mesmo padrão visual do onboarding */
+function CheckRow({
+  id,
+  label,
+  checked,
+  onToggle,
+}: {
+  id: string;
+  label: string;
+  checked: boolean;
+  onToggle: () => void;
+}) {
+  const Icon = iconFor(id);
+  return (
+    <label
+      className={cn(
+        "group flex items-center gap-3 rounded-xl border bg-card p-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        checked
+          ? "border-primary ring-2 ring-primary/20 shadow-md"
+          : "border-border hover:border-primary/40"
+      )}
+    >
+      <Checkbox checked={checked} onCheckedChange={onToggle} />
+      <span
+        className={cn(
+          "h-9 w-9 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+          checked
+            ? "bg-primary/10 text-primary"
+            : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+        )}
+      >
+        <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+      </span>
+      <span className="text-sm font-medium text-foreground">{label}</span>
+    </label>
+  );
+}
+
+
 
 /** Input com ícone à esquerda */
 function IconInput({
