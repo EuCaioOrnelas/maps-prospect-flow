@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,7 +29,49 @@ import {
   ArrowRight,
   Check,
   Loader2,
+  CalendarCheck,
+  MonitorPlay,
+  FileText,
+  ShoppingCart,
+  Filter,
+  RefreshCw,
+  Shapes,
+  Infinity as InfinityIcon,
+  SlidersHorizontal,
+  MessageCircle,
+  Repeat,
+  GitBranch,
+  UserCheck,
+  PauseCircle,
+  Zap,
+  Timer,
+  Hourglass,
+  Smile,
+  Briefcase,
+  Handshake,
+  Gauge,
+  AlignLeft,
+  AlignJustify,
+  AlignCenter,
+  Ban,
+  HelpCircle,
+  TrendingUp,
+  Search,
+  ShieldCheck,
+  PhoneCall,
+  Archive,
+  Columns3,
+  ListTodo,
+  BellRing,
+  Globe,
+  Instagram,
+  Link2,
+  Phone,
+  CalendarClock,
+  Tag,
+  type LucideIcon,
 } from "lucide-react";
+
 import {
   SDR_DEFAULT_DRAFT,
   SDR_OBJECTIVES,
@@ -105,37 +147,129 @@ const STEPS = [
   },
 ];
 
+/** Ícones limpos por id de opção (usados em cards e seletores) */
+const OPTION_ICONS: Record<string, LucideIcon> = {
+  // objetivos
+  reuniao: CalendarCheck,
+  demonstracao: MonitorPlay,
+  proposta: FileText,
+  venda_direta: ShoppingCart,
+  qualificar: Filter,
+  recuperar: RefreshCw,
+  outro: Shapes,
+  // horário / gatilhos
+  always: InfinityIcon,
+  custom: SlidersHorizontal,
+  first_only: MessageCircle,
+  after_flow: GitBranch,
+  after_transfer: UserCheck,
+  off: PauseCircle,
+  immediate: Zap,
+  imediato: Zap,
+  "30s": Timer,
+  "1min": Hourglass,
+  // personalidade
+  consultivo: Handshake,
+  profissional: Briefcase,
+  descontraido: Smile,
+  objetivo: Target,
+  baixo: Gauge,
+  medio: Gauge,
+  alto: Gauge,
+  curtas: AlignLeft,
+  medias: AlignCenter,
+  longas: AlignJustify,
+  nunca: Ban,
+  pouco: Smile,
+  normal: Smile,
+  sempre: HelpCircle,
+  quando_necessario: HelpCircle,
+  evitar: Ban,
+  muito: TrendingUp,
+  natural: MessageCircle,
+  abertura: Search,
+  contornar: Repeat,
+  explorar: Search,
+  validar: ShieldCheck,
+  vendedor: PhoneCall,
+  // follow-up / encerramento
+  inteligente: Brain,
+  manual: SlidersHorizontal,
+  arquivar: Archive,
+  mover_pipeline: Columns3,
+  criar_tarefa: ListTodo,
+  avisar_vendedor: BellRing,
+  // situações
+  aguardar: Hourglass,
+  uma_pergunta: HelpCircle,
+  outro_horario: CalendarClock,
+  followup: Repeat,
+  encerrar: Flag,
+  avisar: BellRing,
+  descobrir: Search,
+  comparar: Columns3,
+  contexto: Search,
+  enviar: ArrowRight,
+  acelerar: Zap,
+  recusou: Ban,
+  sem_resposta: PauseCircle,
+  pediu_parar: Ban,
+  venda: ShoppingCart,
+  // prioridades
+  conexao: Handshake,
+  necessidade: Search,
+  objecoes: ShieldCheck,
+  valor: TrendingUp,
+};
+
+function iconFor(id: string): LucideIcon {
+  return OPTION_ICONS[id] ?? Tag;
+}
 
 function OptionCard({
   active,
   onClick,
   title,
   hint,
+  id,
 }: {
   active: boolean;
   onClick: () => void;
   title: string;
   hint?: string;
+  id?: string;
 }) {
+  const Icon = iconFor(id ?? "");
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative w-full text-left rounded-xl border bg-card p-4 pr-10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-        active ? "border-primary ring-2 ring-primary/20 shadow-md" : "border-border hover:border-primary/40"
+        "group relative w-full text-left rounded-xl border border-border bg-card p-4 pr-10 transition-colors duration-200",
+        active ? "bg-muted/40" : "hover:bg-muted/40"
       )}
     >
-      <span
-        className={cn(
-          "absolute top-3 right-3 h-5 w-5 rounded-full border flex items-center justify-center transition-colors",
-          active ? "bg-primary border-primary" : "border-border group-hover:border-primary/50"
-        )}
-      >
-        {active && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />}
-      </span>
-      <span className="text-sm font-medium text-foreground">{title}</span>
-      {hint && <span className="block text-xs text-muted-foreground mt-0.5">{hint}</span>}
+      {active && (
+        <span className="absolute top-3 right-3 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+          <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
+        </span>
+      )}
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center transition-colors",
+            active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+          )}
+        >
+          <Icon className="h-4 w-4" strokeWidth={1.75} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-medium text-foreground leading-5">{title}</span>
+          {hint && (
+            <span className="block text-xs text-muted-foreground mt-1 leading-4">{hint}</span>
+          )}
+        </span>
+      </div>
     </button>
   );
 }
@@ -152,25 +286,59 @@ function Pills({
 }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {options.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          onClick={() => onChange(o.id)}
-          className={cn(
-            "px-3.5 py-2 rounded-lg text-sm border bg-card transition-all",
-            value === o.id
-              ? "border-primary ring-2 ring-primary/20 text-foreground font-medium"
-              : "border-border text-muted-foreground hover:border-primary/40"
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
+      {options.map((o) => {
+        const Icon = iconFor(o.id);
+        const selected = value === o.id;
+        return (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => onChange(o.id)}
+            className={cn(
+              "inline-flex items-center gap-2 h-10 px-3.5 rounded-lg text-sm border transition-colors",
+              selected
+                ? "border-primary/60 bg-primary/10 text-primary font-medium"
+                : "border-border bg-card text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+            )}
+          >
+            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+            <span className="leading-none">{o.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
-
 }
+
+/** Input com ícone à esquerda */
+function IconInput({
+  icon: Icon,
+  className,
+  ...props
+}: ComponentProps<typeof Input> & { icon: LucideIcon }) {
+  return (
+    <div className="relative">
+      <Icon
+        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+        strokeWidth={1.75}
+      />
+      <Input className={cn("pl-9", className)} {...props} />
+    </div>
+  );
+}
+
+/** Label com ícone */
+function IconLabel({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
+  return (
+    <Label className="flex items-center gap-2">
+      <Icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+      {children}
+    </Label>
+  );
+}
+
+
+
 
 
 
@@ -277,7 +445,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
     if (!open || !accountOwnerId) return;
     supabase
       .from("user_waba_connections")
-      .select("id,nickname,phone_number,phone_number_id")
+      .select("id,nickname,display_phone_number,phone_number_id")
       .eq("owner_user_id", accountOwnerId)
       .then(({ data }) => setNumbers(data ?? []));
   }, [open, accountOwnerId]);
@@ -348,19 +516,21 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           {step === 1 && (
             <>
               <div className="space-y-2">
-                <Label>Nome do SDR</Label>
-                <Input
+                <IconLabel icon={Bot}>Nome do SDR</IconLabel>
+                <IconInput
+                  icon={Bot}
                   value={draft.name}
                   onChange={(e) => set("name", e.target.value)}
                   placeholder="Ex.: SDR Comercial"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Objetivo principal</Label>
+                <IconLabel icon={Target}>Objetivo principal</IconLabel>
                 <div className="grid sm:grid-cols-2 gap-2">
                   {SDR_OBJECTIVES.map((o) => (
                     <OptionCard
                       key={o.id}
+                      id={o.id}
                       active={draft.objective === o.id}
                       onClick={() => set("objective", o.id)}
                       title={o.label}
@@ -369,7 +539,8 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                   ))}
                 </div>
                 {draft.objective === "outro" && (
-                  <Input
+                  <IconInput
+                    icon={Shapes}
                     className="mt-2"
                     value={draft.objective_custom}
                     onChange={(e) => set("objective_custom", e.target.value)}
@@ -387,7 +558,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           {step === 2 && (
             <>
               <div className="space-y-2">
-                <Label>Números de WhatsApp (Meta)</Label>
+                <IconLabel icon={Phone}>Números de WhatsApp (Meta)</IconLabel>
                 {numbers.length === 0 && (
                   <p className="text-sm text-muted-foreground">
                     Nenhum número conectado. Conecte um número Meta em Meta → Números.
@@ -397,7 +568,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                   {numbers.map((n) => (
                     <label
                       key={n.id}
-                      className="flex items-center gap-3 rounded-xl border border-border p-3 cursor-pointer hover:bg-muted/50"
+                      className="flex items-center gap-3 rounded-xl border border-border p-3 cursor-pointer hover:bg-muted/40 transition-colors"
                     >
                       <Checkbox
                         checked={draft.whatsapp_number_ids.includes(n.id)}
@@ -405,8 +576,11 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                           set("whatsapp_number_ids", toggleArray(draft.whatsapp_number_ids, n.id))
                         }
                       />
-                      <span className="text-sm">
-                        {n.nickname || n.phone_number || n.phone_number_id}
+                      <span className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Phone className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+                      </span>
+                      <span className="text-sm text-foreground">
+                        {n.nickname || n.display_phone_number || n.phone_number_id}
                       </span>
                     </label>
                   ))}
@@ -414,7 +588,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               </div>
 
               <div className="space-y-3">
-                <Label>Horário de atendimento</Label>
+                <IconLabel icon={Clock}>Horário de atendimento</IconLabel>
                 <Pills
                   value={draft.schedule.mode}
                   onChange={(v) => patch("schedule", { mode: v as any })}
@@ -438,10 +612,10 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                             })
                           }
                           className={cn(
-                            "px-3 py-1.5 rounded-lg text-sm border transition-colors",
+                            "h-10 min-w-[3.25rem] px-3 rounded-lg text-sm border transition-colors",
                             draft.schedule.days.includes(d.id)
-                              ? "border-primary bg-primary/10 text-foreground font-medium"
-                              : "border-border text-muted-foreground hover:bg-muted/50"
+                              ? "border-primary/60 bg-primary/10 text-primary font-medium"
+                              : "border-border bg-card text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                           )}
                         >
                           {d.label}
@@ -450,16 +624,18 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Início</Label>
-                        <Input
+                        <IconLabel icon={Clock}>Início</IconLabel>
+                        <IconInput
+                          icon={Clock}
                           type="time"
                           value={draft.schedule.start}
                           onChange={(e) => patch("schedule", { start: e.target.value })}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Fim</Label>
-                        <Input
+                        <IconLabel icon={Clock}>Fim</IconLabel>
+                        <IconInput
+                          icon={Clock}
                           type="time"
                           value={draft.schedule.end}
                           onChange={(e) => patch("schedule", { end: e.target.value })}
@@ -504,15 +680,18 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               <div className="space-y-2">
                 <Label>Conversa iniciada pelo SDR</Label>
                 {[
-                  { key: "outbound_prospect", label: "Prospectar automaticamente" },
-                  { key: "outbound_followup", label: "Fazer follow-up" },
-                  { key: "outbound_reactivate", label: "Reativar oportunidades" },
+                  { key: "outbound_prospect", label: "Prospectar automaticamente", icon: Search },
+                  { key: "outbound_followup", label: "Fazer follow-up", icon: Repeat },
+                  { key: "outbound_reactivate", label: "Reativar oportunidades", icon: RefreshCw },
                 ].map((o) => (
                   <div
                     key={o.key}
                     className="flex items-center justify-between rounded-xl border border-border p-3"
                   >
-                    <span className="text-sm">{o.label}</span>
+                    <span className="flex items-center gap-2 text-sm text-foreground">
+                      <o.icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+                      {o.label}
+                    </span>
                     <Switch
                       checked={(draft.triggers as any)[o.key]}
                       onCheckedChange={(v) => patch("triggers", { [o.key]: v } as any)}
@@ -743,16 +922,18 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               ))}
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Site</Label>
-                  <Input
+                  <IconLabel icon={Globe}>Site</IconLabel>
+                  <IconInput
+                    icon={Globe}
                     value={draft.knowledge.site}
                     onChange={(e) => patch("knowledge", { site: e.target.value })}
                     placeholder="https://"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Instagram</Label>
-                  <Input
+                  <IconLabel icon={Instagram}>Instagram</IconLabel>
+                  <IconInput
+                    icon={Instagram}
                     value={draft.knowledge.instagram}
                     onChange={(e) => patch("knowledge", { instagram: e.target.value })}
                     placeholder="@empresa"
@@ -760,7 +941,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Links de apoio</Label>
+                <IconLabel icon={Link2}>Links de apoio</IconLabel>
                 <Textarea
                   rows={2}
                   value={draft.knowledge.links}
@@ -794,7 +975,13 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                         })
                       }
                     />
-                    <span className="text-sm">{o.label}</span>
+                    <span className="flex items-center gap-2 text-sm text-foreground">
+                      {(() => {
+                        const I = iconFor(o.id);
+                        return <I className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />;
+                      })()}
+                      {o.label}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -817,7 +1004,13 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                         })
                       }
                     />
-                    <span className="text-sm">{o.label}</span>
+                    <span className="flex items-center gap-2 text-sm text-foreground">
+                      {(() => {
+                        const I = iconFor(o.id);
+                        return <I className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />;
+                      })()}
+                      {o.label}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -895,7 +1088,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           {step === 9 && (
             <div className="rounded-2xl border border-border p-5 space-y-3">
               {[
-                ["Nome", draft.name || "—"],
+                ["Nome", draft.name || "Não definido"],
                 [
                   "Objetivo",
                   draft.objective === "outro"
@@ -908,10 +1101,10 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                     .map(
                       (id) =>
                         numbers.find((n) => n.id === id)?.nickname ||
-                        numbers.find((n) => n.id === id)?.phone_number ||
+                        numbers.find((n) => n.id === id)?.display_phone_number ||
                         "Número"
                     )
-                    .join(", ") || "—",
+                    .join(", ") || "Nenhum número",
                 ],
                 [
                   "Horário",
@@ -932,7 +1125,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                     draft.knowledge.site && "Site",
                   ]
                     .filter(Boolean)
-                    .join(" + ") || "—",
+                    .join(" + ") || "Não informado",
                 ],
               ].map(([k, v]) => (
                 <div key={k as string} className="flex items-start justify-between gap-6">
