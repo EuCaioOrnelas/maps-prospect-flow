@@ -122,24 +122,20 @@ function OptionCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative w-full text-left rounded-xl border bg-white p-4 pr-10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-        active
-          ? "border-[hsl(158,72%,38%)] ring-2 ring-[hsl(158,72%,38%)]/20 shadow-md"
-          : "border-[hsl(220,15%,90%)] hover:border-[hsl(220,15%,75%)]"
+        "group relative w-full text-left rounded-xl border bg-card p-4 pr-10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        active ? "border-primary ring-2 ring-primary/20 shadow-md" : "border-border hover:border-primary/40"
       )}
     >
       <span
         className={cn(
           "absolute top-3 right-3 h-5 w-5 rounded-full border flex items-center justify-center transition-colors",
-          active
-            ? "bg-[hsl(158,72%,38%)] border-[hsl(158,72%,38%)]"
-            : "border-[hsl(220,15%,80%)] group-hover:border-[hsl(220,15%,60%)]"
+          active ? "bg-primary border-primary" : "border-border group-hover:border-primary/50"
         )}
       >
-        {active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+        {active && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />}
       </span>
-      <span className="text-sm font-medium text-[hsl(220,18%,15%)]">{title}</span>
-      {hint && <span className="block text-xs text-[hsl(220,12%,46%)] mt-0.5">{hint}</span>}
+      <span className="text-sm font-medium text-foreground">{title}</span>
+      {hint && <span className="block text-xs text-muted-foreground mt-0.5">{hint}</span>}
     </button>
   );
 }
@@ -162,10 +158,10 @@ function Pills({
           type="button"
           onClick={() => onChange(o.id)}
           className={cn(
-            "px-3.5 py-2 rounded-lg text-sm border bg-white transition-all",
+            "px-3.5 py-2 rounded-lg text-sm border bg-card transition-all",
             value === o.id
-              ? "border-[hsl(158,72%,38%)] ring-2 ring-[hsl(158,72%,38%)]/20 text-[hsl(220,18%,15%)] font-medium"
-              : "border-[hsl(220,15%,90%)] text-[hsl(220,12%,46%)] hover:border-[hsl(220,15%,75%)]"
+              ? "border-primary ring-2 ring-primary/20 text-foreground font-medium"
+              : "border-border text-muted-foreground hover:border-primary/40"
           )}
         >
           {o.label}
@@ -173,6 +169,7 @@ function Pills({
       ))}
     </div>
   );
+
 }
 
 
