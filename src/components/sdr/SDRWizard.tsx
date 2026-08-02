@@ -386,41 +386,11 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
     arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
 
   const StepIcon = STEPS[step - 1].icon;
+  const stepDef = STEPS[step - 1];
 
-  return (
-    <Shell variant={variant} open={open} onClose={onClose}>
-      <div>
-        <Head variant={variant}>
-          <div className="flex items-center justify-between gap-3">
-            <Title variant={variant} className="flex items-center gap-2 font-semibold">
-              <span className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                <StepIcon className="h-4.5 w-4.5 text-primary" size={18} />
-              </span>
-              <span className="flex flex-col items-start">
-                <span className="text-base">{STEPS[step - 1].title}</span>
-                <span className="text-xs font-normal text-muted-foreground">
-                  Etapa {step} de {STEPS.length}
-                </span>
-              </span>
-            </Title>
-            <Badge variant="secondary" className="gap-1">
-              <Bot size={12} /> SDR Inteligente
-            </Badge>
-          </div>
-          <div className="flex gap-1 mt-4">
-            {STEPS.map((_, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "h-1 flex-1 rounded-full transition-colors",
-                  i < step ? "bg-primary" : "bg-muted"
-                )}
-              />
-            ))}
-          </div>
-        </Head>
+  const body = (
+    <div className="py-2 space-y-5">
 
-        <div className="py-2 space-y-5">
           {/* 1 - Objetivo */}
           {step === 1 && (
             <>
