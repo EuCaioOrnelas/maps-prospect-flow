@@ -23,18 +23,26 @@ export type SdrObjective =
   | "proposta"
   | "venda_direta"
   | "qualificar"
-  | "recuperar"
-  | "outro";
+  | "recuperar";
 
 export const SDR_OBJECTIVES: { id: SdrObjective; label: string; hint?: string }[] = [
   { id: "reuniao", label: "Marcar reunião" },
   { id: "demonstracao", label: "Agendar demonstração" },
   { id: "proposta", label: "Enviar proposta" },
-  { id: "venda_direta", label: "Fechar venda direta", hint: "Recomendado para produtos simples até R$ 500/mês" },
+  { id: "venda_direta", label: "Fechar venda direta", hint: "Ideal para ticket até R$ 500/mês" },
   { id: "qualificar", label: "Qualificar oportunidades" },
   { id: "recuperar", label: "Recuperar oportunidades" },
-  { id: "outro", label: "Outro" },
 ];
+
+/** Critério de sucesso derivado do objetivo (não editável pelo usuário) */
+export const SDR_SUCCESS_BY_OBJECTIVE: Record<SdrObjective, string> = {
+  reuniao: "Reunião marcada com data e horário confirmados",
+  demonstracao: "Demonstração agendada com data e horário confirmados",
+  proposta: "Proposta enviada e confirmada como recebida pelo lead",
+  venda_direta: "Venda fechada e pagamento encaminhado",
+  qualificar: "Lead qualificado com dor, orçamento e decisor identificados",
+  recuperar: "Oportunidade reativada e próximo passo agendado",
+};
 
 export const SDR_WEEKDAYS = [
   { id: 1, label: "Seg" },
@@ -44,6 +52,16 @@ export const SDR_WEEKDAYS = [
   { id: 5, label: "Sex" },
   { id: 6, label: "Sáb" },
   { id: 0, label: "Dom" },
+];
+
+/** Gatilhos de ativação (multi-seleção) */
+export const SDR_ACTIVATION_TRIGGERS: { id: string; label: string; hint: string }[] = [
+  { id: "inbound_all", label: "Toda mensagem recebida", hint: "O SDR responde qualquer contato no WhatsApp" },
+  { id: "first_only", label: "Só o primeiro contato", hint: "Assume apenas a abertura da conversa" },
+  { id: "after_flow", label: "Depois de um fluxo", hint: "Entra quando um fluxo termina" },
+  { id: "after_transfer", label: "Após transferência", hint: "Assume quando o time transferir" },
+  { id: "manual_call", label: "Quando eu chamar", hint: "Ativado manualmente no chat ou no CRM" },
+  { id: "new_opportunity", label: "Nova oportunidade", hint: "Inicia a conversa em novos leads prospectados" },
 ];
 
 export const SDR_SITUATIONS: {
@@ -61,15 +79,6 @@ export const SDR_SITUATIONS: {
     ],
   },
   {
-    id: "sem_resposta",
-    label: "Cliente ficou sem responder",
-    options: [
-      { id: "followup", label: "Fazer follow-up" },
-      { id: "encerrar", label: "Encerrar" },
-      { id: "avisar", label: "Avisar vendedor" },
-    ],
-  },
-  {
     id: "concorrente",
     label: "Cliente já usa concorrente",
     options: [
@@ -82,6 +91,7 @@ export const SDR_SITUATIONS: {
     id: "preco",
     label: "Cliente pediu preço",
     options: [
+      { id: "nunca_sem_reuniao", label: "Nunca falar preço sem marcar reunião" },
       { id: "contexto", label: "Descobrir contexto antes" },
       { id: "enviar", label: "Enviar imediatamente" },
     ],
@@ -95,30 +105,38 @@ export const SDR_SITUATIONS: {
       { id: "followup", label: "Agendar follow-up" },
     ],
   },
-  {
-    id: "interesse",
-    label: "Cliente demonstrou muito interesse",
-    options: [
-      { id: "acelerar", label: "Acelerar negociação" },
-      { id: "reuniao", label: "Marcar reunião" },
-      { id: "vendedor", label: "Chamar vendedor" },
-    ],
-  },
 ];
 
 export const SDR_PRIORITIES = [
-  { id: "conexao", label: "Criar conexão" },
-  { id: "necessidade", label: "Descobrir necessidade" },
-  { id: "objecoes", label: "Resolver objeções" },
-  { id: "valor", label: "Gerar valor" },
-  { id: "reuniao", label: "Marcar reunião" },
+  { id: "conexao", label: "Criar conexão", hint: "Quebrar o gelo e gerar confiança" },
+  { id: "necessidade", label: "Descobrir necessidade", hint: "Entender a dor real do lead" },
+  { id: "valor", label: "Gerar valor", hint: "Mostrar como a solução resolve a dor" },
+  { id: "objecoes", label: "Resolver objeções", hint: "Tratar dúvidas e travas" },
+  { id: "reuniao", label: "Fechar o objetivo", hint: "Conduzir para o próximo passo" },
 ];
+
+export type SdrProduct = {
+  name: string;
+  description: string;
+  when_to_offer: string;
+  price: string;
+};
+
+export type SdrLink = {
+  url: string;
+  when_to_use: string;
+};
 
 export type SdrDraft = {
   name: string;
   objective: SdrObjective;
   objective_custom: string;
   whatsapp_number_ids: string[];
+  ai: {
+    provider: "openai";
+    model: string;
+    api_key: string;
+  };
   schedule: {
     mode: "always" | "custom";
     days: number[];
@@ -127,11 +145,12 @@ export type SdrDraft = {
     queue_outside_hours: boolean;
   };
   triggers: {
+    activation: string[];
     inbound: "always" | "first_only" | "after_flow" | "after_transfer" | "off";
     outbound_prospect: boolean;
     outbound_followup: boolean;
     outbound_reactivate: boolean;
-    reply_delay: "immediate" | "30s" | "1min" | "custom";
+    reply_delay: "immediate" | "30s" | "1min" | "smart" | "custom";
     reply_delay_custom_seconds: number;
     templates: string[];
   };
@@ -152,7 +171,10 @@ export type SdrDraft = {
   };
   knowledge: {
     company: string;
+    niche: string;
+    audience: string;
     products: string;
+    products_list: SdrProduct[];
     faq: string;
     policies: string;
     cases: string;
@@ -161,14 +183,23 @@ export type SdrDraft = {
     site: string;
     instagram: string;
     links: string;
+    links_list: SdrLink[];
   };
   closing: {
     success_criteria: string[];
     stop_criteria: string[];
+    stop_no_reply_hours: number;
     followup_max: number;
     followup_mode: "inteligente" | "manual";
     followup_interval_hours: number;
+    followup_min_hours: number;
+    followup_max_hours: number;
+    followup_templates: string[];
+    notify_seller: boolean;
+    notify_seller_email: string;
     after_limit: "arquivar" | "mover_pipeline" | "criar_tarefa" | "avisar_vendedor";
+    after_limit_actions: string[];
+    after_limit_stage_id: string;
   };
   situations: Record<string, string>;
 };
@@ -178,6 +209,11 @@ export const SDR_DEFAULT_DRAFT: SdrDraft = {
   objective: "reuniao",
   objective_custom: "",
   whatsapp_number_ids: [],
+  ai: {
+    provider: "openai",
+    model: "gpt-4o-mini",
+    api_key: "",
+  },
   schedule: {
     mode: "custom",
     days: [1, 2, 3, 4, 5],
@@ -186,11 +222,12 @@ export const SDR_DEFAULT_DRAFT: SdrDraft = {
     queue_outside_hours: true,
   },
   triggers: {
+    activation: ["inbound_all"],
     inbound: "always",
     outbound_prospect: true,
     outbound_followup: true,
     outbound_reactivate: false,
-    reply_delay: "30s",
+    reply_delay: "smart",
     reply_delay_custom_seconds: 60,
     templates: [],
   },
@@ -211,7 +248,10 @@ export const SDR_DEFAULT_DRAFT: SdrDraft = {
   },
   knowledge: {
     company: "",
+    niche: "",
+    audience: "",
     products: "",
+    products_list: [{ name: "", description: "", when_to_offer: "", price: "" }],
     faq: "",
     policies: "",
     cases: "",
@@ -220,22 +260,29 @@ export const SDR_DEFAULT_DRAFT: SdrDraft = {
     site: "",
     instagram: "",
     links: "",
+    links_list: [],
   },
   closing: {
     success_criteria: ["reuniao"],
     stop_criteria: ["recusou", "sem_resposta", "pediu_parar"],
+    stop_no_reply_hours: 48,
     followup_max: 4,
     followup_mode: "inteligente",
     followup_interval_hours: 24,
+    followup_min_hours: 12,
+    followup_max_hours: 48,
+    followup_templates: [],
+    notify_seller: true,
+    notify_seller_email: "",
     after_limit: "avisar_vendedor",
+    after_limit_actions: ["arquivar"],
+    after_limit_stage_id: "",
   },
   situations: {
     ocupado: "uma_pergunta",
-    sem_resposta: "followup",
     concorrente: "descobrir",
-    preco: "contexto",
+    preco: "nunca_sem_reuniao",
     recusou: "followup",
-    interesse: "reuniao",
   },
 };
 
