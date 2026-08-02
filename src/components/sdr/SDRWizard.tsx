@@ -1063,7 +1063,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           {step === 9 && (
             <div className="rounded-2xl border border-border p-5 space-y-3">
               {[
-                ["Nome", draft.name || "—"],
+                ["Nome", draft.name || "Não definido"],
                 [
                   "Objetivo",
                   draft.objective === "outro"
