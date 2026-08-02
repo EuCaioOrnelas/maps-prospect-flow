@@ -248,9 +248,6 @@ function OnboardingShell({
 export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog" }: Props) {
   const { user, accountOwnerId } = useAuth();
   const [step, setStep] = useState(1);
-  const [stage, setStage] = useState<"welcome" | "questions">(
-    variant === "page" ? "welcome" : "questions"
-  );
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<SdrDraft>(SDR_DEFAULT_DRAFT);
   const [numbers, setNumbers] = useState<any[]>([]);
