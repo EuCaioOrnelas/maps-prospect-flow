@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -123,7 +123,7 @@ function Shell({
   variant: "dialog" | "page";
   open: boolean;
   onClose: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   if (variant === "page") {
     return <div className="w-full">{children}</div>;
@@ -135,7 +135,7 @@ function Shell({
   );
 }
 
-function Head({ variant, children }: { variant: "dialog" | "page"; children: React.ReactNode }) {
+function Head({ variant, children }: { variant: "dialog" | "page"; children: ReactNode }) {
   if (variant === "page") return <div className="space-y-2">{children}</div>;
   return <DialogHeader>{children}</DialogHeader>;
 }
@@ -147,7 +147,7 @@ function Title({
 }: {
   variant: "dialog" | "page";
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   if (variant === "page") return <div className={className}>{children}</div>;
   return <DialogTitle className={className}>{children}</DialogTitle>;
