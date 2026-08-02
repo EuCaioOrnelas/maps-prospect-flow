@@ -1012,9 +1012,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   );
 
   if (isPage) {
-    if (stage === "welcome") {
-      return <WelcomeStage editing={!!editing} onStart={() => setStage("questions")} />;
-    }
+
     return (
       <OnboardingShell
         step={step}
