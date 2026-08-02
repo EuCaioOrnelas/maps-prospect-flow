@@ -81,6 +81,7 @@ const MetaAppDocumentation = lazyWithRetry(() => import("./pages/MetaAppDocument
 const MetaApiGuide = lazyWithRetry(() => import("./pages/MetaApiGuide"), "MetaApiGuide");
 const OpportunitiesManagement = lazyWithRetry(() => import("./pages/OpportunitiesManagement"), "OpportunitiesManagement");
 const SDRInteligente = lazyWithRetry(() => import("./pages/SDRInteligente"), "SDRInteligente");
+const SDRWizardPage = lazyWithRetry(() => import("./pages/SDRWizardPage"), "SDRWizardPage");
 const Chat = lazyWithRetry(() => import("./pages/Chat"), "Chat");
 import { ChatComingSoonGate } from "./components/chat/ChatComingSoonGate";
 const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomations"), "WhatsAppAutomations");
@@ -312,6 +313,8 @@ const App = () => (
                 <Route path="/oportunidades" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/oportunidades/gestao" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><OpportunitiesManagement /></Suspense></ProtectedRoute>} />
                 <Route path="/oportunidades/sdr" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><SDRInteligente /></Suspense></ProtectedRoute>} />
+                <Route path="/oportunidades/sdr/novo" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><SDRWizardPage /></Suspense></ProtectedRoute>} />
+                <Route path="/oportunidades/sdr/:id/editar" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><SDRWizardPage /></Suspense></ProtectedRoute>} />
                 <Route path="/whatsapp" element={<Navigate to="/meta-campaigns" replace />} />
                 <Route path="/whatsapp/reports" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/meta-campaigns" element={<ProtectedRoute><MetaCampaigns /></ProtectedRoute>} />
