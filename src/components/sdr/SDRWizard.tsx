@@ -310,6 +310,35 @@ function Pills({
   );
 }
 
+/** Input com ícone à esquerda */
+function IconInput({
+  icon: Icon,
+  className,
+  ...props
+}: React.ComponentProps<typeof Input> & { icon: LucideIcon }) {
+  return (
+    <div className="relative">
+      <Icon
+        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+        strokeWidth={1.75}
+      />
+      <Input className={cn("pl-9", className)} {...props} />
+    </div>
+  );
+}
+
+/** Label com ícone */
+function IconLabel({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
+  return (
+    <Label className="flex items-center gap-2">
+      <Icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+      {children}
+    </Label>
+  );
+}
+
+
+
 
 
 
