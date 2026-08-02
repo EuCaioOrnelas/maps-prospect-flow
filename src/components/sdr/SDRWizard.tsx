@@ -245,26 +245,35 @@ function OptionCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative w-full text-left rounded-xl border border-border bg-card p-4 pr-10 transition-colors duration-200",
-        active ? "bg-muted/40" : "hover:bg-muted/40"
+        "group relative w-full text-left rounded-xl border bg-card p-4 pr-11 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        active
+          ? "border-primary ring-2 ring-primary/20 shadow-md"
+          : "border-border hover:border-primary/40"
       )}
     >
-      {active && (
-        <span className="absolute top-3 right-3 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-          <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
-        </span>
-      )}
+      <span
+        className={cn(
+          "absolute top-3 right-3 h-5 w-5 rounded-full border flex items-center justify-center transition-colors",
+          active
+            ? "bg-primary border-primary"
+            : "border-border group-hover:border-primary/50"
+        )}
+      >
+        {active && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />}
+      </span>
       <div className="flex items-start gap-3">
         <span
           className={cn(
-            "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center transition-colors",
-            active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+            "shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-colors",
+            active
+              ? "bg-primary/10 text-primary"
+              : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
           )}
         >
-          <Icon className="h-4 w-4" strokeWidth={1.75} />
+          <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
         </span>
         <span className="min-w-0">
-          <span className="block text-sm font-medium text-foreground leading-5">{title}</span>
+          <span className="block text-sm font-semibold text-foreground leading-5">{title}</span>
           {hint && (
             <span className="block text-xs text-muted-foreground mt-1 leading-4">{hint}</span>
           )}
@@ -295,13 +304,19 @@ function Pills({
             type="button"
             onClick={() => onChange(o.id)}
             className={cn(
-              "inline-flex items-center gap-2 h-10 px-3.5 rounded-lg text-sm border transition-colors",
+              "group inline-flex items-center gap-2 h-10 px-3.5 rounded-lg text-sm border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
               selected
-                ? "border-primary/60 bg-primary/10 text-primary font-medium"
-                : "border-border bg-card text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                ? "border-primary ring-2 ring-primary/20 shadow-md text-foreground font-semibold"
+                : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
             )}
           >
-            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+            <Icon
+              className={cn(
+                "h-4 w-4 shrink-0 transition-colors",
+                selected ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+              )}
+              strokeWidth={1.75}
+            />
             <span className="leading-none">{o.label}</span>
           </button>
         );
@@ -309,6 +324,7 @@ function Pills({
     </div>
   );
 }
+
 
 /** Input com ícone à esquerda */
 function IconInput({
