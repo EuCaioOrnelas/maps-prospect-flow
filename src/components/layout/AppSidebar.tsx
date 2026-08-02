@@ -92,7 +92,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao";
   const isOnCampaignsPage = currentPath === "/meta-campaigns";
-  const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
+  const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao" || currentPath === "/oportunidades/sdr";
   const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
   const isOnAutomationPage = currentPath.startsWith("/fluxos");
   const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/") || currentPath === "/meta-campaigns";
@@ -300,7 +300,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   className={cn(
                     "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isOpportunitiesOpen
-                      ? "max-h-28 opacity-100 mt-1"
+                      ? "max-h-40 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
                 >
@@ -331,6 +331,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       >
                         <BarChart3 size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Gestão</span>
+                      </Link>
+                    </li>
+                    <li data-tour="sidebar-oportunidades-sdr">
+                      <Link
+                        to="/oportunidades/sdr"
+                        className={cn(
+                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
+                          currentPath === "/oportunidades/sdr"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Bot size={20} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">SDR Inteligente</span>
                       </Link>
                     </li>
                   </ul>

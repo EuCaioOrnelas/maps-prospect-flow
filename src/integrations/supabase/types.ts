@@ -6297,6 +6297,191 @@ export type Database = {
         }
         Relationships: []
       }
+      sdr_agents: {
+        Row: {
+          closing: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          knowledge: Json
+          name: string
+          objective: string
+          objective_custom: string | null
+          owner_user_id: string
+          personality: Json
+          schedule: Json
+          situations: Json
+          status: string
+          strategy: Json
+          triggers: Json
+          updated_at: string
+          whatsapp_number_ids: string[]
+        }
+        Insert: {
+          closing?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          knowledge?: Json
+          name: string
+          objective?: string
+          objective_custom?: string | null
+          owner_user_id: string
+          personality?: Json
+          schedule?: Json
+          situations?: Json
+          status?: string
+          strategy?: Json
+          triggers?: Json
+          updated_at?: string
+          whatsapp_number_ids?: string[]
+        }
+        Update: {
+          closing?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          knowledge?: Json
+          name?: string
+          objective?: string
+          objective_custom?: string | null
+          owner_user_id?: string
+          personality?: Json
+          schedule?: Json
+          situations?: Json
+          status?: string
+          strategy?: Json
+          triggers?: Json
+          updated_at?: string
+          whatsapp_number_ids?: string[]
+        }
+        Relationships: []
+      }
+      sdr_runs: {
+        Row: {
+          agent_id: string
+          analysis: Json
+          created_at: string
+          id: string
+          inbound_message: string | null
+          messages: Json
+          owner_user_id: string
+          session_id: string | null
+          strategy: Json
+          trigger_type: string
+          validation: Json
+        }
+        Insert: {
+          agent_id: string
+          analysis?: Json
+          created_at?: string
+          id?: string
+          inbound_message?: string | null
+          messages?: Json
+          owner_user_id: string
+          session_id?: string | null
+          strategy?: Json
+          trigger_type?: string
+          validation?: Json
+        }
+        Update: {
+          agent_id?: string
+          analysis?: Json
+          created_at?: string
+          id?: string
+          inbound_message?: string | null
+          messages?: Json
+          owner_user_id?: string
+          session_id?: string | null
+          strategy?: Json
+          trigger_type?: string
+          validation?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sdr_runs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_runs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sdr_sessions: {
+        Row: {
+          agent_id: string
+          contact_name: string | null
+          created_at: string
+          current_goal: string | null
+          followups_sent: number
+          id: string
+          last_message_at: string | null
+          last_reply_at: string | null
+          lead_id: string | null
+          memory: Json
+          messages_sent: number
+          owner_user_id: string
+          phone: string | null
+          replies_received: number
+          stage: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          contact_name?: string | null
+          created_at?: string
+          current_goal?: string | null
+          followups_sent?: number
+          id?: string
+          last_message_at?: string | null
+          last_reply_at?: string | null
+          lead_id?: string | null
+          memory?: Json
+          messages_sent?: number
+          owner_user_id: string
+          phone?: string | null
+          replies_received?: number
+          stage?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          contact_name?: string | null
+          created_at?: string
+          current_goal?: string | null
+          followups_sent?: number
+          id?: string
+          last_message_at?: string | null
+          last_reply_at?: string | null
+          lead_id?: string | null
+          memory?: Json
+          messages_sent?: number
+          owner_user_id?: string
+          phone?: string | null
+          replies_received?: number
+          stage?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sdr_sessions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       search_history: {
         Row: {
           created_at: string
