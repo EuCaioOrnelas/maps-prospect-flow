@@ -1079,7 +1079,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                         numbers.find((n) => n.id === id)?.phone_number ||
                         "Número"
                     )
-                    .join(", ") || "—",
+                    .join(", ") || "Nenhum número",
                 ],
                 [
                   "Horário",
