@@ -245,7 +245,7 @@ function OptionCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative w-full text-left rounded-xl border bg-card p-4 pr-11 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        "group relative flex h-full w-full flex-col items-center justify-start gap-4 p-6 rounded-xl border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
         active
           ? "border-primary ring-2 ring-primary/20 shadow-md"
           : "border-border hover:border-primary/40"
@@ -261,27 +261,30 @@ function OptionCard({
       >
         {active && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />}
       </span>
-      <div className="flex items-start gap-3">
-        <span
-          className={cn(
-            "shrink-0 h-10 w-10 rounded-lg flex items-center justify-center transition-colors",
-            active
-              ? "bg-primary/10 text-primary"
-              : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
-          )}
-        >
-          <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+      <span
+        className={cn(
+          "h-12 w-12 rounded-lg flex items-center justify-center transition-colors",
+          active
+            ? "bg-primary/10 text-primary"
+            : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+        )}
+      >
+        <Icon className="h-6 w-6" strokeWidth={1.75} />
+      </span>
+      <span className="flex flex-col items-center gap-1 px-1">
+        <span className="text-sm font-medium text-center text-foreground leading-snug break-words">
+          {title}
         </span>
-        <span className="min-w-0">
-          <span className="block text-sm font-semibold text-foreground leading-5">{title}</span>
-          {hint && (
-            <span className="block text-xs text-muted-foreground mt-1 leading-4">{hint}</span>
-          )}
-        </span>
-      </div>
+        {hint && (
+          <span className="text-xs text-center text-muted-foreground leading-4 break-words">
+            {hint}
+          </span>
+        )}
+      </span>
     </button>
   );
 }
+
 
 
 function Pills({
