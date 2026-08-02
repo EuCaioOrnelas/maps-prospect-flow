@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -10,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import {
   Bot,
@@ -24,6 +26,9 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ArrowRight,
+  Check,
+  Loader2,
 } from "lucide-react";
 import {
   SDR_DEFAULT_DRAFT,
@@ -44,16 +49,62 @@ interface Props {
 }
 
 const STEPS = [
-  { title: "Objetivo", icon: Target },
-  { title: "Onde atua", icon: Wifi },
-  { title: "Quando entra", icon: Clock },
-  { title: "Como conversa", icon: MessageSquare },
-  { title: "Estratégia", icon: Brain },
-  { title: "Conhecimento", icon: BookOpen },
-  { title: "Encerramento", icon: Flag },
-  { title: "Situações", icon: Sparkles },
-  { title: "Revisão", icon: CheckCircle2 },
+  {
+    title: "Objetivo",
+    icon: Target,
+    headline: "Qual o objetivo do seu SDR?",
+    subtitle: "Vamos definir o que ele deve buscar em toda conversa.",
+  },
+  {
+    title: "Onde atua",
+    icon: Wifi,
+    headline: "Onde esse SDR vai trabalhar?",
+    subtitle: "Escolha os números de WhatsApp e o horário de atendimento.",
+  },
+  {
+    title: "Quando entra",
+    icon: Clock,
+    headline: "Quando ele deve entrar na conversa?",
+    subtitle: "Defina os gatilhos de entrada e o tempo de resposta.",
+  },
+  {
+    title: "Como conversa",
+    icon: MessageSquare,
+    headline: "Como ele deve conversar?",
+    subtitle: "Personalidade, tom de voz e ritmo das mensagens.",
+  },
+  {
+    title: "Estratégia",
+    icon: Brain,
+    headline: "Qual a estratégia de vendas?",
+    subtitle: "Prioridades, insistência e tratamento de objeções.",
+  },
+  {
+    title: "Conhecimento",
+    icon: BookOpen,
+    headline: "O que ele precisa saber?",
+    subtitle: "Quanto mais contexto, mais natural e preciso ele responde.",
+  },
+  {
+    title: "Encerramento",
+    icon: Flag,
+    headline: "Quando encerrar ou insistir?",
+    subtitle: "Critérios de sucesso, parada e follow-up.",
+  },
+  {
+    title: "Situações",
+    icon: Sparkles,
+    headline: "Como ele deve agir quando...",
+    subtitle: "Ajuste comportamentos específicos sem escrever prompts.",
+  },
+  {
+    title: "Revisão",
+    icon: CheckCircle2,
+    headline: "Tudo pronto para ativar?",
+    subtitle: "Revise as configurações antes de criar o seu SDR.",
+  },
 ];
+
 
 function OptionCard({
   active,
