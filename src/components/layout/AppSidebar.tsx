@@ -92,7 +92,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao";
   const isOnCampaignsPage = currentPath === "/meta-campaigns";
-  const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao";
+  const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao" || currentPath === "/oportunidades/sdr";
   const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
   const isOnAutomationPage = currentPath.startsWith("/fluxos");
   const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/") || currentPath === "/meta-campaigns";
