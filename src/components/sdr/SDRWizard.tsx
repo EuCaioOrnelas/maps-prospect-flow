@@ -162,10 +162,10 @@ function Pills({
           type="button"
           onClick={() => onChange(o.id)}
           className={cn(
-            "px-3 py-1.5 rounded-lg text-sm border transition-colors",
+            "px-3.5 py-2 rounded-lg text-sm border bg-white transition-all",
             value === o.id
-              ? "border-primary bg-primary/10 text-foreground font-medium"
-              : "border-border text-muted-foreground hover:bg-muted/50"
+              ? "border-[hsl(158,72%,38%)] ring-2 ring-[hsl(158,72%,38%)]/20 text-[hsl(220,18%,15%)] font-medium"
+              : "border-[hsl(220,15%,90%)] text-[hsl(220,12%,46%)] hover:border-[hsl(220,15%,75%)]"
           )}
         >
           {o.label}
@@ -174,6 +174,7 @@ function Pills({
     </div>
   );
 }
+
 
 
 function Shell({
