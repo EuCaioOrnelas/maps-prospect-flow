@@ -81,32 +81,100 @@ function safeJson(text: string): any {
   }
 }
 
+const TONE_GUIDE: Record<string, string> = {
+  consultivo:
+    "Consultivo: pergunte antes de afirmar, use as respostas do lead nas próximas frases, traga uma observação útil sobre o negócio dele em cada mensagem. Nada de discurso pronto.",
+  profissional:
+    "Profissional: frases claras e técnicas, sem gírias, sem exclamações, foco em dado e resultado. Trate por 'você' com respeito e objetividade.",
+  descontraido:
+    "Descontraído: linguagem do dia a dia, frases curtas, leve informalidade ('bora', 'tranquilo'), mas nunca infantil nem forçado. Continua vendendo.",
+  objetivo:
+    "Objetivo: máximo de 2 linhas por mensagem, zero rodeio, sempre um próximo passo concreto na última frase.",
+};
+
+const FORMALITY_GUIDE: Record<string, string> = {
+  baixo: "Formalidade baixa: 'você', contrações naturais, tom de conversa entre conhecidos.",
+  medio: "Formalidade média: cordial e profissional, sem gírias e sem rigidez.",
+  alto: "Formalidade alta: tratamento respeitoso, sem gírias, sem emojis, estrutura impecável.",
+};
+
+const LENGTH_GUIDE: Record<string, string> = {
+  curtas: "Cada mensagem com no máximo 2 linhas.",
+  medias: "Cada mensagem com 3 a 4 linhas.",
+  longas: "Pode explicar com mais detalhe, ainda dividido em mensagens.",
+};
+
+const EMOJI_GUIDE: Record<string, string> = {
+  nunca: "Nunca use emojis.",
+  pouco: "No máximo 1 emoji a cada 3 mensagens, só quando reforçar o sentido.",
+  normal: "Emojis leves são permitidos, no máximo 1 por mensagem.",
+};
+
+const QUESTION_GUIDE: Record<string, string> = {
+  sempre: "Termine praticamente toda resposta com UMA pergunta que avance o objetivo.",
+  quando_necessario: "Pergunte apenas quando faltar informação para avançar; caso contrário, conduza afirmando.",
+  evitar: "Evite perguntas: conduza com afirmações e propostas de próximo passo.",
+};
+
 function agentBrief(agent: any) {
   const k = agent.knowledge ?? {};
   const p = agent.personality ?? {};
   const s = agent.strategy ?? {};
   const c = agent.closing ?? {};
+  const t = agent.triggers ?? {};
+  const products = Array.isArray(k.products_list)
+    ? k.products_list
+        .filter((x: any) => x?.name)
+        .map(
+          (x: any) =>
+            `- ${x.name}${x.price ? ` (${x.price})` : ""}: ${x.description || "-"} | OFERECER QUANDO: ${x.when_to_offer || "-"}`
+        )
+        .join("\n")
+    : "";
+  const links = Array.isArray(k.links_list)
+    ? k.links_list
+        .filter((x: any) => x?.url)
+        .map((x: any) => `- ${x.url} | USAR QUANDO: ${x.when_to_use || "-"}`)
+        .join("\n")
+    : "";
   return `
 NOME DO SDR: ${agent.name}
-OBJETIVO FINAL: ${agent.objective === "outro" ? agent.objective_custom : agent.objective}
+OBJETIVO FINAL: ${agent.objective}
+CRITÉRIO DE SUCESSO: ${(c.success_criteria || []).join(", ") || "-"}
 
 EMPRESA: ${k.company || "-"}
-PRODUTOS/SERVIÇOS: ${k.products || "-"}
+NICHO: ${k.niche || "-"} | PÚBLICO-ALVO: ${k.audience || "-"}
 DIFERENCIAIS: ${k.differentials || "-"}
+PRODUTOS:
+${products || k.products || "-"}
 CASES: ${k.cases || "-"}
 FAQ: ${k.faq || "-"}
 POLÍTICAS: ${k.policies || "-"}
 CONCORRENTES: ${k.competitors || "-"}
 SITE: ${k.site || "-"} | INSTAGRAM: ${k.instagram || "-"}
+LINKS DE APOIO:
+${links || "-"}
 
-PERSONALIDADE: tom ${p.tone}, formalidade ${p.formality}, respostas ${p.length}, emojis ${p.emojis}, perguntas ${p.questions}.
-CONDUÇÃO: ${p.leads_conversation ? "o SDR sempre conduz a conversa" : "o SDR acompanha o ritmo do lead"}.
+ESTILO OBRIGATÓRIO:
+${TONE_GUIDE[p.tone] ?? ""}
+${FORMALITY_GUIDE[p.formality] ?? ""}
+${LENGTH_GUIDE[p.length] ?? ""}
+${EMOJI_GUIDE[p.emojis] ?? ""}
+${QUESTION_GUIDE[p.questions] ?? ""}
+
+REGRAS INEGOCIÁVEIS:
+- O SDR SEMPRE conduz a conversa e nunca devolve o comando ao lead.
+- NUNCA esperar o lead decidir sozinho: toda resposta termina com um próximo passo claro.
+- Nunca inventar informação fora do conhecimento acima.
+${(agent.situations ?? {}).preco === "nunca_sem_reuniao" ? "- NUNCA informar preço antes de a reunião estar agendada." : ""}
 
 ESTRATÉGIA: prioridades ${(s.priorities || []).join(" > ")}; insistência ${s.insistence}; voltar ao objetivo ${s.return_to_goal}; objeções: ${s.on_objection}.
-ENCERRAMENTO: sucesso = ${(c.success_criteria || []).join(", ")}; parar = ${(c.stop_criteria || []).join(", ")}; follow-ups até ${c.followup_max}.
+GATILHOS DE ATIVAÇÃO: ${(t.activation || []).join(", ") || "inbound_all"}.
+ENCERRAMENTO: parar quando ${(c.stop_criteria || []).join(", ")}${c.stop_no_reply_hours ? ` (sem resposta por ${c.stop_no_reply_hours}h)` : ""}; follow-ups até ${c.followup_max} em modo ${c.followup_mode}${c.followup_mode === "inteligente" ? ` (intervalo variável entre ${c.followup_min_hours ?? 12}h e ${c.followup_max_hours ?? 48}h, sempre dentro do horário de atendimento)` : ""}.
 SITUAÇÕES CONFIGURADAS: ${JSON.stringify(agent.situations ?? {})}
 `.trim();
 }
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
