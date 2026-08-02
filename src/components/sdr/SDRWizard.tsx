@@ -550,30 +550,33 @@ function NumbersCombobox({
           </Command>
         </PopoverContent>
       </Popover>
-      {selected.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selected.map((id) => {
+      <div className="min-h-[38px] rounded-lg border border-dashed border-border/70 bg-muted/30 px-2 py-1.5 flex flex-wrap items-center gap-2">
+        {selected.length === 0 ? (
+          <span className="text-xs text-muted-foreground">Nenhum número selecionado ainda</span>
+        ) : (
+          selected.map((id) => {
             const n = numbers.find((x) => x.id === id);
             if (!n) return null;
             return (
-              <Badge key={id} variant="secondary" className="gap-1.5 pl-2 pr-1 py-1">
+              <Badge key={id} variant="secondary" className="gap-1.5 pl-2 pr-1 py-1 text-foreground">
                 <Phone className="h-3 w-3" />
                 {n.nickname || n.display_phone_number}
                 <button
                   type="button"
                   onClick={() => onToggle(id)}
-                  className="ml-1 rounded-full p-0.5 hover:bg-background/60"
+                  className="ml-1 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>
               </Badge>
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
     </div>
   );
 }
+
 
 /** Shell com header e título fixos; scroll apenas no conteúdo da etapa */
 function OnboardingShell({
