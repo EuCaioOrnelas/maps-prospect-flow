@@ -122,17 +122,28 @@ function OptionCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full text-left rounded-xl border p-3 transition-colors",
+        "group relative w-full text-left rounded-xl border bg-white p-4 pr-10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
         active
-          ? "border-primary bg-primary/10 text-foreground"
-          : "border-border bg-card hover:bg-muted/50 text-muted-foreground"
+          ? "border-[hsl(158,72%,38%)] ring-2 ring-[hsl(158,72%,38%)]/20 shadow-md"
+          : "border-[hsl(220,15%,90%)] hover:border-[hsl(220,15%,75%)]"
       )}
     >
-      <span className="text-sm font-medium text-foreground">{title}</span>
-      {hint && <span className="block text-xs text-muted-foreground mt-0.5">{hint}</span>}
+      <span
+        className={cn(
+          "absolute top-3 right-3 h-5 w-5 rounded-full border flex items-center justify-center transition-colors",
+          active
+            ? "bg-[hsl(158,72%,38%)] border-[hsl(158,72%,38%)]"
+            : "border-[hsl(220,15%,80%)] group-hover:border-[hsl(220,15%,60%)]"
+        )}
+      >
+        {active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+      </span>
+      <span className="text-sm font-medium text-[hsl(220,18%,15%)]">{title}</span>
+      {hint && <span className="block text-xs text-[hsl(220,12%,46%)] mt-0.5">{hint}</span>}
     </button>
   );
 }
+
 
 function Pills({
   value,
