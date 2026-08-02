@@ -315,7 +315,7 @@ function IconInput({
   icon: Icon,
   className,
   ...props
-}: React.ComponentProps<typeof Input> & { icon: LucideIcon }) {
+}: ComponentProps<typeof Input> & { icon: LucideIcon }) {
   return (
     <div className="relative">
       <Icon
