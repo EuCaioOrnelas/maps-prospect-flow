@@ -445,7 +445,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
     if (!open || !accountOwnerId) return;
     supabase
       .from("user_waba_connections")
-      .select("id,nickname,phone_number,phone_number_id")
+      .select("id,nickname,display_phone_number,phone_number_id")
       .eq("owner_user_id", accountOwnerId)
       .then(({ data }) => setNumbers(data ?? []));
   }, [open, accountOwnerId]);
@@ -580,7 +580,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                         <Phone className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
                       </span>
                       <span className="text-sm text-foreground">
-                        {n.nickname || n.phone_number || n.phone_number_id}
+                        {n.nickname || n.display_phone_number || n.phone_number_id}
                       </span>
                     </label>
                   ))}
@@ -1101,7 +1101,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                     .map(
                       (id) =>
                         numbers.find((n) => n.id === id)?.nickname ||
-                        numbers.find((n) => n.id === id)?.phone_number ||
+                        numbers.find((n) => n.id === id)?.display_phone_number ||
                         "Número"
                     )
                     .join(", ") || "Nenhum número",
