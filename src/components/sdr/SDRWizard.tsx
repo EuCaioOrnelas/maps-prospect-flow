@@ -948,30 +948,22 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   const isPage = variant === "page";
 
   const footer = isPage ? (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between border-t border-border pt-6">
       <Button
         variant="ghost"
         onClick={() => (step === 1 ? onClose() : setStep(step - 1))}
         disabled={saving}
-        className="text-[hsl(220,12%,46%)] hover:text-[hsl(220,18%,15%)]"
+        className="text-muted-foreground hover:text-foreground"
       >
         {step === 1 ? "Cancelar" : "Voltar"}
       </Button>
       {step < STEPS.length ? (
-        <Button
-          onClick={() => setStep(step + 1)}
-          disabled={!canProceed}
-          className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] disabled:bg-[hsl(220,15%,80%)] disabled:text-white text-white px-8 h-11 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
-        >
+        <Button onClick={() => setStep(step + 1)} disabled={!canProceed} className="px-8 h-11">
           Continuar
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       ) : (
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] text-white px-8 h-11 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
-        >
+        <Button onClick={handleSave} disabled={saving} className="px-8 h-11">
           {saving ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : editing ? (
@@ -982,6 +974,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         </Button>
       )}
     </div>
+
   ) : (
     <div className="flex items-center justify-between pt-2 border-t border-border">
       <Button
