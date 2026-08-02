@@ -628,10 +628,10 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                             })
                           }
                           className={cn(
-                            "h-10 min-w-[3.25rem] px-3 rounded-lg text-sm border transition-colors",
+                            "h-10 min-w-[3.25rem] px-3 rounded-lg text-sm border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
                             draft.schedule.days.includes(d.id)
-                              ? "border-primary/60 bg-primary/10 text-primary font-medium"
-                              : "border-border bg-card text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                              ? "border-primary ring-2 ring-primary/20 shadow-md text-foreground font-semibold"
+                              : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
                           )}
                         >
                           {d.label}
