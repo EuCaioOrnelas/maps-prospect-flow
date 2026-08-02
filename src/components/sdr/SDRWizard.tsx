@@ -911,16 +911,18 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               ))}
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Site</Label>
-                  <Input
+                  <IconLabel icon={Globe}>Site</IconLabel>
+                  <IconInput
+                    icon={Globe}
                     value={draft.knowledge.site}
                     onChange={(e) => patch("knowledge", { site: e.target.value })}
                     placeholder="https://"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Instagram</Label>
-                  <Input
+                  <IconLabel icon={Instagram}>Instagram</IconLabel>
+                  <IconInput
+                    icon={Instagram}
                     value={draft.knowledge.instagram}
                     onChange={(e) => patch("knowledge", { instagram: e.target.value })}
                     placeholder="@empresa"
@@ -928,7 +930,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Links de apoio</Label>
+                <IconLabel icon={Link2}>Links de apoio</IconLabel>
                 <Textarea
                   rows={2}
                   value={draft.knowledge.links}
