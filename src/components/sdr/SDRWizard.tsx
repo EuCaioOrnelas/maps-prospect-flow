@@ -1019,29 +1019,123 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               ))}
             </div>
           )}
-        </div>
+    </div>
+  );
 
-        <div className="flex items-center justify-between pt-2 border-t border-border">
-          <Button
-            variant="ghost"
-            onClick={() => (step === 1 ? onClose() : setStep(step - 1))}
-            disabled={saving}
-            className="gap-1"
-          >
-            <ChevronLeft size={16} />
-            {step === 1 ? "Cancelar" : "Voltar"}
-          </Button>
-          {step < STEPS.length ? (
-            <Button onClick={() => setStep(step + 1)} disabled={!canProceed} className="gap-1">
-              Continuar <ChevronRight size={16} />
-            </Button>
+  const isPage = variant === "page";
+
+  const footer = isPage ? (
+    <div className="flex items-center justify-between">
+      <Button
+        variant="ghost"
+        onClick={() => (step === 1 ? onClose() : setStep(step - 1))}
+        disabled={saving}
+        className="text-[hsl(220,12%,46%)] hover:text-[hsl(220,18%,15%)]"
+      >
+        {step === 1 ? "Cancelar" : "Voltar"}
+      </Button>
+      {step < STEPS.length ? (
+        <Button
+          onClick={() => setStep(step + 1)}
+          disabled={!canProceed}
+          className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] disabled:bg-[hsl(220,15%,80%)] disabled:text-white text-white px-8 h-11 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
+        >
+          Continuar
+          <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
+      ) : (
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] text-white px-8 h-11 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
+        >
+          {saving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : editing ? (
+            "Salvar alterações"
           ) : (
-            <Button onClick={handleSave} disabled={saving} className="gap-1">
-              {saving ? "Salvando..." : editing ? "Salvar alterações" : "Criar SDR"}
-            </Button>
+            "Criar SDR"
           )}
-        </div>
-      </div>
-    </Shell>
+        </Button>
+      )}
+    </div>
+  ) : (
+    <div className="flex items-center justify-between pt-2 border-t border-border">
+      <Button
+        variant="ghost"
+        onClick={() => (step === 1 ? onClose() : setStep(step - 1))}
+        disabled={saving}
+        className="gap-1"
+      >
+        <ChevronLeft size={16} />
+        {step === 1 ? "Cancelar" : "Voltar"}
+      </Button>
+      {step < STEPS.length ? (
+        <Button onClick={() => setStep(step + 1)} disabled={!canProceed} className="gap-1">
+          Continuar <ChevronRight size={16} />
+        </Button>
+      ) : (
+        <Button onClick={handleSave} disabled={saving} className="gap-1">
+          {saving ? "Salvando..." : editing ? "Salvar alterações" : "Criar SDR"}
+        </Button>
+      )}
+    </div>
+  );
+
+  if (isPage) {
+    if (stage === "welcome") {
+      return <WelcomeStage editing={!!editing} onStart={() => setStage("questions")} />;
+    }
+    return (
+      <OnboardingShell
+        step={step}
+        total={STEPS.length}
+        stepKey={`sdr-step-${step}`}
+        headline={stepDef.headline}
+        subtitle={stepDef.subtitle}
+        footer={footer}
+      >
+        {body}
+      </OnboardingShell>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="flex items-center gap-2 font-semibold">
+              <span className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                <StepIcon className="text-primary" size={18} />
+              </span>
+              <span className="flex flex-col items-start">
+                <span className="text-base">{stepDef.title}</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  Etapa {step} de {STEPS.length}
+                </span>
+              </span>
+            </DialogTitle>
+            <Badge variant="secondary" className="gap-1">
+              <Bot size={12} /> SDR Inteligente
+            </Badge>
+          </div>
+          <div className="flex gap-1 mt-4">
+            {STEPS.map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "h-1 flex-1 rounded-full transition-colors",
+                  i < step ? "bg-primary" : "bg-muted"
+                )}
+              />
+            ))}
+          </div>
+        </DialogHeader>
+        {body}
+        {footer}
+      </DialogContent>
+    </Dialog>
   );
 }
+
