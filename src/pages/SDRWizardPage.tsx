@@ -42,10 +42,10 @@ export default function SDRWizardPage() {
       <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
         <BackgroundGlow />
         <AppSidebar profile={profile} />
-        <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
+        <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px] h-screen">
           <AppHeader profile={profile} />
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
-            <div className="max-w-5xl mx-auto">
+          <main className="flex-1 min-h-0 p-4 sm:p-6 lg:p-8 overflow-hidden">
+            <div className="max-w-5xl mx-auto h-full min-h-0">
               {loading ? (
                 <div className="flex items-center justify-center py-24">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
