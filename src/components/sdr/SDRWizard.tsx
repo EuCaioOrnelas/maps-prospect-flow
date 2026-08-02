@@ -972,7 +972,13 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                         })
                       }
                     />
-                    <span className="text-sm">{o.label}</span>
+                    <span className="flex items-center gap-2 text-sm text-foreground">
+                      {(() => {
+                        const I = iconFor(o.id);
+                        return <I className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />;
+                      })()}
+                      {o.label}
+                    </span>
                   </label>
                 ))}
               </div>
