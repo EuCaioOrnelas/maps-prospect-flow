@@ -80,6 +80,7 @@ const CancellationFeedback = lazyWithRetry(() => import("./pages/CancellationFee
 const MetaAppDocumentation = lazyWithRetry(() => import("./pages/MetaAppDocumentation"), "MetaAppDocumentation");
 const MetaApiGuide = lazyWithRetry(() => import("./pages/MetaApiGuide"), "MetaApiGuide");
 const OpportunitiesManagement = lazyWithRetry(() => import("./pages/OpportunitiesManagement"), "OpportunitiesManagement");
+const SDRInteligente = lazyWithRetry(() => import("./pages/SDRInteligente"), "SDRInteligente");
 const Chat = lazyWithRetry(() => import("./pages/Chat"), "Chat");
 import { ChatComingSoonGate } from "./components/chat/ChatComingSoonGate";
 const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomations"), "WhatsAppAutomations");
