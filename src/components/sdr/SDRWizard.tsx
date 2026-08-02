@@ -680,15 +680,18 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               <div className="space-y-2">
                 <Label>Conversa iniciada pelo SDR</Label>
                 {[
-                  { key: "outbound_prospect", label: "Prospectar automaticamente" },
-                  { key: "outbound_followup", label: "Fazer follow-up" },
-                  { key: "outbound_reactivate", label: "Reativar oportunidades" },
+                  { key: "outbound_prospect", label: "Prospectar automaticamente", icon: Search },
+                  { key: "outbound_followup", label: "Fazer follow-up", icon: Repeat },
+                  { key: "outbound_reactivate", label: "Reativar oportunidades", icon: RefreshCw },
                 ].map((o) => (
                   <div
                     key={o.key}
                     className="flex items-center justify-between rounded-xl border border-border p-3"
                   >
-                    <span className="text-sm">{o.label}</span>
+                    <span className="flex items-center gap-2 text-sm text-foreground">
+                      <o.icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+                      {o.label}
+                    </span>
                     <Switch
                       checked={(draft.triggers as any)[o.key]}
                       onCheckedChange={(v) => patch("triggers", { [o.key]: v } as any)}
