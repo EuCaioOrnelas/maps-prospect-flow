@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -10,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
 import {
   Bot,
@@ -24,6 +26,9 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ArrowRight,
+  Check,
+  Loader2,
 } from "lucide-react";
 import {
   SDR_DEFAULT_DRAFT,
@@ -44,16 +49,62 @@ interface Props {
 }
 
 const STEPS = [
-  { title: "Objetivo", icon: Target },
-  { title: "Onde atua", icon: Wifi },
-  { title: "Quando entra", icon: Clock },
-  { title: "Como conversa", icon: MessageSquare },
-  { title: "Estratégia", icon: Brain },
-  { title: "Conhecimento", icon: BookOpen },
-  { title: "Encerramento", icon: Flag },
-  { title: "Situações", icon: Sparkles },
-  { title: "Revisão", icon: CheckCircle2 },
+  {
+    title: "Objetivo",
+    icon: Target,
+    headline: "Qual o objetivo do seu SDR?",
+    subtitle: "Vamos definir o que ele deve buscar em toda conversa.",
+  },
+  {
+    title: "Onde atua",
+    icon: Wifi,
+    headline: "Onde esse SDR vai trabalhar?",
+    subtitle: "Escolha os números de WhatsApp e o horário de atendimento.",
+  },
+  {
+    title: "Quando entra",
+    icon: Clock,
+    headline: "Quando ele deve entrar na conversa?",
+    subtitle: "Defina os gatilhos de entrada e o tempo de resposta.",
+  },
+  {
+    title: "Como conversa",
+    icon: MessageSquare,
+    headline: "Como ele deve conversar?",
+    subtitle: "Personalidade, tom de voz e ritmo das mensagens.",
+  },
+  {
+    title: "Estratégia",
+    icon: Brain,
+    headline: "Qual a estratégia de vendas?",
+    subtitle: "Prioridades, insistência e tratamento de objeções.",
+  },
+  {
+    title: "Conhecimento",
+    icon: BookOpen,
+    headline: "O que ele precisa saber?",
+    subtitle: "Quanto mais contexto, mais natural e preciso ele responde.",
+  },
+  {
+    title: "Encerramento",
+    icon: Flag,
+    headline: "Quando encerrar ou insistir?",
+    subtitle: "Critérios de sucesso, parada e follow-up.",
+  },
+  {
+    title: "Situações",
+    icon: Sparkles,
+    headline: "Como ele deve agir quando...",
+    subtitle: "Ajuste comportamentos específicos sem escrever prompts.",
+  },
+  {
+    title: "Revisão",
+    icon: CheckCircle2,
+    headline: "Tudo pronto para ativar?",
+    subtitle: "Revise as configurações antes de criar o seu SDR.",
+  },
 ];
+
 
 function OptionCard({
   active,
@@ -71,17 +122,28 @@ function OptionCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full text-left rounded-xl border p-3 transition-colors",
+        "group relative w-full text-left rounded-xl border bg-white p-4 pr-10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
         active
-          ? "border-primary bg-primary/10 text-foreground"
-          : "border-border bg-card hover:bg-muted/50 text-muted-foreground"
+          ? "border-[hsl(158,72%,38%)] ring-2 ring-[hsl(158,72%,38%)]/20 shadow-md"
+          : "border-[hsl(220,15%,90%)] hover:border-[hsl(220,15%,75%)]"
       )}
     >
-      <span className="text-sm font-medium text-foreground">{title}</span>
-      {hint && <span className="block text-xs text-muted-foreground mt-0.5">{hint}</span>}
+      <span
+        className={cn(
+          "absolute top-3 right-3 h-5 w-5 rounded-full border flex items-center justify-center transition-colors",
+          active
+            ? "bg-[hsl(158,72%,38%)] border-[hsl(158,72%,38%)]"
+            : "border-[hsl(220,15%,80%)] group-hover:border-[hsl(220,15%,60%)]"
+        )}
+      >
+        {active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+      </span>
+      <span className="text-sm font-medium text-[hsl(220,18%,15%)]">{title}</span>
+      {hint && <span className="block text-xs text-[hsl(220,12%,46%)] mt-0.5">{hint}</span>}
     </button>
   );
 }
+
 
 function Pills({
   value,
@@ -100,10 +162,10 @@ function Pills({
           type="button"
           onClick={() => onChange(o.id)}
           className={cn(
-            "px-3 py-1.5 rounded-lg text-sm border transition-colors",
+            "px-3.5 py-2 rounded-lg text-sm border bg-white transition-all",
             value === o.id
-              ? "border-primary bg-primary/10 text-foreground font-medium"
-              : "border-border text-muted-foreground hover:bg-muted/50"
+              ? "border-[hsl(158,72%,38%)] ring-2 ring-[hsl(158,72%,38%)]/20 text-[hsl(220,18%,15%)] font-medium"
+              : "border-[hsl(220,15%,90%)] text-[hsl(220,12%,46%)] hover:border-[hsl(220,15%,75%)]"
           )}
         >
           {o.label}
@@ -114,51 +176,130 @@ function Pills({
 }
 
 
-function Shell({
-  variant,
-  open,
-  onClose,
+
+/** Layout tela-cheia no mesmo padrão do onboarding da Wiize */
+function OnboardingShell({
+  step,
+  total,
+  headline,
+  subtitle,
   children,
+  footer,
+  stepKey,
 }: {
-  variant: "dialog" | "page";
-  open: boolean;
-  onClose: () => void;
+  step: number;
+  total: number;
+  headline: string;
+  subtitle: string;
   children: ReactNode;
+  footer: ReactNode;
+  stepKey: string;
 }) {
-  if (variant === "page") {
-    return <div className="w-full">{children}</div>;
-  }
+  const progress = Math.round((step / total) * 100);
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">{children}</DialogContent>
-    </Dialog>
+    <div className="min-h-screen bg-[hsl(40,30%,97%)] text-[hsl(220,15%,15%)] flex flex-col">
+      <header className="px-6 sm:px-10 py-6 flex items-center justify-between">
+        <Logo size="sm" asLink={false} />
+        <div className="hidden sm:flex items-center gap-3 text-xs text-[hsl(220,12%,46%)]">
+          <span>
+            {step} de {total}
+          </span>
+          <div className="w-40 h-1 rounded-full bg-[hsl(220,15%,90%)] overflow-hidden">
+            <motion.div
+              className="h-full bg-[hsl(158,72%,38%)]"
+              initial={false}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            />
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 flex justify-center px-6 sm:px-10 pb-20">
+        <AnimatePresence mode="wait">
+          <motion.section
+            key={stepKey}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.35 }}
+            className="w-full max-w-3xl"
+          >
+            <div className="text-center mb-10 mt-2 sm:mt-6">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[hsl(220,18%,12%)] mb-3">
+                {headline}
+              </h2>
+              <p className="text-sm sm:text-base text-[hsl(220,12%,46%)]">{subtitle}</p>
+            </div>
+
+            <div className="[&_input]:bg-white [&_textarea]:bg-white [&_label]:text-[hsl(220,18%,15%)]">
+              {children}
+            </div>
+
+            <div className="mt-12">{footer}</div>
+          </motion.section>
+        </AnimatePresence>
+      </main>
+    </div>
   );
 }
 
-function Head({ variant, children }: { variant: "dialog" | "page"; children: ReactNode }) {
-  if (variant === "page") return <div className="space-y-2">{children}</div>;
-  return <DialogHeader>{children}</DialogHeader>;
+function WelcomeStage({ editing, onStart }: { editing: boolean; onStart: () => void }) {
+  return (
+    <div className="min-h-screen bg-[hsl(40,30%,97%)] text-[hsl(220,15%,15%)] flex flex-col">
+      <header className="px-6 sm:px-10 py-6">
+        <Logo size="sm" asLink={false} />
+      </header>
+      <main className="flex-1 flex items-center justify-center px-6 sm:px-10 pb-24">
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="max-w-2xl w-full text-center"
+        >
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[hsl(158,72%,38%)]/10 text-[hsl(158,72%,30%)] text-xs font-medium mb-6">
+            <Bot className="h-3.5 w-3.5" />
+            SDR Inteligente
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4 text-[hsl(220,18%,12%)]">
+            {editing ? (
+              <>Vamos ajustar o cérebro do seu SDR.</>
+            ) : (
+              <>
+                Vamos construir o cérebro do seu
+                <br className="hidden sm:block" /> SDR em poucos minutos.
+              </>
+            )}
+          </h1>
+          <p className="text-base sm:text-lg text-[hsl(220,12%,46%)] mb-10 max-w-xl mx-auto">
+            Algumas perguntas rápidas para definir objetivo, personalidade, estratégia e
+            conhecimento do agente que vai conversar pelo WhatsApp.
+          </p>
+          <Button
+            size="lg"
+            onClick={onStart}
+            className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] text-white px-8 h-12 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
+          >
+            {editing ? "Continuar" : "Começar"}
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        </motion.section>
+      </main>
+    </div>
+  );
 }
 
-function Title({
-  variant,
-  className,
-  children,
-}: {
-  variant: "dialog" | "page";
-  className?: string;
-  children: ReactNode;
-}) {
-  if (variant === "page") return <div className={className}>{children}</div>;
-  return <DialogTitle className={className}>{children}</DialogTitle>;
-}
 
 export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog" }: Props) {
   const { user, accountOwnerId } = useAuth();
   const [step, setStep] = useState(1);
+  const [stage, setStage] = useState<"welcome" | "questions">(
+    variant === "page" ? "welcome" : "questions"
+  );
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<SdrDraft>(SDR_DEFAULT_DRAFT);
   const [numbers, setNumbers] = useState<any[]>([]);
+
 
   useEffect(() => {
     if (!open) return;
@@ -249,41 +390,11 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
     arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
 
   const StepIcon = STEPS[step - 1].icon;
+  const stepDef = STEPS[step - 1];
 
-  return (
-    <Shell variant={variant} open={open} onClose={onClose}>
-      <div>
-        <Head variant={variant}>
-          <div className="flex items-center justify-between gap-3">
-            <Title variant={variant} className="flex items-center gap-2 font-semibold">
-              <span className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                <StepIcon className="h-4.5 w-4.5 text-primary" size={18} />
-              </span>
-              <span className="flex flex-col items-start">
-                <span className="text-base">{STEPS[step - 1].title}</span>
-                <span className="text-xs font-normal text-muted-foreground">
-                  Etapa {step} de {STEPS.length}
-                </span>
-              </span>
-            </Title>
-            <Badge variant="secondary" className="gap-1">
-              <Bot size={12} /> SDR Inteligente
-            </Badge>
-          </div>
-          <div className="flex gap-1 mt-4">
-            {STEPS.map((_, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "h-1 flex-1 rounded-full transition-colors",
-                  i < step ? "bg-primary" : "bg-muted"
-                )}
-              />
-            ))}
-          </div>
-        </Head>
+  const body = (
+    <div className="py-2 space-y-5">
 
-        <div className="py-2 space-y-5">
           {/* 1 - Objetivo */}
           {step === 1 && (
             <>
@@ -882,29 +993,123 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               ))}
             </div>
           )}
-        </div>
+    </div>
+  );
 
-        <div className="flex items-center justify-between pt-2 border-t border-border">
-          <Button
-            variant="ghost"
-            onClick={() => (step === 1 ? onClose() : setStep(step - 1))}
-            disabled={saving}
-            className="gap-1"
-          >
-            <ChevronLeft size={16} />
-            {step === 1 ? "Cancelar" : "Voltar"}
-          </Button>
-          {step < STEPS.length ? (
-            <Button onClick={() => setStep(step + 1)} disabled={!canProceed} className="gap-1">
-              Continuar <ChevronRight size={16} />
-            </Button>
+  const isPage = variant === "page";
+
+  const footer = isPage ? (
+    <div className="flex items-center justify-between">
+      <Button
+        variant="ghost"
+        onClick={() => (step === 1 ? onClose() : setStep(step - 1))}
+        disabled={saving}
+        className="text-[hsl(220,12%,46%)] hover:text-[hsl(220,18%,15%)]"
+      >
+        {step === 1 ? "Cancelar" : "Voltar"}
+      </Button>
+      {step < STEPS.length ? (
+        <Button
+          onClick={() => setStep(step + 1)}
+          disabled={!canProceed}
+          className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] disabled:bg-[hsl(220,15%,80%)] disabled:text-white text-white px-8 h-11 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
+        >
+          Continuar
+          <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
+      ) : (
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] text-white px-8 h-11 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
+        >
+          {saving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : editing ? (
+            "Salvar alterações"
           ) : (
-            <Button onClick={handleSave} disabled={saving} className="gap-1">
-              {saving ? "Salvando..." : editing ? "Salvar alterações" : "Criar SDR"}
-            </Button>
+            "Criar SDR"
           )}
-        </div>
-      </div>
-    </Shell>
+        </Button>
+      )}
+    </div>
+  ) : (
+    <div className="flex items-center justify-between pt-2 border-t border-border">
+      <Button
+        variant="ghost"
+        onClick={() => (step === 1 ? onClose() : setStep(step - 1))}
+        disabled={saving}
+        className="gap-1"
+      >
+        <ChevronLeft size={16} />
+        {step === 1 ? "Cancelar" : "Voltar"}
+      </Button>
+      {step < STEPS.length ? (
+        <Button onClick={() => setStep(step + 1)} disabled={!canProceed} className="gap-1">
+          Continuar <ChevronRight size={16} />
+        </Button>
+      ) : (
+        <Button onClick={handleSave} disabled={saving} className="gap-1">
+          {saving ? "Salvando..." : editing ? "Salvar alterações" : "Criar SDR"}
+        </Button>
+      )}
+    </div>
+  );
+
+  if (isPage) {
+    if (stage === "welcome") {
+      return <WelcomeStage editing={!!editing} onStart={() => setStage("questions")} />;
+    }
+    return (
+      <OnboardingShell
+        step={step}
+        total={STEPS.length}
+        stepKey={`sdr-step-${step}`}
+        headline={stepDef.headline}
+        subtitle={stepDef.subtitle}
+        footer={footer}
+      >
+        {body}
+      </OnboardingShell>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="flex items-center gap-2 font-semibold">
+              <span className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                <StepIcon className="text-primary" size={18} />
+              </span>
+              <span className="flex flex-col items-start">
+                <span className="text-base">{stepDef.title}</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  Etapa {step} de {STEPS.length}
+                </span>
+              </span>
+            </DialogTitle>
+            <Badge variant="secondary" className="gap-1">
+              <Bot size={12} /> SDR Inteligente
+            </Badge>
+          </div>
+          <div className="flex gap-1 mt-4">
+            {STEPS.map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "h-1 flex-1 rounded-full transition-colors",
+                  i < step ? "bg-primary" : "bg-muted"
+                )}
+              />
+            ))}
+          </div>
+        </DialogHeader>
+        {body}
+        {footer}
+      </DialogContent>
+    </Dialog>
   );
 }
+
