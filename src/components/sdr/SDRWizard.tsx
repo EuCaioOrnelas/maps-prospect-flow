@@ -1100,7 +1100,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                     draft.knowledge.site && "Site",
                   ]
                     .filter(Boolean)
-                    .join(" + ") || "—",
+                    .join(" + ") || "Não informado",
                 ],
               ].map(([k, v]) => (
                 <div key={k as string} className="flex items-start justify-between gap-6">
