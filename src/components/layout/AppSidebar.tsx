@@ -333,6 +333,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         <span className="whitespace-nowrap truncate">Gestão</span>
                       </Link>
                     </li>
+                    <li data-tour="sidebar-oportunidades-sdr">
+                      <Link
+                        to="/oportunidades/sdr"
+                        className={cn(
+                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
+                          currentPath === "/oportunidades/sdr"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Bot size={20} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">SDR Inteligente</span>
+                      </Link>
+                    </li>
                   </ul>
                 </div>
               )}
