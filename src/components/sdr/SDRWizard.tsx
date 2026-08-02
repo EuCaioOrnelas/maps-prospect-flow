@@ -584,7 +584,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               </div>
               <div className="space-y-2">
                 <IconLabel icon={Target}>Objetivo principal</IconLabel>
-                <div className="grid sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
                   {SDR_OBJECTIVES.map((o) => (
                     <OptionCard
                       key={o.id}
