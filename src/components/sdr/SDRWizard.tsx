@@ -523,9 +523,14 @@ function NumbersCombobox({
                       key={n.id}
                       value={`${n.nickname ?? ""} ${n.display_phone_number ?? ""} ${n.phone_number_id ?? ""}`}
                       onSelect={() => onToggle(n.id)}
-                      className="gap-2"
+                      className={cn(
+                        "gap-2 cursor-pointer rounded-lg px-2 py-2",
+                        "data-[selected=true]:bg-muted data-[selected=true]:text-foreground",
+                        isOn && "bg-primary/10 text-foreground data-[selected=true]:bg-primary/15",
+                      )}
                     >
                       <Checkbox checked={isOn} className="pointer-events-none" />
+
                       <Phone className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
                       <span className="flex flex-col">
                         <span className="text-sm text-foreground">
