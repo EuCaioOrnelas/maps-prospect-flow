@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Logo } from "@/components/Logo";
+
 import { cn } from "@/lib/utils";
 import {
   Bot,
@@ -122,24 +122,20 @@ function OptionCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative w-full text-left rounded-xl border bg-white p-4 pr-10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-        active
-          ? "border-[hsl(158,72%,38%)] ring-2 ring-[hsl(158,72%,38%)]/20 shadow-md"
-          : "border-[hsl(220,15%,90%)] hover:border-[hsl(220,15%,75%)]"
+        "group relative w-full text-left rounded-xl border bg-card p-4 pr-10 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        active ? "border-primary ring-2 ring-primary/20 shadow-md" : "border-border hover:border-primary/40"
       )}
     >
       <span
         className={cn(
           "absolute top-3 right-3 h-5 w-5 rounded-full border flex items-center justify-center transition-colors",
-          active
-            ? "bg-[hsl(158,72%,38%)] border-[hsl(158,72%,38%)]"
-            : "border-[hsl(220,15%,80%)] group-hover:border-[hsl(220,15%,60%)]"
+          active ? "bg-primary border-primary" : "border-border group-hover:border-primary/50"
         )}
       >
-        {active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+        {active && <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />}
       </span>
-      <span className="text-sm font-medium text-[hsl(220,18%,15%)]">{title}</span>
-      {hint && <span className="block text-xs text-[hsl(220,12%,46%)] mt-0.5">{hint}</span>}
+      <span className="text-sm font-medium text-foreground">{title}</span>
+      {hint && <span className="block text-xs text-muted-foreground mt-0.5">{hint}</span>}
     </button>
   );
 }
@@ -162,10 +158,10 @@ function Pills({
           type="button"
           onClick={() => onChange(o.id)}
           className={cn(
-            "px-3.5 py-2 rounded-lg text-sm border bg-white transition-all",
+            "px-3.5 py-2 rounded-lg text-sm border bg-card transition-all",
             value === o.id
-              ? "border-[hsl(158,72%,38%)] ring-2 ring-[hsl(158,72%,38%)]/20 text-[hsl(220,18%,15%)] font-medium"
-              : "border-[hsl(220,15%,90%)] text-[hsl(220,12%,46%)] hover:border-[hsl(220,15%,75%)]"
+              ? "border-primary ring-2 ring-primary/20 text-foreground font-medium"
+              : "border-border text-muted-foreground hover:border-primary/40"
           )}
         >
           {o.label}
@@ -173,11 +169,12 @@ function Pills({
       ))}
     </div>
   );
+
 }
 
 
 
-/** Layout tela-cheia no mesmo padrão do onboarding da Wiize */
+/** Etapas no padrão do onboarding, porém dentro do portal (sidebar + header) */
 function OnboardingShell({
   step,
   total,
@@ -197,105 +194,57 @@ function OnboardingShell({
 }) {
   const progress = Math.round((step / total) * 100);
   return (
-    <div className="min-h-screen bg-[hsl(40,30%,97%)] text-[hsl(220,15%,15%)] flex flex-col">
-      <header className="px-6 sm:px-10 py-6 flex items-center justify-between">
-        <Logo size="sm" asLink={false} />
-        <div className="hidden sm:flex items-center gap-3 text-xs text-[hsl(220,12%,46%)]">
+    <div className="w-full">
+      <div className="flex items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <Bot className="h-4 w-4 text-primary" />
+          SDR Inteligente
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span>
             {step} de {total}
           </span>
-          <div className="w-40 h-1 rounded-full bg-[hsl(220,15%,90%)] overflow-hidden">
+          <div className="w-32 sm:w-40 h-1 rounded-full bg-muted overflow-hidden">
             <motion.div
-              className="h-full bg-[hsl(158,72%,38%)]"
+              className="h-full bg-primary"
               initial={false}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.4, ease: "easeOut" }}
             />
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="flex-1 flex justify-center px-6 sm:px-10 pb-20">
-        <AnimatePresence mode="wait">
-          <motion.section
-            key={stepKey}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.35 }}
-            className="w-full max-w-3xl"
-          >
-            <div className="text-center mb-10 mt-2 sm:mt-6">
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[hsl(220,18%,12%)] mb-3">
-                {headline}
-              </h2>
-              <p className="text-sm sm:text-base text-[hsl(220,12%,46%)]">{subtitle}</p>
-            </div>
-
-            <div className="[&_input]:bg-white [&_textarea]:bg-white [&_label]:text-[hsl(220,18%,15%)]">
-              {children}
-            </div>
-
-            <div className="mt-12">{footer}</div>
-          </motion.section>
-        </AnimatePresence>
-      </main>
-    </div>
-  );
-}
-
-function WelcomeStage({ editing, onStart }: { editing: boolean; onStart: () => void }) {
-  return (
-    <div className="min-h-screen bg-[hsl(40,30%,97%)] text-[hsl(220,15%,15%)] flex flex-col">
-      <header className="px-6 sm:px-10 py-6">
-        <Logo size="sm" asLink={false} />
-      </header>
-      <main className="flex-1 flex items-center justify-center px-6 sm:px-10 pb-24">
+      <AnimatePresence mode="wait">
         <motion.section
+          key={stepKey}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="max-w-2xl w-full text-center"
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.3 }}
+          className="w-full max-w-3xl mx-auto"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[hsl(158,72%,38%)]/10 text-[hsl(158,72%,30%)] text-xs font-medium mb-6">
-            <Bot className="h-3.5 w-3.5" />
-            SDR Inteligente
+          <div className="text-center mb-10">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-3">
+              {headline}
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground">{subtitle}</p>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4 text-[hsl(220,18%,12%)]">
-            {editing ? (
-              <>Vamos ajustar o cérebro do seu SDR.</>
-            ) : (
-              <>
-                Vamos construir o cérebro do seu
-                <br className="hidden sm:block" /> SDR em poucos minutos.
-              </>
-            )}
-          </h1>
-          <p className="text-base sm:text-lg text-[hsl(220,12%,46%)] mb-10 max-w-xl mx-auto">
-            Algumas perguntas rápidas para definir objetivo, personalidade, estratégia e
-            conhecimento do agente que vai conversar pelo WhatsApp.
-          </p>
-          <Button
-            size="lg"
-            onClick={onStart}
-            className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] text-white px-8 h-12 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
-          >
-            {editing ? "Continuar" : "Começar"}
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
+
+          <div>{children}</div>
+
+          <div className="mt-12">{footer}</div>
         </motion.section>
-      </main>
+      </AnimatePresence>
     </div>
   );
 }
+
 
 
 export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog" }: Props) {
   const { user, accountOwnerId } = useAuth();
   const [step, setStep] = useState(1);
-  const [stage, setStage] = useState<"welcome" | "questions">(
-    variant === "page" ? "welcome" : "questions"
-  );
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<SdrDraft>(SDR_DEFAULT_DRAFT);
   const [numbers, setNumbers] = useState<any[]>([]);
@@ -999,30 +948,22 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   const isPage = variant === "page";
 
   const footer = isPage ? (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between border-t border-border pt-6">
       <Button
         variant="ghost"
         onClick={() => (step === 1 ? onClose() : setStep(step - 1))}
         disabled={saving}
-        className="text-[hsl(220,12%,46%)] hover:text-[hsl(220,18%,15%)]"
+        className="text-muted-foreground hover:text-foreground"
       >
         {step === 1 ? "Cancelar" : "Voltar"}
       </Button>
       {step < STEPS.length ? (
-        <Button
-          onClick={() => setStep(step + 1)}
-          disabled={!canProceed}
-          className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] disabled:bg-[hsl(220,15%,80%)] disabled:text-white text-white px-8 h-11 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
-        >
+        <Button onClick={() => setStep(step + 1)} disabled={!canProceed} className="px-8 h-11">
           Continuar
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       ) : (
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-[hsl(158,72%,38%)] hover:bg-[hsl(158,72%,32%)] text-white px-8 h-11 rounded-lg shadow-[0_4px_16px_hsl(158,72%,38%,0.3)] hover:shadow-[0_6px_20px_hsl(158,72%,38%,0.4)] transition-all"
-        >
+        <Button onClick={handleSave} disabled={saving} className="px-8 h-11">
           {saving ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : editing ? (
@@ -1033,6 +974,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         </Button>
       )}
     </div>
+
   ) : (
     <div className="flex items-center justify-between pt-2 border-t border-border">
       <Button
@@ -1057,9 +999,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   );
 
   if (isPage) {
-    if (stage === "welcome") {
-      return <WelcomeStage editing={!!editing} onStart={() => setStage("questions")} />;
-    }
+
     return (
       <OnboardingShell
         step={step}
