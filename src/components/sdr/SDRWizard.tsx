@@ -991,26 +991,17 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                   { id: "proposta", label: "Proposta enviada" },
                   { id: "qualificado", label: "Lead qualificado" },
                 ].map((o) => (
-                  <label
+                  <CheckRow
                     key={o.id}
-                    className="flex items-center gap-3 rounded-xl border border-border p-3 cursor-pointer hover:bg-muted/50"
-                  >
-                    <Checkbox
-                      checked={draft.closing.success_criteria.includes(o.id)}
-                      onCheckedChange={() =>
-                        patch("closing", {
-                          success_criteria: toggleArray(draft.closing.success_criteria, o.id),
-                        })
-                      }
-                    />
-                    <span className="flex items-center gap-2 text-sm text-foreground">
-                      {(() => {
-                        const I = iconFor(o.id);
-                        return <I className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />;
-                      })()}
-                      {o.label}
-                    </span>
-                  </label>
+                    id={o.id}
+                    label={o.label}
+                    checked={draft.closing.success_criteria.includes(o.id)}
+                    onToggle={() =>
+                      patch("closing", {
+                        success_criteria: toggleArray(draft.closing.success_criteria, o.id),
+                      })
+                    }
+                  />
                 ))}
               </div>
               <div className="space-y-2">
@@ -1020,26 +1011,17 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                   { id: "sem_resposta", label: "Sem resposta" },
                   { id: "pediu_parar", label: "Solicitou parar" },
                 ].map((o) => (
-                  <label
+                  <CheckRow
                     key={o.id}
-                    className="flex items-center gap-3 rounded-xl border border-border p-3 cursor-pointer hover:bg-muted/50"
-                  >
-                    <Checkbox
-                      checked={draft.closing.stop_criteria.includes(o.id)}
-                      onCheckedChange={() =>
-                        patch("closing", {
-                          stop_criteria: toggleArray(draft.closing.stop_criteria, o.id),
-                        })
-                      }
-                    />
-                    <span className="flex items-center gap-2 text-sm text-foreground">
-                      {(() => {
-                        const I = iconFor(o.id);
-                        return <I className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />;
-                      })()}
-                      {o.label}
-                    </span>
-                  </label>
+                    id={o.id}
+                    label={o.label}
+                    checked={draft.closing.stop_criteria.includes(o.id)}
+                    onToggle={() =>
+                      patch("closing", {
+                        stop_criteria: toggleArray(draft.closing.stop_criteria, o.id),
+                      })
+                    }
+                  />
                 ))}
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
