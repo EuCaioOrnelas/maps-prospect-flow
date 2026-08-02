@@ -38,7 +38,6 @@ import {
   Wifi,
 } from "lucide-react";
 import { useSDRAgents } from "@/hooks/useSDRAgents";
-import { SDRWizard } from "@/components/sdr/SDRWizard";
 import { getSdrLimit, SDR_OBJECTIVE_LABEL } from "@/lib/sdrConfig";
 
 function MetricCard({
@@ -53,13 +52,15 @@ function MetricCard({
   hint?: string;
 }) {
   return (
-    <Card className="p-4">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon size={16} />
-        <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
-      </div>
-      <p className="text-2xl font-semibold mt-2">{value}</p>
-      {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
+    <Card className="p-5 rounded-2xl border-border/70">
+      <span className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center">
+        <Icon className="text-primary" size={20} />
+      </span>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mt-4">
+        {label}
+      </p>
+      <p className="text-2xl sm:text-3xl font-bold mt-1">{value}</p>
+      {hint && <p className="text-xs text-muted-foreground mt-1.5">{hint}</p>}
     </Card>
   );
 }
@@ -68,8 +69,6 @@ export default function SDRInteligente() {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const { agents, analytics, loading, refresh } = useSDRAgents();
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [editing, setEditing] = useState<any | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const limit = useMemo(() => getSdrLimit(profile), [profile]);
@@ -97,16 +96,12 @@ export default function SDRInteligente() {
 
   const createButton = (
     <Button
-      size="lg"
       className="gap-2"
       disabled={reachedLimit}
-      onClick={() => {
-        setEditing(null);
-        setWizardOpen(true);
-      }}
+      onClick={() => navigate("/oportunidades/sdr/novo")}
     >
       {reachedLimit ? <Lock size={16} /> : <Plus size={16} />}
-      Criar novo SDR IA
+      Criar novo SDR
     </Button>
   );
 
@@ -142,33 +137,53 @@ export default function SDRInteligente() {
               </div>
 
               {/* Analytics */}
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-                <MetricCard icon={Users} label="Em atendimento" value={String(analytics.inAttendance)} />
-                <MetricCard icon={Clock} label="Em follow-up" value={String(analytics.inFollowUp)} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <MetricCard
+                  icon={Users}
+                  label="Em atendimento"
+                  value={String(analytics.inAttendance)}
+                  hint="Conversas ativas conduzidas pelos SDRs"
+                />
+                <MetricCard
+                  icon={Clock}
+                  label="Em follow-up"
+                  value={String(analytics.inFollowUp)}
+                  hint="Leads aguardando retomada automática"
+                />
                 <MetricCard
                   icon={Target}
                   label="Conversão média"
                   value={`${analytics.conversionRate.toFixed(1)}%`}
+                  hint="Sessões que atingiram o objetivo final"
                 />
                 <MetricCard
                   icon={TrendingUp}
                   label="Taxa de resposta"
                   value={`${analytics.replyRate.toFixed(1)}%`}
+                  hint="Leads que responderam ao SDR"
                 />
                 <MetricCard
                   icon={XCircle}
                   label="Taxa de abandono"
                   value={`${analytics.abandonRate.toFixed(1)}%`}
+                  hint="Conversas encerradas sem avanço"
                 />
                 <MetricCard
                   icon={MessageSquare}
                   label="Mensagens enviadas"
                   value={String(analytics.messagesSent)}
+                  hint="Total de mensagens geradas pela IA"
                 />
               </div>
 
-              {/* Create */}
-              <div className="flex justify-center">
+              {/* Lista de SDRs */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                <div>
+                  <h2 className="text-lg font-semibold">Lista de SDRs</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Gerencie, pause ou edite os agentes da sua operação.
+                  </p>
+                </div>
                 {reachedLimit ? (
                   <TooltipProvider>
                     <Tooltip>
@@ -207,6 +222,9 @@ export default function SDRInteligente() {
                   <p className="text-sm text-muted-foreground mt-1">
                     Crie seu primeiro SDR e deixe a IA conduzir as negociações.
                   </p>
+                  <Button className="mt-4 gap-2" onClick={() => navigate("/oportunidades/sdr/novo")}>
+                    <Plus size={16} /> Criar novo SDR
+                  </Button>
                 </Card>
               ) : (
                 <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -250,10 +268,7 @@ export default function SDRInteligente() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => {
-                              setEditing(a);
-                              setWizardOpen(true);
-                            }}
+                            onClick={() => navigate(`/oportunidades/sdr/${a.id}/editar`)}
                           >
                             <Pencil size={14} />
                           </Button>
@@ -275,13 +290,6 @@ export default function SDRInteligente() {
           </main>
         </div>
       </div>
-
-      <SDRWizard
-        open={wizardOpen}
-        editing={editing}
-        onClose={() => setWizardOpen(false)}
-        onCreated={refresh}
-      />
 
       <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
         <AlertDialogContent>

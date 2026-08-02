@@ -110,3 +110,6 @@ verify_jwt = false
 
 
 
+
+[functions.sdr-dispatch]
+verify_jwt = false

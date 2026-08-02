@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -37,6 +37,7 @@ import {
 
 interface Props {
   open: boolean;
+  variant?: "dialog" | "page";
   onClose: () => void;
   onCreated: () => void;
   editing?: any | null;
@@ -112,7 +113,47 @@ function Pills({
   );
 }
 
-export function SDRWizard({ open, onClose, onCreated, editing }: Props) {
+
+function Shell({
+  variant,
+  open,
+  onClose,
+  children,
+}: {
+  variant: "dialog" | "page";
+  open: boolean;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  if (variant === "page") {
+    return <div className="w-full">{children}</div>;
+  }
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">{children}</DialogContent>
+    </Dialog>
+  );
+}
+
+function Head({ variant, children }: { variant: "dialog" | "page"; children: ReactNode }) {
+  if (variant === "page") return <div className="space-y-2">{children}</div>;
+  return <DialogHeader>{children}</DialogHeader>;
+}
+
+function Title({
+  variant,
+  className,
+  children,
+}: {
+  variant: "dialog" | "page";
+  className?: string;
+  children: ReactNode;
+}) {
+  if (variant === "page") return <div className={className}>{children}</div>;
+  return <DialogTitle className={className}>{children}</DialogTitle>;
+}
+
+export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog" }: Props) {
   const { user, accountOwnerId } = useAuth();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -210,11 +251,11 @@ export function SDRWizard({ open, onClose, onCreated, editing }: Props) {
   const StepIcon = STEPS[step - 1].icon;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
-        <DialogHeader>
+    <Shell variant={variant} open={open} onClose={onClose}>
+      <div>
+        <Head variant={variant}>
           <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="flex items-center gap-2">
+            <Title variant={variant} className="flex items-center gap-2 font-semibold">
               <span className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
                 <StepIcon className="h-4.5 w-4.5 text-primary" size={18} />
               </span>
@@ -224,7 +265,7 @@ export function SDRWizard({ open, onClose, onCreated, editing }: Props) {
                   Etapa {step} de {STEPS.length}
                 </span>
               </span>
-            </DialogTitle>
+            </Title>
             <Badge variant="secondary" className="gap-1">
               <Bot size={12} /> SDR Inteligente
             </Badge>
@@ -240,7 +281,7 @@ export function SDRWizard({ open, onClose, onCreated, editing }: Props) {
               />
             ))}
           </div>
-        </DialogHeader>
+        </Head>
 
         <div className="py-2 space-y-5">
           {/* 1 - Objetivo */}
@@ -863,7 +904,7 @@ export function SDRWizard({ open, onClose, onCreated, editing }: Props) {
             </Button>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </Shell>
   );
 }

@@ -125,22 +125,28 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const token = authHeader?.replace("Bearer ", "").trim() ?? "";
+    // Modo interno: chamadas server-to-server (webhook, cron) usam a service role key
+    const isInternal = token === serviceKey;
+    let user: { id: string } | null = null;
+
+    if (!isInternal) {
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !data?.user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      user = data.user;
     }
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+
 
     const body = await req.json();
     const agentId: string = body.agentId;
@@ -170,9 +176,11 @@ serve(async (req) => {
       });
     }
 
-    // Verifica acesso: dono da conta ou membro
-    const { data: ownerCheck } = await supabase.rpc("get_account_owner", { _uid: user.id });
-    if (agent.owner_user_id !== user.id && agent.owner_user_id !== ownerCheck) {
+    // Verifica acesso: dono da conta ou membro (ignorado no modo interno)
+    const { data: ownerCheck } = user
+      ? await supabase.rpc("get_account_owner", { _uid: user.id })
+      : { data: null };
+    if (user && agent.owner_user_id !== user.id && agent.owner_user_id !== ownerCheck) {
       return new Response(JSON.stringify({ error: "Sem permissão" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -228,7 +236,7 @@ Analise em profundidade, projete pelo menos 2 cenários de resposta com probabil
     await logAiUsage({
       feature: "sdr_brain_analysis",
       usage: analysisRes.usage,
-      user_id: user.id,
+      user_id: user?.id ?? agent.owner_user_id,
       metadata: { agent_id: agentId },
     });
 
@@ -259,7 +267,7 @@ Escreva a sequência de mensagens.`;
     await logAiUsage({
       feature: "sdr_brain_writer",
       usage: writerRes.usage,
-      user_id: user.id,
+      user_id: user?.id ?? agent.owner_user_id,
       metadata: { agent_id: agentId },
     });
 
@@ -288,7 +296,7 @@ ${historyText}`;
     await logAiUsage({
       feature: "sdr_brain_validator",
       usage: validationRes.usage,
-      user_id: user.id,
+      user_id: user?.id ?? agent.owner_user_id,
       metadata: { agent_id: agentId },
     });
 
