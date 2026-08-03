@@ -349,17 +349,28 @@ export function GuidedTour() {
   // OR while we're still waiting for a target inside a modal to mount).
   const showFallbackOverlay = !spot;
 
+  /** Closes the public (no-login) demo and returns to the site with a clean state. */
+  const closePublicDemo = () => {
+    try {
+      finish();
+    } catch {}
+    document.body.classList.remove("public-demo-mode", "tour-demo-cockpit", "tour-demo-lead");
+    // Full reload so the demo network guard and all demo fixtures are torn down.
+    window.location.assign("/");
+  };
+
+
   return createPortal(
     <div
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 2147483646 }}
+      style={{ zIndex: 2147483645 }}
     >
       {/* Close button — public (no-login) demo only */}
       {isPublicDemoPath() && (
         <button
           type="button"
           aria-label="Fechar tour"
-          onClick={() => { try { finish(); } catch {} navigate("/"); }}
+          onClick={closePublicDemo}
           className="fixed top-5 right-5 pointer-events-auto inline-flex items-center gap-2 rounded-hover border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow-[0_10px_30px_hsl(var(--foreground)/0.18)] transition hover:bg-muted"
           style={{ zIndex: 2147483647 }}
         >
@@ -390,7 +401,7 @@ export function GuidedTour() {
             left: spot.left,
             width: spot.width,
             height: spot.height,
-            zIndex: 2147483647,
+            zIndex: 2147483646,
             boxShadow: [
               "0 0 0 9999px hsl(var(--foreground) / 0.28)",
               "inset 0 0 0 2px hsl(var(--primary))",
@@ -414,7 +425,7 @@ export function GuidedTour() {
             className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-panel px-6 py-4 sm:px-7 sm:py-5"
             style={{
               ...popupStyle,
-              zIndex: 2147483647,
+              zIndex: 2147483646,
               boxShadow: "0 24px 80px hsl(var(--foreground) / 0.12), 0 8px 28px hsl(var(--foreground) / 0.08)",
               transition: "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1)",
             }}
@@ -435,7 +446,7 @@ export function GuidedTour() {
 
           <div
             className="fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto"
-            style={{ zIndex: 2147483647 }}
+            style={{ zIndex: 2147483646 }}
           >
             <div className="flex items-center gap-3 bg-card border border-border rounded-panel px-2 py-2 shadow-[0_18px_50px_hsl(var(--foreground)/0.10)]">
               <Button
@@ -505,7 +516,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
   return (
     <div
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
-      style={{ zIndex: 2147483647 }}
+      style={{ zIndex: 2147483646 }}
     >
       <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-panel shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
         <div
@@ -633,7 +644,7 @@ function WelcomeStep({ title, body, onStart }: WelcomeStepProps) {
   return (
     <div
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
-      style={{ zIndex: 2147483647 }}
+      style={{ zIndex: 2147483646 }}
     >
       <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-panel shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
         {/* Decorative gradient halo */}
