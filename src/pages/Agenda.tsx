@@ -170,15 +170,18 @@ export default function Agenda() {
   };
 
   const periodLabel = useMemo(() => {
+    const fullDate = (d: Date) =>
+      `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
     if (view === "day") return formatLongDate(cursor);
     if (view === "week") {
       const from = startOfWeek(cursor);
       const to = addDays(from, 6);
-      return `${from.getDate()}/${from.getMonth() + 1} a ${to.getDate()}/${to.getMonth() + 1}`;
+      return `${fullDate(from)} até ${fullDate(to)}`;
     }
     if (view === "month") return formatMonth(cursor);
     return "Próximos compromissos";
   }, [view, cursor]);
+
 
   const showNavigation = view !== "list";
   const saving = createEvent.isPending || updateEvent.isPending;
