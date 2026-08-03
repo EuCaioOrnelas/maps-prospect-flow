@@ -499,6 +499,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
   const { fireRealistic, fireSides } = useConfetti();
   const navigate = useNavigate();
   const [progress, setProgress] = useState(0);
+  const publicDemo = window.location.pathname === "/tour-guiado";
 
   useEffect(() => {
     const tConfetti = setTimeout(() => fireSides(), 250);
@@ -514,7 +515,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
     fireRealistic();
     setTimeout(() => fireSides(), 150);
     onFinish();
-    navigate("/meta-campaigns");
+    navigate(publicDemo ? "/signup" : "/meta-campaigns");
   };
 
   return (
@@ -608,7 +609,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
             className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
           >
             <FaWhatsapp size={40} className="!h-7 !w-7" />
-            Conectar WhatsApp Agora
+            {publicDemo ? "Começar teste grátis de 7 dias" : "Conectar WhatsApp Agora"}
           </Button>
 
 

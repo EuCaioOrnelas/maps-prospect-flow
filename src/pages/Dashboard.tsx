@@ -51,6 +51,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
+import { buildTourDemoSearchHistory } from "@/lib/publicDemo";
 interface Lead {
   name: string;
   category: string;
@@ -77,6 +78,7 @@ const HISTORY_PER_PAGE = 20;
 const MAX_HISTORY_ITEMS = 200; // Histórico ampliado para manter mais buscas
 
 const Dashboard = () => {
+  const publicDemo = window.location.pathname === "/tour-guiado";
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -108,6 +110,10 @@ const Dashboard = () => {
   const [pendingSearch, setPendingSearch] = useState(false);
 
   useEffect(() => {
+    if (publicDemo) {
+      setCompanyProfile({ company_name: "Wiize Demo", target_audience: "Empresas B2B" });
+      return;
+    }
     if (!user) return;
     (async () => {
       const { data } = await supabase
@@ -190,6 +196,11 @@ const Dashboard = () => {
   // Fetch search history and clean up old entries
   useEffect(() => {
     const fetchHistory = async () => {
+      if (publicDemo) {
+        setSearchHistory(buildTourDemoSearchHistory() as SearchHistoryItem[]);
+        setLoadingHistory(false);
+        return;
+      }
       if (!user) return;
       
       try {
@@ -244,7 +255,7 @@ const Dashboard = () => {
     };
 
     fetchHistory();
-  }, [user]);
+  }, [user, publicDemo]);
 
   // Reset result page when leads change
   useEffect(() => {

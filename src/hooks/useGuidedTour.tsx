@@ -156,6 +156,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const startedRef = useRef(false);
   const [onboardingTick, setOnboardingTick] = useState(0);
+  const isPublicDemo = location.pathname === "/tour-guiado";
 
   // Re-check tour eligibility when onboarding modal closes
   useEffect(() => {
@@ -389,6 +390,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   // don't have Oportunidades, Agentes IA or Aquecimento — skip those steps so
   // the tour doesn't redirect to /upgrade mid-walkthrough.
   const steps = useMemo<TourStep[]>(() => {
+    if (isPublicDemo) return allSteps;
     const skipOpps = !hasOpportunitiesAccess(profile as any);
     const skipAgents = !hasAIAgentsAccess(profile as any);
     const skipWarming = true;
@@ -418,14 +420,25 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.plan, profile?.created_at]);
+  }, [profile?.plan, profile?.created_at, isPublicDemo]);
+
+  useEffect(() => {
+    if (!isPublicDemo || startedRef.current) return;
+    startedRef.current = true;
+    document.body.classList.add("public-demo-mode");
+    const timer = window.setTimeout(() => {
+      setCurrentStepIndex(0);
+      setIsActive(true);
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [isPublicDemo]);
 
   // Auto-start on first dashboard visit.
   // Depend on user?.id (stable) instead of the whole user object (re-created on
   // every auth refresh, which was canceling the async start before it fired).
   const userId = user?.id;
   useEffect(() => {
-    if (!userId || startedRef.current) return;
+    if (isPublicDemo || !userId || startedRef.current) return;
     // Sub usuários (parent_owner_id) usam a conta do owner — nunca disparar o tour.
     if ((profile as any)?.parent_owner_id) {
       startedRef.current = true;
@@ -499,7 +512,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [userId, location.pathname, onboardingTick]);
+  }, [userId, location.pathname, onboardingTick, isPublicDemo]);
 
   useEffect(() => {
     const step = steps[currentStepIndex];
@@ -557,8 +570,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       }
 
       // Navigate first
-      if (step.route && location.pathname !== step.route) {
-        navigate(step.route);
+      const targetRoute = isPublicDemo ? "/tour-guiado" : step.route;
+      if (targetRoute && location.pathname !== targetRoute) {
+        navigate(targetRoute);
         await new Promise((r) => setTimeout(r, step.waitMs ?? 500));
       } else if (step.waitMs) {
         await new Promise((r) => setTimeout(r, step.waitMs));
@@ -590,7 +604,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         await step.onEnter();
       }
     },
-    [navigate, location.pathname, steps]
+    [navigate, location.pathname, steps, isPublicDemo]
   );
 
   const start = useCallback(async () => {
@@ -627,6 +641,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   }, [goToStep]);
 
   const persistCompletion = useCallback(async () => {
+    if (isPublicDemo) return;
     if (user) localStorage.setItem(lsKeyFor(user.id), "1");
     if (!user) return;
     try {
@@ -637,7 +652,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("[tour] persist error", e);
     }
-  }, [user]);
+  }, [user, isPublicDemo]);
 
   const finish = useCallback(() => {
     setIsActive(false);

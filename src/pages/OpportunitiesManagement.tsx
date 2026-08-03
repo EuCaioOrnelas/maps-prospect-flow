@@ -85,6 +85,7 @@ const WhatsAppIcon = ({ size = 18 }: { size?: number }) => (
 
 
 export default function OpportunitiesManagement() {
+  const publicDemo = window.location.pathname === "/tour-guiado";
   const { profile, user, accountOwnerId } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -188,6 +189,11 @@ export default function OpportunitiesManagement() {
   }, [sendCooldown]);
 
   const fetchCompanyProfile = async () => {
+    if (publicDemo) {
+      setCompanyProfile({ company_name: "Wiize Demo", target_audience: "Empresas B2B" });
+      setProfileLoaded(true);
+      return;
+    }
     if (!user) return;
     try {
       const { data } = await supabase
@@ -228,6 +234,11 @@ export default function OpportunitiesManagement() {
   }, [leads.length, loading]);
 
   const fetchLeads = async () => {
+    if (publicDemo) {
+      setLeads([]);
+      setLoading(false);
+      return;
+    }
     if (!user) return;
     setLoading(true);
     try {
@@ -668,10 +679,10 @@ export default function OpportunitiesManagement() {
 
   // Tour demo lead injection (synthetic, never persisted)
   const [tourDemoActive, setTourDemoActive] = useState(
-    typeof document !== "undefined" && document.body.classList.contains("tour-demo-lead")
+    typeof document !== "undefined" && (document.body.classList.contains("tour-demo-lead") || window.location.pathname === "/tour-guiado")
   );
   useEffect(() => {
-    const update = () => setTourDemoActive(document.body.classList.contains("tour-demo-lead"));
+    const update = () => setTourDemoActive(document.body.classList.contains("tour-demo-lead") || window.location.pathname === "/tour-guiado");
     update();
     const obs = new MutationObserver(update);
     obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });

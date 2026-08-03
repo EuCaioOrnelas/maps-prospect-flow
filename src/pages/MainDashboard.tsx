@@ -44,10 +44,10 @@ export default function MainDashboard() {
 
   // Tour mode: when active, replace cockpit with aspirational fake data
   const [tourCockpitActive, setTourCockpitActive] = useState(
-    typeof document !== "undefined" && document.body.classList.contains("tour-demo-cockpit")
+    typeof document !== "undefined" && (document.body.classList.contains("tour-demo-cockpit") || window.location.pathname === "/tour-guiado")
   );
   useEffect(() => {
-    const update = () => setTourCockpitActive(document.body.classList.contains("tour-demo-cockpit"));
+    const update = () => setTourCockpitActive(document.body.classList.contains("tour-demo-cockpit") || window.location.pathname === "/tour-guiado");
     update();
     const obs = new MutationObserver(update);
     obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
