@@ -319,10 +319,48 @@ serve(async (req) => {
       session = data;
     }
 
-    const brief = agentBrief(agent);
+
+    // ---------- AGENDA: horários realmente livres do responsável ----------
+    const responsibleUserId: string =
+      agent.strategy?.handoff_sellers?.find((s: any) => s?.user_id)?.user_id ??
+      agent.closing?.notify_sellers?.find((s: any) => s?.user_id)?.user_id ??
+      agent.owner_user_id;
+
+    const meetingDuration = Number(agent.closing?.meeting_duration_minutes) || 60;
+    const horizonEnd = new Date(Date.now() + 11 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: busyRows } = await supabase
+      .from("calendar_events")
+      .select("starts_at, ends_at")
+      .eq("assigned_user_id", responsibleUserId)
+      .neq("status", "cancelled")
+      .lte("starts_at", horizonEnd)
+      .gte("ends_at", new Date().toISOString());
+
+    const freeSlots: FreeSlot[] = buildFreeSlots({
+      schedule: agent.schedule,
+      durationMinutes: meetingDuration,
+      busy: (busyRows ?? []).map((b: any) => ({
+        start: new Date(b.starts_at).getTime(),
+        end: new Date(b.ends_at).getTime(),
+      })),
+    });
+
+    const agendaBlock = freeSlots.length
+      ? `AGENDA REAL DO RESPONSÁVEL (fuso ${CALENDAR_TIMEZONE}) — horários LIVRES, duração de ${meetingDuration} minutos:
+${freeSlots.map((s) => `- ${s.label} | iso: ${s.iso}`).join("\n")}
+
+REGRAS DE AGENDAMENTO (inegociáveis):
+- Ofereça no MÁXIMO 3 opções por mensagem, sempre retiradas da lista acima.
+- NUNCA sugira, confirme ou aceite um horário que não esteja na lista: ele está ocupado ou fora do atendimento.
+- Se o lead pedir um horário fora da lista, diga que aquele horário não está disponível e ofereça as opções livres mais próximas.
+- Só marque como confirmado quando o lead escolher explicitamente uma das opções.`
+      : `AGENDA REAL DO RESPONSÁVEL: não há horários livres nos próximos dias. Não ofereça horários; diga que vai confirmar a disponibilidade e retornar.`;
+
+    const brief = `${agentBrief(agent)}\n\n${agendaBlock}`;
     const historyText =
       history.map((m) => `${m.role === "assistant" ? "SDR" : "LEAD"}: ${m.content}`).join("\n") ||
       "(sem histórico)";
+
 
     // ---------- CAMADAS 1-5: Contexto, Memória, Compreensão, Planejamento, Estratégia ----------
     const analysisSystem = `Você é o cérebro analítico de um SDR de alta performance no WhatsApp (B2B).
