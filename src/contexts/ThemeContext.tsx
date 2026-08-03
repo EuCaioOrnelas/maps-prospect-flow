@@ -34,6 +34,7 @@ const applyDashboardTheme = (theme: ResolvedTheme) => {
 export const DashboardThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
     try {
+      if (isPublicDemoPath()) return "light";
       const stored = localStorage.getItem("dashboard-theme");
       return stored === "dark" ? "dark" : "light";
     } catch {
@@ -45,9 +46,11 @@ export const DashboardThemeProvider = ({ children }: { children: ReactNode }) =>
 
   useEffect(() => {
     try {
+      if (isPublicDemoPath()) return;
       localStorage.setItem("dashboard-theme", theme);
     } catch {}
   }, [theme]);
+
 
   useLayoutEffect(() => {
     applyDashboardTheme(theme);
