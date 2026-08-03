@@ -413,14 +413,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             {can("crm") && (
             <li data-tour="sidebar-crm">
               <SidebarNavItem
-                title="CRM"
+                title="Contatos"
                 icon={Users}
                 onClick={handleCrmClick}
                 isActive={isOnCrmPage}
                 isExpanded={isExpanded}
                 hasSubmenu
                 isSubmenuOpen={isCrmOpen}
-                tooltip="CRM"
+                tooltip="Contatos"
               />
 
               {isExpanded && (
@@ -444,7 +444,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <Users size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Contatos</span>
+                        <span className="whitespace-nowrap truncate">CRM</span>
                       </Link>
                     </li>
                     <li data-tour="sidebar-crm-agenda">

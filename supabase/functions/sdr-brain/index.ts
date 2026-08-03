@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildFreeSlots, matchSlot, formatSlotLabel, CALENDAR_TIMEZONE, type FreeSlot } from "./agenda.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -318,10 +319,48 @@ serve(async (req) => {
       session = data;
     }
 
-    const brief = agentBrief(agent);
+
+    // ---------- AGENDA: horários realmente livres do responsável ----------
+    const responsibleUserId: string =
+      agent.strategy?.handoff_sellers?.find((s: any) => s?.user_id)?.user_id ??
+      agent.closing?.notify_sellers?.find((s: any) => s?.user_id)?.user_id ??
+      agent.owner_user_id;
+
+    const meetingDuration = Number(agent.closing?.meeting_duration_minutes) || 60;
+    const horizonEnd = new Date(Date.now() + 11 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: busyRows } = await supabase
+      .from("calendar_events")
+      .select("starts_at, ends_at")
+      .eq("assigned_user_id", responsibleUserId)
+      .neq("status", "cancelled")
+      .lte("starts_at", horizonEnd)
+      .gte("ends_at", new Date().toISOString());
+
+    const freeSlots: FreeSlot[] = buildFreeSlots({
+      schedule: agent.schedule,
+      durationMinutes: meetingDuration,
+      busy: (busyRows ?? []).map((b: any) => ({
+        start: new Date(b.starts_at).getTime(),
+        end: new Date(b.ends_at).getTime(),
+      })),
+    });
+
+    const agendaBlock = freeSlots.length
+      ? `AGENDA REAL DO RESPONSÁVEL (fuso ${CALENDAR_TIMEZONE}) — horários LIVRES, duração de ${meetingDuration} minutos:
+${freeSlots.map((s) => `- ${s.label} | iso: ${s.iso}`).join("\n")}
+
+REGRAS DE AGENDAMENTO (inegociáveis):
+- Ofereça no MÁXIMO 3 opções por mensagem, sempre retiradas da lista acima.
+- NUNCA sugira, confirme ou aceite um horário que não esteja na lista: ele está ocupado ou fora do atendimento.
+- Se o lead pedir um horário fora da lista, diga que aquele horário não está disponível e ofereça as opções livres mais próximas.
+- Só marque como confirmado quando o lead escolher explicitamente uma das opções.`
+      : `AGENDA REAL DO RESPONSÁVEL: não há horários livres nos próximos dias. Não ofereça horários; diga que vai confirmar a disponibilidade e retornar.`;
+
+    const brief = `${agentBrief(agent)}\n\n${agendaBlock}`;
     const historyText =
       history.map((m) => `${m.role === "assistant" ? "SDR" : "LEAD"}: ${m.content}`).join("\n") ||
       "(sem histórico)";
+
 
     // ---------- CAMADAS 1-5: Contexto, Memória, Compreensão, Planejamento, Estratégia ----------
     const analysisSystem = `Você é o cérebro analítico de um SDR de alta performance no WhatsApp (B2B).
@@ -340,7 +379,13 @@ Responda SEMPRE em JSON válido com o formato:
  "proximo_passo": "conexao|necessidade|valor|objecoes|fechamento",
  "micro_objetivo": string,
  "estrategia": string,
- "proxima_acao": "responder|aguardar|followup|chamar_vendedor|encerrar"
+ "proxima_acao": "responder|aguardar|followup|chamar_vendedor|encerrar",
+ "agendamento": {"confirmado": boolean, "inicio_iso": string|null, "tipo": "meeting|demo|call|visit", "titulo": string, "observacao": string, "opcoes_iso": [string]}
+
+Regras do campo "agendamento":
+- "opcoes_iso" traz no máximo 3 horários da lista de horários livres que devem ser oferecidos agora (vazio se não for o momento de oferecer).
+- "confirmado" só é true quando o lead escolheu explicitamente um horário; nesse caso "inicio_iso" precisa ser EXATAMENTE um iso da lista de horários livres.
+- Se o horário desejado pelo lead não estiver na lista, "confirmado" = false e "inicio_iso" = null.
 }`;
     const analysisUser = `CONFIGURAÇÃO DO SDR:
 ${brief}
@@ -434,6 +479,134 @@ ${historyText}`;
       messages = validation.mensagens_finais.filter((m: any) => typeof m === "string" && m.trim());
     }
 
+    // ---------- AGENDAMENTO AUTOMÁTICO: Agenda + CRM + e-mail ao responsável ----------
+    let scheduled: Record<string, unknown> | null = null;
+    const booking = analysis?.agendamento ?? {};
+    const chosenSlot = booking?.confirmado === true ? matchSlot(booking.inicio_iso, freeSlots) : null;
+
+    if (persist && chosenSlot) {
+      const leadId: string | null = session?.lead_id ?? leadContext?.lead_id ?? null;
+      const contactName: string =
+        session?.contact_name || leadContext?.contact_name || leadContext?.company_name || "Lead";
+      const contactPhone: string = session?.phone || leadContext?.phone || "";
+      const startsAt = new Date(chosenSlot.iso);
+      const endsAt = new Date(startsAt.getTime() + meetingDuration * 60_000);
+      const eventType = ["meeting", "demo", "call", "visit"].includes(booking.tipo)
+        ? booking.tipo
+        : "meeting";
+
+      const { data: event, error: eventError } = await supabase
+        .from("calendar_events")
+        .insert({
+          owner_user_id: agent.owner_user_id,
+          assigned_user_id: responsibleUserId,
+          created_by: null,
+          title: (booking.titulo as string) || `Reunião com ${contactName}`,
+          description: (booking.observacao as string) || analysis?.micro_objetivo || null,
+          event_type: eventType,
+          status: "scheduled",
+          source: "sdr",
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt.toISOString(),
+          timezone: CALENDAR_TIMEZONE,
+          lead_id: leadId,
+          sdr_agent_id: agentId,
+          contact_name: contactName,
+          company_name: leadContext?.company_name ?? null,
+          contact_phone: contactPhone || null,
+          contact_email: leadContext?.email ?? null,
+          notes: `Agendado automaticamente pelo SDR ${agent.name}.`,
+          metadata: { session_id: session?.id ?? null, agent_id: agentId },
+        })
+        .select("id, starts_at")
+        .maybeSingle();
+
+      if (eventError) {
+        // Conflito de horário (exclusion constraint) ou falha: não quebra a conversa
+        console.error("[sdr-brain] falha ao criar evento na agenda:", eventError.message);
+      } else {
+        scheduled = { event_id: event?.id, starts_at: event?.starts_at, label: formatSlotLabel(chosenSlot.iso) };
+
+        // 1) CRM: move o lead para o estágio de reunião marcada e registra a atividade
+        if (leadId) {
+          const stageId: string | null =
+            agent.closing?.meeting_stage_id ??
+            (await (async () => {
+              const { data: stage } = await supabase
+                .from("pipeline_stages")
+                .select("id")
+                .eq("user_id", agent.owner_user_id)
+                .in("name", ["Qualificado", "Em Negociação"])
+                .order("name", { ascending: true })
+                .limit(1)
+                .maybeSingle();
+              return stage?.id ?? null;
+            })());
+
+          await supabase
+            .from("leads")
+            .update({
+              ...(stageId ? { pipeline_stage_id: stageId } : {}),
+              responsible_user_id: responsibleUserId,
+              has_responded: true,
+              last_response_at: new Date().toISOString(),
+            })
+            .eq("id", leadId);
+
+          await supabase.from("lead_activities").insert({
+            lead_id: leadId,
+            user_id: agent.owner_user_id,
+            owner_user_id: agent.owner_user_id,
+            activity_type: "meeting_scheduled",
+            description: `${agent.name} agendou ${eventType === "demo" ? "uma demonstração" : "uma reunião"} para ${formatSlotLabel(chosenSlot.iso)}.`,
+            metadata: { event_id: event?.id, source: "sdr", starts_at: startsAt.toISOString() },
+          });
+        }
+
+        // 2) E-mail para o responsável
+        try {
+          const { data: responsibleProfile } = await supabase
+            .from("profiles")
+            .select("email, name")
+            .eq("id", responsibleUserId)
+            .maybeSingle();
+
+          const recipients = new Set<string>();
+          if (responsibleProfile?.email) recipients.add(responsibleProfile.email);
+          for (const s of agent.closing?.notify_sellers ?? []) {
+            if (s?.email) recipients.add(s.email);
+          }
+          if (agent.closing?.notify_seller_email) recipients.add(agent.closing.notify_seller_email);
+
+          for (const email of recipients) {
+            await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+              body: JSON.stringify({
+                user_id: agent.owner_user_id,
+                email_type: "SDR_MEETING_SCHEDULED",
+                override_email: email,
+                idempotency_key: `sdr-meeting-${event?.id}-${email}`,
+                payload: {
+                  sdr_name: agent.name,
+                  contact_name: contactName,
+                  company_name: leadContext?.company_name ?? "",
+                  contact_phone: contactPhone,
+                  when_label: formatSlotLabel(chosenSlot.iso),
+                  duration_minutes: meetingDuration,
+                  event_type: eventType,
+                  notes: (booking.observacao as string) || analysis?.micro_objetivo || "",
+                  responsible_name: responsibleProfile?.name ?? "",
+                },
+              }),
+            });
+          }
+        } catch (err) {
+          console.error("[sdr-brain] falha ao notificar responsável:", err);
+        }
+      }
+    }
+
     // ---------- CAMADA 9: Execução (registro) ----------
     let runId: string | null = null;
     if (persist) {
@@ -485,6 +658,8 @@ ${historyText}`;
         validation,
         messages,
         next_action: written.proxima_acao ?? analysis.proxima_acao ?? "aguardar",
+        scheduled,
+        free_slots: freeSlots.slice(0, 3),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
