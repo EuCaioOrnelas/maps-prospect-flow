@@ -32,7 +32,7 @@ export function WeekView({ date, events, onSelect, onCreateAt, onMove, responsib
     <Card className="overflow-hidden">
       <div className="overflow-x-auto">
         <div className="min-w-[720px]">
-          <div className="grid grid-cols-[64px_repeat(7,1fr)] border-b border-border bg-muted/40">
+          <div className="grid grid-cols-[64px_repeat(7,minmax(0,1fr))] border-b border-border bg-muted/40">
             <div className="px-2 py-2.5 text-[11px] text-muted-foreground">Hora</div>
             {days.map((day) => {
               const isToday = isSameDay(day, today);
@@ -62,7 +62,7 @@ export function WeekView({ date, events, onSelect, onCreateAt, onMove, responsib
           </div>
 
           {hours.map((hour) => (
-            <div key={hour} className="grid grid-cols-[64px_repeat(7,1fr)] border-b border-border/50 last:border-b-0">
+            <div key={hour} className="grid h-[52px] grid-cols-[64px_repeat(7,minmax(0,1fr))] border-b border-border/50 last:border-b-0">
               <div className="px-2 py-1.5 text-[11px] tabular-nums text-muted-foreground">
                 {pad(hour)}:00
               </div>
@@ -90,11 +90,11 @@ export function WeekView({ date, events, onSelect, onCreateAt, onMove, responsib
                       onCreateAt(d);
                     }}
                     className={cn(
-                      "min-h-[42px] space-y-1 border-l border-border/50 p-1 transition-colors",
+                      "relative h-full min-w-0 overflow-hidden border-l border-border/50 p-1 transition-colors",
                       hoverSlot === key && "bg-primary/10",
                     )}
                   >
-                    {slotEvents.map((ev) => (
+                    {slotEvents.slice(0, 1).map((ev) => (
                       <EventChip
                         key={ev.id}
                         event={ev}
@@ -105,6 +105,15 @@ export function WeekView({ date, events, onSelect, onCreateAt, onMove, responsib
                         responsibleName={responsibleName(ev.assigned_user_id)}
                       />
                     ))}
+                    {slotEvents.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => onSelect(slotEvents[1])}
+                        className="mt-0.5 w-full truncate rounded text-left text-[10px] font-medium text-primary hover:underline"
+                      >
+                        +{slotEvents.length - 1} compromisso{slotEvents.length > 2 ? "s" : ""}
+                      </button>
+                    )}
                   </div>
                 );
               })}
