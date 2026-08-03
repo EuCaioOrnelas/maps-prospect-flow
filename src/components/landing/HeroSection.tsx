@@ -707,8 +707,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
  const [stageProgress, setStageProgress] = useState(0);
  const [isAnimating, setIsAnimating] = useState(false);
  const [jumpTarget, setJumpTarget] = useState<number | null>(null);
- const [videoOpen, setVideoOpen] = useState(false);
- const [hasWatchedVideo, setHasWatchedVideo] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
  const sectionRef = useRef<HTMLElement>(null);
  const demoRef = useRef<HTMLDivElement>(null);
  const animationStartRef = useRef<number>(0);
@@ -950,12 +949,11 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
  </div>
  </a>
 
- <VideoModal
- open={videoOpen}
- onOpenChange={setVideoOpen}
- onVideoWatched={() => setHasWatchedVideo(true)}
- onSignupClick={onSignupClick}
- />
+      <VideoModal
+        open={videoOpen}
+        onOpenChange={setVideoOpen}
+        onSignupClick={onSignupClick}
+      />
 
  {/* Keyframe animations */}
  <style>{`
