@@ -127,8 +127,8 @@ export function EventDetailsDialog({
             <Button
               type="button"
               size="icon"
-              variant="ghost"
-              className="h-8 w-8 shrink-0"
+              variant="outline"
+              className="h-8 w-8 shrink-0 rounded-lg border-border bg-background transition-colors hover:bg-muted hover:text-foreground"
               aria-label="Editar compromisso"
               onClick={() => {
                 onOpenChange(false);
