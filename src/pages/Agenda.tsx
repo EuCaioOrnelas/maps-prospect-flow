@@ -355,6 +355,7 @@ export default function Agenda() {
                 date={cursor}
                 events={visibleEvents}
                 onSelect={openEdit}
+                onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
                 responsibleName={responsibleName}
@@ -365,6 +366,7 @@ export default function Agenda() {
                 date={cursor}
                 events={visibleEvents}
                 onSelect={openEdit}
+                onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
                 responsibleName={responsibleName}
@@ -375,6 +377,7 @@ export default function Agenda() {
                 date={cursor}
                 events={visibleEvents}
                 onSelect={openEdit}
+                onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
                 responsibleName={responsibleName}
@@ -384,6 +387,7 @@ export default function Agenda() {
               <ListView
                 events={visibleEvents}
                 onSelect={openEdit}
+                onQuickEdit={openQuickEdit}
                 responsibleName={responsibleName}
               />
             )}
@@ -402,6 +406,15 @@ export default function Agenda() {
         saving={saving}
         onSave={handleSave}
         onDelete={handleDelete}
+      />
+
+      <QuickEditDialog
+        open={quickOpen}
+        onOpenChange={setQuickOpen}
+        event={quickEvent}
+        saving={updateEvent.isPending}
+        onSave={handleQuickSave}
+        onOpenFull={openEdit}
       />
     </div>
   );
