@@ -412,38 +412,17 @@ export function EventDialog({
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label className="flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" /> Participantes
             </Label>
-            <div className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-2">
-              {members.length === 0 && (
-                <p className="text-xs text-muted-foreground">Nenhum usuário disponível.</p>
-              )}
-              {members.map((m) => {
-                const checked = form.participants.includes(m.user_id);
-                return (
-                  <label
-                    key={m.user_id}
-                    className="flex cursor-pointer items-center gap-2 text-sm"
-                  >
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={() =>
-                        set(
-                          "participants",
-                          checked
-                            ? form.participants.filter((id) => id !== m.user_id)
-                            : [...form.participants, m.user_id],
-                        )
-                      }
-                    />
-                    <span className="truncate">{m.name || m.email || "Usuário"}</span>
-                  </label>
-                );
-              })}
-            </div>
+            <MemberPicker
+              members={members}
+              value={form.participants}
+              onChange={(v) => set("participants", v)}
+            />
           </div>
+
 
           {form.category === "comercial" && (
             <div className="grid gap-4 sm:grid-cols-2">
