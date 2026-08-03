@@ -436,6 +436,17 @@ export default function Agenda() {
         onSave={handleQuickSave}
         onOpenFull={openEdit}
       />
+
+      <EventDetailsDialog
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        event={detailsEvent}
+        members={members}
+        saving={updateEvent.isPending}
+        onStatusChange={handleStatusChange}
+        onReschedule={openQuickEdit}
+        onEdit={openEdit}
+      />
     </div>
   );
 }
