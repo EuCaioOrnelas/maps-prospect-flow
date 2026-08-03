@@ -330,9 +330,9 @@ export function EventDialog({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ev-date" className="flex items-center gap-1.5">
+              <Label htmlFor="ev-date" className="flex h-5 items-center gap-1.5">
                 <CalendarDays className="h-3.5 w-3.5" /> Data
               </Label>
               <Input
@@ -341,9 +341,10 @@ export function EventDialog({
                 value={form.date}
                 onChange={(e) => set("date", e.target.value)}
               />
+              <p className="min-h-[14px] text-[11px] text-muted-foreground" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ev-time" className="flex items-center gap-1.5">
+              <Label htmlFor="ev-time" className="flex h-5 items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" /> Início
               </Label>
               <Input
@@ -352,9 +353,12 @@ export function EventDialog({
                 value={form.startTime}
                 onChange={(e) => set("startTime", e.target.value)}
               />
+              <p className="min-h-[14px] text-[11px] text-muted-foreground" />
             </div>
             <div className="space-y-1.5">
-              <Label>Duração</Label>
+              <Label className="flex h-5 items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" /> Duração
+              </Label>
               <Select value={String(form.duration)} onValueChange={(v) => set("duration", Number(v))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -363,11 +367,12 @@ export function EventDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {endLabel && (
-                <p className="text-[11px] text-muted-foreground">Termina às {endLabel}</p>
-              )}
+              <p className="min-h-[14px] text-[11px] text-muted-foreground">
+                {endLabel ? `Termina às ${endLabel}` : ""}
+              </p>
             </div>
           </div>
+
 
           <div className="space-y-2">
             <Label>Categoria do compromisso</Label>
