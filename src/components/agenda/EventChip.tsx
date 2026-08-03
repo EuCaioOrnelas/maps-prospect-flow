@@ -228,17 +228,32 @@ export function EventChip({
       <div
         className={cn(
           "flex h-[22px] w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-md border border-l-[3px] px-1.5 text-[11px] font-medium transition-all duration-200",
-          type.bar,
+          barClass,
           "border-y-border/50 border-r-border/50",
-          cancelled && "opacity-55",
+          cancelled && "opacity-60",
           hovered && "shadow-sm ring-1 ring-ring/20",
         )}
       >
-        <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", type.dot)} />
+        {StatusIcon ? (
+          <StatusIcon
+            className={cn(
+              "h-3 w-3 shrink-0",
+              completed ? "text-emerald-500" : "text-destructive",
+            )}
+          />
+        ) : (
+          <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dotClass)} />
+        )}
         <span className="shrink-0 tabular-nums text-muted-foreground">
           {formatTime(event.starts_at)}
         </span>
-        <span className={cn("truncate text-foreground", cancelled && "line-through")}>
+        <span
+          className={cn(
+            "truncate text-foreground",
+            cancelled && "line-through text-muted-foreground",
+            completed && "text-muted-foreground",
+          )}
+        >
           {event.title}
         </span>
         {event.source === "sdr" && <Bot className="ml-auto h-3 w-3 shrink-0 text-primary" />}
