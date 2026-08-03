@@ -72,7 +72,7 @@ export function MockSidebar({
   return (
     <aside className="hidden w-[248px] shrink-0 flex-col border-r border-border bg-card lg:flex">
       <div className="flex h-16 items-center gap-2 border-b border-border px-4">
-        <Logo className="h-7 w-auto" />
+        <Logo size="sm" asLink={false} />
       </div>
       <nav className="flex-1 overflow-hidden p-3">
         <p className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
