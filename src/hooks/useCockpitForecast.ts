@@ -42,7 +42,7 @@ export function useCockpitForecast(periodDays: number): CockpitForecast {
 
   const { data, isLoading } = useQuery({
     queryKey: ["cockpit-forecast", user?.id, periodDays],
-    enabled: !publicDemo,
+    enabled: !!user && !publicDemo,
     queryFn: async () => {
       if (!user) return null;
 
@@ -93,7 +93,6 @@ export function useCockpitForecast(periodDays: number): CockpitForecast {
         prev: extractData(prevSearchRes.data || [], prevScoredRes.data || []),
       };
     },
-    enabled: !!user,
     staleTime: 30_000,
   });
 

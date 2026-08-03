@@ -47,7 +47,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard-kpis", accountOwnerId, periodDays],
-    enabled: !publicDemo,
+    enabled: !!user && !publicDemo,
     queryFn: async () => {
       if (!user || !accountOwnerId) return null;
 
@@ -415,7 +415,6 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         executiveAlerts,
       };
     },
-    enabled: !!user,
     staleTime: 30_000,
   });
 
