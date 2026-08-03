@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -92,21 +92,33 @@ import {
   KeyRound,
   Info,
   Sparkle,
+  Save,
+  MessagesSquare,
   type LucideIcon,
 } from "lucide-react";
 
 import {
   SDR_ACTIVATION_TRIGGERS,
   SDR_DEFAULT_DRAFT,
+  SDR_INSISTENCE_OPTIONS,
   SDR_OBJECTIVES,
   SDR_OBJECTIVE_LABEL,
+  SDR_OBJECTION_OPTIONS,
   SDR_PRIORITIES,
+  SDR_REPLY_DELAY_OPTIONS,
+  SDR_RETURN_OPTIONS,
   SDR_SITUATIONS,
+  SDR_STOP_OPTIONS,
   SDR_SUCCESS_BY_OBJECTIVE,
   SDR_WEEKDAYS,
+  clearSdrDraft,
+  loadSdrDraft,
+  saveSdrDraft,
   type SdrDraft,
   type SdrObjective,
+  type SdrSeller,
 } from "@/lib/sdrConfig";
+import { AI_PROVIDERS } from "@/lib/aiProviders";
 
 interface Props {
   open: boolean;
@@ -581,6 +593,109 @@ function NumbersCombobox({
 }
 
 
+/** Combobox pesquisável de vendedores (multi-seleção) */
+function SellersCombobox({
+  members,
+  selected,
+  onToggle,
+  placeholder = "Selecionar vendedores...",
+}: {
+  members: any[];
+  selected: SdrSeller[];
+  onToggle: (seller: SdrSeller) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const options = (members || []).filter((m: any) => m.email);
+  const label =
+    selected.length === 0
+      ? placeholder
+      : selected.length === 1
+        ? selected[0].name || selected[0].email
+        : `${selected.length} vendedores selecionados`;
+
+  return (
+    <div className="space-y-2">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex h-11 w-full items-center justify-between rounded-lg border border-border bg-card px-3 text-sm transition-colors hover:border-primary/40"
+          >
+            <span className="flex items-center gap-2 truncate">
+              <UserCheck className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+              <span className={cn("truncate", selected.length === 0 && "text-muted-foreground")}>
+                {label}
+              </span>
+            </span>
+            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="p-0 w-[--radix-popover-trigger-width] bg-popover text-popover-foreground border-border shadow-lg z-50"
+          align="start"
+        >
+          <Command
+            filter={(value, search) =>
+              value.toLowerCase().includes(search.toLowerCase().trim()) ? 1 : 0
+            }
+          >
+            <CommandInput placeholder="Buscar por nome ou e-mail..." />
+            <CommandList>
+              <CommandEmpty>Nenhum vendedor encontrado.</CommandEmpty>
+              <CommandGroup>
+                {options.map((m: any) => {
+                  const isOn = selected.some((s) => s.email === m.email);
+                  return (
+                    <CommandItem
+                      key={m.id}
+                      value={`${m.name ?? ""} ${m.email ?? ""}`}
+                      onSelect={() =>
+                        onToggle({ user_id: m.user_id ?? null, name: m.name || m.email, email: m.email })
+                      }
+                      className={cn(
+                        "gap-2 cursor-pointer rounded-lg px-2 py-2",
+                        "data-[selected=true]:bg-muted data-[selected=true]:text-foreground",
+                        isOn && "bg-primary/10 text-foreground data-[selected=true]:bg-primary/15"
+                      )}
+                    >
+                      <Checkbox checked={isOn} className="pointer-events-none" />
+                      <UserCheck className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+                      <span className="flex flex-col">
+                        <span className="text-sm text-foreground">{m.name || m.email}</span>
+                        <span className="text-xs text-muted-foreground">{m.email}</span>
+                      </span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      <div className="min-h-[38px] rounded-lg border border-dashed border-border/70 bg-muted/30 px-2 py-1.5 flex flex-wrap items-center gap-2">
+        {selected.length === 0 ? (
+          <span className="text-xs text-muted-foreground">Nenhum vendedor selecionado ainda</span>
+        ) : (
+          selected.map((s) => (
+            <Badge key={s.email} variant="secondary" className="gap-1.5 pl-2 pr-1 py-1 text-foreground">
+              <UserCheck className="h-3 w-3" />
+              {s.name || s.email}
+              <button
+                type="button"
+                onClick={() => onToggle(s)}
+                className="ml-1 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** Shell com header e título fixos; scroll apenas no conteúdo da etapa */
 function OnboardingShell({
   step,
@@ -600,6 +715,10 @@ function OnboardingShell({
   stepKey: string;
 }) {
   const progress = Math.round((step / total) * 100);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [stepKey]);
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
       {/* Header fixo */}
@@ -634,7 +753,7 @@ function OnboardingShell({
       </div>
 
       {/* Conteúdo com scroll */}
-      <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto pr-1">
         <AnimatePresence mode="wait">
           <motion.section
             key={stepKey}
@@ -688,9 +807,23 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         situations: { ...SDR_DEFAULT_DRAFT.situations, ...(editing.situations || {}) },
       });
     } else {
-      setDraft(SDR_DEFAULT_DRAFT);
+      const stored = loadSdrDraft();
+      if (stored?.draft) {
+        setDraft({ ...SDR_DEFAULT_DRAFT, ...stored.draft });
+        setStep(Math.min(Math.max(stored.step || 1, 1), STEPS.length));
+        toast.info("Rascunho retomado de onde você parou");
+      } else {
+        setDraft(SDR_DEFAULT_DRAFT);
+      }
     }
   }, [open, editing]);
+
+  /** Autosave do rascunho (apenas na criação) */
+  useEffect(() => {
+    if (!open || editing) return;
+    if (!draft.name.trim() && step === 1) return;
+    saveSdrDraft(draft, step);
+  }, [open, editing, draft, step]);
 
   useEffect(() => {
     if (!open || !accountOwnerId) return;
@@ -736,7 +869,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         knowledge: {
           ...d.knowledge,
           company: d.knowledge.company || p.company_name
-            ? [p.company_name, p.company_objective].filter(Boolean).join(" — ") || d.knowledge.company
+            ? [p.company_name, p.company_objective].filter(Boolean).join(". ") || d.knowledge.company
             : d.knowledge.company,
           niche: d.knowledge.niche || p.company_niche || "",
           audience: d.knowledge.audience || p.company_target_audience || "",
@@ -789,7 +922,6 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         return draft.knowledge.products_list.length > 0 && productsValid;
       case 9:
         return (
-          draft.closing.notify_seller_email.trim().length > 3 &&
           draft.closing.after_limit_actions.length > 0 &&
           (!draft.closing.after_limit_actions.includes("mover_pipeline") ||
             !!draft.closing.after_limit_stage_id)
@@ -828,6 +960,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         : supabase.from("sdr_agents" as any).insert(payload);
       const { error } = await q;
       if (error) throw error;
+      if (!editing) clearSdrDraft();
       toast.success(editing ? "SDR atualizado com sucesso" : "SDR criado com sucesso");
       onCreated();
       onClose();
@@ -836,6 +969,12 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveDraft = () => {
+    saveSdrDraft(draft, step);
+    toast.success("Rascunho salvo. Ele aparece na lista de SDRs para você continuar depois.");
+    onClose();
   };
 
   const StepIcon = STEPS[step - 1].icon;
@@ -849,6 +988,15 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         products_list: d.knowledge.products_list.map((p, idx) =>
           idx === i ? { ...p, [field]: value } : p
         ),
+      },
+    }));
+
+  const updateFaq = (i: number, field: string, value: string) =>
+    setDraft((d) => ({
+      ...d,
+      knowledge: {
+        ...d.knowledge,
+        faq_list: d.knowledge.faq_list.map((f, idx) => (idx === i ? { ...f, [field]: value } : f)),
       },
     }));
 
@@ -1017,17 +1165,15 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={Timer} title="Tempo para responder" />
+            <SectionTitle
+              icon={Timer}
+              title="Tempo para responder"
+              hint="Quanto tempo o SDR espera antes de enviar a resposta. Respostas instantâneas entregam menos e parecem robô."
+            />
             <CardSelect
               value={draft.triggers.reply_delay}
               onChange={(v) => patch("triggers", { reply_delay: v as any })}
-              options={[
-                { id: "smart", label: "Pausa inteligente", hint: "A IA calcula o tempo humano real" },
-                { id: "immediate", label: "Imediatamente", hint: "Responde na hora" },
-                { id: "30s", label: "30 segundos" },
-                { id: "1min", label: "1 minuto" },
-                { id: "custom", label: "Personalizado", hint: "Você define os segundos" },
-              ]}
+              options={SDR_REPLY_DELAY_OPTIONS}
             />
             {draft.triggers.reply_delay === "smart" && (
               <InfoBox icon={Brain} title="Como a pausa inteligente funciona">
@@ -1037,7 +1183,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                   e na complexidade do texto.
                 </p>
                 <p>
-                  O resultado é usado como atraso real do envio — conversas ficam naturais e evitam
+                  O resultado é usado como atraso real do envio, deixando a conversa natural e sem
                   cara de robô.
                 </p>
               </InfoBox>
@@ -1156,7 +1302,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           </div>
 
           <InfoBox icon={ShieldCheck} title="Regras obrigatórias do SDR">
-            <p>• O SDR sempre conduz a conversa — nunca devolve o comando ao lead.</p>
+            <p>• O SDR sempre conduz a conversa e nunca devolve o comando ao lead.</p>
             <p>• Ele nunca espera o lead decidir sozinho: toda mensagem termina com um próximo passo.</p>
             <p>• Uma pergunta por vez, sem textão e sem inventar informação.</p>
           </InfoBox>
@@ -1202,45 +1348,67 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={TrendingUp} title="Pode insistir?" />
+            <SectionTitle
+              icon={TrendingUp}
+              title="Pode insistir?"
+              hint="Define quantas vezes o SDR tenta contornar um 'agora não' antes de recuar."
+            />
             <CardSelect
               cols={3}
               value={draft.strategy.insistence}
               onChange={(v) => patch("strategy", { insistence: v as any })}
-              options={[
-                { id: "pouco", label: "Pouco", hint: "Respeita o ritmo do lead" },
-                { id: "medio", label: "Médio", hint: "Equilibrado" },
-                { id: "muito", label: "Muito", hint: "Persistente até o objetivo" },
-              ]}
+              options={SDR_INSISTENCE_OPTIONS}
             />
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={Target} title="Quando voltar ao objetivo?" />
+            <SectionTitle
+              icon={Target}
+              title="Quando voltar ao objetivo?"
+              hint="Depois de responder uma dúvida ou desviar de assunto, em que momento ele retoma o objetivo principal."
+            />
             <CardSelect
               cols={3}
               value={draft.strategy.return_to_goal}
               onChange={(v) => patch("strategy", { return_to_goal: v as any })}
-              options={[
-                { id: "imediato", label: "Imediatamente" },
-                { id: "natural", label: "Naturalmente" },
-                { id: "abertura", label: "Só com abertura" },
-              ]}
+              options={SDR_RETURN_OPTIONS}
             />
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={ShieldCheck} title="Se surgir objeção" />
+            <SectionTitle
+              icon={ShieldCheck}
+              title="Se surgir objeção"
+              hint="Como o SDR reage quando o lead trava (preço, tempo, confiança ou concorrente)."
+            />
             <CardSelect
               value={draft.strategy.on_objection}
               onChange={(v) => patch("strategy", { on_objection: v as any })}
-              options={[
-                { id: "contornar", label: "Contornar" },
-                { id: "explorar", label: "Explorar" },
-                { id: "validar", label: "Validar" },
-                { id: "vendedor", label: "Chamar vendedor" },
-              ]}
+              options={SDR_OBJECTION_OPTIONS}
             />
+            {draft.strategy.on_objection === "vendedor" && (
+              <div className="space-y-2">
+                <IconLabel icon={UserCheck}>Qual vendedor deve assumir?</IconLabel>
+                <SellersCombobox
+                  members={members}
+                  selected={draft.strategy.handoff_sellers}
+                  onToggle={(seller) =>
+                    patch("strategy", {
+                      handoff_sellers: draft.strategy.handoff_sellers.some(
+                        (x) => x.email === seller.email
+                      )
+                        ? draft.strategy.handoff_sellers.filter((x) => x.email !== seller.email)
+                        : [...draft.strategy.handoff_sellers, seller],
+                    })
+                  }
+                  placeholder="Selecionar vendedor..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Ao transferir, o vendedor recebe um e-mail com o resumo, o número do lead e o número
+                  de WhatsApp usado na conversa, e passa a ser o responsável pela conversa no chat.
+                </p>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1250,7 +1418,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         <>
           <InfoBox icon={Sparkles} title="Preenchemos com o perfil da sua empresa">
             <p>
-              Puxamos o que já existe no seu perfil da Wiize. Complete o que faltar — esses dados também
+              Puxamos o que já existe no seu perfil da Wiize. Complete o que faltar, pois esses dados também
               deixam sua prospecção mais precisa.
             </p>
           </InfoBox>
@@ -1391,8 +1559,60 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
       {/* 8 - Materiais */}
       {step === 8 && (
         <div className="space-y-5">
+          <div className="space-y-3">
+            <SectionTitle
+              icon={MessagesSquare}
+              title="Perguntas frequentes"
+              hint="Escreva a pergunta possível e a resposta oficial. A IA usa isso para responder sem inventar."
+            />
+            {draft.knowledge.faq_list.map((f, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <IconInput
+                    icon={HelpCircle}
+                    className="flex-1"
+                    value={f.question}
+                    onChange={(e) => updateFaq(i, "question", e.target.value)}
+                    placeholder="Pergunta do lead. Ex.: vocês atendem em todo o Brasil?"
+                  />
+                  {draft.knowledge.faq_list.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        patch("knowledge", {
+                          faq_list: draft.knowledge.faq_list.filter((_, idx) => idx !== i),
+                        })
+                      }
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <Textarea
+                  rows={2}
+                  value={f.answer}
+                  onChange={(e) => updateFaq(i, "answer", e.target.value)}
+                  placeholder="Resposta que o SDR deve dar"
+                />
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() =>
+                patch("knowledge", {
+                  faq_list: [...draft.knowledge.faq_list, { question: "", answer: "" }],
+                })
+              }
+            >
+              <Plus className="h-4 w-4 mr-2" /> Adicionar pergunta
+            </Button>
+          </div>
+
           {[
-            { key: "faq", label: "FAQ", icon: HelpCircle, ph: "Perguntas frequentes e respostas" },
             { key: "policies", label: "Políticas", icon: ShieldCheck, ph: "Garantia, cancelamento, prazos" },
             { key: "cases", label: "Cases e provas sociais", icon: TrendingUp, ph: "Resultados de clientes" },
             { key: "competitors", label: "Concorrentes", icon: Columns3, ph: "Como se comparar" },
@@ -1498,17 +1718,17 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={Ban} title="Quando parar" />
+            <SectionTitle
+              icon={Ban}
+              title="Quando parar"
+              hint="Situações em que o SDR encerra a abordagem e para de enviar mensagens."
+            />
             <CardMultiSelect
               values={draft.closing.stop_criteria}
               onToggle={(id) =>
                 patch("closing", { stop_criteria: toggleArray(draft.closing.stop_criteria, id) })
               }
-              options={[
-                { id: "recusou", label: "Recusou o serviço", hint: "Disse claramente que não quer" },
-                { id: "sem_resposta", label: "Ficou sem resposta", hint: "Silêncio por X horas" },
-                { id: "pediu_parar", label: "Pediu para parar", hint: "Solicitou não ser contatado" },
-              ]}
+              options={SDR_STOP_OPTIONS}
             />
             {draft.closing.stop_criteria.includes("sem_resposta") && (
               <div className="space-y-1.5">
@@ -1528,7 +1748,11 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={Repeat} title="Modo de follow-up" />
+            <SectionTitle
+              icon={Repeat}
+              title="Modo de follow-up"
+              hint="Como o SDR retoma o contato quando o lead some no meio da conversa."
+            />
             <CardSelect
               cols={2}
               value={draft.closing.followup_mode}
@@ -1672,48 +1896,18 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
             <SectionTitle
               icon={BellRing}
               title="Avisar vendedor ao encerrar"
-              hint="Obrigatório. Ele recebe um e-mail com o resumo e o próximo passo."
+              hint="Opcional. Quem for marcado recebe um e-mail com o resumo da conversa e o próximo passo."
             />
-            <div className="grid sm:grid-cols-1 gap-2">
-              {members
-                .filter((m) => m.email)
-                .map((m) => {
-                  const on = draft.closing.notify_seller_email === m.email;
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => patch("closing", { notify_seller_email: m.email! })}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl border bg-card p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
-                        on
-                          ? "border-primary ring-2 ring-primary/20 shadow-md"
-                          : "border-border hover:border-primary/40"
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "h-9 w-9 rounded-lg flex items-center justify-center shrink-0",
-                          on ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        <UserCheck className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-sm font-medium text-foreground">
-                          {m.name || m.email}
-                        </span>
-                        <span className="block text-xs text-muted-foreground truncate">{m.email}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-            </div>
-            <IconInput
-              icon={BellRing}
-              value={draft.closing.notify_seller_email}
-              onChange={(e) => patch("closing", { notify_seller_email: e.target.value })}
-              placeholder="Ou digite outro e-mail"
+            <SellersCombobox
+              members={members}
+              selected={draft.closing.notify_sellers}
+              onToggle={(seller) =>
+                patch("closing", {
+                  notify_sellers: draft.closing.notify_sellers.some((x) => x.email === seller.email)
+                    ? draft.closing.notify_sellers.filter((x) => x.email !== seller.email)
+                    : [...draft.closing.notify_sellers, seller],
+                })
+              }
             />
           </div>
 
@@ -1798,35 +1992,47 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
       {step === 11 && (
         <div className="space-y-5">
           <CardGrid cols={3}>
-            <OptionCard
-              icon={Cpu}
-              active
-              onClick={() => {}}
-              title="GPT (OpenAI)"
-              hint="Modelo padrão do SDR"
-            />
-            {[
-              { label: "Claude", hint: "Em breve" },
-              { label: "Gemini", hint: "Em breve" },
-              { label: "DeepSeek", hint: "Em breve" },
-              { label: "Llama", hint: "Em breve" },
-            ].map((p) => (
-              <div
-                key={p.label}
-                className="relative flex h-full w-full flex-col items-center justify-start gap-4 p-6 rounded-xl border border-dashed border-border bg-muted/30 opacity-70"
-              >
-                <Badge variant="secondary" className="absolute top-3 right-3 text-[10px]">
-                  Em breve
-                </Badge>
-                <span className="h-12 w-12 rounded-lg bg-muted text-muted-foreground flex items-center justify-center">
-                  <Cpu className="h-6 w-6" strokeWidth={1.75} />
-                </span>
-                <span className="flex flex-col items-center gap-1">
-                  <span className="text-sm font-medium text-foreground">{p.label}</span>
-                  <span className="text-xs text-muted-foreground">{p.hint}</span>
-                </span>
-              </div>
-            ))}
+            {AI_PROVIDERS.map((prov) => {
+              const isOpenAI = prov.id === "openai";
+              if (isOpenAI) {
+                return (
+                  <button
+                    key={prov.id}
+                    type="button"
+                    onClick={() => patch("ai", { provider: "openai" })}
+                    className="group relative flex h-full w-full flex-col items-center justify-start gap-4 p-6 rounded-xl border border-primary bg-card ring-2 ring-primary/20 shadow-md transition-all duration-200"
+                  >
+                    <span className="absolute top-3 right-3 h-5 w-5 rounded-full border border-primary bg-primary flex items-center justify-center">
+                      <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
+                    </span>
+                    <span className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+                      <img src={prov.logo} alt={prov.name} className="h-7 w-7 object-contain" />
+                    </span>
+                    <span className="flex flex-col items-center gap-1">
+                      <span className="text-sm font-medium text-foreground">GPT (OpenAI)</span>
+                      <span className="text-xs text-muted-foreground">Modelo padrão do SDR</span>
+                    </span>
+                  </button>
+                );
+              }
+              return (
+                <div
+                  key={prov.id}
+                  className="relative flex h-full w-full flex-col items-center justify-start gap-4 p-6 rounded-xl border border-dashed border-border bg-muted/30 opacity-70"
+                >
+                  <Badge variant="secondary" className="absolute top-3 right-3 text-[10px]">
+                    Em breve
+                  </Badge>
+                  <span className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+                    <img src={prov.logo} alt={prov.name} className="h-7 w-7 object-contain grayscale" />
+                  </span>
+                  <span className="flex flex-col items-center gap-1">
+                    <span className="text-sm font-medium text-foreground">{prov.name}</span>
+                    <span className="text-xs text-muted-foreground">Em breve</span>
+                  </span>
+                </div>
+              );
+            })}
           </CardGrid>
 
           <div className="space-y-2">
@@ -1851,8 +2057,8 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
 
       {/* 12 - Revisão */}
       {step === 12 && (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-border bg-card p-5 flex items-center gap-4">
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center gap-4 p-5 border-b border-border bg-muted/30">
             <span className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Bot className="h-6 w-6" strokeWidth={1.75} />
             </span>
@@ -1861,119 +2067,168 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                 {draft.name || "SDR sem nome"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {SDR_OBJECTIVE_LABEL(draft.objective)} · tom {draft.personality.tone}
+                {SDR_OBJECTIVE_LABEL(draft.objective)} · tom {draft.personality.tone} · GPT
+                (gpt-4o-mini)
               </p>
             </div>
+            <Badge variant="secondary" className="ml-auto gap-1 hidden sm:flex">
+              <CheckCircle2 className="h-3 w-3" /> Pronto para ativar
+            </Badge>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="p-5 space-y-5">
             {[
               {
+                title: "Objetivo e sucesso",
                 icon: Target,
-                label: "Objetivo",
-                value: SDR_OBJECTIVE_LABEL(draft.objective),
+                rows: [
+                  { label: "Objetivo", value: SDR_OBJECTIVE_LABEL(draft.objective) },
+                  {
+                    label: "Critério de sucesso",
+                    value: SDR_SUCCESS_BY_OBJECTIVE[draft.objective as SdrObjective],
+                  },
+                ],
               },
               {
-                icon: Flag,
-                label: "Sucesso",
-                value: SDR_SUCCESS_BY_OBJECTIVE[draft.objective as SdrObjective],
-              },
-              {
+                title: "Onde atua",
                 icon: Phone,
-                label: "Números",
-                value:
-                  draft.whatsapp_number_ids
-                    .map(
-                      (id) =>
-                        numbers.find((n) => n.id === id)?.nickname ||
-                        numbers.find((n) => n.id === id)?.display_phone_number ||
-                        "Número"
-                    )
-                    .join(", ") || "Nenhum número",
+                rows: [
+                  {
+                    label: "Números",
+                    value:
+                      draft.whatsapp_number_ids
+                        .map(
+                          (id) =>
+                            numbers.find((n) => n.id === id)?.nickname ||
+                            numbers.find((n) => n.id === id)?.display_phone_number ||
+                            "Número"
+                        )
+                        .join(", ") || "Nenhum número",
+                  },
+                  {
+                    label: "Horário",
+                    value:
+                      draft.schedule.mode === "always"
+                        ? "Sempre ativo (24h)"
+                        : `${draft.schedule.days
+                            .map((d) => SDR_WEEKDAYS.find((w) => w.id === d)?.label)
+                            .filter(Boolean)
+                            .join(", ")} · ${draft.schedule.start}h às ${draft.schedule.end}h`,
+                  },
+                ],
               },
               {
-                icon: Clock,
-                label: "Horário",
-                value:
-                  draft.schedule.mode === "always"
-                    ? "Sempre ativo"
-                    : `${draft.schedule.days
-                        .map((d) => SDR_WEEKDAYS.find((w) => w.id === d)?.label)
-                        .join(", ")} · ${draft.schedule.start}h–${draft.schedule.end}h`,
-              },
-              {
+                title: "Ativação e ritmo",
                 icon: Zap,
-                label: "Ativação",
-                value:
-                  draft.triggers.activation
-                    .map((a) => SDR_ACTIVATION_TRIGGERS.find((t) => t.id === a)?.label)
-                    .filter(Boolean)
-                    .join(", ") || "Não definido",
+                rows: [
+                  {
+                    label: "Gatilhos",
+                    value:
+                      draft.triggers.activation
+                        .map((a) => SDR_ACTIVATION_TRIGGERS.find((t) => t.id === a)?.label)
+                        .filter(Boolean)
+                        .join(", ") || "Não definido",
+                  },
+                  {
+                    label: "Tempo de resposta",
+                    value:
+                      draft.triggers.reply_delay === "custom"
+                        ? `${draft.triggers.reply_delay_custom_seconds} segundos`
+                        : SDR_REPLY_DELAY_OPTIONS.find((o) => o.id === draft.triggers.reply_delay)
+                            ?.label || "Não definido",
+                  },
+                ],
               },
               {
-                icon: Timer,
-                label: "Tempo de resposta",
-                value:
-                  draft.triggers.reply_delay === "smart"
-                    ? "Pausa inteligente"
-                    : draft.triggers.reply_delay === "custom"
-                      ? `${draft.triggers.reply_delay_custom_seconds}s`
-                      : draft.triggers.reply_delay,
+                title: "Estratégia",
+                icon: Brain,
+                rows: [
+                  {
+                    label: "Insistência",
+                    value:
+                      SDR_INSISTENCE_OPTIONS.find((o) => o.id === draft.strategy.insistence)?.label ||
+                      "Não definido",
+                  },
+                  {
+                    label: "Objeções",
+                    value:
+                      SDR_OBJECTION_OPTIONS.find((o) => o.id === draft.strategy.on_objection)?.label ||
+                      "Não definido",
+                  },
+                  {
+                    label: "Vendedor no handoff",
+                    value:
+                      draft.strategy.handoff_sellers.map((v) => v.name || v.email).join(", ") ||
+                      "Não aplicável",
+                  },
+                ],
               },
               {
-                icon: Package,
-                label: "Produtos",
-                value: `${draft.knowledge.products_list.filter((p) => p.name).length} cadastrados`,
-              },
-              {
-                icon: Repeat,
-                label: "Follow-up",
-                value: `${draft.closing.followup_mode === "inteligente" ? "Inteligente" : "Manual"} · até ${draft.closing.followup_max}`,
-              },
-              {
-                icon: BellRing,
-                label: "Avisar vendedor",
-                value: draft.closing.notify_seller_email || "Não definido",
-              },
-              {
-                icon: Archive,
-                label: "Ao encerrar",
-                value:
-                  draft.closing.after_limit_actions
-                    .map((a) =>
-                      a === "arquivar"
-                        ? "Arquivar"
-                        : `Mover para ${stages.find((s) => s.id === draft.closing.after_limit_stage_id)?.name || "pipeline"}`
-                    )
-                    .join(" + ") || "Não definido",
-              },
-              { icon: Cpu, label: "Inteligência", value: "GPT · gpt-4o-mini" },
-              {
+                title: "Conhecimento",
                 icon: BookOpen,
-                label: "Conhecimento",
-                value:
-                  [
-                    draft.knowledge.company && "Empresa",
-                    draft.knowledge.faq && "FAQ",
-                    draft.knowledge.cases && "Cases",
-                    draft.knowledge.site && "Site",
-                  ]
-                    .filter(Boolean)
-                    .join(" + ") || "Não informado",
+                rows: [
+                  { label: "Empresa", value: draft.knowledge.company || "Não informado" },
+                  {
+                    label: "Produtos",
+                    value:
+                      draft.knowledge.products_list
+                        .filter((pr) => pr.name)
+                        .map((pr) => pr.name)
+                        .join(", ") || "Nenhum produto",
+                  },
+                  {
+                    label: "FAQ",
+                    value: `${draft.knowledge.faq_list.filter((f) => f.question && f.answer).length} pergunta(s) cadastrada(s)`,
+                  },
+                ],
               },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-xl border border-border bg-card p-4 flex items-start gap-3"
-              >
-                <span className="h-9 w-9 rounded-lg bg-muted text-muted-foreground flex items-center justify-center shrink-0">
-                  <item.icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {item.label}
-                  </p>
-                  <p className="text-sm font-medium text-foreground break-words">{item.value}</p>
+              {
+                title: "Encerramento",
+                icon: Flag,
+                rows: [
+                  {
+                    label: "Follow-up",
+                    value: `${draft.closing.followup_mode === "inteligente" ? "Inteligente" : "Manual"} · até ${draft.closing.followup_max} tentativa(s)`,
+                  },
+                  {
+                    label: "Avisar vendedor",
+                    value:
+                      draft.closing.notify_sellers.map((v) => v.name || v.email).join(", ") ||
+                      "Ninguém selecionado",
+                  },
+                  {
+                    label: "Ao encerrar",
+                    value:
+                      draft.closing.after_limit_actions
+                        .map((a) =>
+                          a === "arquivar"
+                            ? "Arquivar lead"
+                            : `Mover para ${stages.find((st) => st.id === draft.closing.after_limit_stage_id)?.name || "pipeline"}`
+                        )
+                        .join(" + ") || "Não definido",
+                  },
+                ],
+              },
+            ].map((block) => (
+              <div key={block.title} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <block.icon className="h-4 w-4" strokeWidth={1.75} />
+                  </span>
+                  <p className="text-sm font-semibold text-foreground">{block.title}</p>
+                </div>
+                <div className="rounded-xl border border-border divide-y divide-border">
+                  {block.rows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 px-4 py-3"
+                    >
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground sm:w-44 shrink-0">
+                        {row.label}
+                      </p>
+                      <p className="text-sm text-foreground break-words">{row.value}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -1995,6 +2250,13 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
       >
         {step === 1 ? "Cancelar" : "Voltar"}
       </Button>
+      <div className="flex items-center gap-2">
+        {!editing && (
+          <Button variant="outline" onClick={handleSaveDraft} disabled={saving} className="h-11 gap-2">
+            <Save className="h-4 w-4" />
+            Salvar rascunho
+          </Button>
+        )}
       {step < STEPS.length ? (
         <Button onClick={() => setStep(step + 1)} disabled={!canProceed} className="px-8 h-11">
           Continuar
@@ -2011,6 +2273,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           )}
         </Button>
       )}
+      </div>
     </div>
   ) : (
     <div className="flex items-center justify-between pt-2 border-t border-border">

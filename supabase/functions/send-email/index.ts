@@ -524,6 +524,36 @@ function templateSuggestionInDevelopment(payload: Record<string, unknown>): Temp
   };
 }
 
+function templateSdrSellerHandoff(payload: Record<string, unknown>): TemplateResult {
+  const sdrName = (payload.sdr_name as string) || "SDR Inteligente";
+  const contactName = (payload.contact_name as string) || "Lead sem nome";
+  const contactPhone = (payload.contact_phone as string) || "";
+  const wabaNumber = (payload.waba_number as string) || "";
+  const reason = (payload.reason as string) || "O SDR encerrou a condução e o lead precisa de atendimento humano.";
+  const summary = (payload.summary as string) || "";
+  const nextStep = (payload.next_step as string) || "Entre em contato com o lead pelo WhatsApp.";
+  const waLink = contactPhone
+    ? `https://wa.me/${String(contactPhone).replace(/\D/g, "")}`
+    : `${BRAND.url}/chat`;
+
+  return {
+    subject: `🤝 ${sdrName}: assuma o lead ${contactName}`,
+    html: baseLayout("Lead aguardando vendedor", `
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Um lead precisa de você</h1>
+      <p style="margin:0 0 16px;color:#3f3f46;font-size:15px;">${reason}</p>
+      <div style="margin:16px 0;padding:16px;background:#f4f4f5;border-radius:8px;">
+        <p style="margin:0 0 6px;font-size:14px;color:#3f3f46;"><strong>Lead:</strong> ${contactName}</p>
+        <p style="margin:0 0 6px;font-size:14px;color:#3f3f46;"><strong>WhatsApp do lead:</strong> ${contactPhone || "não informado"}</p>
+        <p style="margin:0 0 6px;font-size:14px;color:#3f3f46;"><strong>Número usado na conversa:</strong> ${wabaNumber || "não informado"}</p>
+        <p style="margin:0;font-size:14px;color:#3f3f46;"><strong>SDR:</strong> ${sdrName}</p>
+      </div>
+      ${summary ? `<p style="margin:0 0 8px;font-size:14px;color:#3f3f46;"><strong>Resumo da conversa:</strong><br>${summary}</p>` : ""}
+      <p style="margin:16px 0 0;font-size:14px;color:#3f3f46;"><strong>Próximo passo:</strong> ${nextStep}</p>
+      <a href="${waLink}" style="display:inline-block;margin-top:20px;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Falar com o lead</a>
+    `, `${contactName} está aguardando atendimento humano`),
+  };
+}
+
 const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateResult> = {
   CAMPAIGN_SCHEDULED_STARTED: templateCampaignStarted,
   WEEKLY_SUMMARY: templateWeeklySummary,
@@ -537,6 +567,7 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   AGENT_HUMAN_HANDOFF: templateAgentHumanHandoff,
   AGENT_OBJECTIVE_COMPLETED: templateAgentObjectiveCompleted,
   SUGGESTION_IN_DEVELOPMENT: templateSuggestionInDevelopment,
+  SDR_SELLER_HANDOFF: templateSdrSellerHandoff,
 };
 
 function htmlToPlainText(html: string): string {

@@ -116,6 +116,46 @@ const QUESTION_GUIDE: Record<string, string> = {
   evitar: "Evite perguntas: conduza com afirmações e propostas de próximo passo.",
 };
 
+const OBJECTIVE_PLAYBOOK: Record<string, string> = {
+  reuniao:
+    "OBJETIVO MARCAR REUNIÃO: toda a conversa converge para uma agenda. Nunca resolva tudo pelo WhatsApp; use a reunião como o lugar onde a dúvida será respondida. Ofereça sempre DUAS janelas concretas (ex.: 'amanhã 10h ou 15h?') e confirme dia, horário e canal. Não fale preço fechado antes da agenda.",
+  demonstracao:
+    "OBJETIVO AGENDAR DEMONSTRAÇÃO: gere curiosidade mostrando UM resultado prático por vez e transforme cada dúvida em motivo para ver a ferramenta funcionando ('isso eu te mostro na tela em 15 minutos'). Feche com duas opções de horário e confirme quem participará.",
+  proposta:
+    "OBJETIVO ENVIAR PROPOSTA: antes de enviar qualquer coisa, levante escopo, volume, prazo e quem decide. Só então anuncie o envio, envie e peça confirmação explícita de recebimento, combinando o dia da resposta.",
+  venda_direta:
+    "OBJETIVO FECHAR VENDA DIRETA: conduza para a decisão na própria conversa. Apresente a oferta certa, trate a objeção e peça o fechamento de forma direta ('te envio o link de pagamento agora?').",
+  qualificar:
+    "OBJETIVO QUALIFICAR: colete de forma natural (uma pergunta por vez) dor real, impacto/urgência, orçamento aproximado e se a pessoa decide. Não force venda nem agenda; encerre resumindo o diagnóstico e o próximo passo.",
+  recuperar:
+    "OBJETIVO RECUPERAR: retome o contexto anterior sem cobrar o lead ('vi que paramos em X'). Traga um motivo novo para retomar, reduza o atrito do próximo passo e reagende. Nunca repita a abordagem anterior.",
+};
+
+const INSISTENCE_GUIDE: Record<string, string> = {
+  pouco: "Insistência baixa: diante de um 'agora não', acolha e recue na primeira negativa.",
+  medio: "Insistência média: tente contornar no máximo duas vezes com ângulos diferentes antes de recuar.",
+  muito: "Insistência alta: continue trazendo novos ângulos de valor até o lead decidir, sem ser grosseiro nem repetitivo.",
+};
+
+const RETURN_GUIDE: Record<string, string> = {
+  imediato: "Após responder qualquer dúvida, volte ao objetivo na MESMA mensagem.",
+  natural: "Converse um pouco e retome o objetivo assim que fizer sentido no fluxo.",
+  abertura: "Só retome o objetivo quando o lead demonstrar algum sinal de interesse.",
+};
+
+const OBJECTION_GUIDE: Record<string, string> = {
+  contornar: "Diante de objeção: reformule o valor de forma curta e siga direto para o próximo passo.",
+  explorar: "Diante de objeção: pergunte o motivo real por trás dela antes de responder.",
+  validar: "Diante de objeção: concorde e acolha primeiro, depois apresente a saída.",
+  vendedor: "Diante de objeção relevante: avise que um especialista humano vai assumir e defina proxima_acao = chamar_vendedor.",
+};
+
+const PIPELINE_STEPS = `1. conexao — quebrar o gelo e gerar confiança
+2. necessidade — entender a dor real do lead
+3. valor — mostrar como a solução resolve a dor
+4. objecoes — tratar dúvidas e travas
+5. fechamento — conduzir para o objetivo final`;
+
 function agentBrief(agent: any) {
   const k = agent.knowledge ?? {};
   const p = agent.personality ?? {};
@@ -148,7 +188,15 @@ DIFERENCIAIS: ${k.differentials || "-"}
 PRODUTOS:
 ${products || k.products || "-"}
 CASES: ${k.cases || "-"}
-FAQ: ${k.faq || "-"}
+FAQ (pergunta => resposta oficial):
+${
+    Array.isArray(k.faq_list) && k.faq_list.some((f: any) => f?.question)
+      ? k.faq_list
+          .filter((f: any) => f?.question)
+          .map((f: any) => `- P: ${f.question}\n  R: ${f.answer || "-"}`)
+          .join("\n")
+      : k.faq || "-"
+  }
 POLÍTICAS: ${k.policies || "-"}
 CONCORRENTES: ${k.competitors || "-"}
 SITE: ${k.site || "-"} | INSTAGRAM: ${k.instagram || "-"}
@@ -168,7 +216,16 @@ REGRAS INEGOCIÁVEIS:
 - Nunca inventar informação fora do conhecimento acima.
 ${(agent.situations ?? {}).preco === "nunca_sem_reuniao" ? "- NUNCA informar preço antes de a reunião estar agendada." : ""}
 
-ESTRATÉGIA: prioridades ${(s.priorities || []).join(" > ")}; insistência ${s.insistence}; voltar ao objetivo ${s.return_to_goal}; objeções: ${s.on_objection}.
+PLAYBOOK DO OBJETIVO:
+${OBJECTIVE_PLAYBOOK[agent.objective] ?? "Conduza a conversa até o objetivo configurado."}
+
+FUNIL OBRIGATÓRIO (avance um passo por vez, sem pular etapas):
+${PIPELINE_STEPS}
+
+ESTRATÉGIA: insistência ${s.insistence}; voltar ao objetivo ${s.return_to_goal}; objeções: ${s.on_objection}.
+${INSISTENCE_GUIDE[s.insistence] ?? ""}
+${RETURN_GUIDE[s.return_to_goal] ?? ""}
+${OBJECTION_GUIDE[s.on_objection] ?? ""}
 GATILHOS DE ATIVAÇÃO: ${(t.activation || []).join(", ") || "inbound_all"}.
 ENCERRAMENTO: parar quando ${(c.stop_criteria || []).join(", ")}${c.stop_no_reply_hours ? ` (sem resposta por ${c.stop_no_reply_hours}h)` : ""}; follow-ups até ${c.followup_max} em modo ${c.followup_mode}${c.followup_mode === "inteligente" ? ` (intervalo variável entre ${c.followup_min_hours ?? 12}h e ${c.followup_max_hours ?? 48}h, sempre dentro do horário de atendimento)` : ""}.
 SITUAÇÕES CONFIGURADAS: ${JSON.stringify(agent.situations ?? {})}
@@ -269,6 +326,7 @@ serve(async (req) => {
     // ---------- CAMADAS 1-5: Contexto, Memória, Compreensão, Planejamento, Estratégia ----------
     const analysisSystem = `Você é o cérebro analítico de um SDR de alta performance no WhatsApp (B2B).
 Você NÃO escreve a resposta ao lead. Você apenas analisa e decide a estratégia.
+Você SEMPRE identifica em qual passo do funil a conversa está (conexao, necessidade, valor, objecoes, fechamento), inclusive em follow-ups e reaberturas, e define o próximo passo sem pular etapas.
 Responda SEMPRE em JSON válido com o formato:
 {
  "memoria": {"fatos": [string], "promessas": [string], "objecoes": [string]},
@@ -278,6 +336,8 @@ Responda SEMPRE em JSON válido com o formato:
  "abertura": "alta|media|baixa",
  "estagio": "nao_conhece|conhece|interesse|comparando|negociando|pronto|recusou",
  "cenarios": [{"resposta": string, "probabilidade_de_continuar": number}],
+ "passo_atual": "conexao|necessidade|valor|objecoes|fechamento",
+ "proximo_passo": "conexao|necessidade|valor|objecoes|fechamento",
  "micro_objetivo": string,
  "estrategia": string,
  "proxima_acao": "responder|aguardar|followup|chamar_vendedor|encerrar"
@@ -294,6 +354,7 @@ ${JSON.stringify(session?.memory ?? {})}
 HISTÓRICO:
 ${historyText}
 
+PASSO DO FUNIL NA ÚLTIMA INTERAÇÃO: ${session?.stage ?? "conexao"}
 GATILHO: ${triggerType}
 NOVA MENSAGEM DO LEAD: ${inbound || "(nenhuma — conversa iniciada pelo SDR)"}
 
@@ -315,7 +376,8 @@ Regras absolutas:
 - Cada mensagem tem um único assunto (saudação, contexto, pergunta, CTA).
 - Nunca invente informações que não estejam no conhecimento fornecido.
 - Faça no máximo UMA pergunta por resposta.
-- Siga o micro-objetivo definido pela análise, sem forçar a venda.
+- Siga o micro-objetivo e o passo do funil definidos pela análise, sem forçar a venda nem pular etapas.
+- Em follow-ups, retome explicitamente o ponto onde a conversa parou.
 Responda SEMPRE em JSON: {"mensagens": [string], "proxima_acao": string, "justificativa": string}`;
     const writerUser = `CONFIGURAÇÃO DO SDR:
 ${brief}
@@ -400,7 +462,7 @@ ${historyText}`;
         await supabase
           .from("sdr_sessions")
           .update({
-            stage: analysis.estagio ?? session.stage,
+            stage: analysis.proximo_passo ?? analysis.passo_atual ?? analysis.estagio ?? session.stage,
             current_goal: analysis.micro_objetivo ?? session.current_goal,
             memory: analysis.memoria ?? session.memory,
             messages_sent: (session.messages_sent ?? 0) + messages.length,
