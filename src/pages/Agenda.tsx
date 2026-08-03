@@ -28,8 +28,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { useCalendarEvents, type CalendarEventInput } from "@/hooks/useCalendarEvents";
 import { useEventReminders } from "@/hooks/useEventReminders";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AgendaMetrics } from "@/components/agenda/AgendaMetrics";
 import { EventDialog } from "@/components/agenda/EventDialog";
+import { QuickEditDialog } from "@/components/agenda/QuickEditDialog";
+
 import { DayView } from "@/components/agenda/views/DayView";
 import { WeekView } from "@/components/agenda/views/WeekView";
 import { MonthView } from "@/components/agenda/views/MonthView";
