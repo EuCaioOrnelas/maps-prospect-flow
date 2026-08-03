@@ -227,11 +227,11 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
  Indisponível
  </Button>
  ) : (
- <a href="/#pricing" onClick={handlePricingClick}>
- <Button variant="hero" size="sm" className="w-full justify-center">
- Gerar vendas
- </Button>
- </a>
+                  <Link to="/signup/escolher-plano" onClick={() => { setMobileMenuOpen(false); handleSignupClick(); }}>
+                    <Button variant="hero" size="sm" className="w-full justify-center">
+                      Iniciar Teste Grátis
+                    </Button>
+                  </Link>
  )}
  </div>
  </div>
