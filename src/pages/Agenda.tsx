@@ -72,6 +72,9 @@ export default function Agenda() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickEvent, setQuickEvent] = useState<CalendarEvent | null>(null);
+
 
   const range = useMemo(() => {
     switch (view) {
