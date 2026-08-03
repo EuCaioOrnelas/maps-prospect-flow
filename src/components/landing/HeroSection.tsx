@@ -699,9 +699,23 @@ const floatingCards = [
 ];
 
 /* ─── Main component ─── */
-interface HeroSectionProps { onSignupClick?: () => void; }
+interface HeroSectionProps {
+ onSignupClick?: () => void;
+ titleLine1?: string;
+ titleLine2?: string;
+ titleHighlight?: string;
+ description?: string;
+ descriptionClassName?: string;
+}
 
-export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
+export const HeroSection = ({
+ onSignupClick,
+ titleLine1 = "IA comercial que",
+ titleLine2 = "Transforma leads em",
+ titleHighlight = "Oportunidades reais",
+ description = "IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.",
+ descriptionClassName,
+}: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
  const [currentStage, setCurrentStage] = useState(0);
  const [stageProgress, setStageProgress] = useState(0);
@@ -833,16 +847,12 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
  <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
  </div>
   <h1 className="font-display font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.08] tracking-tight" style={{ animationDelay: "0.1s" }}>
-  <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary/10 border border-primary/20 mb-3 sm:mb-4">
-    <Sparkles size={14} className="text-primary" />
-    <span className="text-xs sm:text-sm font-medium text-primary">Teste grátis por 7 dias</span>
-  </div>
-  <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">IA comercial que</span>
-  <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">Transforma leads em</span>
-  <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">Oportunidades reais</span>
+  <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">{titleLine1}</span>
+  <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">{titleLine2}</span>
+  <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">{titleHighlight}</span>
   </h1>
- <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
- IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.
+ <p className={`${descriptionClassName ?? "text-base sm:text-lg md:text-xl"} text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up`} style={{ animationDelay: "0.2s" }}>
+ {description}
  </p>
  <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
  {TRIAL_DISABLED ? (

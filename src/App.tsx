@@ -39,6 +39,7 @@ const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"), "Ad
 const AdminLandingPages = lazyWithRetry(() => import("./pages/AdminLandingPages"), "AdminLandingPages");
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/AdminAnnouncements"), "AdminAnnouncements");
 const LandingPage = lazyWithRetry(() => import("./pages/LandingPage"), "LandingPage");
+const Prospeccao = lazyWithRetry(() => import("./pages/Prospeccao"), "Prospeccao");
 const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword"), "ForgotPassword");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"), "ResetPassword");
 const Reports = lazyWithRetry(() => import("./pages/Reports"), "Reports");
@@ -271,6 +272,8 @@ const App = () => (
               <PageVisitTracker />
               <Routes>
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />
+                <Route path="/prospeccao" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Prospeccao /></Suspense></LightThemeWrapper>} />
+
                 <Route path="/demonstracao" element={<Suspense fallback={<PageLoader />}><Demonstracao /></Suspense>} />
                 
                 
