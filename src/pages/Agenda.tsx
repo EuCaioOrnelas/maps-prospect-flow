@@ -33,6 +33,7 @@ import { AgendaMetrics } from "@/components/agenda/AgendaMetrics";
 import { EventDialog } from "@/components/agenda/EventDialog";
 import { QuickEditDialog } from "@/components/agenda/QuickEditDialog";
 
+import { EventDetailsDialog } from "@/components/agenda/EventDetailsDialog";
 import { DayView } from "@/components/agenda/views/DayView";
 import { WeekView } from "@/components/agenda/views/WeekView";
 import { MonthView } from "@/components/agenda/views/MonthView";
@@ -74,6 +75,8 @@ export default function Agenda() {
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickEvent, setQuickEvent] = useState<CalendarEvent | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsEvent, setDetailsEvent] = useState<CalendarEvent | null>(null);
 
 
   const range = useMemo(() => {
