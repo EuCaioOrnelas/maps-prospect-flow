@@ -23,6 +23,7 @@ export interface PickedLead {
 
 interface Props {
   onSelect: (lead: PickedLead) => void;
+  selectedLabel?: string | null;
 }
 
 /** Busca leads do CRM / Oportunidades para preencher o compromisso comercial. */
