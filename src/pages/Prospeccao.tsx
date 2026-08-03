@@ -99,7 +99,7 @@ const Prospeccao = () => {
             titleLine1="Prospecção B2B que"
             titleLine2="Encontra e analisa"
             titleHighlight="Seus clientes ideais"
-            description="Nossa IA comercial prospecta leads B2B para você, analisa e faz um diagnóstico individual de cada empresa com base no seu perfil empresarial, identificando dores, pontos fracos e oportunidades para transformar leads em oportunidades reais, multiplicando seu faturamento e a eficiência do seu comercial."
+            description="Nossa IA comercial prospecta leads B2B, analisa e faz o diagnóstico individual de cada empresa — identificando dores e oportunidades para transformar leads em vendas reais."
             descriptionClassName="text-sm sm:text-base md:text-[1.05rem] leading-relaxed"
           />
           <TrustedBySection />
