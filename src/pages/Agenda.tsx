@@ -5,7 +5,7 @@ import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,14 +21,15 @@ import {
   Loader2,
   Users,
   Filter,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { useCalendarEvents, type CalendarEventInput } from "@/hooks/useCalendarEvents";
+import { useEventReminders } from "@/hooks/useEventReminders";
 import { AgendaMetrics } from "@/components/agenda/AgendaMetrics";
 import { EventDialog } from "@/components/agenda/EventDialog";
-import { ContinuousView } from "@/components/agenda/views/ContinuousView";
 import { DayView } from "@/components/agenda/views/DayView";
 import { WeekView } from "@/components/agenda/views/WeekView";
 import { MonthView } from "@/components/agenda/views/MonthView";
@@ -47,10 +48,9 @@ import {
 } from "@/lib/calendarViews";
 import { cn } from "@/lib/utils";
 
-type ViewMode = "continuous" | "day" | "week" | "month" | "list";
+type ViewMode = "day" | "week" | "month" | "list";
 
 const VIEWS: { value: ViewMode; label: string }[] = [
-  { value: "continuous", label: "Contínua" },
   { value: "day", label: "Dia" },
   { value: "week", label: "Semana" },
   { value: "month", label: "Mês" },
@@ -61,10 +61,11 @@ export default function Agenda() {
   const { profile, user } = useAuth();
   const { members } = useAccountMembers();
 
-  const [view, setView] = useState<ViewMode>("continuous");
+  const [view, setView] = useState<ViewMode>("month");
   const [cursor, setCursor] = useState(() => new Date());
   const [userFilter, setUserFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
@@ -78,7 +79,6 @@ export default function Agenda() {
       case "month":
         return { from: startOfWeek(startOfMonth(cursor)), to: endOfWeek(endOfMonth(cursor)) };
       default:
-        // contínua e lista: janela ampla a partir de hoje
         return { from: startOfDay(new Date()), to: endOfDay(addDays(new Date(), 120)) };
     }
   }, [view, cursor]);
@@ -96,10 +96,18 @@ export default function Agenda() {
     userFilter,
   });
 
-  const visibleEvents = useMemo(
-    () => (typeFilter === "all" ? events : events.filter((e) => e.event_type === typeFilter)),
-    [events, typeFilter],
-  );
+  const visibleEvents = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return events.filter((e) => {
+      if (typeFilter !== "all" && e.event_type !== typeFilter) return false;
+      if (!term) return true;
+      return [e.title, e.description, e.company_name, e.contact_name]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(term));
+    });
+  }, [events, typeFilter, search]);
+
+  useEventReminders(events);
 
   const responsibleName = (userId: string) => {
     const member = members.find((m) => m.user_id === userId);
@@ -134,12 +142,12 @@ export default function Agenda() {
     toast.success("Compromisso excluído.");
   };
 
-  const handleMove = async (event: CalendarEvent, newDate: Date) => {
+  const handleMove = async (event: CalendarEvent, newDate: Date, hour?: number) => {
     const start = new Date(event.starts_at);
     const end = new Date(event.ends_at);
     const duration = end.getTime() - start.getTime();
     const nextStart = new Date(newDate);
-    nextStart.setHours(start.getHours(), start.getMinutes(), 0, 0);
+    nextStart.setHours(hour ?? start.getHours(), hour !== undefined ? 0 : start.getMinutes(), 0, 0);
     if (nextStart.getTime() === start.getTime()) return;
     try {
       await updateEvent.mutateAsync({
@@ -172,7 +180,7 @@ export default function Agenda() {
     return "Próximos compromissos";
   }, [view, cursor]);
 
-  const showNavigation = view === "day" || view === "week" || view === "month";
+  const showNavigation = view !== "list";
   const saving = createEvent.isPending || updateEvent.isPending;
 
   return (
@@ -212,19 +220,9 @@ export default function Agenda() {
           <AgendaMetrics events={visibleEvents} loading={loading} />
 
           {/* Controles */}
-          <Card className="p-3 border-border/70">
+          <Card className="p-3 border-border/70 space-y-3">
             <div className="flex flex-col lg:flex-row lg:items-center gap-3">
-              <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)} className="w-full lg:w-auto">
-                <TabsList className="w-full lg:w-auto grid grid-cols-5 lg:flex">
-                  {VIEWS.map((v) => (
-                    <TabsTrigger key={v.value} value={v.value} className="text-xs lg:text-sm">
-                      {v.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
-
-              <div className="flex items-center gap-2 lg:ml-auto flex-wrap">
+              <div className="flex items-center gap-2">
                 {showNavigation && (
                   <div className="flex items-center gap-1">
                     <Button variant="outline" size="icon" onClick={() => step(-1)} aria-label="Período anterior">
@@ -238,40 +236,65 @@ export default function Agenda() {
                     </Button>
                   </div>
                 )}
+                <p className="text-sm font-semibold capitalize text-foreground">{periodLabel}</p>
+              </div>
 
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-[150px]">
-                    <Filter className="h-3.5 w-3.5 mr-1.5 shrink-0" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os tipos</SelectItem>
-                    {EVENT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {canSeeEveryone && (
-                  <Select value={userFilter} onValueChange={setUserFilter}>
-                    <SelectTrigger className="w-[170px]">
-                      <Users className="h-3.5 w-3.5 mr-1.5 shrink-0" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Toda a equipe</SelectItem>
-                      {members.map((m) => (
-                        <SelectItem key={m.user_id} value={m.user_id}>
-                          {m.name || m.email || "Usuário"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+              <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1 lg:ml-auto">
+                {VIEWS.map((v) => (
+                  <Button
+                    key={v.value}
+                    size="sm"
+                    variant={view === v.value ? "default" : "ghost"}
+                    className="h-7 px-3 text-xs"
+                    onClick={() => setView(v.value)}
+                  >
+                    {v.label}
+                  </Button>
+                ))}
               </div>
             </div>
 
-            <p className="mt-2 text-xs text-muted-foreground capitalize">{periodLabel}</p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar por título, empresa ou contato"
+                  className="pl-9"
+                />
+              </div>
+
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full sm:w-[170px]">
+                  <Filter className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
+                  {EVENT_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {canSeeEveryone && (
+                <Select value={userFilter} onValueChange={setUserFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <Users className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toda a equipe</SelectItem>
+                    {members.map((m) => (
+                      <SelectItem key={m.user_id} value={m.user_id}>
+                        {m.name || m.email || "Usuário"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </Card>
 
           {/* Conteúdo */}
@@ -282,19 +305,13 @@ export default function Agenda() {
               </div>
             )}
 
-            {view === "continuous" && (
-              <ContinuousView
-                events={visibleEvents}
-                onSelect={openEdit}
-                responsibleName={responsibleName}
-              />
-            )}
             {view === "day" && (
               <DayView
                 date={cursor}
                 events={visibleEvents}
                 onSelect={openEdit}
                 onCreateAt={openNew}
+                onMove={handleMove}
                 responsibleName={responsibleName}
               />
             )}
@@ -304,6 +321,7 @@ export default function Agenda() {
                 events={visibleEvents}
                 onSelect={openEdit}
                 onCreateAt={openNew}
+                onMove={handleMove}
                 responsibleName={responsibleName}
               />
             )}
@@ -314,6 +332,7 @@ export default function Agenda() {
                 onSelect={openEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
+                responsibleName={responsibleName}
               />
             )}
             {view === "list" && (
