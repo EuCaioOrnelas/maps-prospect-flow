@@ -207,7 +207,7 @@ const Hero = () => {
               size="lg"
               className="rounded-full group h-11 sm:h-12 px-5 sm:px-6 text-sm font-semibold w-full sm:w-auto shadow-xl whitespace-nowrap"
             >
-              Escalar Operação
+              Iniciar Teste Grátis
               <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
