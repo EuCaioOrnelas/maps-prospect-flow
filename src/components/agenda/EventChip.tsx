@@ -37,6 +37,7 @@ export function EventChip({
   variant = "default",
 }: Props) {
   const [hovered, setHovered] = useState(false);
+  const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const type = getEventType(event.event_type);
   const status = getEventStatus(event.status);
   const Icon = type.icon;
