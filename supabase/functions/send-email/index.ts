@@ -554,6 +554,42 @@ function templateSdrSellerHandoff(payload: Record<string, unknown>): TemplateRes
   };
 }
 
+function templateSdrMeetingScheduled(payload: Record<string, unknown>): TemplateResult {
+  const sdrName = (payload.sdr_name as string) || "SDR Inteligente";
+  const contactName = (payload.contact_name as string) || "Lead";
+  const companyName = (payload.company_name as string) || "";
+  const contactPhone = (payload.contact_phone as string) || "";
+  const whenLabel = (payload.when_label as string) || "";
+  const duration = (payload.duration_minutes as number) || 60;
+  const eventType = (payload.event_type as string) || "meeting";
+  const notes = (payload.notes as string) || "";
+  const typeLabel =
+    eventType === "demo" ? "Demonstração" : eventType === "call" ? "Ligação" : eventType === "visit" ? "Visita" : "Reunião";
+  const waLink = contactPhone
+    ? `https://wa.me/${String(contactPhone).replace(/\D/g, "")}`
+    : `${BRAND.url}/crm/agenda`;
+
+  return {
+    subject: `📅 Nova ${typeLabel.toLowerCase()} agendada: ${contactName}`,
+    html: baseLayout("Compromisso agendado pelo SDR", `
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">${typeLabel} confirmada na sua agenda</h1>
+      <p style="margin:0 0 16px;color:#3f3f46;font-size:15px;">O ${sdrName} conduziu a conversa até o agendamento e já criou o compromisso na Agenda Wiize.</p>
+      <div style="margin:16px 0;padding:16px;background:#f4f4f5;border-radius:8px;">
+        <p style="margin:0 0 6px;font-size:14px;color:#3f3f46;"><strong>Quando:</strong> ${whenLabel} (${duration} min)</p>
+        <p style="margin:0 0 6px;font-size:14px;color:#3f3f46;"><strong>Contato:</strong> ${contactName}${companyName ? ` — ${companyName}` : ""}</p>
+        <p style="margin:0 0 6px;font-size:14px;color:#3f3f46;"><strong>WhatsApp:</strong> ${contactPhone || "não informado"}</p>
+        <p style="margin:0;font-size:14px;color:#3f3f46;"><strong>Tipo:</strong> ${typeLabel}</p>
+      </div>
+      ${notes ? `<p style="margin:0 0 8px;font-size:14px;color:#3f3f46;"><strong>Contexto:</strong> ${notes}</p>` : ""}
+      <p style="margin:16px 0 0;font-size:14px;color:#3f3f46;">O contato também já foi atualizado no CRM.</p>
+      <div style="margin-top:20px;">
+        <a href="${BRAND.url}/crm/agenda" style="display:inline-block;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Ver na agenda</a>
+        <a href="${waLink}" style="display:inline-block;margin-left:8px;padding:12px 24px;background:#ffffff;border:1px solid ${BRAND.color};color:${BRAND.color};border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Falar com o lead</a>
+      </div>
+    `, `${contactName}: ${whenLabel}`),
+  };
+}
+
 const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateResult> = {
   CAMPAIGN_SCHEDULED_STARTED: templateCampaignStarted,
   WEEKLY_SUMMARY: templateWeeklySummary,
