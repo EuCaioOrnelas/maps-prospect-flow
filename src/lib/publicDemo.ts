@@ -64,8 +64,12 @@ export function buildTourDemoSearchHistory() {
  * Blocks every request to the backend (REST, auth, functions, storage, realtime)
  * while the demo page is mounted. Returns a cleanup function.
  */
+let guardInstalled = false;
+
 export function installPublicDemoNetworkGuard() {
   if (typeof window === "undefined") return () => {};
+  if (guardInstalled) return () => {};
+  guardInstalled = true;
 
   const backendHost = (() => {
     try {
@@ -119,6 +123,7 @@ export function installPublicDemoNetworkGuard() {
   }) as typeof WebSocket;
 
   return () => {
+    guardInstalled = false;
     window.fetch = originalFetch;
     XMLHttpRequest.prototype.open = OriginalXHROpen;
     window.WebSocket = OriginalWebSocket;
