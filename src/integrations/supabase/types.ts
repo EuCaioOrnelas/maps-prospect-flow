@@ -1483,6 +1483,116 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          assigned_user_id: string
+          company_name: string | null
+          conference_provider: string | null
+          conference_url: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          conversation_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string
+          event_type: Database["public"]["Enums"]["calendar_event_type"]
+          external_calendar_provider: string | null
+          external_event_id: string | null
+          id: string
+          lead_id: string | null
+          lead_origin: string | null
+          location: string | null
+          metadata: Json
+          notes: string | null
+          owner_user_id: string
+          reminders: Json
+          sdr_agent_id: string | null
+          source: Database["public"]["Enums"]["calendar_event_source"]
+          starts_at: string
+          status: Database["public"]["Enums"]["calendar_event_status"]
+          timezone: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean
+          assigned_user_id: string
+          company_name?: string | null
+          conference_provider?: string | null
+          conference_url?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at: string
+          event_type?: Database["public"]["Enums"]["calendar_event_type"]
+          external_calendar_provider?: string | null
+          external_event_id?: string | null
+          id?: string
+          lead_id?: string | null
+          lead_origin?: string | null
+          location?: string | null
+          metadata?: Json
+          notes?: string | null
+          owner_user_id: string
+          reminders?: Json
+          sdr_agent_id?: string | null
+          source?: Database["public"]["Enums"]["calendar_event_source"]
+          starts_at: string
+          status?: Database["public"]["Enums"]["calendar_event_status"]
+          timezone?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean
+          assigned_user_id?: string
+          company_name?: string | null
+          conference_provider?: string | null
+          conference_url?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string
+          event_type?: Database["public"]["Enums"]["calendar_event_type"]
+          external_calendar_provider?: string | null
+          external_event_id?: string | null
+          id?: string
+          lead_id?: string | null
+          lead_origin?: string | null
+          location?: string | null
+          metadata?: Json
+          notes?: string | null
+          owner_user_id?: string
+          reminders?: Json
+          sdr_agent_id?: string | null
+          source?: Database["public"]["Enums"]["calendar_event_source"]
+          starts_at?: string
+          status?: Database["public"]["Enums"]["calendar_event_status"]
+          timezone?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_daily_reservations: {
         Row: {
           campaign_id: string
@@ -9441,6 +9551,10 @@ export type Database = {
         }
         Returns: Json
       }
+      can_manage_calendar_event: {
+        Args: { _assigned: string; _created_by: string; _owner: string }
+        Returns: boolean
+      }
       cancel_partner_commissions_for_customer: {
         Args: {
           p_customer_user_id: string
@@ -9704,6 +9818,20 @@ export type Database = {
       account_member_status: "active" | "inactive"
       account_role: "owner" | "admin" | "operational"
       app_role: "admin" | "moderator" | "user" | "partner"
+      calendar_event_source: "manual" | "sdr" | "flow" | "import"
+      calendar_event_status:
+        | "scheduled"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
+        | "no_show"
+      calendar_event_type:
+        | "meeting"
+        | "demo"
+        | "call"
+        | "followup"
+        | "visit"
+        | "other"
       commission_status:
         | "pending"
         | "review"
@@ -9878,6 +10006,22 @@ export const Constants = {
       account_member_status: ["active", "inactive"],
       account_role: ["owner", "admin", "operational"],
       app_role: ["admin", "moderator", "user", "partner"],
+      calendar_event_source: ["manual", "sdr", "flow", "import"],
+      calendar_event_status: [
+        "scheduled",
+        "confirmed",
+        "completed",
+        "cancelled",
+        "no_show",
+      ],
+      calendar_event_type: [
+        "meeting",
+        "demo",
+        "call",
+        "followup",
+        "visit",
+        "other",
+      ],
       commission_status: [
         "pending",
         "review",
