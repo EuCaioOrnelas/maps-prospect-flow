@@ -21,25 +21,27 @@ import {
   usePublicSpotlight,
 } from "@/components/tour/PublicTourSpotlight";
 
+import { TOUR_CONTENT, TourContentStep } from "@/lib/tourContent";
+
 /* ------------------------------------------------------------------ */
-/*  Steps — espelham exatamente o tour guiado interno da Wiize        */
+/*  Steps — o CONTEÚDO vem de src/lib/tourContent.ts (fonte única      */
+/*  compartilhada com o tour interno). Aqui só definimos o mock de     */
+/*  tela/estado de cada passo, indexado pelo id do passo.              */
 /* ------------------------------------------------------------------ */
 
-type PublicStep = {
-  id: string;
-  title: string;
-  body: string;
+type MockConfig = {
   target?: string;
+  /** sobrescreve o placement quando o mock precisa de outro lado */
   placement?: Placement;
   screen: MockScreen;
   section?: MockSection;
   activeItem?: string;
-  /** estados do mock */
   typed?: boolean;
   loading?: boolean;
   showLead?: boolean;
-  pillar: "cockpit" | "captacao" | "prospeccao" | "atendimento" | "gestao";
 };
+
+type PublicStep = TourContentStep & Omit<MockConfig, "placement"> & { placement: Placement };
 
 const PILLARS = {
   cockpit: { label: "Cockpit", number: "01" },
@@ -49,97 +51,53 @@ const PILLARS = {
   gestao: { label: "Gestão", number: "05" },
 } as const;
 
-const STEPS: PublicStep[] = [
-  {
-    id: "welcome",
-    title: "Bem-vindo à Wiize",
-    body: "Vamos te apresentar a sua nova operação comercial em quatro pilares: captação, prospecção, atendimento e gestão. Em poucos minutos você entende exatamente como cada parte trabalha por você.",
-    placement: "center",
-    screen: "cockpit",
-    activeItem: "dashboard",
-    pillar: "cockpit",
-  },
+const MOCKS: Record<string, MockConfig> = {
+  welcome: { screen: "cockpit", activeItem: "dashboard" },
 
   // ---- Cockpit ----
-  {
-    id: "cockpit-overview",
-    title: "Cockpit de Crescimento",
-    body: "Esta é a sua central de comando. Aqui você acompanha o impacto financeiro gerado, a curva de leads captados e o resultado consolidado da sua operação em tempo real.",
+  "cockpit-overview": {
     target: '[data-ptour="cockpit-hero"]',
-    placement: "bottom",
     screen: "cockpit",
     activeItem: "dashboard",
-    pillar: "cockpit",
   },
-  {
-    id: "cockpit-kpis",
-    title: "Indicadores executivos",
-    body: "Receita potencial, leads quentes do dia, saúde da operação e o tempo que a IA economizou para você. Tudo o que precisa saber em quatro cartões.",
+  "cockpit-kpis": {
     target: '[data-ptour="cockpit-kpis"]',
-    placement: "top",
     screen: "cockpit",
     activeItem: "dashboard",
-    pillar: "cockpit",
   },
-  {
-    id: "cockpit-forecast",
-    title: "Projeção e funil",
-    body: "À esquerda, a projeção de receita por nível de score. À direita, o funil operacional completo: do lead captado à oportunidade gerada.",
+  "cockpit-forecast": {
     target: '[data-ptour="cockpit-forecast"]',
-    placement: "top",
     screen: "cockpit",
     activeItem: "dashboard",
-    pillar: "cockpit",
   },
 
   // ---- Captação ----
-  {
-    id: "sidebar-oportunidades-intro",
-    title: "Captação de leads com Prospecção IA",
-    body: "Tudo começa no menu Prospecção IA. É aqui que a IA busca novas empresas, analisa cada lead e deixa a abordagem pronta. Vamos entrar agora.",
+  "sidebar-oportunidades-intro": {
     target: '[data-ptour="sidebar-oportunidades"]',
-    placement: "right",
     screen: "cockpit",
     section: "oportunidades",
-    pillar: "captacao",
   },
-  {
-    id: "sidebar-oportunidades-buscar",
-    title: "Item Buscar",
-    body: "Este é o ponto de entrada da sua captação. Em Buscar você encontra empresas reais do Google Maps prontas para serem prospectadas. Vamos abrir essa página.",
+  "sidebar-oportunidades-buscar": {
     target: '[data-ptour="sidebar-oportunidades-buscar"]',
-    placement: "right",
     screen: "cockpit",
     section: "oportunidades",
-    pillar: "captacao",
   },
-  {
-    id: "search-empty",
-    title: "Defina o nicho",
-    body: "Comece pela palavra-chave do nicho que você quer captar. Exemplo: clínicas, contabilidades, restaurantes ou imobiliárias.",
+  "search-empty": {
     target: '[data-ptour="search-keyword"]',
     placement: "bottom",
     screen: "search",
     section: "oportunidades",
     activeItem: "buscar",
-    pillar: "captacao",
   },
-  {
-    id: "search-typing",
-    title: "Escolha a cidade",
-    body: "Agora defina a localização que deseja prospectar. A busca pode ser local, nacional ou internacional.",
+  "search-typing": {
     target: '[data-ptour="search-location"]',
     placement: "bottom",
     screen: "search",
     section: "oportunidades",
     activeItem: "buscar",
     typed: true,
-    pillar: "captacao",
   },
-  {
-    id: "search-button",
-    title: "Prospecte oportunidades",
-    body: "Com os campos preenchidos, basta clicar aqui para a Wiize encontrar empresas qualificadas para sua abordagem.",
+  "search-button": {
     target: '[data-ptour="search-button"]',
     placement: "bottom",
     screen: "search",
@@ -147,184 +105,120 @@ const STEPS: PublicStep[] = [
     activeItem: "buscar",
     typed: true,
     loading: true,
-    pillar: "captacao",
   },
 
   // ---- Gestão / Diagnóstico ----
-  {
-    id: "sidebar-oportunidades-gestao",
-    title: "Gestão da Prospecção IA (Captação)",
-    body: "Toda empresa captada vai parar aqui — ainda na etapa de Captação. É onde a IA analisa cada lead em profundidade antes de virar negócio. Vamos entrar.",
+  "sidebar-oportunidades-gestao": {
     target: '[data-ptour="sidebar-oportunidades-gestao"]',
-    placement: "right",
     screen: "search",
     section: "oportunidades",
-    pillar: "captacao",
   },
-  {
-    id: "management",
-    title: "Gestão da Prospecção IA (Captação)",
-    body: "Esta tela ainda faz parte da Captação: cada empresa recebe uma pontuação, um diagnóstico de pontos fortes e fracos e uma probabilidade de fechamento. A gestão do funil de vendas (CRM, pipeline e score de contatos) acontece em outro menu, que veremos mais à frente.",
-    placement: "center",
+  management: {
     screen: "gestao",
     section: "oportunidades",
     activeItem: "gestao",
-    pillar: "captacao",
   },
-  {
-    id: "diagnosis",
-    title: "Diagnóstico inteligente",
-    body: "Abrimos um lead de exemplo. Veja o score total (0–100), a quebra por dimensão (estrutura digital, reputação e potencial) e a probabilidade de conversão.",
+  diagnosis: {
     target: '[data-ptour="lead-score-summary"]',
     placement: "left",
     screen: "gestao",
     section: "oportunidades",
     activeItem: "gestao",
     showLead: true,
-    pillar: "captacao",
   },
-  {
-    id: "approach-message",
-    title: "Abordagem gerada por IA",
-    body: "Com base no diagnóstico, a Wiize escreve uma mensagem personalizada para o primeiro contato. Você pode copiar, ajustar ou enviar direto pelo WhatsApp.",
+  "approach-message": {
     target: '[data-ptour="lead-approach-card"]',
     placement: "left",
     screen: "gestao",
     section: "oportunidades",
     activeItem: "gestao",
     showLead: true,
-    pillar: "captacao",
   },
 
   // ---- SDR Inteligente ----
-  {
-    id: "sidebar-oportunidades-sdr",
-    title: "SDR Inteligente",
-    body: "Aqui vive o seu pré-vendedor de IA: ele assume a conversa no WhatsApp, qualifica o lead, quebra objeções, faz follow-up sozinho e agenda a reunião com o seu time — 24 horas por dia, sem cansar.",
+  "sidebar-oportunidades-sdr": {
     target: '[data-ptour="sidebar-oportunidades-sdr"]',
-    placement: "right",
     screen: "cockpit",
     section: "oportunidades",
-    pillar: "captacao",
   },
 
   // ---- Agenda ----
-  {
-    id: "sidebar-agenda",
-    title: "Agenda comercial",
-    body: "A Agenda é integrada ao SDR Inteligente: ele consulta a disponibilidade real do seu time, oferece horários livres na conversa e cria a reunião automaticamente — com lembretes por e-mail e visões de dia, semana, mês e lista.",
+  "sidebar-agenda": {
     target: '[data-ptour="sidebar-agenda"]',
-    placement: "right",
     screen: "cockpit",
-    pillar: "captacao",
   },
 
   // ---- Meta ----
-  {
-    id: "sidebar-meta-intro",
-    title: "Meta — API Oficial do WhatsApp",
-    body: "Tudo o que envolve a Meta Cloud API fica neste menu: dashboard de entregas, campanhas, números e configurações.",
+  "sidebar-meta-intro": {
     target: '[data-ptour="sidebar-meta"]',
-    placement: "right",
     screen: "cockpit",
     section: "meta",
-    pillar: "prospeccao",
   },
-  {
-    id: "sidebar-meta-campanhas",
-    title: "Campanhas oficiais",
-    body: "Dispare templates aprovados pela Meta para prospecção, nutrição e reativação — com entregabilidade garantida.",
+  "sidebar-meta-campanhas": {
     target: '[data-ptour="sidebar-meta-campanhas"]',
-    placement: "right",
     screen: "cockpit",
     section: "meta",
-    pillar: "prospeccao",
   },
-  {
-    id: "sidebar-meta-numeros",
-    title: "Números & WABA",
-    body: "Conecte e gerencie seus números oficiais ligados à sua conta WABA (WhatsApp Business Account).",
+  "sidebar-meta-numeros": {
     target: '[data-ptour="sidebar-meta-numeros"]',
-    placement: "right",
     screen: "cockpit",
     section: "meta",
-    pillar: "prospeccao",
   },
 
   // ---- Atendimento ----
-  {
-    id: "sidebar-chat",
-    title: "Atendimento unificado",
-    body: "Todas as conversas em um único lugar. Responda manualmente ou deixe a IA conduzir o atendimento por você, 24 horas por dia.",
+  "sidebar-chat": {
     target: '[data-ptour="sidebar-chat"]',
-    placement: "right",
     screen: "cockpit",
-    pillar: "atendimento",
   },
 
   // ---- Automação ----
-  {
-    id: "sidebar-automacao-intro",
-    title: "Automação completa",
-    body: "Aqui você cria fluxos conversacionais, configura agentes de IA e prepara seus números para o envio em volume. Vamos passar por cada um.",
+  "sidebar-automacao-intro": {
     target: '[data-ptour="sidebar-automacao"]',
-    placement: "right",
     screen: "cockpit",
     section: "automacao",
-    pillar: "atendimento",
   },
-  {
-    id: "sidebar-automacao-fluxos",
-    title: "Fluxos automáticos",
-    body: "Construa jornadas conversacionais com mensagens, condições, esperas e integrações nativas com Google e WhatsApp.",
+  "sidebar-automacao-fluxos": {
     target: '[data-ptour="sidebar-automacao-fluxos"]',
-    placement: "right",
     screen: "cockpit",
     section: "automacao",
-    pillar: "atendimento",
   },
 
   // ---- CRM ----
-  {
-    id: "sidebar-crm-intro",
-    title: "Gestão do funil (CRM)",
-    body: "No menu CRM você acompanha todo o funil de vendas e a qualificação automática dos seus leads.",
+  "sidebar-crm-intro": {
     target: '[data-ptour="sidebar-crm"]',
-    placement: "right",
     screen: "cockpit",
     section: "crm",
-    pillar: "gestao",
   },
-  {
-    id: "sidebar-crm-pipeline",
-    title: "Pipeline visual",
-    body: "Acompanhe cada lead pelas etapas do funil, do primeiro contato ao fechamento, com kanban e arrastar e soltar.",
+  "sidebar-crm-pipeline": {
     target: '[data-ptour="sidebar-crm-pipeline"]',
-    placement: "right",
     screen: "cockpit",
     section: "crm",
-    pillar: "gestao",
   },
-  {
-    id: "sidebar-crm-score",
-    title: "Score de contatos",
-    body: "Identifique os leads mais quentes em uma escala de 0 a 1.000, baseada em engajamento, intenção de compra e respostas no WhatsApp.",
+  "sidebar-crm-score": {
     target: '[data-ptour="sidebar-crm-score"]',
-    placement: "right",
     screen: "cockpit",
     section: "crm",
-    pillar: "gestao",
   },
 
-  {
-    id: "final",
-    title: "Tudo pronto para escalar",
-    body: "Você já conhece toda a operação Wiize. Falta apenas uma etapa para começar a gerar resultados reais no seu comercial.",
-    placement: "center",
-    screen: "cockpit",
-    pillar: "gestao",
-  },
-];
+  final: { screen: "cockpit" },
+};
+
+const STEPS: PublicStep[] = TOUR_CONTENT.map((content) => {
+  const mock = MOCKS[content.id];
+  if (!mock && import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[TourGuiado] Passo "${content.id}" não possui mock configurado em MOCKS. Adicione-o para manter o tour público sincronizado.`
+    );
+  }
+  const { placement: mockPlacement, ...rest } = mock ?? { screen: "cockpit" as MockScreen };
+  return {
+    ...content,
+    ...rest,
+    placement: (mockPlacement ?? content.placement) as Placement,
+  };
+});
+
 
 function splitBody(body: string) {
   const match = body.trim().match(/^(.+?[.!?])\s+(.+)$/s);
