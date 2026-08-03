@@ -209,9 +209,9 @@ export function EventDetailsDialog({
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <p className="min-w-0 flex-1 break-all text-sm text-muted-foreground">{location}</p>
                 {isLink && (
-                  <Button asChild size="sm" className="shrink-0">
+                  <Button asChild size="sm" className="group shrink-0 gap-1.5">
                     <a href={location} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                      <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                       Acessar reunião
                     </a>
                   </Button>
