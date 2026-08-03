@@ -152,9 +152,27 @@ export function EventChip({
               )}
             </div>
           </div>
-          <Badge variant="outline" className={cn("shrink-0 text-[10px] h-5", status.chip)}>
-            {status.label}
-          </Badge>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Badge variant="outline" className={cn("text-[10px] h-5", status.chip)}>
+              {status.label}
+            </Badge>
+            {onQuickEdit && (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                aria-label="Editar compromisso"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickEdit(event);
+                }}
+              >
+                <PencilLine className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+
         </div>
       </div>
     );
