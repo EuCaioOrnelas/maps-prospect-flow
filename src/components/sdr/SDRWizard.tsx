@@ -98,15 +98,25 @@ import {
 import {
   SDR_ACTIVATION_TRIGGERS,
   SDR_DEFAULT_DRAFT,
+  SDR_INSISTENCE_OPTIONS,
   SDR_OBJECTIVES,
   SDR_OBJECTIVE_LABEL,
+  SDR_OBJECTION_OPTIONS,
   SDR_PRIORITIES,
+  SDR_REPLY_DELAY_OPTIONS,
+  SDR_RETURN_OPTIONS,
   SDR_SITUATIONS,
+  SDR_STOP_OPTIONS,
   SDR_SUCCESS_BY_OBJECTIVE,
   SDR_WEEKDAYS,
+  clearSdrDraft,
+  loadSdrDraft,
+  saveSdrDraft,
   type SdrDraft,
   type SdrObjective,
+  type SdrSeller,
 } from "@/lib/sdrConfig";
+import { AI_PROVIDERS } from "@/lib/aiProviders";
 
 interface Props {
   open: boolean;
