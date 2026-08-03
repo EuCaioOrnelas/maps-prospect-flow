@@ -802,6 +802,7 @@ Deno.serve(async (req) => {
       "NUMBER_DISCONNECTED",
       "SUPPORT_TICKET_REPLY",
       "SUPPORT_TICKET_NEW",
+      "SDR_MEETING_SCHEDULED",
       "ADMIN_BROADCAST",
     ]);
     if (!COOLDOWN_BYPASS.has(email_type)) {
