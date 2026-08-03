@@ -862,7 +862,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
  </Button>
  </Link>
  )}
- <Link to="/demonstracao" className="group shrink-0">
+ <Link to="/tour-guiado" className="group shrink-0">
  <Button
  variant="ghost"
  size="lg"
