@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Building2, User, Bot, PencilLine } from "lucide-react";
+import { Clock, Building2, User, Bot, PencilLine, CheckCircle2, XCircle } from "lucide-react";
 import {
   getEventType,
   getEventStatus,
@@ -46,6 +46,24 @@ export function EventChip({
   const Icon = type.icon;
   const duration = formatDuration(minutesBetween(event.starts_at, event.ends_at));
   const cancelled = event.status === "cancelled";
+  const completed = event.status === "completed";
+  const noShow = event.status === "no_show";
+  /** Estilo da barra lateral/fundo conforme o desfecho da reunião. */
+  const barClass = cancelled
+    ? "border-l-destructive bg-destructive/5"
+    : completed
+      ? "border-l-emerald-500 bg-emerald-500/5"
+      : noShow
+        ? "border-l-amber-500 bg-amber-500/5"
+        : type.bar;
+  const dotClass = cancelled
+    ? "bg-destructive"
+    : completed
+      ? "bg-emerald-500"
+      : noShow
+        ? "bg-amber-500"
+        : type.dot;
+  const StatusIcon = completed ? CheckCircle2 : cancelled ? XCircle : null;
 
 
   const details = (
@@ -121,15 +139,30 @@ export function EventChip({
         onClick={() => onClick(event)}
         className={cn(
           "cursor-pointer rounded-lg border border-l-[3px] border-border/70 p-3 transition-all duration-200",
-          type.bar,
+          barClass,
           "hover:shadow-md hover:-translate-y-[1px]",
-          cancelled && "opacity-55",
+          cancelled && "opacity-60",
         )}
       >
         <div className="flex items-start gap-2">
-          <Icon className="h-4 w-4 mt-0.5 shrink-0 text-foreground/70" />
+          {StatusIcon ? (
+            <StatusIcon
+              className={cn(
+                "h-4 w-4 mt-0.5 shrink-0",
+                completed ? "text-emerald-500" : "text-destructive",
+              )}
+            />
+          ) : (
+            <Icon className="h-4 w-4 mt-0.5 shrink-0 text-foreground/70" />
+          )}
           <div className="min-w-0 flex-1">
-            <p className={cn("text-sm font-medium truncate", cancelled && "line-through")}>
+            <p
+              className={cn(
+                "text-sm font-medium truncate",
+                cancelled && "line-through text-muted-foreground",
+                completed && "text-muted-foreground",
+              )}
+            >
               {event.title}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
@@ -195,17 +228,32 @@ export function EventChip({
       <div
         className={cn(
           "flex h-[22px] w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-md border border-l-[3px] px-1.5 text-[11px] font-medium transition-all duration-200",
-          type.bar,
+          barClass,
           "border-y-border/50 border-r-border/50",
-          cancelled && "opacity-55",
+          cancelled && "opacity-60",
           hovered && "shadow-sm ring-1 ring-ring/20",
         )}
       >
-        <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", type.dot)} />
+        {StatusIcon ? (
+          <StatusIcon
+            className={cn(
+              "h-3 w-3 shrink-0",
+              completed ? "text-emerald-500" : "text-destructive",
+            )}
+          />
+        ) : (
+          <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dotClass)} />
+        )}
         <span className="shrink-0 tabular-nums text-muted-foreground">
           {formatTime(event.starts_at)}
         </span>
-        <span className={cn("truncate text-foreground", cancelled && "line-through")}>
+        <span
+          className={cn(
+            "truncate text-foreground",
+            cancelled && "line-through text-muted-foreground",
+            completed && "text-muted-foreground",
+          )}
+        >
           {event.title}
         </span>
         {event.source === "sdr" && <Bot className="ml-auto h-3 w-3 shrink-0 text-primary" />}

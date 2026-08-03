@@ -33,6 +33,7 @@ import { AgendaMetrics } from "@/components/agenda/AgendaMetrics";
 import { EventDialog } from "@/components/agenda/EventDialog";
 import { QuickEditDialog } from "@/components/agenda/QuickEditDialog";
 
+import { EventDetailsDialog } from "@/components/agenda/EventDetailsDialog";
 import { DayView } from "@/components/agenda/views/DayView";
 import { WeekView } from "@/components/agenda/views/WeekView";
 import { MonthView } from "@/components/agenda/views/MonthView";
@@ -74,6 +75,8 @@ export default function Agenda() {
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickEvent, setQuickEvent] = useState<CalendarEvent | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsEvent, setDetailsEvent] = useState<CalendarEvent | null>(null);
 
 
   const range = useMemo(() => {
@@ -135,6 +138,23 @@ export default function Agenda() {
   const openQuickEdit = (event: CalendarEvent) => {
     setQuickEvent(event);
     setQuickOpen(true);
+  };
+
+  const openDetails = (event: CalendarEvent) => {
+    setDetailsEvent(event);
+    setDetailsOpen(true);
+  };
+
+  const handleStatusChange = async (event: CalendarEvent, status: string) => {
+    try {
+      await updateEvent.mutateAsync({ id: event.id, status });
+      toast.success(
+        status === "completed" ? "Reunião marcada como concluída." : "Reunião marcada como perdida.",
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível atualizar.");
+      throw err;
+    }
   };
 
   const handleQuickSave = async (input: Parameters<typeof updateEvent.mutateAsync>[0]) => {
@@ -354,7 +374,7 @@ export default function Agenda() {
               <DayView
                 date={cursor}
                 events={visibleEvents}
-                onSelect={openEdit}
+                onSelect={openDetails}
                 onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
@@ -365,7 +385,7 @@ export default function Agenda() {
               <WeekView
                 date={cursor}
                 events={visibleEvents}
-                onSelect={openEdit}
+                onSelect={openDetails}
                 onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
@@ -376,7 +396,7 @@ export default function Agenda() {
               <MonthView
                 date={cursor}
                 events={visibleEvents}
-                onSelect={openEdit}
+                onSelect={openDetails}
                 onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
@@ -386,7 +406,7 @@ export default function Agenda() {
             {view === "list" && (
               <ListView
                 events={visibleEvents}
-                onSelect={openEdit}
+                onSelect={openDetails}
                 onQuickEdit={openQuickEdit}
                 responsibleName={responsibleName}
               />
@@ -415,6 +435,17 @@ export default function Agenda() {
         saving={updateEvent.isPending}
         onSave={handleQuickSave}
         onOpenFull={openEdit}
+      />
+
+      <EventDetailsDialog
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        event={detailsEvent}
+        members={members}
+        saving={updateEvent.isPending}
+        onStatusChange={handleStatusChange}
+        onReschedule={openQuickEdit}
+        onEdit={openEdit}
       />
     </div>
   );
