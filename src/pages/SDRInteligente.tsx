@@ -38,7 +38,13 @@ import {
   Wifi,
 } from "lucide-react";
 import { useSDRAgents } from "@/hooks/useSDRAgents";
-import { getSdrLimit, SDR_OBJECTIVE_LABEL } from "@/lib/sdrConfig";
+import {
+  clearSdrDraft,
+  getSdrLimit,
+  loadSdrDraft,
+  SDR_OBJECTIVE_LABEL,
+  type SdrStoredDraft,
+} from "@/lib/sdrConfig";
 
 function MetricCard({
   icon: Icon,
@@ -70,6 +76,7 @@ export default function SDRInteligente() {
   const navigate = useNavigate();
   const { agents, analytics, loading, refresh } = useSDRAgents();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [storedDraft, setStoredDraft] = useState<SdrStoredDraft | null>(() => loadSdrDraft());
 
   const limit = useMemo(() => getSdrLimit(profile), [profile]);
   const reachedLimit = agents.length >= limit;
@@ -211,6 +218,44 @@ export default function SDRInteligente() {
                   createButton
                 )}
               </div>
+
+              {/* Rascunho em andamento */}
+              {storedDraft && (
+                <Card className="p-5 border-dashed border-primary/40 bg-primary/5 flex flex-col sm:flex-row sm:items-center gap-4">
+                  <span className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Pencil size={18} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold truncate">
+                        {storedDraft.draft.name?.trim() || "SDR sem nome"}
+                      </p>
+                      <Badge variant="secondary">Rascunho</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Configuração interrompida na etapa {storedDraft.step} de 12. Continue de onde
+                      parou.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => navigate("/oportunidades/sdr/novo")}>
+                      Continuar configuração
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive"
+                      onClick={() => {
+                        clearSdrDraft();
+                        setStoredDraft(null);
+                        toast.success("Rascunho descartado");
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                </Card>
+              )}
 
               {/* Lista */}
               {loading ? (
