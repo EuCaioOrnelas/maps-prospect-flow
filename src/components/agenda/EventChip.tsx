@@ -2,7 +2,8 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Building2, User, Bot } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Clock, Building2, User, Bot, PencilLine } from "lucide-react";
 import {
   getEventType,
   getEventStatus,
@@ -18,6 +19,7 @@ export type EventChipVariant = "compact" | "default" | "detailed";
 interface Props {
   event: CalendarEvent;
   onClick: (event: CalendarEvent) => void;
+  onQuickEdit?: (event: CalendarEvent) => void;
   onDragStart?: (event: CalendarEvent) => void;
   onDragEnd?: () => void;
   responsibleName?: string | null;
@@ -31,6 +33,7 @@ interface Props {
 export function EventChip({
   event,
   onClick,
+  onQuickEdit,
   onDragStart,
   onDragEnd,
   responsibleName,
@@ -43,6 +46,7 @@ export function EventChip({
   const Icon = type.icon;
   const duration = formatDuration(minutesBetween(event.starts_at, event.ends_at));
   const cancelled = event.status === "cancelled";
+
 
   const details = (
     <Card className="p-3 shadow-xl border-border">
