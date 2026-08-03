@@ -2036,8 +2036,8 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
 
       {/* 12 - Revisão */}
       {step === 12 && (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-border bg-card p-5 flex items-center gap-4">
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center gap-4 p-5 border-b border-border bg-muted/30">
             <span className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Bot className="h-6 w-6" strokeWidth={1.75} />
             </span>
@@ -2046,119 +2046,168 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                 {draft.name || "SDR sem nome"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {SDR_OBJECTIVE_LABEL(draft.objective)} · tom {draft.personality.tone}
+                {SDR_OBJECTIVE_LABEL(draft.objective)} · tom {draft.personality.tone} · GPT
+                (gpt-4o-mini)
               </p>
             </div>
+            <Badge variant="secondary" className="ml-auto gap-1 hidden sm:flex">
+              <CheckCircle2 className="h-3 w-3" /> Pronto para ativar
+            </Badge>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="p-5 space-y-5">
             {[
               {
+                title: "Objetivo e sucesso",
                 icon: Target,
-                label: "Objetivo",
-                value: SDR_OBJECTIVE_LABEL(draft.objective),
+                rows: [
+                  { label: "Objetivo", value: SDR_OBJECTIVE_LABEL(draft.objective) },
+                  {
+                    label: "Critério de sucesso",
+                    value: SDR_SUCCESS_BY_OBJECTIVE[draft.objective as SdrObjective],
+                  },
+                ],
               },
               {
-                icon: Flag,
-                label: "Sucesso",
-                value: SDR_SUCCESS_BY_OBJECTIVE[draft.objective as SdrObjective],
-              },
-              {
+                title: "Onde atua",
                 icon: Phone,
-                label: "Números",
-                value:
-                  draft.whatsapp_number_ids
-                    .map(
-                      (id) =>
-                        numbers.find((n) => n.id === id)?.nickname ||
-                        numbers.find((n) => n.id === id)?.display_phone_number ||
-                        "Número"
-                    )
-                    .join(", ") || "Nenhum número",
+                rows: [
+                  {
+                    label: "Números",
+                    value:
+                      draft.whatsapp_number_ids
+                        .map(
+                          (id) =>
+                            numbers.find((n) => n.id === id)?.nickname ||
+                            numbers.find((n) => n.id === id)?.display_phone_number ||
+                            "Número"
+                        )
+                        .join(", ") || "Nenhum número",
+                  },
+                  {
+                    label: "Horário",
+                    value:
+                      draft.schedule.mode === "always"
+                        ? "Sempre ativo (24h)"
+                        : `${draft.schedule.days
+                            .map((d) => SDR_WEEKDAYS.find((w) => w.id === d)?.label)
+                            .filter(Boolean)
+                            .join(", ")} · ${draft.schedule.start}h às ${draft.schedule.end}h`,
+                  },
+                ],
               },
               {
-                icon: Clock,
-                label: "Horário",
-                value:
-                  draft.schedule.mode === "always"
-                    ? "Sempre ativo"
-                    : `${draft.schedule.days
-                        .map((d) => SDR_WEEKDAYS.find((w) => w.id === d)?.label)
-                        .join(", ")} · ${draft.schedule.start}h–${draft.schedule.end}h`,
-              },
-              {
+                title: "Ativação e ritmo",
                 icon: Zap,
-                label: "Ativação",
-                value:
-                  draft.triggers.activation
-                    .map((a) => SDR_ACTIVATION_TRIGGERS.find((t) => t.id === a)?.label)
-                    .filter(Boolean)
-                    .join(", ") || "Não definido",
+                rows: [
+                  {
+                    label: "Gatilhos",
+                    value:
+                      draft.triggers.activation
+                        .map((a) => SDR_ACTIVATION_TRIGGERS.find((t) => t.id === a)?.label)
+                        .filter(Boolean)
+                        .join(", ") || "Não definido",
+                  },
+                  {
+                    label: "Tempo de resposta",
+                    value:
+                      draft.triggers.reply_delay === "custom"
+                        ? `${draft.triggers.reply_delay_custom_seconds} segundos`
+                        : SDR_REPLY_DELAY_OPTIONS.find((o) => o.id === draft.triggers.reply_delay)
+                            ?.label || "Não definido",
+                  },
+                ],
               },
               {
-                icon: Timer,
-                label: "Tempo de resposta",
-                value:
-                  draft.triggers.reply_delay === "smart"
-                    ? "Pausa inteligente"
-                    : draft.triggers.reply_delay === "custom"
-                      ? `${draft.triggers.reply_delay_custom_seconds}s`
-                      : draft.triggers.reply_delay,
+                title: "Estratégia",
+                icon: Brain,
+                rows: [
+                  {
+                    label: "Insistência",
+                    value:
+                      SDR_INSISTENCE_OPTIONS.find((o) => o.id === draft.strategy.insistence)?.label ||
+                      "Não definido",
+                  },
+                  {
+                    label: "Objeções",
+                    value:
+                      SDR_OBJECTION_OPTIONS.find((o) => o.id === draft.strategy.on_objection)?.label ||
+                      "Não definido",
+                  },
+                  {
+                    label: "Vendedor no handoff",
+                    value:
+                      draft.strategy.handoff_sellers.map((v) => v.name || v.email).join(", ") ||
+                      "Não aplicável",
+                  },
+                ],
               },
               {
-                icon: Package,
-                label: "Produtos",
-                value: `${draft.knowledge.products_list.filter((p) => p.name).length} cadastrados`,
-              },
-              {
-                icon: Repeat,
-                label: "Follow-up",
-                value: `${draft.closing.followup_mode === "inteligente" ? "Inteligente" : "Manual"} · até ${draft.closing.followup_max}`,
-              },
-              {
-                icon: BellRing,
-                label: "Avisar vendedor",
-                value: draft.closing.notify_seller_email || "Não definido",
-              },
-              {
-                icon: Archive,
-                label: "Ao encerrar",
-                value:
-                  draft.closing.after_limit_actions
-                    .map((a) =>
-                      a === "arquivar"
-                        ? "Arquivar"
-                        : `Mover para ${stages.find((s) => s.id === draft.closing.after_limit_stage_id)?.name || "pipeline"}`
-                    )
-                    .join(" + ") || "Não definido",
-              },
-              { icon: Cpu, label: "Inteligência", value: "GPT · gpt-4o-mini" },
-              {
+                title: "Conhecimento",
                 icon: BookOpen,
-                label: "Conhecimento",
-                value:
-                  [
-                    draft.knowledge.company && "Empresa",
-                    draft.knowledge.faq && "FAQ",
-                    draft.knowledge.cases && "Cases",
-                    draft.knowledge.site && "Site",
-                  ]
-                    .filter(Boolean)
-                    .join(" + ") || "Não informado",
+                rows: [
+                  { label: "Empresa", value: draft.knowledge.company || "Não informado" },
+                  {
+                    label: "Produtos",
+                    value:
+                      draft.knowledge.products_list
+                        .filter((pr) => pr.name)
+                        .map((pr) => pr.name)
+                        .join(", ") || "Nenhum produto",
+                  },
+                  {
+                    label: "FAQ",
+                    value: `${draft.knowledge.faq_list.filter((f) => f.question && f.answer).length} pergunta(s) cadastrada(s)`,
+                  },
+                ],
               },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-xl border border-border bg-card p-4 flex items-start gap-3"
-              >
-                <span className="h-9 w-9 rounded-lg bg-muted text-muted-foreground flex items-center justify-center shrink-0">
-                  <item.icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {item.label}
-                  </p>
-                  <p className="text-sm font-medium text-foreground break-words">{item.value}</p>
+              {
+                title: "Encerramento",
+                icon: Flag,
+                rows: [
+                  {
+                    label: "Follow-up",
+                    value: `${draft.closing.followup_mode === "inteligente" ? "Inteligente" : "Manual"} · até ${draft.closing.followup_max} tentativa(s)`,
+                  },
+                  {
+                    label: "Avisar vendedor",
+                    value:
+                      draft.closing.notify_sellers.map((v) => v.name || v.email).join(", ") ||
+                      "Ninguém selecionado",
+                  },
+                  {
+                    label: "Ao encerrar",
+                    value:
+                      draft.closing.after_limit_actions
+                        .map((a) =>
+                          a === "arquivar"
+                            ? "Arquivar lead"
+                            : `Mover para ${stages.find((st) => st.id === draft.closing.after_limit_stage_id)?.name || "pipeline"}`
+                        )
+                        .join(" + ") || "Não definido",
+                  },
+                ],
+              },
+            ].map((block) => (
+              <div key={block.title} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <block.icon className="h-4 w-4" strokeWidth={1.75} />
+                  </span>
+                  <p className="text-sm font-semibold text-foreground">{block.title}</p>
+                </div>
+                <div className="rounded-xl border border-border divide-y divide-border">
+                  {block.rows.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 px-4 py-3"
+                    >
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground sm:w-44 shrink-0">
+                        {row.label}
+                      </p>
+                      <p className="text-sm text-foreground break-words">{row.value}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
