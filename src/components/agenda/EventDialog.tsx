@@ -498,12 +498,26 @@ export function EventDialog({
               <Label htmlFor="ev-local" className="flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5" /> Local ou link
               </Label>
-              <Input
-                id="ev-local"
-                value={form.location}
-                onChange={(e) => set("location", e.target.value)}
-                placeholder="Online, endereço ou link da chamada"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="ev-local"
+                  value={form.location}
+                  onChange={(e) => set("location", e.target.value)}
+                  placeholder="Online, endereço ou link da chamada"
+                />
+                {locationUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    title="Abrir link"
+                    onClick={() => window.open(locationUrl, "_blank", "noopener,noreferrer")}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label className="flex items-center gap-1.5">
@@ -518,8 +532,12 @@ export function EventDialog({
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Enviado por e-mail e como aviso dentro da ferramenta.
+              </p>
             </div>
           </div>
+
 
           <div className="space-y-1.5">
             <Label htmlFor="ev-desc">Descrição</Label>
