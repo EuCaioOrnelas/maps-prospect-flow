@@ -604,6 +604,7 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   AGENT_OBJECTIVE_COMPLETED: templateAgentObjectiveCompleted,
   SUGGESTION_IN_DEVELOPMENT: templateSuggestionInDevelopment,
   SDR_SELLER_HANDOFF: templateSdrSellerHandoff,
+  SDR_MEETING_SCHEDULED: templateSdrMeetingScheduled,
 };
 
 function htmlToPlainText(html: string): string {
