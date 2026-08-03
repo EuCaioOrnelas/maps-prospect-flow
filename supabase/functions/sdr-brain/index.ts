@@ -379,7 +379,13 @@ Responda SEMPRE em JSON válido com o formato:
  "proximo_passo": "conexao|necessidade|valor|objecoes|fechamento",
  "micro_objetivo": string,
  "estrategia": string,
- "proxima_acao": "responder|aguardar|followup|chamar_vendedor|encerrar"
+ "proxima_acao": "responder|aguardar|followup|chamar_vendedor|encerrar",
+ "agendamento": {"confirmado": boolean, "inicio_iso": string|null, "tipo": "meeting|demo|call|visit", "titulo": string, "observacao": string, "opcoes_iso": [string]}
+
+Regras do campo "agendamento":
+- "opcoes_iso" traz no máximo 3 horários da lista de horários livres que devem ser oferecidos agora (vazio se não for o momento de oferecer).
+- "confirmado" só é true quando o lead escolheu explicitamente um horário; nesse caso "inicio_iso" precisa ser EXATAMENTE um iso da lista de horários livres.
+- Se o horário desejado pelo lead não estiver na lista, "confirmado" = false e "inicio_iso" = null.
 }`;
     const analysisUser = `CONFIGURAÇÃO DO SDR:
 ${brief}
