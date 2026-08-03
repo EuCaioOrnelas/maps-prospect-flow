@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Clock, Headphones, Kanban, MessageCircle, Rocket, Search, Send, Sparkles, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Clock, Headphones, Kanban, MessageCircle, Rocket, Search, Send, Sparkles, X, Zap } from "lucide-react";
+import { isPublicDemoPath } from "@/lib/publicDemo";
 import { FaWhatsapp } from "react-icons/fa";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,7 @@ function splitBodyForScan(body: string): string[] {
 
 export function GuidedTour() {
   const { isActive, currentStepIndex, steps, direction, next, prev, finish } = useGuidedTour();
+  const navigate = useNavigate();
   const step = steps[currentStepIndex];
   const hideOnLoad = step?.hideSpotlightWhileTargetLoads === "always" || (!!step?.hideSpotlightWhileTargetLoads && direction === "next");
   const [rect, setRect] = useState<Rect | null>(null);
@@ -385,7 +387,22 @@ export function GuidedTour() {
       className="fixed inset-0 pointer-events-none"
       style={{ zIndex: 2147483646 }}
     >
+      {/* Close button — public (no-login) demo only */}
+      {isPublicDemoPath() && (
+        <button
+          type="button"
+          aria-label="Fechar tour"
+          onClick={() => { try { finish(); } catch {} navigate("/"); }}
+          className="fixed top-5 right-5 pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/95 px-4 py-2 text-sm font-semibold text-neutral-900 shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:bg-white"
+          style={{ zIndex: 2147483647 }}
+        >
+          <X size={15} />
+          Fechar tour
+        </button>
+      )}
+
       {/* Fallback full overlay when no spotlight */}
+
       {showFallbackOverlay && (
         <div
           className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300"

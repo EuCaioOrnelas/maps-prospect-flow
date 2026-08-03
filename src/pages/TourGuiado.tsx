@@ -1,11 +1,24 @@
+import { useEffect } from "react";
 import { SEO } from "@/components/SEO";
 import MainDashboard from "@/pages/MainDashboard";
 import Dashboard from "@/pages/Dashboard";
 import OpportunitiesManagement from "@/pages/OpportunitiesManagement";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+import { installPublicDemoNetworkGuard } from "@/lib/publicDemo";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function TourGuiado() {
   const { currentStepIndex, steps } = useGuidedTour();
+  const { setTheme } = useTheme();
+
+  // Hard network isolation: nothing leaves the browser during the public demo.
+  useEffect(() => installPublicDemoNetworkGuard(), []);
+
+  // Public demo always renders in the light (white) theme.
+  useEffect(() => {
+    setTheme("light");
+  }, [setTheme]);
+
   const route = steps[currentStepIndex]?.route;
   const screen = route === "/oportunidades"
     ? <Dashboard />
