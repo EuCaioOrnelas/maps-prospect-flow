@@ -92,7 +92,6 @@ export function MonthView({ date, events, onSelect, onQuickEdit, onCreateAt, onM
                     variant="compact"
                     onClick={onSelect}
                     onQuickEdit={onQuickEdit}
-                onQuickEdit={onQuickEdit}
                     onDragStart={setDragging}
                     onDragEnd={() => setDragging(null)}
                     responsibleName={responsibleName(ev.assigned_user_id)}

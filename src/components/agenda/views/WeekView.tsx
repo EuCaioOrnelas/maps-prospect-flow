@@ -102,8 +102,6 @@ export function WeekView({ date, events, onSelect, onQuickEdit, onCreateAt, onMo
                         variant="compact"
                         onClick={onSelect}
                         onQuickEdit={onQuickEdit}
-                    onQuickEdit={onQuickEdit}
-                onQuickEdit={onQuickEdit}
                         onDragStart={setDragging}
                         onDragEnd={() => setDragging(null)}
                         responsibleName={responsibleName(ev.assigned_user_id)}
