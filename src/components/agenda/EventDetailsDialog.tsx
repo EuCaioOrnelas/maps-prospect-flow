@@ -127,8 +127,8 @@ export function EventDetailsDialog({
             <Button
               type="button"
               size="icon"
-              variant="ghost"
-              className="h-8 w-8 shrink-0"
+              variant="outline"
+              className="h-8 w-8 shrink-0 rounded-lg border-border bg-background transition-colors hover:bg-muted hover:text-foreground"
               aria-label="Editar compromisso"
               onClick={() => {
                 onOpenChange(false);
@@ -209,9 +209,9 @@ export function EventDetailsDialog({
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <p className="min-w-0 flex-1 break-all text-sm text-muted-foreground">{location}</p>
                 {isLink && (
-                  <Button asChild size="sm" className="shrink-0">
+                  <Button asChild size="sm" className="group shrink-0 gap-1.5">
                     <a href={location} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                      <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                       Acessar reunião
                     </a>
                   </Button>
@@ -238,47 +238,57 @@ export function EventDetailsDialog({
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-2 border-t border-border pt-4 sm:grid-cols-3">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busy}
-              onClick={() => apply("completed")}
-              className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-600 dark:text-emerald-300"
-            >
-              {pending === "completed" ? (
-                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-              ) : (
-                <CheckCircle2 className="mr-1.5 h-4 w-4" />
-              )}
-              Concluída
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busy}
-              onClick={() => {
-                onOpenChange(false);
-                onReschedule(event);
-              }}
-            >
-              <CalendarClock className="mr-1.5 h-4 w-4" />
-              Reagendar
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busy}
-              onClick={() => apply("cancelled")}
-              className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-            >
-              {pending === "cancelled" ? (
-                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-              ) : (
-                <XCircle className="mr-1.5 h-4 w-4" />
-              )}
-              Perdida
-            </Button>
+          <div className="space-y-3 border-t border-border pt-4">
+            <p className="text-xs font-medium text-muted-foreground">Ações rápidas</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={() => apply("completed")}
+                className="group relative justify-start gap-2 overflow-hidden border-emerald-500/30 bg-emerald-500/5 text-emerald-700 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/15 hover:shadow-sm hover:shadow-emerald-500/10 dark:text-emerald-300"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/15 transition-colors group-hover:bg-emerald-500/25">
+                  {pending === "completed" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4" />
+                  )}
+                </span>
+                Concluída
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={() => {
+                  onOpenChange(false);
+                  onReschedule(event);
+                }}
+                className="group relative justify-start gap-2 overflow-hidden border-primary/30 bg-primary/5 text-primary transition-all hover:border-primary/50 hover:bg-primary/15 hover:shadow-sm hover:shadow-primary/10"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 transition-colors group-hover:bg-primary/25">
+                  <CalendarClock className="h-4 w-4" />
+                </span>
+                Reagendar
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={() => apply("cancelled")}
+                className="group relative justify-start gap-2 overflow-hidden border-destructive/30 bg-destructive/5 text-destructive transition-all hover:border-destructive/50 hover:bg-destructive/15 hover:shadow-sm hover:shadow-destructive/10"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-destructive/15 transition-colors group-hover:bg-destructive/25">
+                  {pending === "cancelled" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <XCircle className="h-4 w-4" />
+                  )}
+                </span>
+                Perdida
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
