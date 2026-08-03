@@ -807,9 +807,23 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         situations: { ...SDR_DEFAULT_DRAFT.situations, ...(editing.situations || {}) },
       });
     } else {
-      setDraft(SDR_DEFAULT_DRAFT);
+      const stored = loadSdrDraft();
+      if (stored?.draft) {
+        setDraft({ ...SDR_DEFAULT_DRAFT, ...stored.draft });
+        setStep(Math.min(Math.max(stored.step || 1, 1), STEPS.length));
+        toast.info("Rascunho retomado de onde você parou");
+      } else {
+        setDraft(SDR_DEFAULT_DRAFT);
+      }
     }
   }, [open, editing]);
+
+  /** Autosave do rascunho (apenas na criação) */
+  useEffect(() => {
+    if (!open || editing) return;
+    if (!draft.name.trim() && step === 1) return;
+    saveSdrDraft(draft, step);
+  }, [open, editing, draft, step]);
 
   useEffect(() => {
     if (!open || !accountOwnerId) return;
@@ -946,6 +960,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         : supabase.from("sdr_agents" as any).insert(payload);
       const { error } = await q;
       if (error) throw error;
+      if (!editing) clearSdrDraft();
       toast.success(editing ? "SDR atualizado com sucesso" : "SDR criado com sucesso");
       onCreated();
       onClose();
@@ -954,6 +969,12 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveDraft = () => {
+    saveSdrDraft(draft, step);
+    toast.success("Rascunho salvo. Ele aparece na lista de SDRs para você continuar depois.");
+    onClose();
   };
 
   const StepIcon = STEPS[step - 1].icon;
@@ -2229,6 +2250,13 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
       >
         {step === 1 ? "Cancelar" : "Voltar"}
       </Button>
+      <div className="flex items-center gap-2">
+        {!editing && (
+          <Button variant="outline" onClick={handleSaveDraft} disabled={saving} className="h-11 gap-2">
+            <Save className="h-4 w-4" />
+            Salvar rascunho
+          </Button>
+        )}
       {step < STEPS.length ? (
         <Button onClick={() => setStep(step + 1)} disabled={!canProceed} className="px-8 h-11">
           Continuar
@@ -2245,6 +2273,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           )}
         </Button>
       )}
+      </div>
     </div>
   ) : (
     <div className="flex items-center justify-between pt-2 border-t border-border">
