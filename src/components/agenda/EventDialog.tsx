@@ -445,53 +445,56 @@ export function EventDialog({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="ev-company" className="flex items-center gap-1.5">
-                <Building2 className="h-3.5 w-3.5" /> Empresa
-              </Label>
-              <Input
-                id="ev-company"
-                value={form.company_name}
-                onChange={(e) => set("company_name", e.target.value)}
-                placeholder="Nome da empresa"
-              />
+          {form.category === "comercial" && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="ev-company" className="flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5" /> Empresa
+                </Label>
+                <Input
+                  id="ev-company"
+                  value={form.company_name}
+                  onChange={(e) => set("company_name", e.target.value)}
+                  placeholder="Nome da empresa"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ev-contact" className="flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" /> Contato
+                </Label>
+                <Input
+                  id="ev-contact"
+                  value={form.contact_name}
+                  onChange={(e) => set("contact_name", e.target.value)}
+                  placeholder="Nome do lead"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ev-email" className="flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5" /> E-mail
+                </Label>
+                <Input
+                  id="ev-email"
+                  type="email"
+                  value={form.contact_email}
+                  onChange={(e) => set("contact_email", e.target.value)}
+                  placeholder="contato@empresa.com.br"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ev-phone" className="flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5" /> Telefone
+                </Label>
+                <Input
+                  id="ev-phone"
+                  value={form.contact_phone}
+                  onChange={(e) => set("contact_phone", e.target.value)}
+                  placeholder="(11) 90000-0000"
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ev-contact" className="flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5" /> Contato
-              </Label>
-              <Input
-                id="ev-contact"
-                value={form.contact_name}
-                onChange={(e) => set("contact_name", e.target.value)}
-                placeholder="Nome do lead"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ev-email" className="flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5" /> E-mail
-              </Label>
-              <Input
-                id="ev-email"
-                type="email"
-                value={form.contact_email}
-                onChange={(e) => set("contact_email", e.target.value)}
-                placeholder="contato@empresa.com.br"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ev-phone" className="flex items-center gap-1.5">
-                <Phone className="h-3.5 w-3.5" /> Telefone
-              </Label>
-              <Input
-                id="ev-phone"
-                value={form.contact_phone}
-                onChange={(e) => set("contact_phone", e.target.value)}
-                placeholder="(11) 90000-0000"
-              />
-            </div>
-          </div>
+          )}
+
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
