@@ -95,6 +95,7 @@ function splitBodyForScan(body: string): string[] {
 
 export function GuidedTour() {
   const { isActive, currentStepIndex, steps, direction, next, prev, finish } = useGuidedTour();
+  const navigate = useNavigate();
   const step = steps[currentStepIndex];
   const hideOnLoad = step?.hideSpotlightWhileTargetLoads === "always" || (!!step?.hideSpotlightWhileTargetLoads && direction === "next");
   const [rect, setRect] = useState<Rect | null>(null);
