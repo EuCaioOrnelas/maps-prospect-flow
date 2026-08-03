@@ -91,9 +91,26 @@ export function EventChip({
             </Badge>
           )}
         </div>
+        {onQuickEdit && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-7 w-full text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              setHovered(false);
+              onQuickEdit(event);
+            }}
+          >
+            <PencilLine className="h-3 w-3 mr-1.5" />
+            Editar detalhes
+          </Button>
+        )}
       </div>
     </Card>
   );
+
 
   if (variant === "detailed") {
     return (
