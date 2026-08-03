@@ -544,23 +544,27 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           </p>
 
           {/* Next step card */}
-          <div className="text-left bg-white border border-gray-200 rounded-card p-4 sm:p-5 mb-4">
+          <div className="text-left bg-card border border-border rounded-card p-4 sm:p-5 mb-6">
             <div className="flex items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-50 border border-green-200 text-primary">
-                <FaWhatsapp size={30} />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card bg-primary/10 border border-primary/20 text-primary">
+                {publicDemo ? <Rocket size={24} /> : <FaWhatsapp size={30} />}
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="text-sm sm:text-base font-bold text-foreground leading-tight">
-                  Última etapa: conectar seu WhatsApp Oficial
+                  {publicDemo
+                    ? "Próxima etapa: criar sua conta gratuita"
+                    : "Última etapa: conectar seu WhatsApp Oficial"}
                 </h4>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
-                  Conecte sua conta oficial via Meta API para começar a prospectar, atender e fechar mais negócios.
+                  {publicDemo
+                    ? "Crie sua conta em menos de 1 minuto e teste a Wiize por 7 dias, sem cartão e sem compromisso. Você já começa com o cockpit, a prospecção com IA e o SDR Inteligente liberados."
+                    : "Conecte sua conta oficial via Meta API para começar a prospectar, atender e fechar mais negócios."}
                 </p>
               </div>
             </div>
 
             <div className="mt-4 flex items-center gap-3">
-              <div className="relative h-3.5 flex-1 max-w-[75%] overflow-hidden rounded-full bg-gray-100 border border-gray-200">
+              <div className="relative h-3.5 flex-1 max-w-[75%] overflow-hidden rounded-full bg-muted border border-border">
                 <div
                   className="absolute inset-y-0 left-0 rounded-full bg-[linear-gradient(90deg,#15803d_0%,#16a34a_55%,#22c55e_100%)] shadow-[0_0_16px_rgba(34,197,94,0.55)]"
                   style={{
@@ -570,21 +574,15 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
                 />
               </div>
               <span className="text-xs font-bold text-primary tabular-nums whitespace-nowrap">
-                Última etapa
+                {publicDemo ? "Falta 1 passo" : "Última etapa"}
               </span>
 
             </div>
             <p className="text-[11px] sm:text-xs text-muted-foreground mt-3">
-              Falta pouco! Conecte seu WhatsApp Oficial para ativar todas as funcionalidades da Wiize.
+              {publicDemo
+                ? "Sem cartão de crédito. Cancele quando quiser."
+                : "Falta pouco! Conecte seu WhatsApp Oficial para ativar todas as funcionalidades da Wiize."}
             </p>
-          </div>
-
-          {/* Estimated time card */}
-          <div className="flex items-center justify-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-6">
-            <Clock size={16} className="text-green-700" />
-            <span className="text-xs sm:text-sm font-semibold text-green-800">
-              Tempo estimado: 15 a 25 minutos
-            </span>
           </div>
 
           <Button
@@ -592,8 +590,17 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
             onClick={handleConnect}
             className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
           >
-            <FaWhatsapp size={40} className="!h-7 !w-7" />
-            {publicDemo ? "Começar teste grátis de 7 dias" : "Conectar WhatsApp Agora"}
+            {publicDemo ? (
+              <>
+                <Rocket size={20} className="!h-6 !w-6" />
+                Começar meu teste grátis
+              </>
+            ) : (
+              <>
+                <FaWhatsapp size={40} className="!h-7 !w-7" />
+                Conectar WhatsApp Agora
+              </>
+            )}
           </Button>
 
 
