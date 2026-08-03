@@ -30,6 +30,7 @@ import {
   FileText,
   Phone,
   RotateCcw,
+  CalendarDays,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { MetaIcon } from "@/components/meta/MetaIcon";
