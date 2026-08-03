@@ -412,14 +412,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             {can("crm") && (
             <li data-tour="sidebar-crm">
               <SidebarNavItem
-                title="Pipeline"
+                title="CRM"
                 icon={Users}
                 onClick={handleCrmClick}
                 isActive={isOnCrmPage}
                 isExpanded={isExpanded}
                 hasSubmenu
                 isSubmenuOpen={isCrmOpen}
-                tooltip="Pipeline"
+                tooltip="CRM"
               />
 
               {isExpanded && (
@@ -427,7 +427,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   className={cn(
                     "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isCrmOpen
-                      ? "max-h-28 opacity-100 mt-1"
+                      ? "max-h-40 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
                 >
@@ -443,7 +443,21 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <Users size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Pipeline</span>
+                        <span className="whitespace-nowrap truncate">Contatos</span>
+                      </Link>
+                    </li>
+                    <li data-tour="sidebar-crm-agenda">
+                      <Link
+                        to="/crm/agenda"
+                        className={cn(
+                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
+                          currentPath === "/crm/agenda"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <CalendarDays size={20} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Agenda</span>
                       </Link>
                     </li>
                     <li data-tour="sidebar-crm-score">
