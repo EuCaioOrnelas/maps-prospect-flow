@@ -345,6 +345,29 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       },
     },
 
+    // ---- SDR Inteligente ----
+    {
+      id: "sidebar-oportunidades-sdr",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-oportunidades-sdr"]',
+      title: "SDR Inteligente",
+      body: "Aqui vive o seu pré-vendedor de IA: ele assume a conversa no WhatsApp, qualifica o lead, quebra objeções, faz follow-up sozinho e agenda a reunião com o seu time — 24 horas por dia, sem cansar.",
+      placement: "right",
+      sidebarSection: "oportunidades",
+      waitMs: 700,
+    },
+
+    // ---- Agenda ----
+    {
+      id: "sidebar-agenda",
+      route: "/dashboard",
+      target: '[data-tour="sidebar-agenda"]',
+      title: "Agenda comercial",
+      body: "A Agenda é integrada ao SDR Inteligente: ele consulta a disponibilidade real do seu time, oferece horários livres na conversa e cria a reunião automaticamente — com lembretes por e-mail e visões de dia, semana, mês e lista.",
+      placement: "right",
+      waitMs: 700,
+    },
+
     // ---- Meta (API Oficial) ----
     {
       id: "sidebar-meta-intro",
