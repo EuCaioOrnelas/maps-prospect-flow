@@ -6,6 +6,8 @@ import OpportunitiesManagement from "@/pages/OpportunitiesManagement";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
 import { installPublicDemoNetworkGuard } from "@/lib/publicDemo";
 import { useTheme } from "@/contexts/ThemeContext";
+import { PublicDemoCloseButton } from "@/components/tour/PublicDemoCloseButton";
+
 
 export default function TourGuiado() {
   const { currentStepIndex, steps } = useGuidedTour();
@@ -34,6 +36,9 @@ export default function TourGuiado() {
       />
 
       <div data-tour-scroll-root className="fixed inset-0 overflow-auto bg-background">{screen}</div>
+
+      <PublicDemoCloseButton />
+
     </>
   );
 }
