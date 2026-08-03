@@ -726,7 +726,7 @@ const Dashboard = () => {
                 variant="hero"
                 size="lg"
                 className="w-full h-14 text-base font-semibold"
-                disabled={isSearching || searchesRemaining <= 0}
+                disabled={isSearching || (!publicDemo && searchesRemaining <= 0)}
                 data-tour="search-button"
               >
                 {isSearching ? (
@@ -742,7 +742,7 @@ const Dashboard = () => {
                 )}
               </Button>
 
-              {searchesRemaining <= 0 && (
+              {!publicDemo && searchesRemaining <= 0 && (
                 <div className="flex items-center justify-center gap-2 mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl">
                   <AlertCircle size={16} className="text-destructive" />
                   <p className="text-destructive text-sm font-medium">
