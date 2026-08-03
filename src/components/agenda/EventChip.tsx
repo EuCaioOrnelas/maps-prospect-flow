@@ -213,13 +213,17 @@ export function EventChip({
       {hovered && anchor &&
         createPortal(
           <div
-            className="pointer-events-none fixed z-[60] w-64 animate-in fade-in duration-150"
+            className="fixed z-[60] w-64 pt-1.5 animate-in fade-in duration-150"
             style={{ left: anchor.x, top: anchor.y }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            onClick={(e) => e.stopPropagation()}
           >
             {details}
           </div>,
           document.body,
         )}
+
     </div>
   );
 }
