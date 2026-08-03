@@ -153,11 +153,11 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
  Indisponível
  </Button>
  ) : (
- <a href="/#pricing" onClick={handlePricingClick}>
- <Button variant="hero" size="sm" className="rounded-full border-transparent shadow-lg">
- Gerar vendas
- </Button>
- </a>
+              <Link to="/signup/escolher-plano" onClick={handleSignupClick}>
+                <Button variant="hero" size="sm" className="rounded-full border-transparent shadow-lg">
+                  Iniciar Teste Grátis
+                </Button>
+              </Link>
  )}
  </div>
 
