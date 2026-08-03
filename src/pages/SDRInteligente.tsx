@@ -36,8 +36,10 @@ import {
   Pencil,
   Trash2,
   Wifi,
+  MessagesSquare,
 } from "lucide-react";
 import { useSDRAgents } from "@/hooks/useSDRAgents";
+import { SDRTestChatDialog } from "@/components/sdr/SDRTestChatDialog";
 import {
   clearSdrDraft,
   getSdrLimit,
@@ -76,6 +78,7 @@ export default function SDRInteligente() {
   const navigate = useNavigate();
   const { agents, analytics, loading, refresh } = useSDRAgents();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [testAgent, setTestAgent] = useState<any | null>(null);
   const [storedDraft, setStoredDraft] = useState<SdrStoredDraft | null>(() => loadSdrDraft());
 
   const limit = useMemo(() => getSdrLimit(profile), [profile]);
@@ -312,6 +315,14 @@ export default function SDRInteligente() {
                         <div className="flex gap-1">
                           <Button
                             size="sm"
+                            variant="outline"
+                            className="gap-1.5 h-8"
+                            onClick={() => setTestAgent(a)}
+                          >
+                            <MessagesSquare size={14} /> Testar
+                          </Button>
+                          <Button
+                            size="sm"
                             variant="ghost"
                             onClick={() => navigate(`/oportunidades/sdr/${a.id}/editar`)}
                           >
@@ -335,6 +346,12 @@ export default function SDRInteligente() {
           </main>
         </div>
       </div>
+
+      <SDRTestChatDialog
+        agent={testAgent}
+        open={!!testAgent}
+        onOpenChange={(v) => !v && setTestAgent(null)}
+      />
 
       <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
         <AlertDialogContent>
