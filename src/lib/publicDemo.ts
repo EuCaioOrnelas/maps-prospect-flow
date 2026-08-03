@@ -90,9 +90,12 @@ export function installPublicDemoNetworkGuard() {
     }
   };
 
+  // Respond with an empty, successful payload instead of an error status:
+  // a 403 would surface as a runtime error in the app's error reporter while
+  // the demo is running. Nothing ever reaches the backend either way.
   const blockedResponse = () =>
-    new Response(JSON.stringify({ error: "demo_mode_blocked", data: null }), {
-      status: 403,
+    new Response("[]", {
+      status: 200,
       headers: { "Content-Type": "application/json" },
     });
 
