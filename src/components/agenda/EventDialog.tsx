@@ -405,12 +405,20 @@ export function EventDialog({
               <Label className="flex items-center gap-1.5">
                 <Briefcase className="h-3.5 w-3.5" /> Lead vinculado
               </Label>
-              <LeadPicker onSelect={applyLead} />
+              <LeadPicker
+                onSelect={applyLead}
+                selectedLabel={
+                  form.lead_id
+                    ? form.company_name || form.contact_name || "Lead vinculado"
+                    : null
+                }
+              />
               <p className="text-[11px] text-muted-foreground">
                 Preenche empresa, contato, e-mail e telefone automaticamente.
               </p>
             </div>
           )}
+
 
           <div className="space-y-1.5">
             <Label className="flex items-center gap-1.5">
