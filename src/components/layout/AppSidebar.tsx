@@ -444,7 +444,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <Users size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Contatos</span>
+                        <span className="whitespace-nowrap truncate">CRM</span>
                       </Link>
                     </li>
                     <li data-tour="sidebar-crm-agenda">
