@@ -283,20 +283,39 @@ export default function Agenda() {
 
               {canSeeEveryone && (
                 <Select value={userFilter} onValueChange={setUserFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[210px]">
                     <Users className="h-3.5 w-3.5 mr-1.5 shrink-0" />
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Toda a equipe</SelectItem>
-                    {members.map((m) => (
-                      <SelectItem key={m.user_id} value={m.user_id}>
-                        {m.name || m.email || "Usuário"}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="all">
+                      <span className="flex items-center gap-2">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                          <Users className="h-3.5 w-3.5" />
+                        </span>
+                        Toda a equipe
+                      </span>
+                    </SelectItem>
+                    {members.map((m) => {
+                      const label = m.name || m.email || "Usuário";
+                      return (
+                        <SelectItem key={m.user_id} value={m.user_id}>
+                          <span className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6 rounded-md">
+                              <AvatarImage src={m.avatar_url || undefined} alt={label} className="rounded-md object-cover" />
+                              <AvatarFallback className="rounded-md text-[10px] font-semibold">
+                                {label.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="truncate">{label}</span>
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               )}
+
             </div>
           </Card>
 
