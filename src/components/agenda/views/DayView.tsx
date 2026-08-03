@@ -1,5 +1,6 @@
-import { useMemo } from "react";
-import { EventCard } from "../EventCard";
+import { useMemo, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { EventChip } from "../EventChip";
 import { DAY_START_HOUR, DAY_END_HOUR, pad, type CalendarEvent } from "@/lib/calendarConfig";
 import { eventsOfDay } from "@/lib/calendarViews";
 import { cn } from "@/lib/utils";
@@ -9,31 +10,43 @@ interface Props {
   events: CalendarEvent[];
   onSelect: (event: CalendarEvent) => void;
   onCreateAt: (date: Date) => void;
+  onMove: (event: CalendarEvent, newDate: Date, hour?: number) => void;
   responsibleName: (userId: string) => string | null;
 }
 
 /** Visualização diária com faixa de horários. */
-export function DayView({ date, events, onSelect, onCreateAt, responsibleName }: Props) {
+export function DayView({ date, events, onSelect, onCreateAt, onMove, responsibleName }: Props) {
   const hours = useMemo(
     () => Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => DAY_START_HOUR + i),
     [],
   );
   const dayEvents = eventsOfDay(events, date);
+  const [dragging, setDragging] = useState<CalendarEvent | null>(null);
+  const [hoverHour, setHoverHour] = useState<number | null>(null);
   const now = new Date();
 
   return (
-    <div className="divide-y divide-border/60 rounded-xl border border-border/70 overflow-hidden">
+    <Card className="overflow-hidden">
       {hours.map((hour) => {
         const slotEvents = dayEvents.filter((e) => new Date(e.starts_at).getHours() === hour);
-        const isCurrent =
-          now.getHours() === hour &&
-          now.toDateString() === date.toDateString();
+        const isCurrent = now.getHours() === hour && now.toDateString() === date.toDateString();
         return (
           <div
             key={hour}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setHoverHour(hour);
+            }}
+            onDragLeave={() => setHoverHour((prev) => (prev === hour ? null : prev))}
+            onDrop={() => {
+              if (dragging) onMove(dragging, date, hour);
+              setDragging(null);
+              setHoverHour(null);
+            }}
             className={cn(
-              "grid grid-cols-[56px_1fr] gap-3 px-3 py-2 transition-colors hover:bg-muted/40",
+              "grid grid-cols-[64px_1fr] gap-3 border-b border-border/50 px-3 py-2 transition-colors last:border-b-0",
               isCurrent && "bg-primary/5",
+              hoverHour === hour && "bg-primary/10",
             )}
           >
             <button
@@ -43,16 +56,19 @@ export function DayView({ date, events, onSelect, onCreateAt, responsibleName }:
                 d.setHours(hour, 0, 0, 0);
                 onCreateAt(d);
               }}
-              className="text-left text-xs text-muted-foreground pt-1 hover:text-primary transition-colors"
+              className="pt-1 text-left text-xs tabular-nums text-muted-foreground transition-colors hover:text-primary"
             >
               {pad(hour)}:00
             </button>
-            <div className="space-y-1.5 min-h-[36px]">
+            <div className="min-h-[40px] space-y-1.5">
               {slotEvents.map((ev) => (
-                <EventCard
+                <EventChip
                   key={ev.id}
                   event={ev}
+                  variant="detailed"
                   onClick={onSelect}
+                  onDragStart={setDragging}
+                  onDragEnd={() => setDragging(null)}
                   responsibleName={responsibleName(ev.assigned_user_id)}
                 />
               ))}
@@ -60,6 +76,6 @@ export function DayView({ date, events, onSelect, onCreateAt, responsibleName }:
           </div>
         );
       })}
-    </div>
+    </Card>
   );
 }

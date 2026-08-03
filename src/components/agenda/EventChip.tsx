@@ -1,0 +1,169 @@
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Clock, Building2, User, Bot } from "lucide-react";
+import {
+  getEventType,
+  getEventStatus,
+  minutesBetween,
+  formatDuration,
+  type CalendarEvent,
+} from "@/lib/calendarConfig";
+import { formatTime } from "@/lib/calendarViews";
+import { cn } from "@/lib/utils";
+
+export type EventChipVariant = "compact" | "default" | "detailed";
+
+interface Props {
+  event: CalendarEvent;
+  onClick: (event: CalendarEvent) => void;
+  onDragStart?: (event: CalendarEvent) => void;
+  onDragEnd?: () => void;
+  responsibleName?: string | null;
+  variant?: EventChipVariant;
+}
+
+/**
+ * Chip de compromisso usado nas grades (mês, semana, dia).
+ * Mostra um card detalhado no hover, sem depender de cliques.
+ */
+export function EventChip({
+  event,
+  onClick,
+  onDragStart,
+  onDragEnd,
+  responsibleName,
+  variant = "default",
+}: Props) {
+  const [hovered, setHovered] = useState(false);
+  const type = getEventType(event.event_type);
+  const status = getEventStatus(event.status);
+  const Icon = type.icon;
+  const duration = formatDuration(minutesBetween(event.starts_at, event.ends_at));
+  const cancelled = event.status === "cancelled";
+
+  const details = (
+    <Card className="p-3 shadow-xl border-border">
+      <div className="space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="text-sm font-semibold leading-tight">{event.title}</h4>
+          <span className={cn("h-3 w-3 rounded-full shrink-0 mt-0.5", type.dot)} />
+        </div>
+        {event.description && (
+          <p className="text-xs text-muted-foreground line-clamp-2">{event.description}</p>
+        )}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Clock className="h-3 w-3" />
+          <span className="tabular-nums">
+            {formatTime(event.starts_at)} – {formatTime(event.ends_at)}
+          </span>
+          <span className="text-[10px]">({duration})</span>
+        </div>
+        {event.company_name && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Building2 className="h-3 w-3" />
+            <span className="truncate">{event.company_name}</span>
+          </div>
+        )}
+        {responsibleName && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <User className="h-3 w-3" />
+            <span className="truncate">{responsibleName}</span>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-1 pt-0.5">
+          <Badge variant="outline" className={cn("text-[10px] h-5", type.chip)}>
+            {type.label}
+          </Badge>
+          <Badge variant="outline" className={cn("text-[10px] h-5", status.chip)}>
+            {status.label}
+          </Badge>
+          {event.source === "sdr" && (
+            <Badge variant="outline" className="text-[10px] h-5 gap-1">
+              <Bot className="h-3 w-3" />
+              SDR
+            </Badge>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+
+  if (variant === "detailed") {
+    return (
+      <div
+        draggable={!!onDragStart}
+        onDragStart={() => onDragStart?.(event)}
+        onDragEnd={onDragEnd}
+        onClick={() => onClick(event)}
+        className={cn(
+          "cursor-pointer rounded-lg border border-l-[3px] border-border/70 p-3 transition-all duration-200",
+          type.bar,
+          "hover:shadow-md hover:-translate-y-[1px]",
+          cancelled && "opacity-55",
+        )}
+      >
+        <div className="flex items-start gap-2">
+          <Icon className="h-4 w-4 mt-0.5 shrink-0 text-foreground/70" />
+          <div className="min-w-0 flex-1">
+            <p className={cn("text-sm font-medium truncate", cancelled && "line-through")}>
+              {event.title}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                <Clock className="h-3 w-3" />
+                {formatTime(event.starts_at)} – {formatTime(event.ends_at)}
+              </span>
+              <span>· {duration}</span>
+              {event.company_name && (
+                <span className="inline-flex items-center gap-1 truncate">
+                  <Building2 className="h-3 w-3" />
+                  {event.company_name}
+                </span>
+              )}
+              {responsibleName && (
+                <span className="inline-flex items-center gap-1 truncate">
+                  <User className="h-3 w-3" />
+                  {responsibleName}
+                </span>
+              )}
+            </div>
+          </div>
+          <Badge variant="outline" className={cn("shrink-0 text-[10px] h-5", status.chip)}>
+            {status.label}
+          </Badge>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      draggable={!!onDragStart}
+      onDragStart={() => onDragStart?.(event)}
+      onDragEnd={onDragEnd}
+      onClick={() => onClick(event)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="relative cursor-pointer"
+    >
+      <div
+        className={cn(
+          "flex items-center gap-1 rounded border-l-2 px-1.5 py-0.5 text-[11px] font-medium transition-all duration-200",
+          type.bar,
+          "truncate",
+          cancelled && "opacity-55 line-through",
+          hovered && "shadow-sm",
+        )}
+      >
+        <span className="tabular-nums text-muted-foreground">{formatTime(event.starts_at)}</span>
+        <span className="truncate text-foreground">{event.title}</span>
+      </div>
+      {hovered && (
+        <div className="absolute left-0 top-full z-50 mt-1 w-64 animate-in fade-in slide-in-from-top-1 duration-150">
+          {details}
+        </div>
+      )}
+    </div>
+  );
+}

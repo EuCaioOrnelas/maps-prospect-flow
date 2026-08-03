@@ -130,7 +130,7 @@ const buildInitialState = (
     contact_phone: "",
     location: "",
     notes: "",
-    reminder: "none",
+    reminder: "15",
   };
 };
 
