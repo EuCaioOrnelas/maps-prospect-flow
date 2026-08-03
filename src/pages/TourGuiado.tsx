@@ -34,6 +34,9 @@ export default function TourGuiado() {
       />
 
       <div data-tour-scroll-root className="fixed inset-0 overflow-auto bg-background">{screen}</div>
+
+      <PublicDemoCloseButton />
+
     </>
   );
 }
