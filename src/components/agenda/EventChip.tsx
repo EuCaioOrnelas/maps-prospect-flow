@@ -149,15 +149,21 @@ export function EventChip({
     >
       <div
         className={cn(
-          "flex items-center gap-1 rounded border-l-2 px-1.5 py-0.5 text-[11px] font-medium transition-all duration-200",
+          "flex items-center gap-1.5 rounded-md border border-l-[3px] px-1.5 py-1 text-[11px] font-medium transition-all duration-200",
           type.bar,
-          "truncate",
-          cancelled && "opacity-55 line-through",
-          hovered && "shadow-sm",
+          "border-y-border/50 border-r-border/50",
+          cancelled && "opacity-55",
+          hovered && "shadow-sm ring-1 ring-ring/20",
         )}
       >
-        <span className="tabular-nums text-muted-foreground">{formatTime(event.starts_at)}</span>
-        <span className="truncate text-foreground">{event.title}</span>
+        <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", type.dot)} />
+        <span className="shrink-0 tabular-nums text-muted-foreground">
+          {formatTime(event.starts_at)}
+        </span>
+        <span className={cn("truncate text-foreground", cancelled && "line-through")}>
+          {event.title}
+        </span>
+        {event.source === "sdr" && <Bot className="ml-auto h-3 w-3 shrink-0 text-primary" />}
       </div>
       {hovered && (
         <div className="absolute left-0 top-full z-50 mt-1 w-64 animate-in fade-in slide-in-from-top-1 duration-150">
