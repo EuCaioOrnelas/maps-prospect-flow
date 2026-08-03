@@ -658,6 +658,8 @@ ${historyText}`;
         validation,
         messages,
         next_action: written.proxima_acao ?? analysis.proxima_acao ?? "aguardar",
+        scheduled,
+        free_slots: freeSlots.slice(0, 3),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
