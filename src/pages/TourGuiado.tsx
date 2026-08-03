@@ -33,7 +33,7 @@ export default function TourGuiado() {
         description="Percorra o mesmo tour guiado que os clientes veem ao entrar na Wiize: cockpit, prospecção com IA, SDR Inteligente, agenda, WhatsApp oficial, CRM e automações."
       />
 
-      <div className="fixed inset-0 overflow-auto bg-background">{screen}</div>
+      <div data-tour-scroll-root className="fixed inset-0 overflow-auto bg-background">{screen}</div>
     </>
   );
 }
