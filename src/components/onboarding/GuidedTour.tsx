@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Check, ChevronRight, Clock, Headphones, Kanban, 
 import { isPublicDemoPath } from "@/lib/publicDemo";
 import { FaWhatsapp } from "react-icons/fa";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+import { TOUR_CONTENT } from "@/lib/tourContent";
 import { Button } from "@/components/ui/button";
 import { useConfetti } from "@/components/ui/confetti";
 import logoIconNew from "@/assets/logo-icon-new.png";
@@ -44,41 +45,7 @@ function queryTourTarget<T extends Element = HTMLElement>(selector: string) {
 }
 
 function getPillarKey(stepId: string) {
-  if (["cockpit-overview", "cockpit-kpis", "cockpit-forecast"].includes(stepId)) {
-    return "cockpit";
-  }
-
-  if ([
-    "sidebar-oportunidades-intro",
-    "sidebar-oportunidades-buscar",
-    "search-empty",
-    "search-typing",
-    "search-button",
-    "sidebar-oportunidades-gestao",
-    "management",
-    "diagnosis",
-    "approach-message",
-  ].includes(stepId)) {
-    return "captacao";
-  }
-
-  if ([
-    "sidebar-crm-intro",
-    "sidebar-crm-pipeline",
-    "sidebar-crm-score",
-  ].includes(stepId)) {
-    return "gestao";
-  }
-
-  if (["sidebar-campanhas-intro", "sidebar-campanhas-prospeccao", "sidebar-campanhas-relacionamento", "sidebar-meta-intro", "sidebar-meta-campanhas", "sidebar-meta-numeros", "sidebar-meta-configuracoes"].includes(stepId)) {
-    return "prospeccao";
-  }
-
-  if (["sidebar-chat", "sidebar-automacao-intro", "sidebar-automacao-fluxos", "sidebar-automacao-agentes", "sidebar-automacao-aquecimento"].includes(stepId)) {
-    return "atendimento";
-  }
-
-  return "gestao";
+  return TOUR_CONTENT.find((step) => step.id === stepId)?.pillar ?? "gestao";
 }
 
 // Split body text into ~2 short scannable lines on the first sentence break.
@@ -393,7 +360,7 @@ export function GuidedTour() {
           type="button"
           aria-label="Fechar tour"
           onClick={() => { try { finish(); } catch {} navigate("/"); }}
-          className="fixed top-5 right-5 pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/95 px-4 py-2 text-sm font-semibold text-neutral-900 shadow-[0_10px_30px_rgba(0,0,0,0.25)] transition hover:bg-white"
+          className="fixed top-5 right-5 pointer-events-auto inline-flex items-center gap-2 rounded-hover border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow-[0_10px_30px_hsl(var(--foreground)/0.18)] transition hover:bg-muted"
           style={{ zIndex: 2147483647 }}
         >
           <X size={15} />
@@ -417,7 +384,7 @@ export function GuidedTour() {
       {/* Spotlight */}
       {spot && (
         <div
-          className="fixed pointer-events-auto rounded-[28px]"
+          className="fixed pointer-events-auto rounded-card"
           style={{
             top: spot.top,
             left: spot.left,
@@ -427,8 +394,8 @@ export function GuidedTour() {
             boxShadow: [
               "0 0 0 9999px hsl(var(--foreground) / 0.28)",
               "inset 0 0 0 2px hsl(var(--primary))",
-              "0 0 0 4px hsl(var(--primary) / 0.18)",
-              "0 0 32px hsl(var(--primary) / 0.35)",
+              "0 0 0 4px hsl(var(--primary) / 0.16)",
+              "0 0 24px hsl(var(--primary) / 0.28)",
             ].join(", "),
             transition:
               "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1), width 480ms cubic-bezier(0.2, 0.8, 0.2, 1), height 480ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 480ms cubic-bezier(0.2, 0.8, 0.2, 1)",
@@ -444,7 +411,7 @@ export function GuidedTour() {
         <>
           <div
             ref={popupCardRef}
-            className="fixed pointer-events-auto bg-card/95 text-card-foreground border border-border/60 rounded-[28px] px-6 py-4 sm:px-7 sm:py-5 backdrop-blur-md"
+            className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-panel px-6 py-4 sm:px-7 sm:py-5"
             style={{
               ...popupStyle,
               zIndex: 2147483647,
@@ -470,13 +437,13 @@ export function GuidedTour() {
             className="fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto"
             style={{ zIndex: 2147483647 }}
           >
-            <div className="flex items-center gap-3 bg-card/95 backdrop-blur-md border border-border/60 rounded-full pl-2 pr-2 py-2.5 shadow-[0_18px_50px_hsl(var(--foreground)/0.10)]">
+            <div className="flex items-center gap-3 bg-card border border-border rounded-panel px-2 py-2 shadow-[0_18px_50px_hsl(var(--foreground)/0.10)]">
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={prev}
                 disabled={isFirst}
-                className="rounded-full gap-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                className="rounded-hover gap-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
               >
                 <ArrowLeft size={14} />
                 Voltar
@@ -492,7 +459,7 @@ export function GuidedTour() {
               <Button
                 size="sm"
                 onClick={next}
-                className="rounded-full gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
+                className="rounded-hover gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 Próximo
                 <ArrowRight size={14} />
@@ -540,7 +507,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
       style={{ zIndex: 2147483647 }}
     >
-      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-panel shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
         <div
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full opacity-40 pointer-events-none blur-3xl"
           style={{
@@ -577,7 +544,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           </p>
 
           {/* Next step card */}
-          <div className="text-left bg-white border border-gray-200 rounded-2xl p-4 sm:p-5 mb-4">
+          <div className="text-left bg-white border border-gray-200 rounded-card p-4 sm:p-5 mb-4">
             <div className="flex items-start gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-50 border border-green-200 text-primary">
                 <FaWhatsapp size={30} />
@@ -661,7 +628,7 @@ function WelcomeStep({ title, body, onStart }: WelcomeStepProps) {
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
       style={{ zIndex: 2147483647 }}
     >
-      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-3xl shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-panel shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
         {/* Decorative gradient halo */}
         <div
           className="absolute -top-40 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full opacity-50 pointer-events-none blur-3xl"
