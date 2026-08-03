@@ -479,6 +479,134 @@ ${historyText}`;
       messages = validation.mensagens_finais.filter((m: any) => typeof m === "string" && m.trim());
     }
 
+    // ---------- AGENDAMENTO AUTOMÁTICO: Agenda + CRM + e-mail ao responsável ----------
+    let scheduled: Record<string, unknown> | null = null;
+    const booking = analysis?.agendamento ?? {};
+    const chosenSlot = booking?.confirmado === true ? matchSlot(booking.inicio_iso, freeSlots) : null;
+
+    if (persist && chosenSlot) {
+      const leadId: string | null = session?.lead_id ?? leadContext?.lead_id ?? null;
+      const contactName: string =
+        session?.contact_name || leadContext?.contact_name || leadContext?.company_name || "Lead";
+      const contactPhone: string = session?.phone || leadContext?.phone || "";
+      const startsAt = new Date(chosenSlot.iso);
+      const endsAt = new Date(startsAt.getTime() + meetingDuration * 60_000);
+      const eventType = ["meeting", "demo", "call", "visit"].includes(booking.tipo)
+        ? booking.tipo
+        : "meeting";
+
+      const { data: event, error: eventError } = await supabase
+        .from("calendar_events")
+        .insert({
+          owner_user_id: agent.owner_user_id,
+          assigned_user_id: responsibleUserId,
+          created_by: null,
+          title: (booking.titulo as string) || `Reunião com ${contactName}`,
+          description: (booking.observacao as string) || analysis?.micro_objetivo || null,
+          event_type: eventType,
+          status: "scheduled",
+          source: "sdr",
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt.toISOString(),
+          timezone: CALENDAR_TIMEZONE,
+          lead_id: leadId,
+          sdr_agent_id: agentId,
+          contact_name: contactName,
+          company_name: leadContext?.company_name ?? null,
+          contact_phone: contactPhone || null,
+          contact_email: leadContext?.email ?? null,
+          notes: `Agendado automaticamente pelo SDR ${agent.name}.`,
+          metadata: { session_id: session?.id ?? null, agent_id: agentId },
+        })
+        .select("id, starts_at")
+        .maybeSingle();
+
+      if (eventError) {
+        // Conflito de horário (exclusion constraint) ou falha: não quebra a conversa
+        console.error("[sdr-brain] falha ao criar evento na agenda:", eventError.message);
+      } else {
+        scheduled = { event_id: event?.id, starts_at: event?.starts_at, label: formatSlotLabel(chosenSlot.iso) };
+
+        // 1) CRM: move o lead para o estágio de reunião marcada e registra a atividade
+        if (leadId) {
+          const stageId: string | null =
+            agent.closing?.meeting_stage_id ??
+            (await (async () => {
+              const { data: stage } = await supabase
+                .from("pipeline_stages")
+                .select("id")
+                .eq("user_id", agent.owner_user_id)
+                .in("name", ["Qualificado", "Em Negociação"])
+                .order("name", { ascending: true })
+                .limit(1)
+                .maybeSingle();
+              return stage?.id ?? null;
+            })());
+
+          await supabase
+            .from("leads")
+            .update({
+              ...(stageId ? { pipeline_stage_id: stageId } : {}),
+              responsible_user_id: responsibleUserId,
+              has_responded: true,
+              last_response_at: new Date().toISOString(),
+            })
+            .eq("id", leadId);
+
+          await supabase.from("lead_activities").insert({
+            lead_id: leadId,
+            user_id: agent.owner_user_id,
+            owner_user_id: agent.owner_user_id,
+            activity_type: "meeting_scheduled",
+            description: `${agent.name} agendou ${eventType === "demo" ? "uma demonstração" : "uma reunião"} para ${formatSlotLabel(chosenSlot.iso)}.`,
+            metadata: { event_id: event?.id, source: "sdr", starts_at: startsAt.toISOString() },
+          });
+        }
+
+        // 2) E-mail para o responsável
+        try {
+          const { data: responsibleProfile } = await supabase
+            .from("profiles")
+            .select("email, name")
+            .eq("id", responsibleUserId)
+            .maybeSingle();
+
+          const recipients = new Set<string>();
+          if (responsibleProfile?.email) recipients.add(responsibleProfile.email);
+          for (const s of agent.closing?.notify_sellers ?? []) {
+            if (s?.email) recipients.add(s.email);
+          }
+          if (agent.closing?.notify_seller_email) recipients.add(agent.closing.notify_seller_email);
+
+          for (const email of recipients) {
+            await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+              body: JSON.stringify({
+                user_id: agent.owner_user_id,
+                email_type: "SDR_MEETING_SCHEDULED",
+                override_email: email,
+                idempotency_key: `sdr-meeting-${event?.id}-${email}`,
+                payload: {
+                  sdr_name: agent.name,
+                  contact_name: contactName,
+                  company_name: leadContext?.company_name ?? "",
+                  contact_phone: contactPhone,
+                  when_label: formatSlotLabel(chosenSlot.iso),
+                  duration_minutes: meetingDuration,
+                  event_type: eventType,
+                  notes: (booking.observacao as string) || analysis?.micro_objetivo || "",
+                  responsible_name: responsibleProfile?.name ?? "",
+                },
+              }),
+            });
+          }
+        } catch (err) {
+          console.error("[sdr-brain] falha ao notificar responsável:", err);
+        }
+      }
+    }
+
     // ---------- CAMADA 9: Execução (registro) ----------
     let runId: string | null = null;
     if (persist) {
