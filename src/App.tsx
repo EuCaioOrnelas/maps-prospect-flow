@@ -55,6 +55,7 @@ const SendingGuidelines = lazyWithRetry(() => import("./pages/SendingGuidelines"
 const HelpCenter = lazyWithRetry(() => import("./pages/HelpCenter"), "HelpCenter");
 const HelpCenterFAQ = lazyWithRetry(() => import("./pages/HelpCenterFAQ"), "HelpCenterFAQ");
 const TourCompleto = lazyWithRetry(() => import("./pages/TourCompleto"), "TourCompleto");
+const TourGuiado = lazyWithRetry(() => import("./pages/TourGuiado"), "TourGuiado");
 const CheckoutSuccess = lazyWithRetry(() => import("./pages/CheckoutSuccess"), "CheckoutSuccess");
 const CheckoutFailed = lazyWithRetry(() => import("./pages/CheckoutFailed"), "CheckoutFailed");
 const CheckoutPix = lazyWithRetry(() => import("./pages/CheckoutPix"), "CheckoutPix");
