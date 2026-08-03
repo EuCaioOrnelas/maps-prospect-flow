@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowDown, ArrowRight, Handshake, Play, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowRight, Handshake, Play } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { Navbar } from "@/components/landing/Navbar";
