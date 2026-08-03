@@ -27,7 +27,7 @@ interface Props {
 }
 
 /** Busca leads do CRM / Oportunidades para preencher o compromisso comercial. */
-export function LeadPicker({ onSelect }: Props) {
+export function LeadPicker({ onSelect, selectedLabel }: Props) {
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState("");
   const [loading, setLoading] = useState(false);
