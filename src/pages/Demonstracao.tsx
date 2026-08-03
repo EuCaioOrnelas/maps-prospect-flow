@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowDown, ArrowRight, Handshake, Play } from "lucide-react";
+import { ArrowDown, ArrowRight, Handshake, Play, Sparkles } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { Navbar } from "@/components/landing/Navbar";
@@ -137,6 +137,14 @@ const Hero = () => {
         className="flex flex-col items-center text-center"
       >
 
+        <motion.div
+          variants={fadeUp}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4"
+        >
+          <Sparkles size={16} className="text-primary" />
+          <span className="text-sm text-muted-foreground">Teste grátis por 7 dias</span>
+        </motion.div>
+
         <motion.h1
           variants={fadeUp}
           className="font-display font-bold text-foreground leading-[1.1] tracking-tight max-w-[56rem]"
@@ -199,7 +207,7 @@ const Hero = () => {
               size="lg"
               className="rounded-full group h-11 sm:h-12 px-5 sm:px-6 text-sm font-semibold w-full sm:w-auto shadow-xl whitespace-nowrap"
             >
-              Escalar Operação
+              Iniciar Teste Grátis
               <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
