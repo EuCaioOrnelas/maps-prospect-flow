@@ -349,6 +349,17 @@ export function GuidedTour() {
   // OR while we're still waiting for a target inside a modal to mount).
   const showFallbackOverlay = !spot;
 
+  /** Closes the public (no-login) demo and returns to the site with a clean state. */
+  const closePublicDemo = () => {
+    try {
+      finish();
+    } catch {}
+    document.body.classList.remove("public-demo-mode", "tour-demo-cockpit", "tour-demo-lead");
+    // Full reload so the demo network guard and all demo fixtures are torn down.
+    window.location.assign("/");
+  };
+
+
   return createPortal(
     <div
       className="fixed inset-0 pointer-events-none"
