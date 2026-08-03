@@ -164,90 +164,60 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   }, []);
 
 
-  const allSteps: TourStep[] = [
-    {
-      id: "welcome",
-      route: "/dashboard",
-      title: "Bem-vindo à Wiize",
-      body: "Vamos te apresentar a sua nova operação comercial em quatro pilares: captação, prospecção, atendimento e gestão. Em poucos minutos você entende exatamente como cada parte trabalha por você.",
-      placement: "center",
-      injectDemoCockpit: true,
-    },
+  // Comportamento (rota, seletor, animações) de cada passo do tour interno.
+  // O CONTEÚDO (título, texto, ordem) vem de `src/lib/tourContent.ts`,
+  // compartilhado com o tour público em /tour-guiado.
+  type StepBehavior = Omit<TourStep, "id" | "title" | "body">;
+
+  const BEHAVIOR: Record<string, StepBehavior> = {
+    welcome: { route: "/dashboard", injectDemoCockpit: true },
 
     // ---- Cockpit ----
-    {
-      id: "cockpit-overview",
+    "cockpit-overview": {
       route: "/dashboard",
       target: '[data-tour="cockpit-hero"]',
-      title: "Cockpit de Crescimento",
-      body: "Esta é a sua central de comando. Aqui você acompanha o impacto financeiro gerado, a curva de leads captados e o resultado consolidado da sua operação em tempo real.",
-      placement: "bottom",
       injectDemoCockpit: true,
       waitMs: 600,
     },
-    {
-      id: "cockpit-kpis",
+    "cockpit-kpis": {
       route: "/dashboard",
       target: '[data-tour="cockpit-kpis"]',
-      title: "Indicadores executivos",
-      body: "Receita potencial, leads quentes do dia, saúde da operação e o tempo que a IA economizou para você. Tudo o que precisa saber em quatro cartões.",
-      placement: "top",
       injectDemoCockpit: true,
       waitMs: 400,
     },
-    {
-      id: "cockpit-forecast",
+    "cockpit-forecast": {
       route: "/dashboard",
       target: '[data-tour="cockpit-forecast"]',
-      title: "Projeção e funil",
-      body: "À esquerda, a projeção de receita por nível de score. À direita, o funil operacional completo: do lead captado à oportunidade gerada.",
-      placement: "top",
       injectDemoCockpit: true,
       waitMs: 400,
     },
 
     // ---- Captação ----
-    {
-      id: "sidebar-oportunidades-intro",
+    "sidebar-oportunidades-intro": {
       route: "/dashboard",
       target: '[data-tour="sidebar-oportunidades"]',
-      title: "Captação de leads com Prospecção IA",
-      body: "Tudo começa no menu Prospecção IA. É aqui que a IA busca novas empresas, analisa cada lead e deixa a abordagem pronta. Vamos entrar agora.",
-      placement: "right",
       sidebarSection: "oportunidades",
       waitMs: 700,
     },
-    {
-      id: "sidebar-oportunidades-buscar",
+    "sidebar-oportunidades-buscar": {
       route: "/dashboard",
       target: '[data-tour="sidebar-oportunidades-buscar"]',
-      title: "Item Buscar",
-      body: "Este é o ponto de entrada da sua captação. Em Buscar você encontra empresas reais do Google Maps prontas para serem prospectadas. Vamos abrir essa página.",
-      placement: "right",
       sidebarSection: "oportunidades",
       waitMs: 700,
     },
-    {
-      id: "search-empty",
+    "search-empty": {
       route: "/oportunidades",
       target: '#keyword || [data-tour="search-keyword"]',
-      title: "Defina o nicho",
-      body: "Comece pela palavra-chave do nicho que você quer captar. Exemplo: clínicas, contabilidades, restaurantes ou imobiliárias.",
-      placement: "top",
       waitMs: 1100,
       hideSpotlightWhileTargetLoads: "always",
     },
-    {
-      id: "search-typing",
+    "search-typing": {
       route: "/oportunidades",
       target: '#location || [data-tour="search-location"]',
-      title: "Escolha a cidade",
-      body: "Agora defina a localização que deseja prospectar. A busca pode ser local, nacional ou internacional.",
-      placement: "top",
       waitMs: 500,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
-        await waitForElement('#keyword', 40, 100);
+        await waitForElement("#keyword", 40, 100);
         clearInput("#keyword");
         clearInput("#location");
         await simulateTyping("#keyword", "Clínicas de estética", 45);
@@ -255,13 +225,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         await simulateTyping("#location", "São Paulo, SP", 45);
       },
     },
-    {
-      id: "search-button",
+    "search-button": {
       route: "/oportunidades",
       target: '[data-tour="search-button"] || button[type="submit"]',
-      title: "Prospecte oportunidades",
-      body: "Com os campos preenchidos, basta clicar aqui para a Wiize encontrar empresas qualificadas para sua abordagem.",
-      placement: "top",
       waitMs: 500,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
@@ -279,32 +245,20 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     },
 
     // ---- Gestão / Diagnóstico ----
-    {
-      id: "sidebar-oportunidades-gestao",
+    "sidebar-oportunidades-gestao": {
       route: "/oportunidades",
       target: '[data-tour="sidebar-oportunidades-gestao"]',
-      title: "Gestão da Prospecção IA (Captação)",
-      body: "Toda empresa captada vai parar aqui — ainda na etapa de Captação. É onde a IA analisa cada lead em profundidade antes de virar negócio. Vamos entrar.",
-      placement: "right",
       sidebarSection: "oportunidades",
       waitMs: 700,
     },
-    {
-      id: "management",
+    management: {
       route: "/oportunidades/gestao",
-      title: "Gestão da Prospecção IA (Captação)",
-      body: "Esta tela ainda faz parte da Captação: cada empresa recebe uma pontuação, um diagnóstico de pontos fortes e fracos e uma probabilidade de fechamento. A gestão do funil de vendas (CRM, pipeline e score de contatos) acontece em outro menu, que veremos mais à frente.",
-      placement: "center",
       injectDemoLead: true,
       waitMs: 700,
     },
-    {
-      id: "diagnosis",
+    diagnosis: {
       route: "/oportunidades/gestao",
       target: '[data-tour="lead-score-summary"]',
-      title: "Diagnóstico inteligente",
-      body: "Abrimos um lead de exemplo. Veja o score total (0–100), a quebra por dimensão (estrutura digital, reputação e potencial) e a probabilidade de conversão.",
-      placement: "right",
       injectDemoLead: true,
       waitMs: 120,
       resolveTargetAfterEnter: true,
@@ -320,13 +274,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         }
       },
     },
-    {
-      id: "approach-message",
+    "approach-message": {
       route: "/oportunidades/gestao",
       target: '[data-tour="lead-approach-card"]',
-      title: "Abordagem gerada por IA",
-      body: "Com base no diagnóstico, a Wiize escreve uma mensagem personalizada para o primeiro contato. Você pode copiar, ajustar ou enviar direto pelo WhatsApp.",
-      placement: "right",
       injectDemoLead: true,
       waitMs: 150,
       resolveTargetAfterEnter: true,
@@ -346,134 +296,93 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     },
 
     // ---- SDR Inteligente ----
-    {
-      id: "sidebar-oportunidades-sdr",
+    "sidebar-oportunidades-sdr": {
       route: "/dashboard",
       target: '[data-tour="sidebar-oportunidades-sdr"]',
-      title: "SDR Inteligente",
-      body: "Aqui vive o seu pré-vendedor de IA: ele assume a conversa no WhatsApp, qualifica o lead, quebra objeções, faz follow-up sozinho e agenda a reunião com o seu time — 24 horas por dia, sem cansar.",
-      placement: "right",
       sidebarSection: "oportunidades",
       waitMs: 700,
     },
 
     // ---- Agenda ----
-    {
-      id: "sidebar-agenda",
+    "sidebar-agenda": {
       route: "/dashboard",
       target: '[data-tour="sidebar-agenda"]',
-      title: "Agenda comercial",
-      body: "A Agenda é integrada ao SDR Inteligente: ele consulta a disponibilidade real do seu time, oferece horários livres na conversa e cria a reunião automaticamente — com lembretes por e-mail e visões de dia, semana, mês e lista.",
-      placement: "right",
       waitMs: 700,
     },
 
     // ---- Meta (API Oficial) ----
-    {
-      id: "sidebar-meta-intro",
+    "sidebar-meta-intro": {
       route: "/dashboard",
       target: '[data-tour="sidebar-meta"]',
-      title: "Meta — API Oficial do WhatsApp",
-      body: "Tudo o que envolve a Meta Cloud API fica neste menu: dashboard de entregas, campanhas, números e configurações.",
-      placement: "right",
       sidebarSection: "meta",
       waitMs: 700,
     },
-    {
-      id: "sidebar-meta-campanhas",
+    "sidebar-meta-campanhas": {
       route: "/dashboard",
       target: '[data-tour="sidebar-meta-campanhas"]',
-      title: "Campanhas oficiais",
-      body: "Dispare templates aprovados pela Meta para prospecção, nutrição e reativação — com entregabilidade garantida.",
-      placement: "right",
       sidebarSection: "meta",
       waitMs: 500,
     },
-    {
-      id: "sidebar-meta-numeros",
+    "sidebar-meta-numeros": {
       route: "/dashboard",
       target: '[data-tour="sidebar-meta-numeros"]',
-      title: "Números & WABA",
-      body: "Conecte e gerencie seus números oficiais ligados à sua conta WABA (WhatsApp Business Account).",
-      placement: "right",
       sidebarSection: "meta",
       waitMs: 500,
     },
 
     // ---- Atendimento ----
-    {
-      id: "sidebar-chat",
+    "sidebar-chat": {
       route: "/dashboard",
       target: '[data-tour="sidebar-chat"]',
-      title: "Atendimento unificado",
-      body: "Todas as conversas em um único lugar. Responda manualmente ou deixe a IA conduzir o atendimento por você, 24 horas por dia.",
-      placement: "right",
       sidebarSection: "chat",
       waitMs: 600,
     },
 
     // ---- Automação ----
-    {
-      id: "sidebar-automacao-intro",
+    "sidebar-automacao-intro": {
       route: "/dashboard",
       target: '[data-tour="sidebar-automacao"]',
-      title: "Automação completa",
-      body: "Aqui você cria fluxos conversacionais, configura agentes de IA e prepara seus números para o envio em volume. Vamos passar por cada um.",
-      placement: "right",
       sidebarSection: "automacao",
       waitMs: 700,
     },
-    {
-      id: "sidebar-automacao-fluxos",
+    "sidebar-automacao-fluxos": {
       route: "/dashboard",
       target: '[data-tour="sidebar-automacao-fluxos"]',
-      title: "Fluxos automáticos",
-      body: "Construa jornadas conversacionais com mensagens, condições, esperas e integrações nativas com Google e WhatsApp.",
-      placement: "right",
       sidebarSection: "automacao",
       waitMs: 600,
     },
 
     // ---- Gestão (CRM) ----
-    {
-      id: "sidebar-crm-intro",
+    "sidebar-crm-intro": {
       route: "/dashboard",
       target: '[data-tour="sidebar-crm"]',
-      title: "Gestão do funil (CRM)",
-      body: "No menu CRM você acompanha todo o funil de vendas e a qualificação automática dos seus leads.",
-      placement: "right",
       sidebarSection: "crm",
       waitMs: 700,
     },
-    {
-      id: "sidebar-crm-pipeline",
+    "sidebar-crm-pipeline": {
       route: "/dashboard",
       target: '[data-tour="sidebar-crm-pipeline"]',
-      title: "Pipeline visual",
-      body: "Acompanhe cada lead pelas etapas do funil, do primeiro contato ao fechamento, com kanban e arrastar e soltar.",
-      placement: "right",
       sidebarSection: "crm",
       waitMs: 700,
     },
-    {
-      id: "sidebar-crm-score",
+    "sidebar-crm-score": {
       route: "/dashboard",
       target: '[data-tour="sidebar-crm-score"]',
-      title: "Score de contatos",
-      body: "Identifique os leads mais quentes em uma escala de 0 a 1.000, baseada em engajamento, intenção de compra e respostas no WhatsApp.",
-      placement: "right",
       sidebarSection: "crm",
       waitMs: 500,
     },
 
-    {
-      id: "final",
-      route: "/dashboard",
-      title: "Tudo pronto para escalar",
-      body: "Você já conhece toda a operação Wiize. Falta apenas uma etapa para começar a gerar resultados reais.",
-      placement: "center",
-    },
-  ];
+    final: { route: "/dashboard" },
+  };
+
+  const allSteps: TourStep[] = TOUR_CONTENT.map((content) => ({
+    id: content.id,
+    title: content.title,
+    body: content.body,
+    placement: content.placement,
+    ...(BEHAVIOR[content.id] ?? {}),
+  }));
+
 
   // Filter steps based on plan capabilities. New "start" (Atendimento) users
   // don't have Oportunidades, Agentes IA or Aquecimento — skip those steps so
