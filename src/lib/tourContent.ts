@@ -100,7 +100,7 @@ export const TOUR_CONTENT: TourContentStep[] = [
   {
     id: "sidebar-oportunidades-gestao",
     title: "Gestão da Prospecção IA (Captação)",
-    body: "Toda empresa captada vai parar aqui — ainda na etapa de Captação. É onde a IA analisa cada lead em profundidade antes de virar negócio. Vamos entrar.",
+    body: "Toda empresa captada vai parar aqui, ainda na etapa de Captação. É onde a IA analisa cada lead em profundidade antes de virar negócio. Vamos entrar.",
     placement: "right",
     pillar: "captacao",
   },
@@ -130,24 +130,15 @@ export const TOUR_CONTENT: TourContentStep[] = [
   {
     id: "sidebar-oportunidades-sdr",
     title: "SDR Inteligente",
-    body: "Aqui vive o seu pré-vendedor de IA: ele assume a conversa no WhatsApp, qualifica o lead, quebra objeções, faz follow-up sozinho e agenda a reunião com o seu time — 24 horas por dia, sem cansar.",
+    body: "Aqui vive o seu pré-vendedor de IA. Ele assume a conversa no WhatsApp, qualifica o lead, quebra objeções, faz follow-up sozinho e agenda a reunião com o seu time, 24 horas por dia, sem cansar.",
     placement: "right",
-    pillar: "captacao",
-  },
-
-  // ---- Agenda ----
-  {
-    id: "sidebar-agenda",
-    title: "Agenda comercial",
-    body: "A Agenda é integrada ao SDR Inteligente: ele consulta a disponibilidade real do seu time, oferece horários livres na conversa e cria a reunião automaticamente — com lembretes por e-mail e visões de dia, semana, mês e lista.",
-    placement: "right",
-    pillar: "captacao",
+    pillar: "prospeccao",
   },
 
   // ---- Meta (API Oficial) ----
   {
     id: "sidebar-meta-intro",
-    title: "Meta — API Oficial do WhatsApp",
+    title: "Meta, API Oficial do WhatsApp",
     body: "Tudo o que envolve a Meta Cloud API fica neste menu: dashboard de entregas, campanhas, números e configurações.",
     placement: "right",
     pillar: "prospeccao",
@@ -155,7 +146,7 @@ export const TOUR_CONTENT: TourContentStep[] = [
   {
     id: "sidebar-meta-campanhas",
     title: "Campanhas oficiais",
-    body: "Dispare templates aprovados pela Meta para prospecção, nutrição e reativação — com entregabilidade garantida.",
+    body: "Dispare templates aprovados pela Meta para prospecção, nutrição e reativação, com entregabilidade garantida.",
     placement: "right",
     pillar: "prospeccao",
   },
@@ -165,6 +156,15 @@ export const TOUR_CONTENT: TourContentStep[] = [
     body: "Conecte e gerencie seus números oficiais ligados à sua conta WABA (WhatsApp Business Account).",
     placement: "right",
     pillar: "prospeccao",
+  },
+
+  // ---- Agenda ----
+  {
+    id: "sidebar-agenda",
+    title: "Agenda comercial",
+    body: "A Agenda é integrada ao SDR Inteligente: ele consulta a disponibilidade real do seu time, oferece horários livres na conversa e cria a reunião automaticamente, com lembretes por e-mail e visões de dia, semana, mês e lista.",
+    placement: "right",
+    pillar: "atendimento",
   },
 
   // ---- Atendimento ----
