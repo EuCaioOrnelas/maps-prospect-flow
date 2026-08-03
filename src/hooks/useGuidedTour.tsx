@@ -82,6 +82,18 @@ function clearInput(selector: string) {
   el.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
+/** Scrolls the window AND the public-demo scroll container back to the top. */
+export function scrollTourViewportTop() {
+  if (typeof window === "undefined") return;
+  try {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  } catch {}
+  document.querySelectorAll<HTMLElement>("[data-tour-scroll-root]").forEach((el) => {
+    el.scrollTop = 0;
+    el.scrollLeft = 0;
+  });
+}
+
 function resolveTargetSelectors(selector: string) {
   return selector
     .split("||")
@@ -211,19 +223,27 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       route: "/oportunidades",
       target: '#keyword || [data-tour="search-keyword"]',
       waitMs: 1100,
-      hideSpotlightWhileTargetLoads: "always",
-    },
-    "search-typing": {
-      route: "/oportunidades",
-      target: '#location || [data-tour="search-location"]',
-      waitMs: 500,
+      keepViewportTop: true,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
         await waitForElement("#keyword", 40, 100);
         clearInput("#keyword");
         clearInput("#location");
         await simulateTyping("#keyword", "Clínicas de estética", 45);
-        await new Promise((r) => setTimeout(r, 200));
+      },
+    },
+    "search-typing": {
+      route: "/oportunidades",
+      target: '#location || [data-tour="search-location"]',
+      waitMs: 500,
+      keepViewportTop: true,
+      hideSpotlightWhileTargetLoads: "always",
+      onEnter: async () => {
+        const keyword = await waitForElement<HTMLInputElement>("#keyword", 40, 100);
+        if (keyword && !keyword.value) {
+          await simulateTyping("#keyword", "Clínicas de estética", 30);
+        }
+        clearInput("#location");
         await simulateTyping("#location", "São Paulo, SP", 45);
       },
     },
@@ -231,6 +251,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       route: "/oportunidades",
       target: '[data-tour="search-button"] || button[type="submit"]',
       waitMs: 500,
+      keepViewportTop: true,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
         const btn = await waitForElement<HTMLElement>('[data-tour="search-button"]', 40, 100);
@@ -309,6 +330,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     "sidebar-agenda": {
       route: "/dashboard",
       target: '[data-tour="sidebar-agenda"]',
+      forceSidebar: true,
       waitMs: 700,
     },
 
@@ -426,11 +448,21 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     if (!isPublicDemo || startedRef.current) return;
     startedRef.current = true;
     document.body.classList.add("public-demo-mode");
-    const timer = window.setTimeout(() => {
+    document.body.classList.add("tour-demo-cockpit");
+    let cancelled = false;
+    (async () => {
+      // Wait until the real cockpit is mounted (and give it a frame to paint)
+      // so the welcome card never appears over a blank white screen.
+      await waitForElement('[data-tour="cockpit-hero"]', 70, 100);
+      await new Promise((r) => setTimeout(r, 450));
+      if (cancelled) return;
+      scrollTourViewportTop();
       setCurrentStepIndex(0);
       setIsActive(true);
-    }, 350);
-    return () => window.clearTimeout(timer);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [isPublicDemo]);
 
   // Auto-start on first dashboard visit.
@@ -569,6 +601,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // Always start each step from the top of the page so the highlighted
+      // card is never hidden below a leftover scroll position.
+      const isDialogAnchoredStep = step.id === "diagnosis" || step.id === "approach-message";
+      if (!isDialogAnchoredStep) scrollTourViewportTop();
+
       // Navigate first
       const targetRoute = isPublicDemo ? "/tour-guiado" : step.route;
       if (targetRoute && location.pathname !== targetRoute) {
@@ -591,7 +628,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       }
 
       if (step.keepViewportTop) {
-        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        scrollTourViewportTop();
       }
 
       // For sidebar steps, wait for the full sidebar expansion (300ms width)
