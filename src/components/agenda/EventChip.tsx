@@ -186,7 +186,7 @@ export function EventChip({
       onClick={() => onClick(event)}
       onMouseEnter={(e) => {
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        setAnchor({ x: Math.min(rect.left, window.innerWidth - 280), y: rect.bottom + 6 });
+        setAnchor({ x: Math.min(rect.left, window.innerWidth - 280), y: rect.bottom });
         setHovered(true);
       }}
       onMouseLeave={() => setHovered(false)}
