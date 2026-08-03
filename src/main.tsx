@@ -3,8 +3,15 @@ import App from "./App.tsx";
 import "./index.css";
 import { clearRuntimeCaches, installRuntimeRecovery } from "./lib/runtimeRecovery";
 import { installErrorReporter } from "./lib/errorReporter";
+import { installPublicDemoNetworkGuard, isPublicDemoPath } from "./lib/publicDemo";
+
+// Public demo (/tour-guiado): isolate the page from the backend BEFORE the app boots.
+if (isPublicDemoPath()) {
+  installPublicDemoNetworkGuard();
+}
 
 installErrorReporter();
+
 
 // Cache bust version - increment to force cache clear on all clients
 const CACHE_VERSION = "2026-06-22-meta-guide-recovery";
