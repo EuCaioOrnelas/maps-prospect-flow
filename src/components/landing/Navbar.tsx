@@ -55,6 +55,15 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
  tryScroll();
  };
 
+ const handleNavLinkClick = (e: React.MouseEvent, href: string) => {
+ e.preventDefault();
+ setMobileMenuOpen(false);
+ const id = href.replace("#", "");
+ if (location.pathname !== "/") {
+ navigate(`/#${id}`);
+ }
+ scrollToId(id);
+ };
 
  const navLinks: Array<{ href?: string; to?: string; label: string }> = [
  { href: "#features", label: "Recursos" },
