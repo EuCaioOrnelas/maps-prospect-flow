@@ -349,35 +349,14 @@ export function GuidedTour() {
   // OR while we're still waiting for a target inside a modal to mount).
   const showFallbackOverlay = !spot;
 
-  /** Closes the public (no-login) demo and returns to the site with a clean state. */
-  const closePublicDemo = () => {
-    try {
-      finish();
-    } catch {}
-    document.body.classList.remove("public-demo-mode", "tour-demo-cockpit", "tour-demo-lead");
-    // Full reload so the demo network guard and all demo fixtures are torn down.
-    window.location.assign("/");
-  };
-
-
   return createPortal(
     <div
       className="fixed inset-0 pointer-events-none"
       style={{ zIndex: 2147483645 }}
     >
-      {/* Close button — public (no-login) demo only */}
-      {isPublicDemoPath() && (
-        <button
-          type="button"
-          aria-label="Fechar tour"
-          onClick={closePublicDemo}
-          className="fixed top-5 right-5 pointer-events-auto inline-flex items-center gap-2 rounded-hover border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow-[0_10px_30px_hsl(var(--foreground)/0.18)] transition hover:bg-muted"
-          style={{ zIndex: 2147483647 }}
-        >
-          <X size={15} />
-          Fechar tour
-        </button>
-      )}
+      {/* Close button for the public demo lives in TourGuiado (always mounted). */}
+
+
 
       {/* Fallback full overlay when no spotlight */}
 
