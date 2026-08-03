@@ -46,6 +46,24 @@ export function EventChip({
   const Icon = type.icon;
   const duration = formatDuration(minutesBetween(event.starts_at, event.ends_at));
   const cancelled = event.status === "cancelled";
+  const completed = event.status === "completed";
+  const noShow = event.status === "no_show";
+  /** Estilo da barra lateral/fundo conforme o desfecho da reunião. */
+  const barClass = cancelled
+    ? "border-l-destructive bg-destructive/5"
+    : completed
+      ? "border-l-emerald-500 bg-emerald-500/5"
+      : noShow
+        ? "border-l-amber-500 bg-amber-500/5"
+        : type.bar;
+  const dotClass = cancelled
+    ? "bg-destructive"
+    : completed
+      ? "bg-emerald-500"
+      : noShow
+        ? "bg-amber-500"
+        : type.dot;
+  const StatusIcon = completed ? CheckCircle2 : cancelled ? XCircle : null;
 
 
   const details = (
