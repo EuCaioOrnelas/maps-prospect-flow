@@ -77,7 +77,7 @@ export function SpotlightRing({ rect }: { rect: Rect | null }) {
   }
   return (
     <div
-      className="fixed pointer-events-none rounded-[24px]"
+      className="fixed pointer-events-none rounded-card"
       style={{
         top: rect.top - PADDING,
         left: rect.left - PADDING,
