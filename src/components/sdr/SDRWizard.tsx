@@ -869,7 +869,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         knowledge: {
           ...d.knowledge,
           company: d.knowledge.company || p.company_name
-            ? [p.company_name, p.company_objective].filter(Boolean).join(" — ") || d.knowledge.company
+            ? [p.company_name, p.company_objective].filter(Boolean).join(". ") || d.knowledge.company
             : d.knowledge.company,
           niche: d.knowledge.niche || p.company_niche || "",
           audience: d.knowledge.audience || p.company_target_audience || "",
@@ -1302,7 +1302,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           </div>
 
           <InfoBox icon={ShieldCheck} title="Regras obrigatórias do SDR">
-            <p>• O SDR sempre conduz a conversa — nunca devolve o comando ao lead.</p>
+            <p>• O SDR sempre conduz a conversa e nunca devolve o comando ao lead.</p>
             <p>• Ele nunca espera o lead decidir sozinho: toda mensagem termina com um próximo passo.</p>
             <p>• Uma pergunta por vez, sem textão e sem inventar informação.</p>
           </InfoBox>
@@ -1418,7 +1418,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         <>
           <InfoBox icon={Sparkles} title="Preenchemos com o perfil da sua empresa">
             <p>
-              Puxamos o que já existe no seu perfil da Wiize. Complete o que faltar — esses dados também
+              Puxamos o que já existe no seu perfil da Wiize. Complete o que faltar, pois esses dados também
               deixam sua prospecção mais precisa.
             </p>
           </InfoBox>
