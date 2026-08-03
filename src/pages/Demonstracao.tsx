@@ -137,6 +137,14 @@ const Hero = () => {
         className="flex flex-col items-center text-center"
       >
 
+        <motion.div
+          variants={fadeUp}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4"
+        >
+          <Sparkles size={16} className="text-primary" />
+          <span className="text-sm text-muted-foreground">Teste grátis por 7 dias</span>
+        </motion.div>
+
         <motion.h1
           variants={fadeUp}
           className="font-display font-bold text-foreground leading-[1.1] tracking-tight max-w-[56rem]"
