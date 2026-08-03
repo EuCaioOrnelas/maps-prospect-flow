@@ -94,7 +94,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao";
   const isOnCampaignsPage = currentPath === "/meta-campaigns";
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao" || currentPath === "/oportunidades/sdr";
-  const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/agenda" || currentPath === "/crm/score";
+  const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
   const isOnAutomationPage = currentPath.startsWith("/fluxos");
   const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/") || currentPath === "/meta-campaigns";
 
@@ -282,6 +282,21 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             )}
 
 
+            {/* Agenda - single page */}
+            {can("crm") && (
+            <li data-tour="sidebar-agenda">
+              <SidebarNavItem
+                title="Agenda"
+                icon={CalendarDays}
+                url="/agenda"
+                isActive={currentPath === "/agenda"}
+                isExpanded={isExpanded}
+                tooltip="Agenda"
+              />
+            </li>
+            )}
+
+
             {/* Oportunidades with submenu */}
             {can("oportunidades") && canRole("prospeccao") && (
             <li data-tour="sidebar-oportunidades">
@@ -445,20 +460,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       >
                         <Users size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">CRM</span>
-                      </Link>
-                    </li>
-                    <li data-tour="sidebar-crm-agenda">
-                      <Link
-                        to="/crm/agenda"
-                        className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
-                          currentPath === "/crm/agenda"
-                            ? "bg-sidebar-accent/60 text-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <CalendarDays size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Agenda</span>
                       </Link>
                     </li>
                     <li data-tour="sidebar-crm-score">

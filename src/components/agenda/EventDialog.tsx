@@ -31,7 +31,13 @@ import {
   Trash2,
   Loader2,
   Bell,
+  Briefcase,
+  Users,
+  Check,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { LeadPicker, type PickedLead } from "./LeadPicker";
+import { cn } from "@/lib/utils";
 import {
   EVENT_TYPES,
   EVENT_STATUSES,
@@ -77,7 +83,25 @@ interface FormState {
   location: string;
   notes: string;
   reminder: string;
+  category: "comercial" | "interna";
+  participants: string[];
+  lead_id: string | null;
 }
+
+const CATEGORIES = [
+  {
+    value: "comercial" as const,
+    label: "Reunião comercial",
+    hint: "Com lead, cliente ou prospect",
+    icon: Briefcase,
+  },
+  {
+    value: "interna" as const,
+    label: "Reunião interna",
+    hint: "Somente com a equipe",
+    icon: Users,
+  },
+];
 
 const nextSlot = (base: Date) => {
   const d = new Date(base);
@@ -109,6 +133,14 @@ const buildInitialState = (
       reminder: Array.isArray(event.reminders) && event.reminders.length
         ? String(event.reminders[0])
         : "none",
+      category:
+        ((event.metadata as any)?.category === "interna" ? "interna" : "comercial") as
+          | "comercial"
+          | "interna",
+      participants: Array.isArray((event.metadata as any)?.participants)
+        ? ((event.metadata as any).participants as string[])
+        : [],
+      lead_id: event.lead_id ?? null,
     };
   }
   const base = nextSlot(defaultDate ? new Date(defaultDate) : new Date());
@@ -131,6 +163,9 @@ const buildInitialState = (
     location: "",
     notes: "",
     reminder: "15",
+    category: "comercial",
+    participants: [],
+    lead_id: null,
   };
 };
 
@@ -158,6 +193,18 @@ export function EventDialog({
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const applyLead = (lead: PickedLead) => {
+    setForm((prev) => ({
+      ...prev,
+      lead_id: lead.id,
+      company_name: prev.company_name || lead.company_name || "",
+      contact_name: prev.contact_name || lead.contact_name || "",
+      contact_email: prev.contact_email || lead.email || "",
+      contact_phone: prev.contact_phone || lead.phone || "",
+      title: prev.title || `Reunião comercial · ${lead.company_name || lead.contact_name || "Lead"}`,
+    }));
+  };
 
   const endLabel = useMemo(() => {
     if (!form.date || !form.startTime) return "";
@@ -195,6 +242,12 @@ export function EventDialog({
         location: form.location.trim() || null,
         notes: form.notes.trim() || null,
         reminders: form.reminder === "none" ? [] : [Number(form.reminder)],
+        lead_id: form.category === "comercial" ? form.lead_id : null,
+        metadata: {
+          ...(((event?.metadata as Record<string, unknown>) || {})),
+          category: form.category,
+          participants: form.participants,
+        },
       });
       onOpenChange(false);
     } catch (err) {
@@ -217,7 +270,7 @@ export function EventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{event ? "Editar compromisso" : "Novo compromisso"}</DialogTitle>
           <DialogDescription>
@@ -313,6 +366,82 @@ export function EventDialog({
               {endLabel && (
                 <p className="text-[11px] text-muted-foreground">Termina às {endLabel}</p>
               )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Categoria do compromisso</Label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {CATEGORIES.map((c) => {
+                const active = form.category === c.value;
+                return (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => set("category", c.value)}
+                    className={cn(
+                      "relative rounded-xl border p-4 text-center transition-all hover:-translate-y-0.5",
+                      active
+                        ? "border-primary ring-2 ring-primary/30 bg-primary/5"
+                        : "border-border hover:border-primary/40",
+                    )}
+                  >
+                    {active && (
+                      <Check className="absolute right-2 top-2 h-4 w-4 text-primary" />
+                    )}
+                    <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                      <c.icon className="h-5 w-5 text-primary" />
+                    </span>
+                    <p className="mt-2 text-sm font-semibold">{c.label}</p>
+                    <p className="text-xs text-muted-foreground">{c.hint}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {form.category === "comercial" && (
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <Briefcase className="h-3.5 w-3.5" /> Lead vinculado
+              </Label>
+              <LeadPicker onSelect={applyLead} />
+              <p className="text-[11px] text-muted-foreground">
+                Preenche empresa, contato, e-mail e telefone automaticamente.
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" /> Participantes
+            </Label>
+            <div className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-2">
+              {members.length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhum usuário disponível.</p>
+              )}
+              {members.map((m) => {
+                const checked = form.participants.includes(m.user_id);
+                return (
+                  <label
+                    key={m.user_id}
+                    className="flex cursor-pointer items-center gap-2 text-sm"
+                  >
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={() =>
+                        set(
+                          "participants",
+                          checked
+                            ? form.participants.filter((id) => id !== m.user_id)
+                            : [...form.participants, m.user_id],
+                        )
+                      }
+                    />
+                    <span className="truncate">{m.name || m.email || "Usuário"}</span>
+                  </label>
+                );
+              })}
             </div>
           </div>
 

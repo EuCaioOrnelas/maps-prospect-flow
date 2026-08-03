@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Building2, User, Bot } from "lucide-react";
@@ -36,6 +37,7 @@ export function EventChip({
   variant = "default",
 }: Props) {
   const [hovered, setHovered] = useState(false);
+  const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
   const type = getEventType(event.event_type);
   const status = getEventStatus(event.status);
   const Icon = type.icon;
@@ -143,13 +145,17 @@ export function EventChip({
       onDragStart={() => onDragStart?.(event)}
       onDragEnd={onDragEnd}
       onClick={() => onClick(event)}
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={(e) => {
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        setAnchor({ x: Math.min(rect.left, window.innerWidth - 280), y: rect.bottom + 6 });
+        setHovered(true);
+      }}
       onMouseLeave={() => setHovered(false)}
-      className="relative cursor-pointer"
+      className="w-full min-w-0 cursor-pointer"
     >
       <div
         className={cn(
-          "flex items-center gap-1.5 rounded-md border border-l-[3px] px-1.5 py-1 text-[11px] font-medium transition-all duration-200",
+          "flex h-[22px] w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-md border border-l-[3px] px-1.5 text-[11px] font-medium transition-all duration-200",
           type.bar,
           "border-y-border/50 border-r-border/50",
           cancelled && "opacity-55",
@@ -165,11 +171,16 @@ export function EventChip({
         </span>
         {event.source === "sdr" && <Bot className="ml-auto h-3 w-3 shrink-0 text-primary" />}
       </div>
-      {hovered && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-64 animate-in fade-in slide-in-from-top-1 duration-150">
-          {details}
-        </div>
-      )}
+      {hovered && anchor &&
+        createPortal(
+          <div
+            className="pointer-events-none fixed z-[60] w-64 animate-in fade-in duration-150"
+            style={{ left: anchor.x, top: anchor.y }}
+          >
+            {details}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

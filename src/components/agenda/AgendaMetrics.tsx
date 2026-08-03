@@ -72,23 +72,20 @@ export function AgendaMetrics({ events, loading }: Props) {
   }, [events]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {metrics.map((m) => (
         <Card
           key={m.label}
-          className={cn(
-            "p-4 border-border/70 transition-colors hover:border-primary/30",
-            loading && "animate-pulse",
-          )}
+          className={cn("p-5 rounded-2xl border-border/70", loading && "animate-pulse")}
         >
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-medium text-muted-foreground truncate">{m.label}</p>
-            <span className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
-              <m.icon className="h-4 w-4" />
-            </span>
-          </div>
-          <p className="mt-2 text-2xl font-bold tabular-nums text-foreground">{m.value}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground truncate">{m.hint}</p>
+          <span className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center">
+            <m.icon className="text-primary" size={20} />
+          </span>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mt-4">
+            {m.label}
+          </p>
+          <p className="text-2xl sm:text-3xl font-bold mt-1 tabular-nums">{m.value}</p>
+          <p className="text-xs text-muted-foreground mt-1.5">{m.hint}</p>
         </Card>
       ))}
     </div>
