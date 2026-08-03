@@ -43,9 +43,11 @@ function getStatusFromScore(score: number): string {
 
 export function useDashboardKPIs(periodDays: number): DashboardKPIData {
   const { user, accountOwnerId } = useAuth();
+  const publicDemo = typeof window !== "undefined" && window.location.pathname === "/tour-guiado";
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard-kpis", accountOwnerId, periodDays],
+    enabled: !publicDemo,
     queryFn: async () => {
       if (!user || !accountOwnerId) return null;
 

@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { generateFingerprint, getClientIP } from '@/lib/fingerprint';
 import { trackSignupCompleted, getLandingPageSlug } from '@/hooks/useLandingPageTracking';
 import { attributePartnerLeadOnSignup, getPartnerReferralMetadata } from '@/hooks/usePartnerTracking';
+import { isPublicDemoPath, PUBLIC_DEMO_PROFILE } from '@/lib/publicDemo';
 
 interface Profile {
   id: string;
@@ -63,6 +64,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const publicDemo = typeof window !== 'undefined' && isPublicDemoPath();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -626,16 +628,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider
       value={{
-        user,
-        session,
-        profile,
-        loading,
-        isTrialExpired,
-        trialDaysRemaining,
-        isTrialing: trialStatus.isTrialing,
-        isBlocked,
-        accountOwnerId: ((profile as any)?.parent_owner_id as string) || user?.id || null,
-        isSubUser: Boolean((profile as any)?.parent_owner_id),
+        user: publicDemo ? ({ id: PUBLIC_DEMO_PROFILE.id, email: PUBLIC_DEMO_PROFILE.email } as User) : user,
+        session: publicDemo ? null : session,
+        profile: publicDemo ? PUBLIC_DEMO_PROFILE : profile,
+        loading: publicDemo ? false : loading,
+        isTrialExpired: publicDemo ? false : isTrialExpired,
+        trialDaysRemaining: publicDemo ? 7 : trialDaysRemaining,
+        isTrialing: publicDemo ? true : trialStatus.isTrialing,
+        isBlocked: publicDemo ? false : isBlocked,
+        accountOwnerId: publicDemo ? PUBLIC_DEMO_PROFILE.id : (((profile as any)?.parent_owner_id as string) || user?.id || null),
+        isSubUser: publicDemo ? false : Boolean((profile as any)?.parent_owner_id),
         signUp,
         signIn,
         signOut,

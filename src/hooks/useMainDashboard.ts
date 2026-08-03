@@ -42,7 +42,8 @@ export interface DashboardMetrics {
 
 export function useMainDashboard(periodDays: number): DashboardMetrics {
   const { user, accountOwnerId } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const publicDemo = typeof window !== "undefined" && window.location.pathname === "/tour-guiado";
+  const [loading, setLoading] = useState(!publicDemo);
   const [rawData, setRawData] = useState({
     leadsProspected: 0,
     prevLeadsProspected: 0,
@@ -69,9 +70,10 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
   });
 
   useEffect(() => {
+    if (publicDemo) return;
     if (!user || !accountOwnerId) return;
     fetchData();
-  }, [user, accountOwnerId, periodDays]);
+  }, [user, accountOwnerId, periodDays, publicDemo]);
 
   const fetchData = async () => {
     if (!user || !accountOwnerId) return;

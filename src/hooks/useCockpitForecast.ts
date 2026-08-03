@@ -38,9 +38,11 @@ export interface CockpitForecast {
 export function useCockpitForecast(periodDays: number): CockpitForecast {
   const { user } = useAuth();
   const { averageTicket, isLoading: servicesLoading } = useCompanyServices();
+  const publicDemo = typeof window !== "undefined" && window.location.pathname === "/tour-guiado";
 
   const { data, isLoading } = useQuery({
     queryKey: ["cockpit-forecast", user?.id, periodDays],
+    enabled: !publicDemo,
     queryFn: async () => {
       if (!user) return null;
 
