@@ -139,15 +139,30 @@ export function EventChip({
         onClick={() => onClick(event)}
         className={cn(
           "cursor-pointer rounded-lg border border-l-[3px] border-border/70 p-3 transition-all duration-200",
-          type.bar,
+          barClass,
           "hover:shadow-md hover:-translate-y-[1px]",
-          cancelled && "opacity-55",
+          cancelled && "opacity-60",
         )}
       >
         <div className="flex items-start gap-2">
-          <Icon className="h-4 w-4 mt-0.5 shrink-0 text-foreground/70" />
+          {StatusIcon ? (
+            <StatusIcon
+              className={cn(
+                "h-4 w-4 mt-0.5 shrink-0",
+                completed ? "text-emerald-500" : "text-destructive",
+              )}
+            />
+          ) : (
+            <Icon className="h-4 w-4 mt-0.5 shrink-0 text-foreground/70" />
+          )}
           <div className="min-w-0 flex-1">
-            <p className={cn("text-sm font-medium truncate", cancelled && "line-through")}>
+            <p
+              className={cn(
+                "text-sm font-medium truncate",
+                cancelled && "line-through text-muted-foreground",
+                completed && "text-muted-foreground",
+              )}
+            >
               {event.title}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
