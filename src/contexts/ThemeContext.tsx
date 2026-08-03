@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, ReactNode } from "react";
+import { isPublicDemoPath } from "@/lib/publicDemo";
 
 type Theme = "dark" | "light";
 type ResolvedTheme = Theme;
