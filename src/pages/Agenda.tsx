@@ -132,6 +132,23 @@ export default function Agenda() {
     setDialogOpen(true);
   };
 
+  const openQuickEdit = (event: CalendarEvent) => {
+    setQuickEvent(event);
+    setQuickOpen(true);
+  };
+
+  const handleQuickSave = async (input: Parameters<typeof updateEvent.mutateAsync>[0]) => {
+    try {
+      await updateEvent.mutateAsync(input);
+      toast.success("Compromisso atualizado.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível salvar.");
+      throw err;
+    }
+  };
+
+
+
   const handleSave = async (input: CalendarEventInput & { id?: string }) => {
     const { id, ...rest } = input;
     if (id) {
