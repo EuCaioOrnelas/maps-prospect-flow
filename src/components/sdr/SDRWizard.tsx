@@ -1136,17 +1136,15 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={Timer} title="Tempo para responder" />
+            <SectionTitle
+              icon={Timer}
+              title="Tempo para responder"
+              hint="Quanto tempo o SDR espera antes de enviar a resposta. Respostas instantâneas entregam menos e parecem robô."
+            />
             <CardSelect
               value={draft.triggers.reply_delay}
               onChange={(v) => patch("triggers", { reply_delay: v as any })}
-              options={[
-                { id: "smart", label: "Pausa inteligente", hint: "A IA calcula o tempo humano real" },
-                { id: "immediate", label: "Imediatamente", hint: "Responde na hora" },
-                { id: "30s", label: "30 segundos" },
-                { id: "1min", label: "1 minuto" },
-                { id: "custom", label: "Personalizado", hint: "Você define os segundos" },
-              ]}
+              options={SDR_REPLY_DELAY_OPTIONS}
             />
             {draft.triggers.reply_delay === "smart" && (
               <InfoBox icon={Brain} title="Como a pausa inteligente funciona">
@@ -1156,7 +1154,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                   e na complexidade do texto.
                 </p>
                 <p>
-                  O resultado é usado como atraso real do envio — conversas ficam naturais e evitam
+                  O resultado é usado como atraso real do envio, deixando a conversa natural e sem
                   cara de robô.
                 </p>
               </InfoBox>
@@ -1321,45 +1319,67 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={TrendingUp} title="Pode insistir?" />
+            <SectionTitle
+              icon={TrendingUp}
+              title="Pode insistir?"
+              hint="Define quantas vezes o SDR tenta contornar um 'agora não' antes de recuar."
+            />
             <CardSelect
               cols={3}
               value={draft.strategy.insistence}
               onChange={(v) => patch("strategy", { insistence: v as any })}
-              options={[
-                { id: "pouco", label: "Pouco", hint: "Respeita o ritmo do lead" },
-                { id: "medio", label: "Médio", hint: "Equilibrado" },
-                { id: "muito", label: "Muito", hint: "Persistente até o objetivo" },
-              ]}
+              options={SDR_INSISTENCE_OPTIONS}
             />
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={Target} title="Quando voltar ao objetivo?" />
+            <SectionTitle
+              icon={Target}
+              title="Quando voltar ao objetivo?"
+              hint="Depois de responder uma dúvida ou desviar de assunto, em que momento ele retoma o objetivo principal."
+            />
             <CardSelect
               cols={3}
               value={draft.strategy.return_to_goal}
               onChange={(v) => patch("strategy", { return_to_goal: v as any })}
-              options={[
-                { id: "imediato", label: "Imediatamente" },
-                { id: "natural", label: "Naturalmente" },
-                { id: "abertura", label: "Só com abertura" },
-              ]}
+              options={SDR_RETURN_OPTIONS}
             />
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={ShieldCheck} title="Se surgir objeção" />
+            <SectionTitle
+              icon={ShieldCheck}
+              title="Se surgir objeção"
+              hint="Como o SDR reage quando o lead trava (preço, tempo, confiança ou concorrente)."
+            />
             <CardSelect
               value={draft.strategy.on_objection}
               onChange={(v) => patch("strategy", { on_objection: v as any })}
-              options={[
-                { id: "contornar", label: "Contornar" },
-                { id: "explorar", label: "Explorar" },
-                { id: "validar", label: "Validar" },
-                { id: "vendedor", label: "Chamar vendedor" },
-              ]}
+              options={SDR_OBJECTION_OPTIONS}
             />
+            {draft.strategy.on_objection === "vendedor" && (
+              <div className="space-y-2">
+                <IconLabel icon={UserCheck}>Qual vendedor deve assumir?</IconLabel>
+                <SellersCombobox
+                  members={members}
+                  selected={draft.strategy.handoff_sellers}
+                  onToggle={(seller) =>
+                    patch("strategy", {
+                      handoff_sellers: draft.strategy.handoff_sellers.some(
+                        (x) => x.email === seller.email
+                      )
+                        ? draft.strategy.handoff_sellers.filter((x) => x.email !== seller.email)
+                        : [...draft.strategy.handoff_sellers, seller],
+                    })
+                  }
+                  placeholder="Selecionar vendedor..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Ao transferir, o vendedor recebe um e-mail com o resumo, o número do lead e o número
+                  de WhatsApp usado na conversa, e passa a ser o responsável pela conversa no chat.
+                </p>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1510,8 +1530,60 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
       {/* 8 - Materiais */}
       {step === 8 && (
         <div className="space-y-5">
+          <div className="space-y-3">
+            <SectionTitle
+              icon={MessagesSquare}
+              title="Perguntas frequentes"
+              hint="Escreva a pergunta possível e a resposta oficial. A IA usa isso para responder sem inventar."
+            />
+            {draft.knowledge.faq_list.map((f, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <IconInput
+                    icon={HelpCircle}
+                    className="flex-1"
+                    value={f.question}
+                    onChange={(e) => updateFaq(i, "question", e.target.value)}
+                    placeholder="Pergunta do lead. Ex.: vocês atendem em todo o Brasil?"
+                  />
+                  {draft.knowledge.faq_list.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        patch("knowledge", {
+                          faq_list: draft.knowledge.faq_list.filter((_, idx) => idx !== i),
+                        })
+                      }
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <Textarea
+                  rows={2}
+                  value={f.answer}
+                  onChange={(e) => updateFaq(i, "answer", e.target.value)}
+                  placeholder="Resposta que o SDR deve dar"
+                />
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() =>
+                patch("knowledge", {
+                  faq_list: [...draft.knowledge.faq_list, { question: "", answer: "" }],
+                })
+              }
+            >
+              <Plus className="h-4 w-4 mr-2" /> Adicionar pergunta
+            </Button>
+          </div>
+
           {[
-            { key: "faq", label: "FAQ", icon: HelpCircle, ph: "Perguntas frequentes e respostas" },
             { key: "policies", label: "Políticas", icon: ShieldCheck, ph: "Garantia, cancelamento, prazos" },
             { key: "cases", label: "Cases e provas sociais", icon: TrendingUp, ph: "Resultados de clientes" },
             { key: "competitors", label: "Concorrentes", icon: Columns3, ph: "Como se comparar" },
@@ -1617,17 +1689,17 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={Ban} title="Quando parar" />
+            <SectionTitle
+              icon={Ban}
+              title="Quando parar"
+              hint="Situações em que o SDR encerra a abordagem e para de enviar mensagens."
+            />
             <CardMultiSelect
               values={draft.closing.stop_criteria}
               onToggle={(id) =>
                 patch("closing", { stop_criteria: toggleArray(draft.closing.stop_criteria, id) })
               }
-              options={[
-                { id: "recusou", label: "Recusou o serviço", hint: "Disse claramente que não quer" },
-                { id: "sem_resposta", label: "Ficou sem resposta", hint: "Silêncio por X horas" },
-                { id: "pediu_parar", label: "Pediu para parar", hint: "Solicitou não ser contatado" },
-              ]}
+              options={SDR_STOP_OPTIONS}
             />
             {draft.closing.stop_criteria.includes("sem_resposta") && (
               <div className="space-y-1.5">
@@ -1647,7 +1719,11 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           </div>
 
           <div className="space-y-3">
-            <SectionTitle icon={Repeat} title="Modo de follow-up" />
+            <SectionTitle
+              icon={Repeat}
+              title="Modo de follow-up"
+              hint="Como o SDR retoma o contato quando o lead some no meio da conversa."
+            />
             <CardSelect
               cols={2}
               value={draft.closing.followup_mode}
@@ -1791,48 +1867,18 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
             <SectionTitle
               icon={BellRing}
               title="Avisar vendedor ao encerrar"
-              hint="Obrigatório. Ele recebe um e-mail com o resumo e o próximo passo."
+              hint="Opcional. Quem for marcado recebe um e-mail com o resumo da conversa e o próximo passo."
             />
-            <div className="grid sm:grid-cols-1 gap-2">
-              {members
-                .filter((m) => m.email)
-                .map((m) => {
-                  const on = draft.closing.notify_seller_email === m.email;
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => patch("closing", { notify_seller_email: m.email! })}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl border bg-card p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
-                        on
-                          ? "border-primary ring-2 ring-primary/20 shadow-md"
-                          : "border-border hover:border-primary/40"
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "h-9 w-9 rounded-lg flex items-center justify-center shrink-0",
-                          on ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        <UserCheck className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-sm font-medium text-foreground">
-                          {m.name || m.email}
-                        </span>
-                        <span className="block text-xs text-muted-foreground truncate">{m.email}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-            </div>
-            <IconInput
-              icon={BellRing}
-              value={draft.closing.notify_seller_email}
-              onChange={(e) => patch("closing", { notify_seller_email: e.target.value })}
-              placeholder="Ou digite outro e-mail"
+            <SellersCombobox
+              members={members}
+              selected={draft.closing.notify_sellers}
+              onToggle={(seller) =>
+                patch("closing", {
+                  notify_sellers: draft.closing.notify_sellers.some((x) => x.email === seller.email)
+                    ? draft.closing.notify_sellers.filter((x) => x.email !== seller.email)
+                    : [...draft.closing.notify_sellers, seller],
+                })
+              }
             />
           </div>
 
