@@ -707,8 +707,7 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
  const [stageProgress, setStageProgress] = useState(0);
  const [isAnimating, setIsAnimating] = useState(false);
  const [jumpTarget, setJumpTarget] = useState<number | null>(null);
- const [videoOpen, setVideoOpen] = useState(false);
- const [hasWatchedVideo, setHasWatchedVideo] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
  const sectionRef = useRef<HTMLElement>(null);
  const demoRef = useRef<HTMLDivElement>(null);
  const animationStartRef = useRef<number>(0);
@@ -833,11 +832,15 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
  </div>
  <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
  </div>
- <h1 className="font-display font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.08] tracking-tight" style={{ animationDelay: "0.1s" }}>
- <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">IA comercial que</span>
- <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">Transforma leads em</span>
- <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">Oportunidades reais</span>
- </h1>
+  <h1 className="font-display font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.08] tracking-tight" style={{ animationDelay: "0.1s" }}>
+  <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary/10 border border-primary/20 mb-3 sm:mb-4">
+    <Sparkles size={14} className="text-primary" />
+    <span className="text-xs sm:text-sm font-medium text-primary">Teste grátis por 7 dias</span>
+  </div>
+  <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">IA comercial que</span>
+  <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">Transforma leads em</span>
+  <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">Oportunidades reais</span>
+  </h1>
  <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
  IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.
  </p>
@@ -855,12 +858,12 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
  Teste grátis em breve
  </Button>
  ) : (
- <Link to="/signup/escolher-plano" className="shrink-0" onClick={onSignupClick}>
- <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12">
- {hasWatchedVideo ? "Testar grátis" : "Gerar vendas"}
- <ArrowRight size={14} className="ml-1.5 sm:ml-2 group-hover:translate-x-0.5 transition-transform" />
- </Button>
- </Link>
+  <Link to="/signup/escolher-plano" className="shrink-0" onClick={onSignupClick}>
+  <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12">
+  Iniciar Teste Grátis
+  <ArrowRight size={14} className="ml-1.5 sm:ml-2 group-hover:translate-x-0.5 transition-transform" />
+  </Button>
+  </Link>
  )}
  <Link to="/tour-guiado" className="group shrink-0">
  <Button
@@ -946,12 +949,11 @@ export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
  </div>
  </a>
 
- <VideoModal
- open={videoOpen}
- onOpenChange={setVideoOpen}
- onVideoWatched={() => setHasWatchedVideo(true)}
- onSignupClick={onSignupClick}
- />
+      <VideoModal
+        open={videoOpen}
+        onOpenChange={setVideoOpen}
+        onSignupClick={onSignupClick}
+      />
 
  {/* Keyframe animations */}
  <style>{`

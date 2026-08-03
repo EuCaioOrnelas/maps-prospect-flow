@@ -6,26 +6,20 @@ import { Link } from "react-router-dom";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 
 interface VideoModalProps {
- open: boolean;
- onOpenChange: (open: boolean) => void;
- onVideoWatched?: () => void;
- onSignupClick?: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSignupClick?: () => void;
 }
 
-export const VideoModal = ({ open, onOpenChange, onVideoWatched, onSignupClick }: VideoModalProps) => {
- const [isFullscreen, setIsFullscreen] = useState(false);
- const videoScaleX = 1.055;
+export const VideoModal = ({ open, onOpenChange, onSignupClick }: VideoModalProps) => {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const videoScaleX = 1.055;
 
- useEffect(() => {
- if (!open) {
- setIsFullscreen(false);
- return;
- }
- const timer = setTimeout(() => {
- onVideoWatched?.();
- }, 10000);
- return () => clearTimeout(timer);
- }, [open, onVideoWatched]);
+  useEffect(() => {
+    if (!open) {
+      setIsFullscreen(false);
+    }
+  }, [open]);
 
  const toggleFullscreen = () => {
  const el = document.getElementById("video-modal-container");
