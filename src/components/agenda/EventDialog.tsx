@@ -34,10 +34,12 @@ import {
   Briefcase,
   Users,
   Check,
+  ExternalLink,
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { LeadPicker, type PickedLead } from "./LeadPicker";
+import { MemberPicker } from "./MemberPicker";
 import { cn } from "@/lib/utils";
+
 import {
   EVENT_TYPES,
   EVENT_STATUSES,
