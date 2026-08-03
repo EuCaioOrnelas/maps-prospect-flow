@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { CalendarCheck, CalendarClock, CalendarRange, CheckCircle2, XCircle, Percent, Bot, Timer } from "lucide-react";
+import { CalendarCheck, CalendarClock, CalendarRange, CheckCircle2, XCircle, Bot } from "lucide-react";
 import type { CalendarEvent } from "@/lib/calendarConfig";
 import { startOfDay, endOfDay, addDays, startOfWeek, endOfWeek } from "@/lib/calendarViews";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ const inRange = (iso: string, from: Date, to: Date) => {
   return t >= from.getTime() && t <= to.getTime();
 };
 
-/** Métricas operacionais da Agenda (duas linhas, padrão dos cards da Wiize). */
+/** Métricas operacionais da Agenda, no mesmo padrão dos cards do SDR Inteligente. */
 export function AgendaMetrics({ events, loading }: Props) {
   const metrics = useMemo(() => {
     const now = new Date();
@@ -29,64 +29,66 @@ export function AgendaMetrics({ events, loading }: Props) {
     const noShow = events.filter((e) => e.status === "no_show").length;
     const finished = completed + noShow;
     const attendance = finished ? Math.round((completed / finished) * 100) : 0;
-    const bySdr = events.filter((e) => e.source === "sdr");
-
-    const leadTimes = bySdr
-      .map((e) => new Date(e.starts_at).getTime() - new Date(e.created_at).getTime())
-      .filter((ms) => ms > 0);
-    const avgLeadHours = leadTimes.length
-      ? Math.round(leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length / 3_600_000)
-      : 0;
+    const bySdr = events.filter((e) => e.source === "sdr").length;
 
     return [
       {
         label: "Reuniões hoje",
         value: notCancelled.filter((e) => inRange(e.starts_at, today[0], today[1])).length,
+        hint: "Compromissos ativos de hoje",
         icon: CalendarCheck,
       },
       {
         label: "Amanhã",
         value: notCancelled.filter((e) => inRange(e.starts_at, tomorrow[0], tomorrow[1])).length,
+        hint: "Preparação para o próximo dia",
         icon: CalendarClock,
       },
       {
         label: "Nesta semana",
         value: notCancelled.filter((e) => inRange(e.starts_at, week[0], week[1])).length,
+        hint: "Volume semanal da operação",
         icon: CalendarRange,
       },
-      { label: "Concluídas", value: completed, icon: CheckCircle2 },
-      { label: "Canceladas", value: cancelled, icon: XCircle },
-      { label: "Comparecimento", value: `${attendance}%`, icon: Percent },
-      { label: "Geradas pelo SDR", value: bySdr.length, icon: Bot },
       {
-        label: "Tempo médio até a reunião",
-        value: avgLeadHours ? `${avgLeadHours}h` : "—",
-        icon: Timer,
+        label: "Concluídas",
+        value: completed,
+        hint: `Comparecimento de ${attendance}%`,
+        icon: CheckCircle2,
+      },
+      {
+        label: "Canceladas",
+        value: cancelled,
+        hint: `${noShow} sem comparecimento`,
+        icon: XCircle,
+      },
+      {
+        label: "Geradas pelo SDR",
+        value: bySdr,
+        hint: "Agendadas automaticamente pela IA",
+        icon: Bot,
       },
     ];
   }, [events]);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {metrics.map((m) => (
         <Card
           key={m.label}
           className={cn(
-            "p-3 lg:p-4 border-border/70 transition-colors hover:border-primary/30",
+            "p-4 border-border/70 transition-colors hover:border-primary/30",
             loading && "animate-pulse",
           )}
         >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[11px] lg:text-xs text-muted-foreground truncate">{m.label}</p>
-              <p className="text-xl lg:text-2xl font-bold text-foreground mt-1 tabular-nums">
-                {m.value}
-              </p>
-            </div>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-medium text-muted-foreground truncate">{m.label}</p>
             <span className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
               <m.icon className="h-4 w-4" />
             </span>
           </div>
+          <p className="mt-2 text-2xl font-bold tabular-nums text-foreground">{m.value}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground truncate">{m.hint}</p>
         </Card>
       ))}
     </div>
