@@ -271,6 +271,8 @@ const App = () => (
               <PageVisitTracker />
               <Routes>
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />
+                <Route path="/prospeccao" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Prospeccao /></Suspense></LightThemeWrapper>} />
+
                 <Route path="/demonstracao" element={<Suspense fallback={<PageLoader />}><Demonstracao /></Suspense>} />
                 
                 
