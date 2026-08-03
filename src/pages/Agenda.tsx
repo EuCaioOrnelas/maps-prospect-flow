@@ -137,6 +137,23 @@ export default function Agenda() {
     setQuickOpen(true);
   };
 
+  const openDetails = (event: CalendarEvent) => {
+    setDetailsEvent(event);
+    setDetailsOpen(true);
+  };
+
+  const handleStatusChange = async (event: CalendarEvent, status: string) => {
+    try {
+      await updateEvent.mutateAsync({ id: event.id, status });
+      toast.success(
+        status === "completed" ? "Reunião marcada como concluída." : "Reunião marcada como perdida.",
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível atualizar.");
+      throw err;
+    }
+  };
+
   const handleQuickSave = async (input: Parameters<typeof updateEvent.mutateAsync>[0]) => {
     try {
       await updateEvent.mutateAsync(input);
