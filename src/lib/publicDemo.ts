@@ -115,10 +115,10 @@ export function installPublicDemoNetworkGuard() {
   const OriginalWebSocket = window.WebSocket;
   window.WebSocket = new Proxy(OriginalWebSocket, {
     construct(target, args: [string, (string | string[])?]) {
-      if (isBlocked(String(args[0]))) {
-        throw new Error("demo_mode_blocked");
-      }
-      return Reflect.construct(target, args) as WebSocket;
+      // Never throw (it would break the app shell): point blocked sockets at the
+      // discard port so the connection simply fails silently.
+      const url = isBlocked(String(args[0])) ? "ws://127.0.0.1:9" : args[0];
+      return Reflect.construct(target, [url, args[1]]) as WebSocket;
     },
   }) as typeof WebSocket;
 
