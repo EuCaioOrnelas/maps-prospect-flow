@@ -55,27 +55,6 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
  tryScroll();
  };
 
- const scrollToPricing = () => scrollToId("pricing");
-
- const handleNavLinkClick = (e: React.MouseEvent, href: string) => {
- e.preventDefault();
- setMobileMenuOpen(false);
- const id = href.replace("#", "");
- if (location.pathname !== "/") {
- navigate(`/#${id}`);
- }
- scrollToId(id);
- };
-
- const handlePricingClick = (e: React.MouseEvent) => {
- e.preventDefault();
- setMobileMenuOpen(false);
- onSignupClick?.();
- if (location.pathname !== "/") {
- navigate("/#pricing");
- }
- scrollToPricing();
- };
 
  const navLinks: Array<{ href?: string; to?: string; label: string }> = [
  { href: "#features", label: "Recursos" },
