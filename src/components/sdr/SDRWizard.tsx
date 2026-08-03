@@ -593,6 +593,109 @@ function NumbersCombobox({
 }
 
 
+/** Combobox pesquisável de vendedores (multi-seleção) */
+function SellersCombobox({
+  members,
+  selected,
+  onToggle,
+  placeholder = "Selecionar vendedores...",
+}: {
+  members: any[];
+  selected: SdrSeller[];
+  onToggle: (seller: SdrSeller) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const options = (members || []).filter((m: any) => m.email);
+  const label =
+    selected.length === 0
+      ? placeholder
+      : selected.length === 1
+        ? selected[0].name || selected[0].email
+        : `${selected.length} vendedores selecionados`;
+
+  return (
+    <div className="space-y-2">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex h-11 w-full items-center justify-between rounded-lg border border-border bg-card px-3 text-sm transition-colors hover:border-primary/40"
+          >
+            <span className="flex items-center gap-2 truncate">
+              <UserCheck className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+              <span className={cn("truncate", selected.length === 0 && "text-muted-foreground")}>
+                {label}
+              </span>
+            </span>
+            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="p-0 w-[--radix-popover-trigger-width] bg-popover text-popover-foreground border-border shadow-lg z-50"
+          align="start"
+        >
+          <Command
+            filter={(value, search) =>
+              value.toLowerCase().includes(search.toLowerCase().trim()) ? 1 : 0
+            }
+          >
+            <CommandInput placeholder="Buscar por nome ou e-mail..." />
+            <CommandList>
+              <CommandEmpty>Nenhum vendedor encontrado.</CommandEmpty>
+              <CommandGroup>
+                {options.map((m: any) => {
+                  const isOn = selected.some((s) => s.email === m.email);
+                  return (
+                    <CommandItem
+                      key={m.id}
+                      value={`${m.name ?? ""} ${m.email ?? ""}`}
+                      onSelect={() =>
+                        onToggle({ user_id: m.user_id ?? null, name: m.name || m.email, email: m.email })
+                      }
+                      className={cn(
+                        "gap-2 cursor-pointer rounded-lg px-2 py-2",
+                        "data-[selected=true]:bg-muted data-[selected=true]:text-foreground",
+                        isOn && "bg-primary/10 text-foreground data-[selected=true]:bg-primary/15"
+                      )}
+                    >
+                      <Checkbox checked={isOn} className="pointer-events-none" />
+                      <UserCheck className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+                      <span className="flex flex-col">
+                        <span className="text-sm text-foreground">{m.name || m.email}</span>
+                        <span className="text-xs text-muted-foreground">{m.email}</span>
+                      </span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      <div className="min-h-[38px] rounded-lg border border-dashed border-border/70 bg-muted/30 px-2 py-1.5 flex flex-wrap items-center gap-2">
+        {selected.length === 0 ? (
+          <span className="text-xs text-muted-foreground">Nenhum vendedor selecionado ainda</span>
+        ) : (
+          selected.map((s) => (
+            <Badge key={s.email} variant="secondary" className="gap-1.5 pl-2 pr-1 py-1 text-foreground">
+              <UserCheck className="h-3 w-3" />
+              {s.name || s.email}
+              <button
+                type="button"
+                onClick={() => onToggle(s)}
+                className="ml-1 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** Shell com header e título fixos; scroll apenas no conteúdo da etapa */
 function OnboardingShell({
   step,
@@ -612,6 +715,10 @@ function OnboardingShell({
   stepKey: string;
 }) {
   const progress = Math.round((step / total) * 100);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [stepKey]);
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
       {/* Header fixo */}
@@ -646,7 +753,7 @@ function OnboardingShell({
       </div>
 
       {/* Conteúdo com scroll */}
-      <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto pr-1">
         <AnimatePresence mode="wait">
           <motion.section
             key={stepKey}
