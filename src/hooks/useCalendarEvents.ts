@@ -22,6 +22,7 @@ export interface CalendarEventInput {
   location?: string | null;
   notes?: string | null;
   reminders?: number[];
+  metadata?: Record<string, unknown>;
 }
 
 interface UseCalendarEventsOptions {
