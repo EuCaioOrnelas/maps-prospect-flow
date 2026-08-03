@@ -908,7 +908,6 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         return draft.knowledge.products_list.length > 0 && productsValid;
       case 9:
         return (
-          draft.closing.notify_seller_email.trim().length > 3 &&
           draft.closing.after_limit_actions.length > 0 &&
           (!draft.closing.after_limit_actions.includes("mover_pipeline") ||
             !!draft.closing.after_limit_stage_id)
@@ -968,6 +967,15 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         products_list: d.knowledge.products_list.map((p, idx) =>
           idx === i ? { ...p, [field]: value } : p
         ),
+      },
+    }));
+
+  const updateFaq = (i: number, field: string, value: string) =>
+    setDraft((d) => ({
+      ...d,
+      knowledge: {
+        ...d.knowledge,
+        faq_list: d.knowledge.faq_list.map((f, idx) => (idx === i ? { ...f, [field]: value } : f)),
       },
     }));
 
@@ -1963,35 +1971,47 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
       {step === 11 && (
         <div className="space-y-5">
           <CardGrid cols={3}>
-            <OptionCard
-              icon={Cpu}
-              active
-              onClick={() => {}}
-              title="GPT (OpenAI)"
-              hint="Modelo padrão do SDR"
-            />
-            {[
-              { label: "Claude", hint: "Em breve" },
-              { label: "Gemini", hint: "Em breve" },
-              { label: "DeepSeek", hint: "Em breve" },
-              { label: "Llama", hint: "Em breve" },
-            ].map((p) => (
-              <div
-                key={p.label}
-                className="relative flex h-full w-full flex-col items-center justify-start gap-4 p-6 rounded-xl border border-dashed border-border bg-muted/30 opacity-70"
-              >
-                <Badge variant="secondary" className="absolute top-3 right-3 text-[10px]">
-                  Em breve
-                </Badge>
-                <span className="h-12 w-12 rounded-lg bg-muted text-muted-foreground flex items-center justify-center">
-                  <Cpu className="h-6 w-6" strokeWidth={1.75} />
-                </span>
-                <span className="flex flex-col items-center gap-1">
-                  <span className="text-sm font-medium text-foreground">{p.label}</span>
-                  <span className="text-xs text-muted-foreground">{p.hint}</span>
-                </span>
-              </div>
-            ))}
+            {AI_PROVIDERS.map((prov) => {
+              const isOpenAI = prov.id === "openai";
+              if (isOpenAI) {
+                return (
+                  <button
+                    key={prov.id}
+                    type="button"
+                    onClick={() => patch("ai", { provider: "openai" })}
+                    className="group relative flex h-full w-full flex-col items-center justify-start gap-4 p-6 rounded-xl border border-primary bg-card ring-2 ring-primary/20 shadow-md transition-all duration-200"
+                  >
+                    <span className="absolute top-3 right-3 h-5 w-5 rounded-full border border-primary bg-primary flex items-center justify-center">
+                      <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
+                    </span>
+                    <span className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+                      <img src={prov.logo} alt={prov.name} className="h-7 w-7 object-contain" />
+                    </span>
+                    <span className="flex flex-col items-center gap-1">
+                      <span className="text-sm font-medium text-foreground">GPT (OpenAI)</span>
+                      <span className="text-xs text-muted-foreground">Modelo padrão do SDR</span>
+                    </span>
+                  </button>
+                );
+              }
+              return (
+                <div
+                  key={prov.id}
+                  className="relative flex h-full w-full flex-col items-center justify-start gap-4 p-6 rounded-xl border border-dashed border-border bg-muted/30 opacity-70"
+                >
+                  <Badge variant="secondary" className="absolute top-3 right-3 text-[10px]">
+                    Em breve
+                  </Badge>
+                  <span className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+                    <img src={prov.logo} alt={prov.name} className="h-7 w-7 object-contain grayscale" />
+                  </span>
+                  <span className="flex flex-col items-center gap-1">
+                    <span className="text-sm font-medium text-foreground">{prov.name}</span>
+                    <span className="text-xs text-muted-foreground">Em breve</span>
+                  </span>
+                </div>
+              );
+            })}
           </CardGrid>
 
           <div className="space-y-2">
