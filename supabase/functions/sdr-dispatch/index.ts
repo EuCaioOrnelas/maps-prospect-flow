@@ -180,6 +180,57 @@ serve(async (req) => {
         .from("sdr_sessions")
         .update({ status: nextAction === "encerrar" ? "closed" : "handoff" })
         .eq("id", session?.id);
+
+      // Vendedores a avisar: handoff usa strategy.handoff_sellers, encerramento usa closing.notify_sellers
+      const sellers: any[] =
+        nextAction === "chamar_vendedor"
+          ? (agent.strategy?.handoff_sellers ?? [])
+          : (agent.closing?.notify_sellers ?? []);
+
+      const firstSellerId = sellers.find((s: any) => s?.user_id)?.user_id ?? null;
+      if (nextAction === "chamar_vendedor" && firstSellerId && conversation_id) {
+        await supabase
+          .from("chat_conversations")
+          .update({ responsible_user_id: firstSellerId })
+          .eq("id", conversation_id);
+      }
+
+      const wabaLabel = (() => {
+        return phone_number_id || "";
+      })();
+
+      for (const seller of sellers) {
+        if (!seller?.email) continue;
+        try {
+          await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_KEY}` },
+            body: JSON.stringify({
+              user_id: owner_user_id,
+              email_type: "SDR_SELLER_HANDOFF",
+              override_email: seller.email,
+              idempotency_key: `sdr-handoff-${session?.id ?? contact_phone}-${nextAction}-${seller.email}`,
+              payload: {
+                sdr_name: agent.name,
+                contact_name: contact_name || contact_phone,
+                contact_phone,
+                waba_number: wabaLabel,
+                reason:
+                  nextAction === "chamar_vendedor"
+                    ? "O SDR identificou que este lead precisa de um vendedor humano agora."
+                    : "O SDR concluiu o ciclo de follow-ups e encerrou a conversa.",
+                summary: brain.strategy?.estrategia || brain.analysis?.estrategia || "",
+                next_step:
+                  nextAction === "chamar_vendedor"
+                    ? "Assuma a conversa no chat: você já é o responsável por este lead."
+                    : "Avalie se vale uma nova tentativa manual com este lead.",
+              },
+            }),
+          });
+        } catch (err) {
+          console.error("[sdr-dispatch] falha ao avisar vendedor", seller.email, err);
+        }
+      }
     }
 
     // 6) Envio pelo WhatsApp (Meta Cloud API)
