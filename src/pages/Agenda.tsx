@@ -28,8 +28,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { useCalendarEvents, type CalendarEventInput } from "@/hooks/useCalendarEvents";
 import { useEventReminders } from "@/hooks/useEventReminders";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AgendaMetrics } from "@/components/agenda/AgendaMetrics";
 import { EventDialog } from "@/components/agenda/EventDialog";
+import { QuickEditDialog } from "@/components/agenda/QuickEditDialog";
+
 import { DayView } from "@/components/agenda/views/DayView";
 import { WeekView } from "@/components/agenda/views/WeekView";
 import { MonthView } from "@/components/agenda/views/MonthView";
@@ -69,6 +72,9 @@ export default function Agenda() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const [defaultDate, setDefaultDate] = useState<Date | null>(null);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickEvent, setQuickEvent] = useState<CalendarEvent | null>(null);
+
 
   const range = useMemo(() => {
     switch (view) {
@@ -126,6 +132,23 @@ export default function Agenda() {
     setDialogOpen(true);
   };
 
+  const openQuickEdit = (event: CalendarEvent) => {
+    setQuickEvent(event);
+    setQuickOpen(true);
+  };
+
+  const handleQuickSave = async (input: Parameters<typeof updateEvent.mutateAsync>[0]) => {
+    try {
+      await updateEvent.mutateAsync(input);
+      toast.success("Compromisso atualizado.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível salvar.");
+      throw err;
+    }
+  };
+
+
+
   const handleSave = async (input: CalendarEventInput & { id?: string }) => {
     const { id, ...rest } = input;
     if (id) {
@@ -170,15 +193,18 @@ export default function Agenda() {
   };
 
   const periodLabel = useMemo(() => {
+    const fullDate = (d: Date) =>
+      `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
     if (view === "day") return formatLongDate(cursor);
     if (view === "week") {
       const from = startOfWeek(cursor);
       const to = addDays(from, 6);
-      return `${from.getDate()}/${from.getMonth() + 1} a ${to.getDate()}/${to.getMonth() + 1}`;
+      return `${fullDate(from)} até ${fullDate(to)}`;
     }
     if (view === "month") return formatMonth(cursor);
     return "Próximos compromissos";
   }, [view, cursor]);
+
 
   const showNavigation = view !== "list";
   const saving = createEvent.isPending || updateEvent.isPending;
@@ -280,20 +306,39 @@ export default function Agenda() {
 
               {canSeeEveryone && (
                 <Select value={userFilter} onValueChange={setUserFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[210px]">
                     <Users className="h-3.5 w-3.5 mr-1.5 shrink-0" />
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Toda a equipe</SelectItem>
-                    {members.map((m) => (
-                      <SelectItem key={m.user_id} value={m.user_id}>
-                        {m.name || m.email || "Usuário"}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="all">
+                      <span className="flex items-center gap-2">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                          <Users className="h-3.5 w-3.5" />
+                        </span>
+                        Toda a equipe
+                      </span>
+                    </SelectItem>
+                    {members.map((m) => {
+                      const label = m.name || m.email || "Usuário";
+                      return (
+                        <SelectItem key={m.user_id} value={m.user_id}>
+                          <span className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6 rounded-md">
+                              <AvatarImage src={m.avatar_url || undefined} alt={label} className="rounded-md object-cover" />
+                              <AvatarFallback className="rounded-md text-[10px] font-semibold">
+                                {label.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="truncate">{label}</span>
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               )}
+
             </div>
           </Card>
 
@@ -310,6 +355,7 @@ export default function Agenda() {
                 date={cursor}
                 events={visibleEvents}
                 onSelect={openEdit}
+                onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
                 responsibleName={responsibleName}
@@ -320,6 +366,7 @@ export default function Agenda() {
                 date={cursor}
                 events={visibleEvents}
                 onSelect={openEdit}
+                onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
                 responsibleName={responsibleName}
@@ -330,6 +377,7 @@ export default function Agenda() {
                 date={cursor}
                 events={visibleEvents}
                 onSelect={openEdit}
+                onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
                 responsibleName={responsibleName}
@@ -339,6 +387,7 @@ export default function Agenda() {
               <ListView
                 events={visibleEvents}
                 onSelect={openEdit}
+                onQuickEdit={openQuickEdit}
                 responsibleName={responsibleName}
               />
             )}
@@ -357,6 +406,15 @@ export default function Agenda() {
         saving={saving}
         onSave={handleSave}
         onDelete={handleDelete}
+      />
+
+      <QuickEditDialog
+        open={quickOpen}
+        onOpenChange={setQuickOpen}
+        event={quickEvent}
+        saving={updateEvent.isPending}
+        onSave={handleQuickSave}
+        onOpenFull={openEdit}
       />
     </div>
   );

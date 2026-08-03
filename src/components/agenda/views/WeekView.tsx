@@ -9,13 +9,14 @@ interface Props {
   date: Date;
   events: CalendarEvent[];
   onSelect: (event: CalendarEvent) => void;
+  onQuickEdit?: (event: CalendarEvent) => void;
   onCreateAt: (date: Date) => void;
   onMove: (event: CalendarEvent, newDate: Date, hour?: number) => void;
   responsibleName: (userId: string) => string | null;
 }
 
 /** Visualização semanal em grade de horários. */
-export function WeekView({ date, events, onSelect, onCreateAt, onMove, responsibleName }: Props) {
+export function WeekView({ date, events, onSelect, onQuickEdit, onCreateAt, onMove, responsibleName }: Props) {
   const days = useMemo(() => {
     const first = startOfWeek(date);
     return Array.from({ length: 7 }, (_, i) => addDays(first, i));
@@ -100,6 +101,7 @@ export function WeekView({ date, events, onSelect, onCreateAt, onMove, responsib
                         event={ev}
                         variant="compact"
                         onClick={onSelect}
+                        onQuickEdit={onQuickEdit}
                         onDragStart={setDragging}
                         onDragEnd={() => setDragging(null)}
                         responsibleName={responsibleName(ev.assigned_user_id)}

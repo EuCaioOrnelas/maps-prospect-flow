@@ -9,13 +9,14 @@ interface Props {
   date: Date;
   events: CalendarEvent[];
   onSelect: (event: CalendarEvent) => void;
+  onQuickEdit?: (event: CalendarEvent) => void;
   onCreateAt: (date: Date) => void;
   onMove: (event: CalendarEvent, newDate: Date) => void;
   responsibleName: (userId: string) => string | null;
 }
 
 /** Calendário mensal, com arrastar e soltar entre dias. */
-export function MonthView({ date, events, onSelect, onCreateAt, onMove, responsibleName }: Props) {
+export function MonthView({ date, events, onSelect, onQuickEdit, onCreateAt, onMove, responsibleName }: Props) {
   const grid = useMemo(() => buildMonthGrid(date), [date]);
   const [dragging, setDragging] = useState<CalendarEvent | null>(null);
   const [hoverDay, setHoverDay] = useState<string | null>(null);
@@ -90,6 +91,7 @@ export function MonthView({ date, events, onSelect, onCreateAt, onMove, responsi
                     event={ev}
                     variant="compact"
                     onClick={onSelect}
+                    onQuickEdit={onQuickEdit}
                     onDragStart={setDragging}
                     onDragEnd={() => setDragging(null)}
                     responsibleName={responsibleName(ev.assigned_user_id)}

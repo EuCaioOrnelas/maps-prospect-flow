@@ -2,7 +2,8 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Building2, User, Bot } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Clock, Building2, User, Bot, PencilLine } from "lucide-react";
 import {
   getEventType,
   getEventStatus,
@@ -18,6 +19,7 @@ export type EventChipVariant = "compact" | "default" | "detailed";
 interface Props {
   event: CalendarEvent;
   onClick: (event: CalendarEvent) => void;
+  onQuickEdit?: (event: CalendarEvent) => void;
   onDragStart?: (event: CalendarEvent) => void;
   onDragEnd?: () => void;
   responsibleName?: string | null;
@@ -31,6 +33,7 @@ interface Props {
 export function EventChip({
   event,
   onClick,
+  onQuickEdit,
   onDragStart,
   onDragEnd,
   responsibleName,
@@ -43,6 +46,7 @@ export function EventChip({
   const Icon = type.icon;
   const duration = formatDuration(minutesBetween(event.starts_at, event.ends_at));
   const cancelled = event.status === "cancelled";
+
 
   const details = (
     <Card className="p-3 shadow-xl border-border">
@@ -87,9 +91,26 @@ export function EventChip({
             </Badge>
           )}
         </div>
+        {onQuickEdit && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-7 w-full text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              setHovered(false);
+              onQuickEdit(event);
+            }}
+          >
+            <PencilLine className="h-3 w-3 mr-1.5" />
+            Editar detalhes
+          </Button>
+        )}
       </div>
     </Card>
   );
+
 
   if (variant === "detailed") {
     return (
@@ -131,9 +152,27 @@ export function EventChip({
               )}
             </div>
           </div>
-          <Badge variant="outline" className={cn("shrink-0 text-[10px] h-5", status.chip)}>
-            {status.label}
-          </Badge>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Badge variant="outline" className={cn("text-[10px] h-5", status.chip)}>
+              {status.label}
+            </Badge>
+            {onQuickEdit && (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                aria-label="Editar compromisso"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickEdit(event);
+                }}
+              >
+                <PencilLine className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+
         </div>
       </div>
     );
@@ -147,7 +186,7 @@ export function EventChip({
       onClick={() => onClick(event)}
       onMouseEnter={(e) => {
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        setAnchor({ x: Math.min(rect.left, window.innerWidth - 280), y: rect.bottom + 6 });
+        setAnchor({ x: Math.min(rect.left, window.innerWidth - 280), y: rect.bottom });
         setHovered(true);
       }}
       onMouseLeave={() => setHovered(false)}
@@ -174,13 +213,17 @@ export function EventChip({
       {hovered && anchor &&
         createPortal(
           <div
-            className="pointer-events-none fixed z-[60] w-64 animate-in fade-in duration-150"
+            className="fixed z-[60] w-64 pt-1.5 animate-in fade-in duration-150"
             style={{ left: anchor.x, top: anchor.y }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            onClick={(e) => e.stopPropagation()}
           >
             {details}
           </div>,
           document.body,
         )}
+
     </div>
   );
 }
