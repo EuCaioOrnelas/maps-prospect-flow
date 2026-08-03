@@ -214,6 +214,14 @@ export function EventDialog({
     return `${pad(end.getHours())}:${pad(end.getMinutes())}`;
   }, [form.date, form.startTime, form.duration]);
 
+  const locationUrl = useMemo(() => {
+    const raw = form.location.trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (/^[\w-]+(\.[\w-]+)+([/?].*)?$/i.test(raw)) return `https://${raw}`;
+    return null;
+  }, [form.location]);
+
   const handleSubmit = async () => {
     if (!form.title.trim()) {
       toast.error("Informe um título para o compromisso.");
