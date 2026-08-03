@@ -1,6 +1,7 @@
-import { useMemo } from "react";
-import { EventCard } from "../EventCard";
-import type { CalendarEvent } from "@/lib/calendarConfig";
+import { useMemo, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { EventChip } from "../EventChip";
+import { DAY_START_HOUR, DAY_END_HOUR, pad, type CalendarEvent } from "@/lib/calendarConfig";
 import { addDays, startOfWeek, isSameDay, WEEKDAY_SHORT, eventsOfDay } from "@/lib/calendarViews";
 import { cn } from "@/lib/utils";
 
@@ -9,63 +10,108 @@ interface Props {
   events: CalendarEvent[];
   onSelect: (event: CalendarEvent) => void;
   onCreateAt: (date: Date) => void;
+  onMove: (event: CalendarEvent, newDate: Date, hour?: number) => void;
   responsibleName: (userId: string) => string | null;
 }
 
-/** Visualização semanal com uma coluna por dia. */
-export function WeekView({ date, events, onSelect, onCreateAt, responsibleName }: Props) {
+/** Visualização semanal em grade de horários. */
+export function WeekView({ date, events, onSelect, onCreateAt, onMove, responsibleName }: Props) {
   const days = useMemo(() => {
     const first = startOfWeek(date);
     return Array.from({ length: 7 }, (_, i) => addDays(first, i));
   }, [date]);
+  const hours = useMemo(
+    () => Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => DAY_START_HOUR + i),
+    [],
+  );
+  const [dragging, setDragging] = useState<CalendarEvent | null>(null);
+  const [hoverSlot, setHoverSlot] = useState<string | null>(null);
   const today = new Date();
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
-      {days.map((day) => {
-        const dayEvents = eventsOfDay(events, day);
-        const isToday = isSameDay(day, today);
-        return (
-          <div
-            key={day.toISOString()}
-            className={cn(
-              "rounded-xl border border-border/70 overflow-hidden flex flex-col",
-              isToday && "border-primary/40",
-            )}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                const d = new Date(day);
-                d.setHours(9, 0, 0, 0);
-                onCreateAt(d);
-              }}
-              className={cn(
-                "px-2 py-2 text-left transition-colors hover:bg-muted/50",
-                isToday ? "bg-primary/10" : "bg-muted/30",
-              )}
-            >
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                {WEEKDAY_SHORT[day.getDay()]}
-              </p>
-              <p className={cn("text-sm font-semibold", isToday ? "text-primary" : "text-foreground")}>
-                {day.getDate()}
-              </p>
-            </button>
-            <div className="p-1.5 space-y-1.5 min-h-[120px]">
-              {dayEvents.map((ev) => (
-                <EventCard
-                  key={ev.id}
-                  event={ev}
-                  compact
-                  onClick={onSelect}
-                  responsibleName={responsibleName(ev.assigned_user_id)}
-                />
-              ))}
-            </div>
+    <Card className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <div className="min-w-[720px]">
+          <div className="grid grid-cols-[64px_repeat(7,1fr)] border-b border-border bg-muted/40">
+            <div className="px-2 py-2.5 text-[11px] text-muted-foreground">Hora</div>
+            {days.map((day) => {
+              const isToday = isSameDay(day, today);
+              return (
+                <button
+                  key={day.toISOString()}
+                  type="button"
+                  onClick={() => {
+                    const d = new Date(day);
+                    d.setHours(9, 0, 0, 0);
+                    onCreateAt(d);
+                  }}
+                  className={cn(
+                    "px-2 py-2 text-center transition-colors hover:bg-muted/60",
+                    isToday && "bg-primary/10",
+                  )}
+                >
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    {WEEKDAY_SHORT[day.getDay()]}
+                  </p>
+                  <p className={cn("text-sm font-semibold", isToday ? "text-primary" : "text-foreground")}>
+                    {day.getDate()}
+                  </p>
+                </button>
+              );
+            })}
           </div>
-        );
-      })}
-    </div>
+
+          {hours.map((hour) => (
+            <div key={hour} className="grid grid-cols-[64px_repeat(7,1fr)] border-b border-border/50 last:border-b-0">
+              <div className="px-2 py-1.5 text-[11px] tabular-nums text-muted-foreground">
+                {pad(hour)}:00
+              </div>
+              {days.map((day) => {
+                const key = `${day.toISOString()}-${hour}`;
+                const slotEvents = eventsOfDay(events, day).filter(
+                  (e) => new Date(e.starts_at).getHours() === hour,
+                );
+                return (
+                  <div
+                    key={key}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setHoverSlot(key);
+                    }}
+                    onDragLeave={() => setHoverSlot((prev) => (prev === key ? null : prev))}
+                    onDrop={() => {
+                      if (dragging) onMove(dragging, day, hour);
+                      setDragging(null);
+                      setHoverSlot(null);
+                    }}
+                    onDoubleClick={() => {
+                      const d = new Date(day);
+                      d.setHours(hour, 0, 0, 0);
+                      onCreateAt(d);
+                    }}
+                    className={cn(
+                      "min-h-[42px] space-y-1 border-l border-border/50 p-1 transition-colors",
+                      hoverSlot === key && "bg-primary/10",
+                    )}
+                  >
+                    {slotEvents.map((ev) => (
+                      <EventChip
+                        key={ev.id}
+                        event={ev}
+                        variant="compact"
+                        onClick={onSelect}
+                        onDragStart={setDragging}
+                        onDragEnd={() => setDragging(null)}
+                        responsibleName={responsibleName(ev.assigned_user_id)}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
   );
 }
