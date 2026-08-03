@@ -699,9 +699,23 @@ const floatingCards = [
 ];
 
 /* ─── Main component ─── */
-interface HeroSectionProps { onSignupClick?: () => void; }
+interface HeroSectionProps {
+ onSignupClick?: () => void;
+ titleLine1?: string;
+ titleLine2?: string;
+ titleHighlight?: string;
+ description?: string;
+ descriptionClassName?: string;
+}
 
-export const HeroSection = ({ onSignupClick }: HeroSectionProps) => {
+export const HeroSection = ({
+ onSignupClick,
+ titleLine1 = "IA comercial que",
+ titleLine2 = "Transforma leads em",
+ titleHighlight = "Oportunidades reais",
+ description = "IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.",
+ descriptionClassName,
+}: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
  const [currentStage, setCurrentStage] = useState(0);
  const [stageProgress, setStageProgress] = useState(0);
