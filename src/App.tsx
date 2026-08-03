@@ -55,6 +55,7 @@ const SendingGuidelines = lazyWithRetry(() => import("./pages/SendingGuidelines"
 const HelpCenter = lazyWithRetry(() => import("./pages/HelpCenter"), "HelpCenter");
 const HelpCenterFAQ = lazyWithRetry(() => import("./pages/HelpCenterFAQ"), "HelpCenterFAQ");
 const TourCompleto = lazyWithRetry(() => import("./pages/TourCompleto"), "TourCompleto");
+const TourGuiado = lazyWithRetry(() => import("./pages/TourGuiado"), "TourGuiado");
 const CheckoutSuccess = lazyWithRetry(() => import("./pages/CheckoutSuccess"), "CheckoutSuccess");
 const CheckoutFailed = lazyWithRetry(() => import("./pages/CheckoutFailed"), "CheckoutFailed");
 const CheckoutPix = lazyWithRetry(() => import("./pages/CheckoutPix"), "CheckoutPix");
@@ -292,6 +293,7 @@ const App = () => (
                 <Route path="/ajuda" element={<LightThemeWrapper><HelpCenter /></LightThemeWrapper>} />
                 <Route path="/ajuda/faq" element={<LightThemeWrapper><HelpCenterFAQ /></LightThemeWrapper>} />
                 <Route path="/tour-completo" element={<LightThemeWrapper><TourCompleto /></LightThemeWrapper>} />
+                <Route path="/tour-guiado" element={<Suspense fallback={<PageLoader />}><TourGuiado /></Suspense>} />
                 <Route path="/upgrade" element={<LightThemeWrapper><Upgrade /></LightThemeWrapper>} />
                 <Route path="/upgrade-promo" element={<LightThemeWrapper><UpgradePromo /></LightThemeWrapper>} />
                 <Route path="/trial-expired" element={<ProtectedRoute><TrialExpired /></ProtectedRoute>} />
