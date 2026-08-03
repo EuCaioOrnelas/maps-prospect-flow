@@ -374,7 +374,7 @@ export default function Agenda() {
               <DayView
                 date={cursor}
                 events={visibleEvents}
-                onSelect={openEdit}
+                onSelect={openDetails}
                 onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
@@ -385,7 +385,7 @@ export default function Agenda() {
               <WeekView
                 date={cursor}
                 events={visibleEvents}
-                onSelect={openEdit}
+                onSelect={openDetails}
                 onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
@@ -396,7 +396,7 @@ export default function Agenda() {
               <MonthView
                 date={cursor}
                 events={visibleEvents}
-                onSelect={openEdit}
+                onSelect={openDetails}
                 onQuickEdit={openQuickEdit}
                 onCreateAt={openNew}
                 onMove={handleMove}
@@ -406,7 +406,7 @@ export default function Agenda() {
             {view === "list" && (
               <ListView
                 events={visibleEvents}
-                onSelect={openEdit}
+                onSelect={openDetails}
                 onQuickEdit={openQuickEdit}
                 responsibleName={responsibleName}
               />
