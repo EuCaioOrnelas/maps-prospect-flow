@@ -496,6 +496,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       "management",
       "diagnosis",
       "approach-message",
+      "sidebar-oportunidades-sdr",
     ]);
     const COCKPIT_IDS = new Set(["cockpit-overview", "cockpit-kpis", "cockpit-forecast"]);
 
