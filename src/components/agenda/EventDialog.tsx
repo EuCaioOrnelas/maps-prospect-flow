@@ -34,10 +34,12 @@ import {
   Briefcase,
   Users,
   Check,
+  ExternalLink,
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { LeadPicker, type PickedLead } from "./LeadPicker";
+import { MemberPicker } from "./MemberPicker";
 import { cn } from "@/lib/utils";
+
 import {
   EVENT_TYPES,
   EVENT_STATUSES,
@@ -212,6 +214,14 @@ export function EventDialog({
     return `${pad(end.getHours())}:${pad(end.getMinutes())}`;
   }, [form.date, form.startTime, form.duration]);
 
+  const locationUrl = useMemo(() => {
+    const raw = form.location.trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (/^[\w-]+(\.[\w-]+)+([/?].*)?$/i.test(raw)) return `https://${raw}`;
+    return null;
+  }, [form.location]);
+
   const handleSubmit = async () => {
     if (!form.title.trim()) {
       toast.error("Informe um título para o compromisso.");
@@ -235,10 +245,10 @@ export function EventDialog({
         assigned_user_id: form.assigned_user_id,
         starts_at: starts.toISOString(),
         ends_at: ends.toISOString(),
-        company_name: form.company_name.trim() || null,
-        contact_name: form.contact_name.trim() || null,
-        contact_email: form.contact_email.trim() || null,
-        contact_phone: form.contact_phone.trim() || null,
+        company_name: form.category === "comercial" ? form.company_name.trim() || null : null,
+        contact_name: form.category === "comercial" ? form.contact_name.trim() || null : null,
+        contact_email: form.category === "comercial" ? form.contact_email.trim() || null : null,
+        contact_phone: form.category === "comercial" ? form.contact_phone.trim() || null : null,
         location: form.location.trim() || null,
         notes: form.notes.trim() || null,
         reminders: form.reminder === "none" ? [] : [Number(form.reminder)],
@@ -330,9 +340,9 @@ export function EventDialog({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label htmlFor="ev-date" className="flex items-center gap-1.5">
+              <Label htmlFor="ev-date" className="flex h-5 items-center gap-1.5">
                 <CalendarDays className="h-3.5 w-3.5" /> Data
               </Label>
               <Input
@@ -341,9 +351,10 @@ export function EventDialog({
                 value={form.date}
                 onChange={(e) => set("date", e.target.value)}
               />
+              <p className="min-h-[14px] text-[11px] text-muted-foreground" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ev-time" className="flex items-center gap-1.5">
+              <Label htmlFor="ev-time" className="flex h-5 items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" /> Início
               </Label>
               <Input
@@ -352,9 +363,12 @@ export function EventDialog({
                 value={form.startTime}
                 onChange={(e) => set("startTime", e.target.value)}
               />
+              <p className="min-h-[14px] text-[11px] text-muted-foreground" />
             </div>
             <div className="space-y-1.5">
-              <Label>Duração</Label>
+              <Label className="flex h-5 items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" /> Duração
+              </Label>
               <Select value={String(form.duration)} onValueChange={(v) => set("duration", Number(v))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -363,11 +377,12 @@ export function EventDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {endLabel && (
-                <p className="text-[11px] text-muted-foreground">Termina às {endLabel}</p>
-              )}
+              <p className="min-h-[14px] text-[11px] text-muted-foreground">
+                {endLabel ? `Termina às ${endLabel}` : ""}
+              </p>
             </div>
           </div>
+
 
           <div className="space-y-2">
             <Label>Categoria do compromisso</Label>
@@ -405,105 +420,109 @@ export function EventDialog({
               <Label className="flex items-center gap-1.5">
                 <Briefcase className="h-3.5 w-3.5" /> Lead vinculado
               </Label>
-              <LeadPicker onSelect={applyLead} />
+              <LeadPicker
+                onSelect={applyLead}
+                selectedLabel={
+                  form.lead_id
+                    ? form.company_name || form.contact_name || "Lead vinculado"
+                    : null
+                }
+              />
               <p className="text-[11px] text-muted-foreground">
                 Preenche empresa, contato, e-mail e telefone automaticamente.
               </p>
             </div>
           )}
 
-          <div className="space-y-2">
+
+          <div className="space-y-1.5">
             <Label className="flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" /> Participantes
             </Label>
-            <div className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-2">
-              {members.length === 0 && (
-                <p className="text-xs text-muted-foreground">Nenhum usuário disponível.</p>
-              )}
-              {members.map((m) => {
-                const checked = form.participants.includes(m.user_id);
-                return (
-                  <label
-                    key={m.user_id}
-                    className="flex cursor-pointer items-center gap-2 text-sm"
-                  >
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={() =>
-                        set(
-                          "participants",
-                          checked
-                            ? form.participants.filter((id) => id !== m.user_id)
-                            : [...form.participants, m.user_id],
-                        )
-                      }
-                    />
-                    <span className="truncate">{m.name || m.email || "Usuário"}</span>
-                  </label>
-                );
-              })}
-            </div>
+            <MemberPicker
+              members={members}
+              value={form.participants}
+              onChange={(v) => set("participants", v)}
+            />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="ev-company" className="flex items-center gap-1.5">
-                <Building2 className="h-3.5 w-3.5" /> Empresa
-              </Label>
-              <Input
-                id="ev-company"
-                value={form.company_name}
-                onChange={(e) => set("company_name", e.target.value)}
-                placeholder="Nome da empresa"
-              />
+
+          {form.category === "comercial" && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="ev-company" className="flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5" /> Empresa
+                </Label>
+                <Input
+                  id="ev-company"
+                  value={form.company_name}
+                  onChange={(e) => set("company_name", e.target.value)}
+                  placeholder="Nome da empresa"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ev-contact" className="flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" /> Contato
+                </Label>
+                <Input
+                  id="ev-contact"
+                  value={form.contact_name}
+                  onChange={(e) => set("contact_name", e.target.value)}
+                  placeholder="Nome do lead"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ev-email" className="flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5" /> E-mail
+                </Label>
+                <Input
+                  id="ev-email"
+                  type="email"
+                  value={form.contact_email}
+                  onChange={(e) => set("contact_email", e.target.value)}
+                  placeholder="contato@empresa.com.br"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ev-phone" className="flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5" /> Telefone
+                </Label>
+                <Input
+                  id="ev-phone"
+                  value={form.contact_phone}
+                  onChange={(e) => set("contact_phone", e.target.value)}
+                  placeholder="(11) 90000-0000"
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ev-contact" className="flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5" /> Contato
-              </Label>
-              <Input
-                id="ev-contact"
-                value={form.contact_name}
-                onChange={(e) => set("contact_name", e.target.value)}
-                placeholder="Nome do lead"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ev-email" className="flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5" /> E-mail
-              </Label>
-              <Input
-                id="ev-email"
-                type="email"
-                value={form.contact_email}
-                onChange={(e) => set("contact_email", e.target.value)}
-                placeholder="contato@empresa.com.br"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ev-phone" className="flex items-center gap-1.5">
-                <Phone className="h-3.5 w-3.5" /> Telefone
-              </Label>
-              <Input
-                id="ev-phone"
-                value={form.contact_phone}
-                onChange={(e) => set("contact_phone", e.target.value)}
-                placeholder="(11) 90000-0000"
-              />
-            </div>
-          </div>
+          )}
+
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="ev-local" className="flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5" /> Local ou link
               </Label>
-              <Input
-                id="ev-local"
-                value={form.location}
-                onChange={(e) => set("location", e.target.value)}
-                placeholder="Online, endereço ou link da chamada"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="ev-local"
+                  value={form.location}
+                  onChange={(e) => set("location", e.target.value)}
+                  placeholder="Online, endereço ou link da chamada"
+                />
+                {locationUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    title="Abrir link"
+                    onClick={() => window.open(locationUrl, "_blank", "noopener,noreferrer")}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label className="flex items-center gap-1.5">
@@ -518,8 +537,12 @@ export function EventDialog({
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Enviado por e-mail e como aviso dentro da ferramenta.
+              </p>
             </div>
           </div>
+
 
           <div className="space-y-1.5">
             <Label htmlFor="ev-desc">Descrição</Label>

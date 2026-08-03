@@ -590,6 +590,35 @@ function templateSdrMeetingScheduled(payload: Record<string, unknown>): Template
   };
 }
 
+function templateEventReminder(payload: Record<string, unknown>): TemplateResult {
+  const title = (payload.title as string) || "Compromisso";
+  const whenLabel = (payload.when_label as string) || "";
+  const minutes = (payload.minutes as number) || 15;
+  const location = (payload.location as string) || "";
+  const companyName = (payload.company_name as string) || "";
+  const contactName = (payload.contact_name as string) || "";
+  const notes = (payload.notes as string) || "";
+  const isLink = /^https?:\/\//i.test(location);
+
+  return {
+    subject: `⏰ Em ${minutes} min: ${title}`,
+    html: baseLayout("Lembrete de compromisso", `
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">${title}</h1>
+      <p style="margin:0 0 16px;color:#3f3f46;font-size:15px;">Seu compromisso começa em ${minutes} minutos.</p>
+      <div style="margin:16px 0;padding:16px;background:#f4f4f5;border-radius:8px;">
+        <p style="margin:0 0 6px;font-size:14px;color:#3f3f46;"><strong>Quando:</strong> ${whenLabel}</p>
+        ${contactName ? `<p style="margin:0 0 6px;font-size:14px;color:#3f3f46;"><strong>Contato:</strong> ${contactName}${companyName ? ` — ${companyName}` : ""}</p>` : ""}
+        ${location ? `<p style="margin:0;font-size:14px;color:#3f3f46;"><strong>Local:</strong> ${location}</p>` : ""}
+      </div>
+      ${notes ? `<p style="margin:0 0 8px;font-size:14px;color:#3f3f46;"><strong>Observações:</strong> ${notes}</p>` : ""}
+      <div style="margin-top:20px;">
+        <a href="${BRAND.url}/agenda" style="display:inline-block;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Abrir agenda</a>
+        ${isLink ? `<a href="${location}" style="display:inline-block;margin-left:8px;padding:12px 24px;background:#ffffff;border:1px solid ${BRAND.color};color:${BRAND.color};border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Entrar na reunião</a>` : ""}
+      </div>
+    `, `${title}: ${whenLabel}`),
+  };
+}
+
 const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateResult> = {
   CAMPAIGN_SCHEDULED_STARTED: templateCampaignStarted,
   WEEKLY_SUMMARY: templateWeeklySummary,
@@ -605,6 +634,7 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   SUGGESTION_IN_DEVELOPMENT: templateSuggestionInDevelopment,
   SDR_SELLER_HANDOFF: templateSdrSellerHandoff,
   SDR_MEETING_SCHEDULED: templateSdrMeetingScheduled,
+  EVENT_REMINDER: templateEventReminder,
 };
 
 function htmlToPlainText(html: string): string {

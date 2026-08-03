@@ -23,10 +23,11 @@ export interface PickedLead {
 
 interface Props {
   onSelect: (lead: PickedLead) => void;
+  selectedLabel?: string | null;
 }
 
 /** Busca leads do CRM / Oportunidades para preencher o compromisso comercial. */
-export function LeadPicker({ onSelect }: Props) {
+export function LeadPicker({ onSelect, selectedLabel }: Props) {
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,13 +63,18 @@ export function LeadPicker({ onSelect }: Props) {
       <PopoverTrigger asChild>
         <Button type="button" variant="outline" className="w-full justify-start font-normal">
           <Search className="h-4 w-4 mr-2 shrink-0" />
-          Buscar lead no CRM ou Oportunidades
+          <span className="truncate">
+            {selectedLabel || "Buscar lead no CRM ou Oportunidades"}
+          </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent
+        className="w-[--radix-popover-trigger-width] border border-border bg-popover p-0 shadow-lg"
+        align="start"
+      >
         <Command shouldFilter={false}>
           <CommandInput value={term} onValueChange={setTerm} placeholder="Empresa ou contato" />
-          <CommandList>
+          <CommandList className="max-h-64">
             {loading && (
               <div className="flex items-center justify-center py-6">
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -85,6 +91,7 @@ export function LeadPicker({ onSelect }: Props) {
                       onSelect(lead);
                       setOpen(false);
                     }}
+                    className="cursor-pointer aria-selected:bg-accent aria-selected:text-accent-foreground"
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
@@ -98,6 +105,7 @@ export function LeadPicker({ onSelect }: Props) {
                 ))}
               </CommandGroup>
             )}
+
           </CommandList>
         </Command>
       </PopoverContent>

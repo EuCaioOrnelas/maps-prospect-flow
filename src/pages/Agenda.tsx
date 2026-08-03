@@ -113,7 +113,7 @@ export default function Agenda() {
     });
   }, [events, typeFilter, search]);
 
-  useEventReminders(events);
+  useEventReminders(events, members);
 
   const responsibleName = (userId: string) => {
     const member = members.find((m) => m.user_id === userId);
