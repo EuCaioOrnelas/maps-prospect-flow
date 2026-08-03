@@ -7,11 +7,12 @@ import { groupByDay, formatLongDate, relativeDayLabel } from "@/lib/calendarView
 interface Props {
   events: CalendarEvent[];
   onSelect: (event: CalendarEvent) => void;
+  onQuickEdit?: (event: CalendarEvent) => void;
   responsibleName: (userId: string) => string | null;
 }
 
 /** Lista cronológica agrupada por dia. */
-export function ListView({ events, onSelect, responsibleName }: Props) {
+export function ListView({ events, onSelect, onQuickEdit, responsibleName }: Props) {
   const groups = groupByDay(events);
 
   if (!groups.length) {
@@ -41,6 +42,7 @@ export function ListView({ events, onSelect, responsibleName }: Props) {
                 event={ev}
                 variant="detailed"
                 onClick={onSelect}
+                onQuickEdit={onQuickEdit}
                 responsibleName={responsibleName(ev.assigned_user_id)}
               />
             ))}

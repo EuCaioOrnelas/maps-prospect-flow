@@ -9,13 +9,14 @@ interface Props {
   date: Date;
   events: CalendarEvent[];
   onSelect: (event: CalendarEvent) => void;
+  onQuickEdit?: (event: CalendarEvent) => void;
   onCreateAt: (date: Date) => void;
   onMove: (event: CalendarEvent, newDate: Date, hour?: number) => void;
   responsibleName: (userId: string) => string | null;
 }
 
 /** Visualização diária com faixa de horários. */
-export function DayView({ date, events, onSelect, onCreateAt, onMove, responsibleName }: Props) {
+export function DayView({ date, events, onSelect, onQuickEdit, onCreateAt, onMove, responsibleName }: Props) {
   const hours = useMemo(
     () => Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => DAY_START_HOUR + i),
     [],
@@ -67,6 +68,7 @@ export function DayView({ date, events, onSelect, onCreateAt, onMove, responsibl
                   event={ev}
                   variant="detailed"
                   onClick={onSelect}
+                onQuickEdit={onQuickEdit}
                   onDragStart={setDragging}
                   onDragEnd={() => setDragging(null)}
                   responsibleName={responsibleName(ev.assigned_user_id)}
