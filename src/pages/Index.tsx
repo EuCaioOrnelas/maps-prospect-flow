@@ -80,7 +80,7 @@ const Index = () => {
   return (
     <>
       <SEO
-        description="A Wiize é a inteligência comercial que encontra, analisa e qualifica empresas com IA: prospecção B2B, diagnóstico de leads, CRM e automação para vender mais com menos esforço."
+        description="A Wiize é uma plataforma de IA Comercial desenvolvida para apoiar equipes comerciais em toda a operação, conectando dados, processos e inteligência para transformar oportunidades em resultados."
         keywords="inteligência comercial, prospecção B2B, dados B2B, dados qualificados, enriquecimento de dados, sales intelligence, qualificação de leads, ICP, automação de vendas, CRM inteligente, agente de IA comercial, Wiize"
         url="https://wiize.com.br/"
         jsonLd={[
