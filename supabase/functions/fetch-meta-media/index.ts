@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     );
 
     // Resolve the account this caller belongs to (owner or sub-user)
-    const { data: accountOwnerId } = await supabase.rpc("get_account_owner", { _user_id: callerId });
+    const { data: accountOwnerId } = await supabase.rpc("get_account_owner", { _uid: callerId });
     const allowedOwners = [callerId, accountOwnerId].filter(Boolean);
 
     const message_id = url.searchParams.get("message_id");
