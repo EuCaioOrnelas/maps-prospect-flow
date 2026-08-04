@@ -368,8 +368,9 @@ export function GuidedTour() {
   return createPortal(
     <div
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 2147483645 }}
+      style={{ zIndex: 2147483647 }}
     >
+
       {/* Close button for the public demo lives in TourGuiado (always mounted). */}
 
 
