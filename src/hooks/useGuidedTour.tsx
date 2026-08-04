@@ -169,6 +169,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [direction, setDirection] = useState<"next" | "prev">("next");
+  const [isReplay, setIsReplay] = useState(false);
   const startedRef = useRef(false);
   const [onboardingTick, setOnboardingTick] = useState(0);
   const isPublicDemo = location.pathname === "/tour-guiado";
@@ -660,6 +661,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.warn("[tour] preload failed", e);
     }
+    setIsReplay(true);
     setCurrentStepIndex(0);
     setIsActive(true);
     goToStep(0);
@@ -712,7 +714,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   return (
     <GuidedTourContext.Provider
-      value={{ isActive, currentStepIndex, steps, direction, start, next, prev, finish }}
+      value={{ isActive, currentStepIndex, steps, direction, isReplay, start, next, prev, finish }}
     >
       {children}
     </GuidedTourContext.Provider>
@@ -724,6 +726,7 @@ const NOOP_TOUR_CTX: GuidedTourContextValue = {
   currentStepIndex: 0,
   steps: [],
   direction: "next",
+  isReplay: false,
   start: () => {
     if (typeof console !== "undefined") {
       console.warn("[useGuidedTour] start() called outside GuidedTourProvider — no-op");
