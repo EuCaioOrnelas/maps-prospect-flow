@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Smile, Paperclip, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { resolveStorageUrl } from "@/lib/privateStorage";
+
 
 interface Props {
   open: boolean;
