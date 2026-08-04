@@ -284,16 +284,24 @@ export function useChat() {
         if ((newMsg as any).owner_user_id && (newMsg as any).owner_user_id !== accountOwnerId) return;
         const currentActive = activeConversationIdRef.current;
         if (newMsg.conversation_id === currentActive) {
-          setMessages(prev => {
+          const applyMsg = (msg: ChatMessage) => setMessages(prev => {
             // Dedupe by id
-            if (prev.some(m => m.id === newMsg.id)) return prev;
+            if (prev.some(m => m.id === msg.id)) return prev;
             // Replace optimistic temp msg matched by client_token in metadata
-            const ct = (newMsg.metadata as any)?.client_token;
+            const ct = (msg.metadata as any)?.client_token;
             if (ct && prev.some(m => m.id === ct)) {
-              return prev.map(m => m.id === ct ? newMsg : m);
+              return prev.map(m => m.id === ct ? msg : m);
             }
-            return [...prev, newMsg];
+            return [...prev, msg];
           });
+          if (newMsg.media_url) {
+            // Private bucket: render through a short-lived signed URL.
+            resolveStorageUrl(newMsg.media_url).then(signed =>
+              applyMsg(signed ? { ...newMsg, media_url: signed } : newMsg)
+            );
+          } else {
+            applyMsg(newMsg);
+          }
         }
         // Browser notification on inbound (skip muted, blocked, active conversation, or hidden tab off)
         if (newMsg.direction === "inbound") {
