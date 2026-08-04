@@ -45,11 +45,14 @@ interface GuidedTourContextValue {
   currentStepIndex: number;
   steps: TourStep[];
   direction: "next" | "prev";
+  /** True when the user manually restarted the tour (Perfil → refazer tutorial) */
+  isReplay: boolean;
   start: () => void;
   next: () => void;
   prev: () => void;
   finish: () => void;
 }
+
 
 // Per-user key so the tour shows for each new account on the same browser.
 // Legacy global key is migrated/cleared at startup.
