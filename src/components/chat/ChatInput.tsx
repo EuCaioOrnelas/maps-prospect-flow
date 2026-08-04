@@ -238,7 +238,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     setText("");
     if (qr.media_url) {
       try {
-        const res = await fetch(qr.media_url);
+        const signed = (await resolveStorageUrl(qr.media_url)) || qr.media_url;
+        const res = await fetch(signed);
         const blob = await res.blob();
         const fname = qr.media_filename || `quick-reply-${qr.shortcut}`;
         const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
