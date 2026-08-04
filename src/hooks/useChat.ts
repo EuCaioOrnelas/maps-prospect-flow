@@ -450,8 +450,11 @@ export function useChat() {
       return;
     }
 
+    // Canonical reference stored in the DB (bucket is private; never publicly readable).
     const { data: urlData } = supabase.storage.from("chat-media").getPublicUrl(filePath);
     const publicUrl = urlData.publicUrl;
+    // Short-lived signed URL used for local rendering only.
+    const signedUrl = (await resolveStorageUrl(publicUrl)) || publicUrl;
 
     const tempId = crypto.randomUUID();
     const { data: inserted, error: insertError } = await supabase.from("chat_messages").insert({
