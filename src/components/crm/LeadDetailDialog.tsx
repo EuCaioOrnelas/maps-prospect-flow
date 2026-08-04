@@ -1681,14 +1681,13 @@ export const LeadDetailDialog = ({
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             {file.file_url && (
-                              <a
-                                href={file.file_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                              <button
+                                type="button"
+                                onClick={() => openStorageUrl(file.file_url)}
                                 className="p-1.5 rounded hover:bg-muted transition-colors"
                               >
                                 <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-                              </a>
+                              </button>
                             )}
                             <button
                               onClick={() => handleDeleteLeadFile(file.id)}
