@@ -15,13 +15,27 @@ const SITE_URL = 'https://wiize.com.br';
 const SITE_NAME = 'Wiize';
 
 const defaultMeta = {
-  title: 'Wiize - Inteligência Comercial, Dados Qualificados e Automação B2B',
-  description: 'Plataforma de inteligência comercial B2B: dados de empresas qualificados, enriquecimento com IA e automação de vendas. Encontre, qualifique e converta os clientes certos.',
-  keywords: 'inteligência comercial, dados B2B, dados qualificados, enriquecimento de dados, sales intelligence, automação de vendas, qualificação de leads, prospecção B2B, CRM inteligente, agente de IA comercial, ICP, dados de empresas, Wiize',
+  title: 'Wiize | Inteligência Comercial que Aumenta a Eficiência B2B',
+  description: 'A Wiize é a inteligência comercial que encontra, analisa e qualifica empresas com IA: prospecção B2B, diagnóstico de leads, CRM e automação para vender mais com menos esforço.',
+  keywords: 'inteligência comercial, prospecção B2B, dados B2B, dados qualificados, enriquecimento de dados, sales intelligence, automação de vendas, qualificação de leads, CRM inteligente, agente de IA comercial, ICP, dados de empresas, Wiize',
   image: 'https://lovable.dev/opengraph-image-p98pqg.png',
   url: SITE_URL,
   type: 'website',
 };
+
+// Sitelinks navigation (Teste grátis, Entrar, Prospecção, Contato)
+export const siteNavigationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  '@id': `${SITE_URL}/#sitenav`,
+  itemListElement: [
+    { '@type': 'SiteNavigationElement', position: 1, name: 'Teste grátis por 7 dias', description: 'Crie sua conta e use a Wiize completa por 7 dias.', url: `${SITE_URL}/signup/escolher-plano` },
+    { '@type': 'SiteNavigationElement', position: 2, name: 'Entrar', description: 'Acesse sua conta Wiize.', url: `${SITE_URL}/login` },
+    { '@type': 'SiteNavigationElement', position: 3, name: 'Prospecção B2B com IA', description: 'Prospecte, analise e diagnostique empresas automaticamente.', url: `${SITE_URL}/prospeccao` },
+    { '@type': 'SiteNavigationElement', position: 4, name: 'Contato', description: 'Fale com a central de contato da Wiize.', url: `${SITE_URL}/contato` },
+  ],
+};
+
 
 // Organization schema reused across pages
 const organizationSchema = {
