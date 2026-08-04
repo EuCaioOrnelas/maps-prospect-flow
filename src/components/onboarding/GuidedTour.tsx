@@ -61,7 +61,7 @@ function splitBodyForScan(body: string): string[] {
 }
 
 export function GuidedTour() {
-  const { isActive, currentStepIndex, steps, direction, next, prev, finish } = useGuidedTour();
+  const { isActive, currentStepIndex, steps, direction, isReplay, next, prev, finish } = useGuidedTour();
   const navigate = useNavigate();
   const step = steps[currentStepIndex];
   const hideOnLoad = step?.hideSpotlightWhileTargetLoads === "always" || (!!step?.hideSpotlightWhileTargetLoads && direction === "next");
@@ -257,24 +257,47 @@ export function GuidedTour() {
     const targetElement = step.target ? (queryTourTarget(step.target) as HTMLElement | null) : null;
     const targetDialog = targetElement?.closest('[role="dialog"][data-state="open"]') as HTMLElement | null;
     const dialogRect = targetDialog?.getBoundingClientRect();
-    const popupWidth = dialogRect
-      ? Math.min(popupSize.width || POPUP_W, Math.max(320, Math.round(dialogRect.width - 44)))
-      : popupSize.width || POPUP_W;
     const popupHeight = popupSize.height || 196;
-    const viewportMargin = POPUP_GAP;
-    const bounds = dialogRect
-      ? {
-          top: dialogRect.top + viewportMargin,
-          right: dialogRect.right - viewportMargin,
-          bottom: dialogRect.bottom - viewportMargin,
-          left: dialogRect.left + viewportMargin,
-        }
-      : {
-          top: viewportMargin,
-          right: window.innerWidth - viewportMargin,
-          bottom: window.innerHeight - viewportMargin,
-          left: viewportMargin,
+
+    if (dialogRect) {
+      // Steps whose target lives inside a modal: NEVER place the card inside the
+      // dialog (it gets clipped and the text disappears). Put it in the free
+      // space beside the modal, or centered at the bottom when there's no room.
+      const spaceRight = window.innerWidth - dialogRect.right;
+      const spaceLeft = dialogRect.left;
+      const useRight = spaceRight >= spaceLeft;
+      const space = useRight ? spaceRight : spaceLeft;
+      const width = Math.max(300, Math.min(POPUP_W, space - 36));
+
+      if (space < 340) {
+        // Modal takes nearly the whole viewport: dock the card at the bottom,
+        // above the navigation bar, so both stay readable.
+        popupStyle = {
+          top: Math.max(POPUP_GAP, window.innerHeight - popupHeight - 104),
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: Math.min(POPUP_W, window.innerWidth - 32),
         };
+      } else {
+
+        const top = Math.max(
+          POPUP_GAP,
+          Math.min(window.innerHeight - popupHeight - 96, popupRect.top + popupRect.height / 2 - popupHeight / 2)
+        );
+        const left = useRight
+          ? Math.min(window.innerWidth - width - POPUP_GAP, dialogRect.right + 18)
+          : Math.max(POPUP_GAP, dialogRect.left - width - 18);
+        popupStyle = { top, left, width };
+      }
+    } else {
+    const popupWidth = popupSize.width || POPUP_W;
+    const viewportMargin = POPUP_GAP;
+    const bounds = {
+      top: viewportMargin,
+      right: window.innerWidth - viewportMargin,
+      bottom: window.innerHeight - viewportMargin,
+      left: viewportMargin,
+    };
 
     const spotBounds = {
       top: popupRect.top - PADDING,
@@ -286,18 +309,12 @@ export function GuidedTour() {
     const clampX = (value: number) => Math.max(bounds.left, Math.min(bounds.right - popupWidth, value));
     const clampY = (value: number) => Math.max(bounds.top, Math.min(bounds.bottom - popupHeight, value));
 
-    const placementPriorityMap = dialogRect
-      ? {
-          top: ["top", "bottom", "right", "left"],
-          bottom: ["bottom", "top", "right", "left"],
-          right: ["top", "bottom", "right", "left"],
-          left: ["top", "bottom", "left", "right"],
-        } as const
-      : {
+    const placementPriorityMap = {
           top: ["top", "bottom", "right", "left"],
           bottom: ["bottom", "top", "right", "left"],
           right: ["right", "left", "bottom", "top"],
           left: ["left", "right", "bottom", "top"],
+
         } as const;
 
     const getAvailableGap = (placement: "top" | "bottom" | "left" | "right") => {
@@ -343,7 +360,9 @@ export function GuidedTour() {
     const placements = placementPriorityMap[requestedPlacement];
     const resolvedPlacement = placements.find(canFit) ?? requestedPlacement;
     popupStyle = computePlacementStyle(resolvedPlacement);
+    }
   }
+
 
   // Fallback dark overlay (used when there is no spotlight target — e.g. center step
   // OR while we're still waiting for a target inside a modal to mount).
@@ -352,8 +371,9 @@ export function GuidedTour() {
   return createPortal(
     <div
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 2147483645 }}
+      style={{ zIndex: 2147483647 }}
     >
+
       {/* Close button for the public demo lives in TourGuiado (always mounted). */}
 
 
@@ -394,7 +414,7 @@ export function GuidedTour() {
       )}
 
       {(isLast ? (
-        <FinalStep title={step.title} body={step.body} onFinish={finish} />
+        <FinalStep title={step.title} body={step.body} onFinish={finish} isReplay={isReplay} />
       ) : step.id === "welcome" ? (
         <WelcomeStep title={step.title} body={step.body} onStart={next} />
       ) : (
@@ -467,9 +487,10 @@ interface FinalStepProps {
   title: string;
   body: string;
   onFinish: () => void;
+  isReplay?: boolean;
 }
 
-function FinalStep({ title, body, onFinish }: FinalStepProps) {
+function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
   const { fireRealistic, fireSides } = useConfetti();
   const navigate = useNavigate();
   const [progress, setProgress] = useState(0);
@@ -524,18 +545,31 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
         <div className="relative">
           <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary mb-3">
             <Sparkles size={12} />
-            Onboarding concluído
+            {isReplay ? "Tour concluído" : "Onboarding concluído"}
           </div>
           <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 leading-tight">
-            {title}
+            {isReplay ? "Tudo pronto" : title}
           </h3>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
-            {body}
+            {isReplay
+              ? "Agora você já sabe como a Wiize funciona. Pode voltar ao seu painel e seguir com a operação."
+              : body}
           </p>
 
+          {isReplay ? (
+            <Button
+              size="xl"
+              onClick={onFinish}
+              className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
+            >
+              <Check size={20} className="!h-5 !w-5" />
+              Fechar e voltar ao painel
+            </Button>
+          ) : (
+            <>
           {/* Next step card */}
           <div className="text-left bg-card border border-border rounded-card p-4 sm:p-5 mb-6">
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card bg-primary/10 border border-primary/20 text-primary">
                 {publicDemo ? <Rocket size={24} /> : <FaWhatsapp size={30} />}
               </div>
@@ -547,7 +581,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
                 </h4>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
                   {publicDemo
-                    ? "Crie sua conta em menos de 1 minuto e teste a Wiize por 7 dias, sem cartão e sem compromisso. Você já começa com o cockpit, a prospecção com IA e o SDR Inteligente liberados."
+                    ? "Crie sua conta em menos de 1 minuto e teste a Wiize por 7 dias."
                     : "Conecte sua conta oficial via Meta API para começar a prospectar, atender e fechar mais negócios."}
                 </p>
               </div>
@@ -570,7 +604,7 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
             </div>
             <p className="text-[11px] sm:text-xs text-muted-foreground mt-3">
               {publicDemo
-                ? "Sem cartão de crédito. Cancele quando quiser."
+                ? "O cartão é solicitado apenas como garantia de compromisso — sem cobrança durante o teste. Cancele quando quiser."
                 : "Falta pouco! Conecte seu WhatsApp Oficial para ativar todas as funcionalidades da Wiize."}
             </p>
           </div>
@@ -600,6 +634,9 @@ function FinalStep({ title, body, onFinish }: FinalStepProps) {
           >
             Fechar
           </button>
+            </>
+          )}
+
         </div>
       </div>
     </div>

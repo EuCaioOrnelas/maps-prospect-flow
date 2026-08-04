@@ -1631,6 +1631,12 @@ body.tour-active [data-radix-dialog-overlay] {
 body.tour-active [role="dialog"][data-state="open"] {
   z-index: 2147483645 !important;
 }
+/* Radix modals set `pointer-events: none` on <body>, which was blocking the
+   tour navigation buttons (Voltar/Próximo) whenever a lead dialog was open. */
+body.tour-active {
+  pointer-events: auto !important;
+}
+
 
 @layer components {
   .blog-content {

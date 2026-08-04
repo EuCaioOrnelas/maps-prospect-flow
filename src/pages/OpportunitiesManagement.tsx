@@ -171,10 +171,10 @@ export default function OpportunitiesManagement() {
 
   // Check company profile on mount
   useEffect(() => {
-    if (user) {
+    if (user || publicDemo) {
       fetchCompanyProfile();
     }
-  }, [user]);
+  }, [user, publicDemo]);
 
   // Cooldown timer
   useEffect(() => {
@@ -221,8 +221,8 @@ export default function OpportunitiesManagement() {
   };
 
   useEffect(() => {
-    if (user && profileLoaded && !showOnboarding) fetchLeads();
-  }, [user, profileLoaded, showOnboarding]);
+    if ((user || publicDemo) && profileLoaded && !showOnboarding) fetchLeads();
+  }, [user, publicDemo, profileLoaded, showOnboarding]);
 
   // Auto-score unscored leads when they appear
   useEffect(() => {

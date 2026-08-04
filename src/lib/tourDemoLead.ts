@@ -24,6 +24,12 @@ export function buildTourDemoLead() {
     social_media: { instagram: "@studioglow" },
     phone_numbers: ["+55 11 98765-4321"],
     enrichment_data: {
+      manual_approach: {
+        generated_at: new Date().toISOString(),
+        message:
+          "Olá! Vi o trabalho do Studio Glow no Google e fiquei impressionado com as 184 avaliações 5 estrelas — claramente vocês entregam um serviço excepcional.\n\nNotei que a clínica tem alta procura e imagino que responder rápido a cada lead no WhatsApp deve ser um desafio diário. Trabalho com clínicas de estética implementando automação de WhatsApp com IA que responde em segundos, qualifica e marca o horário no Google Calendar — sem perder o tom humano da equipe.\n\nFaz sentido eu te mostrar em 10 minutos como funcionaria no Studio Glow?",
+      },
+
       score_breakdown: {
         estrutura_digital: 22,
         reputacao: 24,
