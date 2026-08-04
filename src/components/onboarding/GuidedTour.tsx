@@ -357,7 +357,9 @@ export function GuidedTour() {
     const placements = placementPriorityMap[requestedPlacement];
     const resolvedPlacement = placements.find(canFit) ?? requestedPlacement;
     popupStyle = computePlacementStyle(resolvedPlacement);
+    }
   }
+
 
   // Fallback dark overlay (used when there is no spotlight target — e.g. center step
   // OR while we're still waiting for a target inside a modal to mount).
