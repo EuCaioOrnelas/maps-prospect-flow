@@ -541,18 +541,31 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
         <div className="relative">
           <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary mb-3">
             <Sparkles size={12} />
-            Onboarding concluído
+            {isReplay ? "Tour concluído" : "Onboarding concluído"}
           </div>
           <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 leading-tight">
-            {title}
+            {isReplay ? "Tudo pronto" : title}
           </h3>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6">
-            {body}
+            {isReplay
+              ? "Agora você já sabe como a Wiize funciona. Pode voltar ao seu painel e seguir com a operação."
+              : body}
           </p>
 
+          {isReplay ? (
+            <Button
+              size="xl"
+              onClick={onFinish}
+              className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
+            >
+              <Check size={20} className="!h-5 !w-5" />
+              Fechar e voltar ao painel
+            </Button>
+          ) : (
+            <>
           {/* Next step card */}
           <div className="text-left bg-card border border-border rounded-card p-4 sm:p-5 mb-6">
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card bg-primary/10 border border-primary/20 text-primary">
                 {publicDemo ? <Rocket size={24} /> : <FaWhatsapp size={30} />}
               </div>
@@ -564,7 +577,7 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
                 </h4>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-1">
                   {publicDemo
-                    ? "Crie sua conta em menos de 1 minuto e teste a Wiize por 7 dias, sem cartão e sem compromisso. Você já começa com o cockpit, a prospecção com IA e o SDR Inteligente liberados."
+                    ? "Crie sua conta em menos de 1 minuto e teste a Wiize por 7 dias."
                     : "Conecte sua conta oficial via Meta API para começar a prospectar, atender e fechar mais negócios."}
                 </p>
               </div>
@@ -587,7 +600,7 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
             </div>
             <p className="text-[11px] sm:text-xs text-muted-foreground mt-3">
               {publicDemo
-                ? "Sem cartão de crédito. Cancele quando quiser."
+                ? "O cartão é solicitado apenas como garantia de compromisso — sem cobrança durante o teste. Cancele quando quiser."
                 : "Falta pouco! Conecte seu WhatsApp Oficial para ativar todas as funcionalidades da Wiize."}
             </p>
           </div>
@@ -617,6 +630,9 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
           >
             Fechar
           </button>
+            </>
+          )}
+
         </div>
       </div>
     </div>
