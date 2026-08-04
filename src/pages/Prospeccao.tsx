@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { SEO } from "@/components/SEO";
+import { SEO, siteNavigationSchema } from "@/components/SEO";
 import { faqJsonLd } from "@/components/landing/FAQSection";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
@@ -71,12 +71,42 @@ const Prospeccao = () => {
   return (
     <>
       <SEO
-        title="Prospecção B2B com IA: encontre e analise seus clientes ideais"
-        description="A IA da Wiize prospecta leads B2B, analisa cada empresa e gera um diagnóstico individual com dores, pontos fracos e oportunidades para multiplicar suas vendas."
-        keywords="prospecção B2B, prospecção com IA, leads B2B, diagnóstico de empresas, clientes ideais, ICP, geração de leads, inteligência comercial, Wiize"
+        title="Prospecção B2B com IA: Encontre e Qualifique Clientes"
+        description="Prospecção B2B automatizada com IA: a Wiize encontra empresas do seu ICP, analisa cada lead e entrega um diagnóstico com dores, pontos fracos e oportunidades para você abordar na hora certa."
+        keywords="prospecção, prospecção B2B, prospecção com IA, prospecção de clientes, prospecção ativa, prospecção outbound, software de prospecção, ferramenta de prospecção, lista de empresas, geração de leads B2B, qualificação de leads, ICP, diagnóstico de empresas, Wiize"
         url="https://wiize.com.br/prospeccao"
-        jsonLd={[faqJsonLd]}
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Service",
+            "@id": "https://wiize.com.br/prospeccao#service",
+            name: "Prospecção B2B com IA",
+            serviceType: "Prospecção B2B automatizada",
+            areaServed: "BR",
+            provider: { "@id": "https://wiize.com.br/#organization" },
+            description:
+              "Serviço de prospecção B2B com inteligência artificial: busca de empresas por nicho e região, enriquecimento de dados, diagnóstico individual de cada lead e geração de abordagem personalizada.",
+            offers: {
+              "@type": "Offer",
+              priceCurrency: "BRL",
+              price: "97",
+              availability: "https://schema.org/InStock",
+              url: "https://wiize.com.br/signup/escolher-plano",
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Wiize", item: "https://wiize.com.br/" },
+              { "@type": "ListItem", position: 2, name: "Prospecção B2B", item: "https://wiize.com.br/prospeccao" },
+            ],
+          },
+          siteNavigationSchema,
+          faqJsonLd,
+        ]}
       />
+
       <main className="landing-light min-h-screen bg-background overflow-x-hidden overflow-y-auto w-full max-w-full relative">
         <div
           className="hidden sm:block fixed inset-0 pointer-events-none overflow-hidden z-0"

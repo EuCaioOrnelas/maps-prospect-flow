@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { SEO } from "@/components/SEO";
+import { SEO, siteNavigationSchema } from "@/components/SEO";
 import { faqJsonLd } from "@/components/landing/FAQSection";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
