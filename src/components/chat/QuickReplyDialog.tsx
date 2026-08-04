@@ -48,6 +48,15 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
     }
   }, [open, initial]);
 
+  // chat-media is a private bucket: preview through a short-lived signed URL.
+  useEffect(() => {
+    let active = true;
+    if (!mediaUrl) { setMediaPreviewUrl(null); return; }
+    resolveStorageUrl(mediaUrl).then(url => { if (active) setMediaPreviewUrl(url); });
+    return () => { active = false; };
+  }, [mediaUrl]);
+
+
   const insertAtCursor = (insertion: string) => {
     const el = textareaRef.current;
     if (!el) { setContent(prev => prev + insertion); return; }
