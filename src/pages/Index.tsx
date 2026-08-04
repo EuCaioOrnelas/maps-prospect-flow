@@ -80,9 +80,8 @@ const Index = () => {
   return (
     <>
       <SEO
-        title="Inteligência Comercial e Dados Qualificados para Vendas B2B"
-        description="Wiize é a plataforma de inteligência comercial B2B: dados de empresas qualificados, enriquecimento com IA, CRM e automação de vendas para você fechar com os clientes certos."
-        keywords="inteligência comercial, dados B2B, dados qualificados, enriquecimento de dados, sales intelligence, qualificação de leads, ICP, automação de vendas, CRM inteligente, agente de IA comercial, prospecção B2B, dados de empresas, Wiize"
+        description="A Wiize é a inteligência comercial que encontra, analisa e qualifica empresas com IA: prospecção B2B, diagnóstico de leads, CRM e automação para vender mais com menos esforço."
+        keywords="inteligência comercial, prospecção B2B, dados B2B, dados qualificados, enriquecimento de dados, sales intelligence, qualificação de leads, ICP, automação de vendas, CRM inteligente, agente de IA comercial, Wiize"
         url="https://wiize.com.br/"
         jsonLd={[
           {
@@ -92,7 +91,7 @@ const Index = () => {
             applicationCategory: "BusinessApplication",
             operatingSystem: "Web",
             description:
-              "Plataforma de inteligência comercial B2B: dados qualificados de empresas, enriquecimento com IA, CRM e automação para vendas mais inteligentes.",
+              "Inteligência comercial B2B: prospecção com IA, dados qualificados de empresas, diagnóstico de leads, CRM e automação de vendas.",
             offers: {
               "@type": "AggregateOffer",
               priceCurrency: "BRL",
@@ -107,9 +106,11 @@ const Index = () => {
               bestRating: "5",
             },
           },
+          siteNavigationSchema,
           faqJsonLd,
         ]}
       />
+
       <main className="landing-light min-h-screen bg-background overflow-x-hidden overflow-y-auto w-full max-w-full relative">
         {/* Background blobs — versão leve.
             - Apenas 2 blobs (era 3) e ocultos no mobile (sm:block) onde causavam jank.
