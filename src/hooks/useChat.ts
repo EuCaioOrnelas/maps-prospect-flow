@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPhoneForMeta } from "@/lib/phoneUtils";
+import { resolveStorageUrl, resolveStorageUrls } from "@/lib/privateStorage";
 
 export interface ChatConversation {
   id: string;
@@ -194,12 +195,17 @@ export function useChat() {
 
     const loadMessages = async () => {
       if (isFirstLoadForConv) setLoadingMessages(true);
-      const { data } = await supabase
+      const { data: rawData } = await supabase
         .from("chat_messages")
         .select("*")
         .eq("conversation_id", activeConversationId)
         .order("created_at", { ascending: true })
         .limit(200);
+      // Media lives in a private bucket: swap stored paths for short-lived signed URLs.
+      const signedMap = await resolveStorageUrls(((rawData as any[]) || []).map((m) => m.media_url));
+      const data = ((rawData as any[]) || []).map((m) =>
+        m.media_url && signedMap.has(m.media_url) ? { ...m, media_url: signedMap.get(m.media_url)! } : m
+      );
       // Avoid clobbering an optimistic/realtime-updated list when re-running for
       // the same conversation (e.g. user object got a new reference on refocus).
       if (isFirstLoadForConv) {
@@ -278,16 +284,24 @@ export function useChat() {
         if ((newMsg as any).owner_user_id && (newMsg as any).owner_user_id !== accountOwnerId) return;
         const currentActive = activeConversationIdRef.current;
         if (newMsg.conversation_id === currentActive) {
-          setMessages(prev => {
+          const applyMsg = (msg: ChatMessage) => setMessages(prev => {
             // Dedupe by id
-            if (prev.some(m => m.id === newMsg.id)) return prev;
+            if (prev.some(m => m.id === msg.id)) return prev;
             // Replace optimistic temp msg matched by client_token in metadata
-            const ct = (newMsg.metadata as any)?.client_token;
+            const ct = (msg.metadata as any)?.client_token;
             if (ct && prev.some(m => m.id === ct)) {
-              return prev.map(m => m.id === ct ? newMsg : m);
+              return prev.map(m => m.id === ct ? msg : m);
             }
-            return [...prev, newMsg];
+            return [...prev, msg];
           });
+          if (newMsg.media_url) {
+            // Private bucket: render through a short-lived signed URL.
+            resolveStorageUrl(newMsg.media_url).then(signed =>
+              applyMsg(signed ? { ...newMsg, media_url: signed } : newMsg)
+            );
+          } else {
+            applyMsg(newMsg);
+          }
         }
         // Browser notification on inbound (skip muted, blocked, active conversation, or hidden tab off)
         if (newMsg.direction === "inbound") {
@@ -444,8 +458,11 @@ export function useChat() {
       return;
     }
 
+    // Canonical reference stored in the DB (bucket is private; never publicly readable).
     const { data: urlData } = supabase.storage.from("chat-media").getPublicUrl(filePath);
     const publicUrl = urlData.publicUrl;
+    // Short-lived signed URL used for local rendering only.
+    const signedUrl = (await resolveStorageUrl(publicUrl)) || publicUrl;
 
     const tempId = crypto.randomUUID();
     const { data: inserted, error: insertError } = await supabase.from("chat_messages").insert({

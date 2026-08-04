@@ -59,6 +59,7 @@ import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { openStorageUrl } from '@/lib/privateStorage';
 import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 import { LeadSalesBlock } from '@/components/crm/LeadSalesBlock';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1681,14 +1682,13 @@ export const LeadDetailDialog = ({
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             {file.file_url && (
-                              <a
-                                href={file.file_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                              <button
+                                type="button"
+                                onClick={() => openStorageUrl(file.file_url)}
                                 className="p-1.5 rounded hover:bg-muted transition-colors"
                               >
                                 <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-                              </a>
+                              </button>
                             )}
                             <button
                               onClick={() => handleDeleteLeadFile(file.id)}

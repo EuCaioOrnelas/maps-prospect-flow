@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Smile, Paperclip, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { resolveStorageUrl } from "@/lib/privateStorage";
+
 
 interface Props {
   open: boolean;
@@ -25,6 +27,8 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
+
   const [mediaType, setMediaType] = useState<string | null>(null);
   const [mediaFilename, setMediaFilename] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -43,6 +47,15 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
       setMediaFilename(initial?.media_filename || null);
     }
   }, [open, initial]);
+
+  // chat-media is a private bucket: preview through a short-lived signed URL.
+  useEffect(() => {
+    let active = true;
+    if (!mediaUrl) { setMediaPreviewUrl(null); return; }
+    resolveStorageUrl(mediaUrl).then(url => { if (active) setMediaPreviewUrl(url); });
+    return () => { active = false; };
+  }, [mediaUrl]);
+
 
   const insertAtCursor = (insertion: string) => {
     const el = textareaRef.current;
@@ -175,7 +188,7 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
           {mediaUrl && (
             <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
               {mediaType === "image" ? (
-                <img src={mediaUrl} className="w-12 h-12 object-cover rounded" />
+                <img src={mediaPreviewUrl || undefined} className="w-12 h-12 object-cover rounded" />
               ) : (
                 <div className="w-12 h-12 rounded bg-primary/10 flex items-center justify-center text-primary text-xs uppercase font-semibold">{mediaType?.slice(0,3) || "file"}</div>
               )}

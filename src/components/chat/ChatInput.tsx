@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { resolveStorageUrl } from "@/lib/privateStorage";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -238,7 +239,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     setText("");
     if (qr.media_url) {
       try {
-        const res = await fetch(qr.media_url);
+        const signed = (await resolveStorageUrl(qr.media_url)) || qr.media_url;
+        const res = await fetch(signed);
         const blob = await res.blob();
         const fname = qr.media_filename || `quick-reply-${qr.shortcut}`;
         const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });

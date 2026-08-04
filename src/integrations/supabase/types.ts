@@ -9791,6 +9791,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      storage_object_account_readable: {
+        Args: { _name: string }
+        Returns: boolean
+      }
       unaccent_simple: { Args: { input: string }; Returns: string }
       update_partner_goal_progress: {
         Args: { p_partner_id: string }
