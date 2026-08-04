@@ -61,7 +61,7 @@ function splitBodyForScan(body: string): string[] {
 }
 
 export function GuidedTour() {
-  const { isActive, currentStepIndex, steps, direction, next, prev, finish } = useGuidedTour();
+  const { isActive, currentStepIndex, steps, direction, isReplay, next, prev, finish } = useGuidedTour();
   const navigate = useNavigate();
   const step = steps[currentStepIndex];
   const hideOnLoad = step?.hideSpotlightWhileTargetLoads === "always" || (!!step?.hideSpotlightWhileTargetLoads && direction === "next");
@@ -410,7 +410,7 @@ export function GuidedTour() {
       )}
 
       {(isLast ? (
-        <FinalStep title={step.title} body={step.body} onFinish={finish} />
+        <FinalStep title={step.title} body={step.body} onFinish={finish} isReplay={isReplay} />
       ) : step.id === "welcome" ? (
         <WelcomeStep title={step.title} body={step.body} onStart={next} />
       ) : (
@@ -483,9 +483,10 @@ interface FinalStepProps {
   title: string;
   body: string;
   onFinish: () => void;
+  isReplay?: boolean;
 }
 
-function FinalStep({ title, body, onFinish }: FinalStepProps) {
+function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
   const { fireRealistic, fireSides } = useConfetti();
   const navigate = useNavigate();
   const [progress, setProgress] = useState(0);
