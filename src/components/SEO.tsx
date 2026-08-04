@@ -15,8 +15,8 @@ const SITE_URL = 'https://wiize.com.br';
 const SITE_NAME = 'Wiize';
 
 const defaultMeta = {
-  title: 'Wiize | Inteligência Comercial que Aumenta a Eficiência B2B',
-  description: 'A Wiize é a inteligência comercial que encontra, analisa e qualifica empresas com IA: prospecção B2B, diagnóstico de leads, CRM e automação para vender mais com menos esforço.',
+  title: 'Automatize sua Operação Comercial com IA | Wiize',
+  description: 'A Wiize é uma plataforma de IA Comercial desenvolvida para apoiar equipes comerciais em toda a operação, conectando dados, processos e inteligência para transformar oportunidades em resultados.',
   keywords: 'inteligência comercial, prospecção B2B, dados B2B, dados qualificados, enriquecimento de dados, sales intelligence, automação de vendas, qualificação de leads, CRM inteligente, agente de IA comercial, ICP, dados de empresas, Wiize',
   image: 'https://lovable.dev/opengraph-image-p98pqg.png',
   url: SITE_URL,
