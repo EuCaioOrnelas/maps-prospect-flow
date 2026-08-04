@@ -48,12 +48,26 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Connection not found' }), { status: 404, headers: corsHeaders });
     }
 
+    // Media lives in private buckets. Convert any internal storage reference into a
+    // short-lived signed URL so Meta can fetch it without the object being public.
+    const PRIVATE_BUCKETS = ["chat-media", "deal-attachments"];
+    let mediaLink: string | undefined = media_url;
+    if (typeof media_url === "string" && media_url.includes("/storage/v1/object/")) {
+      const m = media_url.match(/\/storage\/v1\/object\/(?:public\/|sign\/|authenticated\/)?([^/?]+)\/(.+?)(?:\?|$)/);
+      if (m && PRIVATE_BUCKETS.includes(m[1])) {
+        const objectPath = decodeURIComponent(m[2]);
+        const { data: signed } = await supabase.storage.from(m[1]).createSignedUrl(objectPath, 60 * 30);
+        if (signed?.signedUrl) mediaLink = signed.signedUrl;
+      }
+    }
+
     // Build Meta API request
     let messagePayload: any = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
       to: to,
     };
+
 
     if (type === "text") {
       messagePayload.type = "text";
