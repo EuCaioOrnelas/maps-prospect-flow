@@ -175,7 +175,7 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
           {mediaUrl && (
             <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
               {mediaType === "image" ? (
-                <img src={mediaUrl} className="w-12 h-12 object-cover rounded" />
+                <img src={mediaPreviewUrl || undefined} className="w-12 h-12 object-cover rounded" />
               ) : (
                 <div className="w-12 h-12 rounded bg-primary/10 flex items-center justify-center text-primary text-xs uppercase font-semibold">{mediaType?.slice(0,3) || "file"}</div>
               )}
