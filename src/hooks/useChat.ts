@@ -194,12 +194,17 @@ export function useChat() {
 
     const loadMessages = async () => {
       if (isFirstLoadForConv) setLoadingMessages(true);
-      const { data } = await supabase
+      const { data: rawData } = await supabase
         .from("chat_messages")
         .select("*")
         .eq("conversation_id", activeConversationId)
         .order("created_at", { ascending: true })
         .limit(200);
+      // Media lives in a private bucket: swap stored paths for short-lived signed URLs.
+      const signedMap = await resolveStorageUrls(((rawData as any[]) || []).map((m) => m.media_url));
+      const data = ((rawData as any[]) || []).map((m) =>
+        m.media_url && signedMap.has(m.media_url) ? { ...m, media_url: signedMap.get(m.media_url)! } : m
+      );
       // Avoid clobbering an optimistic/realtime-updated list when re-running for
       // the same conversation (e.g. user object got a new reference on refocus).
       if (isFirstLoadForConv) {
