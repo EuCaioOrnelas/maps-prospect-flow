@@ -25,6 +25,8 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
+
   const [mediaType, setMediaType] = useState<string | null>(null);
   const [mediaFilename, setMediaFilename] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
