@@ -257,24 +257,44 @@ export function GuidedTour() {
     const targetElement = step.target ? (queryTourTarget(step.target) as HTMLElement | null) : null;
     const targetDialog = targetElement?.closest('[role="dialog"][data-state="open"]') as HTMLElement | null;
     const dialogRect = targetDialog?.getBoundingClientRect();
-    const popupWidth = dialogRect
-      ? Math.min(popupSize.width || POPUP_W, Math.max(320, Math.round(dialogRect.width - 44)))
-      : popupSize.width || POPUP_W;
     const popupHeight = popupSize.height || 196;
-    const viewportMargin = POPUP_GAP;
-    const bounds = dialogRect
-      ? {
-          top: dialogRect.top + viewportMargin,
-          right: dialogRect.right - viewportMargin,
-          bottom: dialogRect.bottom - viewportMargin,
-          left: dialogRect.left + viewportMargin,
-        }
-      : {
-          top: viewportMargin,
-          right: window.innerWidth - viewportMargin,
-          bottom: window.innerHeight - viewportMargin,
-          left: viewportMargin,
+
+    if (dialogRect) {
+      // Steps whose target lives inside a modal: NEVER place the card inside the
+      // dialog (it gets clipped and the text disappears). Put it in the free
+      // space beside the modal, or centered at the bottom when there's no room.
+      const spaceRight = window.innerWidth - dialogRect.right;
+      const spaceLeft = dialogRect.left;
+      const useRight = spaceRight >= spaceLeft;
+      const space = useRight ? spaceRight : spaceLeft;
+      const width = Math.max(300, Math.min(POPUP_W, space - 36));
+
+      if (space < 340) {
+        popupStyle = {
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: Math.min(POPUP_W, window.innerWidth - 32),
         };
+      } else {
+        const top = Math.max(
+          POPUP_GAP,
+          Math.min(window.innerHeight - popupHeight - 96, popupRect.top + popupRect.height / 2 - popupHeight / 2)
+        );
+        const left = useRight
+          ? Math.min(window.innerWidth - width - POPUP_GAP, dialogRect.right + 18)
+          : Math.max(POPUP_GAP, dialogRect.left - width - 18);
+        popupStyle = { top, left, width };
+      }
+    } else {
+    const popupWidth = popupSize.width || POPUP_W;
+    const viewportMargin = POPUP_GAP;
+    const bounds = {
+      top: viewportMargin,
+      right: window.innerWidth - viewportMargin,
+      bottom: window.innerHeight - viewportMargin,
+      left: viewportMargin,
+    };
 
     const spotBounds = {
       top: popupRect.top - PADDING,
@@ -286,18 +306,12 @@ export function GuidedTour() {
     const clampX = (value: number) => Math.max(bounds.left, Math.min(bounds.right - popupWidth, value));
     const clampY = (value: number) => Math.max(bounds.top, Math.min(bounds.bottom - popupHeight, value));
 
-    const placementPriorityMap = dialogRect
-      ? {
-          top: ["top", "bottom", "right", "left"],
-          bottom: ["bottom", "top", "right", "left"],
-          right: ["top", "bottom", "right", "left"],
-          left: ["top", "bottom", "left", "right"],
-        } as const
-      : {
+    const placementPriorityMap = {
           top: ["top", "bottom", "right", "left"],
           bottom: ["bottom", "top", "right", "left"],
           right: ["right", "left", "bottom", "top"],
           left: ["left", "right", "bottom", "top"],
+
         } as const;
 
     const getAvailableGap = (placement: "top" | "bottom" | "left" | "right") => {
