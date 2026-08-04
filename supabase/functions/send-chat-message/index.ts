@@ -74,16 +74,16 @@ serve(async (req) => {
       messagePayload.text = { body: text };
     } else if (type === "image") {
       messagePayload.type = "image";
-      messagePayload.image = { link: media_url, caption: caption || undefined };
+      messagePayload.image = { link: mediaLink, caption: caption || undefined };
     } else if (type === "video") {
       messagePayload.type = "video";
-      messagePayload.video = { link: media_url, caption: caption || undefined };
+      messagePayload.video = { link: mediaLink, caption: caption || undefined };
     } else if (type === "document") {
       messagePayload.type = "document";
-      messagePayload.document = { link: media_url, filename: filename || "document", caption: caption || undefined };
+      messagePayload.document = { link: mediaLink, filename: filename || "document", caption: caption || undefined };
     } else if (type === "audio") {
       messagePayload.type = "audio";
-      messagePayload.audio = { link: media_url };
+      messagePayload.audio = { link: mediaLink };
     }
 
     console.log(`[send-chat-message] Sending ${type} to ${to} via ${phone_number_id}`);
