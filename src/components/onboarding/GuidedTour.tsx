@@ -270,13 +270,16 @@ export function GuidedTour() {
       const width = Math.max(300, Math.min(POPUP_W, space - 36));
 
       if (space < 340) {
+        // Modal takes nearly the whole viewport: dock the card at the bottom,
+        // above the navigation bar, so both stay readable.
         popupStyle = {
-          top: "50%",
+          top: Math.max(POPUP_GAP, window.innerHeight - popupHeight - 104),
           left: "50%",
-          transform: "translate(-50%, -50%)",
+          transform: "translateX(-50%)",
           width: Math.min(POPUP_W, window.innerWidth - 32),
         };
       } else {
+
         const top = Math.max(
           POPUP_GAP,
           Math.min(window.innerHeight - popupHeight - 96, popupRect.top + popupRect.height / 2 - popupHeight / 2)
