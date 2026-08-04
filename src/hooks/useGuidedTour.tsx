@@ -446,7 +446,6 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isPublicDemo || startedRef.current) return;
-    startedRef.current = true;
     document.body.classList.add("public-demo-mode");
     document.body.classList.add("tour-demo-cockpit");
     let cancelled = false;
@@ -457,6 +456,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       await new Promise((r) => setTimeout(r, 450));
       if (cancelled) return;
       scrollTourViewportTop();
+      // Mark as started only when the tour actually opens — otherwise a
+      // cancelled first run (StrictMode / remount) would block it forever.
+      startedRef.current = true;
       setCurrentStepIndex(0);
       setIsActive(true);
     })();
@@ -464,6 +466,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [isPublicDemo]);
+
 
   // Auto-start on first dashboard visit.
   // Depend on user?.id (stable) instead of the whole user object (re-created on
