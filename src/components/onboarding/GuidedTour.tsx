@@ -487,8 +487,10 @@ export function GuidedTour() {
 
       {/* Full-screen interaction blocker: nothing behind the tour is clickable. */}
       <div
+        data-tour-block="true"
         className="fixed inset-0 pointer-events-auto"
         style={{ zIndex: 2147483644 }}
+
         onPointerDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
