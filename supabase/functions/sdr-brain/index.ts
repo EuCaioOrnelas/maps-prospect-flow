@@ -117,9 +117,32 @@ const EMOJI_GUIDE: Record<string, string> = {
 };
 
 const QUESTION_GUIDE: Record<string, string> = {
-  sempre: "Termine praticamente toda resposta com UMA pergunta que avance o objetivo.",
+  sempre: "Termine praticamente toda resposta com UMA pergunta que avance o objetivo, exceto quando o lead recusar, pedir para parar ou demonstrar desinteresse; nesse caso, apenas acolha e encerre sem nova pergunta.",
   quando_necessario: "Pergunte apenas quando faltar informação para avançar; caso contrário, conduza afirmando.",
   evitar: "Evite perguntas: conduza com afirmações e propostas de próximo passo.",
+};
+
+const SITUATION_GUIDE: Record<string, Record<string, string>> = {
+  ocupado: {
+    aguardar: "Se o lead estiver ocupado, acolha e encerre o contato atual sem pressionar.",
+    uma_pergunta: "Se o lead estiver ocupado, faça no máximo uma pergunta diagnóstica fechada e curta, somente se houver abertura.",
+    outro_horario: "Se o lead estiver ocupado, ofereça duas janelas reais da agenda para retomar.",
+  },
+  concorrente: {
+    descobrir: "Se o lead usa concorrente, descubra com uma pergunta A/B o que funciona e o que ainda limita o resultado; nunca ataque a solução atual.",
+    comparar: "Se o lead usa concorrente, compare apenas diferenças verificáveis cadastradas, sem depreciar terceiros.",
+    reuniao: "Se o lead usa concorrente, conecte uma lacuna comprovada a uma reunião e ofereça duas janelas reais.",
+  },
+  preco: {
+    nunca_sem_reuniao: "Se perguntarem preço, não informe valores antes da reunião confirmada; explique que o enquadramento depende do contexto e conduza para duas janelas reais.",
+    contexto: "Se perguntarem preço, identifique primeiro escopo e necessidade com uma pergunta fechada A/B antes de responder.",
+    enviar: "Se perguntarem preço, responda com transparência usando exclusivamente valores cadastrados.",
+  },
+  recusou: {
+    encerrar: "Diante de recusa clara, agradeça e encerre imediatamente, sem pergunta, recuperação ou follow-up.",
+    recuperar: "Diante de hesitação, use no máximo um novo ângulo fundamentado; diante de recusa clara, encerre sem insistir.",
+    followup: "Somente diante de adiamento, e não de recusa clara, combine uma retomada; nunca agende follow-up contra a vontade do lead.",
+  },
 };
 
 const OBJECTIVE_PLAYBOOK: Record<string, string> = {
@@ -186,6 +209,11 @@ function agentBrief(agent: any) {
   const priorities = Array.isArray(s.priorities) && s.priorities.length
     ? s.priorities.join(" → ")
     : "conexao → necessidade → valor → objecoes → fechamento";
+  const situationInstructions = Object.entries(agent.situations ?? {})
+    .map(([situation, choice]) => SITUATION_GUIDE[situation]?.[String(choice)])
+    .filter(Boolean)
+    .map((instruction) => `- ${instruction}`)
+    .join("\n");
   return `
 NOME DO SDR: ${agent.name}
   OBJETIVO FINAL: ${agent.objective}${agent.objective_custom ? ` — INSTRUÇÃO PERSONALIZADA DO USUÁRIO: ${agent.objective_custom}` : ""}
@@ -248,6 +276,8 @@ ${OBJECTION_GUIDE[s.on_objection] ?? ""}
 GATILHOS DE ATIVAÇÃO: ${(t.activation || []).join(", ") || "inbound_all"}.
 ENCERRAMENTO: parar quando ${(c.stop_criteria || []).join(", ")}${c.stop_no_reply_hours ? ` (sem resposta por ${c.stop_no_reply_hours}h)` : ""}; follow-ups até ${c.followup_max} em modo ${c.followup_mode}${c.followup_mode === "inteligente" ? ` (intervalo variável entre ${c.followup_min_hours ?? 12}h e ${c.followup_max_hours ?? 48}h, sempre dentro do horário de atendimento)` : ""}.
 SITUAÇÕES CONFIGURADAS: ${JSON.stringify(agent.situations ?? {})}
+COMPORTAMENTO NAS SITUAÇÕES:
+${situationInstructions || "- Siga o diagnóstico e as regras gerais."}
 CONFIGURAÇÃO COMPLETA DE GATILHOS: ${JSON.stringify(agent.triggers ?? {})}
 `.trim();
 }
@@ -518,6 +548,22 @@ ${historyText}`;
 
     if (Array.isArray(validation.mensagens_finais) && validation.mensagens_finais.length) {
       messages = validation.mensagens_finais.filter((m: any) => typeof m === "string" && m.trim());
+    } else if (validation.aprovado === false) {
+      console.error("[sdr-brain] validator rejected response without a safe rewrite", validation.motivo);
+      messages = [];
+      written.proxima_acao = "aguardar";
+    }
+
+    const meetingAlreadyConfirmed = history.some((item) =>
+      item.role === "assistant" && /(?:reuni[aã]o|demonstra[cç][aã]o).*(?:confirmad|agendad)/i.test(item.content)
+    );
+    if (agent.situations?.preco === "nunca_sem_reuniao" && !meetingAlreadyConfirmed) {
+      const disclosedPrice = messages.some((text) => /(?:R\$\s*\d|\b\d+(?:[.,]\d{2})?\s*(?:reais|por m[eê]s|\/m[eê]s))/i.test(text));
+      if (disclosedPrice) {
+        console.error("[sdr-brain] blocked price disclosure before confirmed meeting");
+        messages = [];
+        written.proxima_acao = "aguardar";
+      }
     }
 
     // ---------- AGENDAMENTO AUTOMÁTICO: Agenda + CRM + e-mail ao responsável ----------
@@ -640,10 +686,12 @@ ${historyText}`;
 
           const recipients = new Set<string>();
           if (responsibleProfile?.email) recipients.add(responsibleProfile.email);
-          for (const s of agent.closing?.notify_sellers ?? []) {
-            if (s?.email) recipients.add(s.email);
+          if (agent.closing?.notify_seller !== false) {
+            for (const s of agent.closing?.notify_sellers ?? []) {
+              if (s?.email) recipients.add(s.email);
+            }
+            if (agent.closing?.notify_seller_email) recipients.add(agent.closing.notify_seller_email);
           }
-          if (agent.closing?.notify_seller_email) recipients.add(agent.closing.notify_seller_email);
 
           for (const email of recipients) {
             await fetch(`${supabaseUrl}/functions/v1/send-email`, {

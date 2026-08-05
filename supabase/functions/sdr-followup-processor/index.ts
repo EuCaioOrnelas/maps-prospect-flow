@@ -84,6 +84,14 @@ Deno.serve(async (req) => {
       await backend.from("sdr_sessions").update({ next_followup_at: null }).eq("id", session.id);
       continue;
     }
+    if (!(agent.whatsapp_number_ids ?? []).includes(session.waba_connection_id)) {
+      await backend.from("sdr_sessions").update({
+        status: "closed",
+        next_followup_at: null,
+        closed_reason: "waba_connection_removed_from_agent",
+      }).eq("id", session.id);
+      continue;
+    }
     if (!isWithinSchedule(agent.schedule)) {
       deferred += 1;
       continue;

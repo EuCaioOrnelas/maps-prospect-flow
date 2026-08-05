@@ -311,7 +311,9 @@ Deno.serve(async (req) => {
 
       // Vendedores a avisar: handoff usa strategy.handoff_sellers, encerramento usa closing.notify_sellers
       const sellers: any[] =
-        nextAction === "chamar_vendedor"
+        agent.closing?.notify_seller === false
+          ? []
+          : nextAction === "chamar_vendedor"
           ? (agent.strategy?.handoff_sellers ?? [])
           : (agent.closing?.notify_sellers ?? []);
 
