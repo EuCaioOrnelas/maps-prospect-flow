@@ -187,26 +187,46 @@ export function GuidedTour() {
       }
 
       const currentRect = el.getBoundingClientRect();
+      const clip = getClipRect(el);
       const shouldScrollIntoView = lastScrolledStepRef.current !== step.id;
-      const isOffscreen = currentRect.top < POPUP_GAP || currentRect.bottom > window.innerHeight - POPUP_GAP;
+      // Clipped by ANY scroll ancestor (dialog body, scrollable panel) or by the viewport.
+      const isClipped =
+        currentRect.top < clip.top + POPUP_GAP ||
+        currentRect.bottom > clip.bottom - POPUP_GAP ||
+        currentRect.left < clip.left ||
+        currentRect.right > clip.right;
 
       if (step.keepViewportTop) {
         if (window.scrollY !== 0) {
           window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         }
+        if (isClipped) {
+          try {
+            el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+          } catch {}
+        }
         if (shouldScrollIntoView) {
           lastScrolledStepRef.current = step.id;
         }
-      } else if (shouldScrollIntoView && isOffscreen) {
+      } else if (isClipped) {
+        // Re-scroll whenever the target is clipped (not only once per step) so
+        // targets inside scrollable modals are always brought fully into view.
         lastScrolledStepRef.current = step.id;
         try {
-          el.scrollIntoView({ block: "center", behavior: "auto" });
+          el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
         } catch {}
       } else if (shouldScrollIntoView) {
         lastScrolledStepRef.current = step.id;
       }
 
-      const next = el.getBoundingClientRect();
+      const rawNext = el.getBoundingClientRect();
+      const clamped = clampRectToClip(rawNext, getClipRect(el));
+      const next = clamped ?? {
+        top: rawNext.top,
+        left: rawNext.left,
+        width: rawNext.width,
+        height: rawNext.height,
+      };
       const serialized = `${Math.round(next.top)}|${Math.round(next.left)}|${Math.round(next.width)}|${Math.round(next.height)}`;
 
       // Only commit when coordinates actually changed — avoids re-render loops
@@ -215,6 +235,7 @@ export function GuidedTour() {
         setRect({ top: next.top, left: next.left, width: next.width, height: next.height });
         setPopupAnchorRect({ top: next.top, left: next.left, width: next.width, height: next.height });
       }
+
       targetEverFoundRef.current = step.id;
 
       if (serialized === lastSerialized) {
