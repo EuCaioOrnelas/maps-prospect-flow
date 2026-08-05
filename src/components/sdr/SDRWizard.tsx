@@ -954,7 +954,6 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           success_criteria: [SDR_SUCCESS_BY_OBJECTIVE[draft.objective as SdrObjective]],
         },
         situations: draft.situations,
-        ai: { provider: "openai", model: "gpt-4o-mini" },
       };
       const q = editing
         ? supabase.from("sdr_agents" as any).update(payload).eq("id", editing.id)
