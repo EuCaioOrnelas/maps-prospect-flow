@@ -14,18 +14,28 @@ function nowInBrazil() {
   return new Date(now.getTime() + BR_TZ_OFFSET * 60 * 60 * 1000);
 }
 
-const WEEKDAY_IDS = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
-
 function isWithinSchedule(schedule: any): boolean {
   if (!schedule || schedule.mode !== "custom") return true;
   const d = nowInBrazil();
-  const day = WEEKDAY_IDS[d.getUTCDay()];
-  const days: string[] = Array.isArray(schedule.days) ? schedule.days : [];
+  const day = d.getUTCDay();
+  const days: number[] = Array.isArray(schedule.days) ? schedule.days.map(Number) : [];
   if (days.length && !days.includes(day)) return false;
   const start = String(schedule.start || "00:00");
   const end = String(schedule.end || "23:59");
   const cur = `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
   return cur >= start && cur <= end;
+}
+
+function responseDelayMs(agent: any, inbound: string, outbound: string, triggerType: string) {
+  if (triggerType === "followup") return 0;
+  const mode = agent.triggers?.reply_delay ?? "smart";
+  if (mode === "immediate") return 0;
+  if (mode === "30s") return 30_000;
+  if (mode === "1min") return 60_000;
+  if (mode === "custom") return Math.min(300, Math.max(0, Number(agent.triggers?.reply_delay_custom_seconds) || 0)) * 1_000;
+  const readingMs = Math.min(30_000, Math.max(8_000, inbound.trim().length * 45));
+  const typingMs = Math.min(45_000, Math.max(5_000, outbound.trim().length * 55));
+  return readingMs + typingMs;
 }
 
 Deno.serve(async (req) => {
@@ -71,7 +81,7 @@ Deno.serve(async (req) => {
     if (!agent) return json({ skipped: "nenhum SDR ativo para este número" });
 
     if (!isWithinSchedule(agent.schedule)) {
-      return json({ skipped: "fora do horário configurado" });
+      return json({ skipped: agent.schedule?.queue_outside_hours ? "enfileirado para o próximo horário útil" : "fora do horário configurado" });
     }
 
     // 2) Sessão (memória de longo prazo)
@@ -95,10 +105,28 @@ Deno.serve(async (req) => {
           phone: contact_phone,
           contact_name: contact_name || null,
           status: "active",
+          conversation_id: conversation_id || null,
+          waba_connection_id,
+          phone_number_id: phone_number_id || null,
+          user_id: user_id || owner_user_id,
         })
         .select("*")
         .maybeSingle();
       session = created;
+    } else {
+      const { data: updated } = await supabase
+        .from("sdr_sessions")
+        .update({
+          conversation_id: conversation_id || session.conversation_id,
+          waba_connection_id,
+          phone_number_id: phone_number_id || session.phone_number_id,
+          user_id: user_id || owner_user_id,
+          ...(trigger_type === "inbound" ? { next_followup_at: null, followup_reason: null } : {}),
+        })
+        .eq("id", session.id)
+        .select("*")
+        .maybeSingle();
+      session = updated ?? session;
     }
 
     // Interrompe se o lead pediu para parar ou já foi encerrado
@@ -241,6 +269,8 @@ Deno.serve(async (req) => {
     const pnid = phone_number_id || connection.phone_number_id;
 
     let sent = 0;
+    const initialDelay = responseDelayMs(agent, message || "", messages.join(" "), trigger_type);
+    if (initialDelay > 0) await new Promise((resolve) => setTimeout(resolve, initialDelay));
     for (const text of messages) {
       // pausa curta entre mensagens para soar humano
       if (sent > 0) await new Promise((r) => setTimeout(r, 1800));
@@ -290,6 +320,13 @@ Deno.serve(async (req) => {
           last_message_direction: "outbound",
         })
         .eq("id", conversation_id);
+    }
+
+    if (session?.id) {
+      await supabase.from("sdr_sessions").update({
+        last_processed_at: new Date().toISOString(),
+        ...(trigger_type === "followup" ? { followups_sent: (session.followups_sent ?? 0) + 1 } : {}),
+      }).eq("id", session.id);
     }
 
     console.log(`[sdr-dispatch] SDR ${agent.name} respondeu ${sent} mensagem(ns) para ${contact_phone}`);

@@ -927,7 +927,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
             !!draft.closing.after_limit_stage_id)
         );
       case 11:
-        return draft.ai.api_key.trim().length >= 10;
+        return true;
       default:
         return true;
     }
@@ -942,7 +942,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         created_by: user.id,
         name: draft.name.trim(),
         objective: draft.objective,
-        objective_custom: null,
+        objective_custom: draft.objective_custom.trim() || null,
         whatsapp_number_ids: draft.whatsapp_number_ids,
         schedule: draft.schedule,
         triggers: draft.triggers,
@@ -954,6 +954,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           success_criteria: [SDR_SUCCESS_BY_OBJECTIVE[draft.objective as SdrObjective]],
         },
         situations: draft.situations,
+        ai: { provider: "openai", model: "gpt-4o-mini" },
       };
       const q = editing
         ? supabase.from("sdr_agents" as any).update(payload).eq("id", editing.id)
@@ -2035,22 +2036,8 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
             })}
           </CardGrid>
 
-          <div className="space-y-2">
-            <IconLabel icon={KeyRound}>Chave de API da OpenAI</IconLabel>
-            <IconInput
-              icon={KeyRound}
-              type="password"
-              value={draft.ai.api_key}
-              onChange={(e) => patch("ai", { api_key: e.target.value })}
-              placeholder="sk-..."
-            />
-            <p className="text-xs text-muted-foreground">
-              A chave fica salva de forma segura e é usada apenas pelo cérebro deste SDR.
-            </p>
-          </div>
-
           <InfoBox icon={Info} title="Modelo utilizado">
-            <p>O SDR usa o modelo gpt-4o-mini, otimizado para conversas rápidas e baixo custo.</p>
+            <p>O SDR usa o modelo gpt-4o-mini da infraestrutura segura da Wiize, otimizado para conversas rápidas e baixo custo.</p>
           </InfoBox>
         </div>
       )}

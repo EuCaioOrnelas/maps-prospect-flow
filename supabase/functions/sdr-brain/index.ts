@@ -185,7 +185,7 @@ function agentBrief(agent: any) {
     : "";
   return `
 NOME DO SDR: ${agent.name}
-OBJETIVO FINAL: ${agent.objective}
+  OBJETIVO FINAL: ${agent.objective}${agent.objective_custom ? ` — INSTRUÇÃO PERSONALIZADA DO USUÁRIO: ${agent.objective_custom}` : ""}
 CRITÉRIO DE SUCESSO: ${(c.success_criteria || []).join(", ") || "-"}
 
 EMPRESA: ${k.company || "-"}
@@ -220,6 +220,10 @@ REGRAS INEGOCIÁVEIS:
 - O SDR SEMPRE conduz a conversa e nunca devolve o comando ao lead.
 - NUNCA esperar o lead decidir sozinho: toda resposta termina com um próximo passo claro.
 - Nunca inventar informação fora do conhecimento acima.
+  - Antes de recomendar, conecte a dor identificada ao produto/serviço mais aderente e explique o valor com base apenas nos diferenciais, cases, políticas e materiais cadastrados.
+  - Use gatilhos B2B com ética: especificidade, prova, autoridade, custo da inação, contraste, compromisso e urgência somente quando houver fundamento real. Nunca fabrique escassez, prazo, case ou resultado.
+  - Quando precisar de decisão, prefira UMA pergunta de escolha guiada com DUAS alternativas úteis e concretas (A ou B), em vez de uma pergunta aberta que convide apenas a “não”.
+  - A escolha guiada nunca autoriza pressão: se houver recusa clara, pedido para parar ou desinteresse, acolha, não insista e respeite os critérios de encerramento.
 ${(agent.situations ?? {}).preco === "nunca_sem_reuniao" ? "- NUNCA informar preço antes de a reunião estar agendada." : ""}
 
 PLAYBOOK DO OBJETIVO:
@@ -358,7 +362,7 @@ Deno.serve(async (req) => {
 ${freeSlots.map((s) => `- ${s.label} | iso: ${s.iso}`).join("\n")}
 
 REGRAS DE AGENDAMENTO (inegociáveis):
-- Ofereça no MÁXIMO 3 opções por mensagem, sempre retiradas da lista acima.
+- Ofereça EXATAMENTE 2 opções por mensagem, sempre retiradas da lista acima, numa única pergunta de escolha ("você prefere A ou B?"). Se só existir 1 opção livre, peça permissão para confirmar essa única janela sem inventar outra.
 - NUNCA sugira, confirme ou aceite um horário que não esteja na lista: ele está ocupado ou fora do atendimento.
 - Se o lead pedir um horário fora da lista, diga que aquele horário não está disponível e ofereça as opções livres mais próximas.
 - Só marque como confirmado quando o lead escolher explicitamente uma das opções.`
@@ -391,7 +395,7 @@ Responda SEMPRE em JSON válido com o formato:
  "agendamento": {"confirmado": boolean, "inicio_iso": string|null, "tipo": "meeting|demo|call|visit", "titulo": string, "observacao": string, "opcoes_iso": [string]}
 
 Regras do campo "agendamento":
-- "opcoes_iso" traz no máximo 3 horários da lista de horários livres que devem ser oferecidos agora (vazio se não for o momento de oferecer).
+ - "opcoes_iso" traz exatamente 2 horários da lista de horários livres quando for o momento de oferecer (vazio se não for o momento; 1 apenas quando só houver uma janela livre).
 - "confirmado" só é true quando o lead escolheu explicitamente um horário; nesse caso "inicio_iso" precisa ser EXATAMENTE um iso da lista de horários livres.
 - Se o horário desejado pelo lead não estiver na lista, "confirmado" = false e "inicio_iso" = null.
 }`;
@@ -431,6 +435,8 @@ Regras absolutas:
 - Faça no máximo UMA pergunta por resposta.
 - Siga o micro-objetivo e o passo do funil definidos pela análise, sem forçar a venda nem pular etapas.
 - Em follow-ups, retome explicitamente o ponto onde a conversa parou.
+- Quando pedir uma decisão, use uma pergunta fechada de escolha com duas alternativas favoráveis e verdadeiras (A ou B). Para agenda, use somente duas janelas presentes na AGENDA REAL. Nunca invente alternativa.
+- Se o lead negar, pedir para parar ou demonstrar desinteresse claro, não use escolha forçada, não pressione e siga a configuração de encerramento.
 Responda SEMPRE em JSON: {"mensagens": [string], "proxima_acao": string, "justificativa": string}`;
     const writerUser = `CONFIGURAÇÃO DO SDR:
 ${brief}
@@ -460,7 +466,7 @@ Escreva a sequência de mensagens.`;
 
     // ---------- CAMADA 8: Validação / Autocrítica ----------
     const validatorSystem = `Você é um revisor crítico de mensagens de vendas no WhatsApp.
-Checklist: respondeu o lead? avançou a negociação? manteve contexto? objetivo continua vivo? soa humano? mensagens curtas? educada? não insistiu demais? criou valor? tem próximo passo?
+Checklist: respondeu o lead? avançou a negociação? manteve contexto? objetivo continua vivo? soa humano? mensagens curtas? educada? não insistiu demais? criou valor? conectou dor ao produto certo sem inventar? quando pediu decisão ofereceu duas alternativas reais? respeitou eventual recusa? tem próximo passo?
 Se reprovar em qualquer item, reescreva.
 Responda SEMPRE em JSON: {"aprovado": boolean, "checklist": {"[item]": boolean}, "mensagens_finais": [string], "motivo": string}`;
     const validatorUser = `CONFIGURAÇÃO:
@@ -536,6 +542,9 @@ ${historyText}`;
       if (eventError) {
         // Conflito de horário (exclusion constraint) ou falha: não quebra a conversa
         console.error("[sdr-brain] falha ao criar evento na agenda:", eventError.message);
+        messages = ["Esse horário acabou de ficar indisponível.", freeSlots.length >= 2
+          ? `Você prefere ${freeSlots[0].label} ou ${freeSlots[1].label}?`
+          : "Vou validar a próxima janela livre e retorno para você."];
       } else {
         scheduled = { event_id: event?.id, starts_at: event?.starts_at, label: chosenSlot.label };
 
@@ -644,6 +653,15 @@ ${historyText}`;
       runId = run?.id ?? null;
 
       if (session?.id) {
+        const nextAction = written.proxima_acao ?? analysis.proxima_acao ?? "aguardar";
+        const followupMin = Math.max(1, Number(agent.closing?.followup_min_hours) || 12);
+        const followupMax = Math.max(followupMin, Number(agent.closing?.followup_max_hours) || 48);
+        const manualInterval = Math.max(1, Number(agent.closing?.followup_interval_hours) || 24);
+        const followupHours = agent.closing?.followup_mode === "inteligente"
+          ? followupMin + Math.random() * (followupMax - followupMin)
+          : manualInterval;
+        const shouldScheduleFollowup = nextAction === "followup" &&
+          (session.followups_sent ?? 0) < (Number(agent.closing?.followup_max) || 0);
         await supabase
           .from("sdr_sessions")
           .update({
@@ -654,6 +672,11 @@ ${historyText}`;
             replies_received: (session.replies_received ?? 0) + (inbound ? 1 : 0),
             last_message_at: new Date().toISOString(),
             ...(inbound ? { last_reply_at: new Date().toISOString() } : {}),
+            last_processed_at: new Date().toISOString(),
+            next_followup_at: shouldScheduleFollowup
+              ? new Date(Date.now() + followupHours * 60 * 60 * 1000).toISOString()
+              : null,
+            followup_reason: shouldScheduleFollowup ? analysis.micro_objetivo ?? "Retomar negociação" : null,
           })
           .eq("id", session.id);
       }

@@ -317,6 +317,7 @@ export type SdrDraft = {
     after_limit: "arquivar" | "mover_pipeline" | "criar_tarefa" | "avisar_vendedor";
     after_limit_actions: string[];
     after_limit_stage_id: string;
+    meeting_duration_minutes: number;
   };
   situations: Record<string, string>;
 };
@@ -397,6 +398,7 @@ export const SDR_DEFAULT_DRAFT: SdrDraft = {
     after_limit: "avisar_vendedor",
     after_limit_actions: ["arquivar"],
     after_limit_stage_id: "",
+    meeting_duration_minutes: 60,
   },
   situations: {
     ocupado: "uma_pergunta",
