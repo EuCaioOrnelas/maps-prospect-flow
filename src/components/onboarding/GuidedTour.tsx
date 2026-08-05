@@ -147,8 +147,12 @@ export function GuidedTour() {
   useEffect(() => {
     if (!isActive) return;
 
-    const isTourUI = (target: EventTarget | null) =>
-      target instanceof Node && !!(target as Element).closest?.("[data-tour-ui='true']");
+    const isTourUI = (target: EventTarget | null) => {
+      if (!(target instanceof Element)) return false;
+      if (target.closest("[data-tour-block='true']")) return false;
+      return !!target.closest("[data-tour-ui='true']");
+    };
+
 
     const blockPointer = (event: Event) => {
       if (isTourUI(event.target)) return;
