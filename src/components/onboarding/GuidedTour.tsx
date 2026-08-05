@@ -44,6 +44,52 @@ function queryTourTarget<T extends Element = HTMLElement>(selector: string) {
   return null;
 }
 
+/**
+ * Intersection of every clipping ancestor (scroll containers, overflow hidden,
+ * dialogs) with the viewport. The spotlight must NEVER paint outside of it,
+ * otherwise the highlight "escapes" the card/modal it belongs to.
+ */
+function getClipRect(el: HTMLElement) {
+  let clip = {
+    top: 0,
+    left: 0,
+    right: window.innerWidth,
+    bottom: window.innerHeight,
+  };
+
+  let node = el.parentElement;
+  while (node && node !== document.body && node !== document.documentElement) {
+    const style = window.getComputedStyle(node);
+    const clips =
+      style.overflow !== "visible" ||
+      style.overflowX !== "visible" ||
+      style.overflowY !== "visible";
+    if (clips) {
+      const r = node.getBoundingClientRect();
+      clip = {
+        top: Math.max(clip.top, r.top),
+        left: Math.max(clip.left, r.left),
+        right: Math.min(clip.right, r.right),
+        bottom: Math.min(clip.bottom, r.bottom),
+      };
+    }
+    node = node.parentElement;
+  }
+
+  return clip;
+}
+
+/** Clamp a target rect so it stays inside its clipping ancestors. */
+function clampRectToClip(r: DOMRect, clip: ReturnType<typeof getClipRect>): Rect | null {
+  const top = Math.max(r.top, clip.top);
+  const left = Math.max(r.left, clip.left);
+  const bottom = Math.min(r.bottom, clip.bottom);
+  const right = Math.min(r.right, clip.right);
+  if (bottom - top <= 4 || right - left <= 4) return null;
+  return { top, left, width: right - left, height: bottom - top };
+}
+
+
 function getPillarKey(stepId: string) {
   return TOUR_CONTENT.find((step) => step.id === stepId)?.pillar ?? "gestao";
 }
