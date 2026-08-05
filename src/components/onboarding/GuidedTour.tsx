@@ -44,6 +44,52 @@ function queryTourTarget<T extends Element = HTMLElement>(selector: string) {
   return null;
 }
 
+/**
+ * Intersection of every clipping ancestor (scroll containers, overflow hidden,
+ * dialogs) with the viewport. The spotlight must NEVER paint outside of it,
+ * otherwise the highlight "escapes" the card/modal it belongs to.
+ */
+function getClipRect(el: HTMLElement) {
+  let clip = {
+    top: 0,
+    left: 0,
+    right: window.innerWidth,
+    bottom: window.innerHeight,
+  };
+
+  let node = el.parentElement;
+  while (node && node !== document.body && node !== document.documentElement) {
+    const style = window.getComputedStyle(node);
+    const clips =
+      style.overflow !== "visible" ||
+      style.overflowX !== "visible" ||
+      style.overflowY !== "visible";
+    if (clips) {
+      const r = node.getBoundingClientRect();
+      clip = {
+        top: Math.max(clip.top, r.top),
+        left: Math.max(clip.left, r.left),
+        right: Math.min(clip.right, r.right),
+        bottom: Math.min(clip.bottom, r.bottom),
+      };
+    }
+    node = node.parentElement;
+  }
+
+  return clip;
+}
+
+/** Clamp a target rect so it stays inside its clipping ancestors. */
+function clampRectToClip(r: DOMRect, clip: ReturnType<typeof getClipRect>): Rect | null {
+  const top = Math.max(r.top, clip.top);
+  const left = Math.max(r.left, clip.left);
+  const bottom = Math.min(r.bottom, clip.bottom);
+  const right = Math.min(r.right, clip.right);
+  if (bottom - top <= 4 || right - left <= 4) return null;
+  return { top, left, width: right - left, height: bottom - top };
+}
+
+
 function getPillarKey(stepId: string) {
   return TOUR_CONTENT.find((step) => step.id === stepId)?.pillar ?? "gestao";
 }
@@ -96,6 +142,48 @@ export function GuidedTour() {
     };
   }, [isActive]);
 
+  // Hard interaction lock: while the tour is active, no click/keyboard event may
+  // reach the app behind it (Radix dialogs closing on outside click, buttons, etc.).
+  useEffect(() => {
+    if (!isActive) return;
+
+    const isTourUI = (target: EventTarget | null) => {
+      if (!(target instanceof Element)) return false;
+      if (target.closest("[data-tour-block='true']")) return false;
+      return !!target.closest("[data-tour-ui='true']");
+    };
+
+
+    const blockPointer = (event: Event) => {
+      // Never block programmatic events — the tour itself dispatches clicks
+      // (opening the lead modal, sidebar menus, etc.).
+      if (!event.isTrusted) return;
+      if (isTourUI(event.target)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+
+    const blockKeys = (event: KeyboardEvent) => {
+      if (!event.isTrusted) return;
+      if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
+        if (isTourUI(event.target)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+
+    const events = ["pointerdown", "mousedown", "mouseup", "click", "dblclick", "touchstart", "contextmenu"];
+    events.forEach((name) => document.addEventListener(name, blockPointer, true));
+    document.addEventListener("keydown", blockKeys, true);
+
+    return () => {
+      events.forEach((name) => document.removeEventListener(name, blockPointer, true));
+      document.removeEventListener("keydown", blockKeys, true);
+    };
+  }, [isActive]);
+
+
+
   // Measure target element and re-measure on resize / scroll / step change.
   // We poll the rect every animation frame for a short window so we capture
   // the FINAL position after sidebar collapse/expand transitions (300ms).
@@ -141,26 +229,46 @@ export function GuidedTour() {
       }
 
       const currentRect = el.getBoundingClientRect();
+      const clip = getClipRect(el);
       const shouldScrollIntoView = lastScrolledStepRef.current !== step.id;
-      const isOffscreen = currentRect.top < POPUP_GAP || currentRect.bottom > window.innerHeight - POPUP_GAP;
+      // Clipped by ANY scroll ancestor (dialog body, scrollable panel) or by the viewport.
+      const isClipped =
+        currentRect.top < clip.top + POPUP_GAP ||
+        currentRect.bottom > clip.bottom - POPUP_GAP ||
+        currentRect.left < clip.left ||
+        currentRect.right > clip.right;
 
       if (step.keepViewportTop) {
         if (window.scrollY !== 0) {
           window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         }
+        if (isClipped) {
+          try {
+            el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+          } catch {}
+        }
         if (shouldScrollIntoView) {
           lastScrolledStepRef.current = step.id;
         }
-      } else if (shouldScrollIntoView && isOffscreen) {
+      } else if (isClipped) {
+        // Re-scroll whenever the target is clipped (not only once per step) so
+        // targets inside scrollable modals are always brought fully into view.
         lastScrolledStepRef.current = step.id;
         try {
-          el.scrollIntoView({ block: "center", behavior: "auto" });
+          el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
         } catch {}
       } else if (shouldScrollIntoView) {
         lastScrolledStepRef.current = step.id;
       }
 
-      const next = el.getBoundingClientRect();
+      const rawNext = el.getBoundingClientRect();
+      const clamped = clampRectToClip(rawNext, getClipRect(el));
+      const next = clamped ?? {
+        top: rawNext.top,
+        left: rawNext.left,
+        width: rawNext.width,
+        height: rawNext.height,
+      };
       const serialized = `${Math.round(next.top)}|${Math.round(next.left)}|${Math.round(next.width)}|${Math.round(next.height)}`;
 
       // Only commit when coordinates actually changed — avoids re-render loops
@@ -169,6 +277,7 @@ export function GuidedTour() {
         setRect({ top: next.top, left: next.left, width: next.width, height: next.height });
         setPopupAnchorRect({ top: next.top, left: next.left, width: next.width, height: next.height });
       }
+
       targetEverFoundRef.current = step.id;
 
       if (serialized === lastSerialized) {
@@ -370,20 +479,44 @@ export function GuidedTour() {
 
   return createPortal(
     <div
+      data-tour-ui="true"
       className="fixed inset-0 pointer-events-none"
       style={{ zIndex: 2147483647 }}
+
     >
 
       {/* Close button for the public demo lives in TourGuiado (always mounted). */}
 
 
 
+      {/* Full-screen interaction blocker: nothing behind the tour is clickable. */}
+      <div
+        data-tour-block="true"
+        className="fixed inset-0 pointer-events-auto"
+        style={{ zIndex: 2147483644 }}
+
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      />
+
       {/* Fallback full overlay when no spotlight */}
 
       {showFallbackOverlay && (
         <div
+          data-tour-block="true"
           className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300"
           style={{
+            zIndex: 2147483645,
             background: "hsl(var(--foreground) / 0.28)",
             backdropFilter: "blur(1.5px)",
             WebkitBackdropFilter: "blur(1.5px)",
@@ -391,10 +524,13 @@ export function GuidedTour() {
         />
       )}
 
+
       {/* Spotlight */}
       {spot && (
         <div
+          data-tour-block="true"
           className="fixed pointer-events-auto rounded-card"
+
           style={{
             top: spot.top,
             left: spot.left,
