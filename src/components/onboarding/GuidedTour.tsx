@@ -523,7 +523,9 @@ export function GuidedTour() {
       {/* Spotlight */}
       {spot && (
         <div
+          data-tour-block="true"
           className="fixed pointer-events-auto rounded-card"
+
           style={{
             top: spot.top,
             left: spot.left,
