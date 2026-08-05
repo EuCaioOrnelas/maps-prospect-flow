@@ -1,5 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -13,6 +17,22 @@ function isWithinSchedule(schedule: any) {
   if (days.length && !days.includes(local.getUTCDay())) return false;
   const current = `${String(local.getUTCHours()).padStart(2, "0")}:${String(local.getUTCMinutes()).padStart(2, "0")}`;
   return current >= String(schedule.start || "00:00") && current <= String(schedule.end || "23:59");
+}
+
+function nextScheduleOpening(schedule: any): string {
+  const localNow = new Date(Date.now() - 3 * 60 * 60 * 1000);
+  const days: number[] = Array.isArray(schedule?.days) && schedule.days.length
+    ? schedule.days.map(Number)
+    : [1, 2, 3, 4, 5];
+  const [hours, minutes] = String(schedule?.start || "08:30").split(":").map(Number);
+  for (let offset = 0; offset <= 7; offset += 1) {
+    const candidate = new Date(Date.UTC(
+      localNow.getUTCFullYear(), localNow.getUTCMonth(), localNow.getUTCDate() + offset, hours || 0, minutes || 0,
+    ));
+    if (!days.includes(candidate.getUTCDay()) || candidate.getTime() <= localNow.getTime()) continue;
+    return new Date(candidate.getTime() + 3 * 60 * 60 * 1000).toISOString();
+  }
+  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 }
 
 Deno.serve(async (req) => {
@@ -94,7 +114,28 @@ Deno.serve(async (req) => {
       }).eq("id", session.id);
       continue;
     }
+
+    const stopCriteria: string[] = Array.isArray(agent.closing?.stop_criteria)
+      ? agent.closing.stop_criteria
+      : [];
+    const inactivityHours = Math.max(1, Number(agent.closing?.stop_no_reply_hours) || 48);
+    const lastCustomerReply = session.last_reply_at ? new Date(session.last_reply_at).getTime() : 0;
+    if (
+      stopCriteria.includes("sem_resposta") &&
+      lastCustomerReply > 0 &&
+      Date.now() - lastCustomerReply >= inactivityHours * 60 * 60 * 1000
+    ) {
+      await backend.from("sdr_sessions").update({
+        status: "abandoned",
+        next_followup_at: null,
+        closed_reason: "no_reply_timeout",
+      }).eq("id", session.id);
+      continue;
+    }
     if (!isWithinSchedule(agent.schedule)) {
+      await backend.from("sdr_sessions").update({
+        next_followup_at: nextScheduleOpening(agent.schedule),
+      }).eq("id", session.id);
       deferred += 1;
       continue;
     }
