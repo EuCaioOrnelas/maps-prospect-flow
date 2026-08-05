@@ -155,12 +155,16 @@ export function GuidedTour() {
 
 
     const blockPointer = (event: Event) => {
+      // Never block programmatic events — the tour itself dispatches clicks
+      // (opening the lead modal, sidebar menus, etc.).
+      if (!event.isTrusted) return;
       if (isTourUI(event.target)) return;
       event.preventDefault();
       event.stopImmediatePropagation();
     };
 
     const blockKeys = (event: KeyboardEvent) => {
+      if (!event.isTrusted) return;
       if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
         if (isTourUI(event.target)) return;
         event.preventDefault();
