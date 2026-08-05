@@ -6529,6 +6529,7 @@ export type Database = {
           agent_id: string
           closed_reason: string | null
           contact_name: string | null
+          conversation_id: string | null
           created_at: string
           current_goal: string | null
           followup_reason: string | null
@@ -6543,15 +6544,19 @@ export type Database = {
           next_followup_at: string | null
           owner_user_id: string
           phone: string | null
+          phone_number_id: string | null
           replies_received: number
           stage: string
           status: string
           updated_at: string
+          user_id: string | null
+          waba_connection_id: string | null
         }
         Insert: {
           agent_id: string
           closed_reason?: string | null
           contact_name?: string | null
+          conversation_id?: string | null
           created_at?: string
           current_goal?: string | null
           followup_reason?: string | null
@@ -6566,15 +6571,19 @@ export type Database = {
           next_followup_at?: string | null
           owner_user_id: string
           phone?: string | null
+          phone_number_id?: string | null
           replies_received?: number
           stage?: string
           status?: string
           updated_at?: string
+          user_id?: string | null
+          waba_connection_id?: string | null
         }
         Update: {
           agent_id?: string
           closed_reason?: string | null
           contact_name?: string | null
+          conversation_id?: string | null
           created_at?: string
           current_goal?: string | null
           followup_reason?: string | null
@@ -6589,10 +6598,13 @@ export type Database = {
           next_followup_at?: string | null
           owner_user_id?: string
           phone?: string | null
+          phone_number_id?: string | null
           replies_received?: number
           stage?: string
           status?: string
           updated_at?: string
+          user_id?: string | null
+          waba_connection_id?: string | null
         }
         Relationships: [
           {
