@@ -142,6 +142,40 @@ export function GuidedTour() {
     };
   }, [isActive]);
 
+  // Hard interaction lock: while the tour is active, no click/keyboard event may
+  // reach the app behind it (Radix dialogs closing on outside click, buttons, etc.).
+  useEffect(() => {
+    if (!isActive) return;
+
+    const isTourUI = (target: EventTarget | null) =>
+      target instanceof Node && !!(target as Element).closest?.("[data-tour-ui='true']");
+
+    const blockPointer = (event: Event) => {
+      if (isTourUI(event.target)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+
+    const blockKeys = (event: KeyboardEvent) => {
+      if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
+        if (isTourUI(event.target)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+
+    const events = ["pointerdown", "mousedown", "mouseup", "click", "dblclick", "touchstart", "contextmenu"];
+    events.forEach((name) => document.addEventListener(name, blockPointer, true));
+    document.addEventListener("keydown", blockKeys, true);
+
+    return () => {
+      events.forEach((name) => document.removeEventListener(name, blockPointer, true));
+      document.removeEventListener("keydown", blockKeys, true);
+    };
+  }, [isActive]);
+
+
+
   // Measure target element and re-measure on resize / scroll / step change.
   // We poll the rect every animation frame for a short window so we capture
   // the FINAL position after sidebar collapse/expand transitions (300ms).
