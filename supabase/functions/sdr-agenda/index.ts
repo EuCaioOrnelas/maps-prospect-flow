@@ -85,7 +85,7 @@ function buildFreeSlots(options: {
     const dayStart = fromLocal(base.year, base.month, base.day + offset, start.hours, start.minutes);
     const dayEnd = fromLocal(base.year, base.month, base.day + offset, end.hours, end.minutes);
     const weekday = toLocalParts(dayStart).weekday;
-    if ((!always && !days.includes(weekday)) || (always && weekday === 0)) continue;
+    if (!days.includes(weekday)) continue;
 
     for (let time = dayStart.getTime(); time + duration <= dayEnd.getTime(); time += duration) {
       if (slots.length >= options.maxSlots) break;

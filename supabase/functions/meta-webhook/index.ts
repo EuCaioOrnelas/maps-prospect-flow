@@ -610,7 +610,20 @@ Deno.serve(async (req) => {
                   try {
                     const SB_URL2 = Deno.env.get('SUPABASE_URL')!;
                     const SB_KEY2 = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-                    await fetch(`${SB_URL2}/functions/v1/sdr-dispatch`, {
+                    const phoneTail = String(normalizedPhone || from).replace(/\D/g, '').slice(-8);
+                    const { data: activeFlow } = await supabase
+                      .from('wa_flow_executions')
+                      .select('id')
+                      .eq('owner_user_id', ownerUserId)
+                      .in('status', ['running', 'waiting', 'awaiting_input', 'active'])
+                      .ilike('lead_phone', `%${phoneTail}`)
+                      .limit(1)
+                      .maybeSingle();
+                    if (activeFlow) {
+                      console.log('[meta-webhook] SDR skipped: active automation flow owns this conversation');
+                      continue;
+                    }
+                    const dispatchPromise = fetch(`${SB_URL2}/functions/v1/sdr-dispatch`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SB_KEY2}` },
                       body: JSON.stringify({
@@ -624,7 +637,14 @@ Deno.serve(async (req) => {
                         message: textContent || null,
                         trigger_type: 'inbound',
                       }),
+                    }).then(async (response) => {
+                      if (!response.ok) {
+                        console.error('[meta-webhook] sdr-dispatch failed:', response.status, await response.text());
+                      }
                     }).catch((e) => console.error('[meta-webhook] sdr-dispatch failed:', e));
+                    // A pausa humana do SDR pode levar alguns segundos; o webhook da Meta
+                    // precisa responder imediatamente sem cancelar o trabalho em segundo plano.
+                    EdgeRuntime.waitUntil(dispatchPromise);
                   } catch (e) {
                     console.error('[meta-webhook] sdr-dispatch error:', e);
                   }

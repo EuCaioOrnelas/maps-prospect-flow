@@ -14,18 +14,34 @@ function nowInBrazil() {
   return new Date(now.getTime() + BR_TZ_OFFSET * 60 * 60 * 1000);
 }
 
-const WEEKDAY_IDS = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
-
 function isWithinSchedule(schedule: any): boolean {
   if (!schedule || schedule.mode !== "custom") return true;
   const d = nowInBrazil();
-  const day = WEEKDAY_IDS[d.getUTCDay()];
-  const days: string[] = Array.isArray(schedule.days) ? schedule.days : [];
+  const day = d.getUTCDay();
+  const days: number[] = Array.isArray(schedule.days) ? schedule.days.map(Number) : [];
   if (days.length && !days.includes(day)) return false;
   const start = String(schedule.start || "00:00");
   const end = String(schedule.end || "23:59");
   const cur = `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
   return cur >= start && cur <= end;
+}
+
+function responseDelayMs(agent: any, inbound: string, outbound: string, triggerType: string) {
+  if (triggerType === "followup") return 0;
+  const mode = agent.triggers?.reply_delay ?? "smart";
+  if (mode === "immediate") return 0;
+  if (mode === "30s") return 30_000;
+  if (mode === "1min") return 60_000;
+  if (mode === "custom") return Math.min(300, Math.max(0, Number(agent.triggers?.reply_delay_custom_seconds) || 0)) * 1_000;
+  const readingMs = Math.min(30_000, Math.max(8_000, inbound.trim().length * 45));
+  const typingMs = Math.min(45_000, Math.max(5_000, outbound.trim().length * 55));
+  return readingMs + typingMs;
+}
+
+function isOptOutMessage(value: unknown) {
+  const text = String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return /^(pare|stop|sair|cancelar|descadastrar|remover)(\b|$)/.test(text) ||
+    /\b(nao quero mais|nao me envie|nao mandar mais|remova meu numero|retire meu contato|pare de mandar|pare de enviar)\b/.test(text);
 }
 
 Deno.serve(async (req) => {
@@ -70,12 +86,36 @@ Deno.serve(async (req) => {
     );
     if (!agent) return json({ skipped: "nenhum SDR ativo para este número" });
 
+    const tail = String(contact_phone).replace(/\D/g, "").slice(-8);
+    if (trigger_type === "inbound" && isOptOutMessage(message)) {
+      await supabase
+        .from("sdr_sessions")
+        .update({ status: "opted_out", next_followup_at: null, closed_reason: "explicit_opt_out" })
+        .eq("agent_id", agent.id)
+        .ilike("phone", `%${tail}`);
+      return json({ ok: true, opted_out: true, sent: 0 });
+    }
+
+    const { data: optedOutSession } = await supabase
+      .from("sdr_sessions")
+      .select("id")
+      .eq("agent_id", agent.id)
+      .eq("status", "opted_out")
+      .ilike("phone", `%${tail}`)
+      .limit(1)
+      .maybeSingle();
+    if (optedOutSession) return json({ skipped: "contato descadastrado" });
+
+    const activation: string[] = Array.isArray(agent.triggers?.activation) ? agent.triggers.activation : ["inbound_all"];
+    if (trigger_type === "inbound" && !activation.includes("inbound_all") && !activation.includes("first_only")) {
+      return json({ skipped: "gatilho inbound não habilitado" });
+    }
+
     if (!isWithinSchedule(agent.schedule)) {
-      return json({ skipped: "fora do horário configurado" });
+      return json({ skipped: agent.schedule?.queue_outside_hours ? "enfileirado para o próximo horário útil" : "fora do horário configurado" });
     }
 
     // 2) Sessão (memória de longo prazo)
-    const tail = String(contact_phone).replace(/\D/g, "").slice(-8);
     let { data: session } = await supabase
       .from("sdr_sessions")
       .select("*")
@@ -95,10 +135,32 @@ Deno.serve(async (req) => {
           phone: contact_phone,
           contact_name: contact_name || null,
           status: "active",
+          conversation_id: conversation_id || null,
+          waba_connection_id,
+          phone_number_id: phone_number_id || null,
+          user_id: user_id || owner_user_id,
         })
         .select("*")
         .maybeSingle();
       session = created;
+    } else {
+      const { data: updated } = await supabase
+        .from("sdr_sessions")
+        .update({
+          conversation_id: conversation_id || session.conversation_id,
+          waba_connection_id,
+          phone_number_id: phone_number_id || session.phone_number_id,
+          user_id: user_id || owner_user_id,
+          ...(trigger_type === "inbound" ? { next_followup_at: null, followup_reason: null } : {}),
+        })
+        .eq("id", session.id)
+        .select("*")
+        .maybeSingle();
+      session = updated ?? session;
+    }
+
+    if (trigger_type === "inbound" && activation.includes("first_only") && (session?.replies_received ?? 0) > 0) {
+      return json({ skipped: "gatilho configurado apenas para o primeiro contato" });
     }
 
     // Interrompe se o lead pediu para parar ou já foi encerrado
@@ -241,6 +303,11 @@ Deno.serve(async (req) => {
     const pnid = phone_number_id || connection.phone_number_id;
 
     let sent = 0;
+    const initialDelay = responseDelayMs(agent, message || "", messages.join(" "), trigger_type);
+    if (initialDelay > 0) await new Promise((resolve) => setTimeout(resolve, initialDelay));
+    if (!isWithinSchedule(agent.schedule)) {
+      return json({ skipped: "horário de atendimento encerrado durante o processamento", sent: 0 });
+    }
     for (const text of messages) {
       // pausa curta entre mensagens para soar humano
       if (sent > 0) await new Promise((r) => setTimeout(r, 1800));
@@ -290,6 +357,13 @@ Deno.serve(async (req) => {
           last_message_direction: "outbound",
         })
         .eq("id", conversation_id);
+    }
+
+    if (session?.id) {
+      await supabase.from("sdr_sessions").update({
+        last_processed_at: new Date().toISOString(),
+        ...(trigger_type === "followup" ? { followups_sent: (session.followups_sent ?? 0) + 1 } : {}),
+      }).eq("id", session.id);
     }
 
     console.log(`[sdr-dispatch] SDR ${agent.name} respondeu ${sent} mensagem(ns) para ${contact_phone}`);

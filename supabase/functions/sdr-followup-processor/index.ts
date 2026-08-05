@@ -1,0 +1,165 @@
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
+  status,
+  headers: { ...corsHeaders, "Content-Type": "application/json" },
+});
+
+function isWithinSchedule(schedule: any) {
+  if (!schedule || schedule.mode !== "custom") return true;
+  const local = new Date(Date.now() - 3 * 60 * 60 * 1000);
+  const days = Array.isArray(schedule.days) ? schedule.days.map(Number) : [];
+  if (days.length && !days.includes(local.getUTCDay())) return false;
+  const current = `${String(local.getUTCHours()).padStart(2, "0")}:${String(local.getUTCMinutes()).padStart(2, "0")}`;
+  return current >= String(schedule.start || "00:00") && current <= String(schedule.end || "23:59");
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceKey) return json({ error: "Backend configuration unavailable" }, 500);
+  const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "").trim();
+  if (token !== serviceKey) return json({ error: "Unauthorized" }, 401);
+
+  const backend = createClient(url, serviceKey);
+  const { data: sessions, error } = await backend
+    .from("sdr_sessions")
+    .select("*")
+    .eq("status", "active")
+    .not("next_followup_at", "is", null)
+    .lte("next_followup_at", new Date().toISOString())
+    .order("next_followup_at", { ascending: true })
+    .limit(25);
+  if (error) return json({ error: "Unable to load due follow-ups" }, 500);
+
+  let dispatched = 0;
+  let deferred = 0;
+  let handedOff = 0;
+
+  for (const session of sessions ?? []) {
+    const { data: agent } = await backend.from("sdr_agents").select("*").eq("id", session.agent_id).maybeSingle();
+    if (!agent || agent.status !== "active") {
+      await backend.from("sdr_sessions").update({ next_followup_at: null }).eq("id", session.id);
+      continue;
+    }
+    if (!isWithinSchedule(agent.schedule)) {
+      deferred += 1;
+      continue;
+    }
+
+    const maximum = Math.max(0, Number(agent.closing?.followup_max) || 0);
+    if ((session.followups_sent ?? 0) >= maximum) {
+      await backend.from("sdr_sessions").update({
+        status: "handoff",
+        next_followup_at: null,
+        closed_reason: "followup_limit_reached",
+      }).eq("id", session.id);
+      handedOff += 1;
+      continue;
+    }
+
+    const lastReplyAt = session.last_reply_at ? new Date(session.last_reply_at).getTime() : 0;
+    const outsideCustomerWindow = !lastReplyAt || Date.now() - lastReplyAt >= 23 * 60 * 60 * 1000;
+    const templateIds = Array.isArray(agent.closing?.followup_templates) ? agent.closing.followup_templates : [];
+
+    // Fora da janela de atendimento da Meta, texto livre é proibido. Sem template
+    // aprovado, o caso vai para humano em vez de tentar um envio inválido.
+    if (outsideCustomerWindow && templateIds.length === 0) {
+      await backend.from("sdr_sessions").update({
+        status: "handoff",
+        next_followup_at: null,
+        closed_reason: "meta_template_required",
+      }).eq("id", session.id);
+      handedOff += 1;
+      continue;
+    }
+
+    if (!session.waba_connection_id || !session.phone) {
+      await backend.from("sdr_sessions").update({
+        next_followup_at: null,
+        closed_reason: "missing_dispatch_context",
+      }).eq("id", session.id);
+      continue;
+    }
+
+    if (outsideCustomerWindow) {
+      const { data: template } = await backend
+        .from("wiize_message_templates")
+        .select("name,language,body")
+        .in("id", templateIds)
+        .eq("archived", false)
+        .limit(1)
+        .maybeSingle();
+      const { data: connection } = await backend
+        .from("user_waba_connections")
+        .select("access_token,phone_number_id")
+        .eq("id", session.waba_connection_id)
+        .maybeSingle();
+      if (!template || !connection?.access_token) {
+        await backend.from("sdr_sessions").update({
+          status: "handoff",
+          next_followup_at: null,
+          closed_reason: "approved_template_unavailable",
+        }).eq("id", session.id);
+        handedOff += 1;
+        continue;
+      }
+      const metaResponse = await fetch(`https://graph.facebook.com/v21.0/${session.phone_number_id || connection.phone_number_id}/messages`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${connection.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to: String(session.phone).replace(/\D/g, ""),
+          type: "template",
+          template: { name: template.name, language: { code: template.language || "pt_BR" } },
+        }),
+      });
+      if (!metaResponse.ok) {
+        console.error("[sdr-followup-processor] Meta template failed:", metaResponse.status, await metaResponse.text());
+        continue;
+      }
+      if (session.conversation_id) {
+        await backend.from("chat_messages").insert({
+          conversation_id: session.conversation_id,
+          user_id: session.user_id || session.owner_user_id,
+          owner_user_id: session.owner_user_id,
+          direction: "outbound",
+          message_type: "template",
+          content: template.body || `[${template.name}]`,
+          status: "sent",
+        });
+      }
+      await backend.from("sdr_sessions").update({
+        followups_sent: (session.followups_sent ?? 0) + 1,
+        next_followup_at: null,
+        last_processed_at: new Date().toISOString(),
+      }).eq("id", session.id);
+      dispatched += 1;
+      continue;
+    }
+
+    const response = await fetch(`${url}/functions/v1/sdr-dispatch`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+      body: JSON.stringify({
+        owner_user_id: session.owner_user_id,
+        user_id: session.user_id || session.owner_user_id,
+        waba_connection_id: session.waba_connection_id,
+        phone_number_id: session.phone_number_id,
+        conversation_id: session.conversation_id,
+        contact_phone: session.phone,
+        contact_name: session.contact_name,
+        message: "",
+        trigger_type: "followup",
+      }),
+    });
+    if (response.ok) dispatched += 1;
+    else console.error("[sdr-followup-processor] dispatch failed:", response.status, await response.text());
+  }
+
+  return json({ ok: true, processed: sessions?.length ?? 0, dispatched, deferred, handed_off: handedOff });
+});
