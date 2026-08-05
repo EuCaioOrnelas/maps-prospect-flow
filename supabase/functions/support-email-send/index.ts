@@ -4,7 +4,7 @@
 //  - customer_reply: mensagem do suporte → e-mail do cliente (mantém thread por Reply-To)
 //  - customer_rating_request: solicita avaliação ao fechar/resolver ticket
 //  - customer_autoclose_followup: follow-up após 72h sem resposta
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

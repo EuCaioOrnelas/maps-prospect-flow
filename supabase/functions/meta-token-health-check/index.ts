@@ -3,7 +3,7 @@
 // code 190 — invalid/expired token, revoked, password change, etc).
 // Network errors, rate limits and transient failures NEVER disconnect the token,
 // to avoid false positives (e.g. permanent/never-expiring tokens).
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

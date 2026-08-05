@@ -1,6 +1,6 @@
 // Daily cron: sends per-user Meta operation summary email.
 // Respects meta_user_settings.notify_daily_summary (default off).
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
