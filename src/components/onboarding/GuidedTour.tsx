@@ -445,18 +445,38 @@ export function GuidedTour() {
 
 
 
+      {/* Full-screen interaction blocker: nothing behind the tour is clickable. */}
+      <div
+        className="fixed inset-0 pointer-events-auto"
+        style={{ zIndex: 2147483644 }}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      />
+
       {/* Fallback full overlay when no spotlight */}
 
       {showFallbackOverlay && (
         <div
           className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300"
           style={{
+            zIndex: 2147483645,
             background: "hsl(var(--foreground) / 0.28)",
             backdropFilter: "blur(1.5px)",
             WebkitBackdropFilter: "blur(1.5px)",
           }}
         />
       )}
+
 
       {/* Spotlight */}
       {spot && (
