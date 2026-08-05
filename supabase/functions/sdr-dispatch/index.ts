@@ -26,6 +26,23 @@ function isWithinSchedule(schedule: any): boolean {
   return cur >= start && cur <= end;
 }
 
+function nextScheduleOpening(schedule: any): string {
+  const now = nowInBrazil();
+  const days: number[] = Array.isArray(schedule?.days) && schedule.days.length
+    ? schedule.days.map(Number)
+    : [1, 2, 3, 4, 5];
+  const [hours, minutes] = String(schedule?.start || "08:30").split(":").map(Number);
+  for (let offset = 0; offset <= 7; offset += 1) {
+    const candidateLocal = new Date(Date.UTC(
+      now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset, hours || 0, minutes || 0,
+    ));
+    if (!days.includes(candidateLocal.getUTCDay())) continue;
+    if (candidateLocal.getTime() <= now.getTime()) continue;
+    return new Date(candidateLocal.getTime() - BR_TZ_OFFSET * 60 * 60 * 1000).toISOString();
+  }
+  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+}
+
 function responseDelayMs(agent: any, inbound: string, outbound: string, triggerType: string) {
   if (triggerType === "followup") return 0;
   const mode = agent.triggers?.reply_delay ?? "smart";
@@ -143,10 +160,6 @@ Deno.serve(async (req) => {
       return json({ skipped: "reativação automática desabilitada" });
     }
 
-    if (!isWithinSchedule(agent.schedule)) {
-      return json({ skipped: agent.schedule?.queue_outside_hours ? "enfileirado para o próximo horário útil" : "fora do horário configurado" });
-    }
-
     // 2) Sessão (memória de longo prazo)
     let { data: session } = await supabase
       .from("sdr_sessions")
@@ -189,6 +202,19 @@ Deno.serve(async (req) => {
         .select("*")
         .maybeSingle();
       session = updated ?? session;
+    }
+
+    if (!isWithinSchedule(agent.schedule)) {
+      if (agent.schedule?.queue_outside_hours && session?.id && trigger_type === "inbound") {
+        const resumeAt = nextScheduleOpening(agent.schedule);
+        await supabase.from("sdr_sessions").update({
+          next_followup_at: resumeAt,
+          followup_reason: "outside_business_hours",
+          last_reply_at: new Date().toISOString(),
+        }).eq("id", session.id);
+        return json({ queued: true, resume_at: resumeAt, sent: 0 });
+      }
+      return json({ skipped: "fora do horário configurado", sent: 0 });
     }
 
     if (trigger_type === "inbound" && activation.includes("first_only") && (session?.replies_received ?? 0) > 0) {

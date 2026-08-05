@@ -89,8 +89,10 @@ Deno.serve(async (req) => {
       continue;
     }
 
+    const isQueuedInbound = session.followup_reason === "outside_business_hours";
+
     const maximum = Math.max(0, Number(agent.closing?.followup_max) || 0);
-    if ((session.followups_sent ?? 0) >= maximum) {
+    if (!isQueuedInbound && (session.followups_sent ?? 0) >= maximum) {
       await applyAfterLimit(agent, session);
       await backend.from("sdr_sessions").update({
         status: (agent.closing?.notify_sellers ?? []).length ? "handoff" : "closed",
@@ -107,7 +109,7 @@ Deno.serve(async (req) => {
 
     // Fora da janela de atendimento da Meta, texto livre é proibido. Sem template
     // aprovado, o caso vai para humano em vez de tentar um envio inválido.
-    if (outsideCustomerWindow && templateIds.length === 0) {
+    if (!isQueuedInbound && outsideCustomerWindow && templateIds.length === 0) {
       await backend.from("sdr_sessions").update({
         status: "handoff",
         next_followup_at: null,
@@ -125,7 +127,7 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    if (outsideCustomerWindow) {
+    if (!isQueuedInbound && outsideCustomerWindow) {
       const { data: template } = await backend
         .from("wiize_message_templates")
         .select("name,language,body")
@@ -193,7 +195,7 @@ Deno.serve(async (req) => {
         contact_phone: session.phone,
         contact_name: session.contact_name,
         message: "",
-        trigger_type: "followup",
+        trigger_type: isQueuedInbound ? "queued_inbound" : "followup",
       }),
     });
     if (response.ok) dispatched += 1;
