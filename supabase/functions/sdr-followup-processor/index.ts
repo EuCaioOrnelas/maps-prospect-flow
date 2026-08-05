@@ -50,7 +50,9 @@ Deno.serve(async (req) => {
     if (session.lead_id && actions.includes("mover_pipeline") && agent.closing?.after_limit_stage_id) {
       await backend.from("leads").update({ pipeline_stage_id: agent.closing.after_limit_stage_id }).eq("id", session.lead_id);
     }
-    const sellers = Array.isArray(agent.closing?.notify_sellers) ? agent.closing.notify_sellers : [];
+    const sellers = agent.closing?.notify_seller === false
+      ? []
+      : Array.isArray(agent.closing?.notify_sellers) ? agent.closing.notify_sellers : [];
     for (const seller of sellers) {
       if (!seller?.email) continue;
       await fetch(`${url}/functions/v1/send-email`, {
@@ -103,7 +105,7 @@ Deno.serve(async (req) => {
     if (!isQueuedInbound && (session.followups_sent ?? 0) >= maximum) {
       await applyAfterLimit(agent, session);
       await backend.from("sdr_sessions").update({
-        status: (agent.closing?.notify_sellers ?? []).length ? "handoff" : "closed",
+        status: agent.closing?.notify_seller !== false && (agent.closing?.notify_sellers ?? []).length ? "handoff" : "closed",
         next_followup_at: null,
         closed_reason: "followup_limit_reached",
       }).eq("id", session.id);

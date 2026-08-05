@@ -565,6 +565,12 @@ ${historyText}`;
         written.proxima_acao = "aguardar";
       }
     }
+    const detectedObjections = Array.isArray(analysis?.memoria?.objecoes)
+      ? analysis.memoria.objecoes.filter((item: unknown) => typeof item === "string" && item.trim())
+      : [];
+    if (agent.strategy?.on_objection === "vendedor" && (detectedObjections.length > 0 || analysis?.passo_atual === "objecoes")) {
+      written.proxima_acao = "chamar_vendedor";
+    }
 
     // ---------- AGENDAMENTO AUTOMÁTICO: Agenda + CRM + e-mail ao responsável ----------
     let scheduled: Record<string, unknown> | null = null;
