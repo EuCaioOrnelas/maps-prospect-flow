@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { hasOpportunitiesAccess, hasAIAgentsAccess, planHasFeature } from "@/lib/planAccess";
 import { TOUR_CONTENT } from "@/lib/tourContent";
+import { uninstallPublicDemoNetworkGuard } from "@/lib/publicDemo";
 
 export type TourStep = {
   id: string;
@@ -171,6 +172,8 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const [isReplay, setIsReplay] = useState(false);
   const startedRef = useRef(false);
+  const pendingTourPathRef = useRef<string | null>(null);
+  const publicDemoSessionRef = useRef(false);
   const [onboardingTick, setOnboardingTick] = useState(0);
   const isPublicDemo = location.pathname === "/tour-guiado";
 
@@ -450,6 +453,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isPublicDemo || startedRef.current) return;
+    publicDemoSessionRef.current = true;
     document.body.classList.add("public-demo-mode");
     document.body.classList.add("tour-demo-cockpit");
     let cancelled = false;
@@ -470,6 +474,35 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [isPublicDemo]);
+
+  // A route change initiated outside the tour (browser Back/Forward, redirects
+  // after login/payment, links, etc.) must tear the tour down completely. Tour
+  // navigation is valid only when the URL matches the active step's route.
+  useEffect(() => {
+    if (!isActive) return;
+    const activeStep = steps[currentStepIndex];
+    const expectedPath = isPublicDemo ? "/tour-guiado" : activeStep?.route;
+    if (pendingTourPathRef.current === location.pathname) {
+      pendingTourPathRef.current = null;
+      return;
+    }
+    if (!expectedPath || location.pathname === expectedPath) return;
+
+    setIsActive(false);
+    const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
+    sections.forEach((section) => document.body.classList.remove(`tour-open-${section}`));
+    document.body.classList.remove(
+      "tour-active",
+      "tour-sidebar-open",
+      "tour-demo-lead",
+      "tour-demo-cockpit",
+      "public-demo-mode"
+    );
+    if (publicDemoSessionRef.current) {
+      uninstallPublicDemoNetworkGuard();
+      publicDemoSessionRef.current = false;
+    }
+  }, [isActive, currentStepIndex, steps, isPublicDemo, location.pathname]);
 
 
   // Auto-start on first dashboard visit.
@@ -543,7 +576,8 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         console.error("[tour] mark-shown error", e);
       }
 
-      setTimeout(() => {
+      window.setTimeout(() => {
+        if (cancelled || window.location.pathname !== "/dashboard") return;
         setCurrentStepIndex(0);
         setIsActive(true);
       }, 300);
@@ -616,6 +650,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       // Navigate first
       const targetRoute = isPublicDemo ? "/tour-guiado" : step.route;
       if (targetRoute && location.pathname !== targetRoute) {
+        pendingTourPathRef.current = targetRoute;
         navigate(targetRoute);
         await new Promise((r) => setTimeout(r, step.waitMs ?? 500));
       } else if (step.waitMs) {
@@ -701,10 +736,20 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   const finish = useCallback(() => {
     setIsActive(false);
+    pendingTourPathRef.current = null;
     const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
-    document.body.classList.remove("tour-sidebar-open");
-    document.body.classList.remove("tour-demo-lead");
+    document.body.classList.remove(
+      "tour-active",
+      "tour-sidebar-open",
+      "tour-demo-lead",
+      "tour-demo-cockpit",
+      "public-demo-mode"
+    );
+    if (publicDemoSessionRef.current) {
+      uninstallPublicDemoNetworkGuard();
+      publicDemoSessionRef.current = false;
+    }
     const openDialog = document.querySelector('[role="dialog"]');
     if (openDialog) {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
