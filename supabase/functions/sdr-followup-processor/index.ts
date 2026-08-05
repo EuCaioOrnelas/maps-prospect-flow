@@ -80,6 +80,10 @@ Deno.serve(async (req) => {
       await backend.from("sdr_sessions").update({ next_followup_at: null }).eq("id", session.id);
       continue;
     }
+    if (agent.triggers?.outbound_followup === false) {
+      await backend.from("sdr_sessions").update({ next_followup_at: null }).eq("id", session.id);
+      continue;
+    }
     if (!isWithinSchedule(agent.schedule)) {
       deferred += 1;
       continue;

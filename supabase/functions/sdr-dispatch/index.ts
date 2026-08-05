@@ -88,11 +88,34 @@ Deno.serve(async (req) => {
 
     const tail = String(contact_phone).replace(/\D/g, "").slice(-8);
     if (trigger_type === "inbound" && isOptOutMessage(message)) {
-      await supabase
+      const { data: existingOptOut } = await supabase
         .from("sdr_sessions")
-        .update({ status: "opted_out", next_followup_at: null, closed_reason: "explicit_opt_out" })
+        .select("id")
         .eq("agent_id", agent.id)
-        .ilike("phone", `%${tail}`);
+        .ilike("phone", `%${tail}`)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existingOptOut) {
+        await supabase.from("sdr_sessions").update({
+          status: "opted_out",
+          next_followup_at: null,
+          closed_reason: "explicit_opt_out",
+        }).eq("id", existingOptOut.id);
+      } else {
+        await supabase.from("sdr_sessions").insert({
+          agent_id: agent.id,
+          owner_user_id,
+          user_id: user_id || owner_user_id,
+          phone: contact_phone,
+          contact_name: contact_name || null,
+          conversation_id: conversation_id || null,
+          waba_connection_id,
+          phone_number_id: phone_number_id || null,
+          status: "opted_out",
+          closed_reason: "explicit_opt_out",
+        });
+      }
       return json({ ok: true, opted_out: true, sent: 0 });
     }
 
@@ -109,6 +132,15 @@ Deno.serve(async (req) => {
     const activation: string[] = Array.isArray(agent.triggers?.activation) ? agent.triggers.activation : ["inbound_all"];
     if (trigger_type === "inbound" && !activation.includes("inbound_all") && !activation.includes("first_only")) {
       return json({ skipped: "gatilho inbound não habilitado" });
+    }
+    if (trigger_type === "followup" && agent.triggers?.outbound_followup === false) {
+      return json({ skipped: "follow-up automático desabilitado" });
+    }
+    if (trigger_type === "prospect" && agent.triggers?.outbound_prospect === false) {
+      return json({ skipped: "prospecção automática desabilitada" });
+    }
+    if (trigger_type === "reactivate" && agent.triggers?.outbound_reactivate === false) {
+      return json({ skipped: "reativação automática desabilitada" });
     }
 
     if (!isWithinSchedule(agent.schedule)) {

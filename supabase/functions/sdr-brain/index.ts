@@ -140,7 +140,7 @@ const OBJECTIVE_PLAYBOOK: Record<string, string> = {
 const INSISTENCE_GUIDE: Record<string, string> = {
   pouco: "Insistência baixa: diante de um 'agora não', acolha e recue na primeira negativa.",
   medio: "Insistência média: tente contornar no máximo duas vezes com ângulos diferentes antes de recuar.",
-  muito: "Insistência alta: continue trazendo novos ângulos de valor até o lead decidir, sem ser grosseiro nem repetitivo.",
+  muito: "Insistência alta: use no máximo três ângulos de valor diferentes. Pare imediatamente diante de recusa clara, opt-out ou desinteresse persistente.",
 };
 
 const RETURN_GUIDE: Record<string, string> = {
