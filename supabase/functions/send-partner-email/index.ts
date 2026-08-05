@@ -16,9 +16,9 @@
 //   - partner_application_received     → confirmation to landing page applicant
 //   - admin_partner_alert              → internal alert to the partners team
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { PDFDocument, rgb } from "https://esm.sh/pdf-lib@1.17.1";
-import fontkit from "https://esm.sh/@pdf-lib/fontkit@1.1.1";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { PDFDocument, rgb } from "npm:pdf-lib@1.17.1";
+import fontkit from "npm:@pdf-lib/fontkit@1.1.1";
 
 // ----------------------------------------------------------------
 // Wiize Partners — inline certificate generator (PDF)
