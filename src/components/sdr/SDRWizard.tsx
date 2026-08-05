@@ -942,9 +942,14 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         .eq("owner_user_id", accountOwnerId)
         .eq("status", "active");
       if (activeAgentsError) throw activeAgentsError;
-      const conflictingAgent = (activeAgents ?? []).find((agent: any) =>
+      const existingAgents = (activeAgents ?? []) as unknown as Array<{
+        id: string;
+        name: string;
+        whatsapp_number_ids: string[];
+      }>;
+      const conflictingAgent = existingAgents.find((agent) =>
         agent.id !== editing?.id &&
-        (agent.whatsapp_number_ids ?? []).some((id: string) => draft.whatsapp_number_ids.includes(id))
+        (agent.whatsapp_number_ids ?? []).some((id) => draft.whatsapp_number_ids.includes(id))
       );
       if (conflictingAgent) {
         throw new Error(`Um dos números selecionados já está vinculado ao SDR “${conflictingAgent.name}”.`);
