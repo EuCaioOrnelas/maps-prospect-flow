@@ -519,18 +519,18 @@ ${historyText}`;
         ? booking.tipo
         : "meeting";
 
-      const existingMeetingQuery = supabase
+      let existingMeetingQuery = supabase
         .from("calendar_events")
         .select("id, starts_at")
         .eq("sdr_agent_id", agentId)
         .in("status", ["scheduled", "confirmed"])
         .gte("starts_at", new Date().toISOString())
         .limit(1);
-      const { data: existingMeeting } = leadId
-        ? await existingMeetingQuery.eq("lead_id", leadId).maybeSingle()
-        : session?.id
-          ? await existingMeetingQuery.contains("metadata", { session_id: session.id }).maybeSingle()
-          : { data: null };
+      if (leadId) existingMeetingQuery = existingMeetingQuery.eq("lead_id", leadId);
+      else if (session?.id) existingMeetingQuery = existingMeetingQuery.contains("metadata", { session_id: session.id });
+      const { data: existingMeeting } = leadId || session?.id
+        ? await existingMeetingQuery.maybeSingle()
+        : { data: null };
 
       if (existingMeeting) {
         scheduled = { event_id: existingMeeting.id, starts_at: existingMeeting.starts_at, existing: true };
@@ -569,6 +569,8 @@ ${historyText}`;
         messages = ["Esse horário acabou de ficar indisponível.", freeSlots.length >= 2
           ? `Você prefere ${freeSlots[0].label} ou ${freeSlots[1].label}?`
           : "Vou validar a próxima janela livre e retorno para você."];
+      } else if (existingMeeting) {
+        messages = ["Seu horário já está reservado na nossa agenda."];
       } else {
         scheduled = { event_id: event?.id, starts_at: event?.starts_at, label: chosenSlot.label };
 
