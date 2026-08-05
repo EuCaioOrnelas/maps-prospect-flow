@@ -936,6 +936,19 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
     if (!user || !accountOwnerId) return;
     setSaving(true);
     try {
+      const { data: activeAgents, error: activeAgentsError } = await supabase
+        .from("sdr_agents" as any)
+        .select("id,name,whatsapp_number_ids")
+        .eq("owner_user_id", accountOwnerId)
+        .eq("status", "active");
+      if (activeAgentsError) throw activeAgentsError;
+      const conflictingAgent = (activeAgents ?? []).find((agent: any) =>
+        agent.id !== editing?.id &&
+        (agent.whatsapp_number_ids ?? []).some((id: string) => draft.whatsapp_number_ids.includes(id))
+      );
+      if (conflictingAgent) {
+        throw new Error(`Um dos números selecionados já está vinculado ao SDR “${conflictingAgent.name}”.`);
+      }
       const payload: any = {
         owner_user_id: accountOwnerId,
         created_by: user.id,
