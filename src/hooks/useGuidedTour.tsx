@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { hasOpportunitiesAccess, hasAIAgentsAccess, planHasFeature } from "@/lib/planAccess";
 import { TOUR_CONTENT } from "@/lib/tourContent";
 
@@ -166,18 +166,15 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const { user, profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const navigationType = useNavigationType();
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const [isReplay, setIsReplay] = useState(false);
   const startedRef = useRef(false);
-  const activeRef = useRef(false);
+  const tourNavigationRef = useRef(false);
   const [onboardingTick, setOnboardingTick] = useState(0);
   const isPublicDemo = location.pathname === "/tour-guiado";
-
-  useEffect(() => {
-    activeRef.current = isActive;
-  }, [isActive]);
 
   // Re-check tour eligibility when onboarding modal closes
   useEffect(() => {
@@ -483,10 +480,10 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     if (!isActive) return;
     const activeStep = steps[currentStepIndex];
     const expectedPath = isPublicDemo ? "/tour-guiado" : activeStep?.route;
-    if (!expectedPath || location.pathname === expectedPath) return;
+    const browserHistoryNavigation = navigationType === "POP";
+    if (!browserHistoryNavigation && (tourNavigationRef.current || !expectedPath || location.pathname === expectedPath)) return;
 
     setIsActive(false);
-    activeRef.current = false;
     const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
     sections.forEach((section) => document.body.classList.remove(`tour-open-${section}`));
     document.body.classList.remove(
@@ -496,7 +493,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       "tour-demo-cockpit",
       "public-demo-mode"
     );
-  }, [isActive, currentStepIndex, steps, isPublicDemo, location.pathname]);
+  }, [isActive, currentStepIndex, steps, isPublicDemo, location.pathname, navigationType]);
 
 
   // Auto-start on first dashboard visit.
@@ -570,12 +567,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         console.error("[tour] mark-shown error", e);
       }
 
-      const startTimer = window.setTimeout(() => {
+      window.setTimeout(() => {
         if (cancelled || window.location.pathname !== "/dashboard") return;
         setCurrentStepIndex(0);
         setIsActive(true);
       }, 300);
-      if (cancelled) window.clearTimeout(startTimer);
     })();
     return () => {
       cancelled = true;
@@ -613,7 +609,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     async (index: number) => {
       const step = steps[index];
       if (!step) return;
+      tourNavigationRef.current = true;
 
+      try {
       // PRE-APPLY sidebar classes BEFORE navigating/measuring so the sidebar
       // is already expanded with the CORRECT submenu open by the time the
       // spotlight measures the target. This prevents the "icon-then-expand"
@@ -676,6 +674,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       if (!shouldResolveTargetAfterEnter && step.onEnter) {
         await step.onEnter();
       }
+      } finally {
+        tourNavigationRef.current = false;
+      }
     },
     [navigate, location.pathname, steps, isPublicDemo]
   );
@@ -730,7 +731,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   const finish = useCallback(() => {
     setIsActive(false);
-    activeRef.current = false;
+    tourNavigationRef.current = false;
     const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
     document.body.classList.remove(
