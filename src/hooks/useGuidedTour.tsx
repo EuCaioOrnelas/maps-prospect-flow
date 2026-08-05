@@ -172,7 +172,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const [isReplay, setIsReplay] = useState(false);
   const startedRef = useRef(false);
-  const tourNavigationRef = useRef(false);
+  const pendingTourPathRef = useRef<string | null>(null);
   const publicDemoSessionRef = useRef(false);
   const [onboardingTick, setOnboardingTick] = useState(0);
   const isPublicDemo = location.pathname === "/tour-guiado";
@@ -482,7 +482,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     if (!isActive) return;
     const activeStep = steps[currentStepIndex];
     const expectedPath = isPublicDemo ? "/tour-guiado" : activeStep?.route;
-    if (tourNavigationRef.current || !expectedPath || location.pathname === expectedPath) return;
+    if (pendingTourPathRef.current === location.pathname) {
+      pendingTourPathRef.current = null;
+      return;
+    }
+    if (!expectedPath || location.pathname === expectedPath) return;
 
     setIsActive(false);
     const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
@@ -614,9 +618,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     async (index: number) => {
       const step = steps[index];
       if (!step) return;
-      tourNavigationRef.current = true;
 
-      try {
       // PRE-APPLY sidebar classes BEFORE navigating/measuring so the sidebar
       // is already expanded with the CORRECT submenu open by the time the
       // spotlight measures the target. This prevents the "icon-then-expand"
@@ -648,6 +650,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       // Navigate first
       const targetRoute = isPublicDemo ? "/tour-guiado" : step.route;
       if (targetRoute && location.pathname !== targetRoute) {
+        pendingTourPathRef.current = targetRoute;
         navigate(targetRoute);
         await new Promise((r) => setTimeout(r, step.waitMs ?? 500));
       } else if (step.waitMs) {
@@ -678,9 +681,6 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
       if (!shouldResolveTargetAfterEnter && step.onEnter) {
         await step.onEnter();
-      }
-      } finally {
-        tourNavigationRef.current = false;
       }
     },
     [navigate, location.pathname, steps, isPublicDemo]
@@ -736,7 +736,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   const finish = useCallback(() => {
     setIsActive(false);
-    tourNavigationRef.current = false;
+    pendingTourPathRef.current = null;
     const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
     document.body.classList.remove(
