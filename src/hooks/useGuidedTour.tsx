@@ -171,8 +171,13 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const [isReplay, setIsReplay] = useState(false);
   const startedRef = useRef(false);
+  const activeRef = useRef(false);
   const [onboardingTick, setOnboardingTick] = useState(0);
   const isPublicDemo = location.pathname === "/tour-guiado";
+
+  useEffect(() => {
+    activeRef.current = isActive;
+  }, [isActive]);
 
   // Re-check tour eligibility when onboarding modal closes
   useEffect(() => {
@@ -471,6 +476,28 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     };
   }, [isPublicDemo]);
 
+  // A route change initiated outside the tour (browser Back/Forward, redirects
+  // after login/payment, links, etc.) must tear the tour down completely. Tour
+  // navigation is valid only when the URL matches the active step's route.
+  useEffect(() => {
+    if (!isActive) return;
+    const activeStep = steps[currentStepIndex];
+    const expectedPath = isPublicDemo ? "/tour-guiado" : activeStep?.route;
+    if (!expectedPath || location.pathname === expectedPath) return;
+
+    setIsActive(false);
+    activeRef.current = false;
+    const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
+    sections.forEach((section) => document.body.classList.remove(`tour-open-${section}`));
+    document.body.classList.remove(
+      "tour-active",
+      "tour-sidebar-open",
+      "tour-demo-lead",
+      "tour-demo-cockpit",
+      "public-demo-mode"
+    );
+  }, [isActive, currentStepIndex, steps, isPublicDemo, location.pathname]);
+
 
   // Auto-start on first dashboard visit.
   // Depend on user?.id (stable) instead of the whole user object (re-created on
@@ -543,10 +570,12 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         console.error("[tour] mark-shown error", e);
       }
 
-      setTimeout(() => {
+      const startTimer = window.setTimeout(() => {
+        if (cancelled || window.location.pathname !== "/dashboard") return;
         setCurrentStepIndex(0);
         setIsActive(true);
       }, 300);
+      if (cancelled) window.clearTimeout(startTimer);
     })();
     return () => {
       cancelled = true;
@@ -701,10 +730,16 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   const finish = useCallback(() => {
     setIsActive(false);
+    activeRef.current = false;
     const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
-    document.body.classList.remove("tour-sidebar-open");
-    document.body.classList.remove("tour-demo-lead");
+    document.body.classList.remove(
+      "tour-active",
+      "tour-sidebar-open",
+      "tour-demo-lead",
+      "tour-demo-cockpit",
+      "public-demo-mode"
+    );
     const openDialog = document.querySelector('[role="dialog"]');
     if (openDialog) {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));

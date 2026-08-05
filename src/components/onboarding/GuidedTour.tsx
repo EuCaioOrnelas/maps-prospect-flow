@@ -646,7 +646,13 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
     fireRealistic();
     setTimeout(() => fireSides(), 150);
     onFinish();
-    navigate(publicDemo ? "/signup" : "/meta-campaigns");
+    if (publicDemo) {
+      // Full navigation is intentional: it tears down the public demo network
+      // guard before checkout/signup and lands directly on plan selection.
+      window.location.assign("/signup/escolher-plano");
+      return;
+    }
+    navigate("/meta-campaigns");
   };
 
   return (
