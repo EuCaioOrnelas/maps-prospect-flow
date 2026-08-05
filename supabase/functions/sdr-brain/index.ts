@@ -1,6 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { buildFreeSlots, matchSlot, formatSlotLabel, CALENDAR_TIMEZONE, type FreeSlot } from "./agenda.ts";
+
+interface FreeSlot {
+  iso: string;
+  label: string;
+}
+
+const CALENDAR_TIMEZONE = "America/Sao_Paulo";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -327,23 +333,26 @@ serve(async (req) => {
       agent.owner_user_id;
 
     const meetingDuration = Number(agent.closing?.meeting_duration_minutes) || 60;
-    const horizonEnd = new Date(Date.now() + 11 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: busyRows } = await supabase
-      .from("calendar_events")
-      .select("starts_at, ends_at")
-      .eq("assigned_user_id", responsibleUserId)
-      .neq("status", "cancelled")
-      .lte("starts_at", horizonEnd)
-      .gte("ends_at", new Date().toISOString());
-
-    const freeSlots: FreeSlot[] = buildFreeSlots({
-      schedule: agent.schedule,
-      durationMinutes: meetingDuration,
-      busy: (busyRows ?? []).map((b: any) => ({
-        start: new Date(b.starts_at).getTime(),
-        end: new Date(b.ends_at).getTime(),
-      })),
-    });
+    let freeSlots: FreeSlot[] = [];
+    try {
+      const availabilityResponse = await fetch(`${supabaseUrl}/functions/v1/sdr-agenda`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+        body: JSON.stringify({
+          responsibleUserId,
+          schedule: agent.schedule ?? {},
+          durationMinutes: meetingDuration,
+        }),
+      });
+      if (availabilityResponse.ok) {
+        const availability = await availabilityResponse.json();
+        freeSlots = Array.isArray(availability?.slots) ? availability.slots : [];
+      } else {
+        console.error("[sdr-brain] sdr-agenda falhou:", availabilityResponse.status, await availabilityResponse.text());
+      }
+    } catch (agendaError) {
+      console.error("[sdr-brain] não foi possível consultar sdr-agenda:", agendaError);
+    }
 
     const agendaBlock = freeSlots.length
       ? `AGENDA REAL DO RESPONSÁVEL (fuso ${CALENDAR_TIMEZONE}) — horários LIVRES, duração de ${meetingDuration} minutos:
@@ -482,7 +491,10 @@ ${historyText}`;
     // ---------- AGENDAMENTO AUTOMÁTICO: Agenda + CRM + e-mail ao responsável ----------
     let scheduled: Record<string, unknown> | null = null;
     const booking = analysis?.agendamento ?? {};
-    const chosenSlot = booking?.confirmado === true ? matchSlot(booking.inicio_iso, freeSlots) : null;
+    const candidateTime = typeof booking?.inicio_iso === "string" ? new Date(booking.inicio_iso).getTime() : Number.NaN;
+    const chosenSlot = booking?.confirmado === true && !Number.isNaN(candidateTime)
+      ? freeSlots.find((slot) => new Date(slot.iso).getTime() === candidateTime) ?? null
+      : null;
 
     if (persist && chosenSlot) {
       const leadId: string | null = session?.lead_id ?? leadContext?.lead_id ?? null;
@@ -526,7 +538,7 @@ ${historyText}`;
         // Conflito de horário (exclusion constraint) ou falha: não quebra a conversa
         console.error("[sdr-brain] falha ao criar evento na agenda:", eventError.message);
       } else {
-        scheduled = { event_id: event?.id, starts_at: event?.starts_at, label: formatSlotLabel(chosenSlot.iso) };
+        scheduled = { event_id: event?.id, starts_at: event?.starts_at, label: chosenSlot.label };
 
         // 1) CRM: move o lead para o estágio de reunião marcada e registra a atividade
         if (leadId) {
@@ -559,7 +571,7 @@ ${historyText}`;
             user_id: agent.owner_user_id,
             owner_user_id: agent.owner_user_id,
             activity_type: "meeting_scheduled",
-            description: `${agent.name} agendou ${eventType === "demo" ? "uma demonstração" : "uma reunião"} para ${formatSlotLabel(chosenSlot.iso)}.`,
+            description: `${agent.name} agendou ${eventType === "demo" ? "uma demonstração" : "uma reunião"} para ${chosenSlot.label}.`,
             metadata: { event_id: event?.id, source: "sdr", starts_at: startsAt.toISOString() },
           });
         }
@@ -593,7 +605,7 @@ ${historyText}`;
                   contact_name: contactName,
                   company_name: leadContext?.company_name ?? "",
                   contact_phone: contactPhone,
-                  when_label: formatSlotLabel(chosenSlot.iso),
+                  when_label: chosenSlot.label,
                   duration_minutes: meetingDuration,
                   event_type: eventType,
                   notes: (booking.observacao as string) || analysis?.micro_objetivo || "",
