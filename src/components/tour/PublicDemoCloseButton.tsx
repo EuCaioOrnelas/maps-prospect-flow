@@ -26,6 +26,7 @@ export function PublicDemoCloseButton() {
 
   return createPortal(
     <div
+      data-tour-ui="true"
       style={{
         position: "fixed",
         top: 20,

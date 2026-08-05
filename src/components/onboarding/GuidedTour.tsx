@@ -509,6 +509,7 @@ export function GuidedTour() {
 
       {showFallbackOverlay && (
         <div
+          data-tour-block="true"
           className="fixed inset-0 pointer-events-auto animate-in fade-in duration-300"
           style={{
             zIndex: 2147483645,
