@@ -173,6 +173,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [isReplay, setIsReplay] = useState(false);
   const startedRef = useRef(false);
   const tourNavigationRef = useRef(false);
+  const publicDemoSessionRef = useRef(false);
   const [onboardingTick, setOnboardingTick] = useState(0);
   const isPublicDemo = location.pathname === "/tour-guiado";
 
@@ -452,6 +453,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isPublicDemo || startedRef.current) return;
+    publicDemoSessionRef.current = true;
     document.body.classList.add("public-demo-mode");
     document.body.classList.add("tour-demo-cockpit");
     let cancelled = false;
@@ -492,7 +494,10 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       "tour-demo-cockpit",
       "public-demo-mode"
     );
-    if (isPublicDemo) uninstallPublicDemoNetworkGuard();
+    if (publicDemoSessionRef.current) {
+      uninstallPublicDemoNetworkGuard();
+      publicDemoSessionRef.current = false;
+    }
   }, [isActive, currentStepIndex, steps, isPublicDemo, location.pathname]);
 
 
@@ -741,6 +746,10 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       "tour-demo-cockpit",
       "public-demo-mode"
     );
+    if (publicDemoSessionRef.current) {
+      uninstallPublicDemoNetworkGuard();
+      publicDemoSessionRef.current = false;
+    }
     const openDialog = document.querySelector('[role="dialog"]');
     if (openDialog) {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
