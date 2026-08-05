@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { hasOpportunitiesAccess, hasAIAgentsAccess, planHasFeature } from "@/lib/planAccess";
 import { TOUR_CONTENT } from "@/lib/tourContent";
 
@@ -166,7 +166,6 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const { user, profile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const navigationType = useNavigationType();
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [direction, setDirection] = useState<"next" | "prev">("next");
@@ -480,8 +479,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     if (!isActive) return;
     const activeStep = steps[currentStepIndex];
     const expectedPath = isPublicDemo ? "/tour-guiado" : activeStep?.route;
-    const browserHistoryNavigation = navigationType === "POP";
-    if (!browserHistoryNavigation && (tourNavigationRef.current || !expectedPath || location.pathname === expectedPath)) return;
+    if (tourNavigationRef.current || !expectedPath || location.pathname === expectedPath) return;
 
     setIsActive(false);
     const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
@@ -493,7 +491,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       "tour-demo-cockpit",
       "public-demo-mode"
     );
-  }, [isActive, currentStepIndex, steps, isPublicDemo, location.pathname, navigationType]);
+  }, [isActive, currentStepIndex, steps, isPublicDemo, location.pathname]);
 
 
   // Auto-start on first dashboard visit.
