@@ -89,7 +89,6 @@ import {
   Lock,
   Lightbulb,
   Cpu,
-  KeyRound,
   Info,
   Sparkle,
   Save,
