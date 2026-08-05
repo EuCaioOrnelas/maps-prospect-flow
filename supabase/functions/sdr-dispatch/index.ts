@@ -61,6 +61,11 @@ function isOptOutMessage(value: unknown) {
     /\b(nao quero mais|nao me envie|nao mandar mais|remova meu numero|retire meu contato|pare de mandar|pare de enviar)\b/.test(text);
 }
 
+function isExplicitRejection(value: unknown) {
+  const text = String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return /\b(nao tenho interesse|nao estou interessado|nao quero contratar|nao quero comprar|nao preciso disso|sem interesse|pode encerrar)\b/.test(text);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -134,6 +139,14 @@ Deno.serve(async (req) => {
         });
       }
       return json({ ok: true, opted_out: true, sent: 0 });
+    }
+    if (trigger_type === "inbound" && isExplicitRejection(message)) {
+      await supabase
+        .from("sdr_sessions")
+        .update({ status: "closed", next_followup_at: null, closed_reason: "explicit_rejection" })
+        .eq("agent_id", agent.id)
+        .ilike("phone", `%${tail}`);
+      return json({ ok: true, rejected: true, sent: 0 });
     }
 
     const { data: optedOutSession } = await supabase
