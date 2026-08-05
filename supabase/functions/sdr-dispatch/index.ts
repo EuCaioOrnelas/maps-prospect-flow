@@ -80,6 +80,11 @@ Deno.serve(async (req) => {
     );
     if (!agent) return json({ skipped: "nenhum SDR ativo para este número" });
 
+    const activation: string[] = Array.isArray(agent.triggers?.activation) ? agent.triggers.activation : ["inbound_all"];
+    if (trigger_type === "inbound" && !activation.includes("inbound_all") && !activation.includes("first_only")) {
+      return json({ skipped: "gatilho inbound não habilitado" });
+    }
+
     if (!isWithinSchedule(agent.schedule)) {
       return json({ skipped: agent.schedule?.queue_outside_hours ? "enfileirado para o próximo horário útil" : "fora do horário configurado" });
     }
@@ -127,6 +132,10 @@ Deno.serve(async (req) => {
         .select("*")
         .maybeSingle();
       session = updated ?? session;
+    }
+
+    if (trigger_type === "inbound" && activation.includes("first_only") && (session?.replies_received ?? 0) > 0) {
+      return json({ skipped: "gatilho configurado apenas para o primeiro contato" });
     }
 
     // Interrompe se o lead pediu para parar ou já foi encerrado

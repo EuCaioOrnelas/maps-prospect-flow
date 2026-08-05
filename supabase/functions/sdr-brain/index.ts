@@ -299,6 +299,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (!isInternal && persist) {
+      return new Response(JSON.stringify({ error: "Persistência disponível somente no fluxo interno" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: agent, error: agentError } = await supabase
       .from("sdr_agents")
       .select("*")
@@ -652,7 +659,7 @@ ${historyText}`;
         .maybeSingle();
       runId = run?.id ?? null;
 
-      if (session?.id) {
+      if (session?.id && session.agent_id === agentId && session.owner_user_id === agent.owner_user_id) {
         const nextAction = written.proxima_acao ?? analysis.proxima_acao ?? "aguardar";
         const followupMin = Math.max(1, Number(agent.closing?.followup_min_hours) || 12);
         const followupMax = Math.max(followupMin, Number(agent.closing?.followup_max_hours) || 48);
