@@ -103,7 +103,7 @@ export const SDR_PRIORITIES = SDR_PIPELINE;
 export const SDR_INSISTENCE_OPTIONS = [
   { id: "pouco", label: "Pouco", hint: "Aceita o 'agora não' na primeira vez e recua" },
   { id: "medio", label: "Médio", hint: "Tenta contornar duas vezes antes de recuar" },
-  { id: "muito", label: "Muito", hint: "Insiste com novos ângulos até o lead decidir" },
+  { id: "muito", label: "Muito", hint: "Usa até três ângulos diferentes, mas para diante de recusa clara" },
 ];
 
 export const SDR_RETURN_OPTIONS = [

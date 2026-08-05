@@ -26,6 +26,23 @@ function isWithinSchedule(schedule: any): boolean {
   return cur >= start && cur <= end;
 }
 
+function nextScheduleOpening(schedule: any): string {
+  const now = nowInBrazil();
+  const days: number[] = Array.isArray(schedule?.days) && schedule.days.length
+    ? schedule.days.map(Number)
+    : [1, 2, 3, 4, 5];
+  const [hours, minutes] = String(schedule?.start || "08:30").split(":").map(Number);
+  for (let offset = 0; offset <= 7; offset += 1) {
+    const candidateLocal = new Date(Date.UTC(
+      now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset, hours || 0, minutes || 0,
+    ));
+    if (!days.includes(candidateLocal.getUTCDay())) continue;
+    if (candidateLocal.getTime() <= now.getTime()) continue;
+    return new Date(candidateLocal.getTime() - BR_TZ_OFFSET * 60 * 60 * 1000).toISOString();
+  }
+  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+}
+
 function responseDelayMs(agent: any, inbound: string, outbound: string, triggerType: string) {
   if (triggerType === "followup") return 0;
   const mode = agent.triggers?.reply_delay ?? "smart";
@@ -42,6 +59,11 @@ function isOptOutMessage(value: unknown) {
   const text = String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   return /^(pare|stop|sair|cancelar|descadastrar|remover)(\b|$)/.test(text) ||
     /\b(nao quero mais|nao me envie|nao mandar mais|remova meu numero|retire meu contato|pare de mandar|pare de enviar)\b/.test(text);
+}
+
+function isExplicitRejection(value: unknown) {
+  const text = String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return /\b(nao tenho interesse|nao estou interessado|nao quero contratar|nao quero comprar|nao preciso disso|sem interesse|pode encerrar)\b/.test(text);
 }
 
 Deno.serve(async (req) => {
@@ -88,12 +110,43 @@ Deno.serve(async (req) => {
 
     const tail = String(contact_phone).replace(/\D/g, "").slice(-8);
     if (trigger_type === "inbound" && isOptOutMessage(message)) {
+      const { data: existingOptOut } = await supabase
+        .from("sdr_sessions")
+        .select("id")
+        .eq("agent_id", agent.id)
+        .ilike("phone", `%${tail}`)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existingOptOut) {
+        await supabase.from("sdr_sessions").update({
+          status: "opted_out",
+          next_followup_at: null,
+          closed_reason: "explicit_opt_out",
+        }).eq("id", existingOptOut.id);
+      } else {
+        await supabase.from("sdr_sessions").insert({
+          agent_id: agent.id,
+          owner_user_id,
+          user_id: user_id || owner_user_id,
+          phone: contact_phone,
+          contact_name: contact_name || null,
+          conversation_id: conversation_id || null,
+          waba_connection_id,
+          phone_number_id: phone_number_id || null,
+          status: "opted_out",
+          closed_reason: "explicit_opt_out",
+        });
+      }
+      return json({ ok: true, opted_out: true, sent: 0 });
+    }
+    if (trigger_type === "inbound" && isExplicitRejection(message)) {
       await supabase
         .from("sdr_sessions")
-        .update({ status: "opted_out", next_followup_at: null, closed_reason: "explicit_opt_out" })
+        .update({ status: "closed", next_followup_at: null, closed_reason: "explicit_rejection" })
         .eq("agent_id", agent.id)
         .ilike("phone", `%${tail}`);
-      return json({ ok: true, opted_out: true, sent: 0 });
+      return json({ ok: true, rejected: true, sent: 0 });
     }
 
     const { data: optedOutSession } = await supabase
@@ -110,9 +163,14 @@ Deno.serve(async (req) => {
     if (trigger_type === "inbound" && !activation.includes("inbound_all") && !activation.includes("first_only")) {
       return json({ skipped: "gatilho inbound não habilitado" });
     }
-
-    if (!isWithinSchedule(agent.schedule)) {
-      return json({ skipped: agent.schedule?.queue_outside_hours ? "enfileirado para o próximo horário útil" : "fora do horário configurado" });
+    if (trigger_type === "followup" && agent.triggers?.outbound_followup === false) {
+      return json({ skipped: "follow-up automático desabilitado" });
+    }
+    if (trigger_type === "prospect" && agent.triggers?.outbound_prospect === false) {
+      return json({ skipped: "prospecção automática desabilitada" });
+    }
+    if (trigger_type === "reactivate" && agent.triggers?.outbound_reactivate === false) {
+      return json({ skipped: "reativação automática desabilitada" });
     }
 
     // 2) Sessão (memória de longo prazo)
@@ -157,6 +215,19 @@ Deno.serve(async (req) => {
         .select("*")
         .maybeSingle();
       session = updated ?? session;
+    }
+
+    if (!isWithinSchedule(agent.schedule)) {
+      if (agent.schedule?.queue_outside_hours && session?.id && trigger_type === "inbound") {
+        const resumeAt = nextScheduleOpening(agent.schedule);
+        await supabase.from("sdr_sessions").update({
+          next_followup_at: resumeAt,
+          followup_reason: "outside_business_hours",
+          last_reply_at: new Date().toISOString(),
+        }).eq("id", session.id);
+        return json({ queued: true, resume_at: resumeAt, sent: 0 });
+      }
+      return json({ skipped: "fora do horário configurado", sent: 0 });
     }
 
     if (trigger_type === "inbound" && activation.includes("first_only") && (session?.replies_received ?? 0) > 0) {
@@ -240,7 +311,9 @@ Deno.serve(async (req) => {
 
       // Vendedores a avisar: handoff usa strategy.handoff_sellers, encerramento usa closing.notify_sellers
       const sellers: any[] =
-        nextAction === "chamar_vendedor"
+        agent.closing?.notify_seller === false
+          ? []
+          : nextAction === "chamar_vendedor"
           ? (agent.strategy?.handoff_sellers ?? [])
           : (agent.closing?.notify_sellers ?? []);
 

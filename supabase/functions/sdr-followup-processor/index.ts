@@ -40,10 +40,58 @@ Deno.serve(async (req) => {
   let deferred = 0;
   let handedOff = 0;
 
+  async function applyAfterLimit(agent: any, session: any) {
+    const actions: string[] = Array.isArray(agent.closing?.after_limit_actions)
+      ? agent.closing.after_limit_actions
+      : agent.closing?.after_limit ? [agent.closing.after_limit] : [];
+    if (session.lead_id && actions.includes("arquivar")) {
+      await backend.from("leads").update({ archived_at: new Date().toISOString() }).eq("id", session.lead_id);
+    }
+    if (session.lead_id && actions.includes("mover_pipeline") && agent.closing?.after_limit_stage_id) {
+      await backend.from("leads").update({ pipeline_stage_id: agent.closing.after_limit_stage_id }).eq("id", session.lead_id);
+    }
+    const sellers = agent.closing?.notify_seller === false
+      ? []
+      : Array.isArray(agent.closing?.notify_sellers) ? agent.closing.notify_sellers : [];
+    for (const seller of sellers) {
+      if (!seller?.email) continue;
+      await fetch(`${url}/functions/v1/send-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
+        body: JSON.stringify({
+          user_id: session.owner_user_id,
+          email_type: "SDR_SELLER_HANDOFF",
+          override_email: seller.email,
+          idempotency_key: `sdr-followup-limit-${session.id}-${seller.email}`,
+          payload: {
+            sdr_name: agent.name,
+            contact_name: session.contact_name || session.phone,
+            contact_phone: session.phone,
+            reason: "O SDR atingiu o limite de follow-ups configurado.",
+            summary: session.followup_reason || session.current_goal || "Ciclo automático encerrado.",
+            next_step: "Revise a conversa e decida se haverá uma abordagem humana.",
+          },
+        }),
+      }).catch((error) => console.error("[sdr-followup-processor] seller notification failed", error));
+    }
+  }
+
   for (const session of sessions ?? []) {
     const { data: agent } = await backend.from("sdr_agents").select("*").eq("id", session.agent_id).maybeSingle();
     if (!agent || agent.status !== "active") {
       await backend.from("sdr_sessions").update({ next_followup_at: null }).eq("id", session.id);
+      continue;
+    }
+    if (agent.triggers?.outbound_followup === false) {
+      await backend.from("sdr_sessions").update({ next_followup_at: null }).eq("id", session.id);
+      continue;
+    }
+    if (!(agent.whatsapp_number_ids ?? []).includes(session.waba_connection_id)) {
+      await backend.from("sdr_sessions").update({
+        status: "closed",
+        next_followup_at: null,
+        closed_reason: "waba_connection_removed_from_agent",
+      }).eq("id", session.id);
       continue;
     }
     if (!isWithinSchedule(agent.schedule)) {
@@ -51,10 +99,13 @@ Deno.serve(async (req) => {
       continue;
     }
 
+    const isQueuedInbound = session.followup_reason === "outside_business_hours";
+
     const maximum = Math.max(0, Number(agent.closing?.followup_max) || 0);
-    if ((session.followups_sent ?? 0) >= maximum) {
+    if (!isQueuedInbound && (session.followups_sent ?? 0) >= maximum) {
+      await applyAfterLimit(agent, session);
       await backend.from("sdr_sessions").update({
-        status: "handoff",
+        status: agent.closing?.notify_seller !== false && (agent.closing?.notify_sellers ?? []).length ? "handoff" : "closed",
         next_followup_at: null,
         closed_reason: "followup_limit_reached",
       }).eq("id", session.id);
@@ -68,7 +119,7 @@ Deno.serve(async (req) => {
 
     // Fora da janela de atendimento da Meta, texto livre é proibido. Sem template
     // aprovado, o caso vai para humano em vez de tentar um envio inválido.
-    if (outsideCustomerWindow && templateIds.length === 0) {
+    if (!isQueuedInbound && outsideCustomerWindow && templateIds.length === 0) {
       await backend.from("sdr_sessions").update({
         status: "handoff",
         next_followup_at: null,
@@ -86,7 +137,7 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    if (outsideCustomerWindow) {
+    if (!isQueuedInbound && outsideCustomerWindow) {
       const { data: template } = await backend
         .from("wiize_message_templates")
         .select("name,language,body")
@@ -154,7 +205,7 @@ Deno.serve(async (req) => {
         contact_phone: session.phone,
         contact_name: session.contact_name,
         message: "",
-        trigger_type: "followup",
+        trigger_type: isQueuedInbound ? "queued_inbound" : "followup",
       }),
     });
     if (response.ok) dispatched += 1;
