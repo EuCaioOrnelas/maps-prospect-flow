@@ -38,6 +38,12 @@ function responseDelayMs(agent: any, inbound: string, outbound: string, triggerT
   return readingMs + typingMs;
 }
 
+function isOptOutMessage(value: unknown) {
+  const text = String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return /^(pare|stop|sair|cancelar|descadastrar|remover)(\b|$)/.test(text) ||
+    /\b(nao quero mais|nao me envie|nao mandar mais|remova meu numero|retire meu contato|pare de mandar|pare de enviar)\b/.test(text);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -80,6 +86,26 @@ Deno.serve(async (req) => {
     );
     if (!agent) return json({ skipped: "nenhum SDR ativo para este número" });
 
+    const tail = String(contact_phone).replace(/\D/g, "").slice(-8);
+    if (trigger_type === "inbound" && isOptOutMessage(message)) {
+      await supabase
+        .from("sdr_sessions")
+        .update({ status: "opted_out", next_followup_at: null, closed_reason: "explicit_opt_out" })
+        .eq("agent_id", agent.id)
+        .ilike("phone", `%${tail}`);
+      return json({ ok: true, opted_out: true, sent: 0 });
+    }
+
+    const { data: optedOutSession } = await supabase
+      .from("sdr_sessions")
+      .select("id")
+      .eq("agent_id", agent.id)
+      .eq("status", "opted_out")
+      .ilike("phone", `%${tail}`)
+      .limit(1)
+      .maybeSingle();
+    if (optedOutSession) return json({ skipped: "contato descadastrado" });
+
     const activation: string[] = Array.isArray(agent.triggers?.activation) ? agent.triggers.activation : ["inbound_all"];
     if (trigger_type === "inbound" && !activation.includes("inbound_all") && !activation.includes("first_only")) {
       return json({ skipped: "gatilho inbound não habilitado" });
@@ -90,7 +116,6 @@ Deno.serve(async (req) => {
     }
 
     // 2) Sessão (memória de longo prazo)
-    const tail = String(contact_phone).replace(/\D/g, "").slice(-8);
     let { data: session } = await supabase
       .from("sdr_sessions")
       .select("*")
@@ -280,6 +305,9 @@ Deno.serve(async (req) => {
     let sent = 0;
     const initialDelay = responseDelayMs(agent, message || "", messages.join(" "), trigger_type);
     if (initialDelay > 0) await new Promise((resolve) => setTimeout(resolve, initialDelay));
+    if (!isWithinSchedule(agent.schedule)) {
+      return json({ skipped: "horário de atendimento encerrado durante o processamento", sent: 0 });
+    }
     for (const text of messages) {
       // pausa curta entre mensagens para soar humano
       if (sent > 0) await new Promise((r) => setTimeout(r, 1800));

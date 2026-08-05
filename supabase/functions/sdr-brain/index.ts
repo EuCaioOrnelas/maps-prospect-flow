@@ -519,7 +519,24 @@ ${historyText}`;
         ? booking.tipo
         : "meeting";
 
-      const { data: event, error: eventError } = await supabase
+      const existingMeetingQuery = supabase
+        .from("calendar_events")
+        .select("id, starts_at")
+        .eq("sdr_agent_id", agentId)
+        .in("status", ["scheduled", "confirmed"])
+        .gte("starts_at", new Date().toISOString())
+        .limit(1);
+      const { data: existingMeeting } = leadId
+        ? await existingMeetingQuery.eq("lead_id", leadId).maybeSingle()
+        : session?.id
+          ? await existingMeetingQuery.contains("metadata", { session_id: session.id }).maybeSingle()
+          : { data: null };
+
+      if (existingMeeting) {
+        scheduled = { event_id: existingMeeting.id, starts_at: existingMeeting.starts_at, existing: true };
+      }
+
+      const { data: event, error: eventError } = existingMeeting ? { data: existingMeeting, error: null } : await supabase
         .from("calendar_events")
         .insert({
           owner_user_id: agent.owner_user_id,
