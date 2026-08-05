@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { hasOpportunitiesAccess, hasAIAgentsAccess, planHasFeature } from "@/lib/planAccess";
 import { TOUR_CONTENT } from "@/lib/tourContent";
+import { uninstallPublicDemoNetworkGuard } from "@/lib/publicDemo";
 
 export type TourStep = {
   id: string;
@@ -491,6 +492,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       "tour-demo-cockpit",
       "public-demo-mode"
     );
+    if (isPublicDemo) uninstallPublicDemoNetworkGuard();
   }, [isActive, currentStepIndex, steps, isPublicDemo, location.pathname]);
 
 

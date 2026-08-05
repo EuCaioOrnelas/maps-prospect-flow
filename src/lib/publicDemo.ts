@@ -65,6 +65,11 @@ export function buildTourDemoSearchHistory() {
  * while the demo page is mounted. Returns a cleanup function.
  */
 let guardInstalled = false;
+let removeInstalledGuard: (() => void) | null = null;
+
+export function uninstallPublicDemoNetworkGuard() {
+  removeInstalledGuard?.();
+}
 
 export function installPublicDemoNetworkGuard() {
   if (typeof window === "undefined") return () => {};
@@ -125,10 +130,14 @@ export function installPublicDemoNetworkGuard() {
     },
   }) as typeof WebSocket;
 
-  return () => {
+  const cleanup = () => {
+    if (!guardInstalled) return;
     guardInstalled = false;
     window.fetch = originalFetch;
     XMLHttpRequest.prototype.open = OriginalXHROpen;
     window.WebSocket = OriginalWebSocket;
+    removeInstalledGuard = null;
   };
+  removeInstalledGuard = cleanup;
+  return cleanup;
 }
