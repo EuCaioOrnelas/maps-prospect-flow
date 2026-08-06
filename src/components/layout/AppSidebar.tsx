@@ -595,9 +595,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               <SidebarNavItem
                 title="Avisos"
                 icon={Bell}
-                iconClassName="text-foreground"
                 onClick={() => setAnnouncementsOpen(true)}
                 isExpanded={isExpanded}
+
                 badge={unreadAnnouncements > 0 ? (
                   <span className={cn(
                     "absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full",
