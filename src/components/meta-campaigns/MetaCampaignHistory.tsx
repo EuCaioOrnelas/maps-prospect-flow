@@ -85,7 +85,7 @@ export const MetaCampaignHistory = ({ connections }: MetaCampaignHistoryProps) =
         .gte("created_at", since)
         .order("created_at", { ascending: false })
         .limit(200);
-      setCampaigns(data || []);
+      if (commitSnapshot(`meta-history:${accountOwnerId}`, data || [])) setCampaigns(data || []);
     } catch (err) {
       console.error("Error fetching history:", err);
     } finally {
