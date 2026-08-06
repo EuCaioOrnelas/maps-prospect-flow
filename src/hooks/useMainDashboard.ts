@@ -253,14 +253,14 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         { stage: "Oportunidades", value: oportunidades },
       ];
 
-      setRawData({
+      const next = {
         leadsProspected, prevLeadsProspected,
         messagesSent, prevMessagesSent,
         messagesFailed, prevMessagesFailed,
         totalResponses, prevTotalResponses,
         campaigns,
         numbers: numbersRes.data || [],
-        warmingSessions: [],
+        warmingSessions: [] as any[],
         incidents: incidentsRes.data || [],
         responsesByDay,
         cplBenchmark: cplValue?.value || 50,
@@ -272,7 +272,10 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         monthlyBreakdown,
         leadsByDay,
         funnel,
-      });
+      };
+      // Atualiza somente quando os números realmente mudaram
+      if (commitSnapshot(snapKey, next)) setRawData(next);
+
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {
