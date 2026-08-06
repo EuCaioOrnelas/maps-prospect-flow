@@ -3,6 +3,11 @@ import { cn } from "@/lib/utils";
 /**
  * Padrão único de Empty State para cards de indicadores.
  * O card mantém exatamente o mesmo tamanho/posição — só o conteúdo interno muda.
+ *
+ * Três estados possíveis, sempre no mesmo espaço reservado:
+ *  1. loading  → skeleton (evita "flash de zero" durante o fetch)
+ *  2. empty    → "Ainda não há dados" + dica curta
+ *  3. ready    → o valor real
  */
 
 /** Considera vazio: null/undefined, 0, "0", "0%", "R$ 0,00", "—", "" */
@@ -50,6 +55,82 @@ export function MetricEmpty({ hint, className, align = "left", size = "md" }: Me
           {hint}
         </p>
       )}
+    </div>
+  );
+}
+
+interface MetricSkeletonProps {
+  className?: string;
+  align?: "left" | "center";
+  size?: "sm" | "md";
+}
+
+/** Skeleton do valor — ocupa exatamente o mesmo espaço do valor/empty state. */
+export function MetricSkeleton({ className, align = "left", size = "md" }: MetricSkeletonProps) {
+  return (
+    <div
+      className={cn(
+        "min-w-0 animate-pulse",
+        align === "center" && "flex flex-col items-center",
+        className
+      )}
+      aria-busy="true"
+      aria-label="Carregando indicador"
+    >
+      <div
+        className={cn(
+          "rounded-md bg-muted/70",
+          size === "sm" ? "h-4 w-16" : "h-6 w-24"
+        )}
+      />
+      <div className="mt-2 h-2.5 w-3/5 min-w-[70px] rounded bg-muted/40" />
+    </div>
+  );
+}
+
+interface MetricSlotProps {
+  /** Enquanto true, mostra skeleton (nunca zero). */
+  loading?: boolean;
+  /** Após o fetch, indica que não existem dados reais. */
+  empty?: boolean;
+  hint?: string;
+  align?: "left" | "center";
+  size?: "sm" | "md";
+  /** Classe aplicada ao contêiner (use min-h para reservar o espaço). */
+  className?: string;
+  /** Conteúdo real do indicador. */
+  children?: React.ReactNode;
+}
+
+/**
+ * Slot único para o corpo do card: alterna entre carregando, vazio e valor real
+ * com fade suave, sem alterar tamanho ou posição do layout.
+ */
+export function MetricSlot({
+  loading,
+  empty,
+  hint,
+  align = "left",
+  size = "md",
+  className,
+  children,
+}: MetricSlotProps) {
+  const state = loading ? "loading" : empty ? "empty" : "ready";
+
+  return (
+    <div className={cn("min-w-0", className)}>
+      <div
+        key={state}
+        className="animate-in fade-in-0 duration-500 ease-out motion-reduce:animate-none"
+      >
+        {state === "loading" ? (
+          <MetricSkeleton align={align} size={size} />
+        ) : state === "empty" ? (
+          <MetricEmpty hint={hint} align={align} size={size} />
+        ) : (
+          children
+        )}
+      </div>
     </div>
   );
 }
