@@ -161,6 +161,7 @@ export default function SDRInteligente() {
               {/* Analytics */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <MetricCard
+                  loading={loading}
                   icon={Users}
                   label="Em atendimento"
                   value={String(analytics.inAttendance)}
@@ -168,6 +169,7 @@ export default function SDRInteligente() {
                   emptyHint="Aparece quando o SDR iniciar um atendimento."
                 />
                 <MetricCard
+                  loading={loading}
                   icon={Clock}
                   label="Em follow-up"
                   value={String(analytics.inFollowUp)}
@@ -175,6 +177,7 @@ export default function SDRInteligente() {
                   emptyHint="Preenchido quando houver follow-ups agendados."
                 />
                 <MetricCard
+                  loading={loading}
                   icon={Target}
                   label="Conversão média"
                   value={`${analytics.conversionRate.toFixed(1)}%`}
@@ -182,6 +185,7 @@ export default function SDRInteligente() {
                   emptyHint="Disponível após as primeiras conversões."
                 />
                 <MetricCard
+                  loading={loading}
                   icon={TrendingUp}
                   label="Taxa de resposta"
                   value={`${analytics.replyRate.toFixed(1)}%`}
@@ -189,6 +193,7 @@ export default function SDRInteligente() {
                   emptyHint="Depende das primeiras respostas dos leads."
                 />
                 <MetricCard
+                  loading={loading}
                   icon={XCircle}
                   label="Taxa de abandono"
                   value={`${analytics.abandonRate.toFixed(1)}%`}
@@ -196,6 +201,7 @@ export default function SDRInteligente() {
                   emptyHint="Calculada após conversas encerradas."
                 />
                 <MetricCard
+                  loading={loading}
                   icon={MessageSquare}
                   label="Mensagens enviadas"
                   value={String(analytics.messagesSent)}

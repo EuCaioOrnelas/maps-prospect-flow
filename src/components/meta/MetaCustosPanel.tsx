@@ -159,6 +159,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
               icon={k.icon}
               spark={k.spark}
               empty={!k.raw}
+              loading={(data as any)?.loading}
               emptyHint={getMetricEmptyHint(k.label)}
             />
             {k.hint && (
