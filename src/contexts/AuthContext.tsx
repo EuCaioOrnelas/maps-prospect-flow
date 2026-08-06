@@ -130,9 +130,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { isExpired, daysRemaining, isTrialing: !isExpired };
   };
 
+  // Fonte única de verdade: public.has_active_access(user_id).
+  // O cálculo local continua como fallback otimista enquanto o RPC não responde,
+  // mas a decisão final de bloqueio vem sempre do banco.
+  const [serverAccess, setServerAccess] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      if (publicDemo) { setServerAccess(true); return; }
+      if (!user?.id) { setServerAccess(null); return; }
+      const { data, error } = await supabase.rpc('has_active_access', { _user_id: user.id });
+      if (cancelled) return;
+      if (error) {
+        console.error('[AuthContext] has_active_access error:', error);
+        setServerAccess(null); // mantém fallback local
+        return;
+      }
+      setServerAccess(data === true);
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [user?.id, profile?.plan, profile?.subscription_current_period_end, profile?.terms_accepted_at, publicDemo]);
+
   const trialStatus = calculateTrialStatus(profile);
-  const isTrialExpired = trialStatus.isExpired;
+  const isTrialExpired = serverAccess === null ? trialStatus.isExpired : !serverAccess;
   const trialDaysRemaining = trialStatus.daysRemaining;
+
   const isBlocked = profile?.is_blocked === true;
 
   const fetchProfile = async (userId: string) => {

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logDowngrade } from "../_shared/downgrade-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,6 +68,16 @@ Deno.serve(async (req) => {
     const expiredDetails: any[] = [];
 
     for (const sub of expired || []) {
+      // Whitelist por role: admins nunca são bloqueados automaticamente.
+      const { data: isAdmin } = await admin.rpc("has_role", {
+        _user_id: sub.user_id,
+        _role: "admin",
+      });
+      if (isAdmin === true) {
+        log("Skipped admin", { userId: sub.user_id });
+        continue;
+      }
+
       // 1) Marcar contrato como expirado
       await admin
         .from("custom_subscriptions")
@@ -91,6 +102,18 @@ Deno.serve(async (req) => {
           subscription_price_cents: 0,
         })
         .eq("id", sub.user_id);
+
+      await logDowngrade(admin, {
+        userId: sub.user_id,
+        reason: "custom_contract_expired_after_paid_period",
+        previousPlan: sub.plan,
+        newPlan: "blocked",
+        metadata: {
+          source: "check-custom-subscription-expiry",
+          subscription_id: sub.id,
+          ends_at: sub.ends_at,
+        },
+      });
 
       expiredDetails.push({
         email: profile?.email,

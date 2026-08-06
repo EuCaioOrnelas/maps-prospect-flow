@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isDowngradeProtected, logDowngrade } from "../_shared/downgrade-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,7 +55,15 @@ serve(async (req) => {
     for (const row of paidSales || []) if (row.customer_user_id) realPayers.add(row.customer_user_id);
 
     let downgraded = 0;
+    let protectedCount = 0;
     for (const user of expiredUsers || []) {
+      // Whitelist: admins e assinaturas manuais/custom nunca são rebaixados.
+      if (await isDowngradeProtected(supabaseClient, user.id)) {
+        protectedCount++;
+        logStep("Skipped (downgrade protected)", { userId: user.id, email: user.email });
+        continue;
+      }
+
       const { error: updateError } = await supabaseClient
         .from("profiles")
         .update({
@@ -79,6 +88,18 @@ serve(async (req) => {
         downgraded++;
         logStep("User downgraded to free", { userId: user.id, email: user.email, previousPlan: user.plan });
 
+        await logDowngrade(supabaseClient, {
+          userId: user.id,
+          reason: "subscription_expired_after_grace_period",
+          previousPlan: user.plan,
+          metadata: {
+            source: "check-subscription-expiry",
+            email: user.email,
+            payment_provider: user.payment_provider,
+            period_end: user.subscription_current_period_end,
+          },
+        });
+
         // Só registra churn quando existe prova de pagamento anterior. Trial
         // vencido/não cobrado perde acesso, mas nunca entra nas métricas de churn.
         try {
@@ -98,7 +119,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ checked: expiredUsers?.length || 0, downgraded, real_payers_checked: realPayers.size }),
+      JSON.stringify({ checked: expiredUsers?.length || 0, downgraded, protected: protectedCount, real_payers_checked: realPayers.size }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
