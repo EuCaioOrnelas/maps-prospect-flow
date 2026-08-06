@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Users, MessageCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MetricEmpty } from "@/components/ui/metric-empty";
 
 interface KPICardProps {
   title: string;
@@ -11,43 +12,55 @@ interface KPICardProps {
   suffix?: string;
   subtitle?: string;
   subtitleSize?: string;
+  empty?: boolean;
+  emptyHint?: string;
 }
 
-function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, subtitleSize }: KPICardProps) {
+function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, subtitleSize, empty, emptyHint }: KPICardProps) {
   const isPositive = change > 0;
   const hasRealChange = change !== 0;
 
   return (
     <Card className="bg-card border-border/50 p-5 relative overflow-hidden rounded-xl">
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground shrink-0">
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+          empty ? "bg-muted/40 text-muted-foreground/40" : "bg-muted/50 text-muted-foreground"
+        )}>
           {icon}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
             {title}
           </p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-foreground leading-tight">
-              {value}{suffix}
-            </p>
-            {hasRealChange && (
-              <span className={cn(
-                "text-[10px] font-medium",
-                isPositive ? "text-emerald-400" : "text-destructive"
-              )}>
-                {changeLabel || `${isPositive ? '+' : ''}${Math.abs(change).toFixed(1)}%`}
-              </span>
-            )}
-          </div>
-          {subtitle && (
-            <p className={cn(subtitleSize || "text-[10px]", "text-muted-foreground/50 mt-0.5")}>{subtitle}</p>
+          {empty ? (
+            <MetricEmpty hint={emptyHint} className="mt-1" />
+          ) : (
+            <>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-foreground leading-tight">
+                  {value}{suffix}
+                </p>
+                {hasRealChange && (
+                  <span className={cn(
+                    "text-[10px] font-medium",
+                    isPositive ? "text-emerald-400" : "text-destructive"
+                  )}>
+                    {changeLabel || `${isPositive ? '+' : ''}${Math.abs(change).toFixed(1)}%`}
+                  </span>
+                )}
+              </div>
+              {subtitle && (
+                <p className={cn(subtitleSize || "text-[10px]", "text-muted-foreground/50 mt-0.5")}>{subtitle}</p>
+              )}
+            </>
           )}
         </div>
       </div>
     </Card>
   );
 }
+
 
 interface DashboardKPIsProps {
   leadsProspected: number;
