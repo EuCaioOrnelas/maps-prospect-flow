@@ -86,31 +86,6 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
   const messagesSent = props.messagesSent ?? 0;
   const prevMessagesSent = props.prevMessagesSent ?? 0;
 
-  const hasData = leadsProspected > 0 || messagesSent > 0;
-
-  if (!hasData) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {[
-          { title: "Leads Prospectados", icon: <Users size={16} /> },
-          { title: "Conversas Iniciadas", icon: <MessageCircle size={16} /> },
-        ].map((item) => (
-          <Card key={item.title} className="bg-card border-border/50 p-5 relative overflow-hidden rounded-xl">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground/40 shrink-0">
-                {item.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">{item.title}</p>
-                <p className="text-sm text-muted-foreground/50 mt-1">Sem dados ainda</p>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
   const leadsChange = calcChange(leadsProspected, prevLeadsProspected);
   const leadsDiff = leadsProspected - prevLeadsProspected;
   const conversasChange = calcChange(messagesSent, prevMessagesSent);
@@ -127,6 +102,8 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
         value={leadsProspected.toLocaleString('pt-BR')}
         icon={<Users size={16} />}
         change={leadsChange}
+        empty={leadsProspected === 0}
+        emptyHint="Preenchido após a primeira busca de leads."
         changeLabel={leadsChange !== 0 ? `${leadsChange > 0 ? '+' : ''}${Math.abs(leadsChange).toFixed(1)}% vs anterior` : undefined}
         subtitle={
           leadsDiff !== 0
@@ -140,6 +117,8 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
         value={messagesSent.toLocaleString('pt-BR')}
         icon={<MessageCircle size={16} />}
         change={conversasChange}
+        empty={messagesSent === 0}
+        emptyHint="Disponível após o primeiro envio de mensagem."
         changeLabel={
           prevMessagesSent > 0 && conversasDiff !== 0
             ? `${conversasDiff > 0 ? '+' : ''}${conversasDiff} vs anterior`
@@ -148,6 +127,7 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
         subtitle={`Taxa de conversas iniciadas: ${activationRate.toFixed(1)}%`}
         subtitleSize="text-xs"
       />
+
     </div>
   );
 }
