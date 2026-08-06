@@ -9687,6 +9687,7 @@ export type Database = {
         Args: { p_category: string; p_owner: string; p_template: string }
         Returns: number
       }
+      has_active_access: { Args: { _user_id: string }; Returns: boolean }
       has_feature_access: {
         Args: { _feature: string; _user_id: string }
         Returns: boolean
@@ -9708,8 +9709,19 @@ export type Database = {
       }
       is_account_member: { Args: { _target_owner: string }; Returns: boolean }
       is_current_user_admin: { Args: never; Returns: boolean }
+      is_downgrade_protected: { Args: { _user_id: string }; Returns: boolean }
       is_member_available: { Args: { _user_id: string }; Returns: boolean }
       is_user_blocked: { Args: { p_user_id: string }; Returns: boolean }
+      log_plan_downgrade: {
+        Args: {
+          _metadata?: Json
+          _new_plan?: string
+          _previous_plan?: string
+          _reason: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       log_security_event: {
         Args: {
           p_action: string
