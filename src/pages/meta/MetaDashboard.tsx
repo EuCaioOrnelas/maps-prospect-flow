@@ -5,6 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { MetaKpiCard } from "@/components/meta/MetaKpiCard";
+import { getMetricEmptyHint } from "@/lib/metricEmptyHints";
 import { MetaInsightCard } from "@/components/meta/MetaInsightCard";
 import { MetaCustosPanel } from "@/components/meta/MetaCustosPanel";
 import { Card } from "@/components/ui/card";
@@ -125,6 +126,7 @@ export default function MetaDashboard() {
                 icon={k.icon}
                 spark={k.spark}
                 empty={!k.raw}
+                emptyHint={getMetricEmptyHint(k.label)}
               />
             ))}
           </div>

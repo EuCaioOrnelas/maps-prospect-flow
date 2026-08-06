@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { MetricEmpty, isMetricEmpty } from "@/components/ui/metric-empty";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -69,14 +70,14 @@ export const ScoreDashboardTab = () => {
   }));
 
   const kpis = [
-    { label: "Total com Score", value: data.total_users, icon: Users, color: "text-primary" },
-    { label: "Score Médio", value: data.avg_score.toFixed(1), icon: BarChart3, color: "text-blue-400" },
-    { label: "Score Mediano", value: data.median_score.toFixed(1), icon: Target, color: "text-yellow-400" },
-    { label: "Alto Valor", value: data.high_score, icon: TrendingUp, color: "text-emerald-400" },
-    { label: "Em Risco", value: data.at_risk, icon: AlertTriangle, color: "text-destructive" },
-    { label: "Prontos p/ Upgrade", value: data.ready_upgrade, icon: Zap, color: "text-purple-400" },
-    { label: "Em Alta", value: data.trends.rising, icon: TrendingUp, color: "text-emerald-400" },
-    { label: "Em Queda", value: data.trends.falling, icon: TrendingDown, color: "text-destructive" },
+    { label: "Total com Score", value: data.total_users, icon: Users, color: "text-primary", emptyHint: "Preenchido quando usuários receberem pontuação." },
+    { label: "Score Médio", value: data.avg_score.toFixed(1), icon: BarChart3, color: "text-blue-400", emptyHint: "Calculado após os primeiros scores." },
+    { label: "Score Mediano", value: data.median_score.toFixed(1), icon: Target, color: "text-yellow-400", emptyHint: "Exige volume mínimo de usuários pontuados." },
+    { label: "Alto Valor", value: data.high_score, icon: TrendingUp, color: "text-emerald-400", emptyHint: "Aparece quando alguém atingir score alto." },
+    { label: "Em Risco", value: data.at_risk, icon: AlertTriangle, color: "text-destructive", emptyHint: "Nenhum usuário em risco no momento." },
+    { label: "Prontos p/ Upgrade", value: data.ready_upgrade, icon: Zap, color: "text-purple-400", emptyHint: "Disponível conforme o uso evoluir." },
+    { label: "Em Alta", value: data.trends.rising, icon: TrendingUp, color: "text-emerald-400", emptyHint: "Requer histórico de scores para comparar." },
+    { label: "Em Queda", value: data.trends.falling, icon: TrendingDown, color: "text-destructive", emptyHint: "Requer histórico de scores para comparar." },
   ];
 
   return (
@@ -87,10 +88,19 @@ export const ScoreDashboardTab = () => {
           <Card key={kpi.label} className="bg-card border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
-                <div>
-                  <p className="text-2xl font-bold">{kpi.value}</p>
-                  <p className="text-xs text-muted-foreground">{kpi.label}</p>
+                <kpi.icon className={`h-5 w-5 ${isMetricEmpty(kpi.value) ? "text-muted-foreground/40" : kpi.color}`} />
+                <div className="min-w-0">
+                  {isMetricEmpty(kpi.value) ? (
+                    <>
+                      <p className="text-xs text-muted-foreground">{kpi.label}</p>
+                      <MetricEmpty hint={kpi.emptyHint} size="sm" className="mt-0.5" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold">{kpi.value}</p>
+                      <p className="text-xs text-muted-foreground">{kpi.label}</p>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>

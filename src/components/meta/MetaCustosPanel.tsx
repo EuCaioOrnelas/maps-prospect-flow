@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { MetaKpiCard } from "@/components/meta/MetaKpiCard";
+import { getMetricEmptyHint } from "@/lib/metricEmptyHints";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -158,6 +159,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
               icon={k.icon}
               spark={k.spark}
               empty={!k.raw}
+              emptyHint={getMetricEmptyHint(k.label)}
             />
             {k.hint && (
               <Tooltip>

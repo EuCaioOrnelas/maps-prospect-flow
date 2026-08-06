@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { MetricEmpty, isMetricEmpty } from "@/components/ui/metric-empty";
 
 interface MetaKpiCardProps {
   label: string;
@@ -15,10 +16,13 @@ interface MetaKpiCardProps {
   /** Mantido por compatibilidade — todos os ícones usam o verde primário */
   accent?: "primary" | "emerald" | "violet" | "amber" | "rose";
   empty?: boolean;
+  /** Frase curta explicando quando o indicador será preenchido */
+  emptyHint?: string;
   tooltip?: string;
 }
 
-export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, tooltip }: MetaKpiCardProps) {
+export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, emptyHint, tooltip }: MetaKpiCardProps) {
+  const isEmpty = empty || isMetricEmpty(value);
   const positive = (delta ?? 0) > 0.05;
   const negative = (delta ?? 0) < -0.05;
   const neutral = !positive && !negative;
@@ -29,10 +33,14 @@ export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, to
   const capped = delta !== undefined && Math.abs(delta) > 300;
 
   const iconEl = icon && (
-    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+    <div className={cn(
+      "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
+      isEmpty ? "bg-muted/40 text-muted-foreground/40" : "bg-primary/10 text-primary"
+    )}>
       {icon}
     </div>
   );
+
 
   return (
     <Card
@@ -64,19 +72,16 @@ export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, to
         </p>
       </div>
 
-      <p
-        className={cn(
-          "mt-3 tabular-nums truncate leading-none",
-          empty
-            ? "text-sm text-muted-foreground/70 font-normal italic"
-            : "text-[26px] font-bold text-foreground tracking-tight"
-        )}
-      >
-        {empty ? "Sem dados para análise" : value}
-      </p>
+      {isEmpty ? (
+        <MetricEmpty hint={emptyHint} className="mt-3" />
+      ) : (
+        <p className="mt-3 tabular-nums truncate leading-none text-[26px] font-bold text-foreground tracking-tight">
+          {value}
+        </p>
+      )}
 
       <div className="flex items-center mt-4 gap-2 min-h-[24px]">
-        {displayDelta !== undefined && !empty ? (
+        {displayDelta !== undefined && !isEmpty ? (
           <span
             className={cn(
               "inline-flex items-center gap-0.5 font-semibold tabular-nums px-1.5 py-0.5 rounded-md text-[11px]",
@@ -88,13 +93,14 @@ export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, to
             {positive ? <ArrowUpRight size={12} strokeWidth={2.5} /> : negative ? <ArrowDownRight size={12} strokeWidth={2.5} /> : <Minus size={12} strokeWidth={2.5} />}
             {capped ? (displayDelta > 0 ? "+300%+" : "-300%+") : `${Math.abs(displayDelta).toFixed(1)}%`}
           </span>
-        ) : !empty ? (
+        ) : !isEmpty ? (
           <span className="inline-flex items-center gap-0.5 text-muted-foreground/60 text-[11px]">
             <Minus size={12} /> sem comparação
           </span>
         ) : null}
-        {hint && <span className="text-muted-foreground/70 truncate text-[11px]">{hint}</span>}
+        {hint && !isEmpty && <span className="text-muted-foreground/70 truncate text-[11px]">{hint}</span>}
       </div>
+
     </Card>
   );
 }
