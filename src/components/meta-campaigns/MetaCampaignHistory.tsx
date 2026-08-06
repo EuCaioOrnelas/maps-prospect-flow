@@ -64,7 +64,7 @@ export const MetaCampaignHistory = ({ connections }: MetaCampaignHistoryProps) =
         () => fetchHistory()
       )
       .subscribe();
-    const interval = setInterval(fetchHistory, 15000);
+    const interval = setInterval(() => { if (isTabVisible()) fetchHistory(); }, 120000);
     return () => {
       supabase.removeChannel(channel);
       clearInterval(interval);
