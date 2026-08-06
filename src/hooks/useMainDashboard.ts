@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { subDays } from "date-fns";
+import { getSnapshot, commitSnapshot } from "@/lib/dashboardSnapshot";
+
 
 export interface MonthlyBreakdown {
   month: string;
