@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { MetricStateCacheProvider } from "@/hooks/useMetricStateCache";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -266,6 +267,7 @@ const App = () => (
         <BrowserRouter>
           <PasswordRecoveryRedirect />
           <AuthProvider>
+            <MetricStateCacheProvider>
             <GuidedTourProvider>
             <Suspense fallback={<PageLoader />}>
               <PartnerTrackingProvider>
@@ -492,6 +494,7 @@ const App = () => (
             <ActivationChecklist />
             <GuidedTour />
             </GuidedTourProvider>
+            </MetricStateCacheProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
