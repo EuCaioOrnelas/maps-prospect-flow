@@ -8192,6 +8192,27 @@ export type Database = {
           },
         ]
       }
+      user_metric_state: {
+        Row: {
+          has_data: boolean
+          metric_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          has_data?: boolean
+          metric_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          has_data?: boolean
+          metric_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_onboarding: {
         Row: {
           biggest_challenge: string | null
