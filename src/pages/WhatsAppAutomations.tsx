@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { MetricEmpty } from "@/components/ui/metric-empty";
 
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -371,7 +372,11 @@ export default function WhatsAppAutomations() {
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
                     <Workflow size={13} /> Fluxos criados
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{totalFlows}</p>
+                  {totalFlows === 0 ? (
+                    <MetricEmpty hint="Preenchido ao criar seu primeiro fluxo." align="center" size="sm" />
+                  ) : (
+                    <p className="text-2xl font-bold text-foreground">{totalFlows}</p>
+                  )}
                 </CardContent>
               </Card>
               <Card className="border-border">
@@ -379,7 +384,11 @@ export default function WhatsAppAutomations() {
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
                     <Zap size={13} /> Publicados
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{activeFlows}</p>
+                  {activeFlows === 0 ? (
+                    <MetricEmpty hint="Aparece após publicar um fluxo." align="center" size="sm" />
+                  ) : (
+                    <p className="text-2xl font-bold text-foreground">{activeFlows}</p>
+                  )}
                 </CardContent>
               </Card>
               <Card className="border-border">
@@ -387,7 +396,11 @@ export default function WhatsAppAutomations() {
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
                     <BarChart3 size={13} /> Rascunhos
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{draftFlows}</p>
+                  {draftFlows === 0 ? (
+                    <MetricEmpty hint="Mostra fluxos ainda não publicados." align="center" size="sm" />
+                  ) : (
+                    <p className="text-2xl font-bold text-foreground">{draftFlows}</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
