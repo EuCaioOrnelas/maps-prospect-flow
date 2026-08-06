@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { commitSnapshot, isTabVisible } from "@/lib/dashboardSnapshot";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, History, CheckCircle2, XCircle, Calendar, MessageSquare, FileText, Phone, Globe, Users, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
