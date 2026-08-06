@@ -4,7 +4,7 @@ import { CalendarCheck, CalendarClock, CalendarRange, CheckCircle2, XCircle, Bot
 import type { CalendarEvent } from "@/lib/calendarConfig";
 import { startOfDay, endOfDay, addDays, startOfWeek, endOfWeek } from "@/lib/calendarViews";
 import { cn } from "@/lib/utils";
-import { MetricEmpty } from "@/components/ui/metric-empty";
+import { MetricSlot } from "@/components/ui/metric-empty";
 
 interface Props {
   events: CalendarEvent[];
@@ -85,27 +85,28 @@ export function AgendaMetrics({ events, loading }: Props) {
         return (
           <Card
             key={m.label}
-            className={cn("p-5 rounded-2xl border-border/70", loading && "animate-pulse")}
+            className="p-5 rounded-2xl border-border/70"
           >
             <span
               className={cn(
                 "h-11 w-11 rounded-xl flex items-center justify-center",
-                empty ? "bg-muted/50" : "bg-primary/10"
+                loading || empty ? "bg-muted/50" : "bg-primary/10"
               )}
             >
-              <m.icon className={empty ? "text-muted-foreground/40" : "text-primary"} size={20} />
+              <m.icon className={loading || empty ? "text-muted-foreground/40" : "text-primary"} size={20} />
             </span>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mt-4">
               {m.label}
             </p>
-            {empty ? (
-              <MetricEmpty hint={m.emptyHint} className="mt-2 min-h-[46px]" />
-            ) : (
-              <>
-                <p className="text-2xl sm:text-3xl font-bold mt-1 tabular-nums">{m.value}</p>
-                <p className="text-xs text-muted-foreground mt-1.5">{m.hint}</p>
-              </>
-            )}
+            <MetricSlot
+              loading={loading}
+              empty={empty}
+              hint={m.emptyHint}
+              className="mt-2 min-h-[62px]"
+            >
+              <p className="text-2xl sm:text-3xl font-bold tabular-nums">{m.value}</p>
+              <p className="text-xs text-muted-foreground mt-1.5">{m.hint}</p>
+            </MetricSlot>
           </Card>
         );
       })}

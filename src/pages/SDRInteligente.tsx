@@ -7,7 +7,7 @@ import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
-import { MetricEmpty, isMetricEmpty } from "@/components/ui/metric-empty";
+import { MetricSlot, isMetricEmpty } from "@/components/ui/metric-empty";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -55,34 +55,32 @@ function MetricCard({
   value,
   hint,
   emptyHint,
+  loading,
 }: {
   icon: any;
   label: string;
   value: string;
   hint?: string;
   emptyHint?: string;
+  loading?: boolean;
 }) {
   const empty = isMetricEmpty(value);
   return (
     <Card className="p-5 rounded-2xl border-border/70">
       <span
         className={`h-11 w-11 rounded-xl flex items-center justify-center ${
-          empty ? "bg-muted/50" : "bg-primary/10"
+          empty || loading ? "bg-muted/50" : "bg-primary/10"
         }`}
       >
-        <Icon className={empty ? "text-muted-foreground/40" : "text-primary"} size={20} />
+        <Icon className={empty || loading ? "text-muted-foreground/40" : "text-primary"} size={20} />
       </span>
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mt-4">
         {label}
       </p>
-      {empty ? (
-        <MetricEmpty hint={emptyHint} className="mt-2 min-h-[46px]" />
-      ) : (
-        <>
-          <p className="text-2xl sm:text-3xl font-bold mt-1">{value}</p>
-          {hint && <p className="text-xs text-muted-foreground mt-1.5">{hint}</p>}
-        </>
-      )}
+      <MetricSlot loading={loading} empty={empty} hint={emptyHint} className="mt-2 min-h-[62px]">
+        <p className="text-2xl sm:text-3xl font-bold">{value}</p>
+        {hint && <p className="text-xs text-muted-foreground mt-1.5">{hint}</p>}
+      </MetricSlot>
     </Card>
   );
 }
@@ -163,6 +161,7 @@ export default function SDRInteligente() {
               {/* Analytics */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <MetricCard
+                  loading={loading}
                   icon={Users}
                   label="Em atendimento"
                   value={String(analytics.inAttendance)}
@@ -170,6 +169,7 @@ export default function SDRInteligente() {
                   emptyHint="Aparece quando o SDR iniciar um atendimento."
                 />
                 <MetricCard
+                  loading={loading}
                   icon={Clock}
                   label="Em follow-up"
                   value={String(analytics.inFollowUp)}
@@ -177,6 +177,7 @@ export default function SDRInteligente() {
                   emptyHint="Preenchido quando houver follow-ups agendados."
                 />
                 <MetricCard
+                  loading={loading}
                   icon={Target}
                   label="Conversão média"
                   value={`${analytics.conversionRate.toFixed(1)}%`}
@@ -184,6 +185,7 @@ export default function SDRInteligente() {
                   emptyHint="Disponível após as primeiras conversões."
                 />
                 <MetricCard
+                  loading={loading}
                   icon={TrendingUp}
                   label="Taxa de resposta"
                   value={`${analytics.replyRate.toFixed(1)}%`}
@@ -191,6 +193,7 @@ export default function SDRInteligente() {
                   emptyHint="Depende das primeiras respostas dos leads."
                 />
                 <MetricCard
+                  loading={loading}
                   icon={XCircle}
                   label="Taxa de abandono"
                   value={`${analytics.abandonRate.toFixed(1)}%`}
@@ -198,6 +201,7 @@ export default function SDRInteligente() {
                   emptyHint="Calculada após conversas encerradas."
                 />
                 <MetricCard
+                  loading={loading}
                   icon={MessageSquare}
                   label="Mensagens enviadas"
                   value={String(analytics.messagesSent)}

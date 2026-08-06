@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { MetricEmpty, isMetricEmpty } from "@/components/ui/metric-empty";
+import { MetricSlot, isMetricEmpty } from "@/components/ui/metric-empty";
 
 interface MetaKpiCardProps {
   label: string;
@@ -19,9 +19,11 @@ interface MetaKpiCardProps {
   /** Frase curta explicando quando o indicador será preenchido */
   emptyHint?: string;
   tooltip?: string;
+  /** Enquanto true, mostra skeleton em vez de zero. */
+  loading?: boolean;
 }
 
-export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, emptyHint, tooltip }: MetaKpiCardProps) {
+export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, emptyHint, tooltip, loading = false }: MetaKpiCardProps) {
   const isEmpty = empty || isMetricEmpty(value);
   const positive = (delta ?? 0) > 0.05;
   const negative = (delta ?? 0) < -0.05;
@@ -35,7 +37,7 @@ export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, em
   const iconEl = icon && (
     <div className={cn(
       "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
-      isEmpty ? "bg-muted/40 text-muted-foreground/40" : "bg-primary/10 text-primary"
+      isEmpty || loading ? "bg-muted/40 text-muted-foreground/40" : "bg-primary/10 text-primary"
     )}>
       {icon}
     </div>
@@ -72,16 +74,14 @@ export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, em
         </p>
       </div>
 
-      {isEmpty ? (
-        <MetricEmpty hint={emptyHint} className="mt-3" />
-      ) : (
-        <p className="mt-3 tabular-nums truncate leading-none text-[26px] font-bold text-foreground tracking-tight">
+      <MetricSlot loading={loading} empty={isEmpty} hint={emptyHint} className="mt-3 min-h-[44px]">
+        <p className="tabular-nums truncate leading-none text-[26px] font-bold text-foreground tracking-tight">
           {value}
         </p>
-      )}
+      </MetricSlot>
 
       <div className="flex items-center mt-4 gap-2 min-h-[24px]">
-        {displayDelta !== undefined && !isEmpty ? (
+        {loading ? null : displayDelta !== undefined && !isEmpty ? (
           <span
             className={cn(
               "inline-flex items-center gap-0.5 font-semibold tabular-nums px-1.5 py-0.5 rounded-md text-[11px]",

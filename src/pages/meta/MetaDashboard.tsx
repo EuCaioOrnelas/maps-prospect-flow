@@ -126,6 +126,7 @@ export default function MetaDashboard() {
                 icon={k.icon}
                 spark={k.spark}
                 empty={!k.raw}
+                loading={data.loading}
                 emptyHint={getMetricEmptyHint(k.label)}
               />
             ))}

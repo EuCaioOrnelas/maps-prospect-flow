@@ -193,6 +193,7 @@ export default function MainDashboard() {
                   healthStatus={kpis.healthStatus}
                   healthDetail={kpis.healthDetail}
                   aiMinutesSaved={kpis.aiMinutesSaved}
+                  loading={!demo && (realKpis as any).loading}
                 />
               </div>
 

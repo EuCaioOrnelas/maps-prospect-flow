@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { DollarSign, Flame, AlertTriangle, Bot, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MetricEmpty } from "@/components/ui/metric-empty";
+import { MetricSlot } from "@/components/ui/metric-empty";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface KPIData {
@@ -25,6 +25,7 @@ interface ExecutiveKPIsProps {
   healthStatus: string;
   healthDetail: string;
   aiMinutesSaved: number;
+  loading?: boolean;
 }
 
 function fmtCompact(n: number) {
@@ -43,6 +44,7 @@ export function ExecutiveKPIs({
   healthStatus,
   healthDetail,
   aiMinutesSaved,
+  loading = false,
 }: ExecutiveKPIsProps) {
   const hotLeadsChange = leadsQuentesHoje - leadsQuentesOntem;
   const aiHours = Math.floor(aiMinutesSaved / 60);
@@ -120,12 +122,12 @@ export function ExecutiveKPIs({
                   <div className="flex items-center justify-between">
                     <div className={cn(
                       "w-9 h-9 rounded-xl flex items-center justify-center",
-                      kpi.empty ? "bg-muted/40 text-muted-foreground/40" : "bg-primary/10 text-primary"
+                      kpi.empty || loading ? "bg-muted/40 text-muted-foreground/40" : "bg-primary/10 text-primary"
                     )}>
                       {kpi.icon}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      {kpi.showBadge && kpi.badge && !kpi.empty && (
+                      {kpi.showBadge && kpi.badge && !kpi.empty && !loading && (
                         <span className={cn(
                           "text-xs font-semibold px-2 py-0.5 rounded-full",
                           kpi.badgeType === 'positive' && "bg-primary/10 text-primary",
@@ -144,9 +146,7 @@ export function ExecutiveKPIs({
                     <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
                       {kpi.title}
                     </p>
-                    {kpi.empty ? (
-                      <MetricEmpty hint={kpi.emptyHint} className="min-h-[42px]" />
-                    ) : (
+                    <MetricSlot loading={loading} empty={kpi.empty} hint={kpi.emptyHint} className="min-h-[42px]">
                       <>
                         <p className={cn(
                           "font-bold leading-none whitespace-nowrap",
@@ -156,7 +156,7 @@ export function ExecutiveKPIs({
                         </p>
                         <p className="text-xs text-muted-foreground/60 mt-1">{kpi.subtitle}</p>
                       </>
-                    )}
+                    </MetricSlot>
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />

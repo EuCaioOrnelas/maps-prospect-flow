@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { MetricEmpty } from "@/components/ui/metric-empty";
+import { MetricSlot } from "@/components/ui/metric-empty";
 
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -372,11 +372,16 @@ export default function WhatsAppAutomations() {
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
                     <Workflow size={13} /> Fluxos criados
                   </div>
-                  {totalFlows === 0 ? (
-                    <MetricEmpty hint="Preenchido ao criar seu primeiro fluxo." align="center" size="sm" />
-                  ) : (
+                  <MetricSlot
+                    loading={isLoading}
+                    empty={totalFlows === 0}
+                    hint="Preenchido ao criar seu primeiro fluxo."
+                    align="center"
+                    size="sm"
+                    className="min-h-[44px] flex flex-col items-center justify-center"
+                  >
                     <p className="text-2xl font-bold text-foreground">{totalFlows}</p>
-                  )}
+                  </MetricSlot>
                 </CardContent>
               </Card>
               <Card className="border-border">
@@ -384,11 +389,16 @@ export default function WhatsAppAutomations() {
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
                     <Zap size={13} /> Publicados
                   </div>
-                  {activeFlows === 0 ? (
-                    <MetricEmpty hint="Aparece após publicar um fluxo." align="center" size="sm" />
-                  ) : (
+                  <MetricSlot
+                    loading={isLoading}
+                    empty={activeFlows === 0}
+                    hint="Aparece após publicar um fluxo."
+                    align="center"
+                    size="sm"
+                    className="min-h-[44px] flex flex-col items-center justify-center"
+                  >
                     <p className="text-2xl font-bold text-foreground">{activeFlows}</p>
-                  )}
+                  </MetricSlot>
                 </CardContent>
               </Card>
               <Card className="border-border">
@@ -396,11 +406,16 @@ export default function WhatsAppAutomations() {
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
                     <BarChart3 size={13} /> Rascunhos
                   </div>
-                  {draftFlows === 0 ? (
-                    <MetricEmpty hint="Mostra fluxos ainda não publicados." align="center" size="sm" />
-                  ) : (
+                  <MetricSlot
+                    loading={isLoading}
+                    empty={draftFlows === 0}
+                    hint="Mostra fluxos ainda não publicados."
+                    align="center"
+                    size="sm"
+                    className="min-h-[44px] flex flex-col items-center justify-center"
+                  >
                     <p className="text-2xl font-bold text-foreground">{draftFlows}</p>
-                  )}
+                  </MetricSlot>
                 </CardContent>
               </Card>
             </div>
