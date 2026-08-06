@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MetricEmpty, isMetricEmpty } from "@/components/ui/metric-empty";
+import { MetricSlot, isMetricEmpty } from "@/components/ui/metric-empty";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -90,17 +90,20 @@ export const ScoreDashboardTab = () => {
               <div className="flex items-center gap-3">
                 <kpi.icon className={`h-5 w-5 ${isMetricEmpty(kpi.value) ? "text-muted-foreground/40" : kpi.color}`} />
                 <div className="min-w-0">
-                  {isMetricEmpty(kpi.value) ? (
-                    <>
-                      <p className="text-xs text-muted-foreground">{kpi.label}</p>
-                      <MetricEmpty hint={kpi.emptyHint} size="sm" className="mt-0.5" />
-                    </>
-                  ) : (
+                  {isMetricEmpty(kpi.value) && (
+                    <p className="text-xs text-muted-foreground">{kpi.label}</p>
+                  )}
+                  <MetricSlot
+                    empty={isMetricEmpty(kpi.value)}
+                    hint={kpi.emptyHint}
+                    size="sm"
+                    className={isMetricEmpty(kpi.value) ? "mt-0.5 min-h-[40px]" : "min-h-[40px]"}
+                  >
                     <>
                       <p className="text-2xl font-bold">{kpi.value}</p>
                       <p className="text-xs text-muted-foreground">{kpi.label}</p>
                     </>
-                  )}
+                  </MetricSlot>
                 </div>
               </div>
             </CardContent>
