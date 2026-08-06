@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { getSnapshot, commitSnapshot, isTabVisible } from "@/lib/dashboardSnapshot";
+
 
 export const META_COST_PER_MSG = 0.12;
 
@@ -97,9 +99,6 @@ export function useMetaDashboard(
   responsibleUserId?: string | null,
 ): MetaDashboardData {
   const { user, accountOwnerId } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<Omit<MetaDashboardData, "loading">>(() => emptyData());
-  const [refreshTick, setRefreshTick] = useState(0);
 
   const startISO = range.start.toISOString();
   const endISO = range.end.toISOString();
@@ -107,12 +106,30 @@ export function useMetaDashboard(
   const prevStart = new Date(range.start.getTime() - periodMs);
   const prevEnd = range.start;
 
+  // Chave estável do snapshot (granularidade de hora evita invalidar a cada render)
+  const snapKey = `meta:${accountOwnerId || user?.id || "anon"}:${startISO.slice(0, 13)}:${endISO.slice(0, 13)}:${responsibleUserId || "all"}`;
+
+  const cached = getSnapshot<Omit<MetaDashboardData, "loading">>(snapKey);
+  const [loading, setLoading] = useState(!cached);
+  const [data, setData] = useState<Omit<MetaDashboardData, "loading">>(() => cached ?? emptyData());
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  // Ao trocar de período/responsável, reidrata do cache sem piscar
+  useEffect(() => {
+    const snap = getSnapshot<Omit<MetaDashboardData, "loading">>(snapKey);
+    if (snap) {
+      setData(snap);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }, [snapKey]);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      setLoading(true);
+
       const ownerId = accountOwnerId || user.id;
       const respFilter = responsibleUserId || null;
       const withResp = (q: any): any => (respFilter ? q.eq("responsible_user_id", respFilter) : q);
@@ -438,7 +455,7 @@ export function useMetaDashboard(
         });
       }
 
-      setData({
+      const next = {
         totalCost, prevTotalCost,
         realCost, estimatedCost, costRealRatio,
         messagesSent, prevMessagesSent: prevSent,
@@ -461,12 +478,15 @@ export function useMetaDashboard(
         heatmap,
         campaigns,
         insights,
-      });
+      };
+
+      // Só re-renderiza se algum valor realmente mudou
+      if (commitSnapshot(snapKey, next)) setData(next);
 
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [user?.id, accountOwnerId, startISO, endISO, responsibleUserId, refreshTick]);
+  }, [user?.id, accountOwnerId, startISO, endISO, responsibleUserId, refreshTick, snapKey]);
 
   useEffect(() => {
     if (!user) return;
@@ -480,7 +500,9 @@ export function useMetaDashboard(
       .channel(`meta-dashboard-whatsapp-${ownerId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_campaigns", filter: `owner_user_id=eq.${ownerId}` }, refresh)
       .subscribe();
-    const interval = setInterval(refresh, 15000);
+    // Refresh silencioso e menos agressivo, pausado quando a aba não está visível
+    const interval = setInterval(() => { if (isTabVisible()) refresh(); }, 120000);
+
     return () => {
       supabase.removeChannel(metaChannel);
       supabase.removeChannel(whatsappChannel);

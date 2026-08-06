@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { commitSnapshot, isTabVisible } from "@/lib/dashboardSnapshot";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, History, CheckCircle2, XCircle, Calendar, MessageSquare, FileText, Phone, Globe, Users, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -64,7 +66,7 @@ export const MetaCampaignHistory = ({ connections }: MetaCampaignHistoryProps) =
         () => fetchHistory()
       )
       .subscribe();
-    const interval = setInterval(fetchHistory, 15000);
+    const interval = setInterval(() => { if (isTabVisible()) fetchHistory(); }, 120000);
     return () => {
       supabase.removeChannel(channel);
       clearInterval(interval);
@@ -85,7 +87,7 @@ export const MetaCampaignHistory = ({ connections }: MetaCampaignHistoryProps) =
         .gte("created_at", since)
         .order("created_at", { ascending: false })
         .limit(200);
-      setCampaigns(data || []);
+      if (commitSnapshot(`meta-history:${accountOwnerId}`, data || [])) setCampaigns(data || []);
     } catch (err) {
       console.error("Error fetching history:", err);
     } finally {

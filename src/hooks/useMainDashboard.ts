@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { subDays } from "date-fns";
+import { getSnapshot, commitSnapshot } from "@/lib/dashboardSnapshot";
+
 
 export interface MonthlyBreakdown {
   month: string;
@@ -43,8 +45,10 @@ export interface DashboardMetrics {
 export function useMainDashboard(periodDays: number): DashboardMetrics {
   const { user, accountOwnerId } = useAuth();
   const publicDemo = typeof window !== "undefined" && window.location.pathname === "/tour-guiado";
-  const [loading, setLoading] = useState(!publicDemo);
-  const [rawData, setRawData] = useState({
+  const snapKey = `main:${accountOwnerId || "anon"}:${periodDays}`;
+  const cachedSnap = publicDemo ? null : getSnapshot<any>(snapKey);
+  const [loading, setLoading] = useState(!publicDemo && !cachedSnap);
+  const [rawData, setRawData] = useState(cachedSnap ?? {
     leadsProspected: 0,
     prevLeadsProspected: 0,
     messagesSent: 0,
@@ -72,12 +76,16 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
   useEffect(() => {
     if (publicDemo) return;
     if (!user || !accountOwnerId) return;
+    const snap = getSnapshot<any>(snapKey);
+    if (snap) { setRawData(snap); setLoading(false); }
     fetchData();
-  }, [user, accountOwnerId, periodDays, publicDemo]);
+  }, [user?.id, accountOwnerId, periodDays, publicDemo, snapKey]);
 
   const fetchData = async () => {
     if (!user || !accountOwnerId) return;
-    setLoading(true);
+    // Não mostra skeleton se já temos dados em cache — atualização é silenciosa
+    if (!getSnapshot<any>(snapKey)) setLoading(true);
+
 
     const now = new Date();
     const periodStart = subDays(now, periodDays);
@@ -253,14 +261,14 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         { stage: "Oportunidades", value: oportunidades },
       ];
 
-      setRawData({
+      const next = {
         leadsProspected, prevLeadsProspected,
         messagesSent, prevMessagesSent,
         messagesFailed, prevMessagesFailed,
         totalResponses, prevTotalResponses,
         campaigns,
         numbers: numbersRes.data || [],
-        warmingSessions: [],
+        warmingSessions: [] as any[],
         incidents: incidentsRes.data || [],
         responsesByDay,
         cplBenchmark: cplValue?.value || 50,
@@ -272,7 +280,10 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
         monthlyBreakdown,
         leadsByDay,
         funnel,
-      });
+      };
+      // Atualiza somente quando os números realmente mudaram
+      if (commitSnapshot(snapKey, next)) setRawData(next);
+
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {

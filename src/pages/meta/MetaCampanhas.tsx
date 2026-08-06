@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { commitSnapshot, isTabVisible } from "@/lib/dashboardSnapshot";
+
 import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { Card } from "@/components/ui/card";
@@ -91,9 +93,12 @@ export default function MetaCampanhas() {
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
+  const loadedOnceRef = useRef(false);
+
   const loadCampaigns = async () => {
     if (!user || !accountOwnerId) return;
-    setLoading(true);
+    if (!loadedOnceRef.current) setLoading(true);
+
     const { data, error } = await supabase
       .from("meta_campaigns")
       .select("id,campaign_name,status,total_recipients,success_count,failed_count,created_at,connection_id,template_name,template_language,error_details")
@@ -123,7 +128,7 @@ export default function MetaCampanhas() {
       leads: [],
       current_lead_index: null,
     })) as CampaignRow[];
-    setCampaigns(rows);
+    if (commitSnapshot(`meta-campanhas:${accountOwnerId}`, rows)) setCampaigns(rows);
 
     const numIds = Array.from(new Set(rows.map(r => r.connection_id).filter(Boolean))) as string[];
     if (numIds.length) {
@@ -133,10 +138,11 @@ export default function MetaCampanhas() {
         .in("id", numIds);
       const map: Record<string, { phone: string; label: string | null }> = {};
       (nums || []).forEach((n: any) => { map[n.id] = { phone: n.display_phone_number || n.phone_number_id, label: n.nickname }; });
-      setNumberMap(map);
+      if (commitSnapshot(`meta-campanhas-nums:${accountOwnerId}`, map)) setNumberMap(map);
     } else {
       setNumberMap({});
     }
+    loadedOnceRef.current = true;
     setLoading(false);
   };
 
@@ -151,7 +157,9 @@ export default function MetaCampanhas() {
         () => loadCampaigns()
       )
       .subscribe();
-    const interval = setInterval(loadCampaigns, 15000);
+    // Atualização silenciosa em background (pausa com a aba oculta)
+    const interval = setInterval(() => { if (isTabVisible()) loadCampaigns(); }, 120000);
+
     return () => {
       supabase.removeChannel(channel);
       clearInterval(interval);
