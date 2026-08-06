@@ -4,6 +4,7 @@ import { CalendarCheck, CalendarClock, CalendarRange, CheckCircle2, XCircle, Bot
 import type { CalendarEvent } from "@/lib/calendarConfig";
 import { startOfDay, endOfDay, addDays, startOfWeek, endOfWeek } from "@/lib/calendarViews";
 import { cn } from "@/lib/utils";
+import { MetricEmpty } from "@/components/ui/metric-empty";
 
 interface Props {
   events: CalendarEvent[];
