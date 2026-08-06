@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isDowngradeProtected, logDowngrade } from "../_shared/downgrade-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -94,7 +95,15 @@ serve(async (req) => {
     }
 
     let downgraded = 0;
+    let protectedCount = 0;
     for (const u of toDowngrade) {
+      // Whitelist: admins e assinaturas manuais/custom nunca são rebaixados.
+      if (await isDowngradeProtected(supabase, u.id)) {
+        protectedCount++;
+        log("Protegido contra rebaixamento", { userId: u.id, email: u.email });
+        continue;
+      }
+
       const { error: upErr } = await supabase
         .from("profiles")
         .update({
@@ -117,6 +126,12 @@ serve(async (req) => {
         continue;
       }
       downgraded++;
+      await logDowngrade(supabase, {
+        userId: u.id,
+        reason: u.reason,
+        previousPlan: u.plan,
+        metadata: { source: "retroactive_subscription_sweep", email: u.email },
+      });
 
       // Churn só é registrado para quem realmente pagou algum dia.
       if (!realPayers.has(u.id)) continue;
@@ -137,6 +152,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         scanned: profiles?.length || 0,
+        protected: protectedCount,
         downgraded,
         real_payers: realPayers.size,
         details: toDowngrade,
