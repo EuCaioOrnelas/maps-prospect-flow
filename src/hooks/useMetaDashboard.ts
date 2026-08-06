@@ -455,7 +455,7 @@ export function useMetaDashboard(
         });
       }
 
-      setData({
+      const next = {
         totalCost, prevTotalCost,
         realCost, estimatedCost, costRealRatio,
         messagesSent, prevMessagesSent: prevSent,
@@ -478,12 +478,15 @@ export function useMetaDashboard(
         heatmap,
         campaigns,
         insights,
-      });
+      };
+
+      // Só re-renderiza se algum valor realmente mudou
+      if (commitSnapshot(snapKey, next)) setData(next);
 
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [user?.id, accountOwnerId, startISO, endISO, responsibleUserId, refreshTick]);
+  }, [user?.id, accountOwnerId, startISO, endISO, responsibleUserId, refreshTick, snapKey]);
 
   useEffect(() => {
     if (!user) return;
@@ -497,7 +500,9 @@ export function useMetaDashboard(
       .channel(`meta-dashboard-whatsapp-${ownerId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_campaigns", filter: `owner_user_id=eq.${ownerId}` }, refresh)
       .subscribe();
-    const interval = setInterval(refresh, 15000);
+    // Refresh silencioso e menos agressivo, pausado quando a aba não está visível
+    const interval = setInterval(() => { if (isTabVisible()) refresh(); }, 120000);
+
     return () => {
       supabase.removeChannel(metaChannel);
       supabase.removeChannel(whatsappChannel);
