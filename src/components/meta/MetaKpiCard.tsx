@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { MetricEmpty, isMetricEmpty } from "@/components/ui/metric-empty";
 
 interface MetaKpiCardProps {
   label: string;
@@ -15,10 +16,13 @@ interface MetaKpiCardProps {
   /** Mantido por compatibilidade — todos os ícones usam o verde primário */
   accent?: "primary" | "emerald" | "violet" | "amber" | "rose";
   empty?: boolean;
+  /** Frase curta explicando quando o indicador será preenchido */
+  emptyHint?: string;
   tooltip?: string;
 }
 
-export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, tooltip }: MetaKpiCardProps) {
+export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, emptyHint, tooltip }: MetaKpiCardProps) {
+  const isEmpty = empty || isMetricEmpty(value);
   const positive = (delta ?? 0) > 0.05;
   const negative = (delta ?? 0) < -0.05;
   const neutral = !positive && !negative;
@@ -29,10 +33,14 @@ export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, to
   const capped = delta !== undefined && Math.abs(delta) > 300;
 
   const iconEl = icon && (
-    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+    <div className={cn(
+      "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
+      isEmpty ? "bg-muted/40 text-muted-foreground/40" : "bg-primary/10 text-primary"
+    )}>
       {icon}
     </div>
   );
+
 
   return (
     <Card
