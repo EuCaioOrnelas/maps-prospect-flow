@@ -43,8 +43,10 @@ export interface DashboardMetrics {
 export function useMainDashboard(periodDays: number): DashboardMetrics {
   const { user, accountOwnerId } = useAuth();
   const publicDemo = typeof window !== "undefined" && window.location.pathname === "/tour-guiado";
-  const [loading, setLoading] = useState(!publicDemo);
-  const [rawData, setRawData] = useState({
+  const snapKey = `main:${accountOwnerId || "anon"}:${periodDays}`;
+  const cachedSnap = publicDemo ? null : getSnapshot<any>(snapKey);
+  const [loading, setLoading] = useState(!publicDemo && !cachedSnap);
+  const [rawData, setRawData] = useState(cachedSnap ?? {
     leadsProspected: 0,
     prevLeadsProspected: 0,
     messagesSent: 0,
@@ -72,12 +74,16 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
   useEffect(() => {
     if (publicDemo) return;
     if (!user || !accountOwnerId) return;
+    const snap = getSnapshot<any>(snapKey);
+    if (snap) { setRawData(snap); setLoading(false); }
     fetchData();
-  }, [user, accountOwnerId, periodDays, publicDemo]);
+  }, [user?.id, accountOwnerId, periodDays, publicDemo, snapKey]);
 
   const fetchData = async () => {
     if (!user || !accountOwnerId) return;
-    setLoading(true);
+    // Não mostra skeleton se já temos dados em cache — atualização é silenciosa
+    if (!getSnapshot<any>(snapKey)) setLoading(true);
+
 
     const now = new Date();
     const periodStart = subDays(now, periodDays);
