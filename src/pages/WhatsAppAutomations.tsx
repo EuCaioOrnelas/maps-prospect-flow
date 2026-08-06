@@ -373,6 +373,7 @@ export default function WhatsAppAutomations() {
                     <Workflow size={13} /> Fluxos criados
                   </div>
                   <MetricSlot
+                    cacheKey="flows:total"
                     loading={isLoading}
                     empty={totalFlows === 0}
                     hint="Preenchido ao criar seu primeiro fluxo."
@@ -390,6 +391,7 @@ export default function WhatsAppAutomations() {
                     <Zap size={13} /> Publicados
                   </div>
                   <MetricSlot
+                    cacheKey="flows:ativos"
                     loading={isLoading}
                     empty={activeFlows === 0}
                     hint="Aparece após publicar um fluxo."
@@ -407,6 +409,7 @@ export default function WhatsAppAutomations() {
                     <BarChart3 size={13} /> Rascunhos
                   </div>
                   <MetricSlot
+                    cacheKey="flows:rascunhos"
                     loading={isLoading}
                     empty={draftFlows === 0}
                     hint="Mostra fluxos ainda não publicados."

@@ -99,6 +99,7 @@ export function AgendaMetrics({ events, loading }: Props) {
               {m.label}
             </p>
             <MetricSlot
+              cacheKey={`agenda:${m.label}`}
               loading={loading}
               empty={empty}
               hint={m.emptyHint}

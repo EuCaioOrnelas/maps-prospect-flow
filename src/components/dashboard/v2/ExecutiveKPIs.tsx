@@ -146,7 +146,7 @@ export function ExecutiveKPIs({
                     <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
                       {kpi.title}
                     </p>
-                    <MetricSlot loading={loading} empty={kpi.empty} hint={kpi.emptyHint} className="min-h-[42px]">
+                    <MetricSlot cacheKey={`cockpit:${kpi.title}`} loading={loading} empty={kpi.empty} hint={kpi.emptyHint} className="min-h-[42px]">
                       <>
                         <p className={cn(
                           "font-bold leading-none whitespace-nowrap",
