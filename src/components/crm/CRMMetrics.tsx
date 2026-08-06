@@ -1,6 +1,7 @@
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { Card, CardContent } from '@/components/ui/card';
 import { Users, DollarSign, Target, LucideIcon } from 'lucide-react';
+import { MetricEmpty } from '@/components/ui/metric-empty';
 
 interface CRMMetricsProps {
   leads: Lead[];
@@ -14,6 +15,8 @@ interface Metric {
   subValue?: string;
   icon: LucideIcon;
   color: string;
+  empty?: boolean;
+  emptyHint?: string;
 }
 
 export const CRMMetrics = ({ leads, stages, hideValue = false }: CRMMetricsProps) => {
