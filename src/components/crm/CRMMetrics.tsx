@@ -1,12 +1,13 @@
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { Card, CardContent } from '@/components/ui/card';
 import { Users, DollarSign, Target, LucideIcon } from 'lucide-react';
-import { MetricEmpty } from '@/components/ui/metric-empty';
+import { MetricSlot } from '@/components/ui/metric-empty';
 
 interface CRMMetricsProps {
   leads: Lead[];
   stages: PipelineStage[];
   hideValue?: boolean;
+  loading?: boolean;
 }
 
 interface Metric {
@@ -19,7 +20,7 @@ interface Metric {
   emptyHint?: string;
 }
 
-export const CRMMetrics = ({ leads, stages, hideValue = false }: CRMMetricsProps) => {
+export const CRMMetrics = ({ leads, stages, hideValue = false, loading = false }: CRMMetricsProps) => {
   const leadsInPipeline = leads.filter(lead => lead.pipeline_stage_id != null);
   const totalLeads = leadsInPipeline.length;
   
@@ -80,21 +81,19 @@ export const CRMMetrics = ({ leads, stages, hideValue = false }: CRMMetricsProps
       {metrics.map((metric) => (
         <Card key={metric.label} className="border-border/50 relative overflow-hidden">
           {/* Green glow */}
-          {!metric.empty && (
+          {!metric.empty && !loading && (
             <div className="absolute -bottom-10 -right-10 w-36 h-36 rounded-full bg-emerald-500/[0.04] dark:bg-emerald-500/[0.07] blur-3xl pointer-events-none" />
           )}
           <CardContent className="p-5 relative">
             <div className="flex flex-col gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${metric.empty ? 'bg-muted/50' : 'bg-primary/[0.07] dark:bg-primary/[0.12]'}`}>
-                <metric.icon className={`w-[17px] h-[17px] ${metric.empty ? 'text-muted-foreground/40' : metric.color}`} />
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${metric.empty || loading ? 'bg-muted/50' : 'bg-primary/[0.07] dark:bg-primary/[0.12]'}`}>
+                <metric.icon className={`w-[17px] h-[17px] ${metric.empty || loading ? 'text-muted-foreground/40' : metric.color}`} />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
                   {metric.label}
                 </p>
-                {metric.empty ? (
-                  <MetricEmpty hint={metric.emptyHint} className="min-h-[46px]" />
-                ) : (
+                <MetricSlot loading={loading} empty={metric.empty} hint={metric.emptyHint} className="min-h-[46px]">
                   <div className="flex items-baseline gap-1.5">
                     <p className="text-[30px] font-bold leading-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>
                       {metric.label === 'Taxa de Conversão' ? `${metric.value}%` : metric.value}
@@ -103,7 +102,7 @@ export const CRMMetrics = ({ leads, stages, hideValue = false }: CRMMetricsProps
                       <span className="text-[10px] text-muted-foreground">{metric.subValue}</span>
                     )}
                   </div>
-                )}
+                </MetricSlot>
               </div>
             </div>
           </CardContent>

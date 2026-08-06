@@ -436,7 +436,7 @@ export default function CRM() {
 
               <CRMTabs />
 
-              <CRMMetrics stages={stages} leads={filteredLeads} hideValue={isOperational} />
+              <CRMMetrics stages={stages} leads={filteredLeads} hideValue={isOperational} loading={isLoading} />
 
 
               {hasContactLimit && (

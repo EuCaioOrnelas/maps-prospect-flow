@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Users, MessageCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MetricEmpty } from "@/components/ui/metric-empty";
+import { MetricSlot } from "@/components/ui/metric-empty";
 
 interface KPICardProps {
   title: string;
@@ -14,9 +14,10 @@ interface KPICardProps {
   subtitleSize?: string;
   empty?: boolean;
   emptyHint?: string;
+  loading?: boolean;
 }
 
-function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, subtitleSize, empty, emptyHint }: KPICardProps) {
+function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, subtitleSize, empty, emptyHint, loading }: KPICardProps) {
   const isPositive = change > 0;
   const hasRealChange = change !== 0;
 
@@ -25,7 +26,7 @@ function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, su
       <div className="flex items-center gap-4">
         <div className={cn(
           "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-          empty ? "bg-muted/40 text-muted-foreground/40" : "bg-muted/50 text-muted-foreground"
+          empty || loading ? "bg-muted/40 text-muted-foreground/40" : "bg-muted/50 text-muted-foreground"
         )}>
           {icon}
         </div>
@@ -33,9 +34,7 @@ function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, su
           <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
             {title}
           </p>
-          {empty ? (
-            <MetricEmpty hint={emptyHint} className="mt-1" />
-          ) : (
+          <MetricSlot loading={loading} empty={empty} hint={emptyHint} className="mt-1 min-h-[52px]">
             <>
               <div className="flex items-baseline gap-2">
                 <p className="text-2xl font-bold text-foreground leading-tight">
@@ -54,7 +53,7 @@ function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, su
                 <p className={cn(subtitleSize || "text-[10px]", "text-muted-foreground/50 mt-0.5")}>{subtitle}</p>
               )}
             </>
-          )}
+          </MetricSlot>
         </div>
       </div>
     </Card>
@@ -71,6 +70,7 @@ interface DashboardKPIsProps {
   prevMessagesSent: number;
   responseRate: number;
   prevResponseRate: number;
+  loading?: boolean;
 }
 
 function calcChange(current: number, previous: number): number {
@@ -102,6 +102,7 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
         value={leadsProspected.toLocaleString('pt-BR')}
         icon={<Users size={16} />}
         change={leadsChange}
+        loading={props.loading}
         empty={leadsProspected === 0}
         emptyHint="Preenchido após a primeira busca de leads."
         changeLabel={leadsChange !== 0 ? `${leadsChange > 0 ? '+' : ''}${Math.abs(leadsChange).toFixed(1)}% vs anterior` : undefined}
@@ -117,6 +118,7 @@ export function DashboardKPIs(props: DashboardKPIsProps) {
         value={messagesSent.toLocaleString('pt-BR')}
         icon={<MessageCircle size={16} />}
         change={conversasChange}
+        loading={props.loading}
         empty={messagesSent === 0}
         emptyHint="Disponível após o primeiro envio de mensagem."
         changeLabel={
