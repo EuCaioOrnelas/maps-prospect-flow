@@ -600,16 +600,16 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 isExpanded={isExpanded}
                 badge={unreadAnnouncements > 0 ? (
                   <span className={cn(
-                    "absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1.5 rounded-full",
-                    "flex items-center justify-center text-[9px] font-bold leading-none tabular-nums",
+                    "absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full",
+                    "flex items-center justify-center text-[9px] font-bold leading-none tabular-nums text-white",
+                    "ring-2 ring-background shadow-sm",
                     disconnectedNumberAlerts.length > 0
-                      ? "bg-amber-500 text-white"
-                      : "bg-primary text-primary-foreground"
+                      ? "bg-amber-500"
+                      : "bg-primary"
                   )}>
                     {unreadAnnouncements > 99 ? "+99" : unreadAnnouncements}
                   </span>
                 ) : undefined}
-
                 tooltip={disconnectedNumberAlerts.length > 0 ? (
                   <div>
                     <p className="font-medium text-amber-500">⚠️ Número Meta desconectado</p>
