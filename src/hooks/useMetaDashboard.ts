@@ -97,9 +97,6 @@ export function useMetaDashboard(
   responsibleUserId?: string | null,
 ): MetaDashboardData {
   const { user, accountOwnerId } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<Omit<MetaDashboardData, "loading">>(() => emptyData());
-  const [refreshTick, setRefreshTick] = useState(0);
 
   const startISO = range.start.toISOString();
   const endISO = range.end.toISOString();
@@ -107,12 +104,30 @@ export function useMetaDashboard(
   const prevStart = new Date(range.start.getTime() - periodMs);
   const prevEnd = range.start;
 
+  // Chave estável do snapshot (granularidade de hora evita invalidar a cada render)
+  const snapKey = `meta:${accountOwnerId || user?.id || "anon"}:${startISO.slice(0, 13)}:${endISO.slice(0, 13)}:${responsibleUserId || "all"}`;
+
+  const cached = getSnapshot<Omit<MetaDashboardData, "loading">>(snapKey);
+  const [loading, setLoading] = useState(!cached);
+  const [data, setData] = useState<Omit<MetaDashboardData, "loading">>(() => cached ?? emptyData());
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  // Ao trocar de período/responsável, reidrata do cache sem piscar
+  useEffect(() => {
+    const snap = getSnapshot<Omit<MetaDashboardData, "loading">>(snapKey);
+    if (snap) {
+      setData(snap);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }, [snapKey]);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      setLoading(true);
+
       const ownerId = accountOwnerId || user.id;
       const respFilter = responsibleUserId || null;
       const withResp = (q: any): any => (respFilter ? q.eq("responsible_user_id", respFilter) : q);
