@@ -91,9 +91,12 @@ export default function MetaCampanhas() {
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
+  const loadedOnceRef = useRef(false);
+
   const loadCampaigns = async () => {
     if (!user || !accountOwnerId) return;
-    setLoading(true);
+    if (!loadedOnceRef.current) setLoading(true);
+
     const { data, error } = await supabase
       .from("meta_campaigns")
       .select("id,campaign_name,status,total_recipients,success_count,failed_count,created_at,connection_id,template_name,template_language,error_details")
