@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { DollarSign, Flame, AlertTriangle, Bot, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MetricEmpty } from "@/components/ui/metric-empty";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface KPIData {
@@ -12,6 +13,8 @@ interface KPIData {
   icon: React.ReactNode;
   tooltip?: string;
   showBadge: boolean;
+  empty?: boolean;
+  emptyHint?: string;
 }
 
 interface ExecutiveKPIsProps {
@@ -66,6 +69,8 @@ export function ExecutiveKPIs({
       icon: <DollarSign size={18} />,
       tooltip: "Soma total dos valores em negociação de todos os leads no CRM. Crescimento comparado aos últimos 30 dias.",
       showBadge: true,
+      empty: receitaPotencial === 0,
+      emptyHint: "Será preenchido após as primeiras negociações.",
     },
     {
       title: "Leads Quentes Hoje",
@@ -76,6 +81,8 @@ export function ExecutiveKPIs({
       icon: <Flame size={18} />,
       tooltip: "Leads que tiveram um aumento relevante de 150+ pontos no score nas últimas 24 horas. Comparado com o dia anterior.",
       showBadge: true,
+      empty: leadsQuentesHoje === 0 && leadsQuentesOntem === 0,
+      emptyHint: "Disponível quando os leads ganharem score.",
     },
     {
       title: "Gargalo Atual",
@@ -85,6 +92,8 @@ export function ExecutiveKPIs({
       icon: <AlertTriangle size={18} />,
       tooltip: healthTooltip,
       showBadge: false,
+      empty: isInsufficientData,
+      emptyHint: "Exige volume mínimo de leads para diagnóstico.",
     },
     {
       title: "IA Economizou",
@@ -93,6 +102,8 @@ export function ExecutiveKPIs({
       badgeType: 'positive',
       subtitle: "Tempo economizado com respostas IA + fluxos",
       icon: <Bot size={18} />,
+      empty: aiMinutesSaved === 0,
+      emptyHint: "Atualizado conforme a IA responder por você.",
       tooltip: "Calculado com base nos caracteres escritos pela IA (200 chars/min humano) + nós percorridos nos fluxos automatizados (2 min/nó).",
       showBadge: true,
     },
@@ -107,11 +118,14 @@ export function ExecutiveKPIs({
               <Card className="group relative overflow-hidden border-border/40 bg-card hover:border-primary/20 hover:shadow-md hover:shadow-primary/[0.04] transition-all duration-300 cursor-pointer rounded-2xl">
                 <div className="p-5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                    <div className={cn(
+                      "w-9 h-9 rounded-xl flex items-center justify-center",
+                      kpi.empty ? "bg-muted/40 text-muted-foreground/40" : "bg-primary/10 text-primary"
+                    )}>
                       {kpi.icon}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      {kpi.showBadge && kpi.badge && (
+                      {kpi.showBadge && kpi.badge && !kpi.empty && (
                         <span className={cn(
                           "text-xs font-semibold px-2 py-0.5 rounded-full",
                           kpi.badgeType === 'positive' && "bg-primary/10 text-primary",
@@ -130,14 +144,19 @@ export function ExecutiveKPIs({
                     <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
                       {kpi.title}
                     </p>
-                    <p className={cn(
-                      "font-bold leading-none whitespace-nowrap",
-                      isInsufficientData && kpi.title === "Gargalo Atual" ? "text-base text-muted-foreground" : 
-                      kpi.value.length > 16 ? "text-lg text-foreground" : "text-2xl text-foreground"
-                    )}>
-                      {kpi.value}
-                    </p>
-                    <p className="text-xs text-muted-foreground/60 mt-1">{kpi.subtitle}</p>
+                    {kpi.empty ? (
+                      <MetricEmpty hint={kpi.emptyHint} className="min-h-[42px]" />
+                    ) : (
+                      <>
+                        <p className={cn(
+                          "font-bold leading-none whitespace-nowrap",
+                          kpi.value.length > 16 ? "text-lg text-foreground" : "text-2xl text-foreground"
+                        )}>
+                          {kpi.value}
+                        </p>
+                        <p className="text-xs text-muted-foreground/60 mt-1">{kpi.subtitle}</p>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
