@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { getSnapshot, commitSnapshot, isTabVisible } from "@/lib/dashboardSnapshot";
+
 
 export const META_COST_PER_MSG = 0.12;
 
