@@ -7,6 +7,7 @@ import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
+import { MetricEmpty, isMetricEmpty } from "@/components/ui/metric-empty";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -53,22 +54,35 @@ function MetricCard({
   label,
   value,
   hint,
+  emptyHint,
 }: {
   icon: any;
   label: string;
   value: string;
   hint?: string;
+  emptyHint?: string;
 }) {
+  const empty = isMetricEmpty(value);
   return (
     <Card className="p-5 rounded-2xl border-border/70">
-      <span className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center">
-        <Icon className="text-primary" size={20} />
+      <span
+        className={`h-11 w-11 rounded-xl flex items-center justify-center ${
+          empty ? "bg-muted/50" : "bg-primary/10"
+        }`}
+      >
+        <Icon className={empty ? "text-muted-foreground/40" : "text-primary"} size={20} />
       </span>
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mt-4">
         {label}
       </p>
-      <p className="text-2xl sm:text-3xl font-bold mt-1">{value}</p>
-      {hint && <p className="text-xs text-muted-foreground mt-1.5">{hint}</p>}
+      {empty ? (
+        <MetricEmpty hint={emptyHint} className="mt-2 min-h-[46px]" />
+      ) : (
+        <>
+          <p className="text-2xl sm:text-3xl font-bold mt-1">{value}</p>
+          {hint && <p className="text-xs text-muted-foreground mt-1.5">{hint}</p>}
+        </>
+      )}
     </Card>
   );
 }
@@ -153,36 +167,42 @@ export default function SDRInteligente() {
                   label="Em atendimento"
                   value={String(analytics.inAttendance)}
                   hint="Conversas ativas conduzidas pelos SDRs"
+                  emptyHint="Aparece quando o SDR iniciar um atendimento."
                 />
                 <MetricCard
                   icon={Clock}
                   label="Em follow-up"
                   value={String(analytics.inFollowUp)}
                   hint="Leads aguardando retomada automática"
+                  emptyHint="Preenchido quando houver follow-ups agendados."
                 />
                 <MetricCard
                   icon={Target}
                   label="Conversão média"
                   value={`${analytics.conversionRate.toFixed(1)}%`}
                   hint="Sessões que atingiram o objetivo final"
+                  emptyHint="Disponível após as primeiras conversões."
                 />
                 <MetricCard
                   icon={TrendingUp}
                   label="Taxa de resposta"
                   value={`${analytics.replyRate.toFixed(1)}%`}
                   hint="Leads que responderam ao SDR"
+                  emptyHint="Depende das primeiras respostas dos leads."
                 />
                 <MetricCard
                   icon={XCircle}
                   label="Taxa de abandono"
                   value={`${analytics.abandonRate.toFixed(1)}%`}
                   hint="Conversas encerradas sem avanço"
+                  emptyHint="Calculada após conversas encerradas."
                 />
                 <MetricCard
                   icon={MessageSquare}
                   label="Mensagens enviadas"
                   value={String(analytics.messagesSent)}
                   hint="Total de mensagens geradas pela IA"
+                  emptyHint="Será atualizado no primeiro envio da IA."
                 />
               </div>
 
