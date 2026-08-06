@@ -77,7 +77,7 @@ function MetricCard({
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mt-4">
         {label}
       </p>
-      <MetricSlot loading={loading} empty={empty} hint={emptyHint} className="mt-2 min-h-[62px]">
+      <MetricSlot cacheKey={`sdr:${label}`} loading={loading} empty={empty} hint={emptyHint} className="mt-2 min-h-[62px]">
         <p className="text-2xl sm:text-3xl font-bold">{value}</p>
         {hint && <p className="text-xs text-muted-foreground mt-1.5">{hint}</p>}
       </MetricSlot>

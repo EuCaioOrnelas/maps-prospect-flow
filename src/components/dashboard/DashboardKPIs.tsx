@@ -34,7 +34,7 @@ function KPICard({ title, value, icon, change, changeLabel, suffix, subtitle, su
           <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
             {title}
           </p>
-          <MetricSlot loading={loading} empty={empty} hint={emptyHint} className="mt-1 min-h-[52px]">
+          <MetricSlot cacheKey={`dashboard:${title}`} loading={loading} empty={empty} hint={emptyHint} className="mt-1 min-h-[52px]">
             <>
               <div className="flex items-baseline gap-2">
                 <p className="text-2xl font-bold text-foreground leading-tight">

@@ -94,6 +94,7 @@ export const ScoreDashboardTab = () => {
                     <p className="text-xs text-muted-foreground">{kpi.label}</p>
                   )}
                   <MetricSlot
+                    cacheKey={`score:${kpi.label}`}
                     empty={isMetricEmpty(kpi.value)}
                     hint={kpi.emptyHint}
                     size="sm"

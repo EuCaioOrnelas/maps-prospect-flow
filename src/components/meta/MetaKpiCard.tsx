@@ -74,7 +74,7 @@ export function MetaKpiCard({ label, value, delta, hint, icon, empty = false, em
         </p>
       </div>
 
-      <MetricSlot loading={loading} empty={isEmpty} hint={emptyHint} className="mt-3 min-h-[44px]">
+      <MetricSlot cacheKey={`meta:${label}`} loading={loading} empty={isEmpty} hint={emptyHint} className="mt-3 min-h-[44px]">
         <p className="tabular-nums truncate leading-none text-[26px] font-bold text-foreground tracking-tight">
           {value}
         </p>

@@ -1,4 +1,6 @@
+import React from "react";
 import { cn } from "@/lib/utils";
+import { useMetricStateCache } from "@/hooks/useMetricStateCache";
 
 /**
  * Padrão único de Empty State para cards de indicadores.
@@ -98,6 +100,12 @@ interface MetricSlotProps {
   size?: "sm" | "md";
   /** Classe aplicada ao contêiner (use min-h para reservar o espaço). */
   className?: string;
+  /**
+   * Chave estável do indicador. Quando informada, o estado (vazio x com dados)
+   * é cacheado localmente e no backend, então na próxima abertura — em qualquer
+   * dispositivo — o card já assume o estado correto durante o carregamento.
+   */
+  cacheKey?: string;
   /** Conteúdo real do indicador. */
   children?: React.ReactNode;
 }
@@ -113,9 +121,26 @@ export function MetricSlot({
   align = "left",
   size = "md",
   className,
+  cacheKey,
   children,
 }: MetricSlotProps) {
-  const state = loading ? "loading" : empty ? "empty" : "ready";
+  const { getCached, report } = useMetricStateCache();
+  const cached = getCached(cacheKey);
+
+  React.useEffect(() => {
+    if (loading || !cacheKey) return;
+    report(cacheKey, !empty);
+  }, [loading, empty, cacheKey, report]);
+
+  // Durante o carregamento, se o cache indica que o indicador estava vazio,
+  // mostramos direto o empty state (sem piscar skeleton → vazio).
+  const state = loading
+    ? cached === false
+      ? "empty"
+      : "loading"
+    : empty
+      ? "empty"
+      : "ready";
 
   return (
     <div className={cn("min-w-0", className)}>
@@ -134,3 +159,4 @@ export function MetricSlot({
     </div>
   );
 }
+
