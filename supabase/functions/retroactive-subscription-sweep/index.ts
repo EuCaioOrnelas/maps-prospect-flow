@@ -1,6 +1,37 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isDowngradeProtected, logDowngrade } from "../_shared/downgrade-guard.ts";
+// ===== INLINED downgrade guard (sem _shared) =====
+async function isDowngradeProtected(supabase: any, userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc("is_downgrade_protected", { _user_id: userId });
+    if (error) {
+      console.error("[downgrade-guard] rpc error", error.message);
+      return true; // fail-safe: não rebaixa
+    }
+    return data === true;
+  } catch (e) {
+    console.error("[downgrade-guard] exception", String(e));
+    return true;
+  }
+}
+
+async function logDowngrade(
+  supabase: any,
+  params: { userId: string; reason: string; previousPlan?: string | null; newPlan?: string; metadata?: Record<string, unknown> },
+): Promise<void> {
+  try {
+    await supabase.rpc("log_plan_downgrade", {
+      _user_id: params.userId,
+      _reason: params.reason,
+      _previous_plan: params.previousPlan ?? null,
+      _new_plan: params.newPlan ?? "free",
+      _metadata: params.metadata ?? {},
+    });
+  } catch (e) {
+    console.error("[downgrade-guard] audit failed", String(e));
+  }
+}
+// ===== end inlined guard =====
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

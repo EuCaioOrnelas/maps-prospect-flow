@@ -1,5 +1,22 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { logDowngrade } from "../_shared/downgrade-guard.ts";
+// ===== INLINED downgrade audit helper (sem _shared) =====
+async function logDowngrade(
+  supabase: any,
+  params: { userId: string; reason: string; previousPlan?: string | null; newPlan?: string; metadata?: Record<string, unknown> },
+): Promise<void> {
+  try {
+    await supabase.rpc("log_plan_downgrade", {
+      _user_id: params.userId,
+      _reason: params.reason,
+      _previous_plan: params.previousPlan ?? null,
+      _new_plan: params.newPlan ?? "free",
+      _metadata: params.metadata ?? {},
+    });
+  } catch (e) {
+    console.error("[downgrade-guard] audit failed", String(e));
+  }
+}
+// ===== end inlined guard =====
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
