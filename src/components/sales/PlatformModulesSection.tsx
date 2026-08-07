@@ -1157,13 +1157,8 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           reversed && "lg:[&>*:first-child]:order-2",
         )}
       >
-        {/* Texto — entra pelo lado oposto ao mockup */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.7 }}
-        >
+        {/* O texto acompanha o card; somente o mockup inicia depois da entrada. */}
+        <div>
           <div className="inline-flex items-center gap-2.5 mb-4 rounded-full border border-border bg-card pl-1.5 pr-3.5 py-1.5 shadow-[0_6px_18px_-14px_hsl(var(--foreground)/0.4)]">
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
               <Icon size={15} className="text-primary-foreground" />
@@ -1180,34 +1175,25 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           </p>
           <ul className="grid sm:grid-cols-2 gap-2">
             {item.benefits.map((b, bi) => (
-              <motion.li
+              <li
                 key={b}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.4 }}
-                transition={{ duration: 0.4, ease: "easeOut", delay: 0.9 + bi * 0.07 }}
                 className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card px-3 py-2"
               >
                 <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center">
                   <Check size={11} className="text-primary-foreground" strokeWidth={3.5} />
                 </span>
                 <span className="text-[13px] font-medium text-foreground/90 leading-snug">{b}</span>
-              </motion.li>
+              </li>
             ))}
           </ul>
-        </motion.div>
+        </div>
 
         {/* Mockup — entra pelo lado contrário do texto */}
-        <motion.div
-          className="w-full"
-          initial={{ opacity: 0, y: 20, scale: 0.97 }}
-          animate={entered ? { opacity: 1, y: 0, scale: 1 } : {}}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        >
+        <div className="w-full">
           <MockStage>
             {entered ? <Mock /> : <div className="h-[447px]" aria-hidden="true" />}
           </MockStage>
-        </motion.div>
+        </div>
 
       </div>
 
