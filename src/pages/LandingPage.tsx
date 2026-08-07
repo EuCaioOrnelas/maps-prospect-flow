@@ -27,6 +27,11 @@ const FeaturesOverviewSection = lazy(() =>
 const WhyItWorksSection = lazy(() =>
   import("@/components/sales/WhyItWorksSection").then((m) => ({ default: m.WhyItWorksSection })),
 );
+const PlatformModulesSection = lazy(() =>
+  import("@/components/sales/PlatformModulesSection").then((m) => ({
+    default: m.PlatformModulesSection,
+  })),
+);
 const TestimonialsSection = lazy(() =>
   import("@/components/landing/TestimonialsSection").then((m) => ({
     default: m.TestimonialsSection,
@@ -155,6 +160,7 @@ const LandingPage = () => {
             <MechanismSection />
             <FeaturesOverviewSection />
             <WhyItWorksSection />
+            <PlatformModulesSection />
             <TestimonialsSection />
             <PricingSection />
             <FAQSection />
