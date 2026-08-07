@@ -428,46 +428,85 @@ const AgendaMock = () => (
 /* ---------------------------- 4. Campanhas ---------------------------- */
 const CampaignMock = () => (
   <MockShell title="Campanhas — API Oficial Meta" badge="enviando">
-    <div className="grid grid-cols-4 gap-2 mb-3">
+    <Reveal className="flex items-center gap-1.5 mb-2.5">
+      <Pill tone="primary">
+        <ShieldCheck size={9} /> WABA verificada
+      </Pill>
+      <Pill tone="outline">Qualidade: Alta</Pill>
+      <Pill tone="info">Tier 10k/dia</Pill>
+    </Reveal>
+
+    <div className="grid grid-cols-4 gap-1.5 mb-2.5">
       {[
         { l: "Enviadas", v: "1.400", d: "" },
         { l: "Entregues", v: "1.248", d: "89%" },
         { l: "Lidas", v: "1.032", d: "74%" },
         { l: "Respostas", v: "317", d: "23%" },
-      ].map((k) => (
-        <Row key={k.l} className="text-center py-2">
-          <p className="text-sm font-bold text-foreground leading-none">{k.v}</p>
-          <p className="text-[8px] text-muted-foreground uppercase tracking-wide mt-1">{k.l}</p>
-          {k.d && <p className="text-[9px] font-bold text-primary mt-0.5">{k.d}</p>}
-        </Row>
+      ].map((k, i) => (
+        <Reveal key={k.l} delay={0.08 * i} y={12}>
+          <Row className="text-center py-2 h-full">
+            <p className="text-sm font-bold text-foreground leading-none">{k.v}</p>
+            <p className="text-[8px] text-muted-foreground uppercase tracking-wide mt-1">{k.l}</p>
+            {k.d && <p className="text-[9px] font-bold text-primary mt-0.5">{k.d}</p>}
+          </Row>
+        </Reveal>
       ))}
     </div>
 
-    <div className="space-y-2">
-      {[
-        { n: "Reativação — Base fria", s: "Concluída", tone: "primary" as const, p: 100, t: "template_reativacao_v2" },
-        { n: "Oferta Julho — ICP contábil", s: "Enviando", tone: "amber" as const, p: 62, t: "oferta_julho_pt_br" },
-      ].map((c) => (
-        <Row key={c.n} className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Send size={13} className="text-primary" />
+    {/* Preview do template + envio em andamento */}
+    <div className="grid grid-cols-5 gap-2">
+      <Reveal delay={0.3} x={-12} className="col-span-2">
+        <div className="h-full rounded-xl border border-border/60 bg-muted/30 p-2 flex flex-col gap-1.5">
+          <p className="text-[8px] font-bold uppercase tracking-wide text-muted-foreground">
+            Pré-visualização
+          </p>
+          <div className="rounded-lg rounded-tl-sm bg-card border border-border/60 p-2 space-y-1">
+            <p className="text-[9px] font-semibold text-foreground leading-snug">
+              Olá, {"{{nome}}"} 👋
+            </p>
+            <p className="text-[9px] text-muted-foreground leading-snug">
+              Vi que a {"{{empresa}}"} atua em {"{{nicho}}"}. Posso te mostrar como gerar mais
+              oportunidades?
+            </p>
+            <div className="rounded-md bg-primary/10 text-primary text-[8px] font-bold text-center py-1">
+              Quero saber mais
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold text-foreground truncate">{c.n}</p>
-              <p className="text-[9px] text-muted-foreground font-mono truncate">{c.t}</p>
-            </div>
-            <Pill tone={c.tone}>{c.s}</Pill>
           </div>
-          <Bar value={c.p} tone={c.p === 100 ? "primary" : "amber"} />
-        </Row>
-      ))}
-      <div className="flex items-center gap-1.5 pt-0.5">
-        <Pill tone="info">
-          <ShieldCheck size={9} /> Conta verificada Meta
-        </Pill>
-        <Pill tone="outline">Qualidade: Alta</Pill>
-        <Pill tone="outline">Delay seguro</Pill>
+          <div className="flex flex-wrap gap-1 mt-auto">
+            <Pill tone="outline">3 variáveis</Pill>
+            <Pill tone="primary">Aprovado</Pill>
+          </div>
+        </div>
+      </Reveal>
+
+      <div className="col-span-3 space-y-1.5">
+        {[
+          { n: "Reativação — Base fria", s: "Concluída", tone: "primary" as const, p: 100, t: "template_reativacao_v2", d: "620/620" },
+          { n: "Oferta Julho — ICP contábil", s: "Enviando", tone: "amber" as const, p: 62, t: "oferta_julho_pt_br", d: "484/780" },
+          { n: "Convite Webinar", s: "Agendada", tone: "info" as const, p: 0, t: "convite_webinar_pt", d: "0/1.200" },
+        ].map((c, i) => (
+          <Reveal key={c.n} delay={0.35 + i * 0.1} x={12}>
+            <Row className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Send size={13} className="text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold text-foreground truncate">{c.n}</p>
+                  <p className="text-[9px] text-muted-foreground font-mono truncate">{c.t}</p>
+                </div>
+                <Pill tone={c.tone}>{c.s}</Pill>
+              </div>
+              <Bar value={c.p} tone={c.p === 100 ? "primary" : "amber"} delay={0.5 + i * 0.1} />
+              <div className="flex items-center justify-between text-[9px] text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <CheckCheck size={9} className="text-sky-500" /> {c.d}
+                </span>
+                <span>delay seguro 8s</span>
+              </div>
+            </Row>
+          </Reveal>
+        ))}
       </div>
     </div>
   </MockShell>
@@ -475,138 +514,244 @@ const CampaignMock = () => (
 
 /* ---------------------------- 5. CRM ---------------------------- */
 const CrmMock = () => (
-  <MockShell title="CRM Inteligente — Pipeline" badge="score IA">
-    <div className="flex items-center gap-2 mb-3">
-      <Pill tone="primary">
-        <TrendingUp size={9} /> R$ 184.000 em negociação
-      </Pill>
-      <Pill tone="outline">12 leads</Pill>
-    </div>
-    <div className="grid grid-cols-3 gap-2">
+  <MockShell title="CRM Inteligente — Pipeline comercial" badge="score IA">
+    <Reveal className="grid grid-cols-3 gap-1.5 mb-2.5">
+      {[
+        { l: "Em negociação", v: "R$ 184k" },
+        { l: "Taxa de ganho", v: "34%" },
+        { l: "Ciclo médio", v: "11 dias" },
+      ].map((k) => (
+        <Row key={k.l} className="py-1.5 text-center">
+          <p className="text-[11px] font-bold text-foreground leading-none">{k.v}</p>
+          <p className="text-[8px] uppercase tracking-wide text-muted-foreground mt-1">{k.l}</p>
+        </Row>
+      ))}
+    </Reveal>
+
+    <div className="grid grid-cols-3 gap-1.5">
       {[
         {
           c: "Prospectado",
           n: 5,
+          v: "R$ 32k",
           items: [
-            { n: "Alpha Contab.", s: 92, v: "R$ 4.9k", tag: "Quente" },
-            { n: "Vetor Eng.", s: 61, v: "R$ 2.1k", tag: "" },
+            { n: "Alpha Contab.", s: 92, v: "R$ 4.9k", tag: "Quente", who: "RS", when: "hoje" },
+            { n: "Vetor Eng.", s: 61, v: "R$ 2.1k", tag: "Novo", who: "JM", when: "2d" },
           ],
         },
         {
           c: "Em negociação",
           n: 4,
-          items: [{ n: "Nexus Odonto", s: 88, v: "R$ 7.4k", tag: "Proposta" }],
+          v: "R$ 96k",
+          items: [
+            { n: "Nexus Odonto", s: 88, v: "R$ 7.4k", tag: "Proposta", who: "AC", when: "1d" },
+            { n: "Lumen Tech", s: 76, v: "R$ 5.2k", tag: "Reunião", who: "RS", when: "3d" },
+          ],
         },
         {
           c: "Fechamento",
           n: 3,
-          items: [{ n: "Grupo Orion", s: 95, v: "R$ 12k", tag: "Contrato" }],
+          v: "R$ 56k",
+          items: [
+            { n: "Grupo Orion", s: 95, v: "R$ 12k", tag: "Contrato", who: "AC", when: "hoje" },
+            { n: "Delta Log", s: 84, v: "R$ 8.6k", tag: "Assinar", who: "JM", when: "1d" },
+          ],
         },
-      ].map((col) => (
-        <div key={col.c} className="space-y-2">
-          <div className="flex items-center gap-1">
-            <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground truncate">
-              {col.c}
-            </p>
-            <span className="text-[8px] font-bold text-muted-foreground bg-muted rounded px-1">
-              {col.n}
-            </span>
-          </div>
-          {col.items.map((it) => (
-            <Row key={it.n} className="space-y-1.5">
-              <div className="flex items-center gap-1.5">
-                <span className="w-4 h-4 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Building2 size={9} className="text-primary" />
-                </span>
-                <p className="text-[10px] font-semibold text-foreground truncate">{it.n}</p>
-              </div>
-              <p className="text-[10px] font-bold text-primary">{it.v}</p>
-              <Bar value={it.s} tone={it.s > 85 ? "primary" : "amber"} />
+      ].map((col, ci) => (
+        <div key={col.c} className="space-y-1.5">
+          <Reveal delay={0.05 * ci}>
+            <div className="rounded-lg bg-muted/50 px-1.5 py-1">
               <div className="flex items-center gap-1">
-                <Pill tone={it.s > 85 ? "primary" : "muted"}>Score {it.s}</Pill>
-                {it.tag && <Pill tone="outline">{it.tag}</Pill>}
+                <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground truncate">
+                  {col.c}
+                </p>
+                <span className="ml-auto text-[8px] font-bold text-muted-foreground bg-background rounded px-1">
+                  {col.n}
+                </span>
               </div>
-            </Row>
+              <p className="text-[9px] font-bold text-primary">{col.v}</p>
+            </div>
+          </Reveal>
+          {col.items.map((it, ii) => (
+            <Reveal key={it.n} delay={0.15 + ci * 0.08 + ii * 0.1} y={14}>
+              <Row className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Building2 size={9} className="text-primary" />
+                  </span>
+                  <p className="text-[10px] font-semibold text-foreground truncate">{it.n}</p>
+                </div>
+                <p className="text-[10px] font-bold text-primary">{it.v}</p>
+                <Bar value={it.s} tone={it.s > 85 ? "primary" : "amber"} delay={0.3 + ci * 0.08} />
+                <div className="flex items-center gap-1">
+                  <Pill tone={it.s > 85 ? "primary" : "muted"}>{it.s}</Pill>
+                  <Pill tone="outline">{it.tag}</Pill>
+                </div>
+                <div className="flex items-center gap-1 text-[8px] text-muted-foreground">
+                  <span className="w-3.5 h-3.5 rounded-full bg-muted flex items-center justify-center font-bold">
+                    {it.who}
+                  </span>
+                  <Clock size={8} /> {it.when}
+                </div>
+              </Row>
+            </Reveal>
           ))}
         </div>
       ))}
     </div>
+
+    <Reveal delay={0.6} className="mt-2">
+      <Row className="flex items-center gap-1.5 py-1.5 border-dashed">
+        <Sparkles size={11} className="text-primary flex-shrink-0" />
+        <p className="text-[9px] text-muted-foreground leading-snug">
+          IA priorizou <span className="font-semibold text-foreground">Grupo Orion</span> — maior
+          intenção de compra nas últimas 48h
+        </p>
+      </Row>
+    </Reveal>
   </MockShell>
 );
 
 /* ---------------------------- 6. Chat ---------------------------- */
 const ChatMock = () => (
-  <MockShell title="Central de Conversas" badge="3 online">
-    <div className="grid grid-cols-5 gap-3">
-      <div className="col-span-2 space-y-2">
-        <div className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/70 px-2 py-1.5 mb-1">
+  <MockShell title="Central de Conversas — WhatsApp" badge="3 online">
+    <div className="grid grid-cols-5 gap-2">
+      {/* Lista de conversas */}
+      <div className="col-span-2 space-y-1.5">
+        <Reveal className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/70 px-2 py-1.5">
           <Search size={10} className="text-muted-foreground" />
           <span className="text-[9px] text-muted-foreground">Buscar conversa</span>
-        </div>
+        </Reveal>
+        <Reveal delay={0.05} className="flex gap-1">
+          <Pill tone="primary">Todas</Pill>
+          <Pill tone="outline">IA</Pill>
+          <Pill tone="outline">Humano</Pill>
+        </Reveal>
         {[
-          { n: "Marcos S.", m: "Vocês atendem fora de SP?", u: 2, t: "09:41" },
-          { n: "Julia R.", m: "Recebi a proposta, obrigada!", u: 0, t: "09:12" },
-          { n: "Pedro L.", m: "Podemos falar amanhã?", u: 1, t: "Ontem" },
+          { n: "Marcos S.", m: "Vocês atendem fora de SP?", u: 2, t: "09:41", tag: "IA" },
+          { n: "Julia R.", m: "Recebi a proposta, obrigada!", u: 0, t: "09:12", tag: "" },
+          { n: "Pedro L.", m: "Podemos falar amanhã?", u: 1, t: "Ontem", tag: "Humano" },
+          { n: "Grupo Orion", m: "Enviei o contrato assinado", u: 0, t: "Ontem", tag: "" },
         ].map((c, i) => (
-          <Row
-            key={c.n}
-            className={cn("flex items-center gap-2", i === 0 && "border-primary/30 bg-primary/[0.07]")}
-          >
-            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Users size={11} className="text-primary" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold text-foreground truncate">{c.n}</p>
-              <p className="text-[9px] text-muted-foreground truncate">{c.m}</p>
-            </div>
-            {c.u > 0 && (
-              <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[8px] font-bold flex items-center justify-center flex-shrink-0">
-                {c.u}
-              </span>
-            )}
-          </Row>
+          <Reveal key={c.n} delay={0.12 + i * 0.07} x={-10}>
+            <Row
+              className={cn(
+                "flex items-center gap-2 py-2",
+                i === 0 && "border-primary/30 bg-primary/[0.07]",
+              )}
+            >
+              <div className="relative flex-shrink-0">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Users size={11} className="text-primary" />
+                </div>
+                {i === 0 && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary ring-2 ring-card" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1">
+                  <p className="text-[10px] font-semibold text-foreground truncate flex-1">{c.n}</p>
+                  <span className="text-[8px] text-muted-foreground flex-shrink-0">{c.t}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <p className="text-[9px] text-muted-foreground truncate flex-1">{c.m}</p>
+                  {c.u > 0 && (
+                    <span className="w-3.5 h-3.5 rounded-full bg-primary text-primary-foreground text-[8px] font-bold flex items-center justify-center flex-shrink-0">
+                      {c.u}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </Row>
+          </Reveal>
         ))}
       </div>
 
-      <div className="col-span-3 flex flex-col gap-2">
-        <div className="flex items-center gap-2 pb-2 border-b border-border/60">
+      {/* Janela da conversa */}
+      <div className="col-span-3 flex flex-col rounded-xl border border-border/60 bg-background/50 overflow-hidden">
+        <div className="flex items-center gap-2 px-2 py-1.5 border-b border-border/60 bg-card">
           <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
             <Users size={11} className="text-primary" />
           </div>
-          <p className="text-[10px] font-semibold text-foreground">Marcos S.</p>
-          <Pill tone="outline">
-            <Tag size={9} /> VIP
-          </Pill>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold text-foreground truncate">Marcos S.</p>
+            <p className="text-[8px] text-primary">digitando…</p>
+          </div>
+          <div className="ml-auto flex items-center gap-1">
+            <Pill tone="outline">
+              <Tag size={9} /> VIP
+            </Pill>
+          </div>
         </div>
-        <div className="rounded-2xl rounded-bl-sm bg-muted px-3 py-2 text-[11px] text-muted-foreground max-w-[92%]">
-          Vocês atendem fora de SP?
+
+        <div className="flex-1 p-2 space-y-1.5 [background-image:radial-gradient(hsl(var(--border))_1px,transparent_1px)] [background-size:12px_12px]">
+          <Reveal delay={0.2} y={8}>
+            <div className="rounded-2xl rounded-bl-sm bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground max-w-[88%] w-fit">
+              Oi! Vocês atendem fora de SP?
+              <span className="block text-right text-[8px] text-muted-foreground/70 mt-0.5">09:40</span>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.45} y={8}>
+            <div className="ml-auto w-fit max-w-[88%] rounded-2xl rounded-br-sm bg-primary/12 ring-1 ring-inset ring-primary/15 px-2.5 py-1.5 text-[10px] text-foreground">
+              Atendemos todo o Brasil 🇧🇷 Quer falar com um especialista hoje?
+              <span className="mt-0.5 flex items-center justify-end gap-1 text-[8px] text-muted-foreground">
+                09:42 <CheckCheck size={9} className="text-sky-500" />
+              </span>
+            </div>
+          </Reveal>
+
+          <Reveal delay={0.75} y={8}>
+            <div className="rounded-2xl rounded-bl-sm bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground max-w-[88%] w-fit">
+              Pode ser hoje às 16h?
+              <span className="block text-right text-[8px] text-muted-foreground/70 mt-0.5">09:43</span>
+            </div>
+          </Reveal>
+
+          <div className="w-fit rounded-2xl rounded-bl-sm bg-muted px-2.5 py-2">
+            <TypingDots delay={1.0} />
+          </div>
+
+          <Reveal delay={1.5} y={8}>
+            <div className="ml-auto w-fit max-w-[88%] rounded-2xl rounded-br-sm bg-primary/12 ring-1 ring-inset ring-primary/15 px-2.5 py-1.5 text-[10px] text-foreground">
+              Fechado! Reunião confirmada para hoje 16h 📅
+              <span className="mt-0.5 flex items-center justify-end gap-1 text-[8px] text-muted-foreground">
+                09:43 <CheckCheck size={9} className="text-sky-500" />
+              </span>
+            </div>
+          </Reveal>
         </div>
-        <div className="rounded-2xl rounded-br-sm bg-primary/12 ring-1 ring-inset ring-primary/15 px-3 py-2 text-[11px] text-foreground ml-auto max-w-[92%]">
-          Atendemos todo o Brasil 🇧🇷 Quer falar com um especialista hoje?
-          <span className="mt-1 flex items-center justify-end gap-1 text-[8px] text-muted-foreground">
-            09:42 <CheckCheck size={9} className="text-sky-500" />
-          </span>
-        </div>
-        <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-2.5 py-1.5">
-          <Smile size={11} className="text-muted-foreground" />
-          <Paperclip size={11} className="text-muted-foreground" />
-          <span className="text-[9px] text-muted-foreground flex-1">Digite uma mensagem…</span>
-          <span className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-            <Send size={9} className="text-primary-foreground" />
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          <Pill tone="primary">
-            <Bot size={9} /> IA respondeu
-          </Pill>
-          <Pill tone="amber">
-            <UserCheck size={9} /> Transferir p/ humano
-          </Pill>
+
+        <div className="p-2 border-t border-border/60 bg-card space-y-1.5">
+          <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-2 py-1.5">
+            <Smile size={11} className="text-muted-foreground" />
+            <Paperclip size={11} className="text-muted-foreground" />
+            <span className="text-[9px] text-muted-foreground flex-1">Digite uma mensagem…</span>
+            <motion.span
+              className="w-5 h-5 rounded-full bg-primary flex items-center justify-center"
+              initial={{ scale: 0.6, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={VIEW}
+              transition={{ duration: 0.4, delay: 1.7, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Send size={9} className="text-primary-foreground" />
+            </motion.span>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            <Pill tone="primary">
+              <Bot size={9} /> IA respondeu
+            </Pill>
+            <Pill tone="amber">
+              <UserCheck size={9} /> Transferir p/ humano
+            </Pill>
+            <Pill tone="outline">Resposta rápida</Pill>
+          </div>
         </div>
       </div>
     </div>
   </MockShell>
 );
+
 
 /* ---------------------------- 7. Fluxos ---------------------------- */
 const FlowNode = ({
