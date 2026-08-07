@@ -780,14 +780,14 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       />
       <div
         className={cn(
-          "relative z-10 grid items-center gap-6 lg:gap-12 lg:grid-cols-2",
+          "relative z-10 w-full grid items-center gap-6 lg:gap-12 lg:grid-cols-2",
           reversed && "lg:[&>*:first-child]:order-2",
         )}
       >
         {/* Texto */}
         <div>
-          <div className="inline-flex items-center gap-2.5 mb-4 rounded-full border border-primary/20 bg-primary/[0.08] pl-1.5 pr-3.5 py-1.5">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-[0_6px_16px_-6px_hsl(var(--primary))]">
+          <div className="inline-flex items-center gap-2.5 mb-4 rounded-full border border-border bg-card pl-1.5 pr-3.5 py-1.5 shadow-[0_6px_18px_-14px_hsl(var(--foreground)/0.4)]">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
               <Icon size={15} className="text-primary-foreground" />
             </div>
             <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
@@ -804,9 +804,9 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             {item.benefits.map((b) => (
               <li
                 key={b}
-                className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-background/40 px-3 py-2"
+                className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card px-3 py-2"
               >
-                <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center shadow-[0_4px_10px_-4px_hsl(var(--primary))]">
+                <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center">
                   <Check size={11} className="text-primary-foreground" strokeWidth={3.5} />
                 </span>
                 <span className="text-[13px] font-medium text-foreground/90 leading-snug">{b}</span>
@@ -817,9 +817,12 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
 
         {/* Mockup */}
         <div className="w-full">
-          <Mock />
+          <MockStage>
+            <Mock />
+          </MockStage>
         </div>
       </div>
+
     </motion.article>
   );
 };
