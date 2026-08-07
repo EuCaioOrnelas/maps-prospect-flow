@@ -138,27 +138,44 @@ const Reveal = ({
   </motion.div>
 );
 
-/* Balão de "digitando" que some após aparecer a mensagem (entrada apenas) */
-const TypingDots = ({ delay = 0 }: { delay?: number }) => (
-  <motion.span
-    className="inline-flex items-center gap-1"
-    initial={{ opacity: 0 }}
-    whileInView={{ opacity: [0, 1, 1, 0] }}
-    viewport={VIEW}
-    transition={{ duration: 1.6, delay, times: [0, 0.15, 0.75, 1] }}
+/* Viewport para animações em loop: repetem enquanto visíveis, param ao sair */
+const LOOP_VIEW = { once: false, amount: 0.2 } as const;
+
+/* Fundo de conversa (padrão tipo WhatsApp) para áreas de mensagens */
+const ChatWallpaper = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
+  <div
+    className={cn(
+      "relative rounded-xl border border-border/50 bg-muted/25 p-2",
+      "[background-image:radial-gradient(hsl(var(--primary)/0.10)_1px,transparent_1px)] [background-size:13px_13px]",
+      className,
+    )}
   >
+    {children}
+  </div>
+);
+
+/* Balão de "digitando" — permanece na tela e pulsa em loop enquanto visível */
+const TypingDots = ({ delay = 0 }: { delay?: number }) => (
+  <span className="inline-flex items-center gap-1">
     {[0, 1, 2].map((i) => (
       <motion.span
         key={i}
         className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60"
-        initial={{ y: 0 }}
-        whileInView={{ y: [0, -3, 0, -3, 0] }}
-        viewport={VIEW}
-        transition={{ duration: 1.2, delay: delay + i * 0.12 }}
+        initial={{ y: 0, opacity: 0.5 }}
+        whileInView={{ y: [0, -3, 0], opacity: [0.5, 1, 0.5] }}
+        viewport={LOOP_VIEW}
+        transition={{
+          duration: 1,
+          delay: delay + i * 0.14,
+          repeat: Infinity,
+          repeatType: "loop",
+          ease: "easeInOut",
+        }}
       />
     ))}
-  </motion.span>
+  </span>
 );
+
 
 const Bar = ({ value, tone = "primary", delay = 0 }: { value: number; tone?: "primary" | "amber"; delay?: number }) => (
   <div className="h-1.5 rounded-full bg-muted overflow-hidden">
