@@ -82,55 +82,55 @@ export const WhyItWorksSection = () => {
  })}
  </div>
 
- {/* Bloco de resultados */}
- <motion.div
- initial={{ opacity: 0, y: 20 }}
- whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true, amount: 0.2 }}
- transition={{ duration: 0.5, delay: 0.1 }}
- className="relative mt-4 sm:mt-6 overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-5 sm:p-8 md:p-10"
- >
- <div className="absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] soft-glow pointer-events-none" />
- <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] soft-glow pointer-events-none" />
+  {/* Bloco de resultados */}
+  <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true, amount: 0.2 }}
+  transition={{ duration: 0.5, delay: 0.1 }}
+  className="relative mt-4 sm:mt-6 overflow-hidden rounded-card border border-white/20 bg-primary p-5 sm:p-8 md:p-10 shadow-[0_24px_60px_-30px_hsl(var(--primary)/0.5)]"
+  >
+  <div className="absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-white/10 pointer-events-none" />
+  <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-white/10 pointer-events-none" />
 
- <div className="relative z-10">
- <div className="text-center mb-6 sm:mb-8">
- <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-primary/80 bg-primary/5 px-2.5 py-0.5 rounded-full mb-3 uppercase tracking-wider">
- <Sparkles size={11} />
- Resultados na prática
- </span>
- <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-2">
- O que isso muda no dia a dia
- </h3>
- <p className="text-sm text-muted-foreground max-w-xl mx-auto">
- Cada etapa do processo foi desenhada para eliminar gargalos e maximizar conversão.
- </p>
- </div>
+  <div className="relative z-10">
+  <div className="text-center mb-6 sm:mb-8">
+  <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-white/90 bg-white/15 px-2.5 py-0.5 rounded-card mb-3 uppercase tracking-wider">
+  <Sparkles size={11} className="text-white" />
+  Resultados na prática
+  </span>
+  <h3 className="font-display text-xl sm:text-2xl font-bold text-white mb-2">
+  O que isso muda no dia a dia
+  </h3>
+  <p className="text-sm text-white/80 max-w-xl mx-auto">
+  Cada etapa do processo foi desenhada para eliminar gargalos e maximizar conversão.
+  </p>
+  </div>
 
- <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
- {results.map((result, index) => (
- <motion.div
- key={index}
- initial={{ opacity: 0, y: 16 }}
- whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true, amount: 0.2 }}
- transition={{ duration: 0.4, delay: index * 0.08 }}
- className="text-center p-3 sm:p-5 rounded-xl border border-border/40 bg-background/40 hover:border-primary/30 hover:bg-card/60 transition-all duration-300"
- >
- <span className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-primary block mb-1">
- {result.metric}
- </span>
- <span className="text-xs sm:text-sm font-semibold text-foreground block mb-1.5">
- {result.label}
- </span>
- <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
- {result.description}
- </p>
- </motion.div>
- ))}
- </div>
- </div>
- </motion.div>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+  {results.map((result, index) => (
+  <motion.div
+  key={index}
+  initial={{ opacity: 0, y: 16 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true, amount: 0.2 }}
+  transition={{ duration: 0.4, delay: index * 0.08 }}
+  className="text-center p-3 sm:p-5 rounded-card border border-white/20 bg-white/10 hover:bg-white/15 transition-all duration-300"
+  >
+  <span className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white block mb-1">
+  {result.metric}
+  </span>
+  <span className="text-xs sm:text-sm font-semibold text-white/90 block mb-1.5">
+  {result.label}
+  </span>
+  <p className="text-[11px] sm:text-xs text-white/80 leading-relaxed">
+  {result.description}
+  </p>
+  </motion.div>
+  ))}
+  </div>
+  </div>
+  </motion.div>
  </div>
  </section>
  );
