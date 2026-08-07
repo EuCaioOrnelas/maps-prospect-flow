@@ -755,21 +755,21 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 32, scale: 0.96 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true, amount: 0.2, margin: "0px 0px -80px 0px" }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      style={{ contentVisibility: "auto", containIntrinsicSize: "480px" } as React.CSSProperties}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.15, margin: "0px 0px -80px 0px" }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+      style={{ contentVisibility: "auto", containIntrinsicSize: "560px" } as React.CSSProperties}
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-primary/15 p-5 sm:p-8 lg:p-10",
-        "shadow-[0_1px_0_0_hsl(var(--primary)/0.08)_inset,0_20px_60px_-40px_hsl(var(--primary)/0.5)]",
-        "hover:border-primary/30 hover:shadow-[0_1px_0_0_hsl(var(--primary)/0.12)_inset,0_30px_80px_-40px_hsl(var(--primary)/0.65)]",
-        "transition-all duration-500 will-change-auto",
+        "relative overflow-hidden rounded-3xl border border-border p-5 sm:p-8 lg:p-10",
+        "w-full lg:min-h-[560px] flex items-center",
+        "shadow-[0_18px_50px_-40px_hsl(var(--foreground)/0.35)]",
         reversed
           ? "bg-[linear-gradient(300deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]"
           : "bg-[linear-gradient(60deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]",
       )}
     >
+
       <div
         className={cn(
           "absolute -top-24 w-72 h-72 rounded-full pointer-events-none opacity-[0.5]",
