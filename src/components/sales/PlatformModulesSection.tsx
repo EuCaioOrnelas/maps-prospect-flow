@@ -66,9 +66,10 @@ const MockShell = ({
         </span>
       )}
     </div>
-    <div className="p-3 sm:p-3.5 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] min-h-[356px] flex flex-col justify-start">
+    <div className="p-3 sm:p-3.5 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] h-[364px] overflow-hidden flex flex-col justify-start">
       {children}
     </div>
+
   </div>
 );
 
@@ -137,27 +138,44 @@ const Reveal = ({
   </motion.div>
 );
 
-/* Balão de "digitando" que some após aparecer a mensagem (entrada apenas) */
-const TypingDots = ({ delay = 0 }: { delay?: number }) => (
-  <motion.span
-    className="inline-flex items-center gap-1"
-    initial={{ opacity: 0 }}
-    whileInView={{ opacity: [0, 1, 1, 0] }}
-    viewport={VIEW}
-    transition={{ duration: 1.6, delay, times: [0, 0.15, 0.75, 1] }}
+/* Viewport para animações em loop: repetem enquanto visíveis, param ao sair */
+const LOOP_VIEW = { once: false, amount: 0.2 } as const;
+
+/* Fundo de conversa (padrão tipo WhatsApp) para áreas de mensagens */
+const ChatWallpaper = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
+  <div
+    className={cn(
+      "relative rounded-xl border border-border/50 bg-muted/25 p-2",
+      "[background-image:radial-gradient(hsl(var(--primary)/0.10)_1px,transparent_1px)] [background-size:13px_13px]",
+      className,
+    )}
   >
+    {children}
+  </div>
+);
+
+/* Balão de "digitando" — permanece na tela e pulsa em loop enquanto visível */
+const TypingDots = ({ delay = 0 }: { delay?: number }) => (
+  <span className="inline-flex items-center gap-1">
     {[0, 1, 2].map((i) => (
       <motion.span
         key={i}
         className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60"
-        initial={{ y: 0 }}
-        whileInView={{ y: [0, -3, 0, -3, 0] }}
-        viewport={VIEW}
-        transition={{ duration: 1.2, delay: delay + i * 0.12 }}
+        initial={{ y: 0, opacity: 0.5 }}
+        whileInView={{ y: [0, -3, 0], opacity: [0.5, 1, 0.5] }}
+        viewport={LOOP_VIEW}
+        transition={{
+          duration: 1,
+          delay: delay + i * 0.14,
+          repeat: Infinity,
+          repeatType: "loop",
+          ease: "easeInOut",
+        }}
       />
     ))}
-  </motion.span>
+  </span>
 );
+
 
 const Bar = ({ value, tone = "primary", delay = 0 }: { value: number; tone?: "primary" | "amber"; delay?: number }) => (
   <div className="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -278,7 +296,8 @@ const SdrMock = () => (
       </Pill>
     </div>
 
-    <div className="space-y-2">
+    <ChatWallpaper className="space-y-2">
+
       {[
         { me: false, t: "Oi! Vi que vocês trabalham com contabilidade. Quanto custa?", h: "09:41" },
         {
@@ -286,13 +305,9 @@ const SdrMock = () => (
           t: "Olá, Marcos! Depende do porte. Hoje vocês atendem quantos clientes por mês?",
           h: "09:41",
         },
-        { me: false, t: "Uns 40.", h: "09:43" },
-        {
-          me: true,
-          t: "Perfeito 👊 Posso te mostrar em 15 min. Amanhã às 10h ou às 16h?",
-          h: "09:43",
-        },
+        { me: false, t: "Uns 40 clientes por mês.", h: "09:43" },
       ].map((m, i) => (
+
         <Reveal key={i} delay={0.15 + i * 0.28} y={10}>
           <div className={cn("flex", m.me ? "justify-end" : "justify-start")}>
             <div
@@ -312,17 +327,19 @@ const SdrMock = () => (
           </div>
         </Reveal>
       ))}
-      <div className="w-fit rounded-2xl rounded-bl-sm bg-muted px-2.5 py-2">
-        <TypingDots delay={1.2} />
+      <div className="w-fit rounded-2xl rounded-bl-sm bg-muted px-2.5 py-2 shadow-sm">
+        <TypingDots delay={0.2} />
       </div>
-    </div>
+    </ChatWallpaper>
 
-    <Reveal delay={1.5} className="mt-3">
-      <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-2.5">
-        <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1.5">
+
+    <Reveal delay={1.1} className="mt-2">
+      <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-2">
+        <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1">
           <Sparkles size={10} /> Raciocínio da IA
         </p>
-        <div className="space-y-1">
+        <div className="space-y-0.5">
+
           {["Nome coletado: Marcos", "Necessidade entendida (40 clientes/mês)", "Reunião proposta — 2 horários"].map(
             (s, i) => (
               <motion.p
@@ -367,9 +384,10 @@ const AgendaMock = () => (
           {d}
         </span>
       ))}
-      {Array.from({ length: 21 }).map((_, i) => {
-        const green = [4, 9, 15].includes(i);
-        const blue = [7, 18].includes(i);
+      {Array.from({ length: 14 }).map((_, i) => {
+        const green = [4, 9, 12].includes(i);
+        const blue = [7].includes(i);
+
         return (
           <motion.span
             key={i}
@@ -508,7 +526,7 @@ const CampaignMock = () => (
         {[
           { n: "Reativação — Base fria", s: "Concluída", tone: "primary" as const, p: 100, t: "template_reativacao_v2", d: "620/620" },
           { n: "Oferta Julho — ICP contábil", s: "Enviando", tone: "amber" as const, p: 62, t: "oferta_julho_pt_br", d: "484/780" },
-          { n: "Convite Webinar", s: "Agendada", tone: "info" as const, p: 0, t: "convite_webinar_pt", d: "0/1.200" },
+          
         ].map((c, i) => (
           <Reveal key={c.n} delay={0.35 + i * 0.1} x={12}>
             <Row className="space-y-1.5">
@@ -625,15 +643,16 @@ const CrmMock = () => (
       ))}
     </div>
 
-    <Reveal delay={0.6} className="mt-2">
-      <Row className="flex items-center gap-1.5 py-1.5 border-dashed">
+    <Reveal delay={0.6} className="mt-1.5">
+      <Row className="flex items-center gap-1.5 py-1 border-dashed">
         <Sparkles size={11} className="text-primary flex-shrink-0" />
-        <p className="text-[9px] text-muted-foreground leading-snug">
+        <p className="text-[9px] text-muted-foreground leading-snug truncate">
           IA priorizou <span className="font-semibold text-foreground">Grupo Orion</span> — maior
-          intenção de compra nas últimas 48h
+          intenção nas últimas 48h
         </p>
       </Row>
     </Reveal>
+
   </MockShell>
 );
 
@@ -656,7 +675,7 @@ const ChatMock = () => (
           { n: "Marcos S.", m: "Vocês atendem fora de SP?", u: 2, t: "09:41", tag: "IA" },
           { n: "Julia R.", m: "Recebi a proposta, obrigada!", u: 0, t: "09:12", tag: "" },
           { n: "Pedro L.", m: "Podemos falar amanhã?", u: 1, t: "Ontem", tag: "Humano" },
-          { n: "Grupo Orion", m: "Enviei o contrato assinado", u: 0, t: "Ontem", tag: "" },
+          
         ].map((c, i) => (
           <Reveal key={c.n} delay={0.12 + i * 0.07} x={-10}>
             <Row
@@ -709,7 +728,7 @@ const ChatMock = () => (
           </div>
         </div>
 
-        <div className="flex-1 p-2 space-y-1.5 [background-image:radial-gradient(hsl(var(--border))_1px,transparent_1px)] [background-size:12px_12px]">
+        <div className="flex-1 p-2 space-y-1.5 bg-muted/25 [background-image:radial-gradient(hsl(var(--primary)/0.12)_1px,transparent_1px)] [background-size:13px_13px]">
           <Reveal delay={0.2} y={8}>
             <div className="rounded-2xl rounded-bl-sm bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground max-w-[88%] w-fit">
               Oi! Vocês atendem fora de SP?
@@ -801,19 +820,20 @@ const FlowNode = ({
   >
     <div
       className={cn(
-        "w-9 h-9 rounded-full flex items-center justify-center ring-4",
+        "w-8 h-8 rounded-full flex items-center justify-center ring-4",
         tone === "primary" && "bg-primary text-primary-foreground ring-primary/15",
         tone === "info" && "bg-sky-500 text-white ring-sky-500/15",
         tone === "amber" && "bg-amber-500 text-white ring-amber-500/15",
         tone === "muted" && "bg-muted text-muted-foreground ring-border/40",
       )}
     >
-      <Icon size={15} />
+      <Icon size={14} />
     </div>
-    <p className="mt-1.5 text-[9px] font-bold uppercase tracking-wide text-foreground leading-tight">
+    <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-foreground leading-tight">
       {label}
     </p>
-    {sub && <p className="text-[8px] text-muted-foreground leading-tight mt-0.5">{sub}</p>}
+    {sub && <p className="text-[8px] text-muted-foreground leading-tight">{sub}</p>}
+
   </motion.div>
 );
 
@@ -841,37 +861,44 @@ const DottedLine = ({
     />
     {travel && (
       <motion.span
-        className="absolute w-1.5 h-1.5 rounded-full bg-primary"
+        className="absolute w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
         style={axis === "x" ? { top: "50%", left: 0, marginTop: -3 } : { left: "50%", top: 0, marginLeft: -3 }}
         initial={{ opacity: 0 }}
         whileInView={
           axis === "x"
-            ? { opacity: [0, 1, 1, 0], x: [0, 28] }
-            : { opacity: [0, 1, 1, 0], y: [0, 18] }
+            ? { opacity: [0, 1, 1, 0], x: [0, 32] }
+            : { opacity: [0, 1, 1, 0], y: [0, 20] }
         }
-        viewport={VIEW}
-        transition={{ duration: 1, delay: delay + 0.3, ease: "easeInOut" }}
+        viewport={LOOP_VIEW}
+        transition={{
+          duration: 1.2,
+          delay: delay + 0.3,
+          ease: "easeInOut",
+          repeat: Infinity,
+          repeatDelay: 1.4,
+        }}
         aria-hidden="true"
       />
     )}
+
   </span>
 );
 
 const FlowMock = () => (
   <MockShell title="Fluxos Inteligentes — Construtor visual" badge="publicado">
-    <div className="relative py-1">
+    <div className="relative">
       {/* Linha 1 — gatilho → atendimento */}
       <div className="flex items-start justify-center gap-2">
         <FlowNode icon={MessageSquare} label="Gatilho" sub="Mensagem recebida" delay={0} />
-        <DottedLine className="mt-4 w-8 border-t-2" delay={0.2} travel />
+        <DottedLine className="mt-[15px] w-8 border-t-2" delay={0.2} travel />
         <FlowNode icon={Bot} label="Atendimento" sub="IA inicia conversa" tone="info" delay={0.3} />
-        <DottedLine className="mt-4 w-8 border-t-2" delay={0.45} travel />
+        <DottedLine className="mt-[15px] w-8 border-t-2" delay={0.45} travel />
         <FlowNode icon={UserCheck} label="Triagem" sub="Coleta de dados" tone="muted" delay={0.55} />
       </div>
 
       {/* conector vertical */}
       <div className="flex justify-center">
-        <DottedLine className="h-5 border-l-2" delay={0.7} axis="y" travel />
+        <DottedLine className="h-4 border-l-2" delay={0.7} axis="y" travel />
       </div>
 
       {/* Linha 2 — condição */}
@@ -879,27 +906,34 @@ const FlowMock = () => (
         <FlowNode icon={GitBranch} label="Qualificado?" sub="Condição / Teste A/B" tone="amber" delay={0.85} />
       </div>
 
-      {/* ramificação */}
+      {/* ramificação — alinhada ao centro dos ícones (nós têm 92px de largura) */}
       <motion.div
-        className="flex justify-center items-stretch"
+        className="relative h-5"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={VIEW}
         transition={{ duration: 0.4, delay: 1 }}
+        aria-hidden="true"
       >
-        <div className="w-1/2 h-5 border-l-2 border-t-2 border-dashed border-primary/45 rounded-tl-lg mt-0" />
-        <div className="w-1/2 h-5 border-r-2 border-t-2 border-dashed border-primary/45 rounded-tr-lg" />
+        {/* barra horizontal ligando os centros dos nós das pontas */}
+        <span className="absolute left-[46px] right-[46px] top-2.5 border-t-2 border-dashed border-primary/45" />
+        {/* descida do nó de condição */}
+        <span className="absolute left-1/2 -translate-x-px top-0 h-2.5 border-l-2 border-dashed border-primary/45" />
+        {/* descidas para cada saída */}
+        <span className="absolute left-[46px] top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
+        <span className="absolute left-1/2 -translate-x-px top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
+        <span className="absolute right-[46px] top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
       </motion.div>
 
       {/* Linha 3 — saídas */}
-      <div className="flex items-start justify-between px-1">
+      <div className="flex items-start justify-between">
         <FlowNode icon={CalendarDays} label="Agendar" sub="Reunião na agenda" delay={1.1} />
         <FlowNode icon={Timer} label="Espera" sub="Follow-up 2h úteis" tone="muted" delay={1.2} />
         <FlowNode icon={LayoutDashboard} label="CRM" sub="Move de etapa" tone="info" delay={1.3} />
       </div>
 
       <div className="flex justify-center">
-        <DottedLine className="h-5 border-l-2" delay={1.4} axis="y" travel />
+        <DottedLine className="h-4 border-l-2" delay={1.4} axis="y" travel />
       </div>
 
       <div className="flex justify-center">
@@ -907,21 +941,22 @@ const FlowMock = () => (
       </div>
 
       {/* rodapé de métricas */}
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-1.5 flex items-center justify-center gap-1.5">
         {[
           { i: Zap, l: "Entradas", v: "842" },
           { i: BarChart3, l: "Conclusão", v: "68%" },
           { i: Mail, l: "Integrações", v: "Sheets" },
         ].map((k, i) => (
           <Reveal key={k.l} delay={1.6 + i * 0.08}>
-            <Row className="flex items-center gap-1.5 py-1.5">
-              <k.i size={11} className="text-primary flex-shrink-0" />
-              <p className="text-[9px] text-muted-foreground truncate flex-1">{k.l}</p>
-              <p className="text-[10px] font-bold text-foreground">{k.v}</p>
-            </Row>
+            <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/70 px-2 py-1">
+              <k.i size={10} className="text-primary flex-shrink-0" />
+              <span className="text-[9px] text-muted-foreground">{k.l}</span>
+              <span className="text-[9px] font-bold text-foreground">{k.v}</span>
+            </span>
           </Reveal>
         ))}
       </div>
+
     </div>
   </MockShell>
 );
@@ -1026,21 +1061,25 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
   const Mock = item.mock;
 
   return (
+    <div
+      className="lg:sticky"
+      style={{ top: `calc(5.5rem + ${index * 16}px)`, zIndex: 10 + index }}
+    >
     <motion.article
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15, margin: "0px 0px -80px 0px" }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
-      style={{ contentVisibility: "auto", containIntrinsicSize: "560px" } as React.CSSProperties}
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-border p-5 sm:p-8 lg:p-10",
+        "relative overflow-hidden rounded-3xl border border-border p-5 sm:p-8 lg:p-10 bg-card",
         "w-full lg:min-h-[560px] flex items-center",
-        "shadow-[0_18px_50px_-40px_hsl(var(--foreground)/0.35)]",
+        "shadow-[0_24px_60px_-30px_hsl(var(--foreground)/0.35)]",
         reversed
           ? "bg-[linear-gradient(300deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]"
           : "bg-[linear-gradient(60deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]",
       )}
     >
+
 
       <div
         className={cn(
@@ -1096,7 +1135,9 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       </div>
 
     </motion.article>
+    </div>
   );
+
 };
 
 export const PlatformModulesSection = () => {
