@@ -714,6 +714,7 @@ export const HeroSection = ({
   onSignupClick,
   titleLine1 = "IA comercial que",
   titleLine2 = "Transforma leads em",
+  titleLine2Highlight = "",
   titleHighlight = "Oportunidades reais",
   titleLine3 = "",
   description = "IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.",
