@@ -1155,12 +1155,9 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
 
 
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-border p-5 sm:p-8 lg:p-10 bg-card",
+        "relative overflow-hidden rounded-card border border-white/20 p-5 sm:p-8 lg:p-10 bg-primary",
         "w-full lg:min-h-[560px] flex items-center",
-        "shadow-[0_24px_60px_-30px_hsl(var(--foreground)/0.35)]",
-        reversed
-          ? "bg-[linear-gradient(300deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]"
-          : "bg-[linear-gradient(60deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]",
+        "shadow-[0_24px_60px_-30px_hsl(var(--primary)/0.5)]",
       )}
     >
 
