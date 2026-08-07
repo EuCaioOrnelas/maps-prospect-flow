@@ -77,7 +77,7 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
 
 
  {/* Content */}
- <div className={`relative z-10 flex items-start gap-3 ${isLeft ? "md:flex-row-reverse md:text-right" : ""}`}>
+ <div className={`relative z-10 flex items-center gap-3 ${isLeft ? "md:flex-row-reverse md:text-right" : ""}`}>
  <div className="flex-shrink-0">
  <span className="text-[9px] font-bold tracking-[0.14em] text-primary/35 block leading-none mb-1 hidden md:block">
  {String(index + 1).padStart(2, "0")}
