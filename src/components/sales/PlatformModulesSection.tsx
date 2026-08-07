@@ -15,6 +15,24 @@ import {
   Users,
   Tag,
   ArrowRight,
+  Filter,
+  Sparkles,
+  Building2,
+  Phone,
+  Globe,
+  CheckCheck,
+  TrendingUp,
+  Video,
+  Mail,
+  BarChart3,
+  Zap,
+  ShieldCheck,
+  Paperclip,
+  Smile,
+  GitBranch,
+  Timer,
+  UserCheck,
+  Flame,
 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { SectionHeading } from "@/components/landing/SectionHeading";
@@ -24,27 +42,51 @@ import { cn } from "@/lib/utils";
 /* Mockup shell — replica leve de uma tela real da plataforma          */
 /* ------------------------------------------------------------------ */
 
-const MockShell = ({ title, children }: { title: string; children: ReactNode }) => (
-  <div className="w-full rounded-2xl border border-border/70 bg-card/80 overflow-hidden shadow-sm">
-    <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border/60 bg-muted/40">
+const MockShell = ({
+  title,
+  badge,
+  children,
+}: {
+  title: string;
+  badge?: string;
+  children: ReactNode;
+}) => (
+  <div className="w-full rounded-2xl border border-border/70 bg-card overflow-hidden shadow-[0_18px_50px_-24px_hsl(var(--primary)/0.35)]">
+    <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border/60 bg-gradient-to-r from-primary/[0.07] via-transparent to-transparent">
       <span className="w-2 h-2 rounded-full bg-destructive/40" />
       <span className="w-2 h-2 rounded-full bg-amber-400/50" />
-      <span className="w-2 h-2 rounded-full bg-primary/50" />
+      <span className="w-2 h-2 rounded-full bg-primary/60" />
       <span className="ml-2 text-[10px] font-medium text-muted-foreground tracking-wide truncate">
         {title}
       </span>
+      {badge && (
+        <span className="ml-auto flex-shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          {badge}
+        </span>
+      )}
     </div>
-    <div className="p-3.5 sm:p-4">{children}</div>
+    <div className="p-3.5 sm:p-4 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04]">
+      {children}
+    </div>
   </div>
 );
 
-const Pill = ({ children, tone = "muted" }: { children: ReactNode; tone?: "muted" | "primary" | "amber" }) => (
+const Pill = ({
+  children,
+  tone = "muted",
+}: {
+  children: ReactNode;
+  tone?: "muted" | "primary" | "amber" | "info" | "outline";
+}) => (
   <span
     className={cn(
-      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-      tone === "primary" && "bg-primary/10 text-primary",
-      tone === "amber" && "bg-amber-500/10 text-amber-600",
+      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap",
+      tone === "primary" && "bg-primary/12 text-primary ring-1 ring-inset ring-primary/20",
+      tone === "amber" && "bg-amber-500/12 text-amber-600 ring-1 ring-inset ring-amber-500/20",
+      tone === "info" && "bg-sky-500/12 text-sky-600 ring-1 ring-inset ring-sky-500/20",
       tone === "muted" && "bg-muted text-muted-foreground",
+      tone === "outline" && "border border-border/70 text-muted-foreground",
     )}
   >
     {children}
@@ -52,50 +94,100 @@ const Pill = ({ children, tone = "muted" }: { children: ReactNode; tone?: "muted
 );
 
 const Row = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
-  <div className={cn("rounded-xl border border-border/60 bg-background/60 p-2.5", className)}>{children}</div>
+  <div className={cn("rounded-xl border border-border/60 bg-background/70 p-2.5", className)}>
+    {children}
+  </div>
+);
+
+const Bar = ({ value, tone = "primary" }: { value: number; tone?: "primary" | "amber" }) => (
+  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+    <div
+      className={cn("h-full rounded-full", tone === "primary" ? "bg-primary" : "bg-amber-500")}
+      style={{ width: `${value}%` }}
+    />
+  </div>
 );
 
 /* ---------------------------- 1. Prospecção ---------------------------- */
 const ProspectMock = () => (
-  <MockShell title="Prospecção IA — Buscar oportunidades">
+  <MockShell title="Prospecção IA — Buscar oportunidades" badge="ao vivo">
+    {/* barra de busca */}
+    <div className="flex items-center gap-2 mb-3">
+      <div className="flex-1 flex items-center gap-2 rounded-lg border border-border/60 bg-background/70 px-2.5 py-1.5">
+        <Search size={11} className="text-primary" />
+        <span className="text-[10px] text-foreground/80 truncate">
+          escritórios de contabilidade · São Paulo · 20-100 func.
+        </span>
+      </div>
+      <span className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-[10px] font-bold text-primary-foreground">
+        <Sparkles size={10} /> Buscar
+      </span>
+    </div>
+
+    <div className="flex flex-wrap gap-1.5 mb-3">
+      <Pill tone="primary">
+        <Filter size={9} /> Nicho: Contábil
+      </Pill>
+      <Pill tone="outline">Tem site</Pill>
+      <Pill tone="outline">Google 4.0+</Pill>
+      <Pill tone="info">184 encontradas</Pill>
+    </div>
+
     <div className="grid grid-cols-5 gap-3">
-      <div className="col-span-2 rounded-xl border border-border/60 bg-muted/30 relative overflow-hidden min-h-[130px]">
-        <div className="absolute inset-0 opacity-[0.5] [background-image:linear-gradient(hsl(var(--border))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border))_1px,transparent_1px)] [background-size:18px_18px]" />
+      <div className="col-span-2 rounded-xl border border-border/60 bg-muted/30 relative overflow-hidden min-h-[152px]">
+        <div className="absolute inset-0 opacity-[0.5] [background-image:linear-gradient(hsl(var(--border))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border))_1px,transparent_1px)] [background-size:16px_16px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_45%_45%,hsl(var(--primary)/0.14),transparent_65%)]" />
         {[
-          { t: "20%", l: "25%" },
-          { t: "48%", l: "58%" },
-          { t: "70%", l: "32%" },
-          { t: "34%", l: "76%" },
+          { t: "18%", l: "22%", hot: true },
+          { t: "44%", l: "56%", hot: true },
+          { t: "68%", l: "30%", hot: false },
+          { t: "32%", l: "76%", hot: false },
+          { t: "78%", l: "64%", hot: false },
         ].map((p, i) => (
           <span
             key={i}
-            className="absolute w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center"
+            className={cn(
+              "absolute w-5 h-5 rounded-full flex items-center justify-center ring-2",
+              p.hot ? "bg-primary/25 ring-primary/30" : "bg-muted ring-border/60",
+            )}
             style={{ top: p.t, left: p.l }}
           >
-            <MapPin size={10} className="text-primary" />
+            <MapPin size={10} className={p.hot ? "text-primary" : "text-muted-foreground"} />
           </span>
         ))}
         <div className="absolute bottom-2 left-2">
           <Pill tone="primary">São Paulo · SP</Pill>
         </div>
       </div>
+
       <div className="col-span-3 space-y-2">
         {[
-          { n: "Alpha Contabilidade", s: 92, c: "Contabilidade" },
-          { n: "Nexus Clínica Odonto", s: 87, c: "Saúde" },
-          { n: "Vetor Engenharia", s: 74, c: "Engenharia" },
+          { n: "Alpha Contabilidade", s: 92, c: "Contabilidade · 45 func.", tags: ["Site", "WhatsApp"] },
+          { n: "Nexus Clínica Odonto", s: 87, c: "Saúde · 28 func.", tags: ["Instagram"] },
+          { n: "Vetor Engenharia", s: 74, c: "Engenharia · 62 func.", tags: ["Site"] },
         ].map((e) => (
-          <Row key={e.n} className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Search size={13} className="text-primary" />
+          <Row key={e.n} className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Building2 size={13} className="text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold text-foreground truncate">{e.n}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{e.c}</p>
+              </div>
+              <Pill tone={e.s > 85 ? "primary" : "muted"}>
+                <Star size={9} /> {e.s}
+              </Pill>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold text-foreground truncate">{e.n}</p>
-              <p className="text-[10px] text-muted-foreground truncate">{e.c}</p>
+            <Bar value={e.s} tone={e.s > 85 ? "primary" : "amber"} />
+            <div className="flex items-center gap-1.5">
+              {e.tags.map((t) => (
+                <Pill key={t} tone="outline">
+                  {t === "Site" ? <Globe size={9} /> : <Phone size={9} />} {t}
+                </Pill>
+              ))}
+              <span className="ml-auto text-[9px] font-semibold text-primary">Diagnóstico IA →</span>
             </div>
-            <Pill tone={e.s > 85 ? "primary" : "muted"}>
-              <Star size={9} /> {e.s}
-            </Pill>
           </Row>
         ))}
       </div>
@@ -105,31 +197,70 @@ const ProspectMock = () => (
 
 /* ---------------------------- 2. SDR ---------------------------- */
 const SdrMock = () => (
-  <MockShell title="SDR Inteligente — WhatsApp">
+  <MockShell title="SDR Inteligente — WhatsApp" badge="IA ativa">
+    <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-border/60">
+      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+        <Users size={14} className="text-primary" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-semibold text-foreground truncate">Marcos Silva</p>
+        <p className="text-[9px] text-primary">online · respondendo</p>
+      </div>
+      <Pill tone="primary">
+        <Flame size={9} /> Quente
+      </Pill>
+    </div>
+
     <div className="space-y-2">
       {[
-        { me: false, t: "Oi! Vi que vocês trabalham com contabilidade. Quanto custa?" },
-        { me: true, t: "Olá, Marcos! Depende do porte. Hoje vocês atendem quantos clientes por mês?" },
-        { me: false, t: "Uns 40." },
-        { me: true, t: "Perfeito. Posso te mostrar em 15 min: amanhã 10h ou 16h?" },
+        { me: false, t: "Oi! Vi que vocês trabalham com contabilidade. Quanto custa?", h: "09:41" },
+        {
+          me: true,
+          t: "Olá, Marcos! Depende do porte. Hoje vocês atendem quantos clientes por mês?",
+          h: "09:41",
+        },
+        { me: false, t: "Uns 40.", h: "09:43" },
+        {
+          me: true,
+          t: "Perfeito 👊 Posso te mostrar em 15 min. Amanhã às 10h ou às 16h?",
+          h: "09:43",
+        },
       ].map((m, i) => (
         <div key={i} className={cn("flex", m.me ? "justify-end" : "justify-start")}>
           <div
             className={cn(
-              "max-w-[80%] rounded-2xl px-3 py-2 text-[11px] leading-snug",
+              "max-w-[82%] rounded-2xl px-3 py-2 text-[11px] leading-snug shadow-sm",
               m.me
-                ? "bg-primary/10 text-foreground rounded-br-sm"
+                ? "bg-primary/12 text-foreground rounded-br-sm ring-1 ring-inset ring-primary/15"
                 : "bg-muted text-muted-foreground rounded-bl-sm",
             )}
           >
             {m.t}
+            <span className="mt-1 flex items-center justify-end gap-1 text-[8px] text-muted-foreground/80">
+              {m.h}
+              {m.me && <CheckCheck size={9} className="text-sky-500" />}
+            </span>
           </div>
         </div>
       ))}
-      <div className="flex flex-wrap gap-1.5 pt-1">
+    </div>
+
+    <div className="mt-3 rounded-xl border border-primary/20 bg-primary/[0.06] p-2.5">
+      <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1.5">
+        <Sparkles size={10} /> Raciocínio da IA
+      </p>
+      <div className="space-y-1">
+        {["Nome coletado: Marcos", "Necessidade entendida (40 clientes/mês)", "Reunião proposta — 2 horários"].map(
+          (s) => (
+            <p key={s} className="flex items-center gap-1.5 text-[10px] text-foreground/80">
+              <Check size={10} className="text-primary" strokeWidth={3} /> {s}
+            </p>
+          ),
+        )}
+      </div>
+      <div className="flex flex-wrap gap-1.5 mt-2">
         <Pill tone="primary">Lead qualificado</Pill>
-        <Pill tone="amber">Follow-up agendado</Pill>
-        <Pill>Reunião proposta</Pill>
+        <Pill tone="amber">Follow-up 24h</Pill>
       </div>
     </div>
   </MockShell>
@@ -137,99 +268,200 @@ const SdrMock = () => (
 
 /* ---------------------------- 3. Agenda ---------------------------- */
 const AgendaMock = () => (
-  <MockShell title="Agenda Inteligente">
+  <MockShell title="Agenda Inteligente — Novembro" badge="sincronizado">
+    <div className="flex items-center gap-2 mb-3">
+      <Pill tone="primary">Mês</Pill>
+      <Pill tone="outline">Semana</Pill>
+      <Pill tone="outline">Dia</Pill>
+      <span className="ml-auto flex items-center gap-1 text-[9px] text-muted-foreground">
+        <span className="w-2 h-2 rounded-full bg-primary" /> Comercial
+        <span className="ml-1.5 w-2 h-2 rounded-full bg-sky-500" /> Interna
+      </span>
+    </div>
+
     <div className="grid grid-cols-7 gap-1 mb-3">
       {["S", "T", "Q", "Q", "S", "S", "D"].map((d, i) => (
         <span key={i} className="text-center text-[9px] font-semibold text-muted-foreground">
           {d}
         </span>
       ))}
-      {Array.from({ length: 21 }).map((_, i) => (
-        <span
-          key={i}
-          className={cn(
-            "aspect-square rounded-md text-[9px] flex items-center justify-center border border-transparent",
-            [4, 9, 15].includes(i)
-              ? "bg-primary/10 text-primary font-bold border-primary/20"
-              : "bg-muted/40 text-muted-foreground",
-          )}
-        >
-          {i + 1}
-        </span>
-      ))}
+      {Array.from({ length: 21 }).map((_, i) => {
+        const green = [4, 9, 15].includes(i);
+        const blue = [7, 18].includes(i);
+        return (
+          <span
+            key={i}
+            className={cn(
+              "aspect-square rounded-md text-[9px] flex flex-col items-center justify-center gap-0.5 border",
+              green
+                ? "bg-primary/10 text-primary font-bold border-primary/25"
+                : blue
+                  ? "bg-sky-500/10 text-sky-600 font-bold border-sky-500/25"
+                  : "bg-muted/40 text-muted-foreground border-transparent",
+            )}
+          >
+            {i + 1}
+            {(green || blue) && (
+              <span className={cn("w-1 h-1 rounded-full", green ? "bg-primary" : "bg-sky-500")} />
+            )}
+          </span>
+        );
+      })}
     </div>
+
     <div className="space-y-2">
       {[
-        { h: "10:00", t: "Demo — Alpha Contabilidade", s: "Google Calendar" },
-        { h: "16:30", t: "Follow-up — Vetor Engenharia", s: "Outlook" },
+        {
+          h: "10:00",
+          d: "45 min",
+          t: "Demo — Alpha Contabilidade",
+          s: "Google Meet",
+          tone: "primary" as const,
+          who: ["AC", "RS"],
+        },
+        {
+          h: "16:30",
+          d: "30 min",
+          t: "Follow-up — Vetor Engenharia",
+          s: "Outlook",
+          tone: "info" as const,
+          who: ["VE"],
+        },
       ].map((e) => (
         <Row key={e.h} className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Clock size={13} className="text-primary" />
+          <div className="flex flex-col items-center justify-center w-11 flex-shrink-0 rounded-lg bg-primary/10 py-1">
+            <span className="text-[11px] font-bold text-primary leading-none">{e.h}</span>
+            <span className="text-[8px] text-muted-foreground mt-0.5">{e.d}</span>
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold text-foreground truncate">{e.t}</p>
-            <p className="text-[10px] text-muted-foreground">{e.h} · sincronizado</p>
+            <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <Video size={9} /> {e.s} · agendado pela IA
+            </p>
           </div>
-          <Pill>{e.s}</Pill>
+          <div className="flex -space-x-1.5">
+            {e.who.map((w) => (
+              <span
+                key={w}
+                className="w-5 h-5 rounded-full bg-muted border border-background text-[8px] font-bold text-muted-foreground flex items-center justify-center"
+              >
+                {w}
+              </span>
+            ))}
+          </div>
         </Row>
       ))}
+      <Row className="flex items-center gap-2 border-dashed">
+        <Clock size={12} className="text-muted-foreground" />
+        <p className="text-[10px] text-muted-foreground">
+          Lembrete automático por e-mail 1h antes de cada reunião
+        </p>
+      </Row>
     </div>
   </MockShell>
 );
 
 /* ---------------------------- 4. Campanhas ---------------------------- */
 const CampaignMock = () => (
-  <MockShell title="Campanhas — API Oficial Meta">
-    <div className="grid grid-cols-3 gap-2 mb-3">
+  <MockShell title="Campanhas — API Oficial Meta" badge="enviando">
+    <div className="grid grid-cols-4 gap-2 mb-3">
       {[
-        { l: "Entregues", v: "1.248" },
-        { l: "Lidas", v: "1.032" },
-        { l: "Respondidas", v: "317" },
+        { l: "Enviadas", v: "1.400", d: "" },
+        { l: "Entregues", v: "1.248", d: "89%" },
+        { l: "Lidas", v: "1.032", d: "74%" },
+        { l: "Respostas", v: "317", d: "23%" },
       ].map((k) => (
-        <Row key={k.l} className="text-center">
-          <p className="text-sm font-bold text-foreground">{k.v}</p>
-          <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{k.l}</p>
+        <Row key={k.l} className="text-center py-2">
+          <p className="text-sm font-bold text-foreground leading-none">{k.v}</p>
+          <p className="text-[8px] text-muted-foreground uppercase tracking-wide mt-1">{k.l}</p>
+          {k.d && <p className="text-[9px] font-bold text-primary mt-0.5">{k.d}</p>}
         </Row>
       ))}
     </div>
+
     <div className="space-y-2">
       {[
-        { n: "Reativação — Base fria", s: "Concluída", tone: "primary" as const },
-        { n: "Oferta Julho — ICP contábil", s: "Enviando", tone: "amber" as const },
+        { n: "Reativação — Base fria", s: "Concluída", tone: "primary" as const, p: 100, t: "template_reativacao_v2" },
+        { n: "Oferta Julho — ICP contábil", s: "Enviando", tone: "amber" as const, p: 62, t: "oferta_julho_pt_br" },
       ].map((c) => (
-        <Row key={c.n} className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Send size={13} className="text-primary" />
+        <Row key={c.n} className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Send size={13} className="text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold text-foreground truncate">{c.n}</p>
+              <p className="text-[9px] text-muted-foreground font-mono truncate">{c.t}</p>
+            </div>
+            <Pill tone={c.tone}>{c.s}</Pill>
           </div>
-          <p className="text-[11px] font-semibold text-foreground truncate flex-1">{c.n}</p>
-          <Pill tone={c.tone}>{c.s}</Pill>
+          <Bar value={c.p} tone={c.p === 100 ? "primary" : "amber"} />
         </Row>
       ))}
+      <div className="flex items-center gap-1.5 pt-0.5">
+        <Pill tone="info">
+          <ShieldCheck size={9} /> Conta verificada Meta
+        </Pill>
+        <Pill tone="outline">Qualidade: Alta</Pill>
+        <Pill tone="outline">Delay seguro</Pill>
+      </div>
     </div>
   </MockShell>
 );
 
 /* ---------------------------- 5. CRM ---------------------------- */
 const CrmMock = () => (
-  <MockShell title="CRM Inteligente">
+  <MockShell title="CRM Inteligente — Pipeline" badge="score IA">
+    <div className="flex items-center gap-2 mb-3">
+      <Pill tone="primary">
+        <TrendingUp size={9} /> R$ 184.000 em negociação
+      </Pill>
+      <Pill tone="outline">12 leads</Pill>
+    </div>
     <div className="grid grid-cols-3 gap-2">
       {[
-        { c: "Prospectado", items: [{ n: "Alpha Contab.", s: 92 }, { n: "Vetor Eng.", s: 61 }] },
-        { c: "Em negociação", items: [{ n: "Nexus Odonto", s: 88 }] },
-        { c: "Fechamento", items: [{ n: "Grupo Orion", s: 95 }] },
+        {
+          c: "Prospectado",
+          n: 5,
+          items: [
+            { n: "Alpha Contab.", s: 92, v: "R$ 4.9k", tag: "Quente" },
+            { n: "Vetor Eng.", s: 61, v: "R$ 2.1k", tag: "" },
+          ],
+        },
+        {
+          c: "Em negociação",
+          n: 4,
+          items: [{ n: "Nexus Odonto", s: 88, v: "R$ 7.4k", tag: "Proposta" }],
+        },
+        {
+          c: "Fechamento",
+          n: 3,
+          items: [{ n: "Grupo Orion", s: 95, v: "R$ 12k", tag: "Contrato" }],
+        },
       ].map((col) => (
         <div key={col.c} className="space-y-2">
-          <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground truncate">
-            {col.c}
-          </p>
+          <div className="flex items-center gap-1">
+            <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground truncate">
+              {col.c}
+            </p>
+            <span className="text-[8px] font-bold text-muted-foreground bg-muted rounded px-1">
+              {col.n}
+            </span>
+          </div>
           {col.items.map((it) => (
             <Row key={it.n} className="space-y-1.5">
-              <p className="text-[10px] font-semibold text-foreground truncate">{it.n}</p>
-              <div className="h-1 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full bg-primary/70" style={{ width: `${it.s}%` }} />
+              <div className="flex items-center gap-1.5">
+                <span className="w-4 h-4 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Building2 size={9} className="text-primary" />
+                </span>
+                <p className="text-[10px] font-semibold text-foreground truncate">{it.n}</p>
               </div>
-              <Pill tone={it.s > 85 ? "primary" : "muted"}>Score {it.s}</Pill>
+              <p className="text-[10px] font-bold text-primary">{it.v}</p>
+              <Bar value={it.s} tone={it.s > 85 ? "primary" : "amber"} />
+              <div className="flex items-center gap-1">
+                <Pill tone={it.s > 85 ? "primary" : "muted"}>Score {it.s}</Pill>
+                {it.tag && <Pill tone="outline">{it.tag}</Pill>}
+              </div>
             </Row>
           ))}
         </div>
@@ -240,30 +472,71 @@ const CrmMock = () => (
 
 /* ---------------------------- 6. Chat ---------------------------- */
 const ChatMock = () => (
-  <MockShell title="Central de Conversas">
+  <MockShell title="Central de Conversas" badge="3 online">
     <div className="grid grid-cols-5 gap-3">
       <div className="col-span-2 space-y-2">
-        {["Marcos S.", "Julia R.", "Pedro L."].map((n, i) => (
-          <Row key={n} className={cn("flex items-center gap-2", i === 0 && "border-primary/30 bg-primary/5")}>
+        <div className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/70 px-2 py-1.5 mb-1">
+          <Search size={10} className="text-muted-foreground" />
+          <span className="text-[9px] text-muted-foreground">Buscar conversa</span>
+        </div>
+        {[
+          { n: "Marcos S.", m: "Vocês atendem fora de SP?", u: 2, t: "09:41" },
+          { n: "Julia R.", m: "Recebi a proposta, obrigada!", u: 0, t: "09:12" },
+          { n: "Pedro L.", m: "Podemos falar amanhã?", u: 1, t: "Ontem" },
+        ].map((c, i) => (
+          <Row
+            key={c.n}
+            className={cn("flex items-center gap-2", i === 0 && "border-primary/30 bg-primary/[0.07]")}
+          >
             <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
               <Users size={11} className="text-primary" />
             </div>
-            <p className="text-[10px] font-semibold text-foreground truncate">{n}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold text-foreground truncate">{c.n}</p>
+              <p className="text-[9px] text-muted-foreground truncate">{c.m}</p>
+            </div>
+            {c.u > 0 && (
+              <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[8px] font-bold flex items-center justify-center flex-shrink-0">
+                {c.u}
+              </span>
+            )}
           </Row>
         ))}
       </div>
-      <div className="col-span-3 space-y-2">
-        <div className="rounded-2xl rounded-bl-sm bg-muted px-3 py-2 text-[11px] text-muted-foreground">
+
+      <div className="col-span-3 flex flex-col gap-2">
+        <div className="flex items-center gap-2 pb-2 border-b border-border/60">
+          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+            <Users size={11} className="text-primary" />
+          </div>
+          <p className="text-[10px] font-semibold text-foreground">Marcos S.</p>
+          <Pill tone="outline">
+            <Tag size={9} /> VIP
+          </Pill>
+        </div>
+        <div className="rounded-2xl rounded-bl-sm bg-muted px-3 py-2 text-[11px] text-muted-foreground max-w-[92%]">
           Vocês atendem fora de SP?
         </div>
-        <div className="rounded-2xl rounded-br-sm bg-primary/10 px-3 py-2 text-[11px] text-foreground ml-auto max-w-[90%]">
-          Atendemos todo o Brasil. Quer falar com um especialista?
+        <div className="rounded-2xl rounded-br-sm bg-primary/12 ring-1 ring-inset ring-primary/15 px-3 py-2 text-[11px] text-foreground ml-auto max-w-[92%]">
+          Atendemos todo o Brasil 🇧🇷 Quer falar com um especialista hoje?
+          <span className="mt-1 flex items-center justify-end gap-1 text-[8px] text-muted-foreground">
+            09:42 <CheckCheck size={9} className="text-sky-500" />
+          </span>
+        </div>
+        <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-2.5 py-1.5">
+          <Smile size={11} className="text-muted-foreground" />
+          <Paperclip size={11} className="text-muted-foreground" />
+          <span className="text-[9px] text-muted-foreground flex-1">Digite uma mensagem…</span>
+          <span className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+            <Send size={9} className="text-primary-foreground" />
+          </span>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <Pill tone="primary">IA respondeu</Pill>
-          <Pill tone="amber">Transferir p/ humano</Pill>
-          <Pill>
-            <Tag size={9} /> VIP
+          <Pill tone="primary">
+            <Bot size={9} /> IA respondeu
+          </Pill>
+          <Pill tone="amber">
+            <UserCheck size={9} /> Transferir p/ humano
           </Pill>
         </div>
       </div>
@@ -273,29 +546,57 @@ const ChatMock = () => (
 
 /* ---------------------------- 7. Fluxos ---------------------------- */
 const FlowMock = () => (
-  <MockShell title="Fluxos Inteligentes — Construtor visual">
-    <div className="space-y-2">
-      {[
-        { i: MessageSquare, t: "Gatilho: nova mensagem", tone: "primary" as const },
-        { i: Bot, t: "IA qualifica o lead", tone: "muted" as const },
-        { i: CalendarDays, t: "Agendar reunião", tone: "muted" as const },
-        { i: LayoutDashboard, t: "Mover no CRM", tone: "primary" as const },
-      ].map((n, i, arr) => (
-        <div key={n.t}>
-          <Row className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <n.i size={13} className="text-primary" />
-            </div>
-            <p className="text-[11px] font-semibold text-foreground truncate flex-1">{n.t}</p>
-            <Pill tone={n.tone}>{i === 1 ? "condição" : "ação"}</Pill>
+  <MockShell title="Fluxos Inteligentes — Construtor visual" badge="publicado">
+    <div className="grid grid-cols-5 gap-3">
+      <div className="col-span-3 space-y-1">
+        {[
+          { i: MessageSquare, t: "Nova mensagem recebida", s: "gatilho", tone: "primary" as const },
+          { i: Bot, t: "IA qualifica o lead", s: "inteligência", tone: "info" as const },
+          { i: GitBranch, t: "Lead é qualificado?", s: "condição", tone: "amber" as const },
+          { i: CalendarDays, t: "Agendar reunião", s: "ação", tone: "muted" as const },
+          { i: LayoutDashboard, t: "Mover no CRM", s: "ação", tone: "muted" as const },
+        ].map((n, i, arr) => (
+          <div key={n.t}>
+            <Row className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <n.i size={13} className="text-primary" />
+              </div>
+              <p className="text-[11px] font-semibold text-foreground truncate flex-1">{n.t}</p>
+              <Pill tone={n.tone}>{n.s}</Pill>
+            </Row>
+            {i < arr.length - 1 && (
+              <div className="flex justify-center">
+                <span className="h-3 w-px bg-border" />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="col-span-2 space-y-2">
+        <Row className="space-y-1.5">
+          <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground">
+            Desempenho
+          </p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-lg font-bold text-foreground leading-none">68%</span>
+            <span className="text-[9px] text-primary font-semibold">conclusão</span>
+          </div>
+          <Bar value={68} />
+        </Row>
+        {[
+          { i: Zap, l: "Entradas", v: "842" },
+          { i: BarChart3, l: "Teste A/B", v: "B +14%" },
+          { i: Timer, l: "Espera", v: "2h úteis" },
+          { i: Mail, l: "Integrações", v: "Sheets" },
+        ].map((k) => (
+          <Row key={k.l} className="flex items-center gap-2 py-1.5">
+            <k.i size={11} className="text-primary flex-shrink-0" />
+            <p className="text-[10px] text-muted-foreground flex-1 truncate">{k.l}</p>
+            <p className="text-[10px] font-bold text-foreground">{k.v}</p>
           </Row>
-          {i < arr.length - 1 && (
-            <div className="flex justify-center py-0.5">
-              <ArrowRight size={12} className="text-muted-foreground/60 rotate-90" />
-            </div>
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   </MockShell>
 );
@@ -404,11 +705,22 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       viewport={{ once: true, amount: 0.2, margin: "0px 0px -80px 0px" }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       style={{ contentVisibility: "auto", containIntrinsicSize: "480px" } as React.CSSProperties}
-      className="relative overflow-hidden rounded-3xl border border-border/70 bg-card/70 p-5 sm:p-8 lg:p-10 shadow-sm hover:shadow-lg hover:shadow-primary/5 transition-shadow duration-500 will-change-auto"
+      className={cn(
+        "relative overflow-hidden rounded-3xl border border-primary/15 p-5 sm:p-8 lg:p-10",
+        "shadow-[0_1px_0_0_hsl(var(--primary)/0.08)_inset,0_20px_60px_-40px_hsl(var(--primary)/0.5)]",
+        "hover:border-primary/30 hover:shadow-[0_1px_0_0_hsl(var(--primary)/0.12)_inset,0_30px_80px_-40px_hsl(var(--primary)/0.65)]",
+        "transition-all duration-500 will-change-auto",
+        reversed
+          ? "bg-[linear-gradient(300deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]"
+          : "bg-[linear-gradient(60deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]",
+      )}
     >
       <div
-        className="absolute -top-16 -right-16 w-64 h-64 rounded-full pointer-events-none opacity-[0.07]"
-        style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }}
+        className={cn(
+          "absolute -top-24 w-72 h-72 rounded-full pointer-events-none opacity-[0.5]",
+          reversed ? "-left-24" : "-right-24",
+        )}
+        style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.14), transparent 70%)" }}
         aria-hidden="true"
       />
       <div
@@ -419,11 +731,11 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       >
         {/* Texto */}
         <div>
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Icon size={17} className="text-primary" />
+          <div className="inline-flex items-center gap-2.5 mb-4 rounded-full border border-primary/20 bg-primary/[0.08] pl-1.5 pr-3.5 py-1.5">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-[0_6px_16px_-6px_hsl(var(--primary))]">
+              <Icon size={15} className="text-primary-foreground" />
             </div>
-            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-primary">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
               {item.eyebrow}
             </span>
           </div>
@@ -433,13 +745,16 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-5">
             {item.description}
           </p>
-          <ul className="space-y-2.5">
+          <ul className="grid sm:grid-cols-2 gap-2">
             {item.benefits.map((b) => (
-              <li key={b} className="flex items-start gap-2.5">
-                <span className="mt-0.5 w-4.5 h-[18px] min-w-[18px] rounded-full bg-primary/10 flex items-center justify-center">
-                  <Check size={11} className="text-primary" strokeWidth={3} />
+              <li
+                key={b}
+                className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-background/40 px-3 py-2"
+              >
+                <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center shadow-[0_4px_10px_-4px_hsl(var(--primary))]">
+                  <Check size={11} className="text-primary-foreground" strokeWidth={3.5} />
                 </span>
-                <span className="text-sm text-foreground/85 leading-snug">{b}</span>
+                <span className="text-[13px] font-medium text-foreground/90 leading-snug">{b}</span>
               </li>
             ))}
           </ul>
