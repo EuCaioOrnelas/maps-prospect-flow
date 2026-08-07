@@ -1136,7 +1136,9 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       </div>
 
     </motion.article>
+    </div>
   );
+
 };
 
 export const PlatformModulesSection = () => {
