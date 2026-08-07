@@ -130,6 +130,7 @@ const LandingPage = () => {
               bestRating: "5",
             },
           },
+          platformModulesJsonLd,
           faqJsonLd,
         ]}
       />
