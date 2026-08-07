@@ -417,10 +417,15 @@ const AgendaMock = () => (
           {d}
         </span>
       ))}
-      {Array.from({ length: 14 }).map((_, i) => {
-        const day = i + 11;
-        const green = [3, 8, 11].includes(i);
-        const blue = [6].includes(i);
+      {Array.from({ length: 35 }).map((_, i) => {
+        const day = i - 1; // 2 células vazias antes do dia 1
+        const valid = day >= 1 && day <= 30;
+        const green = [6, 12, 19, 25].includes(day);
+        const blue = [9, 21].includes(day);
+
+        if (!valid) {
+          return <span key={i} className="h-6 rounded-md bg-muted/20" aria-hidden="true" />;
+        }
 
         return (
           <motion.span
@@ -428,9 +433,9 @@ const AgendaMock = () => (
             initial={{ opacity: 0, scale: 0.85 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={VIEW}
-            transition={{ duration: 0.3, delay: 0.05 + i * 0.015 }}
+            transition={{ duration: 0.3, delay: 0.05 + i * 0.008 }}
             className={cn(
-              "h-7 rounded-md text-[9px] flex flex-col items-center justify-center gap-0.5 border",
+              "h-6 rounded-md text-[9px] flex flex-col items-center justify-center leading-none gap-[1px] border",
               green
                 ? "bg-primary/10 text-primary font-bold border-primary/25"
                 : blue
@@ -446,6 +451,7 @@ const AgendaMock = () => (
         );
       })}
     </div>
+
 
     <div className="space-y-2">
       {[
