@@ -66,9 +66,10 @@ const MockShell = ({
         </span>
       )}
     </div>
-    <div className="p-3 sm:p-3.5 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] min-h-[356px] flex flex-col justify-start">
+    <div className="p-3 sm:p-3.5 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] h-[364px] overflow-hidden flex flex-col justify-start">
       {children}
     </div>
+
   </div>
 );
 
