@@ -759,13 +759,21 @@ const FlowNode = ({
   label,
   sub,
   tone = "primary",
+  delay = 0,
 }: {
   icon: typeof Search;
   label: string;
   sub?: string;
   tone?: "primary" | "info" | "amber" | "muted";
+  delay?: number;
 }) => (
-  <div className="flex flex-col items-center text-center w-[92px]">
+  <motion.div
+    className="flex flex-col items-center text-center w-[92px]"
+    initial={{ opacity: 0, scale: 0.7, y: 8 }}
+    whileInView={{ opacity: 1, scale: 1, y: 0 }}
+    viewport={VIEW}
+    transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
+  >
     <div
       className={cn(
         "w-9 h-9 rounded-full flex items-center justify-center ring-4",
@@ -781,14 +789,47 @@ const FlowNode = ({
       {label}
     </p>
     {sub && <p className="text-[8px] text-muted-foreground leading-tight mt-0.5">{sub}</p>}
-  </div>
+  </motion.div>
 );
 
-const DottedLine = ({ className = "" }: { className?: string }) => (
-  <span
-    className={cn("block border-dashed border-primary/45", className)}
-    aria-hidden="true"
-  />
+/* Linha pontilhada que se desenha na entrada + bolinha percorrendo o fluxo */
+const DottedLine = ({
+  className = "",
+  delay = 0,
+  axis = "x",
+  travel = false,
+}: {
+  className?: string;
+  delay?: number;
+  axis?: "x" | "y";
+  travel?: boolean;
+}) => (
+  <span className={cn("relative block", className.includes("w-") ? "" : "")}>
+    <motion.span
+      className={cn("block border-dashed border-primary/45", className)}
+      aria-hidden="true"
+      initial={axis === "x" ? { scaleX: 0 } : { scaleY: 0 }}
+      whileInView={axis === "x" ? { scaleX: 1 } : { scaleY: 1 }}
+      viewport={VIEW}
+      transition={{ duration: 0.4, delay, ease: "easeOut" }}
+      style={{ originX: 0, originY: 0 }}
+    />
+    {travel && (
+      <motion.span
+        className="absolute w-1.5 h-1.5 rounded-full bg-primary"
+        style={axis === "x" ? { top: "50%", left: 0, marginTop: -3 } : { left: "50%", top: 0, marginLeft: -3 }}
+        initial={{ opacity: 0 }}
+        whileInView={
+          axis === "x"
+            ? { opacity: [0, 1, 1, 0], x: [0, 28] }
+            : { opacity: [0, 1, 1, 0], y: [0, 18] }
+        }
+        viewport={VIEW}
+        transition={{ duration: 1, delay: delay + 0.3, ease: "easeInOut" }}
+        aria-hidden="true"
+      />
+    )}
+  </span>
 );
 
 const FlowMock = () => (
@@ -796,42 +837,48 @@ const FlowMock = () => (
     <div className="relative py-1">
       {/* Linha 1 — gatilho → atendimento */}
       <div className="flex items-start justify-center gap-2">
-        <FlowNode icon={MessageSquare} label="Gatilho" sub="Mensagem recebida" />
-        <DottedLine className="mt-4 w-8 border-t-2" />
-        <FlowNode icon={Bot} label="Atendimento" sub="IA inicia conversa" tone="info" />
-        <DottedLine className="mt-4 w-8 border-t-2" />
-        <FlowNode icon={UserCheck} label="Triagem" sub="Coleta de dados" tone="muted" />
+        <FlowNode icon={MessageSquare} label="Gatilho" sub="Mensagem recebida" delay={0} />
+        <DottedLine className="mt-4 w-8 border-t-2" delay={0.2} travel />
+        <FlowNode icon={Bot} label="Atendimento" sub="IA inicia conversa" tone="info" delay={0.3} />
+        <DottedLine className="mt-4 w-8 border-t-2" delay={0.45} travel />
+        <FlowNode icon={UserCheck} label="Triagem" sub="Coleta de dados" tone="muted" delay={0.55} />
       </div>
 
       {/* conector vertical */}
       <div className="flex justify-center">
-        <DottedLine className="h-5 border-l-2" />
+        <DottedLine className="h-5 border-l-2" delay={0.7} axis="y" travel />
       </div>
 
       {/* Linha 2 — condição */}
       <div className="flex justify-center">
-        <FlowNode icon={GitBranch} label="Qualificado?" sub="Condição / Teste A/B" tone="amber" />
+        <FlowNode icon={GitBranch} label="Qualificado?" sub="Condição / Teste A/B" tone="amber" delay={0.85} />
       </div>
 
       {/* ramificação */}
-      <div className="flex justify-center items-stretch">
+      <motion.div
+        className="flex justify-center items-stretch"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={VIEW}
+        transition={{ duration: 0.4, delay: 1 }}
+      >
         <div className="w-1/2 h-5 border-l-2 border-t-2 border-dashed border-primary/45 rounded-tl-lg mt-0" />
         <div className="w-1/2 h-5 border-r-2 border-t-2 border-dashed border-primary/45 rounded-tr-lg" />
-      </div>
+      </motion.div>
 
       {/* Linha 3 — saídas */}
       <div className="flex items-start justify-between px-1">
-        <FlowNode icon={CalendarDays} label="Agendar" sub="Reunião na agenda" />
-        <FlowNode icon={Timer} label="Espera" sub="Follow-up 2h úteis" tone="muted" />
-        <FlowNode icon={LayoutDashboard} label="CRM" sub="Move de etapa" tone="info" />
+        <FlowNode icon={CalendarDays} label="Agendar" sub="Reunião na agenda" delay={1.1} />
+        <FlowNode icon={Timer} label="Espera" sub="Follow-up 2h úteis" tone="muted" delay={1.2} />
+        <FlowNode icon={LayoutDashboard} label="CRM" sub="Move de etapa" tone="info" delay={1.3} />
       </div>
 
       <div className="flex justify-center">
-        <DottedLine className="h-5 border-l-2" />
+        <DottedLine className="h-5 border-l-2" delay={1.4} axis="y" travel />
       </div>
 
       <div className="flex justify-center">
-        <FlowNode icon={CheckCheck} label="Entrega" sub="Vendedor notificado" />
+        <FlowNode icon={CheckCheck} label="Entrega" sub="Vendedor notificado" delay={1.55} />
       </div>
 
       {/* rodapé de métricas */}
@@ -840,17 +887,20 @@ const FlowMock = () => (
           { i: Zap, l: "Entradas", v: "842" },
           { i: BarChart3, l: "Conclusão", v: "68%" },
           { i: Mail, l: "Integrações", v: "Sheets" },
-        ].map((k) => (
-          <Row key={k.l} className="flex items-center gap-1.5 py-1.5">
-            <k.i size={11} className="text-primary flex-shrink-0" />
-            <p className="text-[9px] text-muted-foreground truncate flex-1">{k.l}</p>
-            <p className="text-[10px] font-bold text-foreground">{k.v}</p>
-          </Row>
+        ].map((k, i) => (
+          <Reveal key={k.l} delay={1.6 + i * 0.08}>
+            <Row className="flex items-center gap-1.5 py-1.5">
+              <k.i size={11} className="text-primary flex-shrink-0" />
+              <p className="text-[9px] text-muted-foreground truncate flex-1">{k.l}</p>
+              <p className="text-[10px] font-bold text-foreground">{k.v}</p>
+            </Row>
+          </Reveal>
         ))}
       </div>
     </div>
   </MockShell>
 );
+
 
 
 /* ------------------------------------------------------------------ */
