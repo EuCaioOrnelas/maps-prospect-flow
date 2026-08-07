@@ -99,6 +99,18 @@ const Row = ({ children, className = "" }: { children: ReactNode; className?: st
   </div>
 );
 
+/* Palco de destaque para os mockups (sem blur, apenas degradê sólido) */
+const MockStage = ({ children }: { children: ReactNode }) => (
+  <div className="relative w-full rounded-[26px] p-3 sm:p-5 bg-[linear-gradient(145deg,hsl(var(--primary)/0.22)_0%,hsl(var(--primary)/0.10)_45%,hsl(var(--primary)/0.16)_100%)] ring-1 ring-inset ring-primary/20">
+    <span className="pointer-events-none absolute left-2.5 top-2.5 w-4 h-4 border-l-2 border-t-2 border-primary/40 rounded-tl-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-2.5 top-2.5 w-4 h-4 border-r-2 border-t-2 border-primary/40 rounded-tr-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute left-2.5 bottom-2.5 w-4 h-4 border-l-2 border-b-2 border-primary/40 rounded-bl-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-2.5 bottom-2.5 w-4 h-4 border-r-2 border-b-2 border-primary/40 rounded-br-md" aria-hidden="true" />
+    <div className="relative">{children}</div>
+  </div>
+);
+
+
 const Bar = ({ value, tone = "primary" }: { value: number; tone?: "primary" | "amber" }) => (
   <div className="h-1.5 rounded-full bg-muted overflow-hidden">
     <div
@@ -545,54 +557,96 @@ const ChatMock = () => (
 );
 
 /* ---------------------------- 7. Fluxos ---------------------------- */
+const FlowNode = ({
+  icon: Icon,
+  label,
+  sub,
+  tone = "primary",
+}: {
+  icon: typeof Search;
+  label: string;
+  sub?: string;
+  tone?: "primary" | "info" | "amber" | "muted";
+}) => (
+  <div className="flex flex-col items-center text-center w-[92px]">
+    <div
+      className={cn(
+        "w-9 h-9 rounded-full flex items-center justify-center ring-4",
+        tone === "primary" && "bg-primary text-primary-foreground ring-primary/15",
+        tone === "info" && "bg-sky-500 text-white ring-sky-500/15",
+        tone === "amber" && "bg-amber-500 text-white ring-amber-500/15",
+        tone === "muted" && "bg-muted text-muted-foreground ring-border/40",
+      )}
+    >
+      <Icon size={15} />
+    </div>
+    <p className="mt-1.5 text-[9px] font-bold uppercase tracking-wide text-foreground leading-tight">
+      {label}
+    </p>
+    {sub && <p className="text-[8px] text-muted-foreground leading-tight mt-0.5">{sub}</p>}
+  </div>
+);
+
+const DottedLine = ({ className = "" }: { className?: string }) => (
+  <span
+    className={cn("block border-dashed border-primary/45", className)}
+    aria-hidden="true"
+  />
+);
+
 const FlowMock = () => (
   <MockShell title="Fluxos Inteligentes — Construtor visual" badge="publicado">
-    <div className="grid grid-cols-5 gap-3">
-      <div className="col-span-3 space-y-1">
-        {[
-          { i: MessageSquare, t: "Nova mensagem recebida", s: "gatilho", tone: "primary" as const },
-          { i: Bot, t: "IA qualifica o lead", s: "inteligência", tone: "info" as const },
-          { i: GitBranch, t: "Lead é qualificado?", s: "condição", tone: "amber" as const },
-          { i: CalendarDays, t: "Agendar reunião", s: "ação", tone: "muted" as const },
-          { i: LayoutDashboard, t: "Mover no CRM", s: "ação", tone: "muted" as const },
-        ].map((n, i, arr) => (
-          <div key={n.t}>
-            <Row className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <n.i size={13} className="text-primary" />
-              </div>
-              <p className="text-[11px] font-semibold text-foreground truncate flex-1">{n.t}</p>
-              <Pill tone={n.tone}>{n.s}</Pill>
-            </Row>
-            {i < arr.length - 1 && (
-              <div className="flex justify-center">
-                <span className="h-3 w-px bg-border" />
-              </div>
-            )}
-          </div>
-        ))}
+    <div className="relative py-1">
+      {/* Linha 1 — gatilho → atendimento */}
+      <div className="flex items-start justify-center gap-2">
+        <FlowNode icon={MessageSquare} label="Gatilho" sub="Mensagem recebida" />
+        <DottedLine className="mt-4 w-8 border-t-2" />
+        <FlowNode icon={Bot} label="Atendimento" sub="IA inicia conversa" tone="info" />
+        <DottedLine className="mt-4 w-8 border-t-2" />
+        <FlowNode icon={UserCheck} label="Triagem" sub="Coleta de dados" tone="muted" />
       </div>
 
-      <div className="col-span-2 space-y-2">
-        <Row className="space-y-1.5">
-          <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground">
-            Desempenho
-          </p>
-          <div className="flex items-baseline gap-1">
-            <span className="text-lg font-bold text-foreground leading-none">68%</span>
-            <span className="text-[9px] text-primary font-semibold">conclusão</span>
-          </div>
-          <Bar value={68} />
-        </Row>
+      {/* conector vertical */}
+      <div className="flex justify-center">
+        <DottedLine className="h-5 border-l-2" />
+      </div>
+
+      {/* Linha 2 — condição */}
+      <div className="flex justify-center">
+        <FlowNode icon={GitBranch} label="Qualificado?" sub="Condição / Teste A/B" tone="amber" />
+      </div>
+
+      {/* ramificação */}
+      <div className="flex justify-center items-stretch">
+        <div className="w-1/2 h-5 border-l-2 border-t-2 border-dashed border-primary/45 rounded-tl-lg mt-0" />
+        <div className="w-1/2 h-5 border-r-2 border-t-2 border-dashed border-primary/45 rounded-tr-lg" />
+      </div>
+
+      {/* Linha 3 — saídas */}
+      <div className="flex items-start justify-between px-1">
+        <FlowNode icon={CalendarDays} label="Agendar" sub="Reunião na agenda" />
+        <FlowNode icon={Timer} label="Espera" sub="Follow-up 2h úteis" tone="muted" />
+        <FlowNode icon={LayoutDashboard} label="CRM" sub="Move de etapa" tone="info" />
+      </div>
+
+      <div className="flex justify-center">
+        <DottedLine className="h-5 border-l-2" />
+      </div>
+
+      <div className="flex justify-center">
+        <FlowNode icon={CheckCheck} label="Entrega" sub="Vendedor notificado" />
+      </div>
+
+      {/* rodapé de métricas */}
+      <div className="mt-3 grid grid-cols-3 gap-2">
         {[
           { i: Zap, l: "Entradas", v: "842" },
-          { i: BarChart3, l: "Teste A/B", v: "B +14%" },
-          { i: Timer, l: "Espera", v: "2h úteis" },
+          { i: BarChart3, l: "Conclusão", v: "68%" },
           { i: Mail, l: "Integrações", v: "Sheets" },
         ].map((k) => (
-          <Row key={k.l} className="flex items-center gap-2 py-1.5">
+          <Row key={k.l} className="flex items-center gap-1.5 py-1.5">
             <k.i size={11} className="text-primary flex-shrink-0" />
-            <p className="text-[10px] text-muted-foreground flex-1 truncate">{k.l}</p>
+            <p className="text-[9px] text-muted-foreground truncate flex-1">{k.l}</p>
             <p className="text-[10px] font-bold text-foreground">{k.v}</p>
           </Row>
         ))}
@@ -600,6 +654,7 @@ const FlowMock = () => (
     </div>
   </MockShell>
 );
+
 
 /* ------------------------------------------------------------------ */
 
@@ -700,21 +755,21 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 32, scale: 0.96 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true, amount: 0.2, margin: "0px 0px -80px 0px" }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      style={{ contentVisibility: "auto", containIntrinsicSize: "480px" } as React.CSSProperties}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.15, margin: "0px 0px -80px 0px" }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+      style={{ contentVisibility: "auto", containIntrinsicSize: "560px" } as React.CSSProperties}
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-primary/15 p-5 sm:p-8 lg:p-10",
-        "shadow-[0_1px_0_0_hsl(var(--primary)/0.08)_inset,0_20px_60px_-40px_hsl(var(--primary)/0.5)]",
-        "hover:border-primary/30 hover:shadow-[0_1px_0_0_hsl(var(--primary)/0.12)_inset,0_30px_80px_-40px_hsl(var(--primary)/0.65)]",
-        "transition-all duration-500 will-change-auto",
+        "relative overflow-hidden rounded-3xl border border-border p-5 sm:p-8 lg:p-10",
+        "w-full lg:min-h-[560px] flex items-center",
+        "shadow-[0_18px_50px_-40px_hsl(var(--foreground)/0.35)]",
         reversed
           ? "bg-[linear-gradient(300deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]"
           : "bg-[linear-gradient(60deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]",
       )}
     >
+
       <div
         className={cn(
           "absolute -top-24 w-72 h-72 rounded-full pointer-events-none opacity-[0.5]",
@@ -725,14 +780,14 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       />
       <div
         className={cn(
-          "relative z-10 grid items-center gap-6 lg:gap-12 lg:grid-cols-2",
+          "relative z-10 w-full grid items-center gap-6 lg:gap-12 lg:grid-cols-2",
           reversed && "lg:[&>*:first-child]:order-2",
         )}
       >
         {/* Texto */}
         <div>
-          <div className="inline-flex items-center gap-2.5 mb-4 rounded-full border border-primary/20 bg-primary/[0.08] pl-1.5 pr-3.5 py-1.5">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-[0_6px_16px_-6px_hsl(var(--primary))]">
+          <div className="inline-flex items-center gap-2.5 mb-4 rounded-full border border-border bg-card pl-1.5 pr-3.5 py-1.5 shadow-[0_6px_18px_-14px_hsl(var(--foreground)/0.4)]">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
               <Icon size={15} className="text-primary-foreground" />
             </div>
             <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
@@ -749,9 +804,9 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             {item.benefits.map((b) => (
               <li
                 key={b}
-                className="flex items-center gap-2.5 rounded-xl border border-border/50 bg-background/40 px-3 py-2"
+                className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card px-3 py-2"
               >
-                <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center shadow-[0_4px_10px_-4px_hsl(var(--primary))]">
+                <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center">
                   <Check size={11} className="text-primary-foreground" strokeWidth={3.5} />
                 </span>
                 <span className="text-[13px] font-medium text-foreground/90 leading-snug">{b}</span>
@@ -762,9 +817,12 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
 
         {/* Mockup */}
         <div className="w-full">
-          <Mock />
+          <MockStage>
+            <Mock />
+          </MockStage>
         </div>
       </div>
+
     </motion.article>
   );
 };
