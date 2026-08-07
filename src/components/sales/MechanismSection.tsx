@@ -1,6 +1,6 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
-import { Search, ScanSearch, Brain, Sparkles, Send, Bot, RefreshCw, CalendarCheck, LayoutGrid } from "lucide-react";
+import { Search, ScanSearch, Brain, Sparkles, Send, Bot, RefreshCw, CalendarCheck, CalendarDays, Headset, LayoutGrid } from "lucide-react";
 import { useRef } from "react";
 import { useInView } from "framer-motion";
 import { SectionHeading } from "@/components/landing/SectionHeading";
@@ -11,8 +11,10 @@ const steps = [
  { icon: Brain, title: "Diagnóstico IA", desc: "Com base na análise, identifica necessidades, dores e oportunidades reais", micro: "Score calculado por IA" },
  { icon: Sparkles, title: "Geração de Mensagem com IA", desc: "Cria abordagem personalizada automaticamente para cada lead", micro: "Copy única por lead" },
  { icon: Send, title: "Envio", desc: "Dispara mensagens no momento ideal", micro: "Via WhatsApp oficial" },
+ { icon: Headset, title: "SDR IA Assume a Conversa", desc: "Qualifica em tempo real, quebra objeções e conduz o lead pelo funil", micro: "Raciocínio em 9 camadas" },
  { icon: Bot, title: "IA Closer Responde", desc: "Conversa, qualifica e conduz o lead até o fechamento", micro: "Atendimento 24/7" },
  { icon: RefreshCw, title: "Follow-up", desc: "Recupera leads que iriam esfriar", micro: "Reengajamento automático" },
+ { icon: CalendarDays, title: "Agenda Inteligente", desc: "A IA agenda a reunião direto no calendário do time, sem fricção", micro: "Slots e lembretes automáticos" },
  { icon: CalendarCheck, title: "Conversão", desc: "Gera reuniões e oportunidades reais", micro: "Pipeline alimentado" },
  { icon: LayoutGrid, title: "CRM", desc: "Organiza tudo sem esforço manual", micro: "Histórico centralizado" },
 ];
@@ -216,7 +218,7 @@ export const MechanismSection = () => {
  className="flex justify-center mt-10 relative z-10"
  >
  <div className="flex items-center gap-2.5 px-4 py-2 rounded-hover border border-primary/25 bg-primary/10 shadow-sm">
- <CalendarCheck size={14} className="text-primary-foreground" />
+ <CalendarCheck size={14} className="text-primary" />
  <span className="text-xs font-medium text-primary">Clientes gerados + pipeline organizado</span>
  </div>
  </motion.div>
