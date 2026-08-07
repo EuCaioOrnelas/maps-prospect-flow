@@ -557,54 +557,96 @@ const ChatMock = () => (
 );
 
 /* ---------------------------- 7. Fluxos ---------------------------- */
+const FlowNode = ({
+  icon: Icon,
+  label,
+  sub,
+  tone = "primary",
+}: {
+  icon: typeof Search;
+  label: string;
+  sub?: string;
+  tone?: "primary" | "info" | "amber" | "muted";
+}) => (
+  <div className="flex flex-col items-center text-center w-[92px]">
+    <div
+      className={cn(
+        "w-9 h-9 rounded-full flex items-center justify-center ring-4",
+        tone === "primary" && "bg-primary text-primary-foreground ring-primary/15",
+        tone === "info" && "bg-sky-500 text-white ring-sky-500/15",
+        tone === "amber" && "bg-amber-500 text-white ring-amber-500/15",
+        tone === "muted" && "bg-muted text-muted-foreground ring-border/40",
+      )}
+    >
+      <Icon size={15} />
+    </div>
+    <p className="mt-1.5 text-[9px] font-bold uppercase tracking-wide text-foreground leading-tight">
+      {label}
+    </p>
+    {sub && <p className="text-[8px] text-muted-foreground leading-tight mt-0.5">{sub}</p>}
+  </div>
+);
+
+const DottedLine = ({ className = "" }: { className?: string }) => (
+  <span
+    className={cn("block border-dashed border-primary/45", className)}
+    aria-hidden="true"
+  />
+);
+
 const FlowMock = () => (
   <MockShell title="Fluxos Inteligentes — Construtor visual" badge="publicado">
-    <div className="grid grid-cols-5 gap-3">
-      <div className="col-span-3 space-y-1">
-        {[
-          { i: MessageSquare, t: "Nova mensagem recebida", s: "gatilho", tone: "primary" as const },
-          { i: Bot, t: "IA qualifica o lead", s: "inteligência", tone: "info" as const },
-          { i: GitBranch, t: "Lead é qualificado?", s: "condição", tone: "amber" as const },
-          { i: CalendarDays, t: "Agendar reunião", s: "ação", tone: "muted" as const },
-          { i: LayoutDashboard, t: "Mover no CRM", s: "ação", tone: "muted" as const },
-        ].map((n, i, arr) => (
-          <div key={n.t}>
-            <Row className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <n.i size={13} className="text-primary" />
-              </div>
-              <p className="text-[11px] font-semibold text-foreground truncate flex-1">{n.t}</p>
-              <Pill tone={n.tone}>{n.s}</Pill>
-            </Row>
-            {i < arr.length - 1 && (
-              <div className="flex justify-center">
-                <span className="h-3 w-px bg-border" />
-              </div>
-            )}
-          </div>
-        ))}
+    <div className="relative py-1">
+      {/* Linha 1 — gatilho → atendimento */}
+      <div className="flex items-start justify-center gap-2">
+        <FlowNode icon={MessageSquare} label="Gatilho" sub="Mensagem recebida" />
+        <DottedLine className="mt-4 w-8 border-t-2" />
+        <FlowNode icon={Bot} label="Atendimento" sub="IA inicia conversa" tone="info" />
+        <DottedLine className="mt-4 w-8 border-t-2" />
+        <FlowNode icon={UserCheck} label="Triagem" sub="Coleta de dados" tone="muted" />
       </div>
 
-      <div className="col-span-2 space-y-2">
-        <Row className="space-y-1.5">
-          <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground">
-            Desempenho
-          </p>
-          <div className="flex items-baseline gap-1">
-            <span className="text-lg font-bold text-foreground leading-none">68%</span>
-            <span className="text-[9px] text-primary font-semibold">conclusão</span>
-          </div>
-          <Bar value={68} />
-        </Row>
+      {/* conector vertical */}
+      <div className="flex justify-center">
+        <DottedLine className="h-5 border-l-2" />
+      </div>
+
+      {/* Linha 2 — condição */}
+      <div className="flex justify-center">
+        <FlowNode icon={GitBranch} label="Qualificado?" sub="Condição / Teste A/B" tone="amber" />
+      </div>
+
+      {/* ramificação */}
+      <div className="flex justify-center items-stretch">
+        <div className="w-1/2 h-5 border-l-2 border-t-2 border-dashed border-primary/45 rounded-tl-lg mt-0" />
+        <div className="w-1/2 h-5 border-r-2 border-t-2 border-dashed border-primary/45 rounded-tr-lg" />
+      </div>
+
+      {/* Linha 3 — saídas */}
+      <div className="flex items-start justify-between px-1">
+        <FlowNode icon={CalendarDays} label="Agendar" sub="Reunião na agenda" />
+        <FlowNode icon={Timer} label="Espera" sub="Follow-up 2h úteis" tone="muted" />
+        <FlowNode icon={LayoutDashboard} label="CRM" sub="Move de etapa" tone="info" />
+      </div>
+
+      <div className="flex justify-center">
+        <DottedLine className="h-5 border-l-2" />
+      </div>
+
+      <div className="flex justify-center">
+        <FlowNode icon={CheckCheck} label="Entrega" sub="Vendedor notificado" />
+      </div>
+
+      {/* rodapé de métricas */}
+      <div className="mt-3 grid grid-cols-3 gap-2">
         {[
           { i: Zap, l: "Entradas", v: "842" },
-          { i: BarChart3, l: "Teste A/B", v: "B +14%" },
-          { i: Timer, l: "Espera", v: "2h úteis" },
+          { i: BarChart3, l: "Conclusão", v: "68%" },
           { i: Mail, l: "Integrações", v: "Sheets" },
         ].map((k) => (
-          <Row key={k.l} className="flex items-center gap-2 py-1.5">
+          <Row key={k.l} className="flex items-center gap-1.5 py-1.5">
             <k.i size={11} className="text-primary flex-shrink-0" />
-            <p className="text-[10px] text-muted-foreground flex-1 truncate">{k.l}</p>
+            <p className="text-[9px] text-muted-foreground truncate flex-1">{k.l}</p>
             <p className="text-[10px] font-bold text-foreground">{k.v}</p>
           </Row>
         ))}
@@ -612,6 +654,7 @@ const FlowMock = () => (
     </div>
   </MockShell>
 );
+
 
 /* ------------------------------------------------------------------ */
 
