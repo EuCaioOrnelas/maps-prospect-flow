@@ -384,9 +384,10 @@ const AgendaMock = () => (
           {d}
         </span>
       ))}
-      {Array.from({ length: 21 }).map((_, i) => {
-        const green = [4, 9, 15].includes(i);
-        const blue = [7, 18].includes(i);
+      {Array.from({ length: 14 }).map((_, i) => {
+        const green = [4, 9, 12].includes(i);
+        const blue = [7].includes(i);
+
         return (
           <motion.span
             key={i}
