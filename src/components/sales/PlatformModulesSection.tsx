@@ -331,10 +331,11 @@ const SdrMock = () => (
           </div>
         </Reveal>
       ))}
-      <div className="w-fit rounded-2xl rounded-bl-sm bg-muted px-2.5 py-2">
-        <TypingDots delay={1.2} />
+      <div className="w-fit rounded-2xl rounded-bl-sm bg-muted px-2.5 py-2 shadow-sm">
+        <TypingDots delay={0.2} />
       </div>
-    </div>
+    </ChatWallpaper>
+
 
     <Reveal delay={1.5} className="mt-3">
       <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-2.5">
