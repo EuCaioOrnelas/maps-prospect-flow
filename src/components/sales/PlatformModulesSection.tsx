@@ -1064,10 +1064,11 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       style={{ top: `calc(5.5rem + ${index * 16}px)`, zIndex: 10 + index }}
     >
     <motion.article
-      initial={{ opacity: 0, y: 40, scale: 0.98 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true, amount: 0.15, margin: "0px 0px -80px 0px" }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+      initial={{ opacity: 0, x: reversed ? 140 : -140, scale: 0.96 }}
+      whileInView={{ opacity: 1, x: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.2, margin: "0px 0px -60px 0px" }}
+      transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+
 
       className={cn(
         "relative overflow-hidden rounded-3xl border border-border p-5 sm:p-8 lg:p-10 bg-card",
