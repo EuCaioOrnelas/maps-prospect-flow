@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import {
   Search,
   Bot,
@@ -33,10 +33,30 @@ import {
   Timer,
   UserCheck,
   Flame,
+  ChevronUp,
+  ChevronDown,
+  MousePointer2,
 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 import { cn } from "@/lib/utils";
+import avatar1 from "@/assets/avatars/contact-1.jpg";
+import avatar2 from "@/assets/avatars/contact-2.jpg";
+import avatar3 from "@/assets/avatars/contact-3.jpg";
+import avatar4 from "@/assets/avatars/contact-4.jpg";
+import avatar5 from "@/assets/avatars/contact-5.jpg";
+import avatar6 from "@/assets/avatars/contact-6.jpg";
+
+const contactAvatars = [avatar1, avatar2, avatar3, avatar4, avatar5, avatar6];
+
+const ContactAvatar = ({ index, className = "" }: { index: number; className?: string }) => (
+  <img
+    src={contactAvatars[index % contactAvatars.length]}
+    alt=""
+    loading="lazy"
+    className={cn("rounded-full object-cover object-top", className)}
+  />
+);
 
 /* ------------------------------------------------------------------ */
 /* Mockup shell — replica leve de uma tela real da plataforma          */
@@ -220,8 +240,12 @@ const ProspectMock = () => (
 
     <div className="grid grid-cols-5 gap-3">
       <div className="col-span-2 rounded-xl border border-border/60 bg-muted/30 relative overflow-hidden min-h-[152px]">
-        <div className="absolute inset-0 opacity-[0.5] [background-image:linear-gradient(hsl(var(--border))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border))_1px,transparent_1px)] [background-size:16px_16px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_45%_45%,hsl(var(--primary)/0.14),transparent_65%)]" />
+        <div className="absolute inset-0 bg-muted/40" />
+        <div className="absolute -left-5 top-6 h-3 w-[125%] rotate-[18deg] bg-background shadow-[0_0_0_1px_hsl(var(--border))]" />
+        <div className="absolute -left-4 top-[74px] h-2.5 w-[120%] -rotate-[12deg] bg-background shadow-[0_0_0_1px_hsl(var(--border))]" />
+        <div className="absolute left-[54%] -top-4 h-[120%] w-3 rotate-[5deg] bg-background shadow-[0_0_0_1px_hsl(var(--border))]" />
+        <div className="absolute left-2 top-2 h-8 w-12 rounded-md border border-primary/15 bg-primary/[0.07]" />
+        <div className="absolute bottom-3 right-2 h-10 w-14 rounded-md border border-sky-500/15 bg-sky-500/[0.07]" />
         {[
           { t: "18%", l: "22%", hot: true },
           { t: "44%", l: "56%", hot: true },
@@ -229,16 +253,20 @@ const ProspectMock = () => (
           { t: "32%", l: "76%", hot: false },
           { t: "78%", l: "64%", hot: false },
         ].map((p, i) => (
-          <span
+          <motion.span
             key={i}
             className={cn(
               "absolute w-5 h-5 rounded-full flex items-center justify-center ring-2",
               p.hot ? "bg-primary/25 ring-primary/30" : "bg-muted ring-border/60",
             )}
             style={{ top: p.t, left: p.l }}
+            initial={{ opacity: 0, scale: 0.4 }}
+            whileInView={{ opacity: 1, scale: p.hot ? [0.85, 1.22, 0.92, 1] : 1 }}
+            viewport={VIEW}
+            transition={{ duration: p.hot ? 1.1 : 0.4, delay: 0.15 + i * 0.1, ease: "easeOut" }}
           >
             <MapPin size={10} className={p.hot ? "text-primary" : "text-muted-foreground"} />
-          </span>
+          </motion.span>
         ))}
         <div className="absolute bottom-2 left-2">
           <Pill tone="primary">São Paulo · SP</Pill>
@@ -384,14 +412,15 @@ const AgendaMock = () => (
     </div>
 
     <div className="grid grid-cols-7 gap-1 mb-3">
-      {["S", "T", "Q", "Q", "S", "S", "D"].map((d, i) => (
+      {["SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM"].map((d, i) => (
         <span key={i} className="text-center text-[9px] font-semibold text-muted-foreground">
           {d}
         </span>
       ))}
       {Array.from({ length: 14 }).map((_, i) => {
-        const green = [4, 9, 12].includes(i);
-        const blue = [7].includes(i);
+        const day = i + 11;
+        const green = [3, 8, 11].includes(i);
+        const blue = [6].includes(i);
 
         return (
           <motion.span
@@ -401,7 +430,7 @@ const AgendaMock = () => (
             viewport={VIEW}
             transition={{ duration: 0.3, delay: 0.05 + i * 0.015 }}
             className={cn(
-              "aspect-square rounded-md text-[9px] flex flex-col items-center justify-center gap-0.5 border",
+              "h-7 rounded-md text-[9px] flex flex-col items-center justify-center gap-0.5 border",
               green
                 ? "bg-primary/10 text-primary font-bold border-primary/25"
                 : blue
@@ -409,7 +438,7 @@ const AgendaMock = () => (
                   : "bg-muted/40 text-muted-foreground border-transparent",
             )}
           >
-            {i + 1}
+            {day}
             {(green || blue) && (
               <span className={cn("w-1 h-1 rounded-full", green ? "bg-primary" : "bg-sky-500")} />
             )}
@@ -450,12 +479,12 @@ const AgendaMock = () => (
               </p>
             </div>
             <div className="flex -space-x-1.5">
-              {e.who.map((w) => (
+              {e.who.map((w, avatarIndex) => (
                 <span
                   key={w}
-                  className="w-5 h-5 rounded-full bg-muted border border-background text-[8px] font-bold text-muted-foreground flex items-center justify-center"
+                  className="w-6 h-6 rounded-full bg-muted border-2 border-background overflow-hidden"
                 >
-                  {w}
+                  <ContactAvatar index={i * 2 + avatarIndex} className="h-full w-full" />
                 </span>
               ))}
             </div>
@@ -474,6 +503,31 @@ const AgendaMock = () => (
 );
 
 /* ---------------------------- 4. Campanhas ---------------------------- */
+const CampaignProgress = ({ name, template, index }: { name: string; template: string; index: number }) => {
+  const [status, setStatus] = useState("Preparando");
+  const [progress, setProgress] = useState(8);
+
+  useEffect(() => {
+    const first = window.setTimeout(() => { setStatus("Enviando"); setProgress(58 + index * 8); }, 450 + index * 280);
+    const second = window.setTimeout(() => { setStatus("Concluída"); setProgress(100); }, 1600 + index * 500);
+    return () => { window.clearTimeout(first); window.clearTimeout(second); };
+  }, [index]);
+
+  return (
+    <Reveal delay={0.35 + index * 0.1} x={12}>
+      <Row className="space-y-1.5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Send size={13} className="text-primary" /></div>
+          <div className="min-w-0 flex-1"><p className="text-[11px] font-semibold text-foreground truncate">{name}</p><p className="text-[9px] text-muted-foreground font-mono truncate">{template}</p></div>
+          <Pill tone={status === "Concluída" ? "primary" : "amber"}>{status}</Pill>
+        </div>
+        <div className="h-1.5 rounded-full bg-muted overflow-hidden"><motion.div className="h-full rounded-full bg-primary" animate={{ width: `${progress}%` }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }} /></div>
+        <div className="flex items-center justify-between text-[9px] text-muted-foreground"><span className="flex items-center gap-1"><CheckCheck size={9} className="text-sky-500" /> {progress}% processado</span><span>delay seguro 8s</span></div>
+      </Row>
+    </Reveal>
+  );
+};
+
 const CampaignMock = () => (
   <MockShell title="Campanhas — API Oficial Meta" badge="enviando">
     <Reveal className="flex items-center gap-1.5 mb-2.5">
@@ -486,16 +540,18 @@ const CampaignMock = () => (
 
     <div className="grid grid-cols-4 gap-1.5 mb-2.5">
       {[
-        { l: "Enviadas", v: "1.400", d: "" },
-        { l: "Entregues", v: "1.248", d: "89%" },
-        { l: "Lidas", v: "1.032", d: "74%" },
-        { l: "Respostas", v: "317", d: "23%" },
+        { l: "Enviadas", v: "1.400", d: "12%", up: true },
+        { l: "Entregues", v: "1.248", d: "8,4%", up: true },
+        { l: "Lidas", v: "1.032", d: "3,1%", up: true },
+        { l: "Respostas", v: "317", d: "1,2%", up: false },
       ].map((k, i) => (
         <Reveal key={k.l} delay={0.08 * i} y={12}>
           <Row className="text-center py-2 h-full">
             <p className="text-sm font-bold text-foreground leading-none">{k.v}</p>
             <p className="text-[8px] text-muted-foreground uppercase tracking-wide mt-1">{k.l}</p>
-            {k.d && <p className="text-[9px] font-bold text-primary mt-0.5">{k.d}</p>}
+            <p className={cn("mt-0.5 flex items-center justify-center text-[9px] font-bold", k.up ? "text-primary" : "text-destructive")}>
+              {k.up ? <ChevronUp size={10} /> : <ChevronDown size={10} />}{k.d}
+            </p>
           </Row>
         </Reveal>
       ))}
@@ -529,32 +585,10 @@ const CampaignMock = () => (
 
       <div className="col-span-3 space-y-1.5">
         {[
-          { n: "Reativação — Base fria", s: "Concluída", tone: "primary" as const, p: 100, t: "template_reativacao_v2", d: "620/620" },
-          { n: "Oferta Julho — ICP contábil", s: "Enviando", tone: "amber" as const, p: 62, t: "oferta_julho_pt_br", d: "484/780" },
-          
-        ].map((c, i) => (
-          <Reveal key={c.n} delay={0.35 + i * 0.1} x={12}>
-            <Row className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Send size={13} className="text-primary" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-semibold text-foreground truncate">{c.n}</p>
-                  <p className="text-[9px] text-muted-foreground font-mono truncate">{c.t}</p>
-                </div>
-                <Pill tone={c.tone}>{c.s}</Pill>
-              </div>
-              <Bar value={c.p} tone={c.p === 100 ? "primary" : "amber"} delay={0.5 + i * 0.1} />
-              <div className="flex items-center justify-between text-[9px] text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <CheckCheck size={9} className="text-sky-500" /> {c.d}
-                </span>
-                <span>delay seguro 8s</span>
-              </div>
-            </Row>
-          </Reveal>
-        ))}
+          { n: "Reativação — Base fria", t: "template_reativacao_v2" },
+          { n: "Oferta Julho — ICP contábil", t: "oferta_julho_pt_br" },
+          { n: "Follow-up — Demonstração", t: "followup_demo_v3" },
+        ].map((c, i) => <CampaignProgress key={c.n} name={c.n} template={c.t} index={i} />)}
       </div>
     </div>
   </MockShell>
