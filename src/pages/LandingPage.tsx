@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { faqJsonLd } from "@/components/landing/FAQSection";
+import { platformModulesJsonLd } from "@/components/sales/PlatformModulesSection";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
