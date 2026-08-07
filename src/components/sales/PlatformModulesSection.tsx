@@ -861,19 +861,26 @@ const DottedLine = ({
     />
     {travel && (
       <motion.span
-        className="absolute w-1.5 h-1.5 rounded-full bg-primary"
+        className="absolute w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
         style={axis === "x" ? { top: "50%", left: 0, marginTop: -3 } : { left: "50%", top: 0, marginLeft: -3 }}
         initial={{ opacity: 0 }}
         whileInView={
           axis === "x"
-            ? { opacity: [0, 1, 1, 0], x: [0, 28] }
-            : { opacity: [0, 1, 1, 0], y: [0, 18] }
+            ? { opacity: [0, 1, 1, 0], x: [0, 32] }
+            : { opacity: [0, 1, 1, 0], y: [0, 20] }
         }
-        viewport={VIEW}
-        transition={{ duration: 1, delay: delay + 0.3, ease: "easeInOut" }}
+        viewport={LOOP_VIEW}
+        transition={{
+          duration: 1.2,
+          delay: delay + 0.3,
+          ease: "easeInOut",
+          repeat: Infinity,
+          repeatDelay: 1.4,
+        }}
         aria-hidden="true"
       />
     )}
+
   </span>
 );
 
