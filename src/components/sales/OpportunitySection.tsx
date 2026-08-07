@@ -62,9 +62,9 @@ export const OpportunitySection = () => {
                 Padrão antigo
               </span>
             </div>
-            <div className="flex min-h-20 flex-row items-center justify-center gap-1 sm:gap-2 bg-gradient-to-b from-primary to-primary/90 px-2">
-              <img src={logoWhite} alt="wiize" className="h-8 w-8 rounded-lg object-contain shadow-lg sm:h-9 sm:w-9" />
-              <span className="text-xs sm:text-base font-bold text-primary-foreground">wiize</span>
+            <div className="flex min-h-20 flex-row items-center justify-center gap-2 sm:gap-3 bg-gradient-to-b from-primary to-primary/90 px-2">
+              <img src={logoWhite} alt="wiize" className="h-9 w-9 rounded-lg object-contain sm:h-10 sm:w-10" />
+              <span className="text-sm sm:text-lg font-bold text-primary-foreground">wiize</span>
             </div>
           </div>
 
