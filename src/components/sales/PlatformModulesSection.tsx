@@ -71,7 +71,7 @@ const MockShell = ({
   badge?: string;
   children: ReactNode;
 }) => (
-  <div className="w-full rounded-2xl border border-border/70 bg-card overflow-hidden shadow-[0_18px_50px_-24px_hsl(var(--primary)/0.35)]">
+  <div className="w-full rounded-card border border-border/70 bg-card overflow-hidden shadow-[0_18px_50px_-24px_hsl(var(--primary)/0.35)]">
     <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border/60 bg-gradient-to-r from-primary/[0.07] via-transparent to-transparent">
       <span className="w-2 h-2 rounded-full bg-destructive/40" />
       <span className="w-2 h-2 rounded-full bg-amber-400/50" />
@@ -116,18 +116,18 @@ const Pill = ({
 );
 
 const Row = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
-  <div className={cn("rounded-xl border border-border/60 bg-background/70 p-2.5", className)}>
+  <div className={cn("rounded-card border border-border/60 bg-background/70 p-2.5", className)}>
     {children}
   </div>
 );
 
-/* Palco de destaque para os mockups (sem blur, apenas degradê sólido) */
+/* Palco de destaque para os mockups (bordas arredondadas Wiize, fundo verde com frame branco) */
 const MockStage = ({ children }: { children: ReactNode }) => (
-  <div className="relative w-full rounded-[20px] p-1.5 sm:p-2.5 bg-[linear-gradient(145deg,hsl(var(--primary)/0.22)_0%,hsl(var(--primary)/0.10)_45%,hsl(var(--primary)/0.16)_100%)] ring-1 ring-inset ring-primary/20">
-    <span className="pointer-events-none absolute left-1.5 top-1.5 w-3 h-3 border-l-2 border-t-2 border-primary/40 rounded-tl-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute right-1.5 top-1.5 w-3 h-3 border-r-2 border-t-2 border-primary/40 rounded-tr-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute left-1.5 bottom-1.5 w-3 h-3 border-l-2 border-b-2 border-primary/40 rounded-bl-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute right-1.5 bottom-1.5 w-3 h-3 border-r-2 border-b-2 border-primary/40 rounded-br-md" aria-hidden="true" />
+  <div className="relative w-full rounded-card p-1.5 sm:p-2.5 bg-white/10 ring-1 ring-inset ring-white/20">
+    <span className="pointer-events-none absolute left-1.5 top-1.5 w-3 h-3 border-l-2 border-t-2 border-white/40 rounded-tl-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-1.5 top-1.5 w-3 h-3 border-r-2 border-t-2 border-white/40 rounded-tr-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute left-1.5 bottom-1.5 w-3 h-3 border-l-2 border-b-2 border-white/40 rounded-bl-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-1.5 bottom-1.5 w-3 h-3 border-r-2 border-b-2 border-white/40 rounded-br-md" aria-hidden="true" />
     {/* zoom em telas pequenas: o mockup mantém o layout de desktop sem cortar conteúdo */}
     <div className="relative [zoom:0.72] sm:[zoom:0.9] lg:[zoom:1]">{children}</div>
 
@@ -1155,22 +1155,19 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
 
 
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-border p-5 sm:p-8 lg:p-10 bg-card",
+        "relative overflow-hidden rounded-card border border-white/20 p-5 sm:p-8 lg:p-10 bg-primary",
         "w-full lg:min-h-[560px] flex items-center",
-        "shadow-[0_24px_60px_-30px_hsl(var(--foreground)/0.35)]",
-        reversed
-          ? "bg-[linear-gradient(300deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]"
-          : "bg-[linear-gradient(60deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]",
+        "shadow-[0_24px_60px_-30px_hsl(var(--primary)/0.5)]",
       )}
     >
 
 
       <div
         className={cn(
-          "absolute -top-24 w-72 h-72 rounded-full pointer-events-none opacity-[0.5]",
+          "absolute -top-24 w-72 h-72 rounded-full pointer-events-none opacity-[0.6]",
           reversed ? "-left-24" : "-right-24",
         )}
-        style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.14), transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, hsl(var(--primary-foreground) / 0.12), transparent 70%)" }}
         aria-hidden="true"
       />
       <div
@@ -1181,30 +1178,30 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       >
         {/* O texto acompanha o card; somente o mockup inicia depois da entrada. */}
         <div>
-          <div className="inline-flex items-center gap-2.5 mb-4 rounded-full border border-border bg-card pl-1.5 pr-3.5 py-1.5 shadow-[0_6px_18px_-14px_hsl(var(--foreground)/0.4)]">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-              <Icon size={15} className="text-primary-foreground" />
+          <div className="inline-flex items-center gap-2.5 mb-4 rounded-full border border-white/30 bg-white/15 pl-1.5 pr-3.5 py-1.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.25)]">
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+              <Icon size={15} className="text-white" />
             </div>
-            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-white">
               {item.eyebrow}
             </span>
           </div>
-          <h3 className="font-display font-bold text-foreground text-xl sm:text-2xl lg:text-[1.75rem] leading-tight tracking-tight mb-3">
+          <h3 className="font-display font-bold text-white text-xl sm:text-2xl lg:text-[1.75rem] leading-tight tracking-tight mb-3">
             {item.title}
           </h3>
-          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-5">
+          <p className="text-sm sm:text-base !text-white/85 leading-relaxed mb-5">
             {item.description}
           </p>
           <ul className="grid sm:grid-cols-2 gap-2">
             {item.benefits.map((b) => (
               <li
                 key={b}
-                className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card px-3 py-2"
+                className="flex items-center gap-2.5 rounded-card border border-white/25 bg-white/10 px-3 py-2"
               >
-                <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center">
-                  <Check size={11} className="text-primary-foreground" strokeWidth={3.5} />
+                <span className="w-5 h-5 min-w-[20px] rounded-full bg-white/20 flex items-center justify-center">
+                  <Check size={11} className="text-white" strokeWidth={3.5} />
                 </span>
-                <span className="text-[13px] font-medium text-foreground/90 leading-snug">{b}</span>
+                <span className="text-[13px] font-medium !text-white/90 leading-snug">{b}</span>
               </li>
             ))}
           </ul>
