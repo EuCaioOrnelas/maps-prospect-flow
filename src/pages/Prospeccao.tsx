@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { SEO, siteNavigationSchema } from "@/components/SEO";
 import { faqJsonLd } from "@/components/landing/FAQSection";
+import { platformModulesJsonLd } from "@/components/sales/PlatformModulesSection";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
@@ -108,6 +109,7 @@ const Prospeccao = () => {
             ],
           },
           siteNavigationSchema,
+          platformModulesJsonLd,
           faqJsonLd,
         ]}
       />

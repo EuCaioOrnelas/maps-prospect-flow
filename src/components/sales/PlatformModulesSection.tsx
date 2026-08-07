@@ -1222,6 +1222,30 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
 
 };
 
+// JSON-LD dos módulos da plataforma (ajuda na indexação orgânica dos recursos)
+export const platformModulesJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "@id": "https://wiize.com.br/#recursos",
+  name: "Recursos da plataforma Wiize",
+  description:
+    "Módulos de IA comercial da Wiize: prospecção, SDR, agenda, campanhas via API oficial da Meta, CRM, central de conversas e fluxos inteligentes.",
+  itemListElement: modules.map((m, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    item: {
+      "@type": "SoftwareApplication",
+      name: m.title,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description: m.description,
+      featureList: m.benefits,
+      url: `https://wiize.com.br/#recursos`,
+      provider: { "@id": "https://wiize.com.br/#organization" },
+    },
+  })),
+};
+
 export const PlatformModulesSection = () => {
   const { ref, isVisible } = useScrollAnimation();
 
@@ -1229,6 +1253,7 @@ export const PlatformModulesSection = () => {
     <section
       id="recursos"
       ref={ref as React.RefObject<HTMLElement>}
+      aria-label="Recursos e módulos da plataforma Wiize"
       className="py-12 sm:py-20 w-full relative scroll-mt-24"
     >
       <div className="container mx-auto px-4 max-w-6xl">
@@ -1250,5 +1275,6 @@ export const PlatformModulesSection = () => {
     </section>
   );
 };
+
 
 export default PlatformModulesSection;
