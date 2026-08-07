@@ -610,7 +610,7 @@ const CrmMock = () => (
       ))}
     </Reveal>
 
-    <div className="grid grid-cols-3 gap-1.5">
+    <div className="relative grid grid-cols-3 gap-1.5">
       {[
         {
           c: "Prospectado",
@@ -680,6 +680,23 @@ const CrmMock = () => (
           ))}
         </div>
       ))}
+      <motion.div
+        className="pointer-events-none absolute left-[17%] top-[100px] z-20"
+        initial={{ opacity: 0, x: 0, y: 0 }}
+        animate={{ opacity: [0, 1, 1, 1, 0], x: [0, 0, 52, 112, 112], y: [0, 20, 38, 38, 38] }}
+        transition={{ duration: 2.4, delay: 1.1, times: [0, 0.18, 0.48, 0.82, 1], ease: "easeInOut" }}
+      >
+        <MousePointer2 size={20} className="fill-primary text-primary drop-shadow-md" />
+        <motion.span
+          className="absolute left-3 top-3 h-12 w-24 rounded-lg border border-primary/40 bg-card/95 p-2 shadow-lg"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: [0, 1, 1, 0], scale: [0.9, 1, 1, 0.95] }}
+          transition={{ duration: 2, delay: 1.35, times: [0, 0.18, 0.78, 1] }}
+        >
+          <span className="block text-[9px] font-bold text-foreground">Alpha Contab.</span>
+          <span className="text-[8px] font-semibold text-primary">R$ 4.9k</span>
+        </motion.span>
+      </motion.div>
     </div>
 
     <Reveal delay={0.6} className="mt-1.5">
@@ -714,7 +731,8 @@ const ChatMock = () => (
           { n: "Marcos S.", m: "Vocês atendem fora de SP?", u: 2, t: "09:41", tag: "IA" },
           { n: "Julia R.", m: "Recebi a proposta, obrigada!", u: 0, t: "09:12", tag: "" },
           { n: "Pedro L.", m: "Podemos falar amanhã?", u: 1, t: "Ontem", tag: "Humano" },
-          
+          { n: "Camila A.", m: "Qual o próximo horário?", u: 0, t: "Ontem", tag: "IA" },
+          { n: "Rafael M.", m: "Vou enviar os dados agora.", u: 0, t: "Ter", tag: "" },
         ].map((c, i) => (
           <Reveal key={c.n} delay={0.12 + i * 0.07} x={-10}>
             <Row
@@ -724,9 +742,7 @@ const ChatMock = () => (
               )}
             >
               <div className="relative flex-shrink-0">
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Users size={11} className="text-primary" />
-                </div>
+                <ContactAvatar index={i} className="h-7 w-7 border border-border/60" />
                 {i === 0 && (
                   <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary ring-2 ring-card" />
                 )}
@@ -753,12 +769,10 @@ const ChatMock = () => (
       {/* Janela da conversa */}
       <div className="col-span-3 flex flex-col rounded-xl border border-border/60 bg-background/50 overflow-hidden">
         <div className="flex items-center gap-2 px-2 py-1.5 border-b border-border/60 bg-card">
-          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-            <Users size={11} className="text-primary" />
-          </div>
+          <ContactAvatar index={0} className="h-7 w-7 border border-border/60" />
           <div className="min-w-0">
             <p className="text-[10px] font-semibold text-foreground truncate">Marcos S.</p>
-            <p className="text-[8px] text-primary">digitando…</p>
+            <p className="text-[8px] text-primary">online agora</p>
           </div>
           <div className="ml-auto flex items-center gap-1">
             <Pill tone="outline">
@@ -768,14 +782,14 @@ const ChatMock = () => (
         </div>
 
         <div className="flex-1 p-2 space-y-1.5 bg-muted/25 [background-image:radial-gradient(hsl(var(--primary)/0.12)_1px,transparent_1px)] [background-size:13px_13px]">
-          <Reveal delay={0.2} y={8}>
+          <Reveal delay={0.45} y={8}>
             <div className="rounded-2xl rounded-bl-sm bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground max-w-[88%] w-fit">
               Oi! Vocês atendem fora de SP?
               <span className="block text-right text-[8px] text-muted-foreground/70 mt-0.5">09:40</span>
             </div>
           </Reveal>
 
-          <Reveal delay={0.45} y={8}>
+          <Reveal delay={1.15} y={8}>
             <div className="ml-auto w-fit max-w-[88%] rounded-2xl rounded-br-sm bg-primary/12 ring-1 ring-inset ring-primary/15 px-2.5 py-1.5 text-[10px] text-foreground">
               Atendemos todo o Brasil 🇧🇷 Quer falar com um especialista hoje?
               <span className="mt-0.5 flex items-center justify-end gap-1 text-[8px] text-muted-foreground">
@@ -784,11 +798,14 @@ const ChatMock = () => (
             </div>
           </Reveal>
 
-          <div className="w-fit rounded-2xl rounded-bl-sm bg-muted px-2.5 py-2">
-            <TypingDots delay={1.0} />
-          </div>
+          <Reveal delay={1.85} y={8}>
+            <div className="rounded-2xl rounded-bl-sm bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground max-w-[88%] w-fit">
+              Sim, pode agendar para hoje às 16h.
+              <span className="block text-right text-[8px] text-muted-foreground/70 mt-0.5">09:42</span>
+            </div>
+          </Reveal>
 
-          <Reveal delay={1.5} y={8}>
+          <Reveal delay={2.55} y={8}>
             <div className="ml-auto w-fit max-w-[88%] rounded-2xl rounded-br-sm bg-primary/12 ring-1 ring-inset ring-primary/15 px-2.5 py-1.5 text-[10px] text-foreground">
               Fechado! Reunião confirmada para hoje 16h 📅
               <span className="mt-0.5 flex items-center justify-end gap-1 text-[8px] text-muted-foreground">
@@ -808,7 +825,7 @@ const ChatMock = () => (
               initial={{ scale: 0.6, opacity: 0 }}
               whileInView={{ scale: 1, opacity: 1 }}
               viewport={VIEW}
-              transition={{ duration: 0.4, delay: 1.7, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.4, delay: 2.9, ease: [0.22, 1, 0.36, 1] }}
             >
               <Send size={9} className="text-primary-foreground" />
             </motion.span>
@@ -903,11 +920,11 @@ const DottedLine = ({
         }
         viewport={LOOP_VIEW}
         transition={{
-          duration: 1.2,
-          delay: delay + 0.3,
+          duration: 0.9 + (delay % 0.45),
+          delay: 0.15 + ((delay * 7) % 0.8),
           ease: "easeInOut",
           repeat: Infinity,
-          repeatDelay: 1.4,
+          repeatDelay: 0.7 + ((delay * 11) % 1.5),
         }}
         aria-hidden="true"
       />
@@ -918,13 +935,13 @@ const DottedLine = ({
 
 const FlowMock = () => (
   <MockShell title="Fluxos Inteligentes — Construtor visual" badge="publicado">
-    <div className="relative">
+      <div className="relative px-1">
       {/* Linha 1 — gatilho → atendimento */}
-      <div className="flex items-start justify-center gap-2">
+        <div className="flex items-start justify-center gap-0">
         <FlowNode icon={MessageSquare} label="Gatilho" sub="Mensagem recebida" delay={0} />
-        <DottedLine className="mt-[15px] w-8 border-t-2" delay={0.2} travel />
+          <DottedLine className="mt-[15px] -mx-2 w-12 border-t-2" delay={0.2} travel />
         <FlowNode icon={Bot} label="Atendimento" sub="IA inicia conversa" tone="info" delay={0.3} />
-        <DottedLine className="mt-[15px] w-8 border-t-2" delay={0.45} travel />
+          <DottedLine className="mt-[15px] -mx-2 w-12 border-t-2" delay={0.53} travel />
         <FlowNode icon={UserCheck} label="Triagem" sub="Coleta de dados" tone="muted" delay={0.55} />
       </div>
 
@@ -949,6 +966,15 @@ const FlowMock = () => (
       >
         {/* barra horizontal ligando os centros dos nós das pontas */}
         <span className="absolute left-[46px] right-[46px] top-2.5 border-t-2 border-dashed border-primary/45" />
+        {[18, 43, 71].map((left, i) => (
+          <motion.span
+            key={left}
+            className="absolute top-[7px] h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
+            style={{ left: `${left}%` }}
+            animate={{ x: [0, i % 2 ? 34 : 58], opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 1 + i * 0.27, delay: 1.15 + i * 0.43, repeat: Infinity, repeatDelay: 0.8 + i * 0.65, ease: "easeInOut" }}
+          />
+        ))}
         {/* descida do nó de condição */}
         <span className="absolute left-1/2 -translate-x-px top-0 h-2.5 border-l-2 border-dashed border-primary/45" />
         {/* descidas para cada saída */}
@@ -1091,6 +1117,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
   const reversed = index % 2 === 1;
   const Icon = item.icon;
   const Mock = item.mock;
+  const [entered, setEntered] = useState(false);
 
   return (
     <div
@@ -1102,6 +1129,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       whileInView={{ opacity: 1, x: 0, scale: 1 }}
       viewport={{ once: true, amount: 0.2, margin: "0px 0px -60px 0px" }}
       transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+      onAnimationComplete={() => setEntered(true)}
 
 
       className={cn(
@@ -1173,12 +1201,11 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
         <motion.div
           className="w-full"
           initial={{ opacity: 0, y: 20, scale: 0.97 }}
-          whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.85 }}
+          animate={entered ? { opacity: 1, y: 0, scale: 1 } : {}}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         >
           <MockStage>
-            <Mock />
+            {entered ? <Mock /> : <div className="h-[447px]" aria-hidden="true" />}
           </MockStage>
         </motion.div>
 
