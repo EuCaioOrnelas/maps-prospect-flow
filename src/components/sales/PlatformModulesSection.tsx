@@ -526,7 +526,7 @@ const CampaignMock = () => (
         {[
           { n: "Reativação — Base fria", s: "Concluída", tone: "primary" as const, p: 100, t: "template_reativacao_v2", d: "620/620" },
           { n: "Oferta Julho — ICP contábil", s: "Enviando", tone: "amber" as const, p: 62, t: "oferta_julho_pt_br", d: "484/780" },
-          { n: "Convite Webinar", s: "Agendada", tone: "info" as const, p: 0, t: "convite_webinar_pt", d: "0/1.200" },
+          
         ].map((c, i) => (
           <Reveal key={c.n} delay={0.35 + i * 0.1} x={12}>
             <Row className="space-y-1.5">
