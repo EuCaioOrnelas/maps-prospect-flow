@@ -305,13 +305,9 @@ const SdrMock = () => (
           t: "Olá, Marcos! Depende do porte. Hoje vocês atendem quantos clientes por mês?",
           h: "09:41",
         },
-        { me: false, t: "Uns 40.", h: "09:43" },
-        {
-          me: true,
-          t: "Perfeito 👊 Posso te mostrar em 15 min. Amanhã às 10h ou às 16h?",
-          h: "09:43",
-        },
+        { me: false, t: "Uns 40 clientes por mês.", h: "09:43" },
       ].map((m, i) => (
+
         <Reveal key={i} delay={0.15 + i * 0.28} y={10}>
           <div className={cn("flex", m.me ? "justify-end" : "justify-start")}>
             <div
