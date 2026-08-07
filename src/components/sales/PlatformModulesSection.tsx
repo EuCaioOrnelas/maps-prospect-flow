@@ -371,8 +371,12 @@ const AgendaMock = () => (
         const green = [4, 9, 15].includes(i);
         const blue = [7, 18].includes(i);
         return (
-          <span
+          <motion.span
             key={i}
+            initial={{ opacity: 0, scale: 0.85 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={VIEW}
+            transition={{ duration: 0.3, delay: 0.05 + i * 0.015 }}
             className={cn(
               "aspect-square rounded-md text-[9px] flex flex-col items-center justify-center gap-0.5 border",
               green
@@ -386,7 +390,7 @@ const AgendaMock = () => (
             {(green || blue) && (
               <span className={cn("w-1 h-1 rounded-full", green ? "bg-primary" : "bg-sky-500")} />
             )}
-          </span>
+          </motion.span>
         );
       })}
     </div>
@@ -409,30 +413,33 @@ const AgendaMock = () => (
           tone: "info" as const,
           who: ["VE"],
         },
-      ].map((e) => (
-        <Row key={e.h} className="flex items-center gap-2">
-          <div className="flex flex-col items-center justify-center w-11 flex-shrink-0 rounded-lg bg-primary/10 py-1">
-            <span className="text-[11px] font-bold text-primary leading-none">{e.h}</span>
-            <span className="text-[8px] text-muted-foreground mt-0.5">{e.d}</span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold text-foreground truncate">{e.t}</p>
-            <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <Video size={9} /> {e.s} · agendado pela IA
-            </p>
-          </div>
-          <div className="flex -space-x-1.5">
-            {e.who.map((w) => (
-              <span
-                key={w}
-                className="w-5 h-5 rounded-full bg-muted border border-background text-[8px] font-bold text-muted-foreground flex items-center justify-center"
-              >
-                {w}
-              </span>
-            ))}
-          </div>
-        </Row>
+      ].map((e, i) => (
+        <Reveal key={e.h} delay={0.55 + i * 0.14} y={14}>
+          <Row className="flex items-center gap-2">
+            <div className="flex flex-col items-center justify-center w-11 flex-shrink-0 rounded-lg bg-primary/10 py-1">
+              <span className="text-[11px] font-bold text-primary leading-none">{e.h}</span>
+              <span className="text-[8px] text-muted-foreground mt-0.5">{e.d}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold text-foreground truncate">{e.t}</p>
+              <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <Video size={9} /> {e.s} · agendado pela IA
+              </p>
+            </div>
+            <div className="flex -space-x-1.5">
+              {e.who.map((w) => (
+                <span
+                  key={w}
+                  className="w-5 h-5 rounded-full bg-muted border border-background text-[8px] font-bold text-muted-foreground flex items-center justify-center"
+                >
+                  {w}
+                </span>
+              ))}
+            </div>
+          </Row>
+        </Reveal>
       ))}
+
       <Row className="flex items-center gap-2 border-dashed">
         <Clock size={12} className="text-muted-foreground" />
         <p className="text-[10px] text-muted-foreground">
