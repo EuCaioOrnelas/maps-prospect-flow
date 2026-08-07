@@ -99,6 +99,18 @@ const Row = ({ children, className = "" }: { children: ReactNode; className?: st
   </div>
 );
 
+/* Palco de destaque para os mockups (sem blur, apenas degradê sólido) */
+const MockStage = ({ children }: { children: ReactNode }) => (
+  <div className="relative w-full rounded-[26px] p-3 sm:p-5 bg-[linear-gradient(145deg,hsl(var(--primary)/0.22)_0%,hsl(var(--primary)/0.10)_45%,hsl(var(--primary)/0.16)_100%)] ring-1 ring-inset ring-primary/20">
+    <span className="pointer-events-none absolute left-2.5 top-2.5 w-4 h-4 border-l-2 border-t-2 border-primary/40 rounded-tl-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-2.5 top-2.5 w-4 h-4 border-r-2 border-t-2 border-primary/40 rounded-tr-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute left-2.5 bottom-2.5 w-4 h-4 border-l-2 border-b-2 border-primary/40 rounded-bl-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-2.5 bottom-2.5 w-4 h-4 border-r-2 border-b-2 border-primary/40 rounded-br-md" aria-hidden="true" />
+    <div className="relative">{children}</div>
+  </div>
+);
+
+
 const Bar = ({ value, tone = "primary" }: { value: number; tone?: "primary" | "amber" }) => (
   <div className="h-1.5 rounded-full bg-muted overflow-hidden">
     <div
