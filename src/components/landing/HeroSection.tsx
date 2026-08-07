@@ -852,8 +852,23 @@ export const HeroSection = ({
  </div>
   <h1 className="font-display font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.08] tracking-tight" style={{ animationDelay: "0.1s" }}>
             <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">{titleLine1}</span>
-            <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">{titleLine2}</span>
-            <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">{titleHighlight}</span>
+            {titleLine2Highlight ? (
+              <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">
+                {titleLine2.split(titleLine2Highlight).map((part, i, arr) => (
+                  <span key={i}>
+                    {part}
+                    {i < arr.length - 1 && (
+                      <span className="text-shimmer-highlight font-extrabold">{titleLine2Highlight}</span>
+                    )}
+                  </span>
+                ))}
+              </span>
+            ) : (
+              <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">{titleLine2}</span>
+            )}
+            {titleHighlight && (
+              <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">{titleHighlight}</span>
+            )}
             {titleLine3 && (
               <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem] text-foreground mt-1 sm:mt-2">{titleLine3}</span>
             )}
