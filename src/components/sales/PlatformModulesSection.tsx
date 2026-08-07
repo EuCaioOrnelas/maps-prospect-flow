@@ -1174,7 +1174,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             {item.description}
           </p>
           <ul className="grid sm:grid-cols-2 gap-2">
-            {item.benefits.map((b, bi) => (
+            {item.benefits.map((b) => (
               <li
                 key={b}
                 className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card px-3 py-2"
