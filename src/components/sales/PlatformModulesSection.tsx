@@ -959,7 +959,7 @@ const DottedLine = ({
 
 const FlowMock = () => (
   <MockShell title="Fluxos Inteligentes — Construtor visual" badge="publicado">
-      <div className="relative px-1">
+      <div className="relative px-1 w-full my-auto">
       {/* Linha 1 — gatilho → atendimento */}
         <div className="flex items-start justify-center gap-0">
         <FlowNode icon={MessageSquare} label="Gatilho" sub="Mensagem recebida" delay={0} />
