@@ -109,7 +109,7 @@ const MockStage = ({ children }: { children: ReactNode }) => (
     <span className="pointer-events-none absolute left-1.5 bottom-1.5 w-3 h-3 border-l-2 border-b-2 border-primary/40 rounded-bl-md" aria-hidden="true" />
     <span className="pointer-events-none absolute right-1.5 bottom-1.5 w-3 h-3 border-r-2 border-b-2 border-primary/40 rounded-br-md" aria-hidden="true" />
     {/* zoom em telas pequenas: o mockup mantém o layout de desktop sem cortar conteúdo */}
-    <div className="relative [zoom:0.72] xs:[zoom:0.8] sm:[zoom:0.9] lg:[zoom:1]">{children}</div>
+    <div className="relative [zoom:0.72] sm:[zoom:0.9] lg:[zoom:1]">{children}</div>
 
   </div>
 );
