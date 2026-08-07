@@ -1062,21 +1062,25 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
   const Mock = item.mock;
 
   return (
+    <div
+      className="lg:sticky"
+      style={{ top: `calc(5.5rem + ${index * 16}px)`, zIndex: 10 + index }}
+    >
     <motion.article
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15, margin: "0px 0px -80px 0px" }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
-      style={{ contentVisibility: "auto", containIntrinsicSize: "560px" } as React.CSSProperties}
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-border p-5 sm:p-8 lg:p-10",
+        "relative overflow-hidden rounded-3xl border border-border p-5 sm:p-8 lg:p-10 bg-card",
         "w-full lg:min-h-[560px] flex items-center",
-        "shadow-[0_18px_50px_-40px_hsl(var(--foreground)/0.35)]",
+        "shadow-[0_24px_60px_-30px_hsl(var(--foreground)/0.35)]",
         reversed
           ? "bg-[linear-gradient(300deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]"
           : "bg-[linear-gradient(60deg,hsl(var(--primary)/0.10)_0%,hsl(var(--card))_45%,hsl(var(--card))_100%)]",
       )}
     >
+
 
       <div
         className={cn(
