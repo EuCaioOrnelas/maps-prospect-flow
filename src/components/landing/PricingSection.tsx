@@ -440,10 +440,10 @@ export const PricingSection = () => {
  </span>
  )}
  <div className="mb-4 sm:mb-6">
- <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
- <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/15">
- <plan.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
- </div>
+  <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+  <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-card bg-primary shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)]">
+  <plan.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
+  </div>
  <h3 className="font-display font-bold text-[15px] sm:text-lg md:text-xl">{plan.name}</h3>
  </div>
  <p className="text-muted-foreground text-[10.5px] sm:text-sm leading-snug min-h-[2.5rem] md:min-h-[2.75rem]">{plan.description}</p>
@@ -522,10 +522,10 @@ export const PricingSection = () => {
  }}
  >
  <div className="mb-4 sm:mb-6">
- <div className="flex items-center gap-2 sm:gap-3 mb-2">
- <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/15">
- <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
- </div>
+  <div className="flex items-center gap-2 sm:gap-3 mb-2">
+  <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-card bg-primary shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)]">
+  <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
+  </div>
  <h3 className="font-display font-bold text-[15px] sm:text-lg md:text-xl">Enterprise</h3>
  </div>
  <p className="text-muted-foreground text-[10.5px] sm:text-sm leading-snug min-h-[2.5rem] md:min-h-[2.75rem]">
