@@ -700,25 +700,21 @@ const floatingCards = [
 
 /* ─── Main component ─── */
 interface HeroSectionProps {
-  onSignupClick?: () => void;
-  titleLine1?: string;
-  titleLine2?: string;
-  titleLine2Highlight?: string;
-  titleHighlight?: string;
-  titleLine3?: string;
-  description?: string;
-  descriptionClassName?: string;
+ onSignupClick?: () => void;
+ titleLine1?: string;
+ titleLine2?: string;
+ titleHighlight?: string;
+ description?: string;
+ descriptionClassName?: string;
 }
 
 export const HeroSection = ({
-  onSignupClick,
-  titleLine1 = "IA comercial que",
-  titleLine2 = "Transforma leads em",
-  titleLine2Highlight = "",
-  titleHighlight = "Oportunidades reais",
-  titleLine3 = "",
-  description = "IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.",
-  descriptionClassName,
+ onSignupClick,
+ titleLine1 = "IA comercial que",
+ titleLine2 = "Transforma leads em",
+ titleHighlight = "Oportunidades reais",
+ description = "IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.",
+ descriptionClassName,
 }: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
  const [currentStage, setCurrentStage] = useState(0);
@@ -851,27 +847,9 @@ export const HeroSection = ({
  <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
  </div>
   <h1 className="font-display font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.08] tracking-tight" style={{ animationDelay: "0.1s" }}>
-            <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">{titleLine1}</span>
-            {titleLine2Highlight ? (
-              <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">
-                {titleLine2.split(titleLine2Highlight).map((part, i, arr) => (
-                  <span key={i}>
-                    {part}
-                    {i < arr.length - 1 && (
-                      <span className="text-shimmer-highlight font-extrabold">{titleLine2Highlight}</span>
-                    )}
-                  </span>
-                ))}
-              </span>
-            ) : (
-              <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">{titleLine2}</span>
-            )}
-            {titleHighlight && (
-              <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">{titleHighlight}</span>
-            )}
-            {titleLine3 && (
-              <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem] text-foreground mt-1 sm:mt-2">{titleLine3}</span>
-            )}
+  <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">{titleLine1}</span>
+  <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">{titleLine2}</span>
+  <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">{titleHighlight}</span>
   </h1>
  <p className={`${descriptionClassName ?? "text-base sm:text-lg md:text-xl"} text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up`} style={{ animationDelay: "0.2s" }}>
  {description}
