@@ -116,7 +116,7 @@ const Pill = ({
 );
 
 const Row = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
-  <div className={cn("rounded-xl border border-border/60 bg-background/70 p-2.5", className)}>
+  <div className={cn("rounded-card border border-border/60 bg-background/70 p-2.5", className)}>
     {children}
   </div>
 );
