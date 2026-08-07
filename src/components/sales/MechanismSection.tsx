@@ -1,6 +1,6 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
-import { Search, ScanSearch, Brain, Sparkles, Send, Bot, RefreshCw, CalendarCheck, LayoutGrid } from "lucide-react";
+import { Search, ScanSearch, Brain, Sparkles, Send, Bot, RefreshCw, CalendarCheck, CalendarDays, Headset, LayoutGrid } from "lucide-react";
 import { useRef } from "react";
 import { useInView } from "framer-motion";
 import { SectionHeading } from "@/components/landing/SectionHeading";
@@ -11,8 +11,10 @@ const steps = [
  { icon: Brain, title: "Diagnóstico IA", desc: "Com base na análise, identifica necessidades, dores e oportunidades reais", micro: "Score calculado por IA" },
  { icon: Sparkles, title: "Geração de Mensagem com IA", desc: "Cria abordagem personalizada automaticamente para cada lead", micro: "Copy única por lead" },
  { icon: Send, title: "Envio", desc: "Dispara mensagens no momento ideal", micro: "Via WhatsApp oficial" },
+ { icon: Headset, title: "SDR IA Assume a Conversa", desc: "Qualifica em tempo real, quebra objeções e conduz o lead pelo funil", micro: "Raciocínio em 9 camadas" },
  { icon: Bot, title: "IA Closer Responde", desc: "Conversa, qualifica e conduz o lead até o fechamento", micro: "Atendimento 24/7" },
  { icon: RefreshCw, title: "Follow-up", desc: "Recupera leads que iriam esfriar", micro: "Reengajamento automático" },
+ { icon: CalendarDays, title: "Agenda Inteligente", desc: "A IA agenda a reunião direto no calendário do time, sem fricção", micro: "Slots e lembretes automáticos" },
  { icon: CalendarCheck, title: "Conversão", desc: "Gera reuniões e oportunidades reais", micro: "Pipeline alimentado" },
  { icon: LayoutGrid, title: "CRM", desc: "Organiza tudo sem esforço manual", micro: "Histórico centralizado" },
 ];
@@ -82,8 +84,8 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
  </span>
  <div className="relative">
  <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-primary/8 pointer-events-none" />
- <div className="relative w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
- <Icon size={18} className="text-primary" />
+ <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center group-hover:shadow-[0_8px_22px_-4px_hsl(var(--primary)/0.65)] group-hover:scale-110 transition-all duration-300">
+ <Icon size={18} className="text-primary-foreground" />
  </div>
  </div>
  </div>

@@ -17,7 +17,7 @@ const comparisons = [
 
 const CheckIcon = () => (
  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
- <path d="M3.5 7.5L5.5 9.5L10.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary" />
+ <path d="M3.5 7.5L5.5 9.5L10.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground" />
  </svg>
 );
 
@@ -60,16 +60,16 @@ export const OpportunitySection = () => {
  initial={{ opacity: 0, x: 24 }}
  animate={isVisible ? { opacity: 1, x: 0 } : {}}
  transition={{ duration: 0.6, delay: 0.3 }}
- className="rounded-t-2xl border border-b-0 border-primary/20 bg-white dark:bg-card px-8 pt-8 pb-5 relative overflow-hidden"
+ className="rounded-t-2xl border border-b-0 border-primary bg-gradient-to-br from-primary to-primary/85 px-8 pt-8 pb-5 relative overflow-hidden shadow-[0_10px_30px_-12px_hsl(var(--primary)/0.6)]"
  >
- <div className="absolute -top-10 -right-10 w-48 h-48 bg-primary/[0.08] rounded-full soft-glow pointer-events-none" />
- <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-hover text-[11px] font-semibold uppercase tracking-wider bg-primary/10 text-primary border border-primary/15 mb-4">
+ <div className="absolute -top-10 -right-10 w-48 h-48 bg-primary-foreground/10 rounded-full soft-glow pointer-events-none" />
+ <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-hover text-[11px] font-semibold uppercase tracking-wider bg-primary-foreground/15 text-primary-foreground border border-primary-foreground/25 mb-4 relative">
  <Sparkles size={12} />
  Mais eficiente
  </span>
  <div className="flex items-center gap-3">
  <img src={logoIconNew} alt="Wiize" className="w-9 h-9 rounded-xl" />
- <h3 className="text-sm font-semibold text-primary uppercase tracking-widest">Modelo com Wiize</h3>
+ <h3 className="text-sm font-semibold text-primary-foreground uppercase tracking-widest">Modelo com Wiize</h3>
  </div>
  </motion.div>
  </div>
@@ -96,10 +96,10 @@ export const OpportunitySection = () => {
  initial={{ opacity: 0, x: 12 }}
  animate={isVisible ? { opacity: 1, x: 0 } : {}}
  transition={{ duration: 0.4, delay: 0.4 + i * 0.06 }}
- className={`border-x border-primary/20 bg-white dark:bg-card px-8 py-3 relative overflow-hidden ${i === comparisons.length - 1 ? 'border-b rounded-b-2xl pb-6' : ''}`}
+ className={`border-x border-primary/30 bg-primary/[0.07] dark:bg-primary/10 px-8 py-3 relative overflow-hidden ${i === comparisons.length - 1 ? 'border-b rounded-b-2xl pb-6' : ''}`}
  >
  <div className="flex items-center gap-3 min-h-[32px] relative">
- <div className="w-5 h-5 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+ <div className="w-5 h-5 rounded-md bg-gradient-to-br from-primary to-primary/80 shadow-[0_3px_10px_-3px_hsl(var(--primary)/0.6)] flex items-center justify-center flex-shrink-0">
  <CheckIcon />
  </div>
  <p className="text-sm text-foreground leading-snug">
@@ -125,15 +125,15 @@ export const OpportunitySection = () => {
  Modelo tradicional
  </h3>
  </div>
- <div className="bg-white dark:bg-card px-3 py-3 relative overflow-hidden">
- <div className="absolute -top-8 -right-8 w-24 h-24 bg-primary/[0.08] rounded-full soft-glow pointer-events-none" />
- <span className="inline-flex items-center gap-1 px-2 py-1 rounded-hover text-[9px] font-semibold uppercase tracking-wider bg-primary/10 text-primary mb-1.5 relative">
+ <div className="bg-gradient-to-br from-primary to-primary/85 px-3 py-3 relative overflow-hidden">
+ <div className="absolute -top-8 -right-8 w-24 h-24 bg-primary-foreground/10 rounded-full soft-glow pointer-events-none" />
+ <span className="inline-flex items-center gap-1 px-2 py-1 rounded-hover text-[9px] font-semibold uppercase tracking-wider bg-primary-foreground/15 text-primary-foreground mb-1.5 relative">
  <Sparkles size={9} />
  Com Wiize
  </span>
  <div className="flex items-center gap-1.5 relative">
  <img src={logoIconNew} alt="Wiize" className="w-5 h-5 rounded-md" />
- <h3 className="text-[11px] font-semibold text-primary uppercase tracking-wider">Modelo Wiize</h3>
+ <h3 className="text-[11px] font-semibold text-primary-foreground uppercase tracking-wider">Modelo Wiize</h3>
  </div>
  </div>
  </div>
@@ -158,9 +158,9 @@ export const OpportunitySection = () => {
  </p>
  </div>
  </div>
- <div className="bg-white dark:bg-card px-3 py-3 relative overflow-hidden">
+ <div className="bg-primary/[0.07] dark:bg-primary/10 px-3 py-3 relative overflow-hidden">
  <div className="flex items-start gap-2 relative">
- <div className="w-4 h-4 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+ <div className="w-4 h-4 rounded-md bg-gradient-to-br from-primary to-primary/80 shadow-[0_3px_8px_-3px_hsl(var(--primary)/0.6)] flex items-center justify-center flex-shrink-0 mt-0.5">
  <CheckIcon />
  </div>
  <p className="text-[12px] text-foreground leading-snug">
