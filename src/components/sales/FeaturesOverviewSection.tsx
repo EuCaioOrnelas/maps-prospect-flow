@@ -86,7 +86,7 @@ export const FeaturesOverviewSection = () => {
  <div className="relative z-10">
  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Prospecção Inteligente</span>
  <div className="flex items-center gap-2.5 mb-1">
- <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
+ <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <MessageCircle size={16} className="text-primary-foreground" />
  </div>
  <h3 className="font-semibold text-foreground text-base">Abordagem Contextual em Escala</h3>
@@ -106,7 +106,7 @@ export const FeaturesOverviewSection = () => {
  <div className="relative z-10">
  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">API Oficial & Segurança</span>
  <div className="flex items-center gap-2.5 mb-1">
- <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
+ <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <Send size={16} className="text-primary-foreground" />
  </div>
  <h3 className="font-semibold text-foreground text-base">Campanhas via API Oficial Meta</h3>
@@ -126,7 +126,7 @@ export const FeaturesOverviewSection = () => {
  <div className="relative z-10 p-3 sm:p-3.5 flex flex-col">
  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider w-fit">Conversas humanas em escala</span>
  <div className="flex items-center gap-3 mb-2">
- <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
+ <div className="w-10 h-10 rounded-hover bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <Bot size={20} className="text-primary-foreground" />
  </div>
  <h3 className="font-semibold text-foreground text-base">Fluxos Operacionais com IA</h3>
@@ -156,7 +156,7 @@ export const FeaturesOverviewSection = () => {
  <div className="relative z-10">
  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Gestão & Intenção de Compra</span>
  <div className="flex items-center gap-2.5 mb-1">
- <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
+ <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <LayoutDashboard size={16} className="text-primary-foreground" />
  </div>
  <h3 className="font-semibold text-foreground text-base">CRM com IA de Intenção de Compra</h3>
@@ -176,7 +176,7 @@ export const FeaturesOverviewSection = () => {
  <div className="relative z-10">
  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">SDR IA de Captação + Diagnóstico</span>
  <div className="flex items-center gap-2.5 mb-1">
- <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
+ <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <Search size={16} className="text-primary-foreground" />
  </div>
  <h3 className="font-semibold text-foreground text-base">SDR IA de Captação com Diagnóstico Automático</h3>
@@ -196,7 +196,7 @@ export const FeaturesOverviewSection = () => {
  <div className="relative z-10">
  <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Automação Comercial</span>
  <div className="flex items-center gap-2.5 mb-1.5">
- <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
+ <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <Zap size={16} className="text-primary-foreground" />
  </div>
  <h3 className="font-semibold text-foreground text-base">Operação Comercial Autônoma</h3>

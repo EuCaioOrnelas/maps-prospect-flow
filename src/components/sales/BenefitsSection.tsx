@@ -44,7 +44,7 @@ export const BenefitsSection = () => {
  transition={{ duration: 0.5, delay: 0.1 * i }}
  className="group p-8 rounded-2xl border border-border bg-card/30 hover:bg-card/60 transition-all duration-300"
  >
- <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+ <div className="w-12 h-12 rounded-card bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
  <b.icon size={22} className="text-primary-foreground" />
  </div>
  <h3 className="font-semibold text-foreground mb-2">{b.title}</h3>
