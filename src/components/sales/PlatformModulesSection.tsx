@@ -1196,12 +1196,12 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             {item.benefits.map((b) => (
               <li
                 key={b}
-                className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card px-3 py-2"
+                className="flex items-center gap-2.5 rounded-xl border border-white/20 bg-white/10 px-3 py-2"
               >
-                <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center">
-                  <Check size={11} className="text-primary-foreground" strokeWidth={3.5} />
+                <span className="w-5 h-5 min-w-[20px] rounded-full bg-white/20 flex items-center justify-center">
+                  <Check size={11} className="text-white" strokeWidth={3.5} />
                 </span>
-                <span className="text-[13px] font-medium text-foreground/90 leading-snug">{b}</span>
+                <span className="text-[13px] font-medium text-white/90 leading-snug">{b}</span>
               </li>
             ))}
           </ul>
