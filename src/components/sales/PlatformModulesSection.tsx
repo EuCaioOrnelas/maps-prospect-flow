@@ -66,9 +66,10 @@ const MockShell = ({
         </span>
       )}
     </div>
-    <div className="p-3 sm:p-3.5 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] h-[364px] overflow-hidden flex flex-col justify-start">
+    <div className="p-3 sm:p-3.5 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] min-h-[300px] sm:min-h-[380px] lg:h-[420px] overflow-hidden flex flex-col justify-start">
       {children}
     </div>
+
 
   </div>
 );
@@ -107,7 +108,9 @@ const MockStage = ({ children }: { children: ReactNode }) => (
     <span className="pointer-events-none absolute right-1.5 top-1.5 w-3 h-3 border-r-2 border-t-2 border-primary/40 rounded-tr-md" aria-hidden="true" />
     <span className="pointer-events-none absolute left-1.5 bottom-1.5 w-3 h-3 border-l-2 border-b-2 border-primary/40 rounded-bl-md" aria-hidden="true" />
     <span className="pointer-events-none absolute right-1.5 bottom-1.5 w-3 h-3 border-r-2 border-b-2 border-primary/40 rounded-br-md" aria-hidden="true" />
-    <div className="relative">{children}</div>
+    {/* zoom em telas pequenas: o mockup mantém o layout de desktop sem cortar conteúdo */}
+    <div className="relative [zoom:0.72] sm:[zoom:0.9] lg:[zoom:1]">{children}</div>
+
   </div>
 );
 
@@ -306,6 +309,8 @@ const SdrMock = () => (
           h: "09:41",
         },
         { me: false, t: "Uns 40 clientes por mês.", h: "09:43" },
+
+
       ].map((m, i) => (
 
         <Reveal key={i} delay={0.15 + i * 0.28} y={10}>
@@ -333,7 +338,7 @@ const SdrMock = () => (
     </ChatWallpaper>
 
 
-    <Reveal delay={1.1} className="mt-2">
+    <Reveal delay={0.9} className="mt-2">
       <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-2">
         <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1">
           <Sparkles size={10} /> Raciocínio da IA
@@ -1066,10 +1071,11 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       style={{ top: `calc(5.5rem + ${index * 16}px)`, zIndex: 10 + index }}
     >
     <motion.article
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 40, scale: 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, amount: 0.15, margin: "0px 0px -80px 0px" }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+
       className={cn(
         "relative overflow-hidden rounded-3xl border border-border p-5 sm:p-8 lg:p-10 bg-card",
         "w-full lg:min-h-[560px] flex items-center",
@@ -1095,8 +1101,13 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           reversed && "lg:[&>*:first-child]:order-2",
         )}
       >
-        {/* Texto */}
-        <div>
+        {/* Texto — entra pelo lado oposto ao mockup */}
+        <motion.div
+          initial={{ opacity: 0, x: reversed ? 48 : -48 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.12 }}
+        >
           <div className="inline-flex items-center gap-2.5 mb-4 rounded-full border border-border bg-card pl-1.5 pr-3.5 py-1.5 shadow-[0_6px_18px_-14px_hsl(var(--foreground)/0.4)]">
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
               <Icon size={15} className="text-primary-foreground" />
@@ -1112,26 +1123,37 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             {item.description}
           </p>
           <ul className="grid sm:grid-cols-2 gap-2">
-            {item.benefits.map((b) => (
-              <li
+            {item.benefits.map((b, bi) => (
+              <motion.li
                 key={b}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.4, ease: "easeOut", delay: 0.3 + bi * 0.07 }}
                 className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card px-3 py-2"
               >
                 <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center">
                   <Check size={11} className="text-primary-foreground" strokeWidth={3.5} />
                 </span>
                 <span className="text-[13px] font-medium text-foreground/90 leading-snug">{b}</span>
-              </li>
+              </motion.li>
             ))}
           </ul>
-        </div>
+        </motion.div>
 
-        {/* Mockup */}
-        <div className="w-full">
+        {/* Mockup — entra pelo lado contrário do texto */}
+        <motion.div
+          className="w-full"
+          initial={{ opacity: 0, x: reversed ? -56 : 56, rotate: reversed ? -1.5 : 1.5 }}
+          whileInView={{ opacity: 1, x: 0, rotate: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
+        >
           <MockStage>
             <Mock />
           </MockStage>
-        </div>
+        </motion.div>
+
       </div>
 
     </motion.article>
