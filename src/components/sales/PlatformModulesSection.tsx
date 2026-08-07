@@ -286,7 +286,7 @@ const ProspectMock = () => (
 /* ---------------------------- 2. SDR ---------------------------- */
 const SdrMock = () => (
   <MockShell title="SDR Inteligente — WhatsApp" badge="IA ativa">
-    <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-border/60">
+    <div className="flex items-center gap-2 pb-2 mb-2 border-b border-border/60">
       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
         <Users size={14} className="text-primary" />
       </div>
@@ -299,7 +299,7 @@ const SdrMock = () => (
       </Pill>
     </div>
 
-    <ChatWallpaper className="space-y-2">
+    <ChatWallpaper className="space-y-1.5">
 
       {[
         { me: false, t: "Oi! Vi que vocês trabalham com contabilidade. Quanto custa?", h: "09:41" },
@@ -338,8 +338,8 @@ const SdrMock = () => (
     </ChatWallpaper>
 
 
-    <Reveal delay={0.9} className="mt-2">
-      <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-2">
+    <Reveal delay={0.9} className="mt-1.5">
+      <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-1.5">
         <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1">
           <Sparkles size={10} /> Raciocínio da IA
         </p>
@@ -750,13 +750,6 @@ const ChatMock = () => (
             </div>
           </Reveal>
 
-          <Reveal delay={0.75} y={8}>
-            <div className="rounded-2xl rounded-bl-sm bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground max-w-[88%] w-fit">
-              Pode ser hoje às 16h?
-              <span className="block text-right text-[8px] text-muted-foreground/70 mt-0.5">09:43</span>
-            </div>
-          </Reveal>
-
           <div className="w-fit rounded-2xl rounded-bl-sm bg-muted px-2.5 py-2">
             <TypingDots delay={1.0} />
           </div>
@@ -771,7 +764,7 @@ const ChatMock = () => (
           </Reveal>
         </div>
 
-        <div className="p-2 border-t border-border/60 bg-card space-y-1.5">
+        <div className="p-2 border-t border-border/60 bg-card space-y-1">
           <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-2 py-1.5">
             <Smile size={11} className="text-muted-foreground" />
             <Paperclip size={11} className="text-muted-foreground" />
