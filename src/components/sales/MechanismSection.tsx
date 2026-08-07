@@ -82,8 +82,8 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
  </span>
  <div className="relative">
  <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-primary/8 pointer-events-none" />
- <div className="relative w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
- <Icon size={18} className="text-primary" />
+ <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center group-hover:shadow-[0_8px_22px_-4px_hsl(var(--primary)/0.65)] group-hover:scale-110 transition-all duration-300">
+ <Icon size={18} className="text-primary-foreground" />
  </div>
  </div>
  </div>
@@ -216,7 +216,7 @@ export const MechanismSection = () => {
  className="flex justify-center mt-10 relative z-10"
  >
  <div className="flex items-center gap-2.5 px-4 py-2 rounded-hover border border-primary/25 bg-primary/10 shadow-sm">
- <CalendarCheck size={14} className="text-primary" />
+ <CalendarCheck size={14} className="text-primary-foreground" />
  <span className="text-xs font-medium text-primary">Clientes gerados + pipeline organizado</span>
  </div>
  </motion.div>
