@@ -293,43 +293,58 @@ const SdrMock = () => (
           h: "09:43",
         },
       ].map((m, i) => (
-        <div key={i} className={cn("flex", m.me ? "justify-end" : "justify-start")}>
-          <div
-            className={cn(
-              "max-w-[82%] rounded-2xl px-3 py-2 text-[11px] leading-snug shadow-sm",
-              m.me
-                ? "bg-primary/12 text-foreground rounded-br-sm ring-1 ring-inset ring-primary/15"
-                : "bg-muted text-muted-foreground rounded-bl-sm",
-            )}
-          >
-            {m.t}
-            <span className="mt-1 flex items-center justify-end gap-1 text-[8px] text-muted-foreground/80">
-              {m.h}
-              {m.me && <CheckCheck size={9} className="text-sky-500" />}
-            </span>
+        <Reveal key={i} delay={0.15 + i * 0.28} y={10}>
+          <div className={cn("flex", m.me ? "justify-end" : "justify-start")}>
+            <div
+              className={cn(
+                "max-w-[82%] rounded-2xl px-3 py-2 text-[11px] leading-snug shadow-sm",
+                m.me
+                  ? "bg-primary/12 text-foreground rounded-br-sm ring-1 ring-inset ring-primary/15"
+                  : "bg-muted text-muted-foreground rounded-bl-sm",
+              )}
+            >
+              {m.t}
+              <span className="mt-1 flex items-center justify-end gap-1 text-[8px] text-muted-foreground/80">
+                {m.h}
+                {m.me && <CheckCheck size={9} className="text-sky-500" />}
+              </span>
+            </div>
           </div>
-        </div>
+        </Reveal>
       ))}
+      <div className="w-fit rounded-2xl rounded-bl-sm bg-muted px-2.5 py-2">
+        <TypingDots delay={1.2} />
+      </div>
     </div>
 
-    <div className="mt-3 rounded-xl border border-primary/20 bg-primary/[0.06] p-2.5">
-      <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1.5">
-        <Sparkles size={10} /> Raciocínio da IA
-      </p>
-      <div className="space-y-1">
-        {["Nome coletado: Marcos", "Necessidade entendida (40 clientes/mês)", "Reunião proposta — 2 horários"].map(
-          (s) => (
-            <p key={s} className="flex items-center gap-1.5 text-[10px] text-foreground/80">
-              <Check size={10} className="text-primary" strokeWidth={3} /> {s}
-            </p>
-          ),
-        )}
+    <Reveal delay={1.5} className="mt-3">
+      <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-2.5">
+        <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1.5">
+          <Sparkles size={10} /> Raciocínio da IA
+        </p>
+        <div className="space-y-1">
+          {["Nome coletado: Marcos", "Necessidade entendida (40 clientes/mês)", "Reunião proposta — 2 horários"].map(
+            (s, i) => (
+              <motion.p
+                key={s}
+                className="flex items-center gap-1.5 text-[10px] text-foreground/80"
+                initial={{ opacity: 0, x: -8 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={VIEW}
+                transition={{ duration: 0.35, delay: 1.6 + i * 0.15 }}
+              >
+                <Check size={10} className="text-primary" strokeWidth={3} /> {s}
+              </motion.p>
+            ),
+          )}
+        </div>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          <Pill tone="primary">Lead qualificado</Pill>
+          <Pill tone="amber">Follow-up 24h</Pill>
+        </div>
       </div>
-      <div className="flex flex-wrap gap-1.5 mt-2">
-        <Pill tone="primary">Lead qualificado</Pill>
-        <Pill tone="amber">Follow-up 24h</Pill>
-      </div>
-    </div>
+    </Reveal>
+
   </MockShell>
 );
 
