@@ -674,7 +674,7 @@ const ChatMock = () => (
           { n: "Marcos S.", m: "Vocês atendem fora de SP?", u: 2, t: "09:41", tag: "IA" },
           { n: "Julia R.", m: "Recebi a proposta, obrigada!", u: 0, t: "09:12", tag: "" },
           { n: "Pedro L.", m: "Podemos falar amanhã?", u: 1, t: "Ontem", tag: "Humano" },
-          { n: "Grupo Orion", m: "Enviei o contrato assinado", u: 0, t: "Ontem", tag: "" },
+          
         ].map((c, i) => (
           <Reveal key={c.n} delay={0.12 + i * 0.07} x={-10}>
             <Row
