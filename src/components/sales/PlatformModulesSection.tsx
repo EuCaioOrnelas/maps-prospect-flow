@@ -890,9 +890,9 @@ const FlowMock = () => (
       {/* Linha 1 — gatilho → atendimento */}
       <div className="flex items-start justify-center gap-2">
         <FlowNode icon={MessageSquare} label="Gatilho" sub="Mensagem recebida" delay={0} />
-        <DottedLine className="mt-4 w-8 border-t-2" delay={0.2} travel />
+        <DottedLine className="mt-[17px] w-8 border-t-2" delay={0.2} travel />
         <FlowNode icon={Bot} label="Atendimento" sub="IA inicia conversa" tone="info" delay={0.3} />
-        <DottedLine className="mt-4 w-8 border-t-2" delay={0.45} travel />
+        <DottedLine className="mt-[17px] w-8 border-t-2" delay={0.45} travel />
         <FlowNode icon={UserCheck} label="Triagem" sub="Coleta de dados" tone="muted" delay={0.55} />
       </div>
 
@@ -906,24 +906,32 @@ const FlowMock = () => (
         <FlowNode icon={GitBranch} label="Qualificado?" sub="Condição / Teste A/B" tone="amber" delay={0.85} />
       </div>
 
-      {/* ramificação */}
+      {/* ramificação — alinhada ao centro dos ícones (nós têm 92px de largura) */}
       <motion.div
-        className="flex justify-center items-stretch"
+        className="relative h-6"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={VIEW}
         transition={{ duration: 0.4, delay: 1 }}
+        aria-hidden="true"
       >
-        <div className="w-1/2 h-5 border-l-2 border-t-2 border-dashed border-primary/45 rounded-tl-lg mt-0" />
-        <div className="w-1/2 h-5 border-r-2 border-t-2 border-dashed border-primary/45 rounded-tr-lg" />
+        {/* barra horizontal ligando os centros dos nós das pontas */}
+        <span className="absolute left-[46px] right-[46px] top-3 border-t-2 border-dashed border-primary/45" />
+        {/* descida do nó de condição */}
+        <span className="absolute left-1/2 -translate-x-px top-0 h-3 border-l-2 border-dashed border-primary/45" />
+        {/* descidas para cada saída */}
+        <span className="absolute left-[46px] top-3 h-3 border-l-2 border-dashed border-primary/45" />
+        <span className="absolute left-1/2 -translate-x-px top-3 h-3 border-l-2 border-dashed border-primary/45" />
+        <span className="absolute right-[46px] top-3 h-3 border-l-2 border-dashed border-primary/45" />
       </motion.div>
 
       {/* Linha 3 — saídas */}
-      <div className="flex items-start justify-between px-1">
+      <div className="flex items-start justify-between">
         <FlowNode icon={CalendarDays} label="Agendar" sub="Reunião na agenda" delay={1.1} />
         <FlowNode icon={Timer} label="Espera" sub="Follow-up 2h úteis" tone="muted" delay={1.2} />
         <FlowNode icon={LayoutDashboard} label="CRM" sub="Move de etapa" tone="info" delay={1.3} />
       </div>
+
 
       <div className="flex justify-center">
         <DottedLine className="h-5 border-l-2" delay={1.4} axis="y" travel />
