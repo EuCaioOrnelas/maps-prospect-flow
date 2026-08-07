@@ -229,31 +229,34 @@ const ProspectMock = () => (
           { n: "Alpha Contabilidade", s: 92, c: "Contabilidade · 45 func.", tags: ["Site", "WhatsApp"] },
           { n: "Nexus Clínica Odonto", s: 87, c: "Saúde · 28 func.", tags: ["Instagram"] },
           { n: "Vetor Engenharia", s: 74, c: "Engenharia · 62 func.", tags: ["Site"] },
-        ].map((e) => (
-          <Row key={e.n} className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Building2 size={13} className="text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold text-foreground truncate">{e.n}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{e.c}</p>
-              </div>
-              <Pill tone={e.s > 85 ? "primary" : "muted"}>
-                <Star size={9} /> {e.s}
-              </Pill>
-            </div>
-            <Bar value={e.s} tone={e.s > 85 ? "primary" : "amber"} />
-            <div className="flex items-center gap-1.5">
-              {e.tags.map((t) => (
-                <Pill key={t} tone="outline">
-                  {t === "Site" ? <Globe size={9} /> : <Phone size={9} />} {t}
+        ].map((e, i) => (
+          <Reveal key={e.n} delay={0.15 + i * 0.12} y={14}>
+            <Row className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Building2 size={13} className="text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold text-foreground truncate">{e.n}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{e.c}</p>
+                </div>
+                <Pill tone={e.s > 85 ? "primary" : "muted"}>
+                  <Star size={9} /> {e.s}
                 </Pill>
-              ))}
-              <span className="ml-auto text-[9px] font-semibold text-primary">Diagnóstico IA →</span>
-            </div>
-          </Row>
+              </div>
+              <Bar value={e.s} tone={e.s > 85 ? "primary" : "amber"} delay={0.3 + i * 0.12} />
+              <div className="flex items-center gap-1.5">
+                {e.tags.map((t) => (
+                  <Pill key={t} tone="outline">
+                    {t === "Site" ? <Globe size={9} /> : <Phone size={9} />} {t}
+                  </Pill>
+                ))}
+                <span className="ml-auto text-[9px] font-semibold text-primary">Diagnóstico IA →</span>
+              </div>
+            </Row>
+          </Reveal>
         ))}
+
       </div>
     </div>
   </MockShell>
