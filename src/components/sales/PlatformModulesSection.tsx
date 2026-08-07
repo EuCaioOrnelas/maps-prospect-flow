@@ -886,19 +886,19 @@ const DottedLine = ({
 
 const FlowMock = () => (
   <MockShell title="Fluxos Inteligentes — Construtor visual" badge="publicado">
-    <div className="relative py-1">
+    <div className="relative">
       {/* Linha 1 — gatilho → atendimento */}
       <div className="flex items-start justify-center gap-2">
         <FlowNode icon={MessageSquare} label="Gatilho" sub="Mensagem recebida" delay={0} />
-        <DottedLine className="mt-[17px] w-8 border-t-2" delay={0.2} travel />
+        <DottedLine className="mt-[15px] w-8 border-t-2" delay={0.2} travel />
         <FlowNode icon={Bot} label="Atendimento" sub="IA inicia conversa" tone="info" delay={0.3} />
-        <DottedLine className="mt-[17px] w-8 border-t-2" delay={0.45} travel />
+        <DottedLine className="mt-[15px] w-8 border-t-2" delay={0.45} travel />
         <FlowNode icon={UserCheck} label="Triagem" sub="Coleta de dados" tone="muted" delay={0.55} />
       </div>
 
       {/* conector vertical */}
       <div className="flex justify-center">
-        <DottedLine className="h-5 border-l-2" delay={0.7} axis="y" travel />
+        <DottedLine className="h-4 border-l-2" delay={0.7} axis="y" travel />
       </div>
 
       {/* Linha 2 — condição */}
@@ -908,7 +908,7 @@ const FlowMock = () => (
 
       {/* ramificação — alinhada ao centro dos ícones (nós têm 92px de largura) */}
       <motion.div
-        className="relative h-6"
+        className="relative h-5"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={VIEW}
@@ -916,13 +916,13 @@ const FlowMock = () => (
         aria-hidden="true"
       >
         {/* barra horizontal ligando os centros dos nós das pontas */}
-        <span className="absolute left-[46px] right-[46px] top-3 border-t-2 border-dashed border-primary/45" />
+        <span className="absolute left-[46px] right-[46px] top-2.5 border-t-2 border-dashed border-primary/45" />
         {/* descida do nó de condição */}
-        <span className="absolute left-1/2 -translate-x-px top-0 h-3 border-l-2 border-dashed border-primary/45" />
+        <span className="absolute left-1/2 -translate-x-px top-0 h-2.5 border-l-2 border-dashed border-primary/45" />
         {/* descidas para cada saída */}
-        <span className="absolute left-[46px] top-3 h-3 border-l-2 border-dashed border-primary/45" />
-        <span className="absolute left-1/2 -translate-x-px top-3 h-3 border-l-2 border-dashed border-primary/45" />
-        <span className="absolute right-[46px] top-3 h-3 border-l-2 border-dashed border-primary/45" />
+        <span className="absolute left-[46px] top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
+        <span className="absolute left-1/2 -translate-x-px top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
+        <span className="absolute right-[46px] top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
       </motion.div>
 
       {/* Linha 3 — saídas */}
@@ -932,9 +932,8 @@ const FlowMock = () => (
         <FlowNode icon={LayoutDashboard} label="CRM" sub="Move de etapa" tone="info" delay={1.3} />
       </div>
 
-
       <div className="flex justify-center">
-        <DottedLine className="h-5 border-l-2" delay={1.4} axis="y" travel />
+        <DottedLine className="h-4 border-l-2" delay={1.4} axis="y" travel />
       </div>
 
       <div className="flex justify-center">
@@ -942,22 +941,22 @@ const FlowMock = () => (
       </div>
 
       {/* rodapé de métricas */}
-      <div className="mt-2 grid grid-cols-3 gap-2">
-
+      <div className="mt-1.5 flex items-center justify-center gap-1.5">
         {[
           { i: Zap, l: "Entradas", v: "842" },
           { i: BarChart3, l: "Conclusão", v: "68%" },
           { i: Mail, l: "Integrações", v: "Sheets" },
         ].map((k, i) => (
           <Reveal key={k.l} delay={1.6 + i * 0.08}>
-            <Row className="flex items-center gap-1.5 py-1.5">
-              <k.i size={11} className="text-primary flex-shrink-0" />
-              <p className="text-[9px] text-muted-foreground truncate flex-1">{k.l}</p>
-              <p className="text-[10px] font-bold text-foreground">{k.v}</p>
-            </Row>
+            <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/70 px-2 py-1">
+              <k.i size={10} className="text-primary flex-shrink-0" />
+              <span className="text-[9px] text-muted-foreground">{k.l}</span>
+              <span className="text-[9px] font-bold text-foreground">{k.v}</span>
+            </span>
           </Reveal>
         ))}
       </div>
+
     </div>
   </MockShell>
 );
