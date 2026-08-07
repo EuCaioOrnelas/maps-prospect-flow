@@ -1197,7 +1197,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
         {/* Mockup — entra pelo lado contrário do texto */}
         <div className="w-full">
           <MockStage>
-            {entered ? <Mock /> : <div className="h-[447px]" aria-hidden="true" />}
+            <Mock key={entered ? "live" : "idle"} />
           </MockStage>
         </div>
 
