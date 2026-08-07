@@ -296,7 +296,8 @@ const SdrMock = () => (
       </Pill>
     </div>
 
-    <div className="space-y-2">
+    <ChatWallpaper className="space-y-2">
+
       {[
         { me: false, t: "Oi! Vi que vocês trabalham com contabilidade. Quanto custa?", h: "09:41" },
         {
