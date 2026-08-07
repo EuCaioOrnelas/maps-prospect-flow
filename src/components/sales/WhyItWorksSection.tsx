@@ -70,7 +70,7 @@ export const WhyItWorksSection = () => {
 
  <div className="relative z-10">
  <div className="flex items-center gap-2.5 mb-2">
- <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0 group-hover:shadow-[0_8px_22px_-4px_hsl(var(--primary)/0.65)] transition-colors">
+ <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0 group-hover:shadow-[0_8px_22px_-4px_hsl(var(--primary)/0.65)] transition-colors">
  <Icon size={16} className="text-primary-foreground" />
  </div>
  <h3 className="font-semibold text-foreground text-base leading-tight">{pillar.title}</h3>

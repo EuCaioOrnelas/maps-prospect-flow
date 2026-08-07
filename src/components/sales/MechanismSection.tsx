@@ -84,7 +84,7 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
  </span>
  <div className="relative">
  <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-primary/8 pointer-events-none" />
- <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center group-hover:shadow-[0_8px_22px_-4px_hsl(var(--primary)/0.65)] group-hover:scale-110 transition-all duration-300">
+ <div className="relative w-10 h-10 rounded-hover bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center group-hover:shadow-[0_8px_22px_-4px_hsl(var(--primary)/0.65)] group-hover:scale-110 transition-all duration-300">
  <Icon size={18} className="text-primary-foreground" />
  </div>
  </div>
