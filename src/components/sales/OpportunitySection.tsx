@@ -1,7 +1,7 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
 import { X, Check } from "lucide-react";
-import logoIcon from "@/assets/logo-icon-new.png";
+import logoWhite from "@/assets/logo-w-white.png";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
 type Row = { strong: string; rest: string };
@@ -15,6 +15,9 @@ const rows: Row[] = [
   { strong: "CRM com inteligência comercial", rest: "e visão completa do funil" },
   { strong: "IA de Intenção de Compra", rest: "analisa engajamento em tempo real" },
   { strong: "Campanhas inteligentes com IA", rest: "e personalização em escala" },
+  { strong: "Prospecção IA encontra empresas", rest: "no nicho, região e tamanho ideais" },
+  { strong: "Agenda Inteligente", rest: "marca reuniões automaticamente no calendário" },
+  { strong: "Fluxos de Automação", rest: "conectam WhatsApp, CRM e disparos inteligentes" },
 ];
 
 const OldCell = () => (
@@ -34,7 +37,7 @@ export const OpportunitySection = () => {
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative">
-      <div className="container mx-auto px-4 max-w-5xl">
+      <div className="container mx-auto px-4 max-w-6xl">
         <SectionHeading
           eyebrow="A oportunidade"
           title="O novo padrão para"
@@ -59,9 +62,9 @@ export const OpportunitySection = () => {
                 Padrão antigo
               </span>
             </div>
-            <div className="flex min-h-20 flex-row items-center justify-center gap-1.5 sm:gap-2 bg-gradient-to-b from-primary to-primary/90 px-2">
-              <img src={logoIcon} alt="wiize" className="h-7 w-7 rounded-lg object-contain shadow-lg sm:h-8 sm:w-8" />
-              <span className="text-xs font-bold text-primary-foreground sm:text-sm">wiize</span>
+            <div className="flex min-h-20 flex-row items-center justify-center gap-1 sm:gap-2 bg-gradient-to-b from-primary to-primary/90 px-2">
+              <img src={logoWhite} alt="wiize" className="h-8 w-8 rounded-lg object-contain shadow-lg sm:h-9 sm:w-9" />
+              <span className="text-xs sm:text-base font-bold text-primary-foreground">wiize</span>
             </div>
           </div>
 
