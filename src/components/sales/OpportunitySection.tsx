@@ -54,52 +54,51 @@ export const OpportunitySection = () => {
           initial={{ opacity: 0, y: 24 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="relative rounded-panel border border-border bg-card p-2 sm:p-5 md:p-8 shadow-[0_18px_50px_-24px_hsl(var(--foreground)/0.25)]"
+          className="overflow-hidden rounded-panel border border-border bg-card p-3 shadow-[0_18px_50px_-24px_hsl(var(--foreground)/0.25)] sm:p-5 md:p-7"
         >
-          <div className="relative grid grid-cols-[1fr_84px_96px] sm:grid-cols-[1fr_150px_190px]">
-            {/* Coluna Wiize destacada (fundo) */}
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-[96px] sm:w-[190px] rounded-card bg-primary/[0.05] dark:bg-primary/10 border border-primary/15" />
-
-            {/* Header */}
-            <div className="flex items-end px-2 sm:px-4 pb-4 pt-2">
-              <span className="text-xs sm:text-sm font-semibold text-foreground">Recurso</span>
-            </div>
-            <div className="flex items-end justify-center pb-4 pt-2">
-              <span className="text-[11px] sm:text-sm text-muted-foreground text-center leading-tight">
-                Outras ferramentas
-              </span>
-            </div>
-            <div className="relative rounded-t-card bg-gradient-to-b from-primary to-primary/90 px-2 py-4 flex flex-col items-center justify-center gap-1.5">
-              <img src={logoIconNew} alt="Wiize" className="h-7 w-7 rounded-sm" />
-              <span className="text-[11px] sm:text-sm font-semibold text-primary-foreground">Wiize</span>
+          <div className="overflow-hidden rounded-card border border-border">
+            <div className="grid grid-cols-[minmax(0,1fr)_82px_88px] sm:grid-cols-[minmax(0,1fr)_150px_180px]">
+              <div className="flex min-h-24 items-center px-3 sm:px-5">
+                <span className="text-xs font-bold text-foreground sm:text-sm">Recurso</span>
+              </div>
+              <div className="flex min-h-24 items-center justify-center px-1 text-center">
+                <span className="text-[10px] font-medium leading-tight text-muted-foreground sm:text-sm">
+                  Outras ferramentas
+                </span>
+              </div>
+              <div className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-t-card bg-gradient-to-b from-primary to-primary/90 px-2">
+                <img src={logoIconNew} alt="Wiize" className="h-7 w-7 rounded-sm sm:h-8 sm:w-8" />
+                <span className="text-xs font-bold text-primary-foreground sm:text-sm">Wiize</span>
+              </div>
             </div>
 
-            {/* Linhas */}
-            {rows.map((r, i) => (
-              <motion.div
-                key={r.feature}
-                initial={{ opacity: 0, y: 8 }}
-                animate={isVisible ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.35, delay: 0.15 + i * 0.05 }}
-                className="contents"
-              >
-                <div className="flex items-center px-2 sm:px-4 py-4 border-t border-border">
-                  <span className="text-[12px] sm:text-[15px] font-medium text-foreground leading-snug">
-                    {r.feature}
-                  </span>
-                </div>
-                <div className="flex items-center justify-center py-4 border-t border-border">
-                  <OtherCell ok={r.others} />
-                </div>
-                <div
-                  className={`relative flex items-center justify-center py-4 border-t border-primary/15 ${
-                    i === rows.length - 1 ? "rounded-b-card" : ""
-                  }`}
+            <div>
+              {rows.map((row, index) => (
+                <motion.div
+                  key={row.feature}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={isVisible ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.3, delay: 0.12 + index * 0.035 }}
+                  className="grid min-h-14 grid-cols-[minmax(0,1fr)_82px_88px] border-t border-border sm:grid-cols-[minmax(0,1fr)_150px_180px]"
                 >
-                  <WiizeCell />
-                </div>
-              </motion.div>
-            ))}
+                  <div className="flex items-center px-3 py-3 sm:px-5">
+                    <span className="text-[11px] font-semibold leading-snug text-foreground sm:text-[15px]">
+                      {row.feature}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center py-3">
+                    <OtherCell ok={row.others} />
+                  </div>
+                  <div
+                    className={`flex items-center justify-center border-l border-primary/15 bg-primary/[0.045] py-3 dark:bg-primary/10 ${
+                      index === rows.length - 1 ? "rounded-b-card" : ""
+                    }`}
+                  >
+                    <WiizeCell />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </motion.div>
       </div>
