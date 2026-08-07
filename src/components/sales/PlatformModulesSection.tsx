@@ -1178,18 +1178,18 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       >
         {/* O texto acompanha o card; somente o mockup inicia depois da entrada. */}
         <div>
-          <div className="inline-flex items-center gap-2.5 mb-4 rounded-full border border-border bg-card pl-1.5 pr-3.5 py-1.5 shadow-[0_6px_18px_-14px_hsl(var(--foreground)/0.4)]">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-              <Icon size={15} className="text-primary-foreground" />
+          <div className="inline-flex items-center gap-2.5 mb-4 rounded-full border border-white/25 bg-white/10 pl-1.5 pr-3.5 py-1.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.25)]">
+            <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
+              <Icon size={15} className="text-white" />
             </div>
-            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-white">
               {item.eyebrow}
             </span>
           </div>
-          <h3 className="font-display font-bold text-foreground text-xl sm:text-2xl lg:text-[1.75rem] leading-tight tracking-tight mb-3">
+          <h3 className="font-display font-bold text-white text-xl sm:text-2xl lg:text-[1.75rem] leading-tight tracking-tight mb-3">
             {item.title}
           </h3>
-          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-5">
+          <p className="text-sm sm:text-base text-white/80 leading-relaxed mb-5">
             {item.description}
           </p>
           <ul className="grid sm:grid-cols-2 gap-2">
