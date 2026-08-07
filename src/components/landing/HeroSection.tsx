@@ -703,6 +703,7 @@ interface HeroSectionProps {
   onSignupClick?: () => void;
   titleLine1?: string;
   titleLine2?: string;
+  titleLine2Highlight?: string;
   titleHighlight?: string;
   titleLine3?: string;
   description?: string;
