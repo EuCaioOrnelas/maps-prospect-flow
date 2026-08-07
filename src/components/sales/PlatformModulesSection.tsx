@@ -820,19 +820,20 @@ const FlowNode = ({
   >
     <div
       className={cn(
-        "w-9 h-9 rounded-full flex items-center justify-center ring-4",
+        "w-8 h-8 rounded-full flex items-center justify-center ring-4",
         tone === "primary" && "bg-primary text-primary-foreground ring-primary/15",
         tone === "info" && "bg-sky-500 text-white ring-sky-500/15",
         tone === "amber" && "bg-amber-500 text-white ring-amber-500/15",
         tone === "muted" && "bg-muted text-muted-foreground ring-border/40",
       )}
     >
-      <Icon size={15} />
+      <Icon size={14} />
     </div>
-    <p className="mt-1.5 text-[9px] font-bold uppercase tracking-wide text-foreground leading-tight">
+    <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-foreground leading-tight">
       {label}
     </p>
-    {sub && <p className="text-[8px] text-muted-foreground leading-tight mt-0.5">{sub}</p>}
+    {sub && <p className="text-[8px] text-muted-foreground leading-tight">{sub}</p>}
+
   </motion.div>
 );
 
