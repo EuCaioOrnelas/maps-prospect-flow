@@ -333,12 +333,13 @@ const SdrMock = () => (
     </ChatWallpaper>
 
 
-    <Reveal delay={1.5} className="mt-3">
-      <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-2.5">
-        <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1.5">
+    <Reveal delay={1.1} className="mt-2">
+      <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-2">
+        <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1">
           <Sparkles size={10} /> Raciocínio da IA
         </p>
-        <div className="space-y-1">
+        <div className="space-y-0.5">
+
           {["Nome coletado: Marcos", "Necessidade entendida (40 clientes/mês)", "Reunião proposta — 2 horários"].map(
             (s, i) => (
               <motion.p
