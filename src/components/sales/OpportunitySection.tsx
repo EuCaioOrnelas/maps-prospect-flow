@@ -1,7 +1,7 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
 import { X, Check } from "lucide-react";
-import logoWhite from "@/assets/logo-w-white.png.asset.json";
+import logoIcon from "@/assets/logo-icon-new.png";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
 type Row = { strong: string; rest: string };
