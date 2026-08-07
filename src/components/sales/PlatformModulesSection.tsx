@@ -1123,7 +1123,6 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
   const reversed = index % 2 === 1;
   const Icon = item.icon;
   const Mock = item.mock;
-  const [entered, setEntered] = useState(false);
 
   return (
     <div
@@ -1135,7 +1134,6 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       whileInView={{ opacity: 1, x: 0, scale: 1 }}
       viewport={{ once: true, amount: 0.2, margin: "0px 0px -60px 0px" }}
       transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-      onAnimationComplete={() => setEntered(true)}
 
 
       className={cn(
