@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { ReactNode, useEffect, useState } from "react";
+import { motion, useInView } from "framer-motion";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import {
   Search,
   Bot,
