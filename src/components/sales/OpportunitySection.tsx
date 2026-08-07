@@ -60,8 +60,8 @@ export const OpportunitySection = () => {
               </span>
             </div>
             <div className="flex min-h-20 flex-col items-center justify-center gap-1.5 bg-gradient-to-b from-primary to-primary/90 px-2">
-              <img src={logoWhite.url} alt="Wiize" className="h-7 w-7 object-contain sm:h-8 sm:w-8" />
-              <span className="text-xs font-bold text-primary-foreground sm:text-sm">Wiize</span>
+              <img src={logoIcon} alt="wiize" className="h-7 w-7 rounded-lg object-contain shadow-lg sm:h-8 sm:w-8" />
+              <span className="text-xs font-bold text-primary-foreground sm:text-sm">wiize</span>
             </div>
           </div>
 
