@@ -1196,12 +1196,12 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             {item.benefits.map((b) => (
               <li
                 key={b}
-                className="flex items-center gap-2.5 rounded-card border border-white/30 bg-white px-3 py-2"
+                className="flex items-center gap-2.5 rounded-card border border-white/30 bg-white/15 px-3 py-2"
               >
-                <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center">
+                <span className="w-5 h-5 min-w-[20px] rounded-full bg-white/20 flex items-center justify-center">
                   <Check size={11} className="text-white" strokeWidth={3.5} />
                 </span>
-                <span className="text-[13px] font-medium text-foreground leading-snug">{b}</span>
+                <span className="text-[13px] font-medium !text-white/90 leading-snug">{b}</span>
               </li>
             ))}
           </ul>
