@@ -61,12 +61,12 @@ const MockShell = ({
       </span>
       {badge && (
         <span className="ml-auto flex-shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
           {badge}
         </span>
       )}
     </div>
-    <div className="p-3.5 sm:p-4 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04]">
+    <div className="p-3 sm:p-3.5 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] min-h-[356px] flex flex-col justify-start">
       {children}
     </div>
   </div>
@@ -101,24 +101,76 @@ const Row = ({ children, className = "" }: { children: ReactNode; className?: st
 
 /* Palco de destaque para os mockups (sem blur, apenas degradê sólido) */
 const MockStage = ({ children }: { children: ReactNode }) => (
-  <div className="relative w-full rounded-[26px] p-3 sm:p-5 bg-[linear-gradient(145deg,hsl(var(--primary)/0.22)_0%,hsl(var(--primary)/0.10)_45%,hsl(var(--primary)/0.16)_100%)] ring-1 ring-inset ring-primary/20">
-    <span className="pointer-events-none absolute left-2.5 top-2.5 w-4 h-4 border-l-2 border-t-2 border-primary/40 rounded-tl-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute right-2.5 top-2.5 w-4 h-4 border-r-2 border-t-2 border-primary/40 rounded-tr-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute left-2.5 bottom-2.5 w-4 h-4 border-l-2 border-b-2 border-primary/40 rounded-bl-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute right-2.5 bottom-2.5 w-4 h-4 border-r-2 border-b-2 border-primary/40 rounded-br-md" aria-hidden="true" />
+  <div className="relative w-full rounded-[20px] p-1.5 sm:p-2.5 bg-[linear-gradient(145deg,hsl(var(--primary)/0.22)_0%,hsl(var(--primary)/0.10)_45%,hsl(var(--primary)/0.16)_100%)] ring-1 ring-inset ring-primary/20">
+    <span className="pointer-events-none absolute left-1.5 top-1.5 w-3 h-3 border-l-2 border-t-2 border-primary/40 rounded-tl-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-1.5 top-1.5 w-3 h-3 border-r-2 border-t-2 border-primary/40 rounded-tr-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute left-1.5 bottom-1.5 w-3 h-3 border-l-2 border-b-2 border-primary/40 rounded-bl-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-1.5 bottom-1.5 w-3 h-3 border-r-2 border-b-2 border-primary/40 rounded-br-md" aria-hidden="true" />
     <div className="relative">{children}</div>
   </div>
 );
 
+/* --------- Animações de entrada (todas once, sem loop infinito) --------- */
+const VIEW = { once: true, amount: 0.25 } as const;
 
-const Bar = ({ value, tone = "primary" }: { value: number; tone?: "primary" | "amber" }) => (
+const Reveal = ({
+  children,
+  delay = 0,
+  y = 10,
+  x = 0,
+  className = "",
+}: {
+  children: ReactNode;
+  delay?: number;
+  y?: number;
+  x?: number;
+  className?: string;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y, x }}
+    whileInView={{ opacity: 1, y: 0, x: 0 }}
+    viewport={VIEW}
+    transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
+    className={className}
+  >
+    {children}
+  </motion.div>
+);
+
+/* Balão de "digitando" que some após aparecer a mensagem (entrada apenas) */
+const TypingDots = ({ delay = 0 }: { delay?: number }) => (
+  <motion.span
+    className="inline-flex items-center gap-1"
+    initial={{ opacity: 0 }}
+    whileInView={{ opacity: [0, 1, 1, 0] }}
+    viewport={VIEW}
+    transition={{ duration: 1.6, delay, times: [0, 0.15, 0.75, 1] }}
+  >
+    {[0, 1, 2].map((i) => (
+      <motion.span
+        key={i}
+        className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60"
+        initial={{ y: 0 }}
+        whileInView={{ y: [0, -3, 0, -3, 0] }}
+        viewport={VIEW}
+        transition={{ duration: 1.2, delay: delay + i * 0.12 }}
+      />
+    ))}
+  </motion.span>
+);
+
+const Bar = ({ value, tone = "primary", delay = 0 }: { value: number; tone?: "primary" | "amber"; delay?: number }) => (
   <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-    <div
+    <motion.div
       className={cn("h-full rounded-full", tone === "primary" ? "bg-primary" : "bg-amber-500")}
-      style={{ width: `${value}%` }}
+      initial={{ width: 0 }}
+      whileInView={{ width: `${value}%` }}
+      viewport={VIEW}
+      transition={{ duration: 0.9, delay, ease: [0.22, 1, 0.36, 1] }}
     />
   </div>
 );
+
 
 /* ---------------------------- 1. Prospecção ---------------------------- */
 const ProspectMock = () => (
