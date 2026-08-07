@@ -309,11 +309,7 @@ const SdrMock = () => (
           h: "09:41",
         },
         { me: false, t: "Uns 40 clientes por mês.", h: "09:43" },
-        {
-          me: true,
-          t: "Perfeito 👊 Posso te mostrar em 15 min. Amanhã às 10h ou às 16h?",
-          h: "09:43",
-        },
+
 
       ].map((m, i) => (
 
