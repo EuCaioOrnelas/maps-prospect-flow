@@ -643,15 +643,16 @@ const CrmMock = () => (
       ))}
     </div>
 
-    <Reveal delay={0.6} className="mt-2">
-      <Row className="flex items-center gap-1.5 py-1.5 border-dashed">
+    <Reveal delay={0.6} className="mt-1.5">
+      <Row className="flex items-center gap-1.5 py-1 border-dashed">
         <Sparkles size={11} className="text-primary flex-shrink-0" />
-        <p className="text-[9px] text-muted-foreground leading-snug">
+        <p className="text-[9px] text-muted-foreground leading-snug truncate">
           IA priorizou <span className="font-semibold text-foreground">Grupo Orion</span> — maior
-          intenção de compra nas últimas 48h
+          intenção nas últimas 48h
         </p>
       </Row>
     </Reveal>
+
   </MockShell>
 );
 
