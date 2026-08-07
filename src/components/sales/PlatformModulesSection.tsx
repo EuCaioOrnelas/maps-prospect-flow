@@ -342,7 +342,7 @@ const SdrMock = () => (
     </ChatWallpaper>
 
 
-    <Reveal delay={1.1} className="mt-2">
+    <Reveal delay={0.9} className="mt-2">
       <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-2">
         <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1">
           <Sparkles size={10} /> Raciocínio da IA
