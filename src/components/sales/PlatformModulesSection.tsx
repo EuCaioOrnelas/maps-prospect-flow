@@ -729,7 +729,7 @@ const ChatMock = () => (
           </div>
         </div>
 
-        <div className="flex-1 p-2 space-y-1.5 [background-image:radial-gradient(hsl(var(--border))_1px,transparent_1px)] [background-size:12px_12px]">
+        <div className="flex-1 p-2 space-y-1.5 bg-muted/25 [background-image:radial-gradient(hsl(var(--primary)/0.12)_1px,transparent_1px)] [background-size:13px_13px]">
           <Reveal delay={0.2} y={8}>
             <div className="rounded-2xl rounded-bl-sm bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground max-w-[88%] w-fit">
               Oi! Vocês atendem fora de SP?
