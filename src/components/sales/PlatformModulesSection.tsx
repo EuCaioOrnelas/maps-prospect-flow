@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { ReactNode, useEffect, useState } from "react";
+import { motion, useInView } from "framer-motion";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import {
   Search,
   Bot,
@@ -510,27 +510,45 @@ const AgendaMock = () => (
 
 /* ---------------------------- 4. Campanhas ---------------------------- */
 const CampaignProgress = ({ name, template, index }: { name: string; template: string; index: number }) => {
-  const [status, setStatus] = useState("Preparando");
-  const [progress, setProgress] = useState(8);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.6 });
+  const [status, setStatus] = useState("Na fila");
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const first = window.setTimeout(() => { setStatus("Enviando"); setProgress(58 + index * 8); }, 450 + index * 280);
-    const second = window.setTimeout(() => { setStatus("Concluída"); setProgress(100); }, 1600 + index * 500);
-    return () => { window.clearTimeout(first); window.clearTimeout(second); };
-  }, [index]);
+    if (!inView) return;
+    const timers: number[] = [];
+    const start = 700 + index * 450;
+
+    timers.push(window.setTimeout(() => { setStatus("Preparando"); setProgress(8); }, start));
+    timers.push(window.setTimeout(() => setStatus("Enviando"), start + 500));
+
+    // incremento progressivo do progressbar
+    [
+      [700, 22], [1100, 35], [1500, 48], [1900, 61],
+      [2300, 74], [2700, 86], [3100, 94],
+    ].forEach(([t, v]) => {
+      timers.push(window.setTimeout(() => setProgress(v), start + t));
+    });
+
+    timers.push(window.setTimeout(() => { setStatus("Concluída"); setProgress(100); }, start + 3550));
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [inView, index]);
 
   return (
-    <Reveal delay={0.35 + index * 0.1} x={12}>
-      <Row className="space-y-1.5">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Send size={13} className="text-primary" /></div>
-          <div className="min-w-0 flex-1"><p className="text-[11px] font-semibold text-foreground truncate">{name}</p><p className="text-[9px] text-muted-foreground font-mono truncate">{template}</p></div>
-          <Pill tone={status === "Concluída" ? "primary" : "amber"}>{status}</Pill>
-        </div>
-        <div className="h-1.5 rounded-full bg-muted overflow-hidden"><motion.div className="h-full rounded-full bg-primary" animate={{ width: `${progress}%` }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }} /></div>
-        <div className="flex items-center justify-between text-[9px] text-muted-foreground"><span className="flex items-center gap-1"><CheckCheck size={9} className="text-sky-500" /> {progress}% processado</span><span>delay seguro 8s</span></div>
-      </Row>
-    </Reveal>
+    <div ref={ref}>
+      <Reveal delay={0.35 + index * 0.1} x={12}>
+        <Row className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Send size={13} className="text-primary" /></div>
+            <div className="min-w-0 flex-1"><p className="text-[11px] font-semibold text-foreground truncate">{name}</p><p className="text-[9px] text-muted-foreground font-mono truncate">{template}</p></div>
+            <Pill tone={status === "Concluída" ? "primary" : status === "Na fila" ? "muted" : "amber"}>{status}</Pill>
+          </div>
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden"><motion.div className="h-full rounded-full bg-primary" animate={{ width: `${progress}%` }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }} /></div>
+          <div className="flex items-center justify-between text-[9px] text-muted-foreground"><span className="flex items-center gap-1"><CheckCheck size={9} className="text-sky-500" /> {progress}% processado</span><span>delay seguro 8s</span></div>
+        </Row>
+      </Reveal>
+    </div>
   );
 };
 
@@ -941,7 +959,7 @@ const DottedLine = ({
 
 const FlowMock = () => (
   <MockShell title="Fluxos Inteligentes — Construtor visual" badge="publicado">
-      <div className="relative px-1">
+      <div className="relative px-1 w-full my-auto">
       {/* Linha 1 — gatilho → atendimento */}
         <div className="flex items-start justify-center gap-0">
         <FlowNode icon={MessageSquare} label="Gatilho" sub="Mensagem recebida" delay={0} />
