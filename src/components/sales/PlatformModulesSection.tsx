@@ -942,7 +942,8 @@ const FlowMock = () => (
       </div>
 
       {/* rodapé de métricas */}
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-2 grid grid-cols-3 gap-2">
+
         {[
           { i: Zap, l: "Entradas", v: "842" },
           { i: BarChart3, l: "Conclusão", v: "68%" },
