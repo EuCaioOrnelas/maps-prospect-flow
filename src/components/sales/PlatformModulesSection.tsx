@@ -1164,10 +1164,10 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
 
       <div
         className={cn(
-          "absolute -top-24 w-72 h-72 rounded-full pointer-events-none opacity-[0.5]",
+          "absolute -top-24 w-72 h-72 rounded-full pointer-events-none opacity-[0.6]",
           reversed ? "-left-24" : "-right-24",
         )}
-        style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.14), transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, hsl(var(--primary-foreground) / 0.12), transparent 70%)" }}
         aria-hidden="true"
       />
       <div
