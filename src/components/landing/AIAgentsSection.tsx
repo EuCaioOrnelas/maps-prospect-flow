@@ -84,7 +84,7 @@ export const AIAgentsSection = () => {
  transition={{ duration: 0.5, delay: index * 0.12 }}
  className="group relative rounded-2xl border border-border/60 bg-card/95 p-7 hover:border-primary/30 hover:bg-card/80 transition-all duration-300"
  >
- <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
+ <div className="w-12 h-12 rounded-card bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
  <pillar.icon className="w-6 h-6 text-primary" />
  </div>
  <h3 className="font-display text-lg font-semibold text-foreground mb-1">{pillar.title}</h3>
@@ -191,7 +191,7 @@ export const AIAgentsSection = () => {
  transition={{ duration: 0.4, delay: index * 0.08 }}
  className="flex items-center gap-4 p-3.5 rounded-xl bg-card/50 border border-border/30 hover:border-primary/20 transition-colors"
  >
- <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+ <div className="w-9 h-9 rounded-sm bg-primary/10 flex items-center justify-center flex-shrink-0">
  <cap.icon className="w-4.5 h-4.5 text-primary" size={18} />
  </div>
  <span className="text-sm text-foreground/90">{cap.text}</span>

@@ -64,7 +64,7 @@ export const AuthoritySection = () => {
  transition={{ duration: 0.5, delay: 0.3 + 0.1 * i }}
  className="p-6 rounded-2xl border border-border bg-card/50"
  >
- <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+ <div className="w-10 h-10 rounded-sm bg-primary/10 flex items-center justify-center mb-4">
  <p.icon size={20} className="text-primary" />
  </div>
  <h3 className="font-semibold text-foreground mb-2 text-sm">{p.title}</h3>

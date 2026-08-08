@@ -129,7 +129,7 @@ export const OfficialAPISection = () => {
  transition={{ duration: 0.5, delay: index * 0.1 }}
  className="glass rounded-xl p-5 md:p-6 hover:bg-card/90 transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/20"
  >
- <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+ <div className="w-12 h-12 rounded-card bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
  <feature.icon size={22} className="text-primary" />
  </div>
  <h3 className="font-display text-base md:text-lg font-semibold mb-2">

@@ -113,7 +113,7 @@ export const FeaturesSection = () => {
  }`}
  >
  <div className="flex flex-col sm:flex-row items-start gap-4 mb-4 sm:mb-6">
- <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/20">
+ <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-sm bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/20">
  <Zap size={20} className="text-white" />
  </div>
  <div>
@@ -129,19 +129,19 @@ export const FeaturesSection = () => {
  </div>
  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
  <div className="flex items-center gap-3 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
- <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+ <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
  <CheckCircle size={16} className="text-white" />
  </div>
  <span className="text-xs sm:text-sm font-medium text-foreground">Empresas com atividade recente</span>
  </div>
  <div className="flex items-center gap-3 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
- <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+ <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
  <CheckCircle size={16} className="text-white" />
  </div>
  <span className="text-xs sm:text-sm font-medium text-foreground">Contatos ativos e verificados</span>
  </div>
  <div className="flex items-center gap-3 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
- <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
+ <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
  <CheckCircle size={16} className="text-white" />
  </div>
  <span className="text-xs sm:text-sm font-medium text-foreground">Alto potencial de conversão</span>
@@ -171,7 +171,7 @@ export const FeaturesSection = () => {
  key={activeIndex}
  className="animate-in fade-in slide-in-from-right-4 duration-500 flex flex-col items-center"
  >
- <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center mb-5 shadow-lg shadow-primary/20">
+ <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-card bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center mb-5 shadow-lg shadow-primary/20">
  <activeFeature.icon size={28} className="text-white" />
  </div>
 
