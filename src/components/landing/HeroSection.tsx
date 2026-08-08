@@ -91,27 +91,27 @@ const StageCapture = ({ progress }: { progress: number }) => {
  <div className="flex flex-col h-full overflow-hidden gap-2">
  <div className="grid grid-cols-[1fr_auto] gap-2 shrink-0">
  <div className="grid gap-1.5">
- <div className="bg-secondary rounded-lg px-3 py-1.5 text-xs flex items-center gap-2">
+ <div className="bg-secondary rounded-sm px-3 py-1.5 text-xs flex items-center gap-2">
  <Search size={12} className="text-muted-foreground" />
  <span className="text-foreground">academias</span>
  <span className="typing-cursor opacity-70">|</span>
  </div>
- <div className="bg-secondary rounded-lg px-3 py-1.5 text-[11px] text-muted-foreground flex items-center gap-1.5">
+ <div className="bg-secondary rounded-sm px-3 py-1.5 text-[11px] text-muted-foreground flex items-center gap-1.5">
  <MapPin size={11} className="text-primary" />
  <span>São Paulo, SP</span>
  </div>
  </div>
- <button className="bg-primary text-primary-foreground rounded-lg px-3 font-medium text-xs flex flex-col items-center justify-center gap-1 aspect-square shrink-0">
+ <button className="bg-primary text-primary-foreground rounded-card px-3 font-medium text-xs flex flex-col items-center justify-center gap-1 aspect-square shrink-0">
  <Search size={16} />
  <span>Buscar</span>
  </button>
  </div>
- <div className="rounded-xl bg-secondary/30 p-2 flex-1 min-h-0 flex flex-col gap-1.5 overflow-hidden">
+ <div className="rounded-card bg-secondary/30 p-2 flex-1 min-h-0 flex flex-col gap-1.5 overflow-hidden">
  <div className="space-y-1.5 flex-1 min-h-0 overflow-hidden">
  {leads.map((l, i) => (
  <div
  key={i}
- className="flex items-center gap-2 bg-background/55 rounded-lg p-2 border border-border/40"
+ className="flex items-center gap-2 bg-background/55 rounded-card p-2 border border-border/40"
  style={{
  opacity: progress > 0.08 + i * 0.12 ? 1 : 0,
  transform: `translateX(${progress > 0.08 + i * 0.12 ? 0 : -16}px)`,
@@ -125,18 +125,18 @@ const StageCapture = ({ progress }: { progress: number }) => {
  <p className="font-medium text-[12px] truncate">{l.name}</p>
  <p className="text-[11px] text-muted-foreground truncate">{l.phone} · {l.note}</p>
  </div>
- <div className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary shrink-0">
+ <div className="rounded-xs bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary shrink-0">
  {l.rating}
  </div>
  </div>
  ))}
  </div>
  <div className="grid grid-cols-2 gap-1.5 shrink-0">
- <div className="rounded-lg bg-success/10 p-1.5 border border-success/10">
+ <div className="rounded-card bg-success/10 p-1.5 border border-success/10">
  <p className="text-[10px] text-muted-foreground">Telefones validados</p>
  <p className="text-[11px] font-semibold text-success">3/3 com DDI + DDD</p>
  </div>
- <div className="rounded-lg bg-primary/10 p-1.5 border border-primary/10">
+ <div className="rounded-card bg-primary/10 p-1.5 border border-primary/10">
  <p className="text-[10px] text-muted-foreground">Prontos para CRM</p>
  <p className="text-[11px] font-semibold text-primary">Importação instantânea</p>
  </div>
@@ -162,7 +162,7 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
 
  return (
  <div className="flex h-full flex-col gap-1.5 overflow-hidden">
- <div className="flex items-center gap-2 bg-secondary/50 rounded-lg p-1.5 shrink-0">
+ <div className="flex items-center gap-2 bg-secondary/50 rounded-card p-1.5 shrink-0">
  <div className="w-6 h-6 rounded-sm bg-primary/15 flex items-center justify-center shrink-0">
  <Users size={11} className="text-primary" />
  </div>
@@ -170,12 +170,12 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
  <p className="font-medium text-[11px] truncate">CrossFit Box SP</p>
  <p className="text-[10px] text-muted-foreground">(11) 99XXX-XXXX</p>
  </div>
- <div className="flex items-center gap-1 rounded-full bg-warning/10 px-1.5 py-0.5 shrink-0" style={{ opacity: progress > 0.58 ? 1 : 0, transition: 'opacity 0.6s' }}>
+ <div className="flex items-center gap-1 rounded-xs bg-warning/10 px-1.5 py-0.5 shrink-0" style={{ opacity: progress > 0.58 ? 1 : 0, transition: 'opacity 0.6s' }}>
  <img src={gptIcon} alt="GPT" className="w-4 h-4 rounded-sm" />
  <span className="text-[11px] font-bold text-warning">{Math.min(Math.round(progress * 847), 847)}</span>
  </div>
  </div>
- <div className="rounded-lg bg-secondary/30 p-1.5 flex-1 min-h-0 flex flex-col gap-1 overflow-hidden">
+ <div className="rounded-card bg-secondary/30 p-1.5 flex-1 min-h-0 flex flex-col gap-1 overflow-hidden">
  <div className="flex items-center gap-1.5 shrink-0">
  <img src={gptIcon} alt="GPT" className="w-4 h-4 rounded-sm shrink-0" />
  <div className="min-w-0">
@@ -204,7 +204,7 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
  {tags.map((t, i) => (
  <span
  key={i}
- className={`text-[9px] px-1 py-0.5 rounded-full font-medium ${t.color}`}
+ className={`text-[9px] px-1 py-0.5 rounded-xs font-medium ${t.color}`}
  style={{ opacity: progress > 0.58 + i * 0.08 ? 1 : 0, transform: `scale(${progress > 0.58 + i * 0.08 ? 1 : 0.85})`, transition: 'all 0.4s ease-out' }}
  >
  {t.label}
@@ -231,7 +231,7 @@ const StageMessage = ({ progress }: { progress: number }) => {
  const visibleChars = Math.round(progress * fullMsg.length);
  return (
  <div className="flex h-full flex-col gap-2.5">
- <div className="flex items-center gap-2 bg-secondary/50 rounded-lg p-2.5">
+ <div className="flex items-center gap-2 bg-secondary/50 rounded-card p-2.5">
  <div className="w-7 h-7 rounded-sm bg-info/15 flex items-center justify-center shrink-0">
  <Users size={12} className="text-info" />
  </div>
@@ -240,12 +240,12 @@ const StageMessage = ({ progress }: { progress: number }) => {
  <p className="text-[11px] text-muted-foreground">João Silva — Proprietário</p>
  </div>
  </div>
- <div className="bg-secondary/30 rounded-lg p-3 flex-1 flex flex-col min-h-0">
+ <div className="bg-secondary/30 rounded-card p-3 flex-1 flex flex-col min-h-0">
  <div className="flex items-center gap-1.5 mb-2">
  <Sparkles size={11} className="text-primary animate-pulse" />
  <span className="text-[11px] font-medium text-primary">IA gerando mensagem personalizada</span>
  </div>
- <div className="bg-background/60 rounded-lg p-2.5 text-xs text-foreground leading-relaxed flex-1">
+ <div className="bg-background/60 rounded-card p-2.5 text-xs text-foreground leading-relaxed flex-1">
  {fullMsg.slice(0, visibleChars)}
  {visibleChars < fullMsg.length && <span className="typing-cursor opacity-70">|</span>}
  </div>
@@ -289,7 +289,7 @@ const StageSend = ({ progress }: { progress: number }) => {
  const delivered = progress >= step.delivered;
 
  return (
- <div key={i} className="bg-secondary/45 rounded-lg p-2 border border-border/40">
+ <div key={i} className="bg-secondary/45 rounded-card p-2 border border-border/40">
  <div className="flex items-center gap-2">
  <div className="w-7 h-7 rounded-sm bg-primary/15 flex items-center justify-center shrink-0">
  <Send size={10} className={`text-primary ${sent && !delivered ? 'animate-pulse' : ''}`} />
@@ -312,7 +312,7 @@ const StageSend = ({ progress }: { progress: number }) => {
  );
  })}
  </div>
- <div className="bg-primary/10 rounded-lg p-2.5 border border-primary/10 shrink-0">
+ <div className="bg-primary/10 rounded-card p-2.5 border border-primary/10 shrink-0">
  <div className="flex items-center gap-2 mb-1.5">
  <Send size={11} className="text-primary animate-pulse" />
  <span className="text-[11px] font-medium text-primary">Disparo em massa</span>
@@ -360,14 +360,14 @@ const StageReply = ({ progress }: { progress: number }) => {
 
  return (
  <div className="flex h-full flex-col gap-2.5">
- <div className="rounded-xl bg-secondary/30 p-2.5 flex-1 min-h-0">
+ <div className="rounded-card bg-secondary/30 p-2.5 flex-1 min-h-0">
  <div className="flex h-full flex-col justify-end gap-2 overflow-hidden">
  {messages.map((message, index) => {
  if (progress <= message.start) return null;
 
  return (
  <div key={index} className={`flex ${message.dir === 'out' ? 'justify-end' : 'justify-start'}`} style={{ animation: 'fadeSlideUp 0.35s ease-out' }}>
- <div className={`${message.dir === 'out' ? 'bg-primary/15 rounded-tr-sm' : 'bg-background/70 rounded-tl-sm'} rounded-xl px-3 py-2 max-w-[84%] border border-border/30`}>
+ <div className={`${message.dir === 'out' ? 'bg-primary/15 rounded-tr-sm' : 'bg-background/70 rounded-tl-sm'} rounded-sm px-3 py-2 max-w-[84%] border border-border/30`}>
  <p className="text-[12px] text-foreground leading-relaxed">{message.text}</p>
  <div className="flex items-center justify-end gap-1 mt-1">
  <span className="text-[10px] text-muted-foreground">{message.time}</span>
@@ -385,7 +385,7 @@ const StageReply = ({ progress }: { progress: number }) => {
 
  {progress > 0.18 && progress < 0.28 && (
  <div className="flex justify-start" style={{ animation: 'fadeSlideUp 0.35s ease-out' }}>
- <div className="bg-background/70 rounded-xl rounded-tl-sm px-3 py-2 border border-border/30">
+ <div className="bg-background/70 rounded-sm rounded-tl-sm px-3 py-2 border border-border/30">
  <div className="flex items-center gap-1 py-0.5">
  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '120ms' }} />
@@ -397,7 +397,7 @@ const StageReply = ({ progress }: { progress: number }) => {
  </div>
  </div>
 
- <div className="bg-success/10 rounded-lg p-2.5 flex items-center gap-2 border border-success/10">
+ <div className="bg-success/10 rounded-card p-2.5 flex items-center gap-2 border border-success/10">
  <MessageCircle size={12} className="text-success" />
  <span className="text-[11px] font-medium text-success">Lead respondeu e abriu janela ativa para atendimento</span>
  </div>
@@ -417,22 +417,22 @@ const StageAIChat = ({ progress }: { progress: number }) => {
 
  return (
  <div className="flex h-full flex-col gap-2.5">
- <div className="flex items-center gap-2 rounded-xl bg-secondary/30 p-2.5 border border-border/40">
+ <div className="flex items-center gap-2 rounded-card bg-secondary/30 p-2.5 border border-border/40">
  <img src={gptIcon} alt="GPT" className="w-7 h-7 rounded-sm" />
  <div className="flex-1 min-w-0">
  <p className="text-[11px] font-medium text-primary">IA Closer respondendo em tempo real</p>
  <p className="text-[11px] text-muted-foreground truncate">Contexto, score, CRM e histórico da conversa</p>
  </div>
- <div className="rounded-full bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">GPT ativo</div>
+ <div className="rounded-xs bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">GPT ativo</div>
  </div>
- <div className="rounded-xl bg-secondary/30 p-2.5 flex-1 min-h-0">
+ <div className="rounded-card bg-secondary/30 p-2.5 flex-1 min-h-0">
  <div className="flex h-full flex-col justify-end gap-1.5 overflow-hidden">
  {msgs.map((m, i) => {
  if (progress <= m.start) return null;
 
  return (
  <div key={i} className={`flex ${m.dir === 'out' ? 'justify-end' : 'justify-start'}`} style={{ animation: 'fadeSlideUp 0.35s ease-out' }}>
- <div className={`${m.dir === 'out' ? 'bg-primary/15 rounded-tr-sm' : 'bg-background/75 rounded-tl-sm'} rounded-xl px-2.5 py-1.5 max-w-[84%] border border-border/30`}>
+ <div className={`${m.dir === 'out' ? 'bg-primary/15 rounded-tr-sm' : 'bg-background/75 rounded-tl-sm'} rounded-sm px-2.5 py-1.5 max-w-[84%] border border-border/30`}>
  <p className="text-[11px] text-foreground leading-relaxed">{m.text}</p>
  <div className="flex items-center gap-1 mt-1 justify-end">
  <span className="text-[10px] text-muted-foreground">{m.time}</span>
@@ -446,11 +446,11 @@ const StageAIChat = ({ progress }: { progress: number }) => {
  </div>
 
  <div className="grid grid-cols-2 gap-2">
- <div className="rounded-lg bg-success/10 p-2 border border-success/10">
+ <div className="rounded-card bg-success/10 p-2 border border-success/10">
  <p className="text-[10px] text-muted-foreground">Intenção detectada</p>
  <p className="text-[11px] font-semibold text-success">Alta prioridade comercial</p>
  </div>
- <div className="rounded-lg bg-primary/10 p-2 border border-primary/10">
+ <div className="rounded-card bg-primary/10 p-2 border border-primary/10">
  <p className="text-[10px] text-muted-foreground">Próximo passo</p>
  <p className="text-[11px] font-semibold text-primary">Reunião agendada</p>
  </div>
@@ -469,7 +469,7 @@ const StageClose = ({ progress }: { progress: number }) => {
  return (
  <div className="flex h-full flex-col overflow-hidden">
  {/* Lead header */}
- <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5 shrink-0">
+ <div className="flex items-center gap-2.5 bg-secondary/50 rounded-card p-2.5 shrink-0">
  <div className="w-8 h-8 rounded-sm bg-success/20 flex items-center justify-center shrink-0">
  <Users size={13} className="text-success" />
  </div>
@@ -478,7 +478,7 @@ const StageClose = ({ progress }: { progress: number }) => {
  <p className="text-[11px] text-muted-foreground">João Silva · Proprietário</p>
  </div>
  {showBadge && (
- <div className="rounded-full bg-success/15 px-2 py-0.5 border border-success/20">
+ <div className="rounded-xs bg-success/15 px-2 py-0.5 border border-success/20">
  <span className="text-[10px] font-bold text-success">FECHADO</span>
  </div>
  )}
@@ -520,11 +520,11 @@ const StageClose = ({ progress }: { progress: number }) => {
 
  {showDetails && (
  <div className="flex items-center gap-4" style={{ animation: 'fadeSlideUp 0.5s ease-out' }}>
- <div className="flex items-center gap-1.5 bg-warning/10 rounded-full px-3 py-1 border border-warning/15">
+ <div className="flex items-center gap-1.5 bg-warning/10 rounded-xs px-3 py-1 border border-warning/15">
  <Star size={11} className="text-warning" />
  <span className="text-[11px] font-semibold text-warning">R$ 5.964/ano</span>
  </div>
- <div className="flex items-center gap-1.5 bg-info/10 rounded-full px-3 py-1 border border-info/15">
+ <div className="flex items-center gap-1.5 bg-info/10 rounded-xs px-3 py-1 border border-info/15">
  <CalendarCheck size={11} className="text-info" />
  <span className="text-[11px] font-semibold text-info">Sex 14:00</span>
  </div>
@@ -535,15 +535,15 @@ const StageClose = ({ progress }: { progress: number }) => {
  {/* Bottom metrics */}
  {showMetrics && (
  <div className="grid grid-cols-3 gap-1.5 shrink-0" style={{ animation: 'fadeSlideUp 0.4s ease-out' }}>
- <div className="rounded-lg bg-success/10 p-2 text-center border border-success/10">
+ <div className="rounded-card bg-success/10 p-2 text-center border border-success/10">
  <p className="text-[14px] font-bold text-success">100%</p>
  <p className="text-[9px] text-muted-foreground">Automático</p>
  </div>
- <div className="rounded-lg bg-primary/10 p-2 text-center border border-primary/10">
+ <div className="rounded-card bg-primary/10 p-2 text-center border border-primary/10">
  <p className="text-[14px] font-bold text-primary">4 min</p>
  <p className="text-[9px] text-muted-foreground">Tempo total</p>
  </div>
- <div className="rounded-lg bg-warning/10 p-2 text-center border border-warning/10">
+ <div className="rounded-card bg-warning/10 p-2 text-center border border-warning/10">
  <p className="text-[14px] font-bold text-warning">CRM</p>
  <p className="text-[9px] text-muted-foreground">Atualizado</p>
  </div>
@@ -677,7 +677,7 @@ const StageCRM = ({ progress }: { progress: number }) => {
  </div>
  </div>
 
- <div className="bg-secondary/30 rounded-lg p-2 flex items-center gap-2 border border-border/40 shrink-0">
+ <div className="bg-secondary/30 rounded-card p-2 flex items-center gap-2 border border-border/40 shrink-0">
  <TrendingUp size={11} className="text-success" />
  <div className="min-w-0">
  <p className="text-[11px] font-medium text-foreground">Lead criado e movido automaticamente</p>
@@ -890,12 +890,12 @@ export const HeroSection = ({
  {/* RIGHT: 8-stage demo (sem parallax — scroll passa liso) */}
  <div className="animate-slide-up w-full hidden xl:flex xl:justify-end" style={{ animationDelay: "0.5s" }}>
  <div className="relative w-full max-w-[28rem] 2xl:max-w-[30rem]">
- <div className="absolute -inset-4 bg-primary/8 soft-glow rounded-3xl" />
+ <div className="absolute -inset-4 bg-primary/8 soft-glow rounded-panel" />
 
  {/* Floating cards */}
  {floatingCards.map((card, i) => (
  <div key={i} className={`absolute ${card.position} z-30 floating-card hidden lg:block`} style={{ animationDelay: card.delay }}>
- <div className="glass rounded-lg p-3 shadow-lg shadow-primary/10 border border-border/50 hover:border-primary/20 transition-all hover:scale-105">
+ <div className="glass rounded-card p-3 shadow-lg shadow-primary/10 border border-border/50 hover:border-primary/20 transition-all hover:scale-105">
  <div className="flex items-center gap-2">
  <div className="w-8 h-8 rounded-sm bg-primary/20 flex items-center justify-center"><card.icon size={14} className="text-primary" /></div>
  <div><p className="text-sm font-bold text-foreground"><AnimatedCounter value={card.value} duration={2000} /></p><p className="text-[11px] text-muted-foreground whitespace-nowrap">{card.label}</p></div>
@@ -904,7 +904,7 @@ export const HeroSection = ({
  </div>
  ))}
 
- <div ref={demoRef} className={`relative glass rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-card hover:shadow-glow transition-shadow duration-500 ${isAnimating ? 'demo-animating' : 'demo-paused'}`}>
+ <div ref={demoRef} className={`relative glass rounded-card sm:rounded-card p-4 sm:p-5 shadow-card hover:shadow-glow transition-shadow duration-500 ${isAnimating ? 'demo-animating' : 'demo-paused'}`}>
  {/* Window controls */}
  <div className="flex items-center justify-between mb-3">
  <div className="flex items-center gap-2">
@@ -915,7 +915,7 @@ export const HeroSection = ({
  <span className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">Wiize Platform</span>
  </div>
 
- <div className="bg-background/50 rounded-lg sm:rounded-xl p-3 sm:p-4">
+ <div className="bg-background/50 rounded-card sm:rounded-card p-3 sm:p-4">
  {/* Stage indicator bar — clickable */}
  <div className="flex items-center gap-1 mb-3">
  {stages.map((s, i) => (

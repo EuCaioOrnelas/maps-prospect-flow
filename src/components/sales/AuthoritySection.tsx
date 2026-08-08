@@ -47,7 +47,7 @@ export const AuthoritySection = () => {
  className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16"
  >
  {stats.map((s) => (
- <div key={s.label} className="text-center p-6 rounded-2xl border border-border bg-card/30">
+ <div key={s.label} className="text-center p-6 rounded-panel border border-border bg-card/30">
  <div className="text-3xl sm:text-4xl font-bold text-primary mb-1">{s.value}</div>
  <div className="text-xs text-muted-foreground uppercase tracking-wider">{s.label}</div>
  </div>
@@ -62,7 +62,7 @@ export const AuthoritySection = () => {
  initial={{ opacity: 0, y: 20 }}
  animate={isVisible ? { opacity: 1, y: 0 } : {}}
  transition={{ duration: 0.5, delay: 0.3 + 0.1 * i }}
- className="p-6 rounded-2xl border border-border bg-card/50"
+ className="p-6 rounded-panel border border-border bg-card/50"
  >
  <div className="w-10 h-10 rounded-sm bg-primary/10 flex items-center justify-center mb-4">
  <p.icon size={20} className="text-primary" />

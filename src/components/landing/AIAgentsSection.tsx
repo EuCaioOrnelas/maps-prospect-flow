@@ -57,10 +57,10 @@ export const AIAgentsSection = () => {
  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
  }`}
  >
- <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 mb-6">
+ <div className="inline-flex items-center gap-2 px-4 py-2 rounded-sm border border-primary/20 bg-primary/5 mb-6">
  <Bot size={16} className="text-primary" />
  <span className="text-sm text-muted-foreground font-medium">Agentes de IA para WhatsApp</span>
- <span className="px-2 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold rounded-full uppercase tracking-wide">Beta</span>
+ <span className="px-2 py-0.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold rounded-xs uppercase tracking-wide">Beta</span>
  </div>
 
  <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-bold mb-5 leading-tight text-foreground">
@@ -82,7 +82,7 @@ export const AIAgentsSection = () => {
  whileInView={{ opacity: 1, y: 0 }}
   viewport={{ once: true, amount: 0.2 }}
  transition={{ duration: 0.5, delay: index * 0.12 }}
- className="group relative rounded-2xl border border-border/60 bg-card/95 p-7 hover:border-primary/30 hover:bg-card/80 transition-all duration-300"
+ className="group relative rounded-panel border border-border/60 bg-card/95 p-7 hover:border-primary/30 hover:bg-card/80 transition-all duration-300"
  >
  <div className="w-12 h-12 rounded-card bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
  <pillar.icon className="w-6 h-6 text-primary" />
@@ -103,7 +103,7 @@ export const AIAgentsSection = () => {
   viewport={{ once: true, amount: 0.2 }}
  transition={{ duration: 0.6 }}
  >
- <div className="rounded-2xl border border-border/60 bg-card/80 overflow-hidden">
+ <div className="rounded-panel border border-border/60 bg-card/80 overflow-hidden">
  {/* Window bar */}
  <div className="flex items-center gap-2 px-5 py-3.5 border-b border-border/40 bg-secondary/30">
  <div className="w-3 h-3 rounded-full bg-destructive/60" />
@@ -116,7 +116,7 @@ export const AIAgentsSection = () => {
  {/* Field: Objective */}
  <div>
  <label className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1.5 block">Objetivo</label>
- <div className="rounded-lg bg-secondary/40 border border-border/30 px-4 py-2.5 text-sm text-foreground/90">
+ <div className="rounded-hover bg-secondary/40 border border-border/30 px-4 py-2.5 text-sm text-foreground/90">
  Qualificar leads e agendar reuniões
  </div>
  </div>
@@ -128,7 +128,7 @@ export const AIAgentsSection = () => {
  {["Profissional", "Casual", "Técnico"].map((tone, i) => (
  <span
  key={tone}
- className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+ className={`px-3 py-1.5 rounded-sm text-xs font-medium border transition-colors ${
  i === 0
  ? "bg-primary/15 border-primary/30 text-primary"
  : "bg-secondary/30 border-border/30 text-muted-foreground"
@@ -144,13 +144,13 @@ export const AIAgentsSection = () => {
  <div>
  <label className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1.5 block">Integração CRM</label>
  <div className="space-y-2">
- <div className="flex items-center justify-between rounded-lg bg-secondary/40 border border-border/30 px-4 py-2.5">
+ <div className="flex items-center justify-between rounded-hover bg-secondary/40 border border-border/30 px-4 py-2.5">
  <span className="text-sm text-foreground/90">Ao receber resposta</span>
- <span className="text-xs bg-primary/15 text-primary px-2.5 py-1 rounded-md font-medium">→ Interessado</span>
+ <span className="text-xs bg-primary/15 text-primary px-2.5 py-1 rounded-xs font-medium">→ Interessado</span>
  </div>
- <div className="flex items-center justify-between rounded-lg bg-secondary/40 border border-border/30 px-4 py-2.5">
+ <div className="flex items-center justify-between rounded-hover bg-secondary/40 border border-border/30 px-4 py-2.5">
  <span className="text-sm text-foreground/90">Ao encerrar conversa</span>
- <span className="text-xs bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-md font-medium">→ Negociação</span>
+ <span className="text-xs bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-xs font-medium">→ Negociação</span>
  </div>
  </div>
  </div>
@@ -189,7 +189,7 @@ export const AIAgentsSection = () => {
  whileInView={{ opacity: 1, x: 0 }}
   viewport={{ once: true, amount: 0.2 }}
  transition={{ duration: 0.4, delay: index * 0.08 }}
- className="flex items-center gap-4 p-3.5 rounded-xl bg-card/50 border border-border/30 hover:border-primary/20 transition-colors"
+ className="flex items-center gap-4 p-3.5 rounded-card bg-card/50 border border-border/30 hover:border-primary/20 transition-colors"
  >
  <div className="w-9 h-9 rounded-sm bg-primary/10 flex items-center justify-center flex-shrink-0">
  <cap.icon className="w-4.5 h-4.5 text-primary" size={18} />
@@ -207,7 +207,7 @@ export const AIAgentsSection = () => {
  whileInView={{ opacity: 1, y: 0 }}
   viewport={{ once: true, amount: 0.2 }}
  transition={{ duration: 0.6 }}
- className="rounded-2xl border border-border/60 bg-card/95 overflow-hidden"
+ className="rounded-panel border border-border/60 bg-card/95 overflow-hidden"
  >
  <div className="p-6 md:p-8 border-b border-border/30">
  <div className="flex items-center gap-3 mb-2">

@@ -75,7 +75,7 @@ export const VideoModal = ({ open, onOpenChange, onSignupClick }: VideoModalProp
  <Dialog open={open} onOpenChange={onOpenChange}>
  <DialogContent
  id="video-modal-container"
- className="w-[96vw] max-w-none max-h-[94vh] p-0 gap-0 border-0 bg-background shadow-2xl rounded-2xl overflow-hidden [&>button]:hidden"
+ className="w-[96vw] max-w-none max-h-[94vh] p-0 gap-0 border-0 bg-background shadow-2xl rounded-card overflow-hidden [&>button]:hidden"
  style={{ width: "min(96vw, calc((100vh - 10rem) * 16 / 9), 1480px)" }}
  >
  {/* Header */}
@@ -93,13 +93,13 @@ export const VideoModal = ({ open, onOpenChange, onSignupClick }: VideoModalProp
  <div className="flex items-center gap-1">
  <button
  onClick={toggleFullscreen}
- className="hidden sm:flex p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+ className="hidden sm:flex p-2 rounded-card hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
  >
  {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
  </button>
  <button
  onClick={() => onOpenChange(false)}
- className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+ className="p-2 rounded-card hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
  >
  <X size={15} />
  </button>

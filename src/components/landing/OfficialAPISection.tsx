@@ -48,7 +48,7 @@ export const OfficialAPISection = () => {
  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
  }`}
  >
- <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
+ <div className="inline-flex items-center gap-2 px-4 py-2 rounded-sm glass mb-6">
  <Shield size={16} className="text-primary" />
  <span className="text-sm text-muted-foreground">API Oficial & Segurança</span>
  </div>
@@ -68,7 +68,7 @@ export const OfficialAPISection = () => {
  whileInView={{ opacity: 1, scale: 1 }}
   viewport={{ once: true, amount: 0.2 }}
  transition={{ duration: 0.6 }}
- className="glass rounded-2xl p-6 md:p-10 mb-10 md:mb-14 border border-primary/20 relative overflow-hidden"
+ className="glass rounded-panel p-6 md:p-10 mb-10 md:mb-14 border border-primary/20 relative overflow-hidden"
  >
  {/* Decorative glow */}
  <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/10 rounded-full soft-glow" />
@@ -77,7 +77,7 @@ export const OfficialAPISection = () => {
  <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
  {/* Icon with label */}
  <div className="flex-shrink-0">
- <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 flex flex-col items-center justify-center shadow-lg gap-1">
+ <div className="w-20 h-20 md:w-24 md:h-24 rounded-card bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 flex flex-col items-center justify-center shadow-lg gap-1">
  <Globe className="w-7 h-7 md:w-8 md:h-8 text-primary" />
  <span className="text-[8px] md:text-[9px] font-bold text-primary uppercase tracking-wide leading-tight text-center">Meta API<br/>Oficial</span>
  </div>
@@ -97,19 +97,19 @@ export const OfficialAPISection = () => {
  </p>
 
  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
- <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+ <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-primary/10 text-primary text-xs font-medium border border-primary/20">
  <CheckCircle size={12} />
  Templates Aprovados
  </span>
- <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+ <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-primary/10 text-primary text-xs font-medium border border-primary/20">
  <CheckCircle size={12} />
  Rastreamento de Entrega
  </span>
- <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+ <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-primary/10 text-primary text-xs font-medium border border-primary/20">
  <CheckCircle size={12} />
  Sem Risco de Bloqueio
  </span>
- <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+ <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-primary/10 text-primary text-xs font-medium border border-primary/20">
  <CheckCircle size={12} />
  Envios Ilimitados
  </span>
@@ -127,7 +127,7 @@ export const OfficialAPISection = () => {
  whileInView={{ opacity: 1, y: 0 }}
   viewport={{ once: true, amount: 0.2 }}
  transition={{ duration: 0.5, delay: index * 0.1 }}
- className="glass rounded-xl p-5 md:p-6 hover:bg-card/90 transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/20"
+ className="glass rounded-card p-5 md:p-6 hover:bg-card/90 transition-all duration-300 hover:-translate-y-1 border border-border/50 hover:border-primary/20"
  >
  <div className="w-12 h-12 rounded-card bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
  <feature.icon size={22} className="text-primary" />
@@ -151,7 +151,7 @@ export const OfficialAPISection = () => {
  {trustBadges.map((badge, index) => (
  <div
  key={index}
- className="glass rounded-xl p-4 text-center border border-border/50 hover:border-primary/20 transition-colors"
+ className="glass rounded-card p-4 text-center border border-border/50 hover:border-primary/20 transition-colors"
  >
  <div className="w-8 h-8 rounded-sm bg-primary/10 flex items-center justify-center mx-auto mb-2">
  <CheckCircle size={16} className="text-primary" />

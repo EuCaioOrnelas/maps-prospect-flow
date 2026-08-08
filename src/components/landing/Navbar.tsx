@@ -164,7 +164,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
  {/* Mobile menu - rendered outside the glass container so it isn't affected by backdrop-blur */}
  {mobileMenuOpen && (
  <div
- className="sm:hidden fixed left-4 right-4 z-50 animate-fade-in rounded-2xl"
+ className="sm:hidden fixed left-4 right-4 z-50 animate-fade-in rounded-panel"
  style={{
  top: scrolled ? '90px' : '88px',
  backgroundColor: 'hsl(var(--background))',

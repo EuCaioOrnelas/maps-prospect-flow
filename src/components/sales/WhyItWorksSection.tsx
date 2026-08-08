@@ -63,7 +63,7 @@ export const WhyItWorksSection = () => {
  whileInView={{ opacity: 1, y: 0 }}
  viewport={{ once: true, amount: 0.2 }}
  transition={{ duration: 0.5, delay: index * 0.12 }}
- className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-4 sm:p-5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+ className="group relative overflow-hidden rounded-card border border-border/70 bg-card/95 p-4 sm:p-5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
  >
  <div className="absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] soft-glow pointer-events-none" />
  <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] soft-glow pointer-events-none" />
@@ -88,14 +88,14 @@ export const WhyItWorksSection = () => {
   whileInView={{ opacity: 1, y: 0 }}
   viewport={{ once: true, amount: 0.2 }}
   transition={{ duration: 0.5, delay: 0.1 }}
-  className="relative mt-4 sm:mt-6 overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-5 sm:p-8 md:p-10"
+  className="relative mt-4 sm:mt-6 overflow-hidden rounded-card border border-border/70 bg-card/95 p-5 sm:p-8 md:p-10"
   >
   <div className="absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] soft-glow pointer-events-none" />
   <div className="absolute -top-8 -left-8 w-36 h-36 rounded-full bg-primary/[0.04] soft-glow pointer-events-none" />
 
   <div className="relative z-10">
   <div className="text-center mb-6 sm:mb-8">
-  <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-primary px-2.5 py-1 rounded-full mb-3 uppercase tracking-wider">
+  <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-primary px-2.5 py-1 rounded-xs mb-3 uppercase tracking-wider">
   <Sparkles size={11} className="text-white" />
   Resultados na prática
   </span>

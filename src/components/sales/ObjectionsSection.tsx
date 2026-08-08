@@ -73,7 +73,7 @@ export const ObjectionsSection = () => {
  <AccordionItem
  key={i}
  value={`item-${i}`}
- className="border border-border rounded-2xl px-6 bg-card/30 data-[state=open]:border-primary/20"
+ className="border border-border rounded-panel px-6 bg-card/30 data-[state=open]:border-primary/20"
  >
  <AccordionTrigger className="text-sm font-medium text-foreground hover:no-underline py-5">
  {o.q}
