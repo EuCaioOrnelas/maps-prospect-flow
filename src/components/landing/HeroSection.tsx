@@ -118,7 +118,7 @@ const StageCapture = ({ progress }: { progress: number }) => {
  transition: "all 0.45s ease-out",
  }}
  >
- <div className="w-7 h-7 rounded-full bg-success/15 flex items-center justify-center shrink-0">
+ <div className="w-7 h-7 rounded-sm bg-success/15 flex items-center justify-center shrink-0">
  <Users size={12} className="text-success" />
  </div>
  <div className="flex-1 min-w-0">
@@ -163,7 +163,7 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
  return (
  <div className="flex h-full flex-col gap-1.5 overflow-hidden">
  <div className="flex items-center gap-2 bg-secondary/50 rounded-lg p-1.5 shrink-0">
- <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+ <div className="w-6 h-6 rounded-sm bg-primary/15 flex items-center justify-center shrink-0">
  <Users size={11} className="text-primary" />
  </div>
  <div className="flex-1 min-w-0">
@@ -171,13 +171,13 @@ const StageDiagnosis = ({ progress }: { progress: number }) => {
  <p className="text-[10px] text-muted-foreground">(11) 99XXX-XXXX</p>
  </div>
  <div className="flex items-center gap-1 rounded-full bg-warning/10 px-1.5 py-0.5 shrink-0" style={{ opacity: progress > 0.58 ? 1 : 0, transition: 'opacity 0.6s' }}>
- <img src={gptIcon} alt="GPT" className="w-4 h-4 rounded-full" />
+ <img src={gptIcon} alt="GPT" className="w-4 h-4 rounded-sm" />
  <span className="text-[11px] font-bold text-warning">{Math.min(Math.round(progress * 847), 847)}</span>
  </div>
  </div>
  <div className="rounded-lg bg-secondary/30 p-1.5 flex-1 min-h-0 flex flex-col gap-1 overflow-hidden">
  <div className="flex items-center gap-1.5 shrink-0">
- <img src={gptIcon} alt="GPT" className="w-4 h-4 rounded-full shrink-0" />
+ <img src={gptIcon} alt="GPT" className="w-4 h-4 rounded-sm shrink-0" />
  <div className="min-w-0">
  <p className="text-[10px] font-medium text-primary truncate">GPT cruzando sinais comerciais</p>
  </div>
@@ -232,7 +232,7 @@ const StageMessage = ({ progress }: { progress: number }) => {
  return (
  <div className="flex h-full flex-col gap-2.5">
  <div className="flex items-center gap-2 bg-secondary/50 rounded-lg p-2.5">
- <div className="w-7 h-7 rounded-full bg-info/15 flex items-center justify-center shrink-0">
+ <div className="w-7 h-7 rounded-sm bg-info/15 flex items-center justify-center shrink-0">
  <Users size={12} className="text-info" />
  </div>
  <div>
@@ -291,7 +291,7 @@ const StageSend = ({ progress }: { progress: number }) => {
  return (
  <div key={i} className="bg-secondary/45 rounded-lg p-2 border border-border/40">
  <div className="flex items-center gap-2">
- <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+ <div className="w-7 h-7 rounded-sm bg-primary/15 flex items-center justify-center shrink-0">
  <Send size={10} className={`text-primary ${sent && !delivered ? 'animate-pulse' : ''}`} />
  </div>
  <div className="flex-1 min-w-0">
@@ -418,7 +418,7 @@ const StageAIChat = ({ progress }: { progress: number }) => {
  return (
  <div className="flex h-full flex-col gap-2.5">
  <div className="flex items-center gap-2 rounded-xl bg-secondary/30 p-2.5 border border-border/40">
- <img src={gptIcon} alt="GPT" className="w-7 h-7 rounded-full" />
+ <img src={gptIcon} alt="GPT" className="w-7 h-7 rounded-sm" />
  <div className="flex-1 min-w-0">
  <p className="text-[11px] font-medium text-primary">IA Closer respondendo em tempo real</p>
  <p className="text-[11px] text-muted-foreground truncate">Contexto, score, CRM e histórico da conversa</p>
@@ -470,7 +470,7 @@ const StageClose = ({ progress }: { progress: number }) => {
  <div className="flex h-full flex-col overflow-hidden">
  {/* Lead header */}
  <div className="flex items-center gap-2.5 bg-secondary/50 rounded-lg p-2.5 shrink-0">
- <div className="w-8 h-8 rounded-full bg-success/20 flex items-center justify-center shrink-0">
+ <div className="w-8 h-8 rounded-sm bg-success/20 flex items-center justify-center shrink-0">
  <Users size={13} className="text-success" />
  </div>
  <div className="flex-1">
@@ -511,7 +511,7 @@ const StageClose = ({ progress }: { progress: number }) => {
  className="flex flex-col items-center gap-1.5"
  style={{ transform: `scale(${pulseScale})`, transition: 'transform 0.15s ease-out' }}
  >
- <div className="w-14 h-14 rounded-full bg-success/15 flex items-center justify-center border-2 border-success/30">
+ <div className="w-14 h-14 rounded-card bg-success/15 flex items-center justify-center border-2 border-success/30">
  <BadgeCheck size={28} className="text-success" />
  </div>
  <span className="text-base font-bold text-success tracking-tight">Cliente Fechado!</span>
@@ -838,10 +838,10 @@ export const HeroSection = ({
  <div className="text-center xl:text-left">
  <div className="inline-flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-hover glass mb-6 sm:mb-8 animate-fade-in border border-primary/10">
  <div className="flex -space-x-1 sm:-space-x-1.5">
- <img src={avatar1} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
- <img src={avatar2} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
- <img src={avatar3} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
- <img src={avatar4} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-full border border-background sm:border-2 object-cover" width={28} height={28} />
+ <img src={avatar1} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-sm border border-background sm:border-2 object-cover" width={28} height={28} />
+ <img src={avatar2} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-sm border border-background sm:border-2 object-cover" width={28} height={28} />
+ <img src={avatar3} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-sm border border-background sm:border-2 object-cover" width={28} height={28} />
+ <img src={avatar4} alt="" className="w-4 h-4 sm:w-7 sm:h-7 rounded-sm border border-background sm:border-2 object-cover" width={28} height={28} />
  
  </div>
  <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
@@ -897,7 +897,7 @@ export const HeroSection = ({
  <div key={i} className={`absolute ${card.position} z-30 floating-card hidden lg:block`} style={{ animationDelay: card.delay }}>
  <div className="glass rounded-lg p-3 shadow-lg shadow-primary/10 border border-border/50 hover:border-primary/20 transition-all hover:scale-105">
  <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center"><card.icon size={14} className="text-primary" /></div>
+ <div className="w-8 h-8 rounded-sm bg-primary/20 flex items-center justify-center"><card.icon size={14} className="text-primary" /></div>
  <div><p className="text-sm font-bold text-foreground"><AnimatedCounter value={card.value} duration={2000} /></p><p className="text-[11px] text-muted-foreground whitespace-nowrap">{card.label}</p></div>
  </div>
  </div>
@@ -954,7 +954,7 @@ export const HeroSection = ({
  </div>
 
  <a href="#features" className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce hover:opacity-100 transition-opacity">
- <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+ <div className="w-8 h-8 rounded-sm bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
  <ArrowDown size={18} className="text-primary-foreground" />
  </div>
  </a>
