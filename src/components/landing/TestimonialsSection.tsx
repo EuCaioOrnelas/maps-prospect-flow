@@ -193,20 +193,14 @@ export const TestimonialsSection = () => {
 
       {/* Linhas horizontais — largura total, direções alternadas */}
       <div className="relative z-10 flex flex-col gap-6 tm-mask-x">
-        <TestimonialsRow testimonials={firstRow} duration={55} isActive={isActive} />
-        <TestimonialsRow testimonials={secondRow} duration={65} isActive={isActive} reverse />
-        <TestimonialsRow
-          testimonials={thirdRow}
-          duration={50}
-          isActive={isActive}
-          className="hidden md:block"
-        />
+        <TestimonialsRow testimonials={firstRow} duration={60} isActive={isActive} />
+        <TestimonialsRow testimonials={secondRow} duration={70} isActive={isActive} reverse />
       </div>
 
       <style>{`
         @keyframes tm-scroll-x {
           0% { transform: translate3d(0, 0, 0); }
-          100% { transform: translate3d(-50%, 0, 0); }
+          100% { transform: translate3d(-33.3333%, 0, 0); }
         }
         .tm-track {
           animation-name: tm-scroll-x;
