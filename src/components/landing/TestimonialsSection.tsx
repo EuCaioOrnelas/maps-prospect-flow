@@ -82,37 +82,40 @@ const secondColumn = testimonials.slice(3, 6);
 const thirdColumn = testimonials.slice(6, 9);
 
 /**
- * Marquee 100% CSS. Sem framer-motion.
+ * Marquee horizontal 100% CSS. Sem framer-motion.
  * A animação roda no compositor (transform GPU) — não dispara JS/reflow.
- * `animation-play-state` é alternado por uma classe controlada por IntersectionObserver:
- * quando a coluna sai da viewport, pausa; volta, retoma. Zero custo fora da tela.
+ * `animation-play-state` é alternado por IntersectionObserver:
+ * quando a seção sai da viewport, pausa; volta, retoma. Zero custo fora da tela.
  */
-const TestimonialsColumn = ({
+const TestimonialsRow = ({
   testimonials,
-  duration = 30,
+  duration = 40,
   isActive = true,
+  reverse = false,
   className,
 }: {
   testimonials: Testimonial[];
   duration?: number;
   isActive?: boolean;
+  reverse?: boolean;
   className?: string;
 }) => {
   return (
     <div className={`relative overflow-hidden ${className ?? ""}`}>
       <div
-        className="tm-track flex flex-col gap-6"
+        className="tm-track flex flex-row gap-6 w-max"
         style={{
           animationDuration: `${duration}s`,
           animationPlayState: isActive ? "running" : "paused",
+          animationDirection: reverse ? "reverse" : "normal",
         }}
       >
         {[0, 1].map((dupIdx) => (
-          <div key={dupIdx} className="flex flex-col gap-6" aria-hidden={dupIdx === 1}>
+          <div key={dupIdx} className="flex flex-row gap-6" aria-hidden={dupIdx === 1}>
             {testimonials.map(({ text, name, role, company, avatar }, i) => (
               <div
                 key={`${dupIdx}-${i}`}
-                className="rounded-2xl p-6 border border-border/60"
+                className="rounded-2xl p-6 border border-border/60 w-[320px] md:w-[380px] shrink-0"
                 style={{
                   background:
                     "linear-gradient(160deg, hsl(var(--card)) 0%, hsl(var(--card)) 60%, hsl(var(--primary) / 0.05) 100%)",
@@ -128,7 +131,7 @@ const TestimonialsColumn = ({
                     alt={name}
                     width={48}
                     height={48}
-                    className="w-12 h-12 rounded-full border-2 border-primary/20 object-cover shrink-0"
+                    className="w-12 h-12 rounded-card border-2 border-primary/20 object-cover shrink-0"
                     loading="lazy"
                     decoding="async"
                   />
@@ -186,41 +189,35 @@ export const TestimonialsSection = () => {
           description="Veja como empresas estão convertendo mais com prospecção inteligente e mensagens personalizadas por IA."
           isVisible={isVisible}
         />
+      </div>
 
-        {/* Desktop: 3 columns */}
-        <div className="hidden lg:grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto h-[600px] tm-mask">
-          <TestimonialsColumn testimonials={firstColumn} duration={45} isActive={isActive} />
-          <TestimonialsColumn testimonials={secondColumn} duration={55} isActive={isActive} />
-          <TestimonialsColumn testimonials={thirdColumn} duration={40} isActive={isActive} />
-        </div>
-
-        {/* Tablet: 2 columns */}
-        <div className="hidden md:grid md:grid-cols-2 lg:hidden gap-6 max-w-4xl mx-auto h-[500px] tm-mask">
-          <TestimonialsColumn testimonials={firstColumn} duration={45} isActive={isActive} />
-          <TestimonialsColumn testimonials={secondColumn} duration={55} isActive={isActive} />
-        </div>
-
-        {/* Mobile: 1 column */}
-        <div className="md:hidden w-full h-[400px] tm-mask px-2">
-          <TestimonialsColumn testimonials={firstColumn} duration={40} isActive={isActive} />
-        </div>
+      {/* Linhas horizontais — largura total, direções alternadas */}
+      <div className="relative z-10 flex flex-col gap-6 tm-mask-x">
+        <TestimonialsRow testimonials={firstRow} duration={55} isActive={isActive} />
+        <TestimonialsRow testimonials={secondRow} duration={65} isActive={isActive} reverse />
+        <TestimonialsRow
+          testimonials={thirdRow}
+          duration={50}
+          isActive={isActive}
+          className="hidden md:block"
+        />
       </div>
 
       <style>{`
-        @keyframes tm-scroll {
+        @keyframes tm-scroll-x {
           0% { transform: translate3d(0, 0, 0); }
-          100% { transform: translate3d(0, -50%, 0); }
+          100% { transform: translate3d(-50%, 0, 0); }
         }
         .tm-track {
-          animation-name: tm-scroll;
+          animation-name: tm-scroll-x;
           animation-timing-function: linear;
           animation-iteration-count: infinite;
           will-change: transform;
           backface-visibility: hidden;
         }
-        .tm-mask {
-          -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%);
-          mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%);
+        .tm-mask-x {
+          -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+          mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
         }
         @media (prefers-reduced-motion: reduce) {
           .tm-track { animation: none !important; }
