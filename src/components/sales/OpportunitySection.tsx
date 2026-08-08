@@ -1,6 +1,6 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
-import { X, Check } from "lucide-react";
+import { X, Check, ListChecks } from "lucide-react";
 import logoWhite from "@/assets/logo-w-white.png";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
@@ -54,7 +54,10 @@ export const OpportunitySection = () => {
         >
           {/* Header */}
           <div className="grid grid-cols-[minmax(0,1fr)_82px_88px] sm:grid-cols-[minmax(0,1fr)_150px_180px]">
-            <div className="flex min-h-20 items-center px-3 sm:px-5">
+            <div className="flex min-h-20 items-center gap-2 px-3 sm:px-5">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-sm bg-primary/10 shrink-0">
+                <ListChecks size={14} className="text-primary" strokeWidth={2.5} />
+              </span>
               <span className="text-xs font-bold text-foreground sm:text-sm">Recurso</span>
             </div>
             <div className="flex min-h-20 items-center justify-center px-1 text-center">

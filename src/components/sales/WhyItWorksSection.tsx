@@ -95,8 +95,8 @@ export const WhyItWorksSection = () => {
 
   <div className="relative z-10">
   <div className="text-center mb-6 sm:mb-8">
-  <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-primary/80 bg-primary/5 px-2.5 py-0.5 rounded-full mb-3 uppercase tracking-wider">
-  <Sparkles size={11} />
+  <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-primary px-2.5 py-1 rounded-full mb-3 uppercase tracking-wider">
+  <Sparkles size={11} className="text-white" />
   Resultados na prática
   </span>
   <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-2">
@@ -115,15 +115,19 @@ export const WhyItWorksSection = () => {
   whileInView={{ opacity: 1, y: 0 }}
   viewport={{ once: true, amount: 0.2 }}
   transition={{ duration: 0.4, delay: index * 0.08 }}
-  className="text-center p-3 sm:p-5 rounded-card border border-white/20 bg-primary hover:bg-primary/95 transition-all duration-300"
+  className="text-center p-3 sm:p-5 rounded-card border border-primary/15 bg-card hover:border-primary/30 hover:shadow-[0_10px_28px_-16px_hsl(var(--primary)/0.45)] transition-all duration-300"
+  style={{
+    background:
+      "linear-gradient(160deg, hsl(var(--card)) 0%, hsl(var(--card)) 45%, hsl(var(--primary) / 0.08) 100%)",
+  }}
   >
-  <span className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white block mb-1">
+  <span className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-primary block mb-1">
   {result.metric}
   </span>
-  <span className="text-xs sm:text-sm font-semibold text-white/90 block mb-1.5">
+  <span className="text-xs sm:text-sm font-semibold text-foreground block mb-1.5">
   {result.label}
   </span>
-  <p className="text-[11px] sm:text-xs text-white/80 leading-relaxed">
+  <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
   {result.description}
   </p>
   </motion.div>

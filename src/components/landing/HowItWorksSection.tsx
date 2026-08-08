@@ -92,7 +92,7 @@ export const HowItWorksSection = () => {
  <div className={`absolute inset-0 bg-gradient-to-br ${step.color} rounded-2xl soft-glow opacity-0 group-hover:opacity-50 transition-opacity duration-500`} />
  
  {/* Main icon container */}
- <div className={`relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
+ <div className={`relative w-16 h-16 lg:w-20 lg:h-20 rounded-card bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
  <step.icon className="w-8 h-8 lg:w-10 lg:h-10 text-white group-hover:animate-pulse" />
  
  {/* Floating secondary icon */}
@@ -163,7 +163,7 @@ export const HowItWorksSection = () => {
  {/* Icon centered */}
  <div className="flex justify-center mt-3 mb-4">
  <div className="relative">
- <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg`}>
+ <div className={`w-14 h-14 rounded-card bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg`}>
  <step.icon className="w-7 h-7 text-white" />
  </div>
  {/* Secondary icon */}
