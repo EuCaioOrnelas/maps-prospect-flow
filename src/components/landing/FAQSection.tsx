@@ -91,7 +91,7 @@ export const FAQSection = () => {
  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
  }`}
  >
- <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-4 sm:mb-6">
+ <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-hover glass mb-4 sm:mb-6">
  <HelpCircle size={16} className="text-primary" />
  <span className="text-xs sm:text-sm text-muted-foreground">Dúvidas Frequentes</span>
  </div>
