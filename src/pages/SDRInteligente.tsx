@@ -469,5 +469,3 @@ export default function SDRInteligente() {
     </SidebarProvider>
   );
 }
-  );
-}
