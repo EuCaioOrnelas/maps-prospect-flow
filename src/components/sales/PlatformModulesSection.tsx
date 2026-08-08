@@ -1183,8 +1183,8 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             <Icon size={24} strokeWidth={1.8} />
           </div>
           <div className="inline-flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-sm bg-primary text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-primary-foreground">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
               {item.eyebrow}
             </span>
           </div>
@@ -1200,7 +1200,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
                 key={b}
                 className="flex items-center gap-2.5 rounded-card border border-border/70 bg-muted/50 px-3 py-2"
               >
-                <span className="inline-flex h-5 w-5 min-w-[20px] items-center justify-center rounded-sm bg-primary shadow-[0_4px_12px_-4px_hsl(var(--primary)/0.6)]">
+                <span className="inline-flex h-5 w-5 min-w-[20px] items-center justify-center rounded-xs bg-primary shadow-[0_4px_12px_-4px_hsl(var(--primary)/0.6)]">
                   <Check size={12} className="text-primary-foreground" strokeWidth={3} />
                 </span>
                 <span className="text-[13px] font-medium text-foreground leading-snug">{b}</span>
