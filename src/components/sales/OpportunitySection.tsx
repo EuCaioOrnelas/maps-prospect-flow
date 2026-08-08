@@ -1,6 +1,6 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
-import { X, Check } from "lucide-react";
+import { X, Check, ListChecks } from "lucide-react";
 import logoWhite from "@/assets/logo-w-white.png";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
