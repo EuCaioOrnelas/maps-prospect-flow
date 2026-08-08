@@ -1179,7 +1179,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       >
         {/* Área de texto */}
         <div className="p-5 sm:p-8 lg:p-10 flex flex-col justify-center">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4 shadow-sm shadow-primary/10">
+          <div className="w-12 h-12 rounded-card bg-primary flex items-center justify-center text-primary-foreground mb-4 shadow-[0_4px_12px_-6px_hsl(var(--primary)/0.6)]">
             <Icon size={24} strokeWidth={1.8} />
           </div>
           <div className="inline-flex items-center gap-2 mb-3">
