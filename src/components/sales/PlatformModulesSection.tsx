@@ -123,10 +123,10 @@ const Row = ({ children, className = "" }: { children: ReactNode; className?: st
 
 const MockStage = ({ children }: { children: ReactNode }) => (
   <div className="relative w-full rounded-card p-1.5 sm:p-2.5 pb-3 sm:pb-4 bg-primary/[0.04] ring-1 ring-inset ring-primary/15">
-    <span className="pointer-events-none absolute left-1.5 top-1.5 w-3 h-3 border-l-2 border-t-2 border-primary/30 rounded-tl-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute right-1.5 top-1.5 w-3 h-3 border-r-2 border-t-2 border-primary/30 rounded-tr-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute left-1.5 bottom-1.5 w-3 h-3 border-l-2 border-b-2 border-primary/30 rounded-bl-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute right-1.5 bottom-1.5 w-3 h-3 border-r-2 border-b-2 border-primary/30 rounded-br-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute left-1.5 top-1.5 w-3 h-3 border-l-2 border-t-2 border-primary/30 rounded-tl-xs" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-1.5 top-1.5 w-3 h-3 border-r-2 border-t-2 border-primary/30 rounded-tr-xs" aria-hidden="true" />
+    <span className="pointer-events-none absolute left-1.5 bottom-1.5 w-3 h-3 border-l-2 border-b-2 border-primary/30 rounded-bl-xs" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-1.5 bottom-1.5 w-3 h-3 border-r-2 border-b-2 border-primary/30 rounded-br-xs" aria-hidden="true" />
     {/* zoom em telas pequenas: o mockup mantém o layout de desktop sem cortar conteúdo */}
     <div className="relative flex items-center justify-center min-h-[300px] sm:min-h-[360px] lg:min-h-[400px] [zoom:0.72] sm:[zoom:0.9] lg:[zoom:1]">
       <div className="w-full">{children}</div>
