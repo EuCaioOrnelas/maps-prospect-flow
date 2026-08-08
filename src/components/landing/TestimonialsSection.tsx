@@ -100,7 +100,7 @@ const TestimonialsRow = ({
   className?: string;
 }) => {
   return (
-    <div className={`relative overflow-hidden ${className ?? ""}`}>
+    <div className={`relative overflow-hidden py-1.5 ${className ?? ""}`}>
       <div
         className="tm-track flex flex-row gap-6 w-max"
         style={{
@@ -115,7 +115,7 @@ const TestimonialsRow = ({
             {testimonials.map(({ text, name, role, company, avatar }, i) => (
               <div
                 key={`${dupIdx}-${i}`}
-                className="rounded-2xl p-6 border border-border/60 w-[320px] md:w-[380px] shrink-0"
+                className="rounded-card p-6 border border-border/60 w-[320px] md:w-[380px] shrink-0"
                 style={{
                   background:
                     "linear-gradient(160deg, hsl(var(--card)) 0%, hsl(var(--card)) 60%, hsl(var(--primary) / 0.05) 100%)",

@@ -28,7 +28,7 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
  }`}
  >
- <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
+ <div className="inline-flex items-center gap-2 px-4 py-2 rounded-hover glass mb-6">
  <Zap size={16} className="text-primary" />
  <span className="text-sm text-muted-foreground">Comece em menos de 1 minuto</span>
  </div>

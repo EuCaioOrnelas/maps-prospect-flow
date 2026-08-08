@@ -86,7 +86,7 @@ const MockShell = ({
         </span>
       )}
     </div>
-    <div className="p-3 sm:p-3.5 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] min-h-[300px] sm:min-h-[380px] lg:h-[420px] overflow-hidden flex flex-col justify-start">
+    <div className="p-3 sm:p-3.5 pb-4 sm:pb-5 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] min-h-[300px] sm:min-h-[380px] lg:h-[420px] overflow-hidden flex flex-col justify-start">
       {children}
     </div>
 
@@ -327,7 +327,7 @@ const SdrMock = () => (
       </Pill>
     </div>
 
-    <ChatWallpaper className="space-y-1.5">
+    <ChatWallpaper className="space-y-1.5 flex-1 min-h-0 overflow-hidden">
 
       {[
         { me: false, t: "Oi! Vi que vocês trabalham com contabilidade. Quanto custa?", h: "09:41" },
@@ -366,7 +366,7 @@ const SdrMock = () => (
     </ChatWallpaper>
 
 
-    <Reveal delay={0.9} className="mt-1.5">
+    <Reveal delay={0.9} className="mt-2 shrink-0">
       <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-1.5">
         <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1">
           <Sparkles size={10} /> Raciocínio da IA

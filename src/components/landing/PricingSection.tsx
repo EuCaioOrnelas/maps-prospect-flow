@@ -433,7 +433,7 @@ export const PricingSection = () => {
  }}
  >
  {plan.popular && (
- <span className="absolute -top-2.5 sm:-top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[9px] sm:text-[11px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap shadow-md z-20">
+ <span className="absolute -top-2.5 sm:-top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 bg-primary text-primary-foreground text-[9px] sm:text-[11px] font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-sm whitespace-nowrap shadow-md z-20">
  <Sparkles size={10} />
  <span className="hidden sm:inline">mais popular</span>
  <span className="sm:hidden">popular</span>
