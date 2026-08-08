@@ -77,9 +77,9 @@ const testimonials: Testimonial[] = [
   },
 ];
 
-const firstColumn = testimonials.slice(0, 3);
-const secondColumn = testimonials.slice(3, 6);
-const thirdColumn = testimonials.slice(6, 9);
+const firstRow = testimonials.slice(0, 3);
+const secondRow = testimonials.slice(3, 6);
+const thirdRow = testimonials.slice(6, 9);
 
 /**
  * Marquee horizontal 100% CSS. Sem framer-motion.
