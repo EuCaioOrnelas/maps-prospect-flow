@@ -22,14 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { SDRBetaDialog, hasSeenSdrBetaNotice } from "@/components/sdr/SDRBetaDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -105,21 +98,8 @@ export default function SDRInteligente() {
   const [showBeta, setShowBeta] = useState(false);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem("sdr_beta_notice_v1")) setShowBeta(true);
-    } catch {
-      /* storage indisponível */
-    }
+    if (!hasSeenSdrBetaNotice()) setShowBeta(true);
   }, []);
-
-  const dismissBeta = () => {
-    try {
-      localStorage.setItem("sdr_beta_notice_v1", "1");
-    } catch {
-      /* storage indisponível */
-    }
-    setShowBeta(false);
-  };
 
   const limit = useMemo(() => getSdrLimit(profile), [profile]);
   const reachedLimit = agents.length >= limit;
@@ -431,41 +411,8 @@ export default function SDRInteligente() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={showBeta} onOpenChange={(v) => (v ? setShowBeta(true) : dismissBeta())}>
-        <DialogContent className="sm:max-w-md rounded-panel">
-          <DialogHeader>
-            <span className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center mb-2">
-              <Sparkles className="text-primary" size={20} />
-            </span>
-            <DialogTitle className="flex items-center gap-2">
-              SDR Inteligente
-              <span className="px-2 py-0.5 rounded-xs bg-primary/15 text-primary text-[10px] font-bold uppercase tracking-wide">
-                Beta
-              </span>
-            </DialogTitle>
-            <DialogDescription className="text-left space-y-3 pt-1">
-              <span className="block">
-                Esta funcionalidade está em versão beta. Algumas funções ainda estão em teste e a IA
-                pode cometer erros leves durante as conversas — recomendamos acompanhar os
-                atendimentos no início.
-              </span>
-              <span className="block">
-                Tem uma sugestão de melhoria? Envie pela página <strong>Sugestões</strong>, no menu
-                lateral. Sua opinião ajuda a evoluir o SDR mais rápido.
-              </span>
-              <span className="flex items-start gap-2 rounded-card border border-border/60 bg-muted/40 p-3 text-xs">
-                <Lightbulb size={14} className="text-primary mt-0.5 flex-shrink-0" />
-                Obrigado pela compreensão e por testar com a gente!
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={dismissBeta} className="w-full sm:w-auto">
-              Entendi, continuar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SDRBetaDialog open={showBeta} onOpenChange={setShowBeta} />
+
     </SidebarProvider>
   );
 }
