@@ -95,8 +95,8 @@ export const WhyItWorksSection = () => {
 
   <div className="relative z-10">
   <div className="text-center mb-6 sm:mb-8">
-  <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-primary/80 bg-primary/5 px-2.5 py-0.5 rounded-full mb-3 uppercase tracking-wider">
-  <Sparkles size={11} />
+  <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-primary px-2.5 py-1 rounded-full mb-3 uppercase tracking-wider">
+  <Sparkles size={11} className="text-white" />
   Resultados na prática
   </span>
   <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-2">
