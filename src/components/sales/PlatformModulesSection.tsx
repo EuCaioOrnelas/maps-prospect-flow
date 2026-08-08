@@ -1200,8 +1200,8 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
                 key={b}
                 className="flex items-center gap-2.5 rounded-card border border-border/70 bg-muted/50 px-3 py-2"
               >
-                <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center">
-                  <Check size={11} className="text-primary-foreground" strokeWidth={3.5} />
+                <span className="inline-flex h-5 w-5 min-w-[20px] items-center justify-center rounded-sm bg-primary shadow-[0_4px_12px_-4px_hsl(var(--primary)/0.6)]">
+                  <Check size={12} className="text-primary-foreground" strokeWidth={3} />
                 </span>
                 <span className="text-[13px] font-medium text-foreground leading-snug">{b}</span>
               </li>
