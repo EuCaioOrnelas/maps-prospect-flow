@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -22,6 +22,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -38,6 +46,8 @@ import {
   Trash2,
   Wifi,
   MessagesSquare,
+  Sparkles,
+  Lightbulb,
 } from "lucide-react";
 import { useSDRAgents } from "@/hooks/useSDRAgents";
 import { SDRTestChatDialog } from "@/components/sdr/SDRTestChatDialog";
