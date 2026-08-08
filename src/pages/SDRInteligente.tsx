@@ -40,7 +40,7 @@ import {
   Wifi,
   MessagesSquare,
   Sparkles,
-  Lightbulb,
+  
 } from "lucide-react";
 import { useSDRAgents } from "@/hooks/useSDRAgents";
 import { SDRTestChatDialog } from "@/components/sdr/SDRTestChatDialog";
