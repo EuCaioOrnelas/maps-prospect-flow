@@ -89,7 +89,7 @@ export const HowItWorksSection = () => {
  <div className="flex justify-center mb-4">
  <div className="relative group cursor-pointer">
  {/* Glow effect on hover */}
- <div className={`absolute inset-0 bg-gradient-to-br ${step.color} rounded-2xl soft-glow opacity-0 group-hover:opacity-50 transition-opacity duration-500`} />
+ <div className={`absolute inset-0 bg-gradient-to-br ${step.color} rounded-panel soft-glow opacity-0 group-hover:opacity-50 transition-opacity duration-500`} />
  
  {/* Main icon container */}
  <div className={`relative w-16 h-16 lg:w-20 lg:h-20 rounded-card bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
@@ -102,7 +102,7 @@ export const HowItWorksSection = () => {
  </div>
  
  {/* Pulse ring on hover */}
- <div className={`absolute inset-0 rounded-2xl border-2 border-current opacity-0 group-hover:opacity-30 group-hover:animate-ping transition-opacity`} style={{ borderColor: 'inherit' }} />
+ <div className={`absolute inset-0 rounded-panel border-2 border-current opacity-0 group-hover:opacity-30 group-hover:animate-ping transition-opacity`} style={{ borderColor: 'inherit' }} />
  </div>
  </div>
 
@@ -116,10 +116,10 @@ export const HowItWorksSection = () => {
  )}
 
  {/* Card */}
- <div className="relative bg-card/95 rounded-2xl p-5 lg:p-6 border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+ <div className="relative bg-card/95 rounded-card p-5 lg:p-6 border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
  {/* Step number badge */}
  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
- <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full bg-gradient-to-br ${step.color} text-white text-xs font-bold shadow-lg`}>
+ <span className={`inline-flex items-center justify-center px-3 py-1 rounded-xs bg-gradient-to-br ${step.color} text-white text-xs font-bold shadow-lg`}>
  Passo {step.number}
  </span>
  </div>
@@ -152,10 +152,10 @@ export const HowItWorksSection = () => {
  style={{ transitionDelay: `${index * 150 + 200}ms` }}
  >
  {/* Card with icon inside */}
- <div className="relative bg-card/95 rounded-2xl p-5 border border-border/50">
+ <div className="relative bg-card/95 rounded-card p-5 border border-border/50">
  {/* Step badge - centered */}
  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
- <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full bg-gradient-to-br ${step.color} text-white text-xs font-bold shadow-lg`}>
+ <span className={`inline-flex items-center justify-center px-3 py-1 rounded-xs bg-gradient-to-br ${step.color} text-white text-xs font-bold shadow-lg`}>
  Passo {step.number}
  </span>
  </div>

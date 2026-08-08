@@ -421,7 +421,7 @@ export const PricingSection = () => {
  delay: index * 0.15,
  ease: [0.25, 0.46, 0.45, 0.94]
  }}
- className={`group relative rounded-2xl flex flex-col overflow-visible transition-transform duration-300 md:hover:-translate-y-2 ${plan.popular ? 'md:hover:scale-[1.02]' : 'md:hover:scale-[1.03]'} ${
+ className={`group relative rounded-panel flex flex-col overflow-visible transition-transform duration-300 md:hover:-translate-y-2 ${plan.popular ? 'md:hover:scale-[1.02]' : 'md:hover:scale-[1.03]'} ${
  plan.popular
  ? "bg-gradient-card border-2 border-primary shadow-glow p-3 sm:p-5 md:p-6 md:z-10"
  : "glass p-3 sm:p-5 md:p-6"
@@ -515,7 +515,7 @@ export const PricingSection = () => {
  whileInView={{ opacity: 1, y: 0, scale: 1 }}
   viewport={{ once: true, amount: 0.2 }}
  transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
- className="group relative col-span-2 md:col-span-1 rounded-2xl flex flex-col overflow-hidden glass p-3 sm:p-5 md:p-6 transition-transform duration-300 md:hover:-translate-y-2 md:hover:scale-[1.03]"
+ className="group relative col-span-2 md:col-span-1 rounded-card flex flex-col overflow-hidden glass p-3 sm:p-5 md:p-6 transition-transform duration-300 md:hover:-translate-y-2 md:hover:scale-[1.03]"
  style={{
  boxShadow:
  "inset 0 1px 0 0 hsl(var(--primary) / 0.12), inset 0 0 60px -30px hsl(var(--primary) / 0.18)",
@@ -598,7 +598,7 @@ export const PricingSection = () => {
  initial={{ opacity: 0, y: 24 }}
  animate={{ opacity: 1, y: 0 }}
  transition={{ duration: 0.5 }}
- className="mb-16 rounded-3xl border border-border/60 bg-gradient-to-b from-card/60 to-card/20 backdrop-soft-glow overflow-hidden shadow-[0_8px_40px_-12px_rgba(0,0,0,0.15)]"
+ className="mb-16 rounded-panel border border-border/60 bg-gradient-to-b from-card/60 to-card/20 backdrop-soft-glow overflow-hidden shadow-[0_8px_40px_-12px_rgba(0,0,0,0.15)]"
  >
  {/* Header */}
  <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 p-6 md:p-8 border-b border-border/60">
@@ -612,7 +612,7 @@ export const PricingSection = () => {
  </div>
  <button
  onClick={() => setAllGroups(!allOpen)}
- className="self-start sm:self-auto inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-full border border-border/60 hover:border-border"
+ className="self-start sm:self-auto inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-sm border border-border/60 hover:border-border"
  >
  <ChevronDown size={14} className={`transition-transform ${allOpen ? '' : '-rotate-90'}`} />
  {allOpen ? "Recolher todos" : "Expandir todos"}
@@ -633,7 +633,7 @@ export const PricingSection = () => {
  <div className="flex items-center justify-center gap-2 mb-2">
  <span className="text-xs md:text-sm font-semibold text-foreground/80">{col.name}</span>
  {col.popular && (
- <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wide bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">
+ <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wide bg-primary/15 text-primary px-1.5 py-0.5 rounded-xs">
  popular
  </span>
  )}
@@ -669,7 +669,7 @@ export const PricingSection = () => {
  className="w-full grid grid-cols-[1.6fr_1fr_1fr] md:grid-cols-[2fr_1fr_1fr_1fr] gap-2 items-center px-4 md:px-6 py-4 hover:bg-muted/30 transition-colors group"
  >
  <div className="flex items-center gap-3 text-left">
- <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 group-hover:bg-primary/15 transition-colors">
+ <div className="flex h-9 w-9 items-center justify-center rounded-hover bg-primary/10 text-primary shrink-0 group-hover:bg-primary/15 transition-colors">
  <Icon size={16} />
  </div>
  <span className="font-display font-bold text-sm md:text-base text-foreground">
@@ -701,7 +701,7 @@ export const PricingSection = () => {
  >
  <span className="text-foreground/90 text-[11px] md:text-sm pl-2 md:pl-12 leading-snug">{row.label}</span>
  <div className="text-center">{renderCell(row.start)}</div>
- <div className="text-center bg-primary/[0.04] rounded-md py-1.5">{renderCell(row.growth)}</div>
+ <div className="text-center bg-primary/[0.04] rounded-sm py-1.5">{renderCell(row.growth)}</div>
  <div className="hidden md:block text-center">{renderCell(row.scale)}</div>
  </div>
  ))}
@@ -721,7 +721,7 @@ export const PricingSection = () => {
  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
  }`}
  >
- <div className="relative overflow-hidden md:rounded-2xl md:border md:border-border/50 p-0 md:p-6 lg:p-10">
+ <div className="relative overflow-hidden md:rounded-card md:border md:border-border/50 p-0 md:p-6 lg:p-10">
  <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full soft-glow" />
  <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full soft-glow" />
  
@@ -747,8 +747,8 @@ export const PricingSection = () => {
   { icon: Server, title: "Uptime 99.9%", description: "Disponibilidade contínua" },
   { icon: FileCheck, title: "LGPD Compliant", description: "Proteção de dados" },
   ].map((item, i) => (
-  <div key={i} className="group p-5 rounded-xl bg-background/60 border border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-sm text-center">
-  <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-primary mb-4 group-hover:bg-primary/90 transition-all duration-300">
+  <div key={i} className="group p-5 rounded-card bg-background/60 border border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-sm text-center">
+  <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-card bg-primary mb-4 group-hover:bg-primary/90 transition-all duration-300">
   <item.icon className="h-6 w-6 text-primary-foreground transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
   </div>
   <p className="font-semibold text-foreground mb-1.5 text-sm">{item.title}</p>
@@ -763,8 +763,8 @@ export const PricingSection = () => {
   { icon: BadgeCheck, title: "Cancele quando quiser", description: "Sem fidelidade" },
   { icon: RotateCcw, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
   ].map((item, i) => (
-  <div key={i} className="group p-5 rounded-xl bg-background/60 border border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-sm text-center">
-  <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-primary mb-4 group-hover:bg-primary/90 transition-all duration-300">
+  <div key={i} className="group p-5 rounded-card bg-background/60 border border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-sm text-center">
+  <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-card bg-primary mb-4 group-hover:bg-primary/90 transition-all duration-300">
   <item.icon className="h-6 w-6 text-primary-foreground transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
   </div>
   <p className="font-semibold text-foreground mb-1.5 text-sm">{item.title}</p>
@@ -774,7 +774,7 @@ export const PricingSection = () => {
   </div>
 
   <div className="md:hidden">
-  <div className="rounded-2xl border border-border/60 bg-background/40 overflow-hidden divide-y divide-border/50">
+  <div className="rounded-panel border border-border/60 bg-background/40 overflow-hidden divide-y divide-border/50">
   {[
   { icon: Lock, title: "Dados Protegidos", description: "Criptografia ponta a ponta" },
   { icon: CreditCard, title: "Pagamento Seguro", description: "Processamento certificado" },
@@ -785,7 +785,7 @@ export const PricingSection = () => {
   { icon: RotateCcw, title: "Garantia 7 dias", description: "Devolução sem burocracia" },
   ].map((item, i) => (
   <div key={i} className="flex items-center gap-3 px-4 py-3">
-  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shrink-0">
+  <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary shrink-0">
   <item.icon className="h-4 w-4 text-primary-foreground" />
   </div>
   <div className="flex-1 min-w-0">

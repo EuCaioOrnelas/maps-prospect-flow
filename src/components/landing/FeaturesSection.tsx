@@ -93,7 +93,7 @@ export const FeaturesSection = () => {
  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
  }`}
  >
- <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full glass mb-4 sm:mb-6">
+ <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-sm glass mb-4 sm:mb-6">
  <Brain size={16} className="text-primary" />
  <span className="text-xs sm:text-sm text-muted-foreground">Tecnologia de Prospecção Inteligente</span>
  </div>
@@ -108,7 +108,7 @@ export const FeaturesSection = () => {
 
  {/* AI Value Block */}
  <div
- className={`glass rounded-xl sm:rounded-2xl p-5 sm:p-8 mb-10 sm:mb-14 transition-all duration-700 delay-150 ${
+ className={`glass rounded-card sm:rounded-card p-5 sm:p-8 mb-10 sm:mb-14 transition-all duration-700 delay-150 ${
  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
  }`}
  >
@@ -128,19 +128,19 @@ export const FeaturesSection = () => {
  </div>
  </div>
  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
- <div className="flex items-center gap-3 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
+ <div className="flex items-center gap-3 rounded-card p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
  <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
  <CheckCircle size={16} className="text-white" />
  </div>
  <span className="text-xs sm:text-sm font-medium text-foreground">Empresas com atividade recente</span>
  </div>
- <div className="flex items-center gap-3 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
+ <div className="flex items-center gap-3 rounded-card p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
  <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
  <CheckCircle size={16} className="text-white" />
  </div>
  <span className="text-xs sm:text-sm font-medium text-foreground">Contatos ativos e verificados</span>
  </div>
- <div className="flex items-center gap-3 rounded-lg p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
+ <div className="flex items-center gap-3 rounded-card p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-emerald-500/5 border border-primary/15">
  <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-emerald-500 flex items-center justify-center flex-shrink-0">
  <CheckCircle size={16} className="text-white" />
  </div>
@@ -156,13 +156,13 @@ export const FeaturesSection = () => {
  }`}
  >
  <div
- className="glass rounded-2xl border border-border/50 overflow-hidden"
+ className="glass rounded-panel border border-border/50 overflow-hidden"
  onMouseEnter={() => setIsAutoPlaying(false)}
  onMouseLeave={() => setIsAutoPlaying(true)}
  >
  <div className="relative p-5 sm:p-8 lg:p-10 min-h-[340px] sm:min-h-[360px] flex flex-col items-center justify-center text-center">
  {activeFeature.badge && (
- <span className="absolute top-4 right-4 sm:top-6 sm:right-6 px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-full z-10">
+ <span className="absolute top-4 right-4 sm:top-6 sm:right-6 px-2.5 py-1 text-xs font-semibold bg-primary text-primary-foreground rounded-xs z-10">
  {activeFeature.badge}
  </span>
  )}
@@ -183,7 +183,7 @@ export const FeaturesSection = () => {
  {activeFeature.description}
  </p>
 
- <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary/5 border border-primary/10">
+ <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-hover bg-primary/5 border border-primary/10">
  <CheckCircle size={16} className="text-primary flex-shrink-0" />
  <span className="text-sm font-medium text-foreground">{activeFeature.highlight}</span>
  </div>

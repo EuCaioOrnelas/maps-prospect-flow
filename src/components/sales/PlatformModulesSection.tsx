@@ -80,7 +80,7 @@ const MockShell = ({
         {title}
       </span>
       {badge && (
-        <span className="ml-auto flex-shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
+        <span className="ml-auto flex-shrink-0 inline-flex items-center gap-1 rounded-xs bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
           <span className="w-1.5 h-1.5 rounded-full bg-primary" />
           {badge}
         </span>
@@ -103,7 +103,7 @@ const Pill = ({
 }) => (
   <span
     className={cn(
-      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap",
+      "inline-flex items-center gap-1 rounded-xs px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap",
       tone === "primary" && "bg-primary/12 text-primary ring-1 ring-inset ring-primary/20",
       tone === "amber" && "bg-amber-500/12 text-amber-600 ring-1 ring-inset ring-amber-500/20",
       tone === "info" && "bg-sky-500/12 text-sky-600 ring-1 ring-inset ring-sky-500/20",
@@ -123,10 +123,10 @@ const Row = ({ children, className = "" }: { children: ReactNode; className?: st
 
 const MockStage = ({ children }: { children: ReactNode }) => (
   <div className="relative w-full rounded-card p-1.5 sm:p-2.5 pb-3 sm:pb-4 bg-primary/[0.04] ring-1 ring-inset ring-primary/15">
-    <span className="pointer-events-none absolute left-1.5 top-1.5 w-3 h-3 border-l-2 border-t-2 border-primary/30 rounded-tl-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute right-1.5 top-1.5 w-3 h-3 border-r-2 border-t-2 border-primary/30 rounded-tr-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute left-1.5 bottom-1.5 w-3 h-3 border-l-2 border-b-2 border-primary/30 rounded-bl-md" aria-hidden="true" />
-    <span className="pointer-events-none absolute right-1.5 bottom-1.5 w-3 h-3 border-r-2 border-b-2 border-primary/30 rounded-br-md" aria-hidden="true" />
+    <span className="pointer-events-none absolute left-1.5 top-1.5 w-3 h-3 border-l-2 border-t-2 border-primary/30 rounded-tl-xs" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-1.5 top-1.5 w-3 h-3 border-r-2 border-t-2 border-primary/30 rounded-tr-xs" aria-hidden="true" />
+    <span className="pointer-events-none absolute left-1.5 bottom-1.5 w-3 h-3 border-l-2 border-b-2 border-primary/30 rounded-bl-xs" aria-hidden="true" />
+    <span className="pointer-events-none absolute right-1.5 bottom-1.5 w-3 h-3 border-r-2 border-b-2 border-primary/30 rounded-br-xs" aria-hidden="true" />
     {/* zoom em telas pequenas: o mockup mantém o layout de desktop sem cortar conteúdo */}
     <div className="relative flex items-center justify-center min-h-[300px] sm:min-h-[360px] lg:min-h-[400px] [zoom:0.72] sm:[zoom:0.9] lg:[zoom:1]">
       <div className="w-full">{children}</div>
@@ -168,7 +168,7 @@ const LOOP_VIEW = { once: false, amount: 0.2 } as const;
 const ChatWallpaper = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
   <div
     className={cn(
-      "relative rounded-xl border border-border/50 bg-muted/25 p-2",
+      "relative rounded-card border border-border/50 bg-muted/25 p-2",
       "[background-image:radial-gradient(hsl(var(--primary)/0.10)_1px,transparent_1px)] [background-size:13px_13px]",
       className,
     )}
@@ -218,13 +218,13 @@ const ProspectMock = () => (
   <MockShell title="Prospecção IA — Buscar oportunidades" badge="ao vivo">
     {/* barra de busca */}
     <div className="flex items-center gap-2 mb-3">
-      <div className="flex-1 flex items-center gap-2 rounded-lg border border-border/60 bg-background/70 px-2.5 py-1.5">
+      <div className="flex-1 flex items-center gap-2 rounded-sm border border-border/60 bg-background/70 px-2.5 py-1.5">
         <Search size={11} className="text-primary" />
         <span className="text-[10px] text-foreground/80 truncate">
           escritórios de contabilidade · São Paulo · 20-100 func.
         </span>
       </div>
-      <span className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-[10px] font-bold text-primary-foreground">
+      <span className="inline-flex items-center gap-1 rounded-sm bg-primary px-2.5 py-1.5 text-[10px] font-bold text-primary-foreground">
         <Sparkles size={10} /> Buscar
       </span>
     </div>
@@ -239,13 +239,13 @@ const ProspectMock = () => (
     </div>
 
     <div className="grid grid-cols-5 gap-3">
-      <div className="col-span-2 rounded-xl border border-border/60 bg-muted/30 relative overflow-hidden min-h-[152px]">
+      <div className="col-span-2 rounded-card border border-border/60 bg-muted/30 relative overflow-hidden min-h-[152px]">
         <div className="absolute inset-0 bg-muted/40" />
         <div className="absolute -left-5 top-6 h-3 w-[125%] rotate-[18deg] bg-background shadow-[0_0_0_1px_hsl(var(--border))]" />
         <div className="absolute -left-4 top-[74px] h-2.5 w-[120%] -rotate-[12deg] bg-background shadow-[0_0_0_1px_hsl(var(--border))]" />
         <div className="absolute left-[54%] -top-4 h-[120%] w-3 rotate-[5deg] bg-background shadow-[0_0_0_1px_hsl(var(--border))]" />
-        <div className="absolute left-2 top-2 h-8 w-12 rounded-md border border-primary/15 bg-primary/[0.07]" />
-        <div className="absolute bottom-3 right-2 h-10 w-14 rounded-md border border-sky-500/15 bg-sky-500/[0.07]" />
+        <div className="absolute left-2 top-2 h-8 w-12 rounded-card border border-primary/15 bg-primary/[0.07]" />
+        <div className="absolute bottom-3 right-2 h-10 w-14 rounded-card border border-sky-500/15 bg-sky-500/[0.07]" />
         {[
           { t: "18%", l: "22%", hot: true },
           { t: "44%", l: "56%", hot: true },
@@ -282,7 +282,7 @@ const ProspectMock = () => (
           <Reveal key={e.n} delay={0.15 + i * 0.12} y={14}>
             <Row className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-sm bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <Building2 size={13} className="text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -345,7 +345,7 @@ const SdrMock = () => (
           <div className={cn("flex", m.me ? "justify-end" : "justify-start")}>
             <div
               className={cn(
-                "max-w-[82%] rounded-2xl px-3 py-2 text-[11px] leading-snug shadow-sm",
+                "max-w-[82%] rounded-sm px-3 py-2 text-[11px] leading-snug shadow-sm",
                 m.me
                   ? "bg-primary/12 text-foreground rounded-br-sm ring-1 ring-inset ring-primary/15"
                   : "bg-muted text-muted-foreground rounded-bl-sm",
@@ -360,14 +360,14 @@ const SdrMock = () => (
           </div>
         </Reveal>
       ))}
-      <div className="w-fit rounded-2xl rounded-bl-sm bg-muted px-2.5 py-2 shadow-sm">
+      <div className="w-fit rounded-sm rounded-bl-sm bg-muted px-2.5 py-2 shadow-sm">
         <TypingDots delay={0.2} />
       </div>
     </ChatWallpaper>
 
 
     <Reveal delay={0.9} className="mt-2 shrink-0">
-      <div className="rounded-xl border border-primary/20 bg-primary/[0.06] p-1.5">
+      <div className="rounded-card border border-primary/20 bg-primary/[0.06] p-1.5">
         <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1">
           <Sparkles size={10} /> Raciocínio da IA
         </p>
@@ -424,7 +424,7 @@ const AgendaMock = () => (
         const blue = [9, 21].includes(day);
 
         if (!valid) {
-          return <span key={i} className="h-6 rounded-md bg-muted/20" aria-hidden="true" />;
+          return <span key={i} className="h-6 rounded-xs bg-muted/20" aria-hidden="true" />;
         }
 
         return (
@@ -435,7 +435,7 @@ const AgendaMock = () => (
             viewport={VIEW}
             transition={{ duration: 0.3, delay: 0.05 + i * 0.008 }}
             className={cn(
-              "h-6 rounded-md text-[9px] flex flex-col items-center justify-center leading-none gap-[1px] border",
+              "h-6 rounded-xs text-[9px] flex flex-col items-center justify-center leading-none gap-[1px] border",
               green
                 ? "bg-primary/10 text-primary font-bold border-primary/25"
                 : blue
@@ -474,7 +474,7 @@ const AgendaMock = () => (
       ].map((e, i) => (
         <Reveal key={e.h} delay={0.55 + i * 0.14} y={14}>
           <Row className="flex items-center gap-2">
-            <div className="flex flex-col items-center justify-center w-11 flex-shrink-0 rounded-lg bg-primary/10 py-1">
+            <div className="flex flex-col items-center justify-center w-11 flex-shrink-0 rounded-hover bg-primary/10 py-1">
               <span className="text-[11px] font-bold text-primary leading-none">{e.h}</span>
               <span className="text-[8px] text-muted-foreground mt-0.5">{e.d}</span>
             </div>
@@ -540,7 +540,7 @@ const CampaignProgress = ({ name, template, index }: { name: string; template: s
       <Reveal delay={0.35 + index * 0.1} x={12}>
         <Row className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Send size={13} className="text-primary" /></div>
+            <div className="w-7 h-7 rounded-sm bg-primary/10 flex items-center justify-center flex-shrink-0"><Send size={13} className="text-primary" /></div>
             <div className="min-w-0 flex-1"><p className="text-[11px] font-semibold text-foreground truncate">{name}</p><p className="text-[9px] text-muted-foreground font-mono truncate">{template}</p></div>
             <Pill tone={status === "Concluída" ? "primary" : status === "Na fila" ? "muted" : "amber"}>{status}</Pill>
           </div>
@@ -584,11 +584,11 @@ const CampaignMock = () => (
     {/* Preview do template + envio em andamento */}
     <div className="grid grid-cols-5 gap-2">
       <Reveal delay={0.3} x={-12} className="col-span-2">
-        <div className="h-full rounded-xl border border-border/60 bg-muted/30 p-2 flex flex-col gap-1.5">
+        <div className="h-full rounded-card border border-border/60 bg-muted/30 p-2 flex flex-col gap-1.5">
           <p className="text-[8px] font-bold uppercase tracking-wide text-muted-foreground">
             Pré-visualização
           </p>
-          <div className="rounded-lg rounded-tl-sm bg-card border border-border/60 p-2 space-y-1">
+          <div className="rounded-card rounded-tl-sm bg-card border border-border/60 p-2 space-y-1">
             <p className="text-[9px] font-semibold text-foreground leading-snug">
               Olá, {"{{nome}}"} 👋
             </p>
@@ -596,7 +596,7 @@ const CampaignMock = () => (
               Vi que a {"{{empresa}}"} atua em {"{{nicho}}"}. Posso te mostrar como gerar mais
               oportunidades?
             </p>
-            <div className="rounded-md bg-primary/10 text-primary text-[8px] font-bold text-center py-1">
+            <div className="rounded-xs bg-primary/10 text-primary text-[8px] font-bold text-center py-1">
               Quero saber mais
             </div>
           </div>
@@ -666,7 +666,7 @@ const CrmMock = () => (
       ].map((col, ci) => (
         <div key={col.c} className="space-y-1.5">
           <Reveal delay={0.05 * ci}>
-            <div className="rounded-lg bg-muted/50 px-1.5 py-1">
+            <div className="rounded-xs bg-muted/50 px-1.5 py-1">
               <div className="flex items-center gap-1">
                 <p className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground truncate">
                   {col.c}
@@ -712,7 +712,7 @@ const CrmMock = () => (
       >
         <MousePointer2 size={20} className="fill-primary text-primary drop-shadow-md" />
         <motion.span
-          className="absolute left-3 top-3 h-12 w-24 rounded-lg border border-primary/40 bg-card/95 p-2 shadow-lg"
+          className="absolute left-3 top-3 h-12 w-24 rounded-card border border-primary/40 bg-card/95 p-2 shadow-lg"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: [0, 1, 1, 0], scale: [0.9, 1, 1, 0.95] }}
           transition={{ duration: 2, delay: 1.35, times: [0, 0.18, 0.78, 1] }}
@@ -742,7 +742,7 @@ const ChatMock = () => (
     <div className="grid grid-cols-5 gap-2">
       {/* Lista de conversas */}
       <div className="col-span-2 space-y-1.5">
-        <Reveal className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/70 px-2 py-1.5">
+        <Reveal className="flex items-center gap-1.5 rounded-sm border border-border/60 bg-background/70 px-2 py-1.5">
           <Search size={10} className="text-muted-foreground" />
           <span className="text-[9px] text-muted-foreground">Buscar conversa</span>
         </Reveal>
@@ -791,7 +791,7 @@ const ChatMock = () => (
       </div>
 
       {/* Janela da conversa */}
-      <div className="col-span-3 flex flex-col rounded-xl border border-border/60 bg-background/50 overflow-hidden">
+      <div className="col-span-3 flex flex-col rounded-card border border-border/60 bg-background/50 overflow-hidden">
         <div className="flex items-center gap-2 px-2 py-1.5 border-b border-border/60 bg-card">
           <ContactAvatar index={0} className="h-7 w-7 border border-border/60" />
           <div className="min-w-0">
@@ -807,14 +807,14 @@ const ChatMock = () => (
 
         <div className="flex-1 p-2 space-y-1.5 bg-muted/25 [background-image:radial-gradient(hsl(var(--primary)/0.12)_1px,transparent_1px)] [background-size:13px_13px]">
           <Reveal delay={0.45} y={8}>
-            <div className="rounded-2xl rounded-bl-sm bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground max-w-[88%] w-fit">
+            <div className="rounded-sm rounded-bl-sm bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground max-w-[88%] w-fit">
               Oi! Vocês atendem fora de SP?
               <span className="block text-right text-[8px] text-muted-foreground/70 mt-0.5">09:40</span>
             </div>
           </Reveal>
 
           <Reveal delay={1.15} y={8}>
-            <div className="ml-auto w-fit max-w-[88%] rounded-2xl rounded-br-sm bg-primary/12 ring-1 ring-inset ring-primary/15 px-2.5 py-1.5 text-[10px] text-foreground">
+            <div className="ml-auto w-fit max-w-[88%] rounded-sm rounded-br-sm bg-primary/12 ring-1 ring-inset ring-primary/15 px-2.5 py-1.5 text-[10px] text-foreground">
               Atendemos todo o Brasil 🇧🇷 Quer falar com um especialista hoje?
               <span className="mt-0.5 flex items-center justify-end gap-1 text-[8px] text-muted-foreground">
                 09:42 <CheckCheck size={9} className="text-sky-500" />
@@ -823,14 +823,14 @@ const ChatMock = () => (
           </Reveal>
 
           <Reveal delay={1.85} y={8}>
-            <div className="rounded-2xl rounded-bl-sm bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground max-w-[88%] w-fit">
+            <div className="rounded-sm rounded-bl-sm bg-muted px-2.5 py-1.5 text-[10px] text-muted-foreground max-w-[88%] w-fit">
               Sim, pode agendar para hoje às 16h.
               <span className="block text-right text-[8px] text-muted-foreground/70 mt-0.5">09:42</span>
             </div>
           </Reveal>
 
           <Reveal delay={2.55} y={8}>
-            <div className="ml-auto w-fit max-w-[88%] rounded-2xl rounded-br-sm bg-primary/12 ring-1 ring-inset ring-primary/15 px-2.5 py-1.5 text-[10px] text-foreground">
+            <div className="ml-auto w-fit max-w-[88%] rounded-sm rounded-br-sm bg-primary/12 ring-1 ring-inset ring-primary/15 px-2.5 py-1.5 text-[10px] text-foreground">
               Fechado! Reunião confirmada para hoje 16h 📅
               <span className="mt-0.5 flex items-center justify-end gap-1 text-[8px] text-muted-foreground">
                 09:43 <CheckCheck size={9} className="text-sky-500" />
@@ -840,7 +840,7 @@ const ChatMock = () => (
         </div>
 
         <div className="p-2 border-t border-border/60 bg-card space-y-1">
-          <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-2 py-1.5">
+          <div className="flex items-center gap-2 rounded-sm border border-border/60 bg-background/70 px-2 py-1.5">
             <Smile size={11} className="text-muted-foreground" />
             <Paperclip size={11} className="text-muted-foreground" />
             <span className="text-[9px] text-muted-foreground flex-1">Digite uma mensagem…</span>
@@ -1030,7 +1030,7 @@ const FlowMock = () => (
           { i: Mail, l: "Integrações", v: "Sheets" },
         ].map((k, i) => (
           <Reveal key={k.l} delay={1.6 + i * 0.08}>
-            <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/70 px-2 py-1">
+            <span className="inline-flex items-center gap-1 rounded-xs border border-border/60 bg-background/70 px-2 py-1">
               <k.i size={10} className="text-primary flex-shrink-0" />
               <span className="text-[9px] text-muted-foreground">{k.l}</span>
               <span className="text-[9px] font-bold text-foreground">{k.v}</span>

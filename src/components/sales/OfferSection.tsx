@@ -48,7 +48,7 @@ export const OfferSection = ({ onSignupClick }: OfferSectionProps) => {
  initial={{ opacity: 0, y: 20 }}
  animate={isVisible ? { opacity: 1, y: 0 } : {}}
  transition={{ duration: 0.6, delay: 0.2 }}
- className="rounded-2xl border border-primary/20 bg-card/30 p-8 sm:p-12 relative overflow-hidden"
+ className="rounded-panel border border-primary/20 bg-card/30 p-8 sm:p-12 relative overflow-hidden"
  >
  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
  

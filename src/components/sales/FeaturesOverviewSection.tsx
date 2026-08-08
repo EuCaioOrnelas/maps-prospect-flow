@@ -18,7 +18,7 @@ import flowBuilderPreview from "@/assets/flow-builder-preview.png";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const cardBase =
- "group rounded-2xl border border-border/70 bg-card/95 transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-primary/5";
+ "group rounded-card border border-border/70 bg-card/95 transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-lg hover:shadow-primary/5";
 const cardGlowMain =
  "absolute -bottom-10 -right-10 w-52 h-52 rounded-full bg-primary/[0.06] soft-glow pointer-events-none";
 const cardGlowSecondary =
@@ -84,7 +84,7 @@ export const FeaturesOverviewSection = () => {
  <div className={cardGlowSecondary} />
  <div className={cardGlowMain} />
  <div className="relative z-10">
- <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Prospecção Inteligente</span>
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-xs mb-2 uppercase tracking-wider">Prospecção Inteligente</span>
  <div className="flex items-center gap-2.5 mb-1">
  <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <MessageCircle size={16} className="text-primary-foreground" />
@@ -104,7 +104,7 @@ export const FeaturesOverviewSection = () => {
  <div className={cardGlowSecondary} />
  <div className={cardGlowMain} />
  <div className="relative z-10">
- <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">API Oficial & Segurança</span>
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-xs mb-2 uppercase tracking-wider">API Oficial & Segurança</span>
  <div className="flex items-center gap-2.5 mb-1">
  <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <Send size={16} className="text-primary-foreground" />
@@ -124,7 +124,7 @@ export const FeaturesOverviewSection = () => {
  <div className={cardGlowSecondary} />
  <div className={cardGlowMain} />
  <div className="relative z-10 p-3 sm:p-3.5 flex flex-col">
- <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider w-fit">Conversas humanas em escala</span>
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-xs mb-2 uppercase tracking-wider w-fit">Conversas humanas em escala</span>
  <div className="flex items-center gap-3 mb-2">
  <div className="w-10 h-10 rounded-hover bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <Bot size={20} className="text-primary-foreground" />
@@ -154,7 +154,7 @@ export const FeaturesOverviewSection = () => {
  <div className={cardGlowSecondary} />
  <div className={cardGlowMain} />
  <div className="relative z-10">
- <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Gestão & Intenção de Compra</span>
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-xs mb-2 uppercase tracking-wider">Gestão & Intenção de Compra</span>
  <div className="flex items-center gap-2.5 mb-1">
  <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <LayoutDashboard size={16} className="text-primary-foreground" />
@@ -174,7 +174,7 @@ export const FeaturesOverviewSection = () => {
  <div className={cardGlowSecondary} />
  <div className={cardGlowMain} />
  <div className="relative z-10">
- <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">SDR IA de Captação + Diagnóstico</span>
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-xs mb-2 uppercase tracking-wider">SDR IA de Captação + Diagnóstico</span>
  <div className="flex items-center gap-2.5 mb-1">
  <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <Search size={16} className="text-primary-foreground" />
@@ -194,7 +194,7 @@ export const FeaturesOverviewSection = () => {
  <div className={cardGlowSecondary} />
  <div className={cardGlowMain} />
  <div className="relative z-10">
- <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-full mb-2 uppercase tracking-wider">Automação Comercial</span>
+ <span className="inline-block text-[10px] font-semibold text-primary/80 bg-primary/5 px-2 py-0.5 rounded-xs mb-2 uppercase tracking-wider">Automação Comercial</span>
  <div className="flex items-center gap-2.5 mb-1.5">
  <div className="w-8 h-8 rounded-sm bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center flex-shrink-0">
  <Zap size={16} className="text-primary-foreground" />
@@ -213,7 +213,7 @@ export const FeaturesOverviewSection = () => {
  return (
  <div key={i} className="flex items-center flex-1 min-w-0 last:flex-none">
  <motion.div
- className="flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded-lg px-2 sm:px-2.5 py-1.5 sm:py-2 whitespace-nowrap"
+ className="flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded-sm px-2 sm:px-2.5 py-1.5 sm:py-2 whitespace-nowrap"
  initial={{ opacity: 0, x: -15, scale: 0.9 }}
  animate={isVisible ? { opacity: 1, x: 0, scale: 1 } : {}}
  transition={{ duration: 0.5, delay: 0.6 + i * 0.25, ease: [0.22, 1, 0.36, 1] }}

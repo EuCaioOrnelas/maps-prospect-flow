@@ -15,7 +15,7 @@ export const ProblemSection = () => {
  const { ref, isVisible } = useScrollAnimation();
 
  const cardBase =
- "group rounded-2xl border border-border/70 bg-card/95 transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-md";
+ "group rounded-card border border-border/70 bg-card/95 transition-shadow duration-500 ease-out p-3 sm:p-3.5 h-full flex flex-col relative overflow-hidden hover:shadow-md";
  const cardGlowMain =
  "absolute -bottom-16 -right-16 w-44 h-44 rounded-full bg-destructive/14 soft-glow pointer-events-none opacity-100";
  const cardGlowSecondary =

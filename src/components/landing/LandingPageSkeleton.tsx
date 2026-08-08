@@ -8,7 +8,7 @@ export const LandingPageSkeleton = () => {
  <div className="container mx-auto px-4 py-4">
  <div className="flex items-center justify-between">
  <div className="flex items-center gap-2">
- <Skeleton className="h-10 w-10 rounded-lg" />
+ <Skeleton className="h-10 w-10 rounded-hover" />
  <Skeleton className="h-6 w-16 hidden md:block" />
  </div>
  <div className="hidden md:flex items-center gap-8">
@@ -40,12 +40,12 @@ export const LandingPageSkeleton = () => {
  <Skeleton className="h-8 w-1/2 mx-auto" />
  
  {/* Feature box */}
- <Skeleton className="h-16 w-full max-w-2xl mx-auto rounded-xl" />
+ <Skeleton className="h-16 w-full max-w-2xl mx-auto rounded-card" />
  
  {/* CTA buttons */}
  <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
- <Skeleton className="h-14 w-64 rounded-xl" />
- <Skeleton className="h-14 w-48 rounded-xl" />
+ <Skeleton className="h-14 w-64 rounded-card" />
+ <Skeleton className="h-14 w-48 rounded-card" />
  </div>
  
  {/* Feature highlights */}
@@ -61,7 +61,7 @@ export const LandingPageSkeleton = () => {
  
  {/* Demo section */}
  <div className="mt-20 max-w-5xl mx-auto">
- <Skeleton className="h-[400px] w-full rounded-2xl" />
+ <Skeleton className="h-[400px] w-full rounded-panel" />
  </div>
  </div>
  </div>

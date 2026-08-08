@@ -52,7 +52,7 @@ export const FloatingChatButton = () => {
               to="/contato"
               onClick={() => setShowPopup(false)}
               aria-label="Abrir chat com a Wian"
-              className="relative block rounded-2xl bg-white shadow-2xl shadow-black/20 border border-black/5 overflow-hidden cursor-pointer hover:shadow-black/25 transition-shadow"
+              className="relative block rounded-panel bg-white shadow-2xl shadow-black/20 border border-black/5 overflow-hidden cursor-pointer hover:shadow-black/25 transition-shadow"
             >
               {/* Close */}
               <button
@@ -93,7 +93,7 @@ export const FloatingChatButton = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-neutral-100 rounded-2xl rounded-tl-sm px-3 py-2 max-w-[90%]"
+                  className="bg-neutral-100 rounded-sm rounded-tl-sm px-3 py-2 max-w-[90%]"
                 >
                   <p className="text-sm text-neutral-800 leading-snug">
                     👋 Olá! Sou a Wian, Suporte Inteligente da Wiize.
@@ -103,7 +103,7 @@ export const FloatingChatButton = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.6 }}
-                  className="bg-neutral-100 rounded-2xl rounded-tl-sm px-3 py-2 max-w-[90%]"
+                  className="bg-neutral-100 rounded-sm rounded-tl-sm px-3 py-2 max-w-[90%]"
                 >
                   <p className="text-sm text-neutral-800 leading-snug">
                     Posso responder suas dúvidas sobre planos, funcionalidades e integrações.
@@ -113,7 +113,7 @@ export const FloatingChatButton = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 1.0 }}
-                  className="bg-neutral-100 rounded-2xl rounded-tl-sm px-3 py-2 max-w-[90%]"
+                  className="bg-neutral-100 rounded-sm rounded-tl-sm px-3 py-2 max-w-[90%]"
                 >
                   <p className="text-sm text-neutral-800 leading-snug">
                     Como posso ajudar você? 😊

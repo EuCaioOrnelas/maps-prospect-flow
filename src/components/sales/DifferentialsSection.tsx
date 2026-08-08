@@ -45,7 +45,7 @@ export const DifferentialsSection = () => {
  initial={{ opacity: 0, y: 20 }}
  animate={isVisible ? { opacity: 1, y: 0 } : {}}
  transition={{ duration: 0.6, delay: 0.2 }}
- className="rounded-2xl border border-border bg-card/30 overflow-x-auto"
+ className="rounded-panel border border-border bg-card/30 overflow-x-auto"
  >
  <div className="min-w-[520px]">
  {/* Header */}
