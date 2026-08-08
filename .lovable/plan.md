@@ -2,11 +2,14 @@ Ajuste visual da seção "Recursos da plataforma" (PlatformModulesSection) na la
 
 Objetivo
 --------
-Transformar os cards de módulos da landing page de cards verdes sólidos (bg-primary) para cards claros com uma textura sutil de grid/fundo para dar destaque sem o contraste brusco ou a sensação de "verde morto".
+Transformar os cards de módulos da landing page para um layout claro e premium: cards brancos com textura sutil de grid, separação visual entre a área de texto (estilo do terceiro protótipo) e a área de mockup (estilo do primeiro protótipo), mantendo destaque sem o contraste brusco do verde sólido.
 
 Direção escolhida
 -----------------
-"Grid sutil em cada card" (v1): cards brancos com background de linhas/grid em baixíssima opacidade, mantendo a estrutura sticky, mockups e alternância de layout.
+Combinação personalizada dos protótipos v1 e v3:
+- Card branco com grid sutil em baixíssima opacidade (v1).
+- Divisão do card em duas zonas: texto à esquerda, mockup à direita em fundo levemente mais escuro (v1).
+- Estilo tipográfico e de ícones/benefícios da área de texto inspirado no v3, adaptado aos tokens do projeto.
 
 Escopo de alterações
 --------------------
@@ -14,29 +17,34 @@ Escopo de alterações
    - Trocar o `bg-primary` dos cards por `bg-card`.
    - Adicionar uma camada de textura de grid (`linear-gradient`) com opacidade baixa (≈ 5%) usando `hsl(var(--primary))` em cada card.
    - Ajustar bordas dos cards de `border-white/20` para `border-border`.
-   - Atualizar tipografia dos cards de branco/white-85 para tokens de foreground (`text-foreground`, `text-muted-foreground`).
-   - Alterar o badge de eyebrow (label de módulo) de glass/branco para `bg-primary/10` com texto `text-primary`.
-   - Alterar os itens de benefícios de `bg-white/15` + `border-white/30` para variações claras com `bg-primary/5` ou `bg-muted` + `border-primary/15` e texto `text-foreground`.
-   - Ajustar o ícone de check dentro dos benefícios de branco para `text-primary`.
-   - Revisar o gradiente de destaque no card (`radial-gradient` de primary-foreground) para uma versão sutil que não fique pesada em cards claros.
-   - Verificar se o `MockShell` (fundo do mockup interno) mantém legibilidade sobre o novo card claro; ajustar se necessário.
+   - Dividir internamente cada card em duas colunas: texto em `bg-card` e mockup em uma zona levemente diferenciada (ex.: `bg-muted/30` ou `bg-slate-50/50`) para dar separação visual, sem alterar o tamanho dos mockups.
+   - Área de texto:
+     - Adicionar um bloco de ícone grande (≈ 48px) em `rounded-2xl bg-primary/10 text-primary` acima do título.
+     - Título em `font-display text-foreground text-2xl sm:text-3xl font-bold`.
+     - Descrição em `text-muted-foreground`.
+     - Benefícios com check em círculo preenchido `bg-primary text-primary-foreground` e texto `text-foreground`.
+     - Badge de eyebrow em `bg-primary/10 text-primary rounded-full`.
+   - Remover o gradiente radial de destaque branco sobre o card (não faz sentido em card claro).
+   - Verificar se o `MockShell` e os mini mockups internos mantêm legibilidade sobre o novo fundo; ajustar sombras e bordas se necessário.
+   - Manter sticky, alternância de layout, animações e responsividade.
 
 2. `src/components/sales/WhyItWorksSection.tsx` (revisão)
-   - Verificar se a transição visual entre "Recursos da plataforma" (agora clara) e a seção seguinte continua coesa.
-   - Ajustar margens ou fundo se necessário para evitar que as duas seções claras fiquem "grudadas".
+   - Verificar a transição visual entre a seção de recursos (agora clara) e a seção seguinte.
+   - Ajustar margens ou fundo se necessário para evitar que duas seções claras fiquem visualmente coladas.
 
 3. Verificações
    - Build local (`bun run build` ou `vite build`) sem erros de TypeScript/Tailwind.
-   - Screenshot da seção em desktop e mobile para validar contraste e legibilidade.
+   - Screenshot da seção em desktop e mobile para validar contraste, legibilidade e tamanho preservado dos mockups.
 
 Restrições
 ----------
 - Manter todos os 7 módulos e a alternância de layout (texto/mockup).
 - Preservar os mini mockups interativos e a animação de entrada atual.
+- Não alterar o tamanho/dimensões dos mockups representativos.
 - Não usar `backdrop-blur` (política do projeto: modais usam `bg-black/70`, sem blur; cards também seguem sem blur).
 - Usar tokens semânticos do Tailwind (`bg-card`, `text-foreground`, `hsl(var(--primary))`, etc.) em vez de cores hardcoded.
 - Manter o JSON-LD/export SEO já existente.
 
 Critério de aceitação
 ---------------------
-A seção "Recursos da plataforma" exibe cards claros com textura sutil de grid, tipografia legível, e gera destaque visual sem parecer um bloco de cor verde sólido. A animação e responsividade continuam funcionando.
+A seção "Recursos da plataforma" exibe cards claros com textura sutil de grid, separação entre zona de texto e zona de mockup, tipografia premium na área de texto e legibilidade perfeita. A animação, responsividade e tamanhos dos mockups continuam inalterados.
