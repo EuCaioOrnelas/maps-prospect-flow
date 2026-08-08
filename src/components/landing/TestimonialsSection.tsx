@@ -109,8 +109,9 @@ const TestimonialsRow = ({
           animationDirection: reverse ? "reverse" : "normal",
         }}
       >
-        {[0, 1].map((dupIdx) => (
-          <div key={dupIdx} className="flex flex-row gap-6" aria-hidden={dupIdx === 1}>
+        {[0, 1, 2].map((dupIdx) => (
+          <div key={dupIdx} className="flex flex-row gap-6" aria-hidden={dupIdx !== 0}>
+
             {testimonials.map(({ text, name, role, company, avatar }, i) => (
               <div
                 key={`${dupIdx}-${i}`}
