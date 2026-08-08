@@ -1154,65 +1154,66 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
 
 
       className={cn(
-        "relative overflow-hidden rounded-card border border-white/20 p-5 sm:p-8 lg:p-10 bg-primary",
-        "w-full lg:min-h-[560px] flex items-center",
+        "relative overflow-hidden rounded-card border border-border",
+        "w-full lg:min-h-[560px]",
         "shadow-[0_24px_60px_-30px_hsl(var(--primary)/0.5)]",
       )}
     >
-
-
+      {/* Textura sutil de grid no fundo do card */}
       <div
-        className={cn(
-          "absolute -top-24 w-72 h-72 rounded-full pointer-events-none opacity-[0.6]",
-          reversed ? "-left-24" : "-right-24",
-        )}
-        style={{ background: "radial-gradient(circle, hsl(var(--primary-foreground) / 0.12), transparent 70%)" }}
+        className="absolute inset-0 pointer-events-none opacity-[0.035] sm:opacity-[0.045]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, hsl(var(--primary)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--primary)) 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
         aria-hidden="true"
       />
+
       <div
         className={cn(
-          "relative z-10 w-full grid items-center gap-6 lg:gap-12 lg:grid-cols-2",
+          "relative z-10 w-full h-full grid lg:grid-cols-2",
           reversed && "lg:[&>*:first-child]:order-2",
         )}
       >
-        {/* O texto acompanha o card; somente o mockup inicia depois da entrada. */}
-        <div>
-          <div className="inline-flex items-center gap-2.5 mb-4 rounded-card border border-white/30 bg-white/15 pl-1.5 pr-3.5 py-1.5 shadow-[0_6px_18px_-14px_rgba(0,0,0,0.25)]">
-            <div className="w-8 h-8 rounded-card bg-white/20 flex items-center justify-center flex-shrink-0">
-              <Icon size={15} className="text-white" />
-            </div>
-            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-white">
+        {/* Área de texto */}
+        <div className="p-5 sm:p-8 lg:p-10 flex flex-col justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4 shadow-sm shadow-primary/10">
+            <Icon size={24} strokeWidth={1.8} />
+          </div>
+          <div className="inline-flex items-center gap-2 mb-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
               {item.eyebrow}
             </span>
           </div>
-          <h3 className="font-display font-bold text-white text-xl sm:text-2xl lg:text-[1.75rem] leading-tight tracking-tight mb-3">
+          <h3 className="font-display font-bold text-foreground text-xl sm:text-2xl lg:text-[1.75rem] leading-tight tracking-tight mb-3">
             {item.title}
           </h3>
-          <p className="text-sm sm:text-base !text-white/85 leading-relaxed mb-5">
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-5">
             {item.description}
           </p>
           <ul className="grid sm:grid-cols-2 gap-2">
             {item.benefits.map((b) => (
               <li
                 key={b}
-                className="flex items-center gap-2.5 rounded-card border border-white/30 bg-white/15 px-3 py-2"
+                className="flex items-center gap-2.5 rounded-card border border-border/70 bg-muted/50 px-3 py-2"
               >
-                <span className="w-5 h-5 min-w-[20px] rounded-full bg-white/20 flex items-center justify-center">
-                  <Check size={11} className="text-white" strokeWidth={3.5} />
+                <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center">
+                  <Check size={11} className="text-primary-foreground" strokeWidth={3.5} />
                 </span>
-                <span className="text-[13px] font-medium !text-white/90 leading-snug">{b}</span>
+                <span className="text-[13px] font-medium text-foreground leading-snug">{b}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Mockup — entra pelo lado contrário do texto */}
-        <div className="w-full">
+        {/* Área do mockup — fundo levemente diferenciado para separar visualmente */}
+        <div className="p-5 sm:p-8 lg:p-10 bg-muted/30 flex items-center justify-center h-full">
           <MockStage>
             <Mock />
           </MockStage>
         </div>
-
       </div>
 
     </motion.article>
