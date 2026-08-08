@@ -1183,8 +1183,8 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             <Icon size={24} strokeWidth={1.8} />
           </div>
           <div className="inline-flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-hover bg-primary text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-primary-foreground">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
               {item.eyebrow}
             </span>
           </div>
