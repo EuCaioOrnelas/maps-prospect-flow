@@ -71,7 +71,7 @@ const MockShell = ({
   badge?: string;
   children: ReactNode;
 }) => (
-  <div className="w-full rounded-card border border-border/70 bg-card overflow-hidden shadow-[0_18px_50px_-24px_hsl(var(--primary)/0.35)]">
+  <div className="w-full rounded-card border border-border/70 bg-card overflow-hidden shadow-[0_4px_14px_-8px_hsl(var(--foreground)/0.18)]">
     <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border/60 bg-gradient-to-r from-primary/[0.07] via-transparent to-transparent">
       <span className="w-2 h-2 rounded-full bg-destructive/40" />
       <span className="w-2 h-2 rounded-full bg-amber-400/50" />
@@ -122,14 +122,15 @@ const Row = ({ children, className = "" }: { children: ReactNode; className?: st
 );
 
 const MockStage = ({ children }: { children: ReactNode }) => (
-  <div className="relative w-full rounded-card p-1.5 sm:p-2.5 bg-primary/[0.04] ring-1 ring-inset ring-primary/15">
+  <div className="relative w-full rounded-card p-1.5 sm:p-2.5 pb-3 sm:pb-4 bg-primary/[0.04] ring-1 ring-inset ring-primary/15">
     <span className="pointer-events-none absolute left-1.5 top-1.5 w-3 h-3 border-l-2 border-t-2 border-primary/30 rounded-tl-md" aria-hidden="true" />
     <span className="pointer-events-none absolute right-1.5 top-1.5 w-3 h-3 border-r-2 border-t-2 border-primary/30 rounded-tr-md" aria-hidden="true" />
     <span className="pointer-events-none absolute left-1.5 bottom-1.5 w-3 h-3 border-l-2 border-b-2 border-primary/30 rounded-bl-md" aria-hidden="true" />
     <span className="pointer-events-none absolute right-1.5 bottom-1.5 w-3 h-3 border-r-2 border-b-2 border-primary/30 rounded-br-md" aria-hidden="true" />
     {/* zoom em telas pequenas: o mockup mantém o layout de desktop sem cortar conteúdo */}
-    <div className="relative [zoom:0.72] sm:[zoom:0.9] lg:[zoom:1]">{children}</div>
-
+    <div className="relative flex items-center justify-center min-h-[300px] sm:min-h-[360px] lg:min-h-[400px] [zoom:0.72] sm:[zoom:0.9] lg:[zoom:1]">
+      <div className="w-full">{children}</div>
+    </div>
   </div>
 );
 
@@ -1156,7 +1157,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       className={cn(
         "relative overflow-hidden rounded-card border border-border",
         "w-full lg:min-h-[560px]",
-        "shadow-[0_24px_60px_-30px_hsl(var(--primary)/0.5)]",
+        "shadow-[0_6px_18px_-10px_hsl(var(--foreground)/0.18)]",
       )}
     >
       {/* Textura sutil de grid no fundo do card */}
@@ -1178,7 +1179,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       >
         {/* Área de texto */}
         <div className="p-5 sm:p-8 lg:p-10 flex flex-col justify-center">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4 shadow-sm shadow-primary/10">
+          <div className="w-12 h-12 rounded-card bg-primary flex items-center justify-center text-primary-foreground mb-4 shadow-[0_4px_12px_-6px_hsl(var(--primary)/0.6)]">
             <Icon size={24} strokeWidth={1.8} />
           </div>
           <div className="inline-flex items-center gap-2 mb-3">
@@ -1199,8 +1200,8 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
                 key={b}
                 className="flex items-center gap-2.5 rounded-card border border-border/70 bg-muted/50 px-3 py-2"
               >
-                <span className="w-5 h-5 min-w-[20px] rounded-full bg-primary flex items-center justify-center">
-                  <Check size={11} className="text-primary-foreground" strokeWidth={3.5} />
+                <span className="inline-flex h-5 w-5 min-w-[20px] items-center justify-center rounded-sm bg-primary shadow-[0_4px_12px_-4px_hsl(var(--primary)/0.6)]">
+                  <Check size={12} className="text-primary-foreground" strokeWidth={3} />
                 </span>
                 <span className="text-[13px] font-medium text-foreground leading-snug">{b}</span>
               </li>
@@ -1214,6 +1215,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             <Mock />
           </MockStage>
         </div>
+
       </div>
 
     </motion.article>
