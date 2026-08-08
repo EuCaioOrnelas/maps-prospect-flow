@@ -1209,7 +1209,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
         </div>
 
         {/* Área do mockup — fundo levemente diferenciado para separar visualmente */}
-        <div className="p-5 sm:p-8 lg:p-10 bg-muted/30 flex items-center justify-center h-full">
+        <div className="p-5 sm:p-8 lg:p-10 bg-muted/60 flex items-center justify-center h-full">
           <MockStage>
             <Mock />
           </MockStage>
