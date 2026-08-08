@@ -1157,7 +1157,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       className={cn(
         "relative overflow-hidden rounded-card border border-border",
         "w-full lg:min-h-[560px]",
-        "shadow-[0_24px_60px_-30px_hsl(var(--primary)/0.5)]",
+        "shadow-[0_6px_18px_-10px_hsl(var(--foreground)/0.18)]",
       )}
     >
       {/* Textura sutil de grid no fundo do card */}
