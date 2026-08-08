@@ -2,9 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { subDays, subHours } from "date-fns";
-import { TrendingDown, TrendingUp, Flame, Zap, Clock, AlertCircle, ThermometerSun } from "lucide-react";
 import React from "react";
 import type { ExecutiveAlert } from "@/components/dashboard/v2/ExecutiveAlerts";
+import { buildExecutiveAlerts } from "@/lib/executiveAlerts";
+
 
 export interface DashboardKPIData {
   receitaPotencial: number;
@@ -319,86 +320,160 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
 
       const radarLeads: RadarLead[] = [...withGrowth, ...withoutGrowth].slice(0, 6);
 
-      // --- Executive Alerts (real data-driven) ---
-      const executiveAlerts: ExecutiveAlert[] = [];
+      // --- Executive Alerts (real data-driven, com comparação de períodos) ---
+      const prevStart = subDays(now, periodDays * 2);
+      const iso = (d: Date) => d.toISOString();
+      const fortyEightHoursAgo = subHours(now, 48);
+      const fourteenDaysAgo = subDays(now, 14);
+      const nextSevenDays = new Date(now.getTime() + 7 * 86400000);
 
-      // 1. Leads with highest score growth today
-      const topGrowthToday = Array.from(scoreGrowthByLead.entries())
-        .sort((a, b) => b[1] - a[1]);
-      if (topGrowthToday.length > 0 && topGrowthToday[0][1] >= 100) {
-        executiveAlerts.push({
-          type: 'success',
-          icon: React.createElement(Flame, { size: 14 }),
-          text: `${topGrowthToday.filter(([_, v]) => v >= 100).length} leads tiveram aumento de score superior a 100 pts nas últimas 24h`,
-          route: '/crm-score',
-        });
+      const countOf = (res: any) => res?.count || 0;
+      const sumResults = (res: any) => (res?.data || []).reduce((s: number, r: any) => s + (r.results_count || 0), 0);
+
+      const [
+        prospCurRes, prospPrevRes,
+        newLeadsCurRes, newLeadsPrevRes,
+        chatOutCurRes, chatOutPrevRes,
+        agentOutCurRes, agentOutPrevRes,
+        convCurRes, convPrevRes,
+        dealsCurRes, dealsPrevRes,
+        meetCurRes, meetPrevRes,
+        noContactRes,
+        stuckRes,
+        upcomingMeetRes,
+        pendingPastMeetRes,
+        campaignsRes,
+        numbersRes,
+        inboundMsgsRes,
+        outboundMsgsRes,
+        forgottenHotRes,
+      ] = await Promise.all([
+        supabase.from("search_history").select("results_count").eq("owner_user_id", accountOwnerId).gte("created_at", iso(periodStart)),
+        supabase.from("search_history").select("results_count").eq("owner_user_id", accountOwnerId).gte("created_at", iso(prevStart)).lt("created_at", iso(periodStart)),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).gte("created_at", iso(periodStart)),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).gte("created_at", iso(prevStart)).lt("created_at", iso(periodStart)),
+        supabase.from("chat_messages").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).eq("direction", "outbound").gte("created_at", iso(periodStart)),
+        supabase.from("chat_messages").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).eq("direction", "outbound").gte("created_at", iso(prevStart)).lt("created_at", iso(periodStart)),
+        supabase.from("agent_message_logs").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).eq("direction", "outbound").gte("created_at", iso(periodStart)),
+        supabase.from("agent_message_logs").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).eq("direction", "outbound").gte("created_at", iso(prevStart)).lt("created_at", iso(periodStart)),
+        supabase.from("agent_conversations").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).gte("created_at", iso(periodStart)),
+        supabase.from("agent_conversations").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).gte("created_at", iso(prevStart)).lt("created_at", iso(periodStart)),
+        supabase.from("lead_deals").select("value, sale_type, contract_months").eq("owner_user_id", accountOwnerId).gte("closed_at", iso(periodStart)),
+        supabase.from("lead_deals").select("value, sale_type, contract_months").eq("owner_user_id", accountOwnerId).gte("closed_at", iso(prevStart)).lt("closed_at", iso(periodStart)),
+        supabase.from("calendar_events").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).gte("created_at", iso(periodStart)),
+        supabase.from("calendar_events").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).gte("created_at", iso(prevStart)).lt("created_at", iso(periodStart)),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).is("archived_at", null).eq("first_message_sent", false).lt("created_at", iso(fortyEightHoursAgo)),
+        supabase.from("leads").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).is("archived_at", null).not("pipeline_stage_id", "is", null).lt("updated_at", iso(fourteenDaysAgo)),
+        supabase.from("calendar_events").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).gte("starts_at", iso(now)).lte("starts_at", iso(nextSevenDays)).neq("status", "cancelled"),
+        supabase.from("calendar_events").select("id", { count: "exact", head: true }).eq("owner_user_id", accountOwnerId).lt("ends_at", iso(now)).in("status", ["scheduled", "confirmed"]),
+        supabase.from("whatsapp_campaigns").select("id, sent_count, total_responses").eq("owner_user_id", accountOwnerId).gte("created_at", iso(periodStart)),
+        supabase.from("whatsapp_numbers").select("id, is_connected").eq("owner_user_id", accountOwnerId),
+        supabase.from("chat_messages").select("conversation_id, created_at").eq("owner_user_id", accountOwnerId).eq("direction", "inbound").gte("created_at", iso(sevenDaysAgo)).order("created_at", { ascending: false }).limit(2000),
+        supabase.from("chat_messages").select("conversation_id, created_at").eq("owner_user_id", accountOwnerId).eq("direction", "outbound").gte("created_at", iso(sevenDaysAgo)).order("created_at", { ascending: false }).limit(2000),
+        supabase.from("revenue_leads").select("id, last_activity_at, score_total").eq("owner_user_id", accountOwnerId).gte("score_total", 601),
+      ]);
+
+      const dealValue = (rows: any[]) => rows.reduce((s, d) => s + (d.sale_type === "recurring" ? Number(d.value || 0) * (d.contract_months || 1) : Number(d.value || 0)), 0);
+      const dealsCur = dealsCurRes.data || [];
+      const dealsPrev = dealsPrevRes.data || [];
+
+      // Conversas com mensagem do cliente sem resposta há mais de 24h
+      const lastInbound = new Map<string, number>();
+      (inboundMsgsRes.data || []).forEach((m: any) => {
+        if (!m.conversation_id) return;
+        const t = new Date(m.created_at).getTime();
+        if (!lastInbound.has(m.conversation_id) || t > (lastInbound.get(m.conversation_id) as number)) lastInbound.set(m.conversation_id, t);
+      });
+      const lastOutbound = new Map<string, number>();
+      (outboundMsgsRes.data || []).forEach((m: any) => {
+        if (!m.conversation_id) return;
+        const t = new Date(m.created_at).getTime();
+        if (!lastOutbound.has(m.conversation_id) || t > (lastOutbound.get(m.conversation_id) as number)) lastOutbound.set(m.conversation_id, t);
+      });
+      let unansweredConversations = 0;
+      lastInbound.forEach((inAt, convId) => {
+        const outAt = lastOutbound.get(convId) || 0;
+        if (inAt > outAt && now.getTime() - inAt > 24 * 3600 * 1000) unansweredConversations += 1;
+      });
+
+      // Melhor dia da semana por volume de respostas recebidas
+      const weekdayNames = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+      const weekdayCounts = new Array(7).fill(0);
+      (inboundMsgsRes.data || []).forEach((m: any) => {
+        const d = new Date(m.created_at);
+        if (!isNaN(d.getTime())) weekdayCounts[d.getDay()] += 1;
+      });
+      const totalInbound = weekdayCounts.reduce((a, b) => a + b, 0);
+      let bestResponseWeekday: { label: string; rate: number } | null = null;
+      if (totalInbound >= 20) {
+        const bestIdx = weekdayCounts.indexOf(Math.max(...weekdayCounts));
+        bestResponseWeekday = { label: weekdayNames[bestIdx], rate: Math.round((weekdayCounts[bestIdx] / totalInbound) * 100) };
       }
 
-      // 2. Score decay alert
-      const globalDecayLogs = scoreDecayRes.data || [];
-      const globalDecayLeadIds = new Set(globalDecayLogs.map((l: any) => l.lead_id));
-      const globalDecayCount = globalDecayLeadIds.size;
-      if (globalDecayCount > 0) {
-        executiveAlerts.push({
-          type: 'warning',
-          icon: React.createElement(TrendingDown, { size: 14 }),
-          text: `${globalDecayCount} leads perderam pontos de score nos últimos 7 dias — risco de esfriamento`,
-          route: '/crm-score',
-        });
-      }
+      const forgottenHotLeads = (forgottenHotRes.data || []).filter((l: any) => {
+        if (!l.last_activity_at) return true;
+        return new Date(l.last_activity_at).getTime() < sevenDaysAgo.getTime();
+      }).length;
 
-      // 3. Hot leads ready for sale
-      const readyForSale = allScores.filter((s: number) => s >= 801).length;
-      if (readyForSale > 0) {
-        executiveAlerts.push({
-          type: 'success',
-          icon: React.createElement(Zap, { size: 14 }),
-          text: `${readyForSale} leads com score acima de 800 — prontos para abordagem de venda`,
-          route: '/crm',
-        });
-      }
+      const campaignsWithoutReturn = (campaignsRes.data || []).filter((c: any) => (c.sent_count || 0) >= 20 && (c.total_responses || 0) === 0).length;
+      const disconnectedNumbers = (numbersRes.data || []).filter((n: any) => n.is_connected === false).length;
 
-      // 4. Cold leads warning
-      const coldLeadsCount = allScores.filter((s: number) => s <= 200 && s > 0).length;
-      if (coldLeadsCount > 5) {
-        executiveAlerts.push({
-          type: 'danger',
-          icon: React.createElement(ThermometerSun, { size: 14 }),
-          text: `${coldLeadsCount} leads frios (score ≤200) — considere reativação ou limpeza`,
-          route: '/crm-score',
-        });
-      }
+      // Taxa de conversão lead -> venda
+      const newLeadsCur = countOf(newLeadsCurRes);
+      const newLeadsPrev = countOf(newLeadsPrevRes);
+      const conversionRate = newLeadsCur > 0 && newLeadsPrev > 0
+        ? { current: (dealsCur.length / newLeadsCur) * 100, previous: (dealsPrev.length / newLeadsPrev) * 100 }
+        : null;
 
-      // 5. Peak activity hour (based on score logs timestamps)
+      // Pico de horário
       const scoreLogs24h = recentScoreLogsRes.data || [];
+      let peakHour: number | null = null;
       if (scoreLogs24h.length > 5) {
         const hourCounts = new Map<number, number>();
         scoreLogs24h.forEach((log: any) => {
           if (!log.created_at) return;
           const h = new Date(log.created_at).getHours();
-          if (isNaN(h)) return;
-          hourCounts.set(h, (hourCounts.get(h) || 0) + 1);
+          if (!isNaN(h)) hourCounts.set(h, (hourCounts.get(h) || 0) + 1);
         });
-        const peakHour = Array.from(hourCounts.entries()).sort((a, b) => b[1] - a[1])[0];
-        if (peakHour && !isNaN(peakHour[0])) {
-          executiveAlerts.push({
-            type: 'info',
-            icon: React.createElement(Clock, { size: 14 }),
-            text: `Pico de atividade dos leads: ${peakHour[0].toString().padStart(2, '0')}:00 — melhor horário para envios`,
-            route: '/meta-campaigns',
-          });
-        }
+        const top = Array.from(hourCounts.entries()).sort((a, b) => b[1] - a[1])[0];
+        if (top) peakHour = top[0];
       }
 
-      // 6. No activity fallback
-      if (executiveAlerts.length === 0) {
-        executiveAlerts.push({
-          type: 'info',
-          icon: React.createElement(AlertCircle, { size: 14 }),
-          text: 'Sem alertas no momento. Continue prospectando para gerar diagnósticos.',
-          route: '/opportunities',
-        });
-      }
+      const globalDecayLeadIds = new Set((scoreDecayRes.data || []).map((l: any) => l.lead_id));
+
+      const executiveAlerts = buildExecutiveAlerts({
+        periodDays,
+        prospected: { current: sumResults(prospCurRes), previous: sumResults(prospPrevRes) },
+        newLeads: { current: newLeadsCur, previous: newLeadsPrev },
+        messagesSent: {
+          current: countOf(chatOutCurRes) + countOf(agentOutCurRes),
+          previous: countOf(chatOutPrevRes) + countOf(agentOutPrevRes),
+        },
+        conversations: { current: countOf(convCurRes), previous: countOf(convPrevRes) },
+        deals: {
+          currentCount: dealsCur.length,
+          previousCount: dealsPrev.length,
+          currentValue: dealValue(dealsCur),
+          previousValue: dealValue(dealsPrev),
+        },
+        meetings: { current: countOf(meetCurRes), previous: countOf(meetPrevRes) },
+        leadsWithoutFirstContact: countOf(noContactRes),
+        unansweredConversations,
+        stuckLeads: countOf(stuckRes),
+        forgottenHotLeads,
+        upcomingMeetings7d: countOf(upcomingMeetRes),
+        pendingPastMeetings: countOf(pendingPastMeetRes),
+        campaignsWithoutReturn,
+        disconnectedNumbers,
+        bestResponseWeekday,
+        conversionRate,
+        hotGrowth24h: Array.from(scoreGrowthByLead.values()).filter((v) => v >= 100).length,
+        decayedLeads7d: globalDecayLeadIds.size,
+        readyForSale: allScores.filter((s: number) => s >= 801).length,
+        coldLeads: allScores.filter((s: number) => s <= 200 && s > 0).length,
+        peakHour,
+      });
+
 
       return {
         receitaPotencial,
