@@ -1214,6 +1214,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             <Mock />
           </MockStage>
         </div>
+
       </div>
 
     </motion.article>
