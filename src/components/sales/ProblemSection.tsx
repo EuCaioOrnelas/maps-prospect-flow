@@ -51,7 +51,7 @@ export const ProblemSection = () => {
  <div className="absolute bottom-[-5rem] left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-destructive/14 soft-glow pointer-events-none opacity-100" />
 
  <div className="relative z-20 p-3 sm:p-3.5 pb-44 sm:pb-32">
- <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
+ <div className="w-9 h-9 rounded-card bg-destructive/10 flex items-center justify-center mb-3">
  <MessageSquareOff size={18} className="text-destructive" />
  </div>
  <h3 className="font-semibold text-foreground text-base mb-1">Mensagens genéricas</h3>
@@ -83,7 +83,7 @@ export const ProblemSection = () => {
  Contatos sem aderência ao seu produto. Listas compradas, dados desatualizados e zero qualificação prévia.
  </p>
  </div>
- <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0 ml-3">
+ <div className="w-8 h-8 rounded-card bg-destructive/10 flex items-center justify-center flex-shrink-0 ml-3">
  <UserX size={16} className="text-destructive" />
  </div>
  </div>
@@ -98,7 +98,7 @@ export const ProblemSection = () => {
  <div className={cardGlowSecondary} />
  <div className={cardGlowMain} />
  <div className="relative z-10">
- <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center mb-2">
+ <div className="w-8 h-8 rounded-card bg-destructive/10 flex items-center justify-center mb-2">
  <Clock size={16} className="text-destructive" />
  </div>
  <h3 className="font-semibold text-foreground text-base mb-0.5">Prospecção manual</h3>
@@ -121,7 +121,7 @@ export const ProblemSection = () => {
  Sem cadência definida. Leads esfriam, oportunidades morrem e o time perde vendas por falta de acompanhamento.
  </p>
  </div>
- <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0 ml-3">
+ <div className="w-8 h-8 rounded-card bg-destructive/10 flex items-center justify-center flex-shrink-0 ml-3">
  <AlertTriangle size={16} className="text-destructive" />
  </div>
  </div>
@@ -136,7 +136,7 @@ export const ProblemSection = () => {
  <div className={cardGlowSecondary} />
  <div className={cardGlowMain} />
  <div className="relative z-10">
- <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center mb-2">
+ <div className="w-8 h-8 rounded-card bg-destructive/10 flex items-center justify-center mb-2">
  <BarChart3 size={16} className="text-destructive" />
  </div>
  <h3 className="font-semibold text-foreground text-base mb-0.5">Funil desorganizado</h3>
@@ -152,7 +152,7 @@ export const ProblemSection = () => {
  <div className={cardGlowMain} />
  <div className="flex-1 min-w-0 relative z-10">
  <div className="flex items-center gap-2.5 mb-1.5">
- <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+ <div className="w-8 h-8 rounded-card bg-destructive/10 flex items-center justify-center flex-shrink-0">
  <TrendingDown size={16} className="text-destructive" />
  </div>
  <h3 className="font-semibold text-foreground text-base">Baixa conversão</h3>
