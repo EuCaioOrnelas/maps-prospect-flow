@@ -153,7 +153,7 @@ export const OfficialAPISection = () => {
  key={index}
  className="glass rounded-xl p-4 text-center border border-border/50 hover:border-primary/20 transition-colors"
  >
- <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+ <div className="w-8 h-8 rounded-sm bg-primary/10 flex items-center justify-center mx-auto mb-2">
  <CheckCircle size={16} className="text-primary" />
  </div>
  <p className="font-semibold text-sm text-foreground">{badge.label}</p>

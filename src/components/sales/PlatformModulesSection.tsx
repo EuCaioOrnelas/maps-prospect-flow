@@ -315,7 +315,7 @@ const ProspectMock = () => (
 const SdrMock = () => (
   <MockShell title="SDR Inteligente — WhatsApp" badge="IA ativa">
     <div className="flex items-center gap-2 pb-2 mb-2 border-b border-border/60">
-      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+      <div className="w-8 h-8 rounded-sm bg-primary/10 flex items-center justify-center">
         <Users size={14} className="text-primary" />
       </div>
       <div className="min-w-0 flex-1">
