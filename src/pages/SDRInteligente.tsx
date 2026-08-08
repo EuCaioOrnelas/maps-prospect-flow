@@ -102,6 +102,24 @@ export default function SDRInteligente() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [testAgent, setTestAgent] = useState<any | null>(null);
   const [storedDraft, setStoredDraft] = useState<SdrStoredDraft | null>(() => loadSdrDraft());
+  const [showBeta, setShowBeta] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("sdr_beta_notice_v1")) setShowBeta(true);
+    } catch {
+      /* storage indisponível */
+    }
+  }, []);
+
+  const dismissBeta = () => {
+    try {
+      localStorage.setItem("sdr_beta_notice_v1", "1");
+    } catch {
+      /* storage indisponível */
+    }
+    setShowBeta(false);
+  };
 
   const limit = useMemo(() => getSdrLimit(profile), [profile]);
   const reachedLimit = agents.length >= limit;
@@ -162,10 +180,20 @@ export default function SDRInteligente() {
                     negociação no WhatsApp até concluir o objetivo.
                   </p>
                 </div>
-                <Badge variant="secondary" className="gap-1 h-7">
-                  <Wifi size={12} />
-                  {agents.length} de {limit} SDRs
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowBeta(true)}
+                    className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-sm border border-primary/30 bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wide hover:bg-primary/15 transition-colors"
+                  >
+                    <Sparkles size={12} />
+                    Beta
+                  </button>
+                  <Badge variant="secondary" className="gap-1 h-7">
+                    <Wifi size={12} />
+                    {agents.length} de {limit} SDRs
+                  </Badge>
+                </div>
               </div>
 
               {/* Analytics */}
