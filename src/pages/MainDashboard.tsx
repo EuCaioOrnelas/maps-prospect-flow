@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAccountRole } from "@/hooks/useAccountRole";
 import { useMainDashboard } from "@/hooks/useMainDashboard";
 import { useCockpitForecast } from "@/hooks/useCockpitForecast";
 import { useDashboardKPIs } from "@/hooks/useDashboardKPIs";
@@ -36,6 +37,7 @@ const PERIOD_OPTIONS = [
 
 export default function MainDashboard() {
   const { profile } = useAuth();
+  const { role: accountRole } = useAccountRole();
   useAutoScoreTracking("main_dashboard");
   const [period, setPeriod] = useState('30');
   const periodDays = parseInt(period);
@@ -225,7 +227,8 @@ export default function MainDashboard() {
               {/* 4 — Opportunity Radar */}
               <OpportunityRadar radarLeads={kpis.radarLeads} />
 
-              {/* 5 — Briefing diário (chat) + Alertas */}
+              {/* 5 — Briefing diário (chat) + Alertas — exclusivo owner/admin */}
+              {accountRole !== "operational" && (
               <DailyBriefing
                 alerts={kpis.executiveAlerts}
                 userName={(profile as any)?.full_name || (profile as any)?.name || null}
@@ -251,6 +254,8 @@ export default function MainDashboard() {
                     .join(" | "),
                 }}
               />
+              )}
+
 
               <ExecutiveAlerts
                 alerts={kpis.executiveAlerts}

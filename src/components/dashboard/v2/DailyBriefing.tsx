@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -9,12 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronDown, ChevronUp, Send, Loader2, RotateCcw, Info, Zap } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ChevronDown, ChevronUp, Send, Loader2, RotateCcw, Info, Zap, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import type { ExecutiveAlert } from "./ExecutiveAlerts";
+import wianAvatar from "@/assets/wian-avatar.png";
 
 export interface BriefingMetrics {
   [label: string]: number | string;
@@ -39,6 +38,7 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const dayKey = () => new Date().toISOString().slice(0, 10);
 const CHAT_KEY = () => `wiize:briefing:chat:${dayKey()}`;
 const SNAP_KEY = "wiize:briefing:snapshots";
+const PERSONA_KEY = (uid: string) => `wiize:briefing:persona:${uid}`;
 
 function greeting(hour: number) {
   if (hour < 12) return "Bom dia";
@@ -76,6 +76,38 @@ interface Snapshot {
   alerts?: { type: string; text: string }[];
 }
 
+/** Perfil individual do gestor — evolui a cada interação para personalizar o tom da Wian. */
+interface Persona {
+  interactions: number;
+  topics: Record<string, number>;
+  lastSeen?: string;
+}
+
+const TOPIC_MAP: { key: string; match: RegExp }[] = [
+  { key: "funil", match: /funil|gargalo|etapa/i },
+  { key: "receita", match: /receita|faturamento|ticket|financeiro/i },
+  { key: "prospecção", match: /prospec|lead|oportunidade|busca/i },
+  { key: "conversão", match: /convers|fechamento|proposta/i },
+  { key: "sdr", match: /sdr|agente|reuni|agenda/i },
+  { key: "crm", match: /crm|contato|pipeline|negocia/i },
+  { key: "campanhas", match: /campanha|disparo|whatsapp|meta/i },
+];
+
+function bumpPersona(uid: string, question: string): Persona {
+  const current = readJSON<Persona>(PERSONA_KEY(uid), { interactions: 0, topics: {} });
+  const topics = { ...(current.topics || {}) };
+  TOPIC_MAP.forEach((t) => {
+    if (t.match.test(question)) topics[t.key] = (topics[t.key] ?? 0) + 1;
+  });
+  const next: Persona = {
+    interactions: (current.interactions ?? 0) + 1,
+    topics,
+    lastSeen: dayKey(),
+  };
+  writeJSON(PERSONA_KEY(uid), next);
+  return next;
+}
+
 /** Mantém no navegador um histórico de até 7 dias (métricas + alertas) para dar memória à Wian. */
 function persistSnapshot(metrics: BriefingMetrics, periodDays: number, alerts: ExecutiveAlert[]) {
   const today = dayKey();
@@ -95,23 +127,29 @@ const SUGGESTIONS = [
   { shortcut: "plano", label: "Sim, me explique o plano de ação" },
   { shortcut: "prioridade", label: "O que eu devo priorizar hoje?" },
   { shortcut: "funil", label: "Analise meu funil e aponte o gargalo" },
-  { shortcut: "conversao", label: "Por que minha conversão caiu?" },
-  { shortcut: "metas", label: "Defina metas para recuperar os números" },
+  { shortcut: "receita", label: "Como aumentar a receita projetada?" },
+  { shortcut: "crm", label: "Quais oportunidades do CRM valem atacar?" },
+  { shortcut: "sdr", label: "Como está a performance do SDR IA?" },
 ];
 
+const timeLabel = (ts: number) =>
+  new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
 export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBriefingProps) {
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showQuick, setShowQuick] = useState(true);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
 
   const today = new Date();
   const dateLabel = today.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const briefingAt = useMemo(() => today.getTime(), []); // horário base das mensagens do briefing
 
   // Conversa do dia + limpeza dos dias anteriores (reset diário do briefing)
   useEffect(() => {
@@ -152,12 +190,19 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
       .slice(0, 3);
   }, [list]);
 
-  /** Briefing inicial: exatamente 4 mensagens no formato de chat. */
+  /** Briefing inicial: exatamente 4 mensagens no formato de chat, personalizado pelo perfil do gestor. */
   const briefing = useMemo<string[]>(() => {
     const name = firstName(userName);
+    const persona = user?.id
+      ? readJSON<Persona>(PERSONA_KEY(user.id), { interactions: 0, topics: {} })
+      : { interactions: 0, topics: {} };
+    const veteran = (persona.interactions ?? 0) >= 8;
+    const topTopic = Object.entries(persona.topics || {}).sort((a, b) => b[1] - a[1])[0]?.[0];
     const bullets = (items: ExecutiveAlert[]) => items.slice(0, 5).map((a) => `• ${a.text}`).join("\n");
 
-    const m1 = `${greeting(today.getHours())}${name ? `, ${name}` : ""}. Este é o seu briefing comercial de hoje, ${dateLabel}, com base nos últimos ${periodDays} dias de operação. Analisei ${list.length} indicadores: ${critical.length} crítico(s), ${attention.length} em atenção e ${positives.length} positivo(s).`;
+    const m1 = veteran
+      ? `${greeting(today.getHours())}${name ? `, ${name}` : ""}. Briefing de ${dateLabel} — janela de ${periodDays} dias. ${list.length} indicadores analisados: ${critical.length} crítico(s), ${attention.length} em atenção, ${positives.length} positivo(s).${topTopic ? ` Já deixei ${topTopic} mapeado, como você costuma acompanhar.` : ""}`
+      : `${greeting(today.getHours())}${name ? `, ${name}` : ""}. Este é o seu briefing comercial de hoje, ${dateLabel}, com base nos últimos ${periodDays} dias de operação. Analisei ${list.length} indicadores: ${critical.length} crítico(s), ${attention.length} em atenção e ${positives.length} positivo(s).`;
 
     const parts2: string[] = [];
     if (critical.length > 0) {
@@ -193,7 +238,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
       : "Preparei um plano de ação para ampliar volume e acelerar o pipeline nesta semana. Quer que eu te explique melhor?";
 
     return [m1, m2, m3, m4];
-  }, [list, critical, attention, positives, resolvedSinceYesterday, userName, periodDays, dateLabel]);
+  }, [list, critical, attention, positives, resolvedSinceYesterday, userName, periodDays, dateLabel, user?.id]);
 
   const send = async (raw?: string) => {
     const question = (raw ?? input).trim();
@@ -207,9 +252,11 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
 
     try {
       const snapshots = readJSON<Snapshot[]>(SNAP_KEY, []);
+      const persona = user?.id ? bumpPersona(user.id, question) : undefined;
       const { data, error } = await supabase.functions.invoke("briefing-chat", {
         body: {
           message: question,
+          persona,
           // O briefing lido pelo gestor entra como memória inicial da conversa
           messages: [
             ...briefing.map((content) => ({ role: "assistant", content })),
@@ -259,138 +306,194 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
     inputRef.current?.focus();
   };
 
-  const Avatar = () => (
-    <div className="w-7 h-7 shrink-0 rounded-sm bg-primary/10 text-primary flex items-center justify-center text-[11px] font-semibold">
-      W
-    </div>
+  const Avatar = ({ size = 30 }: { size?: number }) => (
+    <img
+      src={wianAvatar}
+      alt="Wian, analista comercial da Wiize"
+      width={size}
+      height={size}
+      loading="lazy"
+      style={{ width: size, height: size }}
+      className="shrink-0 rounded-sm object-cover ring-1 ring-border/60"
+    />
   );
 
-  const Bubble = ({ text }: { text: string }) => (
-    <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-muted/60 px-3.5 py-2.5 text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap">
-      {text}
+  const AssistantRow = ({ text, at, first }: { text: string; at: number; first: boolean }) => (
+    <div className="flex gap-2.5 items-end">
+      <div className={cn("w-[30px] shrink-0", !first && "opacity-0")}>{first ? <Avatar /> : <div />}</div>
+      <div className="max-w-[86%] min-w-0">
+        <div
+          className={cn(
+            "bg-muted/70 px-3.5 py-2.5 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap break-words",
+            "rounded-2xl",
+            first ? "rounded-bl-sm" : "rounded-bl-sm",
+          )}
+        >
+          {text}
+        </div>
+        <span className="mt-1 block text-[10px] text-muted-foreground/70">{timeLabel(at)}</span>
+      </div>
     </div>
   );
 
   return (
     <>
-      <Card className="border-border/40 rounded-2xl overflow-hidden">
-        <CardHeader className="pb-3 flex flex-row items-start justify-between gap-3 space-y-0">
-          <div className="min-w-0">
-            <CardTitle className="text-base font-semibold">Briefing do dia com a Wian</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
-              {dateLabel} • últimos {periodDays} dias
+      <section className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm">
+        {/* Header estilo chat */}
+        <header className="flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-muted/30">
+          <div className="relative shrink-0">
+            <Avatar size={38} />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="text-sm font-semibold text-foreground truncate">Wian — Briefing do dia</h2>
+              <span className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary text-[10px] font-semibold uppercase tracking-wide">
+                <ShieldCheck size={10} /> Executivo
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground truncate">
+              Analista comercial • {dateLabel} • últimos {periodDays} dias
             </p>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 text-xs text-muted-foreground"
-              onClick={() => setShowInfo(true)}
-            >
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground" onClick={() => setShowInfo(true)} aria-label="Como funciona o briefing">
               <Info size={14} />
             </Button>
             {messages.length > 0 && !collapsed && (
-              <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground" onClick={clearChat}>
-                <RotateCcw size={13} /> Limpar
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground" onClick={clearChat} aria-label="Limpar conversa">
+                <RotateCcw size={13} />
               </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
-              className="gap-1.5 text-xs text-muted-foreground"
+              className="h-8 w-8 p-0 text-muted-foreground"
               onClick={() => setCollapsed((v) => !v)}
+              aria-label={collapsed ? "Abrir briefing" : "Fechar briefing"}
             >
-              {collapsed ? <>Abrir <ChevronDown size={14} /></> : <>Fechar <ChevronUp size={14} /></>}
+              {collapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
             </Button>
           </div>
-        </CardHeader>
+        </header>
 
         {!collapsed && (
-          <CardContent className="space-y-3 pb-5">
-            <div ref={threadRef} className="max-h-[520px] overflow-y-auto space-y-3 pr-1">
+          <>
+            {/* Thread */}
+            <div
+              ref={threadRef}
+              className="max-h-[520px] overflow-y-auto px-4 py-4 space-y-3 bg-background/40"
+            >
+              <div className="flex justify-center">
+                <span className="px-2.5 py-1 rounded-sm bg-muted/70 text-[10px] font-medium text-muted-foreground">
+                  Hoje • {dateLabel}
+                </span>
+              </div>
+
               {briefing.map((text, i) => (
-                <div key={`b-${i}`} className="flex gap-2.5">
-                  <Avatar />
-                  <Bubble text={text} />
-                </div>
+                <AssistantRow key={`b-${i}`} text={text} at={briefingAt} first={i === 0} />
               ))}
 
-              {messages.map((m, i) => (
-                <div key={`m-${i}`} className={cn("flex gap-2.5", m.role === "user" && "justify-end")}>
-                  {m.role === "assistant" && <Avatar />}
-                  {m.role === "assistant" ? (
-                    <Bubble text={m.content} />
-                  ) : (
-                    <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap">
-                      {m.content}
+              {messages.map((m, i) =>
+                m.role === "assistant" ? (
+                  <AssistantRow key={`m-${i}`} text={m.content} at={m.at} first />
+                ) : (
+                  <div key={`m-${i}`} className="flex justify-end">
+                    <div className="max-w-[86%] min-w-0">
+                      <div className="rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                        {m.content}
+                      </div>
+                      <span className="mt-1 block text-right text-[10px] text-muted-foreground/70">{timeLabel(m.at)}</span>
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ),
+              )}
 
               {sending && (
-                <div className="flex gap-2.5 items-center">
+                <div className="flex gap-2.5 items-end">
                   <Avatar />
-                  <div className="rounded-2xl rounded-tl-sm bg-muted/60 px-3.5 py-2.5 text-sm text-muted-foreground flex items-center gap-2">
-                    <Loader2 size={13} className="animate-spin" /> Analisando seus dados...
+                  <div className="rounded-2xl rounded-bl-sm bg-muted/70 px-3.5 py-3 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Mensagens rápidas — mesmo padrão do chat */}
-            <div className="rounded-xl border border-border/60 overflow-hidden">
-              <div className="px-3 py-2 border-b border-border/60 flex items-center gap-2">
-                <Zap size={12} className="text-primary shrink-0" />
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {/* Composer */}
+            <div className="border-t border-border/50 bg-card">
+              {/* Mensagens rápidas — mesmo padrão do chat */}
+              <div className="px-3 pt-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowQuick((v) => !v)}
+                  className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Zap size={12} className="text-primary" />
                   Mensagens rápidas
-                </span>
+                  {showQuick ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </button>
+                {showQuick && (
+                  <div className="mt-2 flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
+                    {SUGGESTIONS.map((s) => (
+                      <button
+                        key={s.shortcut}
+                        type="button"
+                        disabled={sending}
+                        onClick={() => send(s.label)}
+                        className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border border-border/60 bg-muted/40 hover:bg-muted hover:border-primary/40 transition-colors disabled:opacity-50"
+                      >
+                        <code className="text-[10px] font-mono font-semibold text-primary">/{s.shortcut}</code>
+                        <span className="text-xs text-foreground/80 whitespace-nowrap">{s.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div>
-                {SUGGESTIONS.map((s) => (
-                  <button
-                    key={s.shortcut}
-                    type="button"
-                    disabled={sending}
-                    onClick={() => send(s.label)}
-                    className="w-full text-left px-3 py-2 flex items-start gap-2.5 transition-colors border-b border-border/40 last:border-b-0 hover:bg-muted/60 disabled:opacity-50"
-                  >
-                    <code className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded-sm bg-primary/15 text-primary text-[11px] font-mono font-semibold">
-                      /{s.shortcut}
-                    </code>
-                    <span className="flex-1 min-w-0 text-xs text-foreground/80">{s.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                send();
-              }}
-              className="flex items-center gap-2"
-            >
-              <Input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Responda à Wian ou pergunte sobre suas métricas..."
-                className="h-10 text-sm rounded-sm"
-                disabled={sending}
-                maxLength={600}
-              />
-              <Button type="submit" size="sm" className="h-10 px-3 rounded-sm" disabled={sending || !input.trim()}>
-                {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-              </Button>
-            </form>
-            <p className="text-[11px] text-muted-foreground">
-              A Wian responde apenas sobre os dados da sua operação na Wiize.
-            </p>
-          </CardContent>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  send();
+                }}
+                className="p-3 pt-2 flex items-end gap-2"
+              >
+                <div className="flex-1 min-w-0 rounded-xl border border-border/60 bg-background focus-within:border-primary/50 transition-colors">
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        send();
+                      }
+                    }}
+                    rows={1}
+                    placeholder="Pergunte à Wian sobre suas métricas, CRM, vendas ou SDR..."
+                    className="w-full resize-none bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground/70 max-h-28"
+                    disabled={sending}
+                    maxLength={600}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="h-10 w-10 p-0 rounded-sm shrink-0"
+                  disabled={sending || !input.trim()}
+                  aria-label="Enviar"
+                >
+                  {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                </Button>
+              </form>
+              <p className="px-3 pb-3 -mt-1 text-[10px] text-muted-foreground/80">
+                A Wian analisa cockpit, CRM, vendas, SDR e agenda desta conta. Disponível apenas para owner e administradores.
+              </p>
+            </div>
+          </>
         )}
-      </Card>
+      </section>
 
       <Dialog open={showInfo} onOpenChange={setShowInfo}>
         <DialogContent className="max-w-lg">
@@ -406,16 +509,20 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
               quatro mensagens: apresentação, pontos críticos e de atenção, evoluções positivas e o plano de ação.
             </p>
             <p>
+              Na conversa ela enxerga também o CRM (contatos, etapas, score e pipeline em R$), as vendas registradas,
+              a performance do SDR Inteligente, os próximos compromissos da Agenda e o score de maturidade da conta.
+            </p>
+            <p>
               Os emojis indicam severidade: 🔴 crítico, 🟡 atenção, 🟢 positivo e ✅ ponto que estava pendente ontem e
               foi resolvido.
             </p>
             <p>
-              O histórico dos últimos 7 dias fica salvo neste navegador para que a Wian compare tendências e reconheça
-              melhorias. A conversa é reiniciada todos os dias junto com o novo briefing.
+              O histórico dos últimos 7 dias fica salvo neste navegador para comparar tendências, e o estilo das
+              respostas se adapta ao seu perfil conforme você conversa com ela.
             </p>
             <p>
-              Ela responde exclusivamente sobre os dados da sua operação na Wiize — prospecção, funil, CRM, campanhas,
-              SDR e agenda.
+              Por conter dados financeiros e estratégicos, o briefing é exclusivo para o owner e administradores da
+              conta.
             </p>
           </div>
         </DialogContent>
