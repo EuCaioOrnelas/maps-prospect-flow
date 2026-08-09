@@ -913,6 +913,7 @@ export default function OpportunitiesManagement() {
               ))}
             </div>
           )}
+          </div>
 
           {/* Justificativa */}
           {justificativa && (
