@@ -322,13 +322,45 @@ serve(async (req) => {
     const ownerId = (me?.parent_owner_id as string) || userId;
 
     const body = await req.json().catch(() => ({}));
-    const question = String(body?.message ?? "").trim().slice(0, MAX_QUESTION);
+    let question = String(body?.message ?? "").trim().slice(0, MAX_QUESTION);
+    let transcript: string | null = null;
+
+    // Mensagem de voz: transcreve com Whisper e usa o texto como pergunta
+    const audioB64 = typeof body?.audio === "string" ? body.audio : "";
+    if (!question && audioB64) {
+      try {
+        const bin = Uint8Array.from(atob(audioB64), (c) => c.charCodeAt(0));
+        const mime = String(body?.audio_mime || "audio/webm");
+        const ext = mime.includes("mp4") ? "m4a" : mime.includes("ogg") ? "ogg" : "webm";
+        const form = new FormData();
+        form.append("file", new Blob([bin], { type: mime }), `voice.${ext}`);
+        form.append("model", "whisper-1");
+        form.append("language", "pt");
+        const wRes = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
+          body: form,
+        });
+        if (!wRes.ok) throw new Error(await wRes.text());
+        const wJson = await wRes.json();
+        transcript = String(wJson?.text ?? "").trim();
+        question = transcript.slice(0, MAX_QUESTION);
+      } catch (err) {
+        console.error("[briefing-chat] transcription error", err);
+        return new Response(JSON.stringify({ error: "Não consegui entender o áudio. Tente novamente." }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     if (!question) {
       return new Response(JSON.stringify({ error: "message obrigatório" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
 
     // Limite diário (conta chamadas registradas hoje)
