@@ -1793,6 +1793,19 @@ Retorne APENAS um JSON válido:
             analise_concorrencia_regional: result.analise_concorrencia_regional,
             analise_demanda_regional: result.analise_demanda_regional,
             justificativa_score: result.justificativa_score,
+            similaridade_clientes_ganhos: Math.max(result.similaridade_clientes_ganhos, similarityScore),
+            clientes_similares: result.clientes_similares,
+            oportunidade_expansao: result.oportunidade_expansao,
+            potencial_receita_estimado: result.potencial_receita_estimado,
+            won_base_snapshot: wonProfile
+              ? {
+                  total: wonProfile.total,
+                  avg_ticket: wonProfile.avgTicket,
+                  top_categories: wonCategories.map(([c, n]) => ({ category: c, count: n })),
+                  top_cities: wonCities.map(([c, n]) => ({ city: c, count: n })),
+                  recurring_share: wonProfile.recurringShare,
+                }
+              : null,
             scoring_inputs: {
               avaliacao_media,
               quantidade_avaliacoes,
