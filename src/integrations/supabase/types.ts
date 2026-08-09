@@ -6409,6 +6409,7 @@ export type Database = {
       }
       sdr_agents: {
         Row: {
+          ai: Json
           closing: Json
           created_at: string
           created_by: string | null
@@ -6428,6 +6429,7 @@ export type Database = {
           whatsapp_number_ids: string[]
         }
         Insert: {
+          ai?: Json
           closing?: Json
           created_at?: string
           created_by?: string | null
@@ -6447,6 +6449,7 @@ export type Database = {
           whatsapp_number_ids?: string[]
         }
         Update: {
+          ai?: Json
           closing?: Json
           created_at?: string
           created_by?: string | null
@@ -7974,10 +7977,14 @@ export type Database = {
       }
       user_ai_credentials: {
         Row: {
-          api_key: string
+          api_key: string | null
           created_at: string
+          encrypted_key: string | null
           id: string
           is_active: boolean
+          key_hint: string | null
+          last_validated_at: string | null
+          model: string | null
           name: string
           owner_user_id: string | null
           provider: string
@@ -7985,10 +7992,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          api_key: string
+          api_key?: string | null
           created_at?: string
+          encrypted_key?: string | null
           id?: string
           is_active?: boolean
+          key_hint?: string | null
+          last_validated_at?: string | null
+          model?: string | null
           name?: string
           owner_user_id?: string | null
           provider: string
@@ -7996,10 +8007,14 @@ export type Database = {
           user_id: string
         }
         Update: {
-          api_key?: string
+          api_key?: string | null
           created_at?: string
+          encrypted_key?: string | null
           id?: string
           is_active?: boolean
+          key_hint?: string | null
+          last_validated_at?: string | null
+          model?: string | null
           name?: string
           owner_user_id?: string | null
           provider?: string
