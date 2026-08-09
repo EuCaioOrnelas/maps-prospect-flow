@@ -346,7 +346,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     const el = inputRef.current;
     if (!el) return;
     el.style.height = "0px";
-    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    el.style.height = `${Math.min(Math.max(el.scrollHeight, 40), 120)}px`;
   }, [input]);
 
   useEffect(() => {
