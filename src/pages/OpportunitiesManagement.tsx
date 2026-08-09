@@ -865,6 +865,8 @@ export default function OpportunitiesManagement() {
     return (
       <div className="space-y-4">
         <div data-tour="lead-score-summary" className="space-y-4">
+          {/* Foco do tour: apenas score + detalhamento (sem a justificativa) */}
+          <div data-tour="lead-score-focus" className="space-y-4">
           {/* Score Principal */}
           <div data-tour="lead-score-hero" className="bg-primary/5 border border-primary/20 rounded-xl p-5 text-center">
             <p className="text-5xl font-bold text-primary">{lead.ai_score ?? 0}</p>
@@ -911,6 +913,7 @@ export default function OpportunitiesManagement() {
               ))}
             </div>
           )}
+          </div>
 
           {/* Justificativa */}
           {justificativa && (
@@ -2074,6 +2077,17 @@ export default function OpportunitiesManagement() {
           data-tour={selectedLead?.id === "__tour_demo_lead__" ? "lead-dialog-demo" : undefined}
           data-tour-selected-lead-id={selectedLead?.id}
           className="max-w-2xl max-h-[90vh] p-0 gap-0 bg-background overflow-hidden"
+          onPointerDownOutside={(e) => {
+            if (document.body.classList.contains("tour-active")) e.preventDefault();
+          }}
+          onInteractOutside={(e) => {
+            if (document.body.classList.contains("tour-active")) e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            // O tour fecha o modal disparando um Escape programático (isTrusted=false).
+            // Só bloqueamos o Escape real do usuário.
+            if (document.body.classList.contains("tour-active") && e.isTrusted) e.preventDefault();
+          }}
           onWheelCapture={(e) => {
             const scrollArea = document.getElementById("lead-detail-scroll-area");
             if (!scrollArea) return;

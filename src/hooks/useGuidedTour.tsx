@@ -98,6 +98,26 @@ export function scrollTourViewportTop() {
   });
 }
 
+/** Pré-carrega os chunks das rotas usadas pelo tour (uma única vez cada). */
+const preloadedTourRoutes = new Set<string>();
+export function preloadTourRoutes(routes: Array<string | undefined>) {
+  routes.forEach((route) => {
+    if (!route || preloadedTourRoutes.has(route)) return;
+    preloadedTourRoutes.add(route);
+    const loader =
+      route === "/oportunidades/gestao"
+        ? () => import("@/pages/OpportunitiesManagement")
+        : route === "/oportunidades"
+          ? () => import("@/pages/Dashboard")
+          : route === "/dashboard"
+            ? () => import("@/pages/MainDashboard")
+            : null;
+    loader?.().catch(() => preloadedTourRoutes.delete(route));
+  });
+}
+
+
+
 function resolveTargetSelectors(selector: string) {
   return selector
     .split("||")
@@ -294,7 +314,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     },
     diagnosis: {
       route: "/oportunidades/gestao",
-      target: '[data-tour="lead-score-summary"]',
+      target: '[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]',
       injectDemoLead: true,
       waitMs: 120,
       resolveTargetAfterEnter: true,
@@ -304,7 +324,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         if (!dialog) return;
 
         await activateLeadTab('[data-tour="lead-tab-score"]');
-        const summary = await waitForElement<HTMLElement>('[data-tour="lead-score-summary"]', 25, 70);
+        const summary = await waitForElement<HTMLElement>(
+          '[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]',
+          25,
+          70
+        );
         if (summary) {
           centerElementInScrollArea(summary);
         }
@@ -462,6 +486,8 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     publicDemoSessionRef.current = true;
     document.body.classList.add("public-demo-mode");
     document.body.classList.add("tour-demo-cockpit");
+    // Pré-carrega todas as telas do tour logo no início.
+    preloadTourRoutes(["/dashboard", "/oportunidades", "/oportunidades/gestao"]);
     let cancelled = false;
     (async () => {
       // Wait until the real cockpit is mounted (and give it a frame to paint)
@@ -488,11 +514,15 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     if (!isActive) return;
     const activeStep = steps[currentStepIndex];
     const expectedPath = isPublicDemo ? "/tour-guiado" : activeStep?.route;
-    if (pendingTourPathRef.current === location.pathname) {
-      pendingTourPathRef.current = null;
+    // Enquanto o tour está no meio de uma transição de passo (fechando modal,
+    // navegando, aguardando alvo), o ref fica preenchido. Nesse intervalo a URL
+    // e o passo ativo podem divergir temporariamente — não é navegação externa.
+    if (pendingTourPathRef.current) {
+      if (pendingTourPathRef.current === location.pathname) pendingTourPathRef.current = null;
       return;
     }
     if (!expectedPath || location.pathname === expectedPath) return;
+
 
     setIsActive(false);
     const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
@@ -561,6 +591,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
       // Preload pages used in the tour for instant transitions
       try {
+        preloadTourRoutes(["/dashboard", "/oportunidades", "/oportunidades/gestao"]);
         await Promise.all([
           import("@/pages/Dashboard"),
           import("@/pages/OpportunitiesManagement"),
@@ -625,6 +656,13 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       const step = steps[index];
       if (!step) return;
 
+      // Marca a transição ANTES de qualquer await: enquanto o ref estiver
+      // preenchido, o watcher de rota não derruba o tour por divergência
+      // temporária entre a URL atual e a rota do passo (bug que fechava o
+      // guia ao sair do modal do lead rumo ao passo do SDR Inteligente).
+      const targetRoute = isPublicDemo ? "/tour-guiado" : step.route;
+      pendingTourPathRef.current = targetRoute ?? location.pathname;
+
       // PRE-APPLY sidebar classes BEFORE navigating/measuring so the sidebar
       // is already expanded with the CORRECT submenu open by the time the
       // spotlight measures the target. This prevents the "icon-then-expand"
@@ -637,6 +675,10 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       } else if (step.forceSidebar) {
         document.body.classList.add("tour-sidebar-open");
       }
+
+      // Pré-carrega o chunk da rota do próximo passo para que a transição
+      // seja instantânea (evita o "guia demorando pra carregar").
+      preloadTourRoutes(steps.slice(index, index + 3).map((s) => s.route));
 
       // Close any open lead dialog if we're moving away from diagnosis steps
       const isDialogStep = step.id === "diagnosis" || step.id === "approach-message";
@@ -654,9 +696,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       if (!isDialogAnchoredStep) scrollTourViewportTop();
 
       // Navigate first
-      const targetRoute = isPublicDemo ? "/tour-guiado" : step.route;
       if (targetRoute && location.pathname !== targetRoute) {
-        pendingTourPathRef.current = targetRoute;
         navigate(targetRoute);
         await new Promise((r) => setTimeout(r, step.waitMs ?? 500));
       } else if (step.waitMs) {
@@ -688,6 +728,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       if (!shouldResolveTargetAfterEnter && step.onEnter) {
         await step.onEnter();
       }
+
+      // Transição concluída: volta a monitorar navegações externas.
+      pendingTourPathRef.current = null;
     },
     [navigate, location.pathname, steps, isPublicDemo]
   );
