@@ -342,7 +342,7 @@ export function EventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
+      <DialogContent ref={scrollRef} className="max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-lg">
             {event ? "Editar compromisso" : "Novo compromisso"}
