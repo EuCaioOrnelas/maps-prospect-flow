@@ -511,11 +511,44 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
       const rec = new MediaRecorder(stream);
       chunksRef.current = [];
       cancelRef.current = false;
+
+      // Analisador de volume real — as barras acompanham a voz, como no WhatsApp
+      try {
+        const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+        const ctx = new Ctx();
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 1024;
+        source.connect(analyser);
+        audioCtxRef.current = ctx;
+        analyserRef.current = analyser;
+        setLevels([]);
+        const buf = new Uint8Array(analyser.frequencyBinCount);
+        const tick = () => {
+          const an = analyserRef.current;
+          if (!an) return;
+          an.getByteTimeDomainData(buf);
+          let sum = 0;
+          for (let i = 0; i < buf.length; i += 1) {
+            const v = (buf[i] - 128) / 128;
+            sum += v * v;
+          }
+          const rms = Math.sqrt(sum / buf.length);
+          const level = Math.max(0.06, Math.min(1, rms * 3.2));
+          setLevels((prev) => [...prev, level].slice(-WAVE_BARS));
+          waveRafRef.current = window.setTimeout(tick, 90) as unknown as number;
+        };
+        tick();
+      } catch {
+        /* sem analisador: mantém a gravação funcionando */
+      }
+
       rec.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
       rec.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
+        stopWaveform();
         const seconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
         const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
         chunksRef.current = [];
@@ -537,6 +570,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
       notify("Microfone bloqueado", "Autorize o acesso ao microfone para enviar áudios à Wian.", "destructive");
     }
   };
+
 
   const finishRecording = () => {
     stopTimer();
