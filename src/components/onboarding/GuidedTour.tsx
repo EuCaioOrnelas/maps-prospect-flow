@@ -406,7 +406,7 @@ export function GuidedTour() {
         popupStyle = { top, left, width };
       }
     } else {
-    const popupWidth = popupSize.width || POPUP_W;
+    const popupWidth = Math.min(popupSize.width || POPUP_W, availableWidth);
     const viewportMargin = POPUP_GAP;
     const bounds = {
       top: viewportMargin,
