@@ -212,6 +212,12 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       injectDemoCockpit: true,
       waitMs: 400,
     },
+    "wian-briefing": {
+      route: "/dashboard",
+      target: '[data-tour="wian-briefing"]',
+      injectDemoCockpit: true,
+      waitMs: 500,
+    },
 
     // ---- Captação ----
     "sidebar-oportunidades-intro": {

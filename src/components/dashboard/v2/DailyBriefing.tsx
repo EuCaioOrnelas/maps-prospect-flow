@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,6 +17,72 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { ExecutiveAlert } from "./ExecutiveAlerts";
 import { BriefingAudioBubble } from "./BriefingAudioBubble";
 import wianAvatar from "@/assets/wian-avatar.png";
+
+/** Normaliza o texto da IA antes de renderizar: remove travessões duplos e padroniza listas. */
+function normalizeReply(text: string) {
+  return String(text || "")
+    .replace(/\r/g, "")
+    .replace(/(^|\s)--+(\s|$)/g, "$1—$2")
+    .replace(/^\s*[-*]\s+/gm, "- ")
+    .replace(/^\s*•\s+/gm, "- ")
+    .replace(/\n{3,}/g, "\n\n");
+}
+
+/** Renderiza a resposta da Wian com markdown (negrito, listas e tópicos). */
+const RichText = ({ text }: { text: string }) => (
+  <div className="text-sm leading-relaxed [&_p]:my-0 [&_p+p]:mt-2 break-words">
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+        em: ({ children }) => <em className="italic">{children}</em>,
+        ul: ({ children }) => <ul className="mt-2 space-y-1.5 list-none pl-0">{children}</ul>,
+        ol: ({ children }) => <ol className="mt-2 space-y-1.5 list-decimal pl-4">{children}</ol>,
+        li: ({ children }) => (
+          <li className="relative pl-4 before:absolute before:left-0 before:top-[0.55em] before:h-1.5 before:w-1.5 before:rounded-full before:bg-primary/70 marker:text-primary">
+            {children}
+          </li>
+        ),
+        h1: ({ children }) => <p className="font-semibold text-foreground mt-2">{children}</p>,
+        h2: ({ children }) => <p className="font-semibold text-foreground mt-2">{children}</p>,
+        h3: ({ children }) => <p className="font-semibold text-foreground mt-2">{children}</p>,
+        a: ({ children, href }) => (
+          <a href={href} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">
+            {children}
+          </a>
+        ),
+        code: ({ children }) => (
+          <code className="rounded bg-muted px-1 py-0.5 text-[12px] font-mono">{children}</code>
+        ),
+      }}
+    >
+      {normalizeReply(text)}
+    </ReactMarkdown>
+  </div>
+);
+
+/** Conversa fictícia usada no tour guiado para demonstrar a Wian em ação. */
+const DEMO_CONVERSATION: { role: ChatRole; content: string; offsetMin: number }[] = [
+  { role: "user", content: "O que eu devo priorizar hoje?", offsetMin: 6 },
+  {
+    role: "assistant",
+    offsetMin: 6,
+    content:
+      "Priorize três frentes hoje, nesta ordem:\n\n- 🔴 **12 leads quentes sem contato há 3 dias** — score médio 82. Abra o CRM, filtre por score acima de 80 e dispare a abordagem. Potencial parado: **R$ 148.400,00**.\n- 🟡 **Taxa de resposta em 21%** — abaixo dos 28% da semana passada. Ajuste a primeira mensagem no SDR Inteligente para abrir com diagnóstico, não com oferta.\n- 🟢 **Ticket médio subiu para R$ 4.180,00** — mantenha o mesmo perfil de empresa na próxima busca de prospecção.\n\nMeta realista para hoje: **8 novas conversas** e **2 reuniões agendadas**. Quer que eu detalhe o plano da primeira frente?",
+  },
+  { role: "user", content: "Sim, detalhe a primeira frente", offsetMin: 7 },
+  {
+    role: "assistant",
+    offsetMin: 7,
+    content:
+      "Frente 1 — **Reativar os 12 leads quentes**\n\n- **Problema:** contatos com alta intenção parados na etapa Em negociação.\n- **Ação:** CRM → filtro Score > 80 → enviar abordagem consultiva citando a dor mapeada no diagnóstico.\n- **Meta:** 5 respostas em 48h e 2 propostas enviadas até sexta.\n\nSe você fizer isso hoje, a projeção de receita do mês sobe de **R$ 369.168,00** para cerca de **R$ 412.000,00**. Quer que eu acompanhe esse indicador amanhã no briefing?",
+  },
+];
+/** Quantidade de barras exibidas na onda de gravação. */
+const WAVE_BARS = 34;
+
+
+
 
 
 export interface BriefingMetrics {
@@ -37,7 +105,10 @@ interface DailyBriefingProps {
   periodDays: number;
   metrics?: BriefingMetrics;
   capabilities?: BriefingCapabilities;
+  /** Modo demonstração (tour guiado): simula uma conversa real com a Wian, sem chamar a IA. */
+  demoConversation?: boolean;
 }
+
 
 
 type ChatRole = "user" | "assistant";
@@ -167,7 +238,7 @@ const SDR_TERMS = /\bsdr\b|agente ia|agentes ia|copiloto/i;
 const timeLabel = (ts: number) =>
   new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilities }: DailyBriefingProps) {
+export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilities, demoConversation }: DailyBriefingProps) {
   const caps: BriefingCapabilities = capabilities ?? {
     planName: "—",
     opportunities: true,
@@ -197,6 +268,26 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
   const timerRef = useRef<number | null>(null);
   const lastToastRef = useRef<string | null>(null);
 
+  // Ondas do áudio em tempo real (volume da voz)
+  const [levels, setLevels] = useState<number[]>([]);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const waveRafRef = useRef<number | null>(null);
+
+  const stopWaveform = () => {
+    if (waveRafRef.current) window.clearTimeout(waveRafRef.current);
+    waveRafRef.current = null;
+    analyserRef.current = null;
+    try {
+      void audioCtxRef.current?.close();
+    } catch {
+      /* ignore */
+    }
+    audioCtxRef.current = null;
+    setLevels([]);
+  };
+
+
   const initials = useMemo(() => {
     const n = (profile?.name || userName || "").trim();
     if (!n) return "EU";
@@ -217,6 +308,17 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
   // Conversa do dia + limpeza dos dias anteriores (reset diário do briefing)
   useEffect(() => {
+    if (demoConversation) {
+      // Tour guiado: conversa simulada com dados fictícios, sem tocar no armazenamento real
+      setMessages(
+        DEMO_CONVERSATION.map((m) => ({
+          role: m.role,
+          content: m.content,
+          at: Date.now() - (10 - m.offsetMin) * 60_000,
+        })),
+      );
+      return;
+    }
     setMessages(readJSON<ChatMsg[]>(CHAT_KEY(), []));
     try {
       const prefix = "wiize:briefing:chat:";
@@ -227,11 +329,13 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [demoConversation]);
+
 
   useEffect(() => {
+    if (demoConversation) return;
     if (metrics && Object.keys(metrics).length > 0) persistSnapshot(metrics, periodDays, alerts || []);
-  }, [metrics, periodDays, alerts]);
+  }, [metrics, periodDays, alerts, demoConversation]);
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
@@ -242,12 +346,18 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     const el = inputRef.current;
     if (!el) return;
     el.style.height = "0px";
-    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    el.style.height = `${Math.min(Math.max(el.scrollHeight, 40), 120)}px`;
   }, [input]);
 
   useEffect(() => {
     return () => {
       if (timerRef.current) window.clearInterval(timerRef.current);
+      if (waveRafRef.current) window.clearTimeout(waveRafRef.current);
+      try {
+        void audioCtxRef.current?.close();
+      } catch {
+        /* ignore */
+      }
     };
   }, []);
 
@@ -287,7 +397,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
       : { interactions: 0, topics: {} };
     const veteran = (persona.interactions ?? 0) >= 8;
     const topTopic = Object.entries(persona.topics || {}).sort((a, b) => b[1] - a[1])[0]?.[0];
-    const bullets = (items: ExecutiveAlert[]) => items.slice(0, 5).map((a) => `• ${a.text}`).join("\n");
+    const bullets = (items: ExecutiveAlert[]) => items.slice(0, 5).map((a) => `- ${a.text}`).join("\n");
 
     const m1 = veteran
       ? `${greeting(today.getHours())}${name ? `, ${name}` : ""}. Briefing de ${dateLabel} — janela de ${periodDays} dias. ${list.length} indicadores analisados: ${critical.length} crítico(s), ${attention.length} em atenção, ${positives.length} positivo(s).${topTopic ? ` Já deixei ${topTopic} mapeado, como você costuma acompanhar.` : ""}`
@@ -312,7 +422,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     if (resolvedSinceYesterday.length > 0) {
       parts3.push(
         `✅ Comparando com o briefing de ontem, estes pontos foram resolvidos:\n${resolvedSinceYesterday
-          .map((t) => `• ${t}`)
+          .map((t) => `- ${t}`)
           .join("\n")}\nBom trabalho — vale sustentar o ritmo.`,
       );
     }
@@ -331,6 +441,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
   /** Envia texto ou áudio para a Wian. Quando há áudio, ela transcreve e responde ao conteúdo falado. */
   const send = async (raw?: string, voice?: { blob: Blob; seconds: number }) => {
+    if (demoConversation) return; // tour guiado: apenas demonstração
     const question = voice ? "" : (raw ?? input).trim();
     if ((!question && !voice) || sending) return;
 
@@ -429,11 +540,44 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
       const rec = new MediaRecorder(stream);
       chunksRef.current = [];
       cancelRef.current = false;
+
+      // Analisador de volume real — as barras acompanham a voz, como no WhatsApp
+      try {
+        const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+        const ctx = new Ctx();
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 1024;
+        source.connect(analyser);
+        audioCtxRef.current = ctx;
+        analyserRef.current = analyser;
+        setLevels([]);
+        const buf = new Uint8Array(analyser.frequencyBinCount);
+        const tick = () => {
+          const an = analyserRef.current;
+          if (!an) return;
+          an.getByteTimeDomainData(buf);
+          let sum = 0;
+          for (let i = 0; i < buf.length; i += 1) {
+            const v = (buf[i] - 128) / 128;
+            sum += v * v;
+          }
+          const rms = Math.sqrt(sum / buf.length);
+          const level = Math.max(0.06, Math.min(1, rms * 3.2));
+          setLevels((prev) => [...prev, level].slice(-WAVE_BARS));
+          waveRafRef.current = window.setTimeout(tick, 90) as unknown as number;
+        };
+        tick();
+      } catch {
+        /* sem analisador: mantém a gravação funcionando */
+      }
+
       rec.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
       rec.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
+        stopWaveform();
         const seconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
         const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
         chunksRef.current = [];
@@ -455,6 +599,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
       notify("Microfone bloqueado", "Autorize o acesso ao microfone para enviar áudios à Wian.", "destructive");
     }
   };
+
 
   const finishRecording = () => {
     stopTimer();
@@ -509,15 +654,10 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     <div className="flex gap-2.5 items-start">
       <div className={cn("w-[30px] shrink-0", !first && "opacity-0")}>{first ? <Avatar /> : <div />}</div>
       <div className="max-w-[86%] min-w-0">
-        <div
-          className={cn(
-            "bg-muted/70 px-3.5 py-2.5 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap break-words",
-            "rounded-2xl",
-            first ? "rounded-tl-sm" : "rounded-tl-sm",
-          )}
-        >
-          {text}
+        <div className="rounded-2xl rounded-tl-sm bg-muted/70 px-3.5 py-2.5 text-foreground/90">
+          <RichText text={text} />
         </div>
+
         <span className="mt-1 block text-[10px] text-muted-foreground/70">{timeLabel(at)}</span>
       </div>
 
@@ -678,18 +818,20 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                     <span className="text-sm font-mono tabular-nums text-foreground/80 shrink-0">
                       {Math.floor(elapsed / 60)}:{(elapsed % 60).toString().padStart(2, "0")}
                     </span>
-                    <div className="flex-1 min-w-0 flex items-center gap-[2px] overflow-hidden">
-                      {Array.from({ length: 28 }).map((_, i) => (
-                        <span
-                          key={i}
-                          className="flex-1 rounded-full bg-destructive/50 animate-pulse"
-                          style={{
-                            height: `${6 + ((i * 7 + elapsed * 3) % 16)}px`,
-                            animationDelay: `${(i % 6) * 0.08}s`,
-                          }}
-                        />
-                      ))}
+                    <div className="flex-1 min-w-0 h-6 flex items-center justify-start gap-[2px] overflow-hidden">
+                      {Array.from({ length: WAVE_BARS }).map((_, i) => {
+                        const lvl = levels[levels.length - WAVE_BARS + i];
+                        const h = lvl ? 3 + lvl * 19 : 3;
+                        return (
+                          <span
+                            key={i}
+                            className="w-[3px] shrink-0 rounded-full bg-destructive/70 transition-[height] duration-100 ease-out"
+                            style={{ height: `${h}px` }}
+                          />
+                        );
+                      })}
                     </div>
+
                     <span className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
                       {locked ? (
                         <>
@@ -701,7 +843,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                     </span>
                   </div>
                 ) : (
-                  <div className="flex-1 min-w-0 rounded-xl border border-border/60 bg-background focus-within:border-primary/50 transition-colors">
+                  <div className="flex-1 min-w-0 flex items-center rounded-xl border border-border/60 bg-background focus-within:border-primary/50 transition-colors">
                     <textarea
                       ref={inputRef}
                       value={input}
@@ -714,7 +856,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                       }}
                       rows={1}
                       placeholder="Pergunte à Wian sobre suas métricas, CRM, vendas ou SDR..."
-                      className="w-full resize-none bg-transparent px-3 py-2.5 text-sm leading-relaxed outline-none placeholder:text-muted-foreground/70 max-h-[120px] overflow-y-auto scrollbar-thin"
+                      className="w-full resize-none bg-transparent px-3 py-[9px] text-sm leading-[22px] outline-none placeholder:text-muted-foreground/70 min-h-[40px] max-h-[120px] overflow-y-auto scrollbar-thin"
                       disabled={sending}
                       maxLength={600}
                     />
@@ -723,9 +865,10 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
                 {input.trim() && !recording ? (
                   <Button
+                    key="send"
                     type="submit"
                     size="sm"
-                    className="h-10 w-10 p-0 rounded-sm shrink-0"
+                    className="h-10 w-10 p-0 rounded-sm shrink-0 animate-scale-in"
                     disabled={sending}
                     aria-label="Enviar"
                   >
@@ -733,10 +876,14 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                   </Button>
                 ) : (
                   <Button
+                    key="mic"
                     type="button"
                     size="sm"
                     variant={recording ? "destructive" : "default"}
-                    className={cn("h-10 w-10 p-0 rounded-sm shrink-0 transition-transform", recording && "scale-110")}
+                    className={cn(
+                      "h-10 w-10 p-0 rounded-sm shrink-0 animate-scale-in transition-transform duration-200",
+                      recording && "scale-110",
+                    )}
                     disabled={sending}
                     onPointerDown={onMicDown}
                     onPointerUp={onMicUp}
@@ -752,13 +899,14 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                     {sending ? (
                       <Loader2 size={15} className="animate-spin" />
                     ) : recording && locked ? (
-                      <Send size={15} />
+                      <Send size={15} className="animate-scale-in" />
                     ) : (
-                      <Mic size={15} />
+                      <Mic size={15} className="animate-scale-in" />
                     )}
                   </Button>
                 )}
               </form>
+
 
               <p className="px-3 pb-3 -mt-1 text-[10px] text-muted-foreground/80">
                 A Wian analisa cockpit, CRM, atendimento, campanhas{caps.opportunities ? ", prospecção" : ""}
