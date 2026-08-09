@@ -342,15 +342,21 @@ export function GuidedTour() {
   const currentPillarIndex = Math.max(0, TOUR_PILLARS.findIndex((pillar) => pillar.key === getPillarKey(step.id)));
   const currentPillar = TOUR_PILLARS[currentPillarIndex] ?? TOUR_PILLARS[0];
 
-  // Spotlight rect (with padding)
+  // Spotlight rect (with padding), sempre clampado ao viewport para nunca
+  // "vazar" da tela em resoluções pequenas.
+  const VIEW_MARGIN = 12;
   const spot = spotlightRect
-    ? {
-        top: spotlightRect.top - PADDING,
-        left: spotlightRect.left - PADDING,
-        width: spotlightRect.width + PADDING * 2,
-        height: spotlightRect.height + PADDING * 2,
-      }
+    ? (() => {
+        const top = Math.max(VIEW_MARGIN, spotlightRect.top - PADDING);
+        const left = Math.max(VIEW_MARGIN, spotlightRect.left - PADDING);
+        const bottom = Math.min(window.innerHeight - VIEW_MARGIN, spotlightRect.top + spotlightRect.height + PADDING);
+        const right = Math.min(window.innerWidth - VIEW_MARGIN, spotlightRect.left + spotlightRect.width + PADDING);
+        return { top, left, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
+      })()
     : null;
+
+  // Largura do card sempre cabe na tela.
+  const availableWidth = Math.max(260, Math.min(POPUP_W, window.innerWidth - 32));
 
   // Compute popup position — auto-flip so the card never overlaps the spotlight border
   let popupStyle: React.CSSProperties = {};
@@ -359,8 +365,9 @@ export function GuidedTour() {
       top: "50%",
       left: "50%",
       transform: "translate(-50%, -50%)",
-      width: POPUP_W,
+      width: availableWidth,
     };
+
   } else {
     const requestedPlacement = (step.placement ?? "bottom") as "top" | "bottom" | "left" | "right";
     const targetElement = step.target ? (queryTourTarget(step.target) as HTMLElement | null) : null;
