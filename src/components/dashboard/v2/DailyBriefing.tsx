@@ -7,13 +7,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronDown, ChevronUp, Send, Loader2, RotateCcw, Info, Zap, ShieldCheck } from "lucide-react";
+import { ChevronDown, ChevronUp, Send, Loader2, RotateCcw, Info, Zap, ShieldCheck, Mic, Trash2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ExecutiveAlert } from "./ExecutiveAlerts";
+import { BriefingAudioBubble } from "./BriefingAudioBubble";
 import wianAvatar from "@/assets/wian-avatar.png";
+
 
 export interface BriefingMetrics {
   [label: string]: number | string;
@@ -43,7 +45,11 @@ interface ChatMsg {
   role: ChatRole;
   content: string;
   at: number;
+  /** Mensagem de voz do gestor (blob local, válido apenas na sessão atual) */
+  audioUrl?: string;
+  audioSeconds?: number;
 }
+
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -169,8 +175,8 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     agents: true,
   };
 
-  const { toast } = useToast();
-  const { user } = useAuth();
+  const { toast, dismiss } = useToast();
+  const { user, profile } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showQuick, setShowQuick] = useState(true);
@@ -179,6 +185,31 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
+
+  // ---- Gravação de voz ----
+  const [recording, setRecording] = useState(false);
+  const [locked, setLocked] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const cancelRef = useRef(false);
+  const startedAtRef = useRef(0);
+  const timerRef = useRef<number | null>(null);
+  const lastToastRef = useRef<string | null>(null);
+
+  const initials = useMemo(() => {
+    const n = (profile?.name || userName || "").trim();
+    if (!n) return "EU";
+    const parts = n.split(/\s+/);
+    return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() || "EU";
+  }, [profile?.name, userName]);
+
+  /** Aviso único: sempre apaga o anterior quando chega uma nova mensagem da Wian. */
+  const notify = (title: string, description: string, variant?: "destructive") => {
+    if (lastToastRef.current) dismiss(lastToastRef.current);
+    const t = toast({ title, description, variant });
+    lastToastRef.current = t.id;
+  };
 
   const today = new Date();
   const dateLabel = today.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -205,6 +236,21 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
+
+  // Auto-altura do input (limite + scroll interno, igual WhatsApp)
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "0px";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, [input]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+    };
+  }, []);
+
 
   // Remove indicadores de módulos que o plano do usuário não possui (ex.: Atendimento sem prospecção/SDR)
   const list = useMemo(
@@ -283,22 +329,43 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     return [m1, m2, m3, m4];
   }, [list, critical, attention, positives, resolvedSinceYesterday, userName, periodDays, dateLabel, user?.id]);
 
-  const send = async (raw?: string) => {
-    const question = (raw ?? input).trim();
-    if (!question || sending) return;
+  /** Envia texto ou áudio para a Wian. Quando há áudio, ela transcreve e responde ao conteúdo falado. */
+  const send = async (raw?: string, voice?: { blob: Blob; seconds: number }) => {
+    const question = voice ? "" : (raw ?? input).trim();
+    if ((!question && !voice) || sending) return;
 
-    const next = [...messages, { role: "user" as ChatRole, content: question, at: Date.now() }];
+    let audioUrl: string | undefined;
+    let audioB64: string | undefined;
+    if (voice) {
+      audioUrl = URL.createObjectURL(voice.blob);
+      audioB64 = await new Promise<string>((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result).split(",")[1] || "");
+        fr.onerror = () => reject(new Error("Falha ao ler o áudio"));
+        fr.readAsDataURL(voice.blob);
+      });
+    }
+
+    const userMsg: ChatMsg = {
+      role: "user",
+      content: question || "🎤 Mensagem de voz",
+      at: Date.now(),
+      ...(audioUrl ? { audioUrl, audioSeconds: voice?.seconds } : {}),
+    };
+    const next = [...messages, userMsg];
     setMessages(next);
-    writeJSON(CHAT_KEY(), next);
-    setInput("");
+    writeJSON(CHAT_KEY(), next.map((m) => ({ ...m, audioUrl: undefined })));
+    if (!voice) setInput("");
     setSending(true);
 
     try {
       const snapshots = readJSON<Snapshot[]>(SNAP_KEY, []);
-      const persona = user?.id ? bumpPersona(user.id, question) : undefined;
+      const persona = user?.id ? bumpPersona(user.id, question || "audio") : undefined;
       const { data, error } = await supabase.functions.invoke("briefing-chat", {
         body: {
           message: question,
+          audio: audioB64,
+          audio_mime: voice ? voice.blob.type || "audio/webm" : undefined,
           persona,
           // O briefing lido pelo gestor entra como memória inicial da conversa
           messages: [
@@ -318,30 +385,106 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
       if (error) throw error;
       if ((data as any)?.error === "daily_limit") {
-        toast({
-          title: "Limite diário atingido",
-          description: "Você já usou as consultas de hoje com a Wian. Ela volta amanhã com o novo briefing.",
-          variant: "destructive",
-        });
+        notify(
+          "Limite diário atingido",
+          "Você já usou as consultas de hoje com a Wian. Ela volta amanhã com o novo briefing.",
+          "destructive",
+        );
         return;
       }
 
       const reply = (data as any)?.reply?.trim();
       if (!reply) throw new Error("Resposta vazia");
 
-      const withReply = [...next, { role: "assistant" as ChatRole, content: reply, at: Date.now() }];
+      const transcript = (data as any)?.transcript?.trim();
+      const base = transcript
+        ? next.map((m, i) => (i === next.length - 1 && m.audioUrl ? { ...m, content: transcript } : m))
+        : next;
+      const withReply = [...base, { role: "assistant" as ChatRole, content: reply, at: Date.now() }];
       setMessages(withReply);
-      writeJSON(CHAT_KEY(), withReply);
+      writeJSON(CHAT_KEY(), withReply.map((m) => ({ ...m, audioUrl: undefined })));
+      notify("Wian respondeu", reply.replace(/\s+/g, " ").slice(0, 110) + (reply.length > 110 ? "…" : ""));
     } catch (e: any) {
-      toast({
-        title: "Não consegui responder agora",
-        description: e?.message ? String(e.message) : "Tente novamente em instantes.",
-        variant: "destructive",
-      });
+      notify(
+        "Não consegui responder agora",
+        e?.message ? String(e.message) : "Tente novamente em instantes.",
+        "destructive",
+      );
     } finally {
       setSending(false);
       inputRef.current?.focus();
     }
+  };
+
+  // ---- Controles de gravação (segurar para enviar · toque rápido para travar) ----
+  const stopTimer = () => {
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    timerRef.current = null;
+  };
+
+  const startRecording = async () => {
+    if (recording || sending) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      const rec = new MediaRecorder(stream);
+      chunksRef.current = [];
+      cancelRef.current = false;
+      rec.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      rec.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const seconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
+        const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
+        chunksRef.current = [];
+        if (cancelRef.current || seconds < 1 || blob.size < 1200) return;
+        void send(undefined, { blob, seconds });
+      };
+      recorderRef.current = rec;
+      startedAtRef.current = Date.now();
+      setElapsed(0);
+      rec.start();
+      setRecording(true);
+      stopTimer();
+      timerRef.current = window.setInterval(() => {
+        const s = Math.round((Date.now() - startedAtRef.current) / 1000);
+        setElapsed(s);
+        if (s >= 120) finishRecording();
+      }, 250);
+    } catch {
+      notify("Microfone bloqueado", "Autorize o acesso ao microfone para enviar áudios à Wian.", "destructive");
+    }
+  };
+
+  const finishRecording = () => {
+    stopTimer();
+    setRecording(false);
+    setLocked(false);
+    try {
+      recorderRef.current?.state !== "inactive" && recorderRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const cancelRecording = () => {
+    cancelRef.current = true;
+    finishRecording();
+  };
+
+  const onMicDown = () => {
+    if (recording) return;
+    void startRecording();
+  };
+
+  const onMicUp = () => {
+    if (!recording) return;
+    // Toque rápido trava a gravação (mãos livres); segurar envia ao soltar.
+    if (Date.now() - startedAtRef.current < 500) {
+      setLocked(true);
+      return;
+    }
+    if (!locked) finishRecording();
   };
 
   const clearChat = () => {
@@ -363,20 +506,21 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
   );
 
   const AssistantRow = ({ text, at, first }: { text: string; at: number; first: boolean }) => (
-    <div className="flex gap-2.5 items-end">
+    <div className="flex gap-2.5 items-start">
       <div className={cn("w-[30px] shrink-0", !first && "opacity-0")}>{first ? <Avatar /> : <div />}</div>
       <div className="max-w-[86%] min-w-0">
         <div
           className={cn(
             "bg-muted/70 px-3.5 py-2.5 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap break-words",
             "rounded-2xl",
-            first ? "rounded-bl-sm" : "rounded-bl-sm",
+            first ? "rounded-tl-sm" : "rounded-tl-sm",
           )}
         >
           {text}
         </div>
         <span className="mt-1 block text-[10px] text-muted-foreground/70">{timeLabel(at)}</span>
       </div>
+
     </div>
   );
 
@@ -384,7 +528,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     <>
       <section className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm">
         {/* Header estilo chat */}
-        <header className="flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-muted/30">
+        <header className="flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-card">
           <div className="relative shrink-0">
             <Avatar size={38} />
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
@@ -426,7 +570,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
             {/* Thread */}
             <div
               ref={threadRef}
-              className="max-h-[520px] overflow-y-auto px-4 py-4 space-y-3 bg-background/40"
+              className="max-h-[520px] overflow-y-auto scrollbar-thin px-4 py-4 space-y-3 bg-background/40"
             >
               <div className="flex justify-center">
                 <span className="px-2.5 py-1 rounded-sm bg-muted/70 text-[10px] font-medium text-muted-foreground">
@@ -444,8 +588,18 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                 ) : (
                   <div key={`m-${i}`} className="flex justify-end">
                     <div className="max-w-[86%] min-w-0">
-                      <div className="rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words">
-                        {m.content}
+                      <div className="rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                        {m.audioUrl ? (
+                          <BriefingAudioBubble
+                            src={m.audioUrl}
+                            seconds={m.audioSeconds}
+                            avatarUrl={profile?.avatar_url}
+                            initials={initials}
+                            transcript={m.content?.startsWith("🎤") ? null : m.content}
+                          />
+                        ) : (
+                          m.content
+                        )}
                       </div>
                       <span className="mt-1 block text-right text-[10px] text-muted-foreground/70">{timeLabel(m.at)}</span>
                     </div>
@@ -454,9 +608,9 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
               )}
 
               {sending && (
-                <div className="flex gap-2.5 items-end">
+                <div className="flex gap-2.5 items-start">
                   <Avatar />
-                  <div className="rounded-2xl rounded-bl-sm bg-muted/70 px-3.5 py-3 flex items-center gap-1.5">
+                  <div className="rounded-2xl rounded-tl-sm bg-muted/70 px-3.5 py-3 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
@@ -465,76 +619,147 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
               )}
             </div>
 
+
             {/* Composer */}
             <div className="border-t border-border/50 bg-card">
-              {/* Mensagens rápidas — mesmo padrão do chat */}
-              <div className="px-3 pt-2.5">
-                <button
-                  type="button"
-                  onClick={() => setShowQuick((v) => !v)}
-                  className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Zap size={12} className="text-primary" />
-                  Mensagens rápidas
-                  {showQuick ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                </button>
-                {showQuick && (
-                  <div className="mt-2 flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
-                    {SUGGESTIONS.filter(
-                      (s) =>
-                        !s.requires ||
-                        (s.requires === "opportunities" ? caps.opportunities : caps.sdr),
-                    ).map((s) => (
-                      <button
-                        key={s.shortcut}
-                        type="button"
-                        disabled={sending}
-                        onClick={() => send(s.label)}
-                        className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border border-border/60 bg-muted/40 hover:bg-muted hover:border-primary/40 transition-colors disabled:opacity-50"
-                      >
-                        <code className="text-[10px] font-mono font-semibold text-primary">/{s.shortcut}</code>
-                        <span className="text-xs text-foreground/80 whitespace-nowrap">{s.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Mensagens rápidas — somem enquanto o gestor digita ou grava */}
+              {!input.trim() && !recording && (
+                <div className="px-3 pt-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowQuick((v) => !v)}
+                    className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Zap size={12} className="text-primary" />
+                    Mensagens rápidas
+                    {showQuick ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  </button>
+                  {showQuick && (
+                    <div className="mt-2 flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
+                      {SUGGESTIONS.filter(
+                        (s) =>
+                          !s.requires ||
+                          (s.requires === "opportunities" ? caps.opportunities : caps.sdr),
+                      ).map((s) => (
+                        <button
+                          key={s.shortcut}
+                          type="button"
+                          disabled={sending}
+                          onClick={() => send(s.label)}
+                          className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border border-border/60 bg-muted/40 hover:bg-muted hover:border-primary/40 transition-colors disabled:opacity-50"
+                        >
+                          <code className="text-[10px] font-mono font-semibold text-primary">/{s.shortcut}</code>
+                          <span className="text-xs text-foreground/80 whitespace-nowrap">{s.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   send();
                 }}
-                className="p-3 pt-2 flex items-end gap-2"
+                className="p-3 pt-2.5 flex items-end gap-2"
               >
-                <div className="flex-1 min-w-0 rounded-xl border border-border/60 bg-background focus-within:border-primary/50 transition-colors">
-                  <textarea
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        send();
-                      }
-                    }}
-                    rows={1}
-                    placeholder="Pergunte à Wian sobre suas métricas, CRM, vendas ou SDR..."
-                    className="w-full resize-none bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground/70 max-h-28"
+                {recording ? (
+                  <div className="flex-1 min-w-0 h-10 flex items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/5 px-3">
+                    <button
+                      type="button"
+                      onClick={cancelRecording}
+                      className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                      aria-label="Cancelar gravação"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <span className="w-2 h-2 rounded-full bg-destructive animate-pulse shrink-0" />
+                    <span className="text-sm font-mono tabular-nums text-foreground/80 shrink-0">
+                      {Math.floor(elapsed / 60)}:{(elapsed % 60).toString().padStart(2, "0")}
+                    </span>
+                    <div className="flex-1 min-w-0 flex items-center gap-[2px] overflow-hidden">
+                      {Array.from({ length: 28 }).map((_, i) => (
+                        <span
+                          key={i}
+                          className="flex-1 rounded-full bg-destructive/50 animate-pulse"
+                          style={{
+                            height: `${6 + ((i * 7 + elapsed * 3) % 16)}px`,
+                            animationDelay: `${(i % 6) * 0.08}s`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <span className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
+                      {locked ? (
+                        <>
+                          <Lock size={10} /> Travado
+                        </>
+                      ) : (
+                        "Solte para enviar"
+                      )}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex-1 min-w-0 rounded-xl border border-border/60 bg-background focus-within:border-primary/50 transition-colors">
+                    <textarea
+                      ref={inputRef}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          send();
+                        }
+                      }}
+                      rows={1}
+                      placeholder="Pergunte à Wian sobre suas métricas, CRM, vendas ou SDR..."
+                      className="w-full resize-none bg-transparent px-3 py-2.5 text-sm leading-relaxed outline-none placeholder:text-muted-foreground/70 max-h-[120px] overflow-y-auto scrollbar-thin"
+                      disabled={sending}
+                      maxLength={600}
+                    />
+                  </div>
+                )}
+
+                {input.trim() && !recording ? (
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="h-10 w-10 p-0 rounded-sm shrink-0"
                     disabled={sending}
-                    maxLength={600}
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="h-10 w-10 p-0 rounded-sm shrink-0"
-                  disabled={sending || !input.trim()}
-                  aria-label="Enviar"
-                >
-                  {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                </Button>
+                    aria-label="Enviar"
+                  >
+                    {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={recording ? "destructive" : "default"}
+                    className={cn("h-10 w-10 p-0 rounded-sm shrink-0 transition-transform", recording && "scale-110")}
+                    disabled={sending}
+                    onPointerDown={onMicDown}
+                    onPointerUp={onMicUp}
+                    onPointerLeave={() => {
+                      if (recording && !locked) onMicUp();
+                    }}
+                    onClick={() => {
+                      if (recording && locked) finishRecording();
+                    }}
+                    aria-label={recording ? "Enviar áudio" : "Gravar áudio"}
+                    title="Segure para gravar e solte para enviar · toque rápido para travar"
+                  >
+                    {sending ? (
+                      <Loader2 size={15} className="animate-spin" />
+                    ) : recording && locked ? (
+                      <Send size={15} />
+                    ) : (
+                      <Mic size={15} />
+                    )}
+                  </Button>
+                )}
               </form>
+
               <p className="px-3 pb-3 -mt-1 text-[10px] text-muted-foreground/80">
                 A Wian analisa cockpit, CRM, atendimento, campanhas{caps.opportunities ? ", prospecção" : ""}
                 {caps.sdr ? ", SDR Inteligente" : ""} e agenda desta conta ({caps.planName}). Disponível apenas para
