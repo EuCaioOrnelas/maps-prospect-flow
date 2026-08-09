@@ -422,7 +422,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     if (resolvedSinceYesterday.length > 0) {
       parts3.push(
         `✅ Comparando com o briefing de ontem, estes pontos foram resolvidos:\n${resolvedSinceYesterday
-          .map((t) => `• ${t}`)
+          .map((t) => `- ${t}`)
           .join("\n")}\nBom trabalho — vale sustentar o ritmo.`,
       );
     }
