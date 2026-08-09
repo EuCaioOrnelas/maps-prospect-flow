@@ -138,6 +138,61 @@ Deno.serve(async (req) => {
       return json({ error: "Campos obrigatórios ausentes" }, 400);
     }
 
+    // 0) Garante uma conversa para que TUDO que o SDR falar fique visível no chat
+    const phoneTail = String(contact_phone).replace(/\D/g, "").slice(-8);
+    let convId: string | null = conversation_id || null;
+    if (!convId) {
+      const { data: existingConv } = await supabase
+        .from("chat_conversations")
+        .select("id")
+        .eq("owner_user_id", owner_user_id)
+        .eq("waba_connection_id", waba_connection_id)
+        .or(`contact_phone.eq.${contact_phone},contact_phone.ilike.%${phoneTail}`)
+        .limit(1)
+        .maybeSingle();
+      if (existingConv?.id) {
+        convId = existingConv.id;
+      } else {
+        const { data: newConv } = await supabase
+          .from("chat_conversations")
+          .insert({
+            user_id: user_id || owner_user_id,
+            owner_user_id,
+            waba_connection_id,
+            phone_number_id: phone_number_id || null,
+            contact_phone,
+            contact_name: contact_name || null,
+          })
+          .select("id")
+          .maybeSingle();
+        convId = newConv?.id || null;
+      }
+    }
+
+    // Transcrição do áudio do lead vira texto visível no chat
+    if (convId && (audioTranscript || audioTranscriptionFailed)) {
+      const { data: lastAudio } = await supabase
+        .from("chat_messages")
+        .select("id")
+        .eq("conversation_id", convId)
+        .eq("direction", "inbound")
+        .eq("message_type", "audio")
+        .is("content", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lastAudio?.id) {
+        await supabase
+          .from("chat_messages")
+          .update({
+            content: audioTranscript
+              ? `🎤 ${audioTranscript}`
+              : "🎤 Áudio recebido (não foi possível transcrever)",
+          })
+          .eq("id", lastAudio.id);
+      }
+    }
+
     // 1) Encontrar SDR ativo responsável por este número
     const { data: agents } = await supabase
       .from("sdr_agents")
@@ -364,7 +419,7 @@ Deno.serve(async (req) => {
         await supabase
           .from("chat_conversations")
           .update({ responsible_user_id: firstSellerId })
-          .eq("id", conversation_id);
+          .eq("id", convId);
       }
 
       const wabaLabel = (() => {
@@ -444,13 +499,24 @@ Deno.serve(async (req) => {
       const metaJson = await metaRes.json().catch(() => ({}));
       if (!metaRes.ok) {
         console.error("[sdr-dispatch] Meta erro:", metaRes.status, JSON.stringify(metaJson));
+        if (convId) {
+          await supabase.from("chat_messages").insert({
+            conversation_id: convId,
+            user_id: user_id || owner_user_id,
+            owner_user_id,
+            direction: "outbound",
+            message_type: "text",
+            content: text,
+            status: "failed",
+          });
+        }
         break;
       }
       sent++;
 
-      if (conversation_id) {
+      if (convId) {
         await supabase.from("chat_messages").insert({
-          conversation_id,
+          conversation_id: convId,
           user_id: user_id || owner_user_id,
           owner_user_id,
           waba_message_id: metaJson?.messages?.[0]?.id || null,
@@ -462,7 +528,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (conversation_id && sent > 0) {
+    if (convId && sent > 0) {
       await supabase
         .from("chat_conversations")
         .update({
@@ -471,7 +537,7 @@ Deno.serve(async (req) => {
           last_message_type: "text",
           last_message_direction: "outbound",
         })
-        .eq("id", conversation_id);
+        .eq("id", convId);
     }
 
     if (session?.id) {
