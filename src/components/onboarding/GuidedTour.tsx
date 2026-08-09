@@ -513,18 +513,12 @@ export function GuidedTour() {
     const overlapY = Math.max(0, Math.min(popupStyle.top + h, spot.top + spot.height) - Math.max(popupStyle.top, spot.top));
     const overlapRatio = (overlapX * overlapY) / Math.max(1, w * h);
     if (overlapRatio > 0.35) {
-      const spotCenterY = spot.top + spot.height / 2;
-      const spotCenterX = spot.left + spot.width / 2;
-      const width = Math.min(w, 380);
+      const width = Math.min(w, 340);
       popupStyle = {
         ...popupStyle,
         width,
-        top: spotCenterY > window.innerHeight / 2
-          ? POPUP_GAP
-          : Math.max(POPUP_GAP, window.innerHeight - h - NAV_SAFE - POPUP_GAP),
-        left: spotCenterX > window.innerWidth / 2
-          ? POPUP_GAP
-          : Math.max(POPUP_GAP, window.innerWidth - width - POPUP_GAP),
+        top: Math.max(POPUP_GAP, Math.min(window.innerHeight - h - NAV_SAFE - POPUP_GAP, spot.top + 8)),
+        left: Math.max(POPUP_GAP, window.innerWidth - width - POPUP_GAP),
         transform: undefined,
       };
     }
