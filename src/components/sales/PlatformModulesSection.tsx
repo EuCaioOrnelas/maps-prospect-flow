@@ -910,15 +910,11 @@ const DottedLine = ({
   travel?: boolean;
 }) => (
   <span className={cn("relative block", className.includes("w-") ? "" : "")}>
-    <motion.span
+    <span
       className={cn("block border-dashed border-primary/45", className)}
       aria-hidden="true"
-      initial={axis === "x" ? { scaleX: 0 } : { scaleY: 0 }}
-      whileInView={axis === "x" ? { scaleX: 1 } : { scaleY: 1 }}
-      viewport={VIEW}
-      transition={{ duration: 0.4, delay, ease: "easeOut" }}
-      style={{ originX: 0, originY: 0 }}
     />
+
     {travel && (
       <motion.span
         className="absolute w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
