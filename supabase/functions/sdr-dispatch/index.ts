@@ -415,7 +415,7 @@ Deno.serve(async (req) => {
           : (agent.closing?.notify_sellers ?? []);
 
       const firstSellerId = sellers.find((s: any) => s?.user_id)?.user_id ?? null;
-      if (nextAction === "chamar_vendedor" && firstSellerId && conversation_id) {
+      if (nextAction === "chamar_vendedor" && firstSellerId && convId) {
         await supabase
           .from("chat_conversations")
           .update({ responsible_user_id: firstSellerId })
