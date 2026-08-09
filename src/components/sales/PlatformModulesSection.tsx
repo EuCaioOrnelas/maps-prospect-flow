@@ -914,36 +914,35 @@ const DottedLine = ({
   axis?: "x" | "y";
   travel?: boolean;
 }) => (
-  <span className={cn("relative block", className.includes("w-") ? "" : "")}>
-    <span
-      className={cn("block border-dashed border-primary/45", className)}
-      aria-hidden="true"
-    />
-
+  <span className={cn("relative block border-dashed border-primary/45", className)} aria-hidden="true">
     {travel && (
       <motion.span
         className="absolute w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
-        style={axis === "x" ? { top: "50%", left: 0, marginTop: -3 } : { left: "50%", top: 0, marginLeft: -3 }}
+        style={
+          axis === "x"
+            ? { top: -4, left: -3 }
+            : { left: -4, top: -3 }
+        }
         initial={{ opacity: 0 }}
         whileInView={
           axis === "x"
-            ? { opacity: [0, 1, 1, 0], x: [0, 32] }
-            : { opacity: [0, 1, 1, 0], y: [0, 20] }
+            ? { opacity: [0, 1, 1, 0], x: [0, 48] }
+            : { opacity: [0, 1, 1, 0], y: [0, 16] }
         }
         viewport={LOOP_VIEW}
         transition={{
-          duration: 0.9 + (delay % 0.45),
-          delay: 0.15 + ((delay * 7) % 0.8),
+          duration: 1.8,
+          delay: 0.4 + ((delay * 7) % 1.2),
           ease: "easeInOut",
           repeat: Infinity,
-          repeatDelay: 0.7 + ((delay * 11) % 1.5),
+          repeatDelay: 1.2 + ((delay * 11) % 1.5),
         }}
         aria-hidden="true"
       />
     )}
-
   </span>
 );
+
 
 const FlowMock = () => (
   <MockShell title="Fluxos Inteligentes — Construtor visual" badge="publicado">
