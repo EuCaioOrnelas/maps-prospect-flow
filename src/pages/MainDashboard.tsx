@@ -233,6 +233,13 @@ export default function MainDashboard() {
                 alerts={kpis.executiveAlerts}
                 userName={(profile as any)?.full_name || (profile as any)?.name || null}
                 periodDays={periodDays}
+                capabilities={{
+                  planName: getPlanDisplayName(profile as any),
+                  opportunities: hasOpportunitiesAccess(profile as any),
+                  sdr: hasSDRInteligenteAccess(profile as any),
+                  agents: hasAIAgentsAccess(profile as any),
+                }}
+
                 metrics={{
                   "Receita potencial (R$)": Math.round(kpis.receitaPotencial || 0),
                   "Variação da receita potencial (%)": Math.round(kpis.receitaPotencialGrowth || 0),
