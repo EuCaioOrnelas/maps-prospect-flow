@@ -17,6 +17,7 @@ import { ExecutiveKPIs } from "@/components/dashboard/v2/ExecutiveKPIs";
 import { OpportunityRadar } from "@/components/dashboard/v2/OpportunityRadar";
 import { OperationalFunnel } from "@/components/dashboard/v2/OperationalFunnel";
 import { ExecutiveAlerts } from "@/components/dashboard/v2/ExecutiveAlerts";
+import { DailyBriefing } from "@/components/dashboard/v2/DailyBriefing";
 import { ForecastChart } from "@/components/dashboard/v2/ForecastChart";
 import { QuickActions } from "@/components/dashboard/v2/QuickActions";
 
@@ -224,7 +225,13 @@ export default function MainDashboard() {
               {/* 4 — Opportunity Radar */}
               <OpportunityRadar radarLeads={kpis.radarLeads} />
 
-              {/* 5 — Alerts */}
+              {/* 5 — Briefing diário (chat) + Alertas */}
+              <DailyBriefing
+                alerts={kpis.executiveAlerts}
+                userName={(profile as any)?.full_name || (profile as any)?.name || null}
+                periodDays={periodDays}
+              />
+
               <ExecutiveAlerts
                 alerts={kpis.executiveAlerts}
               />
