@@ -90,7 +90,7 @@ export function EventDetailsDialog({
   onEdit,
 }: Props) {
   const [pending, setPending] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<"completed" | "cancelled" | "reschedule" | null>(null);
+  const [confirm, setConfirm] = useState<"completed" | "cancelled" | null>(null);
 
   if (!event) return null;
 
@@ -130,11 +130,6 @@ export function EventDetailsDialog({
       title: "Marcar como perdida?",
       description: "O compromisso será encerrado como perdido e sairá da agenda ativa.",
       action: "Marcar perdida",
-    },
-    reschedule: {
-      title: "Reagendar compromisso?",
-      description: "Você vai escolher uma nova data e horário para este compromisso.",
-      action: "Reagendar",
     },
   };
 
@@ -297,7 +292,12 @@ export function EventDetailsDialog({
                   type="button"
                   variant="outline"
                   disabled={busy}
-                  onClick={() => setConfirm("reschedule")}
+                  onClick={() => {
+                    const target = event;
+                    onOpenChange(false);
+                    // aguarda o modal atual fechar antes de abrir o de remarcação
+                    setTimeout(() => onReschedule(target), 180);
+                  }}
                   className="group relative justify-start gap-2 overflow-hidden border-primary/30 bg-primary/5 text-primary transition-all hover:border-primary/50 hover:bg-primary/15 hover:shadow-sm hover:shadow-primary/10"
                 >
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 transition-colors group-hover:bg-primary/25">
@@ -341,12 +341,7 @@ export function EventDetailsDialog({
                   const action = confirm;
                   setConfirm(null);
                   if (!action) return;
-                  if (action === "reschedule") {
-                    onOpenChange(false);
-                    onReschedule(event);
-                  } else {
-                    void apply(action);
-                  }
+                  void apply(action);
                 }}
               >
                 {confirm ? CONFIRM_COPY[confirm].action : ""}

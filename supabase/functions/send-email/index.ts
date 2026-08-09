@@ -619,6 +619,48 @@ function templateEventReminder(payload: Record<string, unknown>): TemplateResult
   };
 }
 
+/** Lembrete enviado ao lead convidado (no dia, 1h antes e 10 min antes). */
+function templateLeadEventReminder(payload: Record<string, unknown>): TemplateResult {
+  const title = (payload.title as string) || "Reunião";
+  const whenLabel = (payload.when_label as string) || "";
+  const stage = (payload.stage as string) || "day";
+  const location = (payload.location as string) || "";
+  const contactName = (payload.recipient_name as string) || "";
+  const companyName = (payload.company_name as string) || "";
+  const isLink = /^https?:\/\//i.test(location);
+
+  const STAGE_COPY: Record<string, { subject: string; intro: string }> = {
+    day: {
+      subject: `Hoje: ${title}`,
+      intro: "Passando para lembrar que nossa reunião acontece hoje.",
+    },
+    "1h": {
+      subject: `Falta 1 hora: ${title}`,
+      intro: "Nossa reunião começa em cerca de 1 hora.",
+    },
+    "10m": {
+      subject: `Começa em 10 minutos: ${title}`,
+      intro: "Nossa reunião começa em 10 minutos.",
+    },
+  };
+  const copy = STAGE_COPY[stage] || STAGE_COPY.day;
+
+  return {
+    subject: copy.subject,
+    html: baseLayout("Lembrete de reunião", `
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">${title}</h1>
+      <p style="margin:0 0 16px;color:#3f3f46;font-size:15px;">${contactName ? `Olá, ${contactName}. ` : ""}${copy.intro}</p>
+      <div style="margin:16px 0;padding:16px;background:#f4f4f5;border-radius:8px;">
+        <p style="margin:0 0 6px;font-size:14px;color:#3f3f46;"><strong>Quando:</strong> ${whenLabel}</p>
+        ${companyName ? `<p style="margin:0 0 6px;font-size:14px;color:#3f3f46;"><strong>Empresa:</strong> ${companyName}</p>` : ""}
+        ${location ? `<p style="margin:0;font-size:14px;color:#3f3f46;"><strong>Local:</strong> ${location}</p>` : ""}
+      </div>
+      ${isLink ? `<div style="margin-top:20px;"><a href="${location}" style="display:inline-block;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Entrar na reunião</a></div>` : ""}
+      <p style="margin:20px 0 0;font-size:12px;color:#71717a;">Este é um envio automático (no-reply). Se precisar remarcar, responda ao contato comercial.</p>
+    `, `${title}: ${whenLabel}`),
+  };
+}
+
 const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateResult> = {
   CAMPAIGN_SCHEDULED_STARTED: templateCampaignStarted,
   WEEKLY_SUMMARY: templateWeeklySummary,
@@ -635,6 +677,7 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   SDR_SELLER_HANDOFF: templateSdrSellerHandoff,
   SDR_MEETING_SCHEDULED: templateSdrMeetingScheduled,
   EVENT_REMINDER: templateEventReminder,
+  LEAD_EVENT_REMINDER: templateLeadEventReminder,
 };
 
 function htmlToPlainText(html: string): string {
