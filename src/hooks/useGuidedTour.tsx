@@ -335,15 +335,20 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       route: "/oportunidades/gestao",
       injectDemoLead: true,
       waitMs: 700,
+      onEnter: async () => {
+        // Pré-carrega (invisível) o modal do lead usado no próximo passo.
+        setTimeout(() => { void prewarmDemoLeadDialog(); }, 250);
+      },
     },
     diagnosis: {
       route: "/oportunidades/gestao",
       target: '[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]',
       injectDemoLead: true,
-      waitMs: 120,
+      waitMs: 0,
       resolveTargetAfterEnter: true,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
+        document.body.classList.remove("tour-prewarm-lead");
         const dialog = await openDemoLeadDialog();
         if (!dialog) return;
 
