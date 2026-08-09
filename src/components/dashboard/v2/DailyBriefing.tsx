@@ -248,6 +248,8 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
   const { toast, dismiss } = useToast();
   const { user, profile } = useAuth();
+  const uid = user?.id ?? "anon";
+
   const [collapsed, setCollapsed] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showQuick, setShowQuick] = useState(true);
