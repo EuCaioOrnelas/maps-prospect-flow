@@ -633,6 +633,13 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       const step = steps[index];
       if (!step) return;
 
+      // Marca a transição ANTES de qualquer await: enquanto o ref estiver
+      // preenchido, o watcher de rota não derruba o tour por divergência
+      // temporária entre a URL atual e a rota do passo (bug que fechava o
+      // guia ao sair do modal do lead rumo ao passo do SDR Inteligente).
+      const targetRoute = isPublicDemo ? "/tour-guiado" : step.route;
+      pendingTourPathRef.current = targetRoute ?? location.pathname;
+
       // PRE-APPLY sidebar classes BEFORE navigating/measuring so the sidebar
       // is already expanded with the CORRECT submenu open by the time the
       // spotlight measures the target. This prevents the "icon-then-expand"
@@ -645,6 +652,10 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       } else if (step.forceSidebar) {
         document.body.classList.add("tour-sidebar-open");
       }
+
+      // Pré-carrega o chunk da rota do próximo passo para que a transição
+      // seja instantânea (evita o "guia demorando pra carregar").
+      preloadTourRoutes(steps.slice(index, index + 3).map((s) => s.route));
 
       // Close any open lead dialog if we're moving away from diagnosis steps
       const isDialogStep = step.id === "diagnosis" || step.id === "approach-message";
@@ -662,9 +673,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       if (!isDialogAnchoredStep) scrollTourViewportTop();
 
       // Navigate first
-      const targetRoute = isPublicDemo ? "/tour-guiado" : step.route;
       if (targetRoute && location.pathname !== targetRoute) {
-        pendingTourPathRef.current = targetRoute;
         navigate(targetRoute);
         await new Promise((r) => setTimeout(r, step.waitMs ?? 500));
       } else if (step.waitMs) {
@@ -696,6 +705,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       if (!shouldResolveTargetAfterEnter && step.onEnter) {
         await step.onEnter();
       }
+
+      // Transição concluída: volta a monitorar navegações externas.
+      pendingTourPathRef.current = null;
     },
     [navigate, location.pathname, steps, isPublicDemo]
   );
