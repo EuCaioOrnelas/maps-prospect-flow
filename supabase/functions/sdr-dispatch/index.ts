@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
     if (!agent) return json({ skipped: "nenhum SDR ativo para este número" });
 
     const tail = String(contact_phone).replace(/\D/g, "").slice(-8);
-    if (trigger_type === "inbound" && isOptOutMessage(message)) {
+    if (trigger_type === "inbound" && isOptOutMessage(inboundMessage)) {
       const { data: existingOptOut } = await supabase
         .from("sdr_sessions")
         .select("id")
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
       }
       return json({ ok: true, opted_out: true, sent: 0 });
     }
-    if (trigger_type === "inbound" && isExplicitRejection(message)) {
+    if (trigger_type === "inbound" && isExplicitRejection(inboundMessage)) {
       await supabase
         .from("sdr_sessions")
         .update({ status: "closed", next_followup_at: null, closed_reason: "explicit_rejection" })
@@ -317,7 +317,7 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_KEY}` },
       body: JSON.stringify({
         agentId: agent.id,
-        message: message || "",
+        message: inboundMessage || "",
         triggerType: trigger_type,
         history,
         leadContext,
@@ -412,7 +412,7 @@ Deno.serve(async (req) => {
     const pnid = phone_number_id || connection.phone_number_id;
 
     let sent = 0;
-    const initialDelay = responseDelayMs(agent, message || "", messages.join(" "), trigger_type);
+    const initialDelay = responseDelayMs(agent, inboundMessage || "", messages.join(" "), trigger_type);
     if (initialDelay > 0) await new Promise((resolve) => setTimeout(resolve, initialDelay));
     if (!isWithinSchedule(agent.schedule)) {
       return json({ skipped: "horário de atendimento encerrado durante o processamento", sent: 0 });
