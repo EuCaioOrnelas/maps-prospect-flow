@@ -659,7 +659,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
 
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
-    document.body.classList.remove("tour-sidebar-open", "tour-demo-lead", "tour-demo-cockpit");
+    document.body.classList.remove("tour-sidebar-open", "tour-demo-lead", "tour-demo-cockpit", "tour-prewarm-lead");
 
     if (!isActive || !step) return;
 
