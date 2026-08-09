@@ -1142,10 +1142,11 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       style={{ top: `calc(5.5rem + ${index * 16}px)`, zIndex: 10 + index }}
     >
     <motion.article
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 16, x: reversed ? 40 : -40 }}
+      whileInView={{ opacity: 1, y: 0, x: 0 }}
       viewport={{ once: true, amount: 0.15, margin: "0px 0px -80px 0px" }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+
 
 
 
