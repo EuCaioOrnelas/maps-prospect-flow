@@ -37,7 +37,10 @@ interface DailyBriefingProps {
   periodDays: number;
   metrics?: BriefingMetrics;
   capabilities?: BriefingCapabilities;
+  /** Modo demonstração (tour guiado): simula uma conversa real com a Wian, sem chamar a IA. */
+  demoConversation?: boolean;
 }
+
 
 
 type ChatRole = "user" | "assistant";
