@@ -54,6 +54,9 @@ const ContactAvatar = ({ index, className = "" }: { index: number; className?: s
     src={contactAvatars[index % contactAvatars.length]}
     alt=""
     loading="lazy"
+    decoding="async"
+    width={28}
+    height={28}
     className={cn("rounded-full object-cover object-top", className)}
   />
 );
@@ -137,11 +140,14 @@ const MockStage = ({ children }: { children: ReactNode }) => (
 /* --------- Animações de entrada (todas once, sem loop infinito) --------- */
 const VIEW = { once: true, amount: 0.25 } as const;
 
+/* Reveal — estático por performance: o conteúdo do mockup entra junto com o card,
+   sem dezenas de nós animados por cartão. As props de delay/offset são mantidas
+   por compatibilidade com as chamadas existentes. */
 const Reveal = ({
   children,
-  delay = 0,
-  y = 10,
-  x = 0,
+  delay: _delay = 0,
+  y: _y = 10,
+  x: _x = 0,
   className = "",
 }: {
   children: ReactNode;
@@ -149,17 +155,8 @@ const Reveal = ({
   y?: number;
   x?: number;
   className?: string;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y, x }}
-    whileInView={{ opacity: 1, y: 0, x: 0 }}
-    viewport={VIEW}
-    transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
-    className={className}
-  >
-    {children}
-  </motion.div>
-);
+}) => <div className={className}>{children}</div>;
+
 
 /* Viewport para animações em loop: repetem enquanto visíveis, param ao sair */
 const LOOP_VIEW = { once: false, amount: 0.2 } as const;
@@ -253,20 +250,17 @@ const ProspectMock = () => (
           { t: "32%", l: "76%", hot: false },
           { t: "78%", l: "64%", hot: false },
         ].map((p, i) => (
-          <motion.span
+          <span
             key={i}
             className={cn(
               "absolute w-5 h-5 rounded-full flex items-center justify-center ring-2",
-              p.hot ? "bg-primary/25 ring-primary/30" : "bg-muted ring-border/60",
+              p.hot ? "bg-primary/25 ring-primary/30 animate-scale-in" : "bg-muted ring-border/60",
             )}
             style={{ top: p.t, left: p.l }}
-            initial={{ opacity: 0, scale: 0.4 }}
-            whileInView={{ opacity: 1, scale: p.hot ? [0.85, 1.22, 0.92, 1] : 1 }}
-            viewport={VIEW}
-            transition={{ duration: p.hot ? 1.1 : 0.4, delay: 0.15 + i * 0.1, ease: "easeOut" }}
           >
             <MapPin size={10} className={p.hot ? "text-primary" : "text-muted-foreground"} />
-          </motion.span>
+          </span>
+
         ))}
         <div className="absolute bottom-2 left-2">
           <Pill tone="primary">São Paulo · SP</Pill>
@@ -707,14 +701,16 @@ const CrmMock = () => (
       <motion.div
         className="pointer-events-none absolute left-[17%] top-[100px] z-20"
         initial={{ opacity: 0, x: 0, y: 0 }}
-        animate={{ opacity: [0, 1, 1, 1, 0], x: [0, 0, 52, 112, 112], y: [0, 20, 38, 38, 38] }}
+        whileInView={{ opacity: [0, 1, 1, 1, 0], x: [0, 0, 52, 112, 112], y: [0, 20, 38, 38, 38] }}
+        viewport={VIEW}
         transition={{ duration: 2.4, delay: 1.1, times: [0, 0.18, 0.48, 0.82, 1], ease: "easeInOut" }}
       >
         <MousePointer2 size={20} className="fill-primary text-primary drop-shadow-md" />
         <motion.span
           className="absolute left-3 top-3 h-12 w-24 rounded-card border border-primary/40 bg-card/95 p-2 shadow-lg"
           initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: [0, 1, 1, 0], scale: [0.9, 1, 1, 0.95] }}
+          whileInView={{ opacity: [0, 1, 1, 0], scale: [0.9, 1, 1, 0.95] }}
+          viewport={VIEW}
           transition={{ duration: 2, delay: 1.35, times: [0, 0.18, 0.78, 1] }}
         >
           <span className="block text-[9px] font-bold text-foreground">Alpha Contab.</span>
@@ -884,13 +880,8 @@ const FlowNode = ({
   tone?: "primary" | "info" | "amber" | "muted";
   delay?: number;
 }) => (
-  <motion.div
-    className="flex flex-col items-center text-center w-[92px]"
-    initial={{ opacity: 0, scale: 0.7, y: 8 }}
-    whileInView={{ opacity: 1, scale: 1, y: 0 }}
-    viewport={VIEW}
-    transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
-  >
+  <div className="flex flex-col items-center text-center w-[92px]">
+
     <div
       className={cn(
         "w-8 h-8 rounded-full flex items-center justify-center ring-4",
@@ -907,7 +898,8 @@ const FlowNode = ({
     </p>
     {sub && <p className="text-[8px] text-muted-foreground leading-tight">{sub}</p>}
 
-  </motion.div>
+  </div>
+
 );
 
 /* Linha pontilhada que se desenha na entrada + bolinha percorrendo o fluxo */
@@ -923,15 +915,11 @@ const DottedLine = ({
   travel?: boolean;
 }) => (
   <span className={cn("relative block", className.includes("w-") ? "" : "")}>
-    <motion.span
+    <span
       className={cn("block border-dashed border-primary/45", className)}
       aria-hidden="true"
-      initial={axis === "x" ? { scaleX: 0 } : { scaleY: 0 }}
-      whileInView={axis === "x" ? { scaleX: 1 } : { scaleY: 1 }}
-      viewport={VIEW}
-      transition={{ duration: 0.4, delay, ease: "easeOut" }}
-      style={{ originX: 0, originY: 0 }}
     />
+
     {travel && (
       <motion.span
         className="absolute w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
@@ -980,14 +968,8 @@ const FlowMock = () => (
       </div>
 
       {/* ramificação — alinhada ao centro dos ícones (nós têm 92px de largura) */}
-      <motion.div
-        className="relative h-5"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={VIEW}
-        transition={{ duration: 0.4, delay: 1 }}
-        aria-hidden="true"
-      >
+      <div className="relative h-5" aria-hidden="true">
+
         {/* barra horizontal ligando os centros dos nós das pontas */}
         <span className="absolute left-[46px] right-[46px] top-2.5 border-t-2 border-dashed border-primary/45" />
         {[18, 43, 71].map((left, i) => (
@@ -995,7 +977,8 @@ const FlowMock = () => (
             key={left}
             className="absolute top-[7px] h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
             style={{ left: `${left}%` }}
-            animate={{ x: [0, i % 2 ? 34 : 58], opacity: [0, 1, 1, 0] }}
+            whileInView={{ x: [0, i % 2 ? 34 : 58], opacity: [0, 1, 1, 0] }}
+            viewport={LOOP_VIEW}
             transition={{ duration: 1 + i * 0.27, delay: 1.15 + i * 0.43, repeat: Infinity, repeatDelay: 0.8 + i * 0.65, ease: "easeInOut" }}
           />
         ))}
@@ -1005,7 +988,8 @@ const FlowMock = () => (
         <span className="absolute left-[46px] top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
         <span className="absolute left-1/2 -translate-x-px top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
         <span className="absolute right-[46px] top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
-      </motion.div>
+      </div>
+
 
       {/* Linha 3 — saídas */}
       <div className="flex items-start justify-between">
@@ -1148,10 +1132,11 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       style={{ top: `calc(5.5rem + ${index * 16}px)`, zIndex: 10 + index }}
     >
     <motion.article
-      initial={{ opacity: 0, x: reversed ? 140 : -140, scale: 0.96 }}
-      whileInView={{ opacity: 1, x: 0, scale: 1 }}
-      viewport={{ once: true, amount: 0.2, margin: "0px 0px -60px 0px" }}
-      transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.15, margin: "0px 0px -80px 0px" }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+
 
 
       className={cn(

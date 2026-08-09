@@ -4,29 +4,40 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import wianAvatar from "@/assets/wian-avatar-sm.jpg";
 
-const DISMISS_KEY = "wiize_wian_popup_dismissed";
+const DISMISS_KEY = "wiize_wian_popup_dismissed_v2";
 
 export const FloatingChatButton = () => {
   const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (sessionStorage.getItem(DISMISS_KEY)) return;
+    try {
+      if (sessionStorage.getItem(DISMISS_KEY)) return;
+    } catch {}
 
     let opened = false;
     const open = () => {
       if (opened) return;
       opened = true;
       setShowPopup(true);
+      window.removeEventListener("scroll", onScroll);
     };
 
-    // Idle timer: 50s
+    // Abre por scroll (>35% da página) ou por tempo de permanência (50s)
+    function onScroll() {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (max > 0 && window.scrollY / max > 0.35) open();
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
     const timer = setTimeout(open, 50000);
 
     return () => {
       clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
+
 
   const handleClose = (e: React.MouseEvent) => {
     e.preventDefault();
