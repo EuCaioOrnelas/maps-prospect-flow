@@ -486,6 +486,8 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     publicDemoSessionRef.current = true;
     document.body.classList.add("public-demo-mode");
     document.body.classList.add("tour-demo-cockpit");
+    // Pré-carrega todas as telas do tour logo no início.
+    preloadTourRoutes(["/dashboard", "/oportunidades", "/oportunidades/gestao"]);
     let cancelled = false;
     (async () => {
       // Wait until the real cockpit is mounted (and give it a frame to paint)
