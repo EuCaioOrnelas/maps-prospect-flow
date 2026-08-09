@@ -163,6 +163,30 @@ async function openDemoLeadDialog() {
   );
 }
 
+/**
+ * Pré-aquece o modal do lead demo um passo ANTES do "Diagnóstico inteligente".
+ * O dialog é montado de verdade (dados carregados, abas renderizadas), porém
+ * invisível via `body.tour-prewarm-lead`. Quando o usuário clica em "Próximo",
+ * basta remover a classe e o card aparece instantaneamente.
+ */
+async function prewarmDemoLeadDialog() {
+  try {
+    if (document.querySelector('[role="dialog"] [data-tour="lead-tab-dados"]')) return;
+    document.body.classList.add("tour-prewarm-lead");
+    const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 80, 40);
+    if (!row) {
+      document.body.classList.remove("tour-prewarm-lead");
+      return;
+    }
+    row.click();
+    const tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-score"]', 80, 40);
+    tab?.click();
+    await waitForElement('[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]', 80, 40);
+  } catch {
+    document.body.classList.remove("tour-prewarm-lead");
+  }
+}
+
 async function activateLeadTab(selector: string) {
   const tab = await waitForElement<HTMLElement>(selector, 60, 40);
   tab?.click();
@@ -311,15 +335,20 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       route: "/oportunidades/gestao",
       injectDemoLead: true,
       waitMs: 700,
+      onEnter: async () => {
+        // Pré-carrega (invisível) o modal do lead usado no próximo passo.
+        setTimeout(() => { void prewarmDemoLeadDialog(); }, 250);
+      },
     },
     diagnosis: {
       route: "/oportunidades/gestao",
       target: '[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]',
       injectDemoLead: true,
-      waitMs: 120,
+      waitMs: 0,
       resolveTargetAfterEnter: true,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
+        document.body.classList.remove("tour-prewarm-lead");
         const dialog = await openDemoLeadDialog();
         if (!dialog) return;
 
@@ -532,6 +561,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       "tour-sidebar-open",
       "tour-demo-lead",
       "tour-demo-cockpit",
+      "tour-prewarm-lead",
       "public-demo-mode"
     );
     if (publicDemoSessionRef.current) {
@@ -629,7 +659,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
 
     sections.forEach((s) => document.body.classList.remove(`tour-open-${s}`));
-    document.body.classList.remove("tour-sidebar-open", "tour-demo-lead", "tour-demo-cockpit");
+    document.body.classList.remove("tour-sidebar-open", "tour-demo-lead", "tour-demo-cockpit", "tour-prewarm-lead");
 
     if (!isActive || !step) return;
 
@@ -683,6 +713,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       // Close any open lead dialog if we're moving away from diagnosis steps
       const isDialogStep = step.id === "diagnosis" || step.id === "approach-message";
       if (!isDialogStep) {
+        document.body.classList.remove("tour-prewarm-lead");
         const openDialog = document.querySelector('[role="dialog"]');
         if (openDialog) {
           document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
@@ -793,6 +824,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       "tour-sidebar-open",
       "tour-demo-lead",
       "tour-demo-cockpit",
+      "tour-prewarm-lead",
       "public-demo-mode"
     );
     if (publicDemoSessionRef.current) {
