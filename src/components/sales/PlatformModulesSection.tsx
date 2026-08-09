@@ -1221,7 +1221,22 @@ const modules: ModuleItem[] = [
     benefits: ["Fluxos visuais", "Gatilhos inteligentes", "Automação comercial", "Integração completa"],
     mock: FlowMock,
   },
+  {
+    icon: Sparkles,
+    eyebrow: "Wian",
+    title: "Wian — Assistência Comercial com IA",
+    description:
+      "Sua analista comercial dentro da plataforma. Todo dia a Wian lê o cockpit, o CRM, as vendas, o atendimento e a agenda, aponta o que está travando a operação e entrega o plano de ação com metas numéricas. Você conversa com ela por texto ou áudio.",
+    benefits: [
+      "Briefing executivo diário",
+      "Análise das métricas em tempo real",
+      "Plano de ação priorizado",
+      "Conversa por texto ou áudio",
+    ],
+    mock: WianMock,
+  },
 ];
+
 
 const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
   const reversed = index % 2 === 1;
