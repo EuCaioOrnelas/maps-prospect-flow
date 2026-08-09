@@ -383,9 +383,9 @@ export function GuidedTour() {
       const spaceLeft = dialogRect.left;
       const useRight = spaceRight >= spaceLeft;
       const space = useRight ? spaceRight : spaceLeft;
-      const width = Math.max(260, Math.min(availableWidth, space - 36));
+      const width = Math.max(248, Math.min(availableWidth, space - 24));
 
-      if (space < 340) {
+      if (space < 272) {
         // Modal takes nearly the whole viewport: dock the card at the bottom,
         // above the navigation bar, so both stay readable.
         popupStyle = {
