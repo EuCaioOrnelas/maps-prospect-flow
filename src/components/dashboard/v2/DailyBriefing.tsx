@@ -2,19 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
-  Sparkles,
-  ChevronDown,
-  ChevronUp,
-  ArrowRight,
-  Send,
-  Loader2,
-  RotateCcw,
-  TrendingUp,
-  AlertTriangle,
-  Target,
-} from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ChevronDown, ChevronUp, Send, Loader2, RotateCcw, Info, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,14 +32,6 @@ interface ChatMsg {
   role: ChatRole;
   content: string;
   at: number;
-}
-
-interface BriefingBlock {
-  id: string;
-  title?: string;
-  tone: "neutral" | "success" | "danger" | "warning";
-  text: string;
-  items?: { text: string; route: string; tone: ExecutiveAlert["type"] }[];
 }
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -82,26 +69,41 @@ function writeJSON(key: string, value: unknown) {
   }
 }
 
-/** Mantém no navegador um histórico de até 7 dias de métricas para dar contexto de tendência à Wian. */
-function persistSnapshot(metrics: BriefingMetrics, periodDays: number) {
+interface Snapshot {
+  date: string;
+  periodDays: number;
+  metrics: BriefingMetrics;
+  alerts?: { type: string; text: string }[];
+}
+
+/** Mantém no navegador um histórico de até 7 dias (métricas + alertas) para dar memória à Wian. */
+function persistSnapshot(metrics: BriefingMetrics, periodDays: number, alerts: ExecutiveAlert[]) {
   const today = dayKey();
-  const list = readJSON<any[]>(SNAP_KEY, []).filter((d) => d?.date && d.date !== today);
-  list.push({ date: today, periodDays, metrics });
-  writeJSON(SNAP_KEY, list.slice(-7));
-  return list.slice(-7);
+  const list = readJSON<Snapshot[]>(SNAP_KEY, []).filter((d) => d?.date && d.date !== today);
+  list.push({
+    date: today,
+    periodDays,
+    metrics,
+    alerts: (alerts || []).map((a) => ({ type: a.type, text: a.text })),
+  });
+  const trimmed = list.slice(-7);
+  writeJSON(SNAP_KEY, trimmed);
+  return trimmed;
 }
 
 const SUGGESTIONS = [
-  "O que eu devo priorizar hoje?",
-  "Por que minha conversão caiu?",
-  "Como aumentar as respostas dos leads?",
-  "Analise meu funil e aponte o gargalo",
+  { shortcut: "plano", label: "Sim, me explique o plano de ação" },
+  { shortcut: "prioridade", label: "O que eu devo priorizar hoje?" },
+  { shortcut: "funil", label: "Analise meu funil e aponte o gargalo" },
+  { shortcut: "conversao", label: "Por que minha conversão caiu?" },
+  { shortcut: "metas", label: "Defina metas para recuperar os números" },
 ];
 
 export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBriefingProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [collapsed, setCollapsed] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -109,11 +111,9 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
   const threadRef = useRef<HTMLDivElement>(null);
 
   const today = new Date();
-  const dateLabel = capitalize(
-    today.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }),
-  );
+  const dateLabel = today.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 
-  // Carrega conversa do dia e limpa dias anteriores (reset diário do briefing)
+  // Conversa do dia + limpeza dos dias anteriores (reset diário do briefing)
   useEffect(() => {
     setMessages(readJSON<ChatMsg[]>(CHAT_KEY(), []));
     try {
@@ -128,98 +128,72 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
   }, []);
 
   useEffect(() => {
-    if (metrics && Object.keys(metrics).length > 0) persistSnapshot(metrics, periodDays);
-  }, [metrics, periodDays]);
+    if (metrics && Object.keys(metrics).length > 0) persistSnapshot(metrics, periodDays, alerts || []);
+  }, [metrics, periodDays, alerts]);
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
 
   const list = useMemo(() => (alerts || []).filter((a) => !a.text.includes("NaN")), [alerts]);
-  const critical = list.filter((a) => a.type === "danger");
-  const attention = list.filter((a) => a.type === "warning");
-  const positives = list.filter((a) => a.type === "success");
-  const infos = list.filter((a) => a.type === "info");
+  const critical = useMemo(() => list.filter((a) => a.type === "danger"), [list]);
+  const attention = useMemo(() => list.filter((a) => a.type === "warning"), [list]);
+  const positives = useMemo(() => list.filter((a) => a.type === "success"), [list]);
 
-  const blocks = useMemo<BriefingBlock[]>(() => {
+  /** Pontos que estavam críticos/em atenção ontem e não aparecem mais hoje. */
+  const resolvedSinceYesterday = useMemo(() => {
+    const snaps = readJSON<Snapshot[]>(SNAP_KEY, []);
+    const prev = [...snaps].reverse().find((s) => s.date !== dayKey());
+    if (!prev?.alerts?.length) return [] as string[];
+    const todayTexts = new Set(list.map((a) => a.text));
+    return prev.alerts
+      .filter((a) => (a.type === "danger" || a.type === "warning") && !todayTexts.has(a.text))
+      .map((a) => a.text)
+      .slice(0, 3);
+  }, [list]);
+
+  /** Briefing inicial: exatamente 4 mensagens no formato de chat. */
+  const briefing = useMemo<string[]>(() => {
     const name = firstName(userName);
-    const out: BriefingBlock[] = [
-      {
-        id: "hello",
-        tone: "neutral",
-        text: `${greeting(today.getHours())}${name ? `, ${name}` : ""}. Este é o seu briefing comercial de hoje, com base nos últimos ${periodDays} dias de operação. Analisei ${list.length} indicadores: ${critical.length} crítico(s), ${attention.length} em atenção e ${positives.length} positivo(s).`,
-      },
-    ];
+    const bullets = (items: ExecutiveAlert[]) => items.slice(0, 5).map((a) => `• ${a.text}`).join("\n");
 
-    if (positives.length > 0) {
-      out.push({
-        id: "positives",
-        title: "O que está funcionando",
-        tone: "success",
-        text:
-          positives.length === 1
-            ? "Um destaque positivo para sustentar o ritmo:"
-            : `${positives.length} destaques positivos que valem ser mantidos e ampliados:`,
-        items: positives.slice(0, 4).map((a) => ({ text: a.text, route: a.route, tone: a.type })),
-      });
-    }
+    const m1 = `${greeting(today.getHours())}${name ? `, ${name}` : ""}. Este é o seu briefing comercial de hoje, ${dateLabel}, com base nos últimos ${periodDays} dias de operação. Analisei ${list.length} indicadores: ${critical.length} crítico(s), ${attention.length} em atenção e ${positives.length} positivo(s).`;
 
+    const parts2: string[] = [];
     if (critical.length > 0) {
-      out.push({
-        id: "critical",
-        title: "Risco imediato",
-        tone: "danger",
-        text:
-          critical.length === 1
-            ? "Um ponto crítico está travando resultado agora:"
-            : `${critical.length} pontos críticos estão travando resultado agora:`,
-        items: critical.slice(0, 4).map((a) => ({ text: a.text, route: a.route, tone: a.type })),
-      });
+      parts2.push(`🔴 Identifiquei ${critical.length} ponto(s) crítico(s) na operação:\n${bullets(critical)}`);
     }
-
     if (attention.length > 0) {
-      out.push({
-        id: "attention",
-        title: "Pontos de atenção",
-        tone: "warning",
-        text:
-          attention.length === 1
-            ? "Mais um ponto para acompanhar de perto nesta semana:"
-            : `${attention.length} pontos para acompanhar de perto nesta semana:`,
-        items: attention.slice(0, 4).map((a) => ({ text: a.text, route: a.route, tone: a.type })),
-      });
+      parts2.push(`🟡 E ${attention.length} ponto(s) de atenção:\n${bullets(attention)}`);
     }
+    const m2 =
+      parts2.length > 0
+        ? parts2.join("\n\n")
+        : "🟢 Não identifiquei pontos críticos nem de atenção nesta janela. A operação está dentro do esperado.";
 
-    if (critical.length === 0 && attention.length === 0) {
-      out.push({
-        id: "clean",
-        tone: "success",
-        text: "Nenhum risco crítico hoje. Os indicadores estão dentro do esperado — foco em volume e follow-up.",
-      });
+    const parts3: string[] = [];
+    if (positives.length > 0) {
+      parts3.push(`🟢 No lado positivo, registrei ${positives.length} evolução(ões):\n${bullets(positives)}`);
     }
-
-    if (infos.length > 0) {
-      out.push({
-        id: "infos",
-        title: "Leitura de contexto",
-        tone: "neutral",
-        text: "Observações que ajudam no planejamento dos envios:",
-        items: infos.slice(0, 2).map((a) => ({ text: a.text, route: a.route, tone: a.type })),
-      });
+    if (resolvedSinceYesterday.length > 0) {
+      parts3.push(
+        `✅ Comparando com o briefing de ontem, estes pontos foram resolvidos:\n${resolvedSinceYesterday
+          .map((t) => `• ${t}`)
+          .join("\n")}\nBom trabalho — vale sustentar o ritmo.`,
+      );
     }
+    const m3 =
+      parts3.length > 0
+        ? parts3.join("\n\n")
+        : "🟢 Ainda não há indicadores de crescimento relevantes nesta janela. Assim que houver evolução consistente, eu destaco aqui.";
 
     const priority = critical[0] || attention[0] || positives[0];
-    out.push({
-      id: "closing",
-      title: "Plano do dia",
-      tone: "neutral",
-      text: priority
-        ? `Comece por: "${priority.text}". Resolver esse item primeiro é o que mais move o resultado hoje. Depois, avance no follow-up dos leads de maior score e confirme as reuniões da semana.`
-        : "Mantenha o ritmo de prospecção, responda as conversas abertas no mesmo dia e confirme as reuniões da semana para sustentar o pipeline.",
-    });
+    const m4 = priority
+      ? `Preparei um plano de ação pronto para começarmos a resolver as pendências, priorizando "${priority.text}". Quer que eu te explique melhor?`
+      : "Preparei um plano de ação para ampliar volume e acelerar o pipeline nesta semana. Quer que eu te explique melhor?";
 
-    return out;
-  }, [list, critical, attention, positives, infos, userName, periodDays]);
+    return [m1, m2, m3, m4];
+  }, [list, critical, attention, positives, resolvedSinceYesterday, userName, periodDays, dateLabel]);
 
   const send = async (raw?: string) => {
     const question = (raw ?? input).trim();
@@ -232,15 +206,20 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
     setSending(true);
 
     try {
-      const snapshots = readJSON<any[]>(SNAP_KEY, []);
+      const snapshots = readJSON<Snapshot[]>(SNAP_KEY, []);
       const { data, error } = await supabase.functions.invoke("briefing-chat", {
         body: {
           message: question,
-          messages: next.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+          // O briefing lido pelo gestor entra como memória inicial da conversa
+          messages: [
+            ...briefing.map((content) => ({ role: "assistant", content })),
+            ...next.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+          ],
           snapshot: {
             periodDays,
             metrics: metrics ?? {},
             alerts: list.map((a) => ({ type: a.type, text: a.text })),
+            resolvedSinceYesterday,
           },
           history: snapshots.slice(0, -1),
         },
@@ -280,163 +259,111 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
     inputRef.current?.focus();
   };
 
-  const toneIcon = (tone: BriefingBlock["tone"]) => {
-    if (tone === "danger") return <AlertTriangle size={13} className="text-destructive" />;
-    if (tone === "warning") return <AlertTriangle size={13} className="text-yellow-500" />;
-    if (tone === "success") return <TrendingUp size={13} className="text-primary" />;
-    return <Target size={13} className="text-muted-foreground" />;
-  };
+  const Avatar = () => (
+    <div className="w-7 h-7 shrink-0 rounded-sm bg-primary/10 text-primary flex items-center justify-center text-[11px] font-semibold">
+      W
+    </div>
+  );
+
+  const Bubble = ({ text }: { text: string }) => (
+    <div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-muted/60 px-3.5 py-2.5 text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap">
+      {text}
+    </div>
+  );
 
   return (
-    <Card className="border-border/40 rounded-2xl overflow-hidden">
-      <CardHeader className="pb-3 flex flex-row items-start justify-between gap-3 space-y-0">
-        <div className="min-w-0">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <span className="w-7 h-7 rounded-sm bg-primary/10 text-primary flex items-center justify-center">
-              <Sparkles size={14} />
-            </span>
-            Briefing do dia com a Wian
-          </CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">
-            {dateLabel} • últimos {periodDays} dias
-          </p>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {messages.length > 0 && !collapsed && (
-            <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground" onClick={clearChat}>
-              <RotateCcw size={13} /> Limpar
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-xs text-muted-foreground"
-            onClick={() => setCollapsed((v) => !v)}
-          >
-            {collapsed ? <>Abrir <ChevronDown size={14} /></> : <>Fechar <ChevronUp size={14} /></>}
-          </Button>
-        </div>
-      </CardHeader>
-
-      {!collapsed && (
-        <CardContent className="space-y-4 pb-5">
-          {/* Resumo executivo */}
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="rounded-sm border-destructive/30 text-destructive bg-destructive/5">
-              {critical.length} crítico(s)
-            </Badge>
-            <Badge variant="outline" className="rounded-sm border-yellow-500/30 text-yellow-600 bg-yellow-500/5">
-              {attention.length} atenção
-            </Badge>
-            <Badge variant="outline" className="rounded-sm border-primary/30 text-primary bg-primary/5">
-              {positives.length} positivo(s)
-            </Badge>
-          </div>
-
-          {/* Briefing */}
-          <div className="space-y-3">
-            {blocks.map((b) => (
-              <div key={b.id} className="flex gap-2.5">
-                <div className="w-7 h-7 shrink-0 rounded-sm bg-primary/10 text-primary flex items-center justify-center text-[11px] font-semibold">
-                  W
-                </div>
-                <div className="min-w-0 flex-1 space-y-2">
-                  {b.title && (
-                    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      {toneIcon(b.tone)}
-                      {b.title}
-                    </div>
-                  )}
-                  <div className="inline-block max-w-full rounded-2xl rounded-tl-sm bg-muted/60 px-3.5 py-2.5 text-sm text-foreground/85 leading-relaxed">
-                    {b.text}
-                  </div>
-                  {b.items && b.items.length > 0 && (
-                    <div className="space-y-1.5">
-                      {b.items.map((it, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => navigate(it.route)}
-                          className={cn(
-                            "w-full text-left flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm transition-colors group",
-                            it.tone === "danger"
-                              ? "bg-destructive/[0.06] border-destructive/20 hover:bg-destructive/10"
-                              : it.tone === "warning"
-                              ? "bg-yellow-500/[0.06] border-yellow-500/20 hover:bg-yellow-500/10"
-                              : it.tone === "success"
-                              ? "bg-primary/[0.06] border-primary/20 hover:bg-primary/10"
-                              : "bg-muted/50 border-border/30 hover:bg-muted/80",
-                          )}
-                        >
-                          <span className="flex-1 text-foreground/80">{it.text}</span>
-                          <ArrowRight
-                            size={14}
-                            className="shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Conversa com a Wian */}
-          <div className="pt-2 border-t border-border/40 space-y-3">
-            <p className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
-              Converse com a Wian sobre estes números
+    <>
+      <Card className="border-border/40 rounded-2xl overflow-hidden">
+        <CardHeader className="pb-3 flex flex-row items-start justify-between gap-3 space-y-0">
+          <div className="min-w-0">
+            <CardTitle className="text-base font-semibold">Briefing do dia com a Wian</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              {dateLabel} • últimos {periodDays} dias
             </p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs text-muted-foreground"
+              onClick={() => setShowInfo(true)}
+            >
+              <Info size={14} />
+            </Button>
+            {messages.length > 0 && !collapsed && (
+              <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground" onClick={clearChat}>
+                <RotateCcw size={13} /> Limpar
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs text-muted-foreground"
+              onClick={() => setCollapsed((v) => !v)}
+            >
+              {collapsed ? <>Abrir <ChevronDown size={14} /></> : <>Fechar <ChevronUp size={14} /></>}
+            </Button>
+          </div>
+        </CardHeader>
 
-            {(messages.length > 0 || sending) && (
-              <div ref={threadRef} className="max-h-[320px] overflow-y-auto space-y-3 pr-1">
-                {messages.map((m, i) => (
-                  <div key={i} className={cn("flex gap-2.5", m.role === "user" && "justify-end")}>
-                    {m.role === "assistant" && (
-                      <div className="w-7 h-7 shrink-0 rounded-sm bg-primary/10 text-primary flex items-center justify-center text-[11px] font-semibold">
-                        W
-                      </div>
-                    )}
-                    <div
-                      className={cn(
-                        "max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap",
-                        m.role === "assistant"
-                          ? "rounded-2xl rounded-tl-sm bg-muted/60 text-foreground/85"
-                          : "rounded-2xl rounded-tr-sm bg-primary text-primary-foreground",
-                      )}
-                    >
+        {!collapsed && (
+          <CardContent className="space-y-3 pb-5">
+            <div ref={threadRef} className="max-h-[520px] overflow-y-auto space-y-3 pr-1">
+              {briefing.map((text, i) => (
+                <div key={`b-${i}`} className="flex gap-2.5">
+                  <Avatar />
+                  <Bubble text={text} />
+                </div>
+              ))}
+
+              {messages.map((m, i) => (
+                <div key={`m-${i}`} className={cn("flex gap-2.5", m.role === "user" && "justify-end")}>
+                  {m.role === "assistant" && <Avatar />}
+                  {m.role === "assistant" ? (
+                    <Bubble text={m.content} />
+                  ) : (
+                    <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap">
                       {m.content}
                     </div>
-                  </div>
-                ))}
-                {sending && (
-                  <div className="flex gap-2.5 items-center">
-                    <div className="w-7 h-7 shrink-0 rounded-sm bg-primary/10 text-primary flex items-center justify-center text-[11px] font-semibold">
-                      W
-                    </div>
-                    <div className="rounded-2xl rounded-tl-sm bg-muted/60 px-3.5 py-2.5 text-sm text-muted-foreground flex items-center gap-2">
-                      <Loader2 size={13} className="animate-spin" /> Analisando seus dados...
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              ))}
 
-            {messages.length === 0 && (
-              <div className="flex flex-wrap gap-1.5">
+              {sending && (
+                <div className="flex gap-2.5 items-center">
+                  <Avatar />
+                  <div className="rounded-2xl rounded-tl-sm bg-muted/60 px-3.5 py-2.5 text-sm text-muted-foreground flex items-center gap-2">
+                    <Loader2 size={13} className="animate-spin" /> Analisando seus dados...
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Mensagens rápidas — mesmo padrão do chat */}
+            <div className="rounded-xl border border-border/60 overflow-hidden">
+              <div className="px-3 py-2 border-b border-border/60 flex items-center gap-2">
+                <Zap size={12} className="text-primary shrink-0" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Mensagens rápidas
+                </span>
+              </div>
+              <div>
                 {SUGGESTIONS.map((s) => (
                   <button
-                    key={s}
+                    key={s.shortcut}
                     type="button"
-                    onClick={() => send(s)}
                     disabled={sending}
-                    className="px-3 py-1.5 rounded-sm border border-border/40 bg-muted/40 text-xs text-foreground/75 hover:bg-muted/70 transition-colors disabled:opacity-50"
+                    onClick={() => send(s.label)}
+                    className="w-full text-left px-3 py-2 flex items-start gap-2.5 transition-colors border-b border-border/40 last:border-b-0 hover:bg-muted/60 disabled:opacity-50"
                   >
-                    {s}
+                    <code className="shrink-0 mt-0.5 px-1.5 py-0.5 rounded-sm bg-primary/15 text-primary text-[11px] font-mono font-semibold">
+                      /{s.shortcut}
+                    </code>
+                    <span className="flex-1 min-w-0 text-xs text-foreground/80">{s.label}</span>
                   </button>
                 ))}
               </div>
-            )}
+            </div>
 
             <form
               onSubmit={(e) => {
@@ -449,7 +376,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Pergunte sobre suas métricas, funil, campanhas ou próximos passos..."
+                placeholder="Responda à Wian ou pergunte sobre suas métricas..."
                 className="h-10 text-sm rounded-sm"
                 disabled={sending}
                 maxLength={600}
@@ -461,9 +388,38 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
             <p className="text-[11px] text-muted-foreground">
               A Wian responde apenas sobre os dados da sua operação na Wiize.
             </p>
+          </CardContent>
+        )}
+      </Card>
+
+      <Dialog open={showInfo} onOpenChange={setShowInfo}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Como funciona o Briefing do dia</DialogTitle>
+            <DialogDescription>
+              Uma leitura executiva da sua operação, atualizada todos os dias.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+            <p>
+              Todo dia a Wian analisa os indicadores do seu cockpit na janela selecionada e organiza a leitura em
+              quatro mensagens: apresentação, pontos críticos e de atenção, evoluções positivas e o plano de ação.
+            </p>
+            <p>
+              Os emojis indicam severidade: 🔴 crítico, 🟡 atenção, 🟢 positivo e ✅ ponto que estava pendente ontem e
+              foi resolvido.
+            </p>
+            <p>
+              O histórico dos últimos 7 dias fica salvo neste navegador para que a Wian compare tendências e reconheça
+              melhorias. A conversa é reiniciada todos os dias junto com o novo briefing.
+            </p>
+            <p>
+              Ela responde exclusivamente sobre os dados da sua operação na Wiize — prospecção, funil, CRM, campanhas,
+              SDR e agenda.
+            </p>
           </div>
-        </CardContent>
-      )}
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
