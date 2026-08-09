@@ -125,8 +125,8 @@ interface ChatMsg {
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const dayKey = () => new Date().toISOString().slice(0, 10);
-const CHAT_KEY = () => `wiize:briefing:chat:${dayKey()}`;
-const SNAP_KEY = "wiize:briefing:snapshots";
+const CHAT_KEY = (uid: string) => `wiize:briefing:chat:${uid}:${dayKey()}`;
+const SNAP_KEY = (uid: string) => `wiize:briefing:snapshots:${uid}`;
 const PERSONA_KEY = (uid: string) => `wiize:briefing:persona:${uid}`;
 
 function greeting(hour: number) {
@@ -198,9 +198,9 @@ function bumpPersona(uid: string, question: string): Persona {
 }
 
 /** Mantém no navegador um histórico de até 7 dias (métricas + alertas) para dar memória à Wian. */
-function persistSnapshot(metrics: BriefingMetrics, periodDays: number, alerts: ExecutiveAlert[]) {
+function persistSnapshot(uid: string, metrics: BriefingMetrics, periodDays: number, alerts: ExecutiveAlert[]) {
   const today = dayKey();
-  const list = readJSON<Snapshot[]>(SNAP_KEY, []).filter((d) => d?.date && d.date !== today);
+  const list = readJSON<Snapshot[]>(SNAP_KEY(uid), []).filter((d) => d?.date && d.date !== today);
   list.push({
     date: today,
     periodDays,
@@ -208,7 +208,7 @@ function persistSnapshot(metrics: BriefingMetrics, periodDays: number, alerts: E
     alerts: (alerts || []).map((a) => ({ type: a.type, text: a.text })),
   });
   const trimmed = list.slice(-7);
-  writeJSON(SNAP_KEY, trimmed);
+  writeJSON(SNAP_KEY(uid), trimmed);
   return trimmed;
 }
 
@@ -319,22 +319,22 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
       );
       return;
     }
-    setMessages(readJSON<ChatMsg[]>(CHAT_KEY(), []));
+    setMessages(readJSON<ChatMsg[]>(CHAT_KEY(uid), []));
     try {
       const prefix = "wiize:briefing:chat:";
-      const keep = CHAT_KEY();
+      const keep = CHAT_KEY(uid);
       Object.keys(localStorage)
         .filter((k) => k.startsWith(prefix) && k !== keep)
         .forEach((k) => localStorage.removeItem(k));
     } catch {
       /* ignore */
     }
-  }, [demoConversation]);
+  }, [demoConversation, uid]);
 
 
   useEffect(() => {
     if (demoConversation) return;
-    if (metrics && Object.keys(metrics).length > 0) persistSnapshot(metrics, periodDays, alerts || []);
+    if (uid && metrics && Object.keys(metrics).length > 0) persistSnapshot(uid, metrics, periodDays, alerts || []);
   }, [metrics, periodDays, alerts, demoConversation]);
 
   useEffect(() => {
@@ -379,7 +379,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
   /** Pontos que estavam críticos/em atenção ontem e não aparecem mais hoje. */
   const resolvedSinceYesterday = useMemo(() => {
-    const snaps = readJSON<Snapshot[]>(SNAP_KEY, []);
+    const snaps = readJSON<Snapshot[]>(SNAP_KEY(uid), []);
     const prev = [...snaps].reverse().find((s) => s.date !== dayKey());
     if (!prev?.alerts?.length) return [] as string[];
     const todayTexts = new Set(list.map((a) => a.text));
@@ -387,7 +387,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
       .filter((a) => (a.type === "danger" || a.type === "warning") && !todayTexts.has(a.text))
       .map((a) => a.text)
       .slice(0, 3);
-  }, [list]);
+  }, [list, uid]);
 
   /** Briefing inicial: exatamente 4 mensagens no formato de chat, personalizado pelo perfil do gestor. */
   const briefing = useMemo<string[]>(() => {
@@ -465,12 +465,12 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     };
     const next = [...messages, userMsg];
     setMessages(next);
-    writeJSON(CHAT_KEY(), next.map((m) => ({ ...m, audioUrl: undefined })));
+    writeJSON(CHAT_KEY(uid), next.map((m) => ({ ...m, audioUrl: undefined })));
     if (!voice) setInput("");
     setSending(true);
 
     try {
-      const snapshots = readJSON<Snapshot[]>(SNAP_KEY, []);
+      const snapshots = readJSON<Snapshot[]>(SNAP_KEY(uid), []);
       const persona = user?.id ? bumpPersona(user.id, question || "audio") : undefined;
       const { data, error } = await supabase.functions.invoke("briefing-chat", {
         body: {
@@ -513,7 +513,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
         : next;
       const withReply = [...base, { role: "assistant" as ChatRole, content: reply, at: Date.now() }];
       setMessages(withReply);
-      writeJSON(CHAT_KEY(), withReply.map((m) => ({ ...m, audioUrl: undefined })));
+      writeJSON(CHAT_KEY(uid), withReply.map((m) => ({ ...m, audioUrl: undefined })));
       notify("Wian respondeu", reply.replace(/\s+/g, " ").slice(0, 110) + (reply.length > 110 ? "…" : ""));
     } catch (e: any) {
       notify(
@@ -634,7 +634,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
   const clearChat = () => {
     setMessages([]);
-    writeJSON(CHAT_KEY(), []);
+    writeJSON(CHAT_KEY(uid), []);
     inputRef.current?.focus();
   };
 
