@@ -392,7 +392,7 @@ export function GuidedTour() {
           top: Math.max(POPUP_GAP, window.innerHeight - popupHeight - 104),
           left: "50%",
           transform: "translateX(-50%)",
-          width: Math.min(POPUP_W, window.innerWidth - 32),
+          width: availableWidth,
         };
       } else {
 
