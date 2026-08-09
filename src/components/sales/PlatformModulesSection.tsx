@@ -247,20 +247,17 @@ const ProspectMock = () => (
           { t: "32%", l: "76%", hot: false },
           { t: "78%", l: "64%", hot: false },
         ].map((p, i) => (
-          <motion.span
+          <span
             key={i}
             className={cn(
               "absolute w-5 h-5 rounded-full flex items-center justify-center ring-2",
-              p.hot ? "bg-primary/25 ring-primary/30" : "bg-muted ring-border/60",
+              p.hot ? "bg-primary/25 ring-primary/30 animate-scale-in" : "bg-muted ring-border/60",
             )}
             style={{ top: p.t, left: p.l }}
-            initial={{ opacity: 0, scale: 0.4 }}
-            whileInView={{ opacity: 1, scale: p.hot ? [0.85, 1.22, 0.92, 1] : 1 }}
-            viewport={VIEW}
-            transition={{ duration: p.hot ? 1.1 : 0.4, delay: 0.15 + i * 0.1, ease: "easeOut" }}
           >
             <MapPin size={10} className={p.hot ? "text-primary" : "text-muted-foreground"} />
-          </motion.span>
+          </span>
+
         ))}
         <div className="absolute bottom-2 left-2">
           <Pill tone="primary">São Paulo · SP</Pill>
