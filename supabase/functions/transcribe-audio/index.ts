@@ -58,13 +58,14 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { audio_url, message_id } = await req.json();
-    if (!audio_url || typeof audio_url !== "string") {
-      return new Response(JSON.stringify({ error: "audio_url required" }), {
+    const { audio_url, message_id, audio_base64, audio_mime, connection_id } = await req.json();
+    if ((!audio_url || typeof audio_url !== "string") && !audio_base64) {
+      return new Response(JSON.stringify({ error: "audio_url or audio_base64 required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiKey) {
