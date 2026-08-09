@@ -317,29 +317,62 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
         </div>
 
         <div className="border-t border-border p-3 flex items-end gap-2">
-          <Textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void handleSend();
-              }
-            }}
-            placeholder="Escreva como o lead responderia..."
-            className="min-h-[44px] max-h-32 resize-none"
-            disabled={sending}
-          />
-          <Button
-            size="icon"
-            className="h-11 w-11 shrink-0"
-            onClick={() => void handleSend()}
-            disabled={sending || !input.trim()}
-          >
-            {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          </Button>
+          {recording ? (
+            <div className="flex-1 h-11 rounded-xl bg-destructive/10 border border-destructive/30 flex items-center gap-3 px-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
+              <span className="text-sm font-medium text-destructive tabular-nums">
+                {String(Math.floor(elapsed / 60)).padStart(2, "0")}:{String(elapsed % 60).padStart(2, "0")}
+              </span>
+              <div className="flex items-end gap-[3px] h-5">
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <span
+                    key={i}
+                    className="w-[3px] rounded-sm bg-destructive/70 animate-pulse"
+                    style={{ height: `${6 + ((i * 7) % 14)}px`, animationDelay: `${i * 90}ms` }}
+                  />
+                ))}
+              </div>
+              <span className="ml-auto text-xs text-muted-foreground">Gravando… toque para enviar</span>
+            </div>
+          ) : (
+            <Textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void handleSend();
+                }
+              }}
+              placeholder="Escreva como o lead responderia..."
+              className="min-h-[44px] max-h-32 resize-none"
+              disabled={sending}
+            />
+          )}
+          {!input.trim() || recording ? (
+            <Button
+              size="icon"
+              variant={recording ? "destructive" : "outline"}
+              className="h-11 w-11 shrink-0"
+              onClick={() => (recording ? stopRecording() : void startRecording())}
+              disabled={sending}
+              aria-label={recording ? "Enviar áudio" : "Gravar áudio"}
+            >
+              {sending ? <Loader2 size={16} className="animate-spin" /> : recording ? <Square size={16} /> : <Mic size={16} />}
+            </Button>
+          ) : (
+            <Button
+              size="icon"
+              className="h-11 w-11 shrink-0"
+              onClick={() => void handleSend()}
+              disabled={sending || !input.trim()}
+            >
+              {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+            </Button>
+          )}
         </div>
+
       </DialogContent>
     </Dialog>
   );
