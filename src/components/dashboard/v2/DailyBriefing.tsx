@@ -310,6 +310,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
             metrics: metrics ?? {},
             alerts: list.map((a) => ({ type: a.type, text: a.text })),
             resolvedSinceYesterday,
+            capabilities: caps,
           },
           history: snapshots.slice(0, -1),
         },
