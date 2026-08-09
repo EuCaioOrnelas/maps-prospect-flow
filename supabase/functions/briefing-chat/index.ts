@@ -154,12 +154,14 @@ async function loadAccountData(supabase: any, ownerId: string, caps: Caps = {}):
         .order("ai_score", { ascending: false })
         .limit(400),
       supabase.from("lead_deals").select("value, status, closed_at, created_at").eq("owner_user_id", ownerId).gte("created_at", since90),
-      supabase.from("sdr_agents").select("id, name, status").eq("owner_user_id", ownerId),
-      supabase
-        .from("sdr_sessions")
-        .select("status, stage, messages_sent, replies_received")
-        .eq("owner_user_id", ownerId)
-        .limit(500),
+      hasSdr ? supabase.from("sdr_agents").select("id, name, status").eq("owner_user_id", ownerId) : Promise.resolve({ data: [] }),
+      hasSdr
+        ? supabase
+            .from("sdr_sessions")
+            .select("status, stage, messages_sent, replies_received")
+            .eq("owner_user_id", ownerId)
+            .limit(500)
+        : Promise.resolve({ data: [] }),
       supabase
         .from("calendar_events")
         .select("title, starts_at, status, event_type, company_name")
