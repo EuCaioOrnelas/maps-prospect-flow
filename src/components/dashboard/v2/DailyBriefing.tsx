@@ -570,7 +570,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
             {/* Thread */}
             <div
               ref={threadRef}
-              className="max-h-[520px] overflow-y-auto px-4 py-4 space-y-3 bg-background/40"
+              className="max-h-[520px] overflow-y-auto scrollbar-thin px-4 py-4 space-y-3 bg-background/40"
             >
               <div className="flex justify-center">
                 <span className="px-2.5 py-1 rounded-sm bg-muted/70 text-[10px] font-medium text-muted-foreground">
@@ -588,8 +588,18 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                 ) : (
                   <div key={`m-${i}`} className="flex justify-end">
                     <div className="max-w-[86%] min-w-0">
-                      <div className="rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words">
-                        {m.content}
+                      <div className="rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                        {m.audioUrl ? (
+                          <BriefingAudioBubble
+                            src={m.audioUrl}
+                            seconds={m.audioSeconds}
+                            avatarUrl={profile?.avatar_url}
+                            initials={initials}
+                            transcript={m.content?.startsWith("🎤") ? null : m.content}
+                          />
+                        ) : (
+                          m.content
+                        )}
                       </div>
                       <span className="mt-1 block text-right text-[10px] text-muted-foreground/70">{timeLabel(m.at)}</span>
                     </div>
@@ -598,9 +608,9 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
               )}
 
               {sending && (
-                <div className="flex gap-2.5 items-end">
+                <div className="flex gap-2.5 items-start">
                   <Avatar />
-                  <div className="rounded-2xl rounded-bl-sm bg-muted/70 px-3.5 py-3 flex items-center gap-1.5">
+                  <div className="rounded-2xl rounded-tl-sm bg-muted/70 px-3.5 py-3 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
@@ -608,6 +618,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                 </div>
               )}
             </div>
+
 
             {/* Composer */}
             <div className="border-t border-border/50 bg-card">
