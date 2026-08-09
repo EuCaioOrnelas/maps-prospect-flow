@@ -7,6 +7,7 @@ import {
   Bot,
   Target,
   Sparkles,
+  BrainCircuit,
   type LucideIcon,
 } from "lucide-react";
 
@@ -123,6 +124,22 @@ const GROUPS: Array<{ title: string; icon: LucideIcon; rows: Row[] }> = [
       { label: "Contexto comercial contínuo por conversa", start: false, growth: true, scale: true },
       { label: "Testes e simulações antes de ativar", start: false, growth: true, scale: true },
       { label: "Múltiplas IAs Closer para diferentes produtos e times", start: false, growth: false, scale: true },
+    ],
+  },
+  {
+    title: "Wian · Assistência Comercial com IA",
+    icon: BrainCircuit,
+    rows: [
+      { label: "Briefing executivo diário gerado por IA", start: true, growth: true, scale: true },
+      { label: "Conversa com a Wian por texto", start: true, growth: true, scale: true },
+      { label: "Conversa com a Wian por áudio (ela ouve e responde)", start: true, growth: true, scale: true },
+      { label: "Leitura automática do cockpit, CRM, atendimento e vendas", start: true, growth: true, scale: true },
+      { label: "Alertas críticos, de atenção e positivos priorizados", start: true, growth: true, scale: true },
+      { label: "Plano de ação com metas numéricas do dia", start: true, growth: true, scale: true },
+      { label: "Acompanhamento do que foi resolvido desde ontem", start: true, growth: true, scale: true },
+      { label: "Análise de prospecção, SDR Inteligente e agenda", start: false, growth: true, scale: true },
+      { label: "Projeção de receita e diagnóstico de funil por etapa", start: false, growth: true, scale: true },
+      { label: "Indicadores e metas personalizadas do seu negócio", start: false, growth: false, scale: true },
     ],
   },
   {

@@ -963,7 +963,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         whatsapp_number_ids: draft.whatsapp_number_ids,
         schedule: draft.schedule,
         triggers: draft.triggers,
-        personality: { ...draft.personality, leads_conversation: true, never_wait_lead: true },
+        personality: { ...draft.personality },
         strategy: draft.strategy,
         knowledge: { ...draft.knowledge, ai: undefined },
         closing: {

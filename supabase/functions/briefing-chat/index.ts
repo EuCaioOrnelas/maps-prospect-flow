@@ -370,8 +370,11 @@ serve(async (req) => {
 
 
     // Limite diário (conta chamadas registradas hoje)
-    const startOfDay = new Date();
-    startOfDay.setUTCHours(0, 0, 0, 0);
+    // Início do dia no fuso America/Sao_Paulo (UTC-3), alinhado ao dia exibido ao usuário
+    const nowBr = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    nowBr.setUTCHours(0, 0, 0, 0);
+    const startOfDay = new Date(nowBr.getTime() + 3 * 60 * 60 * 1000);
+
     const { count } = await supabase
       .from("ai_usage_logs")
       .select("id", { count: "exact", head: true })

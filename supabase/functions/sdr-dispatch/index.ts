@@ -101,6 +101,8 @@ Deno.serve(async (req) => {
 
     // Mensagem de voz do lead: transcreve o áudio para o cérebro do SDR entender e responder
     let inboundMessage: string = message || "";
+    let audioTranscript: string | null = null;
+    let audioTranscriptionFailed = false;
     if (!inboundMessage && message_type === "audio" && typeof media_ref === "string" && media_ref) {
       try {
         const trRes = await fetch(`${SUPABASE_URL}/functions/v1/transcribe-audio`, {
@@ -123,13 +125,72 @@ Deno.serve(async (req) => {
         console.error("[sdr-dispatch] erro ao transcrever áudio:", err);
       }
       if (!inboundMessage) {
-        return json({ skipped: "áudio não pôde ser transcrito", sent: 0 });
+        // Não bloqueia a conversa: o cérebro responde pedindo o texto e tudo fica visível no chat
+        inboundMessage = "[o lead enviou um áudio que não pôde ser transcrito]";
+        audioTranscriptionFailed = true;
+      } else {
+        audioTranscript = inboundMessage;
       }
     }
 
 
     if (!owner_user_id || !waba_connection_id || !contact_phone) {
       return json({ error: "Campos obrigatórios ausentes" }, 400);
+    }
+
+    // 0) Garante uma conversa para que TUDO que o SDR falar fique visível no chat
+    const phoneTail = String(contact_phone).replace(/\D/g, "").slice(-8);
+    let convId: string | null = conversation_id || null;
+    if (!convId) {
+      const { data: existingConv } = await supabase
+        .from("chat_conversations")
+        .select("id")
+        .eq("owner_user_id", owner_user_id)
+        .eq("waba_connection_id", waba_connection_id)
+        .or(`contact_phone.eq.${contact_phone},contact_phone.ilike.%${phoneTail}`)
+        .limit(1)
+        .maybeSingle();
+      if (existingConv?.id) {
+        convId = existingConv.id;
+      } else {
+        const { data: newConv } = await supabase
+          .from("chat_conversations")
+          .insert({
+            user_id: user_id || owner_user_id,
+            owner_user_id,
+            waba_connection_id,
+            phone_number_id: phone_number_id || null,
+            contact_phone,
+            contact_name: contact_name || null,
+          })
+          .select("id")
+          .maybeSingle();
+        convId = newConv?.id || null;
+      }
+    }
+
+    // Transcrição do áudio do lead vira texto visível no chat
+    if (convId && (audioTranscript || audioTranscriptionFailed)) {
+      const { data: lastAudio } = await supabase
+        .from("chat_messages")
+        .select("id")
+        .eq("conversation_id", convId)
+        .eq("direction", "inbound")
+        .eq("message_type", "audio")
+        .is("content", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lastAudio?.id) {
+        await supabase
+          .from("chat_messages")
+          .update({
+            content: audioTranscript
+              ? `🎤 ${audioTranscript}`
+              : "🎤 Áudio recebido (não foi possível transcrever)",
+          })
+          .eq("id", lastAudio.id);
+      }
     }
 
     // 1) Encontrar SDR ativo responsável por este número
@@ -167,7 +228,7 @@ Deno.serve(async (req) => {
           user_id: user_id || owner_user_id,
           phone: contact_phone,
           contact_name: contact_name || null,
-          conversation_id: conversation_id || null,
+          conversation_id: convId,
           waba_connection_id,
           phone_number_id: phone_number_id || null,
           status: "opted_out",
@@ -229,7 +290,7 @@ Deno.serve(async (req) => {
           phone: contact_phone,
           contact_name: contact_name || null,
           status: "active",
-          conversation_id: conversation_id || null,
+          conversation_id: convId,
           waba_connection_id,
           phone_number_id: phone_number_id || null,
           user_id: user_id || owner_user_id,
@@ -241,7 +302,7 @@ Deno.serve(async (req) => {
       const { data: updated } = await supabase
         .from("sdr_sessions")
         .update({
-          conversation_id: conversation_id || session.conversation_id,
+          conversation_id: convId || session.conversation_id,
           waba_connection_id,
           phone_number_id: phone_number_id || session.phone_number_id,
           user_id: user_id || owner_user_id,
@@ -277,11 +338,11 @@ Deno.serve(async (req) => {
 
     // 3) Histórico da conversa
     let history: { role: string; content: string }[] = [];
-    if (conversation_id) {
+    if (convId) {
       const { data: msgs } = await supabase
         .from("chat_messages")
         .select("direction, content, created_at")
-        .eq("conversation_id", conversation_id)
+        .eq("conversation_id", convId)
         .order("created_at", { ascending: false })
         .limit(20);
       history = (msgs || [])
@@ -354,11 +415,11 @@ Deno.serve(async (req) => {
           : (agent.closing?.notify_sellers ?? []);
 
       const firstSellerId = sellers.find((s: any) => s?.user_id)?.user_id ?? null;
-      if (nextAction === "chamar_vendedor" && firstSellerId && conversation_id) {
+      if (nextAction === "chamar_vendedor" && firstSellerId && convId) {
         await supabase
           .from("chat_conversations")
           .update({ responsible_user_id: firstSellerId })
-          .eq("id", conversation_id);
+          .eq("id", convId);
       }
 
       const wabaLabel = (() => {
@@ -438,13 +499,24 @@ Deno.serve(async (req) => {
       const metaJson = await metaRes.json().catch(() => ({}));
       if (!metaRes.ok) {
         console.error("[sdr-dispatch] Meta erro:", metaRes.status, JSON.stringify(metaJson));
+        if (convId) {
+          await supabase.from("chat_messages").insert({
+            conversation_id: convId,
+            user_id: user_id || owner_user_id,
+            owner_user_id,
+            direction: "outbound",
+            message_type: "text",
+            content: text,
+            status: "failed",
+          });
+        }
         break;
       }
       sent++;
 
-      if (conversation_id) {
+      if (convId) {
         await supabase.from("chat_messages").insert({
-          conversation_id,
+          conversation_id: convId,
           user_id: user_id || owner_user_id,
           owner_user_id,
           waba_message_id: metaJson?.messages?.[0]?.id || null,
@@ -456,7 +528,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (conversation_id && sent > 0) {
+    if (convId && sent > 0) {
       await supabase
         .from("chat_conversations")
         .update({
@@ -465,7 +537,7 @@ Deno.serve(async (req) => {
           last_message_type: "text",
           last_message_direction: "outbound",
         })
-        .eq("id", conversation_id);
+        .eq("id", convId);
     }
 
     if (session?.id) {
