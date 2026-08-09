@@ -1848,6 +1848,10 @@ Retorne APENAS um JSON válido:
       analise_concorrencia_regional: result.analise_concorrencia_regional,
       analise_demanda_regional: result.analise_demanda_regional,
       justificativa_score: result.justificativa_score,
+      similaridade_clientes_ganhos: Math.max(result.similaridade_clientes_ganhos, similarityScore),
+      clientes_similares: result.clientes_similares,
+      oportunidade_expansao: result.oportunidade_expansao,
+      potencial_receita_estimado: result.potencial_receita_estimado,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
