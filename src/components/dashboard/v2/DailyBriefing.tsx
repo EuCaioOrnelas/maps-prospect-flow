@@ -175,8 +175,8 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     agents: true,
   };
 
-  const { toast } = useToast();
-  const { user } = useAuth();
+  const { toast, dismiss } = useToast();
+  const { user, profile } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showQuick, setShowQuick] = useState(true);
@@ -185,6 +185,31 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
+
+  // ---- Gravação de voz ----
+  const [recording, setRecording] = useState(false);
+  const [locked, setLocked] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const cancelRef = useRef(false);
+  const startedAtRef = useRef(0);
+  const timerRef = useRef<number | null>(null);
+  const lastToastRef = useRef<string | null>(null);
+
+  const initials = useMemo(() => {
+    const n = (profile?.name || userName || "").trim();
+    if (!n) return "EU";
+    const parts = n.split(/\s+/);
+    return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() || "EU";
+  }, [profile?.name, userName]);
+
+  /** Aviso único: sempre apaga o anterior quando chega uma nova mensagem da Wian. */
+  const notify = (title: string, description: string, variant?: "destructive") => {
+    if (lastToastRef.current) dismiss(lastToastRef.current);
+    const t = toast({ title, description, variant });
+    lastToastRef.current = t.id;
+  };
 
   const today = new Date();
   const dateLabel = today.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -211,6 +236,21 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
+
+  // Auto-altura do input (limite + scroll interno, igual WhatsApp)
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "0px";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, [input]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+    };
+  }, []);
+
 
   // Remove indicadores de módulos que o plano do usuário não possui (ex.: Atendimento sem prospecção/SDR)
   const list = useMemo(
