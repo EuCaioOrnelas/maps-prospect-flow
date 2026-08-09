@@ -229,10 +229,12 @@ export default function MainDashboard() {
 
               {/* 5 — Briefing diário (chat) + Alertas — exclusivo owner/admin */}
               {accountRole !== "operational" && (
+              <div data-tour="wian-briefing">
               <DailyBriefing
                 alerts={kpis.executiveAlerts}
                 userName={(profile as any)?.full_name || (profile as any)?.name || null}
                 periodDays={periodDays}
+                demoConversation={!!demo}
                 capabilities={{
                   planName: getPlanDisplayName(profile as any),
                   opportunities: hasOpportunitiesAccess(profile as any),
