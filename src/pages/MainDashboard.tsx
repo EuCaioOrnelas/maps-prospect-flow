@@ -225,7 +225,8 @@ export default function MainDashboard() {
               {/* 4 — Opportunity Radar */}
               <OpportunityRadar radarLeads={kpis.radarLeads} />
 
-              {/* 5 — Briefing diário (chat) + Alertas */}
+              {/* 5 — Briefing diário (chat) + Alertas — exclusivo owner/admin */}
+              {accountRole !== "operational" && (
               <DailyBriefing
                 alerts={kpis.executiveAlerts}
                 userName={(profile as any)?.full_name || (profile as any)?.name || null}
