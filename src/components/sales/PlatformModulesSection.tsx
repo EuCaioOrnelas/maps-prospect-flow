@@ -970,20 +970,28 @@ const FlowMock = () => (
       {/* ramificação — alinhada ao centro dos ícones (nós têm 92px de largura) */}
       <div className="relative h-5" aria-hidden="true">
 
-        {/* barra horizontal ligando os centros dos nós das pontas */}
-        <span className="absolute left-[46px] right-[46px] top-2.5 border-t-2 border-dashed border-primary/45" />
-        {[18, 43, 71].map((left, i) => (
-          <motion.span
-            key={left}
-            className="absolute top-[7px] h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
-            style={{ left: `${left}%` }}
-            whileInView={{ x: [0, i % 2 ? 34 : 58], opacity: [0, 1, 1, 0] }}
-            viewport={LOOP_VIEW}
-            transition={{ duration: 1 + i * 0.27, delay: 1.15 + i * 0.43, repeat: Infinity, repeatDelay: 0.8 + i * 0.65, ease: "easeInOut" }}
-          />
-        ))}
-        {/* descida do nó de condição */}
+        {/* descida do nó de condição até a barra */}
         <span className="absolute left-1/2 -translate-x-px top-0 h-2.5 border-l-2 border-dashed border-primary/45" />
+
+        {/* barra horizontal ligando os centros dos nós das pontas */}
+        <div className="absolute left-[46px] right-[46px] top-2.5">
+          <span className="absolute inset-x-0 top-0 border-t-2 border-dashed border-primary/45" />
+          {/* bolinhas saem do centro e percorrem a barra até cada saída */}
+          {[
+            { to: "0%", delay: 1.15 },
+            { to: "100%", delay: 1.5 },
+          ].map((b) => (
+            <motion.span
+              key={b.to}
+              className="absolute -top-[3px] h-1.5 w-1.5 -ml-[3px] rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
+              initial={{ left: "50%", opacity: 0 }}
+              whileInView={{ left: ["50%", b.to], opacity: [0, 1, 1, 0] }}
+              viewport={LOOP_VIEW}
+              transition={{ duration: 1.1, delay: b.delay, repeat: Infinity, repeatDelay: 1.4, ease: "easeInOut" }}
+            />
+          ))}
+        </div>
+
         {/* descidas para cada saída */}
         <span className="absolute left-[46px] top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
         <span className="absolute left-1/2 -translate-x-px top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
@@ -991,12 +999,14 @@ const FlowMock = () => (
       </div>
 
 
+
       {/* Linha 3 — saídas */}
       <div className="flex items-start justify-between">
-        <FlowNode icon={CalendarDays} label="Agendar" sub="Reunião na agenda" delay={1.1} />
-        <FlowNode icon={Timer} label="Espera" sub="Follow-up 2h úteis" tone="muted" delay={1.2} />
-        <FlowNode icon={LayoutDashboard} label="CRM" sub="Move de etapa" tone="info" delay={1.3} />
+        <FlowNode icon={CalendarDays} label="Sim: Agendar" sub="Reunião na agenda" delay={1.1} />
+        <FlowNode icon={LayoutDashboard} label="CRM" sub="Move de etapa" tone="info" delay={1.2} />
+        <FlowNode icon={Timer} label="Não: Espera" sub="Follow-up 2h úteis" tone="muted" delay={1.3} />
       </div>
+
 
       <div className="flex justify-center">
         <DottedLine className="h-4 border-l-2" delay={1.4} axis="y" travel />
@@ -1132,10 +1142,11 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       style={{ top: `calc(5.5rem + ${index * 16}px)`, zIndex: 10 + index }}
     >
     <motion.article
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 16, x: reversed ? 40 : -40 }}
+      whileInView={{ opacity: 1, y: 0, x: 0 }}
       viewport={{ once: true, amount: 0.15, margin: "0px 0px -80px 0px" }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+
 
 
 
@@ -1246,9 +1257,10 @@ export const PlatformModulesSection = () => {
       <div className="container mx-auto px-4 max-w-6xl">
         <SectionHeading
           eyebrow="Recursos da plataforma"
-          title="Tudo o que você precisa para"
-          highlight="vender mais com IA"
+          title="Tudo o que você precisa"
+          highlight="para vender mais com Eficiência"
           highlightFit="tight"
+
           description="Conheça os módulos que trabalham juntos para transformar sua operação comercial em uma máquina de geração de oportunidades."
           isVisible={isVisible}
         />
