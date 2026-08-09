@@ -1042,7 +1042,7 @@ const FlowMock = () => (
 
 /* ---------------------------- 8. Wian ---------------------------- */
 const WianMock = () => (
-  <MockShell title="Wian — Briefing do dia" badge="analista IA">
+  <MockShell title="Wian · Briefing do dia" badge="analista IA">
     <div className="flex items-center gap-2 pb-2 mb-2 border-b border-border/60">
       <img
         src={wianAvatar}
