@@ -987,7 +987,7 @@ const FlowMock = () => (
               initial={{ left: "50%", opacity: 0 }}
               whileInView={{ left: ["50%", b.to], opacity: [0, 1, 1, 0] }}
               viewport={LOOP_VIEW}
-              transition={{ duration: 1.1, delay: b.delay, repeat: Infinity, repeatDelay: 1.4, ease: "easeInOut" }}
+              transition={{ duration: 2.1, delay: b.delay, repeat: Infinity, repeatDelay: 1.6, ease: "easeInOut" }}
             />
           ))}
         </div>
