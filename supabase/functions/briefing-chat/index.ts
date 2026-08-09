@@ -349,8 +349,35 @@ serve(async (req) => {
       );
     }
 
+    const caps: Caps = (body?.snapshot?.capabilities as Caps) ?? {};
     const context = buildContext(body?.snapshot, body?.history);
-    const accountData = await loadAccountData(supabase, ownerId);
+    const accountData = await loadAccountData(supabase, ownerId, caps);
+
+    // Escopo do plano: nunca recomendar módulo que o gestor não possui
+    const available = [
+      "Cockpit executivo",
+      "CRM e score de intenção",
+      "Chat / Atendimento WhatsApp",
+      "Campanhas Meta",
+      "Fluxos inteligentes",
+      "Agenda",
+      caps.opportunities !== false ? "Prospecção IA (Oportunidades)" : null,
+      caps.sdr !== false ? "SDR Inteligente" : null,
+      caps.agents !== false ? "Agentes IA" : null,
+    ].filter(Boolean).join(", ");
+    const blocked = [
+      caps.opportunities === false ? "Prospecção IA / Oportunidades" : null,
+      caps.sdr === false ? "SDR Inteligente (exclusivo do plano Growth IA)" : null,
+      caps.agents === false ? "Agentes IA" : null,
+    ].filter(Boolean);
+    const scopeLines = [
+      `Plano do gestor: ${caps.planName || "não informado"}.`,
+      `Módulos disponíveis para ele: ${available}.`,
+      blocked.length
+        ? `Módulos NÃO contratados: ${blocked.join("; ")}. Nunca analise, cobre nem recomende ações nesses módulos. Se o gestor perguntar sobre eles, diga em uma frase que não fazem parte do plano atual e, no máximo uma vez por conversa, mencione que estão disponíveis no Growth IA — depois volte para as alavancas que ele realmente tem (atendimento, CRM, campanhas, fluxos e agenda).`
+        : "Todos os módulos estão contratados.",
+    ].join("\n");
+
 
     // Perfil individual do gestor (tom, foco e histórico de interações) — enviado pelo cliente
     const p = body?.persona ?? {};
