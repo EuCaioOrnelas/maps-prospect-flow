@@ -383,7 +383,7 @@ export function GuidedTour() {
       const spaceLeft = dialogRect.left;
       const useRight = spaceRight >= spaceLeft;
       const space = useRight ? spaceRight : spaceLeft;
-      const width = Math.max(300, Math.min(POPUP_W, space - 36));
+      const width = Math.max(260, Math.min(availableWidth, space - 36));
 
       if (space < 340) {
         // Modal takes nearly the whole viewport: dock the card at the bottom,
