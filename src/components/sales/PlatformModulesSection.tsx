@@ -1054,7 +1054,7 @@ const WianMock = () => (
         className="w-[30px] h-[30px] rounded-sm object-cover ring-1 ring-border/60"
       />
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-semibold text-foreground truncate">Wian — Assistência Comercial</p>
+        <p className="text-[11px] font-semibold text-foreground truncate">Wian · Assistência Comercial</p>
         <p className="text-[9px] text-primary">online · analisando sua operação</p>
       </div>
       <Pill tone="primary">
