@@ -310,8 +310,9 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
 
   useEffect(() => {
+    if (demoConversation) return;
     if (metrics && Object.keys(metrics).length > 0) persistSnapshot(metrics, periodDays, alerts || []);
-  }, [metrics, periodDays, alerts]);
+  }, [metrics, periodDays, alerts, demoConversation]);
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
