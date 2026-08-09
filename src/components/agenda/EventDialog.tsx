@@ -220,6 +220,12 @@ export function EventDialog({
   );
   const [deleting, setDeleting] = useState(false);
   const [step, setStep] = useState(1);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Ao trocar de etapa o conteúdo volta para o topo do modal.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [step]);
 
   useEffect(() => {
     if (open) {
