@@ -297,6 +297,21 @@ serve(async (req) => {
     }
     const userId = claims.claims.sub as string;
 
+    // Somente owner/admin da conta podem consultar o briefing (dados financeiros sensíveis)
+    const { data: me } = await supabase
+      .from("profiles")
+      .select("name, account_role, parent_owner_id")
+      .eq("id", userId)
+      .maybeSingle();
+    const role = (me?.account_role as string) || "owner";
+    if (role === "operational") {
+      return new Response(JSON.stringify({ error: "forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const ownerId = (me?.parent_owner_id as string) || userId;
+
     const body = await req.json().catch(() => ({}));
     const question = String(body?.message ?? "").trim().slice(0, MAX_QUESTION);
     if (!question) {
@@ -305,6 +320,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     // Limite diário (conta chamadas registradas hoje)
     const startOfDay = new Date();
