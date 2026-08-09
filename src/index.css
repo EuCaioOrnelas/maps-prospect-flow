@@ -1294,6 +1294,14 @@ input::placeholder, textarea::placeholder {
 .wa-bubble-in-fill { fill: #202c33; }
 .landing-light .wa-bubble-in-fill { fill: #ffffff; }
 
+/* ─── Briefing (Wian) bubbles — mesmas cores do chat ─── */
+.briefing-bubble-user { background-color: #005c4b; color: #e9edef; }
+.landing-light .briefing-bubble-user { background-color: #d9fdd3; color: #0b1f17; }
+.briefing-bubble-ai { background-color: #202c33; color: #e9edef; }
+.landing-light .briefing-bubble-ai { background-color: #ffffff; color: #0b1f17; border: 1px solid rgba(11,31,23,0.06); }
+
+
+
 /* Bubble text — contrasta com cada tema */
 .wa-bubble-out .wa-text-primary,
 .wa-bubble-in .wa-text-primary { color: #e9edef; }
