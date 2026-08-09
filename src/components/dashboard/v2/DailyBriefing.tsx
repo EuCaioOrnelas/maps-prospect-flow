@@ -405,7 +405,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
     const parts2: string[] = [];
     if (critical.length > 0) {
-      parts2.push(`🔴 Identifiquei ${critical.length} ponto(s) crítico(s) na operação:\n${bullets(critical)}`);
+      parts2.push(`🚨 Identifiquei ${critical.length} ponto(s) crítico(s) na operação:\n${bullets(critical)}`);
     }
     if (attention.length > 0) {
       parts2.push(`🟡 E ${attention.length} ponto(s) de atenção:\n${bullets(attention)}`);
