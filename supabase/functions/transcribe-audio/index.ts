@@ -75,11 +75,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Áudio enviado direto (base64) — usado pelo chat de teste do SDR e pela Wian
+    let inlineBlob: Blob | null = null;
+    if (audio_base64) {
+      const bin = Uint8Array.from(atob(String(audio_base64)), (c) => c.charCodeAt(0));
+      inlineBlob = new Blob([bin], { type: String(audio_mime || "audio/webm") });
+    }
+
     // Resolve Meta media references to a real downloadable URL with bearer auth
     let fetchUrl = audio_url;
     let fetchHeaders: Record<string, string> = {};
 
-    if (audio_url.startsWith("meta_media:")) {
+    if (!inlineBlob && audio_url.startsWith("meta_media:")) {
+
       const mediaId = audio_url.slice("meta_media:".length).trim();
       if (!mediaId) {
         return new Response(JSON.stringify({ error: "Invalid meta_media id" }), {
