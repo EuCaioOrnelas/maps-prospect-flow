@@ -413,7 +413,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     const m2 =
       parts2.length > 0
         ? parts2.join("\n\n")
-        : "🟢 Não identifiquei pontos críticos nem de atenção nesta janela. A operação está dentro do esperado.";
+        : "✅ Não identifiquei pontos críticos nem de atenção nesta janela. A operação está dentro do esperado.";
 
     const parts3: string[] = [];
     if (positives.length > 0) {
