@@ -235,7 +235,7 @@ const SDR_TERMS = /\bsdr\b|agente ia|agentes ia|copiloto/i;
 const timeLabel = (ts: number) =>
   new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilities }: DailyBriefingProps) {
+export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilities, demoConversation }: DailyBriefingProps) {
   const caps: BriefingCapabilities = capabilities ?? {
     planName: "—",
     opportunities: true,
