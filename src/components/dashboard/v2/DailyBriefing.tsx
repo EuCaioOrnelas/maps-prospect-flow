@@ -956,6 +956,11 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
               quatro mensagens: apresentação, pontos críticos e de atenção, evoluções positivas e o plano de ação.
             </p>
             <p>
+              A Wian analisa cockpit, CRM, atendimento, campanhas{caps.opportunities ? ", prospecção" : ""}
+              {caps.sdr ? ", SDR Inteligente" : ""} e agenda desta conta ({caps.planName}). Disponível apenas para
+              owner e administradores.
+            </p>
+            <p>
               Na conversa ela enxerga também o CRM (contatos, etapas, score e pipeline em R$), as vendas registradas,
               a performance do SDR Inteligente, os próximos compromissos da Agenda e o score de maturidade da conta.
             </p>
