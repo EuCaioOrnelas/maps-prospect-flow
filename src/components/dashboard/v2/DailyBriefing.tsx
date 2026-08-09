@@ -285,6 +285,17 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
   // Conversa do dia + limpeza dos dias anteriores (reset diário do briefing)
   useEffect(() => {
+    if (demoConversation) {
+      // Tour guiado: conversa simulada com dados fictícios, sem tocar no armazenamento real
+      setMessages(
+        DEMO_CONVERSATION.map((m) => ({
+          role: m.role,
+          content: m.content,
+          at: Date.now() - (10 - m.offsetMin) * 60_000,
+        })),
+      );
+      return;
+    }
     setMessages(readJSON<ChatMsg[]>(CHAT_KEY(), []));
     try {
       const prefix = "wiize:briefing:chat:";
@@ -295,7 +306,8 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [demoConversation]);
+
 
   useEffect(() => {
     if (metrics && Object.keys(metrics).length > 0) persistSnapshot(metrics, periodDays, alerts || []);
