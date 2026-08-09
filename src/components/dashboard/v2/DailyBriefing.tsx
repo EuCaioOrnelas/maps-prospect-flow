@@ -7,13 +7,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronDown, ChevronUp, Send, Loader2, RotateCcw, Info, Zap, ShieldCheck } from "lucide-react";
+import { ChevronDown, ChevronUp, Send, Loader2, RotateCcw, Info, Zap, ShieldCheck, Mic, Trash2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ExecutiveAlert } from "./ExecutiveAlerts";
+import { BriefingAudioBubble } from "./BriefingAudioBubble";
 import wianAvatar from "@/assets/wian-avatar.png";
+
 
 export interface BriefingMetrics {
   [label: string]: number | string;
