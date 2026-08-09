@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAccountRole } from "@/hooks/useAccountRole";
 import { useMainDashboard } from "@/hooks/useMainDashboard";
 import { useCockpitForecast } from "@/hooks/useCockpitForecast";
 import { useDashboardKPIs } from "@/hooks/useDashboardKPIs";
