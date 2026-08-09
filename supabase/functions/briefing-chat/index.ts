@@ -119,8 +119,11 @@ function buildContext(snapshot: any, history: any[]): string {
 const BRL = (n: number) =>
   `R$ ${Number(n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+type Caps = { planName?: string; opportunities?: boolean; sdr?: boolean; agents?: boolean };
+
 /** Carrega os dados reais da conta (CRM, vendas, SDR, agenda, score) para dar contexto completo à Wian. */
-async function loadAccountData(supabase: any, ownerId: string): Promise<string> {
+async function loadAccountData(supabase: any, ownerId: string, caps: Caps = {}): Promise<string> {
+  const hasSdr = caps.sdr !== false;
   const lines: string[] = [];
   const since90 = new Date(Date.now() - 90 * 86400_000).toISOString();
 
