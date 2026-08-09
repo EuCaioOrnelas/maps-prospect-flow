@@ -397,7 +397,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
       : { interactions: 0, topics: {} };
     const veteran = (persona.interactions ?? 0) >= 8;
     const topTopic = Object.entries(persona.topics || {}).sort((a, b) => b[1] - a[1])[0]?.[0];
-    const bullets = (items: ExecutiveAlert[]) => items.slice(0, 5).map((a) => `• ${a.text}`).join("\n");
+    const bullets = (items: ExecutiveAlert[]) => items.slice(0, 5).map((a) => `- ${a.text}`).join("\n");
 
     const m1 = veteran
       ? `${greeting(today.getHours())}${name ? `, ${name}` : ""}. Briefing de ${dateLabel} — janela de ${periodDays} dias. ${list.length} indicadores analisados: ${critical.length} crítico(s), ${attention.length} em atenção, ${positives.length} positivo(s).${topTopic ? ` Já deixei ${topTopic} mapeado, como você costuma acompanhar.` : ""}`
