@@ -228,7 +228,7 @@ Deno.serve(async (req) => {
           user_id: user_id || owner_user_id,
           phone: contact_phone,
           contact_name: contact_name || null,
-          conversation_id: conversation_id || null,
+          conversation_id: convId,
           waba_connection_id,
           phone_number_id: phone_number_id || null,
           status: "opted_out",
@@ -290,7 +290,7 @@ Deno.serve(async (req) => {
           phone: contact_phone,
           contact_name: contact_name || null,
           status: "active",
-          conversation_id: conversation_id || null,
+          conversation_id: convId,
           waba_connection_id,
           phone_number_id: phone_number_id || null,
           user_id: user_id || owner_user_id,
@@ -302,7 +302,7 @@ Deno.serve(async (req) => {
       const { data: updated } = await supabase
         .from("sdr_sessions")
         .update({
-          conversation_id: conversation_id || session.conversation_id,
+          conversation_id: convId || session.conversation_id,
           waba_connection_id,
           phone_number_id: phone_number_id || session.phone_number_id,
           user_id: user_id || owner_user_id,
@@ -338,11 +338,11 @@ Deno.serve(async (req) => {
 
     // 3) Histórico da conversa
     let history: { role: string; content: string }[] = [];
-    if (conversation_id) {
+    if (convId) {
       const { data: msgs } = await supabase
         .from("chat_messages")
         .select("direction, content, created_at")
-        .eq("conversation_id", conversation_id)
+        .eq("conversation_id", convId)
         .order("created_at", { ascending: false })
         .limit(20);
       history = (msgs || [])
