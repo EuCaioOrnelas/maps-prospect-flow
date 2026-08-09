@@ -64,7 +64,16 @@ function variation(current: number, previous: number): number | null {
 }
 
 function fmtBRL(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  return (value || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function fmtInt(value: number) {
+  return Math.round(value || 0).toLocaleString("pt-BR");
 }
 
 interface TrendConfig {
@@ -91,7 +100,7 @@ function trendAlert(
   return {
     type: good ? "success" : isDrop ? "warning" : "info",
     icon: React.createElement(isDrop ? TrendingDown : TrendingUp, { size: 14 }),
-    text: `${cfg.label}: ${pct}% ${isDrop ? "a menos" : "a mais"} que nos ${periodLabel(periodDays)} anteriores (${data.current} vs ${data.previous})`,
+    text: `${cfg.label}: ${pct}% ${isDrop ? "a menos" : "a mais"} que nos ${periodLabel(periodDays)} anteriores (${fmtInt(data.current)} vs ${fmtInt(data.previous)})`,
     route: cfg.route,
     priority: good ? 40 + Math.min(20, pct / 5) : 60 + Math.min(30, pct / 3),
   };
@@ -147,7 +156,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: input.leadsWithoutFirstContact >= 20 ? "danger" : "warning",
       icon: React.createElement(Hourglass, { size: 14 }),
-      text: `${input.leadsWithoutFirstContact} leads no CRM há mais de 48h sem nenhuma abordagem enviada`,
+      text: `${fmtInt(input.leadsWithoutFirstContact)} leads no CRM há mais de 48h sem nenhuma abordagem enviada`,
       route: "/crm",
       priority: 90,
     });
@@ -157,7 +166,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: input.unansweredConversations >= 5 ? "danger" : "warning",
       icon: React.createElement(MessageCircleOff, { size: 14 }),
-      text: `${input.unansweredConversations} conversas com mensagem do cliente sem resposta há mais de 24h`,
+      text: `${fmtInt(input.unansweredConversations)} conversas com mensagem do cliente sem resposta há mais de 24h`,
       route: "/chat",
       priority: 100,
     });
@@ -167,7 +176,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: "danger",
       icon: React.createElement(Flame, { size: 14 }),
-      text: `${input.forgottenHotLeads} leads quentes (score acima de 600) sem interação há mais de 7 dias`,
+      text: `${fmtInt(input.forgottenHotLeads)} leads quentes (score acima de 600) sem interação há mais de 7 dias`,
       route: "/crm-score",
       priority: 98,
     });
@@ -177,7 +186,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: "warning",
       icon: React.createElement(Snowflake, { size: 14 }),
-      text: `${input.stuckLeads} leads parados na mesma etapa do funil há mais de 14 dias`,
+      text: `${fmtInt(input.stuckLeads)} leads parados na mesma etapa do funil há mais de 14 dias`,
       route: "/crm",
       priority: 75,
     });
@@ -187,7 +196,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: "danger",
       icon: React.createElement(PlugZap, { size: 14 }),
-      text: `${input.disconnectedNumbers} número(s) de WhatsApp desconectado(s) — envios bloqueados`,
+      text: `${fmtInt(input.disconnectedNumbers)} número(s) de WhatsApp desconectado(s) — envios bloqueados`,
       route: "/whatsapp",
       priority: 100,
     });
@@ -197,7 +206,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: "warning",
       icon: React.createElement(Megaphone, { size: 14 }),
-      text: `${input.campaignsWithoutReturn} campanha(s) com envios e nenhuma resposta — revise a mensagem e o público`,
+      text: `${fmtInt(input.campaignsWithoutReturn)} campanha(s) com envios e nenhuma resposta — revise a mensagem e o público`,
       route: "/meta-campaigns",
       priority: 80,
     });
@@ -207,7 +216,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: "warning",
       icon: React.createElement(CalendarClock, { size: 14 }),
-      text: `${input.pendingPastMeetings} reuniões já realizadas continuam sem desfecho registrado na agenda`,
+      text: `${fmtInt(input.pendingPastMeetings)} reuniões já realizadas continuam sem desfecho registrado na agenda`,
       route: "/agenda",
       priority: 72,
     });
@@ -217,7 +226,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: "danger",
       icon: React.createElement(CalendarX, { size: 14 }),
-      text: `Nenhuma reunião marcada para os próximos 7 dias, mesmo com ${input.readyForSale} leads prontos para venda`,
+      text: `Nenhuma reunião marcada para os próximos 7 dias, mesmo com ${fmtInt(input.readyForSale)} leads prontos para venda`,
       route: "/agenda",
       priority: 96,
     });
@@ -228,7 +237,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: "success",
       icon: React.createElement(Zap, { size: 14 }),
-      text: `${input.hotGrowth24h} leads tiveram aumento de score superior a 100 pts nas últimas 24h`,
+      text: `${fmtInt(input.hotGrowth24h)} leads tiveram aumento de score superior a 100 pts nas últimas 24h`,
       route: "/crm-score",
       priority: 65,
     });
@@ -238,7 +247,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: "success",
       icon: React.createElement(Zap, { size: 14 }),
-      text: `${input.readyForSale} leads com score acima de 800 — prontos para abordagem de venda`,
+      text: `${fmtInt(input.readyForSale)} leads com score acima de 800 — prontos para abordagem de venda`,
       route: "/crm",
       priority: 88,
     });
@@ -248,7 +257,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: "warning",
       icon: React.createElement(TrendingDown, { size: 14 }),
-      text: `${input.decayedLeads7d} leads perderam pontos de score nos últimos 7 dias — risco de esfriamento`,
+      text: `${fmtInt(input.decayedLeads7d)} leads perderam pontos de score nos últimos 7 dias — risco de esfriamento`,
       route: "/crm-score",
       priority: 70,
     });
@@ -258,7 +267,7 @@ export function buildExecutiveAlerts(input: AlertsInput): ExecutiveAlert[] {
     alerts.push({
       type: "warning",
       icon: React.createElement(ThermometerSun, { size: 14 }),
-      text: `${input.coldLeads} leads frios (score até 200) — considere reativação ou limpeza da base`,
+      text: `${fmtInt(input.coldLeads)} leads frios (score até 200) — considere reativação ou limpeza da base`,
       route: "/crm-score",
       priority: 55,
     });
