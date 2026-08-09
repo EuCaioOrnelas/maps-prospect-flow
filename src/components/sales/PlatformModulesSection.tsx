@@ -982,7 +982,8 @@ const FlowMock = () => (
         <span className="absolute left-[46px] top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
         <span className="absolute left-1/2 -translate-x-px top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
         <span className="absolute right-[46px] top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
-      </motion.div>
+      </div>
+
 
       {/* Linha 3 — saídas */}
       <div className="flex items-start justify-between">
