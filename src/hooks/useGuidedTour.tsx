@@ -114,6 +114,9 @@ export function preloadTourRoutes(routes: Array<string | undefined>) {
             : null;
     loader?.().catch(() => preloadedTourRoutes.delete(route));
   });
+}
+
+
 
 function resolveTargetSelectors(selector: string) {
   return selector
