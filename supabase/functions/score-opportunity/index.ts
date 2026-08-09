@@ -1279,6 +1279,10 @@ const normalizeAiResult = ({
     analise_concorrencia_regional: compact(toSafeString(raw?.analise_concorrencia_regional)) || "",
     analise_demanda_regional: compact(toSafeString(raw?.analise_demanda_regional)) || "",
     justificativa_score: compact(toSafeString(raw?.justificativa_score)) || `Score consolidado pelo equilíbrio entre estrutura digital (${estrutura_digital}), reputação (${reputacao}), acessibilidade (${acessibilidade}), engajamento (${engajamento_atividade}) e potencial (${potencial_venda}).`,
+    similaridade_clientes_ganhos: clamp(numberFromUnknown(raw?.similaridade_clientes_ganhos) ?? 0, 0, 100),
+    clientes_similares: normalizeStringArray(raw?.clientes_similares).slice(0, 3),
+    oportunidade_expansao: compact(toSafeString(raw?.oportunidade_expansao)),
+    potencial_receita_estimado: compact(toSafeString(raw?.potencial_receita_estimado)),
   };
 };
 
