@@ -480,7 +480,11 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                 </button>
                 {showQuick && (
                   <div className="mt-2 flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
-                    {SUGGESTIONS.map((s) => (
+                    {SUGGESTIONS.filter(
+                      (s) =>
+                        !s.requires ||
+                        (s.requires === "opportunities" ? caps.opportunities : caps.sdr),
+                    ).map((s) => (
                       <button
                         key={s.shortcut}
                         type="button"
