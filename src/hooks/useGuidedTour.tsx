@@ -163,6 +163,30 @@ async function openDemoLeadDialog() {
   );
 }
 
+/**
+ * Pré-aquece o modal do lead demo um passo ANTES do "Diagnóstico inteligente".
+ * O dialog é montado de verdade (dados carregados, abas renderizadas), porém
+ * invisível via `body.tour-prewarm-lead`. Quando o usuário clica em "Próximo",
+ * basta remover a classe e o card aparece instantaneamente.
+ */
+async function prewarmDemoLeadDialog() {
+  try {
+    if (document.querySelector('[role="dialog"] [data-tour="lead-tab-dados"]')) return;
+    document.body.classList.add("tour-prewarm-lead");
+    const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 80, 40);
+    if (!row) {
+      document.body.classList.remove("tour-prewarm-lead");
+      return;
+    }
+    row.click();
+    const tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-score"]', 80, 40);
+    tab?.click();
+    await waitForElement('[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]', 80, 40);
+  } catch {
+    document.body.classList.remove("tour-prewarm-lead");
+  }
+}
+
 async function activateLeadTab(selector: string) {
   const tab = await waitForElement<HTMLElement>(selector, 60, 40);
   tab?.click();
