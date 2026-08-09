@@ -1002,10 +1002,11 @@ const FlowMock = () => (
 
       {/* Linha 3 — saídas */}
       <div className="flex items-start justify-between">
-        <FlowNode icon={CalendarDays} label="Agendar" sub="Reunião na agenda" delay={1.1} />
-        <FlowNode icon={Timer} label="Espera" sub="Follow-up 2h úteis" tone="muted" delay={1.2} />
-        <FlowNode icon={LayoutDashboard} label="CRM" sub="Move de etapa" tone="info" delay={1.3} />
+        <FlowNode icon={CalendarDays} label="Sim: Agendar" sub="Reunião na agenda" delay={1.1} />
+        <FlowNode icon={LayoutDashboard} label="CRM" sub="Move de etapa" tone="info" delay={1.2} />
+        <FlowNode icon={Timer} label="Não: Espera" sub="Follow-up 2h úteis" tone="muted" delay={1.3} />
       </div>
+
 
       <div className="flex justify-center">
         <DottedLine className="h-4 border-l-2" delay={1.4} axis="y" travel />
