@@ -40,8 +40,13 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
   const [sending, setSending] = useState(false);
   const [memory, setMemory] = useState<any>({});
   const [stage, setStage] = useState<string>("conexao");
+  const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const timerRef = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
 
   const reset = () => {
     setItems([]);
