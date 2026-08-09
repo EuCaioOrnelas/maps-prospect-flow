@@ -1038,8 +1038,99 @@ const FlowMock = () => (
 );
 
 
+/* ---------------------------- 8. Wian ---------------------------- */
+const WianMock = () => (
+  <MockShell title="Wian — Briefing do dia" badge="analista IA">
+    <div className="flex items-center gap-2 pb-2 mb-2 border-b border-border/60">
+      <img
+        src={wianAvatar}
+        alt="Wian, assistência comercial com IA da Wiize"
+        loading="lazy"
+        decoding="async"
+        width={30}
+        height={30}
+        className="w-[30px] h-[30px] rounded-sm object-cover ring-1 ring-border/60"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-semibold text-foreground truncate">Wian — Assistência Comercial</p>
+        <p className="text-[9px] text-primary">online · analisando sua operação</p>
+      </div>
+      <Pill tone="primary">
+        <ShieldCheck size={9} /> Executivo
+      </Pill>
+    </div>
+
+    <ChatWallpaper className="space-y-1.5 flex-1 min-h-0 overflow-hidden">
+      <Reveal delay={0.15}>
+        <div className="max-w-[92%] rounded-sm bg-muted px-3 py-2 text-[11px] leading-snug text-muted-foreground shadow-sm">
+          Bom dia, Caio. Analisei 18 indicadores hoje: 2 críticos, 3 em atenção e 4 positivos.
+        </div>
+      </Reveal>
+      <Reveal delay={0.35}>
+        <div className="max-w-[92%] rounded-sm bg-muted px-3 py-2 text-[11px] leading-snug text-muted-foreground shadow-sm space-y-1">
+          <p className="flex items-start gap-1.5">
+            <span>🔴</span>
+            <span>
+              <b className="text-foreground">12 leads quentes</b> sem contato há 3 dias — R$ 148.400,00 parados.
+            </span>
+          </p>
+          <p className="flex items-start gap-1.5">
+            <span>🟢</span>
+            <span>
+              Ticket médio subiu para <b className="text-foreground">R$ 4.180,00</b>.
+            </span>
+          </p>
+        </div>
+      </Reveal>
+      <Reveal delay={0.55}>
+        <div className="flex justify-end">
+          <div className="max-w-[80%] rounded-sm bg-primary/12 px-3 py-2 text-[11px] leading-snug text-foreground ring-1 ring-inset ring-primary/15 shadow-sm">
+            O que eu devo priorizar hoje?
+            <span className="mt-1 flex items-center justify-end gap-1 text-[8px] text-muted-foreground/80">
+              08:12 <CheckCheck size={9} className="text-sky-500" />
+            </span>
+          </div>
+        </div>
+      </Reveal>
+      <div className="w-fit rounded-sm bg-muted px-2.5 py-2 shadow-sm">
+        <TypingDots delay={0.2} />
+      </div>
+    </ChatWallpaper>
+
+    <Reveal delay={0.9} className="mt-2 shrink-0">
+      <div className="rounded-card border border-primary/20 bg-primary/[0.06] p-1.5">
+        <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-primary mb-1">
+          <Sparkles size={10} /> Plano de ação sugerido
+        </p>
+        <div className="space-y-0.5">
+          {[
+            "Reativar 12 leads quentes no CRM",
+            "Ajustar 1ª mensagem do SDR (resposta 21%)",
+            "Meta do dia: 8 conversas · 2 reuniões",
+          ].map((s, i) => (
+            <motion.p
+              key={s}
+              className="flex items-center gap-1.5 text-[10px] text-foreground/80"
+              initial={{ opacity: 0, x: -8 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={VIEW}
+              transition={{ duration: 0.35, delay: 1.6 + i * 0.15 }}
+            >
+              <Check size={10} className="text-primary" strokeWidth={3} /> {s}
+            </motion.p>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          <Pill tone="primary">Texto ou áudio</Pill>
+          <Pill tone="amber">Briefing diário</Pill>
+        </div>
+      </div>
+    </Reveal>
+  </MockShell>
+);
 
 /* ------------------------------------------------------------------ */
+
 
 type ModuleItem = {
   icon: typeof Search;
