@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, X, Sparkles, Loader2, Shield, Lock, CreditCard, Server, FileCheck, ShieldCheck, BadgeCheck, RotateCcw, Rocket, TrendingUp, Building2, Table2, ChevronDown, Target, Users, Bot, Headphones } from "lucide-react";
+import { Check, X, Sparkles, Loader2, Shield, Lock, CreditCard, Server, FileCheck, ShieldCheck, BadgeCheck, RotateCcw, Rocket, TrendingUp, Building2, Table2, ChevronDown, Target, Users, Bot, Headphones, BrainCircuit } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,6 +77,7 @@ const mainPlans = {
  { text: "Campanhas inteligentes em escala via Meta API" },
  { text: "Fluxos Inteligentes com Wiize AI" },
  { text: "Cockpit Executivo de operação comercial" },
+ { text: "Wian, Assistência Comercial com IA: briefing executivo diário por texto ou áudio", isNew: true },
  { text: "Integração com Google Calendar (agendamento automático)" },
  { text: "Integração com Google Sheets (entrada e saída de dados)" },
  { text: "Integração com Gmail (envio de e-mails pelo fluxo)" },
@@ -104,6 +105,7 @@ const mainPlans = {
  { text: "Geração de abordagens personalizadas por contexto" },
  { text: "Follow-up inteligente com contexto comercial" },
  { text: "Copiloto Comercial IA Closer em conversas" },
+ { text: "Wian avançada: analisa prospecção, SDR, agenda e projeção de receita", isNew: true },
  { text: "Fluxos Operacionais com Wiize AI" },
  { text: "Até 5 números WhatsApp conectados" },
  { text: "Até 5 usuários da conta (multiusuário)" },
@@ -130,6 +132,7 @@ const mainPlans = {
  { text: "Campanhas inteligentes em escala via Meta API" },
  { text: "Fluxos Inteligentes com Wiize AI" },
  { text: "Cockpit Executivo de operação comercial" },
+ { text: "Wian, Assistência Comercial com IA: briefing executivo diário por texto ou áudio", isNew: true },
  { text: "Integração com Google Calendar (agendamento automático)" },
  { text: "Integração com Google Sheets (entrada e saída de dados)" },
  { text: "Integração com Gmail (envio de e-mails pelo fluxo)" },
@@ -157,6 +160,7 @@ const mainPlans = {
  { text: "Geração de abordagens personalizadas por contexto" },
  { text: "Follow-up inteligente com contexto comercial" },
  { text: "Copiloto Comercial IA Closer em conversas" },
+ { text: "Wian avançada: analisa prospecção, SDR, agenda e projeção de receita", isNew: true },
  { text: "Fluxos Operacionais com Wiize AI" },
  { text: "Até 5 números WhatsApp conectados" },
  { text: "Até 5 usuários da conta (multiusuário)" },
@@ -178,6 +182,7 @@ const scalePlan = {
  description: "Para escalar operações comerciais com infraestrutura e IA sob medida.",
  features: [
  { text: "Tudo do plano Growth IA" },
+ { text: "Wian sob medida com indicadores e metas do seu negócio" },
  { text: "Operação Comercial dedicada com Wiize AI", isNew: true },
  { text: "Volume de oportunidades sob demanda" },
  { text: "Fluxos e Inteligências sob medida" },
@@ -296,6 +301,22 @@ export const PricingSection = () => {
  { label: "Contexto comercial contínuo por conversa", start: false, growth: true, scale: true },
  { label: "Testes e simulações antes de ativar", start: false, growth: true, scale: true },
  { label: "Múltiplas IAs Closer para diferentes produtos e times", start: false, growth: false, scale: true },
+ ],
+ },
+ {
+ title: "Wian · Assistência Comercial com IA",
+ icon: BrainCircuit,
+ rows: [
+ { label: "Briefing executivo diário gerado por IA", start: true, growth: true, scale: true },
+ { label: "Conversa com a Wian por texto", start: true, growth: true, scale: true },
+ { label: "Conversa com a Wian por áudio (ela ouve e responde)", start: true, growth: true, scale: true },
+ { label: "Leitura automática do cockpit, CRM, atendimento e vendas", start: true, growth: true, scale: true },
+ { label: "Alertas críticos, de atenção e positivos priorizados", start: true, growth: true, scale: true },
+ { label: "Plano de ação com metas numéricas do dia", start: true, growth: true, scale: true },
+ { label: "Acompanhamento do que foi resolvido desde ontem", start: true, growth: true, scale: true },
+ { label: "Análise de prospecção, SDR Inteligente e agenda", start: false, growth: true, scale: true },
+ { label: "Projeção de receita e diagnóstico de funil por etapa", start: false, growth: true, scale: true },
+ { label: "Indicadores e metas personalizadas do seu negócio", start: false, growth: false, scale: true },
  ],
  },
  {
