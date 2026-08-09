@@ -757,7 +757,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                 ) : (
                   <div key={`m-${i}`} className="flex justify-end">
                     <div className="max-w-[86%] min-w-0">
-                      <div className="rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                      <div className="briefing-bubble-user rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words">
                         {m.audioUrl ? (
                           <BriefingAudioBubble
                             src={m.audioUrl}
