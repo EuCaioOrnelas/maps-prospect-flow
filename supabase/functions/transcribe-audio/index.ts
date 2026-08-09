@@ -58,13 +58,14 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { audio_url, message_id } = await req.json();
-    if (!audio_url || typeof audio_url !== "string") {
-      return new Response(JSON.stringify({ error: "audio_url required" }), {
+    const { audio_url, message_id, audio_base64, audio_mime, connection_id } = await req.json();
+    if ((!audio_url || typeof audio_url !== "string") && !audio_base64) {
+      return new Response(JSON.stringify({ error: "audio_url or audio_base64 required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiKey) {
@@ -74,11 +75,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Áudio enviado direto (base64) — usado pelo chat de teste do SDR e pela Wian
+    let inlineBlob: Blob | null = null;
+    if (audio_base64) {
+      const bin = Uint8Array.from(atob(String(audio_base64)), (c) => c.charCodeAt(0));
+      inlineBlob = new Blob([bin], { type: String(audio_mime || "audio/webm") });
+    }
+
     // Resolve Meta media references to a real downloadable URL with bearer auth
     let fetchUrl = audio_url;
     let fetchHeaders: Record<string, string> = {};
 
-    if (audio_url.startsWith("meta_media:")) {
+    if (!inlineBlob && audio_url.startsWith("meta_media:")) {
+
       const mediaId = audio_url.slice("meta_media:".length).trim();
       if (!mediaId) {
         return new Response(JSON.stringify({ error: "Invalid meta_media id" }), {
@@ -94,7 +103,16 @@ Deno.serve(async (req) => {
 
       // Locate the access token via the message → conversation → connection
       let accessToken: string | null = null;
-      if (message_id) {
+      if (connection_id) {
+        const { data: conn } = await supabase
+          .from("user_waba_connections")
+          .select("access_token")
+          .eq("id", connection_id)
+          .maybeSingle();
+        accessToken = conn?.access_token || null;
+      }
+      if (!accessToken && message_id) {
+
         const { data: msg } = await supabase
           .from("chat_messages")
           .select("conversation_id")
@@ -156,16 +174,24 @@ Deno.serve(async (req) => {
       fetchHeaders = { Authorization: `Bearer ${accessToken}` };
     }
 
-    // Fetch the audio file
-    const audioRes = await fetch(fetchUrl, { headers: fetchHeaders });
-    if (!audioRes.ok) {
-      return new Response(JSON.stringify({ error: `Failed to fetch audio (${audioRes.status})` }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Fetch the audio file (ou usa o áudio enviado direto em base64)
+    let audioBlob: Blob;
+    let mime: string;
+    if (inlineBlob) {
+      audioBlob = inlineBlob;
+      mime = inlineBlob.type || "audio/webm";
+    } else {
+      const audioRes = await fetch(fetchUrl, { headers: fetchHeaders });
+      if (!audioRes.ok) {
+        return new Response(JSON.stringify({ error: `Failed to fetch audio (${audioRes.status})` }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      audioBlob = await audioRes.blob();
+      mime = audioRes.headers.get("content-type") || audioBlob.type || "audio/ogg";
     }
-    const audioBlob = await audioRes.blob();
-    const mime = audioRes.headers.get("content-type") || audioBlob.type || "audio/ogg";
+
     const ext = mime.includes("mp4") ? "m4a"
               : mime.includes("webm") ? "webm"
               : mime.includes("mpeg") ? "mp3"

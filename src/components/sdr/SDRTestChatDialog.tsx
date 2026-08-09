@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Bot, RotateCcw, Send, Sparkles, User, Loader2, Play } from "lucide-react";
+import { Bot, RotateCcw, Send, Sparkles, User, Loader2, Play, Mic, Square } from "lucide-react";
 
 type ChatItem =
   | { kind: "lead"; text: string }
@@ -40,8 +40,13 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
   const [sending, setSending] = useState(false);
   const [memory, setMemory] = useState<any>({});
   const [stage, setStage] = useState<string>("conexao");
+  const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const timerRef = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
 
   const reset = () => {
     setItems([]);
@@ -156,6 +161,67 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
     await runTurn(text, "inbound");
   };
 
+  // ---- Áudio: o lead fala, o SDR ouve (transcrição) e responde ----
+  const startRecording = async () => {
+    if (recording || sending) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      rec.ondataavailable = (e) => e.data.size > 0 && chunks.push(e.data);
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (timerRef.current) window.clearInterval(timerRef.current);
+        setRecording(false);
+        setElapsed(0);
+        const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        if (blob.size < 1200) return;
+        setSending(true);
+        try {
+          const b64 = await new Promise<string>((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => resolve(String(fr.result).split(",")[1] || "");
+            fr.onerror = () => reject(new Error("Falha ao ler o áudio"));
+            fr.readAsDataURL(blob);
+          });
+          const { data, error } = await supabase.functions.invoke("transcribe-audio", {
+            body: { audio_base64: b64, audio_mime: blob.type || "audio/webm" },
+          });
+          if (error) throw error;
+          const text = String((data as any)?.text || "").trim();
+          if (!text) {
+            toast.error("Não consegui entender o áudio. Tente novamente.");
+            return;
+          }
+          setItems((prev) => [...prev, { kind: "lead", text: `🎤 ${text}` }]);
+          setSending(false);
+          await runTurn(text, "inbound");
+          return;
+        } catch (e: any) {
+          toast.error("Erro ao transcrever: " + (e?.message || "tente novamente"));
+        } finally {
+          setSending(false);
+        }
+      };
+      recorderRef.current = rec;
+      rec.start();
+      setRecording(true);
+      setElapsed(0);
+      timerRef.current = window.setInterval(() => setElapsed((s) => s + 1), 1000);
+    } catch {
+      toast.error("Autorize o acesso ao microfone para enviar áudios.");
+    }
+  };
+
+  const stopRecording = () => {
+    try {
+      if (recorderRef.current && recorderRef.current.state !== "inactive") recorderRef.current.stop();
+    } catch {
+      /* ignore */
+    }
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden">
@@ -251,29 +317,62 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
         </div>
 
         <div className="border-t border-border p-3 flex items-end gap-2">
-          <Textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void handleSend();
-              }
-            }}
-            placeholder="Escreva como o lead responderia..."
-            className="min-h-[44px] max-h-32 resize-none"
-            disabled={sending}
-          />
-          <Button
-            size="icon"
-            className="h-11 w-11 shrink-0"
-            onClick={() => void handleSend()}
-            disabled={sending || !input.trim()}
-          >
-            {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          </Button>
+          {recording ? (
+            <div className="flex-1 h-11 rounded-xl bg-destructive/10 border border-destructive/30 flex items-center gap-3 px-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
+              <span className="text-sm font-medium text-destructive tabular-nums">
+                {String(Math.floor(elapsed / 60)).padStart(2, "0")}:{String(elapsed % 60).padStart(2, "0")}
+              </span>
+              <div className="flex items-end gap-[3px] h-5">
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <span
+                    key={i}
+                    className="w-[3px] rounded-sm bg-destructive/70 animate-pulse"
+                    style={{ height: `${6 + ((i * 7) % 14)}px`, animationDelay: `${i * 90}ms` }}
+                  />
+                ))}
+              </div>
+              <span className="ml-auto text-xs text-muted-foreground">Gravando… toque para enviar</span>
+            </div>
+          ) : (
+            <Textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void handleSend();
+                }
+              }}
+              placeholder="Escreva como o lead responderia..."
+              className="min-h-[44px] max-h-32 resize-none"
+              disabled={sending}
+            />
+          )}
+          {!input.trim() || recording ? (
+            <Button
+              size="icon"
+              variant={recording ? "destructive" : "outline"}
+              className="h-11 w-11 shrink-0"
+              onClick={() => (recording ? stopRecording() : void startRecording())}
+              disabled={sending}
+              aria-label={recording ? "Enviar áudio" : "Gravar áudio"}
+            >
+              {sending ? <Loader2 size={16} className="animate-spin" /> : recording ? <Square size={16} /> : <Mic size={16} />}
+            </Button>
+          ) : (
+            <Button
+              size="icon"
+              className="h-11 w-11 shrink-0"
+              onClick={() => void handleSend()}
+              disabled={sending || !input.trim()}
+            >
+              {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+            </Button>
+          )}
         </div>
+
       </DialogContent>
     </Dialog>
   );
