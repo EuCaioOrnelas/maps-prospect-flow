@@ -149,7 +149,9 @@ const mainPlans = {
  description: "Para prospectar, analisar, qualificar e converter oportunidades B2B com Wiize AI.",
  features: [
  { text: "Tudo do plano Atendimento" },
+ { text: "SDR Inteligente: agente autônomo que conversa, qualifica e agenda no WhatsApp", isNew: true },
  { text: "SDR IA para prospecção B2B por nicho e território" },
+
  { text: "Até 3.000 oportunidades qualificadas / mês" },
  { text: "Diagnóstico Comercial com IA de cada lead" },
  { text: "Geração de abordagens personalizadas por contexto" },
