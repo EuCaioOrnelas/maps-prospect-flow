@@ -635,7 +635,11 @@ Deno.serve(async (req) => {
                         contact_phone: from,
                         contact_name: contactName,
                         message: textContent || null,
+                        message_type: msgType,
+                        media_ref: mediaUrl,
+                        media_mime: mediaMime,
                         trigger_type: 'inbound',
+
                       }),
                     }).then(async (response) => {
                       if (!response.ok) {
