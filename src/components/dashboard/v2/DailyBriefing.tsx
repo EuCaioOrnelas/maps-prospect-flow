@@ -528,7 +528,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     <>
       <section className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm">
         {/* Header estilo chat */}
-        <header className="flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-muted/30">
+        <header className="flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-card">
           <div className="relative shrink-0">
             <Avatar size={38} />
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
