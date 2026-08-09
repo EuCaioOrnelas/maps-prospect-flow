@@ -534,7 +534,10 @@ export function GuidedTour() {
     <div
       data-tour-ui="true"
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 2147483647 }}
+      // Abaixo do botão "Fechar tour" (2147483647), que precisa ficar
+      // sempre visível e clicável do início ao fim do tour.
+      style={{ zIndex: 2147483000 }}
+
 
     >
 
