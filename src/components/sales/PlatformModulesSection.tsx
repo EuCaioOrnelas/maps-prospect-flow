@@ -46,6 +46,7 @@ import avatar3 from "@/assets/avatars/contact-3.jpg";
 import avatar4 from "@/assets/avatars/contact-4.jpg";
 import avatar5 from "@/assets/avatars/contact-5.jpg";
 import avatar6 from "@/assets/avatars/contact-6.jpg";
+import wianAvatar from "@/assets/wian-avatar.png";
 
 const contactAvatars = [avatar1, avatar2, avatar3, avatar4, avatar5, avatar6];
 
