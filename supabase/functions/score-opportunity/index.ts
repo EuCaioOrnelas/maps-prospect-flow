@@ -1345,6 +1345,151 @@ serve(async (req) => {
     const nicheCtx = inferNicheContext(companyProfile);
     const { websiteUrl, socialLinks } = extractSocialLinks(site_url, redes_sociais);
 
+    // ═══ Inteligência de clientes já ganhos (similaridade / expansão de receita) ═══
+    type WonProfile = {
+      total: number;
+      avgTicket: number;
+      maxTicket: number;
+      categories: Record<string, number>;
+      cities: Record<string, number>;
+      saleTypes: Record<string, number>;
+      samples: string[];
+      recurringShare: number;
+    };
+    let wonProfile: WonProfile | null = null;
+    try {
+      const { data: wonDeals } = await supabase
+        .from("lead_deals")
+        .select("lead_id, value, sale_type, contract_type, title, closed_at, status")
+        .eq("user_id", user.id)
+        .not("closed_at", "is", null)
+        .order("closed_at", { ascending: false })
+        .limit(80);
+
+      const validDeals = (wonDeals || []).filter(
+        (d: any) => !d.status || !["perdido", "lost", "cancelado", "canceled"].includes(String(d.status).toLowerCase()),
+      );
+
+      if (validDeals.length > 0) {
+        const leadIds = [...new Set(validDeals.map((d: any) => d.lead_id).filter(Boolean))];
+        const { data: wonLeads } = leadIds.length
+          ? await supabase.from("leads").select("id, company_name, category, city, ai_score").in("id", leadIds)
+          : { data: [] as any[] };
+        const leadById = new Map((wonLeads || []).map((l: any) => [l.id, l]));
+
+        const categories: Record<string, number> = {};
+        const cities: Record<string, number> = {};
+        const saleTypes: Record<string, number> = {};
+        const samples: string[] = [];
+        let sum = 0;
+        let max = 0;
+        let recurring = 0;
+
+        for (const d of validDeals) {
+          const v = Number(d.value) || 0;
+          sum += v;
+          if (v > max) max = v;
+          const st = String(d.sale_type || d.contract_type || "").toLowerCase();
+          if (st) saleTypes[st] = (saleTypes[st] || 0) + 1;
+          if (st.includes("recorr") || st.includes("mensal") || st.includes("assinat")) recurring++;
+          const l: any = leadById.get(d.lead_id);
+          if (l) {
+            if (l.category) categories[l.category] = (categories[l.category] || 0) + 1;
+            if (l.city) cities[l.city] = (cities[l.city] || 0) + 1;
+            if (samples.length < 8) {
+              samples.push(
+                `${l.company_name || "Cliente"} — ${l.category || "categoria n/d"} / ${l.city || "cidade n/d"} · ticket R$ ${v.toLocaleString("pt-BR")}${d.title ? ` · ${d.title}` : ""}`,
+              );
+            }
+          }
+        }
+
+        wonProfile = {
+          total: validDeals.length,
+          avgTicket: validDeals.length ? Math.round(sum / validDeals.length) : 0,
+          maxTicket: Math.round(max),
+          categories,
+          cities,
+          saleTypes,
+          samples,
+          recurringShare: validDeals.length ? Math.round((recurring / validDeals.length) * 100) : 0,
+        };
+      }
+    } catch (e) {
+      console.error("won deals context error:", e);
+    }
+
+    const topEntries = (obj: Record<string, number> | undefined, n = 5) =>
+      Object.entries(obj || {})
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, n);
+
+    const wonCategories = topEntries(wonProfile?.categories);
+    const wonCities = topEntries(wonProfile?.cities);
+
+    // Similaridade heurística com a base de clientes ganhos (0-100)
+    const normalize = (s: unknown) =>
+      String(s || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+    let similarityScore = 0;
+    const similarityReasons: string[] = [];
+    if (wonProfile) {
+      const leadCat = normalize(categoria);
+      const leadCity = normalize(cidade);
+      const catMatch = wonCategories.find(([c]) => {
+        const nc = normalize(c);
+        return nc && leadCat && (nc === leadCat || nc.includes(leadCat) || leadCat.includes(nc));
+      });
+      if (catMatch) {
+        similarityScore += 55;
+        similarityReasons.push(`Mesmo segmento de ${catMatch[1]} cliente(s) já fechado(s): ${catMatch[0]}`);
+      }
+      const cityMatch = wonCities.find(([c]) => normalize(c) && normalize(c) === leadCity);
+      if (cityMatch) {
+        similarityScore += 20;
+        similarityReasons.push(`Mesma região de clientes ganhos (${cityMatch[0]})`);
+      }
+      if ((Number(avaliacao_media) || 0) >= 4 && (Number(quantidade_avaliacoes) || 0) >= 20) {
+        similarityScore += 15;
+        similarityReasons.push("Reputação sólida, padrão dos clientes que já converteram");
+      }
+      if (possui_site) {
+        similarityScore += 10;
+        similarityReasons.push("Possui presença digital própria, como a maioria da base ganha");
+      }
+      similarityScore = clamp(similarityScore, 0, 100);
+    }
+
+    const wonContext = wonProfile
+      ? `
+═══ BASE DE CLIENTES JÁ FECHADOS (APRENDIZADO DE VENDAS REAIS) ═══
+- Negócios ganhos analisados: ${wonProfile.total}
+- Ticket médio: R$ ${wonProfile.avgTicket.toLocaleString("pt-BR")} | Maior ticket: R$ ${wonProfile.maxTicket.toLocaleString("pt-BR")}
+- Participação de vendas recorrentes: ${wonProfile.recurringShare}%
+- Segmentos que mais compram: ${wonCategories.map(([c, n]) => `${c} (${n})`).join(", ") || "não identificado"}
+- Regiões que mais compram: ${wonCities.map(([c, n]) => `${c} (${n})`).join(", ") || "não identificado"}
+- Exemplos de clientes ganhos:
+${wonProfile.samples.map((s) => `  • ${s}`).join("\n") || "  • sem exemplos"}
+
+SIMILARIDADE HEURÍSTICA DESTE LEAD COM A BASE GANHA: ${similarityScore}/100
+${similarityReasons.map((r) => `  - ${r}`).join("\n") || "  - Nenhuma semelhança forte identificada"}
+
+REGRAS DE USO DESSA BASE:
+- Se a similaridade for >= 60, trate como OPORTUNIDADE PRIORITÁRIA: eleve "potencial_venda" (nunca abaixo de 11/15) e explique no diagnóstico qual cliente/segmento parecido já foi fechado.
+- Se a similaridade estiver entre 30 e 59, sinalize como oportunidade provável e cite o padrão parcial.
+- Se a similaridade for < 30, não force encaixe.
+- Sempre proponha EXPANSÃO DE RECEITA: qual produto/serviço adicional (upsell/cross-sell/recorrência) cabe neste lead considerando o que já é vendido para clientes parecidos e o ticket médio real.
+`
+      : `
+═══ BASE DE CLIENTES JÁ FECHADOS ═══
+Ainda não há negócios ganhos registrados no CRM. Não invente históricos de vendas; baseie o potencial apenas nas evidências do lead.
+`;
+
+
+
     const pageTargets = [
       ...(websiteUrl ? [{ url: websiteUrl, label: "site" }] : []),
       ...socialLinks.slice(0, 3).map((link) => ({ url: link.url, label: "rede_social", platform: link.platform })),
