@@ -1765,6 +1765,20 @@ Retorne APENAS um JSON válido:
       socialSummary,
     });
 
+    // Piso de potencial quando o lead é muito parecido com clientes já ganhos
+    if (similarityScore >= 60 && result.potencial_venda < 11) {
+      result.potencial_venda = 11;
+      result.score = clamp(
+        result.estrutura_digital + result.reputacao + result.acessibilidade + result.engajamento_atividade + result.potencial_venda,
+        0,
+        100,
+      );
+      if (result.score >= 61 && result.nivel_oportunidade === "Baixa") result.nivel_oportunidade = "Alta";
+      else if (result.score >= 31 && result.nivel_oportunidade === "Baixa") result.nivel_oportunidade = "Média";
+    }
+
+
+
     if (lead_id) {
       const { error: updateErr } = await supabase
         .from("leads")
