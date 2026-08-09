@@ -218,6 +218,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const startedRef = useRef(false);
   const pendingTourPathRef = useRef<string | null>(null);
   const publicDemoSessionRef = useRef(false);
+  /** Independente do tour interno: garante que o demo público sempre inicie. */
+  const publicDemoStartedRef = useRef(false);
+
   const [onboardingTick, setOnboardingTick] = useState(0);
   const isPublicDemo = location.pathname === "/tour-guiado";
 
@@ -511,23 +514,34 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   }, [profile?.plan, profile?.created_at, isPublicDemo]);
 
   useEffect(() => {
-    if (!isPublicDemo || startedRef.current) return;
+
+    if (!isPublicDemo) {
+      // Ao sair do demo público, libera um novo start caso o usuário volte
+      // e devolve o controle do tour interno (que valida localStorage/DB).
+      if (publicDemoStartedRef.current) {
+        publicDemoStartedRef.current = false;
+        startedRef.current = false;
+      }
+      return;
+    }
+
+    if (publicDemoStartedRef.current) return;
+    publicDemoStartedRef.current = true;
     publicDemoSessionRef.current = true;
+    // O demo público nunca depende do estado do tour interno.
+    startedRef.current = true;
     document.body.classList.add("public-demo-mode");
     document.body.classList.add("tour-demo-cockpit");
     // Pré-carrega todas as telas do tour logo no início.
     preloadTourRoutes(["/dashboard", "/oportunidades", "/oportunidades/gestao"]);
     let cancelled = false;
     (async () => {
-      // Wait until the real cockpit is mounted (and give it a frame to paint)
-      // so the welcome card never appears over a blank white screen.
-      await waitForElement('[data-tour="cockpit-hero"]', 70, 100);
-      await new Promise((r) => setTimeout(r, 450));
+      // Aguarda o cockpit montar (com teto curto) para o card de boas-vindas
+      // não aparecer sobre uma tela branca — mas nunca bloqueia o início.
+      await waitForElement('[data-tour="cockpit-hero"]', 25, 100);
+      await new Promise((r) => setTimeout(r, 250));
       if (cancelled) return;
       scrollTourViewportTop();
-      // Mark as started only when the tour actually opens — otherwise a
-      // cancelled first run (StrictMode / remount) would block it forever.
-      startedRef.current = true;
       setCurrentStepIndex(0);
       setIsActive(true);
     })();
@@ -535,6 +549,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [isPublicDemo]);
+
 
   // A route change initiated outside the tour (browser Back/Forward, redirects
   // after login/payment, links, etc.) must tear the tour down completely. Tour
