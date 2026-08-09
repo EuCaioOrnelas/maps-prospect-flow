@@ -60,8 +60,8 @@ export const TOUR_CONTENT: TourContentStep[] = [
   },
   {
     id: "wian-briefing",
-    title: "Wian — sua analista comercial",
-    body: "Todo dia a Wian lê o cockpit, o CRM, as vendas, o atendimento e a agenda e entrega um briefing executivo em formato de chat. Você conversa com ela por texto ou áudio e recebe o plano de ação com metas numéricas.",
+    title: "Wian, seu analista comercial",
+    body: "Todo dia o Wian lê o cockpit, o CRM, as vendas, o atendimento e a agenda e entrega um briefing executivo em formato de chat. Você conversa com ele por texto ou áudio e recebe o plano de ação com metas numéricas.",
     placement: "top",
     pillar: "cockpit",
   },
