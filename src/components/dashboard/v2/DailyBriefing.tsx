@@ -417,7 +417,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
     const parts3: string[] = [];
     if (positives.length > 0) {
-      parts3.push(`🟢 No lado positivo, registrei ${positives.length} evolução(ões):\n${bullets(positives)}`);
+      parts3.push(`📈 No lado positivo, registrei ${positives.length} evolução(ões):\n${bullets(positives)}`);
     }
     if (resolvedSinceYesterday.length > 0) {
       parts3.push(
