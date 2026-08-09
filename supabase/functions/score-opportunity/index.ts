@@ -1715,7 +1715,11 @@ Retorne APENAS um JSON válido:
   "analise_reputacao_detalhada": "...",
   "analise_concorrencia_regional": "análise de concorrentes na região — para telecom, identifique operadoras/provedores locais",
   "analise_demanda_regional": "análise de demanda baseada na densidade demográfica e porte da cidade",
-  "justificativa_score": "1-2 frases objetivas"
+  "justificativa_score": "1-2 frases objetivas",
+  "similaridade_clientes_ganhos": <0-100 — quão parecido este lead é com clientes que já compraram>,
+  "clientes_similares": ["cliente/segmento já ganho parecido"] OU [],
+  "oportunidade_expansao": "produto/serviço adicional (upsell, cross-sell ou recorrência) com maior chance de aumentar faturamento neste lead, ou '' se não houver base",
+  "potencial_receita_estimado": "faixa estimada em R$ com base no ticket médio real dos clientes ganhos, ou '' se não houver base"
 }`;
 
       try {
