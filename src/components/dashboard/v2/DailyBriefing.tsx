@@ -429,7 +429,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     const m3 =
       parts3.length > 0
         ? parts3.join("\n\n")
-        : "🟢 Ainda não há indicadores de crescimento relevantes nesta janela. Assim que houver evolução consistente, eu destaco aqui.";
+        : "✅ Ainda não há indicadores de crescimento relevantes nesta janela. Assim que houver evolução consistente, eu destaco aqui.";
 
     const priority = critical[0] || attention[0] || positives[0];
     const m4 = priority
