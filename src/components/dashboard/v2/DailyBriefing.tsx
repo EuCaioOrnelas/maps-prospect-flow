@@ -496,7 +496,34 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        const status = (error as any)?.context?.status as number | undefined;
+        let body: any = null;
+        try {
+          body = await (error as any)?.context?.json?.();
+        } catch {
+          /* corpo não-JSON */
+        }
+        if (body?.error === "daily_limit" || status === 429) {
+          notify(
+            status === 429 && body?.error !== "daily_limit" ? "Muitas consultas seguidas" : "Limite diário atingido",
+            body?.error === "daily_limit"
+              ? "Você já usou as consultas de hoje com a Wian. Ela volta amanhã com o novo briefing."
+              : "A Wian está recebendo muitas perguntas agora. Tente de novo em alguns instantes.",
+            "destructive",
+          );
+          return;
+        }
+        if (status === 402) {
+          notify(
+            "Créditos de IA esgotados",
+            "Os créditos de IA da conta acabaram. Renove para a Wian voltar a responder.",
+            "destructive",
+          );
+          return;
+        }
+        throw new Error(body?.message || body?.error || "Não consegui falar com a Wian agora.");
+      }
       if ((data as any)?.error === "daily_limit") {
         notify(
           "Limite diário atingido",
