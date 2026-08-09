@@ -481,14 +481,10 @@ export function GuidedTour() {
         // tela): não existe espaço externo. Nesse caso "ancoramos" o card em um
         // canto livre em vez de jogá-lo por cima do foco.
         (() => {
-          const width = Math.min(popupWidth, 380);
-          const spotCenterY = spotBounds.top + (spotBounds.bottom - spotBounds.top) / 2;
-          const spotCenterX = spotBounds.left + (spotBounds.right - spotBounds.left) / 2;
-          const dockTop = spotCenterY > window.innerHeight / 2;
-          const dockLeft = spotCenterX > window.innerWidth / 2;
+          const width = Math.min(popupWidth, 340);
           return {
-            top: dockTop ? bounds.top : Math.max(bounds.top, window.innerHeight - popupHeight - 104),
-            left: dockLeft ? bounds.left : Math.max(bounds.left, window.innerWidth - width - viewportMargin),
+            top: Math.max(bounds.top, Math.min(window.innerHeight - popupHeight - 104, spotBounds.top + 8)),
+            left: Math.max(bounds.left, window.innerWidth - width - viewportMargin),
             width,
           };
         })();
