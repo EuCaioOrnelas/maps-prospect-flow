@@ -561,6 +561,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       "tour-sidebar-open",
       "tour-demo-lead",
       "tour-demo-cockpit",
+      "tour-prewarm-lead",
       "public-demo-mode"
     );
     if (publicDemoSessionRef.current) {
@@ -823,6 +824,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       "tour-sidebar-open",
       "tour-demo-lead",
       "tour-demo-cockpit",
+      "tour-prewarm-lead",
       "public-demo-mode"
     );
     if (publicDemoSessionRef.current) {
