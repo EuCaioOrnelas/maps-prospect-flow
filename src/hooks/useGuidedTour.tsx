@@ -591,6 +591,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
       // Preload pages used in the tour for instant transitions
       try {
+        preloadTourRoutes(["/dashboard", "/oportunidades", "/oportunidades/gestao"]);
         await Promise.all([
           import("@/pages/Dashboard"),
           import("@/pages/OpportunitiesManagement"),
