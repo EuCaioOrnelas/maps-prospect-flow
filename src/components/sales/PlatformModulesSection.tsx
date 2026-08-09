@@ -893,7 +893,8 @@ const FlowNode = ({
     </p>
     {sub && <p className="text-[8px] text-muted-foreground leading-tight">{sub}</p>}
 
-  </motion.div>
+  </div>
+
 );
 
 /* Linha pontilhada que se desenha na entrada + bolinha percorrendo o fluxo */
