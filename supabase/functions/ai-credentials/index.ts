@@ -1,5 +1,40 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
-import { encryptApiKey, keyHint } from "../_shared/aiKeyCrypto.ts";
+
+// ========== INLINED AI KEY CRYPTO (sem _shared) ==========
+// Criptografia AES-256-GCM das chaves de IA dos clientes (BYOK).
+// A chave mestra vive apenas no ambiente das edge functions (AI_CREDENTIALS_SECRET).
+async function masterKey(): Promise<CryptoKey> {
+  const raw = Deno.env.get("AI_CREDENTIALS_SECRET");
+  if (!raw) throw new Error("AI_CREDENTIALS_SECRET não configurada");
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
+  return crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+
+function toB64(buf: Uint8Array): string {
+  let s = "";
+  for (const b of buf) s += String.fromCharCode(b);
+  return btoa(s);
+}
+
+async function encryptApiKey(plain: string): Promise<string> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const cipher = new Uint8Array(
+    await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      await masterKey(),
+      new TextEncoder().encode(plain),
+    ),
+  );
+  const out = new Uint8Array(iv.length + cipher.length);
+  out.set(iv);
+  out.set(cipher, iv.length);
+  return toB64(out);
+}
+
+function keyHint(plain: string): string {
+  return `sk-••••${plain.slice(-4)}`;
+}
+// ========== FIM INLINED AI KEY CRYPTO ==========
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
