@@ -937,7 +937,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
               </form>
 
 
-              <p className="px-3 pb-3 -mt-1 text-[10px] text-muted-foreground/80">
+              <p className="px-3 pb-3 -mt-1 text-[10px] text-muted-foreground/60 opacity-70">
                 A Wian analisa cockpit, CRM, atendimento, campanhas{caps.opportunities ? ", prospecção" : ""}
                 {caps.sdr ? ", SDR Inteligente" : ""} e agenda desta conta ({caps.planName}). Disponível apenas para
                 owner e administradores.
