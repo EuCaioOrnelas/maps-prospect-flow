@@ -8,6 +8,7 @@
 
 export type FeatureKey =
   | "dashboard"
+  | "sdr_inteligente"
   | "oportunidades"
   | "crm"
   | "chat"
@@ -16,6 +17,7 @@ export type FeatureKey =
   | "flows"
   | "reports"
   | "consultoria";
+
 
 export interface FeatureDef {
   key: FeatureKey;
