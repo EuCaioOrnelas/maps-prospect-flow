@@ -467,7 +467,7 @@ serve(async (req) => {
     await logAiUsage({ user_id: userId, usage: aiJson?.usage, metadata: { period: body?.snapshot?.periodDays ?? null } });
 
     return new Response(
-      JSON.stringify({ reply, usage: { used: used + 1, limit: DAILY_LIMIT } }),
+      JSON.stringify({ reply, transcript, usage: { used: used + 1, limit: DAILY_LIMIT } }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
