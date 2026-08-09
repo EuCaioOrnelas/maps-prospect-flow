@@ -481,14 +481,10 @@ export function GuidedTour() {
         // tela): não existe espaço externo. Nesse caso "ancoramos" o card em um
         // canto livre em vez de jogá-lo por cima do foco.
         (() => {
-          const width = Math.min(popupWidth, 380);
-          const spotCenterY = spotBounds.top + (spotBounds.bottom - spotBounds.top) / 2;
-          const spotCenterX = spotBounds.left + (spotBounds.right - spotBounds.left) / 2;
-          const dockTop = spotCenterY > window.innerHeight / 2;
-          const dockLeft = spotCenterX > window.innerWidth / 2;
+          const width = Math.min(popupWidth, 340);
           return {
-            top: dockTop ? bounds.top : Math.max(bounds.top, window.innerHeight - popupHeight - 104),
-            left: dockLeft ? bounds.left : Math.max(bounds.left, window.innerWidth - width - viewportMargin),
+            top: Math.max(bounds.top, Math.min(window.innerHeight - popupHeight - 104, spotBounds.top + 8)),
+            left: Math.max(bounds.left, window.innerWidth - width - viewportMargin),
             width,
           };
         })();
@@ -517,18 +513,12 @@ export function GuidedTour() {
     const overlapY = Math.max(0, Math.min(popupStyle.top + h, spot.top + spot.height) - Math.max(popupStyle.top, spot.top));
     const overlapRatio = (overlapX * overlapY) / Math.max(1, w * h);
     if (overlapRatio > 0.35) {
-      const spotCenterY = spot.top + spot.height / 2;
-      const spotCenterX = spot.left + spot.width / 2;
-      const width = Math.min(w, 380);
+      const width = Math.min(w, 340);
       popupStyle = {
         ...popupStyle,
         width,
-        top: spotCenterY > window.innerHeight / 2
-          ? POPUP_GAP
-          : Math.max(POPUP_GAP, window.innerHeight - h - NAV_SAFE - POPUP_GAP),
-        left: spotCenterX > window.innerWidth / 2
-          ? POPUP_GAP
-          : Math.max(POPUP_GAP, window.innerWidth - width - POPUP_GAP),
+        top: Math.max(POPUP_GAP, Math.min(window.innerHeight - h - NAV_SAFE - POPUP_GAP, spot.top + 8)),
+        left: Math.max(POPUP_GAP, window.innerWidth - width - POPUP_GAP),
         transform: undefined,
       };
     }
