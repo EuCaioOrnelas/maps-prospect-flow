@@ -3,7 +3,7 @@
 // após refactors (ex.: flatten do _integration-core). Roda contra o deploy real.
 //
 // Uso:
-//   deno test --allow-net --allow-env supabase/functions/integration-v1-context/contract_test.ts
+//   deno test --allow-net --allow-env supabase/tests/integration-v1-contract_test.ts
 //
 // Vars opcionais no .env:
 //   VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY,
