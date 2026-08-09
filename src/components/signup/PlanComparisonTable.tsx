@@ -85,6 +85,23 @@ const GROUPS: Array<{ title: string; icon: LucideIcon; rows: Row[] }> = [
     ],
   },
   {
+    title: "SDR Inteligente · Exclusivo Growth IA",
+    icon: Bot,
+    rows: [
+      { label: "Agente SDR autônomo que conduz a conversa no WhatsApp", start: false, growth: true, scale: true },
+      { label: "Qualificação automática por perfil, dor, urgência e orçamento", start: false, growth: true, scale: true },
+      { label: "Quebra de objeções com argumentos do seu negócio", start: false, growth: true, scale: true },
+      { label: "Agendamento de reuniões direto na Agenda Wiize", start: false, growth: true, scale: true },
+      { label: "Handoff automático para humano no momento certo", start: false, growth: true, scale: true },
+      { label: "Movimentação automática do lead no CRM por etapa", start: false, growth: true, scale: true },
+      { label: "Follow-up autônomo com cadência e horário comercial", start: false, growth: true, scale: true },
+      { label: "Modo de teste com simulação de conversa antes de ativar", start: false, growth: true, scale: true },
+      { label: "Painel de sessões, respostas e reuniões geradas pelo SDR", start: false, growth: true, scale: true },
+      { label: "Agentes SDR simultâneos", start: "Não incluso", growth: "Até 3", scale: "Sob medida" },
+    ],
+  },
+  {
+
     title: "SDR IA · Captação e Diagnóstico",
     icon: Target,
     rows: [

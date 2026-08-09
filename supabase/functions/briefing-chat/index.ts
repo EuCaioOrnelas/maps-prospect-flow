@@ -119,8 +119,11 @@ function buildContext(snapshot: any, history: any[]): string {
 const BRL = (n: number) =>
   `R$ ${Number(n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+type Caps = { planName?: string; opportunities?: boolean; sdr?: boolean; agents?: boolean };
+
 /** Carrega os dados reais da conta (CRM, vendas, SDR, agenda, score) para dar contexto completo à Wian. */
-async function loadAccountData(supabase: any, ownerId: string): Promise<string> {
+async function loadAccountData(supabase: any, ownerId: string, caps: Caps = {}): Promise<string> {
+  const hasSdr = caps.sdr !== false;
   const lines: string[] = [];
   const since90 = new Date(Date.now() - 90 * 86400_000).toISOString();
 
@@ -151,12 +154,14 @@ async function loadAccountData(supabase: any, ownerId: string): Promise<string> 
         .order("ai_score", { ascending: false })
         .limit(400),
       supabase.from("lead_deals").select("value, status, closed_at, created_at").eq("owner_user_id", ownerId).gte("created_at", since90),
-      supabase.from("sdr_agents").select("id, name, status").eq("owner_user_id", ownerId),
-      supabase
-        .from("sdr_sessions")
-        .select("status, stage, messages_sent, replies_received")
-        .eq("owner_user_id", ownerId)
-        .limit(500),
+      hasSdr ? supabase.from("sdr_agents").select("id, name, status").eq("owner_user_id", ownerId) : Promise.resolve({ data: [] }),
+      hasSdr
+        ? supabase
+            .from("sdr_sessions")
+            .select("status, stage, messages_sent, replies_received")
+            .eq("owner_user_id", ownerId)
+            .limit(500)
+        : Promise.resolve({ data: [] }),
       supabase
         .from("calendar_events")
         .select("title, starts_at, status, event_type, company_name")
@@ -344,8 +349,35 @@ serve(async (req) => {
       );
     }
 
+    const caps: Caps = (body?.snapshot?.capabilities as Caps) ?? {};
     const context = buildContext(body?.snapshot, body?.history);
-    const accountData = await loadAccountData(supabase, ownerId);
+    const accountData = await loadAccountData(supabase, ownerId, caps);
+
+    // Escopo do plano: nunca recomendar módulo que o gestor não possui
+    const available = [
+      "Cockpit executivo",
+      "CRM e score de intenção",
+      "Chat / Atendimento WhatsApp",
+      "Campanhas Meta",
+      "Fluxos inteligentes",
+      "Agenda",
+      caps.opportunities !== false ? "Prospecção IA (Oportunidades)" : null,
+      caps.sdr !== false ? "SDR Inteligente" : null,
+      caps.agents !== false ? "Agentes IA" : null,
+    ].filter(Boolean).join(", ");
+    const blocked = [
+      caps.opportunities === false ? "Prospecção IA / Oportunidades" : null,
+      caps.sdr === false ? "SDR Inteligente (exclusivo do plano Growth IA)" : null,
+      caps.agents === false ? "Agentes IA" : null,
+    ].filter(Boolean);
+    const scopeLines = [
+      `Plano do gestor: ${caps.planName || "não informado"}.`,
+      `Módulos disponíveis para ele: ${available}.`,
+      blocked.length
+        ? `Módulos NÃO contratados: ${blocked.join("; ")}. Nunca analise, cobre nem recomende ações nesses módulos. Se o gestor perguntar sobre eles, diga em uma frase que não fazem parte do plano atual e, no máximo uma vez por conversa, mencione que estão disponíveis no Growth IA — depois volte para as alavancas que ele realmente tem (atendimento, CRM, campanhas, fluxos e agenda).`
+        : "Todos os módulos estão contratados.",
+    ].join("\n");
+
 
     // Perfil individual do gestor (tom, foco e histórico de interações) — enviado pelo cliente
     const p = body?.persona ?? {};
@@ -377,6 +409,7 @@ serve(async (req) => {
         max_tokens: 420,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: `ESCOPO DO PLANO (obrigatório respeitar):\n${scopeLines}` },
           { role: "system", content: `PERFIL DO GESTOR (adapte tom e profundidade):\n${personaLines}` },
           { role: "system", content: `CONTEXTO DE DADOS DA CONTA:\n${context}` },
           { role: "system", content: `DADOS OPERACIONAIS COMPLETOS (CRM, vendas, SDR, agenda, score):\n${accountData}` },

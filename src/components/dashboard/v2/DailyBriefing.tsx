@@ -19,12 +19,24 @@ export interface BriefingMetrics {
   [label: string]: number | string;
 }
 
+export interface BriefingCapabilities {
+  planName: string;
+  /** Módulo Oportunidades / Prospecção IA liberado no plano */
+  opportunities: boolean;
+  /** SDR Inteligente (exclusivo Growth IA) */
+  sdr: boolean;
+  /** Agentes IA */
+  agents: boolean;
+}
+
 interface DailyBriefingProps {
   alerts: ExecutiveAlert[];
   userName?: string | null;
   periodDays: number;
   metrics?: BriefingMetrics;
+  capabilities?: BriefingCapabilities;
 }
+
 
 type ChatRole = "user" | "assistant";
 interface ChatMsg {
@@ -123,19 +135,40 @@ function persistSnapshot(metrics: BriefingMetrics, periodDays: number, alerts: E
   return trimmed;
 }
 
-const SUGGESTIONS = [
+interface Suggestion {
+  shortcut: string;
+  label: string;
+  /** Só aparece se o plano tiver o módulo correspondente */
+  requires?: "opportunities" | "sdr";
+}
+
+const SUGGESTIONS: Suggestion[] = [
   { shortcut: "plano", label: "Sim, me explique o plano de ação" },
   { shortcut: "prioridade", label: "O que eu devo priorizar hoje?" },
   { shortcut: "funil", label: "Analise meu funil e aponte o gargalo" },
   { shortcut: "receita", label: "Como aumentar a receita projetada?" },
   { shortcut: "crm", label: "Quais oportunidades do CRM valem atacar?" },
-  { shortcut: "sdr", label: "Como está a performance do SDR IA?" },
+  { shortcut: "atendimento", label: "Como está o atendimento e as respostas?" },
+  { shortcut: "campanhas", label: "Minhas campanhas estão performando?" },
+  { shortcut: "prospeccao", label: "Como melhorar minha prospecção?", requires: "opportunities" },
+  { shortcut: "sdr", label: "Como está a performance do SDR Inteligente?", requires: "sdr" },
 ];
+
+/** Termos que só fazem sentido para quem tem prospecção / SDR no plano. */
+const OPPORTUNITY_TERMS = /prospec|oportunidade|captaç|captad|busca de empresas|diagn[óo]stico/i;
+const SDR_TERMS = /\bsdr\b|agente ia|agentes ia|copiloto/i;
 
 const timeLabel = (ts: number) =>
   new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBriefingProps) {
+export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilities }: DailyBriefingProps) {
+  const caps: BriefingCapabilities = capabilities ?? {
+    planName: "—",
+    opportunities: true,
+    sdr: true,
+    agents: true,
+  };
+
   const { toast } = useToast();
   const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
@@ -173,7 +206,17 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
 
-  const list = useMemo(() => (alerts || []).filter((a) => !a.text.includes("NaN")), [alerts]);
+  // Remove indicadores de módulos que o plano do usuário não possui (ex.: Atendimento sem prospecção/SDR)
+  const list = useMemo(
+    () =>
+      (alerts || []).filter((a) => {
+        if (a.text.includes("NaN")) return false;
+        if (!caps.opportunities && OPPORTUNITY_TERMS.test(a.text)) return false;
+        if (!caps.sdr && SDR_TERMS.test(a.text)) return false;
+        return true;
+      }),
+    [alerts, caps.opportunities, caps.sdr],
+  );
   const critical = useMemo(() => list.filter((a) => a.type === "danger"), [list]);
   const attention = useMemo(() => list.filter((a) => a.type === "warning"), [list]);
   const positives = useMemo(() => list.filter((a) => a.type === "success"), [list]);
@@ -267,6 +310,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
             metrics: metrics ?? {},
             alerts: list.map((a) => ({ type: a.type, text: a.text })),
             resolvedSinceYesterday,
+            capabilities: caps,
           },
           history: snapshots.slice(0, -1),
         },
@@ -436,7 +480,11 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
                 </button>
                 {showQuick && (
                   <div className="mt-2 flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
-                    {SUGGESTIONS.map((s) => (
+                    {SUGGESTIONS.filter(
+                      (s) =>
+                        !s.requires ||
+                        (s.requires === "opportunities" ? caps.opportunities : caps.sdr),
+                    ).map((s) => (
                       <button
                         key={s.shortcut}
                         type="button"
@@ -488,7 +536,9 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBr
                 </Button>
               </form>
               <p className="px-3 pb-3 -mt-1 text-[10px] text-muted-foreground/80">
-                A Wian analisa cockpit, CRM, vendas, SDR e agenda desta conta. Disponível apenas para owner e administradores.
+                A Wian analisa cockpit, CRM, atendimento, campanhas{caps.opportunities ? ", prospecção" : ""}
+                {caps.sdr ? ", SDR Inteligente" : ""} e agenda desta conta ({caps.planName}). Disponível apenas para
+                owner e administradores.
               </p>
             </div>
           </>

@@ -8,6 +8,7 @@
 
 export type FeatureKey =
   | "dashboard"
+  | "sdr_inteligente"
   | "oportunidades"
   | "crm"
   | "chat"
@@ -16,6 +17,7 @@ export type FeatureKey =
   | "flows"
   | "reports"
   | "consultoria";
+
 
 export interface FeatureDef {
   key: FeatureKey;
@@ -32,11 +34,20 @@ export const FEATURE_CATALOG: FeatureDef[] = [
     routes: ["/dashboard"],
   },
   {
+    // Precisa vir ANTES de "oportunidades" — a rota /oportunidades/sdr é mais específica.
+    key: "sdr_inteligente",
+    label: "SDR Inteligente (exclusivo Growth IA)",
+    description:
+      "Agente SDR autônomo que conversa, qualifica, quebra objeções e agenda reuniões no WhatsApp.",
+    routes: ["/oportunidades/sdr"],
+  },
+  {
     key: "oportunidades",
     label: "Oportunidades (Prospecção)",
     description: "Geração de leads via busca inteligente e diagnóstico IA.",
     routes: ["/prospeccao", "/oportunidades", "/reports/prospeccao"],
   },
+
   {
     key: "crm",
     label: "CRM (Gestão de Leads)",

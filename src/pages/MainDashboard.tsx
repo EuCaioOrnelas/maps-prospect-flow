@@ -27,7 +27,7 @@ import { TrialAutoChargeBanner } from "@/components/dashboard/TrialAutoChargeBan
 import { ExpiredSubscriptionDialog } from "@/components/ExpiredSubscriptionDialog";
 // Checklist e modal de onboarding removidos — somente o tour guiado orienta o usuário.
 import { buildTourDemoCockpit } from "@/lib/tourDemoCockpit";
-import { hasOpportunitiesAccess } from "@/lib/planAccess";
+import { hasOpportunitiesAccess, hasSDRInteligenteAccess, hasAIAgentsAccess, getPlanDisplayName } from "@/lib/planAccess";
 
 const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
@@ -233,6 +233,13 @@ export default function MainDashboard() {
                 alerts={kpis.executiveAlerts}
                 userName={(profile as any)?.full_name || (profile as any)?.name || null}
                 periodDays={periodDays}
+                capabilities={{
+                  planName: getPlanDisplayName(profile as any),
+                  opportunities: hasOpportunitiesAccess(profile as any),
+                  sdr: hasSDRInteligenteAccess(profile as any),
+                  agents: hasAIAgentsAccess(profile as any),
+                }}
+
                 metrics={{
                   "Receita potencial (R$)": Math.round(kpis.receitaPotencial || 0),
                   "Variação da receita potencial (%)": Math.round(kpis.receitaPotencialGrowth || 0),

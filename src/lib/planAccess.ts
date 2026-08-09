@@ -59,6 +59,17 @@ export function hasAIAgentsAccess(profile: ProfileLike): boolean {
 }
 
 /**
+ * SDR Inteligente (agente SDR autônomo) — EXCLUSIVO Growth IA.
+ * Não vale grandfathering: nem Free, nem Start/Atendimento (mesmo legado) têm acesso.
+ * Enterprise (scale) herda tudo do Growth, então também tem.
+ */
+export function hasSDRInteligenteAccess(profile: ProfileLike): boolean {
+  const plan = (profile?.plan || "").toLowerCase();
+  return plan === "growth" || plan === "scale";
+}
+
+
+/**
  * Limite TOTAL de contatos no CRM, baseado no plano.
  * - novo Atendimento (start) → 1.000
  * - Growth → 10.000
@@ -78,15 +89,18 @@ export function getContactLimit(profile: ProfileLike): number {
  * assinaturas customizadas — é uma camada paralela). Retorna `false` se
  * o plano do usuário não pode acessar a feature.
  */
-const NEW_START_BLOCKED: FeatureKey[] = ["oportunidades", "agents"];
+const NEW_START_BLOCKED: FeatureKey[] = ["oportunidades", "agents", "sdr_inteligente"];
 
 export function planHasFeature(profile: ProfileLike, key: FeatureKey): boolean {
   if (!profile) return true;
+  // SDR Inteligente é exclusivo do Growth IA (e Enterprise) — sem grandfathering.
+  if (key === "sdr_inteligente") return hasSDRInteligenteAccess(profile);
   if (isLegacyPlanUser(profile)) return true;
   const plan = (profile.plan || "").toLowerCase();
   if (plan !== "start") return true;
   return !NEW_START_BLOCKED.includes(key);
 }
+
 
 /**
  * Rótulo correto do plano levando em conta grandfathering.

@@ -349,6 +349,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         <span className="whitespace-nowrap truncate">Gestão</span>
                       </Link>
                     </li>
+                    {can("sdr_inteligente") && (
                     <li data-tour="sidebar-oportunidades-sdr">
                       <Link
                         to="/oportunidades/sdr"
@@ -363,6 +364,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         <span className="whitespace-nowrap truncate">SDR Inteligente</span>
                       </Link>
                     </li>
+                    )}
+
                   </ul>
                 </div>
               )}
