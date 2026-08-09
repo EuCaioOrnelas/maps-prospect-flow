@@ -779,7 +779,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
               {sending && (
                 <div className="flex gap-2.5 items-start">
                   <Avatar />
-                  <div className="rounded-2xl rounded-tl-sm bg-muted/70 px-3.5 py-3 flex items-center gap-1.5">
+                  <div className="briefing-bubble-ai rounded-2xl rounded-tl-sm px-3.5 py-3 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
