@@ -936,7 +936,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
               a performance do SDR Inteligente, os próximos compromissos da Agenda e o score de maturidade da conta.
             </p>
             <p>
-              Os emojis indicam severidade: 🔴 crítico, 🟡 atenção, 🟢 positivo e ✅ ponto que estava pendente ontem e
+              Os emojis indicam severidade: 🚨 crítico, ⚡ atenção, 📈 positivo e ✅ ponto que estava pendente ontem e
               foi resolvido.
             </p>
             <p>
