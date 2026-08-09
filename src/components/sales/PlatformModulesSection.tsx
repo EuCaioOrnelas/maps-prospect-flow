@@ -1094,10 +1094,16 @@ const WianMock = () => (
           </div>
         </div>
       </Reveal>
-      <div className="w-fit rounded-sm bg-muted px-2.5 py-2 shadow-sm">
-        <TypingDots delay={0.2} />
-      </div>
-    </ChatWallpaper>
+      <Reveal delay={0.75}>
+        <div className="max-w-[92%] rounded-sm bg-muted px-3 py-2 text-[11px] leading-snug text-muted-foreground shadow-sm space-y-1">
+          <p>
+            Priorize os <b className="text-foreground">12 leads quentes</b>: 4 já pediram proposta. Coloquei todos no
+            topo do seu CRM.
+          </p>
+          <p className="text-[10px] text-primary font-semibold">Impacto estimado: R$ 62.700,00 nesta semana.</p>
+        </div>
+      </Reveal>
+
 
     <Reveal delay={0.9} className="mt-2 shrink-0">
       <div className="rounded-card border border-primary/20 bg-primary/[0.06] p-1.5">
