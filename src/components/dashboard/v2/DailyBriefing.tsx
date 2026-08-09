@@ -19,12 +19,24 @@ export interface BriefingMetrics {
   [label: string]: number | string;
 }
 
+export interface BriefingCapabilities {
+  planName: string;
+  /** Módulo Oportunidades / Prospecção IA liberado no plano */
+  opportunities: boolean;
+  /** SDR Inteligente (exclusivo Growth IA) */
+  sdr: boolean;
+  /** Agentes IA */
+  agents: boolean;
+}
+
 interface DailyBriefingProps {
   alerts: ExecutiveAlert[];
   userName?: string | null;
   periodDays: number;
   metrics?: BriefingMetrics;
+  capabilities?: BriefingCapabilities;
 }
+
 
 type ChatRole = "user" | "assistant";
 interface ChatMsg {
