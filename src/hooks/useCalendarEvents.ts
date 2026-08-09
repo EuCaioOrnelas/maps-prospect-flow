@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -81,6 +81,23 @@ export function useCalendarEvents({ from, to, userFilter }: UseCalendarEventsOpt
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
   }, [queryClient]);
+
+  // Realtime: qualquer inserção/alteração feita por outro usuário, pelo SDR
+  // ou em outra aba atualiza a agenda imediatamente.
+  useEffect(() => {
+    if (!accountOwnerId) return;
+    const channel = supabase
+      .channel(`calendar-events-${accountOwnerId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "calendar_events" },
+        () => invalidate(),
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [accountOwnerId, invalidate]);
 
   const translateError = (error: unknown) => {
     const err = error as { code?: string; message?: string };

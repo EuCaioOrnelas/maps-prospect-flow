@@ -120,7 +120,7 @@ export const EVENT_TYPES: TypeMeta[] = [
   },
   {
     value: "other",
-    label: "Outro",
+    label: "Compromisso geral",
     icon: CircleDot,
     dot: "bg-muted-foreground",
     chip: "bg-muted text-muted-foreground border-border",

@@ -1508,6 +1508,7 @@ export type Database = {
           metadata: Json
           notes: string | null
           owner_user_id: string
+          reminder_sent_at: string | null
           reminders: Json
           sdr_agent_id: string | null
           source: Database["public"]["Enums"]["calendar_event_source"]
@@ -1541,6 +1542,7 @@ export type Database = {
           metadata?: Json
           notes?: string | null
           owner_user_id: string
+          reminder_sent_at?: string | null
           reminders?: Json
           sdr_agent_id?: string | null
           source?: Database["public"]["Enums"]["calendar_event_source"]
@@ -1574,6 +1576,7 @@ export type Database = {
           metadata?: Json
           notes?: string | null
           owner_user_id?: string
+          reminder_sent_at?: string | null
           reminders?: Json
           sdr_agent_id?: string | null
           source?: Database["public"]["Enums"]["calendar_event_source"]

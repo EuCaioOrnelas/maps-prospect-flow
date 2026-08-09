@@ -543,7 +543,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
       const withReply = [...base, { role: "assistant" as ChatRole, content: reply, at: Date.now() }];
       setMessages(withReply);
       writeJSON(CHAT_KEY(uid), withReply.map((m) => ({ ...m, audioUrl: undefined })));
-      notify("Wian respondeu", reply.replace(/\s+/g, " ").slice(0, 110) + (reply.length > 110 ? "…" : ""));
+      
     } catch (e: any) {
       notify(
         "Não consegui responder agora",
@@ -695,7 +695,14 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
   return (
     <>
-      <section className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm">
+      <section
+        className={cn(
+          "rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm",
+          // Altura fixa: o composer nunca muda de lugar quando as mensagens
+          // rápidas somem — o espaço liberado vai para a conversa.
+          !collapsed && "flex flex-col h-[640px]",
+        )}
+      >
         {/* Header estilo chat */}
         <header className="flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-card">
           <div className="relative shrink-0">
@@ -739,7 +746,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
             {/* Thread */}
             <div
               ref={threadRef}
-              className="max-h-[520px] overflow-y-auto scrollbar-thin px-4 py-4 space-y-3 bg-background/40"
+              className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-4 py-4 space-y-3 bg-background/40"
             >
               <div className="flex justify-center">
                 <span className="px-2.5 py-1 rounded-sm bg-muted/70 text-[10px] font-medium text-muted-foreground">
@@ -790,7 +797,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
 
             {/* Composer */}
-            <div className="border-t border-border/50 bg-card">
+            <div className="shrink-0 border-t border-border/50 bg-card">
               {/* Mensagens rápidas — somem enquanto o gestor digita ou grava */}
               {!input.trim() && !recording && (
                 <div className="px-3 pt-2.5">
