@@ -1279,6 +1279,10 @@ const normalizeAiResult = ({
     analise_concorrencia_regional: compact(toSafeString(raw?.analise_concorrencia_regional)) || "",
     analise_demanda_regional: compact(toSafeString(raw?.analise_demanda_regional)) || "",
     justificativa_score: compact(toSafeString(raw?.justificativa_score)) || `Score consolidado pelo equilíbrio entre estrutura digital (${estrutura_digital}), reputação (${reputacao}), acessibilidade (${acessibilidade}), engajamento (${engajamento_atividade}) e potencial (${potencial_venda}).`,
+    similaridade_clientes_ganhos: clamp(numberFromUnknown(raw?.similaridade_clientes_ganhos) ?? 0, 0, 100),
+    clientes_similares: normalizeStringArray(raw?.clientes_similares).slice(0, 3),
+    oportunidade_expansao: compact(toSafeString(raw?.oportunidade_expansao)),
+    potencial_receita_estimado: compact(toSafeString(raw?.potencial_receita_estimado)),
   };
 };
 
@@ -1344,6 +1348,151 @@ serve(async (req) => {
     const lens = inferOfferingLens(companyProfile);
     const nicheCtx = inferNicheContext(companyProfile);
     const { websiteUrl, socialLinks } = extractSocialLinks(site_url, redes_sociais);
+
+    // ═══ Inteligência de clientes já ganhos (similaridade / expansão de receita) ═══
+    type WonProfile = {
+      total: number;
+      avgTicket: number;
+      maxTicket: number;
+      categories: Record<string, number>;
+      cities: Record<string, number>;
+      saleTypes: Record<string, number>;
+      samples: string[];
+      recurringShare: number;
+    };
+    let wonProfile: WonProfile | null = null;
+    try {
+      const { data: wonDeals } = await supabase
+        .from("lead_deals")
+        .select("lead_id, value, sale_type, contract_type, title, closed_at, status")
+        .eq("user_id", user.id)
+        .not("closed_at", "is", null)
+        .order("closed_at", { ascending: false })
+        .limit(80);
+
+      const validDeals = (wonDeals || []).filter(
+        (d: any) => !d.status || !["perdido", "lost", "cancelado", "canceled"].includes(String(d.status).toLowerCase()),
+      );
+
+      if (validDeals.length > 0) {
+        const leadIds = [...new Set(validDeals.map((d: any) => d.lead_id).filter(Boolean))];
+        const { data: wonLeads } = leadIds.length
+          ? await supabase.from("leads").select("id, company_name, category, city, ai_score").in("id", leadIds)
+          : { data: [] as any[] };
+        const leadById = new Map((wonLeads || []).map((l: any) => [l.id, l]));
+
+        const categories: Record<string, number> = {};
+        const cities: Record<string, number> = {};
+        const saleTypes: Record<string, number> = {};
+        const samples: string[] = [];
+        let sum = 0;
+        let max = 0;
+        let recurring = 0;
+
+        for (const d of validDeals) {
+          const v = Number(d.value) || 0;
+          sum += v;
+          if (v > max) max = v;
+          const st = String(d.sale_type || d.contract_type || "").toLowerCase();
+          if (st) saleTypes[st] = (saleTypes[st] || 0) + 1;
+          if (st.includes("recorr") || st.includes("mensal") || st.includes("assinat")) recurring++;
+          const l: any = leadById.get(d.lead_id);
+          if (l) {
+            if (l.category) categories[l.category] = (categories[l.category] || 0) + 1;
+            if (l.city) cities[l.city] = (cities[l.city] || 0) + 1;
+            if (samples.length < 8) {
+              samples.push(
+                `${l.company_name || "Cliente"} — ${l.category || "categoria n/d"} / ${l.city || "cidade n/d"} · ticket R$ ${v.toLocaleString("pt-BR")}${d.title ? ` · ${d.title}` : ""}`,
+              );
+            }
+          }
+        }
+
+        wonProfile = {
+          total: validDeals.length,
+          avgTicket: validDeals.length ? Math.round(sum / validDeals.length) : 0,
+          maxTicket: Math.round(max),
+          categories,
+          cities,
+          saleTypes,
+          samples,
+          recurringShare: validDeals.length ? Math.round((recurring / validDeals.length) * 100) : 0,
+        };
+      }
+    } catch (e) {
+      console.error("won deals context error:", e);
+    }
+
+    const topEntries = (obj: Record<string, number> | undefined, n = 5) =>
+      Object.entries(obj || {})
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, n);
+
+    const wonCategories = topEntries(wonProfile?.categories);
+    const wonCities = topEntries(wonProfile?.cities);
+
+    // Similaridade heurística com a base de clientes ganhos (0-100)
+    const normalize = (s: unknown) =>
+      String(s || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+    let similarityScore = 0;
+    const similarityReasons: string[] = [];
+    if (wonProfile) {
+      const leadCat = normalize(categoria);
+      const leadCity = normalize(cidade);
+      const catMatch = wonCategories.find(([c]) => {
+        const nc = normalize(c);
+        return nc && leadCat && (nc === leadCat || nc.includes(leadCat) || leadCat.includes(nc));
+      });
+      if (catMatch) {
+        similarityScore += 55;
+        similarityReasons.push(`Mesmo segmento de ${catMatch[1]} cliente(s) já fechado(s): ${catMatch[0]}`);
+      }
+      const cityMatch = wonCities.find(([c]) => normalize(c) && normalize(c) === leadCity);
+      if (cityMatch) {
+        similarityScore += 20;
+        similarityReasons.push(`Mesma região de clientes ganhos (${cityMatch[0]})`);
+      }
+      if ((Number(avaliacao_media) || 0) >= 4 && (Number(quantidade_avaliacoes) || 0) >= 20) {
+        similarityScore += 15;
+        similarityReasons.push("Reputação sólida, padrão dos clientes que já converteram");
+      }
+      if (possui_site) {
+        similarityScore += 10;
+        similarityReasons.push("Possui presença digital própria, como a maioria da base ganha");
+      }
+      similarityScore = clamp(similarityScore, 0, 100);
+    }
+
+    const wonContext = wonProfile
+      ? `
+═══ BASE DE CLIENTES JÁ FECHADOS (APRENDIZADO DE VENDAS REAIS) ═══
+- Negócios ganhos analisados: ${wonProfile.total}
+- Ticket médio: R$ ${wonProfile.avgTicket.toLocaleString("pt-BR")} | Maior ticket: R$ ${wonProfile.maxTicket.toLocaleString("pt-BR")}
+- Participação de vendas recorrentes: ${wonProfile.recurringShare}%
+- Segmentos que mais compram: ${wonCategories.map(([c, n]) => `${c} (${n})`).join(", ") || "não identificado"}
+- Regiões que mais compram: ${wonCities.map(([c, n]) => `${c} (${n})`).join(", ") || "não identificado"}
+- Exemplos de clientes ganhos:
+${wonProfile.samples.map((s) => `  • ${s}`).join("\n") || "  • sem exemplos"}
+
+SIMILARIDADE HEURÍSTICA DESTE LEAD COM A BASE GANHA: ${similarityScore}/100
+${similarityReasons.map((r) => `  - ${r}`).join("\n") || "  - Nenhuma semelhança forte identificada"}
+
+REGRAS DE USO DESSA BASE:
+- Se a similaridade for >= 60, trate como OPORTUNIDADE PRIORITÁRIA: eleve "potencial_venda" (nunca abaixo de 11/15) e explique no diagnóstico qual cliente/segmento parecido já foi fechado.
+- Se a similaridade estiver entre 30 e 59, sinalize como oportunidade provável e cite o padrão parcial.
+- Se a similaridade for < 30, não force encaixe.
+- Sempre proponha EXPANSÃO DE RECEITA: qual produto/serviço adicional (upsell/cross-sell/recorrência) cabe neste lead considerando o que já é vendido para clientes parecidos e o ticket médio real.
+`
+      : `
+═══ BASE DE CLIENTES JÁ FECHADOS ═══
+Ainda não há negócios ganhos registrados no CRM. Não invente históricos de vendas; baseie o potencial apenas nas evidências do lead.
+`;
+
+
 
     const pageTargets = [
       ...(websiteUrl ? [{ url: websiteUrl, label: "site" }] : []),
@@ -1460,6 +1609,7 @@ ${socialPages.length > 0
 - Engajamento e Atividade: ${heuristic.engajamento_atividade}/15
 - Potencial de Venda: ${heuristic.potencial_venda}/15
 - Score base: ${heuristic.score}/100
+${wonContext}
 
 ═══ ANÁLISES OBRIGATÓRIAS ═══
 
@@ -1569,7 +1719,11 @@ Retorne APENAS um JSON válido:
   "analise_reputacao_detalhada": "...",
   "analise_concorrencia_regional": "análise de concorrentes na região — para telecom, identifique operadoras/provedores locais",
   "analise_demanda_regional": "análise de demanda baseada na densidade demográfica e porte da cidade",
-  "justificativa_score": "1-2 frases objetivas"
+  "justificativa_score": "1-2 frases objetivas",
+  "similaridade_clientes_ganhos": <0-100 — quão parecido este lead é com clientes que já compraram>,
+  "clientes_similares": ["cliente/segmento já ganho parecido"] OU [],
+  "oportunidade_expansao": "produto/serviço adicional (upsell, cross-sell ou recorrência) com maior chance de aumentar faturamento neste lead, ou '' se não houver base",
+  "potencial_receita_estimado": "faixa estimada em R$ com base no ticket médio real dos clientes ganhos, ou '' se não houver base"
 }`;
 
       try {
@@ -1611,6 +1765,20 @@ Retorne APENAS um JSON válido:
       socialSummary,
     });
 
+    // Piso de potencial quando o lead é muito parecido com clientes já ganhos
+    if (similarityScore >= 60 && result.potencial_venda < 11) {
+      result.potencial_venda = 11;
+      result.score = clamp(
+        result.estrutura_digital + result.reputacao + result.acessibilidade + result.engajamento_atividade + result.potencial_venda,
+        0,
+        100,
+      );
+      if (result.score >= 61 && result.nivel_oportunidade === "Baixa") result.nivel_oportunidade = "Alta";
+      else if (result.score >= 31 && result.nivel_oportunidade === "Baixa") result.nivel_oportunidade = "Média";
+    }
+
+
+
     if (lead_id) {
       const { error: updateErr } = await supabase
         .from("leads")
@@ -1639,6 +1807,19 @@ Retorne APENAS um JSON válido:
             analise_concorrencia_regional: result.analise_concorrencia_regional,
             analise_demanda_regional: result.analise_demanda_regional,
             justificativa_score: result.justificativa_score,
+            similaridade_clientes_ganhos: Math.max(result.similaridade_clientes_ganhos, similarityScore),
+            clientes_similares: result.clientes_similares,
+            oportunidade_expansao: result.oportunidade_expansao,
+            potencial_receita_estimado: result.potencial_receita_estimado,
+            won_base_snapshot: wonProfile
+              ? {
+                  total: wonProfile.total,
+                  avg_ticket: wonProfile.avgTicket,
+                  top_categories: wonCategories.map(([c, n]) => ({ category: c, count: n })),
+                  top_cities: wonCities.map(([c, n]) => ({ city: c, count: n })),
+                  recurring_share: wonProfile.recurringShare,
+                }
+              : null,
             scoring_inputs: {
               avaliacao_media,
               quantidade_avaliacoes,
@@ -1681,6 +1862,10 @@ Retorne APENAS um JSON válido:
       analise_concorrencia_regional: result.analise_concorrencia_regional,
       analise_demanda_regional: result.analise_demanda_regional,
       justificativa_score: result.justificativa_score,
+      similaridade_clientes_ganhos: Math.max(result.similaridade_clientes_ganhos, similarityScore),
+      clientes_similares: result.clientes_similares,
+      oportunidade_expansao: result.oportunidade_expansao,
+      potencial_receita_estimado: result.potencial_receita_estimado,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -683,7 +683,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     <div className="flex gap-2.5 items-start">
       <div className={cn("w-[30px] shrink-0", !first && "opacity-0")}>{first ? <Avatar /> : <div />}</div>
       <div className="max-w-[86%] min-w-0">
-        <div className="rounded-2xl rounded-tl-sm bg-muted/70 px-3.5 py-2.5 text-foreground/90">
+        <div className="briefing-bubble-ai rounded-2xl rounded-tl-sm px-3.5 py-2.5">
           <RichText text={text} />
         </div>
 
@@ -757,7 +757,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                 ) : (
                   <div key={`m-${i}`} className="flex justify-end">
                     <div className="max-w-[86%] min-w-0">
-                      <div className="rounded-2xl rounded-tr-sm bg-primary text-primary-foreground px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                      <div className="briefing-bubble-user rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words">
                         {m.audioUrl ? (
                           <BriefingAudioBubble
                             src={m.audioUrl}
@@ -779,7 +779,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
               {sending && (
                 <div className="flex gap-2.5 items-start">
                   <Avatar />
-                  <div className="rounded-2xl rounded-tl-sm bg-muted/70 px-3.5 py-3 flex items-center gap-1.5">
+                  <div className="briefing-bubble-ai rounded-2xl rounded-tl-sm px-3.5 py-3 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
@@ -937,7 +937,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
               </form>
 
 
-              <p className="px-3 pb-3 -mt-1 text-[10px] text-muted-foreground/80">
+              <p className="px-3 pb-3 -mt-1 text-[10px] text-muted-foreground/60 opacity-70">
                 A Wian analisa cockpit, CRM, atendimento, campanhas{caps.opportunities ? ", prospecção" : ""}
                 {caps.sdr ? ", SDR Inteligente" : ""} e agenda desta conta ({caps.planName}). Disponível apenas para
                 owner e administradores.
