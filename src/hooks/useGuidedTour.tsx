@@ -712,6 +712,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       // Close any open lead dialog if we're moving away from diagnosis steps
       const isDialogStep = step.id === "diagnosis" || step.id === "approach-message";
       if (!isDialogStep) {
+        document.body.classList.remove("tour-prewarm-lead");
         const openDialog = document.querySelector('[role="dialog"]');
         if (openDialog) {
           document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
