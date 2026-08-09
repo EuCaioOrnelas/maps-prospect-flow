@@ -39,7 +39,7 @@ const RichText = ({ text }: { text: string }) => (
         ul: ({ children }) => <ul className="mt-2 space-y-1.5 list-none pl-5">{children}</ul>,
         ol: ({ children }) => <ol className="mt-2 space-y-1.5 list-decimal pl-5">{children}</ol>,
         li: ({ children }) => (
-          <li className="relative pl-5 text-foreground/90 before:absolute before:left-0 before:top-[0.55em] before:h-[5px] before:w-[5px] before:rounded-full before:border before:border-foreground/60 before:bg-transparent">
+          <li className="relative pl-5 text-foreground/90 before:absolute before:left-0 before:top-[0.55em] before:h-[5px] before:w-[5px] before:rounded-full before:bg-foreground/70">
             {children}
           </li>
         ),
@@ -68,7 +68,7 @@ const DEMO_CONVERSATION: { role: ChatRole; content: string; offsetMin: number }[
     role: "assistant",
     offsetMin: 6,
     content:
-      "Priorize três frentes hoje, nesta ordem:\n\n- 🔴 **12 leads quentes sem contato há 3 dias** — score médio 82. Abra o CRM, filtre por score acima de 80 e dispare a abordagem. Potencial parado: **R$ 148.400,00**.\n- 🟡 **Taxa de resposta em 21%** — abaixo dos 28% da semana passada. Ajuste a primeira mensagem no SDR Inteligente para abrir com diagnóstico, não com oferta.\n- 🟢 **Ticket médio subiu para R$ 4.180,00** — mantenha o mesmo perfil de empresa na próxima busca de prospecção.\n\nMeta realista para hoje: **8 novas conversas** e **2 reuniões agendadas**. Quer que eu detalhe o plano da primeira frente?",
+      "Priorize três frentes hoje, nesta ordem:\n\n- 🚨 **12 leads quentes sem contato há 3 dias** — score médio 82. Abra o CRM, filtre por score acima de 80 e dispare a abordagem. Potencial parado: **R$ 148.400,00**.\n- ⚡ **Taxa de resposta em 21%** — abaixo dos 28% da semana passada. Ajuste a primeira mensagem no SDR Inteligente para abrir com diagnóstico, não com oferta.\n- 📈 **Ticket médio subiu para R$ 4.180,00** — mantenha o mesmo perfil de empresa na próxima busca de prospecção.\n\nMeta realista para hoje: **8 novas conversas** e **2 reuniões agendadas**. Quer que eu detalhe o plano da primeira frente?",
   },
   { role: "user", content: "Sim, detalhe a primeira frente", offsetMin: 7 },
   {
@@ -405,19 +405,19 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
     const parts2: string[] = [];
     if (critical.length > 0) {
-      parts2.push(`🔴 Identifiquei ${critical.length} ponto(s) crítico(s) na operação:\n${bullets(critical)}`);
+      parts2.push(`🚨 Identifiquei ${critical.length} ponto(s) crítico(s) na operação:\n${bullets(critical)}`);
     }
     if (attention.length > 0) {
-      parts2.push(`🟡 E ${attention.length} ponto(s) de atenção:\n${bullets(attention)}`);
+      parts2.push(`⚡ E ${attention.length} ponto(s) de atenção:\n${bullets(attention)}`);
     }
     const m2 =
       parts2.length > 0
         ? parts2.join("\n\n")
-        : "🟢 Não identifiquei pontos críticos nem de atenção nesta janela. A operação está dentro do esperado.";
+        : "✅ Não identifiquei pontos críticos nem de atenção nesta janela. A operação está dentro do esperado.";
 
     const parts3: string[] = [];
     if (positives.length > 0) {
-      parts3.push(`🟢 No lado positivo, registrei ${positives.length} evolução(ões):\n${bullets(positives)}`);
+      parts3.push(`📈 No lado positivo, registrei ${positives.length} evolução(ões):\n${bullets(positives)}`);
     }
     if (resolvedSinceYesterday.length > 0) {
       parts3.push(
@@ -429,7 +429,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     const m3 =
       parts3.length > 0
         ? parts3.join("\n\n")
-        : "🟢 Ainda não há indicadores de crescimento relevantes nesta janela. Assim que houver evolução consistente, eu destaco aqui.";
+        : "✅ Ainda não há indicadores de crescimento relevantes nesta janela. Assim que houver evolução consistente, eu destaco aqui.";
 
     const priority = critical[0] || attention[0] || positives[0];
     const m4 = priority
@@ -936,7 +936,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
               a performance do SDR Inteligente, os próximos compromissos da Agenda e o score de maturidade da conta.
             </p>
             <p>
-              Os emojis indicam severidade: 🔴 crítico, 🟡 atenção, 🟢 positivo e ✅ ponto que estava pendente ontem e
+              Os emojis indicam severidade: 🚨 crítico, ⚡ atenção, 📈 positivo e ✅ ponto que estava pendente ontem e
               foi resolvido.
             </p>
             <p>
