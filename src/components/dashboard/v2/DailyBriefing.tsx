@@ -412,6 +412,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
   /** Envia texto ou áudio para a Wian. Quando há áudio, ela transcreve e responde ao conteúdo falado. */
   const send = async (raw?: string, voice?: { blob: Blob; seconds: number }) => {
+    if (demoConversation) return; // tour guiado: apenas demonstração
     const question = voice ? "" : (raw ?? input).trim();
     if ((!question && !voice) || sending) return;
 
