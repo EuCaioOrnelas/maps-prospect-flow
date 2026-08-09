@@ -812,18 +812,20 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                     <span className="text-sm font-mono tabular-nums text-foreground/80 shrink-0">
                       {Math.floor(elapsed / 60)}:{(elapsed % 60).toString().padStart(2, "0")}
                     </span>
-                    <div className="flex-1 min-w-0 flex items-center gap-[2px] overflow-hidden">
-                      {Array.from({ length: 28 }).map((_, i) => (
-                        <span
-                          key={i}
-                          className="flex-1 rounded-full bg-destructive/50 animate-pulse"
-                          style={{
-                            height: `${6 + ((i * 7 + elapsed * 3) % 16)}px`,
-                            animationDelay: `${(i % 6) * 0.08}s`,
-                          }}
-                        />
-                      ))}
+                    <div className="flex-1 min-w-0 h-6 flex items-center justify-start gap-[2px] overflow-hidden">
+                      {Array.from({ length: WAVE_BARS }).map((_, i) => {
+                        const lvl = levels[levels.length - WAVE_BARS + i];
+                        const h = lvl ? 3 + lvl * 19 : 3;
+                        return (
+                          <span
+                            key={i}
+                            className="w-[3px] shrink-0 rounded-full bg-destructive/70 transition-[height] duration-100 ease-out"
+                            style={{ height: `${h}px` }}
+                          />
+                        );
+                      })}
                     </div>
+
                     <span className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
                       {locked ? (
                         <>
