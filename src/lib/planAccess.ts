@@ -89,15 +89,18 @@ export function getContactLimit(profile: ProfileLike): number {
  * assinaturas customizadas — é uma camada paralela). Retorna `false` se
  * o plano do usuário não pode acessar a feature.
  */
-const NEW_START_BLOCKED: FeatureKey[] = ["oportunidades", "agents"];
+const NEW_START_BLOCKED: FeatureKey[] = ["oportunidades", "agents", "sdr_inteligente"];
 
 export function planHasFeature(profile: ProfileLike, key: FeatureKey): boolean {
   if (!profile) return true;
+  // SDR Inteligente é exclusivo do Growth IA (e Enterprise) — sem grandfathering.
+  if (key === "sdr_inteligente") return hasSDRInteligenteAccess(profile);
   if (isLegacyPlanUser(profile)) return true;
   const plan = (profile.plan || "").toLowerCase();
   if (plan !== "start") return true;
   return !NEW_START_BLOCKED.includes(key);
 }
+
 
 /**
  * Rótulo correto do plano levando em conta grandfathering.
