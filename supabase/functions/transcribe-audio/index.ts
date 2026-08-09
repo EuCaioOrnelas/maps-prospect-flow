@@ -103,7 +103,16 @@ Deno.serve(async (req) => {
 
       // Locate the access token via the message → conversation → connection
       let accessToken: string | null = null;
-      if (message_id) {
+      if (connection_id) {
+        const { data: conn } = await supabase
+          .from("user_waba_connections")
+          .select("access_token")
+          .eq("id", connection_id)
+          .maybeSingle();
+        accessToken = conn?.access_token || null;
+      }
+      if (!accessToken && message_id) {
+
         const { data: msg } = await supabase
           .from("chat_messages")
           .select("conversation_id")
