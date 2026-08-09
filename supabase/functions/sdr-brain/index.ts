@@ -1,5 +1,22 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
-import { decryptApiKey } from "../_shared/aiKeyCrypto.ts";
+
+// ========== INLINED AI KEY CRYPTO (sem _shared) ==========
+// Decriptação AES-256-GCM da chave OpenAI do cliente (BYOK).
+async function masterKey(): Promise<CryptoKey> {
+  const raw = Deno.env.get("AI_CREDENTIALS_SECRET");
+  if (!raw) throw new Error("AI_CREDENTIALS_SECRET não configurada");
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
+  return crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+
+async function decryptApiKey(stored: string): Promise<string> {
+  const buf = Uint8Array.from(atob(stored), (c) => c.charCodeAt(0));
+  const iv = buf.subarray(0, 12);
+  const cipher = buf.subarray(12);
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, await masterKey(), cipher);
+  return new TextDecoder().decode(plain);
+}
+// ========== FIM INLINED AI KEY CRYPTO ==========
 
 interface FreeSlot {
   iso: string;
