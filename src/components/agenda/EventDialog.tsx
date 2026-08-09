@@ -416,7 +416,7 @@ export function EventDialog({
               <div className="grid items-start gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label className="flex h-5 items-center gap-1.5">
-                    <CalendarIcon className="h-3.5 w-3.5" /> Tipo
+                    <TagIcon className="h-3.5 w-3.5" /> Tipo
                   </Label>
                   <Select value={form.event_type} onValueChange={(v) => set("event_type", v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
