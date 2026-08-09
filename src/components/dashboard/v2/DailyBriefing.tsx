@@ -352,6 +352,12 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
   useEffect(() => {
     return () => {
       if (timerRef.current) window.clearInterval(timerRef.current);
+      if (waveRafRef.current) window.clearTimeout(waveRafRef.current);
+      try {
+        void audioCtxRef.current?.close();
+      } catch {
+        /* ignore */
+      }
     };
   }, []);
 
