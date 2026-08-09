@@ -341,6 +341,23 @@ serve(async (req) => {
     }
 
     const context = buildContext(body?.snapshot, body?.history);
+    const accountData = await loadAccountData(supabase, ownerId);
+
+    // Perfil individual do gestor (tom, foco e histórico de interações) — enviado pelo cliente
+    const p = body?.persona ?? {};
+    const personaLines = [
+      `Nome do gestor: ${me?.name ?? "gestor"} (cargo na conta: ${role === "owner" ? "owner" : "administrador"})`,
+      `Interações anteriores com você: ${Number(p?.interactions ?? 0)}`,
+      p?.topics && typeof p.topics === "object"
+        ? `Temas que ele mais consulta: ${Object.entries(p.topics as Record<string, number>)
+            .sort((a, b) => Number(b[1]) - Number(a[1]))
+            .slice(0, 4)
+            .map(([k, v]) => `${k} (${v}x)`)
+            .join(", ") || "ainda sem padrão"}`
+        : "Temas recorrentes: ainda sem padrão",
+      `Estilo preferido: ${Number(p?.interactions ?? 0) >= 12 ? "objetivo e direto ao ponto — ele já conhece a plataforma" : Number(p?.interactions ?? 0) >= 4 ? "equilibrado, com contexto curto antes da recomendação" : "mais explicativo, contextualizando cada indicador"}`,
+    ].join("\n");
+
     const priorRaw = Array.isArray(body?.messages) ? body.messages : [];
     const prior = priorRaw
       .filter((m: any) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
@@ -353,15 +370,18 @@ serve(async (req) => {
       body: JSON.stringify({
         model: MODEL,
         temperature: 0.4,
-        max_tokens: 320,
+        max_tokens: 420,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: `PERFIL DO GESTOR (adapte tom e profundidade):\n${personaLines}` },
           { role: "system", content: `CONTEXTO DE DADOS DA CONTA:\n${context}` },
+          { role: "system", content: `DADOS OPERACIONAIS COMPLETOS (CRM, vendas, SDR, agenda, score):\n${accountData}` },
           ...prior,
           { role: "user", content: question },
         ],
       }),
     });
+
 
     if (!aiRes.ok) {
       const t = await aiRes.text();
