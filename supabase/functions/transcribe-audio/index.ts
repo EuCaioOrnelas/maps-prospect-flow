@@ -174,16 +174,24 @@ Deno.serve(async (req) => {
       fetchHeaders = { Authorization: `Bearer ${accessToken}` };
     }
 
-    // Fetch the audio file
-    const audioRes = await fetch(fetchUrl, { headers: fetchHeaders });
-    if (!audioRes.ok) {
-      return new Response(JSON.stringify({ error: `Failed to fetch audio (${audioRes.status})` }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Fetch the audio file (ou usa o áudio enviado direto em base64)
+    let audioBlob: Blob;
+    let mime: string;
+    if (inlineBlob) {
+      audioBlob = inlineBlob;
+      mime = inlineBlob.type || "audio/webm";
+    } else {
+      const audioRes = await fetch(fetchUrl, { headers: fetchHeaders });
+      if (!audioRes.ok) {
+        return new Response(JSON.stringify({ error: `Failed to fetch audio (${audioRes.status})` }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      audioBlob = await audioRes.blob();
+      mime = audioRes.headers.get("content-type") || audioBlob.type || "audio/ogg";
     }
-    const audioBlob = await audioRes.blob();
-    const mime = audioRes.headers.get("content-type") || audioBlob.type || "audio/ogg";
+
     const ext = mime.includes("mp4") ? "m4a"
               : mime.includes("webm") ? "webm"
               : mime.includes("mpeg") ? "mp3"
