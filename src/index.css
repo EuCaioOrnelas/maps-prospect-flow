@@ -1294,11 +1294,11 @@ input::placeholder, textarea::placeholder {
 .wa-bubble-in-fill { fill: #202c33; }
 .landing-light .wa-bubble-in-fill { fill: #ffffff; }
 
-/* ─── Briefing (Wian) bubbles — tom Wiize, não WhatsApp ─── */
+/* ─── Briefing (Wian) bubbles — tom Wiize, leve no tema claro ─── */
 .briefing-bubble-user { background-color: hsl(158 72% 38%); color: #0b1f17; }
 .landing-light .briefing-bubble-user { background-color: hsl(158 72% 90%); color: #0b1f17; border: 1px solid hsl(158 72% 82%); }
 .briefing-bubble-ai { background-color: #202c33; color: #e9edef; }
-.landing-light .briefing-bubble-ai { background-color: #ffffff; color: #0b1f17; border: 1px solid rgba(11,31,23,0.06); }
+.landing-light .briefing-bubble-ai { background-color: hsl(210 20% 96%); color: #0b1f17; border: 1px solid hsl(220 13% 91%); }
 
 
 
