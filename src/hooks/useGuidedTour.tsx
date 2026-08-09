@@ -98,6 +98,23 @@ export function scrollTourViewportTop() {
   });
 }
 
+/** Pré-carrega os chunks das rotas usadas pelo tour (uma única vez cada). */
+const preloadedTourRoutes = new Set<string>();
+export function preloadTourRoutes(routes: Array<string | undefined>) {
+  routes.forEach((route) => {
+    if (!route || preloadedTourRoutes.has(route)) return;
+    preloadedTourRoutes.add(route);
+    const loader =
+      route === "/oportunidades/gestao"
+        ? () => import("@/pages/OpportunitiesManagement")
+        : route === "/oportunidades"
+          ? () => import("@/pages/Dashboard")
+          : route === "/dashboard"
+            ? () => import("@/pages/MainDashboard")
+            : null;
+    loader?.().catch(() => preloadedTourRoutes.delete(route));
+  });
+
 function resolveTargetSelectors(selector: string) {
   return selector
     .split("||")
