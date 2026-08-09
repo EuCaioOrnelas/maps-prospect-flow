@@ -1232,9 +1232,10 @@ const modules: ModuleItem[] = [
     mock: FlowMock,
   },
   {
-    icon: Sparkles,
+    icon: BrainCircuit,
     eyebrow: "Wian",
-    title: "Wian — Assistência Comercial com IA",
+    title: "Wian, sua Assistência Comercial com IA",
+
     description:
       "Sua analista comercial dentro da plataforma. Todo dia a Wian lê o cockpit, o CRM, as vendas, o atendimento e a agenda, aponta o que está travando a operação e entrega o plano de ação com metas numéricas. Você conversa com ela por texto ou áudio.",
     benefits: [
