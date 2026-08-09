@@ -342,15 +342,21 @@ export function GuidedTour() {
   const currentPillarIndex = Math.max(0, TOUR_PILLARS.findIndex((pillar) => pillar.key === getPillarKey(step.id)));
   const currentPillar = TOUR_PILLARS[currentPillarIndex] ?? TOUR_PILLARS[0];
 
-  // Spotlight rect (with padding)
+  // Spotlight rect (with padding), sempre clampado ao viewport para nunca
+  // "vazar" da tela em resoluções pequenas.
+  const VIEW_MARGIN = 12;
   const spot = spotlightRect
-    ? {
-        top: spotlightRect.top - PADDING,
-        left: spotlightRect.left - PADDING,
-        width: spotlightRect.width + PADDING * 2,
-        height: spotlightRect.height + PADDING * 2,
-      }
+    ? (() => {
+        const top = Math.max(VIEW_MARGIN, spotlightRect.top - PADDING);
+        const left = Math.max(VIEW_MARGIN, spotlightRect.left - PADDING);
+        const bottom = Math.min(window.innerHeight - VIEW_MARGIN, spotlightRect.top + spotlightRect.height + PADDING);
+        const right = Math.min(window.innerWidth - VIEW_MARGIN, spotlightRect.left + spotlightRect.width + PADDING);
+        return { top, left, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
+      })()
     : null;
+
+  // Largura do card sempre cabe na tela.
+  const availableWidth = Math.max(260, Math.min(POPUP_W, window.innerWidth - 32));
 
   // Compute popup position — auto-flip so the card never overlaps the spotlight border
   let popupStyle: React.CSSProperties = {};
@@ -359,8 +365,9 @@ export function GuidedTour() {
       top: "50%",
       left: "50%",
       transform: "translate(-50%, -50%)",
-      width: POPUP_W,
+      width: availableWidth,
     };
+
   } else {
     const requestedPlacement = (step.placement ?? "bottom") as "top" | "bottom" | "left" | "right";
     const targetElement = step.target ? (queryTourTarget(step.target) as HTMLElement | null) : null;
@@ -376,7 +383,7 @@ export function GuidedTour() {
       const spaceLeft = dialogRect.left;
       const useRight = spaceRight >= spaceLeft;
       const space = useRight ? spaceRight : spaceLeft;
-      const width = Math.max(300, Math.min(POPUP_W, space - 36));
+      const width = Math.max(260, Math.min(availableWidth, space - 36));
 
       if (space < 340) {
         // Modal takes nearly the whole viewport: dock the card at the bottom,
@@ -385,7 +392,7 @@ export function GuidedTour() {
           top: Math.max(POPUP_GAP, window.innerHeight - popupHeight - 104),
           left: "50%",
           transform: "translateX(-50%)",
-          width: Math.min(POPUP_W, window.innerWidth - 32),
+          width: availableWidth,
         };
       } else {
 
@@ -399,7 +406,7 @@ export function GuidedTour() {
         popupStyle = { top, left, width };
       }
     } else {
-    const popupWidth = popupSize.width || POPUP_W;
+    const popupWidth = Math.min(popupSize.width || POPUP_W, availableWidth);
     const viewportMargin = POPUP_GAP;
     const bounds = {
       top: viewportMargin,
@@ -471,6 +478,19 @@ export function GuidedTour() {
     popupStyle = computePlacementStyle(resolvedPlacement);
     }
   }
+
+  // Trava final: o card nunca pode sair da tela (nem por baixo da barra de navegação).
+  const NAV_SAFE = 96;
+  if (typeof popupStyle.top === "number") {
+    const maxTop = Math.max(POPUP_GAP, window.innerHeight - (popupSize.height || 196) - NAV_SAFE);
+    popupStyle.top = Math.max(POPUP_GAP, Math.min(maxTop, popupStyle.top));
+  }
+  if (typeof popupStyle.left === "number") {
+    const w = typeof popupStyle.width === "number" ? popupStyle.width : availableWidth;
+    popupStyle.left = Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupStyle.left));
+  }
+  popupStyle.maxWidth = `calc(100vw - ${POPUP_GAP * 2}px)`;
+  popupStyle.maxHeight = `${Math.max(180, window.innerHeight - NAV_SAFE - POPUP_GAP * 2)}px`;
 
 
   // Fallback dark overlay (used when there is no spotlight target — e.g. center step
@@ -557,7 +577,7 @@ export function GuidedTour() {
         <>
           <div
             ref={popupCardRef}
-            className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-panel px-6 py-4 sm:px-7 sm:py-5"
+            className="fixed pointer-events-auto overflow-y-auto overflow-x-hidden bg-card text-card-foreground border border-border rounded-panel px-5 py-4 sm:px-7 sm:py-5"
             style={{
               ...popupStyle,
               zIndex: 2147483646,
@@ -569,10 +589,10 @@ export function GuidedTour() {
               <Sparkles size={13} />
               Etapa {currentPillar.number} • {currentPillar.label}
             </div>
-            <h3 className="text-2xl font-bold tracking-tight text-foreground mb-2.5 leading-[1.15]">
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-2.5 leading-[1.15] break-words">
               {step.title}
             </h3>
-            <div className="space-y-2 text-[15px] text-muted-foreground leading-[1.65]">
+            <div className="space-y-2 text-sm sm:text-[15px] text-muted-foreground leading-[1.6] break-words">
               {splitBodyForScan(step.body).map((line, i) => (
                 <p key={i}>{line}</p>
               ))}

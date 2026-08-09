@@ -152,21 +152,21 @@ async function openDemoLeadDialog() {
   const openDialog = document.querySelector('[role="dialog"]') as HTMLElement | null;
   if (openDialog) {
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-    await new Promise((resolve) => setTimeout(resolve, 180));
+    await new Promise((resolve) => setTimeout(resolve, 90));
   }
 
-  const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 40, 120);
+  const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 80, 40);
   row?.click();
 
-  return waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-dados"]', 25, 120).then(
+  return waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-dados"]', 60, 40).then(
     (tab) => (tab?.closest('[role="dialog"]') as HTMLElement | null) ?? null
   );
 }
 
 async function activateLeadTab(selector: string) {
-  const tab = await waitForElement<HTMLElement>(selector, 25, 120);
+  const tab = await waitForElement<HTMLElement>(selector, 60, 40);
   tab?.click();
-  await new Promise((resolve) => setTimeout(resolve, 120));
+  await new Promise((resolve) => setTimeout(resolve, 60));
 }
 
 function centerElementInScrollArea(element: HTMLElement, scrollAreaId = "lead-detail-scroll-area") {
@@ -326,8 +326,8 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         await activateLeadTab('[data-tour="lead-tab-score"]');
         const summary = await waitForElement<HTMLElement>(
           '[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]',
-          25,
-          70
+          60,
+          40
         );
         if (summary) {
           centerElementInScrollArea(summary);
@@ -347,7 +347,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
         await activateLeadTab('[data-tour="lead-tab-dados"]');
 
-        const section = await waitForElement<HTMLElement>('[data-tour="lead-approach-card"]', 30, 80);
+        const section = await waitForElement<HTMLElement>('[data-tour="lead-approach-card"]', 60, 40);
         if (section) {
           centerElementInScrollArea(section);
           await new Promise((resolve) => setTimeout(resolve, 80));

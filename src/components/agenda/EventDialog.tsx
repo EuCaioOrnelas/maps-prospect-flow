@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import {
   CalendarDays,
   Clock,
+  Tag as TagIcon,
   User,
   Building2,
   Mail,
@@ -220,6 +221,12 @@ export function EventDialog({
   );
   const [deleting, setDeleting] = useState(false);
   const [step, setStep] = useState(1);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Ao trocar de etapa o conteúdo volta para o topo do modal.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [step]);
 
   useEffect(() => {
     if (open) {
@@ -336,7 +343,7 @@ export function EventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
+      <DialogContent ref={scrollRef} className="max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-lg">
             {event ? "Editar compromisso" : "Novo compromisso"}
@@ -406,9 +413,11 @@ export function EventDialog({
                 />
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid items-start gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label>Tipo</Label>
+                  <Label className="flex h-5 items-center gap-1.5">
+                    <TagIcon className="h-3.5 w-3.5" /> Tipo
+                  </Label>
                   <Select value={form.event_type} onValueChange={(v) => set("event_type", v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -425,9 +434,10 @@ export function EventDialog({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-1.5">
+                  <Label className="flex h-5 items-center gap-1.5">
                     <User className="h-3.5 w-3.5" /> Responsável
                   </Label>
+
                   <Select
                     value={form.assigned_user_id}
                     onValueChange={(v) => set("assigned_user_id", v)}
