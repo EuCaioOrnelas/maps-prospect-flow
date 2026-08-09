@@ -2081,7 +2081,9 @@ export default function OpportunitiesManagement() {
             if (document.body.classList.contains("tour-active")) e.preventDefault();
           }}
           onEscapeKeyDown={(e) => {
-            if (document.body.classList.contains("tour-active")) e.preventDefault();
+            // O tour fecha o modal disparando um Escape programático (isTrusted=false).
+            // Só bloqueamos o Escape real do usuário.
+            if (document.body.classList.contains("tour-active") && e.isTrusted) e.preventDefault();
           }}
           onWheelCapture={(e) => {
             const scrollArea = document.getElementById("lead-detail-scroll-area");
