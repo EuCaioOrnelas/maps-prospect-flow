@@ -920,9 +920,10 @@ const DottedLine = ({
         className="absolute w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
         style={
           axis === "x"
-            ? { top: -4, left: -3 }
-            : { left: -4, top: -3 }
+            ? { top: -2, left: -3 }
+            : { left: -2, top: -3 }
         }
+
         initial={{ opacity: 0 }}
         whileInView={
           axis === "x"
