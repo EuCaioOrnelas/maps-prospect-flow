@@ -683,7 +683,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     <div className="flex gap-2.5 items-start">
       <div className={cn("w-[30px] shrink-0", !first && "opacity-0")}>{first ? <Avatar /> : <div />}</div>
       <div className="max-w-[86%] min-w-0">
-        <div className="rounded-2xl rounded-tl-sm bg-muted/70 px-3.5 py-2.5 text-foreground/90">
+        <div className="briefing-bubble-ai rounded-2xl rounded-tl-sm px-3.5 py-2.5">
           <RichText text={text} />
         </div>
 
