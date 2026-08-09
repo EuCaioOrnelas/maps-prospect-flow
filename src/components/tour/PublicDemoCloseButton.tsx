@@ -29,7 +29,7 @@ export function PublicDemoCloseButton() {
       data-tour-ui="true"
       style={{
         position: "fixed",
-        top: 20,
+        bottom: 20,
         right: 20,
         zIndex: 2147483647,
         isolation: "isolate",
