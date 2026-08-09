@@ -577,7 +577,7 @@ export function GuidedTour() {
         <>
           <div
             ref={popupCardRef}
-            className="fixed pointer-events-auto bg-card text-card-foreground border border-border rounded-panel px-6 py-4 sm:px-7 sm:py-5"
+            className="fixed pointer-events-auto overflow-y-auto overflow-x-hidden bg-card text-card-foreground border border-border rounded-panel px-5 py-4 sm:px-7 sm:py-5"
             style={{
               ...popupStyle,
               zIndex: 2147483646,
@@ -589,10 +589,10 @@ export function GuidedTour() {
               <Sparkles size={13} />
               Etapa {currentPillar.number} • {currentPillar.label}
             </div>
-            <h3 className="text-2xl font-bold tracking-tight text-foreground mb-2.5 leading-[1.15]">
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-2.5 leading-[1.15] break-words">
               {step.title}
             </h3>
-            <div className="space-y-2 text-[15px] text-muted-foreground leading-[1.65]">
+            <div className="space-y-2 text-sm sm:text-[15px] text-muted-foreground leading-[1.6] break-words">
               {splitBodyForScan(step.body).map((line, i) => (
                 <p key={i}>{line}</p>
               ))}
