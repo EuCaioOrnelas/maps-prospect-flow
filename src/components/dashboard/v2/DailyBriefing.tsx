@@ -36,10 +36,10 @@ const RichText = ({ text }: { text: string }) => (
       components={{
         strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
         em: ({ children }) => <em className="italic">{children}</em>,
-        ul: ({ children }) => <ul className="mt-2 space-y-2 list-none pl-3">{children}</ul>,
-        ol: ({ children }) => <ol className="mt-2 space-y-2 list-decimal pl-6">{children}</ol>,
+        ul: ({ children }) => <ul className="mt-2 space-y-1.5 list-none pl-5">{children}</ul>,
+        ol: ({ children }) => <ol className="mt-2 space-y-1.5 list-decimal pl-5">{children}</ol>,
         li: ({ children }) => (
-          <li className="relative pl-6 text-foreground/90 before:absolute before:left-0 before:top-[0.5em] before:h-[7px] before:w-[7px] before:rounded-full before:bg-current">
+          <li className="relative pl-5 text-foreground/90 before:absolute before:left-0 before:top-[0.55em] before:h-[5px] before:w-[5px] before:rounded-full before:border before:border-foreground/60 before:bg-transparent">
             {children}
           </li>
         ),
