@@ -137,11 +137,14 @@ const MockStage = ({ children }: { children: ReactNode }) => (
 /* --------- Animações de entrada (todas once, sem loop infinito) --------- */
 const VIEW = { once: true, amount: 0.25 } as const;
 
+/* Reveal — estático por performance: o conteúdo do mockup entra junto com o card,
+   sem dezenas de nós animados por cartão. As props de delay/offset são mantidas
+   por compatibilidade com as chamadas existentes. */
 const Reveal = ({
   children,
-  delay = 0,
-  y = 10,
-  x = 0,
+  delay: _delay = 0,
+  y: _y = 10,
+  x: _x = 0,
   className = "",
 }: {
   children: ReactNode;
@@ -149,17 +152,8 @@ const Reveal = ({
   y?: number;
   x?: number;
   className?: string;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y, x }}
-    whileInView={{ opacity: 1, y: 0, x: 0 }}
-    viewport={VIEW}
-    transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
-    className={className}
-  >
-    {children}
-  </motion.div>
-);
+}) => <div className={className}>{children}</div>;
+
 
 /* Viewport para animações em loop: repetem enquanto visíveis, param ao sair */
 const LOOP_VIEW = { once: false, amount: 0.2 } as const;
