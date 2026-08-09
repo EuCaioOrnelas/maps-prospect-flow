@@ -970,25 +970,34 @@ const FlowMock = () => (
       {/* ramificação — alinhada ao centro dos ícones (nós têm 92px de largura) */}
       <div className="relative h-5" aria-hidden="true">
 
-        {/* barra horizontal ligando os centros dos nós das pontas */}
-        <span className="absolute left-[46px] right-[46px] top-2.5 border-t-2 border-dashed border-primary/45" />
-        {[18, 43, 71].map((left, i) => (
-          <motion.span
-            key={left}
-            className="absolute top-[7px] h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
-            style={{ left: `${left}%` }}
-            whileInView={{ x: [0, i % 2 ? 34 : 58], opacity: [0, 1, 1, 0] }}
-            viewport={LOOP_VIEW}
-            transition={{ duration: 1 + i * 0.27, delay: 1.15 + i * 0.43, repeat: Infinity, repeatDelay: 0.8 + i * 0.65, ease: "easeInOut" }}
-          />
-        ))}
-        {/* descida do nó de condição */}
+        {/* descida do nó de condição até a barra */}
         <span className="absolute left-1/2 -translate-x-px top-0 h-2.5 border-l-2 border-dashed border-primary/45" />
+
+        {/* barra horizontal ligando os centros dos nós das pontas */}
+        <div className="absolute left-[46px] right-[46px] top-2.5">
+          <span className="absolute inset-x-0 top-0 border-t-2 border-dashed border-primary/45" />
+          {/* bolinhas saem do centro e percorrem a barra até cada saída */}
+          {[
+            { to: "0%", delay: 1.15 },
+            { to: "100%", delay: 1.5 },
+          ].map((b) => (
+            <motion.span
+              key={b.to}
+              className="absolute -top-[3px] h-1.5 w-1.5 -ml-[3px] rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
+              initial={{ left: "50%", opacity: 0 }}
+              whileInView={{ left: ["50%", b.to], opacity: [0, 1, 1, 0] }}
+              viewport={LOOP_VIEW}
+              transition={{ duration: 1.1, delay: b.delay, repeat: Infinity, repeatDelay: 1.4, ease: "easeInOut" }}
+            />
+          ))}
+        </div>
+
         {/* descidas para cada saída */}
         <span className="absolute left-[46px] top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
         <span className="absolute left-1/2 -translate-x-px top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
         <span className="absolute right-[46px] top-2.5 h-2.5 border-l-2 border-dashed border-primary/45" />
       </div>
+
 
 
       {/* Linha 3 — saídas */}
