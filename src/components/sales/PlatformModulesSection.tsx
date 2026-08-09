@@ -963,14 +963,8 @@ const FlowMock = () => (
       </div>
 
       {/* ramificação — alinhada ao centro dos ícones (nós têm 92px de largura) */}
-      <motion.div
-        className="relative h-5"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={VIEW}
-        transition={{ duration: 0.4, delay: 1 }}
-        aria-hidden="true"
-      >
+      <div className="relative h-5" aria-hidden="true">
+
         {/* barra horizontal ligando os centros dos nós das pontas */}
         <span className="absolute left-[46px] right-[46px] top-2.5 border-t-2 border-dashed border-primary/45" />
         {[18, 43, 71].map((left, i) => (
