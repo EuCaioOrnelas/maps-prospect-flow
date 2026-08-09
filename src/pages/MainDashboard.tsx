@@ -252,6 +252,8 @@ export default function MainDashboard() {
                     .join(" | "),
                 }}
               />
+              )}
+
 
               <ExecutiveAlerts
                 alerts={kpis.executiveAlerts}
