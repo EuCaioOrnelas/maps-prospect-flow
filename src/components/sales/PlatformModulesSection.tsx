@@ -54,6 +54,9 @@ const ContactAvatar = ({ index, className = "" }: { index: number; className?: s
     src={contactAvatars[index % contactAvatars.length]}
     alt=""
     loading="lazy"
+    decoding="async"
+    width={28}
+    height={28}
     className={cn("rounded-full object-cover object-top", className)}
   />
 );
@@ -698,14 +701,16 @@ const CrmMock = () => (
       <motion.div
         className="pointer-events-none absolute left-[17%] top-[100px] z-20"
         initial={{ opacity: 0, x: 0, y: 0 }}
-        animate={{ opacity: [0, 1, 1, 1, 0], x: [0, 0, 52, 112, 112], y: [0, 20, 38, 38, 38] }}
+        whileInView={{ opacity: [0, 1, 1, 1, 0], x: [0, 0, 52, 112, 112], y: [0, 20, 38, 38, 38] }}
+        viewport={VIEW}
         transition={{ duration: 2.4, delay: 1.1, times: [0, 0.18, 0.48, 0.82, 1], ease: "easeInOut" }}
       >
         <MousePointer2 size={20} className="fill-primary text-primary drop-shadow-md" />
         <motion.span
           className="absolute left-3 top-3 h-12 w-24 rounded-card border border-primary/40 bg-card/95 p-2 shadow-lg"
           initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: [0, 1, 1, 0], scale: [0.9, 1, 1, 0.95] }}
+          whileInView={{ opacity: [0, 1, 1, 0], scale: [0.9, 1, 1, 0.95] }}
+          viewport={VIEW}
           transition={{ duration: 2, delay: 1.35, times: [0, 0.18, 0.78, 1] }}
         >
           <span className="block text-[9px] font-bold text-foreground">Alpha Contab.</span>
@@ -972,7 +977,8 @@ const FlowMock = () => (
             key={left}
             className="absolute top-[7px] h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.7)]"
             style={{ left: `${left}%` }}
-            animate={{ x: [0, i % 2 ? 34 : 58], opacity: [0, 1, 1, 0] }}
+            whileInView={{ x: [0, i % 2 ? 34 : 58], opacity: [0, 1, 1, 0] }}
+            viewport={LOOP_VIEW}
             transition={{ duration: 1 + i * 0.27, delay: 1.15 + i * 0.43, repeat: Infinity, repeatDelay: 0.8 + i * 0.65, ease: "easeInOut" }}
           />
         ))}
