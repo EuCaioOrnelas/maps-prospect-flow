@@ -101,6 +101,8 @@ Deno.serve(async (req) => {
 
     // Mensagem de voz do lead: transcreve o áudio para o cérebro do SDR entender e responder
     let inboundMessage: string = message || "";
+    let audioTranscript: string | null = null;
+    let audioTranscriptionFailed = false;
     if (!inboundMessage && message_type === "audio" && typeof media_ref === "string" && media_ref) {
       try {
         const trRes = await fetch(`${SUPABASE_URL}/functions/v1/transcribe-audio`, {
@@ -123,7 +125,11 @@ Deno.serve(async (req) => {
         console.error("[sdr-dispatch] erro ao transcrever áudio:", err);
       }
       if (!inboundMessage) {
-        return json({ skipped: "áudio não pôde ser transcrito", sent: 0 });
+        // Não bloqueia a conversa: o cérebro responde pedindo o texto e tudo fica visível no chat
+        inboundMessage = "[o lead enviou um áudio que não pôde ser transcrito]";
+        audioTranscriptionFailed = true;
+      } else {
+        audioTranscript = inboundMessage;
       }
     }
 
