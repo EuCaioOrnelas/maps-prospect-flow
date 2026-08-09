@@ -45,7 +45,11 @@ interface ChatMsg {
   role: ChatRole;
   content: string;
   at: number;
+  /** Mensagem de voz do gestor (blob local, válido apenas na sessão atual) */
+  audioUrl?: string;
+  audioSeconds?: number;
 }
+
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
