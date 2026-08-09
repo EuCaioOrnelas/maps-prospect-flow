@@ -156,6 +156,67 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
     await runTurn(text, "inbound");
   };
 
+  // ---- Áudio: o lead fala, o SDR ouve (transcrição) e responde ----
+  const startRecording = async () => {
+    if (recording || sending) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      rec.ondataavailable = (e) => e.data.size > 0 && chunks.push(e.data);
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (timerRef.current) window.clearInterval(timerRef.current);
+        setRecording(false);
+        setElapsed(0);
+        const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        if (blob.size < 1200) return;
+        setSending(true);
+        try {
+          const b64 = await new Promise<string>((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => resolve(String(fr.result).split(",")[1] || "");
+            fr.onerror = () => reject(new Error("Falha ao ler o áudio"));
+            fr.readAsDataURL(blob);
+          });
+          const { data, error } = await supabase.functions.invoke("transcribe-audio", {
+            body: { audio_base64: b64, audio_mime: blob.type || "audio/webm" },
+          });
+          if (error) throw error;
+          const text = String((data as any)?.text || "").trim();
+          if (!text) {
+            toast.error("Não consegui entender o áudio. Tente novamente.");
+            return;
+          }
+          setItems((prev) => [...prev, { kind: "lead", text: `🎤 ${text}` }]);
+          setSending(false);
+          await runTurn(text, "inbound");
+          return;
+        } catch (e: any) {
+          toast.error("Erro ao transcrever: " + (e?.message || "tente novamente"));
+        } finally {
+          setSending(false);
+        }
+      };
+      recorderRef.current = rec;
+      rec.start();
+      setRecording(true);
+      setElapsed(0);
+      timerRef.current = window.setInterval(() => setElapsed((s) => s + 1), 1000);
+    } catch {
+      toast.error("Autorize o acesso ao microfone para enviar áudios.");
+    }
+  };
+
+  const stopRecording = () => {
+    try {
+      if (recorderRef.current && recorderRef.current.state !== "inactive") recorderRef.current.stop();
+    } catch {
+      /* ignore */
+    }
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden">
