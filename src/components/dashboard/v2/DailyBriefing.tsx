@@ -937,11 +937,6 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
               </form>
 
 
-              <p className="px-3 pb-3 -mt-1 text-[10px] text-muted-foreground/60 opacity-70">
-                A Wian analisa cockpit, CRM, atendimento, campanhas{caps.opportunities ? ", prospecção" : ""}
-                {caps.sdr ? ", SDR Inteligente" : ""} e agenda desta conta ({caps.planName}). Disponível apenas para
-                owner e administradores.
-              </p>
             </div>
           </>
         )}
@@ -959,6 +954,11 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
             <p>
               Todo dia a Wian analisa os indicadores do seu cockpit na janela selecionada e organiza a leitura em
               quatro mensagens: apresentação, pontos críticos e de atenção, evoluções positivas e o plano de ação.
+            </p>
+            <p>
+              A Wian analisa cockpit, CRM, atendimento, campanhas{caps.opportunities ? ", prospecção" : ""}
+              {caps.sdr ? ", SDR Inteligente" : ""} e agenda desta conta ({caps.planName}). Disponível apenas para
+              owner e administradores.
             </p>
             <p>
               Na conversa ela enxerga também o CRM (contatos, etapas, score e pipeline em R$), as vendas registradas,
