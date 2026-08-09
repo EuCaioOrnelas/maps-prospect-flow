@@ -383,9 +383,9 @@ export function GuidedTour() {
       const spaceLeft = dialogRect.left;
       const useRight = spaceRight >= spaceLeft;
       const space = useRight ? spaceRight : spaceLeft;
-      const width = Math.max(260, Math.min(availableWidth, space - 36));
+      const width = Math.max(248, Math.min(availableWidth, space - 24));
 
-      if (space < 340) {
+      if (space < 272) {
         // Modal takes nearly the whole viewport: dock the card at the bottom,
         // above the navigation bar, so both stay readable.
         popupStyle = {
@@ -534,9 +534,10 @@ export function GuidedTour() {
     <div
       data-tour-ui="true"
       className="fixed inset-0 pointer-events-none"
-      // Abaixo do botão "Fechar tour" (2147483647), que precisa ficar
-      // sempre visível e clicável do início ao fim do tour.
-      style={{ zIndex: 2147483000 }}
+      // Precisa ficar ACIMA dos dialogs Radix (2147483645) para que spotlight,
+      // card e navegação apareçam sobre o modal do lead, e abaixo apenas do
+      // botão "Fechar tour" (2147483647).
+      style={{ zIndex: 2147483646 }}
 
 
     >
