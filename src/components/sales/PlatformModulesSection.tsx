@@ -1103,6 +1103,9 @@ const WianMock = () => (
           <p className="text-[10px] text-primary font-semibold">Impacto estimado: R$ 62.700,00 nesta semana.</p>
         </div>
       </Reveal>
+    </ChatWallpaper>
+
+
 
 
     <Reveal delay={0.9} className="mt-2 shrink-0">
