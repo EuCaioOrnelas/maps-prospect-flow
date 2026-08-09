@@ -265,6 +265,26 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
   const timerRef = useRef<number | null>(null);
   const lastToastRef = useRef<string | null>(null);
 
+  // Ondas do áudio em tempo real (volume da voz)
+  const [levels, setLevels] = useState<number[]>([]);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const waveRafRef = useRef<number | null>(null);
+
+  const stopWaveform = () => {
+    if (waveRafRef.current) window.clearTimeout(waveRafRef.current);
+    waveRafRef.current = null;
+    analyserRef.current = null;
+    try {
+      void audioCtxRef.current?.close();
+    } catch {
+      /* ignore */
+    }
+    audioCtxRef.current = null;
+    setLevels([]);
+  };
+
+
   const initials = useMemo(() => {
     const n = (profile?.name || userName || "").trim();
     if (!n) return "EU";
