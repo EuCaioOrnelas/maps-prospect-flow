@@ -479,6 +479,19 @@ export function GuidedTour() {
     }
   }
 
+  // Trava final: o card nunca pode sair da tela (nem por baixo da barra de navegação).
+  const NAV_SAFE = 96;
+  if (typeof popupStyle.top === "number") {
+    const maxTop = Math.max(POPUP_GAP, window.innerHeight - (popupSize.height || 196) - NAV_SAFE);
+    popupStyle.top = Math.max(POPUP_GAP, Math.min(maxTop, popupStyle.top));
+  }
+  if (typeof popupStyle.left === "number") {
+    const w = typeof popupStyle.width === "number" ? popupStyle.width : availableWidth;
+    popupStyle.left = Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupStyle.left));
+  }
+  popupStyle.maxWidth = `calc(100vw - ${POPUP_GAP * 2}px)`;
+  popupStyle.maxHeight = `${Math.max(180, window.innerHeight - NAV_SAFE - POPUP_GAP * 2)}px`;
+
 
   // Fallback dark overlay (used when there is no spotlight target — e.g. center step
   // OR while we're still waiting for a target inside a modal to mount).
