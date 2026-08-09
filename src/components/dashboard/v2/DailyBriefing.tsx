@@ -135,19 +135,40 @@ function persistSnapshot(metrics: BriefingMetrics, periodDays: number, alerts: E
   return trimmed;
 }
 
-const SUGGESTIONS = [
+interface Suggestion {
+  shortcut: string;
+  label: string;
+  /** Só aparece se o plano tiver o módulo correspondente */
+  requires?: "opportunities" | "sdr";
+}
+
+const SUGGESTIONS: Suggestion[] = [
   { shortcut: "plano", label: "Sim, me explique o plano de ação" },
   { shortcut: "prioridade", label: "O que eu devo priorizar hoje?" },
   { shortcut: "funil", label: "Analise meu funil e aponte o gargalo" },
   { shortcut: "receita", label: "Como aumentar a receita projetada?" },
   { shortcut: "crm", label: "Quais oportunidades do CRM valem atacar?" },
-  { shortcut: "sdr", label: "Como está a performance do SDR IA?" },
+  { shortcut: "atendimento", label: "Como está o atendimento e as respostas?" },
+  { shortcut: "campanhas", label: "Minhas campanhas estão performando?" },
+  { shortcut: "prospeccao", label: "Como melhorar minha prospecção?", requires: "opportunities" },
+  { shortcut: "sdr", label: "Como está a performance do SDR Inteligente?", requires: "sdr" },
 ];
+
+/** Termos que só fazem sentido para quem tem prospecção / SDR no plano. */
+const OPPORTUNITY_TERMS = /prospec|oportunidade|captaç|captad|busca de empresas|diagn[óo]stico/i;
+const SDR_TERMS = /\bsdr\b|agente ia|agentes ia|copiloto/i;
 
 const timeLabel = (ts: number) =>
   new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-export function DailyBriefing({ alerts, userName, periodDays, metrics }: DailyBriefingProps) {
+export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilities }: DailyBriefingProps) {
+  const caps: BriefingCapabilities = capabilities ?? {
+    planName: "—",
+    opportunities: true,
+    sdr: true,
+    agents: true,
+  };
+
   const { toast } = useToast();
   const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
