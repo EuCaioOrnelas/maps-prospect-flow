@@ -261,9 +261,10 @@ export default function MainDashboard() {
                   "Funil": (data.funnel || [])
                     .map((s: any) => `${s?.stage}: ${s?.value}`)
                     .join(" | "),
-                }}
               />
+              </div>
               )}
+
 
 
               <ExecutiveAlerts
