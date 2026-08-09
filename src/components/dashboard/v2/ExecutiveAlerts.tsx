@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp, X, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
@@ -32,24 +32,63 @@ const severityWeight: Record<ExecutiveAlert['type'], number> = {
 
 const VISIBLE_COUNT = 6;
 
+const todayKey = () => `wiize:exec-alerts-dismissed:${new Date().toISOString().slice(0, 10)}`;
+
+function readDismissed(): string[] {
+  try {
+    const raw = localStorage.getItem(todayKey());
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export function ExecutiveAlerts({ alerts }: ExecutiveAlertsProps) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
+  const [dismissed, setDismissed] = useState<string[]>([]);
 
-  const sorted = (alerts || [])
-    .filter((a) => !a.text.includes('NaN'))
+  useEffect(() => {
+    setDismissed(readDismissed());
+    // limpa chaves de dias anteriores
+    try {
+      const prefix = "wiize:exec-alerts-dismissed:";
+      const keep = todayKey();
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith(prefix) && k !== keep)
+        .forEach((k) => localStorage.removeItem(k));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const persist = (next: string[]) => {
+    setDismissed(next);
+    try {
+      localStorage.setItem(todayKey(), JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const dismissAlert = (text: string) => persist([...dismissed, text]);
+  const restoreAll = () => persist([]);
+
+  const all = (alerts || []).filter((a) => !a.text.includes('NaN'));
+
+  const sorted = all
+    .filter((a) => !dismissed.includes(a.text))
     .sort((a, b) => {
       const s = severityWeight[b.type] - severityWeight[a.type];
       if (s !== 0) return s;
       return (b.priority || 0) - (a.priority || 0);
     });
 
-  if (sorted.length === 0) return null;
+  const dismissedCount = all.length - sorted.length;
 
-  const criticalCount = sorted.filter((a) => a.type === 'danger').length;
-  const warningCount = sorted.filter((a) => a.type === 'warning').length;
-  const visible = expanded ? sorted : sorted.slice(0, VISIBLE_COUNT);
-  const hidden = sorted.length - visible.length;
+  if (all.length === 0) return null;
+
 
   return (
     <Card className="border-border/40 rounded-2xl">
