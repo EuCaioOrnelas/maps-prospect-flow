@@ -8,7 +8,16 @@ import { installPublicDemoNetworkGuard, isPublicDemoPath } from "./lib/publicDem
 // Public demo (/tour-guiado): isolate the page from the backend BEFORE the app boots.
 if (isPublicDemoPath()) {
   installPublicDemoNetworkGuard();
+  // Aplica o tema claro de forma síncrona para evitar o flash escuro
+  // (cards pretos) antes do ThemeProvider montar.
+  try {
+    [document.documentElement, document.body].forEach((el) => {
+      el.classList.add("landing-light");
+      (el as HTMLElement).style.colorScheme = "light";
+    });
+  } catch {}
 }
+
 
 installErrorReporter();
 
