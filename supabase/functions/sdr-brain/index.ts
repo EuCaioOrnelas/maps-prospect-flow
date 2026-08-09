@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { decryptApiKey } from "../_shared/aiKeyCrypto.ts";
 
 interface FreeSlot {
   iso: string;
@@ -13,10 +14,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MODEL = "gpt-4o-mini";
+const DEFAULT_MODEL = "gpt-4o-mini";
+const COST_PER_MODEL: Record<string, { in: number; out: number }> = {
+  "gpt-4o-mini": { in: 0.15, out: 0.6 },
+  "gpt-4o": { in: 2.5, out: 10 },
+  "gpt-4.1-mini": { in: 0.4, out: 1.6 },
+  "gpt-4.1": { in: 2, out: 8 },
+};
 
 async function logAiUsage(p: {
   feature: string;
+  model?: string;
   usage?: { prompt_tokens?: number; completion_tokens?: number } | null;
   user_id?: string | null;
   metadata?: Record<string, unknown>;
@@ -27,7 +35,9 @@ async function logAiUsage(p: {
     if (!url || !key) return;
     const tin = p.usage?.prompt_tokens ?? 0;
     const tout = p.usage?.completion_tokens ?? 0;
-    const cost = tin * (0.15 / 1_000_000) + tout * (0.6 / 1_000_000);
+    const model = p.model ?? DEFAULT_MODEL;
+    const price = COST_PER_MODEL[model] ?? COST_PER_MODEL[DEFAULT_MODEL];
+    const cost = tin * (price.in / 1_000_000) + tout * (price.out / 1_000_000);
     await fetch(`${url}/rest/v1/ai_usage_logs`, {
       method: "POST",
       headers: {
@@ -38,7 +48,7 @@ async function logAiUsage(p: {
       },
       body: JSON.stringify({
         feature: p.feature,
-        model: MODEL,
+        model,
         user_id: p.user_id ?? null,
         tokens_in: tin,
         tokens_out: tout,
@@ -51,12 +61,12 @@ async function logAiUsage(p: {
   }
 }
 
-async function chat(apiKey: string, system: string, user: string, json = true) {
+async function chat(apiKey: string, model: string, system: string, user: string, json = true) {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       temperature: 0.6,
       ...(json ? { response_format: { type: "json_object" } } : {}),
       messages: [
@@ -296,14 +306,6 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openaiApiKey) {
-      return new Response(JSON.stringify({ error: "OPENAI_API_KEY não configurada" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabase = createClient(supabaseUrl, serviceKey);
 
     const authHeader = req.headers.get("Authorization");
@@ -375,6 +377,37 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // ---------- BYOK: chave e modelo do próprio cliente ----------
+    const { data: credential } = await supabase
+      .from("user_ai_credentials")
+      .select("encrypted_key,model,is_active")
+      .eq("user_id", agent.owner_user_id)
+      .eq("provider", "openai")
+      .maybeSingle();
+
+    if (!credential?.encrypted_key || credential.is_active === false) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Nenhuma chave da OpenAI configurada para esta conta. Conecte sua chave na etapa Inteligência do SDR.",
+          code: "missing_api_key",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    let openaiApiKey: string;
+    try {
+      openaiApiKey = await decryptApiKey(credential.encrypted_key);
+    } catch (_e) {
+      return new Response(
+        JSON.stringify({ error: "Não foi possível ler a chave da OpenAI. Reconecte sua chave.", code: "invalid_api_key" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const aiModel: string = agent.ai?.model || credential.model || DEFAULT_MODEL;
 
     let session: any = null;
     if (sessionId) {
@@ -478,10 +511,11 @@ NOVA MENSAGEM DO LEAD: ${inbound || "(nenhuma — conversa iniciada pelo SDR)"}
 
 Analise em profundidade, projete pelo menos 2 cenários de resposta com probabilidade de continuidade e escolha o micro-objetivo desta resposta.`;
 
-    const analysisRes = await chat(openaiApiKey, analysisSystem, analysisUser);
+    const analysisRes = await chat(openaiApiKey, aiModel, analysisSystem, analysisUser);
     const analysis = safeJson(analysisRes.content);
     await logAiUsage({
       feature: "sdr_brain_analysis",
+      model: aiModel,
       usage: analysisRes.usage,
       user_id: user?.id ?? agent.owner_user_id,
       metadata: { agent_id: agentId },
@@ -515,10 +549,11 @@ MENSAGEM DO LEAD: ${inbound || "(primeiro contato / follow-up)"}
 
 Escreva a sequência de mensagens.`;
 
-    const writerRes = await chat(openaiApiKey, writerSystem, writerUser);
+    const writerRes = await chat(openaiApiKey, aiModel, writerSystem, writerUser);
     const written = safeJson(writerRes.content);
     await logAiUsage({
       feature: "sdr_brain_writer",
+      model: aiModel,
       usage: writerRes.usage,
       user_id: user?.id ?? agent.owner_user_id,
       metadata: { agent_id: agentId },
@@ -544,10 +579,11 @@ ${JSON.stringify(messages)}
 HISTÓRICO:
 ${historyText}`;
 
-    const validationRes = await chat(openaiApiKey, validatorSystem, validatorUser);
+    const validationRes = await chat(openaiApiKey, aiModel, validatorSystem, validatorUser);
     const validation = safeJson(validationRes.content);
     await logAiUsage({
       feature: "sdr_brain_validator",
+      model: aiModel,
       usage: validationRes.usage,
       user_id: user?.id ?? agent.owner_user_id,
       metadata: { agent_id: agentId },

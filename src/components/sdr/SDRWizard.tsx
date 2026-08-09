@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 
 import { cn } from "@/lib/utils";
+import { SDRIntelligenceStep } from "@/components/sdr/SDRIntelligenceStep";
 import {
   Bot,
   Target,
@@ -192,7 +193,7 @@ const STEPS = [
     title: "Inteligência",
     icon: Cpu,
     headline: "Qual IA vai pensar por ele?",
-    subtitle: "Escolha o modelo que vai processar o raciocínio do SDR.",
+    subtitle: "Conecte sua chave da OpenAI e escolha o modelo que vai raciocinar pelo SDR.",
   },
   {
     title: "Revisão",
@@ -780,6 +781,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   const { members } = useAccountMembers();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [aiKeyConnected, setAiKeyConnected] = useState(false);
   const [draft, setDraft] = useState<SdrDraft>(SDR_DEFAULT_DRAFT);
   const [numbers, setNumbers] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
@@ -926,11 +928,11 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
             !!draft.closing.after_limit_stage_id)
         );
       case 11:
-        return true;
+        return aiKeyConnected;
       default:
         return true;
     }
-  }, [step, draft, productsValid]);
+  }, [step, draft, productsValid, aiKeyConnected]);
 
   const handleSave = async () => {
     if (!user || !accountOwnerId) return;
@@ -971,6 +973,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           success_criteria: [SDR_SUCCESS_BY_OBJECTIVE[draft.objective as SdrObjective]],
         },
         situations: draft.situations,
+        ai: { provider: "openai", model: draft.ai.model || "gpt-4o-mini" },
       };
       const q = editing
         ? supabase.from("sdr_agents" as any).update(payload).eq("id", editing.id)
@@ -2007,55 +2010,11 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
 
       {/* 11 - Inteligência */}
       {step === 11 && (
-        <div className="space-y-5">
-          <CardGrid cols={3}>
-            {AI_PROVIDERS.map((prov) => {
-              const isOpenAI = prov.id === "openai";
-              if (isOpenAI) {
-                return (
-                  <button
-                    key={prov.id}
-                    type="button"
-                    onClick={() => patch("ai", { provider: "openai" })}
-                    className="group relative flex h-full w-full flex-col items-center justify-start gap-4 p-6 rounded-xl border border-primary bg-card ring-2 ring-primary/20 shadow-md transition-all duration-200"
-                  >
-                    <span className="absolute top-3 right-3 h-5 w-5 rounded-full border border-primary bg-primary flex items-center justify-center">
-                      <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
-                    </span>
-                    <span className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                      <img src={prov.logo} alt={prov.name} className="h-7 w-7 object-contain" />
-                    </span>
-                    <span className="flex flex-col items-center gap-1">
-                      <span className="text-sm font-medium text-foreground">GPT (OpenAI)</span>
-                      <span className="text-xs text-muted-foreground">Modelo padrão do SDR</span>
-                    </span>
-                  </button>
-                );
-              }
-              return (
-                <div
-                  key={prov.id}
-                  className="relative flex h-full w-full flex-col items-center justify-start gap-4 p-6 rounded-xl border border-dashed border-border bg-muted/30 opacity-70"
-                >
-                  <Badge variant="secondary" className="absolute top-3 right-3 text-[10px]">
-                    Em breve
-                  </Badge>
-                  <span className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                    <img src={prov.logo} alt={prov.name} className="h-7 w-7 object-contain grayscale" />
-                  </span>
-                  <span className="flex flex-col items-center gap-1">
-                    <span className="text-sm font-medium text-foreground">{prov.name}</span>
-                    <span className="text-xs text-muted-foreground">Em breve</span>
-                  </span>
-                </div>
-              );
-            })}
-          </CardGrid>
-
-          <InfoBox icon={Info} title="Modelo utilizado">
-            <p>O SDR usa o modelo gpt-4o-mini da infraestrutura segura da Wiize, otimizado para conversas rápidas e baixo custo.</p>
-          </InfoBox>
-        </div>
+        <SDRIntelligenceStep
+          model={draft.ai.model}
+          onModelChange={(m) => patch("ai", { model: m })}
+          onConnectedChange={setAiKeyConnected}
+        />
       )}
 
       {/* 12 - Revisão */}
@@ -2070,8 +2029,8 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
                 {draft.name || "SDR sem nome"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {SDR_OBJECTIVE_LABEL(draft.objective)} · tom {draft.personality.tone} · GPT
-                (gpt-4o-mini)
+                {SDR_OBJECTIVE_LABEL(draft.objective)} · tom {draft.personality.tone} · GPT (
+                {draft.ai.model})
               </p>
             </div>
             <Badge variant="secondary" className="ml-auto gap-1 hidden sm:flex">
