@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,6 +17,69 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { ExecutiveAlert } from "./ExecutiveAlerts";
 import { BriefingAudioBubble } from "./BriefingAudioBubble";
 import wianAvatar from "@/assets/wian-avatar.png";
+
+/** Normaliza o texto da IA antes de renderizar: remove travessões duplos e padroniza listas. */
+function normalizeReply(text: string) {
+  return String(text || "")
+    .replace(/\r/g, "")
+    .replace(/(^|\s)--+(\s|$)/g, "$1—$2")
+    .replace(/^\s*[-*]\s+/gm, "- ")
+    .replace(/^\s*•\s+/gm, "- ")
+    .replace(/\n{3,}/g, "\n\n");
+}
+
+/** Renderiza a resposta da Wian com markdown (negrito, listas e tópicos). */
+const RichText = ({ text }: { text: string }) => (
+  <div className="text-sm leading-relaxed [&_p]:my-0 [&_p+p]:mt-2 break-words">
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+        em: ({ children }) => <em className="italic">{children}</em>,
+        ul: ({ children }) => <ul className="mt-2 space-y-1.5 list-none pl-0">{children}</ul>,
+        ol: ({ children }) => <ol className="mt-2 space-y-1.5 list-decimal pl-4">{children}</ol>,
+        li: ({ children }) => (
+          <li className="relative pl-4 before:absolute before:left-0 before:top-[0.55em] before:h-1.5 before:w-1.5 before:rounded-full before:bg-primary/70 marker:text-primary">
+            {children}
+          </li>
+        ),
+        h1: ({ children }) => <p className="font-semibold text-foreground mt-2">{children}</p>,
+        h2: ({ children }) => <p className="font-semibold text-foreground mt-2">{children}</p>,
+        h3: ({ children }) => <p className="font-semibold text-foreground mt-2">{children}</p>,
+        a: ({ children, href }) => (
+          <a href={href} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">
+            {children}
+          </a>
+        ),
+        code: ({ children }) => (
+          <code className="rounded bg-muted px-1 py-0.5 text-[12px] font-mono">{children}</code>
+        ),
+      }}
+    >
+      {normalizeReply(text)}
+    </ReactMarkdown>
+  </div>
+);
+
+/** Conversa fictícia usada no tour guiado para demonstrar a Wian em ação. */
+const DEMO_CONVERSATION: { role: ChatRole; content: string; offsetMin: number }[] = [
+  { role: "user", content: "O que eu devo priorizar hoje?", offsetMin: 6 },
+  {
+    role: "assistant",
+    offsetMin: 6,
+    content:
+      "Priorize três frentes hoje, nesta ordem:\n\n- 🔴 **12 leads quentes sem contato há 3 dias** — score médio 82. Abra o CRM, filtre por score acima de 80 e dispare a abordagem. Potencial parado: **R$ 148.400,00**.\n- 🟡 **Taxa de resposta em 21%** — abaixo dos 28% da semana passada. Ajuste a primeira mensagem no SDR Inteligente para abrir com diagnóstico, não com oferta.\n- 🟢 **Ticket médio subiu para R$ 4.180,00** — mantenha o mesmo perfil de empresa na próxima busca de prospecção.\n\nMeta realista para hoje: **8 novas conversas** e **2 reuniões agendadas**. Quer que eu detalhe o plano da primeira frente?",
+  },
+  { role: "user", content: "Sim, detalhe a primeira frente", offsetMin: 7 },
+  {
+    role: "assistant",
+    offsetMin: 7,
+    content:
+      "Frente 1 — **Reativar os 12 leads quentes**\n\n- **Problema:** contatos com alta intenção parados na etapa Em negociação.\n- **Ação:** CRM → filtro Score > 80 → enviar abordagem consultiva citando a dor mapeada no diagnóstico.\n- **Meta:** 5 respostas em 48h e 2 propostas enviadas até sexta.\n\nSe você fizer isso hoje, a projeção de receita do mês sobe de **R$ 369.168,00** para cerca de **R$ 412.000,00**. Quer que eu acompanhe esse indicador amanhã no briefing?",
+  },
+];
+
+
 
 
 export interface BriefingMetrics {
