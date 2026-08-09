@@ -409,6 +409,7 @@ serve(async (req) => {
         max_tokens: 420,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: `ESCOPO DO PLANO (obrigatório respeitar):\n${scopeLines}` },
           { role: "system", content: `PERFIL DO GESTOR (adapte tom e profundidade):\n${personaLines}` },
           { role: "system", content: `CONTEXTO DE DADOS DA CONTA:\n${context}` },
           { role: "system", content: `DADOS OPERACIONAIS COMPLETOS (CRM, vendas, SDR, agenda, score):\n${accountData}` },
