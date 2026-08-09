@@ -875,13 +875,8 @@ const FlowNode = ({
   tone?: "primary" | "info" | "amber" | "muted";
   delay?: number;
 }) => (
-  <motion.div
-    className="flex flex-col items-center text-center w-[92px]"
-    initial={{ opacity: 0, scale: 0.7, y: 8 }}
-    whileInView={{ opacity: 1, scale: 1, y: 0 }}
-    viewport={VIEW}
-    transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
-  >
+  <div className="flex flex-col items-center text-center w-[92px]">
+
     <div
       className={cn(
         "w-8 h-8 rounded-full flex items-center justify-center ring-4",
