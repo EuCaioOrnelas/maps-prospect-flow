@@ -1256,9 +1256,10 @@ export const PlatformModulesSection = () => {
       <div className="container mx-auto px-4 max-w-6xl">
         <SectionHeading
           eyebrow="Recursos da plataforma"
-          title="Tudo o que você precisa para"
-          highlight="vender mais com IA"
+          title="Tudo o que você precisa"
+          highlight="para vender mais com Eficiência"
           highlightFit="tight"
+
           description="Conheça os módulos que trabalham juntos para transformar sua operação comercial em uma máquina de geração de oportunidades."
           isVisible={isVisible}
         />
