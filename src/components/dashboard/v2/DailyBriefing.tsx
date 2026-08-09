@@ -591,15 +591,10 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     <div className="flex gap-2.5 items-start">
       <div className={cn("w-[30px] shrink-0", !first && "opacity-0")}>{first ? <Avatar /> : <div />}</div>
       <div className="max-w-[86%] min-w-0">
-        <div
-          className={cn(
-            "bg-muted/70 px-3.5 py-2.5 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap break-words",
-            "rounded-2xl",
-            first ? "rounded-tl-sm" : "rounded-tl-sm",
-          )}
-        >
-          {text}
+        <div className="rounded-2xl rounded-tl-sm bg-muted/70 px-3.5 py-2.5 text-foreground/90">
+          <RichText text={text} />
         </div>
+
         <span className="mt-1 block text-[10px] text-muted-foreground/70">{timeLabel(at)}</span>
       </div>
 
