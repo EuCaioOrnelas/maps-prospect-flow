@@ -329,22 +329,43 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     return [m1, m2, m3, m4];
   }, [list, critical, attention, positives, resolvedSinceYesterday, userName, periodDays, dateLabel, user?.id]);
 
-  const send = async (raw?: string) => {
-    const question = (raw ?? input).trim();
-    if (!question || sending) return;
+  /** Envia texto ou áudio para a Wian. Quando há áudio, ela transcreve e responde ao conteúdo falado. */
+  const send = async (raw?: string, voice?: { blob: Blob; seconds: number }) => {
+    const question = voice ? "" : (raw ?? input).trim();
+    if ((!question && !voice) || sending) return;
 
-    const next = [...messages, { role: "user" as ChatRole, content: question, at: Date.now() }];
+    let audioUrl: string | undefined;
+    let audioB64: string | undefined;
+    if (voice) {
+      audioUrl = URL.createObjectURL(voice.blob);
+      audioB64 = await new Promise<string>((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result).split(",")[1] || "");
+        fr.onerror = () => reject(new Error("Falha ao ler o áudio"));
+        fr.readAsDataURL(voice.blob);
+      });
+    }
+
+    const userMsg: ChatMsg = {
+      role: "user",
+      content: question || "🎤 Mensagem de voz",
+      at: Date.now(),
+      ...(audioUrl ? { audioUrl, audioSeconds: voice?.seconds } : {}),
+    };
+    const next = [...messages, userMsg];
     setMessages(next);
-    writeJSON(CHAT_KEY(), next);
-    setInput("");
+    writeJSON(CHAT_KEY(), next.map((m) => ({ ...m, audioUrl: undefined })));
+    if (!voice) setInput("");
     setSending(true);
 
     try {
       const snapshots = readJSON<Snapshot[]>(SNAP_KEY, []);
-      const persona = user?.id ? bumpPersona(user.id, question) : undefined;
+      const persona = user?.id ? bumpPersona(user.id, question || "audio") : undefined;
       const { data, error } = await supabase.functions.invoke("briefing-chat", {
         body: {
           message: question,
+          audio: audioB64,
+          audio_mime: voice ? voice.blob.type || "audio/webm" : undefined,
           persona,
           // O briefing lido pelo gestor entra como memória inicial da conversa
           messages: [
@@ -364,30 +385,106 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
       if (error) throw error;
       if ((data as any)?.error === "daily_limit") {
-        toast({
-          title: "Limite diário atingido",
-          description: "Você já usou as consultas de hoje com a Wian. Ela volta amanhã com o novo briefing.",
-          variant: "destructive",
-        });
+        notify(
+          "Limite diário atingido",
+          "Você já usou as consultas de hoje com a Wian. Ela volta amanhã com o novo briefing.",
+          "destructive",
+        );
         return;
       }
 
       const reply = (data as any)?.reply?.trim();
       if (!reply) throw new Error("Resposta vazia");
 
-      const withReply = [...next, { role: "assistant" as ChatRole, content: reply, at: Date.now() }];
+      const transcript = (data as any)?.transcript?.trim();
+      const base = transcript
+        ? next.map((m, i) => (i === next.length - 1 && m.audioUrl ? { ...m, content: transcript } : m))
+        : next;
+      const withReply = [...base, { role: "assistant" as ChatRole, content: reply, at: Date.now() }];
       setMessages(withReply);
-      writeJSON(CHAT_KEY(), withReply);
+      writeJSON(CHAT_KEY(), withReply.map((m) => ({ ...m, audioUrl: undefined })));
+      notify("Wian respondeu", reply.replace(/\s+/g, " ").slice(0, 110) + (reply.length > 110 ? "…" : ""));
     } catch (e: any) {
-      toast({
-        title: "Não consegui responder agora",
-        description: e?.message ? String(e.message) : "Tente novamente em instantes.",
-        variant: "destructive",
-      });
+      notify(
+        "Não consegui responder agora",
+        e?.message ? String(e.message) : "Tente novamente em instantes.",
+        "destructive",
+      );
     } finally {
       setSending(false);
       inputRef.current?.focus();
     }
+  };
+
+  // ---- Controles de gravação (segurar para enviar · toque rápido para travar) ----
+  const stopTimer = () => {
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    timerRef.current = null;
+  };
+
+  const startRecording = async () => {
+    if (recording || sending) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      const rec = new MediaRecorder(stream);
+      chunksRef.current = [];
+      cancelRef.current = false;
+      rec.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      rec.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const seconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
+        const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
+        chunksRef.current = [];
+        if (cancelRef.current || seconds < 1 || blob.size < 1200) return;
+        void send(undefined, { blob, seconds });
+      };
+      recorderRef.current = rec;
+      startedAtRef.current = Date.now();
+      setElapsed(0);
+      rec.start();
+      setRecording(true);
+      stopTimer();
+      timerRef.current = window.setInterval(() => {
+        const s = Math.round((Date.now() - startedAtRef.current) / 1000);
+        setElapsed(s);
+        if (s >= 120) finishRecording();
+      }, 250);
+    } catch {
+      notify("Microfone bloqueado", "Autorize o acesso ao microfone para enviar áudios à Wian.", "destructive");
+    }
+  };
+
+  const finishRecording = () => {
+    stopTimer();
+    setRecording(false);
+    setLocked(false);
+    try {
+      recorderRef.current?.state !== "inactive" && recorderRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const cancelRecording = () => {
+    cancelRef.current = true;
+    finishRecording();
+  };
+
+  const onMicDown = () => {
+    if (recording) return;
+    void startRecording();
+  };
+
+  const onMicUp = () => {
+    if (!recording) return;
+    // Toque rápido trava a gravação (mãos livres); segurar envia ao soltar.
+    if (Date.now() - startedAtRef.current < 500) {
+      setLocked(true);
+      return;
+    }
+    if (!locked) finishRecording();
   };
 
   const clearChat = () => {
@@ -409,20 +506,21 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
   );
 
   const AssistantRow = ({ text, at, first }: { text: string; at: number; first: boolean }) => (
-    <div className="flex gap-2.5 items-end">
+    <div className="flex gap-2.5 items-start">
       <div className={cn("w-[30px] shrink-0", !first && "opacity-0")}>{first ? <Avatar /> : <div />}</div>
       <div className="max-w-[86%] min-w-0">
         <div
           className={cn(
             "bg-muted/70 px-3.5 py-2.5 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap break-words",
             "rounded-2xl",
-            first ? "rounded-bl-sm" : "rounded-bl-sm",
+            first ? "rounded-tl-sm" : "rounded-tl-sm",
           )}
         >
           {text}
         </div>
         <span className="mt-1 block text-[10px] text-muted-foreground/70">{timeLabel(at)}</span>
       </div>
+
     </div>
   );
 
