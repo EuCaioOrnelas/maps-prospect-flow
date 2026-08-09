@@ -622,74 +622,144 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
             {/* Composer */}
             <div className="border-t border-border/50 bg-card">
-              {/* Mensagens rápidas — mesmo padrão do chat */}
-              <div className="px-3 pt-2.5">
-                <button
-                  type="button"
-                  onClick={() => setShowQuick((v) => !v)}
-                  className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Zap size={12} className="text-primary" />
-                  Mensagens rápidas
-                  {showQuick ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                </button>
-                {showQuick && (
-                  <div className="mt-2 flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
-                    {SUGGESTIONS.filter(
-                      (s) =>
-                        !s.requires ||
-                        (s.requires === "opportunities" ? caps.opportunities : caps.sdr),
-                    ).map((s) => (
-                      <button
-                        key={s.shortcut}
-                        type="button"
-                        disabled={sending}
-                        onClick={() => send(s.label)}
-                        className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border border-border/60 bg-muted/40 hover:bg-muted hover:border-primary/40 transition-colors disabled:opacity-50"
-                      >
-                        <code className="text-[10px] font-mono font-semibold text-primary">/{s.shortcut}</code>
-                        <span className="text-xs text-foreground/80 whitespace-nowrap">{s.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Mensagens rápidas — somem enquanto o gestor digita ou grava */}
+              {!input.trim() && !recording && (
+                <div className="px-3 pt-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowQuick((v) => !v)}
+                    className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Zap size={12} className="text-primary" />
+                    Mensagens rápidas
+                    {showQuick ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  </button>
+                  {showQuick && (
+                    <div className="mt-2 flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
+                      {SUGGESTIONS.filter(
+                        (s) =>
+                          !s.requires ||
+                          (s.requires === "opportunities" ? caps.opportunities : caps.sdr),
+                      ).map((s) => (
+                        <button
+                          key={s.shortcut}
+                          type="button"
+                          disabled={sending}
+                          onClick={() => send(s.label)}
+                          className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border border-border/60 bg-muted/40 hover:bg-muted hover:border-primary/40 transition-colors disabled:opacity-50"
+                        >
+                          <code className="text-[10px] font-mono font-semibold text-primary">/{s.shortcut}</code>
+                          <span className="text-xs text-foreground/80 whitespace-nowrap">{s.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   send();
                 }}
-                className="p-3 pt-2 flex items-end gap-2"
+                className="p-3 pt-2.5 flex items-end gap-2"
               >
-                <div className="flex-1 min-w-0 rounded-xl border border-border/60 bg-background focus-within:border-primary/50 transition-colors">
-                  <textarea
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        send();
-                      }
-                    }}
-                    rows={1}
-                    placeholder="Pergunte à Wian sobre suas métricas, CRM, vendas ou SDR..."
-                    className="w-full resize-none bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-muted-foreground/70 max-h-28"
+                {recording ? (
+                  <div className="flex-1 min-w-0 h-10 flex items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/5 px-3">
+                    <button
+                      type="button"
+                      onClick={cancelRecording}
+                      className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                      aria-label="Cancelar gravação"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <span className="w-2 h-2 rounded-full bg-destructive animate-pulse shrink-0" />
+                    <span className="text-sm font-mono tabular-nums text-foreground/80 shrink-0">
+                      {Math.floor(elapsed / 60)}:{(elapsed % 60).toString().padStart(2, "0")}
+                    </span>
+                    <div className="flex-1 min-w-0 flex items-center gap-[2px] overflow-hidden">
+                      {Array.from({ length: 28 }).map((_, i) => (
+                        <span
+                          key={i}
+                          className="flex-1 rounded-full bg-destructive/50 animate-pulse"
+                          style={{
+                            height: `${6 + ((i * 7 + elapsed * 3) % 16)}px`,
+                            animationDelay: `${(i % 6) * 0.08}s`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <span className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
+                      {locked ? (
+                        <>
+                          <Lock size={10} /> Travado
+                        </>
+                      ) : (
+                        "Solte para enviar"
+                      )}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex-1 min-w-0 rounded-xl border border-border/60 bg-background focus-within:border-primary/50 transition-colors">
+                    <textarea
+                      ref={inputRef}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          send();
+                        }
+                      }}
+                      rows={1}
+                      placeholder="Pergunte à Wian sobre suas métricas, CRM, vendas ou SDR..."
+                      className="w-full resize-none bg-transparent px-3 py-2.5 text-sm leading-relaxed outline-none placeholder:text-muted-foreground/70 max-h-[120px] overflow-y-auto scrollbar-thin"
+                      disabled={sending}
+                      maxLength={600}
+                    />
+                  </div>
+                )}
+
+                {input.trim() && !recording ? (
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="h-10 w-10 p-0 rounded-sm shrink-0"
                     disabled={sending}
-                    maxLength={600}
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="h-10 w-10 p-0 rounded-sm shrink-0"
-                  disabled={sending || !input.trim()}
-                  aria-label="Enviar"
-                >
-                  {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                </Button>
+                    aria-label="Enviar"
+                  >
+                    {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={recording ? "destructive" : "default"}
+                    className={cn("h-10 w-10 p-0 rounded-sm shrink-0 transition-transform", recording && "scale-110")}
+                    disabled={sending}
+                    onPointerDown={onMicDown}
+                    onPointerUp={onMicUp}
+                    onPointerLeave={() => {
+                      if (recording && !locked) onMicUp();
+                    }}
+                    onClick={() => {
+                      if (recording && locked) finishRecording();
+                    }}
+                    aria-label={recording ? "Enviar áudio" : "Gravar áudio"}
+                    title="Segure para gravar e solte para enviar · toque rápido para travar"
+                  >
+                    {sending ? (
+                      <Loader2 size={15} className="animate-spin" />
+                    ) : recording && locked ? (
+                      <Send size={15} />
+                    ) : (
+                      <Mic size={15} />
+                    )}
+                  </Button>
+                )}
               </form>
+
               <p className="px-3 pb-3 -mt-1 text-[10px] text-muted-foreground/80">
                 A Wian analisa cockpit, CRM, atendimento, campanhas{caps.opportunities ? ", prospecção" : ""}
                 {caps.sdr ? ", SDR Inteligente" : ""} e agenda desta conta ({caps.planName}). Disponível apenas para
