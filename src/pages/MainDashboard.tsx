@@ -230,6 +230,26 @@ export default function MainDashboard() {
                 alerts={kpis.executiveAlerts}
                 userName={(profile as any)?.full_name || (profile as any)?.name || null}
                 periodDays={periodDays}
+                metrics={{
+                  "Receita potencial (R$)": Math.round(kpis.receitaPotencial || 0),
+                  "Variação da receita potencial (%)": Math.round(kpis.receitaPotencialGrowth || 0),
+                  "Receita estimada no período (R$)": Math.round(financialImpact || 0),
+                  "Variação da receita estimada (%)": Math.round(financialChange || 0),
+                  "Ticket médio (R$)": Math.round(forecast.averageTicket || 0),
+                  "Vendas estimadas": Math.round(forecast.totalEstimatedSales || 0),
+                  "Leads gerados no período": kpis.leadsGeradosPeriodo || 0,
+                  "Conversas ativas": kpis.conversasAtivasPeriodo || 0,
+                  "Oportunidades quentes": kpis.oportunidadesQuentesPeriodo || 0,
+                  "Leads quentes hoje": kpis.leadsQuentesHoje || 0,
+                  "Leads quentes ontem": kpis.leadsQuentesOntem || 0,
+                  "Mensagens enviadas": data.messagesSent || 0,
+                  "Respostas recebidas": data.totalResponses || 0,
+                  "Leads prospectados": data.leadsProspected || 0,
+                  "Saúde da operação": `${kpis.healthStatus}${kpis.healthDetail ? ` — ${kpis.healthDetail}` : ""}`,
+                  "Funil": (data.funnel || [])
+                    .map((s: any) => `${s?.stage}: ${s?.value}`)
+                    .join(" | "),
+                }}
               />
 
               <ExecutiveAlerts
