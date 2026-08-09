@@ -492,11 +492,15 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     if (!isActive) return;
     const activeStep = steps[currentStepIndex];
     const expectedPath = isPublicDemo ? "/tour-guiado" : activeStep?.route;
-    if (pendingTourPathRef.current === location.pathname) {
-      pendingTourPathRef.current = null;
+    // Enquanto o tour está no meio de uma transição de passo (fechando modal,
+    // navegando, aguardando alvo), o ref fica preenchido. Nesse intervalo a URL
+    // e o passo ativo podem divergir temporariamente — não é navegação externa.
+    if (pendingTourPathRef.current) {
+      if (pendingTourPathRef.current === location.pathname) pendingTourPathRef.current = null;
       return;
     }
     if (!expectedPath || location.pathname === expectedPath) return;
+
 
     setIsActive(false);
     const sections = ["oportunidades", "campanhas", "meta", "crm", "automacao", "chat", "dashboard"];
