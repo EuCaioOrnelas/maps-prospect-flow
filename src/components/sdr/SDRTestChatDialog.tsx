@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Bot, RotateCcw, Send, Sparkles, User, Loader2, Play } from "lucide-react";
+import { Bot, RotateCcw, Send, Sparkles, User, Loader2, Play, Mic, Square } from "lucide-react";
 
 type ChatItem =
   | { kind: "lead"; text: string }
