@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -26,37 +27,50 @@ interface Props {
   selectedLabel?: string | null;
 }
 
+async function fetchLeads(search: string): Promise<PickedLead[]> {
+  let query = supabase
+    .from("leads")
+    .select("id, company_name, contact_name, email, phone, origin")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (search) {
+    query = query.or(`company_name.ilike.%${search}%,contact_name.ilike.%${search}%`);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []) as unknown as PickedLead[];
+}
+
 /** Busca leads do CRM / Oportunidades para preencher o compromisso comercial. */
 export function LeadPicker({ onSelect, selectedLabel }: Props) {
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [leads, setLeads] = useState<PickedLead[]>([]);
+  const [debounced, setDebounced] = useState("");
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!open) return;
-    let active = true;
-    const timer = setTimeout(async () => {
-      setLoading(true);
-      let query = supabase
-        .from("leads")
-        .select("id, company_name, contact_name, email, phone, origin")
-        .order("created_at", { ascending: false })
-        .limit(20);
-      const search = term.trim();
-      if (search) {
-        query = query.or(`company_name.ilike.%${search}%,contact_name.ilike.%${search}%`);
-      }
-      const { data } = await query;
-      if (!active) return;
-      setLeads((data || []) as unknown as PickedLead[]);
-      setLoading(false);
-    }, 250);
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [term, open]);
+    const timer = setTimeout(() => setDebounced(term.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [term]);
+
+  // Pré-carrega os leads recentes em cache assim que o formulário monta,
+  // para a lista abrir instantaneamente.
+  useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: ["agenda-lead-picker", ""],
+      queryFn: () => fetchLeads(""),
+      staleTime: 5 * 60_000,
+    });
+  }, [queryClient]);
+
+  const { data: leads = [], isFetching } = useQuery({
+    queryKey: ["agenda-lead-picker", debounced],
+    queryFn: () => fetchLeads(debounced),
+    staleTime: 5 * 60_000,
+    placeholderData: (prev) => prev,
+  });
+
+  const loading = isFetching && leads.length === 0;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -80,7 +94,7 @@ export function LeadPicker({ onSelect, selectedLabel }: Props) {
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
             )}
-            {!loading && <CommandEmpty>Nenhum lead encontrado.</CommandEmpty>}
+            {!loading && leads.length === 0 && <CommandEmpty>Nenhum lead encontrado.</CommandEmpty>}
             {!loading && leads.length > 0 && (
               <CommandGroup>
                 {leads.map((lead) => (
@@ -91,10 +105,10 @@ export function LeadPicker({ onSelect, selectedLabel }: Props) {
                       onSelect(lead);
                       setOpen(false);
                     }}
-                    className="cursor-pointer aria-selected:bg-accent aria-selected:text-accent-foreground"
+                    className="cursor-pointer rounded-lg border border-transparent text-foreground data-[selected=true]:border-primary/40 data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {lead.company_name || lead.contact_name || "Lead sem nome"}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
@@ -105,7 +119,6 @@ export function LeadPicker({ onSelect, selectedLabel }: Props) {
                 ))}
               </CommandGroup>
             )}
-
           </CommandList>
         </Command>
       </PopoverContent>

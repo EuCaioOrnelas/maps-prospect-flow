@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { CalendarEvent } from "@/lib/calendarConfig";
 import { formatTime } from "@/lib/calendarViews";
-import { supabase } from "@/integrations/supabase/client";
 import type { AccountMember } from "@/hooks/useAccountMembers";
 
 const DEFAULT_LEAD_MINUTES = 15;
@@ -23,7 +22,8 @@ const leadMinutes = (event: CalendarEvent) => {
 
 /**
  * Avisa o usuário antes de cada compromisso da Agenda, respeitando o lembrete
- * configurado no evento. Dispara toast, notificação nativa e e-mail.
+ * configurado no evento. Dispara toast e notificação nativa;
+ * o e-mail de lembrete é enviado pelo servidor (cron calendar-reminders).
  */
 export function useEventReminders(events: CalendarEvent[], members: AccountMember[] = []) {
   const fired = useRef<Set<string>>(new Set(loadFired()));
@@ -35,41 +35,6 @@ export function useEventReminders(events: CalendarEvent[], members: AccountMembe
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission().catch(() => undefined);
     }
-
-    const sendEmail = async (event: CalendarEvent, minutes: number) => {
-      const list = membersRef.current;
-      const ids = new Set<string>([event.assigned_user_id]);
-      const participants = (event.metadata as any)?.participants;
-      if (Array.isArray(participants)) participants.forEach((id: string) => ids.add(id));
-      const recipients = list
-        .filter((m) => ids.has(m.user_id) && m.email)
-        .map((m) => ({ email: m.email as string, name: m.name || m.email }));
-      if (!recipients.length) return;
-
-      await Promise.all(
-        recipients.map((r) =>
-          supabase.functions
-            .invoke("send-email", {
-              body: {
-                to: r.email,
-                email_type: "EVENT_REMINDER",
-                idempotency_key: `event-reminder-${event.id}`,
-                payload: {
-                  recipient_name: r.name,
-                  title: event.title,
-                  when_label: `${new Date(event.starts_at).toLocaleDateString("pt-BR")} às ${formatTime(event.starts_at)}`,
-                  minutes,
-                  location: event.location || "",
-                  company_name: event.company_name || "",
-                  contact_name: event.contact_name || "",
-                  notes: event.notes || "",
-                },
-              },
-            })
-            .catch(() => undefined),
-        ),
-      );
-    };
 
     const check = () => {
       const now = Date.now();
@@ -102,7 +67,6 @@ export function useEventReminders(events: CalendarEvent[], members: AccountMembe
           }
         }
 
-        void sendEmail(event, minutes);
       });
     };
 

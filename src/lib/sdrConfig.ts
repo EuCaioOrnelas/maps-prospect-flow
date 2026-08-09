@@ -283,6 +283,10 @@ export type SdrDraft = {
     return_to_goal: "imediato" | "natural" | "abertura";
     on_objection: "contornar" | "explorar" | "validar" | "vendedor";
     handoff_sellers: SdrSeller[];
+    /** Vendedores que recebem as reuniões agendadas pelo SDR. */
+    meeting_sellers: SdrSeller[];
+    /** Como distribuir as reuniões entre os vendedores selecionados. */
+    meeting_distribution: "round_robin" | "fixo";
   };
   knowledge: {
     company: string;
@@ -317,6 +321,10 @@ export type SdrDraft = {
     after_limit: "arquivar" | "mover_pipeline" | "criar_tarefa" | "avisar_vendedor";
     after_limit_actions: string[];
     after_limit_stage_id: string;
+    /** Etapa do CRM para onde o lead vai quando a reunião é marcada. */
+    meeting_stage_id: string;
+    /** Etapa do CRM aplicada quando o SDR transfere para um humano. */
+    handoff_stage_id: string;
     meeting_duration_minutes: number;
   };
   situations: Record<string, string>;
@@ -364,6 +372,8 @@ export const SDR_DEFAULT_DRAFT: SdrDraft = {
     return_to_goal: "natural",
     on_objection: "explorar",
     handoff_sellers: [],
+    meeting_sellers: [],
+    meeting_distribution: "round_robin",
   },
   knowledge: {
     company: "",
@@ -398,6 +408,8 @@ export const SDR_DEFAULT_DRAFT: SdrDraft = {
     after_limit: "avisar_vendedor",
     after_limit_actions: ["arquivar"],
     after_limit_stage_id: "",
+    meeting_stage_id: "",
+    handoff_stage_id: "",
     meeting_duration_minutes: 60,
   },
   situations: {

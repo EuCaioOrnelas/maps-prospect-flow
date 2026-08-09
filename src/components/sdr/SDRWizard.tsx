@@ -1430,6 +1430,93 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               </div>
             )}
           </div>
+
+          <div className="space-y-3">
+            <SectionTitle
+              icon={UserCheck}
+              title="Quem recebe as reuniões marcadas"
+              hint="O SDR consulta a agenda desses vendedores, oferece apenas horários livres e cria o compromisso no responsável escolhido."
+            />
+            <SellersCombobox
+              members={members}
+              selected={draft.strategy.meeting_sellers}
+              onToggle={(seller) =>
+                patch("strategy", {
+                  meeting_sellers: draft.strategy.meeting_sellers.some((x) => x.email === seller.email)
+                    ? draft.strategy.meeting_sellers.filter((x) => x.email !== seller.email)
+                    : [...draft.strategy.meeting_sellers, seller],
+                })
+              }
+              placeholder="Selecionar vendedores..."
+            />
+            <CardSelect
+              cols={2}
+              value={draft.strategy.meeting_distribution}
+              onChange={(v) => patch("strategy", { meeting_distribution: v as any })}
+              options={[
+                {
+                  id: "round_robin",
+                  label: "Distribuir igualmente",
+                  hint: "Cada nova reunião vai para o vendedor com menos compromissos futuros",
+                },
+                {
+                  id: "fixo",
+                  label: "Sempre o primeiro",
+                  hint: "Todas as reuniões vão para o primeiro vendedor da lista",
+                },
+              ]}
+            />
+            {stages.length > 0 && (
+              <div className="space-y-2">
+                <IconLabel icon={Target}>Etapa do CRM quando a reunião for marcada</IconLabel>
+                <div className="flex flex-wrap gap-2">
+                  {stages.map((s) => {
+                    const on = draft.closing.meeting_stage_id === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() =>
+                          patch("closing", { meeting_stage_id: on ? "" : s.id })
+                        }
+                        className={cn(
+                          "rounded-lg border px-3 py-1.5 text-xs transition-colors",
+                          on
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/40",
+                        )}
+                      >
+                        {s.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <IconLabel icon={UserCheck}>Etapa do CRM ao transferir para um humano</IconLabel>
+                <div className="flex flex-wrap gap-2">
+                  {stages.map((s) => {
+                    const on = draft.closing.handoff_stage_id === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() =>
+                          patch("closing", { handoff_stage_id: on ? "" : s.id })
+                        }
+                        className={cn(
+                          "rounded-lg border px-3 py-1.5 text-xs transition-colors",
+                          on
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/40",
+                        )}
+                      >
+                        {s.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </>
       )}
 
