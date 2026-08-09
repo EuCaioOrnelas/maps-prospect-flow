@@ -1605,6 +1605,7 @@ ${socialPages.length > 0
 - Engajamento e Atividade: ${heuristic.engajamento_atividade}/15
 - Potencial de Venda: ${heuristic.potencial_venda}/15
 - Score base: ${heuristic.score}/100
+${wonContext}
 
 ═══ ANÁLISES OBRIGATÓRIAS ═══
 
