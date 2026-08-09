@@ -68,7 +68,7 @@ const DEMO_CONVERSATION: { role: ChatRole; content: string; offsetMin: number }[
     role: "assistant",
     offsetMin: 6,
     content:
-      "Priorize três frentes hoje, nesta ordem:\n\n- 🔴 **12 leads quentes sem contato há 3 dias** — score médio 82. Abra o CRM, filtre por score acima de 80 e dispare a abordagem. Potencial parado: **R$ 148.400,00**.\n- 🟡 **Taxa de resposta em 21%** — abaixo dos 28% da semana passada. Ajuste a primeira mensagem no SDR Inteligente para abrir com diagnóstico, não com oferta.\n- 🟢 **Ticket médio subiu para R$ 4.180,00** — mantenha o mesmo perfil de empresa na próxima busca de prospecção.\n\nMeta realista para hoje: **8 novas conversas** e **2 reuniões agendadas**. Quer que eu detalhe o plano da primeira frente?",
+      "Priorize três frentes hoje, nesta ordem:\n\n- 🚨 **12 leads quentes sem contato há 3 dias** — score médio 82. Abra o CRM, filtre por score acima de 80 e dispare a abordagem. Potencial parado: **R$ 148.400,00**.\n- ⚡ **Taxa de resposta em 21%** — abaixo dos 28% da semana passada. Ajuste a primeira mensagem no SDR Inteligente para abrir com diagnóstico, não com oferta.\n- 📈 **Ticket médio subiu para R$ 4.180,00** — mantenha o mesmo perfil de empresa na próxima busca de prospecção.\n\nMeta realista para hoje: **8 novas conversas** e **2 reuniões agendadas**. Quer que eu detalhe o plano da primeira frente?",
   },
   { role: "user", content: "Sim, detalhe a primeira frente", offsetMin: 7 },
   {
