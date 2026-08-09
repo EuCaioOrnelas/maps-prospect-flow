@@ -516,10 +516,15 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
 
     if (!isPublicDemo) {
-      // Ao sair do demo público, libera um novo start caso o usuário volte.
-      publicDemoStartedRef.current = false;
+      // Ao sair do demo público, libera um novo start caso o usuário volte
+      // e devolve o controle do tour interno (que valida localStorage/DB).
+      if (publicDemoStartedRef.current) {
+        publicDemoStartedRef.current = false;
+        startedRef.current = false;
+      }
       return;
     }
+
     if (publicDemoStartedRef.current) return;
     publicDemoStartedRef.current = true;
     publicDemoSessionRef.current = true;
