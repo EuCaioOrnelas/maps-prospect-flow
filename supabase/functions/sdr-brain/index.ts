@@ -434,10 +434,33 @@ Deno.serve(async (req) => {
 
 
     // ---------- AGENDA: horários realmente livres do responsável ----------
-    const responsibleUserId: string =
+    // Vendedores que recebem reuniões; com "distribuir igualmente" escolhemos
+    // quem tem menos compromissos futuros (round robin real por carga).
+    const meetingSellers: string[] = (agent.strategy?.meeting_sellers ?? [])
+      .map((s: any) => s?.user_id)
+      .filter((id: unknown): id is string => typeof id === "string" && !!id);
+
+    let responsibleUserId: string =
+      meetingSellers[0] ??
       agent.strategy?.handoff_sellers?.find((s: any) => s?.user_id)?.user_id ??
       agent.closing?.notify_sellers?.find((s: any) => s?.user_id)?.user_id ??
       agent.owner_user_id;
+
+    if (meetingSellers.length > 1 && agent.strategy?.meeting_distribution !== "fixo") {
+      const { data: upcoming } = await supabase
+        .from("calendar_events")
+        .select("assigned_user_id")
+        .in("assigned_user_id", meetingSellers)
+        .in("status", ["scheduled", "confirmed"])
+        .gte("starts_at", new Date().toISOString());
+      const load = new Map<string, number>(meetingSellers.map((id) => [id, 0]));
+      for (const row of upcoming ?? []) {
+        load.set(row.assigned_user_id, (load.get(row.assigned_user_id) ?? 0) + 1);
+      }
+      responsibleUserId = meetingSellers.reduce((best, id) =>
+        (load.get(id) ?? 0) < (load.get(best) ?? 0) ? id : best,
+      meetingSellers[0]);
+    }
 
     const meetingDuration = Number(agent.closing?.meeting_duration_minutes) || 60;
     let freeSlots: FreeSlot[] = [];
