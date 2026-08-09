@@ -90,7 +90,7 @@ export function EventDetailsDialog({
   onEdit,
 }: Props) {
   const [pending, setPending] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<"completed" | "cancelled" | "reschedule" | null>(null);
+  const [confirm, setConfirm] = useState<"completed" | "cancelled" | null>(null);
 
   if (!event) return null;
 
@@ -130,11 +130,6 @@ export function EventDetailsDialog({
       title: "Marcar como perdida?",
       description: "O compromisso será encerrado como perdido e sairá da agenda ativa.",
       action: "Marcar perdida",
-    },
-    reschedule: {
-      title: "Reagendar compromisso?",
-      description: "Você vai escolher uma nova data e horário para este compromisso.",
-      action: "Reagendar",
     },
   };
 
