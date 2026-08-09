@@ -677,6 +677,7 @@ const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateRe
   SDR_SELLER_HANDOFF: templateSdrSellerHandoff,
   SDR_MEETING_SCHEDULED: templateSdrMeetingScheduled,
   EVENT_REMINDER: templateEventReminder,
+  LEAD_EVENT_REMINDER: templateLeadEventReminder,
 };
 
 function htmlToPlainText(html: string): string {
