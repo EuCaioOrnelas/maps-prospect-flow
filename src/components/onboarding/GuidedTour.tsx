@@ -534,9 +534,10 @@ export function GuidedTour() {
     <div
       data-tour-ui="true"
       className="fixed inset-0 pointer-events-none"
-      // Abaixo do botão "Fechar tour" (2147483647), que precisa ficar
-      // sempre visível e clicável do início ao fim do tour.
-      style={{ zIndex: 2147483000 }}
+      // Precisa ficar ACIMA dos dialogs Radix (2147483645) para que spotlight,
+      // card e navegação apareçam sobre o modal do lead, e abaixo apenas do
+      // botão "Fechar tour" (2147483647).
+      style={{ zIndex: 2147483646 }}
 
 
     >
