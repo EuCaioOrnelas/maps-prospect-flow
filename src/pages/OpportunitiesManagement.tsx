@@ -2074,6 +2074,15 @@ export default function OpportunitiesManagement() {
           data-tour={selectedLead?.id === "__tour_demo_lead__" ? "lead-dialog-demo" : undefined}
           data-tour-selected-lead-id={selectedLead?.id}
           className="max-w-2xl max-h-[90vh] p-0 gap-0 bg-background overflow-hidden"
+          onPointerDownOutside={(e) => {
+            if (document.body.classList.contains("tour-active")) e.preventDefault();
+          }}
+          onInteractOutside={(e) => {
+            if (document.body.classList.contains("tour-active")) e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            if (document.body.classList.contains("tour-active")) e.preventDefault();
+          }}
           onWheelCapture={(e) => {
             const scrollArea = document.getElementById("lead-detail-scroll-area");
             if (!scrollArea) return;
