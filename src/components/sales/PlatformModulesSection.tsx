@@ -36,6 +36,7 @@ import {
   ChevronUp,
   ChevronDown,
   MousePointer2,
+  BrainCircuit,
 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { SectionHeading } from "@/components/landing/SectionHeading";
