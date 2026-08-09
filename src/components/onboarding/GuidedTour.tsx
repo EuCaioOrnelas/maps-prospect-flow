@@ -474,8 +474,24 @@ export function GuidedTour() {
     };
 
     const placements = placementPriorityMap[requestedPlacement];
-    const resolvedPlacement = placements.find(canFit) ?? requestedPlacement;
-    popupStyle = computePlacementStyle(resolvedPlacement);
+    const resolvedPlacement = placements.find(canFit);
+    popupStyle = resolvedPlacement
+      ? computePlacementStyle(resolvedPlacement)
+      : // Alvo grande demais (ex.: card do briefing da Wian ocupa quase toda a
+        // tela): não existe espaço externo. Nesse caso "ancoramos" o card em um
+        // canto livre em vez de jogá-lo por cima do foco.
+        (() => {
+          const width = Math.min(popupWidth, 380);
+          const spotCenterY = spotBounds.top + (spotBounds.bottom - spotBounds.top) / 2;
+          const spotCenterX = spotBounds.left + (spotBounds.right - spotBounds.left) / 2;
+          const dockTop = spotCenterY > window.innerHeight / 2;
+          const dockLeft = spotCenterX > window.innerWidth / 2;
+          return {
+            top: dockTop ? bounds.top : Math.max(bounds.top, window.innerHeight - popupHeight - 104),
+            left: dockLeft ? bounds.left : Math.max(bounds.left, window.innerWidth - width - viewportMargin),
+            width,
+          };
+        })();
     }
   }
 
@@ -491,6 +507,33 @@ export function GuidedTour() {
   }
   popupStyle.maxWidth = `calc(100vw - ${POPUP_GAP * 2}px)`;
   popupStyle.maxHeight = `${Math.max(180, window.innerHeight - NAV_SAFE - POPUP_GAP * 2)}px`;
+
+  // Se, mesmo após o clamp, o card ainda cobrir o centro do destaque, movemos
+  // para o canto com menos sobreposição — nunca no meio do conteúdo focado.
+  if (spot && typeof popupStyle.top === "number" && typeof popupStyle.left === "number") {
+    const w = typeof popupStyle.width === "number" ? popupStyle.width : availableWidth;
+    const h = popupSize.height || 196;
+    const overlapX = Math.max(0, Math.min(popupStyle.left + w, spot.left + spot.width) - Math.max(popupStyle.left, spot.left));
+    const overlapY = Math.max(0, Math.min(popupStyle.top + h, spot.top + spot.height) - Math.max(popupStyle.top, spot.top));
+    const overlapRatio = (overlapX * overlapY) / Math.max(1, w * h);
+    if (overlapRatio > 0.35) {
+      const spotCenterY = spot.top + spot.height / 2;
+      const spotCenterX = spot.left + spot.width / 2;
+      const width = Math.min(w, 380);
+      popupStyle = {
+        ...popupStyle,
+        width,
+        top: spotCenterY > window.innerHeight / 2
+          ? POPUP_GAP
+          : Math.max(POPUP_GAP, window.innerHeight - h - NAV_SAFE - POPUP_GAP),
+        left: spotCenterX > window.innerWidth / 2
+          ? POPUP_GAP
+          : Math.max(POPUP_GAP, window.innerWidth - width - POPUP_GAP),
+        transform: undefined,
+      };
+    }
+  }
+
 
 
   // Fallback dark overlay (used when there is no spotlight target — e.g. center step
