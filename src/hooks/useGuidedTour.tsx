@@ -294,7 +294,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     },
     diagnosis: {
       route: "/oportunidades/gestao",
-      target: '[data-tour="lead-score-summary"]',
+      target: '[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]',
       injectDemoLead: true,
       waitMs: 120,
       resolveTargetAfterEnter: true,
@@ -304,7 +304,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         if (!dialog) return;
 
         await activateLeadTab('[data-tour="lead-tab-score"]');
-        const summary = await waitForElement<HTMLElement>('[data-tour="lead-score-summary"]', 25, 70);
+        const summary = await waitForElement<HTMLElement>(
+          '[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]',
+          25,
+          70
+        );
         if (summary) {
           centerElementInScrollArea(summary);
         }
