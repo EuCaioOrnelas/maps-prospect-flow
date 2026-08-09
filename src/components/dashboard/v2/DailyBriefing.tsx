@@ -837,7 +837,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                     </span>
                   </div>
                 ) : (
-                  <div className="flex-1 min-w-0 rounded-xl border border-border/60 bg-background focus-within:border-primary/50 transition-colors">
+                  <div className="flex-1 min-w-0 flex items-center rounded-xl border border-border/60 bg-background focus-within:border-primary/50 transition-colors">
                     <textarea
                       ref={inputRef}
                       value={input}
@@ -850,7 +850,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                       }}
                       rows={1}
                       placeholder="Pergunte à Wian sobre suas métricas, CRM, vendas ou SDR..."
-                      className="w-full resize-none bg-transparent px-3 py-2.5 text-sm leading-relaxed outline-none placeholder:text-muted-foreground/70 max-h-[120px] overflow-y-auto scrollbar-thin"
+                      className="w-full resize-none bg-transparent px-3 py-[9px] text-sm leading-[22px] outline-none placeholder:text-muted-foreground/70 min-h-[40px] max-h-[120px] overflow-y-auto scrollbar-thin"
                       disabled={sending}
                       maxLength={600}
                     />
@@ -859,9 +859,10 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
 
                 {input.trim() && !recording ? (
                   <Button
+                    key="send"
                     type="submit"
                     size="sm"
-                    className="h-10 w-10 p-0 rounded-sm shrink-0"
+                    className="h-10 w-10 p-0 rounded-sm shrink-0 animate-scale-in"
                     disabled={sending}
                     aria-label="Enviar"
                   >
@@ -869,10 +870,14 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                   </Button>
                 ) : (
                   <Button
+                    key="mic"
                     type="button"
                     size="sm"
                     variant={recording ? "destructive" : "default"}
-                    className={cn("h-10 w-10 p-0 rounded-sm shrink-0 transition-transform", recording && "scale-110")}
+                    className={cn(
+                      "h-10 w-10 p-0 rounded-sm shrink-0 animate-scale-in transition-transform duration-200",
+                      recording && "scale-110",
+                    )}
                     disabled={sending}
                     onPointerDown={onMicDown}
                     onPointerUp={onMicUp}
@@ -888,13 +893,14 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
                     {sending ? (
                       <Loader2 size={15} className="animate-spin" />
                     ) : recording && locked ? (
-                      <Send size={15} />
+                      <Send size={15} className="animate-scale-in" />
                     ) : (
-                      <Mic size={15} />
+                      <Mic size={15} className="animate-scale-in" />
                     )}
                   </Button>
                 )}
               </form>
+
 
               <p className="px-3 pb-3 -mt-1 text-[10px] text-muted-foreground/80">
                 A Wian analisa cockpit, CRM, atendimento, campanhas{caps.opportunities ? ", prospecção" : ""}
