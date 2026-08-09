@@ -39,7 +39,7 @@ const RichText = ({ text }: { text: string }) => (
         ul: ({ children }) => <ul className="mt-2 space-y-1.5 list-none pl-5">{children}</ul>,
         ol: ({ children }) => <ol className="mt-2 space-y-1.5 list-decimal pl-5">{children}</ol>,
         li: ({ children }) => (
-          <li className="relative pl-5 text-foreground/90 before:absolute before:left-0 before:top-[0.55em] before:h-[5px] before:w-[5px] before:rounded-full before:border before:border-foreground/60 before:bg-transparent">
+          <li className="relative pl-5 text-foreground/90 before:absolute before:left-0 before:top-[0.55em] before:h-[5px] before:w-[5px] before:rounded-full before:bg-foreground/70">
             {children}
           </li>
         ),
