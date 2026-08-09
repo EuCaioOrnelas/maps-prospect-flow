@@ -206,7 +206,17 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
 
-  const list = useMemo(() => (alerts || []).filter((a) => !a.text.includes("NaN")), [alerts]);
+  // Remove indicadores de módulos que o plano do usuário não possui (ex.: Atendimento sem prospecção/SDR)
+  const list = useMemo(
+    () =>
+      (alerts || []).filter((a) => {
+        if (a.text.includes("NaN")) return false;
+        if (!caps.opportunities && OPPORTUNITY_TERMS.test(a.text)) return false;
+        if (!caps.sdr && SDR_TERMS.test(a.text)) return false;
+        return true;
+      }),
+    [alerts, caps.opportunities, caps.sdr],
+  );
   const critical = useMemo(() => list.filter((a) => a.type === "danger"), [list]);
   const attention = useMemo(() => list.filter((a) => a.type === "warning"), [list]);
   const positives = useMemo(() => list.filter((a) => a.type === "success"), [list]);
