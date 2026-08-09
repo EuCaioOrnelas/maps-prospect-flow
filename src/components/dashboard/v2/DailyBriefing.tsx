@@ -78,6 +78,9 @@ const DEMO_CONVERSATION: { role: ChatRole; content: string; offsetMin: number }[
       "Frente 1 — **Reativar os 12 leads quentes**\n\n- **Problema:** contatos com alta intenção parados na etapa Em negociação.\n- **Ação:** CRM → filtro Score > 80 → enviar abordagem consultiva citando a dor mapeada no diagnóstico.\n- **Meta:** 5 respostas em 48h e 2 propostas enviadas até sexta.\n\nSe você fizer isso hoje, a projeção de receita do mês sobe de **R$ 369.168,00** para cerca de **R$ 412.000,00**. Quer que eu acompanhe esse indicador amanhã no briefing?",
   },
 ];
+/** Quantidade de barras exibidas na onda de gravação. */
+const WAVE_BARS = 34;
+
 
 
 
