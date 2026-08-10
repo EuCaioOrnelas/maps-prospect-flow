@@ -8,6 +8,7 @@ import {
   PlayCircle, ChevronDown, KeyRound, ListChecks,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRetry } from "@/lib/supabaseWithRetry";
 import { toast } from "sonner";
 
 import webhookGuideCoverAsset from "@/assets/webhook-guide-cover.png.asset.json";
@@ -71,12 +72,12 @@ export function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "
 
   const load = async () => {
     setLoading(true);
-    const { data: res, error } = await supabase.functions.invoke("meta-webhook-config", {
+    const { data: res, error } = await invokeWithRetry<WebhookData>("meta-webhook-config", {
       body: { action: "info" },
     });
     setLoading(false);
-    if (error) {
-      toast.error("Falha ao carregar configuração do webhook");
+    if (error || !res) {
+      toast.error(error?.message || "Falha ao carregar configuração do webhook");
       return;
     }
     const payload = res as WebhookData;
@@ -86,6 +87,7 @@ export function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "
       else onStatusChange(payload.connections.every((c) => !!c.webhook_verified_at) ? "ok" : "pending");
     }
   };
+
 
   useEffect(() => { load(); }, []);
 

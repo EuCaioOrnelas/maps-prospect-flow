@@ -220,16 +220,38 @@ Deno.serve(async (req) => {
       return json({ error: "unauthorized" }, 401);
     }
 
+    const jwt = authHeader.replace("Bearer ", "").trim();
     const userClient = createClient(SUPABASE_URL, ANON, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: claims } = await userClient.auth.getClaims(
-      authHeader.replace("Bearer ", "")
-    );
-    if (!claims?.claims?.sub) return json({ error: "unauthorized" }, 401);
-    const userId = claims.claims.sub as string;
+
+    // Resolve o usuário de forma resiliente: getClaims (JWKS) pode falhar
+    // dependendo do algoritmo de assinatura do projeto — nesse caso caímos
+    // para getUser, que sempre valida no Auth server.
+    let userId: string | null = null;
+    try {
+      const { data: claims } = await userClient.auth.getClaims(jwt);
+      userId = (claims?.claims?.sub as string | undefined) ?? null;
+    } catch (_) {
+      userId = null;
+    }
+    if (!userId) {
+      const { data: userData } = await userClient.auth.getUser(jwt);
+      userId = userData?.user?.id ?? null;
+    }
+    if (!userId) return json({ error: "unauthorized" }, 401);
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+    // Sub-usuários (account_members) enxergam as conexões do dono da conta.
+    const { data: member } = await admin
+      .from("account_members")
+      .select("account_owner_id")
+      .eq("member_user_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
+    const ownerId = (member?.account_owner_id as string | undefined) ?? userId;
+
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const action = body.action ?? "info";
 
@@ -241,12 +263,14 @@ Deno.serve(async (req) => {
       // Ensure connection belongs to user
       const { data: conn, error: connErr } = await admin
         .from("user_waba_connections")
-        .select("id, user_id, waba_id, phone_number_id, display_phone_number, business_name, status, access_token")
+        .select("id, user_id, owner_user_id, waba_id, phone_number_id, display_phone_number, business_name, status, access_token")
         .eq("id", connectionId)
         .maybeSingle();
-      if (connErr || !conn || conn.user_id !== userId) {
+      const connOwner = (conn?.owner_user_id as string | undefined) ?? (conn?.user_id as string | undefined);
+      if (connErr || !conn || connOwner !== ownerId) {
         return json({ error: "connection not found" }, 404);
       }
+
 
       const diagnostics: DiagnosticStep[] = [];
       let mainIssue: ReturnType<typeof explainGraphError> | null = null;
@@ -541,11 +565,13 @@ Deno.serve(async (req) => {
     }
 
     // -------- DEFAULT: return URL + token + connections list --------
-    const { data: connections } = await admin
+    const { data: connections, error: connsErr } = await admin
       .from("user_waba_connections")
       .select("id, waba_id, phone_number_id, display_phone_number, business_name, status, webhook_verified_at")
-      .eq("user_id", userId)
+      .or(`owner_user_id.eq.${ownerId},user_id.eq.${ownerId}`)
       .order("created_at", { ascending: true });
+    if (connsErr) console.error("[meta-webhook-config] list error", connsErr);
+
 
     return json({
       callback_url: CALLBACK_URL,
