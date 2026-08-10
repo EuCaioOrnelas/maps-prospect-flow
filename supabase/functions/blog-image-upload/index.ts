@@ -1,0 +1,99 @@
+// Upload de imagens do blog: valida o admin no projeto EXTERNO do blog e grava
+// no bucket público `blog-images` da Lovable Cloud usando service role.
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const BLOG_SUPABASE_URL = "https://lqfqnqfeuneorxocybru.supabase.co";
+const BLOG_SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZnFucWZldW5lb3J4b2N5YnJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTMyMjQsImV4cCI6MjA4NDY4OTIyNH0.ccxmuoqz-hlanRfqdvQZXN5tdt5d_8j5F6DVCjZAeB8";
+
+const BUCKET = "blog-images";
+
+function json(obj: unknown, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function requireBlogAdmin(req: Request): Promise<{ ok: boolean; userId?: string; status?: number }> {
+  const auth = req.headers.get("Authorization") || "";
+  const token = auth.replace("Bearer ", "").trim();
+  if (!token) return { ok: false, status: 401 };
+
+  const blog = createClient(BLOG_SUPABASE_URL, BLOG_SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data: userData } = await blog.auth.getUser(token);
+  if (!userData?.user) return { ok: false, status: 401 };
+
+  const { data: role } = await blog
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userData.user.id)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  if (!role) return { ok: false, status: 403 };
+  return { ok: true, userId: userData.user.id };
+}
+
+const sanitize = (name: string) =>
+  name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9.\-_]/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 80);
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const guard = await requireBlogAdmin(req);
+    if (!guard.ok) {
+      return json({ error: guard.status === 403 ? "forbidden" : "unauthorized" }, guard.status ?? 401);
+    }
+
+    const form = await req.formData();
+    const file = form.get("file");
+    if (!(file instanceof File)) return json({ error: "Arquivo ausente" }, 400);
+    if (!file.type.startsWith("image/")) return json({ error: "Arquivo precisa ser uma imagem" }, 400);
+    if (file.size > 8 * 1024 * 1024) return json({ error: "Imagem muito grande (máx. 8 MB)" }, 400);
+
+    const supa = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { persistSession: false } },
+    );
+
+    const ext = (file.name.split(".").pop() || "png").toLowerCase();
+    const base = sanitize(file.name.replace(/\.[^.]+$/, "") || "imagem");
+    const path = `${new Date().getFullYear()}/${Date.now()}-${base}.${ext}`;
+
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const { error: upErr } = await supa.storage.from(BUCKET).upload(path, bytes, {
+      contentType: file.type,
+      cacheControl: "31536000",
+      upsert: false,
+    });
+    if (upErr) {
+      console.error("[blog-image-upload] upload failed", upErr);
+      return json({ error: upErr.message }, 500);
+    }
+
+    const { data } = supa.storage.from(BUCKET).getPublicUrl(path);
+    return json({ url: data.publicUrl, path });
+  } catch (e) {
+    console.error("[blog-image-upload] error", e);
+    return json({ error: e instanceof Error ? e.message : "unknown" }, 500);
+  }
+});
