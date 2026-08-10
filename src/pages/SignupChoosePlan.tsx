@@ -43,6 +43,7 @@ const PLANS = [
   {
     key: "start",
     name: "Atendimento",
+    icon: Headphones,
     monthly: 196,
     opportunities: "1.000",
     usageLabel: "Até 1.000 contatos no CRM",
