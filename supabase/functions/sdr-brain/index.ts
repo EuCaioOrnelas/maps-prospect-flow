@@ -172,6 +172,28 @@ const SITUATION_GUIDE: Record<string, Record<string, string>> = {
   },
 };
 
+/** Próxima abertura do horário comercial configurado no agente (America/Sao_Paulo). */
+function nextScheduleOpening(schedule: any): string {
+  const localNow = new Date(Date.now() - 3 * 60 * 60 * 1000);
+  const days: number[] = Array.isArray(schedule?.days) && schedule.days.length
+    ? schedule.days.map(Number)
+    : [1, 2, 3, 4, 5];
+  const [hours, minutes] = String(schedule?.start || "08:30").split(":").map(Number);
+  for (let offset = 0; offset <= 7; offset += 1) {
+    const candidate = new Date(Date.UTC(
+      localNow.getUTCFullYear(),
+      localNow.getUTCMonth(),
+      localNow.getUTCDate() + offset,
+      hours || 0,
+      minutes || 0,
+    ));
+    if (!days.includes(candidate.getUTCDay()) || candidate.getTime() <= localNow.getTime()) continue;
+    return new Date(candidate.getTime() + 3 * 60 * 60 * 1000).toISOString();
+  }
+  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+}
+
+
 const OBJECTIVE_PLAYBOOK: Record<string, string> = {
   reuniao:
     "OBJETIVO MARCAR REUNIÃO: toda a conversa converge para uma agenda. Nunca resolva tudo pelo WhatsApp; use a reunião como o lugar onde a dúvida será respondida. Ofereça sempre DUAS janelas concretas (ex.: 'amanhã 10h ou 15h?') e confirme dia, horário e canal. Não fale preço fechado antes da agenda.",
