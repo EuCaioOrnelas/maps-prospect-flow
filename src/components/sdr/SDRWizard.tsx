@@ -696,6 +696,97 @@ function SellersCombobox({
   );
 }
 
+/** Seletor de etapa do CRM em formato de input pesquisável (tema claro e escuro) */
+function StageSelect({
+  stages,
+  value,
+  onChange,
+  placeholder = "Selecionar etapa do CRM...",
+  allowClear = true,
+}: {
+  stages: any[];
+  value: string;
+  onChange: (id: string) => void;
+  placeholder?: string;
+  allowClear?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const current = stages.find((s) => s.id === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-11 w-full items-center justify-between rounded-lg border border-border bg-card px-3 text-sm transition-colors hover:border-primary/40"
+        >
+          <span className="flex items-center gap-2 truncate">
+            <Columns3 className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+            <span className={cn("truncate", !current && "text-muted-foreground")}>
+              {current?.name || placeholder}
+            </span>
+          </span>
+          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="p-0 w-[--radix-popover-trigger-width] bg-popover text-popover-foreground border-border shadow-lg z-50"
+        align="start"
+      >
+        <Command
+          filter={(v, search) => (v.toLowerCase().includes(search.toLowerCase().trim()) ? 1 : 0)}
+        >
+          <CommandInput placeholder="Buscar etapa..." />
+          <CommandList>
+            <CommandEmpty>Nenhuma etapa encontrada.</CommandEmpty>
+            <CommandGroup>
+              {allowClear && (
+                <CommandItem
+                  value="nao-alterar"
+                  onSelect={() => {
+                    onChange("");
+                    setOpen(false);
+                  }}
+                  className="gap-2 cursor-pointer rounded-lg px-2 py-2 text-muted-foreground data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
+                >
+                  <Ban className="h-4 w-4" strokeWidth={1.75} />
+                  Não alterar a etapa
+                </CommandItem>
+              )}
+              {stages.map((s) => {
+                const on = value === s.id;
+                return (
+                  <CommandItem
+                    key={s.id}
+                    value={s.name}
+                    onSelect={() => {
+                      onChange(s.id);
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "gap-2 cursor-pointer rounded-lg px-2 py-2 text-foreground",
+                      "data-[selected=true]:bg-muted data-[selected=true]:text-foreground",
+                      on && "bg-primary/10 data-[selected=true]:bg-primary/15",
+                    )}
+                  >
+                    <Columns3
+                      className={cn("h-4 w-4", on ? "text-primary" : "text-muted-foreground")}
+                      strokeWidth={1.75}
+                    />
+                    <span className="text-sm text-foreground">{s.name}</span>
+                    {on && <Check className="ml-auto h-4 w-4 text-primary" strokeWidth={3} />}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+
 /** Shell com header e título fixos; scroll apenas no conteúdo da etapa */
 function OnboardingShell({
   step,
