@@ -712,6 +712,16 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
     navigate("/meta-campaigns");
   };
 
+  // Demo público: fechar/voltar nunca pode deixar o visitante dentro do cockpit
+  // simulado (parece um app logado). Sempre volta para a landing page.
+  const handleClose = () => {
+    onFinish();
+    if (publicDemo) {
+      window.location.assign("/");
+      return;
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
@@ -758,7 +768,7 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
           {isReplay ? (
             <Button
               size="xl"
-              onClick={onFinish}
+              onClick={handleClose}
               className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-[0_12px_40px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold"
             >
               <Check size={20} className="!h-5 !w-5" />
@@ -828,7 +838,7 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
 
 
           <button
-            onClick={onFinish}
+            onClick={handleClose}
             className="mt-4 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Fechar
