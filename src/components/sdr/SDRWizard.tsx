@@ -2223,12 +2223,17 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               />
             </div>
           ))}
-          <InfoBox icon={Lock} title="Regra fixa de preço">
+          <InfoBox icon={Lock} title="Regra fixa de preço e conclusão do objetivo">
             <p>
-              Quando "Nunca falar preço sem marcar reunião" está ativo, o SDR só apresenta valores
-              depois que a reunião estiver agendada.
+              Com "Nunca falar preço sem marcar reunião" ativo, o SDR nunca informa valores: ele
+              conduz para a agenda e, quando a reunião é confirmada, o objetivo é concluído.
+            </p>
+            <p>
+              Conversa com objetivo concluído sai do SDR e passa para o time humano. Ele só volta a
+              atuar em conversas encerradas sem sucesso, quando a reativação estiver ativa.
             </p>
           </InfoBox>
+
         </div>
       )}
 
