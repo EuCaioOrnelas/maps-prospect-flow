@@ -646,12 +646,14 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
 
   const load = async () => {
     setLoading(true);
-    const { data: res, error } = await supabase.functions.invoke("meta-webhook-config", {
+    // Retry com refresh de sessão: 401 por token expirado era a causa mais
+    // comum do "Falha ao carregar configuração do webhook".
+    const { data: res, error } = await invokeWithRetry<WebhookData>("meta-webhook-config", {
       body: { action: "info" },
     });
     setLoading(false);
-    if (error) {
-      toast.error("Falha ao carregar configuração do webhook");
+    if (error || !res) {
+      toast.error(error?.message || "Falha ao carregar configuração do webhook");
       return;
     }
     const payload = res as WebhookData;
@@ -661,6 +663,7 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
       else onStatusChange(payload.connections.every((c) => !!c.webhook_verified_at) ? "ok" : "pending");
     }
   };
+
 
   useEffect(() => { load(); }, []);
 
