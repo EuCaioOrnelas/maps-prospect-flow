@@ -86,16 +86,30 @@ export default function AdminBlogEditor() {
     if (!form.content) return toast.error("Adicione conteúdo antes de gerar");
     setGeoLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-blog-geo", {
-        body: {
-          title: form.title,
-          subtitle: form.subtitle,
-          excerpt: form.excerpt,
-          content: form.content,
+      const { data: sess } = await blogSupabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error("Sessão de admin do blog expirada. Faça login novamente.");
+
+      const res = await fetch(
+        `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/generate-blog-geo`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: form.title,
+            subtitle: form.subtitle,
+            excerpt: form.excerpt,
+            content: form.content,
+          }),
         },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || (data as any)?.error) throw new Error((data as any)?.error || `HTTP ${res.status}`);
+
       setForm((f) => ({
         ...f,
         ai_short_answer: (data as any).ai_short_answer || f.ai_short_answer,
