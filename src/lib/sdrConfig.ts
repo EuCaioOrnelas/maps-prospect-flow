@@ -413,6 +413,7 @@ export const SDR_DEFAULT_DRAFT: SdrDraft = {
     meeting_stage_id: "",
     handoff_stage_id: "",
     meeting_duration_minutes: 60,
+    proposal_file: null,
   },
   situations: {
     ocupado: "uma_pergunta",
