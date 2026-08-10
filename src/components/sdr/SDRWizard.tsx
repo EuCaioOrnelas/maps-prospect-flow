@@ -988,6 +988,34 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   const patch = <K extends keyof SdrDraft>(key: K, value: Partial<SdrDraft[K]>) =>
     setDraft((d) => ({ ...d, [key]: { ...(d[key] as any), ...(value as any) } }));
 
+  /** Upload da proposta em PDF (bucket privado, uma pasta por conta) */
+  const uploadProposal = async (file: File) => {
+    if (!accountOwnerId) return;
+    if (file.type !== "application/pdf") {
+      toast.error("Envie um arquivo PDF.");
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("O PDF precisa ter no máximo 15 MB.");
+      return;
+    }
+    setUploadingProposal(true);
+    try {
+      const path = `${accountOwnerId}/${Date.now()}-${file.name.replace(/[^\w.-]+/g, "_")}`;
+      const { error } = await supabase.storage
+        .from("sdr-proposals")
+        .upload(path, file, { contentType: "application/pdf", upsert: true });
+      if (error) throw error;
+      patch("closing", { proposal_file: { url: path, name: file.name, path } });
+      toast.success("Proposta anexada ao SDR.");
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível enviar o PDF.");
+    } finally {
+      setUploadingProposal(false);
+    }
+  };
+
+
   const toggleArray = (arr: string[], id: string) =>
     arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
 
