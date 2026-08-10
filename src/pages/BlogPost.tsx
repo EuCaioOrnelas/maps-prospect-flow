@@ -7,7 +7,7 @@ import remarkGfm from "remark-gfm";
 import { trackBlogCtaClick } from "@/lib/blogAttribution";
 
 import { supabase } from "@/integrations/supabase/client";
-import { blogSupabase } from "@/integrations/blog/client";
+import { blogPublic as blogSupabase } from "@/integrations/blog/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, Share2, ShieldCheck, Headphones, CreditCard, Zap, Link2, Twitter, Linkedin, Home, ThumbsUp } from "lucide-react";

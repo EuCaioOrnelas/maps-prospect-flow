@@ -1,17 +1,6 @@
-import { supabase } from "@/integrations/supabase/client";
+import { blogSupabase } from "@/integrations/blog/client";
 
-const BUCKET = "blog-images";
-// 10 anos (em segundos) — URL assinada de longa duração para uso público no blog
-const SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10;
-
-const sanitize = (name: string) =>
-  name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9.\-_]/g, "-")
-    .replace(/-+/g, "-")
-    .slice(0, 80);
+const FUNCTIONS_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/blog-image-upload`;
 
 export async function uploadBlogImage(file: File): Promise<string> {
   if (!file.type.startsWith("image/")) {
@@ -21,24 +10,25 @@ export async function uploadBlogImage(file: File): Promise<string> {
     throw new Error("Imagem muito grande. Máximo: 8 MB.");
   }
 
-  const ext = (file.name.split(".").pop() || "png").toLowerCase();
-  const base = sanitize(file.name.replace(/\.[^.]+$/, "") || "imagem");
-  const path = `${new Date().getFullYear()}/${Date.now()}-${base}.${ext}`;
+  const { data: sessionData } = await blogSupabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Sessão de admin do blog expirada. Faça login novamente.");
 
-  const { error: upErr } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, file, {
-      cacheControl: "31536000",
-      upsert: false,
-      contentType: file.type,
-    });
-  if (upErr) throw new Error(upErr.message);
+  const form = new FormData();
+  form.append("file", file);
 
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, SIGNED_URL_TTL);
-  if (error || !data?.signedUrl) {
-    throw new Error(error?.message || "Não foi possível gerar a URL da imagem.");
+  const res = await fetch(FUNCTIONS_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
+    body: form,
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json?.url) {
+    throw new Error(json?.error || `Falha no upload (HTTP ${res.status}).`);
   }
-  return data.signedUrl;
+  return json.url as string;
 }

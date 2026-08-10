@@ -50,30 +50,39 @@ async function logAiUsage(p: {
 }
 // ---- fim registro de custo de IA ----
 
+const BLOG_SUPABASE_URL = "https://lqfqnqfeuneorxocybru.supabase.co";
+const BLOG_SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZnFucWZldW5lb3J4b2N5YnJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTMyMjQsImV4cCI6MjA4NDY4OTIyNH0.ccxmuoqz-hlanRfqdvQZXN5tdt5d_8j5F6DVCjZAeB8";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
 
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const supa = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
+    // O admin do blog é autenticado no projeto EXTERNO do blog, não na Lovable Cloud.
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "unauthorized" }, 401);
-    const { data: userData } = await supa.auth.getUser(authHeader.replace("Bearer ", ""));
+    const token = (authHeader || "").replace("Bearer ", "").trim();
+    if (!token) return json({ error: "unauthorized" }, 401);
+
+    const blog = createClient(BLOG_SUPABASE_URL, BLOG_SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const { data: userData } = await blog.auth.getUser(token);
     if (!userData?.user) return json({ error: "unauthorized" }, 401);
 
-    const { data: roleRow } = await supa
+    const { data: roleRow } = await blog
       .from("user_roles").select("role")
       .eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
     if (!roleRow) return json({ error: "forbidden" }, 403);
+
 
     const { title, subtitle, excerpt, content } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
