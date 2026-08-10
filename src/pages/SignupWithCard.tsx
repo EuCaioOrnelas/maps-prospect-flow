@@ -31,11 +31,19 @@ import { generateFingerprint, getClientIP } from "@/lib/fingerprint";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { cn } from "@/lib/utils";
-import { Elements } from "@stripe/react-stripe-js";
+import { Elements, useStripe } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 import { useRef } from "react";
 import { getPartnerReferralMetadata } from "@/hooks/usePartnerTracking";
+
+/** Rascunho dos dados (sem senha e sem cartão) para retomar após o 3DS. */
+const DRAFT_KEY = "wiize_trial_draft";
+/** SetupIntent 3DS em andamento — permite continuar de onde parou. */
+const PENDING_KEY = "wiize_trial_3ds";
+
+type PendingSetup = { customerId: string; setupIntentId: string; planKey: string };
+
 
 const PLAN_INFO: Record<string, { name: string; monthly: number }> = {
   start: { name: "Wiize Start", monthly: 296 },
