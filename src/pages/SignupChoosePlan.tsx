@@ -221,14 +221,18 @@ export default function SignupChoosePlan() {
             Você usa a Wiize completa por 7 dias, sem pagar nada agora. O plano escolhido só passa a valer no 8º dia, se você decidir continuar.
           </p>
 
-          <div className="grid md:grid-cols-2 gap-4 mb-8">
-            {PLANS.map((plan) => {
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-8 items-stretch">
+            {PLANS.map((plan, index) => {
               const isSelected = selected === plan.key;
               return (
-                <div
+                <motion.div
                   key={plan.key}
                   role="button"
                   tabIndex={0}
+                  initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.6, delay: index * 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
                   onClick={() => setSelected(plan.key)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -237,31 +241,42 @@ export default function SignupChoosePlan() {
                     }
                   }}
                   className={cn(
-                    "text-left rounded-2xl border p-6 pt-7 transition-colors duration-200 relative flex flex-col cursor-pointer",
+                    "group text-left rounded-panel p-6 pt-7 relative flex flex-col cursor-pointer overflow-visible transition-transform duration-300 md:hover:-translate-y-2",
                     isSelected
-                      ? "border-primary bg-primary/5 ring-2 ring-primary/30 shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.4)]"
-                      : "border-border bg-card hover:border-primary/40 hover:bg-primary/[0.02]",
+                      ? "bg-gradient-card border-2 border-primary shadow-glow"
+                      : "glass border border-border/60 hover:border-primary/40",
                   )}
+                  style={{
+                    boxShadow: isSelected
+                      ? "inset 0 1px 0 0 hsl(var(--primary) / 0.25), inset 0 0 80px -20px hsl(var(--primary) / 0.35), 0 10px 40px -10px hsl(var(--primary) / 0.35)"
+                      : "inset 0 1px 0 0 hsl(var(--primary) / 0.12), inset 0 0 60px -30px hsl(var(--primary) / 0.18)",
+                  }}
                 >
                   {plan.highlight && (
-                    <span className="absolute -top-2.5 left-6 bg-primary text-primary-foreground text-[10px] font-semibold px-2.5 py-1 rounded-full inline-flex items-center gap-1 whitespace-nowrap">
+                    <span className="absolute -top-2.5 left-6 bg-primary text-primary-foreground text-[10px] font-semibold px-2.5 py-1 rounded-sm inline-flex items-center gap-1 whitespace-nowrap shadow-md z-20">
                       <Flame size={11} className="fill-primary-foreground" /> Mais escolhido
                     </span>
                   )}
-                  <div className="flex items-start justify-between gap-3 h-[60px]">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg leading-tight">Wiize {plan.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{plan.desc}</p>
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-card bg-primary shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] shrink-0">
+                          <plan.icon className="h-5 w-5 text-primary-foreground transition-all duration-300 group-hover:scale-125 group-hover:rotate-12" />
+                        </div>
+                        <h3 className="font-display font-bold text-lg leading-tight">Wiize {plan.name}</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-snug min-h-[2.5rem]">{plan.desc}</p>
                     </div>
                     <div
                       className={cn(
-                        "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1",
+                        "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-colors",
                         isSelected ? "border-primary bg-primary" : "border-border",
                       )}
                     >
                       {isSelected && <Check size={12} className="text-primary-foreground" strokeWidth={3} />}
                     </div>
                   </div>
+
                   {/* Pricing block - foco em gratuidade */}
                   <div className="mt-6">
                     <div className="flex items-baseline gap-1.5">
