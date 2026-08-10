@@ -629,6 +629,9 @@ Responda SEMPRE em JSON: {"mensagens": [string], "proxima_acao": string, "justif
     const writerUser = `CONFIGURAÇÃO DO SDR:
 ${brief}
 
+CONTEXTO E DADOS JÁ CONHECIDOS DO LEAD:
+${JSON.stringify({ ...leadContext, memoria: session?.memory ?? {} })}
+
 ANÁLISE E ESTRATÉGIA:
 ${JSON.stringify(analysis)}
 
@@ -662,6 +665,9 @@ Responda SEMPRE em JSON: {"aprovado": boolean, "checklist": {"[item]": boolean},
 ${brief}
 
 MICRO-OBJETIVO: ${analysis.micro_objetivo ?? "-"}
+
+CONTEXTO E DADOS JÁ CONHECIDOS DO LEAD:
+${JSON.stringify({ ...leadContext, memoria: session?.memory ?? {} })}
 
 MENSAGENS PROPOSTAS:
 ${JSON.stringify(messages)}
@@ -984,7 +990,25 @@ ${historyText}`;
             stage: analysis.proximo_passo ?? analysis.passo_atual ?? analysis.estagio ?? session.stage,
             current_goal: analysis.micro_objetivo ?? session.current_goal,
             memory: {
-              ...(analysis.memoria ?? session.memory ?? {}),
+              ...(session.memory ?? {}),
+              fatos: Array.from(new Set([
+                ...(Array.isArray(session.memory?.fatos) ? session.memory.fatos : []),
+                ...(Array.isArray(analysis.memoria?.fatos) ? analysis.memoria.fatos : []),
+              ])),
+              promessas: Array.from(new Set([
+                ...(Array.isArray(session.memory?.promessas) ? session.memory.promessas : []),
+                ...(Array.isArray(analysis.memoria?.promessas) ? analysis.memoria.promessas : []),
+              ])),
+              objecoes: Array.from(new Set([
+                ...(Array.isArray(session.memory?.objecoes) ? session.memory.objecoes : []),
+                ...(Array.isArray(analysis.memoria?.objecoes) ? analysis.memoria.objecoes : []),
+              ])),
+              identidade: {
+                ...(session.memory?.identidade ?? {}),
+                ...Object.fromEntries(
+                  Object.entries(analysis.identidade ?? {}).filter(([, value]) => value !== null && value !== ""),
+                ),
+              },
               ...(objectiveDone && agent.objective === "proposta" && proposalFile?.path
                 ? { proposal_sent: true }
                 : {}),
