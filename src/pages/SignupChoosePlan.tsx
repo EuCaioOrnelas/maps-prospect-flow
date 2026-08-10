@@ -155,10 +155,14 @@ export default function SignupChoosePlan() {
               Plataforma completa liberada. Sem cobrança hoje. Cancele em 1 clique a qualquer momento.
             </p>
 
-            <div className="mt-5 inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <TrendingUp size={14} className="text-primary" />
-              <span className="font-semibold text-foreground">+500 empresas</span>
-              <span>vendem mais com a Wiize</span>
+            <div className="mt-6 inline-flex items-center gap-2.5 px-3.5 py-2 rounded-hover glass border border-primary/10">
+              <div className="flex -space-x-1.5">
+                <img src={avatar1} alt="" className="w-7 h-7 rounded-sm border-2 border-background object-cover" width={28} height={28} />
+                <img src={avatar2} alt="" className="w-7 h-7 rounded-sm border-2 border-background object-cover" width={28} height={28} />
+                <img src={avatar3} alt="" className="w-7 h-7 rounded-sm border-2 border-background object-cover" width={28} height={28} />
+                <img src={avatar4} alt="" className="w-7 h-7 rounded-sm border-2 border-background object-cover" width={28} height={28} />
+              </div>
+              <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
           </div>
 
