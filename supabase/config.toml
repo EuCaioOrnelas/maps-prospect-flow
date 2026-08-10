@@ -113,3 +113,6 @@ verify_jwt = false
 
 [functions.sdr-dispatch]
 verify_jwt = false
+
+[functions.sdr-followup-processor]
+verify_jwt = false
