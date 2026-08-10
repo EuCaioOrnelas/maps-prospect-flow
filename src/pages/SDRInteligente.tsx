@@ -264,48 +264,13 @@ export default function SDRInteligente() {
                 )}
               </div>
 
-              {/* Rascunho em andamento */}
-              {storedDraft && (
-                <Card className="p-5 border-dashed border-primary/40 bg-primary/5 flex flex-col sm:flex-row sm:items-center gap-4">
-                  <span className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <Pencil size={18} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold truncate">
-                        {storedDraft.draft.name?.trim() || "SDR sem nome"}
-                      </p>
-                      <Badge variant="secondary">Rascunho</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Configuração interrompida na etapa {storedDraft.step} de 12. Continue de onde
-                      parou.
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => navigate("/oportunidades/sdr/novo")}>
-                      Continuar configuração
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive"
-                      onClick={() => {
-                        clearSdrDraft();
-                        setStoredDraft(null);
-                        toast.success("Rascunho descartado");
-                      }}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
-                </Card>
-              )}
+              {/* Rascunho aparece dentro da própria lista, como um card normal */}
+
 
               {/* Lista */}
               {loading ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Carregando SDRs...</p>
-              ) : agents.length === 0 ? (
+              ) : agents.length === 0 && !storedDraft ? (
                 <Card className="p-10 text-center">
                   <Bot className="mx-auto text-muted-foreground mb-3" size={32} />
                   <p className="font-medium">Nenhum SDR criado ainda</p>
@@ -318,7 +283,58 @@ export default function SDRInteligente() {
                 </Card>
               ) : (
                 <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {storedDraft && (
+                    <Card className="p-5 space-y-4 border-dashed border-primary/40">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate">
+                            {storedDraft.draft.name?.trim() || "SDR sem nome"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {SDR_OBJECTIVE_LABEL(storedDraft.draft.objective)}
+                          </p>
+                        </div>
+                        <Badge variant="secondary">Rascunho</Badge>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        <span className="px-2 py-1 rounded-md bg-muted">
+                          Etapa {storedDraft.step} de 12
+                        </span>
+                        <span className="px-2 py-1 rounded-md bg-muted">
+                          {(storedDraft.draft.whatsapp_number_ids || []).length} número(s)
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-border">
+                        <span className="text-xs text-muted-foreground">Configuração incompleta</span>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5 h-8"
+                            onClick={() => navigate("/oportunidades/sdr/novo")}
+                          >
+                            <Pencil size={14} /> Continuar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive"
+                            onClick={() => {
+                              clearSdrDraft();
+                              setStoredDraft(null);
+                              toast.success("Rascunho descartado");
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  )}
                   {agents.map((a) => (
+
                     <Card key={a.id} className="p-5 space-y-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">

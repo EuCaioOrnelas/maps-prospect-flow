@@ -696,6 +696,97 @@ function SellersCombobox({
   );
 }
 
+/** Seletor de etapa do CRM em formato de input pesquisável (tema claro e escuro) */
+function StageSelect({
+  stages,
+  value,
+  onChange,
+  placeholder = "Selecionar etapa do CRM...",
+  allowClear = true,
+}: {
+  stages: any[];
+  value: string;
+  onChange: (id: string) => void;
+  placeholder?: string;
+  allowClear?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const current = stages.find((s) => s.id === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-11 w-full items-center justify-between rounded-lg border border-border bg-card px-3 text-sm transition-colors hover:border-primary/40"
+        >
+          <span className="flex items-center gap-2 truncate">
+            <Columns3 className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+            <span className={cn("truncate", !current && "text-muted-foreground")}>
+              {current?.name || placeholder}
+            </span>
+          </span>
+          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="p-0 w-[--radix-popover-trigger-width] bg-popover text-popover-foreground border-border shadow-lg z-50"
+        align="start"
+      >
+        <Command
+          filter={(v, search) => (v.toLowerCase().includes(search.toLowerCase().trim()) ? 1 : 0)}
+        >
+          <CommandInput placeholder="Buscar etapa..." />
+          <CommandList>
+            <CommandEmpty>Nenhuma etapa encontrada.</CommandEmpty>
+            <CommandGroup>
+              {allowClear && (
+                <CommandItem
+                  value="nao-alterar"
+                  onSelect={() => {
+                    onChange("");
+                    setOpen(false);
+                  }}
+                  className="gap-2 cursor-pointer rounded-lg px-2 py-2 text-muted-foreground data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
+                >
+                  <Ban className="h-4 w-4" strokeWidth={1.75} />
+                  Não alterar a etapa
+                </CommandItem>
+              )}
+              {stages.map((s) => {
+                const on = value === s.id;
+                return (
+                  <CommandItem
+                    key={s.id}
+                    value={s.name}
+                    onSelect={() => {
+                      onChange(s.id);
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "gap-2 cursor-pointer rounded-lg px-2 py-2 text-foreground",
+                      "data-[selected=true]:bg-muted data-[selected=true]:text-foreground",
+                      on && "bg-primary/10 data-[selected=true]:bg-primary/15",
+                    )}
+                  >
+                    <Columns3
+                      className={cn("h-4 w-4", on ? "text-primary" : "text-muted-foreground")}
+                      strokeWidth={1.75}
+                    />
+                    <span className="text-sm text-foreground">{s.name}</span>
+                    {on && <Check className="ml-auto h-4 w-4 text-primary" strokeWidth={3} />}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+
 /** Shell com header e título fixos; scroll apenas no conteúdo da etapa */
 function OnboardingShell({
   step,
@@ -787,6 +878,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   const [stages, setStages] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [uploadingProposal, setUploadingProposal] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -896,6 +988,34 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
 
   const patch = <K extends keyof SdrDraft>(key: K, value: Partial<SdrDraft[K]>) =>
     setDraft((d) => ({ ...d, [key]: { ...(d[key] as any), ...(value as any) } }));
+
+  /** Upload da proposta em PDF (bucket privado, uma pasta por conta) */
+  const uploadProposal = async (file: File) => {
+    if (!accountOwnerId) return;
+    if (file.type !== "application/pdf") {
+      toast.error("Envie um arquivo PDF.");
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("O PDF precisa ter no máximo 15 MB.");
+      return;
+    }
+    setUploadingProposal(true);
+    try {
+      const path = `${accountOwnerId}/${Date.now()}-${file.name.replace(/[^\w.-]+/g, "_")}`;
+      const { error } = await supabase.storage
+        .from("sdr-proposals")
+        .upload(path, file, { contentType: "application/pdf", upsert: true });
+      if (error) throw error;
+      patch("closing", { proposal_file: { url: path, name: file.name, path } });
+      toast.success("Proposta anexada ao SDR.");
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível enviar o PDF.");
+    } finally {
+      setUploadingProposal(false);
+    }
+  };
+
 
   const toggleArray = (arr: string[], id: string) =>
     arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
@@ -1056,8 +1176,69 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               Esse será o objetivo buscado em todas as conversas e também o critério de sucesso do SDR.
             </p>
           </div>
+
+          {draft.objective === "proposta" && (
+            <div className="space-y-3">
+              <SectionTitle
+                icon={FileText}
+                title="Proposta em PDF"
+                hint="O arquivo fica guardado com segurança e só é enviado ao lead quando o SDR concluir o objetivo."
+              />
+              {draft.closing.proposal_file ? (
+                <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
+                  <span className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <FileText className="h-5 w-5" strokeWidth={1.75} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {draft.closing.proposal_file.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">PDF armazenado com segurança</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => patch("closing", { proposal_file: null })}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <label
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center cursor-pointer transition-colors hover:border-primary/40",
+                    uploadingProposal && "pointer-events-none opacity-60"
+                  )}
+                >
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadProposal(file);
+                      e.target.value = "";
+                    }}
+                  />
+                  {uploadingProposal ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <FileText className="h-5 w-5 text-muted-foreground" strokeWidth={1.75} />
+                  )}
+                  <span className="text-sm font-medium text-foreground">
+                    {uploadingProposal ? "Enviando arquivo..." : "Enviar proposta em PDF"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Somente PDF, até 15 MB. Enviado automaticamente ao lead no fechamento.
+                  </span>
+                </label>
+              )}
+            </div>
+          )}
         </>
       )}
+
 
       {/* 2 - Onde atua */}
       {step === 2 && (
@@ -1467,55 +1648,26 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               ]}
             />
             {stages.length > 0 && (
-              <div className="space-y-2">
-                <IconLabel icon={Target}>Etapa do CRM quando a reunião for marcada</IconLabel>
-                <div className="flex flex-wrap gap-2">
-                  {stages.map((s) => {
-                    const on = draft.closing.meeting_stage_id === s.id;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() =>
-                          patch("closing", { meeting_stage_id: on ? "" : s.id })
-                        }
-                        className={cn(
-                          "rounded-lg border px-3 py-1.5 text-xs transition-colors",
-                          on
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary/40",
-                        )}
-                      >
-                        {s.name}
-                      </button>
-                    );
-                  })}
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <IconLabel icon={Target}>Etapa do CRM quando o objetivo for concluído</IconLabel>
+                  <StageSelect
+                    stages={stages}
+                    value={draft.closing.meeting_stage_id}
+                    onChange={(id) => patch("closing", { meeting_stage_id: id })}
+                  />
                 </div>
-                <IconLabel icon={UserCheck}>Etapa do CRM ao transferir para um humano</IconLabel>
-                <div className="flex flex-wrap gap-2">
-                  {stages.map((s) => {
-                    const on = draft.closing.handoff_stage_id === s.id;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() =>
-                          patch("closing", { handoff_stage_id: on ? "" : s.id })
-                        }
-                        className={cn(
-                          "rounded-lg border px-3 py-1.5 text-xs transition-colors",
-                          on
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary/40",
-                        )}
-                      >
-                        {s.name}
-                      </button>
-                    );
-                  })}
+                <div className="space-y-1.5">
+                  <IconLabel icon={UserCheck}>Etapa do CRM ao transferir para um humano</IconLabel>
+                  <StageSelect
+                    stages={stages}
+                    value={draft.closing.handoff_stage_id}
+                    onChange={(id) => patch("closing", { handoff_stage_id: id })}
+                  />
                 </div>
               </div>
             )}
+
           </div>
         </>
       )}
@@ -2038,37 +2190,22 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               ]}
             />
             {draft.closing.after_limit_actions.includes("mover_pipeline") && (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <IconLabel icon={Columns3}>Coluna de destino</IconLabel>
-                <div className="flex flex-wrap gap-2">
-                  {stages.map((s) => {
-                    const on = draft.closing.after_limit_stage_id === s.id;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => patch("closing", { after_limit_stage_id: s.id })}
-                        className={cn(
-                          "inline-flex items-center gap-2 h-10 px-3.5 rounded-lg text-sm border bg-card transition-all hover:-translate-y-0.5 hover:shadow-md",
-                          on
-                            ? "border-primary ring-2 ring-primary/20 shadow-md text-foreground font-semibold"
-                            : "border-border text-muted-foreground hover:border-primary/40"
-                        )}
-                      >
-                        <Columns3
-                          className={cn("h-4 w-4", on ? "text-primary" : "text-muted-foreground")}
-                          strokeWidth={1.75}
-                        />
-                        {s.name}
-                      </button>
-                    );
-                  })}
-                  {stages.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Nenhuma coluna encontrada no CRM.</p>
-                  )}
-                </div>
+                {stages.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhuma coluna encontrada no CRM.</p>
+                ) : (
+                  <StageSelect
+                    stages={stages}
+                    allowClear={false}
+                    placeholder="Selecionar coluna de destino..."
+                    value={draft.closing.after_limit_stage_id}
+                    onChange={(id) => patch("closing", { after_limit_stage_id: id })}
+                  />
+                )}
               </div>
             )}
+
           </div>
         </>
       )}
@@ -2086,12 +2223,17 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               />
             </div>
           ))}
-          <InfoBox icon={Lock} title="Regra fixa de preço">
+          <InfoBox icon={Lock} title="Regra fixa de preço e conclusão do objetivo">
             <p>
-              Quando "Nunca falar preço sem marcar reunião" está ativo, o SDR só apresenta valores
-              depois que a reunião estiver agendada.
+              Com "Nunca falar preço sem marcar reunião" ativo, o SDR nunca informa valores: ele
+              conduz para a agenda e, quando a reunião é confirmada, o objetivo é concluído.
+            </p>
+            <p>
+              Conversa com objetivo concluído sai do SDR e passa para o time humano. Ele só volta a
+              atuar em conversas encerradas sem sucesso, quando a reativação estiver ativa.
             </p>
           </InfoBox>
+
         </div>
       )}
 
