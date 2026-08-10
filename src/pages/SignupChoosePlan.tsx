@@ -339,7 +339,7 @@ export default function SignupChoosePlan() {
                     )}
                   </div>
 
-                </div>
+                </motion.div>
               );
             })}
           </div>
