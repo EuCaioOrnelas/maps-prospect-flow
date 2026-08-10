@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
-import { blogSupabase } from "@/integrations/blog/client";
+import { blogPublic as blogSupabase } from "@/integrations/blog/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {

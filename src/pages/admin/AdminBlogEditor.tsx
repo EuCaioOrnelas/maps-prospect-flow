@@ -229,7 +229,7 @@ export default function AdminBlogEditor() {
     };
 
     if (isNew) {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await blogSupabase.auth.getUser();
       payload.created_by = u.user?.id;
       const { data, error } = await blogSupabase.from("blog_posts").insert(payload).select("id").single();
       setSaving(false);
