@@ -878,6 +878,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   const [stages, setStages] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [uploadingProposal, setUploadingProposal] = useState(false);
 
   useEffect(() => {
     if (!open) return;
