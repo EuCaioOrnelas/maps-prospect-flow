@@ -326,6 +326,7 @@ function SignupWithCardInner() {
       });
       return;
     }
+    saveDraft();
     setStep(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
