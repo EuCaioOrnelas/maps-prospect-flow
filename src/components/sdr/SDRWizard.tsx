@@ -1558,55 +1558,26 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               ]}
             />
             {stages.length > 0 && (
-              <div className="space-y-2">
-                <IconLabel icon={Target}>Etapa do CRM quando a reunião for marcada</IconLabel>
-                <div className="flex flex-wrap gap-2">
-                  {stages.map((s) => {
-                    const on = draft.closing.meeting_stage_id === s.id;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() =>
-                          patch("closing", { meeting_stage_id: on ? "" : s.id })
-                        }
-                        className={cn(
-                          "rounded-lg border px-3 py-1.5 text-xs transition-colors",
-                          on
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary/40",
-                        )}
-                      >
-                        {s.name}
-                      </button>
-                    );
-                  })}
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <IconLabel icon={Target}>Etapa do CRM quando o objetivo for concluído</IconLabel>
+                  <StageSelect
+                    stages={stages}
+                    value={draft.closing.meeting_stage_id}
+                    onChange={(id) => patch("closing", { meeting_stage_id: id })}
+                  />
                 </div>
-                <IconLabel icon={UserCheck}>Etapa do CRM ao transferir para um humano</IconLabel>
-                <div className="flex flex-wrap gap-2">
-                  {stages.map((s) => {
-                    const on = draft.closing.handoff_stage_id === s.id;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() =>
-                          patch("closing", { handoff_stage_id: on ? "" : s.id })
-                        }
-                        className={cn(
-                          "rounded-lg border px-3 py-1.5 text-xs transition-colors",
-                          on
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary/40",
-                        )}
-                      >
-                        {s.name}
-                      </button>
-                    );
-                  })}
+                <div className="space-y-1.5">
+                  <IconLabel icon={UserCheck}>Etapa do CRM ao transferir para um humano</IconLabel>
+                  <StageSelect
+                    stages={stages}
+                    value={draft.closing.handoff_stage_id}
+                    onChange={(id) => patch("closing", { handoff_stage_id: id })}
+                  />
                 </div>
               </div>
             )}
+
           </div>
         </>
       )}
