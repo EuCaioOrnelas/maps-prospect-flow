@@ -3,12 +3,24 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 // ========== INLINED AI KEY CRYPTO (sem _shared) ==========
 // Criptografia AES-256-GCM das chaves de IA dos clientes (BYOK).
 // A chave mestra vive apenas no ambiente das edge functions (AI_CREDENTIALS_SECRET).
-async function masterKey(): Promise<CryptoKey> {
-  const raw = Deno.env.get("AI_CREDENTIALS_SECRET");
-  if (!raw) throw new Error("AI_CREDENTIALS_SECRET não configurada");
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
+function masterSecrets(): string[] {
+  const list: string[] = [];
+  const primary = Deno.env.get("AI_CREDENTIALS_SECRET");
+  if (primary) list.push(primary);
+  // Fallback determinístico: garante que o BYOK funcione mesmo se o secret
+  // dedicado não estiver presente no ambiente da function.
+  const fallback = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (fallback) list.push(`wiize-ai-byok::${fallback}`);
+  if (!list.length) throw new Error("Ambiente sem chave mestra para criptografia.");
+  return list;
+}
+
+async function masterKey(raw?: string): Promise<CryptoKey> {
+  const secret = raw ?? masterSecrets()[0];
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret));
   return crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["encrypt", "decrypt"]);
 }
+
 
 function toB64(buf: Uint8Array): string {
   let s = "";

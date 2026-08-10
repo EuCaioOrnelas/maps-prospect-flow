@@ -2,10 +2,18 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 // ========== INLINED AI KEY CRYPTO (sem _shared) ==========
 // Decriptação AES-256-GCM da chave OpenAI do cliente (BYOK).
-async function masterKey(): Promise<CryptoKey> {
-  const raw = Deno.env.get("AI_CREDENTIALS_SECRET");
-  if (!raw) throw new Error("AI_CREDENTIALS_SECRET não configurada");
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
+function masterSecrets(): string[] {
+  const list: string[] = [];
+  const primary = Deno.env.get("AI_CREDENTIALS_SECRET");
+  if (primary) list.push(primary);
+  const fallback = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (fallback) list.push(`wiize-ai-byok::${fallback}`);
+  if (!list.length) throw new Error("Ambiente sem chave mestra para criptografia.");
+  return list;
+}
+
+async function masterKey(secret: string): Promise<CryptoKey> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret));
   return crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["encrypt", "decrypt"]);
 }
 
@@ -13,8 +21,16 @@ async function decryptApiKey(stored: string): Promise<string> {
   const buf = Uint8Array.from(atob(stored), (c) => c.charCodeAt(0));
   const iv = buf.subarray(0, 12);
   const cipher = buf.subarray(12);
-  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, await masterKey(), cipher);
-  return new TextDecoder().decode(plain);
+  let lastError: unknown = null;
+  for (const secret of masterSecrets()) {
+    try {
+      const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, await masterKey(secret), cipher);
+      return new TextDecoder().decode(plain);
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError ?? new Error("Falha ao decriptar a chave de IA.");
 }
 // ========== FIM INLINED AI KEY CRYPTO ==========
 
