@@ -164,6 +164,27 @@ export function ChatSidebar({
     });
   }, [activeFilter, conversations, crmLeadByPhoneKey, customFilters, hasCustomFilters]);
 
+  // Prioridade: fixados > conversas recentes > contatos salvos > demais números
+  const sortedConversations = useMemo(() => {
+    const rank = (c: ChatConversation) => {
+      if (c.last_message_at) return 0;
+      if (c.contact_name && c.contact_name.trim()) return 1;
+      return 2;
+    };
+    return [...filteredConversations].sort((a, b) => {
+      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+      const ra = rank(a);
+      const rb = rank(b);
+      if (ra !== rb) return ra - rb;
+      if (ra === 0) {
+        return new Date(b.last_message_at || 0).getTime() - new Date(a.last_message_at || 0).getTime();
+      }
+      const an = (a.contact_name || a.contact_phone || "").trim();
+      const bn = (b.contact_name || b.contact_phone || "").trim();
+      return an.localeCompare(bn, "pt-BR");
+    });
+  }, [filteredConversations]);
+
   const isListLoading = loading || (activeFilter === "filtered" && loadingCrmFilters);
 
   return (
@@ -389,7 +410,7 @@ export function ChatSidebar({
           <div className="flex items-center justify-center py-16">
             <div className="h-7 w-7 rounded-full border-[3px] border-[#128c7e]/20 border-t-[#128c7e] animate-spin" />
           </div>
-        ) : filteredConversations.length === 0 ? (
+        ) : sortedConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
             <p className="text-sm wa-text-muted">
               {activeFilter === "filtered"
@@ -401,7 +422,7 @@ export function ChatSidebar({
             <p className="text-xs wa-text-muted mt-1 opacity-60">As mensagens recebidas aparecerão aqui</p>
           </div>
         ) : (
-          filteredConversations.map(conv => {
+          sortedConversations.map(conv => {
             const isActive = activeConversationId === conv.id;
             const hasUnread = conv.unread_count > 0;
             const hasName = !!conv.contact_name?.trim();

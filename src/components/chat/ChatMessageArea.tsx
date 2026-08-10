@@ -14,7 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import logoIconNew from "@/assets/logo-icon-new.png";
-import waChatBgAsset from "@/assets/wa-chat-bg.png.asset.json";
+import waChatBgUrl from "@/assets/wa-chat-bg.png";
 import { WhatsAppAudio } from "./WhatsAppAudio";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { toast } from "sonner";
@@ -955,7 +955,7 @@ export function ChatMessageArea({
         {/* Messages area + input — background extends fully */}
         <div
           className="flex-1 flex flex-col min-h-0 wa-chat-bg relative"
-          style={{ ['--wa-chat-bg-pattern' as any]: `url(${waChatBgAsset.url})` }}
+          style={{ ['--wa-chat-bg-pattern' as any]: `url(${waChatBgUrl})` }}
         >
           <div className="wa-chat-glow" />
 
