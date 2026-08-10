@@ -8,6 +8,7 @@ import {
   PlayCircle, ChevronDown, KeyRound, ListChecks,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRetry } from "@/lib/supabaseWithRetry";
 import { toast } from "sonner";
 
 import webhookGuideCoverAsset from "@/assets/webhook-guide-cover.png.asset.json";

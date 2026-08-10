@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithRetry } from "@/lib/supabaseWithRetry";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
