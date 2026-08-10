@@ -127,6 +127,8 @@ function SignupWithCardInner() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const stripe = useStripe();
+
 
   const planKey = useMemo(() => sessionStorage.getItem("trial_plan_chosen") || "growth", []);
   const plan = PLAN_INFO[planKey];
