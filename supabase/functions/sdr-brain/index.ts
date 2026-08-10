@@ -865,25 +865,118 @@ ${historyText}`;
         const followupHours = agent.closing?.followup_mode === "inteligente"
           ? followupMin + Math.random() * (followupMax - followupMin)
           : manualInterval;
-        const shouldScheduleFollowup = nextAction === "followup" &&
-          (session.followups_sent ?? 0) < (Number(agent.closing?.followup_max) || 0);
+        const followupsLeft = (session.followups_sent ?? 0) < (Number(agent.closing?.followup_max) || 0);
+
+        const stageNow = String(analysis?.estagio ?? "");
+        const refused = stageNow === "recusou";
+        const refusalMode = agent.situations?.recusou ?? "recuperar";
+        // Recusa clara + "encerrar" => a conversa sai do SDR sem follow-up.
+        const closeOnRefusal = refused && refusalMode === "encerrar";
+        // Recusa clara + "followup" => aceita o não agora e retoma dias depois.
+        const refusalFollowup = refused && refusalMode === "followup" && followupsLeft;
+
+        // Cliente ocupado: a IA retoma sozinha na próxima janela comercial.
+        const busyMode = agent.situations?.ocupado;
+        const busyDetected = /(?:ocupad|sem tempo|agora n[aã]o|depois eu|mais tarde|em reuni[aã]o)/i.test(inbound || "");
+        const busyReschedule = busyDetected && (busyMode === "outro_horario" || busyMode === "aguardar") && followupsLeft && !refused;
+
+        // Objetivo concluído: reunião confirmada na agenda encerra o ciclo do SDR.
+        const objectiveDone = Boolean(scheduled) || analysis?.objetivo_concluido === true;
+
+        let shouldScheduleFollowup = (nextAction === "followup" || refusalFollowup || busyReschedule) &&
+          followupsLeft && !closeOnRefusal && !objectiveDone;
+
+        const nextFollowupAt = shouldScheduleFollowup
+          ? busyReschedule
+            ? nextScheduleOpening(agent.schedule)
+            : new Date(Date.now() + followupHours * 60 * 60 * 1000).toISOString()
+          : null;
+
+        // Proposta em PDF enviada ao concluir o objetivo "Enviar proposta".
+        const proposalFile = agent.closing?.proposal_file;
+        const proposalAlreadySent = Boolean((session.memory as any)?.proposal_sent);
+        if (
+          objectiveDone && agent.objective === "proposta" && proposalFile?.path &&
+          !proposalAlreadySent && session.waba_connection_id && session.phone
+        ) {
+          try {
+            const { data: signed } = await supabase.storage
+              .from("sdr-proposals")
+              .createSignedUrl(proposalFile.path, 60 * 60 * 24 * 7);
+            const { data: connection } = await supabase
+              .from("user_waba_connections")
+              .select("access_token, phone_number_id")
+              .eq("id", session.waba_connection_id)
+              .maybeSingle();
+            if (signed?.signedUrl && connection?.access_token) {
+              const proposalResponse = await fetch(
+                `https://graph.facebook.com/v21.0/${session.phone_number_id || connection.phone_number_id}/messages`,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${connection.access_token}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    messaging_product: "whatsapp",
+                    to: String(session.phone).replace(/\D/g, ""),
+                    type: "document",
+                    document: {
+                      link: signed.signedUrl,
+                      filename: proposalFile.name || "proposta.pdf",
+                      caption: "Segue a proposta comercial em anexo.",
+                    },
+                  }),
+                },
+              );
+              if (!proposalResponse.ok) {
+                console.error("[sdr-brain] falha ao enviar proposta:", proposalResponse.status, await proposalResponse.text());
+              }
+            }
+          } catch (err) {
+            console.error("[sdr-brain] erro ao enviar proposta em PDF:", err);
+          }
+        }
+
+        const nextStatus = objectiveDone
+          ? "won"
+          : closeOnRefusal
+            ? "closed"
+            : nextAction === "chamar_vendedor"
+              ? "handoff"
+              : session.status;
+
         await supabase
           .from("sdr_sessions")
           .update({
+            status: nextStatus,
+            ...(objectiveDone || closeOnRefusal
+              ? { closed_reason: objectiveDone ? "objective_completed" : "lead_refused" }
+              : {}),
             stage: analysis.proximo_passo ?? analysis.passo_atual ?? analysis.estagio ?? session.stage,
             current_goal: analysis.micro_objetivo ?? session.current_goal,
-            memory: analysis.memoria ?? session.memory,
+            memory: {
+              ...(analysis.memoria ?? session.memory ?? {}),
+              ...(objectiveDone && agent.objective === "proposta" && proposalFile?.path
+                ? { proposal_sent: true }
+                : {}),
+            },
             messages_sent: (session.messages_sent ?? 0) + messages.length,
             replies_received: (session.replies_received ?? 0) + (inbound ? 1 : 0),
             last_message_at: new Date().toISOString(),
             ...(inbound ? { last_reply_at: new Date().toISOString() } : {}),
             last_processed_at: new Date().toISOString(),
-            next_followup_at: shouldScheduleFollowup
-              ? new Date(Date.now() + followupHours * 60 * 60 * 1000).toISOString()
+            next_followup_at: nextFollowupAt,
+            followup_reason: shouldScheduleFollowup
+              ? busyReschedule
+                ? "Lead ocupado: retomar no próximo horário comercial"
+                : refusalFollowup
+                  ? "Recusa temporária: retomar em alguns dias"
+                  : analysis.micro_objetivo ?? "Retomar negociação"
               : null,
-            followup_reason: shouldScheduleFollowup ? analysis.micro_objetivo ?? "Retomar negociação" : null,
           })
           .eq("id", session.id);
+
       }
     }
 
