@@ -312,28 +312,43 @@ Deno.serve(async (req) => {
               if ((lead as any).follow_up_status === 'pending') {
                 const delayMs = Math.max(30, (lead as any).follow_up_delay_seconds || 90) * 1000;
                 const scheduledAt = new Date(Date.now() + delayMs).toISOString();
-                updates.follow_up_scheduled_at = scheduledAt;
-                try {
-                  // @ts-ignore - EdgeRuntime is available at runtime
-                  EdgeRuntime.waitUntil(
-                    new Promise<void>((resolve) =>
-                      setTimeout(async () => {
-                        try {
-                          await supabase.functions.invoke('opportunity-followup-send', {
-                            body: { leadId: lead.id },
-                          });
-                        } catch (e) {
-                          console.error('[meta-webhook] follow-up invoke failed:', e);
-                        }
-                        resolve();
-                      }, delayMs)
-                    )
-                  );
-                  console.log(`[meta-webhook] ⏰ Follow-up scheduled for lead ${lead.id} in ${delayMs}ms`);
-                } catch (e) {
-                  console.error('[meta-webhook] schedule follow-up failed:', e);
+
+                // Claim atômico: só uma mensagem de entrada consegue mover pending -> scheduled,
+                // então várias respostas seguidas não disparam follow-ups duplicados.
+                const { data: claimed } = await supabase
+                  .from('leads')
+                  .update({ follow_up_status: 'scheduled', follow_up_scheduled_at: scheduledAt })
+                  .eq('id', lead.id)
+                  .eq('follow_up_status', 'pending')
+                  .select('id');
+
+                if (claimed && claimed.length > 0) {
+                  try {
+                    // @ts-ignore - EdgeRuntime is available at runtime
+                    EdgeRuntime.waitUntil(
+                      new Promise<void>((resolve) =>
+                        setTimeout(async () => {
+                          try {
+                            await supabase.functions.invoke('opportunity-followup-send', {
+                              body: { leadId: lead.id },
+                            });
+                          } catch (e) {
+                            console.error('[meta-webhook] follow-up invoke failed:', e);
+                          }
+                          resolve();
+                        }, delayMs)
+                      )
+                    );
+                    console.log(`[meta-webhook] ⏰ Follow-up scheduled for lead ${lead.id} in ${delayMs}ms`);
+                  } catch (e) {
+                    console.error('[meta-webhook] schedule follow-up failed:', e);
+                    await supabase.from('leads').update({ follow_up_status: 'pending' }).eq('id', lead.id);
+                  }
+                } else {
+                  console.log(`[meta-webhook] follow-up já agendado para lead ${lead.id} — ignorando duplicata`);
                 }
               }
+
             } else {
               // outbound: mark as message_sent if not already in a deeper state
               const current = lead.whatsapp_status || 'never_contacted';
@@ -633,6 +648,23 @@ Deno.serve(async (req) => {
                       console.log('[meta-webhook] SDR skipped: active automation flow owns this conversation');
                       continue;
                     }
+
+                    // Campanha de oportunidade com follow-up gerado por IA ainda em andamento:
+                    // o SDR não pode responder junto (duplicaria mensagens). Campanhas só com
+                    // template aprovado ficam com follow_up_status 'none' e liberam o SDR.
+                    const { data: campaignLead } = await supabase
+                      .from('leads')
+                      .select('id, follow_up_status')
+                      .eq('user_id', userId)
+                      .ilike('phone', `%${phoneTail}`)
+                      .in('follow_up_status', ['pending', 'scheduled'])
+                      .limit(1)
+                      .maybeSingle();
+                    if (campaignLead) {
+                      console.log(`[meta-webhook] SDR bloqueado: campanha com follow-up de IA em andamento (lead ${campaignLead.id})`);
+                      continue;
+                    }
+
                     const dispatchPromise = fetch(`${SB_URL2}/functions/v1/sdr-dispatch`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SB_KEY2}` },

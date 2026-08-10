@@ -52,6 +52,8 @@ import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { buildTourDemoSearchHistory } from "@/lib/publicDemo";
+import { AutoApproachPrefs, EMPTY_AUTO_APPROACH, saveAutoApproachPrefs, clearAutoApproachPrefs } from "@/lib/autoApproachPrefs";
+
 interface Lead {
   name: string;
   category: string;
@@ -108,6 +110,10 @@ const Dashboard = () => {
   const [companyProfile, setCompanyProfile] = useState<any>(null);
   const [showCompanyOnboarding, setShowCompanyOnboarding] = useState(false);
   const [pendingSearch, setPendingSearch] = useState(false);
+
+  // Geração automática da abordagem com IA logo após o diagnóstico (desmarcado por padrão)
+  const [autoApproach, setAutoApproach] = useState<AutoApproachPrefs>({ ...EMPTY_AUTO_APPROACH });
+
 
   useEffect(() => {
     if (publicDemo) {
@@ -291,6 +297,10 @@ const Dashboard = () => {
     }
 
     setIsSearching(true);
+    // A preferência é lida na Gestão de Oportunidades, logo após o diagnóstico dos leads.
+    if (autoApproach.manual || autoApproach.meta) saveAutoApproachPrefs(autoApproach);
+    else clearAutoApproachPrefs();
+
     // Nota: não marcamos hasSearched=true aqui — a lista de resultados só aparece
     // ao clicar em uma busca do histórico. Novas buscas redirecionam para /oportunidades/gestao.
 
@@ -720,6 +730,41 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Geração automática da abordagem com IA (após o diagnóstico) */}
+              <div className="rounded-xl border border-border/50 bg-secondary/30 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={14} className="text-primary" />
+                  <p className="text-sm font-medium">Gerar abordagem com IA automaticamente</p>
+                </div>
+                <p className="text-xs text-muted-foreground/80">
+                  Ao final do diagnóstico de cada lead, a IA já escreve a mensagem escolhida — sem precisar gerar uma a uma.
+                </p>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={autoApproach.manual}
+                    onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, manual: !!checked }))}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm">
+                    Mensagem para envio manual
+                    <span className="block text-xs text-muted-foreground">Primeiro contato para copiar ou enviar pelo WhatsApp</span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={autoApproach.meta}
+                    onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, meta: !!checked }))}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm">
+                    Mensagem para campanhas Meta
+                    <span className="block text-xs text-muted-foreground">Follow-up enviado após a resposta ao template aprovado</span>
+                  </span>
+                </label>
+              </div>
+
+
 
               <Button
                 type="submit"

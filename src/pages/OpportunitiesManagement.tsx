@@ -35,6 +35,8 @@ import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProf
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { AutoApproachPrefs, EMPTY_AUTO_APPROACH, readAutoApproachPrefs, clearAutoApproachPrefs } from "@/lib/autoApproachPrefs";
+
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { buildTourDemoLead } from "@/lib/tourDemoLead";
 import { buildTourFillerLeads } from "@/lib/tourDemoCockpit";
@@ -128,7 +130,13 @@ export default function OpportunitiesManagement() {
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchTotal, setBatchTotal] = useState(0);
   const [batchCurrentName, setBatchCurrentName] = useState("");
+  // Etapa 2 (opcional): geração automática da abordagem com IA
+  const [batchStage, setBatchStage] = useState<"scoring" | "approach">("scoring");
+  const [approachProgress, setApproachProgress] = useState(0);
+  const [approachTotal, setApproachTotal] = useState(0);
+  const [autoApproachPrefs, setAutoApproachPrefs] = useState<AutoApproachPrefs>({ ...EMPTY_AUTO_APPROACH });
   const [showFilters, setShowFilters] = useState(false);
+
 
   // Diagnostic editing state
   const [editingDiagnostic, setEditingDiagnostic] = useState(false);
@@ -304,10 +312,58 @@ export default function OpportunitiesManagement() {
   }, [user?.id]);
 
 
+  // Gera a abordagem com IA sem toasts (usada na etapa automática pós-diagnóstico)
+  const generateApproachForLead = async (lead: OpportunityLead, mode: "manual" | "meta") => {
+    const fnName = mode === "manual" ? "approach-lead-manual" : "approach-lead";
+    const { data, error } = await supabase.functions.invoke(fnName, { body: { lead_id: lead.id } });
+    if (error || !data?.mensagem) return false;
+
+    setLeads(prev => prev.map(l => {
+      if (l.id !== lead.id) return l;
+      if (mode === "manual") {
+        return {
+          ...l,
+          enrichment_data: {
+            ...(l.enrichment_data || {}),
+            manual_approach: {
+              message: data.mensagem,
+              estrategia: data.estrategia,
+              gancho: data.gancho,
+              insight: data.insight,
+              generated_at: new Date().toISOString(),
+            },
+          },
+        };
+      }
+      return {
+        ...l,
+        ai_approach_message: data.mensagem,
+        enrichment_data: {
+          ...(l.enrichment_data || {}),
+          approach_analysis: {
+            analise_nicho: data.analise_nicho,
+            analise_cidade: data.analise_cidade,
+            pontos_fracos: data.pontos_fracos,
+            estrategia: data.estrategia,
+          },
+        },
+      };
+    }));
+    return true;
+  };
+
   const batchScoreLeads = async (unscoredLeads: OpportunityLead[]) => {
+
+    const prefs = publicDemo ? { ...EMPTY_AUTO_APPROACH } : readAutoApproachPrefs();
+    setAutoApproachPrefs(prefs);
+    setBatchStage("scoring");
+    setApproachProgress(0);
+    setApproachTotal((prefs.manual ? unscoredLeads.length : 0) + (prefs.meta ? unscoredLeads.length : 0));
     setBatchScoring(true);
     setBatchTotal(unscoredLeads.length);
     setBatchProgress(0);
+    const scoredOk: OpportunityLead[] = [];
+
 
     for (let i = 0; i < unscoredLeads.length; i++) {
       const lead = unscoredLeads[i];
@@ -332,6 +388,7 @@ export default function OpportunitiesManagement() {
           },
         });
         if (!error && data) {
+          scoredOk.push(lead);
           setLeads(prev => prev.map(l => l.id === lead.id ? {
             ...l,
             ai_score: data.score,
@@ -357,9 +414,41 @@ export default function OpportunitiesManagement() {
       }
     }
 
-    setBatchScoring(false);
     toast({ title: "Qualificação concluída!", description: `${unscoredLeads.length} lead(s) analisados com IA` });
+
+    // Etapa 2 — abordagem gerada automaticamente conforme a escolha feita na busca
+    if ((prefs.manual || prefs.meta) && scoredOk.length > 0) {
+      setBatchStage("approach");
+      setApproachTotal((prefs.manual ? scoredOk.length : 0) + (prefs.meta ? scoredOk.length : 0));
+      let done = 0;
+      let generated = 0;
+      for (const lead of scoredOk) {
+        const modes: ("manual" | "meta")[] = [];
+        if (prefs.manual) modes.push("manual");
+        if (prefs.meta) modes.push("meta");
+        for (const mode of modes) {
+          setBatchCurrentName(`${lead.company_name || "Lead"} · ${mode === "manual" ? "envio manual" : "campanha Meta"}`);
+          try {
+            const ok = await generateApproachForLead(lead, mode);
+            if (ok) generated += 1;
+          } catch (err) {
+            console.error(`Approach error for ${lead.company_name}:`, err);
+          }
+          done += 1;
+          setApproachProgress(done);
+        }
+      }
+      toast({
+        title: "Abordagens geradas!",
+        description: `${generated} mensagem(ns) criadas automaticamente com IA`,
+      });
+    }
+
+    clearAutoApproachPrefs();
+    setBatchStage("scoring");
+    setBatchScoring(false);
   };
+
 
   const scoreLead = async (lead: OpportunityLead) => {
     setScoringLeadId(lead.id);
@@ -1486,25 +1575,53 @@ export default function OpportunitiesManagement() {
                 />
               )}
 
-              {/* Batch scoring progress */}
+              {/* Batch progress — Etapa 1: diagnóstico · Etapa 2: abordagem com IA */}
               {batchScoring && (
                 <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3 animate-in fade-in">
+                  {(autoApproachPrefs.manual || autoApproachPrefs.meta) && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className={`px-2 py-0.5 rounded-full border ${batchStage === "scoring" ? "border-primary/40 bg-primary/10 text-primary font-medium" : "border-border/60 text-muted-foreground"}`}>
+                        1 · Diagnóstico
+                      </span>
+                      <span className="text-muted-foreground/50">→</span>
+                      <span className={`px-2 py-0.5 rounded-full border ${batchStage === "approach" ? "border-primary/40 bg-primary/10 text-primary font-medium" : "border-border/60 text-muted-foreground"}`}>
+                        2 · Abordagem com IA
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Loader2 size={16} className="animate-spin text-primary" />
-                      <span className="text-sm font-medium">Analisando leads com IA...</span>
+                      <span className="text-sm font-medium">
+                        {batchStage === "approach" ? "Gerando abordagens com IA..." : "Analisando leads com IA..."}
+                      </span>
                     </div>
-                    <span className="text-sm text-muted-foreground">{batchProgress}/{batchTotal}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {batchStage === "approach" ? `${approachProgress}/${approachTotal}` : `${batchProgress}/${batchTotal}`}
+                    </span>
                   </div>
-                  <Progress value={(batchProgress / batchTotal) * 100} className="h-2" />
+                  <Progress
+                    value={
+                      batchStage === "approach"
+                        ? (approachTotal ? (approachProgress / approachTotal) * 100 : 0)
+                        : (batchTotal ? (batchProgress / batchTotal) * 100 : 0)
+                    }
+                    className="h-2"
+                  />
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">Qualificando: {batchCurrentName}</p>
                     <p className="text-xs text-muted-foreground">
-                      ⏱ Tempo médio: ~{Math.max(1, Math.ceil((batchTotal - batchProgress) * 12 / 60))} min restante{Math.ceil((batchTotal - batchProgress) * 12 / 60) !== 1 ? 's' : ''}
+                      {batchStage === "approach" ? "Escrevendo: " : "Qualificando: "}{batchCurrentName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {batchStage === "approach"
+                        ? `⏱ ~${Math.max(1, Math.ceil((approachTotal - approachProgress) * 10 / 60))} min restantes`
+                        : `⏱ Tempo médio: ~${Math.max(1, Math.ceil((batchTotal - batchProgress) * 12 / 60))} min restante${Math.ceil((batchTotal - batchProgress) * 12 / 60) !== 1 ? 's' : ''}`}
                     </p>
                   </div>
                 </div>
               )}
+
 
               {/* KPI Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
