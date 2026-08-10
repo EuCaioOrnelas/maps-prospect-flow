@@ -67,6 +67,7 @@ const PLANS = [
   {
     key: "growth",
     name: "Growth IA",
+    icon: TrendingUp,
     monthly: 696,
     opportunities: "3.000",
     usageLabel: "Até 10.000 contatos no CRM",
