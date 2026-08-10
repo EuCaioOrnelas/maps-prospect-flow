@@ -269,11 +269,12 @@ Deno.serve(async (req) => {
     // ou agendado, o SDR não responde para não duplicar mensagens no mesmo contato.
     // Campanhas apenas com template aprovado não marcam follow-up e não bloqueiam nada.
     if (trigger_type === "inbound") {
-      const { data: campaignLead } = await backend
+      const { data: campaignLead } = await supabase
         .from("leads")
         .select("id, follow_up_status")
-        .eq("owner_user_id", owner_user_id)
+        .or(`owner_user_id.eq.${owner_user_id},user_id.eq.${owner_user_id}`)
         .ilike("phone", `%${tail}`)
+
         .in("follow_up_status", ["pending", "scheduled"])
         .limit(1)
         .maybeSingle();
