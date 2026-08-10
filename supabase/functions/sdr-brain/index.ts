@@ -637,17 +637,17 @@ ${historyText}`;
       written.proxima_acao = "aguardar";
     }
 
-    const meetingAlreadyConfirmed = history.some((item) =>
-      item.role === "assistant" && /(?:reuni[aã]o|demonstra[cç][aã]o).*(?:confirmad|agendad)/i.test(item.content)
-    );
-    if (agent.situations?.preco === "nunca_sem_reuniao" && !meetingAlreadyConfirmed) {
+    // Regra fixa: com "nunca falar preço sem reunião", o SDR NUNCA informa valores.
+    // Quando a reunião é confirmada o objetivo está concluído e a conversa sai do SDR.
+    if (agent.situations?.preco === "nunca_sem_reuniao") {
       const disclosedPrice = messages.some((text) => /(?:R\$\s*\d|\b\d+(?:[.,]\d{2})?\s*(?:reais|por m[eê]s|\/m[eê]s))/i.test(text));
       if (disclosedPrice) {
-        console.error("[sdr-brain] blocked price disclosure before confirmed meeting");
+        console.error("[sdr-brain] blocked price disclosure (nunca_sem_reuniao)");
         messages = [];
         written.proxima_acao = "aguardar";
       }
     }
+
     const detectedObjections = Array.isArray(analysis?.memoria?.objecoes)
       ? analysis.memoria.objecoes.filter((item: unknown) => typeof item === "string" && item.trim())
       : [];
