@@ -565,11 +565,13 @@ Deno.serve(async (req) => {
     }
 
     // -------- DEFAULT: return URL + token + connections list --------
-    const { data: connections } = await admin
+    const { data: connections, error: connsErr } = await admin
       .from("user_waba_connections")
       .select("id, waba_id, phone_number_id, display_phone_number, business_name, status, webhook_verified_at")
-      .eq("user_id", userId)
+      .or(`owner_user_id.eq.${ownerId},user_id.eq.${ownerId}`)
       .order("created_at", { ascending: true });
+    if (connsErr) console.error("[meta-webhook-config] list error", connsErr);
+
 
     return json({
       callback_url: CALLBACK_URL,
