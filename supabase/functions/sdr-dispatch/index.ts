@@ -327,10 +327,13 @@ Deno.serve(async (req) => {
           followup_reason: "outside_business_hours",
           last_reply_at: new Date().toISOString(),
         }).eq("id", session.id);
+        console.log(`[sdr-dispatch] fora do horário — resposta agendada para ${resumeAt} (${contact_phone})`);
         return json({ queued: true, resume_at: resumeAt, sent: 0 });
       }
+      console.log(`[sdr-dispatch] fora do horário configurado e sem fila — ${contact_phone}`);
       return json({ skipped: "fora do horário configurado", sent: 0 });
     }
+
 
     if (trigger_type === "inbound" && activation.includes("first_only") && (session?.replies_received ?? 0) > 0) {
       return json({ skipped: "gatilho configurado apenas para o primeiro contato" });
