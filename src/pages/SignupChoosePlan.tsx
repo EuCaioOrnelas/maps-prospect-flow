@@ -444,8 +444,8 @@ export default function SignupChoosePlan() {
 
 function Step({ num, title, desc }: { num: string; title: string; desc: string }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 text-primary font-semibold text-sm">
+    <div className="group flex items-start gap-3">
+      <div className="w-9 h-9 rounded-card bg-primary shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center shrink-0 text-primary-foreground font-display font-bold text-sm transition-all duration-300 group-hover:scale-110">
         {num}
       </div>
       <div>
