@@ -166,11 +166,77 @@ function SignupWithCardInner() {
   const [loading, setLoading] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
 
+  // --- 3D Secure ---------------------------------------------------------
+  // authStage: idle → authenticating (desafio do banco aberto) → authenticated
+  const [authStage, setAuthStage] = useState<"idle" | "authenticating" | "authenticated">("idle");
+  const [pendingSetup, setPendingSetup] = useState<PendingSetup | null>(null);
+  const [resumed, setResumed] = useState(false);
+
   useEffect(() => {
     if (!sessionStorage.getItem("trial_plan_chosen")) {
       navigate("/signup/escolher-plano", { replace: true });
     }
   }, [navigate]);
+
+  // Retomada: se o usuário saiu para o app do banco (ou recarregou a página),
+  // recupera os dados preenchidos e o status do 3DS para continuar do mesmo ponto.
+  useEffect(() => {
+    const rawDraft = localStorage.getItem(DRAFT_KEY);
+    if (rawDraft) {
+      try {
+        const d = JSON.parse(rawDraft);
+        setName(d.name || "");
+        setEmail(d.email || "");
+        setTaxId(d.taxId || "");
+        setPhone(d.phone || "");
+        setPostalCode(d.postalCode || "");
+        setAddress(d.address || "");
+        setAddressNumber(d.addressNumber || "");
+        setAddressComplement(d.addressComplement || "");
+        setNeighborhood(d.neighborhood || "");
+        setCity(d.city || "");
+        setState(d.state || "");
+        setCardHolder(d.cardHolder || "");
+        setAcceptedTerms(!!d.acceptedTerms);
+      } catch {
+        /* draft corrompido — ignora */
+      }
+    }
+
+    const rawPending = localStorage.getItem(PENDING_KEY);
+    if (!rawPending) return;
+    let pending: PendingSetup;
+    try {
+      pending = JSON.parse(rawPending);
+    } catch {
+      localStorage.removeItem(PENDING_KEY);
+      return;
+    }
+
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("create-stripe-trial", {
+        body: { action: "status", setupIntentId: pending.setupIntentId },
+      });
+      if (error || data?.error) {
+        localStorage.removeItem(PENDING_KEY);
+        return;
+      }
+      if (data.authenticated) {
+        setPendingSetup(pending);
+        setAuthStage("authenticated");
+        setStep(2);
+        setResumed(true);
+      } else if (data.requiresAction) {
+        setPendingSetup(pending);
+        setStep(2);
+        setResumed(true);
+      } else {
+        localStorage.removeItem(PENDING_KEY);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   useEffect(() => {
     if (user) navigate("/dashboard", { replace: true });
