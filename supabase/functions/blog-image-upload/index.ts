@@ -90,8 +90,14 @@ Deno.serve(async (req) => {
       return json({ error: upErr.message }, 500);
     }
 
-    const { data } = supa.storage.from(BUCKET).getPublicUrl(path);
-    return json({ url: data.publicUrl, path });
+    // Bucket privado (política do workspace bloqueia buckets públicos):
+    // devolvemos uma URL assinada de longa duração (10 anos).
+    const TTL = 60 * 60 * 24 * 365 * 10;
+    const { data, error: signErr } = await supa.storage.from(BUCKET).createSignedUrl(path, TTL);
+    if (signErr || !data?.signedUrl) {
+      return json({ error: signErr?.message || "Não foi possível gerar a URL da imagem." }, 500);
+    }
+    return json({ url: data.signedUrl, path });
   } catch (e) {
     console.error("[blog-image-upload] error", e);
     return json({ error: e instanceof Error ? e.message : "unknown" }, 500);
