@@ -379,13 +379,19 @@ Deno.serve(async (req) => {
         }));
     }
 
-    // 4) Contexto do lead no CRM
-    let leadContext: Record<string, unknown> = { phone: contact_phone, name: contact_name };
+    // 4) Contexto consolidado do lead no CRM e na análise comercial.
+    // Use only real columns: the previous query requested name/stage/notes/score,
+    // which do not exist in leads and silently discarded all researched context.
+    let leadContext: Record<string, unknown> = {
+      phone: contact_phone,
+      contact_name: contact_name || null,
+      whatsapp_profile_name: contact_name || null,
+    };
     try {
       const { data: lead } = await supabase
         .from("leads")
-        .select("id, name, company_name, stage, whatsapp_status, notes, score")
-        .eq("user_id", user_id || owner_user_id)
+        .select("id, contact_name, company_name, email, category, city, region, website, origin, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, enrichment_data, whatsapp_status, pipeline_stage_id, responsible_user_id")
+        .or(`owner_user_id.eq.${owner_user_id},user_id.eq.${owner_user_id}`)
         .ilike("phone", `%${tail}`)
         .limit(1)
         .maybeSingle();
@@ -395,7 +401,17 @@ Deno.serve(async (req) => {
           await supabase.from("sdr_sessions").update({ lead_id: lead.id }).eq("id", session.id);
         }
       }
-    } catch (_) { /* contexto é opcional */ }
+      const { data: revenueLead } = await supabase
+        .from("revenue_leads")
+        .select("name, status_bucket, score_total, score_intent, score_engagement, score_urgency, score_risk, last_intent_category, last_intent_subtype, risk_state, risk_reason, tags, notes, estimated_ticket_value, responsible_user_id")
+        .eq("owner_user_id", owner_user_id)
+        .or(`phone_e164.ilike.%${tail}`)
+        .limit(1)
+        .maybeSingle();
+      if (revenueLead) leadContext = { ...leadContext, revenue_analysis: revenueLead };
+    } catch (contextError) {
+      console.error("[sdr-dispatch] falha ao carregar contexto comercial:", contextError);
+    }
 
     // 5) Cérebro (9 camadas)
     const brainRes = await fetch(`${SUPABASE_URL}/functions/v1/sdr-brain`, {
