@@ -819,20 +819,44 @@ function SignupWithCardInner() {
                   </div>
 
                   <form onSubmit={handleSubmit} className="space-y-5">
-                    <StripeCardForm
-                      ref={cardFormRef}
-                      cardHolder={cardHolder}
-                      onCardHolderChange={setCardHolder}
-                      onCardChange={(d) => setCardBrand(d.brand || "")}
-                      onCvcFocus={() => setCardFlipped(true)}
-                      onCvcBlur={() => setCardFlipped(false)}
-                      disabled={loading}
-                    />
+                    {resumed && pendingSetup && (
+                      <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs flex items-start gap-2">
+                        <ShieldCheck size={14} className="text-primary shrink-0 mt-0.5" />
+                        <p className="text-muted-foreground">
+                          {authStage === "authenticated" ? (
+                            <>
+                              <strong className="text-foreground">Cartão autenticado no seu banco.</strong> Seus dados
+                              foram recuperados — é só confirmar abaixo para ativar os 7 dias grátis.
+                            </>
+                          ) : (
+                            <>
+                              <strong className="text-foreground">Autenticação pendente.</strong> Retomamos seu
+                              cadastro. Clique em ativar para concluir a aprovação do cartão com o seu banco.
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    )}
+
+                    {authStage !== "authenticated" && (
+                      <StripeCardForm
+                        ref={cardFormRef}
+                        cardHolder={cardHolder}
+                        onCardHolderChange={setCardHolder}
+                        onCardChange={(d) => setCardBrand(d.brand || "")}
+                        onCvcFocus={() => setCardFlipped(true)}
+                        onCvcBlur={() => setCardFlipped(false)}
+                        disabled={loading || !!pendingSetup}
+                      />
+                    )}
 
                     <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted-foreground flex items-start gap-2">
                       <ShieldCheck size={14} className="text-primary shrink-0 mt-0.5" />
                       <p>
-                        Pagamento processado via <strong className="text-foreground">Stripe</strong> com criptografia PCI-DSS. Não armazenamos dados do cartão.
+                        Pagamento processado via <strong className="text-foreground">Stripe</strong> com criptografia
+                        PCI-DSS e autenticação <strong className="text-foreground">3D Secure</strong> do seu banco. Não
+                        armazenamos dados do cartão. Se o seu banco pedir aprovação no app, você pode sair e voltar —
+                        retomamos o cadastro do mesmo ponto.
                       </p>
                     </div>
 
@@ -855,15 +879,20 @@ function SignupWithCardInner() {
                       {loading ? (
                         <>
                           <Loader2 className="animate-spin mr-2" size={18} />
-                          Ativando seu trial...
+                          {authStage === "authenticating"
+                            ? "Aguardando aprovação do seu banco..."
+                            : "Ativando seu trial..."}
                         </>
                       ) : (
                         <>
                           <Sparkles size={16} className="mr-2" />
-                          Ativar meus 7 dias grátis
+                          {authStage === "authenticated" && pendingSetup
+                            ? "Concluir cadastro"
+                            : "Ativar meus 7 dias grátis"}
                         </>
                       )}
                     </Button>
+
                     <p className="text-center text-xs text-muted-foreground inline-flex items-center gap-1.5 justify-center w-full">
                       <Lock size={11} /> R$ 0,00 hoje · Cancele quando quiser, em 1 clique
                     </p>
