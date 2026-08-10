@@ -232,6 +232,7 @@ Deno.serve(async (req) => {
     }
 
 
+    let webhookVerifiedAt: string | null = null;
     try {
       const subscribeRes = await fetch(`https://graph.facebook.com/v21.0/${wabaId}/subscribed_apps`, {
         method: "POST",
@@ -240,9 +241,19 @@ Deno.serve(async (req) => {
       });
       const subscribeData = await subscribeRes.json();
       console.log("[meta-embedded-signup] Webhook subscription:", JSON.stringify(subscribeData));
+      if (subscribeRes.ok && subscribeData?.success === true) {
+        webhookVerifiedAt = new Date().toISOString();
+      } else {
+        console.error("[meta-embedded-signup] Subscription was not confirmed; connection remains pending");
+      }
     } catch (e) {
       console.error("[meta-embedded-signup] Webhook subscription error:", e);
     }
+
+    await supabase
+      .from("user_waba_connections")
+      .update({ webhook_verified_at: webhookVerifiedAt })
+      .eq("id", connection.id);
 
     console.log("[meta-embedded-signup] ✅ Connection saved successfully");
 
@@ -256,6 +267,7 @@ Deno.serve(async (req) => {
         business_name: connection.business_name,
         access_token: connection.access_token,
         status: connection.status,
+        webhook_verified_at: webhookVerifiedAt,
         nickname: connection.nickname,
       },
       redirect_uri_used: redirectUriUsed,

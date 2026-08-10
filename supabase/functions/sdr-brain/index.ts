@@ -549,6 +549,7 @@ Recusa clara, opt-out ou desinteresse prevalecem sobre insistência, objetivo e 
 Responda SEMPRE em JSON válido com o formato:
 {
  "memoria": {"fatos": [string], "promessas": [string], "objecoes": [string]},
+ "identidade": {"nome": string|null, "cargo": string|null, "e_decisor": boolean|null, "decisor_nome": string|null},
  "intencao": string,
  "sentimento": "positivo|neutro|negativo",
  "dor": string,
@@ -570,6 +571,14 @@ Regras do campo "agendamento":
  - "opcoes_iso" traz exatamente 2 horários da lista de horários livres quando for o momento de oferecer (vazio se não for o momento; 1 apenas quando só houver uma janela livre).
 - "confirmado" só é true quando o lead escolheu explicitamente um horário; nesse caso "inicio_iso" precisa ser EXATAMENTE um iso da lista de horários livres.
 - Se o horário desejado pelo lead não estiver na lista, "confirmado" = false e "inicio_iso" = null.
+
+REGRAS DE CONTEXTO E DECISOR:
+- Trate whatsapp_profile_name/contact_name como pista de nome. Se houver um nome confiável, use-o naturalmente e NÃO pergunte de novo. Se não houver, descubra o nome antes de aprofundar a qualificação.
+- Leia integralmente CONTEXTO DO LEAD, revenue_analysis, ai_diagnosis, ai_recommended_action, enrichment_data, MEMÓRIA e HISTÓRICO. Um dado já conhecido deve ser confirmado com uma frase curta quando necessário, nunca perguntado novamente como se fosse desconhecido.
+- Separe fatos pesquisados de fatos confirmados pelo contato. Confirme somente dados relevantes ou incertos e avance para uma informação nova.
+- Descubra de forma respeitosa se o contato é dono, responsável pela área, influenciador ou intermediário. Para venda B2B, priorize conversar com o dono ou responsável pela decisão.
+- Se o contato não for o decisor ou disser que ele está indisponível, não confronte nem presuma mentira. Peça o nome/cargo do responsável e uma apresentação, encaminhamento ou melhor horário para falar. Ofereça duas alternativas simples de continuidade.
+- Nunca finja conhecer alguém, invente indicação, esconda sua identidade, pressione recepcionistas ou tente contornar controles de acesso. Persistência comercial deve ser transparente e respeitar recusa/opt-out.
 }`;
     const analysisUser = `CONFIGURAÇÃO DO SDR:
 ${brief}
@@ -608,6 +617,9 @@ Regras absolutas:
 - Faça no máximo UMA pergunta por resposta.
 - Siga o micro-objetivo e o passo do funil definidos pela análise, sem forçar a venda nem pular etapas.
 - Personalize com fatos reais do lead e do negócio cadastrado. Demonstre expertise conectando a dor ao impacto e ao produto ideal; não despeje catálogo nem use elogios genéricos.
+- Use o nome conhecido com moderação. Se o nome estiver ausente, pergunte-o antes da primeira pergunta diagnóstica; não faça duas perguntas na mesma resposta.
+- Não repita perguntas respondidas no histórico, na memória ou na análise comercial. Confirme brevemente fatos pesquisados quando necessário e pergunte apenas o próximo dado ainda desconhecido.
+- Busque o dono ou responsável pela decisão com transparência: se estiver falando com um intermediário, peça encaminhamento, apresentação ou melhor horário. Nunca use pretexto falso, manipulação ou alegação inventada para furar um bloqueio.
 - Use no máximo um gatilho mental por resposta e somente se sustentado por informação real no contexto. Nunca fabrique urgência, escassez, autoridade, economia ou prova social.
 - Em follow-ups, retome explicitamente o ponto onde a conversa parou.
 - Toda pergunta que avance a conversa deve ser fechada e conter duas alternativas úteis, naturais e verdadeiras (A ou B). Para agenda, use exatamente duas janelas presentes na AGENDA REAL. Nunca invente alternativa.
@@ -616,6 +628,9 @@ Regras absolutas:
 Responda SEMPRE em JSON: {"mensagens": [string], "proxima_acao": string, "justificativa": string}`;
     const writerUser = `CONFIGURAÇÃO DO SDR:
 ${brief}
+
+CONTEXTO E DADOS JÁ CONHECIDOS DO LEAD:
+${JSON.stringify({ ...leadContext, memoria: session?.memory ?? {} })}
 
 ANÁLISE E ESTRATÉGIA:
 ${JSON.stringify(analysis)}
@@ -643,13 +658,16 @@ Escreva a sequência de mensagens.`;
 
     // ---------- CAMADA 8: Validação / Autocrítica ----------
     const validatorSystem = `Você é um revisor crítico de mensagens de vendas no WhatsApp.
-Checklist: respondeu o lead? avançou a negociação? manteve contexto? objetivo continua vivo? soa humano? mensagens curtas? educada? não insistiu demais? criou valor? conectou dor ao produto certo sem inventar? toda pergunta de avanço tem exatamente duas alternativas reais? horários vieram da agenda? gatilho comercial tem fundamento explícito? respeitou eventual recusa? tem próximo passo?
+Checklist: respondeu o lead? avançou a negociação? manteve contexto? usou o nome conhecido sem perguntar novamente? evitou perguntar fatos já presentes na análise/memória/histórico? identificou ou avançou respeitosamente até o decisor? objetivo continua vivo? soa humano? mensagens curtas? educada? não insistiu demais? criou valor? conectou dor ao produto certo sem inventar? toda pergunta de avanço tem exatamente duas alternativas reais? horários vieram da agenda? gatilho comercial tem fundamento explícito? respeitou eventual recusa? tem próximo passo?
 Se reprovar em qualquer item, reescreva.
 Responda SEMPRE em JSON: {"aprovado": boolean, "checklist": {"[item]": boolean}, "mensagens_finais": [string], "motivo": string}`;
     const validatorUser = `CONFIGURAÇÃO:
 ${brief}
 
 MICRO-OBJETIVO: ${analysis.micro_objetivo ?? "-"}
+
+CONTEXTO E DADOS JÁ CONHECIDOS DO LEAD:
+${JSON.stringify({ ...leadContext, memoria: session?.memory ?? {} })}
 
 MENSAGENS PROPOSTAS:
 ${JSON.stringify(messages)}
@@ -972,7 +990,25 @@ ${historyText}`;
             stage: analysis.proximo_passo ?? analysis.passo_atual ?? analysis.estagio ?? session.stage,
             current_goal: analysis.micro_objetivo ?? session.current_goal,
             memory: {
-              ...(analysis.memoria ?? session.memory ?? {}),
+              ...(session.memory ?? {}),
+              fatos: Array.from(new Set([
+                ...(Array.isArray(session.memory?.fatos) ? session.memory.fatos : []),
+                ...(Array.isArray(analysis.memoria?.fatos) ? analysis.memoria.fatos : []),
+              ])),
+              promessas: Array.from(new Set([
+                ...(Array.isArray(session.memory?.promessas) ? session.memory.promessas : []),
+                ...(Array.isArray(analysis.memoria?.promessas) ? analysis.memoria.promessas : []),
+              ])),
+              objecoes: Array.from(new Set([
+                ...(Array.isArray(session.memory?.objecoes) ? session.memory.objecoes : []),
+                ...(Array.isArray(analysis.memoria?.objecoes) ? analysis.memoria.objecoes : []),
+              ])),
+              identidade: {
+                ...(session.memory?.identidade ?? {}),
+                ...Object.fromEntries(
+                  Object.entries(analysis.identidade ?? {}).filter(([, value]) => value !== null && value !== ""),
+                ),
+              },
               ...(objectiveDone && agent.objective === "proposta" && proposalFile?.path
                 ? { proposal_sent: true }
                 : {}),

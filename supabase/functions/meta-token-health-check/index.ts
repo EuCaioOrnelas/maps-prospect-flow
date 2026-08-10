@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
 
   const { data: connections, error } = await supabase
     .from("user_waba_connections")
-    .select("id, user_id, access_token, token_expires_at, display_phone_number, business_name, status")
+    .select("id, user_id, waba_id, access_token, token_expires_at, display_phone_number, business_name, status")
     .neq("status", "disconnected");
 
   if (error) {
@@ -69,7 +69,29 @@ Deno.serve(async (req) => {
       );
       const body = await res.json().catch(() => ({} as any));
       if (res.ok && body?.id) {
-        // OK — valid token, do nothing
+        // Token is valid. Also repair the WABA webhook subscription; token health
+        // and subscribed_apps are independent states.
+        if (conn.waba_id) {
+          const subscriptionRes = await fetch(
+            `https://graph.facebook.com/v21.0/${conn.waba_id}/subscribed_apps`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                access_token: conn.access_token,
+                subscribed_fields: ["messages", "message_template_status_update", "phone_number_name_update", "phone_number_quality_update"],
+              }),
+            },
+          );
+          if (subscriptionRes.ok) {
+            await supabase.from("user_waba_connections")
+              .update({ webhook_verified_at: new Date().toISOString() })
+              .eq("id", conn.id);
+          } else {
+            const subscriptionBody = await subscriptionRes.text();
+            console.warn(`[health-check] conn ${conn.id} subscription repair failed (${subscriptionRes.status}): ${subscriptionBody}`);
+          }
+        }
       } else {
         const err = body?.error;
         const code = err?.code;

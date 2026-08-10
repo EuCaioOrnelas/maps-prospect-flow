@@ -560,15 +560,44 @@ Deno.serve(async (req) => {
       });
     }
 
-    // -------- DEFAULT: return URL + token + connections list --------
-    const { data: connections, error: connsErr } = await admin
+    // -------- DEFAULT: validate/repair the live WABA subscription before returning --------
+    // webhook_verified_at is historical evidence, not current state. A WABA may be
+    // unsubscribed later while the timestamp remains populated, producing a false
+    // "configured" status until the user manually clicks Revalidate.
+    const { data: rawConnections, error: connsErr } = await admin
       .from("user_waba_connections")
-      .select("id, waba_id, phone_number_id, display_phone_number, business_name, status, webhook_verified_at")
+      .select("id, waba_id, phone_number_id, display_phone_number, business_name, status, webhook_verified_at, access_token")
       .or(`owner_user_id.eq.${ownerId},user_id.eq.${ownerId}`)
       .eq("status", "active")
       .order("created_at", { ascending: true });
     if (connsErr) console.error("[meta-webhook-config] list error", connsErr);
 
+    const connections = await Promise.all((rawConnections ?? []).map(async (conn: any) => {
+      let liveVerified = false;
+      if (conn.access_token && conn.waba_id) {
+        // This is idempotent. It both checks and self-heals the same WABA
+        // subscription that the manual Revalidate action installs.
+        let subscribe = await graphRequest(`${conn.waba_id}/subscribed_apps`, conn.access_token, {
+          method: "POST",
+          body: { subscribed_fields: REQUIRED_EVENTS },
+        });
+        if (!subscribe.ok) {
+          const fallback = await graphRequest(`${conn.waba_id}/subscribed_apps`, conn.access_token, { method: "POST" });
+          if (fallback.ok) subscribe = fallback;
+        }
+        liveVerified = subscribe.ok;
+      }
+
+      if (liveVerified) {
+        const verifiedAt = new Date().toISOString();
+        await admin.from("user_waba_connections").update({ webhook_verified_at: verifiedAt }).eq("id", conn.id);
+        return { ...conn, webhook_verified_at: verifiedAt, access_token: undefined };
+      }
+
+      // A definitive failed repair must not keep displaying an old green state.
+      await admin.from("user_waba_connections").update({ webhook_verified_at: null }).eq("id", conn.id);
+      return { ...conn, webhook_verified_at: null, access_token: undefined };
+    }));
 
     return json({
       callback_url: CALLBACK_URL,
