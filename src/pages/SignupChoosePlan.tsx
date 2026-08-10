@@ -22,6 +22,12 @@ import {
 } from "lucide-react";
 
 import { SEO } from "@/components/SEO";
+import { motion } from "framer-motion";
+import avatar1 from "@/assets/avatars/avatar1.jpg";
+import avatar2 from "@/assets/avatars/avatar2.jpg";
+import avatar3 from "@/assets/avatars/avatar3.jpg";
+import avatar4 from "@/assets/avatars/avatar4.jpg";
+import { Headphones } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Collapsible,
