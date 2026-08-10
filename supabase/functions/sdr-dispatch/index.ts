@@ -203,7 +203,11 @@ Deno.serve(async (req) => {
     const agent = (agents || []).find((a: any) =>
       (a.whatsapp_number_ids || []).includes(waba_connection_id)
     );
-    if (!agent) return json({ skipped: "nenhum SDR ativo para este número" });
+    if (!agent) {
+      console.log(`[sdr-dispatch] nenhum SDR ativo vinculado à conexão ${waba_connection_id}`);
+      return json({ skipped: "nenhum SDR ativo para este número" });
+    }
+
 
     const tail = String(contact_phone).replace(/\D/g, "").slice(-8);
     if (trigger_type === "inbound" && isOptOutMessage(inboundMessage)) {
