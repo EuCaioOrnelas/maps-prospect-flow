@@ -1137,6 +1137,20 @@ serve(async (req) => {
       }
 
 
+      // Cobrança do 8º dia caiu em desafio 3DS off-session: o Stripe envia a
+      // notificação de autenticação ao cliente e a fatura fica aberta.
+      case "invoice.payment_action_required": {
+        const invoice = event.data.object as Stripe.Invoice;
+        logStep("Invoice requires 3DS authentication", {
+          invoiceId: invoice.id,
+          subscriptionId: invoice.subscription,
+          customerEmail: invoice.customer_email,
+          hostedInvoiceUrl: invoice.hosted_invoice_url,
+        });
+        break;
+      }
+
+
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
         logStep("Invoice payment failed - revoking bumps from subscription", { 
