@@ -327,6 +327,16 @@ export function ContactDetailsPanel({
             )}
           </div>
 
+          {/* Status do SDR Inteligente */}
+          <div className="px-3 pt-3">
+            <SDRStatusBanner
+              phone={conversation.contact_phone}
+              accountOwnerId={accountOwnerId}
+              compact
+            />
+          </div>
+
+
           {/* Tabs */}
           <Tabs defaultValue="geral" className="px-3 pt-3">
             <TabsList className="w-full grid grid-cols-4 h-9">
