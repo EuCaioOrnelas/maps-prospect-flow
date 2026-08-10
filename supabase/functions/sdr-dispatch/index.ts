@@ -331,10 +331,23 @@ Deno.serve(async (req) => {
       return json({ skipped: "gatilho configurado apenas para o primeiro contato" });
     }
 
-    // Interrompe se o lead pediu para parar ou já foi encerrado
+    // Interrompe se o lead pediu para parar, se o objetivo já foi concluído ou se já foi encerrado.
+    // Exceção: SDR de recuperação pode reabrir conversas encerradas sem recusa explícita.
     if (session?.status && session.status !== "active") {
-      return json({ skipped: "sessão encerrada" });
+      const reactivable =
+        agent?.objective === "recuperacao" &&
+        session.status === "closed" &&
+        !["explicit_rejection", "lead_refused"].includes(String(session.closed_reason ?? ""));
+      if (!reactivable) {
+        return json({ skipped: "sessão encerrada" });
+      }
+      await supabase
+        .from("sdr_sessions")
+        .update({ status: "active", closed_reason: null })
+        .eq("id", session.id);
+      session.status = "active";
     }
+
 
     // 3) Histórico da conversa
     let history: { role: string; content: string }[] = [];
