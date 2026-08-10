@@ -529,17 +529,13 @@ Deno.serve(async (req) => {
             ? `${firstError.label}: ${firstError.summary}`
             : eventsDetail || "Webhook não validado";
 
-      // Só marca como verificado se TUDO estiver ok
+      // Mark successful end-to-end validation. A failed diagnostic must not erase
+      // a previously proven webhook: Graph API reads and callback checks can fail
+      // transiently while deliveries keep working normally.
       if (ok) {
         await admin
           .from("user_waba_connections")
-          .update({ webhook_verified_at: new Date().toISOString() })
-          .eq("id", connectionId);
-      } else {
-        // Limpa marcação anterior — não queremos status "verde" se algo regrediu
-        await admin
-          .from("user_waba_connections")
-          .update({ webhook_verified_at: null })
+          .update({ webhook_verified_at: new Date().toISOString(), status: "active" })
           .eq("id", connectionId);
       }
 
@@ -569,6 +565,7 @@ Deno.serve(async (req) => {
       .from("user_waba_connections")
       .select("id, waba_id, phone_number_id, display_phone_number, business_name, status, webhook_verified_at")
       .or(`owner_user_id.eq.${ownerId},user_id.eq.${ownerId}`)
+      .eq("status", "active")
       .order("created_at", { ascending: true });
     if (connsErr) console.error("[meta-webhook-config] list error", connsErr);
 

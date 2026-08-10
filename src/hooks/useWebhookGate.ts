@@ -21,7 +21,11 @@ export function useWebhookGate() {
     const { data, error } = await supabase.functions.invoke("meta-webhook-config", {
       body: { action: "info" },
     });
-    if (!error && data) setConnections((data as any).connections ?? []);
+    if (!error && data) {
+      const activeConnections = (((data as any).connections ?? []) as WebhookConnection[])
+        .filter((connection) => connection.status === "active");
+      setConnections(activeConnections);
+    }
     setLoading(false);
   }, [user]);
 

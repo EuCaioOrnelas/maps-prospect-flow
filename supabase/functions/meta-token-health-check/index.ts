@@ -75,14 +75,13 @@ Deno.serve(async (req) => {
         const code = err?.code;
         const subcode = err?.error_subcode;
         const type = err?.type;
-        // Treat ONLY genuine OAuth/auth errors as a disconnection.
-        if (code === 190 || type === "OAuthException" || HARD_AUTH_SUBCODES.has(subcode)) {
-          // Even with OAuthException, ignore transient ones (e.g. rate limited subcodes)
-          if (subcode && !HARD_AUTH_SUBCODES.has(subcode) && code !== 190) {
-            console.warn(`[health-check] conn ${conn.id} OAuthException subcode ${subcode} — treating as transient`);
-          } else {
-            isHardAuthFailure = true;
-          }
+        // Disconnect only on Meta's explicit invalid-token code or a documented
+        // hard auth subcode. "OAuthException" by itself is too broad and is also
+        // returned for transient permission/app errors.
+        if (code === 190 || HARD_AUTH_SUBCODES.has(subcode)) {
+          isHardAuthFailure = true;
+        } else if (type === "OAuthException") {
+          console.warn(`[health-check] conn ${conn.id} transient OAuthException (code=${code} subcode=${subcode}) — leaving connected`);
         } else {
           console.warn(`[health-check] conn ${conn.id} non-auth error (code=${code} type=${type}) — leaving connected`);
         }
@@ -108,7 +107,10 @@ Deno.serve(async (req) => {
 });
 
 async function markDisconnected(supabase: any, conn: any, today: string) {
-  await supabase.from("user_waba_connections").update({ status: "disconnected" }).eq("id", conn.id);
+  await supabase
+    .from("user_waba_connections")
+    .update({ status: "disconnected", webhook_verified_at: null })
+    .eq("id", conn.id);
   try {
     await supabase.functions.invoke("send-email", {
       body: {

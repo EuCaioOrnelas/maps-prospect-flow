@@ -431,6 +431,14 @@ Deno.serve(async (req) => {
             }
             if (!wabaConn) {
               console.warn(`[meta-webhook] ⚠️ No active WABA connection for waba=${wabaId} phone_number_id=${phoneNumberId || 'missing'}`);
+            } else {
+              // A signed delivery from Meta is the strongest possible proof that
+              // the callback and WABA subscription are operational. Keep the
+              // persisted gate synchronized and self-heal stale UI state.
+              await supabase
+                .from('user_waba_connections')
+                .update({ status: 'active', webhook_verified_at: new Date().toISOString() })
+                .eq('id', wabaConn.id);
             }
 
             for (const msg of messages) {
