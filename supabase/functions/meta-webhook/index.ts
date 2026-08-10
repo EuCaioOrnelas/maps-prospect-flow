@@ -30,7 +30,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const VERIFY_TOKEN = Deno.env.get('META_WEBHOOK_VERIFY_TOKEN');
+  // Must match meta-webhook-config exactly. Without the same fallback the UI
+  // exposes a token that this endpoint rejects, making Meta fail verification.
+  const VERIFY_TOKEN = Deno.env.get('META_WEBHOOK_VERIFY_TOKEN') ?? 'wiize-meta-webhook-2026';
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -431,6 +433,14 @@ Deno.serve(async (req) => {
             }
             if (!wabaConn) {
               console.warn(`[meta-webhook] ⚠️ No active WABA connection for waba=${wabaId} phone_number_id=${phoneNumberId || 'missing'}`);
+            } else {
+              // A signed delivery from Meta is the strongest possible proof that
+              // the callback and WABA subscription are operational. Keep the
+              // persisted gate synchronized and self-heal stale UI state.
+              await supabase
+                .from('user_waba_connections')
+                .update({ status: 'active', webhook_verified_at: new Date().toISOString() })
+                .eq('id', wabaConn.id);
             }
 
             for (const msg of messages) {
