@@ -127,9 +127,21 @@ export function SDRIntelligenceStep({
       const { data, error } = await supabase.functions.invoke("ai-credentials", {
         body: { action: "save", apiKey: key.trim(), model: nextModel },
       });
-      const message = (data as any)?.error || (error as any)?.message;
       if ((data as any)?.error) throw new Error((data as any).error);
-      if (error) throw new Error(message || "Não foi possível validar a chave.");
+      if (error) {
+        // supabase-js não expõe o corpo em respostas não-2xx; lemos manualmente.
+        let detail = "";
+        try {
+          const res = (error as any)?.context;
+          if (res && typeof res.json === "function") {
+            const body = await res.clone().json();
+            detail = body?.error || "";
+          }
+        } catch {
+          /* corpo não é JSON */
+        }
+        throw new Error(detail || (error as any)?.message || "Não foi possível validar a chave.");
+      }
       setApiKey("");
       toast.success("Chave conectada e validada na OpenAI.");
       await load();
@@ -139,6 +151,7 @@ export function SDRIntelligenceStep({
       setSaving(false);
     }
   };
+
 
   const remove = async () => {
     setSaving(true);
