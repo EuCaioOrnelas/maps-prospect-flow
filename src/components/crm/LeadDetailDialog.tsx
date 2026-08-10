@@ -63,6 +63,8 @@ import { openStorageUrl } from '@/lib/privateStorage';
 import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 import { LeadSalesBlock } from '@/components/crm/LeadSalesBlock';
 import { useAuth } from '@/contexts/AuthContext';
+import { SDRStatusBanner } from '@/components/sdr/SDRStatusBanner';
+
 
 interface LeadDeal {
   id: string;
