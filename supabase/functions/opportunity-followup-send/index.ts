@@ -103,11 +103,14 @@ Deno.serve(async (req) => {
     // Normalize phone (E.164 global, sem "+")
     const phone = formatPhoneForMeta(lead.phone || "");
     if (!phone) {
+      // Libera o bloqueio do SDR: sem telefone válido a campanha não continua.
+      await supabase.from("leads").update({ follow_up_status: "failed" } as any).eq("id", leadId);
       return new Response(JSON.stringify({ success: false, error: "Telefone do lead inválido (E.164)." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
+
 
     const resp = await fetch(
       `https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`,
