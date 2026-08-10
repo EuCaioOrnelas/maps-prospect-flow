@@ -21,6 +21,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { ImageLightbox } from "./ImageLightbox";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
+import { SDRStatusBanner } from "@/components/sdr/SDRStatusBanner";
+
 import type { ChatConversation, ChatMessage } from "@/hooks/useChat";
 
 type Props = {
