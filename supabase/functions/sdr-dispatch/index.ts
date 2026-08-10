@@ -246,15 +246,20 @@ Deno.serve(async (req) => {
       return json({ ok: true, rejected: true, sent: 0 });
     }
 
-    const { data: optedOutSession } = await supabase
+    const { data: blockedSession } = await supabase
       .from("sdr_sessions")
-      .select("id")
+      .select("id, status")
       .eq("agent_id", agent.id)
-      .eq("status", "opted_out")
+      .in("status", ["opted_out", "paused"])
       .ilike("phone", `%${tail}`)
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (optedOutSession) return json({ skipped: "contato descadastrado" });
+    if (blockedSession) {
+      console.log(`[sdr-dispatch] ignorado: sessão ${blockedSession.status} para ${contact_phone}`);
+      return json({ skipped: blockedSession.status === "paused" ? "SDR pausado neste contato" : "contato descadastrado" });
+    }
+
 
     const activation: string[] = Array.isArray(agent.triggers?.activation) ? agent.triggers.activation : ["inbound_all"];
     if (trigger_type === "inbound" && !activation.includes("inbound_all") && !activation.includes("first_only")) {
