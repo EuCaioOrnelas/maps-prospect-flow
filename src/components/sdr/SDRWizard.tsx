@@ -1147,8 +1147,69 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               Esse será o objetivo buscado em todas as conversas e também o critério de sucesso do SDR.
             </p>
           </div>
+
+          {draft.objective === "proposta" && (
+            <div className="space-y-3">
+              <SectionTitle
+                icon={FileText}
+                title="Proposta em PDF"
+                hint="O arquivo fica guardado com segurança e só é enviado ao lead quando o SDR concluir o objetivo."
+              />
+              {draft.closing.proposal_file ? (
+                <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
+                  <span className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <FileText className="h-5 w-5" strokeWidth={1.75} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {draft.closing.proposal_file.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">PDF armazenado com segurança</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => patch("closing", { proposal_file: null })}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <label
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center cursor-pointer transition-colors hover:border-primary/40",
+                    uploadingProposal && "pointer-events-none opacity-60"
+                  )}
+                >
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadProposal(file);
+                      e.target.value = "";
+                    }}
+                  />
+                  {uploadingProposal ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <FileText className="h-5 w-5 text-muted-foreground" strokeWidth={1.75} />
+                  )}
+                  <span className="text-sm font-medium text-foreground">
+                    {uploadingProposal ? "Enviando arquivo..." : "Enviar proposta em PDF"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Somente PDF, até 15 MB. Enviado automaticamente ao lead no fechamento.
+                  </span>
+                </label>
+              )}
+            </div>
+          )}
         </>
       )}
+
 
       {/* 2 - Onde atua */}
       {step === 2 && (
