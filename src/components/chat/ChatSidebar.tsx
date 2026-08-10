@@ -410,7 +410,7 @@ export function ChatSidebar({
           <div className="flex items-center justify-center py-16">
             <div className="h-7 w-7 rounded-full border-[3px] border-[#128c7e]/20 border-t-[#128c7e] animate-spin" />
           </div>
-        ) : filteredConversations.length === 0 ? (
+        ) : sortedConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
             <p className="text-sm wa-text-muted">
               {activeFilter === "filtered"
@@ -422,7 +422,7 @@ export function ChatSidebar({
             <p className="text-xs wa-text-muted mt-1 opacity-60">As mensagens recebidas aparecerão aqui</p>
           </div>
         ) : (
-          filteredConversations.map(conv => {
+          sortedConversations.map(conv => {
             const isActive = activeConversationId === conv.id;
             const hasUnread = conv.unread_count > 0;
             const hasName = !!conv.contact_name?.trim();
