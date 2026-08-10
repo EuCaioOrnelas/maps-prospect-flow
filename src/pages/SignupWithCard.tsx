@@ -31,11 +31,19 @@ import { generateFingerprint, getClientIP } from "@/lib/fingerprint";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { cn } from "@/lib/utils";
-import { Elements } from "@stripe/react-stripe-js";
+import { Elements, useStripe } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 import { useRef } from "react";
 import { getPartnerReferralMetadata } from "@/hooks/usePartnerTracking";
+
+/** Rascunho dos dados (sem senha e sem cartão) para retomar após o 3DS. */
+const DRAFT_KEY = "wiize_trial_draft";
+/** SetupIntent 3DS em andamento — permite continuar de onde parou. */
+const PENDING_KEY = "wiize_trial_3ds";
+
+type PendingSetup = { customerId: string; setupIntentId: string; planKey: string };
+
 
 const PLAN_INFO: Record<string, { name: string; monthly: number }> = {
   start: { name: "Wiize Start", monthly: 296 },
@@ -119,6 +127,8 @@ function SignupWithCardInner() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const stripe = useStripe();
+
 
   const planKey = useMemo(() => sessionStorage.getItem("trial_plan_chosen") || "growth", []);
   const plan = PLAN_INFO[planKey];
@@ -156,11 +166,77 @@ function SignupWithCardInner() {
   const [loading, setLoading] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
 
+  // --- 3D Secure ---------------------------------------------------------
+  // authStage: idle → authenticating (desafio do banco aberto) → authenticated
+  const [authStage, setAuthStage] = useState<"idle" | "authenticating" | "authenticated">("idle");
+  const [pendingSetup, setPendingSetup] = useState<PendingSetup | null>(null);
+  const [resumed, setResumed] = useState(false);
+
   useEffect(() => {
     if (!sessionStorage.getItem("trial_plan_chosen")) {
       navigate("/signup/escolher-plano", { replace: true });
     }
   }, [navigate]);
+
+  // Retomada: se o usuário saiu para o app do banco (ou recarregou a página),
+  // recupera os dados preenchidos e o status do 3DS para continuar do mesmo ponto.
+  useEffect(() => {
+    const rawDraft = localStorage.getItem(DRAFT_KEY);
+    if (rawDraft) {
+      try {
+        const d = JSON.parse(rawDraft);
+        setName(d.name || "");
+        setEmail(d.email || "");
+        setTaxId(d.taxId || "");
+        setPhone(d.phone || "");
+        setPostalCode(d.postalCode || "");
+        setAddress(d.address || "");
+        setAddressNumber(d.addressNumber || "");
+        setAddressComplement(d.addressComplement || "");
+        setNeighborhood(d.neighborhood || "");
+        setCity(d.city || "");
+        setState(d.state || "");
+        setCardHolder(d.cardHolder || "");
+        setAcceptedTerms(!!d.acceptedTerms);
+      } catch {
+        /* draft corrompido — ignora */
+      }
+    }
+
+    const rawPending = localStorage.getItem(PENDING_KEY);
+    if (!rawPending) return;
+    let pending: PendingSetup;
+    try {
+      pending = JSON.parse(rawPending);
+    } catch {
+      localStorage.removeItem(PENDING_KEY);
+      return;
+    }
+
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("create-stripe-trial", {
+        body: { action: "status", setupIntentId: pending.setupIntentId },
+      });
+      if (error || data?.error) {
+        localStorage.removeItem(PENDING_KEY);
+        return;
+      }
+      if (data.authenticated) {
+        setPendingSetup(pending);
+        setAuthStage("authenticated");
+        setStep(2);
+        setResumed(true);
+      } else if (data.requiresAction) {
+        setPendingSetup(pending);
+        setStep(2);
+        setResumed(true);
+      } else {
+        localStorage.removeItem(PENDING_KEY);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   useEffect(() => {
     if (user) navigate("/dashboard", { replace: true });
@@ -250,8 +326,126 @@ function SignupWithCardInner() {
       });
       return;
     }
+    saveDraft();
     setStep(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const saveDraft = () => {
+    try {
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({
+          name,
+          email,
+          taxId,
+          phone,
+          postalCode,
+          address,
+          addressNumber,
+          addressComplement,
+          neighborhood,
+          city,
+          state,
+          cardHolder,
+          acceptedTerms,
+        }),
+      );
+    } catch {
+      /* storage indisponível — segue sem rascunho */
+    }
+  };
+
+  const clearPersisted = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    localStorage.removeItem(PENDING_KEY);
+  };
+
+  /** Cria a subscription (só roda com o 3DS já autenticado) e a conta no app. */
+  const finalizeTrial = async (pending: PendingSetup) => {
+    const cleanTaxId = taxId.replace(/\D/g, "");
+
+    const { data: trialRes, error: trialErr } = await supabase.functions.invoke("create-stripe-trial", {
+      body: {
+        action: "finalize",
+        setupIntentId: pending.setupIntentId,
+        planKey: pending.planKey || planKey,
+        email,
+      },
+    });
+    if (trialErr || trialRes?.error) {
+      const trialMessage =
+        trialRes?.message ||
+        trialRes?.error ||
+        trialErr?.message ||
+        "Falha ao validar o cartão. Verifique os dados e tente novamente.";
+      console.error("[SignupWithCard] finalize failed", trialErr || trialRes?.error);
+      throw new Error(trialMessage);
+    }
+
+    const [fp, ip] = await Promise.all([generateFingerprint(), getClientIP()]);
+
+    // Cria o usuário no app com os metadados do trial já autenticado.
+    const redirectUrl = `${window.location.origin}/login?email_confirmed=true`;
+    const { data: signupData, error: signupErr } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          name,
+          signup_ip: ip || "unknown",
+          device_fingerprint: fp || "unknown",
+          terms_accepted: "true",
+          trial_with_card: "true",
+          trial_plan_chosen: planKey,
+          stripe_subscription_id: trialRes.subscriptionId,
+          stripe_customer_id: trialRes.customerId,
+          trial_card_last4: trialRes.cardLast4,
+          trial_card_brand: trialRes.cardBrand,
+          trial_will_charge_at: trialRes.nextDueDate,
+          card_3ds_authenticated: "true",
+          ...getPartnerReferralMetadata(),
+        },
+      },
+    });
+    if (signupErr) throw signupErr;
+    const newUserId = signupData.user?.id;
+    if (!newUserId) throw new Error("Conta criada, mas ID do usuário não retornado");
+
+    await supabase
+      .from("profiles")
+      .update({
+        trial_card_last4: trialRes.cardLast4,
+        trial_card_brand: trialRes.cardBrand,
+        trial_plan_chosen: planKey,
+        trial_billing_period: "monthly",
+        trial_will_charge_at: new Date(trialRes.nextDueDate).toISOString(),
+        trial_auto_charge_cancelled: false,
+        payment_provider: "stripe",
+        trial_asaas_subscription_id: trialRes.subscriptionId,
+        trial_asaas_customer_id: trialRes.customerId,
+        cpf: cleanTaxId,
+        phone: phone || null,
+        postal_code: postalCode.replace(/\D/g, "") || null,
+        address: address || null,
+        address_number: addressNumber || null,
+        address_complement: addressComplement.trim() || null,
+        neighborhood: neighborhood || null,
+        city: city || null,
+        state: state || null,
+      })
+      .eq("id", newUserId);
+
+    sessionStorage.removeItem("trial_plan_chosen");
+    clearPersisted();
+
+    toast({
+      title: "Conta criada com sucesso!",
+      description: `Cartão autenticado no banco (3D Secure). Confirme seu email para ativar o trial. Cobrança automática em ${trialEndDate}.`,
+    });
+
+    setShowEmailVerification(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -263,135 +457,147 @@ function SignupWithCardInner() {
       return;
     }
 
+    if (!password || !isPasswordStrong(password)) {
+      toast({
+        title: "Confirme sua senha",
+        description: "Volte para a etapa anterior e informe a senha da sua conta.",
+        variant: "destructive",
+      });
+      setStep(1);
+      return;
+    }
+
+    // Caminho de retomada: 3DS já autenticado, só falta criar a conta.
+    if (pendingSetup && authStage === "authenticated") {
+      setLoading(true);
+      try {
+        await finalizeTrial(pendingSetup);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("[SignupWithCard] resume error", err);
+        toast({ title: "Erro ao criar conta", description: msg, variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     if (!cardHolder.trim()) {
       toast({ title: "Informe o nome impresso no cartão", variant: "destructive" });
       return;
     }
 
     const cleanTaxId = taxId.replace(/\D/g, "");
-
     setLoading(true);
+    saveDraft();
 
     try {
-      // 1) Tokenize card via Stripe Elements (no PCI scope for us)
-      const paymentMethodId = await cardFormRef.current!.createPaymentMethod({
-        name: cardHolder,
-        email,
-        phone: phone.replace(/\D/g, ""),
-        address: {
-          postal_code: postalCode.replace(/\D/g, ""),
-          line1: `${address}, ${addressNumber || "S/N"}`,
-          city,
-          state,
-          country: "BR",
-        },
-      });
+      let pending = pendingSetup;
 
-      const [fp, ip] = await Promise.all([generateFingerprint(), getClientIP()]);
-      const { data: fraud, error: fraudErr } = await supabase.rpc("check_signup_fraud_strict", {
-        p_fingerprint: fp,
-        p_ip: ip,
-        p_cpf: cleanTaxId,
-      });
-      if (fraudErr) {
-        console.error("[SignupWithCard] fraud check error", fraudErr);
-      } else if (fraud && (fraud as { allowed?: boolean }).allowed === false) {
-        const f = fraud as { message?: string; reason?: string };
-        toast({
-          title: "Cadastro bloqueado",
-          description: f.message || "Já existe uma conta vinculada a este IP/dispositivo/CPF.",
-          variant: "destructive",
+      // 1) Se ainda não há SetupIntent, tokeniza o cartão e cria um.
+      if (!pending) {
+        const paymentMethodId = await cardFormRef.current!.createPaymentMethod({
+          name: cardHolder,
+          email,
+          phone: phone.replace(/\D/g, ""),
+          address: {
+            postal_code: postalCode.replace(/\D/g, ""),
+            line1: `${address}, ${addressNumber || "S/N"}`,
+            city,
+            state,
+            country: "BR",
+          },
         });
-        setLoading(false);
-        return;
-      }
 
-      // 2) Create Stripe trial subscription BEFORE creating auth user.
-      const { data: trialRes, error: trialErr } = await supabase.functions.invoke("create-stripe-trial", {
-        body: {
+        const [fp, ip] = await Promise.all([generateFingerprint(), getClientIP()]);
+        const { data: fraud, error: fraudErr } = await supabase.rpc("check_signup_fraud_strict", {
+          p_fingerprint: fp,
+          p_ip: ip,
+          p_cpf: cleanTaxId,
+        });
+        if (fraudErr) {
+          console.error("[SignupWithCard] fraud check error", fraudErr);
+        } else if (fraud && (fraud as { allowed?: boolean }).allowed === false) {
+          const f = fraud as { message?: string; reason?: string };
+          toast({
+            title: "Cadastro bloqueado",
+            description: f.message || "Já existe uma conta vinculada a este IP/dispositivo/CPF.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const { data: setupRes, error: setupErr } = await supabase.functions.invoke("create-stripe-trial", {
+          body: {
+            action: "setup",
+            planKey,
+            paymentMethodId,
+            customerData: {
+              name,
+              email,
+              taxId: cleanTaxId,
+              phone: phone.replace(/\D/g, ""),
+              postalCode: postalCode.replace(/\D/g, ""),
+              address,
+              addressNumber: addressNumber || "S/N",
+              addressComplement: addressComplement.trim() || undefined,
+              neighborhood,
+              city: city.trim(),
+              state: state.trim(),
+            },
+          },
+        });
+        if (setupErr || setupRes?.error) {
+          const m = setupRes?.error || setupErr?.message || "Falha ao validar o cartão.";
+          throw new Error(m);
+        }
+
+        pending = {
+          customerId: setupRes.customerId,
+          setupIntentId: setupRes.setupIntentId,
           planKey,
-          paymentMethodId,
-          customerData: {
-            name,
-            email,
-            taxId: cleanTaxId,
-            phone: phone.replace(/\D/g, ""),
-            postalCode: postalCode.replace(/\D/g, ""),
-            address,
-            addressNumber: addressNumber || "S/N",
-            addressComplement: addressComplement.trim() || undefined,
-            neighborhood,
-            city: city.trim(),
-            state: state.trim(),
-          },
-        },
-      });
-      if (trialErr || trialRes?.error) {
-        const trialMessage = trialRes?.error || trialErr?.message || "Falha ao validar o cartão. Verifique os dados e tente novamente.";
-        console.error("[SignupWithCard] trial setup failed", trialErr || trialRes?.error);
-        throw new Error(trialMessage);
+        };
+        setPendingSetup(pending);
+        localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+
+        if (setupRes.authenticated) setAuthStage("authenticated");
       }
 
-      // 3) Create auth user with trial metadata
-      const redirectUrl = `${window.location.origin}/login?email_confirmed=true`;
-      const { data: signupData, error: signupErr } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            name,
-            signup_ip: ip || "unknown",
-            device_fingerprint: fp || "unknown",
-            terms_accepted: "true",
-            trial_with_card: "true",
-            trial_plan_chosen: planKey,
-            stripe_subscription_id: trialRes.subscriptionId,
-            stripe_customer_id: trialRes.customerId,
-            trial_card_last4: trialRes.cardLast4,
-            trial_card_brand: trialRes.cardBrand,
-            trial_will_charge_at: trialRes.nextDueDate,
-            ...getPartnerReferralMetadata(),
-          },
-        },
-      });
-      if (signupErr) throw signupErr;
-      const newUserId = signupData.user?.id;
-      if (!newUserId) throw new Error("Conta criada, mas ID do usuário não retornado");
+      // 2) Desafio 3D Secure, se o banco pedir. O usuário pode sair para o app
+      //    do banco e voltar: o SetupIntent fica salvo e a página retoma sozinha.
+      if (authStage !== "authenticated") {
+        const { data: statusRes } = await supabase.functions.invoke("create-stripe-trial", {
+          body: { action: "status", setupIntentId: pending.setupIntentId },
+        });
 
-      // 4) Persist trial details on the profile (webhook also reconciles).
-      await supabase
-        .from("profiles")
-        .update({
-          trial_card_last4: trialRes.cardLast4,
-          trial_card_brand: trialRes.cardBrand,
-          trial_plan_chosen: planKey,
-          trial_billing_period: "monthly",
-          trial_will_charge_at: new Date(trialRes.nextDueDate).toISOString(),
-          trial_auto_charge_cancelled: false,
-          payment_provider: "stripe",
-          trial_asaas_subscription_id: trialRes.subscriptionId,
-          trial_asaas_customer_id: trialRes.customerId,
-          cpf: cleanTaxId,
-          phone: phone || null,
-          postal_code: postalCode.replace(/\D/g, "") || null,
-          address: address || null,
-          address_number: addressNumber || null,
-          address_complement: addressComplement.trim() || null,
-          neighborhood: neighborhood || null,
-          city: city || null,
-          state: state || null,
-        })
-        .eq("id", newUserId);
+        if (statusRes?.requiresAction && statusRes?.clientSecret) {
+          if (!stripe) throw new Error("Stripe ainda está carregando, tente novamente em instantes.");
+          setAuthStage("authenticating");
+          const { error: actionErr, setupIntent } = await stripe.handleNextAction({
+            clientSecret: statusRes.clientSecret,
+          });
+          if (actionErr) {
+            setAuthStage("idle");
+            throw new Error(
+              actionErr.message ||
+                "Não foi possível concluir a autenticação do cartão com o seu banco. Tente novamente.",
+            );
+          }
+          if (setupIntent?.status !== "succeeded") {
+            setAuthStage("idle");
+            throw new Error(
+              "Autenticação do cartão não concluída. Finalize a aprovação no app do seu banco e clique novamente em ativar.",
+            );
+          }
+        } else if (!statusRes?.authenticated) {
+          throw new Error("Não foi possível validar o cartão. Tente novamente ou use outro cartão.");
+        }
+        setAuthStage("authenticated");
+      }
 
-      sessionStorage.removeItem("trial_plan_chosen");
-
-      toast({
-        title: "Conta criada com sucesso!",
-        description: `Confirme seu email para ativar o trial. Cobrança automática em ${trialEndDate}.`,
-      });
-
-      setShowEmailVerification(true);
+      // 3) Cartão autenticado → cria a subscription com trial e a conta.
+      await finalizeTrial(pending);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error("[SignupWithCard] error", e);
@@ -400,6 +606,7 @@ function SignupWithCardInner() {
       setLoading(false);
     }
   };
+
 
   if (!plan) return null;
 
@@ -612,20 +819,44 @@ function SignupWithCardInner() {
                   </div>
 
                   <form onSubmit={handleSubmit} className="space-y-5">
-                    <StripeCardForm
-                      ref={cardFormRef}
-                      cardHolder={cardHolder}
-                      onCardHolderChange={setCardHolder}
-                      onCardChange={(d) => setCardBrand(d.brand || "")}
-                      onCvcFocus={() => setCardFlipped(true)}
-                      onCvcBlur={() => setCardFlipped(false)}
-                      disabled={loading}
-                    />
+                    {resumed && pendingSetup && (
+                      <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs flex items-start gap-2">
+                        <ShieldCheck size={14} className="text-primary shrink-0 mt-0.5" />
+                        <p className="text-muted-foreground">
+                          {authStage === "authenticated" ? (
+                            <>
+                              <strong className="text-foreground">Cartão autenticado no seu banco.</strong> Seus dados
+                              foram recuperados — é só confirmar abaixo para ativar os 7 dias grátis.
+                            </>
+                          ) : (
+                            <>
+                              <strong className="text-foreground">Autenticação pendente.</strong> Retomamos seu
+                              cadastro. Clique em ativar para concluir a aprovação do cartão com o seu banco.
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    )}
+
+                    {authStage !== "authenticated" && (
+                      <StripeCardForm
+                        ref={cardFormRef}
+                        cardHolder={cardHolder}
+                        onCardHolderChange={setCardHolder}
+                        onCardChange={(d) => setCardBrand(d.brand || "")}
+                        onCvcFocus={() => setCardFlipped(true)}
+                        onCvcBlur={() => setCardFlipped(false)}
+                        disabled={loading || !!pendingSetup}
+                      />
+                    )}
 
                     <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted-foreground flex items-start gap-2">
                       <ShieldCheck size={14} className="text-primary shrink-0 mt-0.5" />
                       <p>
-                        Pagamento processado via <strong className="text-foreground">Stripe</strong> com criptografia PCI-DSS. Não armazenamos dados do cartão.
+                        Pagamento processado via <strong className="text-foreground">Stripe</strong> com criptografia
+                        PCI-DSS e autenticação <strong className="text-foreground">3D Secure</strong> do seu banco. Não
+                        armazenamos dados do cartão. Se o seu banco pedir aprovação no app, você pode sair e voltar —
+                        retomamos o cadastro do mesmo ponto.
                       </p>
                     </div>
 
@@ -648,15 +879,20 @@ function SignupWithCardInner() {
                       {loading ? (
                         <>
                           <Loader2 className="animate-spin mr-2" size={18} />
-                          Ativando seu trial...
+                          {authStage === "authenticating"
+                            ? "Aguardando aprovação do seu banco..."
+                            : "Ativando seu trial..."}
                         </>
                       ) : (
                         <>
                           <Sparkles size={16} className="mr-2" />
-                          Ativar meus 7 dias grátis
+                          {authStage === "authenticated" && pendingSetup
+                            ? "Concluir cadastro"
+                            : "Ativar meus 7 dias grátis"}
                         </>
                       )}
                     </Button>
+
                     <p className="text-center text-xs text-muted-foreground inline-flex items-center gap-1.5 justify-center w-full">
                       <Lock size={11} /> R$ 0,00 hoje · Cancele quando quiser, em 1 clique
                     </p>
