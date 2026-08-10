@@ -2100,37 +2100,22 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               ]}
             />
             {draft.closing.after_limit_actions.includes("mover_pipeline") && (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <IconLabel icon={Columns3}>Coluna de destino</IconLabel>
-                <div className="flex flex-wrap gap-2">
-                  {stages.map((s) => {
-                    const on = draft.closing.after_limit_stage_id === s.id;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => patch("closing", { after_limit_stage_id: s.id })}
-                        className={cn(
-                          "inline-flex items-center gap-2 h-10 px-3.5 rounded-lg text-sm border bg-card transition-all hover:-translate-y-0.5 hover:shadow-md",
-                          on
-                            ? "border-primary ring-2 ring-primary/20 shadow-md text-foreground font-semibold"
-                            : "border-border text-muted-foreground hover:border-primary/40"
-                        )}
-                      >
-                        <Columns3
-                          className={cn("h-4 w-4", on ? "text-primary" : "text-muted-foreground")}
-                          strokeWidth={1.75}
-                        />
-                        {s.name}
-                      </button>
-                    );
-                  })}
-                  {stages.length === 0 && (
-                    <p className="text-xs text-muted-foreground">Nenhuma coluna encontrada no CRM.</p>
-                  )}
-                </div>
+                {stages.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhuma coluna encontrada no CRM.</p>
+                ) : (
+                  <StageSelect
+                    stages={stages}
+                    allowClear={false}
+                    placeholder="Selecionar coluna de destino..."
+                    value={draft.closing.after_limit_stage_id}
+                    onChange={(id) => patch("closing", { after_limit_stage_id: id })}
+                  />
+                )}
               </div>
             )}
+
           </div>
         </>
       )}
