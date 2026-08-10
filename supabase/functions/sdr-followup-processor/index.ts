@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
@@ -43,7 +43,11 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !serviceKey) return json({ error: "Backend configuration unavailable" }, 500);
   const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "").trim();
-  if (token !== serviceKey) return json({ error: "Unauthorized" }, 401);
+  const cronSecret = Deno.env.get("SDR_CRON_SECRET");
+  const cronHeader = req.headers.get("x-cron-secret");
+  const authorized = token === serviceKey || (!!cronSecret && cronHeader === cronSecret);
+  if (!authorized) return json({ error: "Unauthorized" }, 401);
+
 
   const backend = createClient(url, serviceKey);
   const { data: sessions, error } = await backend
