@@ -164,6 +164,27 @@ export function ChatSidebar({
     });
   }, [activeFilter, conversations, crmLeadByPhoneKey, customFilters, hasCustomFilters]);
 
+  // Prioridade: fixados > conversas recentes > contatos salvos > demais números
+  const sortedConversations = useMemo(() => {
+    const rank = (c: ChatConversation) => {
+      if (c.last_message_at) return 0;
+      if (c.contact_name && c.contact_name.trim()) return 1;
+      return 2;
+    };
+    return [...filteredConversations].sort((a, b) => {
+      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+      const ra = rank(a);
+      const rb = rank(b);
+      if (ra !== rb) return ra - rb;
+      if (ra === 0) {
+        return new Date(b.last_message_at || 0).getTime() - new Date(a.last_message_at || 0).getTime();
+      }
+      const an = (a.contact_name || a.contact_phone || "").trim();
+      const bn = (b.contact_name || b.contact_phone || "").trim();
+      return an.localeCompare(bn, "pt-BR");
+    });
+  }, [filteredConversations]);
+
   const isListLoading = loading || (activeFilter === "filtered" && loadingCrmFilters);
 
   return (
