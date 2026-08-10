@@ -712,6 +712,16 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
     navigate("/meta-campaigns");
   };
 
+  // Demo público: fechar/voltar nunca pode deixar o visitante dentro do cockpit
+  // simulado (parece um app logado). Sempre volta para a landing page.
+  const handleClose = () => {
+    onFinish();
+    if (publicDemo) {
+      window.location.assign("/");
+      return;
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
