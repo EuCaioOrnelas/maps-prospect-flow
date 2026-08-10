@@ -203,7 +203,11 @@ Deno.serve(async (req) => {
     const agent = (agents || []).find((a: any) =>
       (a.whatsapp_number_ids || []).includes(waba_connection_id)
     );
-    if (!agent) return json({ skipped: "nenhum SDR ativo para este número" });
+    if (!agent) {
+      console.log(`[sdr-dispatch] nenhum SDR ativo vinculado à conexão ${waba_connection_id}`);
+      return json({ skipped: "nenhum SDR ativo para este número" });
+    }
+
 
     const tail = String(contact_phone).replace(/\D/g, "").slice(-8);
     if (trigger_type === "inbound" && isOptOutMessage(inboundMessage)) {
@@ -246,15 +250,20 @@ Deno.serve(async (req) => {
       return json({ ok: true, rejected: true, sent: 0 });
     }
 
-    const { data: optedOutSession } = await supabase
+    const { data: blockedSession } = await supabase
       .from("sdr_sessions")
-      .select("id")
+      .select("id, status")
       .eq("agent_id", agent.id)
-      .eq("status", "opted_out")
+      .in("status", ["opted_out", "paused"])
       .ilike("phone", `%${tail}`)
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (optedOutSession) return json({ skipped: "contato descadastrado" });
+    if (blockedSession) {
+      console.log(`[sdr-dispatch] ignorado: sessão ${blockedSession.status} para ${contact_phone}`);
+      return json({ skipped: blockedSession.status === "paused" ? "SDR pausado neste contato" : "contato descadastrado" });
+    }
+
 
     const activation: string[] = Array.isArray(agent.triggers?.activation) ? agent.triggers.activation : ["inbound_all"];
     if (trigger_type === "inbound" && !activation.includes("inbound_all") && !activation.includes("first_only")) {
@@ -322,10 +331,13 @@ Deno.serve(async (req) => {
           followup_reason: "outside_business_hours",
           last_reply_at: new Date().toISOString(),
         }).eq("id", session.id);
+        console.log(`[sdr-dispatch] fora do horário — resposta agendada para ${resumeAt} (${contact_phone})`);
         return json({ queued: true, resume_at: resumeAt, sent: 0 });
       }
+      console.log(`[sdr-dispatch] fora do horário configurado e sem fila — ${contact_phone}`);
       return json({ skipped: "fora do horário configurado", sent: 0 });
     }
+
 
     if (trigger_type === "inbound" && activation.includes("first_only") && (session?.replies_received ?? 0) > 0) {
       return json({ skipped: "gatilho configurado apenas para o primeiro contato" });

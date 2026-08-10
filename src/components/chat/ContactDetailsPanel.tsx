@@ -21,6 +21,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { ImageLightbox } from "./ImageLightbox";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
+import { SDRStatusBanner } from "@/components/sdr/SDRStatusBanner";
+
 import type { ChatConversation, ChatMessage } from "@/hooks/useChat";
 
 type Props = {
@@ -326,6 +328,16 @@ export function ContactDetailsPanel({
               </Button>
             )}
           </div>
+
+          {/* Status do SDR Inteligente */}
+          <div className="px-3 pt-3">
+            <SDRStatusBanner
+              phone={conversation.contact_phone}
+              accountOwnerId={accountOwnerId}
+              compact
+            />
+          </div>
+
 
           {/* Tabs */}
           <Tabs defaultValue="geral" className="px-3 pt-3">
