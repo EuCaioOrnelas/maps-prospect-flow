@@ -65,7 +65,7 @@ export function SDRBetaDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => (v ? onOpenChange(true) : close())}>
-      <DialogContent className="sm:max-w-lg rounded-panel max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl rounded-panel max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <span className="h-11 w-11 rounded-sm bg-primary/10 flex items-center justify-center mb-2">
             <Sparkles className="text-primary" size={20} />
