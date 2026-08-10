@@ -326,6 +326,8 @@ export type SdrDraft = {
     /** Etapa do CRM aplicada quando o SDR transfere para um humano. */
     handoff_stage_id: string;
     meeting_duration_minutes: number;
+    /** Proposta em PDF enviada automaticamente quando o objetivo é concluído. */
+    proposal_file: { url: string; name: string; path: string } | null;
   };
   situations: Record<string, string>;
 };
