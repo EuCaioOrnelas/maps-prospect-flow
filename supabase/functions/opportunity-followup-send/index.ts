@@ -55,12 +55,30 @@ Deno.serve(async (req) => {
       .eq("id", leadId)
       .maybeSingle();
 
-    if (!lead || lead.follow_up_status !== "pending" || !lead.follow_up_message) {
+    // "scheduled" é o estado reservado pelo webhook (claim atômico); "pending" cobre
+    // chamadas manuais. Qualquer outro estado significa que o follow-up já saiu.
+    const pendingStates = ["pending", "scheduled"];
+    if (!lead || !pendingStates.includes(String(lead.follow_up_status)) || !lead.follow_up_message) {
       return new Response(JSON.stringify({ success: false, error: "Follow-up não pendente" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
+
+    // Claim de envio: garante que apenas uma execução dispare a mensagem.
+    const { data: claimed } = await supabase
+      .from("leads")
+      .update({ follow_up_status: "sending" } as any)
+      .eq("id", leadId)
+      .in("follow_up_status", pendingStates)
+      .select("id");
+    if (!claimed || claimed.length === 0) {
+      return new Response(JSON.stringify({ success: false, error: "Follow-up já em envio" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
 
     // Find the active Meta connection for this user
     const { data: conn } = await supabase
@@ -85,11 +103,14 @@ Deno.serve(async (req) => {
     // Normalize phone (E.164 global, sem "+")
     const phone = formatPhoneForMeta(lead.phone || "");
     if (!phone) {
+      // Libera o bloqueio do SDR: sem telefone válido a campanha não continua.
+      await supabase.from("leads").update({ follow_up_status: "failed" } as any).eq("id", leadId);
       return new Response(JSON.stringify({ success: false, error: "Telefone do lead inválido (E.164)." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
+
 
     const resp = await fetch(
       `https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`,

@@ -105,36 +105,70 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Send free-form text via Meta Cloud API
-    const sendResp = await fetch(
-      `https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${conn.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to: phone,
-          type: "text",
-          text: { body: initialMessage },
-        }),
-      }
-    );
-
-    const sendData = await sendResp.json();
-    if (!sendResp.ok) {
-      console.error("[opportunity-campaign-send] Meta error:", sendData);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: sendData?.error?.message || "Erro ao enviar via Meta",
-          meta_error: sendData?.error,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
+    // A Meta só aceita texto livre dentro da janela de 24h. O primeiro contato de
+    // campanha precisa sair como TEMPLATE APROVADO; o texto livre fica apenas como
+    // fallback quando a janela já está aberta (ou quando nenhum template foi escolhido).
+    let templateRow: { name: string; language: string | null } | null = null;
+    if (templateId) {
+      const { data: tpl } = await supabase
+        .from("wiize_message_templates")
+        .select("name, language")
+        .eq("id", templateId)
+        .maybeSingle();
+      if (tpl?.name) templateRow = tpl as any;
     }
+
+    const metaUrl = `https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`;
+    const metaHeaders = {
+      Authorization: `Bearer ${conn.access_token}`,
+      "Content-Type": "application/json",
+    };
+
+    async function sendPayload(payload: unknown) {
+      const resp = await fetch(metaUrl, { method: "POST", headers: metaHeaders, body: JSON.stringify(payload) });
+      const body = await resp.json();
+      return { ok: resp.ok, body };
+    }
+
+    let sendData: any = null;
+    let sentAsTemplate = false;
+
+    if (templateRow) {
+      const attempt = await sendPayload({
+        messaging_product: "whatsapp",
+        to: phone,
+        type: "template",
+        template: { name: templateRow.name, language: { code: templateRow.language || "pt_BR" } },
+      });
+      if (attempt.ok) {
+        sendData = attempt.body;
+        sentAsTemplate = true;
+      } else {
+        console.error("[opportunity-campaign-send] template send failed, tentando texto livre:", attempt.body?.error);
+      }
+    }
+
+    if (!sendData) {
+      const attempt = await sendPayload({
+        messaging_product: "whatsapp",
+        to: phone,
+        type: "text",
+        text: { body: initialMessage },
+      });
+      if (!attempt.ok) {
+        console.error("[opportunity-campaign-send] Meta error:", attempt.body);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: attempt.body?.error?.message || "Erro ao enviar via Meta",
+            meta_error: attempt.body?.error,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
+      sendData = attempt.body;
+    }
+
 
     // Persist on lead — initial sent + follow-up pending
     const nowIso = new Date().toISOString();
@@ -143,11 +177,13 @@ Deno.serve(async (req) => {
       .update({
         first_message_sent: true,
         first_message_sent_at: nowIso,
-        last_message_sent: initialMessage,
+        last_message_sent: sentAsTemplate ? `[template] ${templateRow?.name}` : initialMessage,
         last_message_sent_at: nowIso,
         whatsapp_status: "message_sent",
         follow_up_message: followUpMessage || null,
         follow_up_delay_seconds: delaySeconds || 90,
+        // "pending" sinaliza que a campanha ainda tem envio de IA por vir — o SDR fica bloqueado
+        // até o follow-up sair. Sem follow-up de IA a campanha é só template: SDR responde normalmente.
         follow_up_status: followUpMessage ? "pending" : "none",
         initial_template_id: templateId || null,
       } as any)
@@ -159,8 +195,11 @@ Deno.serve(async (req) => {
       user_id: userId,
       owner_user_id: userId,
       activity_type: "message_sent",
-      description: `Campanha de oportunidade iniciada via Meta Cloud API`,
+      description: sentAsTemplate
+        ? `Campanha de oportunidade iniciada com template aprovado (${templateRow?.name})`
+        : `Campanha de oportunidade iniciada via Meta Cloud API`,
     });
+
 
     return new Response(
       JSON.stringify({ success: true, message_id: sendData?.messages?.[0]?.id }),

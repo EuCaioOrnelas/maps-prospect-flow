@@ -264,6 +264,28 @@ Deno.serve(async (req) => {
       return json({ skipped: blockedSession.status === "paused" ? "SDR pausado neste contato" : "contato descadastrado" });
     }
 
+    // Bloqueio de concorrência com campanhas de oportunidade que enviam um follow-up
+    // gerado por IA depois da resposta ao template. Enquanto esse envio estiver pendente
+    // ou agendado, o SDR não responde para não duplicar mensagens no mesmo contato.
+    // Campanhas apenas com template aprovado não marcam follow-up e não bloqueiam nada.
+    if (trigger_type === "inbound") {
+      const { data: campaignLead } = await supabase
+        .from("leads")
+        .select("id, follow_up_status")
+        .or(`owner_user_id.eq.${owner_user_id},user_id.eq.${owner_user_id}`)
+        .ilike("phone", `%${tail}`)
+
+        .in("follow_up_status", ["pending", "scheduled"])
+        .limit(1)
+        .maybeSingle();
+      if (campaignLead) {
+        console.log(`[sdr-dispatch] bloqueado: campanha com follow-up de IA em andamento (lead ${campaignLead.id})`);
+        return json({ skipped: "campanha com follow-up de IA em andamento" });
+      }
+    }
+
+
+
 
     const activation: string[] = Array.isArray(agent.triggers?.activation) ? agent.triggers.activation : ["inbound_all"];
     if (trigger_type === "inbound" && !activation.includes("inbound_all") && !activation.includes("first_only")) {
