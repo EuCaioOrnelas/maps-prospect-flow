@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -14,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  BellRing,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -63,6 +65,7 @@ const VIEWS: { value: ViewMode; label: string }[] = [
 
 export default function Agenda() {
   const { profile, user } = useAuth();
+  const navigate = useNavigate();
   const { members } = useAccountMembers();
 
   const [view, setView] = useState<ViewMode>("month");
