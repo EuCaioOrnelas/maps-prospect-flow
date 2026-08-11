@@ -1,74 +1,101 @@
-# Auditoria de Performance e Escalabilidade — Wiize
+# Plano Final — Limpeza e Otimização do Banco (revisado, com validação de dependências)
 
-## Diagnóstico (o que os números realmente dizem)
+Nada foi executado. Abaixo está o resultado da segunda auditoria (validação real no banco e no código) e o plano para aprovação.
 
-**RAM 63–69%: não é problema.** A instância é uma t4g.nano (≈0,5 GB). O Postgres reserva shared_buffers + cache de páginas e mantém isso ocupado por design — memória "usada" aqui é majoritariamente cache de leitura, não vazamento. Não há OOM kills e zero restarts desde o boot.
+## Correções em relação à primeira auditoria
 
-**Conexões 23/60: não é problema.** No momento da auditoria: 13/60 conexões e apenas 1/200 clientes no PgBouncer. Não existe nenhum `createClient` extra no app (só o client oficial + o client do blog, que é outro projeto), **zero canais Realtime** abertos e nenhuma conexão persistente vazando. As conexões vêm de: PostgREST (pool interno fixo), pg_cron/pg_net workers, Realtime/Storage/Auth internos e as Edge Functions. É o baseline normal da plataforma.
+Três conclusões da primeira análise **mudaram** depois da validação:
 
-**O problema real é outro: crescimento descontrolado de tabelas de log e trabalho ocioso de cron.**
-
-Banco = 1,85 GB, e a aplicação inteira ocupa menos de 60 MB. O resto:
-
-| Tabela | Tamanho | Linhas |
-|---|---|---|
-| `cron.job_run_details` | **1.231 MB** | 850.565 (desde 10/03) |
-| `net._http_response` | **594 MB** | 2.357 (tabela inchada/bloat) |
-| `public.campaign_processor_heartbeats` | 24 MB | 127.402 (desde 24/03) |
-| `public.leads` | 3 MB | 1.143 |
-
-Ou seja: **~98% do disco é histórico de cron/HTTP que nunca é limpo.** Isso também é o que mais pressiona cache e autovacuum.
-
-Além disso:
-- **6 crons rodando a cada minuto**, incluindo **`handoff-reassign-watcher` duplicado (jobid 24 e 25)** — trabalho e chamadas HTTP dobradas de graça.
-- `campaign-processor` faz INSERT + UPDATE de heartbeat todo minuto mesmo sem campanha ativa (31.555 inserts + 31.555 updates registrados).
-- `revenue_events` recebeu **1.870.386 consultas** (N+1 do motor de score) sem índice perfeito para o filtro usado.
-- **RLS caro:** as policies usam `is_account_member(owner_user_id)` — função com argumento que varia por linha, então o Postgres a executa **uma vez por linha** e não consegue usar o índice. É por isso que `leads` (1.143 linhas!) tem consultas de 60–1.200 ms e 4.205 seq scans.
-- Índice duplicado: `revenue_leads_user_phone_unique` e `idx_revenue_leads_user_phone` são idênticos.
-- Dashboard dispara ~13 consultas separadas por carregamento (várias na mesma tabela `leads`).
+1. **`net._http_response` NÃO precisa de DELETE.** O TTL nativo do pg_net está ativo e funcionando: `pg_net.ttl = 6 hours`, registro mais antigo às 09:03 e mais recente às 15:02 do mesmo dia, apenas **2.359 linhas vivas**. Os 594 MB são **bloat** (490.876 inserts × 488.905 deletes com apenas **1 autovacuum** desde sempre). Criar rotina de limpeza seria inútil.
+2. **O índice a remover é outro.** `revenue_leads_user_phone_unique` é uma **constraint UNIQUE** (não pode ser dropada). O redundante é `idx_revenue_leads_user_phone`, índice único solto e idêntico.
+3. **Já existe uma solução no projeto que nunca foi ligada.** A Edge Function `cleanup-old-data` faz retenção de heartbeats (3 dias), `rate_limits` (1 h) e `search_history` (7 dias), mas **não existe cron agendando ela**. É a causa raiz dos 127.402 heartbeats desde 24/03.
 
 ---
 
-## Plano de correção
+## A. O que será limpo
 
-### 🔴 CRÍTICO — parar o crescimento infinito
-1. **Retenção de `cron.job_run_details`** (manter 7 dias) via job diário. Sozinho libera ~1,2 GB.
-2. **Retenção de `net._http_response`** (manter 2 dias) + reclaim do bloat de 594 MB.
-3. **Retenção de `campaign_processor_heartbeats`** (manter 7 dias) no mesmo job de limpeza.
+| Estrutura | Hoje | Retenção proposta | Estimativa removida | Método | Risco |
+|---|---|---|---|---|---|
+| `cron.job_run_details` | 1.231 MB / 850.565 linhas (desde 10/03) | 7 dias | ~840.000 linhas / ~1,2 GB | Função de purga **em lotes de 20.000** por execução, cron diário 04:15 UTC | 🟢 |
+| `campaign_processor_heartbeats` | 24 MB / 127.402 linhas | 3 dias (regra que já existe no código) | ~125.000 linhas | Agendar `cleanup-old-data` (diário 04:30 UTC) | 🟢 |
+| `rate_limits` / `search_history` | pequeno | 1 h / 7 dias | — | mesma função, já implementada | 🟢 |
+| `net._http_response` | 594 MB (2.359 linhas vivas) | **nenhuma limpeza** | 0 linhas | Ajuste de autovacuum + reclaim opcional (ver D) | 🟡 |
+| `frontend_errors`, `user_events`, `landing_page_events` | <2 MB | 180 dias (não 90 — `user_events` alimenta as RPCs de estatística operacional do admin) | ~0 hoje | Incluído na mesma função de purga, já preparada para o futuro | 🟢 |
 
-### 🔴 CRÍTICO — RLS por linha
-4. Criar `public.accessible_owner_ids()` (STABLE, SECURITY DEFINER) devolvendo o array de owners que o usuário logado pode ver, e reescrever as policies de `leads`, `chat_conversations`, `chat_messages`, `lead_deals`, `revenue_leads` para `owner_user_id = ANY (public.accessible_owner_ids())`.
-   *Semântica idêntica* (mesmas regras de dono/sub-usuário/membro de conta), mas avaliada **uma vez por query** e compatível com índice. Nada é afrouxado; RLS continua ligado.
+**Nenhum dado de negócio é tocado.** Verificado: nada no frontend, Edge Functions, RPCs ou triggers lê `cron.job_run_details` nem `net._http_response`; os heartbeats só são lidos pela própria `cleanup-old-data`.
 
-### 🟠 ALTO — cron ocioso
-5. Remover o cron **duplicado** `handoff-reassign-watcher` (jobid 25).
-6. `campaign-processor` só grava heartbeat quando existe campanha em execução (evita 43k linhas/mês inúteis).
+## B. O que NÃO será tocado
 
-### 🟠 ALTO — índices
-7. Adicionar `revenue_events (lead_id, event_type, created_at DESC)` — cobre a query de 1,87 M chamadas.
-8. Adicionar `revenue_score_logs (lead_id, event_type, created_at DESC)` — 40 k chamadas.
-9. Adicionar `revenue_leads (last_activity_at)` — sweep global de 2.925 chamadas, hoje seq scan.
-10. Adicionar `blog_posts (status, scheduled_for)` — 18 k chamadas do scheduler.
-11. Remover **apenas** o índice comprovadamente duplicado `revenue_leads_user_phone_unique` (idêntico a `idx_revenue_leads_user_phone`, que permanece garantindo a unicidade).
-12. `ANALYZE` nas tabelas quentes (estatísticas de `leads`/`chat_conversations` estão de junho).
+Tabelas de negócio (`profiles`, `leads`, `lead_deals`, `chat_*`, `revenue_*`, `whatsapp_*`, `partner_*`, `subscription_*`, `user_roles`, `account_members`, configurações e integrações): nenhum registro apagado, nenhuma coluna alterada.
+Também permanecem intactos: todas as triggers, todas as functions de negócio, os índices de embedding (`idx_kb_embedding`, `idx_faqs_embedding` — usados por busca vetorial, "sem uso" apenas porque a busca é esporádica), todas as PKs/FKs e todas as constraints UNIQUE.
 
-*Não serão removidos* os índices "sem uso" de embeddings (`idx_kb_embedding`, `idx_faqs_embedding`) nem PKs — são necessários.
+## C. Crons — inventário e decisão
 
-### 🟡 MÉDIO — frontend/consultas
-13. Consolidar o dashboard principal: as consultas repetidas em `leads` viram uma única leitura reaproveitada, eliminando 5–7 round-trips por carregamento.
-14. Reduzir o polling desnecessário: o badge de não lidas do chat (30 s) e demais intervalos passam a pausar quando a aba não está visível (padrão que já existe em outros módulos).
-15. Paginação: aplicar `range()` nas listas que hoje leem tudo (leads/CRM, mensagens, histórico) onde ainda não há limite.
+25 jobs ativos. Todos **mantidos**, exceto um:
 
-### 🟢 BAIXO
-16. `frontend_errors`, `user_events`, `landing_page_events` ganham retenção (90 dias) para não repetirem o mesmo padrão daqui a um ano.
+- **Remover: jobid 25 `handoff-reassign-watcher-every-minute`.** Confirmado duplicado do jobid 24 `handoff-reassign-watcher`: mesmo schedule (`* * * * *`), mesma URL, mesmo método, mesmo payload (só difere espaçamento do SQL, por isso o hash difere). Nenhum código referencia jobid. O comando/schedule serão registrados na migration antes do `unschedule`, e a reversão é uma linha de `cron.schedule`.
+- **Adicionar 2 jobs novos:** `purge-operational-logs` (04:15 UTC) e `cleanup-old-data-daily` (04:30 UTC).
+- **A cada minuto (mantidos):** `wa-flow-scheduler`, `sdr-followup-processor`, `handoff-reassign-watcher`, `campaign-processor`, `start-scheduled-campaigns` — todos com função operacional real.
+- **Demais (mantidos):** revenue sweep 30 min; email-flow, calendar-reminders, blog-scheduler 5 min; trial 2 h; support autoclose horário; e os diários de billing/partners/meta/score.
 
----
+## D. `net._http_response`
 
-## Detalhes técnicos
-- Tudo em migrations aditivas e idempotentes (`CREATE INDEX IF NOT EXISTS`, `CREATE OR REPLACE FUNCTION`, `DROP POLICY IF EXISTS` + recriação equivalente). Nenhum `DROP TABLE`, nenhuma coluna removida, nenhum dado de negócio apagado.
-- As policies serão recriadas com a **mesma** lógica de acesso — validarei antes/depois com consultas de comparação.
-- A limpeza de logs de cron/HTTP não afeta nenhuma funcionalidade: são tabelas de telemetria interna do Postgres.
-- Validação final: linter de segurança, `EXPLAIN` nas queries alvo antes/depois, checagem de TypeScript e verificação de que as telas de CRM, Chat e Dashboard continuam carregando.
+- **TTL atual:** `pg_net.ttl = 6 hours` (padrão, funcionando — comprovado pela janela de 6 h dos registros).
+- **Volume real:** 2.359 linhas / 587 MB de heap + 7 MB de índice.
+- **Bloat:** ~99% do espaço. Causa: alto churn (≈490 k inserts/deletes) com autovacuum praticamente inativo nessa tabela.
+- **Dependências:** nenhuma no projeto.
+- **Solução proposta:** (1) tornar o autovacuum agressivo nessa tabela (`autovacuum_vacuum_threshold=1000`, `scale_factor=0`) para que o espaço passe a ser **reutilizado** e pare de crescer; (2) o `VACUUM FULL` para devolver os 587 MB ao disco fica como passo **opcional e separado**, só com sua autorização e em janela de baixo tráfego, porque exige lock exclusivo (rápido aqui — poucas linhas vivas — mas bloqueia o pg_net durante a operação). Como o disco está em 28%, isso **não é urgente**. Se o ambiente não permitir alterar a tabela do pg_net (questão de ownership), o plano registra a falha e segue sem ela — nada quebra.
 
-## Infraestrutura
-Depois da limpeza o banco cai de 1,85 GB para ~60 MB. A t4g.nano continua adequada nesse cenário; o próximo upgrade só se justifica quando houver **>40 conexões sustentadas**, uso de disco crescendo de novo ou queries acima de 200 ms com índice correto — detalho isso no relatório final.
+## E. RLS
+
+**Hoje:** `leads`, `chat_conversations`, `chat_messages`, `lead_deals`, `revenue_leads` usam `is_account_member(<coluna_owner>)`. A função (STABLE, SECURITY DEFINER) considera: o próprio owner (`auth.uid()`), sub-usuário (`profiles.parent_owner_id`) e membro ativo (`account_members.status='active'`).
+
+**Problema:** o argumento varia por linha, então o Postgres executa a função **uma vez por linha** e não usa índice. Resultado medido: `leads` com 1.143 linhas gera consultas de 60–1.200 ms e 4.205 seq scans.
+
+**Nova estratégia:** função `public.accessible_owner_ids()` (sem argumento, STABLE, SECURITY DEFINER, `search_path` fixo) devolvendo o array dos owners visíveis — **exatamente as mesmas três regras** — e policies reescritas para `<coluna_owner> = ANY (public.accessible_owner_ids())`. Avaliada uma vez por query e compatível com os índices já existentes. RLS continua habilitado; políticas de admin permanecem como estão.
+
+**Validação de equivalência (obrigatória, antes de aplicar em produção):** harness SQL que, para cada usuário real × cada owner existente, compara `is_account_member(owner)` com `owner = ANY(accessible_owner_ids())` simulando o JWT (`set_config('request.jwt.claims', ...)`). Casos cobertos: owner, sub-usuário, membro ativo, membro inativo, usuário sem vínculo (deve dar 0 nos dois) e usuário anônimo. **Qualquer divergência aborta a alteração** e as policies antigas são restauradas (a migration guarda o texto original).
+
+## F. Índices
+
+**Adicionar (4):**
+- `revenue_events (lead_id, event_type, created_at DESC)` — cobre a query de **1.870.386 execuções**. `EXPLAIN` de baseline já coletado: hoje faz `BitmapAnd` de dois índices, 59,9 ms de execução e 79 ms de planning, 49 buffers. Comparação antes/depois será anexada ao relatório final.
+- `revenue_score_logs (lead_id, event_type, created_at DESC)` — 40.850 execuções.
+- `revenue_leads (last_activity_at)` — sweep global (2.925 execuções, hoje seq scan, média 42 ms).
+- `blog_posts (status, scheduled_for)` — 18.756 execuções do scheduler.
+
+**Remover (1):** `idx_revenue_leads_user_phone` — duplicata exata do índice da constraint `revenue_leads_user_phone_unique`, que permanece e garante a unicidade. Nenhum código cita o nome do índice. Reversão: uma linha de `CREATE UNIQUE INDEX`.
+
+**Manter:** todos os demais, inclusive os "sem scans", após checagem de uso por RLS/FK/ordenação.
+
+Complemento: `ANALYZE` em `leads`, `chat_conversations`, `revenue_leads` (estatísticas de junho).
+
+## G. Código a alterar
+
+- `supabase/functions/cleanup-old-data/index.ts` — corrigir o trecho que varre `search_history` inteiro em loop (N+1) e trocar por consulta agregada; sem mudar as regras de retenção.
+- `src/hooks/useMainDashboard.ts` — consolidar as leituras repetidas de `leads` (hoje ~6 consultas na mesma tabela por carregamento) em uma única leitura reaproveitada. Métricas e filtros permanecem idênticos.
+- `src/hooks/useChatUnreadBadge.ts` — pausar o polling de 30 s quando a aba não está visível (padrão já usado em `useMetaDashboard`).
+- Paginação: aplicar `range()` nas listas de CRM/leads e histórico que hoje leem tudo, **preservando** busca, filtros, ordenação, seleção, ações em massa e contagem.
+- **Não** será alterada a Edge Function `campaign-processor` (grava heartbeat todo minuto): ela é deployada mas **não existe no repositório**; reescrevê-la às cegas arriscaria locks/retry de campanhas. O desperdício dela é resolvido pela retenção de 3 dias, sem risco.
+
+## H. Risco por alteração
+
+🟢 Índices, `ANALYZE`, purga de `cron.job_run_details` em lotes, agendar `cleanup-old-data`, ajustes de frontend/polling.
+🟡 Reescrita das policies RLS (mitigada pelo harness de equivalência), remoção do cron duplicado, ajuste de autovacuum no pg_net, paginação nas listas.
+🔴 `VACUUM FULL` em `net._http_response` — **não será executado nesta rodada**; fica como decisão sua, em janela de baixo tráfego.
+
+## I. Ordem de execução (após sua aprovação)
+
+1. Confirmar ponto de recuperação/backup do Cloud.
+2. Snapshot "antes": tamanhos, contagens, `EXPLAIN` das queries alvo, matriz de acesso RLS por usuário.
+3. Índices novos + `ANALYZE` (não destrutivo, reversível).
+4. `EXPLAIN` depois e comparação.
+5. Harness de equivalência RLS → só então aplicar as novas policies → repetir o harness.
+6. Remover o índice duplicado.
+7. Correções de código (dashboard, polling, paginação, cleanup-old-data).
+8. Remover cron duplicado (com registro do comando original).
+9. Criar função de purga + agendar os 2 crons de retenção.
+10. Purga inicial de `cron.job_run_details` em lotes.
+11. Ajuste de autovacuum no pg_net.
+12. Testes de regressão: login/sessão, CRM (listar/criar/editar/excluir/filtros/paginação), chat e não lidas, campanhas, revenue/scoring, dashboard, permissões owner/membro/sem acesso, execução dos crons mantidos e webhooks/integrações.
+13. Relatório final com diagnóstico, arquivos editados, mudanças de banco, antes/depois e recomendação de infraestrutura.
