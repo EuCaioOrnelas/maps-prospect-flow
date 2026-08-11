@@ -240,26 +240,6 @@ export default function CRMRenewalSettings() {
                       <p>• Contratos de 4 a 6 meses: aviso 15 dias antes (padrão).</p>
                       <p>• Contratos acima de 6 meses: avisos 30 e 15 dias antes.</p>
                     </div>
-
-                    <div className="mt-3 space-y-1.5 max-w-xs">
-                      <FieldLabel icon={CalendarClock}>Contratos de 4 a 6 meses — avisar com (dias)</FieldLabel>
-                      <Input
-                        type="number"
-                        min={1}
-                        placeholder="15"
-                        value={settings.notice_days_4_6_months ?? ""}
-                        onChange={(e) =>
-                          setSettings({
-                            ...settings,
-                            notice_days_4_6_months: e.target.value ? Number(e.target.value) : null,
-                          })
-                        }
-                        className="h-9 rounded-xl"
-                      />
-                      <p className="text-[10.5px] text-muted-foreground">
-                        Deixe vazio para usar o padrão de 15 dias de antecedência.
-                      </p>
-                    </div>
                   </Card>
 
                   <Card className="p-4 rounded-2xl border-border/40 space-y-3">
