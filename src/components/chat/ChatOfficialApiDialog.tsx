@@ -23,7 +23,7 @@ export const ChatOfficialApiDialog = ({ open, onClose, hasConnection }: ChatOffi
           {hasConnection && (
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-background/80 backdrop-blur flex items-center justify-center hover:bg-background transition-colors z-10"
+              className="absolute top-4 right-4 w-8 h-8 rounded-[9px] bg-background/80 backdrop-blur flex items-center justify-center hover:bg-background transition-colors z-10"
             >
               <X className="w-4 h-4 text-muted-foreground" />
             </button>

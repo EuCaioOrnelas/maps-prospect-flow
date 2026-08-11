@@ -441,7 +441,7 @@ const Step = ({
   description: React.ReactNode;
 }) => (
   <div className="flex gap-3">
-    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+    <div className="w-7 h-7 rounded-[8px] bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
       <span className="text-xs font-bold text-primary">{number}</span>
     </div>
     <div className="flex-1 min-w-0">

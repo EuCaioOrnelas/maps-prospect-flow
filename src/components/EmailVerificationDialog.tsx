@@ -55,7 +55,7 @@ export const EmailVerificationDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="landing-light sm:max-w-md bg-background text-foreground border-border">
         <DialogHeader className="text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-[18px] bg-primary/20 flex items-center justify-center mx-auto mb-4">
             <Mail size={32} className="text-primary" />
           </div>
           <DialogTitle className="text-xl font-bold text-center">

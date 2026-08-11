@@ -102,7 +102,7 @@ const CheckoutFailed = () => {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-amber-500/20 rounded-full animate-pulse" />
             <div className="absolute inset-1 bg-background rounded-full flex items-center justify-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-amber-500 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-amber-500 rounded-[18px] flex items-center justify-center">
                 <XCircle className="w-8 h-8 text-white" strokeWidth={2.5} />
               </div>
             </div>

@@ -57,7 +57,7 @@ export default function AdminBlogLogin() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md p-8 space-y-6">
         <div className="flex flex-col items-center gap-2">
-          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="h-12 w-12 rounded-[14px] bg-primary/10 flex items-center justify-center">
             <Lock className="h-6 w-6 text-primary" />
           </div>
           <h1 className="text-2xl font-bold">Admin do Blog</h1>

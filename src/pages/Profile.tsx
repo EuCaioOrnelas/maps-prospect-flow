@@ -700,7 +700,7 @@ const Profile = () => {
               ) : isEditingCompany ? (
                 <div className="space-y-5">
                   <div className="rounded-xl border-2 border-amber-500/50 bg-amber-500/10 p-4 text-sm flex gap-3">
-                    <div className="shrink-0 w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center">
+                    <div className="shrink-0 w-9 h-9 rounded-[10px] bg-amber-500/20 flex items-center justify-center">
                       <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div className="space-y-2 text-foreground/90">

@@ -742,7 +742,7 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
             style={{ animationDuration: "1.8s" }}
           />
           <span className="absolute inset-2 rounded-full bg-primary/15" />
-          <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 shadow-[0_10px_40px_hsl(var(--primary)/0.55)]">
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-[22px] bg-gradient-to-br from-primary to-primary/70 shadow-[0_10px_40px_hsl(var(--primary)/0.55)]">
             <Check
               size={40}
               strokeWidth={3}

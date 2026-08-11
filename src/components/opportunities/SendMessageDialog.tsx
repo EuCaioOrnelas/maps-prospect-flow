@@ -236,7 +236,7 @@ export function SendMessageDialog({
 
           {phase === "no_connection" && (
             <div className="flex flex-col items-center gap-4 py-6">
-              <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-[18px] bg-amber-500/10 flex items-center justify-center">
                 <AlertTriangle size={28} className="text-amber-400" />
               </div>
               <div className="text-center space-y-1">

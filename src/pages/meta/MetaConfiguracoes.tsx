@@ -786,7 +786,7 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
             <span className="text-xs font-medium text-muted-foreground hidden sm:inline">
               {guideOpen ? "Recolher" : "Expandir"}
             </span>
-            <div className="h-8 w-8 rounded-full bg-muted/60 border border-border/60 flex items-center justify-center transition-colors group-hover:bg-muted">
+            <div className="h-8 w-8 rounded-[9px] bg-muted/60 border border-border/60 flex items-center justify-center transition-colors group-hover:bg-muted">
               <ChevronDown className={`h-4 w-4 text-foreground/70 transition-transform duration-300 ${guideOpen ? "rotate-180" : ""}`} />
             </div>
           </div>
@@ -805,7 +805,7 @@ function WebhookPanel({ onStatusChange }: { onStatusChange?: (s: "ok" | "pending
                 <ol className="space-y-3">
                   {steps.map((s) => (
                     <li key={s.n} className="flex gap-3">
-                      <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">{s.n}</div>
+                      <div className="h-6 w-6 rounded-[7px] bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">{s.n}</div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium">{s.t}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">{s.d}</p>

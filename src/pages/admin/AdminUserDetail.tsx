@@ -210,7 +210,7 @@ export default function AdminUserDetail() {
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-border" />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-primary/15 text-primary text-sm font-semibold flex items-center justify-center border border-border">
+                <div className="w-10 h-10 rounded-[11px] bg-primary/15 text-primary text-sm font-semibold flex items-center justify-center border border-border">
                   {(profile?.name || profile?.email || "?").slice(0, 2).toUpperCase()}
                 </div>
               )}

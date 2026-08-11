@@ -661,7 +661,7 @@ export default function ManageSubscription() {
             <CardContent className="space-y-4 relative z-10">
               {cancelled ? (
                 <div className="bg-emerald-500/[0.06] border border-emerald-500/15 rounded-xl p-6 text-center space-y-3">
-                  <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto">
+                  <div className="h-12 w-12 rounded-[14px] bg-emerald-500/10 flex items-center justify-center mx-auto">
                     <CheckCircle className="h-6 w-6 text-emerald-500" />
                   </div>
                   <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold">Renovação cancelada com sucesso</p>
@@ -701,15 +701,15 @@ export default function ManageSubscription() {
                     </h4>
                     <ol className="space-y-2 text-sm text-muted-foreground">
                       <li className="flex gap-3 items-start">
-                        <span className="h-6 w-6 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-500 shrink-0">1</span>
+                        <span className="h-6 w-6 rounded-[7px] bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-500 shrink-0">1</span>
                         <p className="pt-0.5">Clique no botão abaixo para abrir o <strong className="text-foreground">portal de pagamentos</strong></p>
                       </li>
                       <li className="flex gap-3 items-start">
-                        <span className="h-6 w-6 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-500 shrink-0">2</span>
+                        <span className="h-6 w-6 rounded-[7px] bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-500 shrink-0">2</span>
                         <p className="pt-0.5">No portal, clique em <strong className="text-foreground">"Cancelar plano"</strong></p>
                       </li>
                       <li className="flex gap-3 items-start">
-                        <span className="h-6 w-6 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-500 shrink-0">3</span>
+                        <span className="h-6 w-6 rounded-[7px] bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-500 shrink-0">3</span>
                         <p className="pt-0.5">Seu plano continua ativo até o <strong className="text-foreground">final do período pago</strong></p>
                       </li>
                     </ol>
@@ -753,7 +753,7 @@ export default function ManageSubscription() {
                         { text: "Confirme o cancelamento e pronto!", bold: "" },
                       ].map((step, i) => (
                         <li key={i} className="flex gap-3 items-start">
-                          <span className="h-6 w-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
+                          <span className="h-6 w-6 rounded-[7px] bg-primary/10 border border-primary/20 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
                             {i + 1}
                           </span>
                           <p className="text-sm text-muted-foreground leading-relaxed pt-0.5">

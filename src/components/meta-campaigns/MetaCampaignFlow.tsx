@@ -315,7 +315,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
   if (sendResult) {
     return (
       <div className="glass rounded-2xl p-8 text-center max-w-lg mx-auto">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-[18px] bg-primary/10 flex items-center justify-center mx-auto mb-4">
           <CheckCircle2 size={32} className="text-primary" />
         </div>
         <h2 className="text-2xl font-bold mb-2">Campanha enviada!</h2>
@@ -599,7 +599,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
               {/* Passo 1 */}
               <div className="p-4 rounded-lg border border-border bg-muted/20">
                 <p className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">1</span>
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-[7px] bg-primary text-primary-foreground text-xs font-bold">1</span>
                   Acesse o WhatsApp Manager da Meta
                 </p>
                 <p className="text-muted-foreground mb-2">
@@ -613,7 +613,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
               {/* Passo 2 */}
               <div className="p-4 rounded-lg border border-border bg-muted/20">
                 <p className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">2</span>
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-[7px] bg-primary text-primary-foreground text-xs font-bold">2</span>
                   Selecione a WABA correta
                 </p>
                 <p className="text-muted-foreground">
@@ -624,7 +624,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
               {/* Passo 3 */}
               <div className="p-4 rounded-lg border border-border bg-muted/20">
                 <p className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">3</span>
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-[7px] bg-primary text-primary-foreground text-xs font-bold">3</span>
                   Vá em "Modelos de mensagem"
                 </p>
                 <p className="text-muted-foreground mb-2">
@@ -638,7 +638,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
               {/* Passo 4 */}
               <div className="p-4 rounded-lg border border-border bg-muted/20">
                 <p className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">4</span>
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-[7px] bg-primary text-primary-foreground text-xs font-bold">4</span>
                   Escolha a categoria do template
                 </p>
                 <ul className="text-muted-foreground space-y-1 list-disc list-inside">
@@ -654,7 +654,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
               {/* Passo 5 */}
               <div className="p-4 rounded-lg border border-border bg-muted/20">
                 <p className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">5</span>
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-[7px] bg-primary text-primary-foreground text-xs font-bold">5</span>
                   Defina nome, idioma e estrutura
                 </p>
                 <ul className="text-muted-foreground space-y-1 list-disc list-inside">
@@ -670,7 +670,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
               {/* Passo 6 */}
               <div className="p-4 rounded-lg border border-border bg-muted/20">
                 <p className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">6</span>
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-[7px] bg-primary text-primary-foreground text-xs font-bold">6</span>
                   Envie para aprovação
                 </p>
                 <p className="text-muted-foreground">
@@ -681,7 +681,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
               {/* Passo 7 */}
               <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
                 <p className="font-semibold mb-2 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">7</span>
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-[7px] bg-primary text-primary-foreground text-xs font-bold">7</span>
                   Volte para a Wiize e dispare
                 </p>
                 <p className="text-muted-foreground">

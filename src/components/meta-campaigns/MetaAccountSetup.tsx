@@ -280,7 +280,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, isAddingExtra }: MetaAccou
 
 const StepRow = ({ number, text }: { number: number; text: string }) => (
   <div className="flex items-center gap-2.5">
-    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+    <div className="w-5 h-5 rounded-[6px] bg-primary/10 flex items-center justify-center shrink-0">
       <span className="text-[10px] font-bold text-primary">{number}</span>
     </div>
     <p className="text-xs text-muted-foreground">{text}</p>

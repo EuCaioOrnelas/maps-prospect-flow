@@ -145,7 +145,7 @@ const HelpCenter = () => {
                     href="https://www.youtube.com/@wiizebrasil"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
+                    className="w-11 h-11 rounded-[12px] bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
                     aria-label="YouTube"
                   >
                     <Youtube size={20} className="text-foreground" />
@@ -154,7 +154,7 @@ const HelpCenter = () => {
                     href="https://www.instagram.com/wiizebrasil"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-11 h-11 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
+                    className="w-11 h-11 rounded-[12px] bg-muted/50 hover:bg-primary/10 flex items-center justify-center transition-colors"
                     aria-label="Instagram"
                   >
                     <Instagram size={20} className="text-foreground" />

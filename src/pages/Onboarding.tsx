@@ -484,7 +484,7 @@ export default function Onboarding() {
               exit={{ opacity: 0 }}
               className="text-center"
             >
-              <div className="inline-flex h-14 w-14 rounded-full bg-[hsl(158,72%,38%)]/10 items-center justify-center mb-6">
+              <div className="inline-flex h-14 w-14 rounded-[16px] bg-[hsl(158,72%,38%)]/10 items-center justify-center mb-6">
                 <Loader2 className="h-7 w-7 animate-spin text-[hsl(158,72%,38%)]" />
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[hsl(220,18%,12%)] mb-3">

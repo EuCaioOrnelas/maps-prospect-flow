@@ -133,7 +133,7 @@ function MediaPreview({ msg, onOpenImage, onQuickForward }: { msg: ChatMessage; 
           <button
             onClick={(e) => { e.stopPropagation(); onQuickForward(msg); }}
             title="Encaminhar"
-            className="absolute top-1.5 left-1.5 w-8 h-8 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
+            className="absolute top-1.5 left-1.5 w-8 h-8 rounded-[9px] bg-black/55 hover:bg-black/75 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
           >
             <Forward size={15} />
           </button>
@@ -193,7 +193,7 @@ function ImageAlbumGrid({ msgs, onOpenImage, onQuickForward }: { msgs: ChatMessa
             <button
               onClick={(e) => { e.stopPropagation(); onQuickForward(m); }}
               title="Encaminhar"
-              className="absolute top-1 left-1 w-7 h-7 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-opacity"
+              className="absolute top-1 left-1 w-7 h-7 rounded-[8px] bg-black/55 hover:bg-black/75 text-white flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-opacity"
             >
               <Forward size={13} />
             </button>
@@ -1115,7 +1115,7 @@ export function ChatMessageArea({
                 type="button"
                 onClick={() => scrollToBottom("smooth")}
                 aria-label="Ir para a última mensagem"
-                className="absolute right-3 sm:right-5 -top-12 z-20 w-10 h-10 rounded-full bg-background/95 hover:bg-background border wa-border-light shadow-lg flex items-center justify-center text-foreground/80 hover:text-foreground transition-all backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2"
+                className="absolute right-3 sm:right-5 -top-12 z-20 w-10 h-10 rounded-[11px] bg-background/95 hover:bg-background border wa-border-light shadow-lg flex items-center justify-center text-foreground/80 hover:text-foreground transition-all backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2"
               >
                 <ChevronDown size={20} />
               </button>

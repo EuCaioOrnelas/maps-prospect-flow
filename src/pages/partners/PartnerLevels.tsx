@@ -249,7 +249,7 @@ export default function PartnerLevels() {
                     <div className={cn("relative h-12 w-12 rounded-2xl flex items-center justify-center ring-1", meta.bg, meta.ring, meta.fg)}>
                       <Icon size={22} strokeWidth={2.25} />
                       {!isUnlocked && (
-                        <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-background ring-1 ring-border/60 flex items-center justify-center">
+                        <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-[6px] bg-background ring-1 ring-border/60 flex items-center justify-center">
                           <Lock size={10} className="text-muted-foreground" />
                         </span>
                       )}

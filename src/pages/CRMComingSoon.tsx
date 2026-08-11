@@ -13,9 +13,9 @@ const CRMComingSoon = () => {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md text-center space-y-6">
           {/* Icon */}
-          <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center relative">
+          <div className="mx-auto w-20 h-20 bg-primary/10 rounded-[22px] flex items-center justify-center relative">
             <Users size={40} className="text-primary" />
-            <div className="absolute -top-1 -right-1 w-8 h-8 bg-amber-500/20 rounded-full flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 w-8 h-8 bg-amber-500/20 rounded-[9px] flex items-center justify-center">
               <Sparkles size={16} className="text-amber-500" />
             </div>
           </div>

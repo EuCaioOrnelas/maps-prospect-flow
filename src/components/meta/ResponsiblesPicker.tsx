@@ -69,7 +69,7 @@ export function ResponsiblesPicker({
 
   return (
     <div className="space-y-2">
-      <Popover open={open} onOpenChange={(o) => { if (!disabled) { setOpen(o); if (!o) setQuery(""); } }}>
+      <Popover modal open={open} onOpenChange={(o) => { if (!disabled) { setOpen(o); if (!o) setQuery(""); } }}>
         <PopoverTrigger asChild>
           <button
             type="button"

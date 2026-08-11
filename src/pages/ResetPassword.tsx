@@ -246,7 +246,7 @@ const ResetPassword = () => {
               </>
             ) : (
               <div className="text-center">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[16px] bg-primary/10 flex items-center justify-center mx-auto mb-4 sm:mb-6">
                   <Check size={28} className="text-primary sm:hidden" />
                   <Check size={32} className="text-primary hidden sm:block" />
                 </div>

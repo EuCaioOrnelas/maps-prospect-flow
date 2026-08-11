@@ -1329,7 +1329,7 @@ export function WianChat() {
             animate={{ opacity: 1, y: 0 }}
             className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center space-y-3"
           >
-            <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+            <div className="mx-auto w-12 h-12 rounded-[14px] bg-destructive/10 flex items-center justify-center">
               <AlertCircle className="w-6 h-6 text-destructive" />
             </div>
             <div className="space-y-1">

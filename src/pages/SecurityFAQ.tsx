@@ -151,7 +151,7 @@ const SecurityFAQ = () => {
 
         <main className="container mx-auto px-4 py-8 sm:py-12 max-w-4xl">
           <div className="text-center mb-8 sm:mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-[18px] bg-primary/10 mb-4">
               <HelpCircle className="w-8 h-8 text-primary" />
             </div>
             <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-4">

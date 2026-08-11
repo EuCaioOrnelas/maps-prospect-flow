@@ -299,7 +299,7 @@ function PhoneSimulation({ flowName, userPrompt, isFinished }: { flowName: strin
 
             {/* WhatsApp-style header */}
             <div className="bg-primary pb-3 px-4 flex items-center gap-3 pt-1">
-              <div className="w-9 h-9 rounded-full bg-primary-foreground/20 flex items-center justify-center text-primary-foreground text-xs font-bold">
+              <div className="w-9 h-9 rounded-[10px] bg-primary-foreground/20 flex items-center justify-center text-primary-foreground text-xs font-bold">
                 🤖
               </div>
               <div className="flex-1 min-w-0">
@@ -367,7 +367,7 @@ function PhoneSimulation({ flowName, userPrompt, isFinished }: { flowName: strin
               <div className="flex-1 h-8 rounded-full bg-muted px-3 flex items-center">
                 <span className="text-muted-foreground text-[10px]">Mensagem</span>
               </div>
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+              <div className="w-8 h-8 rounded-[9px] bg-primary flex items-center justify-center">
                 <SendIcon size={14} className="text-primary-foreground" />
               </div>
             </div>
@@ -707,7 +707,7 @@ export default function CreateFlowAI() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-              className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto mb-3"
+              className="w-16 h-16 rounded-[18px] bg-primary/10 border-2 border-primary/20 flex items-center justify-center mx-auto mb-3"
             >
               <CheckCircle2 className="w-8 h-8 text-primary" />
             </motion.div>

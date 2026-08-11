@@ -134,7 +134,7 @@ function UpgradeDialog({ open, onOpenChange, onNavigate }: { open: boolean; onOp
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[11px] bg-primary/20 flex items-center justify-center">
               <Crown className="w-5 h-5 text-primary" />
             </div>
             <DialogTitle className="text-xl">Recurso Premium</DialogTitle>

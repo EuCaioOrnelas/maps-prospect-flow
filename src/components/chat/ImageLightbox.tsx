@@ -102,7 +102,7 @@ export function ImageLightbox({ open, images, initialMessageId, contactName, con
       {/* Header */}
       <div className="h-[60px] flex items-center justify-between px-4 wa-lightbox-header shrink-0 z-10">
         <div className="flex items-center gap-3 min-w-0">
-          <button onClick={onClose} title="Fechar" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn shrink-0">
+          <button onClick={onClose} title="Fechar" className="w-10 h-10 rounded-[11px] flex items-center justify-center wa-lightbox-btn shrink-0">
             <X size={22} />
           </button>
           <div className="min-w-0">
@@ -112,22 +112,22 @@ export function ImageLightbox({ open, images, initialMessageId, contactName, con
         </div>
         <div className="flex items-center gap-1">
           {onReply && (
-            <button onClick={() => onReply(current)} title="Responder" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn">
+            <button onClick={() => onReply(current)} title="Responder" className="w-10 h-10 rounded-[11px] flex items-center justify-center wa-lightbox-btn">
               <Reply size={18} />
             </button>
           )}
           {onForward && (
-            <button onClick={() => onForward(current)} title="Encaminhar" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn">
+            <button onClick={() => onForward(current)} title="Encaminhar" className="w-10 h-10 rounded-[11px] flex items-center justify-center wa-lightbox-btn">
               <Forward size={18} />
             </button>
           )}
-          <button onClick={() => setScale(s => Math.max(1, s - 0.25))} title="Diminuir zoom" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn">
+          <button onClick={() => setScale(s => Math.max(1, s - 0.25))} title="Diminuir zoom" className="w-10 h-10 rounded-[11px] flex items-center justify-center wa-lightbox-btn">
             <ZoomOut size={18} />
           </button>
-          <button onClick={() => setScale(s => Math.min(5, s + 0.25))} title="Aumentar zoom" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn">
+          <button onClick={() => setScale(s => Math.min(5, s + 0.25))} title="Aumentar zoom" className="w-10 h-10 rounded-[11px] flex items-center justify-center wa-lightbox-btn">
             <ZoomIn size={18} />
           </button>
-          <button onClick={handleDownload} title="Baixar" className="w-10 h-10 rounded-full flex items-center justify-center wa-lightbox-btn">
+          <button onClick={handleDownload} title="Baixar" className="w-10 h-10 rounded-[11px] flex items-center justify-center wa-lightbox-btn">
             <Download size={18} />
           </button>
         </div>
@@ -136,12 +136,12 @@ export function ImageLightbox({ open, images, initialMessageId, contactName, con
       {/* Main image */}
       <div className="flex-1 relative overflow-hidden flex items-center justify-center" onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}>
         {index > 0 && (
-          <button onClick={() => go(-1)} className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full wa-lightbox-nav flex items-center justify-center z-10 transition-colors">
+          <button onClick={() => go(-1)} className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-[14px] wa-lightbox-nav flex items-center justify-center z-10 transition-colors">
             <ChevronLeft size={28} />
           </button>
         )}
         {index < images.length - 1 && (
-          <button onClick={() => go(1)} className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full wa-lightbox-nav flex items-center justify-center z-10 transition-colors">
+          <button onClick={() => go(1)} className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-[14px] wa-lightbox-nav flex items-center justify-center z-10 transition-colors">
             <ChevronRight size={28} />
           </button>
         )}

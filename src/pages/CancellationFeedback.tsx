@@ -72,7 +72,7 @@ export default function CancellationFeedback() {
           animate={{ opacity: 1, scale: 1 }}
           className="text-center max-w-md space-y-6"
         >
-          <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
+          <div className="mx-auto w-16 h-16 rounded-[18px] bg-emerald-500/10 flex items-center justify-center">
             <CheckCircle className="w-8 h-8 text-emerald-500" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Obrigado pelo seu feedback</h1>

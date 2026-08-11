@@ -376,7 +376,7 @@ const EmptyListState = ({ message, icon: Icon }: { message: string; icon?: React
   const IconComponent = Icon || Search;
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-      <div className="w-12 h-12 rounded-full bg-muted/40 flex items-center justify-center mb-3">
+      <div className="w-12 h-12 rounded-[14px] bg-muted/40 flex items-center justify-center mb-3">
         <IconComponent className="h-5 w-5 text-muted-foreground/50" />
       </div>
       <p className="text-sm font-medium text-muted-foreground/70 mb-1">Sem dados no momento</p>

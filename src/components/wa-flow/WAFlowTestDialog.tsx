@@ -917,7 +917,7 @@ export function WAFlowTestDialog({
             return (
               <div key={message.id} className="flex justify-start">
                 <div className="max-w-[82%] flex items-end gap-2">
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-[9px] bg-muted flex items-center justify-center shrink-0">
                     <Bot className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="min-w-[220px]">
@@ -965,7 +965,7 @@ export function WAFlowTestDialog({
           {isRunning && (
             <div className="flex justify-start">
               <div className="flex items-end gap-2">
-                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-[9px] bg-muted flex items-center justify-center shrink-0">
                   <Bot className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div className="bg-muted px-4 py-3 rounded-2xl rounded-bl-md border border-border/60">

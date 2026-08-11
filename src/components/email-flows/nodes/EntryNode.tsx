@@ -22,7 +22,7 @@ export function EntryNode({ data }: NodeProps) {
   return (
     <div className="bg-card border-2 border-primary/30 rounded-full shadow-[0_2px_12px_hsl(var(--primary)/0.12)] w-44 backdrop-blur-sm relative">
       <div className="flex items-center gap-2 px-4 py-2.5">
-        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+        <div className="w-6 h-6 rounded-[7px] bg-primary/10 flex items-center justify-center shrink-0">
           <Zap size={12} className="text-primary" />
         </div>
         <div className="min-w-0 flex-1">

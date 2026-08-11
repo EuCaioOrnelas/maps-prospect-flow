@@ -918,7 +918,7 @@ export const LeadDetailDialog = ({
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold text-primary-foreground shrink-0"
+              className="w-12 h-12 rounded-[14px] flex items-center justify-center text-lg font-semibold text-primary-foreground shrink-0"
               style={{ backgroundColor: currentStage?.color || 'hsl(var(--primary))' }}
             >
               {displayName.charAt(0).toUpperCase()}
@@ -2044,7 +2044,7 @@ export const LeadDetailDialog = ({
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-destructive/10 text-destructive">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-[9px] bg-destructive/10 text-destructive">
                   ⚠️
                 </span>
                 Google Drive sem espaço

@@ -314,7 +314,7 @@ export default function CheckoutPix() {
                       transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut", delay: 0.3 }}
                     />
                     <motion.div
-                      className="relative h-24 w-24 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30"
+                      className="relative h-24 w-24 rounded-[26px] bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}

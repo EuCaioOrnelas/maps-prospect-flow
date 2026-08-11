@@ -65,7 +65,7 @@ export function IdealAudienceMismatchBanner({ accountOwnerId, onEditProfile }: P
   return (
     <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
       <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-[10px] bg-amber-500/15 flex items-center justify-center shrink-0">
           <AlertTriangle size={18} className="text-amber-500" />
         </div>
         <div className="min-w-0">

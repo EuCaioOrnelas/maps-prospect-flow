@@ -577,7 +577,7 @@ const Dashboard = () => {
             {!hasSDRAccess(profile) ? (
               <div className="max-w-2xl mx-auto mt-12">
                 <div className="rounded-2xl border border-primary/30 bg-card/60 backdrop-blur p-8 text-center">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 border border-primary/20 mb-5">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-[16px] bg-primary/10 border border-primary/20 mb-5">
                     <Lock size={24} className="text-primary" />
                   </div>
                   <span className="inline-block px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-primary/10 text-primary mb-3">
@@ -1145,7 +1145,7 @@ const Dashboard = () => {
       <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <div className="mx-auto w-16 h-16 rounded-[18px] bg-primary/10 flex items-center justify-center mb-4">
               <Zap size={32} className="text-primary" />
             </div>
             <DialogTitle className="text-center text-2xl">Suas buscas acabaram!</DialogTitle>

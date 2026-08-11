@@ -23,7 +23,7 @@ export const ComingSoonDialog = ({ open, onOpenChange, title }: ComingSoonDialog
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.1, type: "spring" }}
-          className="w-20 h-20 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center"
+          className="w-20 h-20 rounded-[22px] bg-primary/10 border border-primary/20 flex items-center justify-center"
         >
           <Lock size={32} className="text-primary" />
         </motion.div>

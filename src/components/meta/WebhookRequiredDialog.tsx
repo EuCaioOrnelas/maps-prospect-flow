@@ -34,7 +34,7 @@ export function WebhookRequiredDialog({ open, onOpenChange, pendingConnections, 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-background">
         <DialogHeader>
-          <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mb-2">
+          <div className="w-12 h-12 rounded-[14px] bg-amber-500/10 flex items-center justify-center mb-2">
             <Webhook className="h-6 w-6 text-amber-600" />
           </div>
           <DialogTitle>{copy.title}</DialogTitle>
