@@ -316,17 +316,14 @@ Deno.serve(async (req) => {
         ? `Por você ser cliente <strong>Growth</strong>, nosso time vai retornar diretamente pelo <strong>WhatsApp</strong> no número informado no chamado (${esc(ticket.phone || "Não informado")}). Se preferir continuar por e-mail, basta responder esta mensagem.`
         : `Como você está no plano <strong>Start / Atendimento</strong>, o retorno será feito por <strong>e-mail</strong>, neste mesmo endereço (${esc(customerEmail)}). Basta responder este e-mail que sua mensagem entra automaticamente no chamado. Se não encontrar nossa confirmação na caixa de entrada, confira também o <strong>Spam</strong> ou <strong>Lixo eletrônico</strong>.`;
 
-      const receiptSubject = `Confirmação de abertura do chamado ${ticketNumber}`;
+      const receiptTopic = cleanSubjectText(ticket.subject) || cleanSubjectText(category);
+      const receiptSubject = receiptTopic
+        ? `Recebemos a sua mensagem sobre ${receiptTopic}`
+        : "Recebemos a sua mensagem para o suporte Wiize";
       const bodyHtml = `
-        <p style="margin:0 0 10px;font-size:16px;font-weight:600;color:#0f172a;">Recebemos o seu chamado</p>
+        <p style="margin:0 0 10px;font-size:16px;font-weight:600;color:#0f172a;">Recebemos a sua mensagem</p>
         <p style="margin:0 0 12px;">Olá ${esc(customerName)},</p>
-        <p style="margin:0 0 14px;color:#374151;">Confirmamos a abertura do seu chamado de suporte. Abaixo estão os dados de protocolo para sua referência:</p>
-        <table style="width:100%;border-collapse:collapse;margin:0 0 16px;">
-          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;width:130px;">Protocolo</td><td style="padding:5px 0;font-weight:600;">${esc(ticketNumber)}</td></tr>
-          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Assunto</td><td style="padding:5px 0;">${esc(ticket.subject || category)}</td></tr>
-          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Categoria</td><td style="padding:5px 0;">${esc(category)}</td></tr>
-          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Aberto em</td><td style="padding:5px 0;">${new Date(ticket.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td></tr>
-        </table>
+        <p style="margin:0 0 14px;color:#374151;">Obrigado por escrever para o nosso suporte. Já registramos o seu atendimento${receiptTopic ? ` sobre <strong>${esc(receiptTopic)}</strong>` : ""} e ele está na fila do nosso time.</p>
 
         <div style="padding:14px 16px;background:${BRAND_SOFT};border-radius:6px;border-left:3px solid ${BRAND};margin:0 0 16px;">
           <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#0f172a;">Prazo de retorno</p>
@@ -338,10 +335,10 @@ Deno.serve(async (req) => {
           <p style="margin:0;color:#374151;font-size:14px;line-height:1.55;">${channelExplain}</p>
         </div>
 
-        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Se precisar adicionar alguma informação ao chamado, basta responder este e-mail. Mantenha o número do protocolo no assunto para agilizar.</p>
-        <p style="margin:14px 0 0;color:#6b7280;font-size:13px;">Obrigado pela confiança,<br>Equipe de Suporte Wiize</p>
+        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Precisa complementar alguma informação? É só responder este e-mail — não precisa preencher nada, nós reconhecemos automaticamente o seu atendimento.</p>
+        <p style="margin:14px 0 0;color:#6b7280;font-size:13px;">Obrigado pela confiança,<br>Equipe de Suporte Wiize<br><span style="color:#9ca3af;">Protocolo interno: ${esc(ticketNumber)} · aberto em ${new Date(ticket.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</span></p>
       `;
-      const html = layout(receiptSubject, bodyHtml, `Chamado ${ticketNumber} aberto | retorno em até 48h úteis`);
+      const html = layout(receiptSubject, bodyHtml, "Recebemos a sua mensagem — nosso time responde em até 48h úteis");
       await sendResend({
         from: FROM,
         to: [customerEmail],
@@ -349,12 +346,7 @@ Deno.serve(async (req) => {
         html,
         text: htmlToText(bodyHtml),
         reply_to: replyTo,
-        headers: {
-          "X-Wiize-Ticket": ticketNumber,
-          "List-Unsubscribe": `<mailto:${replyTo}?subject=unsubscribe>`,
-          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-          "X-Entity-Ref-ID": ticketNumber,
-        },
+        headers: threadHeaders(ticketNumber, true),
       });
       // best-effort: registra envio (ignora se coluna não existir)
       try {
