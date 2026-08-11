@@ -9105,6 +9105,38 @@ export type Database = {
           },
         ]
       }
+      waba_number_responsibles: {
+        Row: {
+          connection_id: string
+          created_at: string
+          id: string
+          owner_user_id: string
+          user_id: string
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          id?: string
+          owner_user_id: string
+          user_id: string
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          id?: string
+          owner_user_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waba_number_responsibles_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_waba_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warming_interactions: {
         Row: {
           ai_generated: boolean
