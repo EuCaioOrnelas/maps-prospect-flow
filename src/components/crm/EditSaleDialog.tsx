@@ -27,11 +27,14 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   sale: Sale | null;
+  /** Só o próprio responsável (ou owner/admin) pode trocar o responsável da venda. */
+  canChangeResponsible?: boolean;
 }
 
-export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
+export function EditSaleDialog({ open, onOpenChange, sale, canChangeResponsible = true }: Props) {
   const { updateSale } = useSales();
   const { members } = useAccountMembers();
+
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
