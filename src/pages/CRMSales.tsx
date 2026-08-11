@@ -572,6 +572,11 @@ export default function CRMSales() {
           saleResponsibleUserId: editingSale?.responsible_user_id,
         })}
       />
+      <RenewSaleDialog
+        open={!!renewingSale}
+        onOpenChange={(o) => !o && setRenewingSale(null)}
+        sale={renewingSale}
+      />
 
     </div>
   );
