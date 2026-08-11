@@ -154,21 +154,6 @@ export default function CRMRenewalSettings() {
     }
   };
 
-  const colorField = (label: string, value: string, onChange: (v: string) => void) => (
-    <div className="space-y-1.5">
-      <FieldLabel icon={Palette}>{label}</FieldLabel>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : "#3daa57"}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-9 w-12 rounded-xl border border-border bg-card p-1 cursor-pointer"
-          aria-label={label}
-        />
-        <Input value={value} onChange={(e) => onChange(e.target.value)} className="h-9 rounded-xl font-mono text-xs" />
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-background relative">
