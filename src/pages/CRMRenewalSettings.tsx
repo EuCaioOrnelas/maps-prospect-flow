@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,8 +18,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
   BellRing,
-  CalendarClock,
-  Image as ImageIcon,
   Loader2,
   Mail,
   MessageSquareText,
@@ -29,12 +27,13 @@ import {
   Send,
   Eye,
   Type,
-  Upload,
   User,
   Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRenewalSettings } from "@/hooks/useRenewalSettings";
+import { ColorField } from "@/components/ui/color-field";
+import { LogoDropField } from "@/components/ui/logo-drop-field";
 
 import {
   SENDER_DOMAIN,
@@ -76,7 +75,6 @@ export default function CRMRenewalSettings() {
   const { settings, setSettings, isLoading, isSaving, save, uploadLogo } = useRenewalSettings();
   const [uploading, setUploading] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: sidebarProfile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -155,27 +153,12 @@ export default function CRMRenewalSettings() {
     }
   };
 
-  const colorField = (label: string, value: string, onChange: (v: string) => void) => (
-    <div className="space-y-1.5">
-      <FieldLabel icon={Palette}>{label}</FieldLabel>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : "#3daa57"}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-9 w-12 rounded-xl border border-border bg-card p-1 cursor-pointer"
-          aria-label={label}
-        />
-        <Input value={value} onChange={(e) => onChange(e.target.value)} className="h-9 rounded-xl font-mono text-xs" />
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-background relative">
       <BackgroundGlow />
       <SEO
-        title="Avisos de renovação de contratos — CRM Wiize"
+        title="Avisos de renovação de contratos | CRM Wiize"
         description="Configure os avisos automáticos de renovação dos contratos recorrentes do seu CRM."
       />
       <AppSidebar profile={profile || sidebarProfile} />
@@ -241,26 +224,6 @@ export default function CRMRenewalSettings() {
                       <p>• Contratos de 4 a 6 meses: aviso 15 dias antes (padrão).</p>
                       <p>• Contratos acima de 6 meses: avisos 30 e 15 dias antes.</p>
                     </div>
-
-                    <div className="mt-3 space-y-1.5 max-w-xs">
-                      <FieldLabel icon={CalendarClock}>Contratos de 4 a 6 meses — avisar com (dias)</FieldLabel>
-                      <Input
-                        type="number"
-                        min={1}
-                        placeholder="15"
-                        value={settings.notice_days_4_6_months ?? ""}
-                        onChange={(e) =>
-                          setSettings({
-                            ...settings,
-                            notice_days_4_6_months: e.target.value ? Number(e.target.value) : null,
-                          })
-                        }
-                        className="h-9 rounded-xl"
-                      />
-                      <p className="text-[10.5px] text-muted-foreground">
-                        Deixe vazio para usar o padrão de 15 dias de antecedência.
-                      </p>
-                    </div>
                   </Card>
 
                   <Card className="p-4 rounded-2xl border-border/40 space-y-3">
@@ -309,65 +272,27 @@ export default function CRMRenewalSettings() {
                       title="Identidade visual e conteúdo"
                       description="O mesmo e-mail é enviado ao cliente e ao responsável interno."
                     />
-
-                    <div className="space-y-1.5">
-                      <FieldLabel icon={ImageIcon}>Logo da empresa</FieldLabel>
-                      <div className="flex items-center gap-3">
-                        <div className="w-16 h-16 rounded-2xl border border-border/60 bg-muted/40 flex items-center justify-center overflow-hidden shrink-0">
-                          {settings.logo_url ? (
-                            <img
-                              src={settings.logo_url}
-                              alt="Logo do e-mail"
-                              className="max-w-full max-h-full object-contain"
-                            />
-                          ) : (
-                            <ImageIcon className="w-5 h-5 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <input
-                            ref={fileRef}
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                            className="hidden"
-                            onChange={(e) => handleLogo(e.target.files?.[0])}
-                          />
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="rounded-xl"
-                            onClick={() => fileRef.current?.click()}
-                            disabled={uploading}
-                          >
-                            {uploading ? (
-                              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                            ) : (
-                              <Upload className="w-3.5 h-3.5 mr-1.5" />
-                            )}
-                            Enviar logo
-                          </Button>
-                          {settings.logo_url && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="rounded-xl"
-                              onClick={() => save({ logo_url: null })}
-                            >
-                              Remover
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    <LogoDropField
+                      value={settings.logo_url}
+                      uploading={uploading}
+                      onFile={(file) => handleLogo(file)}
+                      onRemove={() => save({ logo_url: null })}
+                    />
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {colorField("Cor do cabeçalho", settings.header_color, (v) =>
-                        setSettings({ ...settings, header_color: v })
-                      )}
-                      {colorField("Cor do botão", settings.button_color, (v) =>
-                        setSettings({ ...settings, button_color: v })
-                      )}
+                      <ColorField
+                        label="Cor do cabeçalho"
+                        value={settings.header_color}
+                        onChange={(v) => setSettings({ ...settings, header_color: v })}
+                      />
+                      <ColorField
+                        label="Cor do botão"
+                        value={settings.button_color}
+                        onChange={(v) => setSettings({ ...settings, button_color: v })}
+                      />
                     </div>
+
+
 
                     <Separator />
 

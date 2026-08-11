@@ -72,6 +72,14 @@ export function formatContractValue(months: number, installment: string): string
   return `${months}x ${installment}`;
 }
 
+/** Monta o link do WhatsApp a partir do telefone de contato (DDI 55 automático). */
+function buildWhatsappUrl(phone: string | null | undefined): string {
+  const digits = String(phone ?? "").replace(/\D/g, "");
+  if (digits.length < 10) return "";
+  const full = digits.startsWith("55") ? digits : `55${digits}`;
+  return `https://wa.me/${full}`;
+}
+
 export function renderRenewalEmail(
   settings: Partial<RenewalSettings>,
   data: RenewalEmailData
@@ -98,6 +106,9 @@ export function renderRenewalEmail(
   const contactPhone = (settings.contact_phone || "").trim();
   const hasContact = !!(contactName || contactEmail || contactPhone);
 
+  // O botão principal leva sempre para o WhatsApp do contato; o e-mail fica apenas informativo.
+  const ctaUrl = buildWhatsappUrl(contactPhone) || data.ctaUrl;
+
   const contactBlock = hasContact
     ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:#ffffff;border:1px solid #e4e4e7;border-radius:10px;">
         <tr><td style="padding:14px 16px;">
@@ -109,7 +120,7 @@ export function renderRenewalEmail(
       </table>`
     : "";
 
-  const subject = `${data.isTest ? "[TESTE] " : ""}${title} — ${data.companyName || data.clientName} (${daysLabel})`;
+  const subject = `${data.isTest ? "[TESTE] " : ""}${title}: ${data.companyName || data.clientName} (${daysLabel})`;
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -127,10 +138,10 @@ export function renderRenewalEmail(
     <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#3f3f46;">${esc(intro)}</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;padding:8px 16px;">
-      ${row("Cliente", data.clientName || "—")}
-      ${row("Empresa", data.companyName || "—")}
-      ${row("Contrato", data.saleTitle || "—")}
-      ${row("Vencimento", data.expirationDate || "—")}
+      ${row("Cliente", data.clientName || "Não informado")}
+      ${row("Empresa", data.companyName || "Não informado")}
+      ${row("Contrato", data.saleTitle || "Não informado")}
+      ${row("Vencimento", data.expirationDate || "Não informado")}
       ${row("Dias restantes", data.daysLeft <= 0 ? "0" : String(data.daysLeft))}
       ${row("Duração", `${data.contractMonths} ${data.contractMonths === 1 ? "mês" : "meses"}`)}
       ${row("Valor", formatContractValue(data.contractMonths, data.contractValue))}
@@ -139,7 +150,7 @@ export function renderRenewalEmail(
     ${contactBlock}
 
     <div style="text-align:center;margin:26px 0 6px;">
-      <a href="${esc(data.ctaUrl)}" style="display:inline-block;padding:13px 28px;background:${button};color:#ffffff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">${esc(cta)}</a>
+      <a href="${esc(ctaUrl)}" style="display:inline-block;padding:13px 28px;background:${button};color:#ffffff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">${esc(cta)}</a>
     </div>
   </td></tr>
   <tr><td style="padding:16px 32px;background:#fafafa;text-align:center;border-top:1px solid #e4e4e7;">

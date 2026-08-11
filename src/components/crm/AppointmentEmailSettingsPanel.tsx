@@ -9,18 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  CalendarClock,
-  Eye,
-  Image as ImageIcon,
-  Info,
-  Loader2,
-  Mail,
-  Palette,
-  RotateCcw,
-  Send,
-  Upload,
-} from "lucide-react";
+import { CalendarClock, Eye, Info, Loader2, Mail, Palette, RotateCcw, Send, Type, MousePointerClick, MessageSquareText } from "lucide-react";
+import { ColorField } from "@/components/ui/color-field";
+import { LogoDropField } from "@/components/ui/logo-drop-field";
 import { toast } from "sonner";
 import { useAppointmentEmailSettings } from "@/hooks/useAppointmentEmailSettings";
 import {
@@ -41,7 +32,6 @@ export function AppointmentEmailSettingsPanel() {
     useAppointmentEmailSettings();
   const [uploading, setUploading] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   const senderValid = isValidSenderLocalPart(settings.sender_local_part || "");
@@ -130,22 +120,6 @@ export function AppointmentEmailSettingsPanel() {
     });
   };
 
-  const colorField = (label: string, value: string, onChange: (v: string) => void) => (
-    <div className="space-y-1.5">
-      <Label className="text-xs">{label}</Label>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : "#3daa57"}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-9 w-12 rounded-md border border-border bg-card p-1 cursor-pointer"
-          aria-label={label}
-        />
-        <Input value={value} onChange={(e) => onChange(e.target.value)} className="h-9 font-mono text-xs" />
-      </div>
-    </div>
-  );
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -183,7 +157,7 @@ export function AppointmentEmailSettingsPanel() {
             </div>
           </div>
 
-          <div className="mt-4 rounded-lg border border-border/60 bg-muted/30 p-3 text-[11.5px] text-muted-foreground space-y-1">
+          <div className="mt-4 rounded-xl border border-border/60 bg-muted/30 p-3 text-[11.5px] text-muted-foreground space-y-1">
             <p className="flex items-center gap-1.5 font-medium text-foreground">
               <Info className="w-3.5 h-3.5 text-primary" /> Como funciona
             </p>
@@ -192,7 +166,7 @@ export function AppointmentEmailSettingsPanel() {
             <p>• Cada lembrete é registrado e nunca é enviado duas vezes para o mesmo destinatário.</p>
           </div>
 
-          <div className="mt-3 flex items-start justify-between gap-4 rounded-lg border border-border/60 p-3">
+          <div className="mt-3 flex items-start justify-between gap-4 rounded-xl border border-border/60 p-3">
             <div>
               <p className="text-xs font-medium">Enviar também para o cliente convidado</p>
               <p className="text-[10.5px] text-muted-foreground mt-0.5">
@@ -211,53 +185,31 @@ export function AppointmentEmailSettingsPanel() {
             <Palette className="w-4 h-4 text-primary" /> Identidade visual
           </h2>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs flex items-center gap-1.5">
-              <ImageIcon className="w-3.5 h-3.5 text-primary" /> Logo da empresa
-            </Label>
-            <div className="flex items-center gap-3">
-              <div className="w-16 h-16 rounded-xl border border-border/60 bg-muted/40 flex items-center justify-center overflow-hidden shrink-0">
-                {settings.logo_url ? (
-                  <img src={settings.logo_url} alt="Logo do e-mail da Agenda" className="max-w-full max-h-full object-contain" />
-                ) : (
-                  <ImageIcon className="w-5 h-5 text-muted-foreground" />
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                  className="hidden"
-                  onChange={(e) => handleLogo(e.target.files?.[0])}
-                />
-                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => fileRef.current?.click()} disabled={uploading}>
-                  {uploading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 mr-1.5" />}
-                  Enviar logo
-                </Button>
-                {settings.logo_url && (
-                  <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => save({ logo_url: null })}>
-                    Remover
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
+          <LogoDropField
+            value={settings.logo_url}
+            uploading={uploading}
+            onFile={(file) => handleLogo(file)}
+            onRemove={() => save({ logo_url: null })}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {colorField("Cor do cabeçalho", settings.header_color, (v) =>
-              setSettings({ ...settings, header_color: v })
-            )}
-            {colorField("Cor do botão", settings.button_color, (v) =>
-              setSettings({ ...settings, button_color: v })
-            )}
+            <ColorField
+              label="Cor do cabeçalho"
+              value={settings.header_color}
+              onChange={(v) => setSettings({ ...settings, header_color: v })}
+            />
+            <ColorField
+              label="Cor do botão"
+              value={settings.button_color}
+              onChange={(v) => setSettings({ ...settings, button_color: v })}
+            />
           </div>
 
           <Separator />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs">Nome do remetente</Label>
+              <Label className="text-xs flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-primary" /> Nome do remetente</Label>
               <Input
                 value={settings.sender_name}
                 onChange={(e) => setSettings({ ...settings, sender_name: e.target.value })}
@@ -273,10 +225,10 @@ export function AppointmentEmailSettingsPanel() {
                 <Input
                   value={settings.sender_local_part}
                   onChange={(e) => setSettings({ ...settings, sender_local_part: normalizeSender(e.target.value) })}
-                  className="h-9 rounded-r-none"
+                  className="h-9 rounded-l-xl rounded-r-none"
                   placeholder="agenda"
                 />
-                <span className="h-9 inline-flex items-center rounded-r-md border border-l-0 border-border bg-muted px-2 text-xs text-muted-foreground">
+                <span className="h-9 inline-flex items-center rounded-r-xl border border-l-0 border-border bg-muted px-2 text-xs text-muted-foreground">
                   {SENDER_DOMAIN}
                 </span>
               </div>
@@ -289,7 +241,7 @@ export function AppointmentEmailSettingsPanel() {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Título/assunto do e-mail</Label>
+            <Label className="text-xs flex items-center gap-1.5"><Type className="w-3.5 h-3.5 text-primary" /> Título/assunto do e-mail</Label>
             <Input
               value={settings.email_title}
               onChange={(e) => setSettings({ ...settings, email_title: e.target.value })}
@@ -300,7 +252,7 @@ export function AppointmentEmailSettingsPanel() {
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
-              <Label className="text-xs">Conteúdo do e-mail</Label>
+              <Label className="text-xs flex items-center gap-1.5"><MessageSquareText className="w-3.5 h-3.5 text-primary" /> Conteúdo do e-mail</Label>
               <Button
                 size="sm"
                 variant="ghost"
@@ -316,7 +268,7 @@ export function AppointmentEmailSettingsPanel() {
               onChange={(e) => setSettings({ ...settings, email_body: e.target.value })}
               rows={12}
               maxLength={4000}
-              className="font-mono text-xs leading-relaxed"
+              className="rounded-xl font-mono text-xs leading-relaxed"
             />
             <p className="text-[10.5px] text-muted-foreground">
               Linhas com variáveis sem valor são removidas automaticamente do e-mail final.
@@ -328,7 +280,7 @@ export function AppointmentEmailSettingsPanel() {
                   type="button"
                   onClick={() => insertVariable(v.key)}
                   title={v.label}
-                  className="px-2 py-1 rounded-md border border-border/60 bg-muted/40 text-[10.5px] font-mono text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                  className="px-2 py-1 rounded-lg border border-border/60 bg-muted/40 text-[10.5px] font-mono text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
                 >
                   {`{{${v.key}}}`}
                 </button>
@@ -337,7 +289,7 @@ export function AppointmentEmailSettingsPanel() {
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Texto do botão</Label>
+            <Label className="text-xs flex items-center gap-1.5"><MousePointerClick className="w-3.5 h-3.5 text-primary" /> Texto do botão</Label>
             <Input
               value={settings.cta_label}
               onChange={(e) => setSettings({ ...settings, cta_label: e.target.value })}
