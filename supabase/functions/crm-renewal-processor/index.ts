@@ -34,9 +34,7 @@ const NOTICE_COLUMN: Record<NoticeType, string | null> = {
  * Regras de aviso por duração de contrato.
  * - até 3 meses: 1 aviso, 7 dias antes (muda status para "expiring")
  * - acima de 6 meses: 30 dias (muda status) e 15 dias (não muda status)
- * - 4 a 6 meses: REGRA NÃO DEFINIDA PELO NEGÓCIO.
- *   Fica desligada por padrão e só dispara se a conta preencher
- *   `notice_days_4_6_months` nas configurações. TODO: definir regra oficial.
+ * - 4 a 6 meses: 15 dias antes por padrão (configurável em `notice_days_4_6_months`)
  */
 function pickNotice(
   months: number,
@@ -52,10 +50,9 @@ function pickNotice(
     if (daysLeft <= 30) return { type: "30_days", changesStatus: true };
     return null;
   }
-  // 4 a 6 meses
-  if (custom4to6 && custom4to6 > 0 && daysLeft <= custom4to6) {
-    return { type: "custom_4_6_months", changesStatus: true };
-  }
+  // 4 a 6 meses — padrão 15 dias
+  const days = custom4to6 && custom4to6 > 0 ? custom4to6 : 15;
+  if (daysLeft <= days) return { type: "custom_4_6_months", changesStatus: true };
   return null;
 }
 
@@ -198,11 +195,9 @@ Deno.serve(async (req) => {
         const { subject, html } = renderRenewalEmail(settings, {
           clientName: (deal as any).lead?.contact_name || "Cliente",
           companyName: (deal as any).lead?.company_name || "",
-          responsibleName: ownerProfile?.name || "Equipe comercial",
           expirationDate: exp.toLocaleDateString("pt-BR"),
           daysLeft,
           contractValue: fmtMoney(Number(deal.value || 0)),
-          contractTotal: fmtMoney(Number(deal.value || 0) * months),
           contractMonths: months,
           saleTitle: deal.title || "Contrato",
           ctaUrl: `${APP_URL}/crm/vendas`,

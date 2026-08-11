@@ -87,11 +87,9 @@ Deno.serve(async (req) => {
     const { subject, html } = renderRenewalEmail(settings, {
       clientName: "João da Silva",
       companyName: "Empresa Exemplo LTDA",
-      responsibleName: user.user_metadata?.name || user.email || "Responsável",
       expirationDate: new Date(Date.now() + 7 * 86400000).toLocaleDateString("pt-BR"),
       daysLeft: 7,
       contractValue: fmtMoney(1500),
-      contractTotal: fmtMoney(18000),
       contractMonths: 12,
       saleTitle: "Contrato de prestação de serviços",
       ctaUrl: `${appUrl}/crm/vendas`,
