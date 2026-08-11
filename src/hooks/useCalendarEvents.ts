@@ -118,8 +118,9 @@ export function useCalendarEvents({ from, to, userFilter }: UseCalendarEventsOpt
         ...input,
         owner_user_id: accountOwnerId,
         created_by: user?.id ?? null,
-        reminders: input.reminders ?? [15],
+        reminders: input.reminders ?? [],
       };
+
       const { data, error } = await supabase
         .from("calendar_events")
         .insert(payload as never)
