@@ -72,50 +72,52 @@ Deno.serve(async (req) => {
     }
     
     // 4. Enforce max 10 entries per user for search_history
+    // Regra mantida: manter apenas as 10 entradas mais recentes por usuário.
+    // Antes: 1 query de usuários + 2 queries por usuário (N+1).
+    // Agora: 1 leitura única + deletes em lote.
     console.log('[cleanup-old-data] Enforcing max 10 search history entries per user...');
     const MAX_HISTORY_PER_USER = 10;
-    
-    // Get all users with search history
-    const { data: usersWithHistory } = await supabase
+
+    const { data: allHistory, error: historyReadError } = await supabase
       .from('search_history')
-      .select('user_id')
-      .order('user_id');
-    
-    if (usersWithHistory) {
-      // Get unique user IDs
-      const uniqueUserIds = [...new Set(usersWithHistory.map(u => u.user_id))];
-      let totalTrimmed = 0;
-      
-      for (const userId of uniqueUserIds) {
-        // Get count for this user
-        const { count } = await supabase
-          .from('search_history')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
-        
-        if (count && count > MAX_HISTORY_PER_USER) {
-          // Get IDs of oldest entries to delete
-          const { data: oldEntries } = await supabase
-            .from('search_history')
-            .select('id')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: true })
-            .limit(count - MAX_HISTORY_PER_USER);
-          
-          if (oldEntries && oldEntries.length > 0) {
-            const idsToDelete = oldEntries.map(e => e.id);
-            await supabase
-              .from('search_history')
-              .delete()
-              .in('id', idsToDelete);
-            totalTrimmed += idsToDelete.length;
-          }
-        }
+      .select('id, user_id, created_at')
+      .order('user_id', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    if (historyReadError) {
+      console.error('[cleanup-old-data] Error reading search_history:', historyReadError);
+      results.searchHistoryTrimmed = { error: historyReadError.message };
+    } else if (allHistory) {
+      const seenPerUser = new Map<string, number>();
+      const idsToDelete: string[] = [];
+
+      // Rows já vêm ordenadas por usuário e por created_at desc:
+      // as 10 primeiras de cada usuário ficam, o resto é removido.
+      for (const row of allHistory as Array<{ id: string; user_id: string }>) {
+        const seen = (seenPerUser.get(row.user_id) || 0) + 1;
+        seenPerUser.set(row.user_id, seen);
+        if (seen > MAX_HISTORY_PER_USER) idsToDelete.push(row.id);
       }
-      
+
+      let totalTrimmed = 0;
+      const BATCH = 500;
+      for (let i = 0; i < idsToDelete.length; i += BATCH) {
+        const batch = idsToDelete.slice(i, i + BATCH);
+        const { error: delError } = await supabase
+          .from('search_history')
+          .delete()
+          .in('id', batch);
+        if (delError) {
+          console.error('[cleanup-old-data] Error deleting search_history batch:', delError);
+          break;
+        }
+        totalTrimmed += batch.length;
+      }
+
       results.searchHistoryTrimmed = { success: true, trimmed: totalTrimmed };
       console.log(`[cleanup-old-data] Trimmed ${totalTrimmed} excess search history entries`);
     }
+
     
     // NOTE: We keep landing_page_events and user_events for analytics purposes
     // These contain valuable business data that should not be automatically deleted

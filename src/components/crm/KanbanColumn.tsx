@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState, useEffect, useCallback } from 'react';
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { LeadCard } from './LeadCard';
 import { cn } from '@/lib/utils';
@@ -80,6 +80,30 @@ const KanbanColumnComponent = ({
     [leads, selectedLeadIds]
   );
 
+  // Paginação de renderização: mostra os cards em blocos para não montar
+  // centenas de nós de uma vez. Não altera contagem, seleção, totais
+  // nem qualquer filtro — apenas o que está renderizado na tela.
+  const PAGE_SIZE = 30;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount((c) => Math.min(Math.max(PAGE_SIZE, c), Math.max(PAGE_SIZE, leads.length)));
+  }, [leads.length]);
+
+  const visibleLeads = useMemo(
+    () => (leads.length > visibleCount ? leads.slice(0, visibleCount) : leads),
+    [leads, visibleCount]
+  );
+  const remaining = leads.length - visibleLeads.length;
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
+      setVisibleCount((c) => (c < leads.length ? c + PAGE_SIZE : c));
+    }
+  }, [leads.length]);
+
+
   return (
     <div
       data-stage-id={stage.id}
@@ -136,9 +160,10 @@ const KanbanColumnComponent = ({
       <div
         className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-thin"
         style={{ scrollbarGutter: 'stable' }}
+        onScroll={handleScroll}
       >
         <div className="p-2 space-y-3 w-full min-w-0">
-          {leads.map((lead) => (
+          {visibleLeads.map((lead) => (
             <div key={lead.id} className="relative">
               {bulkSelectMode && (
                 <div 
@@ -165,6 +190,16 @@ const KanbanColumnComponent = ({
               />
             </div>
           ))}
+          {remaining > 0 && (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+              className="w-full text-xs text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/25 rounded-lg py-2 transition-colors"
+            >
+              Carregar mais ({remaining})
+            </button>
+          )}
+
           {leads.length === 0 && (
             <div className={cn(
               "text-center py-5 text-xs border border-dashed rounded-lg transition-colors duration-200",

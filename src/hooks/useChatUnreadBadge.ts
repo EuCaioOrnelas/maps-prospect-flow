@@ -82,10 +82,35 @@ export function useChatUnreadBadge() {
     };
   }, [accountOwnerId, fetchCount]);
 
-  // Poll as fallback every 30s
+  // Poll as fallback every 30s — pausado quando a aba está invisível
   useEffect(() => {
-    const id = setInterval(fetchCount, 30_000);
-    return () => clearInterval(id);
+    let id: ReturnType<typeof setInterval> | null = null;
+
+    const start = () => {
+      if (id === null) id = setInterval(fetchCount, 30_000);
+    };
+    const stop = () => {
+      if (id !== null) {
+        clearInterval(id);
+        id = null;
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        stop();
+      } else {
+        fetchCount(); // atualiza imediatamente ao voltar
+        start();
+      }
+    };
+
+    if (document.visibilityState !== "hidden") start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [fetchCount]);
 
   return count;
