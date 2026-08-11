@@ -296,6 +296,26 @@ export default function CRMSales() {
                     <SelectItem value="renewed">Renovado</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
+                  <SelectTrigger className="bg-card/60 border-border/60">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <SelectValue placeholder="Responsável" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os responsáveis</SelectItem>
+                    <SelectItem value="me">Minhas vendas</SelectItem>
+                    <SelectItem value="none">Sem responsável</SelectItem>
+                    {members
+                      .filter((m) => m.user_id !== user?.id)
+                      .map((m) => (
+                        <SelectItem key={m.user_id} value={m.user_id}>
+                          {m.name || m.email || m.user_id.slice(0, 8)}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                   <Input
@@ -317,13 +337,20 @@ export default function CRMSales() {
                   />
                 </div>
               </div>
-              {hasFilters && (
-                <div className="flex justify-end">
-                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={clearFilters}>
-                    Limpar filtros
-                  </Button>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <p className="text-[11px] text-muted-foreground">
+                  {filtered.length} venda(s) no filtro atual
+                </p>
+                <div className="flex items-center gap-2">
+                  {hasFilters && (
+                    <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={clearFilters}>
+                      Limpar filtros
+                    </Button>
+                  )}
+                  <ExportSalesButton sales={filtered} memberNameById={memberNameById} />
                 </div>
-              )}
+              </div>
+
             </div>
 
 
