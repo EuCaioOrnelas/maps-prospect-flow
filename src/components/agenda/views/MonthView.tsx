@@ -68,7 +68,7 @@ export function MonthView({ date, events, onSelect, onQuickEdit, onCreateAt, onM
               <div className="mb-1 flex items-center justify-between">
                 <span
                   className={cn(
-                    "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs",
+                    "inline-flex h-6 w-6 items-center justify-center rounded-[3px] text-xs",
                     isToday
                       ? "bg-primary font-semibold text-primary-foreground"
                       : isCurrentMonth

@@ -231,7 +231,7 @@ export function ChatSidebar({
                     )}
                   >
                     <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                      "w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0",
                       connectionHealth[c.id] === false 
                         ? "bg-red-500/20" 
                         : c.id === activeConnectionId ? "wa-accent-bg-softer" : "bg-white/5"

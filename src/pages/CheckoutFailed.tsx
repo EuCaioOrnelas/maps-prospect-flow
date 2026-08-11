@@ -168,7 +168,7 @@ const CheckoutFailed = () => {
                           ? 'bg-muted/50 border-border' 
                           : 'bg-background hover:bg-muted/30 border-border/50'
                       }`}>
-                        <div className={`w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0`}>
+                        <div className={`w-10 h-10 rounded-[11px] bg-muted flex items-center justify-center flex-shrink-0`}>
                           <reason.icon className={`w-5 h-5 ${reason.color}`} />
                         </div>
                         <div className="flex-1 min-w-0">

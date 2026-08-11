@@ -1973,7 +1973,7 @@ export default function OpportunitiesManagement() {
                                 <button
                                   type="button"
                                   title={`Responsável: ${label}${canChangeResponsible ? " — clique para alterar" : ""}`}
-                                  className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-semibold border border-border/60 transition hover:ring-2 hover:ring-primary/40 ${m ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"} ${canChangeResponsible ? "cursor-pointer" : "cursor-default"}`}
+                                  className={`inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-[10px] font-semibold border border-border/60 transition hover:ring-2 hover:ring-primary/40 ${m ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"} ${canChangeResponsible ? "cursor-pointer" : "cursor-default"}`}
                                   disabled={!canChangeResponsible}
                                 >
                                   {m?.avatar_url ? (
@@ -2053,7 +2053,7 @@ export default function OpportunitiesManagement() {
                                 return <span className="text-muted-foreground text-xs">—</span>;
                               }
                               const openMeta = () => { setSendingLead(lead); setSendDialogOpen(true); };
-                              const sendBtnClass = "inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95";
+                              const sendBtnClass = "inline-flex items-center justify-center w-9 h-9 rounded-[10px] bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95";
                               // Só uma opção → ação direta (manual abre popover de web/app; meta abre dialog)
                               if (hasManual && !hasMeta) {
                                 return (

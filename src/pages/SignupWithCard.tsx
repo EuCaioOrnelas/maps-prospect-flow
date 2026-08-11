@@ -987,7 +987,7 @@ function StepDot({
     <div className="flex items-center gap-2">
       <div
         className={cn(
-          "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors border-2",
+          "w-8 h-8 rounded-[9px] flex items-center justify-center text-xs font-semibold transition-colors border-2",
           done
             ? "bg-primary border-primary text-primary-foreground"
             : active

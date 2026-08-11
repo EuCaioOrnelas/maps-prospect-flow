@@ -422,7 +422,7 @@ export default function Onboarding() {
                       }`}
                     >
                       <span
-                        className={`absolute top-3 right-3 h-5 w-5 rounded-full border flex items-center justify-center transition-colors ${
+                        className={`absolute top-3 right-3 h-5 w-5 rounded-[2px] border flex items-center justify-center transition-colors ${
                           isSelected
                             ? "bg-[hsl(158,72%,38%)] border-[hsl(158,72%,38%)]"
                             : "border-[hsl(220,15%,80%)] group-hover:border-[hsl(220,15%,60%)]"

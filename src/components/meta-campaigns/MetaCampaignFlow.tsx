@@ -365,7 +365,7 @@ export const MetaCampaignFlow = ({ connections, expiredTokenIds = new Set() }: M
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      <div className={`w-8 h-8 rounded-[9px] flex items-center justify-center ${
                         isExpired ? "bg-destructive/10" : "bg-primary/10"
                       }`}>
                         {isExpired ? (

@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Check, ChevronsUpDown, Search, X, UserPlus } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -69,35 +68,30 @@ export function ResponsiblesPicker({
 
   return (
     <div className="space-y-2">
-      <Popover modal open={open} onOpenChange={(o) => { if (!disabled) { setOpen(o); if (!o) setQuery(""); } }}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            disabled={disabled}
-            className={cn(
-              "flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-input bg-background px-3 text-left text-sm transition-colors",
-              "hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
-            )}
-          >
-            <span className="flex items-center gap-2 truncate">
-              <UserPlus size={14} className="text-muted-foreground shrink-0" />
-              <span className={cn("truncate", value.length === 0 && "text-muted-foreground")}>
-                {value.length === 0
-                  ? "Selecionar responsáveis..."
-                  : value.length === 1
-                    ? labelOf(byId[value[0]], value[0].slice(0, 8))
-                    : `${value.length} responsáveis selecionados`}
-              </span>
-            </span>
-            <ChevronsUpDown size={14} className="shrink-0 text-muted-foreground" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-[--radix-popover-trigger-width] max-w-[calc(100vw-2rem)] p-0 bg-popover text-popover-foreground border-border shadow-lg z-50"
-          align="start"
-          collisionPadding={16}
-          avoidCollisions
-        >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => { if (!disabled) { setOpen((o) => !o); setQuery(""); } }}
+        className={cn(
+          "flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-input bg-background px-3 text-left text-sm transition-colors",
+          "hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
+        )}
+      >
+        <span className="flex items-center gap-2 truncate">
+          <UserPlus size={14} className="text-muted-foreground shrink-0" />
+          <span className={cn("truncate", value.length === 0 && "text-muted-foreground")}>
+            {value.length === 0
+              ? "Selecionar responsáveis..."
+              : value.length === 1
+                ? labelOf(byId[value[0]], value[0].slice(0, 8))
+                : `${value.length} responsáveis selecionados`}
+          </span>
+        </span>
+        <ChevronsUpDown size={14} className="shrink-0 text-muted-foreground" />
+      </button>
+
+      {open && (
+        <div className="rounded-xl border border-border bg-popover text-popover-foreground shadow-sm overflow-hidden">
           <div className="flex items-center gap-2 border-b border-border px-3 py-2">
             <Search size={14} className="text-muted-foreground shrink-0" />
             <Input
@@ -108,8 +102,11 @@ export function ResponsiblesPicker({
               className="h-8 border-0 px-0 shadow-none focus-visible:ring-0"
             />
           </div>
-          <div className="max-h-[min(16rem,var(--radix-popover-content-available-height,16rem))] overflow-y-auto overscroll-contain py-1">
-            {filtered.length === 0 && (
+          <div className="max-h-56 overflow-y-auto overscroll-contain py-1">
+            {members.length === 0 && (
+              <p className="px-3 py-6 text-center text-xs text-muted-foreground">Nenhum colaborador disponível na sua equipe.</p>
+            )}
+            {members.length > 0 && filtered.length === 0 && (
               <p className="px-3 py-6 text-center text-xs text-muted-foreground">Nenhum colaborador encontrado.</p>
             )}
             {filtered.map((m) => {
@@ -147,8 +144,9 @@ export function ResponsiblesPicker({
               );
             })}
           </div>
-        </PopoverContent>
-      </Popover>
+        </div>
+      )}
+
 
       {/* Selecionados aparecem abaixo do input */}
       <div className="min-h-[38px] rounded-lg border border-dashed border-border/70 bg-muted/30 px-2 py-1.5 flex flex-wrap items-center gap-2">

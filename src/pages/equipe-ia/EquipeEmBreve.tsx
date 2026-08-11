@@ -240,7 +240,7 @@ export default function EquipeEmBreve() {
                     {roadmap.map((item, i) => (
                       <div key={item.phase} className="relative pl-8">
                         <div
-                          className={`absolute left-0 top-1 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          className={`absolute left-0 top-1 w-6 h-6 rounded-[3px] border-2 flex items-center justify-center ${
                             item.status === "done"
                               ? "bg-primary border-primary"
                               : item.status === "doing"

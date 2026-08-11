@@ -126,7 +126,7 @@ export default function PartnerRanking() {
                     <div className={cn("w-8 text-center font-bold text-sm", i < 3 ? "text-primary" : "text-muted-foreground")}>
                       {i + 1}
                     </div>
-                    <div className={cn("h-9 w-9 rounded-full flex items-center justify-center bg-gradient-to-br", levelGradients[r.level])}>
+                    <div className={cn("h-9 w-9 rounded-[10px] flex items-center justify-center bg-gradient-to-br", levelGradients[r.level])}>
                       <Icon size={16} />
                     </div>
                     <div className="flex-1 min-w-0">

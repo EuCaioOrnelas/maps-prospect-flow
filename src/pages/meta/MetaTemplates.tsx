@@ -547,7 +547,7 @@ function CategoryForm({
             onClick={() => setCustomOpen((v) => !v)}
             title="Cor personalizada"
             aria-label="Cor personalizada"
-            className={`h-8 w-8 rounded-full border-2 border-dashed flex items-center justify-center transition-all ${!isPaletteColor ? "border-primary text-primary scale-110" : "border-border text-muted-foreground hover:border-primary hover:text-primary"}`}
+            className={`h-8 w-8 rounded-[9px] border-2 border-dashed flex items-center justify-center transition-all ${!isPaletteColor ? "border-primary text-primary scale-110" : "border-border text-muted-foreground hover:border-primary hover:text-primary"}`}
             style={!isPaletteColor ? { background: `${color}22` } : undefined}
           >
             {!isPaletteColor ? (

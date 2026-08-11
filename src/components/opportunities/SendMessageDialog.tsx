@@ -215,7 +215,7 @@ export function SendMessageDialog({
               ].map((s) => (
                 <div key={s.i} className="flex items-center gap-2 flex-1">
                   <div className={`flex items-center gap-1.5 text-xs font-medium ${stepIndex >= s.i ? "text-primary" : "text-muted-foreground"}`}>
-                    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] ${stepIndex >= s.i ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                    <div className={`h-6 w-6 rounded-[3px] flex items-center justify-center text-[10px] ${stepIndex >= s.i ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                       {stepIndex > s.i ? <CheckCircle2 size={12} /> : s.i + 1}
                     </div>
                     <span className="hidden sm:inline">{s.label}</span>
