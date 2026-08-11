@@ -74,7 +74,6 @@ export function ResponsiblesPicker({
           <button
             type="button"
             disabled={disabled}
-            onClick={() => { if (!disabled) setOpen((o) => !o); }}
             className={cn(
               "flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-input bg-background px-3 text-left text-sm transition-colors",
               "hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
