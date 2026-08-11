@@ -1,5 +1,6 @@
 // Renderizador do e-mail de Aviso de Renovação (CRM Vendas & Receita).
 // Compartilhado entre o processador automático e o envio de e-mail de teste.
+// O mesmo e-mail é enviado ao cliente e ao responsável interno — linguagem neutra.
 
 export interface RenewalSettings {
   enabled?: boolean;
@@ -12,16 +13,18 @@ export interface RenewalSettings {
   email_intro?: string | null;
   cta_label?: string | null;
   notice_days_4_6_months?: number | null;
+  contact_name?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
 }
 
 export interface RenewalEmailData {
   clientName: string;
   companyName: string;
-  responsibleName: string;
   expirationDate: string; // dd/mm/aaaa
   daysLeft: number;
+  /** Valor da parcela mensal já formatado (ex.: R$ 1.500,00) */
   contractValue: string;
-  contractTotal: string;
   contractMonths: number;
   saleTitle: string;
   ctaUrl: string;
@@ -50,9 +53,15 @@ export const DEFAULT_RENEWAL_SETTINGS: Required<
   sender_local_part: "renovacao",
   email_title: "Seu contrato está próximo do vencimento",
   email_intro:
-    "Identificamos que o contrato abaixo está próximo do vencimento. Entre em contato para tratar da renovação.",
-  cta_label: "Ver contrato no CRM",
+    "Este é um aviso automático: o contrato abaixo está próximo do vencimento. Entre em contato para tratar da renovação.",
+  cta_label: "Falar sobre a renovação",
 };
+
+/** Duração formatada: 12x R$ 1.500,00 */
+export function formatContractValue(months: number, installment: string): string {
+  if (!months || months <= 1) return installment;
+  return `${months}x ${installment}`;
+}
 
 /** renovacao -> renovacao@wiize.com.br (domínio fixo) */
 export function normalizeSenderLocalPart(input: string | null | undefined): string {
@@ -93,6 +102,22 @@ export function renderRenewalEmail(settings: RenewalSettings, data: RenewalEmail
       <td style="padding:8px 0;font-size:13px;color:#18181b;font-weight:600;text-align:right;">${esc(value)}</td>
     </tr>`;
 
+  const contactName = (settings.contact_name || "").trim();
+  const contactEmail = (settings.contact_email || "").trim();
+  const contactPhone = (settings.contact_phone || "").trim();
+  const hasContact = !!(contactName || contactEmail || contactPhone);
+
+  const contactBlock = hasContact
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:#ffffff;border:1px solid #e4e4e7;border-radius:10px;">
+        <tr><td style="padding:14px 16px;">
+          <p style="margin:0 0 6px;font-size:12px;color:#71717a;text-transform:uppercase;letter-spacing:.04em;">Fale com a gente</p>
+          ${contactName ? `<p style="margin:0 0 2px;font-size:14px;color:#18181b;font-weight:600;">${esc(contactName)}</p>` : ""}
+          ${contactPhone ? `<p style="margin:0;font-size:13px;color:#3f3f46;">Telefone/WhatsApp: <strong>${esc(contactPhone)}</strong></p>` : ""}
+          ${contactEmail ? `<p style="margin:0;font-size:13px;color:#3f3f46;">E-mail: <a href="mailto:${esc(contactEmail)}" style="color:${button};text-decoration:none;">${esc(contactEmail)}</a></p>` : ""}
+        </td></tr>
+      </table>`
+    : "";
+
   const subject = `${data.isTest ? "[TESTE] " : ""}${title} — ${data.companyName || data.clientName} (${daysLabel})`;
 
   const html = `<!DOCTYPE html>
@@ -115,13 +140,13 @@ export function renderRenewalEmail(settings: RenewalSettings, data: RenewalEmail
       ${row("Cliente", data.clientName || "—")}
       ${row("Empresa", data.companyName || "—")}
       ${row("Contrato", data.saleTitle || "—")}
-      ${row("Responsável", data.responsibleName || "—")}
       ${row("Vencimento", data.expirationDate || "—")}
       ${row("Dias restantes", data.daysLeft <= 0 ? "0" : String(data.daysLeft))}
-      ${row("Valor", data.contractValue)}
       ${row("Duração", `${data.contractMonths} ${data.contractMonths === 1 ? "mês" : "meses"}`)}
-      ${row("Valor total do contrato", data.contractTotal)}
+      ${row("Valor", formatContractValue(data.contractMonths, data.contractValue))}
     </table>
+
+    ${contactBlock}
 
     <div style="text-align:center;margin:26px 0 6px;">
       <a href="${esc(data.ctaUrl)}" style="display:inline-block;padding:13px 28px;background:${button};color:#ffffff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">${esc(cta)}</a>

@@ -2599,6 +2599,9 @@ export type Database = {
       crm_renewal_settings: {
         Row: {
           button_color: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           created_at: string
           cta_label: string
           email_intro: string
@@ -2614,6 +2617,9 @@ export type Database = {
         }
         Insert: {
           button_color?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           cta_label?: string
           email_intro?: string
@@ -2629,6 +2635,9 @@ export type Database = {
         }
         Update: {
           button_color?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           cta_label?: string
           email_intro?: string

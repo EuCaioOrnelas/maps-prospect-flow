@@ -48,6 +48,9 @@ export const useRenewalSettings = () => {
             email_intro: next.email_intro,
             cta_label: next.cta_label,
             notice_days_4_6_months: next.notice_days_4_6_months,
+            contact_name: next.contact_name,
+            contact_email: next.contact_email,
+            contact_phone: next.contact_phone,
           },
           { onConflict: "owner_user_id" }
         );

@@ -160,7 +160,7 @@ export function AppointmentEmailSettingsPanel() {
         <Card className="p-4 rounded-2xl border-border/40">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-sm font-semibold flex items-center gap-2">
+              <h2 className="text-sm font-semibold flex items-center gap-2 [&>svg]:w-[18px] [&>svg]:h-[18px] [&>svg]:p-0 [&>svg]:text-primary [&>svg]:box-content [&>svg]:rounded-xl [&>svg]:bg-primary/10 [&>svg]:border [&>svg]:border-primary/20 [&>svg]:p-2">
                 <CalendarClock className="w-4 h-4 text-primary" /> Ativar lembretes de compromisso
               </h2>
               <p className="text-xs text-muted-foreground mt-1 max-w-md">
@@ -207,7 +207,7 @@ export function AppointmentEmailSettingsPanel() {
         </Card>
 
         <Card className="p-4 rounded-2xl border-border/40 space-y-3">
-          <h2 className="text-sm font-semibold flex items-center gap-2">
+          <h2 className="text-sm font-semibold flex items-center gap-2 [&>svg]:w-[18px] [&>svg]:h-[18px] [&>svg]:p-0 [&>svg]:text-primary [&>svg]:box-content [&>svg]:rounded-xl [&>svg]:bg-primary/10 [&>svg]:border [&>svg]:border-primary/20 [&>svg]:p-2">
             <Palette className="w-4 h-4 text-primary" /> Identidade visual
           </h2>
 
@@ -231,12 +231,12 @@ export function AppointmentEmailSettingsPanel() {
                   className="hidden"
                   onChange={(e) => handleLogo(e.target.files?.[0])}
                 />
-                <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => fileRef.current?.click()} disabled={uploading}>
                   {uploading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 mr-1.5" />}
                   Enviar logo
                 </Button>
                 {settings.logo_url && (
-                  <Button size="sm" variant="ghost" onClick={() => save({ logo_url: null })}>
+                  <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => save({ logo_url: null })}>
                     Remover
                   </Button>
                 )}
@@ -261,7 +261,7 @@ export function AppointmentEmailSettingsPanel() {
               <Input
                 value={settings.sender_name}
                 onChange={(e) => setSettings({ ...settings, sender_name: e.target.value })}
-                className="h-9"
+                className="h-9 rounded-xl"
                 maxLength={60}
               />
             </div>
@@ -293,7 +293,7 @@ export function AppointmentEmailSettingsPanel() {
             <Input
               value={settings.email_title}
               onChange={(e) => setSettings({ ...settings, email_title: e.target.value })}
-              className="h-9"
+              className="h-9 rounded-xl"
               maxLength={140}
             />
           </div>
@@ -341,13 +341,13 @@ export function AppointmentEmailSettingsPanel() {
             <Input
               value={settings.cta_label}
               onChange={(e) => setSettings({ ...settings, cta_label: e.target.value })}
-              className="h-9"
+              className="h-9 rounded-xl"
               maxLength={40}
             />
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button onClick={handleSave} disabled={isSaving} className="rounded-xl">
               {isSaving && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
               Salvar configurações
             </Button>
@@ -355,7 +355,7 @@ export function AppointmentEmailSettingsPanel() {
         </Card>
 
         <Card className="p-4 rounded-2xl border-border/40">
-          <h2 className="text-sm font-semibold flex items-center gap-2">
+          <h2 className="text-sm font-semibold flex items-center gap-2 [&>svg]:w-[18px] [&>svg]:h-[18px] [&>svg]:p-0 [&>svg]:text-primary [&>svg]:box-content [&>svg]:rounded-xl [&>svg]:bg-primary/10 [&>svg]:border [&>svg]:border-primary/20 [&>svg]:p-2">
             <Send className="w-4 h-4 text-primary" /> Teste
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
@@ -363,7 +363,7 @@ export function AppointmentEmailSettingsPanel() {
             {user?.email ? <strong> ({user.email})</strong> : null} com dados fictícios de compromisso.
           </p>
           <div className="flex flex-wrap items-center gap-2 mt-3">
-            <Button size="sm" onClick={handleTest} disabled={sendingTest}>
+            <Button size="sm" className="rounded-xl" onClick={handleTest} disabled={sendingTest}>
               {sendingTest ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
               ) : (

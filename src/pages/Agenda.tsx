@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -14,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  BellRing,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -63,6 +65,7 @@ const VIEWS: { value: ViewMode; label: string }[] = [
 
 export default function Agenda() {
   const { profile, user } = useAuth();
+  const navigate = useNavigate();
   const { members } = useAccountMembers();
 
   const [view, setView] = useState<ViewMode>("month");
@@ -257,10 +260,20 @@ export default function Agenda() {
                 </p>
               </div>
             </div>
-            <Button onClick={() => openNew()} className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Novo compromisso
-            </Button>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                className="flex-1 sm:flex-none rounded-xl"
+                onClick={() => navigate("/agenda/lembretes")}
+              >
+                <BellRing className="h-4 w-4 mr-2" />
+                Lembretes por e-mail
+              </Button>
+              <Button onClick={() => openNew()} className="flex-1 sm:flex-none rounded-xl">
+                <Plus className="h-4 w-4 mr-2" />
+                Novo compromisso
+              </Button>
+            </div>
           </div>
 
           <AgendaMetrics events={visibleEvents} loading={loading} />
