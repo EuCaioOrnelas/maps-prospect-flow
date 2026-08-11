@@ -271,7 +271,7 @@ Deno.serve(async (req) => {
         await sb.from("support_tickets").update({ rating_token: token }).eq("id", ticketId);
       }
       const ratingUrl = `${APP_URL}/avaliacao/${token}`;
-      const followupSubject = `Chamado ${ticketNumber} encerrado por inatividade`;
+      const followupSubject = "Podemos encerrar o seu atendimento?";
       const bodyHtml = `
         <p style="margin:0 0 10px;">Olá ${esc(customerName)},</p>
         <p style="margin:0 0 12px;color:#374151;">Como não tivemos retorno nas últimas 72 horas, encerramos o seu chamado <strong>${esc(ticketNumber)}</strong>. Se ainda precisar de algo, basta responder este e-mail e o chamado é reaberto automaticamente.</p>
