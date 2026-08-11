@@ -1483,6 +1483,57 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_email_logs: {
+        Row: {
+          created_at: string
+          email_type: string
+          error_message: string | null
+          event_id: string | null
+          id: string
+          owner_user_id: string
+          provider_message_id: string | null
+          recipient_email: string | null
+          recipient_role: string | null
+          reminder_key: string
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_type?: string
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          owner_user_id: string
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          recipient_role?: string | null
+          reminder_key?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_type?: string
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          owner_user_id?: string
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          recipient_role?: string | null
+          reminder_key?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           all_day: boolean
@@ -2441,6 +2492,54 @@ export type Database = {
           updated_at?: string
           valid_from?: string
           valid_until?: string | null
+        }
+        Relationships: []
+      }
+      crm_appointment_email_settings: {
+        Row: {
+          button_color: string
+          created_at: string
+          cta_label: string
+          email_body: string
+          email_title: string
+          enabled: boolean
+          header_color: string
+          logo_url: string | null
+          notify_client: boolean
+          owner_user_id: string
+          sender_local_part: string
+          sender_name: string
+          updated_at: string
+        }
+        Insert: {
+          button_color?: string
+          created_at?: string
+          cta_label?: string
+          email_body?: string
+          email_title?: string
+          enabled?: boolean
+          header_color?: string
+          logo_url?: string | null
+          notify_client?: boolean
+          owner_user_id: string
+          sender_local_part?: string
+          sender_name?: string
+          updated_at?: string
+        }
+        Update: {
+          button_color?: string
+          created_at?: string
+          cta_label?: string
+          email_body?: string
+          email_title?: string
+          enabled?: boolean
+          header_color?: string
+          logo_url?: string | null
+          notify_client?: boolean
+          owner_user_id?: string
+          sender_local_part?: string
+          sender_name?: string
+          updated_at?: string
         }
         Relationships: []
       }

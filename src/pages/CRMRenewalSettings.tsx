@@ -28,7 +28,10 @@ import {
   Info,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AppointmentEmailSettingsPanel } from "@/components/crm/AppointmentEmailSettingsPanel";
 import { useRenewalSettings } from "@/hooks/useRenewalSettings";
+
 import {
   SENDER_DOMAIN,
   SAMPLE_RENEWAL_DATA,
@@ -145,8 +148,8 @@ export default function CRMRenewalSettings() {
     <div className="min-h-screen bg-background relative">
       <BackgroundGlow />
       <SEO
-        title="Aviso de renovação — CRM Wiize"
-        description="Configure os avisos automáticos de renovação de contratos recorrentes do seu CRM."
+        title="Configurações de e-mail — CRM Wiize"
+        description="Configure os avisos automáticos de renovação de contratos e os lembretes de compromissos da Agenda."
       />
       <AppSidebar profile={profile || sidebarProfile} />
       <MobileNav profile={profile || sidebarProfile} />
@@ -160,25 +163,38 @@ export default function CRMRenewalSettings() {
                   <BellRing className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Aviso de renovação</h1>
+                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Configurações de e-mail</h1>
                   <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                    Avisos automáticos de contratos recorrentes próximos do vencimento
+                    Avisos de renovação de contratos e lembretes de compromissos da Agenda
                   </p>
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={() => navigate("/crm/vendas")}>
+
                 <ArrowLeft className="w-4 h-4 mr-1.5" /> Voltar
               </Button>
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
+            <Tabs defaultValue="renovacao" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="renovacao">Avisos de renovação</TabsTrigger>
+                <TabsTrigger value="compromissos">Lembretes de compromissos</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="compromissos" className="mt-0">
+                <AppointmentEmailSettingsPanel />
+              </TabsContent>
+
+              <TabsContent value="renovacao" className="mt-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-24">
                 <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
               </div>
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 max-w-6xl">
+
                 {/* Coluna de configuração */}
                 <div className="space-y-4">
                   <Card className="p-4 rounded-2xl border-border/40">
@@ -407,7 +423,10 @@ export default function CRMRenewalSettings() {
                 </div>
               </div>
             )}
+              </TabsContent>
+            </Tabs>
           </div>
+
         </div>
       </main>
     </div>
