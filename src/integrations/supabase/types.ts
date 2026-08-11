@@ -2444,6 +2444,107 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_renewal_notice_logs: {
+        Row: {
+          created_at: string
+          deal_id: string | null
+          error_message: string | null
+          id: string
+          lead_id: string | null
+          notice_type: string
+          owner_user_id: string
+          provider_message_id: string | null
+          recipient_email: string | null
+          recipient_role: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          deal_id?: string | null
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          notice_type: string
+          owner_user_id: string
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          recipient_role?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string | null
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          notice_type?: string
+          owner_user_id?: string
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          recipient_role?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_renewal_notice_logs_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "lead_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_renewal_settings: {
+        Row: {
+          button_color: string
+          created_at: string
+          cta_label: string
+          email_intro: string
+          email_title: string
+          enabled: boolean
+          header_color: string
+          logo_url: string | null
+          notice_days_4_6_months: number | null
+          owner_user_id: string
+          sender_local_part: string
+          sender_name: string
+          updated_at: string
+        }
+        Insert: {
+          button_color?: string
+          created_at?: string
+          cta_label?: string
+          email_intro?: string
+          email_title?: string
+          enabled?: boolean
+          header_color?: string
+          logo_url?: string | null
+          notice_days_4_6_months?: number | null
+          owner_user_id: string
+          sender_local_part?: string
+          sender_name?: string
+          updated_at?: string
+        }
+        Update: {
+          button_color?: string
+          created_at?: string
+          cta_label?: string
+          email_intro?: string
+          email_title?: string
+          enabled?: boolean
+          header_color?: string
+          logo_url?: string | null
+          notice_days_4_6_months?: number | null
+          owner_user_id?: string
+          sender_local_part?: string
+          sender_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       crm_tags: {
         Row: {
           created_at: string
@@ -3634,9 +3735,15 @@ export type Database = {
           id: string
           lead_id: string
           notes: string | null
+          notice_15d_sent_at: string | null
+          notice_30d_sent_at: string | null
+          notice_7d_sent_at: string | null
           owner_user_id: string | null
           payment_method: string | null
           receipt_url: string | null
+          renewal_count: number
+          renewed_at: string | null
+          renewed_from_deal_id: string | null
           responsible_user_id: string | null
           sale_type: string
           start_date: string
@@ -3657,9 +3764,15 @@ export type Database = {
           id?: string
           lead_id: string
           notes?: string | null
+          notice_15d_sent_at?: string | null
+          notice_30d_sent_at?: string | null
+          notice_7d_sent_at?: string | null
           owner_user_id?: string | null
           payment_method?: string | null
           receipt_url?: string | null
+          renewal_count?: number
+          renewed_at?: string | null
+          renewed_from_deal_id?: string | null
           responsible_user_id?: string | null
           sale_type?: string
           start_date?: string
@@ -3680,9 +3793,15 @@ export type Database = {
           id?: string
           lead_id?: string
           notes?: string | null
+          notice_15d_sent_at?: string | null
+          notice_30d_sent_at?: string | null
+          notice_7d_sent_at?: string | null
           owner_user_id?: string | null
           payment_method?: string | null
           receipt_url?: string | null
+          renewal_count?: number
+          renewed_at?: string | null
+          renewed_from_deal_id?: string | null
           responsible_user_id?: string | null
           sale_type?: string
           start_date?: string
@@ -3698,6 +3817,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_deals_renewed_from_deal_id_fkey"
+            columns: ["renewed_from_deal_id"]
+            isOneToOne: false
+            referencedRelation: "lead_deals"
             referencedColumns: ["id"]
           },
         ]
