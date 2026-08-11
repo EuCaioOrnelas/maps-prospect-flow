@@ -80,8 +80,9 @@ export function EditSaleDialog({ open, onOpenChange, sale, canChangeResponsible 
         start_date: startDate || undefined,
         notes,
         status,
-        responsible_user_id: responsibleUserId || null,
+        ...(canChangeResponsible ? { responsible_user_id: responsibleUserId || null } : {}),
       });
+
       toast.success("Venda atualizada");
       onOpenChange(false);
     } catch (e: any) {
