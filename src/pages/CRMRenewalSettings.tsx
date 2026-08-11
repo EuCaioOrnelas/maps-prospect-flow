@@ -18,8 +18,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
   BellRing,
-  CalendarClock,
-  Image as ImageIcon,
   Loader2,
   Mail,
   MessageSquareText,
@@ -29,12 +27,13 @@ import {
   Send,
   Eye,
   Type,
-  Upload,
   User,
   Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRenewalSettings } from "@/hooks/useRenewalSettings";
+import { ColorField } from "@/components/ui/color-field";
+import { LogoDropField } from "@/components/ui/logo-drop-field";
 
 import {
   SENDER_DOMAIN,
