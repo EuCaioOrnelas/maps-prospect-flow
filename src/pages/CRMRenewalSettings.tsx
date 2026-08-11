@@ -308,64 +308,26 @@ export default function CRMRenewalSettings() {
                       title="Identidade visual e conteúdo"
                       description="O mesmo e-mail é enviado ao cliente e ao responsável interno."
                     />
-
-                    <div className="space-y-1.5">
-                      <FieldLabel icon={ImageIcon}>Logo da empresa</FieldLabel>
-                      <div className="flex items-center gap-3">
-                        <div className="w-16 h-16 rounded-2xl border border-border/60 bg-muted/40 flex items-center justify-center overflow-hidden shrink-0">
-                          {settings.logo_url ? (
-                            <img
-                              src={settings.logo_url}
-                              alt="Logo do e-mail"
-                              className="max-w-full max-h-full object-contain"
-                            />
-                          ) : (
-                            <ImageIcon className="w-5 h-5 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <input
-                            ref={fileRef}
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                            className="hidden"
-                            onChange={(e) => handleLogo(e.target.files?.[0])}
-                          />
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="rounded-xl"
-                            onClick={() => fileRef.current?.click()}
-                            disabled={uploading}
-                          >
-                            {uploading ? (
-                              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                            ) : (
-                              <Upload className="w-3.5 h-3.5 mr-1.5" />
-                            )}
-                            Enviar logo
-                          </Button>
-                          {settings.logo_url && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="rounded-xl"
-                              onClick={() => save({ logo_url: null })}
-                            >
-                              Remover
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    <LogoDropField
+                      value={settings.logo_url}
+                      uploading={uploading}
+                      onFile={(file) => handleLogo(file)}
+                      onRemove={() => save({ logo_url: null })}
+                    />
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {colorField("Cor do cabeçalho", settings.header_color, (v) =>
-                        setSettings({ ...settings, header_color: v })
-                      )}
-                      {colorField("Cor do botão", settings.button_color, (v) =>
-                        setSettings({ ...settings, button_color: v })
-                      )}
+                      <ColorField
+                        label="Cor do cabeçalho"
+                        value={settings.header_color}
+                        onChange={(v) => setSettings({ ...settings, header_color: v })}
+                      />
+                      <ColorField
+                        label="Cor do botão"
+                        value={settings.button_color}
+                        onChange={(v) => setSettings({ ...settings, button_color: v })}
+                      />
+                    </div>
+
                     </div>
 
                     <Separator />
