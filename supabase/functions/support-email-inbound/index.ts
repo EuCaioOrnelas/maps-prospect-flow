@@ -109,16 +109,23 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     const data = await fetchReceivedEmail(payload?.data ?? payload);
     const to = Array.isArray(data.to) ? data.to.join(",") : String(data.to || "");
+    const cc = Array.isArray(data.cc) ? data.cc.join(",") : String(data.cc || "");
     const from = String(data.from || data.sender || "");
     const subject = String(data.subject || "");
     const text = String(data.text || data.body_plain || data.plain || "");
     const html = String(data.html || data.body_html || "");
 
+    // Headers podem vir como objeto {name: value} ou array [{name, value}] — serializamos tudo
+    // para conseguir localizar o protocolo em In-Reply-To / References / X-Wiize-Ticket.
+    let headersBlob = "";
+    try { headersBlob = JSON.stringify(data?.headers ?? {}); } catch { headersBlob = ""; }
+
     const ticketNumber =
       extractTicketNumber(to) ||
+      extractTicketNumber(cc) ||
       extractTicketNumber(subject) ||
-      extractTicketNumber(data?.headers?.["In-Reply-To"] || "") ||
-      extractTicketNumber(data?.headers?.["References"] || "");
+      extractTicketNumber(headersBlob) ||
+      extractTicketNumber(String(data?.envelope?.to || ""));
 
     console.log("[support-email-inbound] received", { to, subject, ticketNumber, hasText: !!text, hasHtml: !!html });
 
