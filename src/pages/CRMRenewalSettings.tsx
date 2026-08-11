@@ -32,6 +32,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRenewalSettings } from "@/hooks/useRenewalSettings";
+import { useWabaResponsibles } from "@/hooks/useWabaResponsibles";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ColorField } from "@/components/ui/color-field";
 import { LogoDropField } from "@/components/ui/logo-drop-field";
 
@@ -75,6 +78,25 @@ export default function CRMRenewalSettings() {
   const { settings, setSettings, isLoading, isSaving, save, uploadLogo } = useRenewalSettings();
   const [uploading, setUploading] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
+  const { members } = useAccountMembers();
+  const { numbers, responsibles } = useWabaResponsibles();
+
+  const memberEmails = members.filter((m) => !!m.email);
+  const memberById = Object.fromEntries(members.map((m) => [m.user_id, m]));
+  const responsibleNumbers = responsibles
+    .map((r) => {
+      const n = numbers.find((x) => x.id === r.connection_id);
+      if (!n?.display_phone_number) return null;
+      return {
+        key: `${r.user_id}:${n.id}`,
+        phone: n.display_phone_number,
+        label: `${n.display_phone_number} · ${memberById[r.user_id]?.name || memberById[r.user_id]?.email || "Colaborador"}`,
+      };
+    })
+    .filter(Boolean) as { key: string; phone: string; label: string }[];
+
+  const emailIsFromMember = memberEmails.some((m) => m.email === settings.contact_email);
+  const phoneIsFromNumber = responsibleNumbers.some((n) => n.phone === settings.contact_phone);
 
   const { data: sidebarProfile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -167,7 +189,7 @@ export default function CRMRenewalSettings() {
       <main className="lg:pl-[72px] pt-[42px] lg:pt-0 min-h-screen">
         <div className="flex flex-col h-screen">
           <div className="flex-shrink-0 border-b border-border/50">
-            <div className="px-3 pt-2 pb-3 sm:p-4 lg:p-6 flex items-center justify-between gap-3">
+            <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-8 lg:py-5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                   <BellRing className="w-5 h-5 text-primary" />
@@ -185,16 +207,16 @@ export default function CRMRenewalSettings() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
+          <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             {isLoading ? (
               <div className="flex items-center justify-center py-24">
                 <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 max-w-6xl">
+              <div className="mx-auto w-full max-w-6xl grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
                 {/* Coluna de configuração */}
-                <div className="space-y-4">
-                  <Card className="p-4 rounded-2xl border-border/40">
+                <div className="space-y-6">
+                  <Card className="p-5 sm:p-6 rounded-2xl border-border/40">
                     <div className="flex items-start justify-between gap-4">
                       <SectionHeader
                         icon={BellRing}
@@ -226,47 +248,98 @@ export default function CRMRenewalSettings() {
                     </div>
                   </Card>
 
-                  <Card className="p-4 rounded-2xl border-border/40 space-y-3">
+                  <Card className="p-5 sm:p-6 rounded-2xl border-border/40 space-y-5">
                     <SectionHeader
                       icon={User}
                       title="Contato para renovação"
                       description="Aparece no e-mail para que o cliente saiba com quem falar."
                     />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <FieldLabel icon={User}>Nome do contato</FieldLabel>
+                    <div className="space-y-1.5">
+                      <FieldLabel icon={User}>Nome do contato</FieldLabel>
+                      <Input
+                        value={settings.contact_name ?? ""}
+                        onChange={(e) => setSettings({ ...settings, contact_name: e.target.value })}
+                        className="h-10 rounded-xl"
+                        maxLength={80}
+                        placeholder="Ex.: Time comercial"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <FieldLabel icon={Mail}>E-mail de contato</FieldLabel>
+                      <Select
+                        value={emailIsFromMember ? (settings.contact_email as string) : "custom"}
+                        onValueChange={(v) =>
+                          setSettings({ ...settings, contact_email: v === "custom" ? "" : v })
+                        }
+                      >
+                        <SelectTrigger className="h-10 rounded-xl">
+                          <SelectValue placeholder="Selecione o responsável" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {memberEmails.map((m) => (
+                            <SelectItem key={m.user_id} value={m.email as string}>
+                              {(m.name || m.email) + " · " + m.email}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="custom">Outro e-mail (digitar)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {!emailIsFromMember && (
                         <Input
-                          value={settings.contact_name ?? ""}
-                          onChange={(e) => setSettings({ ...settings, contact_name: e.target.value })}
-                          className="h-9 rounded-xl"
-                          maxLength={80}
-                          placeholder="Ex.: Time comercial"
+                          value={settings.contact_email ?? ""}
+                          onChange={(e) => setSettings({ ...settings, contact_email: e.target.value })}
+                          className="h-10 rounded-xl"
+                          maxLength={120}
+                          placeholder="comercial@suaempresa.com.br"
                         />
-                      </div>
-                      <div className="space-y-1.5">
-                        <FieldLabel icon={Phone}>Telefone / WhatsApp</FieldLabel>
+                      )}
+                      <p className="text-[11px] text-muted-foreground">
+                        Use o e-mail do responsável pela conta ou informe um e-mail alternativo.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <FieldLabel icon={Phone}>Telefone / WhatsApp</FieldLabel>
+                      <Select
+                        value={phoneIsFromNumber ? (settings.contact_phone as string) : "custom"}
+                        onValueChange={(v) =>
+                          setSettings({ ...settings, contact_phone: v === "custom" ? "" : v })
+                        }
+                      >
+                        <SelectTrigger className="h-10 rounded-xl">
+                          <SelectValue placeholder="Selecione o número" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {responsibleNumbers.map((n) => (
+                            <SelectItem key={n.key} value={n.phone}>
+                              {n.label}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="custom">Outro telefone (digitar)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {!phoneIsFromNumber && (
                         <Input
                           value={settings.contact_phone ?? ""}
                           onChange={(e) => setSettings({ ...settings, contact_phone: e.target.value })}
-                          className="h-9 rounded-xl"
+                          className="h-10 rounded-xl"
                           maxLength={40}
                           placeholder="(11) 99999-0000"
                         />
+                      )}
+                      <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+                        <Info className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" />
+                        <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                          Para puxar o telefone da API oficial, o colaborador precisa ter 1 número sob a
+                          responsabilidade dele em Números &amp; WABA. Cada colaborador pode ser responsável
+                          por apenas 1 número.
+                        </p>
                       </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <FieldLabel icon={Mail}>E-mail de contato</FieldLabel>
-                      <Input
-                        value={settings.contact_email ?? ""}
-                        onChange={(e) => setSettings({ ...settings, contact_email: e.target.value })}
-                        className="h-9 rounded-xl"
-                        maxLength={120}
-                        placeholder="comercial@suaempresa.com.br"
-                      />
                     </div>
                   </Card>
 
-                  <Card className="p-4 rounded-2xl border-border/40 space-y-3">
+                  <Card className="p-5 sm:p-6 rounded-2xl border-border/40 space-y-5">
                     <SectionHeader
                       icon={Palette}
                       title="Identidade visual e conteúdo"
@@ -302,7 +375,7 @@ export default function CRMRenewalSettings() {
                         <Input
                           value={settings.sender_name}
                           onChange={(e) => setSettings({ ...settings, sender_name: e.target.value })}
-                          className="h-9 rounded-xl"
+                          className="h-10 rounded-xl"
                           maxLength={60}
                         />
                       </div>
@@ -314,10 +387,10 @@ export default function CRMRenewalSettings() {
                             onChange={(e) =>
                               setSettings({ ...settings, sender_local_part: normalizeSenderLocalPart(e.target.value) })
                             }
-                            className="h-9 rounded-l-xl rounded-r-none"
+                            className="h-10 rounded-l-xl rounded-r-none"
                             placeholder="renovacao"
                           />
-                          <span className="h-9 inline-flex items-center rounded-r-xl border border-l-0 border-border bg-muted px-2 text-xs text-muted-foreground">
+                          <span className="h-10 inline-flex items-center rounded-r-xl border border-l-0 border-border bg-muted px-2 text-xs text-muted-foreground">
                             {SENDER_DOMAIN}
                           </span>
                         </div>
@@ -334,7 +407,7 @@ export default function CRMRenewalSettings() {
                       <Input
                         value={settings.email_title}
                         onChange={(e) => setSettings({ ...settings, email_title: e.target.value })}
-                        className="h-9 rounded-xl"
+                        className="h-10 rounded-xl"
                         maxLength={120}
                       />
                     </div>
@@ -355,7 +428,7 @@ export default function CRMRenewalSettings() {
                       <Input
                         value={settings.cta_label}
                         onChange={(e) => setSettings({ ...settings, cta_label: e.target.value })}
-                        className="h-9 rounded-xl"
+                        className="h-10 rounded-xl"
                         maxLength={40}
                       />
                     </div>
@@ -368,7 +441,7 @@ export default function CRMRenewalSettings() {
                     </div>
                   </Card>
 
-                  <Card className="p-4 rounded-2xl border-border/40 space-y-3">
+                  <Card className="p-5 sm:p-6 rounded-2xl border-border/40 space-y-5">
                     <SectionHeader
                       icon={Send}
                       title="Enviar e-mail de teste"
@@ -391,7 +464,7 @@ export default function CRMRenewalSettings() {
                 </div>
 
                 {/* Preview */}
-                <div className="space-y-2">
+                <div className="space-y-3 xl:sticky xl:top-2">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
                       <Eye className="w-4 h-4 text-primary" />
