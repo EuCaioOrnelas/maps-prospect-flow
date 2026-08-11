@@ -655,24 +655,46 @@ const Dashboard = () => {
 
           {/* Search Card */}
           <div className="relative mb-10">
-            <form onSubmit={handleSearch} className="bg-card border border-border rounded-2xl sm:rounded-3xl p-6 sm:p-8" data-tour="search-card">
+            {/* Glow effect behind card */}
+            <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full scale-150 -z-10" />
+            
+            <form onSubmit={handleSearch} className="bg-card border border-border rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl" data-tour="search-card">
               {/* Feature badges */}
-              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 mb-8">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/50">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Target size={16} className="text-primary" />
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Target size={16} className="text-primary" />
+                  </div>
                   <span>Leads qualificados</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Sparkles size={16} className="text-primary" />
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Sparkles size={16} className="text-primary" />
+                  </div>
                   <span>Contatos verificados</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Globe size={16} className="text-primary" />
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Globe size={16} className="text-primary" />
+                  </div>
                   <span>Busca global</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-6" data-tour="search-fields">
+              {/* Global search info */}
+              <div className="flex items-center gap-3 p-3 mb-6 bg-primary/5 border border-primary/20 rounded-xl">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <MapPin size={18} className="text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">Prospecção global no Google Maps</p>
+                  <p className="text-xs text-muted-foreground">
+                    Busque em qualquer lugar: <span className="text-primary/80">São Paulo, SP</span> • <span className="text-primary/80">Miami, FL, USA</span> • <span className="text-primary/80">Lisboa, Portugal</span> • <span className="text-primary/80">Tokyo, Japan</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6" data-tour="search-fields">
                 <div className="space-y-2" data-tour="search-keyword">
                   <Label htmlFor="keyword" className="flex items-center gap-2 text-sm font-medium">
                     <Search size={14} className="text-primary" />
@@ -683,7 +705,7 @@ const Dashboard = () => {
                     placeholder="Ex: restaurantes, dentistas, advogados..."
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
-                    className="h-12 sm:h-13 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
+                    className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                   />
                 </div>
 
@@ -691,57 +713,64 @@ const Dashboard = () => {
                   <Label htmlFor="location" className="flex items-center gap-2 text-sm font-medium">
                     <MapPin size={14} className="text-primary" />
                     Localização
+                    <span className="ml-auto flex items-center gap-1 text-xs font-normal text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full">
+                      <Globe size={10} />
+                      Global
+                    </span>
                   </Label>
                   <Input
                     id="location"
                     placeholder="Ex: São Paulo, SP ou Miami, FL, USA"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="h-12 sm:h-13 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
+                    className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                   />
                   <p className="text-xs text-muted-foreground/70">
-                    Cidade, Estado, País ou qualquer região do mundo
+                    Cidade, Estado • Cidade, País • ou qualquer região do mundo
                   </p>
                 </div>
               </div>
 
-              {/* Geração automática da abordagem com IA */}
-              <div className="rounded-xl border border-border/50 bg-secondary/20 p-4 mb-6">
-                <div className="flex items-center gap-2 mb-3">
+              {/* Geração automática da abordagem com IA (após o diagnóstico) */}
+              <div className="rounded-xl border border-border/50 bg-secondary/30 p-4 space-y-3">
+                <div className="flex items-center gap-2">
                   <Sparkles size={14} className="text-primary" />
-                  <p className="text-sm font-medium text-foreground">Gerar abordagem com IA automaticamente</p>
+                  <p className="text-sm font-medium">Gerar abordagem com IA automaticamente</p>
                 </div>
-                <div className="space-y-2">
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <Checkbox
-                      checked={autoApproach.manual}
-                      onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, manual: !!checked }))}
-                      className="mt-0.5"
-                    />
-                    <span className="text-sm text-foreground/90 group-hover:text-foreground transition-colors">
-                      Mensagem para envio manual
-                      <span className="block text-xs text-muted-foreground">Primeiro contato para copiar ou enviar pelo WhatsApp</span>
-                    </span>
-                  </label>
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <Checkbox
-                      checked={autoApproach.meta}
-                      onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, meta: !!checked }))}
-                      className="mt-0.5"
-                    />
-                    <span className="text-sm text-foreground/90 group-hover:text-foreground transition-colors">
-                      Mensagem para campanhas Meta
-                      <span className="block text-xs text-muted-foreground">Follow-up enviado após a resposta ao template aprovado</span>
-                    </span>
-                  </label>
-                </div>
+                <p className="text-xs text-muted-foreground/80">
+                  Ao final do diagnóstico de cada lead, a IA já escreve a mensagem escolhida — sem precisar gerar uma a uma.
+                </p>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={autoApproach.manual}
+                    onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, manual: !!checked }))}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm">
+                    Mensagem para envio manual
+                    <span className="block text-xs text-muted-foreground">Primeiro contato para copiar ou enviar pelo WhatsApp</span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={autoApproach.meta}
+                    onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, meta: !!checked }))}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm">
+                    Mensagem para campanhas Meta
+                    <span className="block text-xs text-muted-foreground">Follow-up enviado após a resposta ao template aprovado</span>
+                  </span>
+                </label>
               </div>
+
+
 
               <Button
                 type="submit"
                 variant="hero"
                 size="lg"
-                className="w-full h-13 text-base font-semibold"
+                className="w-full h-14 text-base font-semibold"
                 disabled={isSearching || (!publicDemo && searchesRemaining <= 0)}
                 data-tour="search-button"
               >
