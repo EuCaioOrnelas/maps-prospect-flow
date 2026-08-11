@@ -100,7 +100,7 @@ export const CRMMetrics = ({ leads, stages, hideValue = false, loading = false }
                 <MetricSlot cacheKey={`crm:${metric.label}`} loading={loading} empty={metric.empty} hint={metric.emptyHint} className="min-h-[46px]">
                   <div className="flex items-baseline gap-1.5">
                     <p className="text-[30px] font-bold leading-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                      {metric.label === 'Taxa de Conversão' ? `${metric.value}%` : metric.value}
+                      {metric.value}
                     </p>
                     {metric.subValue && (
                       <span className="text-[10px] text-muted-foreground">{metric.subValue}</span>
