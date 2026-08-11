@@ -160,9 +160,10 @@ const KanbanColumnComponent = ({
       <div
         className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-thin"
         style={{ scrollbarGutter: 'stable' }}
+        onScroll={handleScroll}
       >
         <div className="p-2 space-y-3 w-full min-w-0">
-          {leads.map((lead) => (
+          {visibleLeads.map((lead) => (
             <div key={lead.id} className="relative">
               {bulkSelectMode && (
                 <div 
@@ -189,6 +190,16 @@ const KanbanColumnComponent = ({
               />
             </div>
           ))}
+          {remaining > 0 && (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+              className="w-full text-xs text-muted-foreground hover:text-foreground border border-dashed border-muted-foreground/25 rounded-lg py-2 transition-colors"
+            >
+              Carregar mais ({remaining})
+            </button>
+          )}
+
           {leads.length === 0 && (
             <div className={cn(
               "text-center py-5 text-xs border border-dashed rounded-lg transition-colors duration-200",
