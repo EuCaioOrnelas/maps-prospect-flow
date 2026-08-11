@@ -391,7 +391,7 @@ const UpgradePromo = () => {
 
                 {/* 50% OFF Badge */}
                 <motion.div
-                  className="absolute -top-3 -right-3 flex items-center justify-center w-14 h-14 rounded-full shadow-lg shadow-primary/30"
+                  className="absolute -top-3 -right-3 flex items-center justify-center w-14 h-14 rounded-[16px] shadow-lg shadow-primary/30"
                   style={{ background: "linear-gradient(135deg, hsl(158 72% 38%), hsl(170 65% 28%))" }}
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
@@ -535,7 +535,7 @@ const UpgradePromo = () => {
             { icon: CreditCard, title: "Garantia 7 dias", desc: "Devolução sem burocracia" },
           ].map(({ icon: Icon, title, desc }) => (
             <div key={title} className="flex items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border/50">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-primary/10 shrink-0">
                 <Icon className="h-5 w-5 text-primary" />
               </div>
               <div>

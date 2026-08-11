@@ -3017,7 +3017,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                         <button
                           type="button"
                           onClick={() => updateConfig("header_image_url", "")}
-                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
+                          className="absolute top-2 right-2 w-6 h-6 rounded-[7px] bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
                         >
                           <X size={12} />
                         </button>
@@ -3059,7 +3059,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                   <div className="space-y-2">
                     {(config.buttons || []).map((btn: any, i: number) => (
                       <div key={i} className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">{i + 1}</div>
+                        <div className="w-6 h-6 rounded-[7px] bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">{i + 1}</div>
                         <Input
                           value={typeof btn === "string" ? btn : btn.title || ""}
                           onChange={(e) => {
@@ -3482,7 +3482,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                     const isProtected = i < 2;
                     return (
                       <div key={i} className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-[10px] font-bold text-emerald-400 shrink-0">
+                        <div className="w-6 h-6 rounded-[7px] bg-emerald-500/10 flex items-center justify-center text-[10px] font-bold text-emerald-400 shrink-0">
                           {String.fromCharCode(65 + i)}
                         </div>
                         <Input
@@ -3566,7 +3566,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                 <div className="space-y-2">
                   {(config.outputs || []).map((o: any, i: number) => (
                     <div key={i} className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-sky-500/10 flex items-center justify-center text-[10px] font-bold text-sky-400 shrink-0">
+                      <div className="w-6 h-6 rounded-[7px] bg-sky-500/10 flex items-center justify-center text-[10px] font-bold text-sky-400 shrink-0">
                         {i + 1}
                       </div>
                       <Input

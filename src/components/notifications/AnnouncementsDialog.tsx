@@ -169,7 +169,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
               {undismissedDisconnections.map(num => (
                 <div key={num.id} className="p-4 rounded-lg border bg-amber-500/10 border-amber-500/30">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-8 h-8 rounded-[9px] bg-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
                       <WifiOff className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div className="flex-1 min-w-0">

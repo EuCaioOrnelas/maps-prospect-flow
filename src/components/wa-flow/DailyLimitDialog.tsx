@@ -19,7 +19,7 @@ export function DailyLimitDialog({ open, onOpenChange, remaining }: DailyLimitDi
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
-            className="w-14 h-14 rounded-full bg-amber-500/10 border-2 border-amber-500/20 flex items-center justify-center mx-auto mb-3"
+            className="w-14 h-14 rounded-[16px] bg-amber-500/10 border-2 border-amber-500/20 flex items-center justify-center mx-auto mb-3"
           >
             <AlertTriangle className="w-7 h-7 text-amber-500" />
           </motion.div>

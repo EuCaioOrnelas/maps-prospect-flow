@@ -332,7 +332,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
           {/* Step 6 - Congratulations */}
           {step === 6 && (
             <div className="flex flex-col items-center justify-center text-center space-y-6 py-8">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-[22px] bg-primary/10 flex items-center justify-center">
                 <PartyPopper className="h-10 w-10 text-primary" />
               </div>
               <div className="space-y-2">

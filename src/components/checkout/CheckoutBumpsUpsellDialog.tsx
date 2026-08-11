@@ -121,7 +121,7 @@ export function CheckoutBumpsUpsellDialog({
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="absolute top-3 right-3 h-8 w-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+            className="absolute top-3 right-3 h-8 w-8 rounded-[9px] hover:bg-muted flex items-center justify-center transition-colors"
             aria-label="Fechar"
           >
             <X className="h-4 w-4 text-muted-foreground" />
@@ -192,7 +192,7 @@ export function CheckoutBumpsUpsellDialog({
                         <button
                           type="button"
                           onClick={() => setQty(bump.id, qty - 1)}
-                          className="h-7 w-7 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+                          className="h-7 w-7 rounded-[8px] hover:bg-muted flex items-center justify-center transition-colors"
                           aria-label="Diminuir"
                         >
                           <Minus className="h-3.5 w-3.5" />
@@ -203,7 +203,7 @@ export function CheckoutBumpsUpsellDialog({
                         <button
                           type="button"
                           onClick={() => setQty(bump.id, qty + 1)}
-                          className="h-7 w-7 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center transition-colors"
+                          className="h-7 w-7 rounded-[8px] bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center transition-colors"
                           aria-label="Aumentar"
                         >
                           <Plus className="h-3.5 w-3.5" />

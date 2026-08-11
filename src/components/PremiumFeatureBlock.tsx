@@ -21,10 +21,10 @@ export const PremiumFeatureBlock = ({
       <Card className="max-w-md w-full border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto mb-4 relative">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-[22px] bg-primary/10 flex items-center justify-center">
               {icon || <Lock className="h-10 w-10 text-primary" />}
             </div>
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center border-2 border-background">
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-[9px] bg-amber-500/20 flex items-center justify-center border-2 border-background">
               <Crown className="h-4 w-4 text-amber-500" />
             </div>
           </div>

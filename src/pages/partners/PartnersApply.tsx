@@ -398,7 +398,7 @@ export default function PartnersApply() {
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 flex items-center justify-center p-6">
         <Helmet><title>Candidatura recebida — Wiize Partners</title></Helmet>
         <div className="max-w-xl w-full text-center space-y-6 bg-card border border-border rounded-3xl p-10 shadow-elegant">
-          <div className="mx-auto h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="mx-auto h-20 w-20 rounded-[22px] bg-primary/10 flex items-center justify-center">
             <CheckCircle2 className="h-10 w-10 text-primary" />
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">Recebemos sua candidatura!</h1>
@@ -847,7 +847,7 @@ export default function PartnersApply() {
                     }}
                   />
                   <div className="border border-border rounded-xl p-5 flex flex-col items-center gap-2 hover:border-primary hover:bg-primary/5 transition-all">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-[11px] bg-primary/10 text-primary flex items-center justify-center">
                       <Camera className="h-5 w-5" />
                     </div>
                     <div className="text-sm font-medium">Tirar foto</div>
@@ -867,7 +867,7 @@ export default function PartnersApply() {
                     }}
                   />
                   <div className="border border-border rounded-xl p-5 flex flex-col items-center gap-2 hover:border-primary hover:bg-primary/5 transition-all">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-[11px] bg-primary/10 text-primary flex items-center justify-center">
                       <ImageIcon className="h-5 w-5" />
                     </div>
                     <div className="text-sm font-medium">Galeria</div>

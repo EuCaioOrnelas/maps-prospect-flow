@@ -119,7 +119,7 @@ export default function PartnerLayout() {
         >
           <div className="flex items-center gap-3">
             <div className="relative shrink-0">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-border flex items-center justify-center text-sm font-bold text-foreground">
+              <div className="h-10 w-10 rounded-[11px] bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-border flex items-center justify-center text-sm font-bold text-foreground">
                 {initial}
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-card ring-2 ring-card flex items-center justify-center">

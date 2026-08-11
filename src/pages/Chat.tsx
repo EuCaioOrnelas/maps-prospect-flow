@@ -205,7 +205,7 @@ const Chat = () => {
             {showDisconnectedOverlay && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
                 <div className="bg-background border border-border rounded-2xl p-8 max-w-[440px] text-center shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-                  <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-5">
+                  <div className="w-20 h-20 rounded-[22px] bg-destructive/10 flex items-center justify-center mx-auto mb-5">
                     <WifiOff size={36} className="text-destructive" />
                   </div>
                   <h2 className="text-xl font-semibold text-foreground mb-2">Conexão desconectada</h2>

@@ -913,7 +913,7 @@ const Step = ({
 }) => (
   <div className="flex gap-4">
     <div className="flex flex-col items-center">
-      <div className="w-7 h-7 rounded-full bg-[hsl(158_72%_32%)] text-white flex items-center justify-center text-xs font-bold shrink-0">
+      <div className="w-7 h-7 rounded-[8px] bg-[hsl(158_72%_32%)] text-white flex items-center justify-center text-xs font-bold shrink-0">
         {number}
       </div>
       <div className="w-px flex-1 bg-zinc-100 mt-2" />

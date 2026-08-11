@@ -547,7 +547,7 @@ const StepList = ({ steps }: { steps: { title: string; desc: string; link?: stri
   <div className="space-y-3">
     {steps.map((step, i) => (
       <div key={i} className="flex items-start gap-3">
-        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+        <div className="w-7 h-7 rounded-[8px] bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
           <span className="text-xs font-bold text-primary">{i + 1}</span>
         </div>
         <div className="flex-1">

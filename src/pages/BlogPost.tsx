@@ -415,7 +415,7 @@ export default function BlogPost() {
                       const used = await shareNative();
                       if (used) e.preventDefault();
                     }}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground transition-all hover:border-foreground/30 hover:bg-muted"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-[11px] border border-border bg-background text-foreground transition-all hover:border-foreground/30 hover:bg-muted"
                   >
                     <Share2 className="h-4 w-4" />
                   </button>

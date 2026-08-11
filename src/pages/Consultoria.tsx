@@ -292,13 +292,13 @@ const HomeView = ({ onSelectFase }: { onSelectFase: (f: Fase, i: number) => void
           <button
             type="button"
             onClick={() => scroll("left")}
-            className="w-9 h-9 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50">
+            className="w-9 h-9 rounded-[10px] bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50">
             <ChevronLeft size={18} />
           </button>
           <button
             type="button"
             onClick={() => scroll("right")}
-            className="w-9 h-9 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50">
+            className="w-9 h-9 rounded-[10px] bg-muted/50 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition border border-border/50">
             <ChevronRight size={18} />
           </button>
         </div>
@@ -365,14 +365,14 @@ const FaseCard = ({ fase, index, onClick }: { fase: Fase; index: number; onClick
 
         {isComingSoon ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 -translate-y-8">
-            <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/10">
+            <div className="w-16 h-16 rounded-[18px] bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/10">
               <Lock size={28} className="text-white/60" />
             </div>
             <span className="text-[11px] font-semibold text-white/80 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">Em breve</span>
           </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-            <motion.div whileHover={{ scale: 1.1 }} className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center shadow-lg shadow-primary/40">
+            <motion.div whileHover={{ scale: 1.1 }} className="w-16 h-16 rounded-[18px] bg-primary/90 flex items-center justify-center shadow-lg shadow-primary/40">
               <Play size={28} className="text-primary-foreground ml-1" />
             </motion.div>
           </div>
@@ -476,14 +476,14 @@ const VideoCard = ({ video, index, onClick }: { video: Video; index: number; onC
         />
         {isComingSoon ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/10">
+            <div className="w-12 h-12 rounded-[14px] bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/10">
               <Lock size={22} className="text-white/60" />
             </div>
             <span className="text-[10px] font-semibold text-white/80 bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10">Em breve</span>
           </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/20">
-            <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center shadow-lg shadow-primary/30">
+            <div className="w-12 h-12 rounded-[14px] bg-primary/90 flex items-center justify-center shadow-lg shadow-primary/30">
               <Play size={22} className="text-primary-foreground ml-0.5" />
             </div>
           </div>

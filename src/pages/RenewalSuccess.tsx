@@ -50,7 +50,7 @@ const RenewalSuccess = () => {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-primary rounded-full animate-pulse" />
             <div className="absolute inset-1 bg-background rounded-full flex items-center justify-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-primary rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-primary rounded-[18px] flex items-center justify-center">
                 <Check className="w-8 h-8 text-white" strokeWidth={3} />
               </div>
             </div>
@@ -92,7 +92,7 @@ const RenewalSuccess = () => {
           <div className="relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-8 shadow-2xl space-y-6">
             <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-primary/10 border border-emerald-500/20 rounded-xl">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-primary flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-[11px] bg-gradient-to-br from-emerald-500 to-primary flex items-center justify-center flex-shrink-0">
                   <Crown className="w-5 h-5 text-white" />
                 </div>
                 <div>

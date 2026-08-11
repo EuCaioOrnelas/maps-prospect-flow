@@ -642,7 +642,7 @@ export default function AdminPartnersApplications() {
               <div className="relative bg-gradient-to-br from-emerald-500 to-emerald-600 px-6 py-8 text-white text-center">
                 <div className="absolute inset-0 opacity-10 [background-image:radial-gradient(circle_at_30%_20%,white_1px,transparent_1px),radial-gradient(circle_at_70%_80%,white_1px,transparent_1px)] [background-size:24px_24px]" />
                 <div className="relative">
-                  <div className="mx-auto mb-3 w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/10">
+                  <div className="mx-auto mb-3 w-14 h-14 rounded-[16px] bg-white/20 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/10">
                     <Check className="h-7 w-7" strokeWidth={3} />
                   </div>
                   <h2 className="text-xl font-semibold tracking-tight">Parceiro aprovado!</h2>

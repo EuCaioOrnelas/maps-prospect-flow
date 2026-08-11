@@ -63,7 +63,7 @@ export function ExpiredSubscriptionDialog() {
 
         {/* Header */}
         <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-6 text-center">
-          <div className="mx-auto w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mb-4">
+          <div className="mx-auto w-16 h-16 bg-yellow-500/20 rounded-[18px] flex items-center justify-center mb-4">
             <AlertTriangle size={32} className="text-yellow-500" />
           </div>
           <h2 className="text-xl font-display font-bold text-foreground">

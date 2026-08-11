@@ -211,7 +211,7 @@ const TrialExpired = () => {
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-destructive/10 rounded-full blur-2xl" />
             <div className="relative z-10">
-              <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto mb-5">
+              <div className="w-16 h-16 rounded-[18px] bg-destructive/20 flex items-center justify-center mx-auto mb-5">
                 <AlertTriangle size={32} className="text-destructive" />
               </div>
               <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3">
@@ -222,7 +222,7 @@ const TrialExpired = () => {
                 escolha o plano ideal para o seu negócio.
               </p>
               <div className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-xl px-6 py-4">
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20">
+                <div className="flex items-center justify-center w-10 h-10 rounded-[11px] bg-primary/20">
                   <Sparkles size={20} className="text-primary" />
                 </div>
                 <div className="text-left">
@@ -395,19 +395,19 @@ const TrialExpired = () => {
         <div className="max-w-4xl mx-auto mt-16 animate-fade-in" style={{ animationDelay: '0.5s' }}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-primary/10 flex-shrink-0">
                 <Shield className="h-6 w-6 text-primary" />
               </div>
               <div><p className="font-semibold text-foreground">100% Seguro</p><p className="text-sm text-muted-foreground">Pagamento certificado</p></div>
             </div>
             <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-primary/10 flex-shrink-0">
                 <Clock className="h-6 w-6 text-primary" />
               </div>
               <div><p className="font-semibold text-foreground">Cancele quando quiser</p><p className="text-sm text-muted-foreground">Sem fidelidade</p></div>
             </div>
             <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-primary/10 flex-shrink-0">
                 <CreditCard className="h-6 w-6 text-primary" />
               </div>
               <div><p className="font-semibold text-foreground">Garantia 7 dias</p><p className="text-sm text-muted-foreground">Devolução sem burocracia</p></div>

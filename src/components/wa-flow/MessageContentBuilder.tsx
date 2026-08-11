@@ -99,7 +99,7 @@ function CustomAudioPlayer({ src, onRemove }: { src: string; onRemove: () => voi
       <audio ref={audioRef} src={src} preload="metadata" />
       <button
         onClick={toggle}
-        className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 hover:bg-primary/20 transition-colors"
+        className="w-9 h-9 rounded-[10px] bg-primary/10 text-primary flex items-center justify-center shrink-0 hover:bg-primary/20 transition-colors"
       >
         {playing ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
       </button>
@@ -114,7 +114,7 @@ function CustomAudioPlayer({ src, onRemove }: { src: string; onRemove: () => voi
       </div>
       <button
         onClick={onRemove}
-        className="w-7 h-7 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors shrink-0"
+        className="w-7 h-7 rounded-[8px] bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors shrink-0"
       >
         <X size={12} />
       </button>
@@ -351,7 +351,7 @@ function ContentItemEditor({
                   <img src={item.media_url} alt="Preview" className="w-full max-h-40 object-contain" />
                   <button
                     onClick={() => onUpdate({ media_url: "", media_filename: "" })}
-                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
+                    className="absolute top-2 right-2 w-6 h-6 rounded-[7px] bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
                   >
                     <X size={12} />
                   </button>
@@ -413,7 +413,7 @@ function ContentItemEditor({
                   <video src={item.media_url} controls className="w-full max-h-40" />
                   <button
                     onClick={() => onUpdate({ media_url: "", media_filename: "" })}
-                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
+                    className="absolute top-2 right-2 w-6 h-6 rounded-[7px] bg-destructive/90 text-white flex items-center justify-center hover:bg-destructive transition-colors"
                   >
                     <X size={12} />
                   </button>
@@ -457,7 +457,7 @@ function ContentItemEditor({
                   <span className="text-xs text-foreground truncate flex-1">{item.media_filename || "Documento"}</span>
                   <button
                     onClick={() => onUpdate({ media_url: "", media_filename: "" })}
-                    className="w-6 h-6 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors shrink-0"
+                    className="w-6 h-6 rounded-[7px] bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20 transition-colors shrink-0"
                   >
                     <X size={12} />
                   </button>
@@ -730,7 +730,7 @@ export function MessageContentBuilder({ config, updateConfig }: MessageContentBu
                 <div key={item.id} className="relative flex items-start gap-2.5">
                   {/* Green numbered circle */}
                   <div className="flex flex-col items-center pt-3 shrink-0">
-                    <div className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-[7px] bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
                       <span className="text-[10px] font-bold text-emerald-400">{num}</span>
                     </div>
                     {/* Connecting line to next item in same group */}

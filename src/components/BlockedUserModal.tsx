@@ -27,7 +27,7 @@ export const BlockedUserModal = ({ onLogout }: BlockedUserModalProps) => {
         </div>
         
         {/* Icon */}
-        <div className="mx-auto w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center">
+        <div className="mx-auto w-20 h-20 bg-destructive/10 rounded-[22px] flex items-center justify-center">
           <ShieldX size={40} className="text-destructive" />
         </div>
         

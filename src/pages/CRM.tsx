@@ -690,7 +690,7 @@ export default function CRM() {
         <DialogContent className="sm:max-w-md w-[95vw] rounded-lg max-h-[90vh] overflow-y-auto" hideCloseButton onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-[11px] bg-amber-500/20 flex items-center justify-center">
                 <FlaskConical className="w-5 h-5 text-amber-500" />
               </div>
               <DialogTitle className="text-xl">CRM em Versão Beta</DialogTitle>

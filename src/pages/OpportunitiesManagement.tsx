@@ -2006,7 +2006,7 @@ export default function OpportunitiesManagement() {
                                             className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted flex items-center gap-2 ${active ? "bg-muted/60 font-medium" : ""}`}
                                             onClick={() => assignSingle(lead.id, mm.user_id)}
                                           >
-                                            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary text-[10px] font-semibold overflow-hidden">
+                                            <span className="inline-flex h-5 w-5 items-center justify-center rounded-[6px] bg-primary/15 text-primary text-[10px] font-semibold overflow-hidden">
                                               {mm.avatar_url ? <img src={mm.avatar_url} alt="" className="h-full w-full object-cover" /> : (mm.name || mm.email || "?").trim().charAt(0).toUpperCase()}
                                             </span>
                                             <span className="truncate">{mm.name || mm.email || mm.user_id.slice(0, 8)}</span>

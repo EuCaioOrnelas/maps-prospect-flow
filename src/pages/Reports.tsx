@@ -966,7 +966,7 @@ const Reports = () => {
                 onClick={() => setExportMode('link')}
                 className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-secondary/50 transition-all"
               >
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-[14px] bg-primary/10 flex items-center justify-center">
                   <LinkIcon size={24} className="text-primary" />
                 </div>
                 <div className="text-center">
@@ -981,7 +981,7 @@ const Reports = () => {
                 onClick={() => setExportMode('pdf')}
                 className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-secondary/50 transition-all"
               >
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-[14px] bg-primary/10 flex items-center justify-center">
                   <FileText size={24} className="text-primary" />
                 </div>
                 <div className="text-center">

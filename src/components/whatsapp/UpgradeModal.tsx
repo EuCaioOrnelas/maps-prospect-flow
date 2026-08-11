@@ -36,7 +36,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         
         <DialogHeader className="relative space-y-4 pt-2">
           <div className="mx-auto relative">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-warning to-warning/80 shadow-lg shadow-warning/25">
+            <div className="flex h-16 w-16 items-center justify-center rounded-[18px] bg-gradient-to-br from-warning to-warning/80 shadow-lg shadow-warning/25">
               <Crown className="h-8 w-8 text-warning-foreground" />
             </div>
           </div>
@@ -55,7 +55,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
           {/* Features list */}
           <div className="space-y-3">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+              <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary/10">
                 <MessageSquare className="h-4 w-4 text-primary" />
               </div>
               <div>
@@ -65,7 +65,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             </div>
             
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+              <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary/10">
                 <Users className="h-4 w-4 text-primary" />
               </div>
               <div>
@@ -75,7 +75,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             </div>
             
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+              <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary/10">
                 <Zap className="h-4 w-4 text-primary" />
               </div>
               <div>
@@ -94,7 +94,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                 <p className="text-xl font-bold text-foreground">50% de desconto</p>
                 <p className="text-xs text-muted-foreground">No primeiro mês de qualquer plano</p>
               </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-warning/20 border border-warning/30">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-warning/20 border border-warning/30">
                 <Sparkles className="h-6 w-6 text-warning" />
               </div>
             </div>

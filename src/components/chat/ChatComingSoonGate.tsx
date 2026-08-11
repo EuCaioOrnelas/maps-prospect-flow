@@ -62,7 +62,7 @@ export const ChatComingSoonGate = ({ children }: ChatComingSoonGateProps) => {
                 <div className="hidden sm:flex w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/10 items-center justify-center shrink-0">
                   <div className="relative">
                     <MessageSquare size={36} className="text-primary" strokeWidth={1.75} />
-                    <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center ring-4 ring-background">
+                    <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-[7px] bg-amber-500 flex items-center justify-center ring-4 ring-background">
                       <Clock size={11} className="text-white" strokeWidth={2.75} />
                     </div>
                   </div>

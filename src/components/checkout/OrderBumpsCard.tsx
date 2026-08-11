@@ -135,7 +135,7 @@ export function OrderBumpsCard({ planKey, billingPeriod, selection, onChange, va
                       <button
                         type="button"
                         onClick={() => setQty(bump.id, qty - 1)}
-                        className="h-7 w-7 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+                        className="h-7 w-7 rounded-[8px] hover:bg-muted flex items-center justify-center transition-colors"
                         aria-label="Diminuir"
                       >
                         <Minus className="h-3.5 w-3.5" />
@@ -146,7 +146,7 @@ export function OrderBumpsCard({ planKey, billingPeriod, selection, onChange, va
                       <button
                         type="button"
                         onClick={() => setQty(bump.id, qty + 1)}
-                        className="h-7 w-7 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center transition-colors"
+                        className="h-7 w-7 rounded-[8px] bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center transition-colors"
                         aria-label="Aumentar"
                       >
                         <Plus className="h-3.5 w-3.5" />

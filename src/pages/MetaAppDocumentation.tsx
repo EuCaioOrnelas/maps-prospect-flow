@@ -231,7 +231,7 @@ const SectionTitle = ({ icon, title }: { icon: React.ReactNode; title: string })
 const ArchCard = ({ step, title, desc }: { step: string; title: string; desc: string }) => (
   <div className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-2">
     <div className="flex items-center gap-2">
-      <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+      <div className="w-6 h-6 rounded-[7px] bg-emerald-500/20 flex items-center justify-center">
         <span className="text-xs font-bold text-emerald-400">{step}</span>
       </div>
       <h3 className="font-semibold text-sm">{title}</h3>
@@ -253,7 +253,7 @@ const PermissionRow = ({ permission, usage, endpoint }: { permission: string; us
 
 const FlowStep = ({ n, text }: { n: number; text: string }) => (
   <div className="flex items-start gap-3">
-    <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
+    <div className="w-5 h-5 rounded-[6px] bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
       <span className="text-[10px] font-bold text-emerald-400">{n}</span>
     </div>
     <p className="text-sm text-white/70">{text}</p>

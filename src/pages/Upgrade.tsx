@@ -576,7 +576,7 @@ const Upgrade = () => {
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-destructive/10 rounded-full blur-2xl" />
               <div className="relative z-10">
-                <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto mb-5">
+                <div className="w-16 h-16 rounded-[18px] bg-destructive/20 flex items-center justify-center mx-auto mb-5">
                   <AlertTriangle size={32} className="text-destructive" />
                 </div>
                 <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-3">
@@ -587,7 +587,7 @@ const Upgrade = () => {
                   escolha o plano ideal para o seu negócio.
                 </p>
                 <div className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-xl px-6 py-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-[11px] bg-primary/20">
                     <Sparkles size={20} className="text-primary" />
                   </div>
                   <div className="text-left">
@@ -964,19 +964,19 @@ const Upgrade = () => {
 
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-start gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">1</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-primary/15 text-primary text-xs font-bold flex-shrink-0">1</span>
                     <span className="text-muted-foreground"><strong className="text-foreground">Você paga o valor cheio do novo plano</strong>, igual a uma mensalidade normal.</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">2</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-primary/15 text-primary text-xs font-bold flex-shrink-0">2</span>
                     <span className="text-muted-foreground">Sua mensalidade antiga é <strong className="text-foreground">cancelada na hora</strong>. Você não paga duplicado.</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">3</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-primary/15 text-primary text-xs font-bold flex-shrink-0">3</span>
                     <span className="text-muted-foreground">As <strong className="text-foreground">oportunidades que sobraram</strong> do plano antigo viram <strong className="text-foreground">saldo bônus permanente</strong>. Nunca expiram.</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">4</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-primary/15 text-primary text-xs font-bold flex-shrink-0">4</span>
                     <span className="text-muted-foreground">Próxima cobrança: <strong className="text-foreground">daqui a 30 dias</strong>.</span>
                   </li>
                 </ul>
@@ -996,19 +996,19 @@ const Upgrade = () => {
 
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-start gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">1</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-primary/15 text-primary text-xs font-bold flex-shrink-0">1</span>
                     <span className="text-muted-foreground">Você já pagou um ano inteiro do plano atual. <strong className="text-foreground">Cobramos só a diferença</strong> entre os planos pelos dias que ainda faltam até sua renovação.</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">2</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-primary/15 text-primary text-xs font-bold flex-shrink-0">2</span>
                     <span className="text-muted-foreground">Pode <strong className="text-foreground">parcelar no cartão sem juros</strong>. As parcelas terminam antes da sua renovação.</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">3</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-primary/15 text-primary text-xs font-bold flex-shrink-0">3</span>
                     <span className="text-muted-foreground">Sua data de renovação <strong className="text-foreground">não muda</strong>. Você continua pagando o mesmo valor anual atual.</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-primary text-xs font-bold flex-shrink-0">4</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-primary/15 text-primary text-xs font-bold flex-shrink-0">4</span>
                     <span className="text-muted-foreground">As oportunidades que sobraram viram <strong className="text-foreground">saldo bônus permanente</strong>. Nunca expiram.</span>
                   </li>
                 </ul>
@@ -1039,7 +1039,7 @@ const Upgrade = () => {
         <div className="max-w-4xl mx-auto mt-16 animate-fade-in" style={{ animationDelay: '0.5s' }}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-primary/10 flex-shrink-0">
                 <Shield className="h-6 w-6 text-primary" />
               </div>
               <div>
@@ -1048,7 +1048,7 @@ const Upgrade = () => {
               </div>
             </div>
             <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-primary/10 flex-shrink-0">
                 <Clock className="h-6 w-6 text-primary" />
               </div>
               <div>
@@ -1057,7 +1057,7 @@ const Upgrade = () => {
               </div>
             </div>
             <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-primary/10 flex-shrink-0">
                 <CreditCard className="h-6 w-6 text-primary" />
               </div>
               <div>
@@ -1116,7 +1116,7 @@ const Upgrade = () => {
               {/* 4 things the customer wants to know */}
               <div className="space-y-2.5">
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary/10 flex-shrink-0">
                     <Calculator size={15} className="text-primary" />
                   </div>
                   <div className="text-sm">
@@ -1128,7 +1128,7 @@ const Upgrade = () => {
                 </div>
 
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary/10 flex-shrink-0">
                     <CreditCard size={15} className="text-primary" />
                   </div>
                   <div className="text-sm">
@@ -1140,7 +1140,7 @@ const Upgrade = () => {
                 </div>
 
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary/10 flex-shrink-0">
                     <Calendar size={15} className="text-primary" />
                   </div>
                   <div className="text-sm">
@@ -1154,7 +1154,7 @@ const Upgrade = () => {
 
                 {upgradePreview.carriedBonus > 0 && (
                   <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 flex-shrink-0">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-emerald-500/20 flex-shrink-0">
                       <Gift size={15} className="text-emerald-600" />
                     </div>
                     <div className="text-sm">
@@ -1185,7 +1185,7 @@ const Upgrade = () => {
 
               <div className="space-y-2.5">
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary/10 flex-shrink-0">
                     <Calculator size={15} className="text-primary" />
                   </div>
                   <div className="text-sm">
@@ -1197,7 +1197,7 @@ const Upgrade = () => {
                 </div>
 
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary/10 flex-shrink-0">
                     <Calendar size={15} className="text-primary" />
                   </div>
                   <div className="text-sm">
@@ -1210,7 +1210,7 @@ const Upgrade = () => {
 
                 {upgradePreview.carriedBonus > 0 && (
                   <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 flex-shrink-0">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-emerald-500/20 flex-shrink-0">
                       <Gift size={15} className="text-emerald-600" />
                     </div>
                     <div className="text-sm">

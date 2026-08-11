@@ -456,7 +456,7 @@ export default function AdminPartnersDashboard() {
                       <div key={p.name + i} className="rounded-lg border border-border/40 bg-background/40 p-3">
                         <div className="flex items-center justify-between mb-1.5">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-[10px] font-bold tabular-nums w-5 h-5 rounded-full bg-primary/10 text-primary ring-1 ring-primary/20 flex items-center justify-center">
+                            <span className="text-[10px] font-bold tabular-nums w-5 h-5 rounded-[6px] bg-primary/10 text-primary ring-1 ring-primary/20 flex items-center justify-center">
                               {i + 1}
                             </span>
                             <span className="text-sm font-medium truncate">{p.name}</span>

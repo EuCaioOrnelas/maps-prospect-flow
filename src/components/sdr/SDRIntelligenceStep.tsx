@@ -269,7 +269,7 @@ export function SDRIntelligenceStep({
                 )}
               >
                 {active && (
-                  <span className="absolute top-3 right-3 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                  <span className="absolute top-3 right-3 h-5 w-5 rounded-[6px] bg-primary flex items-center justify-center">
                     <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} />
                   </span>
                 )}
@@ -300,7 +300,7 @@ export function SDRIntelligenceStep({
         <ol className="space-y-3">
           {STEPS_GUIDE.map((s, i) => (
             <li key={s.title} className="flex gap-3">
-              <span className="h-6 w-6 shrink-0 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
+              <span className="h-6 w-6 shrink-0 rounded-[7px] bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
                 {i + 1}
               </span>
               <div className="min-w-0">

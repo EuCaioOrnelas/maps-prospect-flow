@@ -358,7 +358,7 @@ function MaterialCard({
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center">
-              <div className="h-14 w-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <div className="h-14 w-14 rounded-[16px] bg-primary text-primary-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                 <Play size={22} fill="currentColor" />
               </div>
             </div>

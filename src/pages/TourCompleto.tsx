@@ -283,7 +283,7 @@ const TourCompleto = () => {
                           <div className="h-11 w-11 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center text-primary group-hover:bg-primary/15 transition-colors">
                             <Icon size={18} />
                           </div>
-                          <div className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-background border border-border flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                          <div className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-[6px] bg-background border border-border flex items-center justify-center text-[10px] font-bold text-muted-foreground">
                             {chapter.index}
                           </div>
                         </div>
@@ -356,7 +356,7 @@ const TourCompleto = () => {
                       "Acompanhar receita projetada e KPIs em tempo real",
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-3">
-                        <div className="h-5 w-5 rounded-full bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                        <div className="h-5 w-5 rounded-[6px] bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center text-primary shrink-0 mt-0.5">
                           <CheckCircle2 size={12} strokeWidth={2.5} />
                         </div>
                         <span className="text-sm text-foreground/90 leading-relaxed">

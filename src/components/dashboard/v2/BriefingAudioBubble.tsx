@@ -102,7 +102,7 @@ export function BriefingAudioBubble({ src, seconds = 0, avatarUrl, initials = "E
         <button
           type="button"
           onClick={toggle}
-          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-primary-foreground/20 hover:bg-primary-foreground/30 transition-colors"
+          className="shrink-0 w-8 h-8 rounded-[9px] flex items-center justify-center bg-primary-foreground/20 hover:bg-primary-foreground/30 transition-colors"
           aria-label={playing ? "Pausar áudio" : "Tocar áudio"}
         >
           {playing ? <Pause size={15} className="fill-current" /> : <Play size={15} className="fill-current" />}

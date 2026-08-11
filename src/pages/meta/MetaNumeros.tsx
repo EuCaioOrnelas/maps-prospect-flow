@@ -237,7 +237,7 @@ export default function MetaNumeros() {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => window.open("/meta-api-guide", "_blank", "noopener,noreferrer")}
-                  className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-[7px] border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                 >
                   <HelpCircle size={14} />
                 </button>
@@ -313,7 +313,7 @@ export default function MetaNumeros() {
             <div className="space-y-6">
               {hasExpired && (
                 <div className="flex items-start gap-4 rounded-2xl border border-destructive/40 bg-destructive/10 p-5 shadow-sm">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/15">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] bg-destructive/15">
                     <ShieldAlert size={20} className="text-destructive" />
                   </div>
                   <div className="flex-1">

@@ -55,7 +55,7 @@ const ThankYou = () => {
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
                 className="mb-6"
               >
-                <div className="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+                <div className="w-20 h-20 mx-auto bg-primary/10 rounded-[22px] flex items-center justify-center">
                   <Heart className="w-10 h-10 text-primary" />
                 </div>
               </motion.div>

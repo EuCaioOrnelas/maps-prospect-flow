@@ -232,7 +232,7 @@ const SharedReport = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <Card className="glass animate-fade-in p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-[11px] bg-primary/10 flex items-center justify-center">
                     <Target className="h-5 w-5 text-primary" />
                   </div>
                   <div>
@@ -244,7 +244,7 @@ const SharedReport = () => {
               
               <Card className="glass animate-fade-in p-4" style={{ animationDelay: '100ms' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-[11px] bg-green-500/10 flex items-center justify-center">
                     <TrendingUp className="h-5 w-5 text-green-500" />
                   </div>
                   <div>
@@ -256,7 +256,7 @@ const SharedReport = () => {
               
               <Card className="glass animate-fade-in p-4" style={{ animationDelay: '200ms' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-[11px] bg-destructive/10 flex items-center justify-center">
                     <AlertCircle className="h-5 w-5 text-destructive" />
                   </div>
                   <div>
@@ -268,7 +268,7 @@ const SharedReport = () => {
               
               <Card className="glass animate-fade-in p-4" style={{ animationDelay: '300ms' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-[11px] bg-blue-500/10 flex items-center justify-center">
                     <TrendingUp className="h-5 w-5 text-blue-500" />
                   </div>
                   <div>
@@ -283,7 +283,7 @@ const SharedReport = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <Card className="glass animate-fade-in p-4" style={{ animationDelay: '400ms' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-[11px] bg-primary/10 flex items-center justify-center">
                     <Users className="h-5 w-5 text-primary" />
                   </div>
                   <div>
@@ -295,7 +295,7 @@ const SharedReport = () => {
 
               <Card className="glass animate-fade-in p-4" style={{ animationDelay: '500ms' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-[11px] bg-green-500/10 flex items-center justify-center">
                     <Target className="h-5 w-5 text-green-500" />
                   </div>
                   <div>
@@ -307,7 +307,7 @@ const SharedReport = () => {
 
               <Card className="glass animate-fade-in p-4" style={{ animationDelay: '600ms' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-[11px] bg-blue-500/10 flex items-center justify-center">
                     <TrendingUp className="h-5 w-5 text-blue-500" />
                   </div>
                   <div>
