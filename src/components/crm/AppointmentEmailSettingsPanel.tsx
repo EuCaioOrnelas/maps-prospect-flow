@@ -23,6 +23,26 @@ import {
   renderAppointmentEmail,
 } from "@/lib/appointmentEmailTemplate";
 
+const SectionHeader = ({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: typeof CalendarClock;
+  title: string;
+  description?: string;
+}) => (
+  <div className="flex items-start gap-3">
+    <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+      <Icon className="w-[18px] h-[18px] text-primary" />
+    </div>
+    <div className="min-w-0">
+      <h2 className="text-sm font-semibold leading-tight">{title}</h2>
+      {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+    </div>
+  </div>
+);
+
 const normalizeSender = (v: string) =>
   v.split("@")[0].trim().toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, 40);
 
@@ -129,19 +149,15 @@ export function AppointmentEmailSettingsPanel() {
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 max-w-6xl">
-      <div className="space-y-4">
-        <Card className="p-4 rounded-2xl border-border/40">
+    <div className="mx-auto w-full max-w-6xl grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+      <div className="space-y-6">
+        <Card className="p-5 sm:p-6 rounded-2xl border-border/40">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold flex items-center gap-2 [&>svg]:w-[18px] [&>svg]:h-[18px] [&>svg]:p-0 [&>svg]:text-primary [&>svg]:box-content [&>svg]:rounded-xl [&>svg]:bg-primary/10 [&>svg]:border [&>svg]:border-primary/20 [&>svg]:p-2">
-                <CalendarClock className="w-4 h-4 text-primary" /> Ativar lembretes de compromisso
-              </h2>
-              <p className="text-xs text-muted-foreground mt-1 max-w-md">
-                Quando ativado, a Wiize envia o lembrete por e-mail antes de cada compromisso da Agenda,
-                respeitando a antecedência configurada em cada evento.
-              </p>
-            </div>
+            <SectionHeader
+              icon={CalendarClock}
+              title="Ativar lembretes de compromisso"
+              description="Quando ativado, a Wiize envia o lembrete por e-mail antes de cada compromisso da Agenda, respeitando a antecedência configurada em cada evento."
+            />
             <div className="flex flex-col items-end gap-1.5">
               <Switch checked={settings.enabled} onCheckedChange={handleToggle} disabled={isSaving} />
               <Badge
@@ -180,10 +196,12 @@ export function AppointmentEmailSettingsPanel() {
           </div>
         </Card>
 
-        <Card className="p-4 rounded-2xl border-border/40 space-y-3">
-          <h2 className="text-sm font-semibold flex items-center gap-2 [&>svg]:w-[18px] [&>svg]:h-[18px] [&>svg]:p-0 [&>svg]:text-primary [&>svg]:box-content [&>svg]:rounded-xl [&>svg]:bg-primary/10 [&>svg]:border [&>svg]:border-primary/20 [&>svg]:p-2">
-            <Palette className="w-4 h-4 text-primary" /> Identidade visual
-          </h2>
+        <Card className="p-5 sm:p-6 rounded-2xl border-border/40 space-y-5">
+          <SectionHeader
+            icon={Palette}
+            title="Identidade visual e conteúdo"
+            description="Logo, cores, remetente e o texto que o destinatário vai ler."
+          />
 
           <LogoDropField
             value={settings.logo_url}
@@ -213,7 +231,7 @@ export function AppointmentEmailSettingsPanel() {
               <Input
                 value={settings.sender_name}
                 onChange={(e) => setSettings({ ...settings, sender_name: e.target.value })}
-                className="h-9 rounded-xl"
+                className="h-10 rounded-xl"
                 maxLength={60}
               />
             </div>
@@ -225,10 +243,10 @@ export function AppointmentEmailSettingsPanel() {
                 <Input
                   value={settings.sender_local_part}
                   onChange={(e) => setSettings({ ...settings, sender_local_part: normalizeSender(e.target.value) })}
-                  className="h-9 rounded-l-xl rounded-r-none"
+                  className="h-10 rounded-l-xl rounded-r-none"
                   placeholder="agenda"
                 />
-                <span className="h-9 inline-flex items-center rounded-r-xl border border-l-0 border-border bg-muted px-2 text-xs text-muted-foreground">
+                <span className="h-10 inline-flex items-center rounded-r-xl border border-l-0 border-border bg-muted px-2 text-xs text-muted-foreground">
                   {SENDER_DOMAIN}
                 </span>
               </div>
@@ -245,7 +263,7 @@ export function AppointmentEmailSettingsPanel() {
             <Input
               value={settings.email_title}
               onChange={(e) => setSettings({ ...settings, email_title: e.target.value })}
-              className="h-9 rounded-xl"
+              className="h-10 rounded-xl"
               maxLength={140}
             />
           </div>
@@ -293,7 +311,7 @@ export function AppointmentEmailSettingsPanel() {
             <Input
               value={settings.cta_label}
               onChange={(e) => setSettings({ ...settings, cta_label: e.target.value })}
-              className="h-9 rounded-xl"
+              className="h-10 rounded-xl"
               maxLength={40}
             />
           </div>
@@ -306,15 +324,13 @@ export function AppointmentEmailSettingsPanel() {
           </div>
         </Card>
 
-        <Card className="p-4 rounded-2xl border-border/40">
-          <h2 className="text-sm font-semibold flex items-center gap-2 [&>svg]:w-[18px] [&>svg]:h-[18px] [&>svg]:p-0 [&>svg]:text-primary [&>svg]:box-content [&>svg]:rounded-xl [&>svg]:bg-primary/10 [&>svg]:border [&>svg]:border-primary/20 [&>svg]:p-2">
-            <Send className="w-4 h-4 text-primary" /> Teste
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            O teste é enviado para o e-mail de login da sua conta
-            {user?.email ? <strong> ({user.email})</strong> : null} com dados fictícios de compromisso.
-          </p>
-          <div className="flex flex-wrap items-center gap-2 mt-3">
+        <Card className="p-5 sm:p-6 rounded-2xl border-border/40">
+          <SectionHeader
+            icon={Send}
+            title="Enviar e-mail de teste"
+            description={`O teste vai para o e-mail de login da sua conta${user?.email ? ` (${user.email})` : ""} com dados fictícios de compromisso.`}
+          />
+          <div className="flex flex-wrap items-center gap-3">
             <Button size="sm" className="rounded-xl" onClick={handleTest} disabled={sendingTest}>
               {sendingTest ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -330,9 +346,11 @@ export function AppointmentEmailSettingsPanel() {
         </Card>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3 xl:sticky xl:top-2">
         <div className="flex items-center gap-2">
-          <Eye className="w-4 h-4 text-primary" />
+          <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <Eye className="w-4 h-4 text-primary" />
+          </div>
           <h2 className="text-sm font-semibold">Preview do e-mail</h2>
         </div>
         <Card className="rounded-2xl border-border/40 overflow-hidden">

@@ -37,7 +37,7 @@ export default function AgendaEmailSettings() {
       <main className="lg:pl-[72px] pt-[42px] lg:pt-0 min-h-screen">
         <div className="flex flex-col h-screen">
           <div className="flex-shrink-0 border-b border-border/50">
-            <div className="px-3 pt-2 pb-3 sm:p-4 lg:p-6 flex items-center justify-between gap-3">
+            <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-8 lg:py-5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                   <CalendarClock className="w-5 h-5 text-primary" />
@@ -55,7 +55,7 @@ export default function AgendaEmailSettings() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
+          <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <AppointmentEmailSettingsPanel />
           </div>
         </div>
