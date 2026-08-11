@@ -534,7 +534,17 @@ export default function CRMSales() {
           </div>
         </div>
       </main>
-      <EditSaleDialog open={!!editingSale} onOpenChange={(o) => !o && setEditingSale(null)} sale={editingSale} />
+      <EditSaleDialog
+        open={!!editingSale}
+        onOpenChange={(o) => !o && setEditingSale(null)}
+        sale={editingSale}
+        canChangeResponsible={canChangeSaleResponsible({
+          role,
+          currentUserId: user?.id,
+          saleResponsibleUserId: editingSale?.responsible_user_id,
+        })}
+      />
+
     </div>
   );
 }
