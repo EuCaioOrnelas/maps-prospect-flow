@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Check, ChevronsUpDown, Search, X, UserPlus } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
