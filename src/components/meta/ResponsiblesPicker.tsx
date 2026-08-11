@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { Check, ChevronsUpDown, Search, X, UserPlus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -76,46 +75,29 @@ export function ResponsiblesPicker({
             type="button"
             disabled={disabled}
             className={cn(
-              "flex w-full items-center gap-2 rounded-xl border border-input bg-background px-3 py-2 text-left text-sm transition-colors",
-              "min-h-10 hover:bg-muted/40 disabled:opacity-50 disabled:cursor-not-allowed"
+              "flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-input bg-background px-3 text-left text-sm transition-colors",
+              "hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
             )}
           >
-            <div className="flex flex-1 flex-wrap items-center gap-1.5 min-w-0">
-              {value.length === 0 ? (
-                <span className="text-muted-foreground flex items-center gap-2">
-                  <UserPlus size={14} /> Adicionar responsáveis
-                </span>
-              ) : (
-                value.map((id) => {
-                  const m = byId[id];
-                  const label = labelOf(m, id.slice(0, 8));
-                  return (
-                    <span
-                      key={id}
-                      className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 py-0.5 pl-0.5 pr-1.5 text-xs"
-                    >
-                      <Avatar className="h-5 w-5">
-                        <AvatarImage src={m?.avatar_url || undefined} alt={label} />
-                        <AvatarFallback className="text-[9px]">{initialsOf(label)}</AvatarFallback>
-                      </Avatar>
-                      <span className="max-w-[120px] truncate">{label}</span>
-                      <span
-                        role="button"
-                        tabIndex={-1}
-                        onClick={(e) => { e.stopPropagation(); toggle(id); }}
-                        className="rounded-full p-0.5 text-muted-foreground hover:bg-background hover:text-foreground"
-                      >
-                        <X size={11} />
-                      </span>
-                    </span>
-                  );
-                })
-              )}
-            </div>
+            <span className="flex items-center gap-2 truncate">
+              <UserPlus size={14} className="text-muted-foreground shrink-0" />
+              <span className={cn("truncate", value.length === 0 && "text-muted-foreground")}>
+                {value.length === 0
+                  ? "Selecionar responsáveis..."
+                  : value.length === 1
+                    ? labelOf(byId[value[0]], value[0].slice(0, 8))
+                    : `${value.length} responsáveis selecionados`}
+              </span>
+            </span>
             <ChevronsUpDown size={14} className="shrink-0 text-muted-foreground" />
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-popover" align="start">
+        <PopoverContent
+          className="w-[--radix-popover-trigger-width] max-w-[calc(100vw-2rem)] p-0 bg-popover text-popover-foreground border-border shadow-lg z-50"
+          align="start"
+          collisionPadding={16}
+          avoidCollisions
+        >
           <div className="flex items-center gap-2 border-b border-border px-3 py-2">
             <Search size={14} className="text-muted-foreground shrink-0" />
             <Input
@@ -126,7 +108,7 @@ export function ResponsiblesPicker({
               className="h-8 border-0 px-0 shadow-none focus-visible:ring-0"
             />
           </div>
-          <div className="max-h-64 overflow-y-auto py-1">
+          <div className="max-h-[min(16rem,var(--radix-popover-content-available-height,16rem))] overflow-y-auto overscroll-contain py-1">
             {filtered.length === 0 && (
               <p className="px-3 py-6 text-center text-xs text-muted-foreground">Nenhum colaborador encontrado.</p>
             )}
@@ -143,10 +125,11 @@ export function ResponsiblesPicker({
                   onClick={() => toggle(m.user_id)}
                   className={cn(
                     "flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors",
-                    blocked ? "opacity-50 cursor-not-allowed" : "hover:bg-muted/50"
+                    blocked ? "opacity-50 cursor-not-allowed" : "hover:bg-muted/50",
+                    selected && "bg-primary/10"
                   )}
                 >
-                  <Avatar className="h-7 w-7">
+                  <Avatar className="h-7 w-7 shrink-0">
                     <AvatarImage src={m.avatar_url || undefined} alt={label} />
                     <AvatarFallback className="text-[10px]">{initialsOf(label)}</AvatarFallback>
                   </Avatar>
@@ -164,15 +147,39 @@ export function ResponsiblesPicker({
               );
             })}
           </div>
-          {value.length > 0 && (
-            <div className="border-t border-border p-2">
-              <Button variant="ghost" size="sm" className="h-7 w-full text-xs" onClick={() => onChange([])}>
-                Limpar seleção
-              </Button>
-            </div>
-          )}
         </PopoverContent>
       </Popover>
+
+      {/* Selecionados aparecem abaixo do input */}
+      <div className="min-h-[38px] rounded-lg border border-dashed border-border/70 bg-muted/30 px-2 py-1.5 flex flex-wrap items-center gap-2">
+        {value.length === 0 ? (
+          <span className="text-xs text-muted-foreground">Nenhum responsável selecionado ainda</span>
+        ) : (
+          value.map((id) => {
+            const m = byId[id];
+            const label = labelOf(m, id.slice(0, 8));
+            return (
+              <span
+                key={id}
+                className="flex items-center gap-1.5 rounded-full border border-border bg-background py-0.5 pl-0.5 pr-1.5 text-xs"
+              >
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={m?.avatar_url || undefined} alt={label} />
+                  <AvatarFallback className="text-[9px]">{initialsOf(label)}</AvatarFallback>
+                </Avatar>
+                <span className="max-w-[140px] truncate">{label}</span>
+                <button
+                  type="button"
+                  onClick={() => toggle(id)}
+                  className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
