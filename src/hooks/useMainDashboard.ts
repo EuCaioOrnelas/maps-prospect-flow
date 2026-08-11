@@ -136,24 +136,26 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
       ]) as any;
 
       // ── Derivações em memória (substituem consultas duplicadas) ──
-      const periodStartISO = periodStart.toISOString();
-      const prevStartISO = prevPeriodStart.toISOString();
-      const prevEndISO = prevPeriodEnd.toISOString();
+      // Comparação por timestamp numérico (evita depender do formato ISO retornado).
+      const periodStartMs = periodStart.getTime();
+      const prevStartMs = prevPeriodStart.getTime();
+      const prevEndMs = prevPeriodEnd.getTime();
+      const ts = (v: string) => new Date(v).getTime();
 
       const allSearchRows: any[] = allTimeSearchRes.data || [];
-      const searchCurrentRows = allSearchRows.filter((r) => r.created_at >= periodStartISO);
+      const searchCurrentRows = allSearchRows.filter((r) => ts(r.created_at) >= periodStartMs);
       const searchPrevRows = allSearchRows.filter(
-        (r) => r.created_at >= prevStartISO && r.created_at < prevEndISO
+        (r) => ts(r.created_at) >= prevStartMs && ts(r.created_at) < prevEndMs
       );
 
       const allCampaignRows: any[] = allTimeCampaignsRes.data || [];
       // Mesma ordenação da consulta original do período (created_at desc)
       const campaigns = allCampaignRows
-        .filter((c) => c.created_at >= periodStartISO)
+        .filter((c) => ts(c.created_at) >= periodStartMs)
         .slice()
         .reverse();
       const prevCampaignData = allCampaignRows.filter(
-        (c) => c.created_at >= prevStartISO && c.created_at < prevEndISO
+        (c) => ts(c.created_at) >= prevStartMs && ts(c.created_at) < prevEndMs
       );
 
       const leadsProspected = searchCurrentRows.reduce((s, r) => s + (r.results_count || 0), 0);
