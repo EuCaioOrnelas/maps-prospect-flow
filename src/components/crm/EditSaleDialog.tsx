@@ -220,7 +220,11 @@ export function EditSaleDialog({ open, onOpenChange, sale, canChangeResponsible 
               <Label className="flex items-center gap-1.5 text-xs">
                 <UserIcon className="w-3.5 h-3.5 text-primary" /> Responsável pela venda
               </Label>
-              <Select value={responsibleUserId || "none"} onValueChange={(v) => setResponsibleUserId(v === "none" ? "" : v)}>
+              <Select
+                value={responsibleUserId || "none"}
+                onValueChange={(v) => setResponsibleUserId(v === "none" ? "" : v)}
+                disabled={!canChangeResponsible}
+              >
                 <SelectTrigger className="h-9">
                   <div className="flex items-center gap-2">
                     <UserIcon className="w-3.5 h-3.5 text-primary" />
@@ -236,6 +240,12 @@ export function EditSaleDialog({ open, onOpenChange, sale, canChangeResponsible 
                   ))}
                 </SelectContent>
               </Select>
+              {!canChangeResponsible && (
+                <p className="text-[10.5px] text-muted-foreground">
+                  Somente o responsável atual, o dono da conta ou um admin podem alterar este campo.
+                </p>
+              )}
+
             </div>
             <div className="space-y-1.5">
               <Label className="flex items-center gap-1.5 text-xs">
