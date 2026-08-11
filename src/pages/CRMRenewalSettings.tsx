@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,7 +75,6 @@ export default function CRMRenewalSettings() {
   const { settings, setSettings, isLoading, isSaving, save, uploadLogo } = useRenewalSettings();
   const [uploading, setUploading] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: sidebarProfile } = useQuery({
     queryKey: ["profile", user?.id],
