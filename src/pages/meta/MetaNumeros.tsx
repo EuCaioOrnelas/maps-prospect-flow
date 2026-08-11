@@ -24,7 +24,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useWabaResponsibles } from "@/hooks/useWabaResponsibles";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 export interface WabaConnection {
@@ -50,6 +51,7 @@ export default function MetaNumeros() {
   const { toast } = useToast();
   const { role } = useAccountRole();
   const { members } = useAccountMembers();
+  const { responsiblesOf, setNumberResponsibles, assignmentByUser, load: reloadResponsibles } = useWabaResponsibles();
   const canChangeResponsible = role === "owner" || role === "admin";
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -71,7 +73,7 @@ export default function MetaNumeros() {
 
   const [editingConn, setEditingConn] = useState<WabaConnection | null>(null);
   const [editNickname, setEditNickname] = useState("");
-  const [editResponsible, setEditResponsible] = useState<string>("none");
+  const [editResponsibles, setEditResponsibles] = useState<string[]>([]);
   const [editToken, setEditToken] = useState("");
   const [showTokenField, setShowTokenField] = useState(false);
 
@@ -158,15 +160,19 @@ export default function MetaNumeros() {
     try {
       const updates: Record<string, any> = { nickname: editNickname || null };
       if (canChangeResponsible) {
-        updates.responsible_user_id = editResponsible === "none" ? null : editResponsible;
+        updates.responsible_user_id = editResponsibles[0] ?? null;
       }
       if (showTokenField && editToken.trim()) updates.access_token = editToken.trim();
       await supabase.from("user_waba_connections").update(updates).eq("id", editingConn.id);
+      if (canChangeResponsible) {
+        await setNumberResponsibles(editingConn.id, editResponsibles);
+        await reloadResponsibles();
+      }
 
       const updated = {
         ...editingConn,
         nickname: editNickname || null,
-        ...(canChangeResponsible ? { responsible_user_id: editResponsible === "none" ? null : editResponsible } : {}),
+        ...(canChangeResponsible ? { responsible_user_id: editResponsibles[0] ?? null } : {}),
         ...(showTokenField && editToken.trim() ? { access_token: editToken.trim() } : {}),
       };
       setConnections((prev) => prev.map((c) => (c.id === editingConn.id ? updated : c)));
@@ -373,7 +379,7 @@ export default function MetaNumeros() {
                             onClick={() => {
                               setEditingConn(conn);
                               setEditNickname(conn.nickname || "");
-                              setEditResponsible(conn.responsible_user_id || "none");
+                              setEditResponsibles(responsiblesOf(conn.id));
                               setEditToken("");
                               setShowTokenField(isExpired);
                             }}
@@ -491,24 +497,39 @@ export default function MetaNumeros() {
 
               {canChangeResponsible && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Responsável (opcional)</label>
-                  <Select value={editResponsible} onValueChange={setEditResponsible}>
-                    <SelectTrigger><SelectValue placeholder="Sem responsável" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem responsável</SelectItem>
-                      {members.map((m) => (
-                        <SelectItem key={m.user_id} value={m.user_id}>
-                          {m.name || m.email || m.user_id.slice(0, 8)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <label className="text-sm font-medium">Responsáveis pelo número</label>
+                  <div className="rounded-xl border border-border divide-y divide-border/60 max-h-52 overflow-y-auto">
+                    {members.map((m) => {
+                      const assignedTo = assignmentByUser[m.user_id];
+                      const blocked = !!assignedTo && assignedTo !== editingConn.id;
+                      const checked = editResponsibles.includes(m.user_id);
+                      return (
+                        <label
+                          key={m.user_id}
+                          className={`flex items-center gap-3 px-3 py-2.5 text-sm ${blocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-muted/40"}`}
+                        >
+                          <Checkbox
+                            checked={checked}
+                            disabled={blocked}
+                            onCheckedChange={(v) =>
+                              setEditResponsibles((prev) =>
+                                v ? [...prev, m.user_id] : prev.filter((id) => id !== m.user_id)
+                              )
+                            }
+                          />
+                          <span className="truncate flex-1">{m.name || m.email || m.user_id.slice(0, 8)}</span>
+                          {blocked && (
+                            <span className="text-[10px] text-muted-foreground shrink-0">já é responsável por outro número</span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
                   <p className="text-[11px] text-muted-foreground">
-                    Quem deve receber notificações e atender por padrão neste número.
+                    Um número pode ter vários responsáveis, mas cada colaborador só pode ser responsável por 1 número.
                   </p>
                 </div>
               )}
-
 
               {!showTokenField ? (
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground hover:text-foreground" onClick={() => setShowTokenField(true)}>
