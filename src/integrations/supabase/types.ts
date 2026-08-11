@@ -9784,6 +9784,7 @@ export type Database = {
       }
     }
     Functions: {
+      accessible_owner_ids: { Args: never; Returns: string[] }
       account_get_member_activity_sessions: {
         Args: { _from: string; _to: string; _user_id: string }
         Returns: {
@@ -10083,6 +10084,7 @@ export type Database = {
         Args: { p_cpf: string; p_email: string }
         Returns: Json
       }
+      purge_operational_logs: { Args: never; Returns: Json }
       recompute_meta_campaign_cost: {
         Args: { p_campaign_id: string }
         Returns: undefined
