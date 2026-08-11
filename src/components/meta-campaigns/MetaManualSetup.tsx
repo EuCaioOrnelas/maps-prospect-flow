@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ResponsiblesPicker } from "@/components/meta/ResponsiblesPicker";
+import { useWabaResponsibles } from "@/hooks/useWabaResponsibles";
 import { startChatBackup } from "@/hooks/useChatBackup";
 
 interface MetaManualSetupProps {
@@ -35,6 +36,7 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
   const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
   const { members } = useAccountMembers();
+  const { assignmentByUser, setNumberResponsibles } = useWabaResponsibles();
 
   // Draft persistido por usuário para não perder dados ao sair/voltar da página
   const draftKey = user ? `meta-manual-setup-draft:${user.id}:${isAddingExtra ? "extra" : "primary"}` : null;
@@ -44,7 +46,7 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
   const [wabaId, setWabaId] = useState("");
   const [phoneNumberId, setPhoneNumberId] = useState("");
   const [nickname, setNickname] = useState("");
-  const [responsibleUserId, setResponsibleUserId] = useState<string>(""); // "" = não escolheu | "none" = sem responsável | <uuid>
+  const [responsibleUserIds, setResponsibleUserIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -110,8 +112,8 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
       return;
     }
 
-    if (!responsibleUserId) {
-      setError("Selecione o responsável por este número (ou 'Sem responsável').");
+    if (responsibleUserIds.length === 0) {
+      setError("Adicione ao menos um responsável por este número.");
       return;
     }
 
@@ -168,7 +170,7 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
         );
       }
 
-      const responsibleId = responsibleUserId === "none" ? null : responsibleUserId;
+      const responsibleId = responsibleUserIds[0] ?? null;
 
       const payload: Record<string, any> = {
         user_id: ownerId,
@@ -200,6 +202,15 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
           throw new Error("Erro temporário ao salvar. Atualize a página e tente de novo; se persistir, fale com o suporte.");
         }
         throw new Error(msg);
+      }
+
+      // Persiste os responsáveis (N por número)
+      try {
+        if ((connection as any)?.id) {
+          await setNumberResponsibles((connection as any).id, responsibleUserIds);
+        }
+      } catch {
+        // ignore
       }
 
       // Try to subscribe webhook (best-effort)
@@ -364,28 +375,18 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
 
           <div className="space-y-2">
             <Label className="flex items-center gap-1.5">
-              Responsável pelo número <span className="text-destructive">*</span>
+              Responsáveis pelo número <span className="text-destructive">*</span>
             </Label>
-            <Select value={responsibleUserId} onValueChange={setResponsibleUserId} disabled={saving}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione quem vai atender por este número" />
-              </SelectTrigger>
-              <SelectContent>
-                {members.slice(0, Math.ceil(members.length / 2)).map((m) => (
-                  <SelectItem key={m.user_id} value={m.user_id}>
-                    {m.name || m.email || m.user_id.slice(0, 8)}
-                  </SelectItem>
-                ))}
-                <SelectItem value="none">— Sem responsável (CRM inteiro) —</SelectItem>
-                {members.slice(Math.ceil(members.length / 2)).map((m) => (
-                  <SelectItem key={m.user_id} value={m.user_id}>
-                    {m.name || m.email || m.user_id.slice(0, 8)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ResponsiblesPicker
+              members={members}
+              value={responsibleUserIds}
+              onChange={setResponsibleUserIds}
+              assignmentByUser={assignmentByUser}
+              disabled={saving}
+            />
             <p className="text-[11px] text-muted-foreground">
-              Ao conectar, importamos os contatos do CRM deste responsável para o chat. Sem responsável, importamos todos os contatos da conta.
+              Um número pode ter vários responsáveis, mas cada colaborador só pode ser responsável por 1 número.
+              Ao conectar, importamos os contatos do CRM do responsável principal para o chat.
             </p>
           </div>
         </div>
