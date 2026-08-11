@@ -186,61 +186,8 @@ export const useSales = (leadId?: string) => {
   }, []);
 
   // ============ Métricas ============
-  const metrics = useMemo(() => {
-    const today = todayISO();
-    const totalRevenue = sales.reduce((acc, s) => {
-      if (s.sale_type === "one_time") return acc + Number(s.value || 0);
-      return acc + Number(s.value || 0) * Number(s.contract_months || 1);
-    }, 0);
+  const metrics = useMemo(() => computeSalesMetrics(sales), [sales]);
 
-    const mrr = sales
-      .filter(
-        (s) =>
-          s.sale_type === "recurring" &&
-          s.status === "active" &&
-          (!s.expiration_date || s.expiration_date >= today)
-      )
-      .reduce((acc, s) => acc + Number(s.value || 0), 0);
-
-    const activeSales = sales.filter(
-      (s) => s.status === "active" && (!s.expiration_date || s.expiration_date >= today)
-    ).length;
-
-    const projected12mo = sales
-      .filter(
-        (s) =>
-          s.sale_type === "recurring" &&
-          s.status === "active" &&
-          (!s.expiration_date || s.expiration_date >= today)
-      )
-      .reduce((acc, s) => {
-        if (!s.expiration_date) return acc + Number(s.value || 0) * 12;
-        const monthsLeft = Math.max(
-          0,
-          Math.min(
-            12,
-            Math.ceil(
-              (new Date(s.expiration_date).getTime() - new Date().getTime()) /
-                (1000 * 60 * 60 * 24 * 30)
-            )
-          )
-        );
-        return acc + Number(s.value || 0) * monthsLeft;
-      }, 0);
-
-    const expiringSoon = sales
-      .filter((s) => {
-        if (s.status !== "active" || !s.expiration_date) return false;
-        const days =
-          (new Date(s.expiration_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
-        return days >= 0 && days <= 30;
-      })
-      .sort((a, b) => (a.expiration_date! < b.expiration_date! ? -1 : 1));
-
-    const nextExpiration = expiringSoon[0]?.expiration_date ?? null;
-
-    return { totalRevenue, mrr, activeSales, projected12mo, expiringSoon, nextExpiration };
-  }, [sales]);
 
   return {
     sales,
