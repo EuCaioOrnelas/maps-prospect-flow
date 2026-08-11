@@ -40,7 +40,7 @@ export const APPOINTMENT_VARIABLES: { key: keyof AppointmentEmailVars; label: st
   { key: "descricao", label: "Descrição/observações" },
   { key: "responsavel", label: "Responsável pelo compromisso" },
   { key: "empresa", label: "Empresa do contato" },
-  { key: "link_compromisso", label: "Link para abrir na Agenda" },
+  { key: "link_compromisso", label: "Link da call (somente se preenchido)" },
 ];
 
 export const DEFAULT_APPOINTMENT_BODY = `Olá, {{nome_cliente}}.
@@ -221,7 +221,7 @@ export const SAMPLE_APPOINTMENT_VARS: AppointmentEmailVars = {
   descricao: "Apresentação da proposta comercial e alinhamento das próximas etapas.",
   responsavel: "Carlos Oliveira",
   empresa: "Empresa Exemplo LTDA",
-  link_compromisso: "https://wiize.com.br/agenda",
+  link_compromisso: "https://meet.google.com/abc-defg-hij",
 };
 
 export const SENDER_DOMAIN = "@wiize.com.br";

@@ -46,7 +46,7 @@ const APPOINTMENT_VARIABLES: { key: keyof AppointmentEmailVars; label: string }[
   { key: "descricao", label: "Descrição/observações" },
   { key: "responsavel", label: "Responsável pelo compromisso" },
   { key: "empresa", label: "Empresa do contato" },
-  { key: "link_compromisso", label: "Link para abrir na Agenda" },
+  { key: "link_compromisso", label: "Link da call (somente se preenchido)" },
 ];
 
 const DEFAULT_APPOINTMENT_BODY = `Olá, {{nome_cliente}}.
@@ -227,7 +227,7 @@ const SAMPLE_APPOINTMENT_VARS: AppointmentEmailVars = {
   descricao: "Apresentação da proposta comercial e alinhamento das próximas etapas.",
   responsavel: "Carlos Oliveira",
   empresa: "Empresa Exemplo LTDA",
-  link_compromisso: "https://wiize.com.br/agenda",
+  link_compromisso: "https://meet.google.com/abc-defg-hij",
 };
 // ---------------------------------------------------------------------------
 
@@ -438,7 +438,14 @@ Deno.serve(async (req) => {
       local_compromisso: event.location || event.conference_url || "",
       descricao: event.notes || "",
       empresa: event.company_name || "",
-      link_compromisso: `${APP_URL}/agenda`,
+      // O botão só aparece quando o compromisso tem link de call configurado.
+      link_compromisso: (() => {
+        const conf = String((event as any).conference_url || "").trim();
+        if (/^https?:\/\//i.test(conf)) return conf;
+        const loc = String(event.location || "").trim();
+        const m = loc.match(/https?:\/\/\S+/i);
+        return m ? m[0] : "";
+      })(),
     };
 
     // ── 1) Lembrete da equipe ────────────────────────────────────────────────

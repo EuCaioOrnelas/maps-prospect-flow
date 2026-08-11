@@ -314,6 +314,13 @@ export function AppointmentEmailSettingsPanel() {
               className="h-10 rounded-xl"
               maxLength={40}
             />
+            <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5">
+              <Info className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" />
+              <p className="text-[10.5px] leading-relaxed text-amber-700 dark:text-amber-400">
+                O botão só aparece no e-mail quando o compromisso tiver um <strong>link da call</strong> preenchido.
+                Sem link, o e-mail é enviado normalmente, apenas sem o botão.
+              </p>
+            </div>
           </div>
 
           <div className="flex justify-end">
@@ -328,22 +335,35 @@ export function AppointmentEmailSettingsPanel() {
           <SectionHeader
             icon={Send}
             title="Enviar e-mail de teste"
-            description={`O teste vai para o e-mail de login da sua conta${user?.email ? ` (${user.email})` : ""} com dados fictícios de compromisso.`}
+            description="Enviamos uma versão de teste com dados fictícios de compromisso para o e-mail de login da sua conta."
           />
-          <div className="flex flex-wrap items-center gap-3">
-            <Button size="sm" className="rounded-xl" onClick={handleTest} disabled={sendingTest}>
-              {sendingTest ? (
-                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-              ) : (
-                <Send className="w-3.5 h-3.5 mr-1.5" />
-              )}
-              Enviar e-mail de teste
-            </Button>
-            <span className="text-[10.5px] text-muted-foreground">
-              Limites: 1 teste a cada 2 minutos · 10 testes por semana
-            </span>
+
+          <div className="mt-4 rounded-xl border border-border/60 bg-muted/30 px-3.5 py-3 space-y-2">
+            <div className="flex items-center justify-between gap-3 text-[11.5px]">
+              <span className="text-muted-foreground">Destinatário</span>
+              <span className="font-medium truncate">{user?.email || "—"}</span>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between gap-3 text-[11.5px]">
+              <span className="text-muted-foreground">Limites</span>
+              <span className="font-medium">1 teste a cada 2 min · 10 por semana</span>
+            </div>
           </div>
+
+          <Button
+            className="mt-4 w-full sm:w-auto rounded-xl"
+            onClick={handleTest}
+            disabled={sendingTest}
+          >
+            {sendingTest ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 mr-2" />
+            )}
+            Enviar e-mail de teste
+          </Button>
         </Card>
+
       </div>
 
       <div className="space-y-3 xl:sticky xl:top-2">
