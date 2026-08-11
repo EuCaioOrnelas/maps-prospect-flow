@@ -204,9 +204,6 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
 
       // Active days (unique days with searches in current period)
       const activeDaysSet = new Set<string>();
-      (searchCurrent.data || []).forEach((r: any) => {
-        // searchCurrent doesn't have created_at selected; use allTimeData filtered
-      });
       allTimeData
         .filter((r: any) => new Date(r.created_at) >= periodStart)
         .forEach((r: any) => {
