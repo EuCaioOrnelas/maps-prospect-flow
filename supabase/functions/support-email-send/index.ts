@@ -274,12 +274,12 @@ Deno.serve(async (req) => {
       const followupSubject = "Podemos encerrar o seu atendimento?";
       const bodyHtml = `
         <p style="margin:0 0 10px;">Olá ${esc(customerName)},</p>
-        <p style="margin:0 0 12px;color:#374151;">Como não tivemos retorno nas últimas 72 horas, encerramos o seu chamado <strong>${esc(ticketNumber)}</strong>. Se ainda precisar de algo, basta responder este e-mail e o chamado é reaberto automaticamente.</p>
+        <p style="margin:0 0 12px;color:#374151;">Como não tivemos retorno seu nos últimos dias, vamos considerar o seu atendimento concluído. Se ainda precisar de ajuda, é só responder este e-mail que voltamos a conversar de onde paramos.</p>
         <p style="margin:0 0 14px;color:#374151;">Se puder, deixe uma avaliação rápida:</p>
         <p style="margin:18px 0;"><a href="${ratingUrl}" style="display:inline-block;padding:11px 22px;background:${BRAND};color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Avaliar atendimento</a></p>
-        <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize</p>
+        <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize<br><span style="color:#9ca3af;">Protocolo interno: ${esc(ticketNumber)}</span></p>
       `;
-      const html = layout(followupSubject, bodyHtml, `Encerramos seu chamado ${ticketNumber} por inatividade`);
+      const html = layout(followupSubject, bodyHtml, "Sem retorno seu, vamos concluir — responda se ainda precisar de ajuda");
       await sendResend({
         from: FROM,
         to: [customerEmail],
@@ -287,6 +287,7 @@ Deno.serve(async (req) => {
         html,
         text: htmlToText(bodyHtml) + `\n\nLink direto: ${ratingUrl}`,
         reply_to: replyTo,
+        headers: threadHeaders(ticketNumber),
       });
       await sb.from("support_tickets")
         .update({
