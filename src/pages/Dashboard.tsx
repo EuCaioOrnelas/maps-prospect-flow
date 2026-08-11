@@ -732,36 +732,38 @@ const Dashboard = () => {
               </div>
 
               {/* Geração automática da abordagem com IA (após o diagnóstico) */}
-              <div className="rounded-xl border border-border/50 bg-secondary/30 p-4 space-y-3">
-                <div className="flex items-center gap-2">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-foreground">
                   <Sparkles size={14} className="text-primary" />
-                  <p className="text-sm font-medium">Gerar abordagem com IA automaticamente</p>
+                  <p className="text-sm font-medium">Abordagem com IA</p>
                 </div>
-                <p className="text-xs text-muted-foreground/80">
-                  Ao final do diagnóstico de cada lead, a IA já escreve a mensagem escolhida — sem precisar gerar uma a uma.
+                <p className="text-xs text-muted-foreground">
+                  Gere automaticamente as mensagens após o diagnóstico dos leads.
                 </p>
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <Checkbox
-                    checked={autoApproach.manual}
-                    onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, manual: !!checked }))}
-                    className="mt-0.5"
-                  />
-                  <span className="text-sm">
-                    Mensagem para envio manual
-                    <span className="block text-xs text-muted-foreground">Primeiro contato para copiar ou enviar pelo WhatsApp</span>
-                  </span>
-                </label>
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <Checkbox
-                    checked={autoApproach.meta}
-                    onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, meta: !!checked }))}
-                    className="mt-0.5"
-                  />
-                  <span className="text-sm">
-                    Mensagem para campanhas Meta
-                    <span className="block text-xs text-muted-foreground">Follow-up enviado após a resposta ao template aprovado</span>
-                  </span>
-                </label>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <Checkbox
+                      checked={autoApproach.manual}
+                      onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, manual: !!checked }))}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm text-foreground group-hover:text-foreground/80 transition-colors">
+                      Mensagem para envio manual
+                      <span className="block text-xs text-muted-foreground">Primeiro contato para copiar ou enviar pelo WhatsApp</span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <Checkbox
+                      checked={autoApproach.meta}
+                      onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, meta: !!checked }))}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm text-foreground group-hover:text-foreground/80 transition-colors">
+                      Mensagem para campanhas Meta
+                      <span className="block text-xs text-muted-foreground">Follow-up após resposta ao template aprovado</span>
+                    </span>
+                  </label>
+                </div>
               </div>
 
 
