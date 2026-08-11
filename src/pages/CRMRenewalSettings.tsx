@@ -441,26 +441,39 @@ export default function CRMRenewalSettings() {
                     </div>
                   </Card>
 
-                  <Card className="p-5 sm:p-6 rounded-2xl border-border/40 space-y-5">
+                  <Card className="p-5 sm:p-6 rounded-2xl border-border/40">
                     <SectionHeader
                       icon={Send}
                       title="Enviar e-mail de teste"
-                      description={`O teste é enviado para o e-mail de login da sua conta${user?.email ? ` (${user.email})` : ""}.`}
+                      description="Enviamos uma versão de teste com dados fictícios para o e-mail de login da sua conta."
                     />
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button size="sm" className="rounded-xl" onClick={handleTest} disabled={sendingTest}>
-                        {sendingTest ? (
-                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                        ) : (
-                          <Send className="w-3.5 h-3.5 mr-1.5" />
-                        )}
-                        Enviar e-mail de teste
-                      </Button>
-                      <span className="text-[10.5px] text-muted-foreground">
-                        Limites: 1 teste a cada 2 minutos · 10 testes por semana
-                      </span>
+
+                    <div className="mt-4 rounded-xl border border-border/60 bg-muted/30 px-3.5 py-3 space-y-2">
+                      <div className="flex items-center justify-between gap-3 text-[11.5px]">
+                        <span className="text-muted-foreground">Destinatário</span>
+                        <span className="font-medium truncate">{user?.email || "—"}</span>
+                      </div>
+                      <div className="h-px bg-border/60" />
+                      <div className="flex items-center justify-between gap-3 text-[11.5px]">
+                        <span className="text-muted-foreground">Limites</span>
+                        <span className="font-medium">1 teste a cada 2 min · 10 por semana</span>
+                      </div>
                     </div>
+
+                    <Button
+                      className="mt-4 w-full sm:w-auto rounded-xl"
+                      onClick={handleTest}
+                      disabled={sendingTest}
+                    >
+                      {sendingTest ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4 mr-2" />
+                      )}
+                      Enviar e-mail de teste
+                    </Button>
                   </Card>
+
                 </div>
 
                 {/* Preview */}
