@@ -86,6 +86,14 @@ function isValidEmail(email: string | null | undefined): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
 }
 
+/** Monta o link do WhatsApp a partir do telefone de contato (DDI 55 automático). */
+function buildWhatsappUrl(phone: string | null | undefined): string {
+  const digits = String(phone ?? "").replace(/\D/g, "");
+  if (digits.length < 10) return "";
+  const full = digits.startsWith("55") ? digits : `55${digits}`;
+  return `https://wa.me/${full}`;
+}
+
 function renderRenewalEmail(settings: RenewalSettings, data: RenewalEmailData): { subject: string; html: string } {
   const header = safeColor(settings.header_color, DEFAULT_RENEWAL_SETTINGS.header_color);
   const button = safeColor(settings.button_color, DEFAULT_RENEWAL_SETTINGS.button_color);
@@ -112,6 +120,9 @@ function renderRenewalEmail(settings: RenewalSettings, data: RenewalEmailData): 
   const contactEmail = (settings.contact_email || "").trim();
   const contactPhone = (settings.contact_phone || "").trim();
   const hasContact = !!(contactName || contactEmail || contactPhone);
+
+  // O botão principal leva sempre para o WhatsApp do contato; o e-mail fica apenas informativo.
+  const ctaUrl = buildWhatsappUrl(contactPhone) || data.ctaUrl;
 
   const contactBlock = hasContact
     ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:#ffffff;border:1px solid #e4e4e7;border-radius:10px;">
@@ -155,7 +166,7 @@ function renderRenewalEmail(settings: RenewalSettings, data: RenewalEmailData): 
     ${contactBlock}
 
     <div style="text-align:center;margin:26px 0 6px;">
-      <a href="${esc(data.ctaUrl)}" style="display:inline-block;padding:13px 28px;background:${button};color:#ffffff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">${esc(cta)}</a>
+      <a href="${esc(ctaUrl)}" style="display:inline-block;padding:13px 28px;background:${button};color:#ffffff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">${esc(cta)}</a>
     </div>
   </td></tr>
   <tr><td style="padding:16px 32px;background:#fafafa;text-align:center;border-top:1px solid #e4e4e7;">
