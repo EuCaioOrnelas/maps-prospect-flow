@@ -69,13 +69,19 @@ export default function CRMSales() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { sales, metrics, deleteSale, getAttachmentUrl } = useSales();
+  const { sales, deleteSale, getAttachmentUrl } = useSales();
   const { members } = useAccountMembers();
+  const { role } = useAccountRole();
   const memberById = useMemo(() => Object.fromEntries(members.map((m) => [m.user_id, m])), [members]);
+  const memberNameById = useMemo(
+    () => Object.fromEntries(members.map((m) => [m.user_id, m.name || m.email || m.user_id.slice(0, 8)])),
+    [members]
+  );
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [responsibleFilter, setResponsibleFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
@@ -100,6 +106,15 @@ export default function CRMSales() {
     return sales.filter((s) => {
       if (typeFilter !== "all" && s.sale_type !== typeFilter) return false;
       if (statusFilter !== "all" && s.status !== statusFilter) return false;
+      if (responsibleFilter !== "all") {
+        if (responsibleFilter === "none") {
+          if (s.responsible_user_id) return false;
+        } else if (responsibleFilter === "me") {
+          if (s.responsible_user_id !== user?.id) return false;
+        } else if (s.responsible_user_id !== responsibleFilter) {
+          return false;
+        }
+      }
       if (dateFrom && s.start_date < dateFrom) return false;
       if (dateTo && s.start_date > dateTo) return false;
       if (search) {
@@ -113,7 +128,10 @@ export default function CRMSales() {
       }
       return true;
     });
-  }, [sales, typeFilter, statusFilter, search, dateFrom, dateTo]);
+  }, [sales, typeFilter, statusFilter, responsibleFilter, search, dateFrom, dateTo, user?.id]);
+
+  // KPIs seguem os filtros ativos (inclusive por responsável)
+  const metrics = useMemo(() => computeSalesMetrics(filtered), [filtered]);
 
   const handleDownload = async (path: string) => {
     const url = await getAttachmentUrl(path);
@@ -129,11 +147,20 @@ export default function CRMSales() {
     setSearch("");
     setTypeFilter("all");
     setStatusFilter("all");
+    setResponsibleFilter("all");
     setDateFrom("");
     setDateTo("");
   };
 
-  const hasFilters = !!(search || typeFilter !== "all" || statusFilter !== "all" || dateFrom || dateTo);
+  const hasFilters = !!(
+    search ||
+    typeFilter !== "all" ||
+    statusFilter !== "all" ||
+    responsibleFilter !== "all" ||
+    dateFrom ||
+    dateTo
+  );
+
 
   return (
     <div className="min-h-screen bg-background relative">
