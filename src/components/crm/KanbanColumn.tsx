@@ -80,6 +80,30 @@ const KanbanColumnComponent = ({
     [leads, selectedLeadIds]
   );
 
+  // Paginação de renderização: mostra os cards em blocos para não montar
+  // centenas de nós de uma vez. Não altera contagem, seleção, totais
+  // nem qualquer filtro — apenas o que está renderizado na tela.
+  const PAGE_SIZE = 30;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount((c) => Math.min(Math.max(PAGE_SIZE, c), Math.max(PAGE_SIZE, leads.length)));
+  }, [leads.length]);
+
+  const visibleLeads = useMemo(
+    () => (leads.length > visibleCount ? leads.slice(0, visibleCount) : leads),
+    [leads, visibleCount]
+  );
+  const remaining = leads.length - visibleLeads.length;
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
+      setVisibleCount((c) => (c < leads.length ? c + PAGE_SIZE : c));
+    }
+  }, [leads.length]);
+
+
   return (
     <div
       data-stage-id={stage.id}
