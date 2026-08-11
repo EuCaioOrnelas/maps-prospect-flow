@@ -37,9 +37,13 @@ import { CRMTabs } from "@/components/crm/CRMTabs";
 import { SalesKPIs } from "@/components/crm/SalesKPIs";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
 import { EditSaleDialog } from "@/components/crm/EditSaleDialog";
+import { ExportSalesButton } from "@/components/crm/ExportSalesButton";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { useAccountRole } from "@/hooks/useAccountRole";
+import { canChangeSaleResponsible } from "@/lib/salesPermissions";
 import type { Sale } from "@/hooks/useSales";
 import { toast } from "sonner";
+
 
 const initialsOf = (name?: string | null, email?: string | null) => {
   const s = (name || email || "?").trim();
