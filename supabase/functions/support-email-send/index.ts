@@ -70,11 +70,42 @@ function htmlToText(html: string) {
   return html.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n\n").replace(/<[^>]+>/g, "").replace(/\n{3,}/g, "\n\n").trim();
 }
 
-function buildSubject(category: string, ticketNumber: string, override?: string) {
-  if (override) return override;
-  // Assunto neutro, sem promessas/emojis (reduz spam score)
-  return `Re: Chamado ${ticketNumber} | Suporte Wiize`;
+// Assunto humano: usa o assunto real do chamado, sem "Re:" falso, sem códigos/pipes.
+// O protocolo trafega por Reply-To (suporte+WIZ-123@) e headers de thread — não no assunto.
+function cleanSubjectText(s?: string | null) {
+  return String(s || "")
+    .replace(/\s+/g, " ")
+    .replace(/^(re|fwd|enc)\s*:\s*/i, "")
+    .replace(/\b(WIZ-?\d{3,}|TEST-?\d{8,})\b/gi, "")
+    .replace(/[|•·]+/g, " ")
+    .trim()
+    .slice(0, 80)
+    .trim();
 }
+
+function buildSubject(category: string, ticketNumber: string, override?: string, ticketSubject?: string | null) {
+  if (override) return override;
+  const topic = cleanSubjectText(ticketSubject) || cleanSubjectText(category);
+  return topic ? `Sobre o seu atendimento: ${topic}` : "Resposta da equipe de suporte Wiize";
+}
+
+// Threading por headers RFC (agrupa no cliente sem poluir o assunto)
+function threadHeaders(ticketNumber: string, isFirst = false) {
+  const root = `<atendimento-${ticketNumber}@${REPLY_DOMAIN}>`;
+  const base: Record<string, string> = {
+    "X-Wiize-Ticket": ticketNumber,
+    "X-Entity-Ref-ID": ticketNumber,
+  };
+  if (isFirst) {
+    base["Message-ID"] = root;
+  } else {
+    base["Message-ID"] = `<atendimento-${ticketNumber}.${crypto.randomUUID()}@${REPLY_DOMAIN}>`;
+    base["In-Reply-To"] = root;
+    base["References"] = root;
+  }
+  return base;
+}
+
 
 async function sendResend(payload: any) {
   const res = await fetch("https://api.resend.com/emails", {
