@@ -186,15 +186,15 @@ Deno.serve(async (req) => {
       const msg = (message || "").trim();
       if (!msg && !(attachments && attachments.length)) throw new Error("message ou attachments obrigatórios");
       const bodyHtml = `
-        <p style="margin:0 0 10px;">Olá ${esc(customerName)},</p>
-        <p style="margin:0 0 14px;color:#374151;">Segue retorno da nossa equipe sobre o seu chamado <strong>${esc(ticketNumber)}</strong>.</p>
+        <p style="margin:0 0 12px;">Olá ${esc(customerName)},</p>
+        <p style="margin:0 0 14px;color:#374151;">Aqui é a equipe de suporte da Wiize. Segue o nosso retorno sobre o que você nos escreveu${ticket.subject ? ` a respeito de <strong>${esc(cleanSubjectText(ticket.subject))}</strong>` : ""}:</p>
         <div style="padding:12px 14px;background:#f7f9fb;border:1px solid #e6e8eb;border-radius:6px;margin:0 0 16px;">
           <p style="margin:0;color:#1f2328;white-space:pre-wrap;">${nl2br(msg || "(mensagem com anexos)")}</p>
         </div>
-        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Para continuar, basta responder este e-mail. Sua mensagem entra automaticamente no chamado.</p>
-        <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize</p>
+        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Se quiser continuar a conversa, é só responder este e-mail — nós recebemos sua mensagem no mesmo atendimento.</p>
+        <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize<br><span style="color:#9ca3af;">Protocolo interno: ${esc(ticketNumber)}</span></p>
       `;
-      const html = layout(subject, bodyHtml, `Retorno sobre o seu chamado ${ticketNumber}`);
+      const html = layout(subject, bodyHtml, `Nossa equipe respondeu você — é só responder este e-mail para continuar`);
       const payload: any = {
         from: FROM,
         to: [customerEmail],
@@ -202,13 +202,7 @@ Deno.serve(async (req) => {
         html,
         text: htmlToText(bodyHtml),
         reply_to: replyTo,
-        headers: {
-          "X-Wiize-Ticket": ticketNumber,
-          "List-Unsubscribe": `<mailto:${replyTo}?subject=unsubscribe>`,
-          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-          "X-Entity-Ref-ID": ticketNumber,
-        },
-
+        headers: threadHeaders(ticketNumber),
       };
       if (attachments && attachments.length) {
         payload.attachments = attachments.map((a) => ({
