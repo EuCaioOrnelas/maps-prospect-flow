@@ -309,7 +309,7 @@ function OptionCard({
     >
       <span
         className={cn(
-          "absolute top-3 right-3 h-5 w-5 rounded-full border flex items-center justify-center transition-colors",
+          "absolute top-3 right-3 h-5 w-5 rounded-[2px] border flex items-center justify-center transition-colors",
           active ? "bg-primary border-primary" : "border-border group-hover:border-primary/50"
         )}
       >

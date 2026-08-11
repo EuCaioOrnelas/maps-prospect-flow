@@ -348,7 +348,7 @@ export default function MetaNumeros() {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                          <div className={`w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0 ${
                             isExpired ? "bg-destructive/10" : "bg-primary/10"
                           }`}>
                             {isExpired ? (

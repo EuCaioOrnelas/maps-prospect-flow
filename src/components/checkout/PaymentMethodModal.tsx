@@ -292,7 +292,7 @@ export function PaymentMethodModal({
                   )}
                 </div>
                 <div className={cn(
-                  "h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                  "h-5 w-5 rounded-[2px] border-2 flex items-center justify-center shrink-0 transition-all",
                   selectedMethod === "card"
                     ? "border-primary bg-primary"
                     : "border-muted-foreground/30 group-hover:border-primary/50"
@@ -331,7 +331,7 @@ export function PaymentMethodModal({
                     </div>
                   </div>
                   <div className={cn(
-                    "h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                    "h-5 w-5 rounded-[2px] border-2 flex items-center justify-center shrink-0 transition-all",
                     selectedMethod === "pix"
                       ? "border-primary bg-primary"
                       : "border-muted-foreground/30 group-hover:border-primary/50"

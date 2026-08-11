@@ -223,7 +223,7 @@ export const CreateUserDialog = ({ onUserCreated }: Props) => {
                 <div key={s.label} className="flex flex-col items-start gap-1.5">
                   <div className="flex items-center gap-1.5 w-full">
                     <div className={cn(
-                      "h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors",
+                      "h-6 w-6 rounded-[3px] flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors",
                       done && "bg-primary text-primary-foreground",
                       active && "bg-primary/15 text-primary ring-2 ring-primary/30",
                       !active && !done && "bg-muted text-muted-foreground"

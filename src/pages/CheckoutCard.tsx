@@ -340,7 +340,7 @@ function CheckoutCardInner() {
             </span>
             <div className="w-8 h-px bg-primary" />
             <span className="flex items-center gap-1.5 font-medium text-primary">
-              <span className="h-4 w-4 rounded-full border-2 border-primary flex items-center justify-center text-[10px] font-bold">3</span>
+              <span className="h-4 w-4 rounded-[2px] border-2 border-primary flex items-center justify-center text-[10px] font-bold">3</span>
               Pagamento
             </span>
           </div>

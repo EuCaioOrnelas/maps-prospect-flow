@@ -336,7 +336,7 @@ export function ActivationChecklist() {
               <div className="relative">
                 <Rocket className="h-5 w-5 text-primary" />
                 {completedCount < STEPS.length && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary rounded-[2px] flex items-center justify-center">
                     <span className="text-[9px] font-bold text-primary-foreground">{STEPS.length - completedCount}</span>
                   </span>
                 )}

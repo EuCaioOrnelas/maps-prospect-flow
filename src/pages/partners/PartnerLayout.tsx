@@ -122,7 +122,7 @@ export default function PartnerLayout() {
               <div className="h-10 w-10 rounded-[11px] bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-border flex items-center justify-center text-sm font-bold text-foreground">
                 {initial}
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-card ring-2 ring-card flex items-center justify-center">
+              <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-[2px] bg-card ring-2 ring-card flex items-center justify-center">
                 <currentMeta.icon size={9} className={cn(currentMeta.fg.replace("text-", "text-"), "stroke-[2.5]")} />
               </span>
             </div>

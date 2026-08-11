@@ -269,7 +269,7 @@ export default function SignupChoosePlan() {
                     </div>
                     <div
                       className={cn(
-                        "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-colors",
+                        "w-5 h-5 rounded-[2px] border-2 flex items-center justify-center shrink-0 mt-1 transition-colors",
                         isSelected ? "border-primary bg-primary" : "border-border",
                       )}
                     >
