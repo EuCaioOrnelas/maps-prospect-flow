@@ -87,7 +87,7 @@ function isOwnSupportEmail(from: string, subject: string) {
   const lowerFrom = (from || "").toLowerCase();
   // Qualquer coisa que venha do próprio suporte@wiize.com.br é loop-back (rating, receipt, etc.) e deve ser ignorada.
   if (/suporte(\+[^@]+)?@wiize\.com\.br/.test(lowerFrom)) return true;
-  return /(confirmação de abertura|novo chamado|avaliação do seu atendimento|como foi o seu atendimento|encerrado por inatividade|suporte wiize)/i.test(subject || "");
+  return /(recebemos a sua mensagem|confirmação de abertura|novo chamado|como foi o seu atendimento|podemos encerrar o seu atendimento|sobre o seu atendimento|encerrado por inatividade|suporte wiize)/i.test(subject || "");
 }
 
 function isAutoReply(data: any, subject: string): boolean {

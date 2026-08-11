@@ -70,11 +70,42 @@ function htmlToText(html: string) {
   return html.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n\n").replace(/<[^>]+>/g, "").replace(/\n{3,}/g, "\n\n").trim();
 }
 
-function buildSubject(category: string, ticketNumber: string, override?: string) {
-  if (override) return override;
-  // Assunto neutro, sem promessas/emojis (reduz spam score)
-  return `Re: Chamado ${ticketNumber} | Suporte Wiize`;
+// Assunto humano: usa o assunto real do chamado, sem "Re:" falso, sem códigos/pipes.
+// O protocolo trafega por Reply-To (suporte+WIZ-123@) e headers de thread — não no assunto.
+function cleanSubjectText(s?: string | null) {
+  return String(s || "")
+    .replace(/\s+/g, " ")
+    .replace(/^(re|fwd|enc)\s*:\s*/i, "")
+    .replace(/\b(WIZ-?\d{3,}|TEST-?\d{8,})\b/gi, "")
+    .replace(/[|•·]+/g, " ")
+    .trim()
+    .slice(0, 80)
+    .trim();
 }
+
+function buildSubject(category: string, ticketNumber: string, override?: string, ticketSubject?: string | null) {
+  if (override) return override;
+  const topic = cleanSubjectText(ticketSubject) || cleanSubjectText(category);
+  return topic ? `Sobre o seu atendimento: ${topic}` : "Resposta da equipe de suporte Wiize";
+}
+
+// Threading por headers RFC (agrupa no cliente sem poluir o assunto)
+function threadHeaders(ticketNumber: string, isFirst = false) {
+  const root = `<atendimento-${ticketNumber}@${REPLY_DOMAIN}>`;
+  const base: Record<string, string> = {
+    "X-Wiize-Ticket": ticketNumber,
+    "X-Entity-Ref-ID": ticketNumber,
+  };
+  if (isFirst) {
+    base["Message-ID"] = root;
+  } else {
+    base["Message-ID"] = `<atendimento-${ticketNumber}.${crypto.randomUUID()}@${REPLY_DOMAIN}>`;
+    base["In-Reply-To"] = root;
+    base["References"] = root;
+  }
+  return base;
+}
+
 
 async function sendResend(payload: any) {
   const res = await fetch("https://api.resend.com/emails", {
@@ -115,7 +146,7 @@ Deno.serve(async (req) => {
 
     const ticketNumber = ticket.ticket_number || ticket.id.slice(0, 8).toUpperCase();
     const category = ticket.category || "Atendimento";
-    const subject = buildSubject(category, ticketNumber, subjectOverride);
+    const subject = buildSubject(category, ticketNumber, subjectOverride, ticket.subject);
     const replyTo = `suporte+${ticketNumber}@${REPLY_DOMAIN}`;
     const customerEmail = ticket.email;
     const customerName = ticket.name || "Cliente";
@@ -155,15 +186,15 @@ Deno.serve(async (req) => {
       const msg = (message || "").trim();
       if (!msg && !(attachments && attachments.length)) throw new Error("message ou attachments obrigatórios");
       const bodyHtml = `
-        <p style="margin:0 0 10px;">Olá ${esc(customerName)},</p>
-        <p style="margin:0 0 14px;color:#374151;">Segue retorno da nossa equipe sobre o seu chamado <strong>${esc(ticketNumber)}</strong>.</p>
+        <p style="margin:0 0 12px;">Olá ${esc(customerName)},</p>
+        <p style="margin:0 0 14px;color:#374151;">Aqui é a equipe de suporte da Wiize. Segue o nosso retorno sobre o que você nos escreveu${ticket.subject ? ` a respeito de <strong>${esc(cleanSubjectText(ticket.subject))}</strong>` : ""}:</p>
         <div style="padding:12px 14px;background:#f7f9fb;border:1px solid #e6e8eb;border-radius:6px;margin:0 0 16px;">
           <p style="margin:0;color:#1f2328;white-space:pre-wrap;">${nl2br(msg || "(mensagem com anexos)")}</p>
         </div>
-        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Para continuar, basta responder este e-mail. Sua mensagem entra automaticamente no chamado.</p>
-        <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize</p>
+        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Se quiser continuar a conversa, é só responder este e-mail — nós recebemos sua mensagem no mesmo atendimento.</p>
+        <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize<br><span style="color:#9ca3af;">Protocolo interno: ${esc(ticketNumber)}</span></p>
       `;
-      const html = layout(subject, bodyHtml, `Retorno sobre o seu chamado ${ticketNumber}`);
+      const html = layout(subject, bodyHtml, `Nossa equipe respondeu você — é só responder este e-mail para continuar`);
       const payload: any = {
         from: FROM,
         to: [customerEmail],
@@ -171,13 +202,7 @@ Deno.serve(async (req) => {
         html,
         text: htmlToText(bodyHtml),
         reply_to: replyTo,
-        headers: {
-          "X-Wiize-Ticket": ticketNumber,
-          "List-Unsubscribe": `<mailto:${replyTo}?subject=unsubscribe>`,
-          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-          "X-Entity-Ref-ID": ticketNumber,
-        },
-
+        headers: threadHeaders(ticketNumber),
       };
       if (attachments && attachments.length) {
         payload.attachments = attachments.map((a) => ({
@@ -199,7 +224,7 @@ Deno.serve(async (req) => {
         await sb.from("support_tickets").update({ rating_token: token }).eq("id", ticketId);
       }
       const ratingUrl = `${APP_URL}/avaliacao/${token}`;
-      const ratingSubject = `Como foi o seu atendimento? | Chamado ${ticketNumber}`;
+      const ratingSubject = "Como foi o seu atendimento com a Wiize?";
       const firstName = esc((customerName || "").split(" ")[0] || "");
       const bodyHtml = `
         <div style="text-align:center;font-size:28px;letter-spacing:6px;color:#F5B301;margin:4px 0 14px;line-height:1;">★ ★ ★ ★ ★</div>
@@ -231,6 +256,7 @@ Deno.serve(async (req) => {
         html,
         text: htmlToText(bodyHtml) + `\n\nLink direto: ${ratingUrl}`,
         reply_to: replyTo,
+        headers: threadHeaders(ticketNumber),
       });
       await sb.from("support_tickets")
         .update({ rating_email_sent_at: new Date().toISOString() })
@@ -245,15 +271,15 @@ Deno.serve(async (req) => {
         await sb.from("support_tickets").update({ rating_token: token }).eq("id", ticketId);
       }
       const ratingUrl = `${APP_URL}/avaliacao/${token}`;
-      const followupSubject = `Chamado ${ticketNumber} encerrado por inatividade`;
+      const followupSubject = "Podemos encerrar o seu atendimento?";
       const bodyHtml = `
         <p style="margin:0 0 10px;">Olá ${esc(customerName)},</p>
-        <p style="margin:0 0 12px;color:#374151;">Como não tivemos retorno nas últimas 72 horas, encerramos o seu chamado <strong>${esc(ticketNumber)}</strong>. Se ainda precisar de algo, basta responder este e-mail e o chamado é reaberto automaticamente.</p>
+        <p style="margin:0 0 12px;color:#374151;">Como não tivemos retorno seu nos últimos dias, vamos considerar o seu atendimento concluído. Se ainda precisar de ajuda, é só responder este e-mail que voltamos a conversar de onde paramos.</p>
         <p style="margin:0 0 14px;color:#374151;">Se puder, deixe uma avaliação rápida:</p>
         <p style="margin:18px 0;"><a href="${ratingUrl}" style="display:inline-block;padding:11px 22px;background:${BRAND};color:#ffffff;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Avaliar atendimento</a></p>
-        <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize</p>
+        <p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Atenciosamente,<br>Equipe de Suporte Wiize<br><span style="color:#9ca3af;">Protocolo interno: ${esc(ticketNumber)}</span></p>
       `;
-      const html = layout(followupSubject, bodyHtml, `Encerramos seu chamado ${ticketNumber} por inatividade`);
+      const html = layout(followupSubject, bodyHtml, "Sem retorno seu, vamos concluir — responda se ainda precisar de ajuda");
       await sendResend({
         from: FROM,
         to: [customerEmail],
@@ -261,6 +287,7 @@ Deno.serve(async (req) => {
         html,
         text: htmlToText(bodyHtml) + `\n\nLink direto: ${ratingUrl}`,
         reply_to: replyTo,
+        headers: threadHeaders(ticketNumber),
       });
       await sb.from("support_tickets")
         .update({
@@ -289,17 +316,14 @@ Deno.serve(async (req) => {
         ? `Por você ser cliente <strong>Growth</strong>, nosso time vai retornar diretamente pelo <strong>WhatsApp</strong> no número informado no chamado (${esc(ticket.phone || "Não informado")}). Se preferir continuar por e-mail, basta responder esta mensagem.`
         : `Como você está no plano <strong>Start / Atendimento</strong>, o retorno será feito por <strong>e-mail</strong>, neste mesmo endereço (${esc(customerEmail)}). Basta responder este e-mail que sua mensagem entra automaticamente no chamado. Se não encontrar nossa confirmação na caixa de entrada, confira também o <strong>Spam</strong> ou <strong>Lixo eletrônico</strong>.`;
 
-      const receiptSubject = `Confirmação de abertura do chamado ${ticketNumber}`;
+      const receiptTopic = cleanSubjectText(ticket.subject) || cleanSubjectText(category);
+      const receiptSubject = receiptTopic
+        ? `Recebemos a sua mensagem sobre ${receiptTopic}`
+        : "Recebemos a sua mensagem para o suporte Wiize";
       const bodyHtml = `
-        <p style="margin:0 0 10px;font-size:16px;font-weight:600;color:#0f172a;">Recebemos o seu chamado</p>
+        <p style="margin:0 0 10px;font-size:16px;font-weight:600;color:#0f172a;">Recebemos a sua mensagem</p>
         <p style="margin:0 0 12px;">Olá ${esc(customerName)},</p>
-        <p style="margin:0 0 14px;color:#374151;">Confirmamos a abertura do seu chamado de suporte. Abaixo estão os dados de protocolo para sua referência:</p>
-        <table style="width:100%;border-collapse:collapse;margin:0 0 16px;">
-          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;width:130px;">Protocolo</td><td style="padding:5px 0;font-weight:600;">${esc(ticketNumber)}</td></tr>
-          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Assunto</td><td style="padding:5px 0;">${esc(ticket.subject || category)}</td></tr>
-          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Categoria</td><td style="padding:5px 0;">${esc(category)}</td></tr>
-          <tr><td style="padding:5px 0;color:#6b7280;font-size:13px;">Aberto em</td><td style="padding:5px 0;">${new Date(ticket.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td></tr>
-        </table>
+        <p style="margin:0 0 14px;color:#374151;">Obrigado por escrever para o nosso suporte. Já registramos o seu atendimento${receiptTopic ? ` sobre <strong>${esc(receiptTopic)}</strong>` : ""} e ele está na fila do nosso time.</p>
 
         <div style="padding:14px 16px;background:${BRAND_SOFT};border-radius:6px;border-left:3px solid ${BRAND};margin:0 0 16px;">
           <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#0f172a;">Prazo de retorno</p>
@@ -311,10 +335,10 @@ Deno.serve(async (req) => {
           <p style="margin:0;color:#374151;font-size:14px;line-height:1.55;">${channelExplain}</p>
         </div>
 
-        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Se precisar adicionar alguma informação ao chamado, basta responder este e-mail. Mantenha o número do protocolo no assunto para agilizar.</p>
-        <p style="margin:14px 0 0;color:#6b7280;font-size:13px;">Obrigado pela confiança,<br>Equipe de Suporte Wiize</p>
+        <p style="margin:0 0 6px;color:#374151;font-size:14px;">Precisa complementar alguma informação? É só responder este e-mail — não precisa preencher nada, nós reconhecemos automaticamente o seu atendimento.</p>
+        <p style="margin:14px 0 0;color:#6b7280;font-size:13px;">Obrigado pela confiança,<br>Equipe de Suporte Wiize<br><span style="color:#9ca3af;">Protocolo interno: ${esc(ticketNumber)} · aberto em ${new Date(ticket.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</span></p>
       `;
-      const html = layout(receiptSubject, bodyHtml, `Chamado ${ticketNumber} aberto | retorno em até 48h úteis`);
+      const html = layout(receiptSubject, bodyHtml, "Recebemos a sua mensagem — nosso time responde em até 48h úteis");
       await sendResend({
         from: FROM,
         to: [customerEmail],
@@ -322,12 +346,7 @@ Deno.serve(async (req) => {
         html,
         text: htmlToText(bodyHtml),
         reply_to: replyTo,
-        headers: {
-          "X-Wiize-Ticket": ticketNumber,
-          "List-Unsubscribe": `<mailto:${replyTo}?subject=unsubscribe>`,
-          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-          "X-Entity-Ref-ID": ticketNumber,
-        },
+        headers: threadHeaders(ticketNumber, true),
       });
       // best-effort: registra envio (ignora se coluna não existir)
       try {
