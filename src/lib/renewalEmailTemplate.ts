@@ -109,7 +109,7 @@ export function renderRenewalEmail(
       </table>`
     : "";
 
-  const subject = `${data.isTest ? "[TESTE] " : ""}${title} — ${data.companyName || data.clientName} (${daysLabel})`;
+  const subject = `${data.isTest ? "[TESTE] " : ""}${title}: ${data.companyName || data.clientName} (${daysLabel})`;
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -127,10 +127,10 @@ export function renderRenewalEmail(
     <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#3f3f46;">${esc(intro)}</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;padding:8px 16px;">
-      ${row("Cliente", data.clientName || "—")}
-      ${row("Empresa", data.companyName || "—")}
-      ${row("Contrato", data.saleTitle || "—")}
-      ${row("Vencimento", data.expirationDate || "—")}
+      ${row("Cliente", data.clientName || "Não informado")}
+      ${row("Empresa", data.companyName || "Não informado")}
+      ${row("Contrato", data.saleTitle || "Não informado")}
+      ${row("Vencimento", data.expirationDate || "Não informado")}
       ${row("Dias restantes", data.daysLeft <= 0 ? "0" : String(data.daysLeft))}
       ${row("Duração", `${data.contractMonths} ${data.contractMonths === 1 ? "mês" : "meses"}`)}
       ${row("Valor", formatContractValue(data.contractMonths, data.contractValue))}

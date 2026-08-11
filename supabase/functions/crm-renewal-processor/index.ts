@@ -124,13 +124,13 @@ function renderRenewalEmail(settings: RenewalSettings, data: RenewalEmailData): 
       </table>`
     : "";
 
-  const subject = `${data.isTest ? "[TESTE] " : ""}${title} — ${data.companyName || data.clientName} (${daysLabel})`;
+  const subject = `${data.isTest ? "[TESTE] " : ""}${title}: ${data.companyName || data.clientName} (${daysLabel})`;
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${esc(title)}</title></head>
 <body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-<div style="display:none;font-size:1px;color:#f4f4f5;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${esc(title)} — ${esc(daysLabel)}</div>
+<div style="display:none;font-size:1px;color:#f4f4f5;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${esc(title)}: ${esc(daysLabel)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 12px;">
 <tr><td align="center">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;">
@@ -143,10 +143,10 @@ function renderRenewalEmail(settings: RenewalSettings, data: RenewalEmailData): 
     <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#3f3f46;">${esc(intro)}</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #e4e4e7;border-radius:10px;padding:8px 16px;">
-      ${row("Cliente", data.clientName || "—")}
-      ${row("Empresa", data.companyName || "—")}
-      ${row("Contrato", data.saleTitle || "—")}
-      ${row("Vencimento", data.expirationDate || "—")}
+      ${row("Cliente", data.clientName || "Não informado")}
+      ${row("Empresa", data.companyName || "Não informado")}
+      ${row("Contrato", data.saleTitle || "Não informado")}
+      ${row("Vencimento", data.expirationDate || "Não informado")}
       ${row("Dias restantes", data.daysLeft <= 0 ? "0" : String(data.daysLeft))}
       ${row("Duração", `${data.contractMonths} ${data.contractMonths === 1 ? "mês" : "meses"}`)}
       ${row("Valor", formatContractValue(data.contractMonths, data.contractValue))}

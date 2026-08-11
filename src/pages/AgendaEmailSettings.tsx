@@ -28,7 +28,7 @@ export default function AgendaEmailSettings() {
     <div className="min-h-screen bg-background relative">
       <BackgroundGlow />
       <SEO
-        title="Lembretes de compromissos — Agenda Wiize"
+        title="Lembretes de compromissos | Agenda Wiize"
         description="Configure os e-mails automáticos de lembrete dos compromissos da sua Agenda comercial."
       />
       <AppSidebar profile={profile || sidebarProfile} />

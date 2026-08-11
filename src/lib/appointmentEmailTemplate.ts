@@ -67,7 +67,7 @@ export const DEFAULT_APPOINTMENT_SETTINGS = {
   button_color: "#3daa57",
   sender_name: "Wiize",
   sender_local_part: "agenda",
-  email_title: "Lembrete de compromisso — {{titulo_compromisso}}",
+  email_title: "Lembrete de compromisso: {{titulo_compromisso}}",
   email_body: DEFAULT_APPOINTMENT_BODY,
   cta_label: "Ver compromisso",
   notify_client: true,

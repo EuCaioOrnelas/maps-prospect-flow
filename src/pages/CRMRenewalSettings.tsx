@@ -175,7 +175,7 @@ export default function CRMRenewalSettings() {
     <div className="min-h-screen bg-background relative">
       <BackgroundGlow />
       <SEO
-        title="Avisos de renovação de contratos — CRM Wiize"
+        title="Avisos de renovação de contratos | CRM Wiize"
         description="Configure os avisos automáticos de renovação dos contratos recorrentes do seu CRM."
       />
       <AppSidebar profile={profile || sidebarProfile} />
