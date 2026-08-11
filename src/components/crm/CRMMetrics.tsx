@@ -1,6 +1,6 @@
 import { type Lead, type PipelineStage } from '@/hooks/useCRM';
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, DollarSign, Target, LucideIcon } from 'lucide-react';
+import { Users, DollarSign, Handshake, LucideIcon } from 'lucide-react';
 import { MetricSlot } from '@/components/ui/metric-empty';
 
 interface CRMMetricsProps {
@@ -29,24 +29,27 @@ export const CRMMetrics = ({ leads, stages, hideValue = false, loading = false }
     s.name.toLowerCase().includes('lost')
   );
 
-  const totalValue = leadsInPipeline
-    .filter(lead => !lostStage || lead.pipeline_stage_id !== lostStage.id)
-    .reduce((sum, lead) => sum + (lead.estimated_value || 0), 0);
-
   const wonStage = stages.find(s => 
     s.name.toLowerCase().includes('ganho') || 
     s.name.toLowerCase().includes('fechado') ||
     s.name.toLowerCase().includes('won') ||
     s.name.toLowerCase().includes('closed')
   );
-  
-  const wonLeads = wonStage 
-    ? leadsInPipeline.filter(lead => lead.pipeline_stage_id === wonStage.id).length 
-    : 0;
 
-  const conversionRate = totalLeads > 0 
-    ? Math.round((wonLeads / totalLeads) * 10000) / 100
-    : 0;
+  const isClosed = (lead: Lead) =>
+    (wonStage && lead.pipeline_stage_id === wonStage.id) ||
+    (lostStage && lead.pipeline_stage_id === lostStage.id);
+
+  // Negociações em andamento: contatos com valor cadastrado que ainda não fecharam
+  const negotiatingLeads = leadsInPipeline.filter(
+    (lead) => Number(lead.estimated_value || 0) > 0 && !isClosed(lead)
+  );
+  const negotiationsCount = negotiatingLeads.length;
+
+  const totalValue = negotiatingLeads.reduce(
+    (sum, lead) => sum + Number(lead.estimated_value || 0),
+    0
+  );
 
   const metrics: Metric[] = [
     {
@@ -58,13 +61,13 @@ export const CRMMetrics = ({ leads, stages, hideValue = false, loading = false }
       emptyHint: 'Preenchido ao adicionar contatos no pipeline.',
     },
     {
-      label: 'Taxa de Conversão',
-      value: conversionRate,
-      subValue: `${wonLeads} contatos`,
-      icon: Target,
+      label: 'Negociações',
+      value: negotiationsCount,
+      subValue: negotiationsCount === 1 ? 'em andamento' : 'em andamento',
+      icon: Handshake,
       color: 'text-primary',
-      empty: totalLeads === 0,
-      emptyHint: 'Disponível após o primeiro negócio ganho.',
+      empty: negotiationsCount === 0,
+      emptyHint: 'Contatos com valor cadastrado e venda ainda não fechada.',
     },
     ...(hideValue ? [] : [{
       label: 'Valor Total em Negociação',
@@ -75,6 +78,7 @@ export const CRMMetrics = ({ leads, stages, hideValue = false, loading = false }
       emptyHint: 'Será preenchido ao informar valores nos contatos.',
     } as Metric]),
   ];
+
 
   return (
     <div className={`grid grid-cols-1 ${hideValue ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mt-4`}>
