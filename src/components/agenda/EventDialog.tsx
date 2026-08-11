@@ -176,8 +176,9 @@ const buildInitialState = (
     contact_phone: "",
     location: "",
     notes: "",
-    reminder: "15",
+    reminder: "none",
     category: "comercial",
+
     participants: [],
     lead_id: null,
     notify_lead: true,

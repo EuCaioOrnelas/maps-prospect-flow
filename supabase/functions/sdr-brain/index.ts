@@ -768,8 +768,9 @@ ${historyText}`;
           contact_phone: contactPhone || null,
           contact_email: leadContext?.email ?? null,
           notes: `Agendado automaticamente pelo SDR ${agent.name}.`,
-          reminders: [15],
+          reminders: [],
           metadata: { session_id: session?.id ?? null, agent_id: agentId },
+
         })
         .select("id, starts_at")
         .maybeSingle();
