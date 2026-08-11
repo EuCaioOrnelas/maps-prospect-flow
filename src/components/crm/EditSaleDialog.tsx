@@ -27,11 +27,14 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   sale: Sale | null;
+  /** Só o próprio responsável (ou owner/admin) pode trocar o responsável da venda. */
+  canChangeResponsible?: boolean;
 }
 
-export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
+export function EditSaleDialog({ open, onOpenChange, sale, canChangeResponsible = true }: Props) {
   const { updateSale } = useSales();
   const { members } = useAccountMembers();
+
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -77,8 +80,9 @@ export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
         start_date: startDate || undefined,
         notes,
         status,
-        responsible_user_id: responsibleUserId || null,
+        ...(canChangeResponsible ? { responsible_user_id: responsibleUserId || null } : {}),
       });
+
       toast.success("Venda atualizada");
       onOpenChange(false);
     } catch (e: any) {
@@ -216,7 +220,11 @@ export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
               <Label className="flex items-center gap-1.5 text-xs">
                 <UserIcon className="w-3.5 h-3.5 text-primary" /> Responsável pela venda
               </Label>
-              <Select value={responsibleUserId || "none"} onValueChange={(v) => setResponsibleUserId(v === "none" ? "" : v)}>
+              <Select
+                value={responsibleUserId || "none"}
+                onValueChange={(v) => setResponsibleUserId(v === "none" ? "" : v)}
+                disabled={!canChangeResponsible}
+              >
                 <SelectTrigger className="h-9">
                   <div className="flex items-center gap-2">
                     <UserIcon className="w-3.5 h-3.5 text-primary" />
@@ -232,6 +240,12 @@ export function EditSaleDialog({ open, onOpenChange, sale }: Props) {
                   ))}
                 </SelectContent>
               </Select>
+              {!canChangeResponsible && (
+                <p className="text-[10.5px] text-muted-foreground">
+                  Somente o responsável atual, o dono da conta ou um admin podem alterar este campo.
+                </p>
+              )}
+
             </div>
             <div className="space-y-1.5">
               <Label className="flex items-center gap-1.5 text-xs">

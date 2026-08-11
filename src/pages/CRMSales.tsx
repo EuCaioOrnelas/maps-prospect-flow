@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSales } from "@/hooks/useSales";
+import { useSales, computeSalesMetrics } from "@/hooks/useSales";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
@@ -37,9 +37,13 @@ import { CRMTabs } from "@/components/crm/CRMTabs";
 import { SalesKPIs } from "@/components/crm/SalesKPIs";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
 import { EditSaleDialog } from "@/components/crm/EditSaleDialog";
+import { ExportSalesButton } from "@/components/crm/ExportSalesButton";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { useAccountRole } from "@/hooks/useAccountRole";
+import { canChangeSaleResponsible } from "@/lib/salesPermissions";
 import type { Sale } from "@/hooks/useSales";
 import { toast } from "sonner";
+
 
 const initialsOf = (name?: string | null, email?: string | null) => {
   const s = (name || email || "?").trim();
@@ -65,13 +69,19 @@ export default function CRMSales() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { sales, metrics, deleteSale, getAttachmentUrl } = useSales();
+  const { sales, deleteSale, getAttachmentUrl } = useSales();
   const { members } = useAccountMembers();
+  const { role } = useAccountRole();
   const memberById = useMemo(() => Object.fromEntries(members.map((m) => [m.user_id, m])), [members]);
+  const memberNameById = useMemo(
+    () => Object.fromEntries(members.map((m) => [m.user_id, m.name || m.email || m.user_id.slice(0, 8)])),
+    [members]
+  );
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [responsibleFilter, setResponsibleFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
@@ -96,6 +106,15 @@ export default function CRMSales() {
     return sales.filter((s) => {
       if (typeFilter !== "all" && s.sale_type !== typeFilter) return false;
       if (statusFilter !== "all" && s.status !== statusFilter) return false;
+      if (responsibleFilter !== "all") {
+        if (responsibleFilter === "none") {
+          if (s.responsible_user_id) return false;
+        } else if (responsibleFilter === "me") {
+          if (s.responsible_user_id !== user?.id) return false;
+        } else if (s.responsible_user_id !== responsibleFilter) {
+          return false;
+        }
+      }
       if (dateFrom && s.start_date < dateFrom) return false;
       if (dateTo && s.start_date > dateTo) return false;
       if (search) {
@@ -109,7 +128,10 @@ export default function CRMSales() {
       }
       return true;
     });
-  }, [sales, typeFilter, statusFilter, search, dateFrom, dateTo]);
+  }, [sales, typeFilter, statusFilter, responsibleFilter, search, dateFrom, dateTo, user?.id]);
+
+  // KPIs seguem os filtros ativos (inclusive por responsável)
+  const metrics = useMemo(() => computeSalesMetrics(filtered), [filtered]);
 
   const handleDownload = async (path: string) => {
     const url = await getAttachmentUrl(path);
@@ -125,11 +147,20 @@ export default function CRMSales() {
     setSearch("");
     setTypeFilter("all");
     setStatusFilter("all");
+    setResponsibleFilter("all");
     setDateFrom("");
     setDateTo("");
   };
 
-  const hasFilters = !!(search || typeFilter !== "all" || statusFilter !== "all" || dateFrom || dateTo);
+  const hasFilters = !!(
+    search ||
+    typeFilter !== "all" ||
+    statusFilter !== "all" ||
+    responsibleFilter !== "all" ||
+    dateFrom ||
+    dateTo
+  );
+
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -237,7 +268,7 @@ export default function CRMSales() {
 
             {/* Filtros - loose, sem card */}
             <div className="flex flex-col gap-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
                 <div className="relative lg:col-span-2">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -265,6 +296,26 @@ export default function CRMSales() {
                     <SelectItem value="renewed">Renovado</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
+                  <SelectTrigger className="bg-card/60 border-border/60">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <SelectValue placeholder="Responsável" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os responsáveis</SelectItem>
+                    <SelectItem value="me">Minhas vendas</SelectItem>
+                    <SelectItem value="none">Sem responsável</SelectItem>
+                    {members
+                      .filter((m) => m.user_id !== user?.id)
+                      .map((m) => (
+                        <SelectItem key={m.user_id} value={m.user_id}>
+                          {m.name || m.email || m.user_id.slice(0, 8)}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                   <Input
@@ -286,13 +337,20 @@ export default function CRMSales() {
                   />
                 </div>
               </div>
-              {hasFilters && (
-                <div className="flex justify-end">
-                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={clearFilters}>
-                    Limpar filtros
-                  </Button>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <p className="text-[11px] text-muted-foreground">
+                  {filtered.length} venda(s) no filtro atual
+                </p>
+                <div className="flex items-center gap-2">
+                  {hasFilters && (
+                    <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={clearFilters}>
+                      Limpar filtros
+                    </Button>
+                  )}
+                  <ExportSalesButton sales={filtered} memberNameById={memberNameById} />
                 </div>
-              )}
+              </div>
+
             </div>
 
 
@@ -476,7 +534,17 @@ export default function CRMSales() {
           </div>
         </div>
       </main>
-      <EditSaleDialog open={!!editingSale} onOpenChange={(o) => !o && setEditingSale(null)} sale={editingSale} />
+      <EditSaleDialog
+        open={!!editingSale}
+        onOpenChange={(o) => !o && setEditingSale(null)}
+        sale={editingSale}
+        canChangeResponsible={canChangeSaleResponsible({
+          role,
+          currentUserId: user?.id,
+          saleResponsibleUserId: editingSale?.responsible_user_id,
+        })}
+      />
+
     </div>
   );
 }
