@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
 
     const ticketNumber = ticket.ticket_number || ticket.id.slice(0, 8).toUpperCase();
     const category = ticket.category || "Atendimento";
-    const subject = buildSubject(category, ticketNumber, subjectOverride);
+    const subject = buildSubject(category, ticketNumber, subjectOverride, ticket.subject);
     const replyTo = `suporte+${ticketNumber}@${REPLY_DOMAIN}`;
     const customerEmail = ticket.email;
     const customerName = ticket.name || "Cliente";
