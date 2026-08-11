@@ -94,30 +94,12 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
 
     try {
       const [
-        searchCurrent, searchPrev,
-        campaignsCurrent, campaignsPrev,
         responsesCurrent, responsesPrev,
         numbersRes, incidentsRes, cplRes,
         allTimeSearchRes, profileRes,
         allTimeCampaignsRes,
         leadsFunnelRes,
       ] = await Promise.all([
-        supabase.from('search_history').select('results_count')
-          .eq('owner_user_id', accountOwnerId).gte('created_at', periodStart.toISOString()),
-        supabase.from('search_history').select('results_count')
-          .eq('owner_user_id', accountOwnerId)
-          .gte('created_at', prevPeriodStart.toISOString())
-          .lt('created_at', prevPeriodEnd.toISOString()),
-        supabase.from('whatsapp_campaigns')
-          .select('id, name, status, sent_count, failed_count, total_leads, total_responses, created_at, whatsapp_number_id')
-          .eq('owner_user_id', accountOwnerId)
-          .gte('created_at', periodStart.toISOString())
-          .order('created_at', { ascending: false }),
-        supabase.from('whatsapp_campaigns')
-          .select('sent_count, failed_count, total_responses')
-          .eq('owner_user_id', accountOwnerId)
-          .gte('created_at', prevPeriodStart.toISOString())
-          .lt('created_at', prevPeriodEnd.toISOString()),
         supabase.from('campaign_responses').select('responded_at')
           .eq('owner_user_id', accountOwnerId).gte('responded_at', periodStart.toISOString()),
         supabase.from('campaign_responses').select('id')
@@ -134,14 +116,16 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
           .order('created_at', { ascending: false }).limit(20),
         (supabase.from('system_settings' as any).select('value')
           .eq('key', 'cpl_benchmark').maybeSingle() as unknown as Promise<any>),
-        // All-time search data for cumulative metrics
+        // Consulta única de search_history (all-time) — período atual e anterior
+        // são derivados em memória a partir deste mesmo conjunto.
         supabase.from('search_history').select('results_count, created_at')
           .eq('owner_user_id', accountOwnerId)
           .order('created_at', { ascending: true }),
         supabase.from('profiles').select('created_at').eq('id', accountOwnerId).maybeSingle(),
-        // All-time campaigns for monthly breakdown
+        // Consulta única de campanhas (all-time) — período atual, anterior e
+        // breakdown mensal derivam deste mesmo conjunto.
         supabase.from('whatsapp_campaigns')
-          .select('sent_count, created_at')
+          .select('id, name, status, sent_count, failed_count, total_leads, total_responses, created_at, whatsapp_number_id')
           .eq('owner_user_id', accountOwnerId)
           .order('created_at', { ascending: true }),
         // Leads do CRM no período — fonte única para o funil operacional (alinhado com Meta)
@@ -151,11 +135,29 @@ export function useMainDashboard(periodDays: number): DashboardMetrics {
           .gte('created_at', periodStart.toISOString()),
       ]) as any;
 
-      const campaigns = campaignsCurrent.data || [];
-      const prevCampaignData = campaignsPrev.data || [];
+      // ── Derivações em memória (substituem consultas duplicadas) ──
+      const periodStartISO = periodStart.toISOString();
+      const prevStartISO = prevPeriodStart.toISOString();
+      const prevEndISO = prevPeriodEnd.toISOString();
 
-      const leadsProspected = (searchCurrent.data || []).reduce((s, r) => s + (r.results_count || 0), 0);
-      const prevLeadsProspected = (searchPrev.data || []).reduce((s, r) => s + (r.results_count || 0), 0);
+      const allSearchRows: any[] = allTimeSearchRes.data || [];
+      const searchCurrentRows = allSearchRows.filter((r) => r.created_at >= periodStartISO);
+      const searchPrevRows = allSearchRows.filter(
+        (r) => r.created_at >= prevStartISO && r.created_at < prevEndISO
+      );
+
+      const allCampaignRows: any[] = allTimeCampaignsRes.data || [];
+      // Mesma ordenação da consulta original do período (created_at desc)
+      const campaigns = allCampaignRows
+        .filter((c) => c.created_at >= periodStartISO)
+        .slice()
+        .reverse();
+      const prevCampaignData = allCampaignRows.filter(
+        (c) => c.created_at >= prevStartISO && c.created_at < prevEndISO
+      );
+
+      const leadsProspected = searchCurrentRows.reduce((s, r) => s + (r.results_count || 0), 0);
+      const prevLeadsProspected = searchPrevRows.reduce((s, r) => s + (r.results_count || 0), 0);
       const messagesSent = campaigns.reduce((s, c) => s + (c.sent_count || 0), 0);
       const messagesFailed = campaigns.reduce((s, c) => s + (c.failed_count || 0), 0);
       const prevMessagesSent = prevCampaignData.reduce((s, c) => s + (c.sent_count || 0), 0);
