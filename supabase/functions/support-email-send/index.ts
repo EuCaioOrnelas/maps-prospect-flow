@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
         await sb.from("support_tickets").update({ rating_token: token }).eq("id", ticketId);
       }
       const ratingUrl = `${APP_URL}/avaliacao/${token}`;
-      const ratingSubject = `Como foi o seu atendimento? | Chamado ${ticketNumber}`;
+      const ratingSubject = "Como foi o seu atendimento com a Wiize?";
       const firstName = esc((customerName || "").split(" ")[0] || "");
       const bodyHtml = `
         <div style="text-align:center;font-size:28px;letter-spacing:6px;color:#F5B301;margin:4px 0 14px;line-height:1;">★ ★ ★ ★ ★</div>
