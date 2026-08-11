@@ -256,6 +256,7 @@ Deno.serve(async (req) => {
         html,
         text: htmlToText(bodyHtml) + `\n\nLink direto: ${ratingUrl}`,
         reply_to: replyTo,
+        headers: threadHeaders(ticketNumber),
       });
       await sb.from("support_tickets")
         .update({ rating_email_sent_at: new Date().toISOString() })
