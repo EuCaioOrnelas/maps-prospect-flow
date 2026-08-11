@@ -257,10 +257,20 @@ export default function Agenda() {
                 </p>
               </div>
             </div>
-            <Button onClick={() => openNew()} className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Novo compromisso
-            </Button>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                className="flex-1 sm:flex-none rounded-xl"
+                onClick={() => navigate("/agenda/lembretes")}
+              >
+                <BellRing className="h-4 w-4 mr-2" />
+                Lembretes por e-mail
+              </Button>
+              <Button onClick={() => openNew()} className="flex-1 sm:flex-none rounded-xl">
+                <Plus className="h-4 w-4 mr-2" />
+                Novo compromisso
+              </Button>
+            </div>
           </div>
 
           <AgendaMetrics events={visibleEvents} loading={loading} />
