@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 export type SaleType = "one_time" | "recurring";
-export type SaleStatus = "active" | "expired" | "cancelled" | "renewed";
+export type SaleStatus = "active" | "expiring" | "expired" | "cancelled" | "renewed";
 
 export interface Sale {
   id: string;
@@ -19,6 +19,12 @@ export interface Sale {
   start_date: string;
   expiration_date: string | null;
   status: SaleStatus;
+  renewed_at: string | null;
+  renewed_from_deal_id: string | null;
+  renewal_count: number | null;
+  notice_30d_sent_at: string | null;
+  notice_15d_sent_at: string | null;
+  notice_7d_sent_at: string | null;
   receipt_url: string | null;
   contract_url: string | null;
   closed_at: string;
@@ -69,7 +75,8 @@ export const computeSalesMetrics = (sales: Sale[]) => {
     return acc + Number(s.value || 0) * Number(s.contract_months || 1);
   }, 0);
 
-  const isLive = (s: Sale) => s.status === "active" && (!s.expiration_date || s.expiration_date >= today);
+  const isLive = (s: Sale) =>
+    (s.status === "active" || s.status === "expiring") && (!s.expiration_date || s.expiration_date >= today);
 
   const mrr = sales
     .filter((s) => s.sale_type === "recurring" && isLive(s))
@@ -95,7 +102,7 @@ export const computeSalesMetrics = (sales: Sale[]) => {
 
   const expiringSoon = sales
     .filter((s) => {
-      if (s.status !== "active" || !s.expiration_date) return false;
+      if ((s.status !== "active" && s.status !== "expiring") || !s.expiration_date) return false;
       const days = (new Date(s.expiration_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
       return days >= 0 && days <= 30;
     })
@@ -211,6 +218,58 @@ export const useSales = (leadId?: string) => {
     [user, accountOwnerId, fetchSales]
   );
 
+  /** Renova um contrato: cria o novo contrato e encerra o anterior como vencido. */
+  const renewSale = useCallback(
+    async (
+      sale: Sale,
+      input: {
+        value: number;
+        contract_months: number;
+        start_date: string;
+        payment_method?: string | null;
+        notes?: string | null;
+      }
+    ) => {
+      if (!user || !accountOwnerId) throw new Error("not_authenticated");
+      const months = Math.max(1, Number(input.contract_months) || 1);
+      const { data, error } = await supabase
+        .from("lead_deals")
+        .insert({
+          user_id: user.id,
+          owner_user_id: accountOwnerId,
+          lead_id: sale.lead_id,
+          title: sale.title,
+          description: sale.description ?? null,
+          value: input.value,
+          sale_type: "recurring",
+          contract_type: String(months),
+          contract_months: months,
+          payment_method: input.payment_method ?? sale.payment_method ?? null,
+          start_date: input.start_date || todayISO(),
+          notes: input.notes ?? null,
+          responsible_user_id: sale.responsible_user_id ?? null,
+          closed_at: new Date().toISOString(),
+          status: "active",
+          renewed_from_deal_id: sale.id,
+          renewal_count: (sale.renewal_count ?? 0) + 1,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+
+      const { error: closeError } = await supabase
+        .from("lead_deals")
+        .update({ status: "expired", renewed_at: new Date().toISOString() })
+        .eq("id", sale.id)
+        .eq("owner_user_id", accountOwnerId);
+      if (closeError) throw closeError;
+
+      await fetchSales();
+      return data as unknown as Sale;
+    },
+    [user, accountOwnerId, fetchSales]
+  );
+
   const uploadAttachment = useCallback(
     async (saleId: string, file: File, kind: "receipt" | "contract") => {
       if (!user || !accountOwnerId) throw new Error("not_authenticated");
@@ -242,6 +301,7 @@ export const useSales = (leadId?: string) => {
     createSale,
     updateSale,
     deleteSale,
+    renewSale,
     uploadAttachment,
     getAttachmentUrl,
     metrics,

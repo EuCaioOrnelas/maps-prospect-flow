@@ -67,6 +67,7 @@ const Contact = lazyWithRetry(() => import("./pages/Contact"), "Contact");
 const Profile = lazyWithRetry(() => import("./pages/Profile"), "Profile");
 const CRM = lazyWithRetry(() => import("./pages/CRM"), "CRM");
 const CRMSales = lazyWithRetry(() => import("./pages/CRMSales"), "CRMSales");
+const CRMRenewalSettings = lazyWithRetry(() => import("./pages/CRMRenewalSettings"), "CRMRenewalSettings");
 const CRMScore = lazyWithRetry(() => import("./pages/CRMScore"), "CRMScore");
 const Agenda = lazyWithRetry(() => import("./pages/Agenda"), "Agenda");
 const EquipeEmBreve = lazyWithRetry(() => import("./pages/equipe-ia/EquipeEmBreve"), "EquipeEmBreve");
@@ -329,6 +330,7 @@ const App = () => (
                 <Route path="/meta-api-guide" element={<ProtectedRoute><MetaApiGuide /></ProtectedRoute>} />
                 <Route path="/crm" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
                 <Route path="/crm/vendas" element={<ProtectedRoute><CRMSales /></ProtectedRoute>} />
+                <Route path="/crm/vendas/renovacao" element={<ProtectedRoute><CRMRenewalSettings /></ProtectedRoute>} />
                 <Route path="/agenda" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Agenda /></Suspense></ProtectedRoute>} />
                 <Route path="/crm/agenda" element={<Navigate to="/agenda" replace />} />
                 <Route path="/crm/score" element={<ProtectedRoute><CRMScore /></ProtectedRoute>} />

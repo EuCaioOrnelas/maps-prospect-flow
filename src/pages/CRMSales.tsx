@@ -32,12 +32,15 @@ import {
   Layers,
   Activity,
   Settings2,
+  RefreshCw,
+  BellRing,
 } from "lucide-react";
 import { CRMTabs } from "@/components/crm/CRMTabs";
 import { SalesKPIs } from "@/components/crm/SalesKPIs";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
 import { EditSaleDialog } from "@/components/crm/EditSaleDialog";
 import { ExportSalesButton } from "@/components/crm/ExportSalesButton";
+import { RenewSaleDialog } from "@/components/crm/RenewSaleDialog";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { canChangeSaleResponsible } from "@/lib/salesPermissions";
@@ -60,6 +63,7 @@ const fmtDate = (s: string | null) =>
 
 const STATUS_BADGES: Record<string, { label: string; tone: string }> = {
   active: { label: "Ativo", tone: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" },
+  expiring: { label: "Vencendo", tone: "bg-amber-500/15 text-amber-600 border-amber-500/30" },
   expired: { label: "Expirado", tone: "bg-muted text-muted-foreground border-border" },
   cancelled: { label: "Cancelado", tone: "bg-destructive/10 text-destructive border-destructive/30" },
   renewed: { label: "Renovado", tone: "bg-primary/10 text-primary border-primary/30" },
@@ -85,6 +89,7 @@ export default function CRMSales() {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [renewingSale, setRenewingSale] = useState<Sale | null>(null);
   const params = new URLSearchParams(location.search);
   const isRegisterMode = params.get("mode") === "registrar";
   const leadId = params.get("leadId") || (location.state as any)?.leadId || "";
@@ -190,10 +195,20 @@ export default function CRMSales() {
                     </p>
                   </div>
                 </div>
-                {isRegisterMode && (
+                {isRegisterMode ? (
                   <Button variant="outline" size="sm" onClick={() => navigate("/crm/vendas")}>
                     <ArrowLeft className="w-4 h-4 mr-1.5" />
                     Voltar
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => navigate("/crm/vendas/renovacao")}
+                  >
+                    <BellRing className="w-4 h-4 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Aviso de renovação</span>
                   </Button>
                 )}
               </div>
@@ -291,6 +306,7 @@ export default function CRMSales() {
                   <SelectContent>
                     <SelectItem value="all">Todos os status</SelectItem>
                     <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="expiring">Vencendo</SelectItem>
                     <SelectItem value="expired">Expirado</SelectItem>
                     <SelectItem value="cancelled">Cancelado</SelectItem>
                     <SelectItem value="renewed">Renovado</SelectItem>
@@ -496,6 +512,18 @@ export default function CRMSales() {
                                     <Download className="w-3.5 h-3.5" />
                                   </Button>
                                 )}
+                                {s.sale_type === "recurring" &&
+                                  (s.status === "expiring" || s.status === "expired") && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 px-2 text-[11px] gap-1"
+                                      title="Renovar contrato"
+                                      onClick={() => setRenewingSale(s)}
+                                    >
+                                      <RefreshCw className="w-3 h-3" /> Renovar
+                                    </Button>
+                                  )}
                                 <Button
                                   size="icon"
                                   variant="ghost"
@@ -543,6 +571,11 @@ export default function CRMSales() {
           currentUserId: user?.id,
           saleResponsibleUserId: editingSale?.responsible_user_id,
         })}
+      />
+      <RenewSaleDialog
+        open={!!renewingSale}
+        onOpenChange={(o) => !o && setRenewingSale(null)}
+        sale={renewingSale}
       />
 
     </div>
