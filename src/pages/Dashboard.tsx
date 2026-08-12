@@ -732,36 +732,46 @@ const Dashboard = () => {
               </div>
 
               {/* Geração automática da abordagem com IA (após o diagnóstico) */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-foreground">
-                  <Sparkles size={14} className="text-primary" />
-                  <p className="text-sm font-medium">Abordagem com IA</p>
+              <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/60">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Sparkles size={14} className="text-primary" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">Abordagem com IA</p>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground mb-4">
                   Gere automaticamente as mensagens após o diagnóstico dos leads.
                 </p>
-                <div className="space-y-2">
-                  <label className="flex items-start gap-3 cursor-pointer group">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="flex items-start gap-3 p-3 rounded-xl bg-card border border-border/60 cursor-pointer group transition-colors hover:border-primary/30 hover:bg-card/80">
                     <Checkbox
                       checked={autoApproach.manual}
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, manual: !!checked }))}
-                      className="mt-0.5"
+                      className="mt-0.5 h-[18px] w-[18px] rounded-md border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
-                    <span className="text-sm text-foreground group-hover:text-foreground/80 transition-colors">
-                      Mensagem para envio manual
-                      <span className="block text-xs text-muted-foreground">Primeiro contato para copiar ou enviar pelo WhatsApp</span>
-                    </span>
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors block">
+                        Envio manual
+                      </span>
+                      <span className="text-xs text-muted-foreground block leading-relaxed">
+                        Primeiro contato para copiar ou enviar pelo WhatsApp.
+                      </span>
+                    </div>
                   </label>
-                  <label className="flex items-start gap-3 cursor-pointer group">
+                  <label className="flex items-start gap-3 p-3 rounded-xl bg-card border border-border/60 cursor-pointer group transition-colors hover:border-primary/30 hover:bg-card/80">
                     <Checkbox
                       checked={autoApproach.meta}
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, meta: !!checked }))}
-                      className="mt-0.5"
+                      className="mt-0.5 h-[18px] w-[18px] rounded-md border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
-                    <span className="text-sm text-foreground group-hover:text-foreground/80 transition-colors">
-                      Mensagem para campanhas Meta
-                      <span className="block text-xs text-muted-foreground">Follow-up após resposta ao template aprovado</span>
-                    </span>
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors block">
+                        Campanhas Meta
+                      </span>
+                      <span className="text-xs text-muted-foreground block leading-relaxed">
+                        Follow-up após resposta ao template aprovado.
+                      </span>
+                    </div>
                   </label>
                 </div>
               </div>
