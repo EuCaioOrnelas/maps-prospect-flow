@@ -31,6 +31,8 @@ import {
   Crown,
   AlertCircle,
   CheckSquare,
+  MessageSquare,
+  Megaphone,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
