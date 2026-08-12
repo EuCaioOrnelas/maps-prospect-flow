@@ -116,3 +116,9 @@ verify_jwt = false
 
 [functions.sdr-followup-processor]
 verify_jwt = false
+
+[functions.crm-renewal-processor]
+verify_jwt = false
+
+[functions.calendar-reminders]
+verify_jwt = false
