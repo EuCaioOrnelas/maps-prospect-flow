@@ -739,7 +739,7 @@ const Dashboard = () => {
                   <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <Sparkles size={14} className="text-primary" />
                   </div>
-                  <p className="text-sm font-semibold text-foreground">Abordagem com IA</p>
+                  <p className="text-sm font-semibold text-foreground">Geração de mensagem p/ abordagem com IA</p>
                 </div>
                 <p className="text-xs text-muted-foreground mb-4">
                   Gere automaticamente as mensagens após o diagnóstico dos leads.
@@ -751,10 +751,15 @@ const Dashboard = () => {
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, manual: !!checked }))}
                       className="mt-0.5 h-[18px] w-[18px] rounded-md border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
-                    <div className="min-w-0">
-                      <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors block">
-                        Envio manual
-                      </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
+                          <MessageSquare size={13} className="text-emerald-500" />
+                        </div>
+                        <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
+                          Envio manual
+                        </span>
+                      </div>
                       <span className="text-xs text-muted-foreground block leading-relaxed">
                         Primeiro contato para copiar ou enviar pelo WhatsApp.
                       </span>
@@ -766,10 +771,15 @@ const Dashboard = () => {
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, meta: !!checked }))}
                       className="mt-0.5 h-[18px] w-[18px] rounded-md border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
-                    <div className="min-w-0">
-                      <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors block">
-                        Campanhas Meta
-                      </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
+                          <Megaphone size={13} className="text-blue-500" />
+                        </div>
+                        <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
+                          Campanhas Meta
+                        </span>
+                      </div>
                       <span className="text-xs text-muted-foreground block leading-relaxed">
                         Follow-up após resposta ao template aprovado.
                       </span>
