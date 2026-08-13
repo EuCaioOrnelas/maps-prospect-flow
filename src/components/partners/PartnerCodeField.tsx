@@ -72,8 +72,24 @@ export function PartnerCodeField({ onChange, className, bare }: Props) {
       setManualReferralCode(normalized);
       setApplied({ code: data.code || normalized.toUpperCase(), partnerName: data.partner_name ?? null });
       onChange?.(normalized, data.partner_name ?? null);
-    } finally {
-      setLoading(false);
+
+      // Already signed in (checkout / upgrade): attribute right away so the
+      // sale is credited even without a new signup event.
+      const { data: sessionData } = await supabase.auth.getUser();
+      const user = sessionData?.user;
+      if (user) {
+        await (supabase as any).rpc("attribute_partner_lead", {
+          p_user_id: user.id,
+          p_email: user.email,
+          p_name: (user.user_metadata as any)?.name ?? null,
+          p_referral_code: normalized,
+          p_click_id: null,
+          p_partner_id: null,
+          p_referral_link_id: null,
+          p_source: "referral_code",
+        });
+      }
+
     }
   };
 
