@@ -40,7 +40,50 @@ function fitCategory(score: number) {
   return "BAIXO FIT";
 }
 
-async function openai(messages: unknown[], apiKey: string, jsonMode = true) {
+// Usuário da requisição atual (para atribuir custo de IA nos logs)
+let CURRENT_USER_ID: string | null = null;
+
+const AI_PRICES: Record<string, { in: number; out: number }> = {
+  "gpt-4o-mini": { in: 0.15 / 1_000_000, out: 0.6 / 1_000_000 },
+};
+
+async function logAiUsage(p: {
+  feature: string;
+  model: string;
+  tokens_in: number;
+  tokens_out: number;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return;
+    const price = AI_PRICES[p.model] ?? AI_PRICES["gpt-4o-mini"];
+    const cost = p.tokens_in * price.in + p.tokens_out * price.out;
+    await fetch(`${url}/rest/v1/ai_usage_logs`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        feature: p.feature,
+        model: p.model,
+        user_id: CURRENT_USER_ID,
+        tokens_in: Math.round(p.tokens_in),
+        tokens_out: Math.round(p.tokens_out),
+        cost_usd: Number(cost.toFixed(8)),
+        metadata: p.metadata ?? {},
+      }),
+    });
+  } catch (e) {
+    console.error("[aiUsage] log falhou", String(e));
+  }
+}
+
+async function openai(messages: unknown[], apiKey: string, jsonMode = true, feature = "influencer-prospect") {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -57,12 +100,19 @@ async function openai(messages: unknown[], apiKey: string, jsonMode = true) {
     throw new Error(`OPENAI_ERROR_${res.status}`);
   }
   const data = await res.json();
+  logAiUsage({
+    feature,
+    model: OPENAI_MODEL,
+    tokens_in: data.usage?.prompt_tokens ?? 0,
+    tokens_out: data.usage?.completion_tokens ?? 0,
+  });
   try {
     return JSON.parse(data.choices?.[0]?.message?.content ?? "{}");
   } catch {
     throw new Error("OPENAI_INVALID_JSON");
   }
 }
+
 
 async function yt(path: string, params: Record<string, string>, key: string) {
   const url = new URL(`https://www.googleapis.com/youtube/v3/${path}`);
