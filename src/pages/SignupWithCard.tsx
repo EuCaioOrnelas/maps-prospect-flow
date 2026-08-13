@@ -1,4 +1,6 @@
+import { PartnerCodeField } from "@/components/partners/PartnerCodeField";
 // Página combinada em 2 etapas: 1) Dados da conta  2) Cartão (estilo checkout premium).
+
 // O usuário só chega aqui depois de escolher o plano em /signup/escolher-plano.
 
 import { useEffect, useMemo, useState } from "react";
