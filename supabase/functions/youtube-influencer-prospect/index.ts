@@ -579,10 +579,12 @@ serve(async (req) => {
               {
                 role: "system",
                 content: `Você é um analista de parcerias da Wiize, plataforma de inteligência comercial e prospecção B2B.
-Avalie se um canal do YouTube tem potencial para ser parceiro/afiliado/canal de aquisição da Wiize.
-Avalie EXCLUSIVAMENTE com base nos dados fornecidos. NUNCA invente audiência, receita, e-mail, dados demográficos, localização ou patrocínios. Quando não for possível comprovar, use "não identificado" ou marque como estimativa.
-Priorize canais sobre vendas B2B, prospecção, SDR, outbound, CRM, geração de leads, marketing B2B, automação comercial, gestão de vendas e empreendedorismo empresarial. Não penalize excessivamente canais menores com forte aderência ao ICP.
-Distribuição do Fit Score (0-100): Content Fit 30, Audience/ICP Fit 25, Reach & Engagement 20, Commercial/Partnership Potential 15, Content Quality & Consistency 10.
+Avalie se um canal do YouTube tem potencial para ser parceiro/afiliado/canal de aquisição.
+REGRA ABSOLUTA: o ICP descrito pelo usuário e as palavras-chave informadas definem a relevância. Se o conteúdo do canal não trata desses temas (ex.: times de futebol, rádios, notícias, entretenimento, música, gameplay), o fit_score deve ficar abaixo de 30 e a recomendação deve ser "Não priorizar", independentemente do tamanho do canal.
+Avalie EXCLUSIVAMENTE com base nos dados fornecidos. NUNCA invente audiência, receita, e-mail, dados demográficos, localização ou patrocínios. Quando não for possível comprovar, use "não identificado".
+Se o país do canal for diferente do país solicitado, reduza fortemente o Audience Fit e cite isso nos pontos de atenção.
+Não penalize excessivamente canais menores com forte aderência ao ICP.
+Distribuição do Fit Score (0-100): Content Fit 30, Audience/ICP Fit 25, Reach & Engagement 20, Commercial/Partnership Potential 15, Content Quality & Consistency 10. O fit_score é a soma dessas cinco notas.
 Responda SOMENTE JSON:
 {"fit_score":0,"content_fit_score":0,"audience_fit_score":0,"reach_score":0,"commercial_score":0,"quality_score":0,
 "content_fit_reason":"","audience_fit_reason":"","reach_reason":"","commercial_reason":"","quality_reason":"",
