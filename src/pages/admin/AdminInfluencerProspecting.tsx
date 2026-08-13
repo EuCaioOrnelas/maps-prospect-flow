@@ -214,6 +214,24 @@ export default function AdminInfluencerProspecting() {
     if (error || data?.error) toast({ title: "Erro ao atualizar status", variant: "destructive" });
   };
 
+  const updateStatusBulk = async (ids: string[], status: string) => {
+    if (ids.length === 0) return;
+    setProspects((p) => p.map((x) => (ids.includes(x.id) ? { ...x, status } : x)));
+    setSaved((p) => p.map((x) => (ids.includes(x.id) ? { ...x, status } : x)));
+    setSelected((s: any) => (s && ids.includes(s.id) ? { ...s, status } : s));
+    const { data, error } = await supabase.functions.invoke("youtube-influencer-prospect", {
+      body: { action: "update_status", prospect_ids: ids, status },
+    });
+    if (error || data?.error) {
+      toast({ title: "Erro ao atualizar status em lote", variant: "destructive" });
+      // recarrega para garantir consistência em caso de erro
+      await loadAllProspects();
+      await loadSaved();
+    } else {
+      toast({ title: `${ids.length} influenciador(es) movidos para "${statusLabel(status)}".` });
+    }
+  };
+
   const saveProspect = async (p: any) => {
     if (savingIds.includes(p.id)) return;
     setSavingIds((s) => [...s, p.id]);
@@ -273,17 +291,21 @@ export default function AdminInfluencerProspecting() {
     showSave,
     page: current,
     onPageChange,
+    onBulkStatusChange,
   }: {
     rows: any[];
     showSave: boolean;
     page: number;
     onPageChange: (p: number) => void;
+    onBulkStatusChange?: (ids: string[], status: string) => Promise<void>;
   }) => {
     const size = Number(pageSize);
     const totalPages = Math.max(1, Math.ceil(rows.length / size));
     const safePage = Math.min(current, totalPages);
     const pageRows = rows.slice((safePage - 1) * size, safePage * size);
     const pageAllSelected = pageRows.length > 0 && pageRows.every((p) => selectedIds.includes(p.id));
+    const [bulkStatus, setBulkStatus] = useState<string>("");
+    const [busyBulk, setBusyBulk] = useState(false);
 
     const togglePage = () =>
       setSelectedIds((s) =>
@@ -315,6 +337,37 @@ export default function AdminInfluencerProspecting() {
               <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])} className="h-8 text-xs">
                 <X size={13} className="mr-1.5" /> Limpar seleção
               </Button>
+              <div className="flex items-center gap-2">
+                <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                  <SelectTrigger className="h-8 w-[170px] text-xs">
+                    <SelectValue placeholder="Mudar status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROSPECT_STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs"
+                  disabled={!bulkStatus || busyBulk}
+                  onClick={async () => {
+                    if (!onBulkStatusChange || !bulkStatus) return;
+                    setBusyBulk(true);
+                    try {
+                      await onBulkStatusChange(selectedIds, bulkStatus);
+                      setBulkStatus("");
+                    } finally {
+                      setBusyBulk(false);
+                    }
+                  }}
+                >
+                  {busyBulk ? <Loader2 size={13} className="mr-1 animate-spin" /> : <Tags size={13} className="mr-1" />}
+                  Aplicar
+                </Button>
+              </div>
               <Button size="sm" variant="outline" onClick={() => exportProspectsXlsx(selectedRows)} className="h-8 text-xs">
                 <FileSpreadsheet size={13} className="mr-1.5" /> Exportar planilha
               </Button>
@@ -731,11 +784,11 @@ export default function AdminInfluencerProspecting() {
             </CardContent>
           </Card>
 
-          <ResultsTable rows={viewProspects} showSave page={page} onPageChange={setPage} />
+          <ResultsTable rows={viewProspects} showSave page={page} onPageChange={setPage} onBulkStatusChange={updateStatusBulk} />
         </TabsContent>
 
         <TabsContent value="saved" className="mt-6">
-          <ResultsTable rows={viewSaved} showSave={false} page={savedPage} onPageChange={setSavedPage} />
+          <ResultsTable rows={viewSaved} showSave={false} page={savedPage} onPageChange={setSavedPage} onBulkStatusChange={updateStatusBulk} />
         </TabsContent>
       </Tabs>
 
