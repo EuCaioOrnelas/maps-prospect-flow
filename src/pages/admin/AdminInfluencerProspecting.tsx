@@ -86,6 +86,24 @@ export default function AdminInfluencerProspecting() {
     setSaved(data ?? []);
   };
 
+  // Recupera os resultados da última prospecção concluída (persistem após recarregar a página)
+  const loadLastResults = async () => {
+    const { data: lastSearch } = await (supabase as any)
+      .from("influencer_searches")
+      .select("id")
+      .eq("status", "done")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!lastSearch?.id) return;
+    const { data } = await (supabase as any)
+      .from("influencer_prospects")
+      .select("*")
+      .eq("search_id", lastSearch.id)
+      .order("fit_score", { ascending: false });
+    if (data?.length) setProspects(data);
+  };
+
   const applyUsage = (u: any) => {
     if (!u) return;
     setUsage(u);
@@ -102,7 +120,9 @@ export default function AdminInfluencerProspecting() {
   useEffect(() => {
     loadSaved();
     loadUsage();
+    loadLastResults();
   }, []);
+
 
   useEffect(() => {
     if (cooldown <= 0) return;
