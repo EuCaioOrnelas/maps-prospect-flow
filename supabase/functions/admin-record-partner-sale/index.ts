@@ -45,11 +45,16 @@ serve(async (req) => {
     if (!partner) return json({ error: "Parceiro não encontrado" }, 404);
     if (partner.user_id === profile.id) return json({ error: "Auto-indicação não permitida" }, 400);
 
-    // Try to find or create the partner_lead linkage
+    // Um cliente só pode ter UMA atribuição (link OU código) — busca por user_id
     let partnerLeadId: string | null = null;
     const { data: existingLead } = await supabaseAdmin
-      .from("partner_leads").select("id").eq("partner_id", partner_id).eq("user_id", profile.id).maybeSingle();
+      .from("partner_leads").select("id, partner_id").eq("user_id", profile.id).maybeSingle();
     if (existingLead) {
+      if (existingLead.partner_id !== partner_id) {
+        return json({
+          error: "Este cliente já está atribuído a outro parceiro. Ajuste a atribuição antes de registrar a venda.",
+        }, 409);
+      }
       partnerLeadId = existingLead.id;
       await supabaseAdmin.from("partner_leads").update({
         is_paid: true, paid_at: paid_at || new Date().toISOString(),
@@ -64,6 +69,13 @@ serve(async (req) => {
       partnerLeadId = newLead?.id || null;
     }
 
+    // Idempotência: mesma referência externa não pode virar duas vendas/comissões
+    if (external_reference) {
+      const { data: dup } = await supabaseAdmin
+        .from("partner_sales").select("id").eq("external_reference", external_reference).maybeSingle();
+      if (dup?.id) return json({ success: true, duplicate: true, sale: dup });
+    }
+
     // Insert sale (the trigger generate_commission_for_sale will create the commission)
     const { data: sale, error: saleErr } = await supabaseAdmin.from("partner_sales").insert({
       partner_id, customer_user_id: profile.id, partner_lead_id: partnerLeadId,
@@ -72,7 +84,12 @@ serve(async (req) => {
       paid_at: paid_at || new Date().toISOString(),
     }).select().single();
 
-    if (saleErr) return json({ error: saleErr.message }, 400);
+    if (saleErr) {
+      if ((saleErr as any)?.code === "23505") {
+        return json({ success: true, duplicate: true }, 200);
+      }
+      return json({ error: saleErr.message }, 400);
+    }
 
     return json({ success: true, sale });
   } catch (err: any) {
