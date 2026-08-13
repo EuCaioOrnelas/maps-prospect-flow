@@ -41,17 +41,56 @@ export function getStoredReferral(): StoredReferral | null {
   } catch { return null; }
 }
 
+/** Normalizes a manually typed referral code (letters/numbers only, lowercase). */
+export function normalizeReferralCode(input: string): string {
+  return (input || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/** Stores a referral code explicitly typed by the user (trial / checkout). */
+export function setManualReferralCode(code: string | null) {
+  try {
+    const normalized = code ? normalizeReferralCode(code) : "";
+    if (!normalized) localStorage.removeItem(CODE_KEY);
+    else localStorage.setItem(CODE_KEY, normalized);
+  } catch {}
+}
+
+/** Reads the referral code explicitly typed by the user, if any. */
+export function getManualReferralCode(): string | null {
+  try {
+    return localStorage.getItem(CODE_KEY) || null;
+  } catch { return null; }
+}
+
+/**
+ * Metadata forwarded to Stripe / Asaas checkout.
+ * A manually typed code takes priority over automatic link attribution.
+ */
 export function getPartnerReferralMetadata(): Record<string, string> {
+  const manualCode = getManualReferralCode();
   const ref = getStoredReferral();
+
+  if (manualCode) {
+    return {
+      partner_referral_code: manualCode,
+      partner_attribution_source: "referral_code",
+      ...(ref?.partner_id && ref.code === manualCode
+        ? { partner_id: ref.partner_id, partner_click_id: ref.click_id }
+        : {}),
+    };
+  }
+
   if (!ref) return {};
 
   return {
     partner_referral_code: ref.code,
     partner_id: ref.partner_id,
     partner_click_id: ref.click_id,
+    partner_attribution_source: "referral_link",
     ...(ref.referral_link_id ? { partner_referral_link_id: ref.referral_link_id } : {}),
   };
 }
+
 
 function persistReferral(data: StoredReferral) {
   try {
