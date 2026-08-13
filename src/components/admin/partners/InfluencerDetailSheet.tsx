@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { ExternalLink, Loader2, Youtube } from "lucide-react";
+import { ExternalLink, Globe, Instagram, Loader2, Mail, Youtube } from "lucide-react";
 import { PROSPECT_STATUSES, fitBadgeVariant, fmtNum } from "@/lib/influencerProspecting";
 
 interface Props {
