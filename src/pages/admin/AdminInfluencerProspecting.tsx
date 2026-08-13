@@ -19,10 +19,13 @@ import {
   fmtNum,
   statusLabel,
 } from "@/lib/influencerProspecting";
+import { Checkbox } from "@/components/ui/checkbox";
+import { exportProspectsPdf, exportProspectsXlsx } from "@/lib/influencerExport";
 import {
   Loader2, Search, Youtube, X, Plus, BookmarkPlus, CheckCircle2, Gauge,
   Globe, Languages, ListOrdered, CalendarClock, Users, TrendingUp, Eye,
   Tags, SlidersHorizontal, Sparkles, Target, Filter, ArrowUpDown, Bookmark,
+  CheckSquare, ListChecks, FileSpreadsheet, FileText, ChevronLeft, ChevronRight,
 } from "lucide-react";
 
 function FieldLabel({ icon: Icon, children }: { icon: any; children: React.ReactNode }) {
