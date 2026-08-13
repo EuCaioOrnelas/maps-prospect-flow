@@ -570,7 +570,7 @@ Escreva em português.`,
           .single();
         if (pErr) {
           console.error("[db] upsert prospect", pErr);
-          continue;
+          return;
         }
 
         if (videos.length) {
@@ -593,7 +593,21 @@ Escreva em português.`,
         }
 
         results.push({ ...prospect, videos });
-      }
+      };
+
+      // Processa canais em paralelo (concorrência limitada) para evitar timeout de 150s
+      const CONCURRENCY = 6;
+      const queue = [...filtered];
+      await Promise.all(
+        Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
+          while (queue.length) {
+            const ch = queue.shift();
+            if (!ch) break;
+            await processChannel(ch);
+          }
+        }),
+      );
+
 
       results.sort((a, b) => (b.fit_score ?? 0) - (a.fit_score ?? 0));
 
