@@ -104,6 +104,8 @@ export default function AdminPartnerDetail() {
   const [newPassword, setNewPassword] = useState("");
   const [newReferralCode, setNewReferralCode] = useState("");
   const [copied, setCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
+
 
   const load = async () => {
     if (!id) return;
