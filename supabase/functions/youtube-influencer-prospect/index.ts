@@ -441,18 +441,84 @@ serve(async (req) => {
         channels.push(...(data.items || []));
       }
 
-      // 4) Filtrar por tamanho
-      const filtered = channels
-        .filter((c) => {
-          if (c.statistics?.hiddenSubscriberCount) return false;
-          const subs = Number(c.statistics?.subscriberCount ?? 0);
-          const views = Number(c.statistics?.viewCount ?? 0);
-          if (subs < minSubs || subs > maxSubs) return false;
-          if (minViews && views < minViews) return false;
-          return true;
-        })
-        .sort((a, b) => Number(b.statistics?.subscriberCount ?? 0) - Number(a.statistics?.subscriberCount ?? 0))
-        .slice(0, resultsRequested);
+      // 4) Filtros determinísticos: tamanho + país
+      const sizeOk = channels.filter((c) => {
+        if (c.statistics?.hiddenSubscriberCount) return false;
+        const subs = Number(c.statistics?.subscriberCount ?? 0);
+        const views = Number(c.statistics?.viewCount ?? 0);
+        if (subs < minSubs || subs > maxSubs) return false;
+        if (minViews && views < minViews) return false;
+        return true;
+      });
+
+      // País: descarta canais cujo país declarado é diferente do solicitado.
+      // Canais sem país declarado passam por uma checagem de idioma/relevância pela IA.
+      const countryOk = sizeOk.filter((c) => {
+        const cc = (c.snippet?.country ?? "").toUpperCase();
+        return !cc || cc === country;
+      });
+
+      // 4.1) Dedupe global: canais já prospectados em buscas anteriores são ignorados
+      const includeExisting = body.include_existing === true;
+      let candidates = countryOk;
+      if (!includeExisting && countryOk.length) {
+        const { data: known } = await admin
+          .from("influencer_prospects")
+          .select("youtube_channel_id")
+          .eq("platform", "youtube")
+          .in("youtube_channel_id", countryOk.map((c: any) => c.id));
+        const knownIds = new Set((known ?? []).map((k: any) => k.youtube_channel_id));
+        candidates = countryOk.filter((c: any) => !knownIds.has(c.id));
+      }
+
+      candidates = candidates.sort(
+        (a, b) => Number(b.statistics?.subscriberCount ?? 0) - Number(a.statistics?.subscriberCount ?? 0),
+      );
+
+      // 4.2) Triagem de aderência ao ICP (barata: 1 chamada de IA para todos os candidatos)
+      let filtered = candidates.slice(0, resultsRequested);
+      const relevanceById = new Map<string, { score: number; reason: string }>();
+      if (candidates.length) {
+        const shortlist = candidates.slice(0, Math.min(candidates.length, resultsRequested * 3, 90));
+        try {
+          const screen = await openai(
+            [
+              {
+                role: "system",
+                content:
+                  'Você faz a triagem de canais do YouTube contra um ICP (perfil ideal) descrito pelo usuário. O ICP e as palavras-chave do usuário são a REGRA ABSOLUTA: se o canal não fala sobre esses temas, ele é irrelevante mesmo que seja grande ou popular. Times de futebol, rádios, notícias gerais, entretenimento, música, gameplay e conteúdo genérico devem receber nota 0 quando não tratam do tema do ICP. Responda SOMENTE JSON {"channels":[{"id":"","score":0,"reason":""}]} com score de 0 a 10 de aderência ao ICP e uma justificativa curta em português para cada id recebido.',
+              },
+              {
+                role: "user",
+                content: JSON.stringify({
+                  icp: description,
+                  keywords,
+                  pais: country,
+                  idioma: language,
+                  canais: shortlist.map((c: any) => ({
+                    id: c.id,
+                    nome: c.snippet?.title,
+                    descricao: (c.snippet?.description ?? "").slice(0, 400),
+                    pais: c.snippet?.country ?? null,
+                  })),
+                }),
+              },
+            ],
+            openaiKey,
+            true,
+            "influencer-prospect (triagem ICP)",
+          );
+          for (const r of screen.channels || []) {
+            if (r?.id) relevanceById.set(String(r.id), { score: Number(r.score ?? 0), reason: String(r.reason ?? "") });
+          }
+          const relevant = shortlist
+            .filter((c: any) => (relevanceById.get(c.id)?.score ?? 0) >= 6)
+            .sort((a: any, b: any) => (relevanceById.get(b.id)?.score ?? 0) - (relevanceById.get(a.id)?.score ?? 0));
+          filtered = relevant.slice(0, resultsRequested);
+        } catch (e) {
+          console.error("[triagem] falhou, seguindo sem filtro de IA", e);
+        }
+      }
 
       if (filtered.length === 0) {
         await admin.from("influencer_searches").update({ status: "done", results_found: 0 }).eq("id", searchRow.id);
@@ -460,9 +526,13 @@ serve(async (req) => {
           search_id: searchRow.id,
           prospects: [],
           total_channels: channels.length,
-          message: "Encontramos canais, mas nenhum dentro da faixa de inscritos/visualizações definida.",
+          message:
+            candidates.length === 0
+              ? "Todos os canais encontrados já haviam sido prospectados antes (ou estão fora do país/faixa definida). Tente outras palavras-chave."
+              : "Encontramos canais, mas nenhum com aderência real ao ICP descrito. Refine a descrição ou as palavras-chave.",
         });
       }
+
 
       // 5) Vídeos recentes de cada canal (limitado a 5 por canal)
       const results: any[] = [];
