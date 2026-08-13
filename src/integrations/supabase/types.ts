@@ -5287,6 +5287,7 @@ export type Database = {
       partner_leads: {
         Row: {
           attributed_at: string
+          attribution_source: string
           cancelled_at: string | null
           click_id: string | null
           created_at: string
@@ -5300,12 +5301,14 @@ export type Database = {
           name: string | null
           paid_at: string | null
           partner_id: string
+          referral_code: string | null
           referral_link_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           attributed_at?: string
+          attribution_source?: string
           cancelled_at?: string | null
           click_id?: string | null
           created_at?: string
@@ -5319,12 +5322,14 @@ export type Database = {
           name?: string | null
           paid_at?: string | null
           partner_id: string
+          referral_code?: string | null
           referral_link_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           attributed_at?: string
+          attribution_source?: string
           cancelled_at?: string | null
           click_id?: string | null
           created_at?: string
@@ -5338,6 +5343,7 @@ export type Database = {
           name?: string | null
           paid_at?: string | null
           partner_id?: string
+          referral_code?: string | null
           referral_link_id?: string | null
           updated_at?: string
           user_id?: string
@@ -10421,6 +10427,7 @@ export type Database = {
         Returns: undefined
       }
       user_has_real_payment: { Args: { _user_id: string }; Returns: boolean }
+      validate_partner_referral_code: { Args: { _code: string }; Returns: Json }
       verify_partner_public: {
         Args: { p_code: string }
         Returns: {
