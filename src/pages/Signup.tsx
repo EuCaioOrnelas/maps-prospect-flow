@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { PartnerCodeField } from "@/components/partners/PartnerCodeField";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PartnerCodeField } from "@/components/partners/PartnerCodeField";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
