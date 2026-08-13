@@ -89,8 +89,10 @@ export function PartnerCodeField({ onChange, className, bare }: Props) {
           p_source: "referral_code",
         });
       }
-
+    } finally {
+      setLoading(false);
     }
+
   };
 
   const remove = () => {
