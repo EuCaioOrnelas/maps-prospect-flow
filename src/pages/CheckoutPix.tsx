@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PartnerCodeField } from "@/components/partners/PartnerCodeField";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -517,7 +518,10 @@ export default function CheckoutPix() {
               onChange={setBumps}
             />
 
+            <PartnerCodeField />
+
             {/* Coupon notice — only for credit card */}
+
             <div className="rounded-2xl border border-border/40 bg-muted/30 p-4 space-y-2">
               <div className="flex items-center gap-2">
                 <Tag className="h-4 w-4 text-muted-foreground" />

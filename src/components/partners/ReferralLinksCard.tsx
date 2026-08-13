@@ -64,7 +64,32 @@ export function ReferralLinksCard({ partner, onSelectFilter, selectedLinkId, sho
           </div>
         </div>
 
+        {/* Referral code — can be typed manually by the client at signup/checkout */}
+        <div className="rounded-xl border border-primary/30 bg-primary/[0.06] p-3">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="min-w-0">
+              <div className="text-sm font-medium">Seu código de indicação</div>
+              <div className="text-[11px] text-muted-foreground">
+                O cliente pode digitar este código no cadastro ou no checkout (cartão ou PIX).
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 h-8"
+              onClick={() => copy("code", partner.referral_code.toUpperCase())}
+            >
+              {copiedId === "code" ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+              {copiedId === "code" ? "Copiado" : "Copiar código"}
+            </Button>
+          </div>
+          <div className="mt-2 font-mono text-base font-bold tracking-[0.15em] text-primary">
+            {partner.referral_code.toUpperCase()}
+          </div>
+        </div>
+
         {/* Default link */}
+
         <LinkRow
           id="default"
           label="Link principal"

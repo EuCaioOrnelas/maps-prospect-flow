@@ -1,4 +1,6 @@
+import { PartnerCodeField } from "@/components/partners/PartnerCodeField";
 // Página combinada em 2 etapas: 1) Dados da conta  2) Cartão (estilo checkout premium).
+
 // O usuário só chega aqui depois de escolher o plano em /signup/escolher-plano.
 
 import { useEffect, useMemo, useState } from "react";
@@ -763,7 +765,10 @@ function SignupWithCardInner() {
                       )}
                     </section>
 
+                    <PartnerCodeField bare className="pt-1" />
+
                     <div className="flex items-start gap-3 pt-2">
+
                       <Checkbox
                         id="terms-step1"
                         checked={acceptedTerms}

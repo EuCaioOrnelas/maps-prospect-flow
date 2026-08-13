@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { PartnerCodeField } from "@/components/partners/PartnerCodeField";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -253,6 +254,10 @@ const Signup = () => {
                 </div>
                 <PasswordStrength password={password} />
               </div>
+
+              <PartnerCodeField bare />
+
+
 
               <div className="flex items-start space-x-3">
                 <Checkbox

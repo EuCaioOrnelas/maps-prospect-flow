@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { PartnerCodeField } from "@/components/partners/PartnerCodeField";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -692,6 +693,10 @@ function CheckoutCardInner() {
               onApply={setAppliedCoupon}
               onRemove={() => setAppliedCoupon(null)}
             />
+
+            <PartnerCodeField />
+
+
 
             {/* Testimonials */}
             <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">

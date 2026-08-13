@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "wiize_referral";
+const CODE_KEY = "wiize_referral_code";
 const COOKIE_KEY = "wiize_ref";
 const COOKIE_DAYS = 365 * 2; // 2 years (last-click persistence)
 
@@ -13,6 +14,7 @@ interface StoredReferral {
   referral_link_id?: string | null;
   ts: number;
 }
+
 
 function setCookie(name: string, value: string, days: number) {
   try {
@@ -39,17 +41,56 @@ export function getStoredReferral(): StoredReferral | null {
   } catch { return null; }
 }
 
+/** Normalizes a manually typed referral code (letters/numbers only, lowercase). */
+export function normalizeReferralCode(input: string): string {
+  return (input || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/** Stores a referral code explicitly typed by the user (trial / checkout). */
+export function setManualReferralCode(code: string | null) {
+  try {
+    const normalized = code ? normalizeReferralCode(code) : "";
+    if (!normalized) localStorage.removeItem(CODE_KEY);
+    else localStorage.setItem(CODE_KEY, normalized);
+  } catch {}
+}
+
+/** Reads the referral code explicitly typed by the user, if any. */
+export function getManualReferralCode(): string | null {
+  try {
+    return localStorage.getItem(CODE_KEY) || null;
+  } catch { return null; }
+}
+
+/**
+ * Metadata forwarded to Stripe / Asaas checkout.
+ * A manually typed code takes priority over automatic link attribution.
+ */
 export function getPartnerReferralMetadata(): Record<string, string> {
+  const manualCode = getManualReferralCode();
   const ref = getStoredReferral();
+
+  if (manualCode) {
+    return {
+      partner_referral_code: manualCode,
+      partner_attribution_source: "referral_code",
+      ...(ref?.partner_id && ref.code === manualCode
+        ? { partner_id: ref.partner_id, partner_click_id: ref.click_id }
+        : {}),
+    };
+  }
+
   if (!ref) return {};
 
   return {
     partner_referral_code: ref.code,
     partner_id: ref.partner_id,
     partner_click_id: ref.click_id,
+    partner_attribution_source: "referral_link",
     ...(ref.referral_link_id ? { partner_referral_link_id: ref.referral_link_id } : {}),
   };
 }
+
 
 function persistReferral(data: StoredReferral) {
   try {
@@ -116,12 +157,19 @@ export function usePartnerTracking() {
 
 
 
-/** Call this after a user signs up to attribute their account to the stored partner. */
+/**
+ * Call this after a user signs up to attribute their account to a partner.
+ * A code typed manually by the user wins over the automatic link attribution.
+ */
 export async function attributePartnerLeadOnSignup(userId: string, email: string, name?: string) {
   const ref = getStoredReferral();
-  if (!ref) return;
-  try {
-    const { data, error } = await (supabase as any).rpc("attribute_partner_lead", {
+  const manualCode = getManualReferralCode();
+  if (!ref && !manualCode) return;
+
+  const attempts: Array<Record<string, unknown>> = [];
+
+  if (ref) {
+    attempts.push({
       p_user_id: userId,
       p_email: email,
       p_name: name || null,
@@ -131,20 +179,42 @@ export async function attributePartnerLeadOnSignup(userId: string, email: string
       p_referral_link_id: ref.referral_link_id ?? null,
       p_source: "signed_in_event",
     });
+  }
 
-    if (error) {
-      console.warn("[attributePartnerLeadOnSignup] attribution failed:", error.message);
-      return;
-    }
+  // Runs last on purpose: the RPC re-attributes the lead to the typed code.
+  if (manualCode) {
+    attempts.push({
+      p_user_id: userId,
+      p_email: email,
+      p_name: name || null,
+      p_referral_code: manualCode,
+      p_click_id: null,
+      p_partner_id: null,
+      p_referral_link_id: null,
+      p_source: "referral_code",
+    });
+  }
 
-    if (data?.status === "blocked") {
-      console.warn("[attributePartnerLeadOnSignup] self-referral blocked:", data);
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-        document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-      } catch {}
+  try {
+    for (const payload of attempts) {
+      const { data, error } = await (supabase as any).rpc("attribute_partner_lead", payload);
+
+      if (error) {
+        console.warn("[attributePartnerLeadOnSignup] attribution failed:", error.message);
+        continue;
+      }
+
+      if (data?.status === "blocked") {
+        console.warn("[attributePartnerLeadOnSignup] self-referral blocked:", data);
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(CODE_KEY);
+          document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        } catch {}
+      }
     }
   } catch (err) {
+
     console.warn("[attributePartnerLeadOnSignup]", err);
   }
 }
