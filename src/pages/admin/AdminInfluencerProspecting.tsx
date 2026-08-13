@@ -291,17 +291,21 @@ export default function AdminInfluencerProspecting() {
     showSave,
     page: current,
     onPageChange,
+    onBulkStatusChange,
   }: {
     rows: any[];
     showSave: boolean;
     page: number;
     onPageChange: (p: number) => void;
+    onBulkStatusChange?: (ids: string[], status: string) => Promise<void>;
   }) => {
     const size = Number(pageSize);
     const totalPages = Math.max(1, Math.ceil(rows.length / size));
     const safePage = Math.min(current, totalPages);
     const pageRows = rows.slice((safePage - 1) * size, safePage * size);
     const pageAllSelected = pageRows.length > 0 && pageRows.every((p) => selectedIds.includes(p.id));
+    const [bulkStatus, setBulkStatus] = useState<string>("");
+    const [busyBulk, setBusyBulk] = useState(false);
 
     const togglePage = () =>
       setSelectedIds((s) =>
