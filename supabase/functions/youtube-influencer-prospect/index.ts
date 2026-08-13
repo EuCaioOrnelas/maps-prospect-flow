@@ -40,6 +40,31 @@ function fitCategory(score: number) {
   return "BAIXO FIT";
 }
 
+/** Extrai meios de contato públicos (e-mail, Instagram, site) de textos do canal/vídeos. */
+function extractContacts(texts: (string | null | undefined)[]) {
+  const blob = texts.filter(Boolean).join("\n");
+  const email =
+    blob.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0]?.toLowerCase() ?? null;
+
+  const igMatch =
+    blob.match(/(?:instagram\.com|instagr\.am)\/([A-Za-z0-9._]{2,30})/i)?.[1] ??
+    blob.match(/(?:insta(?:gram)?\s*[:\-]?\s*)@([A-Za-z0-9._]{2,30})/i)?.[1] ??
+    null;
+  const instagram = igMatch ? `https://instagram.com/${igMatch.replace(/^@/, "")}` : null;
+
+  const links = Array.from(
+    new Set(
+      (blob.match(/https?:\/\/[^\s)<>"']+/g) ?? []).map((l) => l.replace(/[.,;]+$/, "")),
+    ),
+  ).slice(0, 12);
+
+  const IGNORE = /(youtube\.com|youtu\.be|instagram\.com|instagr\.am|facebook\.com|twitter\.com|x\.com|tiktok\.com|linkedin\.com|whatsapp\.com|wa\.me|t\.me|spotify\.com|linktr\.ee)/i;
+  const website = links.find((l) => !IGNORE.test(l)) ?? null;
+
+  return { contact_email: email, instagram_url: instagram, website_url: website, contact_links: links };
+}
+
+
 // Usuário da requisição atual (para atribuir custo de IA nos logs)
 let CURRENT_USER_ID: string | null = null;
 
