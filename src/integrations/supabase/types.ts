@@ -3546,6 +3546,268 @@ export type Database = {
           },
         ]
       }
+      influencer_analysis: {
+        Row: {
+          analysis_json: Json
+          created_at: string
+          id: string
+          model: string
+          prompt_version: string
+          prospect_id: string
+          search_id: string | null
+        }
+        Insert: {
+          analysis_json?: Json
+          created_at?: string
+          id?: string
+          model: string
+          prompt_version: string
+          prospect_id: string
+          search_id?: string | null
+        }
+        Update: {
+          analysis_json?: Json
+          created_at?: string
+          id?: string
+          model?: string
+          prompt_version?: string
+          prospect_id?: string
+          search_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_analysis_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_analysis_search_id_fkey"
+            columns: ["search_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_searches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_prospects: {
+        Row: {
+          ai_reasoning: Json
+          ai_recommendation: string | null
+          ai_summary: string | null
+          audience_fit_score: number | null
+          avg_recent_views: number | null
+          channel_description: string | null
+          channel_handle: string | null
+          channel_name: string
+          channel_url: string | null
+          commercial_score: number | null
+          content_fit_score: number | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          fit_category: string | null
+          fit_score: number | null
+          id: string
+          latest_video_at: string | null
+          platform: string
+          quality_score: number | null
+          reach_score: number | null
+          saved: boolean
+          search_id: string | null
+          status: string
+          subscriber_count: number | null
+          thumbnail_url: string | null
+          total_view_count: number | null
+          updated_at: string
+          video_count: number | null
+          youtube_channel_id: string
+        }
+        Insert: {
+          ai_reasoning?: Json
+          ai_recommendation?: string | null
+          ai_summary?: string | null
+          audience_fit_score?: number | null
+          avg_recent_views?: number | null
+          channel_description?: string | null
+          channel_handle?: string | null
+          channel_name: string
+          channel_url?: string | null
+          commercial_score?: number | null
+          content_fit_score?: number | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          fit_category?: string | null
+          fit_score?: number | null
+          id?: string
+          latest_video_at?: string | null
+          platform?: string
+          quality_score?: number | null
+          reach_score?: number | null
+          saved?: boolean
+          search_id?: string | null
+          status?: string
+          subscriber_count?: number | null
+          thumbnail_url?: string | null
+          total_view_count?: number | null
+          updated_at?: string
+          video_count?: number | null
+          youtube_channel_id: string
+        }
+        Update: {
+          ai_reasoning?: Json
+          ai_recommendation?: string | null
+          ai_summary?: string | null
+          audience_fit_score?: number | null
+          avg_recent_views?: number | null
+          channel_description?: string | null
+          channel_handle?: string | null
+          channel_name?: string
+          channel_url?: string | null
+          commercial_score?: number | null
+          content_fit_score?: number | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          fit_category?: string | null
+          fit_score?: number | null
+          id?: string
+          latest_video_at?: string | null
+          platform?: string
+          quality_score?: number | null
+          reach_score?: number | null
+          saved?: boolean
+          search_id?: string | null
+          status?: string
+          subscriber_count?: number | null
+          thumbnail_url?: string | null
+          total_view_count?: number | null
+          updated_at?: string
+          video_count?: number | null
+          youtube_channel_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_prospects_search_id_fkey"
+            columns: ["search_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_searches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_searches: {
+        Row: {
+          admin_id: string
+          country: string
+          created_at: string
+          error_message: string | null
+          generated_queries: string[]
+          id: string
+          keywords: string[]
+          language: string
+          max_subscribers: number
+          min_subscribers: number
+          min_views: number | null
+          query_description: string
+          recency_days: number
+          results_found: number
+          results_requested: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          country?: string
+          created_at?: string
+          error_message?: string | null
+          generated_queries?: string[]
+          id?: string
+          keywords?: string[]
+          language?: string
+          max_subscribers?: number
+          min_subscribers?: number
+          min_views?: number | null
+          query_description: string
+          recency_days?: number
+          results_found?: number
+          results_requested?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          country?: string
+          created_at?: string
+          error_message?: string | null
+          generated_queries?: string[]
+          id?: string
+          keywords?: string[]
+          language?: string
+          max_subscribers?: number
+          min_subscribers?: number
+          min_views?: number | null
+          query_description?: string
+          recency_days?: number
+          results_found?: number
+          results_requested?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      influencer_videos: {
+        Row: {
+          comment_count: number | null
+          created_at: string
+          description: string | null
+          id: string
+          like_count: number | null
+          prospect_id: string
+          published_at: string | null
+          title: string | null
+          video_url: string | null
+          view_count: number | null
+          youtube_video_id: string
+        }
+        Insert: {
+          comment_count?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          like_count?: number | null
+          prospect_id: string
+          published_at?: string | null
+          title?: string | null
+          video_url?: string | null
+          view_count?: number | null
+          youtube_video_id: string
+        }
+        Update: {
+          comment_count?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          like_count?: number | null
+          prospect_id?: string
+          published_at?: string | null
+          title?: string | null
+          video_url?: string | null
+          view_count?: number | null
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_videos_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integration_audit_log: {
         Row: {
           client_id: string | null
