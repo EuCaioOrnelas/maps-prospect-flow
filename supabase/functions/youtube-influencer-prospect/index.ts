@@ -9,6 +9,23 @@ const corsHeaders = {
 const OPENAI_MODEL = "gpt-4o-mini";
 export const INFLUENCER_ANALYSIS_PROMPT_VERSION = "v1";
 
+// ---- Limites de uso (proteção de quota YouTube + custo OpenAI) ----
+export const LIMITS = {
+  /** Buscas por administrador por dia (janela 24h corridas) */
+  DAILY_PER_ADMIN: 10,
+  /** Buscas somadas de todos os admins por dia (protege a quota global da API) */
+  DAILY_GLOBAL: 25,
+  /** Intervalo mínimo entre duas buscas do mesmo admin (segundos) */
+  COOLDOWN_SECONDS: 60,
+  /** Rajada: máximo de buscas por admin dentro de 10 minutos */
+  BURST_MAX: 3,
+  BURST_WINDOW_SECONDS: 600,
+  /** Teto de canais analisados por busca (cada canal = 1 chamada OpenAI) */
+  MAX_RESULTS_PER_SEARCH: 50,
+};
+
+const DAY_MS = 86400000;
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -62,6 +79,54 @@ async function yt(path: string, params: Record<string, string>, key: string) {
   return await res.json();
 }
 
+/**
+ * Consolida o uso das últimas 24h (por admin e global) a partir da tabela
+ * `influencer_searches`, que é a fonte de verdade das buscas executadas.
+ */
+async function getUsage(admin: any, adminId: string) {
+  const since = new Date(Date.now() - DAY_MS).toISOString();
+
+  const [mine, global, last] = await Promise.all([
+    admin
+      .from("influencer_searches")
+      .select("id", { count: "exact", head: true })
+      .eq("admin_id", adminId)
+      .gte("created_at", since),
+    admin
+      .from("influencer_searches")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", since),
+    admin
+      .from("influencer_searches")
+      .select("created_at")
+      .eq("admin_id", adminId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const usedToday = mine.count ?? 0;
+  const usedGlobal = global.count ?? 0;
+  const lastAt = last.data?.created_at ? new Date(last.data.created_at).getTime() : null;
+  const cooldownRemaining = lastAt
+    ? Math.max(0, Math.ceil((lastAt + LIMITS.COOLDOWN_SECONDS * 1000 - Date.now()) / 1000))
+    : 0;
+
+  return {
+    used_today: usedToday,
+    daily_limit: LIMITS.DAILY_PER_ADMIN,
+    remaining_today: Math.max(0, LIMITS.DAILY_PER_ADMIN - usedToday),
+    used_global_today: usedGlobal,
+    global_daily_limit: LIMITS.DAILY_GLOBAL,
+    cooldown_seconds_remaining: cooldownRemaining,
+    cooldown_seconds: LIMITS.COOLDOWN_SECONDS,
+    max_results_per_search: LIMITS.MAX_RESULTS_PER_SEARCH,
+    burst_max: LIMITS.BURST_MAX,
+    burst_window_minutes: LIMITS.BURST_WINDOW_SECONDS / 60,
+    resets_at: new Date(Date.now() + DAY_MS).toISOString(),
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -90,6 +155,11 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const action = body.action || "search";
+
+    // ---------- QUOTA ----------
+    if (action === "quota") {
+      return json({ usage: await getUsage(admin, u.user.id) });
+    }
 
     // ---------- STATUS / SAVE ----------
     if (action === "update_status") {
@@ -125,6 +195,58 @@ serve(async (req) => {
     const description: string = (body.query_description || "").trim();
     if (description.length < 10) return json({ error: "Descreva melhor o tipo de criador que você procura." }, 400);
 
+    // ---- RATE LIMIT (servidor é a única fonte de verdade) ----
+    const usage = await getUsage(admin, u.user.id);
+
+    if (usage.cooldown_seconds_remaining > 0) {
+      return json(
+        {
+          error: `Aguarde ${usage.cooldown_seconds_remaining}s antes de iniciar outra prospecção.`,
+          code: "COOLDOWN",
+          usage,
+        },
+        429,
+      );
+    }
+    if (usage.remaining_today <= 0) {
+      return json(
+        {
+          error: `Você atingiu o limite de ${LIMITS.DAILY_PER_ADMIN} prospecções nas últimas 24h. Isso protege a quota diária da YouTube API.`,
+          code: "DAILY_LIMIT",
+          usage,
+        },
+        429,
+      );
+    }
+    if (usage.used_global_today >= LIMITS.DAILY_GLOBAL) {
+      return json(
+        {
+          error: `O limite global de ${LIMITS.DAILY_GLOBAL} prospecções nas últimas 24h foi atingido pela equipe. Tente novamente mais tarde.`,
+          code: "GLOBAL_LIMIT",
+          usage,
+        },
+        429,
+      );
+    }
+
+    // Rajada: no máximo BURST_MAX buscas por admin dentro da janela curta
+    const { data: burst } = await admin.rpc("check_rate_limit", {
+      p_identifier: u.user.id,
+      p_endpoint: "influencer_prospect_search",
+      p_max_requests: LIMITS.BURST_MAX,
+      p_window_seconds: LIMITS.BURST_WINDOW_SECONDS,
+    });
+    if (burst && burst.allowed === false) {
+      return json(
+        {
+          error: `Muitas prospecções seguidas. Aguarde alguns minutos antes de tentar novamente (máximo de ${LIMITS.BURST_MAX} a cada ${LIMITS.BURST_WINDOW_SECONDS / 60} minutos).`,
+          code: "BURST_LIMIT",
+          usage,
+        },
+        429,
+      );
+    }
+
     const country = (body.country || "BR").toUpperCase();
     const language = body.language || "pt";
     const keywords: string[] = Array.isArray(body.keywords) ? body.keywords.filter(Boolean).slice(0, 15) : [];
@@ -132,7 +254,10 @@ serve(async (req) => {
     const maxSubs = Number(body.max_subscribers ?? 100000);
     const minViews = body.min_views ? Number(body.min_views) : null;
     const recencyDays = Number(body.recency_days ?? 90);
-    const resultsRequested = Math.min(Number(body.results_requested ?? 20), 100);
+    const resultsRequested = Math.min(
+      Math.max(Number(body.results_requested ?? 20) || 20, 5),
+      LIMITS.MAX_RESULTS_PER_SEARCH,
+    );
 
     const { data: searchRow, error: searchErr } = await admin
       .from("influencer_searches")
@@ -419,6 +544,7 @@ Escreva em português.`,
         search_id: searchRow.id,
         prospects: results,
         total_channels: channelIds.size,
+        usage: await getUsage(admin, u.user.id),
       });
     } catch (e) {
       const msg = (e as Error).message;
