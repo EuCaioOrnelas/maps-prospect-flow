@@ -441,13 +441,13 @@ serve(async (req) => {
         channels.push(...(data.items || []));
       }
 
-      // 4) Filtros determinísticos: tamanho + país
+      // 4) Filtros determinísticos: tamanho + país (regra dura, nunca ignorada)
       const sizeOk = channels.filter((c) => {
-        if (c.statistics?.hiddenSubscriberCount) return false;
         const subs = Number(c.statistics?.subscriberCount ?? 0);
-        const views = Number(c.statistics?.viewCount ?? 0);
-        if (subs < minSubs || subs > maxSubs) return false;
-        if (minViews && views < minViews) return false;
+        if (c.statistics?.hiddenSubscriberCount) return false;
+        if (!Number.isFinite(subs) || subs <= 0) return false;
+        if (minSubs && subs < minSubs) return false;
+        if (maxSubs && subs > maxSubs) return false;
         return true;
       });
 
