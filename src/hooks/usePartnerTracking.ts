@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "wiize_referral";
+const CODE_KEY = "wiize_referral_code";
 const COOKIE_KEY = "wiize_ref";
 const COOKIE_DAYS = 365 * 2; // 2 years (last-click persistence)
 
@@ -13,6 +14,7 @@ interface StoredReferral {
   referral_link_id?: string | null;
   ts: number;
 }
+
 
 function setCookie(name: string, value: string, days: number) {
   try {
