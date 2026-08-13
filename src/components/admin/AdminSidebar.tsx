@@ -128,6 +128,7 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Pagamentos", url: "/admin/partners/pagamentos", icon: CheckCircle2 },
       { title: "Metas", url: "/admin/partners/metas", icon: Target },
       { title: "Links Campanha", url: "/admin/partners/links", icon: Workflow },
+      { title: "YouTube Prospecting", url: "/admin/partners/influenciadores", icon: Youtube },
       { title: "Materiais", url: "/admin/partners/materiais", icon: FileText },
       { title: "Configurações", url: "/admin/partners/configuracoes", icon: SettingsIcon },
     ],
