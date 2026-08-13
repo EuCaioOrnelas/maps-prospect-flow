@@ -763,7 +763,10 @@ function SignupWithCardInner() {
                       )}
                     </section>
 
+                    <PartnerCodeField bare className="pt-1" />
+
                     <div className="flex items-start gap-3 pt-2">
+
                       <Checkbox
                         id="terms-step1"
                         checked={acceptedTerms}
