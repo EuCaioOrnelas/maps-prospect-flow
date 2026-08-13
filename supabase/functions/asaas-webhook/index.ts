@@ -73,6 +73,14 @@ async function registerPartnerSale(
       .single();
 
     if (saleErr) {
+      if ((saleErr as any)?.code === '23505') {
+        const { data: dup } = await supabase
+          .from('partner_sales')
+          .select('id')
+          .eq('external_reference', input.asaasPaymentId)
+          .maybeSingle();
+        return { ok: true, reason: 'duplicate', saleId: dup?.id, isRecurring };
+      }
       console.error('[registerPartnerSale-asaas] insert error:', saleErr);
       return { ok: false, reason: saleErr.message };
     }
