@@ -351,6 +351,8 @@ serve(async (req) => {
           },
         ],
         openaiKey,
+        true,
+        "influencer-prospect (queries)",
       );
       const generatedQueries: string[] = Array.from(
         new Set([...(queryGen.queries || []), ...keywords].map((q: string) => String(q).trim()).filter(Boolean)),
