@@ -694,6 +694,10 @@ function CheckoutCardInner() {
               onRemove={() => setAppliedCoupon(null)}
             />
 
+            <PartnerCodeField />
+
+
+
             {/* Testimonials */}
             <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-4">
               <p className="text-sm font-semibold text-foreground flex items-center gap-2">
