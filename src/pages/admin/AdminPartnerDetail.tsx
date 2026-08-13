@@ -268,10 +268,26 @@ export default function AdminPartnerDetail() {
                 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">{levelLabel[partner.level]}</Badge>
               </div>
               <div className="text-sm text-muted-foreground mt-1">{partner.email} · cadastrado em {fmtDate(partner.created_at)}</div>
-              <button onClick={copyLink} className="mt-3 inline-flex items-center gap-2 text-xs font-mono bg-muted/60 hover:bg-muted px-3 py-1.5 rounded-lg transition-colors">
-                /?ref={partner.referral_code}
-                {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-              </button>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button onClick={copyLink} className="inline-flex items-center gap-2 text-xs font-mono bg-muted/60 hover:bg-muted px-3 py-1.5 rounded-lg transition-colors">
+                  /?ref={partner.referral_code}
+                  {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                </button>
+                <button
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(partner.referral_code.toUpperCase());
+                    setCodeCopied(true);
+                    toast({ title: "Código copiado!", description: partner.referral_code.toUpperCase() });
+                    setTimeout(() => setCodeCopied(false), 1800);
+                  }}
+                  className="inline-flex items-center gap-2 text-xs font-mono font-bold tracking-wider bg-primary/10 text-primary hover:bg-primary/15 px-3 py-1.5 rounded-lg transition-colors"
+                  title="Código de indicação (digitado manualmente pelo cliente)"
+                >
+                  {partner.referral_code.toUpperCase()}
+                  {codeCopied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                </button>
+              </div>
+
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
