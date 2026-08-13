@@ -40,6 +40,31 @@ function fitCategory(score: number) {
   return "BAIXO FIT";
 }
 
+/** Extrai meios de contato públicos (e-mail, Instagram, site) de textos do canal/vídeos. */
+function extractContacts(texts: (string | null | undefined)[]) {
+  const blob = texts.filter(Boolean).join("\n");
+  const email =
+    blob.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0]?.toLowerCase() ?? null;
+
+  const igMatch =
+    blob.match(/(?:instagram\.com|instagr\.am)\/([A-Za-z0-9._]{2,30})/i)?.[1] ??
+    blob.match(/(?:insta(?:gram)?\s*[:\-]?\s*)@([A-Za-z0-9._]{2,30})/i)?.[1] ??
+    null;
+  const instagram = igMatch ? `https://instagram.com/${igMatch.replace(/^@/, "")}` : null;
+
+  const links = Array.from(
+    new Set(
+      (blob.match(/https?:\/\/[^\s)<>"']+/g) ?? []).map((l) => l.replace(/[.,;]+$/, "")),
+    ),
+  ).slice(0, 12);
+
+  const IGNORE = /(youtube\.com|youtu\.be|instagram\.com|instagr\.am|facebook\.com|twitter\.com|x\.com|tiktok\.com|linkedin\.com|whatsapp\.com|wa\.me|t\.me|spotify\.com|linktr\.ee)/i;
+  const website = links.find((l) => !IGNORE.test(l)) ?? null;
+
+  return { contact_email: email, instagram_url: instagram, website_url: website, contact_links: links };
+}
+
+
 // Usuário da requisição atual (para atribuir custo de IA nos logs)
 let CURRENT_USER_ID: string | null = null;
 
@@ -416,18 +441,84 @@ serve(async (req) => {
         channels.push(...(data.items || []));
       }
 
-      // 4) Filtrar por tamanho
-      const filtered = channels
-        .filter((c) => {
-          if (c.statistics?.hiddenSubscriberCount) return false;
-          const subs = Number(c.statistics?.subscriberCount ?? 0);
-          const views = Number(c.statistics?.viewCount ?? 0);
-          if (subs < minSubs || subs > maxSubs) return false;
-          if (minViews && views < minViews) return false;
-          return true;
-        })
-        .sort((a, b) => Number(b.statistics?.subscriberCount ?? 0) - Number(a.statistics?.subscriberCount ?? 0))
-        .slice(0, resultsRequested);
+      // 4) Filtros determinísticos: tamanho + país
+      const sizeOk = channels.filter((c) => {
+        if (c.statistics?.hiddenSubscriberCount) return false;
+        const subs = Number(c.statistics?.subscriberCount ?? 0);
+        const views = Number(c.statistics?.viewCount ?? 0);
+        if (subs < minSubs || subs > maxSubs) return false;
+        if (minViews && views < minViews) return false;
+        return true;
+      });
+
+      // País: descarta canais cujo país declarado é diferente do solicitado.
+      // Canais sem país declarado passam por uma checagem de idioma/relevância pela IA.
+      const countryOk = sizeOk.filter((c) => {
+        const cc = (c.snippet?.country ?? "").toUpperCase();
+        return !cc || cc === country;
+      });
+
+      // 4.1) Dedupe global: canais já prospectados em buscas anteriores são ignorados
+      const includeExisting = body.include_existing === true;
+      let candidates = countryOk;
+      if (!includeExisting && countryOk.length) {
+        const { data: known } = await admin
+          .from("influencer_prospects")
+          .select("youtube_channel_id")
+          .eq("platform", "youtube")
+          .in("youtube_channel_id", countryOk.map((c: any) => c.id));
+        const knownIds = new Set((known ?? []).map((k: any) => k.youtube_channel_id));
+        candidates = countryOk.filter((c: any) => !knownIds.has(c.id));
+      }
+
+      candidates = candidates.sort(
+        (a, b) => Number(b.statistics?.subscriberCount ?? 0) - Number(a.statistics?.subscriberCount ?? 0),
+      );
+
+      // 4.2) Triagem de aderência ao ICP (barata: 1 chamada de IA para todos os candidatos)
+      let filtered = candidates.slice(0, resultsRequested);
+      const relevanceById = new Map<string, { score: number; reason: string }>();
+      if (candidates.length) {
+        const shortlist = candidates.slice(0, Math.min(candidates.length, resultsRequested * 3, 90));
+        try {
+          const screen = await openai(
+            [
+              {
+                role: "system",
+                content:
+                  'Você faz a triagem de canais do YouTube contra um ICP (perfil ideal) descrito pelo usuário. O ICP e as palavras-chave do usuário são a REGRA ABSOLUTA: se o canal não fala sobre esses temas, ele é irrelevante mesmo que seja grande ou popular. Times de futebol, rádios, notícias gerais, entretenimento, música, gameplay e conteúdo genérico devem receber nota 0 quando não tratam do tema do ICP. Responda SOMENTE JSON {"channels":[{"id":"","score":0,"reason":""}]} com score de 0 a 10 de aderência ao ICP e uma justificativa curta em português para cada id recebido.',
+              },
+              {
+                role: "user",
+                content: JSON.stringify({
+                  icp: description,
+                  keywords,
+                  pais: country,
+                  idioma: language,
+                  canais: shortlist.map((c: any) => ({
+                    id: c.id,
+                    nome: c.snippet?.title,
+                    descricao: (c.snippet?.description ?? "").slice(0, 400),
+                    pais: c.snippet?.country ?? null,
+                  })),
+                }),
+              },
+            ],
+            openaiKey,
+            true,
+            "influencer-prospect (triagem ICP)",
+          );
+          for (const r of screen.channels || []) {
+            if (r?.id) relevanceById.set(String(r.id), { score: Number(r.score ?? 0), reason: String(r.reason ?? "") });
+          }
+          const relevant = shortlist
+            .filter((c: any) => (relevanceById.get(c.id)?.score ?? 0) >= 6)
+            .sort((a: any, b: any) => (relevanceById.get(b.id)?.score ?? 0) - (relevanceById.get(a.id)?.score ?? 0));
+          filtered = relevant.slice(0, resultsRequested);
+        } catch (e) {
+          console.error("[triagem] falhou, seguindo sem filtro de IA", e);
+        }
+      }
 
       if (filtered.length === 0) {
         await admin.from("influencer_searches").update({ status: "done", results_found: 0 }).eq("id", searchRow.id);
@@ -435,9 +526,13 @@ serve(async (req) => {
           search_id: searchRow.id,
           prospects: [],
           total_channels: channels.length,
-          message: "Encontramos canais, mas nenhum dentro da faixa de inscritos/visualizações definida.",
+          message:
+            candidates.length === 0
+              ? "Todos os canais encontrados já haviam sido prospectados antes (ou estão fora do país/faixa definida). Tente outras palavras-chave."
+              : "Encontramos canais, mas nenhum com aderência real ao ICP descrito. Refine a descrição ou as palavras-chave.",
         });
       }
+
 
       // 5) Vídeos recentes de cada canal (limitado a 5 por canal)
       const results: any[] = [];
@@ -484,10 +579,12 @@ serve(async (req) => {
               {
                 role: "system",
                 content: `Você é um analista de parcerias da Wiize, plataforma de inteligência comercial e prospecção B2B.
-Avalie se um canal do YouTube tem potencial para ser parceiro/afiliado/canal de aquisição da Wiize.
-Avalie EXCLUSIVAMENTE com base nos dados fornecidos. NUNCA invente audiência, receita, e-mail, dados demográficos, localização ou patrocínios. Quando não for possível comprovar, use "não identificado" ou marque como estimativa.
-Priorize canais sobre vendas B2B, prospecção, SDR, outbound, CRM, geração de leads, marketing B2B, automação comercial, gestão de vendas e empreendedorismo empresarial. Não penalize excessivamente canais menores com forte aderência ao ICP.
-Distribuição do Fit Score (0-100): Content Fit 30, Audience/ICP Fit 25, Reach & Engagement 20, Commercial/Partnership Potential 15, Content Quality & Consistency 10.
+Avalie se um canal do YouTube tem potencial para ser parceiro/afiliado/canal de aquisição.
+REGRA ABSOLUTA: o ICP descrito pelo usuário e as palavras-chave informadas definem a relevância. Se o conteúdo do canal não trata desses temas (ex.: times de futebol, rádios, notícias, entretenimento, música, gameplay), o fit_score deve ficar abaixo de 30 e a recomendação deve ser "Não priorizar", independentemente do tamanho do canal.
+Avalie EXCLUSIVAMENTE com base nos dados fornecidos. NUNCA invente audiência, receita, e-mail, dados demográficos, localização ou patrocínios. Quando não for possível comprovar, use "não identificado".
+Se o país do canal for diferente do país solicitado, reduza fortemente o Audience Fit e cite isso nos pontos de atenção.
+Não penalize excessivamente canais menores com forte aderência ao ICP.
+Distribuição do Fit Score (0-100): Content Fit 30, Audience/ICP Fit 25, Reach & Engagement 20, Commercial/Partnership Potential 15, Content Quality & Consistency 10. O fit_score é a soma dessas cinco notas.
 Responda SOMENTE JSON:
 {"fit_score":0,"content_fit_score":0,"audience_fit_score":0,"reach_score":0,"commercial_score":0,"quality_score":0,
 "content_fit_reason":"","audience_fit_reason":"","reach_reason":"","commercial_reason":"","quality_reason":"",
@@ -532,6 +629,10 @@ Escreva em português.`,
 
         const score = Math.max(0, Math.min(100, Number(analysis?.fit_score ?? 0)));
         const handle = ch.snippet?.customUrl ?? null;
+        const contacts = extractContacts([
+          ch.snippet?.description,
+          ...videos.map((v) => v.description),
+        ]);
 
         const prospectPayload = {
           search_id: searchRow.id,
@@ -550,6 +651,11 @@ Escreva em português.`,
           total_view_count: Number(ch.statistics?.viewCount ?? 0),
           avg_recent_views: avgViews,
           latest_video_at: latestVideoAt,
+          contact_email: contacts.contact_email,
+          instagram_url: contacts.instagram_url,
+          website_url: contacts.website_url,
+          contact_links: contacts.contact_links,
+          relevance_reason: relevanceById.get(ch.id)?.reason ?? null,
           fit_score: score,
           content_fit_score: Number(analysis?.content_fit_score ?? 0),
           audience_fit_score: Number(analysis?.audience_fit_score ?? 0),
@@ -562,6 +668,7 @@ Escreva em português.`,
           ai_reasoning: analysis ?? {},
           created_by: u.user.id,
         };
+
 
         const { data: prospect, error: pErr } = await admin
           .from("influencer_prospects")

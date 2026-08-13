@@ -3603,6 +3603,8 @@ export type Database = {
           channel_name: string
           channel_url: string | null
           commercial_score: number | null
+          contact_email: string | null
+          contact_links: Json
           content_fit_score: number | null
           country: string | null
           created_at: string
@@ -3610,10 +3612,12 @@ export type Database = {
           fit_category: string | null
           fit_score: number | null
           id: string
+          instagram_url: string | null
           latest_video_at: string | null
           platform: string
           quality_score: number | null
           reach_score: number | null
+          relevance_reason: string | null
           saved: boolean
           search_id: string | null
           status: string
@@ -3622,6 +3626,7 @@ export type Database = {
           total_view_count: number | null
           updated_at: string
           video_count: number | null
+          website_url: string | null
           youtube_channel_id: string
         }
         Insert: {
@@ -3635,6 +3640,8 @@ export type Database = {
           channel_name: string
           channel_url?: string | null
           commercial_score?: number | null
+          contact_email?: string | null
+          contact_links?: Json
           content_fit_score?: number | null
           country?: string | null
           created_at?: string
@@ -3642,10 +3649,12 @@ export type Database = {
           fit_category?: string | null
           fit_score?: number | null
           id?: string
+          instagram_url?: string | null
           latest_video_at?: string | null
           platform?: string
           quality_score?: number | null
           reach_score?: number | null
+          relevance_reason?: string | null
           saved?: boolean
           search_id?: string | null
           status?: string
@@ -3654,6 +3663,7 @@ export type Database = {
           total_view_count?: number | null
           updated_at?: string
           video_count?: number | null
+          website_url?: string | null
           youtube_channel_id: string
         }
         Update: {
@@ -3667,6 +3677,8 @@ export type Database = {
           channel_name?: string
           channel_url?: string | null
           commercial_score?: number | null
+          contact_email?: string | null
+          contact_links?: Json
           content_fit_score?: number | null
           country?: string | null
           created_at?: string
@@ -3674,10 +3686,12 @@ export type Database = {
           fit_category?: string | null
           fit_score?: number | null
           id?: string
+          instagram_url?: string | null
           latest_video_at?: string | null
           platform?: string
           quality_score?: number | null
           reach_score?: number | null
+          relevance_reason?: string | null
           saved?: boolean
           search_id?: string | null
           status?: string
@@ -3686,6 +3700,7 @@ export type Database = {
           total_view_count?: number | null
           updated_at?: string
           video_count?: number | null
+          website_url?: string | null
           youtube_channel_id?: string
         }
         Relationships: [

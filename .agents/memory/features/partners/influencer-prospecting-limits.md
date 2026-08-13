@@ -15,3 +15,9 @@ Limites aplicados SEMPRE no servidor (fonte de verdade = tabela `influencer_sear
 Motivo: quota da YouTube Data API (10.000 unidades/dia; cada `search.list` = 100) e custo OpenAI (1 chamada `gpt-4o-mini` por canal).
 Action `quota` retorna o uso atual para a UI. Erros de limite retornam HTTP 429 com `code`: COOLDOWN | DAILY_LIMIT | GLOBAL_LIMIT | BURST_LIMIT.
 Chaves `YOUTUBE_API_KEY` e `OPENAI_API_KEY` só existem no backend — nunca no frontend.
+
+Regras adicionais da busca (v2):
+- Dedupe global: canais já existentes em `influencer_prospects` são ignorados em novas buscas (parâmetro `include_existing: true` reativa).
+- Filtro de país determinístico: canal com `snippet.country` diferente do país pedido é descartado (sem país declarado passa pela triagem de IA).
+- Triagem de ICP: 1 chamada `gpt-4o-mini` classifica os candidatos de 0-10 contra o ICP/keywords; só ≥6 seguem para o Fit Score.
+- Contatos públicos extraídos por regex da descrição do canal/vídeos: `contact_email`, `instagram_url`, `website_url`, `contact_links`.

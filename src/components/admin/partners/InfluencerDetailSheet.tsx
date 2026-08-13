@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { ExternalLink, Loader2, Youtube } from "lucide-react";
+import { ExternalLink, Globe, Instagram, Loader2, Mail, Youtube } from "lucide-react";
 import { PROSPECT_STATUSES, fitBadgeVariant, fmtNum } from "@/lib/influencerProspecting";
 
 interface Props {
@@ -84,6 +84,48 @@ export function InfluencerDetailSheet({ prospect, open, onOpenChange, onStatusCh
           </section>
 
           <Separator />
+
+          <section>
+            <h3 className="text-sm font-semibold mb-2">Contato encontrado</h3>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex items-center gap-2">
+                <Mail size={14} className="text-muted-foreground shrink-0" />
+                {prospect.contact_email ? (
+                  <a href={`mailto:${prospect.contact_email}`} className="text-primary break-all">{prospect.contact_email}</a>
+                ) : (
+                  <span className="text-muted-foreground">E-mail não informado publicamente</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Instagram size={14} className="text-muted-foreground shrink-0" />
+                {prospect.instagram_url ? (
+                  <a href={prospect.instagram_url} target="_blank" rel="noreferrer" className="text-primary break-all">{prospect.instagram_url.replace("https://instagram.com/", "@")}</a>
+                ) : (
+                  <span className="text-muted-foreground">Instagram não informado</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Globe size={14} className="text-muted-foreground shrink-0" />
+                {prospect.website_url ? (
+                  <a href={prospect.website_url} target="_blank" rel="noreferrer" className="text-primary break-all">{prospect.website_url}</a>
+                ) : (
+                  <span className="text-muted-foreground">Site não informado</span>
+                )}
+              </div>
+            </div>
+            {Array.isArray(prospect.contact_links) && prospect.contact_links.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {prospect.contact_links.slice(0, 8).map((l: string) => (
+                  <a key={l} href={l} target="_blank" rel="noreferrer" className="text-[11px] rounded-lg border border-border px-2 py-1 text-muted-foreground hover:text-primary truncate max-w-[220px]">
+                    {l.replace(/^https?:\/\//, "")}
+                  </a>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <Separator />
+
 
           <section>
             <h3 className="text-sm font-semibold mb-3">Análise de Fit</h3>
