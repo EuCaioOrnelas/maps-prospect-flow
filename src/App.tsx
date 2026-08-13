@@ -440,6 +440,7 @@ const App = () => (
                   <Route path="partners/materiais" element={<AdminPartnersMaterials />} />
                   <Route path="partners/metas" element={<AdminPartnersGoals />} />
                   <Route path="partners/links" element={<AdminPartnersLinks />} />
+                  <Route path="partners/influenciadores" element={<AdminInfluencerProspecting />} />
                 </Route>
 
                 {/* Integration Layer — ADMIN ONLY. Rota pública /integration/* removida.
