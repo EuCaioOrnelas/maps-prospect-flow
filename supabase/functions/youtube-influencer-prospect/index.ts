@@ -629,6 +629,10 @@ Escreva em português.`,
 
         const score = Math.max(0, Math.min(100, Number(analysis?.fit_score ?? 0)));
         const handle = ch.snippet?.customUrl ?? null;
+        const contacts = extractContacts([
+          ch.snippet?.description,
+          ...videos.map((v) => v.description),
+        ]);
 
         const prospectPayload = {
           search_id: searchRow.id,
@@ -647,6 +651,11 @@ Escreva em português.`,
           total_view_count: Number(ch.statistics?.viewCount ?? 0),
           avg_recent_views: avgViews,
           latest_video_at: latestVideoAt,
+          contact_email: contacts.contact_email,
+          instagram_url: contacts.instagram_url,
+          website_url: contacts.website_url,
+          contact_links: contacts.contact_links,
+          relevance_reason: relevanceById.get(ch.id)?.reason ?? null,
           fit_score: score,
           content_fit_score: Number(analysis?.content_fit_score ?? 0),
           audience_fit_score: Number(analysis?.audience_fit_score ?? 0),
@@ -659,6 +668,7 @@ Escreva em português.`,
           ai_reasoning: analysis ?? {},
           created_by: u.user.id,
         };
+
 
         const { data: prospect, error: pErr } = await admin
           .from("influencer_prospects")
