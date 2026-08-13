@@ -19,7 +19,34 @@ import {
   fmtNum,
   statusLabel,
 } from "@/lib/influencerProspecting";
-import { Loader2, Search, Youtube, X, Plus, BookmarkPlus, CheckCircle2, Gauge } from "lucide-react";
+import {
+  Loader2, Search, Youtube, X, Plus, BookmarkPlus, CheckCircle2, Gauge,
+  Globe, Languages, ListOrdered, CalendarClock, Users, TrendingUp, Eye,
+  Tags, SlidersHorizontal, Sparkles, Target, Filter, ArrowUpDown, Bookmark,
+} from "lucide-react";
+
+function FieldLabel({ icon: Icon, children }: { icon: any; children: React.ReactNode }) {
+  return (
+    <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+      <Icon size={13} className="text-primary/70" />
+      {children}
+    </Label>
+  );
+}
+
+function SectionTitle({ icon: Icon, title, description }: { icon: any; title: string; description?: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="h-9 w-9 rounded-[10px] bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
+        <Icon size={16} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold leading-tight">{title}</p>
+        {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+      </div>
+    </div>
+  );
+}
 
 const DEFAULT_KEYWORDS = ["prospecção B2B", "vendas B2B", "SDR", "CRM", "outbound", "geração de leads"];
 
