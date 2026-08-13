@@ -202,6 +202,7 @@ serve(async (req) => {
       .eq("role", "admin")
       .maybeSingle();
     if (!roleCheck) return json({ error: "Acesso restrito a administradores." }, 403);
+    CURRENT_USER_ID = u.user.id;
 
     const body = await req.json().catch(() => ({}));
     const action = body.action || "search";
