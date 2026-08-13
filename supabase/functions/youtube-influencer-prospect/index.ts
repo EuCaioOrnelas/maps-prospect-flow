@@ -441,13 +441,13 @@ serve(async (req) => {
         channels.push(...(data.items || []));
       }
 
-      // 4) Filtros determinísticos: tamanho + país
+      // 4) Filtros determinísticos: tamanho + país (regra dura, nunca ignorada)
       const sizeOk = channels.filter((c) => {
-        if (c.statistics?.hiddenSubscriberCount) return false;
         const subs = Number(c.statistics?.subscriberCount ?? 0);
-        const views = Number(c.statistics?.viewCount ?? 0);
-        if (subs < minSubs || subs > maxSubs) return false;
-        if (minViews && views < minViews) return false;
+        if (c.statistics?.hiddenSubscriberCount) return false;
+        if (!Number.isFinite(subs) || subs <= 0) return false;
+        if (minSubs && subs < minSubs) return false;
+        if (maxSubs && subs > maxSubs) return false;
         return true;
       });
 
@@ -476,7 +476,7 @@ serve(async (req) => {
       );
 
       // 4.2) Triagem de aderência ao ICP (barata: 1 chamada de IA para todos os candidatos)
-      let filtered = candidates.slice(0, resultsRequested);
+      let filtered = candidates.slice(0, resultsRequested * 2);
       const relevanceById = new Map<string, { score: number; reason: string }>();
       if (candidates.length) {
         const shortlist = candidates.slice(0, Math.min(candidates.length, resultsRequested * 3, 90));
@@ -514,7 +514,7 @@ serve(async (req) => {
           const relevant = shortlist
             .filter((c: any) => (relevanceById.get(c.id)?.score ?? 0) >= 6)
             .sort((a: any, b: any) => (relevanceById.get(b.id)?.score ?? 0) - (relevanceById.get(a.id)?.score ?? 0));
-          filtered = relevant.slice(0, resultsRequested);
+          filtered = relevant.slice(0, resultsRequested * 2);
         } catch (e) {
           console.error("[triagem] falhou, seguindo sem filtro de IA", e);
         }
@@ -570,6 +570,13 @@ serve(async (req) => {
         const latestVideoAt = videos.length
           ? videos.map((v) => v.published_at).filter(Boolean).sort().reverse()[0]
           : null;
+
+        // Filtro duro de visualizações: média por vídeo recente precisa atingir o mínimo
+        if (minViews && (avgViews ?? 0) < minViews) return;
+        // Já atingimos o número de resultados pedidos
+        if (results.length >= resultsRequested) return;
+
+
 
         // 6) Análise IA
         let analysis: any = null;

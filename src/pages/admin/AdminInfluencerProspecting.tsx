@@ -240,7 +240,21 @@ export default function AdminInfluencerProspecting() {
         return (b.fit_score ?? 0) - (a.fit_score ?? 0);
       });
 
-  const viewProspects = useMemo(() => applyView(prospects), [prospects, sortBy, statusFilter, minScore, search]);
+  // Garantia extra: resultados exibidos sempre respeitam a faixa configurada
+  const withinFilters = (p: any) => {
+    const min = Number(minSubs) || 0;
+    const max = Number(maxSubs) || Infinity;
+    const mv = minViews ? Number(minViews) : 0;
+    const subs = Number(p.subscriber_count ?? 0);
+    if (subs < min || subs > max) return false;
+    if (mv && Number(p.avg_recent_views ?? 0) < mv) return false;
+    return true;
+  };
+
+  const viewProspects = useMemo(
+    () => applyView(prospects.filter(withinFilters)),
+    [prospects, sortBy, statusFilter, minScore, search, minSubs, maxSubs, minViews],
+  );
   const viewSaved = useMemo(() => applyView(saved), [saved, sortBy, statusFilter, minScore, search]);
 
   const ResultsTable = ({ rows, showSave }: { rows: any[]; showSave: boolean }) => (
@@ -483,7 +497,7 @@ export default function AdminInfluencerProspecting() {
                   <Input type="number" value={maxSubs} onChange={(e) => setMaxSubs(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <FieldLabel icon={Eye}>Mínimo de visualizações</FieldLabel>
+                  <FieldLabel icon={Eye}>Média mínima de views por vídeo</FieldLabel>
                   <Input type="number" value={minViews} onChange={(e) => setMinViews(e.target.value)} placeholder="Opcional" />
                 </div>
               </div>
