@@ -516,6 +516,8 @@ Escreva em português.`,
               },
             ],
             openaiKey,
+            true,
+            "influencer-prospect (fit score)",
           );
         } catch (e) {
           console.error("[ai] falhou para canal", ch.id, e);
