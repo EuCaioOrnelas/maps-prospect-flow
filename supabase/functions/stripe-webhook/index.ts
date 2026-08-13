@@ -122,6 +122,15 @@ async function registerPartnerSale(
       .single();
 
     if (saleErr) {
+      // 23505 = índice único (external_reference) → venda já registrada por outra rota/retry
+      if ((saleErr as any)?.code === '23505') {
+        const { data: dup } = await supabase
+          .from('partner_sales')
+          .select('id')
+          .eq('external_reference', input.stripeInvoiceId || input.asaasPaymentId || input.stripeSubscriptionId)
+          .maybeSingle();
+        return { ok: true, reason: 'duplicate', saleId: dup?.id };
+      }
       console.error('[registerPartnerSale] insert error:', saleErr);
       return { ok: false, reason: saleErr.message };
     }
