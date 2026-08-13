@@ -45,6 +45,7 @@ import {
   MessageSquare,
   HelpCircle,
   Lightbulb,
+  Youtube,
 } from "lucide-react";
 
 interface NavItem {
