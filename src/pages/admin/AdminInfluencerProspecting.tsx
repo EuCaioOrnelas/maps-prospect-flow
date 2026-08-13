@@ -214,6 +214,24 @@ export default function AdminInfluencerProspecting() {
     if (error || data?.error) toast({ title: "Erro ao atualizar status", variant: "destructive" });
   };
 
+  const updateStatusBulk = async (ids: string[], status: string) => {
+    if (ids.length === 0) return;
+    setProspects((p) => p.map((x) => (ids.includes(x.id) ? { ...x, status } : x)));
+    setSaved((p) => p.map((x) => (ids.includes(x.id) ? { ...x, status } : x)));
+    setSelected((s: any) => (s && ids.includes(s.id) ? { ...s, status } : s));
+    const { data, error } = await supabase.functions.invoke("youtube-influencer-prospect", {
+      body: { action: "update_status", prospect_ids: ids, status },
+    });
+    if (error || data?.error) {
+      toast({ title: "Erro ao atualizar status em lote", variant: "destructive" });
+      // recarrega para garantir consistência em caso de erro
+      await loadAllProspects();
+      await loadSaved();
+    } else {
+      toast({ title: `${ids.length} influenciador(es) movidos para "${statusLabel(status)}".` });
+    }
+  };
+
   const saveProspect = async (p: any) => {
     if (savingIds.includes(p.id)) return;
     setSavingIds((s) => [...s, p.id]);
