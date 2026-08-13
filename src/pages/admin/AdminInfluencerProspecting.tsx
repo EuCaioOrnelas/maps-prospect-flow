@@ -784,11 +784,11 @@ export default function AdminInfluencerProspecting() {
             </CardContent>
           </Card>
 
-          <ResultsTable rows={viewProspects} showSave page={page} onPageChange={setPage} />
+          <ResultsTable rows={viewProspects} showSave page={page} onPageChange={setPage} onBulkStatusChange={updateStatusBulk} />
         </TabsContent>
 
         <TabsContent value="saved" className="mt-6">
-          <ResultsTable rows={viewSaved} showSave={false} page={savedPage} onPageChange={setSavedPage} />
+          <ResultsTable rows={viewSaved} showSave={false} page={savedPage} onPageChange={setSavedPage} onBulkStatusChange={updateStatusBulk} />
         </TabsContent>
       </Tabs>
 
