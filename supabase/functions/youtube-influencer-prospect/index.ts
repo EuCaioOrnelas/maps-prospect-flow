@@ -239,14 +239,21 @@ serve(async (req) => {
 
     // ---------- STATUS / SAVE ----------
     if (action === "update_status") {
-      const { prospect_id, status } = body;
-      if (!prospect_id || !status) return json({ error: "Dados inválidos." }, 400);
+      const { prospect_id, prospect_ids, status } = body;
+      if (!status) return json({ error: "Dados inválidos." }, 400);
+      // suporta atualização unitária ou em lote
+      const ids: string[] = Array.isArray(prospect_ids)
+        ? prospect_ids.filter(Boolean)
+        : prospect_id
+        ? [prospect_id]
+        : [];
+      if (ids.length === 0) return json({ error: "Informe ao menos um prospect." }, 400);
       const { error } = await admin
         .from("influencer_prospects")
         .update({ status })
-        .eq("id", prospect_id);
+        .in("id", ids);
       if (error) return json({ error: error.message }, 400);
-      return json({ ok: true });
+      return json({ ok: true, updated: ids.length });
     }
 
     if (action === "save_prospect") {
