@@ -441,7 +441,8 @@ serve(async (req) => {
 
       // 5) Vídeos recentes de cada canal (limitado a 5 por canal)
       const results: any[] = [];
-      for (const ch of filtered) {
+      const processChannel = async (ch: any) => {
+
         let videos: any[] = [];
         try {
           const uploads = ch.contentDetails?.relatedPlaylists?.uploads;
