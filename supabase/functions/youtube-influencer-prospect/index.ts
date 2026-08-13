@@ -571,6 +571,13 @@ serve(async (req) => {
           ? videos.map((v) => v.published_at).filter(Boolean).sort().reverse()[0]
           : null;
 
+        // Filtro duro de visualizações: média por vídeo recente precisa atingir o mínimo
+        if (minViews && (avgViews ?? 0) < minViews) return;
+        // Já atingimos o número de resultados pedidos
+        if (results.length >= resultsRequested) return;
+
+
+
         // 6) Análise IA
         let analysis: any = null;
         try {
