@@ -366,32 +366,38 @@ serve(async (req) => {
       const perQuery = resultsRequested <= 20 ? 15 : 25;
       const channelIds = new Set<string>();
 
-      for (const q of generatedQueries.slice(0, maxQueries)) {
-        if (channelIds.size >= resultsRequested * 3) break;
-        try {
-          const data = await yt(
-            "search",
-            {
-              part: "snippet",
-              q,
-              type: "video",
-              maxResults: String(perQuery),
-              order: "relevance",
-              publishedAfter,
-              regionCode: country,
-              relevanceLanguage: language,
-            },
-            youtubeKey,
-          );
-          for (const item of data.items || []) {
-            const cid = item?.snippet?.channelId;
-            if (cid) channelIds.add(cid);
+      const queriesToRun = generatedQueries.slice(0, maxQueries);
+      const searchResults = await Promise.all(
+        queriesToRun.map(async (q) => {
+          try {
+            return await yt(
+              "search",
+              {
+                part: "snippet",
+                q,
+                type: "video",
+                maxResults: String(perQuery),
+                order: "relevance",
+                publishedAfter,
+                regionCode: country,
+                relevanceLanguage: language,
+              },
+              youtubeKey,
+            );
+          } catch (e) {
+            if ((e as Error).message === "YOUTUBE_QUOTA_EXCEEDED") throw e;
+            console.error("[search] query falhou", q, e);
+            return null;
           }
-        } catch (e) {
-          if ((e as Error).message === "YOUTUBE_QUOTA_EXCEEDED") throw e;
-          console.error("[search] query falhou", q, e);
+        }),
+      );
+      for (const data of searchResults) {
+        for (const item of data?.items || []) {
+          const cid = item?.snippet?.channelId;
+          if (cid) channelIds.add(cid);
         }
       }
+
 
       if (channelIds.size === 0) {
         await admin.from("influencer_searches").update({ status: "done", results_found: 0 }).eq("id", searchRow.id);
@@ -435,7 +441,8 @@ serve(async (req) => {
 
       // 5) Vídeos recentes de cada canal (limitado a 5 por canal)
       const results: any[] = [];
-      for (const ch of filtered) {
+      const processChannel = async (ch: any) => {
+
         let videos: any[] = [];
         try {
           const uploads = ch.contentDetails?.relatedPlaylists?.uploads;
@@ -563,7 +570,7 @@ Escreva em português.`,
           .single();
         if (pErr) {
           console.error("[db] upsert prospect", pErr);
-          continue;
+          return;
         }
 
         if (videos.length) {
@@ -586,7 +593,21 @@ Escreva em português.`,
         }
 
         results.push({ ...prospect, videos });
-      }
+      };
+
+      // Processa canais em paralelo (concorrência limitada) para evitar timeout de 150s
+      const CONCURRENCY = 6;
+      const queue = [...filtered];
+      await Promise.all(
+        Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
+          while (queue.length) {
+            const ch = queue.shift();
+            if (!ch) break;
+            await processChannel(ch);
+          }
+        }),
+      );
+
 
       results.sort((a, b) => (b.fit_score ?? 0) - (a.fit_score ?? 0));
 
