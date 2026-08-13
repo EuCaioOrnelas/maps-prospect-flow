@@ -19,7 +19,34 @@ import {
   fmtNum,
   statusLabel,
 } from "@/lib/influencerProspecting";
-import { Loader2, Search, Youtube, X, Plus, BookmarkPlus, CheckCircle2, Gauge } from "lucide-react";
+import {
+  Loader2, Search, Youtube, X, Plus, BookmarkPlus, CheckCircle2, Gauge,
+  Globe, Languages, ListOrdered, CalendarClock, Users, TrendingUp, Eye,
+  Tags, SlidersHorizontal, Sparkles, Target, Filter, ArrowUpDown, Bookmark,
+} from "lucide-react";
+
+function FieldLabel({ icon: Icon, children }: { icon: any; children: React.ReactNode }) {
+  return (
+    <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+      <Icon size={13} className="text-primary/70" />
+      {children}
+    </Label>
+  );
+}
+
+function SectionTitle({ icon: Icon, title, description }: { icon: any; title: string; description?: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="h-9 w-9 rounded-[10px] bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
+        <Icon size={16} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold leading-tight">{title}</p>
+        {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+      </div>
+    </div>
+  );
+}
 
 const DEFAULT_KEYWORDS = ["prospecção B2B", "vendas B2B", "SDR", "CRM", "outbound", "geração de leads"];
 
@@ -291,7 +318,7 @@ export default function AdminInfluencerProspecting() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <PageHeader
         title="Prospecção de Influenciadores"
         subtitle="Encontre criadores com audiência e conteúdo alinhados à Wiize."
@@ -300,67 +327,90 @@ export default function AdminInfluencerProspecting() {
 
       <Tabs defaultValue="youtube">
         <TabsList>
-          <TabsTrigger value="youtube">YouTube Prospecting</TabsTrigger>
-          <TabsTrigger value="saved">Salvos ({saved.length})</TabsTrigger>
+          <TabsTrigger value="youtube" className="gap-1.5">
+            <Youtube size={14} /> YouTube Prospecting
+          </TabsTrigger>
+          <TabsTrigger value="saved" className="gap-1.5">
+            <Bookmark size={14} /> Salvos ({saved.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="youtube" className="space-y-6 mt-6">
           {usage && (
             <Card>
-              <CardContent className="p-5 flex flex-wrap items-center gap-6">
+              <CardContent className="p-5 flex flex-wrap items-center gap-x-6 gap-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center text-primary">
+                  <div className="h-10 w-10 rounded-[12px] bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center text-primary shrink-0">
                     <Gauge size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">
+                    <p className="text-sm font-semibold leading-tight">
                       {usage.remaining_today} de {usage.daily_limit} prospecções disponíveis
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Limite por administrador nas últimas 24h
                     </p>
                   </div>
                 </div>
-                <div className="h-8 w-px bg-border hidden sm:block" />
+                <div className="h-9 w-px bg-border hidden sm:block" />
                 <div className="text-xs text-muted-foreground space-y-1">
-                  <p>
-                    Equipe: <span className="font-medium text-foreground">{usage.used_global_today}/{usage.global_daily_limit}</span> buscas em 24h
+                  <p className="flex items-center gap-1.5">
+                    <Users size={12} className="text-primary/70" />
+                    Equipe:{" "}
+                    <span className="font-medium text-foreground">
+                      {usage.used_global_today}/{usage.global_daily_limit}
+                    </span>{" "}
+                    buscas em 24h
                   </p>
-                  <p>
+                  <p className="flex items-center gap-1.5">
+                    <CalendarClock size={12} className="text-primary/70" />
                     Intervalo mínimo de {usage.cooldown_seconds}s entre buscas · máx. {usage.burst_max} a cada{" "}
                     {usage.burst_window_minutes} min · até {usage.max_results_per_search} canais por busca
                   </p>
                 </div>
                 {cooldown > 0 && (
-                  <Badge variant="secondary" className="ml-auto">
-                    Próxima busca em {cooldown}s
+                  <Badge variant="secondary" className="sm:ml-auto gap-1">
+                    <Loader2 size={11} className="animate-spin" /> Próxima busca em {cooldown}s
                   </Badge>
                 )}
                 {usage.remaining_today <= 0 && cooldown === 0 && (
-                  <Badge variant="destructive" className="ml-auto">
+                  <Badge variant="destructive" className="sm:ml-auto">
                     Limite diário atingido
                   </Badge>
                 )}
               </CardContent>
             </Card>
           )}
+
           <Card>
-            <CardContent className="p-6 space-y-5">
-              <div>
-                <Label>Descreva o tipo de criador que você procura</Label>
+            <CardContent className="p-6 space-y-6">
+              <SectionTitle
+                icon={Sparkles}
+                title="Perfil ideal do criador (ICP)"
+                description="A IA transforma esta descrição em consultas de busca focadas em conteúdo."
+              />
+              <div className="space-y-2">
+                <FieldLabel icon={Target}>Descreva o tipo de criador que você procura</FieldLabel>
                 <Textarea
-                  className="mt-2 min-h-[110px]"
+                  className="min-h-[110px]"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Ex.: Criadores brasileiros que falam sobre vendas B2B, prospecção comercial, SDR, CRM, geração de leads, marketing B2B e empreendedorismo. Público formado por empresários, vendedores, SDRs e gestores comerciais."
                 />
               </div>
 
+              <div className="h-px bg-border" />
+
+              <SectionTitle
+                icon={SlidersHorizontal}
+                title="Filtros da busca"
+                description="Ajuste região, tamanho do canal e recência para refinar os resultados."
+              />
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div>
-                  <Label>País</Label>
+                <div className="space-y-2">
+                  <FieldLabel icon={Globe}>País</FieldLabel>
                   <Select value={country} onValueChange={setCountry}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="BR">Brasil</SelectItem>
                       <SelectItem value="PT">Portugal</SelectItem>
@@ -369,10 +419,10 @@ export default function AdminInfluencerProspecting() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label>Idioma</Label>
+                <div className="space-y-2">
+                  <FieldLabel icon={Languages}>Idioma</FieldLabel>
                   <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pt">Português</SelectItem>
                       <SelectItem value="en">Inglês</SelectItem>
@@ -380,10 +430,10 @@ export default function AdminInfluencerProspecting() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label>Número de resultados</Label>
+                <div className="space-y-2">
+                  <FieldLabel icon={ListOrdered}>Número de resultados</FieldLabel>
                   <Select value={resultsRequested} onValueChange={setResultsRequested}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="10">10</SelectItem>
                       <SelectItem value="20">20</SelectItem>
@@ -392,10 +442,10 @@ export default function AdminInfluencerProspecting() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label>Recência</Label>
+                <div className="space-y-2">
+                  <FieldLabel icon={CalendarClock}>Recência</FieldLabel>
                   <Select value={recency} onValueChange={setRecency}>
-                    <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="30">Últimos 30 dias</SelectItem>
                       <SelectItem value="60">Últimos 60 dias</SelectItem>
@@ -404,23 +454,25 @@ export default function AdminInfluencerProspecting() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label>Mínimo de inscritos</Label>
-                  <Input className="mt-2" type="number" value={minSubs} onChange={(e) => setMinSubs(e.target.value)} />
+                <div className="space-y-2">
+                  <FieldLabel icon={Users}>Mínimo de inscritos</FieldLabel>
+                  <Input type="number" value={minSubs} onChange={(e) => setMinSubs(e.target.value)} />
                 </div>
-                <div>
-                  <Label>Máximo de inscritos</Label>
-                  <Input className="mt-2" type="number" value={maxSubs} onChange={(e) => setMaxSubs(e.target.value)} />
+                <div className="space-y-2">
+                  <FieldLabel icon={TrendingUp}>Máximo de inscritos</FieldLabel>
+                  <Input type="number" value={maxSubs} onChange={(e) => setMaxSubs(e.target.value)} />
                 </div>
-                <div>
-                  <Label>Mínimo de visualizações (opcional)</Label>
-                  <Input className="mt-2" type="number" value={minViews} onChange={(e) => setMinViews(e.target.value)} placeholder="Opcional" />
+                <div className="space-y-2">
+                  <FieldLabel icon={Eye}>Mínimo de visualizações</FieldLabel>
+                  <Input type="number" value={minViews} onChange={(e) => setMinViews(e.target.value)} placeholder="Opcional" />
                 </div>
               </div>
 
-              <div>
-                <Label>Palavras-chave</Label>
-                <div className="flex gap-2 mt-2">
+              <div className="h-px bg-border" />
+
+              <div className="space-y-2">
+                <FieldLabel icon={Tags}>Palavras-chave</FieldLabel>
+                <div className="flex gap-2">
                   <Input
                     value={kwInput}
                     onChange={(e) => setKwInput(e.target.value)}
@@ -432,23 +484,29 @@ export default function AdminInfluencerProspecting() {
                     }}
                     placeholder="Ex.: prospecção B2B"
                   />
-                  <Button type="button" variant="outline" onClick={addKeyword}>
-                    <Plus size={16} />
+                  <Button type="button" variant="outline" onClick={addKeyword} className="shrink-0">
+                    <Plus size={16} className="mr-1" /> Adicionar
                   </Button>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {keywords.map((k) => (
-                    <Badge key={k} variant="secondary" className="gap-1">
-                      {k}
-                      <button onClick={() => setKeywords(keywords.filter((x) => x !== k))}>
-                        <X size={12} />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
+                {keywords.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {keywords.map((k) => (
+                      <Badge key={k} variant="secondary" className="gap-1 pl-2.5 pr-1.5 py-1">
+                        {k}
+                        <button
+                          className="rounded-full p-0.5 hover:bg-foreground/10 transition-colors"
+                          onClick={() => setKeywords(keywords.filter((x) => x !== k))}
+                          aria-label={`Remover ${k}`}
+                        >
+                          <X size={11} />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 pt-1">
                 <Button
                   onClick={runSearch}
                   disabled={loading || cooldown > 0 || (usage ? usage.remaining_today <= 0 : false)}
@@ -457,7 +515,8 @@ export default function AdminInfluencerProspecting() {
                   {cooldown > 0 ? `Aguarde ${cooldown}s` : "Encontrar Influenciadores"}
                 </Button>
                 {loading && (
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <Sparkles size={13} className="text-primary" />
                     {PROGRESS_STEPS[step]}… (pode levar alguns minutos)
                   </span>
                 )}
@@ -465,49 +524,51 @@ export default function AdminInfluencerProspecting() {
             </CardContent>
           </Card>
 
-          <div className="flex flex-wrap gap-3 items-end">
-            <div>
-              <Label className="text-xs">Buscar</Label>
-              <Input className="mt-1 w-[200px]" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome do canal" />
-            </div>
-            <div>
-              <Label className="text-xs">Ordenar por</Label>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="mt-1 w-[180px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fit_score">Fit Score</SelectItem>
-                  <SelectItem value="subscriber_count">Inscritos</SelectItem>
-                  <SelectItem value="avg_recent_views">Views</SelectItem>
-                  <SelectItem value="latest_video_at">Último vídeo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Fit Score mínimo</Label>
-              <Select value={minScore} onValueChange={setMinScore}>
-                <SelectTrigger className="mt-1 w-[150px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Todos</SelectItem>
-                  <SelectItem value="60">60+</SelectItem>
-                  <SelectItem value="70">70+</SelectItem>
-                  <SelectItem value="80">80+</SelectItem>
-                  <SelectItem value="90">90+</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="mt-1 w-[170px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {PROSPECT_STATUSES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <Card>
+            <CardContent className="p-5 flex flex-wrap gap-4 items-end">
+              <div className="space-y-1.5">
+                <FieldLabel icon={Search}>Buscar</FieldLabel>
+                <Input className="w-[200px]" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nome do canal" />
+              </div>
+              <div className="space-y-1.5">
+                <FieldLabel icon={ArrowUpDown}>Ordenar por</FieldLabel>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fit_score">Fit Score</SelectItem>
+                    <SelectItem value="subscriber_count">Inscritos</SelectItem>
+                    <SelectItem value="avg_recent_views">Views</SelectItem>
+                    <SelectItem value="latest_video_at">Último vídeo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <FieldLabel icon={Target}>Fit Score mínimo</FieldLabel>
+                <Select value={minScore} onValueChange={setMinScore}>
+                  <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Todos</SelectItem>
+                    <SelectItem value="60">60+</SelectItem>
+                    <SelectItem value="70">70+</SelectItem>
+                    <SelectItem value="80">80+</SelectItem>
+                    <SelectItem value="90">90+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <FieldLabel icon={Filter}>Status</FieldLabel>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {PROSPECT_STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
 
           <ResultsTable rows={viewProspects} showSave />
         </TabsContent>
@@ -526,3 +587,4 @@ export default function AdminInfluencerProspecting() {
     </div>
   );
 }
+
