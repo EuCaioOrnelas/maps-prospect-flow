@@ -255,6 +255,10 @@ const Signup = () => {
                 <PasswordStrength password={password} />
               </div>
 
+              <PartnerCodeField bare />
+
+
+
               <div className="flex items-start space-x-3">
                 <Checkbox
                   id="terms"
