@@ -337,6 +337,37 @@ export default function AdminInfluencerProspecting() {
               <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])} className="h-8 text-xs">
                 <X size={13} className="mr-1.5" /> Limpar seleção
               </Button>
+              <div className="flex items-center gap-2">
+                <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                  <SelectTrigger className="h-8 w-[170px] text-xs">
+                    <SelectValue placeholder="Mudar status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROSPECT_STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs"
+                  disabled={!bulkStatus || busyBulk}
+                  onClick={async () => {
+                    if (!onBulkStatusChange || !bulkStatus) return;
+                    setBusyBulk(true);
+                    try {
+                      await onBulkStatusChange(selectedIds, bulkStatus);
+                      setBulkStatus("");
+                    } finally {
+                      setBusyBulk(false);
+                    }
+                  }}
+                >
+                  {busyBulk ? <Loader2 size={13} className="mr-1 animate-spin" /> : <Tags size={13} className="mr-1" />}
+                  Aplicar
+                </Button>
+              </div>
               <Button size="sm" variant="outline" onClick={() => exportProspectsXlsx(selectedRows)} className="h-8 text-xs">
                 <FileSpreadsheet size={13} className="mr-1.5" /> Exportar planilha
               </Button>
