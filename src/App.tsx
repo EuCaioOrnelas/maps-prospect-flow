@@ -170,6 +170,7 @@ const PartnerGoals = lazyWithRetry(() => import("./pages/partners/PartnerGoals")
 const PartnerLevels = lazyWithRetry(() => import("./pages/partners/PartnerLevels"), "PartnerLevels");
 const AdminPartnersGoals = lazyWithRetry(() => import("./pages/admin/AdminPartnersGoals"), "AdminPartnersGoals");
 const AdminPartnersLinks = lazyWithRetry(() => import("./pages/admin/AdminPartnersLinks"), "AdminPartnersLinks");
+const AdminInfluencerProspecting = lazyWithRetry(() => import("./pages/admin/AdminInfluencerProspecting"), "AdminInfluencerProspecting");
 const PartnerSlugRedirect = lazyWithRetry(() => import("./pages/PartnerSlugRedirect"), "PartnerSlugRedirect");
 const PartnersLanding = lazyWithRetry(() => import("./pages/PartnersLanding"), "PartnersLanding");
 const PartnerVerification = lazyWithRetry(() => import("./pages/PartnerVerification"), "PartnerVerification");
