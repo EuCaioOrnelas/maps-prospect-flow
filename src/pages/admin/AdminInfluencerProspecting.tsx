@@ -19,7 +19,7 @@ import {
   fmtNum,
   statusLabel,
 } from "@/lib/influencerProspecting";
-import { Loader2, Search, Youtube, X, Plus, BookmarkPlus, CheckCircle2 } from "lucide-react";
+import { Loader2, Search, Youtube, X, Plus, BookmarkPlus, CheckCircle2, Gauge } from "lucide-react";
 
 const DEFAULT_KEYWORDS = ["prospecção B2B", "vendas B2B", "SDR", "CRM", "outbound", "geração de leads"];
 
@@ -42,6 +42,8 @@ export default function AdminInfluencerProspecting() {
   const [saved, setSaved] = useState<any[]>([]);
   const [selected, setSelected] = useState<any | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [usage, setUsage] = useState<any | null>(null);
+  const [cooldown, setCooldown] = useState(0);
 
   const [sortBy, setSortBy] = useState("fit_score");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -57,9 +59,29 @@ export default function AdminInfluencerProspecting() {
     setSaved(data ?? []);
   };
 
+  const applyUsage = (u: any) => {
+    if (!u) return;
+    setUsage(u);
+    setCooldown(u.cooldown_seconds_remaining ?? 0);
+  };
+
+  const loadUsage = async () => {
+    const { data } = await supabase.functions.invoke("youtube-influencer-prospect", {
+      body: { action: "quota" },
+    });
+    applyUsage(data?.usage);
+  };
+
   useEffect(() => {
     loadSaved();
+    loadUsage();
   }, []);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
 
   useEffect(() => {
     if (!loading) return;
@@ -77,6 +99,14 @@ export default function AdminInfluencerProspecting() {
 
   const runSearch = async () => {
     if (loading) return;
+    if (cooldown > 0) {
+      toast({ title: `Aguarde ${cooldown}s para iniciar outra prospecção.`, variant: "destructive" });
+      return;
+    }
+    if (usage && usage.remaining_today <= 0) {
+      toast({ title: "Limite diário de prospecções atingido.", variant: "destructive" });
+      return;
+    }
     if (description.trim().length < 10) {
       toast({ title: "Descreva o tipo de criador que você procura.", variant: "destructive" });
       return;
@@ -98,8 +128,18 @@ export default function AdminInfluencerProspecting() {
           results_requested: Number(resultsRequested),
         },
       });
-      if (error) throw new Error((error as any).message);
+      if (error) {
+        // erros HTTP (ex.: 429 de rate limit) trazem o corpo em error.context
+        let message = (error as any).message;
+        try {
+          const payload = await (error as any).context?.json?.();
+          if (payload?.error) message = payload.error;
+          if (payload?.usage) applyUsage(payload.usage);
+        } catch { /* corpo não-JSON */ }
+        throw new Error(message);
+      }
       if (data?.error) throw new Error(data.error);
+      applyUsage(data?.usage);
       setProspects(data?.prospects ?? []);
       setStep(PROGRESS_STEPS.length - 1);
       toast({
@@ -109,6 +149,7 @@ export default function AdminInfluencerProspecting() {
       });
     } catch (e: any) {
       toast({ title: "Não foi possível concluir a prospecção", description: e.message, variant: "destructive" });
+      loadUsage();
     } finally {
       setLoading(false);
     }
@@ -264,6 +305,45 @@ export default function AdminInfluencerProspecting() {
         </TabsList>
 
         <TabsContent value="youtube" className="space-y-6 mt-6">
+          {usage && (
+            <Card>
+              <CardContent className="p-5 flex flex-wrap items-center gap-6">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center text-primary">
+                    <Gauge size={18} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {usage.remaining_today} de {usage.daily_limit} prospecções disponíveis
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Limite por administrador nas últimas 24h
+                    </p>
+                  </div>
+                </div>
+                <div className="h-8 w-px bg-border hidden sm:block" />
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>
+                    Equipe: <span className="font-medium text-foreground">{usage.used_global_today}/{usage.global_daily_limit}</span> buscas em 24h
+                  </p>
+                  <p>
+                    Intervalo mínimo de {usage.cooldown_seconds}s entre buscas · máx. {usage.burst_max} a cada{" "}
+                    {usage.burst_window_minutes} min · até {usage.max_results_per_search} canais por busca
+                  </p>
+                </div>
+                {cooldown > 0 && (
+                  <Badge variant="secondary" className="ml-auto">
+                    Próxima busca em {cooldown}s
+                  </Badge>
+                )}
+                {usage.remaining_today <= 0 && cooldown === 0 && (
+                  <Badge variant="destructive" className="ml-auto">
+                    Limite diário atingido
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardContent className="p-6 space-y-5">
               <div>
@@ -305,9 +385,10 @@ export default function AdminInfluencerProspecting() {
                   <Select value={resultsRequested} onValueChange={setResultsRequested}>
                     <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
                       <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                      <SelectItem value="50">50 (máximo)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -368,9 +449,12 @@ export default function AdminInfluencerProspecting() {
               </div>
 
               <div className="flex items-center gap-3">
-                <Button onClick={runSearch} disabled={loading}>
+                <Button
+                  onClick={runSearch}
+                  disabled={loading || cooldown > 0 || (usage ? usage.remaining_today <= 0 : false)}
+                >
                   {loading ? <Loader2 className="animate-spin mr-2" size={16} /> : <Search size={16} className="mr-2" />}
-                  Encontrar Influenciadores
+                  {cooldown > 0 ? `Aguarde ${cooldown}s` : "Encontrar Influenciadores"}
                 </Button>
                 {loading && (
                   <span className="text-sm text-muted-foreground">
