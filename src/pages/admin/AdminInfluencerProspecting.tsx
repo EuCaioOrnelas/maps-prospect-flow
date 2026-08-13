@@ -483,7 +483,7 @@ export default function AdminInfluencerProspecting() {
                   <Input type="number" value={maxSubs} onChange={(e) => setMaxSubs(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <FieldLabel icon={Eye}>Mínimo de visualizações</FieldLabel>
+                  <FieldLabel icon={Eye}>Média mínima de views por vídeo</FieldLabel>
                   <Input type="number" value={minViews} onChange={(e) => setMinViews(e.target.value)} placeholder="Opcional" />
                 </div>
               </div>
