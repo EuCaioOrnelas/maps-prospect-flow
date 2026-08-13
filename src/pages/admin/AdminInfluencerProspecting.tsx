@@ -71,11 +71,16 @@ export default function AdminInfluencerProspecting() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [usage, setUsage] = useState<any | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const [savingIds, setSavingIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [sortBy, setSortBy] = useState("fit_score");
   const [statusFilter, setStatusFilter] = useState("all");
   const [minScore, setMinScore] = useState("0");
   const [search, setSearch] = useState("");
+  const [pageSize, setPageSize] = useState("20");
+  const [page, setPage] = useState(1);
+  const [savedPage, setSavedPage] = useState(1);
 
   const loadSaved = async () => {
     const { data } = await (supabase as any)
@@ -86,22 +91,14 @@ export default function AdminInfluencerProspecting() {
     setSaved(data ?? []);
   };
 
-  // Recupera os resultados da última prospecção concluída (persistem após recarregar a página)
-  const loadLastResults = async () => {
-    const { data: lastSearch } = await (supabase as any)
-      .from("influencer_searches")
-      .select("id")
-      .eq("status", "done")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (!lastSearch?.id) return;
+  // Histórico completo: todas as prospecções ficam salvas e disponíveis na tabela
+  const loadAllProspects = async () => {
     const { data } = await (supabase as any)
       .from("influencer_prospects")
       .select("*")
-      .eq("search_id", lastSearch.id)
-      .order("fit_score", { ascending: false });
-    if (data?.length) setProspects(data);
+      .order("fit_score", { ascending: false })
+      .limit(2000);
+    setProspects(data ?? []);
   };
 
   const applyUsage = (u: any) => {
@@ -120,7 +117,7 @@ export default function AdminInfluencerProspecting() {
   useEffect(() => {
     loadSaved();
     loadUsage();
-    loadLastResults();
+    loadAllProspects();
   }, []);
 
 
@@ -136,6 +133,8 @@ export default function AdminInfluencerProspecting() {
     const id = setInterval(() => setStep((s) => Math.min(s + 1, PROGRESS_STEPS.length - 2)), 3500);
     return () => clearInterval(id);
   }, [loading]);
+
+  useEffect(() => { setPage(1); }, [search, statusFilter, minScore, sortBy, pageSize]);
 
   const addKeyword = () => {
     const v = kwInput.trim();
@@ -159,7 +158,6 @@ export default function AdminInfluencerProspecting() {
       return;
     }
     setLoading(true);
-    setProspects([]);
     try {
       const { data, error } = await supabase.functions.invoke("youtube-influencer-prospect", {
         body: {
@@ -187,7 +185,8 @@ export default function AdminInfluencerProspecting() {
       }
       if (data?.error) throw new Error(data.error);
       applyUsage(data?.usage);
-      setProspects(data?.prospects ?? []);
+      await loadAllProspects();
+      setPage(1);
       setStep(PROGRESS_STEPS.length - 1);
       toast({
         title: data?.prospects?.length
@@ -213,16 +212,22 @@ export default function AdminInfluencerProspecting() {
   };
 
   const saveProspect = async (p: any) => {
+    if (savingIds.includes(p.id)) return;
+    setSavingIds((s) => [...s, p.id]);
+    // atualização otimista: a linha já aparece como salva enquanto o backend confirma
+    setProspects((list) => list.map((x) => (x.id === p.id ? { ...x, saved: true, status: "qualificado" } : x)));
+    setSaved((list) => (list.some((x) => x.id === p.id) ? list : [{ ...p, saved: true, status: "qualificado" }, ...list]));
     const { data, error } = await supabase.functions.invoke("youtube-influencer-prospect", {
       body: { action: "save_prospect", prospect_id: p.id, saved: true },
     });
+    setSavingIds((s) => s.filter((id) => id !== p.id));
     if (error || data?.error) {
+      setProspects((list) => list.map((x) => (x.id === p.id ? { ...x, saved: false } : x)));
+      setSaved((list) => list.filter((x) => x.id !== p.id));
       toast({ title: "Erro ao salvar", variant: "destructive" });
       return;
     }
-    setProspects((list) => list.map((x) => (x.id === p.id ? { ...x, saved: true, status: "qualificado" } : x)));
     toast({ title: `${p.channel_name} salvo nos Parceiros.` });
-    loadSaved();
   };
 
   const applyView = (list: any[]) =>
@@ -240,116 +245,235 @@ export default function AdminInfluencerProspecting() {
         return (b.fit_score ?? 0) - (a.fit_score ?? 0);
       });
 
-  // Garantia extra: resultados exibidos sempre respeitam a faixa configurada
-  const withinFilters = (p: any) => {
-    const min = Number(minSubs) || 0;
-    const max = Number(maxSubs) || Infinity;
-    const mv = minViews ? Number(minViews) : 0;
-    const subs = Number(p.subscriber_count ?? 0);
-    if (subs < min || subs > max) return false;
-    if (mv && Number(p.avg_recent_views ?? 0) < mv) return false;
-    return true;
-  };
-
   const viewProspects = useMemo(
-    () => applyView(prospects.filter(withinFilters)),
-    [prospects, sortBy, statusFilter, minScore, search, minSubs, maxSubs, minViews],
+    () => applyView(prospects),
+    [prospects, sortBy, statusFilter, minScore, search],
   );
   const viewSaved = useMemo(() => applyView(saved), [saved, sortBy, statusFilter, minScore, search]);
 
-  const ResultsTable = ({ rows, showSave }: { rows: any[]; showSave: boolean }) => (
-    <Card>
-      <CardContent className="p-0 overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Canal</TableHead>
-              <TableHead>Inscritos</TableHead>
-              <TableHead>Views médias</TableHead>
-              <TableHead>Último vídeo</TableHead>
-              <TableHead>Fit Score</TableHead>
-              <TableHead className="max-w-[280px]">Principal motivo</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-10">
-                  Nenhum canal para exibir.
-                </TableCell>
-              </TableRow>
-            )}
-            {rows.map((p) => (
-              <TableRow
-                key={p.id}
-                className="cursor-pointer"
-                onClick={() => {
-                  setSelected(p);
-                  setSheetOpen(true);
-                }}
-              >
-                <TableCell>
-                  <div className="flex items-center gap-3 min-w-0">
-                    {p.thumbnail_url ? (
-                      <img src={p.thumbnail_url} alt={p.channel_name} className="h-9 w-9 rounded-xl object-cover" />
-                    ) : (
-                      <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center">
-                        <Youtube size={16} className="text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-medium truncate max-w-[180px]">{p.channel_name}</p>
-                      <p className="text-xs text-muted-foreground truncate max-w-[180px]">
-                        {p.channel_handle || "Handle não informado"}
-                      </p>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="text-sm">{fmtNum(p.subscriber_count)}</TableCell>
-                <TableCell className="text-sm">{fmtNum(p.avg_recent_views)}</TableCell>
-                <TableCell className="text-sm">
-                  {p.latest_video_at ? new Date(p.latest_video_at).toLocaleDateString("pt-BR") : "Não informado"}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={fitBadgeVariant(p.fit_score)}>{p.fit_score ?? 0}/100</Badge>
-                  <p className="text-[11px] text-muted-foreground mt-1">{p.fit_category}</p>
-                </TableCell>
-                <TableCell className="max-w-[280px]">
-                  <p className="text-xs text-muted-foreground line-clamp-2">{p.ai_summary || "Não informado"}</p>
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <Select value={p.status} onValueChange={(v) => updateStatus(p.id, v)}>
-                    <SelectTrigger className="h-8 w-[150px] text-xs">
-                      <SelectValue>{statusLabel(p.status)}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PROSPECT_STATUSES.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                  {showSave &&
-                    (p.saved ? (
-                      <Badge variant="secondary" className="gap-1">
-                        <CheckCircle2 size={12} /> Salvo
-                      </Badge>
-                    ) : (
-                      <Button size="sm" variant="outline" onClick={() => saveProspect(p)}>
-                        <BookmarkPlus size={14} className="mr-1" /> Salvar
-                      </Button>
-                    ))}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+  const allById = useMemo(() => {
+    const m = new Map<string, any>();
+    [...prospects, ...saved].forEach((p) => m.set(p.id, p));
+    return m;
+  }, [prospects, saved]);
+
+  const selectedRows = useMemo(
+    () => selectedIds.map((id) => allById.get(id)).filter(Boolean),
+    [selectedIds, allById],
   );
+
+  const toggleId = (id: string) =>
+    setSelectedIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  const ResultsTable = ({
+    rows,
+    showSave,
+    page: current,
+    onPageChange,
+  }: {
+    rows: any[];
+    showSave: boolean;
+    page: number;
+    onPageChange: (p: number) => void;
+  }) => {
+    const size = Number(pageSize);
+    const totalPages = Math.max(1, Math.ceil(rows.length / size));
+    const safePage = Math.min(current, totalPages);
+    const pageRows = rows.slice((safePage - 1) * size, safePage * size);
+    const pageAllSelected = pageRows.length > 0 && pageRows.every((p) => selectedIds.includes(p.id));
+
+    const togglePage = () =>
+      setSelectedIds((s) =>
+        pageAllSelected
+          ? s.filter((id) => !pageRows.some((p) => p.id === id))
+          : Array.from(new Set([...s, ...pageRows.map((p) => p.id)])),
+      );
+
+    const toggleAllFiltered = () =>
+      setSelectedIds((s) => {
+        const ids = rows.map((p) => p.id);
+        const allSel = ids.every((id) => s.includes(id));
+        return allSel ? s.filter((id) => !ids.includes(id)) : Array.from(new Set([...s, ...ids]));
+      });
+
+    return (
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" onClick={togglePage} className="h-8 text-xs">
+            <CheckSquare size={13} className="mr-1.5" />
+            {pageAllSelected ? "Desmarcar esta página" : "Marcar todos desta página"}
+          </Button>
+          <Button size="sm" variant="outline" onClick={toggleAllFiltered} className="h-8 text-xs">
+            <ListChecks size={13} className="mr-1.5" /> Marcar todos ({rows.length})
+          </Button>
+          {selectedIds.length > 0 && (
+            <>
+              <Badge variant="secondary" className="h-7 px-2">{selectedIds.length} selecionado(s)</Badge>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])} className="h-8 text-xs">
+                <X size={13} className="mr-1.5" /> Limpar seleção
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => exportProspectsXlsx(selectedRows)} className="h-8 text-xs">
+                <FileSpreadsheet size={13} className="mr-1.5" /> Exportar planilha
+              </Button>
+              <Button size="sm" onClick={() => exportProspectsPdf(selectedRows)} className="h-8 text-xs">
+                <FileText size={13} className="mr-1.5" /> Exportar PDF
+              </Button>
+            </>
+          )}
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Por página</span>
+            <Select value={pageSize} onValueChange={setPageSize}>
+              <SelectTrigger className="h-8 w-[80px] text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["20", "30", "40", "50"].map((n) => (
+                  <SelectItem key={n} value={n}>{n}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Card>
+          <CardContent className="p-0 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[40px]">
+                    <Checkbox checked={pageAllSelected} onCheckedChange={togglePage} aria-label="Selecionar página" />
+                  </TableHead>
+                  <TableHead>Canal</TableHead>
+                  <TableHead>Inscritos</TableHead>
+                  <TableHead>Views médias</TableHead>
+                  <TableHead>Último vídeo</TableHead>
+                  <TableHead>Fit Score</TableHead>
+                  <TableHead className="max-w-[280px]">Principal motivo</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pageRows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-10">
+                      Nenhum canal para exibir.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {pageRows.map((p) => (
+                  <TableRow
+                    key={p.id}
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setSelected(p);
+                      setSheetOpen(true);
+                    }}
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.includes(p.id)}
+                        onCheckedChange={() => toggleId(p.id)}
+                        aria-label={`Selecionar ${p.channel_name}`}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3 min-w-0">
+                        {p.thumbnail_url ? (
+                          <img src={p.thumbnail_url} alt={p.channel_name} className="h-9 w-9 rounded-xl object-cover" />
+                        ) : (
+                          <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center">
+                            <Youtube size={16} className="text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-medium truncate max-w-[180px]">{p.channel_name}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[180px]">
+                            {p.channel_handle || "Handle não informado"}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">{fmtNum(p.subscriber_count)}</TableCell>
+                    <TableCell className="text-sm">{fmtNum(p.avg_recent_views)}</TableCell>
+                    <TableCell className="text-sm">
+                      {p.latest_video_at ? new Date(p.latest_video_at).toLocaleDateString("pt-BR") : "Não informado"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={fitBadgeVariant(p.fit_score)}>{p.fit_score ?? 0}/100</Badge>
+                      <p className="text-[11px] text-muted-foreground mt-1">{p.fit_category}</p>
+                    </TableCell>
+                    <TableCell className="max-w-[280px]">
+                      <p className="text-xs text-muted-foreground line-clamp-2">{p.ai_summary || "Não informado"}</p>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Select value={p.status} onValueChange={(v) => updateStatus(p.id, v)}>
+                        <SelectTrigger className="h-8 w-[150px] text-xs">
+                          <SelectValue>{statusLabel(p.status)}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PROSPECT_STATUSES.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      {showSave &&
+                        (p.saved ? (
+                          <Badge variant="secondary" className="gap-1">
+                            <CheckCircle2 size={12} /> Salvo
+                          </Badge>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={savingIds.includes(p.id)}
+                            onClick={() => saveProspect(p)}
+                          >
+                            {savingIds.includes(p.id) ? (
+                              <Loader2 size={14} className="mr-1 animate-spin" />
+                            ) : (
+                              <BookmarkPlus size={14} className="mr-1" />
+                            )}
+                            {savingIds.includes(p.id) ? "Salvando…" : "Salvar"}
+                          </Button>
+                        ))}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-muted-foreground">
+            Mostrando {pageRows.length} de {rows.length} canais · página {safePage} de {totalPages}
+          </p>
+          <div className="flex items-center gap-1.5">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8"
+              disabled={safePage <= 1}
+              onClick={() => onPageChange(safePage - 1)}
+            >
+              <ChevronLeft size={14} /> Anterior
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8"
+              disabled={safePage >= totalPages}
+              onClick={() => onPageChange(safePage + 1)}
+            >
+              Próxima <ChevronRight size={14} />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
