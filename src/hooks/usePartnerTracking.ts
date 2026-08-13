@@ -157,12 +157,19 @@ export function usePartnerTracking() {
 
 
 
-/** Call this after a user signs up to attribute their account to the stored partner. */
+/**
+ * Call this after a user signs up to attribute their account to a partner.
+ * A code typed manually by the user wins over the automatic link attribution.
+ */
 export async function attributePartnerLeadOnSignup(userId: string, email: string, name?: string) {
   const ref = getStoredReferral();
-  if (!ref) return;
-  try {
-    const { data, error } = await (supabase as any).rpc("attribute_partner_lead", {
+  const manualCode = getManualReferralCode();
+  if (!ref && !manualCode) return;
+
+  const attempts: Array<Record<string, unknown>> = [];
+
+  if (ref) {
+    attempts.push({
       p_user_id: userId,
       p_email: email,
       p_name: name || null,
@@ -172,20 +179,42 @@ export async function attributePartnerLeadOnSignup(userId: string, email: string
       p_referral_link_id: ref.referral_link_id ?? null,
       p_source: "signed_in_event",
     });
+  }
 
-    if (error) {
-      console.warn("[attributePartnerLeadOnSignup] attribution failed:", error.message);
-      return;
-    }
+  // Runs last on purpose: the RPC re-attributes the lead to the typed code.
+  if (manualCode) {
+    attempts.push({
+      p_user_id: userId,
+      p_email: email,
+      p_name: name || null,
+      p_referral_code: manualCode,
+      p_click_id: null,
+      p_partner_id: null,
+      p_referral_link_id: null,
+      p_source: "referral_code",
+    });
+  }
 
-    if (data?.status === "blocked") {
-      console.warn("[attributePartnerLeadOnSignup] self-referral blocked:", data);
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-        document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-      } catch {}
+  try {
+    for (const payload of attempts) {
+      const { data, error } = await (supabase as any).rpc("attribute_partner_lead", payload);
+
+      if (error) {
+        console.warn("[attributePartnerLeadOnSignup] attribution failed:", error.message);
+        continue;
+      }
+
+      if (data?.status === "blocked") {
+        console.warn("[attributePartnerLeadOnSignup] self-referral blocked:", data);
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(CODE_KEY);
+          document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        } catch {}
+      }
     }
   } catch (err) {
+
     console.warn("[attributePartnerLeadOnSignup]", err);
   }
 }
