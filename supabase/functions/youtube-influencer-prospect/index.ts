@@ -476,7 +476,7 @@ serve(async (req) => {
       );
 
       // 4.2) Triagem de aderência ao ICP (barata: 1 chamada de IA para todos os candidatos)
-      let filtered = candidates.slice(0, resultsRequested);
+      let filtered = candidates.slice(0, resultsRequested * 2);
       const relevanceById = new Map<string, { score: number; reason: string }>();
       if (candidates.length) {
         const shortlist = candidates.slice(0, Math.min(candidates.length, resultsRequested * 3, 90));
@@ -514,7 +514,7 @@ serve(async (req) => {
           const relevant = shortlist
             .filter((c: any) => (relevanceById.get(c.id)?.score ?? 0) >= 6)
             .sort((a: any, b: any) => (relevanceById.get(b.id)?.score ?? 0) - (relevanceById.get(a.id)?.score ?? 0));
-          filtered = relevant.slice(0, resultsRequested);
+          filtered = relevant.slice(0, resultsRequested * 2);
         } catch (e) {
           console.error("[triagem] falhou, seguindo sem filtro de IA", e);
         }
