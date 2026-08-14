@@ -142,7 +142,7 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
               {m.avatar_url ? (
                 <img src={m.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border/60 shrink-0" />
               ) : (
-                <div className="w-8 h-8 rounded-[9px] bg-primary/15 text-primary text-[11px] font-semibold flex items-center justify-center border border-border/60 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-primary/15 text-primary text-[11px] font-semibold flex items-center justify-center border border-border/60 shrink-0">
                   {initials(m)}
                 </div>
               )}

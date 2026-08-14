@@ -182,7 +182,8 @@ export default function MetaNumeros() {
         const stillExpired = await validateConnectionToken(updated);
         setExpiredTokenIds((prev) => {
           const n = new Set(prev);
-          stillExpired ? n.add(editingConn.id) : n.delete(editingConn.id);
+          if (stillExpired) n.add(editingConn.id);
+          else n.delete(editingConn.id);
           return n;
         });
         if (!stillExpired) toast({ title: "Token atualizado com sucesso!" });
