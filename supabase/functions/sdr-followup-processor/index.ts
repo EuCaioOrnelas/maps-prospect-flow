@@ -75,7 +75,15 @@ Deno.serve(async (req) => {
     .lte("next_followup_at", new Date().toISOString())
     .order("next_followup_at", { ascending: true })
     .limit(25);
-  if (error) return json({ error: "Unable to load due follow-ups" }, 500);
+  if (error) {
+    console.error("[sdr-followup-processor] load failed", error);
+    return json({
+      error: "Unable to load due follow-ups",
+      details: error.message,
+      code: (error as { code?: string }).code ?? null,
+      hint: (error as { hint?: string }).hint ?? null,
+    }, 500);
+  }
 
   let dispatched = 0;
   let deferred = 0;
