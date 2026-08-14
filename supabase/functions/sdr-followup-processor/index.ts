@@ -43,10 +43,16 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !serviceKey) return json({ error: "Backend configuration unavailable" }, 500);
   const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "").trim();
+  const apiKeyHeader = req.headers.get("apikey")?.trim();
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const cronSecret = Deno.env.get("SDR_CRON_SECRET");
   const cronHeader = req.headers.get("x-cron-secret");
-  const authorized = token === serviceKey || (!!cronSecret && cronHeader === cronSecret);
+  const authorized =
+    token === serviceKey ||
+    (!!cronSecret && cronHeader === cronSecret) ||
+    (!!anonKey && (token === anonKey || apiKeyHeader === anonKey));
   if (!authorized) return json({ error: "Unauthorized" }, 401);
+
 
 
   const backend = createClient(url, serviceKey);
