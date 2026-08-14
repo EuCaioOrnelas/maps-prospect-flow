@@ -264,6 +264,90 @@ async function sendMessageNode(ctx: SendCtx, cfg: Record<string, any>, vars: Rec
   return true;
 }
 
+// ---------- avaliação (rating) ----------
+function ratingOptions(cfg: Record<string, any>): Array<{ id: string; title: string; value: string }> {
+  const opts: any[] = cfg.options || [];
+  return opts.map((o, i) => ({
+    id: o?.id || `opt_${i}`,
+    title: String(o?.label ?? o?.title ?? `Opção ${i + 1}`),
+    value: String(o?.value ?? o?.label ?? i + 1),
+  }));
+}
+
+async function sendRatingQuestion(ctx: SendCtx, cfg: Record<string, any>, vars: Record<string, string>) {
+  const type = cfg.type || "buttons";
+  const message = interpolate(cfg.message || cfg.body_text || "Como você avalia nosso atendimento?", vars);
+  const opts = ratingOptions(cfg);
+
+  if ((type === "buttons" || type === "menu") && opts.length) {
+    return await sendInteractive(
+      ctx,
+      {
+        interaction_type: type === "menu" ? "list" : "buttons",
+        body_text: message,
+        list_button_text: cfg.list_button_text || "Avaliar",
+        list_section_title: cfg.name || "Avaliação",
+        buttons: opts.map((o) => ({ id: o.id, title: o.title })),
+        list_items: opts.map((o) => ({ id: o.id, title: o.title })),
+      },
+      vars,
+    );
+  }
+  if (type === "numeric") {
+    const min = Number(cfg.numeric?.min ?? 0);
+    const max = Number(cfg.numeric?.max ?? 10);
+    return await sendText(ctx, `${message}\n\nResponda com uma nota de ${min} a ${max}.`);
+  }
+  if (type === "stars") {
+    const max = Number(cfg.stars?.max ?? 5);
+    return await sendText(ctx, `${message}\n\nResponda com um número de 1 a ${max} (estrelas).`);
+  }
+  return await sendText(ctx, message);
+}
+
+function ratingBucket(score: number | null, max: number | null, type: string): string | null {
+  if (score == null || !max) return null;
+  if (type === "numeric" && max >= 10) {
+    if (score >= 9) return "promoter";
+    if (score >= 7) return "passive";
+    return "detractor";
+  }
+  const pct = score / max;
+  if (pct >= 0.8) return "positive";
+  if (pct >= 0.5) return "neutral";
+  return "negative";
+}
+
+function parseRatingAnswer(
+  cfg: Record<string, any>,
+  text: string,
+  buttonId: string,
+  buttonTitle: string,
+): { score: number | null; max: number | null; text: string; bucket: string | null } {
+  const type = cfg.type || "buttons";
+  if (type === "buttons" || type === "menu") {
+    const opts = ratingOptions(cfg);
+    const idx = opts.findIndex(
+      (o) =>
+        normalizeHandle(o.id) === normalizeHandle(buttonId) ||
+        o.title.toLowerCase() === (buttonTitle || text).trim().toLowerCase(),
+    );
+    const chosen = idx >= 0 ? opts[idx] : null;
+    const numeric = chosen ? Number(chosen.value) : NaN;
+    const score = Number.isFinite(numeric) ? numeric : idx >= 0 ? idx + 1 : null;
+    const max = opts.length || null;
+    return { score, max, text: chosen?.title || buttonTitle || text.trim(), bucket: ratingBucket(score, max, type) };
+  }
+  if (type === "numeric" || type === "stars") {
+    const max = type === "numeric" ? Number(cfg.numeric?.max ?? 10) : Number(cfg.stars?.max ?? 5);
+    const found = String(text).match(/-?\d+([.,]\d+)?/);
+    const score = found ? Number(found[0].replace(",", ".")) : null;
+    return { score, max, text: text.trim(), bucket: ratingBucket(score, max, type) };
+  }
+  return { score: null, max: null, text: text.trim(), bucket: null };
+}
+
+
 // ---------- condições ----------
 interface Runtime {
   lastUserText: string;
