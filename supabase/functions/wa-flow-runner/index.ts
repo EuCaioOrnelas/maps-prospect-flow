@@ -841,8 +841,9 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         }
         runtime.vars[varName] = value;
         if (ctx.leadId && cfg.collect_type === "name") {
-          await supabase.from("leads").update({ name: value }).eq("id", ctx.leadId);
+          await supabase.from("leads").update({ contact_name: value }).eq("id", ctx.leadId);
         }
+
         currentId = defaultTarget(edges, node.id);
         break;
       }
