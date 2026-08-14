@@ -1065,7 +1065,7 @@ async function handleInbound(body: Record<string, any>) {
     let startId: string | null = running.awaiting_node_id || running.current_node_id;
     // se estava aguardando num nó de botões, roteia pela opção escolhida
     const awaiting = nodes.find((n) => n.id === running.awaiting_node_id);
-    if (awaiting && (awaiting.node_type === "buttons" || awaiting.node_type === "rating")) {
+    if (awaiting && awaiting.node_type === "buttons") {
       const items = interactiveItems(awaiting.config || {});
       const match = items.find(
         (i) =>
@@ -1075,10 +1075,13 @@ async function handleInbound(body: Record<string, any>) {
       const handle = match?.id || runtime.lastButtonId;
       startId = handle ? targetByHandle(edges, awaiting.id, handle) : defaultTarget(edges, awaiting.id);
       if (!startId) startId = defaultTarget(edges, awaiting.id);
-      if (awaiting.node_type === "rating" && match) vars[`${awaiting.config?.name || "avaliacao"}`] = match.title;
+    } else if (awaiting && awaiting.node_type === "rating") {
+      // o nó de avaliação é reentrante: ele mesmo processa nota e sugestão
+      startId = awaiting.id;
     } else if (awaiting && awaiting.node_type === "message") {
       startId = defaultTarget(edges, awaiting.id);
     }
+
 
     await persist(running.id, {
       status: "active",
