@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.calendar-reminders]
 verify_jwt = false
+
+[functions.wa-flow-runner]
+verify_jwt = false
