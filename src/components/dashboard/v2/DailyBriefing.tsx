@@ -635,7 +635,7 @@ export function DailyBriefing({ alerts, userName, periodDays, metrics, capabilit
     setRecording(false);
     setLocked(false);
     try {
-      recorderRef.current?.state !== "inactive" && recorderRef.current?.stop();
+      if (recorderRef.current && recorderRef.current.state !== "inactive") recorderRef.current.stop();
     } catch {
       /* ignore */
     }
