@@ -317,7 +317,12 @@ Deno.serve(async (req) => {
   if (!supabaseUrl || !serviceKey) return json({ error: "Backend configuration unavailable" }, 500);
 
   const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "").trim();
-  if (!token || token !== serviceKey) return json({ error: "Unauthorized" }, 401);
+  const apiKeyHeader = req.headers.get("apikey")?.trim();
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const authorized =
+    token === serviceKey || (!!anonKey && (token === anonKey || apiKeyHeader === anonKey));
+  if (!authorized) return json({ error: "Unauthorized" }, 401);
+
 
   const supabase = createClient(supabaseUrl, serviceKey);
   const now = Date.now();
