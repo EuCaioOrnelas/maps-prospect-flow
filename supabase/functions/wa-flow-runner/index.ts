@@ -868,39 +868,46 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
           google_account_id: cfg.google_account_id,
           spreadsheet_id: cfg.spreadsheet_id,
           sheet_name: cfg.sheet_name,
-          values: columns.map((c) => interpolate(c.variable ?? "", runtime.vars) || c.default_value || ""),
+          action: "append",
+          data: columns.map((c) => interpolate(c.variable ?? "", runtime.vars) || c.default_value || ""),
         });
         currentId = defaultTarget(edges, node.id);
         break;
       }
 
       case "google_calendar": {
+        const attendee = interpolate(cfg.attendee_email || "", runtime.vars);
         await callGoogleFn("google-calendar-action", {
           user_id: execution.owner_user_id || execution.user_id,
           google_account_id: cfg.google_account_id,
-          title: interpolate(cfg.event_title, runtime.vars),
+          calendar_id: cfg.calendar_id || "primary",
+          summary: interpolate(cfg.event_title, runtime.vars),
           description: interpolate(cfg.event_description, runtime.vars),
-          start: cfg.event_start || new Date().toISOString(),
+          start_datetime: interpolate(cfg.event_start || "", runtime.vars) || new Date().toISOString(),
           duration_minutes: Number(cfg.event_duration ?? 30),
-          attendee_email: cfg.invite_attendee ? interpolate(cfg.attendee_email, runtime.vars) : null,
+          attendee_email: attendee && attendee.includes("@") ? attendee : null,
+          reminder_minutes: cfg.reminder_minutes != null ? Number(cfg.reminder_minutes) : null,
         });
         currentId = defaultTarget(edges, node.id);
         break;
       }
 
       case "gmail": {
-        const body = interpolate(cfg.body, runtime.vars);
+        const body = interpolate(cfg.email_body ?? cfg.body ?? "", runtime.vars);
+        const toList = interpolate(cfg.email_to ?? cfg.to_email ?? "", runtime.vars);
+        const isHtml = cfg.email_html ?? cfg.use_html ?? false;
         await callGoogleFn("gmail-send-action", {
           user_id: execution.owner_user_id || execution.user_id,
           google_account_id: cfg.google_account_id,
-          to: interpolate(cfg.to_email, runtime.vars),
-          subject: interpolate(cfg.subject, runtime.vars),
-          ...(cfg.use_html ? { body_html: body } : { body_text: body }),
-          cc: cfg.cc || [],
-          bcc: cfg.bcc || [],
+          to: toList,
+          subject: interpolate(cfg.email_subject ?? cfg.subject ?? "", runtime.vars),
+          ...(isHtml ? { body_html: body } : { body_text: body }),
+          cc: cfg.email_cc ?? cfg.cc ?? [],
+          bcc: cfg.email_bcc ?? cfg.bcc ?? [],
         });
         currentId = defaultTarget(edges, node.id);
         break;
+
       }
 
       case "end": {
