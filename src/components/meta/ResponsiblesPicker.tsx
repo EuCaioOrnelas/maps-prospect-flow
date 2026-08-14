@@ -127,8 +127,8 @@ export function ResponsiblesPicker({
                   )}
                 >
                   <Avatar className="h-7 w-7 shrink-0 rounded-[28%]">
-                    <AvatarImage src={m.avatar_url || undefined} alt={label} />
-                    <AvatarFallback className="text-[10px]">{initialsOf(label)}</AvatarFallback>
+                    <AvatarImage className="rounded-[28%]" src={m.avatar_url || undefined} alt={label} />
+                    <AvatarFallback className="text-[10px] rounded-[28%]">{initialsOf(label)}</AvatarFallback>
                   </Avatar>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{label}</span>
@@ -162,8 +162,8 @@ export function ResponsiblesPicker({
                 className="flex items-center gap-1.5 rounded-full border border-border bg-background py-0.5 pl-0.5 pr-1.5 text-xs"
               >
                 <Avatar className="h-5 w-5 rounded-[28%]">
-                  <AvatarImage src={m?.avatar_url || undefined} alt={label} />
-                  <AvatarFallback className="text-[9px]">{initialsOf(label)}</AvatarFallback>
+                  <AvatarImage className="rounded-[28%]" src={m?.avatar_url || undefined} alt={label} />
+                  <AvatarFallback className="text-[9px] rounded-[28%]">{initialsOf(label)}</AvatarFallback>
                 </Avatar>
                 <span className="max-w-[140px] truncate">{label}</span>
                 <button
@@ -198,8 +198,8 @@ export function ResponsibleAvatars({
         const label = m?.name || m?.email || id.slice(0, 8);
         return (
           <Avatar key={id} className="h-6 w-6 rounded-[28%] border-2 border-background" title={label}>
-            <AvatarImage src={m?.avatar_url || undefined} alt={label} />
-            <AvatarFallback className="text-[9px]">{initialsOf(label)}</AvatarFallback>
+            <AvatarImage className="rounded-[28%]" src={m?.avatar_url || undefined} alt={label} />
+            <AvatarFallback className="text-[9px] rounded-[28%]">{initialsOf(label)}</AvatarFallback>
           </Avatar>
         );
       })}
