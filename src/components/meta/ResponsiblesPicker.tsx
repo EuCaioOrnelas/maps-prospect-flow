@@ -126,7 +126,7 @@ export function ResponsiblesPicker({
                     selected && "bg-primary/10"
                   )}
                 >
-                  <Avatar className="h-7 w-7 shrink-0">
+                  <Avatar className="h-7 w-7 shrink-0 rounded-[28%]">
                     <AvatarImage src={m.avatar_url || undefined} alt={label} />
                     <AvatarFallback className="text-[10px]">{initialsOf(label)}</AvatarFallback>
                   </Avatar>
@@ -161,7 +161,7 @@ export function ResponsiblesPicker({
                 key={id}
                 className="flex items-center gap-1.5 rounded-full border border-border bg-background py-0.5 pl-0.5 pr-1.5 text-xs"
               >
-                <Avatar className="h-5 w-5">
+                <Avatar className="h-5 w-5 rounded-[28%]">
                   <AvatarImage src={m?.avatar_url || undefined} alt={label} />
                   <AvatarFallback className="text-[9px]">{initialsOf(label)}</AvatarFallback>
                 </Avatar>
@@ -197,7 +197,7 @@ export function ResponsibleAvatars({
         const m = byId[id];
         const label = m?.name || m?.email || id.slice(0, 8);
         return (
-          <Avatar key={id} className="h-6 w-6 border-2 border-background" title={label}>
+          <Avatar key={id} className="h-6 w-6 rounded-[28%] border-2 border-background" title={label}>
             <AvatarImage src={m?.avatar_url || undefined} alt={label} />
             <AvatarFallback className="text-[9px]">{initialsOf(label)}</AvatarFallback>
           </Avatar>
