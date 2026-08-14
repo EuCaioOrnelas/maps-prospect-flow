@@ -107,7 +107,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         supabase.from("wa_flow_executions" as any).select("id, node_history").eq("owner_user_id", accountOwnerId)
           .gte("created_at", periodStart.toISOString()),
         // All revenue leads for health + radar
-        supabase.from("revenue_leads").select("id, phone_e164, score_total, lead_name, status_bucket").eq("owner_user_id", accountOwnerId),
+        supabase.from("revenue_leads").select("id, phone_e164, score_total, name, status_bucket").eq("owner_user_id", accountOwnerId),
         // Recent opportunities (last 7 days)
         supabase.from("search_history").select("results_count").eq("owner_user_id", accountOwnerId)
           .gte("created_at", sevenDaysAgo.toISOString()),
