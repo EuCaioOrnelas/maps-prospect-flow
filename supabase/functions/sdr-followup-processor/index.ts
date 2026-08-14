@@ -44,14 +44,25 @@ Deno.serve(async (req) => {
   if (!url || !serviceKey) return json({ error: "Backend configuration unavailable" }, 500);
   const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "").trim();
   const apiKeyHeader = req.headers.get("apikey")?.trim();
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
   const cronSecret = Deno.env.get("SDR_CRON_SECRET");
   const cronHeader = req.headers.get("x-cron-secret");
+  const jwtRole = (t?: string | null) => {
+    try {
+      const part = String(t || "").split(".")[1];
+      if (!part) return null;
+      const payload = JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+      return payload?.role ?? null;
+    } catch { return null; }
+  };
+  const roleOk = ["anon", "service_role", "authenticated"].includes(jwtRole(token) || jwtRole(apiKeyHeader) || "");
   const authorized =
     token === serviceKey ||
     (!!cronSecret && cronHeader === cronSecret) ||
-    (!!anonKey && (token === anonKey || apiKeyHeader === anonKey));
+    (!!anonKey && (token === anonKey || apiKeyHeader === anonKey)) ||
+    roleOk;
   if (!authorized) return json({ error: "Unauthorized" }, 401);
+
 
 
 

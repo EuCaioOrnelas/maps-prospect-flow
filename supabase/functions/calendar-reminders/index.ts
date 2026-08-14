@@ -318,10 +318,20 @@ Deno.serve(async (req) => {
 
   const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "").trim();
   const apiKeyHeader = req.headers.get("apikey")?.trim();
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+  const jwtRole = (t?: string | null) => {
+    try {
+      const part = String(t || "").split(".")[1];
+      if (!part) return null;
+      const payload = JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+      return payload?.role ?? null;
+    } catch { return null; }
+  };
+  const roleOk = ["anon", "service_role", "authenticated"].includes(jwtRole(token) || jwtRole(apiKeyHeader) || "");
   const authorized =
-    token === serviceKey || (!!anonKey && (token === anonKey || apiKeyHeader === anonKey));
+    token === serviceKey || (!!anonKey && (token === anonKey || apiKeyHeader === anonKey)) || roleOk;
   if (!authorized) return json({ error: "Unauthorized" }, 401);
+
 
 
   const supabase = createClient(supabaseUrl, serviceKey);
