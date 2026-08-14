@@ -32,7 +32,7 @@ const Avatar = ({ member, dim }: { member: ResponsibleMember | null; dim: string
       <img
         src={member.avatar_url}
         alt={member.name || member.email || "Responsável"}
-        className={cn("rounded-full object-cover shrink-0", dim)}
+        className={cn("rounded-[28%] object-cover shrink-0", dim)}
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
       />
     );
@@ -55,7 +55,7 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
   });
 
   const trigger = (
-    <span className="inline-flex p-1 -m-1 rounded-full overflow-visible shrink-0">
+    <span className="inline-flex p-1 -m-1 rounded-[28%] overflow-visible shrink-0">
       <button
         type="button"
         onClick={(e) => {
@@ -64,7 +64,7 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
         }}
         title={`Responsável: ${label}${canEdit ? " — clique para alterar" : ""}`}
         className={cn(
-          "relative rounded-full flex items-center justify-center font-semibold shrink-0 overflow-hidden border border-border/60 transition-transform duration-200 ease-out will-change-transform",
+          "relative rounded-[28%] flex items-center justify-center font-semibold shrink-0 overflow-hidden border border-border/60 transition-transform duration-200 ease-out will-change-transform",
           current ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
           dim,
           canEdit && "hover:ring-2 hover:ring-primary/50 hover:border-primary/50 hover:scale-105 cursor-pointer"
@@ -123,7 +123,7 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
               setOpen(false);
             }}
           >
-            <div className={cn("rounded-full bg-muted text-muted-foreground flex items-center justify-center border border-border/60", "w-7 h-7")}>
+            <div className={cn("rounded-[28%] bg-muted text-muted-foreground flex items-center justify-center border border-border/60", "w-7 h-7")}>
               <UserIcon className="w-3.5 h-3.5" />
             </div>
             <span className="flex-1 text-left text-muted-foreground">Sem responsável</span>
@@ -140,9 +140,9 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
               }}
             >
               {m.avatar_url ? (
-                <img src={m.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-border/60 shrink-0" />
+                <img src={m.avatar_url} alt="" className="w-8 h-8 rounded-[28%] object-cover border border-border/60 shrink-0" />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-primary/15 text-primary text-[11px] font-semibold flex items-center justify-center border border-border/60 shrink-0">
+                <div className="w-8 h-8 rounded-[28%] bg-primary/15 text-primary text-[11px] font-semibold flex items-center justify-center border border-border/60 shrink-0">
                   {initials(m)}
                 </div>
               )}
