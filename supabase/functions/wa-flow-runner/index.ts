@@ -503,13 +503,8 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         currentId = defaultTarget(edges, node.id);
         break;
 
-      case "buttons":
-      case "rating": {
-        if (node.node_type === "rating") {
-          await sendText(ctx.send, interpolate(cfg.message || cfg.body_text || "", runtime.vars));
-        } else {
-          await sendInteractive(ctx.send, cfg, runtime.vars);
-        }
+      case "buttons": {
+        await sendInteractive(ctx.send, cfg, runtime.vars);
         await persist(execution.id, {
           status: "awaiting_input",
           awaiting_node_id: node.id,
@@ -520,6 +515,88 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         });
         return;
       }
+
+      case "rating": {
+        const stateKey = `_rt_${node.id}`;
+        const rowKey = `${stateKey}_row`;
+        const stage = runtime.vars[stateKey];
+        const ratingName = cfg.name || node.name || "Avaliação";
+        const ownerId = execution.owner_user_id || execution.user_id;
+
+        const awaitInput = async () => {
+          await persist(execution.id, {
+            status: "awaiting_input",
+            awaiting_node_id: node.id,
+            current_node_id: node.id,
+            current_node_name: node.name,
+            node_history: history,
+            collected_data: runtime.vars,
+          });
+        };
+
+        // 1) primeira passagem: envia a pergunta
+        if (!stage) {
+          await sendRatingQuestion(ctx.send, cfg, runtime.vars);
+          runtime.vars[stateKey] = "await";
+          await awaitInput();
+          return;
+        }
+
+        // 2) resposta da avaliação
+        if (stage === "await") {
+          if (!runtime.hasFreshUserInput) { await awaitInput(); return; }
+          runtime.hasFreshUserInput = false;
+          const parsed = parseRatingAnswer(cfg, runtime.lastUserText, runtime.lastButtonId, runtime.lastButtonTitle);
+          runtime.vars[ratingName.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 30)] = parsed.text;
+          const { data: row } = await supabase
+            .from("wa_flow_ratings")
+            .insert({
+              user_id: execution.user_id,
+              owner_user_id: ownerId,
+              flow_id: execution.flow_id,
+              node_id: node.id,
+              execution_id: execution.id,
+              contact_phone: ctx.send.to,
+              contact_name: execution.lead_name || runtime.vars.nome || null,
+              lead_id: ctx.leadId,
+              rating_name: ratingName,
+              rating_type: cfg.type || "buttons",
+              score_numeric: parsed.score,
+              score_max: parsed.max,
+              score_text: parsed.text,
+              bucket: parsed.bucket,
+              responded_at: new Date().toISOString(),
+            })
+            .select("id")
+            .maybeSingle();
+          if (row?.id) runtime.vars[rowKey] = row.id;
+
+          if (cfg.ask_suggestion) {
+            const prompt = interpolate(cfg.suggestion_prompt || "Tem alguma sugestão para melhorarmos?", runtime.vars);
+            await sendText(ctx.send, prompt);
+            runtime.vars[stateKey] = "suggestion";
+            await awaitInput();
+            return;
+          }
+          delete runtime.vars[stateKey];
+          currentId = defaultTarget(edges, node.id);
+          break;
+        }
+
+        // 3) sugestão de melhoria
+        if (!runtime.hasFreshUserInput) { await awaitInput(); return; }
+        runtime.hasFreshUserInput = false;
+        const suggestion = runtime.lastUserText.trim();
+        if (runtime.vars[rowKey] && suggestion) {
+          await supabase.from("wa_flow_ratings").update({ suggestion_text: suggestion }).eq("id", runtime.vars[rowKey]);
+        }
+        if (cfg.suggestion_thanks) await sendText(ctx.send, interpolate(cfg.suggestion_thanks, runtime.vars));
+        delete runtime.vars[stateKey];
+        delete runtime.vars[rowKey];
+        currentId = defaultTarget(edges, node.id);
+        break;
+      }
+
 
       case "condition": {
         if (conditionNeedsInput(cfg.condition_type) && !runtime.hasFreshUserInput) {
