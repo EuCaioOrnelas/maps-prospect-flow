@@ -264,6 +264,90 @@ async function sendMessageNode(ctx: SendCtx, cfg: Record<string, any>, vars: Rec
   return true;
 }
 
+// ---------- avaliação (rating) ----------
+function ratingOptions(cfg: Record<string, any>): Array<{ id: string; title: string; value: string }> {
+  const opts: any[] = cfg.options || [];
+  return opts.map((o, i) => ({
+    id: o?.id || `opt_${i}`,
+    title: String(o?.label ?? o?.title ?? `Opção ${i + 1}`),
+    value: String(o?.value ?? o?.label ?? i + 1),
+  }));
+}
+
+async function sendRatingQuestion(ctx: SendCtx, cfg: Record<string, any>, vars: Record<string, string>) {
+  const type = cfg.type || "buttons";
+  const message = interpolate(cfg.message || cfg.body_text || "Como você avalia nosso atendimento?", vars);
+  const opts = ratingOptions(cfg);
+
+  if ((type === "buttons" || type === "menu") && opts.length) {
+    return await sendInteractive(
+      ctx,
+      {
+        interaction_type: type === "menu" ? "list" : "buttons",
+        body_text: message,
+        list_button_text: cfg.list_button_text || "Avaliar",
+        list_section_title: cfg.name || "Avaliação",
+        buttons: opts.map((o) => ({ id: o.id, title: o.title })),
+        list_items: opts.map((o) => ({ id: o.id, title: o.title })),
+      },
+      vars,
+    );
+  }
+  if (type === "numeric") {
+    const min = Number(cfg.numeric?.min ?? 0);
+    const max = Number(cfg.numeric?.max ?? 10);
+    return await sendText(ctx, `${message}\n\nResponda com uma nota de ${min} a ${max}.`);
+  }
+  if (type === "stars") {
+    const max = Number(cfg.stars?.max ?? 5);
+    return await sendText(ctx, `${message}\n\nResponda com um número de 1 a ${max} (estrelas).`);
+  }
+  return await sendText(ctx, message);
+}
+
+function ratingBucket(score: number | null, max: number | null, type: string): string | null {
+  if (score == null || !max) return null;
+  if (type === "numeric" && max >= 10) {
+    if (score >= 9) return "promoter";
+    if (score >= 7) return "passive";
+    return "detractor";
+  }
+  const pct = score / max;
+  if (pct >= 0.8) return "positive";
+  if (pct >= 0.5) return "neutral";
+  return "negative";
+}
+
+function parseRatingAnswer(
+  cfg: Record<string, any>,
+  text: string,
+  buttonId: string,
+  buttonTitle: string,
+): { score: number | null; max: number | null; text: string; bucket: string | null } {
+  const type = cfg.type || "buttons";
+  if (type === "buttons" || type === "menu") {
+    const opts = ratingOptions(cfg);
+    const idx = opts.findIndex(
+      (o) =>
+        normalizeHandle(o.id) === normalizeHandle(buttonId) ||
+        o.title.toLowerCase() === (buttonTitle || text).trim().toLowerCase(),
+    );
+    const chosen = idx >= 0 ? opts[idx] : null;
+    const numeric = chosen ? Number(chosen.value) : NaN;
+    const score = Number.isFinite(numeric) ? numeric : idx >= 0 ? idx + 1 : null;
+    const max = opts.length || null;
+    return { score, max, text: chosen?.title || buttonTitle || text.trim(), bucket: ratingBucket(score, max, type) };
+  }
+  if (type === "numeric" || type === "stars") {
+    const max = type === "numeric" ? Number(cfg.numeric?.max ?? 10) : Number(cfg.stars?.max ?? 5);
+    const found = String(text).match(/-?\d+([.,]\d+)?/);
+    const score = found ? Number(found[0].replace(",", ".")) : null;
+    return { score, max, text: text.trim(), bucket: ratingBucket(score, max, type) };
+  }
+  return { score: null, max: null, text: text.trim(), bucket: null };
+}
+
+
 // ---------- condições ----------
 interface Runtime {
   lastUserText: string;
@@ -306,8 +390,8 @@ async function evaluateCondition(cfg: Record<string, any>, rt: Runtime, leadId: 
     }
     case "score_above": {
       if (!leadId) return false;
-      const { data } = await supabase.from("leads").select("score").eq("id", leadId).maybeSingle();
-      const score = Number(data?.score ?? 0);
+      const { data } = await supabase.from("leads").select("ai_score").eq("id", leadId).maybeSingle();
+      const score = Number(data?.ai_score ?? 0);
       if (cfg.score_check_type === "category") {
         const cat = cfg.score_category;
         if (cat === "hot") return score >= 700;
@@ -318,50 +402,108 @@ async function evaluateCondition(cfg: Record<string, any>, rt: Runtime, leadId: 
     }
     case "is_customer": {
       if (!leadId) return false;
-      const { data } = await supabase.from("lead_deals").select("id").eq("lead_id", leadId).eq("status", "won").limit(1);
-      return !!data?.length;
+      const { data } = await supabase
+        .from("lead_deals")
+        .select("id,status")
+        .eq("lead_id", leadId)
+        .limit(5);
+      return !!(data || []).some((d: any) => !["cancelled", "canceled", "cancelado"].includes(String(d.status || "").toLowerCase()));
     }
+
     default:
       return false;
   }
 }
 
 // ---------- ações ----------
-async function runActions(cfg: Record<string, any>, leadId: string | null, ownerId: string, vars: Record<string, string>) {
+// Resolve uma etapa do Kanban: aceita UUID (pipeline_stages.id) ou nome da coluna.
+async function resolveStageId(ownerId: string, value: string): Promise<string | null> {
+  const v = String(value || "").trim();
+  if (!v) return null;
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)) return v;
+  const { data } = await supabase
+    .from("pipeline_stages")
+    .select("id")
+    .eq("user_id", ownerId)
+    .ilike("name", v)
+    .limit(1)
+    .maybeSingle();
+  return data?.id || null;
+}
+
+async function runActions(
+  cfg: Record<string, any>,
+  leadId: string | null,
+  ownerId: string,
+  vars: Record<string, string>,
+  phone?: string,
+): Promise<string | null> {
   const actions: any[] = Array.isArray(cfg.actions) && cfg.actions.length
     ? cfg.actions
     : cfg.action_type
-      ? [{ type: cfg.action_type, value: cfg.tag_value || cfg.pipeline_stage }]
+      ? [{ type: cfg.action_type, tag_value: cfg.tag_value, pipeline_stage_id: cfg.pipeline_stage }]
       : [];
+  let currentLeadId = leadId;
   for (const act of actions) {
     const type = act?.type;
     try {
-      if ((type === "add_tag" || type === "remove_tag") && leadId) {
-        const { data } = await supabase.from("leads").select("tags").eq("id", leadId).maybeSingle();
+      if ((type === "add_tag" || type === "remove_tag") && currentLeadId) {
+        const { data } = await supabase.from("leads").select("tags").eq("id", currentLeadId).maybeSingle();
         const current: string[] = Array.isArray(data?.tags) ? data!.tags : [];
-        const tag = String(act.value ?? "").trim();
+        const tag = String(act.tag_value ?? act.value ?? "").trim();
         if (!tag) continue;
         const next = type === "add_tag"
           ? Array.from(new Set([...current, tag]))
           : current.filter((t) => String(t).toLowerCase() !== tag.toLowerCase());
-        await supabase.from("leads").update({ tags: next }).eq("id", leadId);
-      } else if ((type === "move_pipeline" || type === "move_kanban") && leadId) {
-        const stage = act.stage_name || act.value;
-        if (stage) await supabase.from("leads").update({ crm_stage: stage }).eq("id", leadId);
-      } else if (type === "update_lead" && leadId && act.field) {
-        await supabase.from("leads").update({ [act.field]: interpolate(act.value, vars) }).eq("id", leadId);
-      } else if (type === "webhook" && (act.webhook_url || cfg.webhook_url)) {
-        await fetch(act.webhook_url || cfg.webhook_url, {
-          method: (act.webhook_method || cfg.webhook_method || "POST").toUpperCase(),
+        await supabase.from("leads").update({ tags: next }).eq("id", currentLeadId);
+      } else if ((type === "move_pipeline" || type === "move_kanban") && currentLeadId) {
+        const stageId = await resolveStageId(ownerId, act.pipeline_stage_id || act.stage_name || act.value);
+        if (stageId) await supabase.from("leads").update({ pipeline_stage_id: stageId }).eq("id", currentLeadId);
+      } else if (type === "send_to_crm") {
+        const stageId = await resolveStageId(ownerId, act.crm_stage_id || "");
+        const name = interpolate(act.crm_name || vars.nome || "", vars) || null;
+        const estimated = Number(String(interpolate(act.crm_value || "", vars)).replace(/[^\d.,]/g, "").replace(",", ".")) || null;
+        const patch: Record<string, any> = {};
+        if (name) patch.contact_name = name;
+        if (stageId) patch.pipeline_stage_id = stageId;
+        if (estimated) patch.estimated_value = estimated;
+        if (currentLeadId) {
+          if (Object.keys(patch).length) await supabase.from("leads").update(patch).eq("id", currentLeadId);
+        } else if (phone) {
+          const { data: created } = await supabase
+            .from("leads")
+            .insert({
+              user_id: ownerId,
+              owner_user_id: ownerId,
+              created_by_user_id: ownerId,
+              phone: digits(phone),
+              origin: "Automação WhatsApp",
+              ...patch,
+            })
+            .select("id")
+            .maybeSingle();
+          currentLeadId = created?.id || null;
+        }
+      } else if (type === "update_lead" && currentLeadId && act.field) {
+        await supabase.from("leads").update({ [act.field]: interpolate(act.value, vars) }).eq("id", currentLeadId);
+      } else if (type === "webhook" && (act.url || act.webhook_url || cfg.webhook_url)) {
+        const url = act.url || act.webhook_url || cfg.webhook_url;
+        const method = (act.method || act.webhook_method || cfg.webhook_method || "POST").toUpperCase();
+        await fetch(url, {
+          method,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ variables: vars, lead_id: leadId, owner_user_id: ownerId }),
+          ...(method === "GET"
+            ? {}
+            : { body: JSON.stringify({ variables: vars, lead_id: currentLeadId, phone: digits(phone || ""), owner_user_id: ownerId }) }),
         });
       }
     } catch (e) {
       console.error("[wa-flow-runner] ação falhou", type, e);
     }
   }
+  return currentLeadId;
 }
+
 
 async function callGoogleFn(fn: string, body: Record<string, any>) {
   try {
@@ -445,13 +587,8 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         currentId = defaultTarget(edges, node.id);
         break;
 
-      case "buttons":
-      case "rating": {
-        if (node.node_type === "rating") {
-          await sendText(ctx.send, interpolate(cfg.message || cfg.body_text || "", runtime.vars));
-        } else {
-          await sendInteractive(ctx.send, cfg, runtime.vars);
-        }
+      case "buttons": {
+        await sendInteractive(ctx.send, cfg, runtime.vars);
         await persist(execution.id, {
           status: "awaiting_input",
           awaiting_node_id: node.id,
@@ -462,6 +599,88 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         });
         return;
       }
+
+      case "rating": {
+        const stateKey = `_rt_${node.id}`;
+        const rowKey = `${stateKey}_row`;
+        const stage = runtime.vars[stateKey];
+        const ratingName = cfg.name || node.name || "Avaliação";
+        const ownerId = execution.owner_user_id || execution.user_id;
+
+        const awaitInput = async () => {
+          await persist(execution.id, {
+            status: "awaiting_input",
+            awaiting_node_id: node.id,
+            current_node_id: node.id,
+            current_node_name: node.name,
+            node_history: history,
+            collected_data: runtime.vars,
+          });
+        };
+
+        // 1) primeira passagem: envia a pergunta
+        if (!stage) {
+          await sendRatingQuestion(ctx.send, cfg, runtime.vars);
+          runtime.vars[stateKey] = "await";
+          await awaitInput();
+          return;
+        }
+
+        // 2) resposta da avaliação
+        if (stage === "await") {
+          if (!runtime.hasFreshUserInput) { await awaitInput(); return; }
+          runtime.hasFreshUserInput = false;
+          const parsed = parseRatingAnswer(cfg, runtime.lastUserText, runtime.lastButtonId, runtime.lastButtonTitle);
+          runtime.vars[ratingName.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 30)] = parsed.text;
+          const { data: row } = await supabase
+            .from("wa_flow_ratings")
+            .insert({
+              user_id: execution.user_id,
+              owner_user_id: ownerId,
+              flow_id: execution.flow_id,
+              node_id: node.id,
+              execution_id: execution.id,
+              contact_phone: ctx.send.to,
+              contact_name: execution.lead_name || runtime.vars.nome || null,
+              lead_id: ctx.leadId,
+              rating_name: ratingName,
+              rating_type: cfg.type || "buttons",
+              score_numeric: parsed.score,
+              score_max: parsed.max,
+              score_text: parsed.text,
+              bucket: parsed.bucket,
+              responded_at: new Date().toISOString(),
+            })
+            .select("id")
+            .maybeSingle();
+          if (row?.id) runtime.vars[rowKey] = row.id;
+
+          if (cfg.ask_suggestion) {
+            const prompt = interpolate(cfg.suggestion_prompt || "Tem alguma sugestão para melhorarmos?", runtime.vars);
+            await sendText(ctx.send, prompt);
+            runtime.vars[stateKey] = "suggestion";
+            await awaitInput();
+            return;
+          }
+          delete runtime.vars[stateKey];
+          currentId = defaultTarget(edges, node.id);
+          break;
+        }
+
+        // 3) sugestão de melhoria
+        if (!runtime.hasFreshUserInput) { await awaitInput(); return; }
+        runtime.hasFreshUserInput = false;
+        const suggestion = runtime.lastUserText.trim();
+        if (runtime.vars[rowKey] && suggestion) {
+          await supabase.from("wa_flow_ratings").update({ suggestion_text: suggestion }).eq("id", runtime.vars[rowKey]);
+        }
+        if (cfg.suggestion_thanks) await sendText(ctx.send, interpolate(cfg.suggestion_thanks, runtime.vars));
+        delete runtime.vars[stateKey];
+        delete runtime.vars[rowKey];
+        currentId = defaultTarget(edges, node.id);
+        break;
+      }
+
 
       case "condition": {
         if (conditionNeedsInput(cfg.condition_type) && !runtime.hasFreshUserInput) {
@@ -503,10 +722,18 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         break;
       }
 
-      case "action":
-        await runActions(cfg, ctx.leadId, execution.owner_user_id || execution.user_id, runtime.vars);
+      case "action": {
+        const newLeadId = await runActions(
+          cfg,
+          ctx.leadId,
+          execution.owner_user_id || execution.user_id,
+          runtime.vars,
+          ctx.send.to,
+        );
+        if (newLeadId) ctx.leadId = newLeadId;
         currentId = defaultTarget(edges, node.id);
         break;
+      }
 
       case "handoff": {
         const pre = interpolate(cfg.pre_message || cfg.handoff_message || "", runtime.vars);
@@ -520,8 +747,10 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
           await supabase.from("chat_conversations").update({ responsible_user_id: responsible }).eq("id", ctx.send.convId);
         }
         if (cfg.crm_stage_id && cfg.crm_stage_id !== "none" && ctx.leadId) {
-          await supabase.from("leads").update({ crm_stage: cfg.crm_stage_id }).eq("id", ctx.leadId);
+          const stageId = await resolveStageId(execution.owner_user_id || execution.user_id, cfg.crm_stage_id);
+          if (stageId) await supabase.from("leads").update({ pipeline_stage_id: stageId }).eq("id", ctx.leadId);
         }
+
         if (cfg.stop_automation !== false) {
           await persist(execution.id, {
             status: "completed",
@@ -612,8 +841,9 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         }
         runtime.vars[varName] = value;
         if (ctx.leadId && cfg.collect_type === "name") {
-          await supabase.from("leads").update({ name: value }).eq("id", ctx.leadId);
+          await supabase.from("leads").update({ contact_name: value }).eq("id", ctx.leadId);
         }
+
         currentId = defaultTarget(edges, node.id);
         break;
       }
@@ -638,39 +868,46 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
           google_account_id: cfg.google_account_id,
           spreadsheet_id: cfg.spreadsheet_id,
           sheet_name: cfg.sheet_name,
-          values: columns.map((c) => interpolate(c.variable ?? "", runtime.vars) || c.default_value || ""),
+          action: "append",
+          data: columns.map((c) => interpolate(c.variable ?? "", runtime.vars) || c.default_value || ""),
         });
         currentId = defaultTarget(edges, node.id);
         break;
       }
 
       case "google_calendar": {
+        const attendee = interpolate(cfg.attendee_email || "", runtime.vars);
         await callGoogleFn("google-calendar-action", {
           user_id: execution.owner_user_id || execution.user_id,
           google_account_id: cfg.google_account_id,
-          title: interpolate(cfg.event_title, runtime.vars),
+          calendar_id: cfg.calendar_id || "primary",
+          summary: interpolate(cfg.event_title, runtime.vars),
           description: interpolate(cfg.event_description, runtime.vars),
-          start: cfg.event_start || new Date().toISOString(),
+          start_datetime: interpolate(cfg.event_start || "", runtime.vars) || new Date().toISOString(),
           duration_minutes: Number(cfg.event_duration ?? 30),
-          attendee_email: cfg.invite_attendee ? interpolate(cfg.attendee_email, runtime.vars) : null,
+          attendee_email: attendee && attendee.includes("@") ? attendee : null,
+          reminder_minutes: cfg.reminder_minutes != null ? Number(cfg.reminder_minutes) : null,
         });
         currentId = defaultTarget(edges, node.id);
         break;
       }
 
       case "gmail": {
-        const body = interpolate(cfg.body, runtime.vars);
+        const body = interpolate(cfg.email_body ?? cfg.body ?? "", runtime.vars);
+        const toList = interpolate(cfg.email_to ?? cfg.to_email ?? "", runtime.vars);
+        const isHtml = cfg.email_html ?? cfg.use_html ?? false;
         await callGoogleFn("gmail-send-action", {
           user_id: execution.owner_user_id || execution.user_id,
           google_account_id: cfg.google_account_id,
-          to: interpolate(cfg.to_email, runtime.vars),
-          subject: interpolate(cfg.subject, runtime.vars),
-          ...(cfg.use_html ? { body_html: body } : { body_text: body }),
-          cc: cfg.cc || [],
-          bcc: cfg.bcc || [],
+          to: toList,
+          subject: interpolate(cfg.email_subject ?? cfg.subject ?? "", runtime.vars),
+          ...(isHtml ? { body_html: body } : { body_text: body }),
+          cc: cfg.email_cc ?? cfg.cc ?? [],
+          bcc: cfg.email_bcc ?? cfg.bcc ?? [],
         });
         currentId = defaultTarget(edges, node.id);
         break;
+
       }
 
       case "end": {
@@ -828,7 +1065,7 @@ async function handleInbound(body: Record<string, any>) {
     let startId: string | null = running.awaiting_node_id || running.current_node_id;
     // se estava aguardando num nó de botões, roteia pela opção escolhida
     const awaiting = nodes.find((n) => n.id === running.awaiting_node_id);
-    if (awaiting && (awaiting.node_type === "buttons" || awaiting.node_type === "rating")) {
+    if (awaiting && awaiting.node_type === "buttons") {
       const items = interactiveItems(awaiting.config || {});
       const match = items.find(
         (i) =>
@@ -838,10 +1075,13 @@ async function handleInbound(body: Record<string, any>) {
       const handle = match?.id || runtime.lastButtonId;
       startId = handle ? targetByHandle(edges, awaiting.id, handle) : defaultTarget(edges, awaiting.id);
       if (!startId) startId = defaultTarget(edges, awaiting.id);
-      if (awaiting.node_type === "rating" && match) vars[`${awaiting.config?.name || "avaliacao"}`] = match.title;
+    } else if (awaiting && awaiting.node_type === "rating") {
+      // o nó de avaliação é reentrante: ele mesmo processa nota e sugestão
+      startId = awaiting.id;
     } else if (awaiting && awaiting.node_type === "message") {
       startId = defaultTarget(edges, awaiting.id);
     }
+
 
     await persist(running.id, {
       status: "active",
@@ -866,12 +1106,25 @@ async function handleInbound(body: Record<string, any>) {
 
   if (!flows?.length) return json({ skipped: "nenhum fluxo ativo" });
 
-  const { count: previous } = await supabase
-    .from("chat_messages")
-    .select("id", { count: "exact", head: true })
+  // "primeira mensagem" é por contato (não por conta inteira)
+  const { data: convForCount } = await supabase
+    .from("chat_conversations")
+    .select("id")
     .eq("owner_user_id", ownerId)
-    .eq("direction", "inbound");
-  const isFirstMessage = (previous ?? 0) <= 1;
+    .ilike("contact_phone", `%${tail}`)
+    .limit(1)
+    .maybeSingle();
+  let previous = 0;
+  if (convForCount?.id) {
+    const { count } = await supabase
+      .from("chat_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("conversation_id", convForCount.id)
+      .eq("direction", "inbound");
+    previous = count ?? 0;
+  }
+  const isFirstMessage = previous <= 1;
+
 
   for (const flow of flows) {
     if (flow.test_mode && digits(flow.test_phone).slice(-8) !== tail) continue;
