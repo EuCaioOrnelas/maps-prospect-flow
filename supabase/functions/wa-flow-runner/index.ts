@@ -1106,12 +1106,25 @@ async function handleInbound(body: Record<string, any>) {
 
   if (!flows?.length) return json({ skipped: "nenhum fluxo ativo" });
 
-  const { count: previous } = await supabase
-    .from("chat_messages")
-    .select("id", { count: "exact", head: true })
+  // "primeira mensagem" é por contato (não por conta inteira)
+  const { data: convForCount } = await supabase
+    .from("chat_conversations")
+    .select("id")
     .eq("owner_user_id", ownerId)
-    .eq("direction", "inbound");
-  const isFirstMessage = (previous ?? 0) <= 1;
+    .ilike("contact_phone", `%${tail}`)
+    .limit(1)
+    .maybeSingle();
+  let previous = 0;
+  if (convForCount?.id) {
+    const { count } = await supabase
+      .from("chat_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("conversation_id", convForCount.id)
+      .eq("direction", "inbound");
+    previous = count ?? 0;
+  }
+  const isFirstMessage = previous <= 1;
+
 
   for (const flow of flows) {
     if (flow.test_mode && digits(flow.test_phone).slice(-8) !== tail) continue;
