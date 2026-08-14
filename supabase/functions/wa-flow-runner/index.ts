@@ -306,8 +306,8 @@ async function evaluateCondition(cfg: Record<string, any>, rt: Runtime, leadId: 
     }
     case "score_above": {
       if (!leadId) return false;
-      const { data } = await supabase.from("leads").select("score").eq("id", leadId).maybeSingle();
-      const score = Number(data?.score ?? 0);
+      const { data } = await supabase.from("leads").select("ai_score").eq("id", leadId).maybeSingle();
+      const score = Number(data?.ai_score ?? 0);
       if (cfg.score_check_type === "category") {
         const cat = cfg.score_category;
         if (cat === "hot") return score >= 700;
@@ -318,9 +318,14 @@ async function evaluateCondition(cfg: Record<string, any>, rt: Runtime, leadId: 
     }
     case "is_customer": {
       if (!leadId) return false;
-      const { data } = await supabase.from("lead_deals").select("id").eq("lead_id", leadId).eq("status", "won").limit(1);
-      return !!data?.length;
+      const { data } = await supabase
+        .from("lead_deals")
+        .select("id,status")
+        .eq("lead_id", leadId)
+        .limit(5);
+      return !!(data || []).some((d: any) => !["cancelled", "canceled", "cancelado"].includes(String(d.status || "").toLowerCase()));
     }
+
     default:
       return false;
   }
