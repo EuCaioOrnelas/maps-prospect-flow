@@ -561,10 +561,18 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         break;
       }
 
-      case "action":
-        await runActions(cfg, ctx.leadId, execution.owner_user_id || execution.user_id, runtime.vars);
+      case "action": {
+        const newLeadId = await runActions(
+          cfg,
+          ctx.leadId,
+          execution.owner_user_id || execution.user_id,
+          runtime.vars,
+          ctx.send.to,
+        );
+        if (newLeadId) ctx.leadId = newLeadId;
         currentId = defaultTarget(edges, node.id);
         break;
+      }
 
       case "handoff": {
         const pre = interpolate(cfg.pre_message || cfg.handoff_message || "", runtime.vars);
@@ -578,8 +586,10 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
           await supabase.from("chat_conversations").update({ responsible_user_id: responsible }).eq("id", ctx.send.convId);
         }
         if (cfg.crm_stage_id && cfg.crm_stage_id !== "none" && ctx.leadId) {
-          await supabase.from("leads").update({ crm_stage: cfg.crm_stage_id }).eq("id", ctx.leadId);
+          const stageId = await resolveStageId(execution.owner_user_id || execution.user_id, cfg.crm_stage_id);
+          if (stageId) await supabase.from("leads").update({ pipeline_stage_id: stageId }).eq("id", ctx.leadId);
         }
+
         if (cfg.stop_automation !== false) {
           await persist(execution.id, {
             status: "completed",
