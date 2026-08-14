@@ -332,41 +332,94 @@ async function evaluateCondition(cfg: Record<string, any>, rt: Runtime, leadId: 
 }
 
 // ---------- ações ----------
-async function runActions(cfg: Record<string, any>, leadId: string | null, ownerId: string, vars: Record<string, string>) {
+// Resolve uma etapa do Kanban: aceita UUID (pipeline_stages.id) ou nome da coluna.
+async function resolveStageId(ownerId: string, value: string): Promise<string | null> {
+  const v = String(value || "").trim();
+  if (!v) return null;
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)) return v;
+  const { data } = await supabase
+    .from("pipeline_stages")
+    .select("id")
+    .eq("user_id", ownerId)
+    .ilike("name", v)
+    .limit(1)
+    .maybeSingle();
+  return data?.id || null;
+}
+
+async function runActions(
+  cfg: Record<string, any>,
+  leadId: string | null,
+  ownerId: string,
+  vars: Record<string, string>,
+  phone?: string,
+): Promise<string | null> {
   const actions: any[] = Array.isArray(cfg.actions) && cfg.actions.length
     ? cfg.actions
     : cfg.action_type
-      ? [{ type: cfg.action_type, value: cfg.tag_value || cfg.pipeline_stage }]
+      ? [{ type: cfg.action_type, tag_value: cfg.tag_value, pipeline_stage_id: cfg.pipeline_stage }]
       : [];
+  let currentLeadId = leadId;
   for (const act of actions) {
     const type = act?.type;
     try {
-      if ((type === "add_tag" || type === "remove_tag") && leadId) {
-        const { data } = await supabase.from("leads").select("tags").eq("id", leadId).maybeSingle();
+      if ((type === "add_tag" || type === "remove_tag") && currentLeadId) {
+        const { data } = await supabase.from("leads").select("tags").eq("id", currentLeadId).maybeSingle();
         const current: string[] = Array.isArray(data?.tags) ? data!.tags : [];
-        const tag = String(act.value ?? "").trim();
+        const tag = String(act.tag_value ?? act.value ?? "").trim();
         if (!tag) continue;
         const next = type === "add_tag"
           ? Array.from(new Set([...current, tag]))
           : current.filter((t) => String(t).toLowerCase() !== tag.toLowerCase());
-        await supabase.from("leads").update({ tags: next }).eq("id", leadId);
-      } else if ((type === "move_pipeline" || type === "move_kanban") && leadId) {
-        const stage = act.stage_name || act.value;
-        if (stage) await supabase.from("leads").update({ crm_stage: stage }).eq("id", leadId);
-      } else if (type === "update_lead" && leadId && act.field) {
-        await supabase.from("leads").update({ [act.field]: interpolate(act.value, vars) }).eq("id", leadId);
-      } else if (type === "webhook" && (act.webhook_url || cfg.webhook_url)) {
-        await fetch(act.webhook_url || cfg.webhook_url, {
-          method: (act.webhook_method || cfg.webhook_method || "POST").toUpperCase(),
+        await supabase.from("leads").update({ tags: next }).eq("id", currentLeadId);
+      } else if ((type === "move_pipeline" || type === "move_kanban") && currentLeadId) {
+        const stageId = await resolveStageId(ownerId, act.pipeline_stage_id || act.stage_name || act.value);
+        if (stageId) await supabase.from("leads").update({ pipeline_stage_id: stageId }).eq("id", currentLeadId);
+      } else if (type === "send_to_crm") {
+        const stageId = await resolveStageId(ownerId, act.crm_stage_id || "");
+        const name = interpolate(act.crm_name || vars.nome || "", vars) || null;
+        const estimated = Number(String(interpolate(act.crm_value || "", vars)).replace(/[^\d.,]/g, "").replace(",", ".")) || null;
+        const patch: Record<string, any> = {};
+        if (name) patch.contact_name = name;
+        if (stageId) patch.pipeline_stage_id = stageId;
+        if (estimated) patch.estimated_value = estimated;
+        if (currentLeadId) {
+          if (Object.keys(patch).length) await supabase.from("leads").update(patch).eq("id", currentLeadId);
+        } else if (phone) {
+          const { data: created } = await supabase
+            .from("leads")
+            .insert({
+              user_id: ownerId,
+              owner_user_id: ownerId,
+              created_by_user_id: ownerId,
+              phone: digits(phone),
+              origin: "Automação WhatsApp",
+              ...patch,
+            })
+            .select("id")
+            .maybeSingle();
+          currentLeadId = created?.id || null;
+        }
+      } else if (type === "update_lead" && currentLeadId && act.field) {
+        await supabase.from("leads").update({ [act.field]: interpolate(act.value, vars) }).eq("id", currentLeadId);
+      } else if (type === "webhook" && (act.url || act.webhook_url || cfg.webhook_url)) {
+        const url = act.url || act.webhook_url || cfg.webhook_url;
+        const method = (act.method || act.webhook_method || cfg.webhook_method || "POST").toUpperCase();
+        await fetch(url, {
+          method,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ variables: vars, lead_id: leadId, owner_user_id: ownerId }),
+          ...(method === "GET"
+            ? {}
+            : { body: JSON.stringify({ variables: vars, lead_id: currentLeadId, phone: digits(phone || ""), owner_user_id: ownerId }) }),
         });
       }
     } catch (e) {
       console.error("[wa-flow-runner] ação falhou", type, e);
     }
   }
+  return currentLeadId;
 }
+
 
 async function callGoogleFn(fn: string, body: Record<string, any>) {
   try {
