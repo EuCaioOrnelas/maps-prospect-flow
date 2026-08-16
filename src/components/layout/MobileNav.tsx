@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
-import { planHasFeature } from "@/lib/planAccess";
+import { planHasFeature, isLegacyPlanUser } from "@/lib/planAccess";
 
 import { cn } from "@/lib/utils";
 
@@ -219,7 +219,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                 <TopLink to="/profile" icon={Users} label="Meu perfil" />
                 <TopLink to="/sugestoes" icon={Lightbulb} label="Sugestões" />
                 <TopLink to="/ajuda" icon={HelpCircle} label="Central de Ajuda" />
-                {profile?.plan !== "scale" && (
+                {(authProfile as any)?.plan?.toLowerCase?.() === "start" && !isLegacyPlanUser(authProfile as any) && (
                   <TopLink to="/upgrade" icon={Crown} label="Fazer Upgrade" highlight />
                 )}
               </div>

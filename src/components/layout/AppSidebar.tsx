@@ -50,7 +50,7 @@ import logoWordmark from "@/assets/logo-wordmark.png";
 import logoWordmarkWhite from "@/assets/logo-wordmark-white.png";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
 
-import { planHasFeature } from "@/lib/planAccess";
+import { planHasFeature, isLegacyPlanUser } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { roleHasPermission, type AccountPermission } from "@/lib/accountPermissions";
 
@@ -216,7 +216,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     setIsMetaOpen(false);
   };
 
-  const showUpgrade = profile?.plan !== 'scale';
+  // Upgrade só faz sentido para o plano Atendimento (novo "start", pós-cutoff).
+  const showUpgrade =
+    (profile?.plan || "").toLowerCase() === "start" && !isLegacyPlanUser(profile);
 
   return (
     <div
