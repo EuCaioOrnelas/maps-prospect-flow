@@ -212,6 +212,7 @@ export const useSales = (leadId?: string) => {
         .single();
       if (error) throw error;
       await fetchSales();
+      notifySalesChanged();
       return data as unknown as Sale;
     },
     [user, accountOwnerId, fetchSales]
@@ -227,6 +228,7 @@ export const useSales = (leadId?: string) => {
         .eq("owner_user_id", accountOwnerId);
       if (error) throw error;
       await fetchSales();
+      notifySalesChanged();
     },
     [user, accountOwnerId, fetchSales]
   );
@@ -237,6 +239,7 @@ export const useSales = (leadId?: string) => {
       const { error } = await supabase.from("lead_deals").delete().eq("id", id).eq("owner_user_id", accountOwnerId);
       if (error) throw error;
       await fetchSales();
+      notifySalesChanged();
     },
     [user, accountOwnerId, fetchSales]
   );
@@ -288,6 +291,7 @@ export const useSales = (leadId?: string) => {
       if (closeError) throw closeError;
 
       await fetchSales();
+      notifySalesChanged();
       return data as unknown as Sale;
     },
     [user, accountOwnerId, fetchSales]
