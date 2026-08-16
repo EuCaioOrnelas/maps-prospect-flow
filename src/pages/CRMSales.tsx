@@ -467,11 +467,16 @@ export default function CRMSales() {
                                 {st.label}
                               </Badge>
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                               {(() => {
                                 const r = s.responsible_user_id ? memberById[s.responsible_user_id] : null;
                                 const label = r?.name || r?.email || "Sem responsável";
-                                return (
+                                const allowed = canChangeSaleResponsible({
+                                  role,
+                                  currentUserId: user?.id,
+                                  saleResponsibleUserId: s.responsible_user_id,
+                                });
+                                const avatar = (
                                   <div title={label} className="inline-flex">
                                     {r?.avatar_url ? (
                                       <img
@@ -486,8 +491,42 @@ export default function CRMSales() {
                                     )}
                                   </div>
                                 );
+
+                                if (!allowed) return avatar;
+
+                                return (
+                                  <Select
+                                    value={s.responsible_user_id || "none"}
+                                    onValueChange={async (v) => {
+                                      const next = v === "none" ? null : v;
+                                      if (next === (s.responsible_user_id || null)) return;
+                                      try {
+                                        await updateSale(s.id, { responsible_user_id: next });
+                                        toast.success("Responsável atualizado");
+                                      } catch (err: any) {
+                                        toast.error(err?.message || "Não foi possível alterar o responsável");
+                                      }
+                                    }}
+                                  >
+                                    <SelectTrigger
+                                      className="h-9 w-auto gap-2 border-transparent bg-transparent px-1 hover:bg-muted/50 focus:ring-0"
+                                      title={`${label} — clique para alterar`}
+                                    >
+                                      {avatar}
+                                    </SelectTrigger>
+                                    <SelectContent align="start">
+                                      <SelectItem value="none">Sem responsável</SelectItem>
+                                      {members.map((m) => (
+                                        <SelectItem key={m.user_id} value={m.user_id}>
+                                          {m.name || m.email || m.user_id.slice(0, 8)}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                );
                               })()}
                             </td>
+
                             <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1">
                                 {s.receipt_url && (
