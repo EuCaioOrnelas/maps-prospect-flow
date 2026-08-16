@@ -67,6 +67,12 @@ export const PAYMENT_METHODS = [
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+/** Event bus local: qualquer instância do hook avisa as outras que houve mudança. */
+const SALES_EVENT = "wiize:sales-changed";
+const notifySalesChanged = () => {
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(SALES_EVENT));
+};
+
 /** Calcula os KPIs de vendas para uma lista qualquer (permite aplicar filtros antes). */
 export const computeSalesMetrics = (sales: Sale[]) => {
   const today = todayISO();
