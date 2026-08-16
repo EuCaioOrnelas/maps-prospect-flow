@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { SidebarNavItem } from "@/components/layout/SidebarNavItem";
 import ThemeSwitch from "@/components/ui/theme-switch";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import logoWordmark from "@/assets/logo-wordmark.png";
+import logoWordmarkWhite from "@/assets/logo-wordmark-white.png";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
