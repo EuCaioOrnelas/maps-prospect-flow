@@ -28,18 +28,18 @@ export function useContactAIApproach(conversation: Conv | null | undefined) {
 
     (async () => {
       const { data, error } = await supabase
-        .from("revenue_leads")
-        .select("ai_approach_message, lead_name, company_name, phone, phone_e164")
+        .from("leads")
+        .select("ai_approach_message, contact_name, company_name, phone")
         .eq("owner_user_id", ownerId)
         .not("ai_approach_message", "is", null)
-        .or(`phone_e164.ilike.%${phoneKey},phone.ilike.%${phoneKey}`)
+        .ilike("phone", `%${phoneKey}`)
         .limit(1)
         .maybeSingle();
       if (cancel || error || !data) return;
       const msg = (data as any).ai_approach_message?.trim();
       if (!msg) return;
       setMessage(msg);
-      setLeadName((data as any).lead_name || (data as any).company_name || null);
+      setLeadName((data as any).contact_name || (data as any).company_name || null);
     })();
 
     return () => { cancel = true; };

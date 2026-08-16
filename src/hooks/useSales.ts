@@ -67,6 +67,12 @@ export const PAYMENT_METHODS = [
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+/** Event bus local: qualquer instância do hook avisa as outras que houve mudança. */
+const SALES_EVENT = "wiize:sales-changed";
+const notifySalesChanged = () => {
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(SALES_EVENT));
+};
+
 /** Calcula os KPIs de vendas para uma lista qualquer (permite aplicar filtros antes). */
 export const computeSalesMetrics = (sales: Sale[]) => {
   const today = todayISO();
@@ -155,10 +161,27 @@ export const useSales = (leadId?: string) => {
         () => fetchSales()
       )
       .subscribe();
+    const onLocal = () => fetchSales();
+    window.addEventListener(SALES_EVENT, onLocal);
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener(SALES_EVENT, onLocal);
     };
   }, [user, accountOwnerId, leadId, fetchSales]);
+
+  // Revalida ao voltar o foco para a aba
+  useEffect(() => {
+    if (!user || !accountOwnerId) return;
+    const onFocus = () => {
+      if (document.visibilityState === "visible") fetchSales();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [user, accountOwnerId, fetchSales]);
 
   const createSale = useCallback(
     async (input: SaleInput) => {
@@ -189,6 +212,7 @@ export const useSales = (leadId?: string) => {
         .single();
       if (error) throw error;
       await fetchSales();
+      notifySalesChanged();
       return data as unknown as Sale;
     },
     [user, accountOwnerId, fetchSales]
@@ -204,6 +228,7 @@ export const useSales = (leadId?: string) => {
         .eq("owner_user_id", accountOwnerId);
       if (error) throw error;
       await fetchSales();
+      notifySalesChanged();
     },
     [user, accountOwnerId, fetchSales]
   );
@@ -214,6 +239,7 @@ export const useSales = (leadId?: string) => {
       const { error } = await supabase.from("lead_deals").delete().eq("id", id).eq("owner_user_id", accountOwnerId);
       if (error) throw error;
       await fetchSales();
+      notifySalesChanged();
     },
     [user, accountOwnerId, fetchSales]
   );
@@ -265,6 +291,7 @@ export const useSales = (leadId?: string) => {
       if (closeError) throw closeError;
 
       await fetchSales();
+      notifySalesChanged();
       return data as unknown as Sale;
     },
     [user, accountOwnerId, fetchSales]
