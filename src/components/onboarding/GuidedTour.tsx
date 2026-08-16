@@ -209,6 +209,12 @@ export function GuidedTour() {
     let attempts = 0;
     let lastSerialized = "";
     let stableFrames = 0;
+    // Body scroll fica travado durante o tour, então scrollIntoView pode nunca
+    // "resolver" o clipping — limitamos as tentativas para não entrar em loop
+    // de scroll + re-medição (que causava tremedeira/piscar da tela).
+    let scrollFixes = 0;
+    const MAX_SCROLL_FIXES = 2;
+
     const startedAt = performance.now();
 
     const measure = () => {
