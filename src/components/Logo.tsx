@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import logoWordmark from "@/assets/logo-wordmark.png";
+import logoWordmarkWhite from "@/assets/logo-wordmark-white.png";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg";
@@ -29,6 +31,9 @@ export const Logo = ({
     lg: { icon: "h-14 w-14", text: "text-4xl" },
   };
 
+  const wordmarkHeights = { sm: "h-5", md: "h-6", lg: "h-7" } as const;
+  const wordmarkHeight = wordmarkHeights[size];
+
   const effectiveSize = sizes[size];
   const mobileEffectiveSize = mobileSize ? sizes[mobileSize] : effectiveSize;
 
@@ -43,23 +48,18 @@ export const Logo = ({
         className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg shrink-0 transition-all duration-200 group-hover:scale-105 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)]`}
       />
       {showText && !iconOnly && (
-        <>
-          {mobileInitialsOnly ? (
-            <span 
-              className={`hidden md:inline tracking-tight text-foreground ${effectiveSize.text} flex items-center`}
-              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500, lineHeight: 1 }}
-            >
-              wiize
-            </span>
-          ) : (
-            <span 
-              className={`tracking-tight text-foreground ${mobileSize ? `${mobileEffectiveSize.text} md:${effectiveSize.text}` : effectiveSize.text} flex items-center`}
-              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500, lineHeight: 1 }}
-            >
-              wiize
-            </span>
-          )}
-        </>
+        <span className={`${mobileInitialsOnly ? "hidden md:flex" : "flex"} items-center ml-1.5`}>
+          <img
+            src={logoWordmark}
+            alt="Wiize"
+            className={`${wordmarkHeight} w-auto object-contain dark:hidden`}
+          />
+          <img
+            src={logoWordmarkWhite}
+            alt="Wiize"
+            className={`${wordmarkHeight} w-auto object-contain hidden dark:block`}
+          />
+        </span>
       )}
     </div>
   );

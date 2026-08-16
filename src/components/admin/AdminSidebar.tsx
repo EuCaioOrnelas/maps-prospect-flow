@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { SidebarNavItem } from "@/components/layout/SidebarNavItem";
 import ThemeSwitch from "@/components/ui/theme-switch";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import logoWordmark from "@/assets/logo-wordmark.png";
+import logoWordmarkWhite from "@/assets/logo-wordmark-white.png";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
@@ -225,12 +227,12 @@ export function AdminSidebar() {
             />
             <span
               className={cn(
-                "tracking-tight text-foreground whitespace-nowrap transition-all duration-200 ease-out flex items-center gap-2",
-                isHovered ? "opacity-100 translate-x-0 text-[1.5rem]" : "opacity-0 -translate-x-2 w-0 overflow-hidden"
+                "whitespace-nowrap transition-all duration-200 ease-out flex items-center gap-2 ml-1.5",
+                isHovered ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 w-0 ml-0 overflow-hidden"
               )}
-              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500, lineHeight: 1 }}
             >
-              wiize
+              <img src={logoWordmark} alt="Wiize" className="h-5 w-auto object-contain dark:hidden" />
+              <img src={logoWordmarkWhite} alt="Wiize" className="h-5 w-auto object-contain hidden dark:block" />
               <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md">
                 Admin
               </span>

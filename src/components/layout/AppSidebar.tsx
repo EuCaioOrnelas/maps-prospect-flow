@@ -46,6 +46,8 @@ import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDia
 import { SidebarNavItem } from "./SidebarNavItem";
 import { SidebarDivider } from "./SidebarDivider";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import logoWordmark from "@/assets/logo-wordmark.png";
+import logoWordmarkWhite from "@/assets/logo-wordmark-white.png";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
 
 import { planHasFeature } from "@/lib/planAccess";
@@ -248,17 +250,17 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               alt="Wiize" 
               className="h-10 w-10 object-contain rounded-hover transition-all duration-200 ease-out group-hover:scale-105 group-hover:brightness-110 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)] shrink-0"
             />
-            {/* Text "wiize" - fade in/out when expanded */}
+            {/* Wordmark - fade in/out when expanded */}
             <span
               className={cn(
-                "text-[1.7rem] tracking-tight text-foreground whitespace-nowrap transition-all duration-200 ease-out flex items-center",
+                "transition-all duration-200 ease-out flex items-center ml-1.5",
                 (isHovered || tourForceOpen)
                   ? "opacity-100 translate-x-0" 
-                  : "opacity-0 -translate-x-2 w-0 overflow-hidden"
+                  : "opacity-0 -translate-x-2 w-0 ml-0 overflow-hidden"
               )}
-              style={{ fontFamily: "'Outfit', system-ui, sans-serif", fontWeight: 500, lineHeight: 1 }}
             >
-              wiize
+              <img src={logoWordmark} alt="Wiize" className="h-6 w-auto object-contain dark:hidden" />
+              <img src={logoWordmarkWhite} alt="Wiize" className="h-6 w-auto object-contain hidden dark:block" />
             </span>
           </Link>
         </div>
