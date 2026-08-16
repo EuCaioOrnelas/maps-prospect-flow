@@ -25,7 +25,7 @@ interface Props {
  * so it can be attached to the trial / checkout attribution.
  */
 export function PartnerCodeField({ onChange, className, bare }: Props) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

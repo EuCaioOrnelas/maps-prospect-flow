@@ -6,15 +6,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature } from "lucide-react";
-import { useSales, PAYMENT_METHODS, type SaleType } from "@/hooks/useSales";
+import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature, User as UserIcon, Activity, StickyNote } from "lucide-react";
+import { useSales, PAYMENT_METHODS, type SaleType, type Sale, type SaleStatus } from "@/hooks/useSales";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface RegisterSaleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  leadId: string;
+  leadId?: string;
   leadName?: string;
   initialValue?: number;
   initialTitle?: string;
@@ -22,6 +23,10 @@ interface RegisterSaleDialogProps {
   onCreated?: () => void;
   embedded?: boolean;
   embeddedLayout?: "compact" | "page";
+  /** Quando informado, o dialog entra em modo edição da venda. */
+  sale?: Sale | null;
+  /** Só o responsável atual, owner ou admin podem trocar o responsável. */
+  canChangeResponsible?: boolean;
 }
 
 const CONTRACT_OPTIONS = [
@@ -43,10 +48,14 @@ export function RegisterSaleDialog({
   onCreated,
   embedded = false,
   embeddedLayout = "compact",
+  sale = null,
+  canChangeResponsible = true,
 }: RegisterSaleDialogProps) {
-  const { createSale, uploadAttachment } = useSales();
+  const { createSale, updateSale, uploadAttachment } = useSales();
+  const { members } = useAccountMembers();
   const [submitting, setSubmitting] = useState(false);
   const compact = embedded && embeddedLayout !== "page";
+  const isEdit = !!sale;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -57,24 +66,46 @@ export function RegisterSaleDialog({
   const [startDate, setStartDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [contractFile, setContractFile] = useState<File | null>(null);
+  const [status, setStatus] = useState<SaleStatus>("active");
+  const [notes, setNotes] = useState("");
+  const [responsibleUserId, setResponsibleUserId] = useState<string>("");
 
   useEffect(() => {
-    if (open) {
-      setTitle(initialTitle ?? (leadName ? `Venda - ${leadName}` : ""));
-      setDescription(initialDescription ?? "");
-      setSaleType("recurring");
+    if (!open) return;
+    if (sale) {
+      setTitle(sale.title ?? "");
+      setDescription(sale.description ?? "");
+      setSaleType(sale.sale_type);
       setValue(
-        initialValue && initialValue > 0
-          ? initialValue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          : ""
+        Number(sale.value || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
       );
-      setMonths("12");
-      setPaymentMethod("pix");
-      setStartDate(new Date().toISOString().slice(0, 10));
+      setMonths(String(sale.contract_months ?? 12));
+      setPaymentMethod(sale.payment_method ?? "pix");
+      setStartDate(sale.start_date ?? new Date().toISOString().slice(0, 10));
+      setStatus(sale.status);
+      setNotes(sale.notes ?? "");
+      setResponsibleUserId(sale.responsible_user_id ?? "");
       setReceiptFile(null);
       setContractFile(null);
+      return;
     }
-  }, [open, initialValue, initialTitle, initialDescription, leadName, leadId]);
+    setTitle(initialTitle ?? (leadName ? `Venda - ${leadName}` : ""));
+    setDescription(initialDescription ?? "");
+    setSaleType("recurring");
+    setValue(
+      initialValue && initialValue > 0
+        ? initialValue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : ""
+    );
+    setMonths("12");
+    setPaymentMethod("pix");
+    setStartDate(new Date().toISOString().slice(0, 10));
+    setStatus("active");
+    setNotes("");
+    setResponsibleUserId("");
+    setReceiptFile(null);
+    setContractFile(null);
+  }, [open, sale, initialValue, initialTitle, initialDescription, leadName, leadId]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("Informe um título para a venda");
@@ -83,8 +114,49 @@ export function RegisterSaleDialog({
 
     setSubmitting(true);
     try {
-      const sale = await createSale({
-        lead_id: leadId,
+      if (isEdit && sale) {
+        await updateSale(sale.id, {
+          title: title.trim(),
+          description: description.trim() || undefined,
+          value: numValue,
+          sale_type: saleType,
+          contract_months: saleType === "recurring" ? Number(months) : null,
+          payment_method: paymentMethod || null,
+          start_date: startDate,
+          notes,
+          status,
+          ...(canChangeResponsible ? { responsible_user_id: responsibleUserId || null } : {}),
+        });
+
+        const uploads: Promise<unknown>[] = [];
+        if (receiptFile) {
+          uploads.push(
+            uploadAttachment(sale.id, receiptFile, "receipt").then((path) =>
+              import("@/integrations/supabase/client").then(({ supabase }) =>
+                supabase.from("lead_deals").update({ receipt_url: path }).eq("id", sale.id)
+              )
+            )
+          );
+        }
+        if (contractFile) {
+          uploads.push(
+            uploadAttachment(sale.id, contractFile, "contract").then((path) =>
+              import("@/integrations/supabase/client").then(({ supabase }) =>
+                supabase.from("lead_deals").update({ contract_url: path }).eq("id", sale.id)
+              )
+            )
+          );
+        }
+        await Promise.all(uploads);
+
+        toast.success("Venda atualizada com sucesso!");
+        onCreated?.();
+        onOpenChange(false);
+        return;
+      }
+
+      const created = await createSale({
+        lead_id: leadId!,
         title: title.trim(),
         description: description.trim() || undefined,
         value: numValue,
@@ -93,23 +165,24 @@ export function RegisterSaleDialog({
         payment_method: paymentMethod,
         start_date: startDate,
       });
+      const newSaleId = created.id;
 
       // Uploads em paralelo
       const uploads: Promise<unknown>[] = [];
       if (receiptFile) {
         uploads.push(
-          uploadAttachment(sale.id, receiptFile, "receipt").then((path) =>
+          uploadAttachment(newSaleId, receiptFile, "receipt").then((path) =>
             import("@/integrations/supabase/client").then(({ supabase }) =>
-              supabase.from("lead_deals").update({ receipt_url: path }).eq("id", sale.id)
+              supabase.from("lead_deals").update({ receipt_url: path }).eq("id", newSaleId)
             )
           )
         );
       }
       if (contractFile) {
         uploads.push(
-          uploadAttachment(sale.id, contractFile, "contract").then((path) =>
+          uploadAttachment(newSaleId, contractFile, "contract").then((path) =>
             import("@/integrations/supabase/client").then(({ supabase }) =>
-              supabase.from("lead_deals").update({ contract_url: path }).eq("id", sale.id)
+              supabase.from("lead_deals").update({ contract_url: path }).eq("id", newSaleId)
             )
           )
         );
@@ -121,11 +194,12 @@ export function RegisterSaleDialog({
       onOpenChange(false);
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao registrar venda");
+      toast.error(isEdit ? "Erro ao atualizar venda" : "Erro ao registrar venda");
     } finally {
       setSubmitting(false);
     }
   };
+
 
   const formBody = (
     <>
@@ -270,6 +344,65 @@ export function RegisterSaleDialog({
             compact={compact}
           />
         </div>
+
+        {isEdit && (
+          <>
+            <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <UserIcon className="w-3.5 h-3.5 text-primary" /> Responsável pela venda
+                </Label>
+                <Select
+                  value={responsibleUserId || "none"}
+                  onValueChange={(v) => setResponsibleUserId(v === "none" ? "" : v)}
+                  disabled={!canChangeResponsible}
+                >
+                  <SelectTrigger className={cn(compact && "h-8 text-xs")}><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem responsável</SelectItem>
+                    {members.map((m) => (
+                      <SelectItem key={m.user_id} value={m.user_id}>
+                        {m.name || m.email || m.user_id.slice(0, 8)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!canChangeResponsible && (
+                  <p className="text-[10.5px] text-muted-foreground">
+                    Somente o responsável atual, o dono da conta ou um admin podem alterar este campo.
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-primary" /> Status
+                </Label>
+                <Select value={status} onValueChange={(v) => setStatus(v as SaleStatus)}>
+                  <SelectTrigger className={cn(compact && "h-8 text-xs")}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="expiring">Vencendo</SelectItem>
+                    <SelectItem value="expired">Expirado</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                    <SelectItem value="renewed">Renovado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <StickyNote className="w-3.5 h-3.5 text-primary" /> Notas
+              </Label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={compact ? 2 : 3}
+                className={cn(compact && "min-h-16 text-xs")}
+              />
+            </div>
+          </>
+        )}
       </div>
     </>
   );
@@ -281,10 +414,11 @@ export function RegisterSaleDialog({
       </Button>
       <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
         {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-        Registrar venda
+        {isEdit ? "Salvar alterações" : "Registrar venda"}
       </Button>
     </div>
   );
+
 
   if (!open) {
     return null;
@@ -307,15 +441,24 @@ export function RegisterSaleDialog({
     );
   }
 
+  const clientName = leadName || sale?.lead?.company_name || sale?.lead?.contact_name;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card p-4">
         <DialogHeader>
-          <DialogTitle>Registrar venda</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar venda" : "Registrar venda"}</DialogTitle>
           <DialogDescription>
-            {leadName ? `Cadastre a venda fechada com ${leadName}` : "Cadastre os detalhes da venda fechada"}
+            {isEdit
+              ? clientName
+                ? `Atualize os detalhes da venda com ${clientName}`
+                : "Atualize os detalhes desta venda"
+              : clientName
+                ? `Cadastre a venda fechada com ${clientName}`
+                : "Cadastre os detalhes da venda fechada"}
           </DialogDescription>
         </DialogHeader>
+
         {formBody}
         <DialogFooter>{footer}</DialogFooter>
       </DialogContent>

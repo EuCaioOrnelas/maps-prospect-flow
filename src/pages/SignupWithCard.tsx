@@ -1,4 +1,5 @@
 import { PartnerCodeField } from "@/components/partners/PartnerCodeField";
+import { CardVerificationNoticeDialog } from "@/components/checkout/CardVerificationNoticeDialog";
 // Página combinada em 2 etapas: 1) Dados da conta  2) Cartão (estilo checkout premium).
 
 // O usuário só chega aqui depois de escolher o plano em /signup/escolher-plano.
@@ -450,9 +451,22 @@ function SignupWithCardInner() {
     setShowEmailVerification(true);
   };
 
+  const [verifyNoticeOpen, setVerifyNoticeOpen] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+    if (!acceptedTerms) {
+      toast({ title: "Aceite os termos para continuar", variant: "destructive" });
+      return;
+    }
+    // Explica o 3D Secure antes de acionar o banco.
+    setVerifyNoticeOpen(true);
+  };
+
+  const runSubmit = async () => {
+    if (loading) return;
+    setVerifyNoticeOpen(false);
 
     if (!acceptedTerms) {
       toast({ title: "Aceite os termos para continuar", variant: "destructive" });
@@ -966,11 +980,20 @@ function SignupWithCardInner() {
         </div>
       </div>
 
+      <CardVerificationNoticeDialog
+        open={verifyNoticeOpen}
+        onOpenChange={setVerifyNoticeOpen}
+        onConfirm={runSubmit}
+        loading={loading}
+        mode="trial"
+      />
+
       <EmailVerificationDialog
         open={showEmailVerification}
         onOpenChange={setShowEmailVerification}
         email={email}
       />
+
     </>
   );
 }
