@@ -31,6 +31,9 @@ export const Logo = ({
     lg: { icon: "h-14 w-14", text: "text-4xl" },
   };
 
+  const wordmarkHeights = { sm: "h-5", md: "h-6", lg: "h-7" } as const;
+  const wordmarkHeight = wordmarkHeights[size];
+
   const effectiveSize = sizes[size];
   const mobileEffectiveSize = mobileSize ? sizes[mobileSize] : effectiveSize;
 
