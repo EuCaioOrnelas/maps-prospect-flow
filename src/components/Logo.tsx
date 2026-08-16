@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import logoWordmark from "@/assets/logo-wordmark.png";
+import logoWordmarkWhite from "@/assets/logo-wordmark-white.png";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg";
