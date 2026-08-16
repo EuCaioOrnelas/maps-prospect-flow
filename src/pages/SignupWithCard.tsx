@@ -980,11 +980,20 @@ function SignupWithCardInner() {
         </div>
       </div>
 
+      <CardVerificationNoticeDialog
+        open={verifyNoticeOpen}
+        onOpenChange={setVerifyNoticeOpen}
+        onConfirm={runSubmit}
+        loading={loading}
+        mode="trial"
+      />
+
       <EmailVerificationDialog
         open={showEmailVerification}
         onOpenChange={setShowEmailVerification}
         email={email}
       />
+
     </>
   );
 }
