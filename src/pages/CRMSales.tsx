@@ -73,7 +73,7 @@ export default function CRMSales() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { sales, deleteSale, getAttachmentUrl } = useSales();
+  const { sales, deleteSale, updateSale, getAttachmentUrl } = useSales();
   const { members } = useAccountMembers();
   const { role } = useAccountRole();
   const memberById = useMemo(() => Object.fromEntries(members.map((m) => [m.user_id, m])), [members]);
