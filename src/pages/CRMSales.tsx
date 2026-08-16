@@ -38,7 +38,6 @@ import {
 import { CRMTabs } from "@/components/crm/CRMTabs";
 import { SalesKPIs } from "@/components/crm/SalesKPIs";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
-import { EditSaleDialog } from "@/components/crm/EditSaleDialog";
 import { ExportSalesButton } from "@/components/crm/ExportSalesButton";
 import { RenewSaleDialog } from "@/components/crm/RenewSaleDialog";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
