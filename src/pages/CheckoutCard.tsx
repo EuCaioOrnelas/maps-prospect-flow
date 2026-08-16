@@ -227,9 +227,13 @@ function CheckoutCardInner() {
   })();
   const totalAfterDiscount = Math.max(0, totalPrice - discountCents);
 
+  const [verifyNoticeOpen, setVerifyNoticeOpen] = useState(false);
+
   const handleSubmit = async () => {
     if (!customerData || !planKey || !isCardValid) return;
+    setVerifyNoticeOpen(false);
     setLoading(true);
+
 
     try {
       const paymentMethodId = await cardFormRef.current!.createPaymentMethod({
