@@ -245,10 +245,12 @@ export function GuidedTour() {
         currentRect.right > clip.right;
 
       if (step.keepViewportTop) {
-        if (window.scrollY !== 0) {
+        if (window.scrollY !== 0 && scrollFixes < MAX_SCROLL_FIXES) {
+          scrollFixes += 1;
           window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         }
-        if (isClipped) {
+        if (isClipped && scrollFixes < MAX_SCROLL_FIXES) {
+          scrollFixes += 1;
           try {
             el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
           } catch {}
@@ -256,9 +258,8 @@ export function GuidedTour() {
         if (shouldScrollIntoView) {
           lastScrolledStepRef.current = step.id;
         }
-      } else if (isClipped) {
-        // Re-scroll whenever the target is clipped (not only once per step) so
-        // targets inside scrollable modals are always brought fully into view.
+      } else if (isClipped && scrollFixes < MAX_SCROLL_FIXES) {
+        scrollFixes += 1;
         lastScrolledStepRef.current = step.id;
         try {
           el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
@@ -266,6 +267,7 @@ export function GuidedTour() {
       } else if (shouldScrollIntoView) {
         lastScrolledStepRef.current = step.id;
       }
+
 
       const rawNext = el.getBoundingClientRect();
       const clamped = clampRectToClip(rawNext, getClipRect(el));
