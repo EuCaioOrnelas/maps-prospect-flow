@@ -37,6 +37,7 @@ import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout
 import { CouponInputCard, type AppliedCoupon } from "@/components/checkout/CouponInputCard";
 import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
 import { CheckoutBumpsUpsellDialog } from "@/components/checkout/CheckoutBumpsUpsellDialog";
+import { CardVerificationNoticeDialog } from "@/components/checkout/CardVerificationNoticeDialog";
 import { emptyBumpSelection, calcBumpsTotalCents, calcBumpsMonthlyCents, bumpsAllowedForCycle, getBumpsForPlan, type OrderBumpSelection } from "@/config/orderBumps";
 
 function formatCurrency(cents: number) {
@@ -518,7 +519,7 @@ function CheckoutCardInner() {
 
                 <div className="mt-5">
                   <Button
-                    onClick={handleSubmit}
+                    onClick={() => setVerifyNoticeOpen(true)}
                     size="lg"
                     disabled={loading || !isCardValid}
                     className="w-full gap-2 h-12 text-base"
@@ -839,6 +840,13 @@ function CheckoutCardInner() {
         </div>
       </footer>
 
+      <CardVerificationNoticeDialog
+        open={verifyNoticeOpen}
+        onOpenChange={setVerifyNoticeOpen}
+        onConfirm={handleSubmit}
+        loading={loading}
+        mode="purchase"
+      />
       <CheckoutBumpsUpsellDialog
         open={upsellOpen}
         onOpenChange={setUpsellOpen}
