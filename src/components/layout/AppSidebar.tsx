@@ -46,6 +46,8 @@ import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDia
 import { SidebarNavItem } from "./SidebarNavItem";
 import { SidebarDivider } from "./SidebarDivider";
 import logoIconNew from "@/assets/logo-icon-new.png";
+import logoWordmark from "@/assets/logo-wordmark.png";
+import logoWordmarkWhite from "@/assets/logo-wordmark-white.png";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
 
 import { planHasFeature } from "@/lib/planAccess";
