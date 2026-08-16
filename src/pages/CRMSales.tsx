@@ -601,16 +601,18 @@ export default function CRMSales() {
           </div>
         </div>
       </main>
-      <EditSaleDialog
+      <RegisterSaleDialog
         open={!!editingSale}
         onOpenChange={(o) => !o && setEditingSale(null)}
         sale={editingSale}
+        leadId={editingSale?.lead_id}
         canChangeResponsible={canChangeSaleResponsible({
           role,
           currentUserId: user?.id,
           saleResponsibleUserId: editingSale?.responsible_user_id,
         })}
       />
+
       <RenewSaleDialog
         open={!!renewingSale}
         onOpenChange={(o) => !o && setRenewingSale(null)}
