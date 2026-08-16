@@ -43,7 +43,7 @@ const organizationSchema = {
   '@id': `${SITE_URL}/#organization`,
   name: SITE_NAME,
   url: SITE_URL,
-  logo: `${SITE_URL}/favicon.svg`,
+  logo: `${SITE_URL}/favicon.png`,
   description: defaultMeta.description,
   foundingDate: '2024',
   sameAs: [

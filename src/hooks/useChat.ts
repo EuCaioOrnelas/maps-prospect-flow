@@ -312,7 +312,7 @@ export function useChat() {
             try {
               const title = conv?.contact_name || conv?.contact_phone || "Nova mensagem";
               const body = (newMsg as any).text || ((newMsg as any).type ? `[${(newMsg as any).type}]` : "Nova mensagem recebida");
-              const n = new Notification(title, { body, icon: "/favicon.ico", tag: newMsg.conversation_id });
+              const n = new Notification(title, { body, icon: "/favicon.png", tag: newMsg.conversation_id });
               n.onclick = () => { window.focus(); n.close(); };
             } catch {}
           }

@@ -180,7 +180,7 @@ export default function BlogPost() {
     publisher: {
       "@type": "Organization",
       name: "Wiize",
-      logo: { "@type": "ImageObject", url: `${SITE_URL}/favicon.svg` },
+      logo: { "@type": "ImageObject", url: `${SITE_URL}/favicon.png` },
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     keywords: (post.seo_keywords || []).join(", "),
