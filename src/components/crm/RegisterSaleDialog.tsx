@@ -441,15 +441,24 @@ export function RegisterSaleDialog({
     );
   }
 
+  const clientName = leadName || sale?.lead?.company_name || sale?.lead?.contact_name;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card p-4">
         <DialogHeader>
-          <DialogTitle>Registrar venda</DialogTitle>
+          <DialogTitle>{isEdit ? "Editar venda" : "Registrar venda"}</DialogTitle>
           <DialogDescription>
-            {leadName ? `Cadastre a venda fechada com ${leadName}` : "Cadastre os detalhes da venda fechada"}
+            {isEdit
+              ? clientName
+                ? `Atualize os detalhes da venda com ${clientName}`
+                : "Atualize os detalhes desta venda"
+              : clientName
+                ? `Cadastre a venda fechada com ${clientName}`
+                : "Cadastre os detalhes da venda fechada"}
           </DialogDescription>
         </DialogHeader>
+
         {formBody}
         <DialogFooter>{footer}</DialogFooter>
       </DialogContent>
