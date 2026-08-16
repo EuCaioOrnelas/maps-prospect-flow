@@ -344,6 +344,65 @@ export function RegisterSaleDialog({
             compact={compact}
           />
         </div>
+
+        {isEdit && (
+          <>
+            <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <UserIcon className="w-3.5 h-3.5 text-primary" /> Responsável pela venda
+                </Label>
+                <Select
+                  value={responsibleUserId || "none"}
+                  onValueChange={(v) => setResponsibleUserId(v === "none" ? "" : v)}
+                  disabled={!canChangeResponsible}
+                >
+                  <SelectTrigger className={cn(compact && "h-8 text-xs")}><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem responsável</SelectItem>
+                    {members.map((m) => (
+                      <SelectItem key={m.user_id} value={m.user_id}>
+                        {m.name || m.email || m.user_id.slice(0, 8)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!canChangeResponsible && (
+                  <p className="text-[10.5px] text-muted-foreground">
+                    Somente o responsável atual, o dono da conta ou um admin podem alterar este campo.
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-primary" /> Status
+                </Label>
+                <Select value={status} onValueChange={(v) => setStatus(v as SaleStatus)}>
+                  <SelectTrigger className={cn(compact && "h-8 text-xs")}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="expiring">Vencendo</SelectItem>
+                    <SelectItem value="expired">Expirado</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                    <SelectItem value="renewed">Renovado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <StickyNote className="w-3.5 h-3.5 text-primary" /> Notas
+              </Label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={compact ? 2 : 3}
+                className={cn(compact && "min-h-16 text-xs")}
+              />
+            </div>
+          </>
+        )}
       </div>
     </>
   );
@@ -355,10 +414,11 @@ export function RegisterSaleDialog({
       </Button>
       <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
         {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-        Registrar venda
+        {isEdit ? "Salvar alterações" : "Registrar venda"}
       </Button>
     </div>
   );
+
 
   if (!open) {
     return null;
