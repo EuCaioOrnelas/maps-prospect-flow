@@ -161,10 +161,27 @@ export const useSales = (leadId?: string) => {
         () => fetchSales()
       )
       .subscribe();
+    const onLocal = () => fetchSales();
+    window.addEventListener(SALES_EVENT, onLocal);
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener(SALES_EVENT, onLocal);
     };
   }, [user, accountOwnerId, leadId, fetchSales]);
+
+  // Revalida ao voltar o foco para a aba
+  useEffect(() => {
+    if (!user || !accountOwnerId) return;
+    const onFocus = () => {
+      if (document.visibilityState === "visible") fetchSales();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [user, accountOwnerId, fetchSales]);
 
   const createSale = useCallback(
     async (input: SaleInput) => {
