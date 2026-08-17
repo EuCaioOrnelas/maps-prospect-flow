@@ -294,10 +294,8 @@ export function EventDetailsDialog({
                   variant="outline"
                   disabled={busy}
                   onClick={() => {
-                    const target = event;
                     onOpenChange(false);
-                    // aguarda o modal atual fechar antes de abrir o de remarcação
-                    setTimeout(() => onReschedule(target), 180);
+                    onReschedule(event);
                   }}
                   className="group relative justify-start gap-2 overflow-hidden border-primary/30 bg-primary/5 text-primary transition-all hover:border-primary/50 hover:bg-primary/15 hover:shadow-sm hover:shadow-primary/10"
                 >
