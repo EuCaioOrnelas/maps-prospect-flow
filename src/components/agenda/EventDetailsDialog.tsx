@@ -326,31 +326,32 @@ export function EventDetailsDialog({
             </div>
           )}
         </div>
-
-        <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{confirm ? CONFIRM_COPY[confirm].title : ""}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {confirm ? CONFIRM_COPY[confirm].description : ""}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Voltar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  const action = confirm;
-                  setConfirm(null);
-                  if (!action) return;
-                  void apply(action);
-                }}
-              >
-                {confirm ? CONFIRM_COPY[confirm].action : ""}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{confirm ? CONFIRM_COPY[confirm].title : ""}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {confirm ? CONFIRM_COPY[confirm].description : ""}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Voltar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              const action = confirm;
+              setConfirm(null);
+              if (!action) return;
+              void apply(action);
+            }}
+          >
+            {confirm ? CONFIRM_COPY[confirm].action : ""}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
