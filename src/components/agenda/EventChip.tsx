@@ -50,6 +50,7 @@ export function EventChip({
   const cancelled = event.status === "cancelled";
   const completed = event.status === "completed";
   const noShow = event.status === "no_show";
+  const overdue = isEventOverdue(event);
   /** Estilo da barra lateral/fundo conforme o desfecho da reunião. */
   const barClass = cancelled
     ? "border-l-destructive bg-destructive/5"
@@ -57,15 +58,25 @@ export function EventChip({
       ? "border-l-emerald-500 bg-emerald-500/5"
       : noShow
         ? "border-l-amber-500 bg-amber-500/5"
-        : type.bar;
+        : overdue
+          ? OVERDUE_STYLES.bar
+          : type.bar;
   const dotClass = cancelled
     ? "bg-destructive"
     : completed
       ? "bg-emerald-500"
       : noShow
         ? "bg-amber-500"
-        : type.dot;
-  const StatusIcon = completed ? CheckCircle2 : cancelled ? XCircle : null;
+        : overdue
+          ? OVERDUE_STYLES.dot
+          : type.dot;
+  const StatusIcon = completed
+    ? CheckCircle2
+    : cancelled
+      ? XCircle
+      : overdue
+        ? AlertTriangle
+        : null;
 
 
   const details = (
