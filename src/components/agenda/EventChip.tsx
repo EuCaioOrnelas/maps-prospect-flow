@@ -162,7 +162,7 @@ export function EventChip({
             <StatusIcon
               className={cn(
                 "h-4 w-4 mt-0.5 shrink-0",
-                completed ? "text-emerald-500" : "text-destructive",
+                completed ? "text-emerald-500" : cancelled ? "text-destructive" : OVERDUE_STYLES.text,
               )}
             />
           ) : (
@@ -251,7 +251,7 @@ export function EventChip({
           <StatusIcon
             className={cn(
               "h-3 w-3 shrink-0",
-              completed ? "text-emerald-500" : "text-destructive",
+              completed ? "text-emerald-500" : cancelled ? "text-destructive" : OVERDUE_STYLES.text,
             )}
           />
         ) : (
