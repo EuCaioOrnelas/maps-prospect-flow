@@ -134,7 +134,8 @@ export function EventDetailsDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+    <Dialog open={open && !confirm} onOpenChange={(v) => { if (!v && !confirm) onOpenChange(false); }}>
       <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
         <DialogHeader className="pr-10">
           <div className="flex items-start gap-3">
