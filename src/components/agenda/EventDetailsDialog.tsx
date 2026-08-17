@@ -36,12 +36,15 @@ import {
   Loader2,
   Mail,
   Phone,
+  AlertTriangle,
 } from "lucide-react";
 import {
   getEventType,
   getEventStatus,
   minutesBetween,
   formatDuration,
+  isEventOverdue,
+  OVERDUE_STYLES,
   type CalendarEvent,
 } from "@/lib/calendarConfig";
 import { formatTime, formatLongDate } from "@/lib/calendarViews";
@@ -100,6 +103,7 @@ export function EventDetailsDialog({
   const duration = formatDuration(minutesBetween(event.starts_at, event.ends_at));
   const location = event.location || event.conference_url || "";
   const isLink = /^https?:\/\//i.test(location);
+  const overdue = isEventOverdue(event);
 
   const participantIds: string[] = Array.isArray((event.metadata as any)?.participants)
     ? ((event.metadata as any).participants as string[])
@@ -174,6 +178,11 @@ export function EventDetailsDialog({
             <Badge variant="outline" className={cn("h-6 text-[11px]", status.chip)}>
               {status.label}
             </Badge>
+            {overdue && (
+              <Badge variant="outline" className={cn("h-6 gap-1 text-[11px]", OVERDUE_STYLES.chip)}>
+                <AlertTriangle className="h-3 w-3" /> Atrasado
+              </Badge>
+            )}
             {event.source === "sdr" && (
               <Badge variant="outline" className="h-6 gap-1 text-[11px]">
                 <Bot className="h-3 w-3" /> SDR Inteligente
