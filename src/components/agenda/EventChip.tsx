@@ -199,8 +199,8 @@ export function EventChip({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            <Badge variant="outline" className={cn("text-[10px] h-5", status.chip)}>
-              {status.label}
+            <Badge variant="outline" className={cn("text-[10px] h-5", overdue ? OVERDUE_STYLES.chip : status.chip)}>
+              {overdue ? "Atrasado" : status.label}
             </Badge>
             {onQuickEdit && (
               <Button
