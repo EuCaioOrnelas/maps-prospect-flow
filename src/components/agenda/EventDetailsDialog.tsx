@@ -85,8 +85,17 @@ export function EventDetailsDialog({
 }: Props) {
   const [pending, setPending] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<"completed" | "cancelled" | null>(null);
+  const confirmRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (confirm && confirmRef.current) {
+      const firstButton = confirmRef.current.querySelector("button") as HTMLElement | null;
+      firstButton?.focus();
+    }
+  }, [confirm]);
 
   if (!event) return null;
+
 
   const type = getEventType(event.event_type);
   const status = getEventStatus(event.status);
