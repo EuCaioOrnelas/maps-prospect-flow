@@ -244,13 +244,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         <div className="h-[58px] min-h-[58px] flex items-center px-4">
           <Link 
             to="/dashboard"
-            className="flex items-center gap-0 h-12 group cursor-pointer"
+            className="flex items-center gap-0 h-12 cursor-pointer"
           >
             {/* Icon logo - always visible and fixed position */}
             <img 
               src={logoIconNew} 
               alt="Wiize" 
-              className="h-10 w-10 object-contain rounded-hover transition-all duration-200 ease-out group-hover:scale-105 group-hover:brightness-110 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)] shrink-0"
+              className="h-10 w-10 object-contain rounded-hover shrink-0"
             />
             {/* Wordmark - fade in/out when expanded */}
             <span

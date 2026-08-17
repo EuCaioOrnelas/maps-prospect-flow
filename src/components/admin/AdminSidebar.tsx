@@ -219,11 +219,11 @@ export function AdminSidebar() {
       >
         {/* Logo */}
         <div className="h-[58px] min-h-[58px] flex items-center border-b border-sidebar-border px-4">
-          <Link to="/admin" className="flex items-center gap-0 h-12 group cursor-pointer">
+          <Link to="/admin" className="flex items-center gap-0 h-12 cursor-pointer">
             <img
               src={logoIconNew}
               alt="Wiize"
-              className="h-10 w-10 object-contain rounded-lg transition-all duration-200 ease-out group-hover:scale-105 shrink-0"
+              className="h-10 w-10 object-contain rounded-lg shrink-0"
             />
             <span
               className={cn(

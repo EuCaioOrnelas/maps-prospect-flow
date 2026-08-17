@@ -41,11 +41,11 @@ export const Logo = ({
   const destination = user ? "/dashboard" : "/";
 
   const logoContent = (
-    <div className="flex items-center justify-center gap-0 group">
+    <div className="flex items-center justify-center gap-0">
       <img 
         src={logoIconNew} 
         alt="Wiize" 
-        className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg shrink-0 transition-all duration-200 group-hover:scale-105 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)]`}
+        className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg shrink-0`}
       />
       {showText && !iconOnly && (
         <span className={`${mobileInitialsOnly ? "hidden md:flex" : "flex"} items-center ml-1.5`}>
@@ -67,11 +67,11 @@ export const Logo = ({
   // If iconOnly, show only the icon
   if (iconOnly) {
     const iconContent = (
-      <div className="flex items-center justify-center group">
+      <div className="flex items-center justify-center">
         <img 
           src={logoIconNew} 
           alt="Wiize" 
-          className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg transition-all duration-200 group-hover:scale-105 group-hover:drop-shadow-[0_0_12px_hsl(158,72%,38%,0.6)]`}
+          className={`${mobileSize ? `${mobileEffectiveSize.icon} md:${effectiveSize.icon}` : effectiveSize.icon} object-contain rounded-lg`}
         />
       </div>
     );
