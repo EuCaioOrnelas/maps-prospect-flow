@@ -112,8 +112,8 @@ export function EventChip({
           <Badge variant="outline" className={cn("text-[10px] h-5", type.chip)}>
             {type.label}
           </Badge>
-          <Badge variant="outline" className={cn("text-[10px] h-5", status.chip)}>
-            {status.label}
+          <Badge variant="outline" className={cn("text-[10px] h-5", overdue ? OVERDUE_STYLES.chip : status.chip)}>
+            {overdue ? "Atrasado" : status.label}
           </Badge>
           {event.source === "sdr" && (
             <Badge variant="outline" className="text-[10px] h-5 gap-1">
