@@ -132,13 +132,23 @@ export default function Agenda() {
     setDialogOpen(true);
   };
 
+  /** Radix pode deixar o body travado quando um modal abre logo após outro fechar. */
+  const unlockBody = () => {
+    document.body.style.pointerEvents = "";
+    document.body.removeAttribute("data-scroll-locked");
+  };
+
   const openEdit = (event: CalendarEvent) => {
+    setDetailsOpen(false);
+    unlockBody();
     setEditing(event);
     setDefaultDate(null);
     setDialogOpen(true);
   };
 
   const openQuickEdit = (event: CalendarEvent) => {
+    setDetailsOpen(false);
+    unlockBody();
     setQuickEvent(event);
     setQuickOpen(true);
   };

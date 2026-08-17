@@ -36,12 +36,15 @@ import {
   Loader2,
   Mail,
   Phone,
+  AlertTriangle,
 } from "lucide-react";
 import {
   getEventType,
   getEventStatus,
   minutesBetween,
   formatDuration,
+  isEventOverdue,
+  OVERDUE_STYLES,
   type CalendarEvent,
 } from "@/lib/calendarConfig";
 import { formatTime, formatLongDate } from "@/lib/calendarViews";
@@ -100,6 +103,7 @@ export function EventDetailsDialog({
   const duration = formatDuration(minutesBetween(event.starts_at, event.ends_at));
   const location = event.location || event.conference_url || "";
   const isLink = /^https?:\/\//i.test(location);
+  const overdue = isEventOverdue(event);
 
   const participantIds: string[] = Array.isArray((event.metadata as any)?.participants)
     ? ((event.metadata as any).participants as string[])
@@ -134,7 +138,8 @@ export function EventDetailsDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+    <Dialog open={open && !confirm} onOpenChange={(v) => { if (!v && !confirm) onOpenChange(false); }}>
       <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
         <DialogHeader className="pr-10">
           <div className="flex items-start gap-3">
@@ -173,6 +178,11 @@ export function EventDetailsDialog({
             <Badge variant="outline" className={cn("h-6 text-[11px]", status.chip)}>
               {status.label}
             </Badge>
+            {overdue && (
+              <Badge variant="outline" className={cn("h-6 gap-1 text-[11px]", OVERDUE_STYLES.chip)}>
+                <AlertTriangle className="h-3 w-3" /> Atrasado
+              </Badge>
+            )}
             {event.source === "sdr" && (
               <Badge variant="outline" className="h-6 gap-1 text-[11px]">
                 <Bot className="h-3 w-3" /> SDR Inteligente
@@ -293,10 +303,8 @@ export function EventDetailsDialog({
                   variant="outline"
                   disabled={busy}
                   onClick={() => {
-                    const target = event;
                     onOpenChange(false);
-                    // aguarda o modal atual fechar antes de abrir o de remarcação
-                    setTimeout(() => onReschedule(target), 180);
+                    onReschedule(event);
                   }}
                   className="group relative justify-start gap-2 overflow-hidden border-primary/30 bg-primary/5 text-primary transition-all hover:border-primary/50 hover:bg-primary/15 hover:shadow-sm hover:shadow-primary/10"
                 >
@@ -325,31 +333,32 @@ export function EventDetailsDialog({
             </div>
           )}
         </div>
-
-        <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{confirm ? CONFIRM_COPY[confirm].title : ""}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {confirm ? CONFIRM_COPY[confirm].description : ""}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Voltar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  const action = confirm;
-                  setConfirm(null);
-                  if (!action) return;
-                  void apply(action);
-                }}
-              >
-                {confirm ? CONFIRM_COPY[confirm].action : ""}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{confirm ? CONFIRM_COPY[confirm].title : ""}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {confirm ? CONFIRM_COPY[confirm].description : ""}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Voltar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              const action = confirm;
+              setConfirm(null);
+              if (!action) return;
+              void apply(action);
+            }}
+          >
+            {confirm ? CONFIRM_COPY[confirm].action : ""}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

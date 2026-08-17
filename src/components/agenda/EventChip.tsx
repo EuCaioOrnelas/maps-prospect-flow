@@ -3,12 +3,14 @@ import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Building2, User, Bot, PencilLine, CheckCircle2, XCircle } from "lucide-react";
+import { Clock, Building2, User, Bot, PencilLine, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import {
   getEventType,
   getEventStatus,
   minutesBetween,
   formatDuration,
+  isEventOverdue,
+  OVERDUE_STYLES,
   type CalendarEvent,
 } from "@/lib/calendarConfig";
 import { formatTime } from "@/lib/calendarViews";
@@ -48,6 +50,7 @@ export function EventChip({
   const cancelled = event.status === "cancelled";
   const completed = event.status === "completed";
   const noShow = event.status === "no_show";
+  const overdue = isEventOverdue(event);
   /** Estilo da barra lateral/fundo conforme o desfecho da reunião. */
   const barClass = cancelled
     ? "border-l-destructive bg-destructive/5"
@@ -55,15 +58,25 @@ export function EventChip({
       ? "border-l-emerald-500 bg-emerald-500/5"
       : noShow
         ? "border-l-amber-500 bg-amber-500/5"
-        : type.bar;
+        : overdue
+          ? OVERDUE_STYLES.bar
+          : type.bar;
   const dotClass = cancelled
     ? "bg-destructive"
     : completed
       ? "bg-emerald-500"
       : noShow
         ? "bg-amber-500"
-        : type.dot;
-  const StatusIcon = completed ? CheckCircle2 : cancelled ? XCircle : null;
+        : overdue
+          ? OVERDUE_STYLES.dot
+          : type.dot;
+  const StatusIcon = completed
+    ? CheckCircle2
+    : cancelled
+      ? XCircle
+      : overdue
+        ? AlertTriangle
+        : null;
 
 
   const details = (
@@ -99,8 +112,8 @@ export function EventChip({
           <Badge variant="outline" className={cn("text-[10px] h-5", type.chip)}>
             {type.label}
           </Badge>
-          <Badge variant="outline" className={cn("text-[10px] h-5", status.chip)}>
-            {status.label}
+          <Badge variant="outline" className={cn("text-[10px] h-5", overdue ? OVERDUE_STYLES.chip : status.chip)}>
+            {overdue ? "Atrasado" : status.label}
           </Badge>
           {event.source === "sdr" && (
             <Badge variant="outline" className="text-[10px] h-5 gap-1">
@@ -149,7 +162,7 @@ export function EventChip({
             <StatusIcon
               className={cn(
                 "h-4 w-4 mt-0.5 shrink-0",
-                completed ? "text-emerald-500" : "text-destructive",
+                completed ? "text-emerald-500" : cancelled ? "text-destructive" : OVERDUE_STYLES.text,
               )}
             />
           ) : (
@@ -186,8 +199,8 @@ export function EventChip({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            <Badge variant="outline" className={cn("text-[10px] h-5", status.chip)}>
-              {status.label}
+            <Badge variant="outline" className={cn("text-[10px] h-5", overdue ? OVERDUE_STYLES.chip : status.chip)}>
+              {overdue ? "Atrasado" : status.label}
             </Badge>
             {onQuickEdit && (
               <Button
@@ -238,7 +251,7 @@ export function EventChip({
           <StatusIcon
             className={cn(
               "h-3 w-3 shrink-0",
-              completed ? "text-emerald-500" : "text-destructive",
+              completed ? "text-emerald-500" : cancelled ? "text-destructive" : OVERDUE_STYLES.text,
             )}
           />
         ) : (

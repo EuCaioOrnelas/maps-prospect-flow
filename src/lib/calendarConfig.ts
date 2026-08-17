@@ -211,3 +211,22 @@ export const formatDuration = (minutes: number) => {
 /** Dois intervalos se sobrepõem? Usado para pré-checagem no cliente. */
 export const overlaps = (aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) =>
   aStart < bEnd && bStart < aEnd;
+
+/**
+ * Compromisso atrasado: já passou do horário de término e continua
+ * aberto (agendado ou confirmado), sem desfecho registrado.
+ */
+export const isEventOverdue = (event: {
+  ends_at: string;
+  status?: string | null;
+}, now: Date = new Date()) =>
+  (event.status === "scheduled" || event.status === "confirmed") &&
+  new Date(event.ends_at).getTime() < now.getTime();
+
+/** Classes visuais do estado "atrasado" (laranja). */
+export const OVERDUE_STYLES = {
+  bar: "border-l-orange-500 bg-orange-500/10",
+  dot: "bg-orange-500",
+  chip: "bg-orange-500/10 text-orange-600 dark:text-orange-300 border-orange-500/30",
+  text: "text-orange-600 dark:text-orange-400",
+};
