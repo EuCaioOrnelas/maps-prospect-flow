@@ -137,14 +137,7 @@ export function EventDetailsDialog({
     },
   };
 
-  const confirmRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (confirm && confirmRef.current) {
-      const firstButton = confirmRef.current.querySelector("button") as HTMLElement | null;
-      firstButton?.focus();
-    }
-  }, [confirm]);
 
   const ConfirmIcon = confirm === "completed" ? CheckCircle2 : XCircle;
   const confirmColor = confirm === "completed" ? "primary" : "destructive";
