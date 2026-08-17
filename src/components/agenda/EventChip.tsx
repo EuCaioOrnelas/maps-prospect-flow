@@ -3,12 +3,14 @@ import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Building2, User, Bot, PencilLine, CheckCircle2, XCircle } from "lucide-react";
+import { Clock, Building2, User, Bot, PencilLine, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import {
   getEventType,
   getEventStatus,
   minutesBetween,
   formatDuration,
+  isEventOverdue,
+  OVERDUE_STYLES,
   type CalendarEvent,
 } from "@/lib/calendarConfig";
 import { formatTime } from "@/lib/calendarViews";
