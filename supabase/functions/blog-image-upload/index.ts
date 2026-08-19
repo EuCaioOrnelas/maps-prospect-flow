@@ -1,5 +1,4 @@
-// Upload de imagens do blog: valida o admin no projeto EXTERNO do blog e grava
-// no bucket público `blog-images` da Lovable Cloud usando service role.
+// Upload de imagens do blog: valida o admin e grava no bucket privado.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -7,10 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-
-const BLOG_SUPABASE_URL = "https://lqfqnqfeuneorxocybru.supabase.co";
-const BLOG_SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZnFucWZldW5lb3J4b2N5YnJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTMyMjQsImV4cCI6MjA4NDY4OTIyNH0.ccxmuoqz-hlanRfqdvQZXN5tdt5d_8j5F6DVCjZAeB8";
 
 const BUCKET = "blog-images";
 
@@ -26,7 +21,10 @@ async function requireBlogAdmin(req: Request): Promise<{ ok: boolean; userId?: s
   const token = auth.replace("Bearer ", "").trim();
   if (!token) return { ok: false, status: 401 };
 
-  const blog = createClient(BLOG_SUPABASE_URL, BLOG_SUPABASE_ANON_KEY, {
+  const url = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!url || !anonKey) return { ok: false, status: 500 };
+  const blog = createClient(url, anonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
