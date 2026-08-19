@@ -375,7 +375,7 @@ serve(async (req) => {
           {
             role: "system",
             content:
-              "Você gera consultas de busca para o YouTube. Responda SOMENTE JSON no formato {\"queries\":[\"...\"]} com 8 a 12 consultas curtas (2 a 5 palavras) no idioma pedido, focadas em CONTEÚDO/temas (não em nomes de canais).",
+              "Você gera consultas de busca para o YouTube. Responda SOMENTE JSON no formato {\"queries\":[\"...\"]} com 14 a 18 consultas curtas (2 a 5 palavras) no idioma pedido, focadas em CONTEÚDO/temas (não em nomes de canais). Varie: termos amplos do nicho, dores/problemas do público, formatos (tutorial, review, aula, podcast, entrevista) e sinônimos regionais. Não repita a mesma ideia com palavras iguais.",
           },
           {
             role: "user",
@@ -388,47 +388,106 @@ serve(async (req) => {
       );
       const generatedQueries: string[] = Array.from(
         new Set([...(queryGen.queries || []), ...keywords].map((q: string) => String(q).trim()).filter(Boolean)),
-      ).slice(0, 12);
+      ).slice(0, 20);
 
       await admin.from("influencer_searches").update({ generated_queries: generatedQueries }).eq("id", searchRow.id);
 
-      // 2) Buscar vídeos → channel IDs (quota controlada)
+      // 2) Buscar vídeos → channel IDs (funil largo, quota controlada)
       const publishedAfter = new Date(Date.now() - recencyDays * 86400000).toISOString();
-      const maxQueries = resultsRequested <= 20 ? 5 : resultsRequested <= 50 ? 8 : 12;
-      const perQuery = resultsRequested <= 20 ? 15 : 25;
+      // maxResults=50 custa a mesma quota que 15 → sempre pedimos o máximo por chamada
+      const PER_QUERY = "50";
+      const maxQueries = resultsRequested <= 20 ? 8 : resultsRequested <= 35 ? 10 : 12;
       const channelIds = new Set<string>();
+      const pageTokens = new Map<string, string>();
+
+      const collect = (data: any, q?: string) => {
+        for (const item of data?.items || []) {
+          const cid = item?.snippet?.channelId ?? item?.id?.channelId;
+          if (cid) channelIds.add(cid);
+        }
+        if (q && data?.nextPageToken) pageTokens.set(q, data.nextPageToken);
+      };
+
+      const runSearch = async (params: Record<string, string>, q?: string) => {
+        try {
+          const data = await yt("search", params, youtubeKey);
+          collect(data, q);
+        } catch (e) {
+          if ((e as Error).message === "YOUTUBE_QUOTA_EXCEEDED") throw e;
+          console.error("[search] query falhou", params.q, e);
+        }
+      };
 
       const queriesToRun = generatedQueries.slice(0, maxQueries);
-      const searchResults = await Promise.all(
-        queriesToRun.map(async (q) => {
-          try {
-            return await yt(
-              "search",
-              {
+
+      // Passo 1: vídeos recentes por tema
+      await Promise.all(
+        queriesToRun.map((q) =>
+          runSearch(
+            {
+              part: "snippet",
+              q,
+              type: "video",
+              maxResults: PER_QUERY,
+              order: "relevance",
+              publishedAfter,
+              regionCode: country,
+              relevanceLanguage: language,
+            },
+            q,
+          ),
+        ),
+      );
+
+      // Passo 2: busca direta por CANAIS (traz criadores que não postaram na janela recente)
+      await Promise.all(
+        queriesToRun.slice(0, Math.min(6, queriesToRun.length)).map((q) =>
+          runSearch({
+            part: "snippet",
+            q,
+            type: "channel",
+            maxResults: PER_QUERY,
+            order: "relevance",
+            regionCode: country,
+            relevanceLanguage: language,
+          }),
+        ),
+      );
+
+      // Passo 3 (adaptativo): se o pool ainda está pequeno, pagina e afrouxa a janela de recência
+      const POOL_TARGET = resultsRequested * 8;
+      if (channelIds.size < POOL_TARGET) {
+        await Promise.all(
+          queriesToRun.slice(0, 8).map(async (q) => {
+            const token = pageTokens.get(q);
+            if (token) {
+              await runSearch({
                 part: "snippet",
                 q,
                 type: "video",
-                maxResults: String(perQuery),
+                maxResults: PER_QUERY,
                 order: "relevance",
                 publishedAfter,
                 regionCode: country,
                 relevanceLanguage: language,
-              },
-              youtubeKey,
-            );
-          } catch (e) {
-            if ((e as Error).message === "YOUTUBE_QUOTA_EXCEEDED") throw e;
-            console.error("[search] query falhou", q, e);
-            return null;
-          }
-        }),
-      );
-      for (const data of searchResults) {
-        for (const item of data?.items || []) {
-          const cid = item?.snippet?.channelId;
-          if (cid) channelIds.add(cid);
-        }
+                pageToken: token,
+              });
+            } else {
+              // sem próxima página: repete sem filtro de recência para ampliar o alcance
+              await runSearch({
+                part: "snippet",
+                q,
+                type: "video",
+                maxResults: PER_QUERY,
+                order: "relevance",
+                regionCode: country,
+                relevanceLanguage: language,
+              });
+            }
+          }),
+        );
       }
+
 
 
       if (channelIds.size === 0) {
