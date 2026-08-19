@@ -1,5 +1,5 @@
 // Upload de imagens do blog: valida o admin e grava no bucket privado.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,20 +16,30 @@ function json(obj: unknown, status = 200) {
   });
 }
 
-function admin() {
+function getBackendConfig() {
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceKey) return null;
+  return { url, serviceKey };
+}
+
+function admin(config: { url: string; serviceKey: string }) {
   return createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    config.url,
+    config.serviceKey,
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 }
 
-async function requireBlogAdmin(req: Request): Promise<{ ok: boolean; userId?: string; status?: number }> {
+async function requireBlogAdmin(
+  req: Request,
+  config: { url: string; serviceKey: string },
+): Promise<{ ok: boolean; userId?: string; status?: number; reason?: string }> {
   const auth = req.headers.get("Authorization") || "";
   const token = auth.replace(/^Bearer\s+/i, "").trim();
   if (!token) return { ok: false, status: 401 };
 
-  const supa = admin();
+  const supa = admin(config);
   const { data: userData, error: userErr } = await supa.auth.getUser(token);
   if (userErr || !userData?.user) {
     console.error("[blog-image-upload] invalid token", userErr?.message);
@@ -45,7 +55,7 @@ async function requireBlogAdmin(req: Request): Promise<{ ok: boolean; userId?: s
 
   if (roleErr) {
     console.error("[blog-image-upload] role lookup failed", roleErr.message);
-    return { ok: false, status: 500 };
+    return { ok: false, status: 500, reason: roleErr.message };
   }
   if (!role) return { ok: false, status: 403 };
   return { ok: true, userId: userData.user.id };
@@ -65,9 +75,17 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const guard = await requireBlogAdmin(req);
+    const config = getBackendConfig();
+    if (!config) return json({ error: "Backend de upload não configurado." }, 500);
+
+    const guard = await requireBlogAdmin(req, config);
     if (!guard.ok) {
-      return json({ error: guard.status === 403 ? "forbidden" : "unauthorized" }, guard.status ?? 401);
+      const error = guard.status === 403
+        ? "Acesso restrito a administradores."
+        : guard.status === 500
+          ? `Falha ao validar administrador: ${guard.reason || "erro interno"}`
+          : "Sessão inválida. Entre novamente e tente o upload.";
+      return json({ error }, guard.status ?? 401);
     }
 
     const form = await req.formData();
@@ -76,11 +94,22 @@ Deno.serve(async (req) => {
     if (!file.type.startsWith("image/")) return json({ error: "Arquivo precisa ser uma imagem" }, 400);
     if (file.size > 8 * 1024 * 1024) return json({ error: "Imagem muito grande (máx. 8 MB)" }, 400);
 
-    const supa = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { persistSession: false } },
-    );
+    const supa = admin(config);
+
+    // O projeto externo pode ainda não possuir o bucket. A criação é
+    // idempotente e evita o erro 500 "Bucket not found" no primeiro envio.
+    const { data: buckets, error: listError } = await supa.storage.listBuckets();
+    if (listError) return json({ error: `Falha ao acessar o armazenamento: ${listError.message}` }, 500);
+    if (!buckets?.some((bucket) => bucket.id === BUCKET)) {
+      const { error: createError } = await supa.storage.createBucket(BUCKET, {
+        public: false,
+        fileSizeLimit: 8 * 1024 * 1024,
+        allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"],
+      });
+      if (createError && !/already exists/i.test(createError.message)) {
+        return json({ error: `Falha ao preparar o armazenamento: ${createError.message}` }, 500);
+      }
+    }
 
     const ext = (file.name.split(".").pop() || "png").toLowerCase();
     const base = sanitize(file.name.replace(/\.[^.]+$/, "") || "imagem");
@@ -94,7 +123,7 @@ Deno.serve(async (req) => {
     });
     if (upErr) {
       console.error("[blog-image-upload] upload failed", upErr);
-      return json({ error: upErr.message }, 500);
+      return json({ error: `Falha ao gravar a imagem: ${upErr.message}` }, 500);
     }
 
     // Bucket privado (política do workspace bloqueia buckets públicos):
