@@ -1,5 +1,11 @@
 project_id = "wgokhkawjdxsmvfuhazb"
 
+[functions.blog-image-upload]
+verify_jwt = false
+
+[functions.generate-blog-geo]
+verify_jwt = false
+
 [functions.blog-sitemap]
 verify_jwt = false
 

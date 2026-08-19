@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { blogSupabase } from "@/integrations/blog/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,13 +44,20 @@ export default function AdminBlogList() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await blogSupabase
-      .from("blog_posts")
-      .select("id,slug,title,status,featured,published_at,updated_at,view_count,like_count,category:blog_categories(name)")
-      .order("updated_at", { ascending: false });
-    if (error) toast.error("Erro ao carregar: " + error.message);
-    setPosts((data as any) || []);
-    setLoading(false);
+    try {
+      const { data, error } = await blogSupabase
+        .from("blog_posts")
+        .select("id,slug,title,status,featured,published_at,updated_at,view_count,like_count,category:blog_categories(name)")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      setPosts((data as any) || []);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha desconhecida";
+      toast.error("Erro ao carregar o blog: " + message);
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);

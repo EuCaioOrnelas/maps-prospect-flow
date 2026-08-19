@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { blogSupabase } from "@/integrations/blog/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -38,7 +38,7 @@ export default function AdminBlogCategories() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from("blog_categories").select("*").order("sort_order");
+    const { data } = await blogSupabase.from("blog_categories").select("*").order("sort_order");
     setItems((data as Category[]) || []);
     setLoading(false);
   };
@@ -55,8 +55,8 @@ export default function AdminBlogCategories() {
       sort_order: editing.sort_order ?? 0,
     };
     const res = editing.id
-      ? await supabase.from("blog_categories").update(payload).eq("id", editing.id)
-      : await supabase.from("blog_categories").insert(payload);
+      ? await blogSupabase.from("blog_categories").update(payload).eq("id", editing.id)
+      : await blogSupabase.from("blog_categories").insert(payload);
     if (res.error) return toast.error("Erro: " + res.error.message);
     toast.success("Salvo");
     setOpen(false);
@@ -66,7 +66,7 @@ export default function AdminBlogCategories() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Remover categoria?")) return;
-    const { error } = await supabase.from("blog_categories").delete().eq("id", id);
+    const { error } = await blogSupabase.from("blog_categories").delete().eq("id", id);
     if (error) toast.error(error.message);
     else load();
   };
