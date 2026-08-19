@@ -375,7 +375,7 @@ serve(async (req) => {
           {
             role: "system",
             content:
-              "Você gera consultas de busca para o YouTube. Responda SOMENTE JSON no formato {\"queries\":[\"...\"]} com 8 a 12 consultas curtas (2 a 5 palavras) no idioma pedido, focadas em CONTEÚDO/temas (não em nomes de canais).",
+              "Você gera consultas de busca para o YouTube. Responda SOMENTE JSON no formato {\"queries\":[\"...\"]} com 14 a 18 consultas curtas (2 a 5 palavras) no idioma pedido, focadas em CONTEÚDO/temas (não em nomes de canais). Varie: termos amplos do nicho, dores/problemas do público, formatos (tutorial, review, aula, podcast, entrevista) e sinônimos regionais. Não repita a mesma ideia com palavras iguais.",
           },
           {
             role: "user",
@@ -388,47 +388,106 @@ serve(async (req) => {
       );
       const generatedQueries: string[] = Array.from(
         new Set([...(queryGen.queries || []), ...keywords].map((q: string) => String(q).trim()).filter(Boolean)),
-      ).slice(0, 12);
+      ).slice(0, 20);
 
       await admin.from("influencer_searches").update({ generated_queries: generatedQueries }).eq("id", searchRow.id);
 
-      // 2) Buscar vídeos → channel IDs (quota controlada)
+      // 2) Buscar vídeos → channel IDs (funil largo, quota controlada)
       const publishedAfter = new Date(Date.now() - recencyDays * 86400000).toISOString();
-      const maxQueries = resultsRequested <= 20 ? 5 : resultsRequested <= 50 ? 8 : 12;
-      const perQuery = resultsRequested <= 20 ? 15 : 25;
+      // maxResults=50 custa a mesma quota que 15 → sempre pedimos o máximo por chamada
+      const PER_QUERY = "50";
+      const maxQueries = resultsRequested <= 20 ? 8 : resultsRequested <= 35 ? 10 : 12;
       const channelIds = new Set<string>();
+      const pageTokens = new Map<string, string>();
+
+      const collect = (data: any, q?: string) => {
+        for (const item of data?.items || []) {
+          const cid = item?.snippet?.channelId ?? item?.id?.channelId;
+          if (cid) channelIds.add(cid);
+        }
+        if (q && data?.nextPageToken) pageTokens.set(q, data.nextPageToken);
+      };
+
+      const runSearch = async (params: Record<string, string>, q?: string) => {
+        try {
+          const data = await yt("search", params, youtubeKey);
+          collect(data, q);
+        } catch (e) {
+          if ((e as Error).message === "YOUTUBE_QUOTA_EXCEEDED") throw e;
+          console.error("[search] query falhou", params.q, e);
+        }
+      };
 
       const queriesToRun = generatedQueries.slice(0, maxQueries);
-      const searchResults = await Promise.all(
-        queriesToRun.map(async (q) => {
-          try {
-            return await yt(
-              "search",
-              {
+
+      // Passo 1: vídeos recentes por tema
+      await Promise.all(
+        queriesToRun.map((q) =>
+          runSearch(
+            {
+              part: "snippet",
+              q,
+              type: "video",
+              maxResults: PER_QUERY,
+              order: "relevance",
+              publishedAfter,
+              regionCode: country,
+              relevanceLanguage: language,
+            },
+            q,
+          ),
+        ),
+      );
+
+      // Passo 2: busca direta por CANAIS (traz criadores que não postaram na janela recente)
+      await Promise.all(
+        queriesToRun.slice(0, Math.min(6, queriesToRun.length)).map((q) =>
+          runSearch({
+            part: "snippet",
+            q,
+            type: "channel",
+            maxResults: PER_QUERY,
+            order: "relevance",
+            regionCode: country,
+            relevanceLanguage: language,
+          }),
+        ),
+      );
+
+      // Passo 3 (adaptativo): se o pool ainda está pequeno, pagina e afrouxa a janela de recência
+      const POOL_TARGET = resultsRequested * 8;
+      if (channelIds.size < POOL_TARGET) {
+        await Promise.all(
+          queriesToRun.slice(0, 8).map(async (q) => {
+            const token = pageTokens.get(q);
+            if (token) {
+              await runSearch({
                 part: "snippet",
                 q,
                 type: "video",
-                maxResults: String(perQuery),
+                maxResults: PER_QUERY,
                 order: "relevance",
                 publishedAfter,
                 regionCode: country,
                 relevanceLanguage: language,
-              },
-              youtubeKey,
-            );
-          } catch (e) {
-            if ((e as Error).message === "YOUTUBE_QUOTA_EXCEEDED") throw e;
-            console.error("[search] query falhou", q, e);
-            return null;
-          }
-        }),
-      );
-      for (const data of searchResults) {
-        for (const item of data?.items || []) {
-          const cid = item?.snippet?.channelId;
-          if (cid) channelIds.add(cid);
-        }
+                pageToken: token,
+              });
+            } else {
+              // sem próxima página: repete sem filtro de recência para ampliar o alcance
+              await runSearch({
+                part: "snippet",
+                q,
+                type: "video",
+                maxResults: PER_QUERY,
+                order: "relevance",
+                regionCode: country,
+                relevanceLanguage: language,
+              });
+            }
+          }),
+        );
       }
+
 
 
       if (channelIds.size === 0) {
@@ -482,50 +541,75 @@ serve(async (req) => {
         (a, b) => Number(b.statistics?.subscriberCount ?? 0) - Number(a.statistics?.subscriberCount ?? 0),
       );
 
-      // 4.2) Triagem de aderência ao ICP (barata: 1 chamada de IA para todos os candidatos)
+      // 4.2) Triagem de aderência ao ICP (lotes paralelos de IA, barata: gpt-4o-mini)
       let filtered = candidates.slice(0, resultsRequested * 2);
       const relevanceById = new Map<string, { score: number; reason: string }>();
       if (candidates.length) {
-        const shortlist = candidates.slice(0, Math.min(candidates.length, resultsRequested * 3, 90));
-        try {
-          const screen = await openai(
-            [
-              {
-                role: "system",
-                content:
-                  'Você faz a triagem de canais do YouTube contra um ICP (perfil ideal) descrito pelo usuário. O ICP e as palavras-chave do usuário são a REGRA ABSOLUTA: se o canal não fala sobre esses temas, ele é irrelevante mesmo que seja grande ou popular. Times de futebol, rádios, notícias gerais, entretenimento, música, gameplay e conteúdo genérico devem receber nota 0 quando não tratam do tema do ICP. Responda SOMENTE JSON {"channels":[{"id":"","score":0,"reason":""}]} com score de 0 a 10 de aderência ao ICP e uma justificativa curta em português para cada id recebido.',
-              },
-              {
-                role: "user",
-                content: JSON.stringify({
-                  icp: description,
-                  keywords,
-                  pais: country,
-                  idioma: language,
-                  canais: shortlist.map((c: any) => ({
-                    id: c.id,
-                    nome: c.snippet?.title,
-                    descricao: (c.snippet?.description ?? "").slice(0, 400),
-                    pais: c.snippet?.country ?? null,
-                  })),
-                }),
-              },
-            ],
-            openaiKey,
-            true,
-            "influencer-prospect (triagem ICP)",
-          );
-          for (const r of screen.channels || []) {
-            if (r?.id) relevanceById.set(String(r.id), { score: Number(r.score ?? 0), reason: String(r.reason ?? "") });
+        // Shortlist bem maior: analisamos muito mais canais antes de escolher os melhores
+        const shortlist = candidates.slice(0, Math.min(candidates.length, Math.max(resultsRequested * 8, 120), 300));
+        const BATCH = 50;
+        const batches: any[][] = [];
+        for (let i = 0; i < shortlist.length; i += BATCH) batches.push(shortlist.slice(i, i + BATCH));
+
+        const screenBatch = async (batch: any[]) => {
+          try {
+            const screen = await openai(
+              [
+                {
+                  role: "system",
+                  content:
+                    'Você faz a triagem de canais do YouTube contra um ICP (perfil ideal) descrito pelo usuário. O ICP e as palavras-chave do usuário são a REGRA ABSOLUTA: se o canal não fala sobre esses temas, ele é irrelevante mesmo que seja grande ou popular. Times de futebol, rádios, notícias gerais, entretenimento, música, gameplay e conteúdo genérico devem receber nota 0 quando não tratam do tema do ICP. Use a escala inteira de 0 a 10 (não concentre tudo em 0 ou 10): canais adjacentes ao tema, que falam com o mesmo público, merecem notas intermediárias. Responda SOMENTE JSON {"channels":[{"id":"","score":0,"reason":""}]} com score de 0 a 10 de aderência ao ICP e uma justificativa curta em português para cada id recebido.',
+                },
+                {
+                  role: "user",
+                  content: JSON.stringify({
+                    icp: description,
+                    keywords,
+                    pais: country,
+                    idioma: language,
+                    canais: batch.map((c: any) => ({
+                      id: c.id,
+                      nome: c.snippet?.title,
+                      descricao: (c.snippet?.description ?? "").slice(0, 400),
+                      pais: c.snippet?.country ?? null,
+                    })),
+                  }),
+                },
+              ],
+              openaiKey,
+              true,
+              "influencer-prospect (triagem ICP)",
+            );
+            for (const r of screen.channels || []) {
+              if (r?.id) relevanceById.set(String(r.id), { score: Number(r.score ?? 0), reason: String(r.reason ?? "") });
+            }
+          } catch (e) {
+            console.error("[triagem] lote falhou", e);
           }
-          const relevant = shortlist
-            .filter((c: any) => (relevanceById.get(c.id)?.score ?? 0) >= 6)
-            .sort((a: any, b: any) => (relevanceById.get(b.id)?.score ?? 0) - (relevanceById.get(a.id)?.score ?? 0));
-          filtered = relevant.slice(0, resultsRequested * 2);
-        } catch (e) {
-          console.error("[triagem] falhou, seguindo sem filtro de IA", e);
+        };
+
+        await Promise.all(batches.map(screenBatch));
+
+        if (relevanceById.size) {
+          const byScore = shortlist
+            .slice()
+            .sort((a: any, b: any) => {
+              const d = (relevanceById.get(b.id)?.score ?? 0) - (relevanceById.get(a.id)?.score ?? 0);
+              if (d !== 0) return d;
+              return Number(b.statistics?.subscriberCount ?? 0) - Number(a.statistics?.subscriberCount ?? 0);
+            });
+
+          // Threshold adaptativo: começa exigente (>=6) e afrouxa só até ter volume suficiente
+          const target = Math.ceil(resultsRequested * 1.6);
+          let pick = byScore.filter((c: any) => (relevanceById.get(c.id)?.score ?? 0) >= 6);
+          for (const th of [5, 4, 3]) {
+            if (pick.length >= target) break;
+            pick = byScore.filter((c: any) => (relevanceById.get(c.id)?.score ?? 0) >= th);
+          }
+          filtered = pick.slice(0, Math.max(target, resultsRequested));
         }
       }
+
 
       if (filtered.length === 0) {
         await admin.from("influencer_searches").update({ status: "done", results_found: 0 }).eq("id", searchRow.id);
@@ -717,7 +801,7 @@ Escreva em português.`,
       };
 
       // Processa canais em paralelo (concorrência limitada) para evitar timeout de 150s
-      const CONCURRENCY = 6;
+      const CONCURRENCY = 10;
       const queue = [...filtered];
       await Promise.all(
         Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
