@@ -1,5 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
-import { FunctionsHttpError } from "@supabase/supabase-js";
+
+const BLOG_BUCKET = "blog-images";
+
+const sanitizeFileName = (name: string) =>
+  name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 80);
 
 export async function uploadBlogImage(file: File): Promise<string> {
   if (!file.type.startsWith("image/")) {
@@ -9,17 +19,31 @@ export async function uploadBlogImage(file: File): Promise<string> {
     throw new Error("Imagem muito grande. Máximo: 8 MB.");
   }
 
-  const form = new FormData();
-  form.append("file", file);
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData.session?.user.id;
+  if (!userId) throw new Error("Sua sessão expirou. Entre novamente e tente o upload.");
 
-  const { data, error } = await supabase.functions.invoke("blog-image-upload", { body: form });
-  if (error) {
-    if (error instanceof FunctionsHttpError) {
-      const payload = await error.context.json().catch(() => null) as { error?: string } | null;
-      throw new Error(payload?.error || `Falha ao enviar a imagem (HTTP ${error.context.status}).`);
-    }
-    throw new Error(error.message || "Falha ao enviar a imagem.");
+  const extension = (file.name.split(".").pop() || "png").toLowerCase();
+  const baseName = sanitizeFileName(file.name.replace(/\.[^.]+$/, "") || "imagem");
+  const path = `${userId}/${new Date().getFullYear()}/${Date.now()}-${baseName}.${extension}`;
+
+  const { error: uploadError } = await supabase.storage.from(BLOG_BUCKET).upload(path, file, {
+    contentType: file.type,
+    cacheControl: "31536000",
+    upsert: false,
+  });
+  if (uploadError) {
+    throw new Error(`Falha ao enviar a imagem: ${uploadError.message}`);
   }
-  if (!data?.url) throw new Error(data?.error || "O upload não retornou a URL da imagem.");
-  return data.url as string;
+
+  const { data: signed, error: signedError } = await supabase.storage
+    .from(BLOG_BUCKET)
+    .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+
+  if (signedError || !signed?.signedUrl) {
+    await supabase.storage.from(BLOG_BUCKET).remove([path]);
+    throw new Error(`Imagem enviada, mas a URL não pôde ser gerada: ${signedError?.message || "erro interno"}`);
+  }
+
+  return signed.signedUrl;
 }
