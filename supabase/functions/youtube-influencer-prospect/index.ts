@@ -801,7 +801,7 @@ Escreva em português.`,
       };
 
       // Processa canais em paralelo (concorrência limitada) para evitar timeout de 150s
-      const CONCURRENCY = 6;
+      const CONCURRENCY = 10;
       const queue = [...filtered];
       await Promise.all(
         Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
