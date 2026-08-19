@@ -50,10 +50,6 @@ async function logAiUsage(p: {
 }
 // ---- fim registro de custo de IA ----
 
-const BLOG_SUPABASE_URL = "https://lqfqnqfeuneorxocybru.supabase.co";
-const BLOG_SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxZnFucWZldW5lb3J4b2N5YnJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxMTMyMjQsImV4cCI6MjA4NDY4OTIyNH0.ccxmuoqz-hlanRfqdvQZXN5tdt5d_8j5F6DVCjZAeB8";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -65,12 +61,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // O admin do blog é autenticado no projeto EXTERNO do blog, não na Lovable Cloud.
+    // O admin do blog usa a mesma autenticação da aplicação.
     const authHeader = req.headers.get("Authorization");
     const token = (authHeader || "").replace("Bearer ", "").trim();
     if (!token) return json({ error: "unauthorized" }, 401);
 
-    const blog = createClient(BLOG_SUPABASE_URL, BLOG_SUPABASE_ANON_KEY, {
+    const url = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!url || !anonKey) return json({ error: "backend_not_configured" }, 500);
+    const blog = createClient(url, anonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
       auth: { persistSession: false, autoRefreshToken: false },
     });

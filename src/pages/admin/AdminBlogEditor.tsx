@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { blogSupabase } from "@/integrations/blog/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,29 +85,10 @@ export default function AdminBlogEditor() {
     if (!form.content) return toast.error("Adicione conteúdo antes de gerar");
     setGeoLoading(true);
     try {
-      const { data: sess } = await blogSupabase.auth.getSession();
-      const token = sess.session?.access_token;
-      if (!token) throw new Error("Sessão de admin do blog expirada. Faça login novamente.");
-
-      const res = await fetch(
-        `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/generate-blog-geo`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: form.title,
-            subtitle: form.subtitle,
-            excerpt: form.excerpt,
-            content: form.content,
-          }),
-        },
-      );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || (data as any)?.error) throw new Error((data as any)?.error || `HTTP ${res.status}`);
+      const { data, error } = await blogSupabase.functions.invoke("generate-blog-geo", {
+        body: { title: form.title, subtitle: form.subtitle, excerpt: form.excerpt, content: form.content },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message || "Falha na geração");
 
       setForm((f) => ({
         ...f,
@@ -137,7 +117,8 @@ export default function AdminBlogEditor() {
   useEffect(() => {
     if (isNew) return;
     (async () => {
-      const { data, error } = await blogSupabase.from("blog_posts").select("*").eq("id", id!).single();
+      if (!id) return;
+      const { data, error } = await blogSupabase.from("blog_posts").select("*").eq("id", id).single();
       if (error || !data) {
         toast.error("Post não encontrado");
         navigate("/admin/blog");
@@ -240,7 +221,11 @@ export default function AdminBlogEditor() {
       toast.success(publishNow ? "Post publicado!" : "Post criado");
       navigate(`/admin/blog/${data.id}`);
     } else {
-      const { error } = await blogSupabase.from("blog_posts").update(payload).eq("id", id!);
+      if (!id) {
+        setSaving(false);
+        return toast.error("Identificador do post ausente.");
+      }
+      const { error } = await blogSupabase.from("blog_posts").update(payload).eq("id", id);
       setSaving(false);
       if (error) {
         console.error("[BlogEditor] update failed", error, payload);
