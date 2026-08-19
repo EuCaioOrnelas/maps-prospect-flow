@@ -17,8 +17,9 @@ export async function uploadBlogImage(file: File): Promise<string> {
     throw new Error("Imagem muito grande. Máximo: 8 MB.");
   }
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  const session = sessionData.session;
+  if (sessionError || !session?.user || !session.access_token) {
     throw new Error("Sua sessão expirou. Entre novamente e tente o upload.");
   }
 
@@ -29,25 +30,32 @@ export async function uploadBlogImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", uploadFile);
 
-  const { data, error } = await supabase.functions.invoke("blog-image-upload", {
+  const backendUrl = import.meta.env.VITE_SUPABASE_URL;
+  const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!backendUrl || !publishableKey) {
+    throw new Error("Falha ao enviar a imagem: armazenamento não configurado.");
+  }
+
+  const response = await fetch(`${backendUrl}/functions/v1/blog-image-upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: publishableKey,
+    },
     body: formData,
   });
 
-  if (error) {
-    let detail = error.message;
-    const response = (error as { context?: Response }).context;
-    if (response) {
-      try {
-        const payload = await response.clone().json() as { error?: string };
-        if (payload.error) detail = payload.error;
-      } catch {
-        // Mantém a mensagem original quando a resposta não for JSON.
-      }
-    }
-    throw new Error(`Falha ao enviar a imagem: ${detail}`);
+  let data: { url?: string; error?: string } = {};
+  try {
+    data = await response.json();
+  } catch {
+    // A mensagem de status abaixo cobre respostas vazias ou inválidas.
+  }
+  if (!response.ok) {
+    throw new Error(`Falha ao enviar a imagem: ${data.error || `erro ${response.status}`}`);
   }
 
-  const url = typeof data?.url === "string" ? data.url : "";
+  const url = typeof data.url === "string" ? data.url : "";
   if (!url) throw new Error("Falha ao enviar a imagem: o servidor não retornou a URL.");
   return url;
 }
