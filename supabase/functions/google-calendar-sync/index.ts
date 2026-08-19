@@ -125,8 +125,15 @@ serve(async (req) => {
         .maybeSingle();
       if (!token) return json({ error: "Conta Google não encontrada." }, 404);
 
+      const { data: prof } = await admin
+        .from("profiles")
+        .select("parent_owner_id")
+        .eq("id", user.id)
+        .maybeSingle();
+
       const row = {
         user_id: user.id,
+        owner_user_id: prof?.parent_owner_id || user.id,
         google_token_id: token.id,
         google_email: token.google_email,
         calendar_id: s.calendar_id || "primary",
