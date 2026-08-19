@@ -1,35 +1,70 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { blogSupabase } from "@/integrations/blog/client";
 import { Loader2 } from "lucide-react";
 
 type State = "checking" | "allowed" | "denied";
 
+// Evita que qualquer chamada pendurada (rede/lock) deixe a tela girando pra sempre.
+function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T | null> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), ms);
+    Promise.resolve(promise)
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        resolve(null);
+      });
+  });
+}
+
 export default function BlogAdminGuard() {
   const [state, setState] = useState<State>("checking");
   const location = useLocation();
+  const runningRef = useRef(false);
 
   useEffect(() => {
     let active = true;
+
     async function check() {
-      const { data: sessionData } = await blogSupabase.auth.getSession();
-      const user = sessionData.session?.user;
-      if (!user) {
-        if (active) setState("denied");
-        return;
+      if (runningRef.current) return;
+      runningRef.current = true;
+      try {
+        const sessionRes = await withTimeout(blogSupabase.auth.getSession(), 8000);
+        const user = sessionRes?.data?.session?.user;
+        if (!active) return;
+        if (!user) {
+          setState("denied");
+          return;
+        }
+        const roleRes = await withTimeout(
+          blogSupabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("role", "admin")
+            .maybeSingle(),
+          8000,
+        );
+        if (!active) return;
+        setState(roleRes?.data ? "allowed" : "denied");
+      } finally {
+        runningRef.current = false;
       }
-      const { data: role } = await blogSupabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      if (!active) return;
-      setState(role ? "allowed" : "denied");
     }
+
     check();
 
-    const { data: sub } = blogSupabase.auth.onAuthStateChange(() => check());
+    const { data: sub } = blogSupabase.auth.onAuthStateChange(() => {
+      // não bloqueia o callback do supabase-js
+      setTimeout(() => {
+        if (active) check();
+      }, 0);
+    });
+
     return () => {
       active = false;
       sub.subscription.unsubscribe();
