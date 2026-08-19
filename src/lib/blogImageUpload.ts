@@ -1,7 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const BLOG_BUCKET = "blog-images";
-
 const sanitizeFileName = (name: string) =>
   name
     .toLowerCase()
@@ -19,31 +17,45 @@ export async function uploadBlogImage(file: File): Promise<string> {
     throw new Error("Imagem muito grande. Máximo: 8 MB.");
   }
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  const userId = sessionData.session?.user.id;
-  if (!userId) throw new Error("Sua sessão expirou. Entre novamente e tente o upload.");
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  const session = sessionData.session;
+  if (sessionError || !session?.user || !session.access_token) {
+    throw new Error("Sua sessão expirou. Entre novamente e tente o upload.");
+  }
 
-  const extension = (file.name.split(".").pop() || "png").toLowerCase();
-  const baseName = sanitizeFileName(file.name.replace(/\.[^.]+$/, "") || "imagem");
-  const path = `${userId}/${new Date().getFullYear()}/${Date.now()}-${baseName}.${extension}`;
+  const safeName = sanitizeFileName(file.name) || "imagem.png";
+  const uploadFile = safeName === file.name
+    ? file
+    : new File([file], safeName, { type: file.type, lastModified: file.lastModified });
+  const formData = new FormData();
+  formData.append("file", uploadFile);
 
-  const { error: uploadError } = await supabase.storage.from(BLOG_BUCKET).upload(path, file, {
-    contentType: file.type,
-    cacheControl: "31536000",
-    upsert: false,
+  const backendUrl = import.meta.env.VITE_SUPABASE_URL;
+  const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!backendUrl || !publishableKey) {
+    throw new Error("Falha ao enviar a imagem: armazenamento não configurado.");
+  }
+
+  const response = await fetch(`${backendUrl}/functions/v1/blog-image-upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: publishableKey,
+    },
+    body: formData,
   });
-  if (uploadError) {
-    throw new Error(`Falha ao enviar a imagem: ${uploadError.message}`);
+
+  let data: { url?: string; error?: string } = {};
+  try {
+    data = await response.json();
+  } catch {
+    // A mensagem de status abaixo cobre respostas vazias ou inválidas.
+  }
+  if (!response.ok) {
+    throw new Error(`Falha ao enviar a imagem: ${data.error || `erro ${response.status}`}`);
   }
 
-  const { data: signed, error: signedError } = await supabase.storage
-    .from(BLOG_BUCKET)
-    .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
-
-  if (signedError || !signed?.signedUrl) {
-    await supabase.storage.from(BLOG_BUCKET).remove([path]);
-    throw new Error(`Imagem enviada, mas a URL não pôde ser gerada: ${signedError?.message || "erro interno"}`);
-  }
-
-  return signed.signedUrl;
+  const url = typeof data.url === "string" ? data.url : "";
+  if (!url) throw new Error("Falha ao enviar a imagem: o servidor não retornou a URL.");
+  return url;
 }
