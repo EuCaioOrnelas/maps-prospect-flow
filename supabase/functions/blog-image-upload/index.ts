@@ -16,32 +16,41 @@ function json(obj: unknown, status = 200) {
   });
 }
 
+function admin() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+}
+
 async function requireBlogAdmin(req: Request): Promise<{ ok: boolean; userId?: string; status?: number }> {
   const auth = req.headers.get("Authorization") || "";
-  const token = auth.replace("Bearer ", "").trim();
+  const token = auth.replace(/^Bearer\s+/i, "").trim();
   if (!token) return { ok: false, status: 401 };
 
-  const url = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!url || !anonKey) return { ok: false, status: 500 };
-  const blog = createClient(url, anonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const supa = admin();
+  const { data: userData, error: userErr } = await supa.auth.getUser(token);
+  if (userErr || !userData?.user) {
+    console.error("[blog-image-upload] invalid token", userErr?.message);
+    return { ok: false, status: 401 };
+  }
 
-  const { data: userData } = await blog.auth.getUser(token);
-  if (!userData?.user) return { ok: false, status: 401 };
-
-  const { data: role } = await blog
+  const { data: role, error: roleErr } = await supa
     .from("user_roles")
     .select("role")
     .eq("user_id", userData.user.id)
     .eq("role", "admin")
     .maybeSingle();
 
+  if (roleErr) {
+    console.error("[blog-image-upload] role lookup failed", roleErr.message);
+    return { ok: false, status: 500 };
+  }
   if (!role) return { ok: false, status: 403 };
   return { ok: true, userId: userData.user.id };
 }
+
 
 const sanitize = (name: string) =>
   name
