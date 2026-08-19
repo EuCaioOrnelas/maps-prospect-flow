@@ -1647,6 +1647,66 @@ export type Database = {
           },
         ]
       }
+      calendar_google_sync: {
+        Row: {
+          calendar_id: string
+          calendar_name: string | null
+          created_at: string
+          default_event_type: string
+          google_email: string | null
+          google_token_id: string | null
+          id: string
+          last_sync_at: string | null
+          last_sync_error: string | null
+          last_sync_status: string | null
+          owner_user_id: string | null
+          pull_enabled: boolean
+          push_enabled: boolean
+          sync_enabled: boolean
+          sync_window_days: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calendar_id?: string
+          calendar_name?: string | null
+          created_at?: string
+          default_event_type?: string
+          google_email?: string | null
+          google_token_id?: string | null
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_status?: string | null
+          owner_user_id?: string | null
+          pull_enabled?: boolean
+          push_enabled?: boolean
+          sync_enabled?: boolean
+          sync_window_days?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calendar_id?: string
+          calendar_name?: string | null
+          created_at?: string
+          default_event_type?: string
+          google_email?: string | null
+          google_token_id?: string | null
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_status?: string | null
+          owner_user_id?: string | null
+          pull_enabled?: boolean
+          push_enabled?: boolean
+          sync_enabled?: boolean
+          sync_window_days?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       campaign_daily_reservations: {
         Row: {
           campaign_id: string
