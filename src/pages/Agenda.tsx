@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -36,6 +36,7 @@ import { EventDialog } from "@/components/agenda/EventDialog";
 import { QuickEditDialog } from "@/components/agenda/QuickEditDialog";
 
 import { EventDetailsDialog } from "@/components/agenda/EventDetailsDialog";
+import { GoogleCalendarSyncDialog } from "@/components/agenda/GoogleCalendarSyncDialog";
 import { DayView } from "@/components/agenda/views/DayView";
 import { WeekView } from "@/components/agenda/views/WeekView";
 import { MonthView } from "@/components/agenda/views/MonthView";
@@ -53,6 +54,8 @@ import {
   formatMonth,
 } from "@/lib/calendarViews";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import googleCalendarIcon from "@/assets/icons/google-calendar-sm.png";
 
 type ViewMode = "day" | "week" | "month" | "list";
 
@@ -80,6 +83,8 @@ export default function Agenda() {
   const [quickEvent, setQuickEvent] = useState<CalendarEvent | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsEvent, setDetailsEvent] = useState<CalendarEvent | null>(null);
+  const [googleOpen, setGoogleOpen] = useState(false);
+  const [googleSync, setGoogleSync] = useState<{ sync_enabled: boolean; last_sync_at: string | null; google_email: string | null } | null>(null);
 
 
   const range = useMemo(() => {
@@ -98,6 +103,7 @@ export default function Agenda() {
   const {
     events,
     loading,
+    refetch,
     canSeeEveryone,
     createEvent,
     updateEvent,
@@ -120,6 +126,41 @@ export default function Agenda() {
   }, [events, typeFilter, search]);
 
   useEventReminders(events, members);
+
+  /** Estado da conexão com o Google Agenda (linha própria protegida por RLS). */
+  const loadGoogleSync = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("calendar_google_sync" as never)
+      .select("sync_enabled, last_sync_at, google_email")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setGoogleSync((data as never) ?? null);
+    return data as never;
+  }, [user]);
+
+  useEffect(() => {
+    void loadGoogleSync();
+  }, [loadGoogleSync]);
+
+  // Sincroniza em segundo plano quando a última troca com o Google passou de 10 minutos.
+  useEffect(() => {
+    if (!googleSync?.sync_enabled) return;
+    const last = googleSync.last_sync_at ? new Date(googleSync.last_sync_at).getTime() : 0;
+    if (Date.now() - last < 10 * 60 * 1000) return;
+    let cancelled = false;
+    supabase.functions
+      .invoke("google-calendar-sync", { body: { action: "sync" } })
+      .then(() => {
+        if (cancelled) return;
+        void loadGoogleSync();
+        void refetch();
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [googleSync?.sync_enabled, googleSync?.last_sync_at, loadGoogleSync, refetch]);
 
   const responsibleName = (userId: string) => {
     const member = members.find((m) => m.user_id === userId);
@@ -270,7 +311,24 @@ export default function Agenda() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                className="flex-1 sm:flex-none rounded-xl"
+                onClick={() => setGoogleOpen(true)}
+              >
+                <img
+                  src={googleCalendarIcon}
+                  alt=""
+                  width={16}
+                  height={16}
+                  className="h-4 w-4 mr-2 object-contain"
+                />
+                {googleSync ? "Google conectado" : "Conexão Google"}
+                {googleSync?.sync_enabled && (
+                  <span className="ml-2 h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                )}
+              </Button>
               <Button
                 variant="outline"
                 className="flex-1 sm:flex-none rounded-xl"
@@ -458,6 +516,15 @@ export default function Agenda() {
         saving={updateEvent.isPending}
         onSave={handleQuickSave}
         onOpenFull={openEdit}
+      />
+
+      <GoogleCalendarSyncDialog
+        open={googleOpen}
+        onOpenChange={setGoogleOpen}
+        onSynced={() => {
+          void loadGoogleSync();
+          void refetch();
+        }}
       />
 
       <EventDetailsDialog
