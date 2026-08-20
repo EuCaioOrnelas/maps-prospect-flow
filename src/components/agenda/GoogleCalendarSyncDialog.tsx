@@ -287,14 +287,20 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
       res.updated || 0
     } atualizados${res.skipped ? ` · ${res.skipped} ignorados por conflito` : ""}`;
 
-  const handleSync = async () => {
-    if (!tokenId) {
+  const handleSync = async (tokenIdOverride?: string) => {
+    const activeToken = tokenIdOverride || tokenId;
+    if (!activeToken) {
       toast.error("Conecte uma conta Google primeiro.");
       return;
     }
     setSyncing(true);
     startProgress();
-    const promise = runSync();
+    const promise = tokenIdOverride
+      ? call({
+          action: "save",
+          settings: { ...buildSettings(), google_token_id: tokenIdOverride },
+        }).then(() => call({ action: "sync" }))
+      : runSync();
     syncPromise.current = promise;
     try {
       const res = await promise;
@@ -313,6 +319,10 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
       }
     }
   };
+
+  // Permite disparar a sincronização logo após o OAuth, sem depender de estado já renderizado.
+  autoSyncRef.current = handleSync;
+
 
   /** Continua a sincronização já em andamento fora do modal. */
   const moveToBackground = () => {
