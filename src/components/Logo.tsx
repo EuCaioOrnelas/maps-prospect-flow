@@ -52,13 +52,14 @@ export const Logo = ({
           <img
             src={logoWordmark}
             alt="Wiize"
-            className={`${wordmarkHeight} w-auto object-contain dark:hidden`}
+            className={`${wordmarkHeight} w-auto object-contain logo-wordmark-dark`}
           />
           <img
             src={logoWordmarkWhite}
             alt="Wiize"
-            className={`${wordmarkHeight} w-auto object-contain hidden dark:block`}
+            className={`${wordmarkHeight} w-auto object-contain logo-wordmark-white`}
           />
+
         </span>
       )}
     </div>
