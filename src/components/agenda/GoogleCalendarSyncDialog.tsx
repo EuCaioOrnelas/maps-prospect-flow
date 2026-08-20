@@ -570,7 +570,8 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
                     className="w-full text-destructive hover:text-destructive"
                   >
                     <Unlink className="mr-2 h-4 w-4" />
-                    Desativar sincronização
+                    Desincronizar e excluir importados
+
                   </Button>
                 )}
               </>
