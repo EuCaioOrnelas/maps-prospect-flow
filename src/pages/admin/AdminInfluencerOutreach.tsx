@@ -482,7 +482,7 @@ export default function AdminInfluencerOutreach() {
               <Plus className="mr-2" size={14} /> Novo modelo
             </Button>
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             {templates.length === 0 && (
               <Card><CardContent className="p-6 text-sm text-muted-foreground">
                 Nenhum modelo salvo. Crie modelos reutilizáveis com variáveis dinâmicas.
