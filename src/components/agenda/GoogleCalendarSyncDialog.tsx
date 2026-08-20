@@ -58,10 +58,12 @@ interface Props {
 }
 
 const STEPS = [
-  "Conecte (ou reconecte) a conta Google que você usa no dia a dia.",
-  "Escolha a agenda de destino e o que deve ser sincronizado.",
-  "Salve a configuração e sincronize — depois disso roda sozinho.",
+  "Clique em “Conectar conta Google” e escolha a conta que você usa no dia a dia.",
+  "Na tela do Google, marque TODAS as caixinhas de permissão — principalmente “Ver, editar, compartilhar e excluir definitivamente todas as agendas”. Sem elas a sincronização não funciona.",
+  "Escolha a agenda de destino, ligue os sentidos desejados e clique em “Salvar configuração”.",
+  "Clique em “Sincronizar agora”. Agendas grandes podem levar alguns minutos — você pode deixar rodando em segundo plano.",
 ];
+
 
 export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props) {
   const [loading, setLoading] = useState(false);
@@ -81,6 +83,8 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
   const [windowDays, setWindowDays] = useState("60");
 
   const progressTimer = useRef<number | null>(null);
+  const syncPromise = useRef<Promise<any> | null>(null);
+
 
   const call = useCallback(async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("google-calendar-sync", { body });
@@ -250,17 +254,42 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
   const handleSync = async () => {
     setSyncing(true);
     startProgress();
+    const promise = runSync();
+    syncPromise.current = promise;
     try {
-      const res = await runSync();
+      const res = await promise;
+      if (syncPromise.current !== promise) return; // já foi para segundo plano
       toast.success(describe(res));
       onSynced?.();
       await loadStatus();
     } catch (err) {
+      if (syncPromise.current !== promise) return;
       toast.error(err instanceof Error ? err.message : "Falha ao sincronizar.");
     } finally {
-      stopProgress();
-      setSyncing(false);
+      if (syncPromise.current === promise) {
+        syncPromise.current = null;
+        stopProgress();
+        setSyncing(false);
+      }
     }
+  };
+
+  /** Continua a sincronização já em andamento fora do modal. */
+  const moveToBackground = () => {
+    const promise = syncPromise.current;
+    syncPromise.current = null;
+    stopProgress();
+    setSyncing(false);
+    onOpenChange(false);
+    toast.info("Sincronização continua em segundo plano. Avisamos quando terminar.");
+    void promise
+      ?.then((res) => {
+        toast.success(describe(res));
+        onSynced?.();
+      })
+      .catch((err) =>
+        toast.error(err instanceof Error ? err.message : "Falha ao sincronizar em segundo plano."),
+      );
   };
 
   const handleBackgroundSync = () => {
@@ -277,10 +306,17 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
   };
 
   const handleDisconnect = async () => {
+    const ok = window.confirm(
+      "Desincronizar? Todos os compromissos importados do Google serão removidos da Agenda Wiize e os vínculos serão apagados. Seus compromissos criados na Wiize permanecem.",
+    );
+    if (!ok) return;
     setSaving(true);
     try {
-      await call({ action: "disconnect" });
-      toast.success("Sincronização desativada.");
+      const res = await call({ action: "disconnect" });
+      toast.success(
+        `Sincronização removida.${res?.removed ? ` ${res.removed} compromisso(s) importado(s) excluído(s).` : ""}`,
+      );
+      onSynced?.();
       await loadStatus();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível desconectar.");
@@ -288,6 +324,7 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
       setSaving(false);
     }
   };
+
 
   const account = accounts.find((a) => a.id === tokenId);
   const needsScope = !!account && !account.has_calendar_scope;
@@ -327,6 +364,12 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
                 </li>
               ))}
             </ol>
+
+            <p className="rounded-xl border border-border bg-background px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+              A conexão é individual: cada usuário da conta (dono e sub-usuários) conecta o próprio
+              Google e vê apenas os compromissos da sua agenda.
+            </p>
+
 
             {/* Estado da conexão + botão principal */}
             <div className="space-y-3 rounded-xl border border-border p-4">
@@ -457,24 +500,41 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
                 </div>
 
                 {settings?.last_sync_at && (
-                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <CheckCircle2
-                      className={cn(
-                        "h-3.5 w-3.5",
-                        settings.last_sync_status === "ok" ? "text-emerald-500" : "text-amber-500",
-                      )}
-                    />
-                    Última sincronização: {new Date(settings.last_sync_at).toLocaleString("pt-BR")}
-                    {settings.last_sync_error ? ` — ${settings.last_sync_error}` : ""}
-                  </p>
+                  <div className="rounded-xl border border-border bg-muted/30 p-3">
+                    <p className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                      <CheckCircle2
+                        className={cn(
+                          "h-3.5 w-3.5",
+                          settings.last_sync_status === "ok" ? "text-emerald-500" : "text-amber-500",
+                        )}
+                      />
+                      Última sincronização: {new Date(settings.last_sync_at).toLocaleString("pt-BR")}
+                    </p>
+                    {settings.last_sync_error && (
+                      <p className="mt-1 line-clamp-3 text-[11px] leading-relaxed text-amber-600">
+                        {settings.last_sync_error}
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {(syncing || progress > 0) && (
-                  <div className="space-y-1.5">
+                  <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3">
                     <Progress value={progress} className="h-2" />
                     <p className="text-[11px] text-muted-foreground">
-                      Sincronizando compromissos com o Google…
+                      Sincronizando compromissos com o Google… agendas grandes podem levar alguns
+                      minutos. Não feche esta janela ou continue em segundo plano.
                     </p>
+                    {syncing && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={moveToBackground}
+                        className="w-full rounded-lg text-xs"
+                      >
+                        Continuar em segundo plano
+                      </Button>
+                    )}
                   </div>
                 )}
 
@@ -507,6 +567,7 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
                   Sincronizar em segundo plano e fechar
                 </Button>
 
+
                 {settings && (
                   <Button
                     variant="ghost"
@@ -515,7 +576,8 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
                     className="w-full text-destructive hover:text-destructive"
                   >
                     <Unlink className="mr-2 h-4 w-4" />
-                    Desativar sincronização
+                    Desincronizar e excluir importados
+
                   </Button>
                 )}
               </>
