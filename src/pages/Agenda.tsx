@@ -143,6 +143,26 @@ export default function Agenda() {
     void loadGoogleSync();
   }, [loadGoogleSync]);
 
+  // Realtime: conectar/desconectar o Google atualiza o estado da agenda na hora.
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`calendar-google-sync-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "calendar_google_sync", filter: `user_id=eq.${user.id}` },
+        () => {
+          void loadGoogleSync();
+          void refetch();
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [user, loadGoogleSync, refetch]);
+
+
   // Sincroniza em segundo plano quando a última troca com o Google passou de 10 minutos.
   useEffect(() => {
     if (!googleSync?.sync_enabled) return;
