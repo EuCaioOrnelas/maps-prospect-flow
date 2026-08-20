@@ -22,6 +22,7 @@ export type CalendarEventType =
   | "call"
   | "followup"
   | "visit"
+  | "google"
   | "other";
 
 export type CalendarEventStatus =
