@@ -10523,6 +10523,7 @@ export type Database = {
         | "followup"
         | "visit"
         | "other"
+        | "google"
       commission_status:
         | "pending"
         | "review"
@@ -10712,6 +10713,7 @@ export const Constants = {
         "followup",
         "visit",
         "other",
+        "google",
       ],
       commission_status: [
         "pending",

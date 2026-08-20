@@ -10,13 +10,13 @@ serve(async (req) => {
 
     if (error) {
       return new Response(renderHTML("Erro", `Autorização negada: ${error}`), {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
 
     if (!code || !stateParam) {
       return new Response(renderHTML("Erro", "Parâmetros inválidos"), {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
 
@@ -25,7 +25,7 @@ serve(async (req) => {
 
     if (!userId) {
       return new Response(renderHTML("Erro", "Usuário não identificado"), {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
 
@@ -53,7 +53,7 @@ serve(async (req) => {
     if (!tokenRes.ok || !tokenData.access_token) {
       console.error("Token exchange failed:", tokenData);
       return new Response(renderHTML("Erro", "Falha ao obter tokens do Google"), {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
 
@@ -83,7 +83,7 @@ serve(async (req) => {
     if (upsertError) {
       console.error("Failed to save tokens:", upsertError);
       return new Response(renderHTML("Erro", "Falha ao salvar credenciais"), {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
 
@@ -104,29 +104,45 @@ serve(async (req) => {
     }
 
     return new Response(renderHTML("Sucesso! ✅", `Conta Google (${userInfo.email || ""}) conectada com sucesso. Você pode fechar esta janela.`), {
-      headers: { "Content-Type": "text/html" },
+      headers: { "Content-Type": "text/html; charset=utf-8" },
     });
   } catch (err) {
     console.error("Error in google-oauth-callback:", err);
     return new Response(renderHTML("Erro", err.message), {
-      headers: { "Content-Type": "text/html" },
+      headers: { "Content-Type": "text/html; charset=utf-8" },
     });
   }
 });
 
 function renderHTML(title: string, message: string): string {
+  const ok = !title.toLowerCase().startsWith("erro");
   return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>${title}</title>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title}</title>
 <style>
-  body { font-family: system-ui; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #0a0a0a; color: #fff; }
-  .card { text-align: center; padding: 40px; border-radius: 16px; background: #1a1a1a; border: 1px solid #333; max-width: 400px; }
-  h1 { margin-bottom: 12px; }
-  p { color: #aaa; }
-  .close-btn { margin-top: 20px; padding: 10px 24px; background: #7c3aed; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f7f6; color: #0f1712; padding: 24px; }
+  .card { text-align: center; padding: 40px 32px; border-radius: 20px; background: #fff; border: 1px solid #e5e9e7; box-shadow: 0 12px 40px rgba(15,23,18,.08); max-width: 420px; width: 100%; }
+  .badge { width: 56px; height: 56px; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; font-size: 26px; background: ${ok ? "#e8f7ef" : "#fdecec"}; }
+  h1 { margin: 0 0 10px; font-size: 20px; font-weight: 700; }
+  p { color: #5c6b63; font-size: 14px; line-height: 1.55; margin: 0; }
+  .close-btn { margin-top: 24px; padding: 12px 26px; background: #0f1712; color: #fff; border: none; border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 600; width: 100%; }
 </style></head>
 <body><div class="card">
+  <div class="badge">${ok ? "✓" : "!"}</div>
   <h1>${title}</h1>
   <p>${message}</p>
   <button class="close-btn" onclick="window.close()">Fechar janela</button>
-</div></body></html>`;
+</div>
+<script>
+  try {
+    if (window.opener) {
+      window.opener.postMessage({ source: "wiize-google-oauth", ok: ${ok} }, "*");
+      if (${ok}) setTimeout(function () { window.close(); }, 1200);
+    }
+  } catch (e) {}
+</script>
+</body></html>`;
 }

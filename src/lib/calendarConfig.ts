@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  CalendarClock,
   Presentation,
   Phone,
   RotateCcw,
@@ -22,6 +23,7 @@ export type CalendarEventType =
   | "call"
   | "followup"
   | "visit"
+  | "google"
   | "other";
 
 export type CalendarEventStatus =
@@ -117,6 +119,14 @@ export const EVENT_TYPES: TypeMeta[] = [
     dot: "bg-rose-500",
     chip: "bg-rose-500/10 text-rose-600 dark:text-rose-300 border-rose-500/20",
     bar: "border-l-rose-500 bg-rose-500/5",
+  },
+  {
+    value: "google",
+    label: "Google Agenda",
+    icon: CalendarClock,
+    dot: "bg-teal-500",
+    chip: "bg-teal-500/10 text-teal-600 dark:text-teal-300 border-teal-500/20",
+    bar: "border-l-teal-500 bg-teal-500/5",
   },
   {
     value: "other",
