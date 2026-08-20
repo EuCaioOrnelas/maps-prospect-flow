@@ -27,10 +27,15 @@ const applyDashboardTheme = (theme: ResolvedTheme) => {
   const themeTargets = [document.documentElement, document.body];
 
   themeTargets.forEach((target) => {
+    if (!target) return;
     target.classList.toggle("landing-light", useLightTheme);
+    target.classList.toggle("dark", !useLightTheme);
     target.style.colorScheme = useLightTheme ? "light" : "dark";
+    // Limpa o background inline aplicado pelo bootstrap do index.html
+    target.style.backgroundColor = "";
   });
 };
+
 
 export const DashboardThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setThemeState] = useState<Theme>(() => {

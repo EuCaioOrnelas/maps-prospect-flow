@@ -55,22 +55,36 @@
     <script>
       (function(){
         try {
+          var doc = document.documentElement;
           var path = window.location.pathname || '';
           // Public/light routes always render in light mode to avoid dark flash
           var lightRoutes = ['/', '/login', '/signup', '/onboarding', '/checkout', '/checkout-card', '/vendas', '/trial-expired', '/upgrade', '/consultoria'];
           var isLightRoute = lightRoutes.some(function(r){
             return r === '/' ? path === '/' : path.indexOf(r) === 0;
           });
-          if (isLightRoute) {
-            document.documentElement.classList.remove('dark');
-            document.documentElement.style.backgroundColor = '#f7f5ef';
-            document.body && (document.body.style.backgroundColor = '#f7f5ef');
-            return;
+
+          // Default is ALWAYS light. Dark only when the user explicitly saved it.
+          var saved = null;
+          try { saved = localStorage.getItem('dashboard-theme'); } catch (e) {}
+          var isDark = !isLightRoute && saved === 'dark';
+
+          doc.classList.remove('dark');
+          if (isDark) {
+            doc.classList.add('dark');
+            doc.classList.remove('landing-light');
+            doc.style.colorScheme = 'dark';
+          } else {
+            doc.classList.add('landing-light');
+            doc.style.colorScheme = 'light';
+            doc.style.backgroundColor = '#ffffff';
           }
-          var t = localStorage.getItem('theme') || localStorage.getItem('vite-ui-theme');
-          if (t === 'dark') document.documentElement.classList.add('dark');
-          else if (t === 'light') document.documentElement.classList.remove('dark');
-          else if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+
+          document.addEventListener('DOMContentLoaded', function(){
+            if (!document.body) return;
+            document.body.classList.toggle('landing-light', !isDark);
+            document.body.style.colorScheme = isDark ? 'dark' : 'light';
+            if (!isDark) document.body.style.backgroundColor = '#ffffff';
+          });
         } catch(e){}
       })();
     </script>
