@@ -428,6 +428,9 @@ serve(async (req) => {
               const startsAt = item.start?.dateTime || `${item.start.date}T00:00:00-03:00`;
               const endsAt = item.end?.dateTime || `${item.end.date}T23:59:00-03:00`;
 
+              // Compromissos que já passaram entram como concluídos (histórico).
+              const isPast = new Date(endsAt).getTime() < Date.now();
+
               const base = {
                 title: item.summary || "(sem título)",
                 description: item.description || null,
@@ -440,15 +443,17 @@ serve(async (req) => {
 
               const existingId = existingMap.get(item.id);
               if (existingId) {
+                const patch: any = { ...base, event_type: googleType, reminders: isPast ? [] : importedReminders };
+                if (isPast) patch.status = "completed";
                 const { error } = await admin
                   .from("calendar_events")
-                  .update({ ...base, event_type: googleType, reminders: importedReminders })
+                  .update(patch)
                   .eq("id", existingId);
                 if (error && isEnumError(error.message)) {
                   googleType = "other";
                   await admin
                     .from("calendar_events")
-                    .update({ ...base, event_type: googleType, reminders: importedReminders })
+                    .update({ ...patch, event_type: googleType })
                     .eq("id", existingId);
                 }
                 continue;
@@ -460,7 +465,8 @@ serve(async (req) => {
                 assigned_user_id: user.id,
                 created_by: user.id,
                 event_type: googleType,
-                status: "scheduled",
+                status: isPast ? "completed" : "scheduled",
+
                 source: "import",
                 timezone: TZ,
                 reminders: importedReminders,
