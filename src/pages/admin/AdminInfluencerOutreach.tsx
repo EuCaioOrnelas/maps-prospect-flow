@@ -29,6 +29,19 @@ import {
 
 const PAGE = 25;
 
+/** Apenas leads qualificados (salvos na prospecção) entram na esteira de abordagem. */
+const QUALIFIED_STATUSES = [
+  "qualificado",
+  "contatos_identificados",
+  "pronto_abordagem",
+  "sem_contato",
+  "email_enviado",
+  "respondeu",
+  "negociacao",
+  "parceria_ativa",
+];
+
+
 export default function AdminInfluencerOutreach() {
   const { toast } = useToast();
   const [tab, setTab] = useState("abordagens");
