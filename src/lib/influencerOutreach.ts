@@ -47,7 +47,29 @@ export const SOURCE_LABELS: Record<string, string> = {
   manual: "Cadastro manual",
 };
 
-export const sourceLabel = (v: string) => SOURCE_LABELS[v] ?? v;
+/** `sources` é gravado como [{source, discovered_at}]; aceita também strings legadas. */
+export const sourceLabel = (v: any) => {
+  const key = typeof v === "string" ? v : String(v?.source ?? "");
+  return SOURCE_LABELS[key] ?? (key || "Origem não informada");
+};
+
+/** Status do influenciador na esteira de abordagem (coluna influencer_prospects.status). */
+export const PROSPECT_OUTREACH_STATUSES = [
+  { value: "novo", label: "Novo" },
+  { value: "qualificado", label: "Qualificado" },
+  { value: "contatos_identificados", label: "Contatos identificados" },
+  { value: "pronto_abordagem", label: "Pronto para abordagem" },
+  { value: "sem_contato", label: "Sem contato" },
+  { value: "email_enviado", label: "E-mail enviado" },
+  { value: "respondeu", label: "Respondeu" },
+  { value: "negociacao", label: "Negociação" },
+  { value: "parceria_ativa", label: "Parceria ativa" },
+  { value: "sem_interesse", label: "Sem interesse" },
+  { value: "descartado", label: "Descartado" },
+];
+
+export const prospectOutreachLabel = (v?: string | null) =>
+  PROSPECT_OUTREACH_STATUSES.find((s) => s.value === v)?.label ?? (v || "Novo");
 
 /** Situação de cada envio individual (espelha influencer_campaign_recipients.status). */
 export const SEND_STATUSES = [
