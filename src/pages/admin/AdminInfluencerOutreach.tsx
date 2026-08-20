@@ -233,19 +233,65 @@ export default function AdminInfluencerOutreach() {
   const allVisibleSelected = filtered.length > 0 && filtered.every((p) => selectedIds.includes(p.id));
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <PageHeader
         title="Abordagem de Influenciadores"
         icon={Mail}
         subtitle="Identifique canais de contato, personalize a mensagem e acompanhe as respostas das parcerias."
       />
 
-      <Tabs value={tab} onValueChange={setTab}>
+      {/* Como funciona o fluxo de abordagem */}
+      <Card className="border-primary/20 bg-primary/[0.04]">
+        <CardContent className="p-5 lg:p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center text-primary">
+              <Info size={15} />
+            </div>
+            <p className="text-sm font-semibold">Como funciona a abordagem</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              {
+                t: "1 · Qualificação",
+                d: "Só aparecem aqui os influenciadores marcados como qualificados na Prospecção. Se um canal não estiver na lista, salve-o na aba de prospecção primeiro.",
+              },
+              {
+                t: "2 · Contatos",
+                d: "“Buscar contatos” varre a página do canal, descrições de vídeos e o site oficial atrás de e-mail e redes. O melhor e-mail encontrado vira o destino da abordagem.",
+              },
+              {
+                t: "3 · Envio",
+                d: "Você seleciona os canais, escreve a mensagem (com variáveis) e cria a campanha. Os e-mails saem em lotes pela Resend, com link de descadastro obrigatório.",
+              },
+              {
+                t: "4 · Resposta",
+                d: "Cada envio tem um Reply-To único (parcerias+INF…@wiize.com.br). Quando o influenciador responde, a mensagem cai na caixa de parcerias, o envio vira “Resposta recebida” e o canal muda para “Respondeu”.",
+              },
+            ].map((s) => (
+              <div key={s.t} className="rounded-2xl border border-border bg-background p-4 space-y-1.5">
+                <p className="text-xs font-semibold text-primary">{s.t}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{s.d}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-start gap-2 rounded-xl border border-border bg-background p-3">
+            <Inbox size={14} className="text-primary mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Para responder, basta responder o e-mail direto na caixa de parcerias — a conversa segue por e-mail normalmente.
+              Dentro do sistema, acompanhe cada envio em <strong>Campanhas</strong> e use o botão de resposta para marcar
+              manualmente quem já respondeu. Quem pede descadastro é bloqueado automaticamente em envios futuros.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="abordagens">Abordagens</TabsTrigger>
           <TabsTrigger value="campanhas">Campanhas</TabsTrigger>
           <TabsTrigger value="modelos">Modelos</TabsTrigger>
         </TabsList>
+
 
         {/* ─────────────── ABORDAGENS ─────────────── */}
         <TabsContent value="abordagens" className="space-y-4 mt-4">
