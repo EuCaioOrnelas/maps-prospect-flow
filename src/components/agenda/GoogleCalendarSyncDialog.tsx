@@ -130,13 +130,17 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
   const loadStatus = useCallback(async () => {
     setLoading(true);
     try {
-      applyState(await call({ action: "status" }));
+      const state = await call({ action: "status" });
+      applyState(state);
+      return state;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível carregar a conexão.");
+      return null;
     } finally {
       setLoading(false);
     }
   }, [call, applyState]);
+
 
   useEffect(() => {
     if (open) void loadStatus();
