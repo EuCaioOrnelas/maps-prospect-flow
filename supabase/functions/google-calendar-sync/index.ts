@@ -156,6 +156,9 @@ serve(async (req) => {
         sync_enabled: s.sync_enabled !== false,
         push_enabled: s.push_enabled !== false,
         pull_enabled: s.pull_enabled !== false,
+        pull_all_calendars: s.pull_all_calendars !== false,
+        reminder_enabled: s.reminder_enabled === true,
+        reminder_minutes: Math.min(Math.max(Number(s.reminder_minutes) || 30, 5), 1440),
         sync_window_days: Math.min(Math.max(Number(s.sync_window_days) || 60, 7), 365),
         default_event_type: s.default_event_type || "meeting",
         updated_at: new Date().toISOString(),
@@ -166,6 +169,7 @@ serve(async (req) => {
       if (error) return json({ error: error.message }, 500);
       return json(await loadState());
     }
+
 
     // ---------- ações que precisam de token válido ----------
     const { data: settings } = await admin
