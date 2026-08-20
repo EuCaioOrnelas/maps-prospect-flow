@@ -3660,6 +3660,323 @@ export type Database = {
           },
         ]
       }
+      influencer_campaign_recipients: {
+        Row: {
+          attempts: number
+          body_html: string
+          campaign_id: string
+          contact_id: string | null
+          created_at: string
+          delivered_at: string | null
+          email: string
+          error_message: string | null
+          failed_at: string | null
+          id: string
+          prospect_id: string
+          provider_message_id: string | null
+          replied_at: string | null
+          reply_token: string
+          sent_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          body_html: string
+          campaign_id: string
+          contact_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          email: string
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          prospect_id: string
+          provider_message_id?: string | null
+          replied_at?: string | null
+          reply_token?: string
+          sent_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          body_html?: string
+          campaign_id?: string
+          contact_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          email?: string
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          prospect_id?: string
+          provider_message_id?: string | null
+          replied_at?: string | null
+          reply_token?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_campaign_recipients_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_campaign_recipients_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_campaigns: {
+        Row: {
+          body_html: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          finished_at: string | null
+          id: string
+          name: string
+          started_at: string | null
+          status: string
+          subject: string
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          body_html: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          finished_at?: string | null
+          id?: string
+          name: string
+          started_at?: string | null
+          status?: string
+          subject: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          finished_at?: string | null
+          id?: string
+          name?: string
+          started_at?: string | null
+          status?: string
+          subject?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_contacts: {
+        Row: {
+          confidence: string
+          created_at: string
+          discovered_at: string
+          id: string
+          is_primary: boolean
+          last_contacted_at: string | null
+          normalized_value: string
+          note: string | null
+          prospect_id: string
+          sources: Json
+          status: string
+          type: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          confidence?: string
+          created_at?: string
+          discovered_at?: string
+          id?: string
+          is_primary?: boolean
+          last_contacted_at?: string | null
+          normalized_value: string
+          note?: string | null
+          prospect_id: string
+          sources?: Json
+          status?: string
+          type: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          discovered_at?: string
+          id?: string
+          is_primary?: boolean
+          last_contacted_at?: string | null
+          normalized_value?: string
+          note?: string | null
+          prospect_id?: string
+          sources?: Json
+          status?: string
+          type?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_contacts_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_email_events: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          detail: string | null
+          event_type: string
+          id: string
+          payload: Json
+          prospect_id: string | null
+          recipient_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          detail?: string | null
+          event_type: string
+          id?: string
+          payload?: Json
+          prospect_id?: string | null
+          recipient_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          detail?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          prospect_id?: string | null
+          recipient_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_email_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_email_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_email_events_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_campaign_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_email_suppressions: {
+        Row: {
+          created_at: string
+          email: string
+          prospect_id: string | null
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          prospect_id?: string | null
+          reason?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          prospect_id?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_email_suppressions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_email_templates: {
+        Row: {
+          body_html: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          kind: string
+          name: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body_html: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: string
+          name: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       influencer_prospects: {
         Row: {
           ai_reasoning: Json

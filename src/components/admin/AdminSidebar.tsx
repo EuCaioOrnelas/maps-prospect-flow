@@ -132,6 +132,7 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Metas", url: "/admin/partners/metas", icon: Target },
       { title: "Links Campanha", url: "/admin/partners/links", icon: Workflow },
       { title: "YouTube Prospecting", url: "/admin/partners/influenciadores", icon: Youtube },
+      { title: "Abordagem Influenciadores", url: "/admin/partners/abordagem", icon: Mail },
       { title: "Materiais", url: "/admin/partners/materiais", icon: FileText },
       { title: "Configurações", url: "/admin/partners/configuracoes", icon: SettingsIcon },
     ],
