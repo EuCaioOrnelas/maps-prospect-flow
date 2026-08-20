@@ -27,23 +27,47 @@ export class ErrorBoundary extends React.Component<
 
     if (isRuntimeAssetError(error)) {
       void recoverFromRuntimeAssetError('error-boundary', error);
+      return;
+    }
+
+    // Sessão antiga / estado obsoleto: tenta um reload automático (uma única vez
+    // por sessão) em vez de exigir que o usuário clique em "Recarregar página".
+    try {
+      const key = 'wiize:auto-reload-after-error';
+      const last = Number(sessionStorage.getItem(key) || 0);
+      if (!last || Date.now() - last > 60_000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        window.location.reload();
+      }
+    } catch {
+      /* noop */
     }
   }
 
   render() {
     if (this.state.hasError) {
+      // Tema claro por padrão; escuro apenas se o usuário salvou "dark".
+      let isDark = false;
+      try {
+        isDark = localStorage.getItem('dashboard-theme') === 'dark';
+      } catch {
+        isDark = false;
+      }
+
       return (
-        <div className="min-h-screen flex items-center justify-center p-8 bg-background text-foreground font-sans">
+        <div
+          className={`${isDark ? 'dark' : 'landing-light'} min-h-screen flex items-center justify-center p-8 bg-background text-foreground font-sans`}
+        >
           <div className="max-w-[460px] w-full text-center bg-card border border-border rounded-2xl p-10 shadow-lg">
             <img
               src={wiizeLogoLight}
               alt="Wiize"
-              className="w-24 h-auto mx-auto mb-5 block dark:hidden"
+              className={`w-24 h-auto mx-auto mb-5 ${isDark ? 'hidden' : 'block'}`}
             />
             <img
               src={wiizeLogoDark}
               alt="Wiize"
-              className="w-24 h-auto mx-auto mb-5 hidden dark:block"
+              className={`w-24 h-auto mx-auto mb-5 ${isDark ? 'block' : 'hidden'}`}
             />
             <h1 className="text-2xl font-semibold mb-3 tracking-tight text-foreground">
               Algo deu errado
