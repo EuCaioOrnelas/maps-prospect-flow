@@ -285,10 +285,11 @@ serve(async (req) => {
           timeMax: to.toISOString(),
           singleEvents: "true",
           showDeleted: "true",
-          maxResults: "250",
+          maxResults: "2500",
           orderBy: "startTime",
         });
         let pageToken: string | undefined;
+        let pages = 0;
         do {
           if (pageToken) params.set("pageToken", pageToken);
           const res = await gfetch(`/calendars/${calendarId}/events?${params.toString()}`);
@@ -333,14 +334,17 @@ serve(async (req) => {
             };
 
             if (existing) {
-              await admin.from("calendar_events").update(base).eq("id", existing.id);
+              await admin
+                .from("calendar_events")
+                .update({ ...base, event_type: "google" })
+                .eq("id", existing.id);
             } else {
               const { error } = await admin.from("calendar_events").insert({
                 ...base,
                 owner_user_id: settings.owner_user_id || user.id,
                 assigned_user_id: user.id,
                 created_by: user.id,
-                event_type: settings.default_event_type || "meeting",
+                event_type: "google",
                 status: "scheduled",
                 source: "import",
                 timezone: TZ,
@@ -348,12 +352,24 @@ serve(async (req) => {
                 external_event_id: item.id,
                 metadata: { google_html_link: item.htmlLink || null },
               });
-              if (error) errors.push(`insert ${item.id}: ${error.message}`);
-              else pulled++;
+              if (error) {
+                // Conflito de horário não deve interromper a importação.
+                if ((error as any).code === "23P01") skipped++;
+                else errors.push(`insert ${item.id}: ${error.message}`);
+              } else pulled++;
             }
           }
           pageToken = data.nextPageToken;
-        } while (pageToken);
+          pages++;
+        } while (pageToken && pages < 40);
+
+        // Padroniza compromissos importados anteriormente.
+        await admin
+          .from("calendar_events")
+          .update({ event_type: "google" })
+          .eq("assigned_user_id", user.id)
+          .eq("external_calendar_provider", "google_import")
+          .neq("event_type", "google");
       }
 
       await admin.from("calendar_google_sync").update({
@@ -363,7 +379,7 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       }).eq("user_id", user.id);
 
-      return json({ ok: true, pushed, updated, pulled, errors: errors.slice(0, 5) });
+      return json({ ok: true, pushed, updated, pulled, skipped, errors: errors.slice(0, 5) });
     }
 
     return json({ error: "Ação inválida" }, 400);
