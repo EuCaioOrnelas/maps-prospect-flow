@@ -210,9 +210,18 @@ export function OutreachComposeDialog({ open, onOpenChange, targets, onCreated }
                   onClick={() => setPreviewIndex((i) => i + 1)}>›</Button>
               </div>
             </div>
-            <Badge variant="secondary" className="w-fit mb-2 max-w-full truncate">
-              {targets[previewIndex]?.email || "—"}
-            </Badge>
+            <div className="flex items-center gap-2.5 mb-3 min-w-0">
+              <ChannelAvatar
+                src={targets[previewIndex]?.prospect?.thumbnail_url}
+                name={targets[previewIndex]?.prospect?.channel_name}
+                size={32}
+              />
+              <div className="min-w-0">
+                <p className="text-xs font-medium truncate">{targets[previewIndex]?.prospect?.channel_name || "—"}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{targets[previewIndex]?.email || "—"}</p>
+              </div>
+            </div>
+
             <ScrollArea className="flex-1 max-h-[52vh]">
               <div className="rounded-xl bg-background border border-border p-4">
                 <p className="text-sm font-semibold mb-3">{preview.subject || "Sem assunto"}</p>
