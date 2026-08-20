@@ -108,10 +108,25 @@ serve(async (req) => {
 
     if (action === "status") return json(await loadState());
 
+    // Desconectar: remove a configuração e TODO o rastro da sincronização
+    // (eventos importados do Google + vínculos dos eventos da Wiize).
     if (action === "disconnect") {
+      const { count: removed } = await admin
+        .from("calendar_events")
+        .delete({ count: "exact" })
+        .eq("assigned_user_id", user.id)
+        .eq("external_calendar_provider", "google_import");
+
+      await admin
+        .from("calendar_events")
+        .update({ external_event_id: null, external_calendar_provider: null })
+        .eq("assigned_user_id", user.id)
+        .not("external_event_id", "is", null);
+
       await admin.from("calendar_google_sync").delete().eq("user_id", user.id);
-      return json({ ok: true });
+      return json({ ok: true, removed: removed || 0 });
     }
+
 
     if (action === "save") {
       const s = payload.settings || {};
