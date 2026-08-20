@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  CalendarClock,
   Presentation,
   Phone,
   RotateCcw,
