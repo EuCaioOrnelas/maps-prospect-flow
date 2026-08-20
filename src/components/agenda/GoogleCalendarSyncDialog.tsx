@@ -58,10 +58,12 @@ interface Props {
 }
 
 const STEPS = [
-  "Conecte (ou reconecte) a conta Google que você usa no dia a dia.",
-  "Escolha a agenda de destino e o que deve ser sincronizado.",
-  "Salve a configuração e sincronize — depois disso roda sozinho.",
+  "Clique em “Conectar conta Google” e escolha a conta que você usa no dia a dia.",
+  "Na tela do Google, marque TODAS as caixinhas de permissão — principalmente “Ver, editar, compartilhar e excluir definitivamente todas as agendas”. Sem elas a sincronização não funciona.",
+  "Escolha a agenda de destino, ligue os sentidos desejados e clique em “Salvar configuração”.",
+  "Clique em “Sincronizar agora”. Agendas grandes podem levar alguns minutos — você pode deixar rodando em segundo plano.",
 ];
+
 
 export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props) {
   const [loading, setLoading] = useState(false);
