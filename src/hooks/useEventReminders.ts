@@ -4,7 +4,6 @@ import type { CalendarEvent } from "@/lib/calendarConfig";
 import { formatTime } from "@/lib/calendarViews";
 import type { AccountMember } from "@/hooks/useAccountMembers";
 
-const DEFAULT_LEAD_MINUTES = 15;
 const STORAGE_KEY = "wiize.agenda.reminders.fired";
 
 const loadFired = (): string[] => {
@@ -15,10 +14,13 @@ const loadFired = (): string[] => {
   }
 };
 
+/** Opt-in: só avisa quando o compromisso tem antecedência configurada. */
 const leadMinutes = (event: CalendarEvent) => {
-  const first = Array.isArray(event.reminders) ? Number(event.reminders[0]) : NaN;
-  return Number.isFinite(first) && first > 0 ? first : DEFAULT_LEAD_MINUTES;
+  if (!Array.isArray(event.reminders) || event.reminders.length === 0) return null;
+  const first = Number(event.reminders[0]);
+  return Number.isFinite(first) && first > 0 ? first : null;
 };
+
 
 /**
  * Avisa o usuário antes de cada compromisso da Agenda, respeitando o lembrete

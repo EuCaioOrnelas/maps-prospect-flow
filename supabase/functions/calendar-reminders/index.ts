@@ -242,7 +242,7 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const DEFAULT_LEAD_MINUTES = 15;
+
 const TZ_OFFSET_MS = -3 * 60 * 60 * 1000;
 const APP_URL = "https://wiize.com.br";
 
