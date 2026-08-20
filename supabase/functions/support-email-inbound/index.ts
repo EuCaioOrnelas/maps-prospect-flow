@@ -129,6 +129,40 @@ Deno.serve(async (req) => {
 
     console.log("[support-email-inbound] received", { to, subject, ticketNumber, hasText: !!text, hasHtml: !!html });
 
+    // ─── Abordagem de influenciadores: parcerias+INF<token>@wiize.com.br ───
+    // Respostas de campanhas de parceria não abrem chamado — são anexadas ao influenciador.
+    const outreachToken =
+      (`${to},${cc},${headersBlob},${String(data?.envelope?.to || "")}`.match(/parcerias\+INF([a-f0-9]{8,})@/i)?.[1] || "")
+        .toLowerCase();
+    if (outreachToken) {
+      const sbOut = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const { data: rec } = await sbOut
+        .from("influencer_campaign_recipients")
+        .select("id, campaign_id, prospect_id, email, reply_token")
+        .like("reply_token", `${outreachToken}%`)
+        .maybeSingle();
+      if (rec) {
+        const replyBody = extractBody(text, html).slice(0, 8000);
+        await sbOut.from("influencer_campaign_recipients")
+          .update({ status: "respondido", replied_at: new Date().toISOString() })
+          .eq("id", rec.id);
+        await sbOut.from("influencer_prospects").update({ status: "respondeu" }).eq("id", rec.prospect_id);
+        await sbOut.from("influencer_contacts")
+          .update({ status: "respondeu" })
+          .eq("prospect_id", rec.prospect_id).eq("type", "email")
+          .eq("normalized_value", String(rec.email).toLowerCase());
+        await sbOut.from("influencer_email_events").insert({
+          recipient_id: rec.id, campaign_id: rec.campaign_id, prospect_id: rec.prospect_id,
+          event_type: "resposta_recebida", detail: subject.slice(0, 300),
+          payload: { from, body: replyBody },
+        });
+        console.log("[support-email-inbound] influencer reply anexada", { recipientId: rec.id });
+        return new Response(JSON.stringify({ ok: true, routed: "influencer_outreach" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     if (isOwnSupportEmail(from, subject)) {
       console.log("[support-email-inbound] ignored own support email", { from, subject, ticketNumber });
       return new Response(JSON.stringify({ ok: true, ignored: "own_support_email" }), {
