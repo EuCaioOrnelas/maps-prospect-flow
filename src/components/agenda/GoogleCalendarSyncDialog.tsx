@@ -200,9 +200,11 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
         finished = true;
         window.removeEventListener("message", onMessage);
         if (announce) toast.success("Conta Google conectada.");
-        await loadStatus();
+        const state = await loadStatus();
         // Primeira sincronização automática: o usuário não precisa clicar em nada.
-        void autoSyncRef.current?.();
+        const account = (state?.accounts || [])[0];
+        if (account) void autoSyncRef.current?.(state?.settings?.google_token_id || account.id);
+
       };
 
       const onMessage = (event: MessageEvent) => {
