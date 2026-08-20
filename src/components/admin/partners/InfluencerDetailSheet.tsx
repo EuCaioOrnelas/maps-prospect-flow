@@ -7,6 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink, Globe, Instagram, Loader2, Mail, Youtube } from "lucide-react";
 import { PROSPECT_STATUSES, fitBadgeVariant, fmtNum } from "@/lib/influencerProspecting";
+import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
+
 
 interface Props {
   prospect: any | null;
