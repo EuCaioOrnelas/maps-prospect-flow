@@ -418,34 +418,35 @@ export default function AdminInfluencerOutreach() {
         </TabsContent>
 
         {/* ─────────────── CAMPANHAS ─────────────── */}
-        <TabsContent value="campanhas" className="space-y-4 mt-4">
+        <TabsContent value="campanhas" className="space-y-5 mt-5">
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-5 lg:p-6">
               <div className="rounded-xl border border-border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Campanha</TableHead>
-                      <TableHead>Criada em</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
+                      <TableHead className="py-3">Campanha</TableHead>
+                      <TableHead className="py-3">Criada em</TableHead>
+                      <TableHead className="py-3">Status</TableHead>
+                      <TableHead className="text-right py-3">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {campaigns.length === 0 ? (
-                      <TableRow><TableCell colSpan={4} className="text-center py-10 text-sm text-muted-foreground">
+                      <TableRow><TableCell colSpan={4} className="text-center py-12 text-sm text-muted-foreground">
                         Nenhuma campanha criada ainda.
                       </TableCell></TableRow>
                     ) : campaigns.map((c) => (
                       <TableRow key={c.id} className="cursor-pointer"
                         onClick={() => { setOpenCampaign(c); loadRecipients(c.id); }}>
-                        <TableCell>
+                        <TableCell className="py-3">
                           <p className="font-medium">{c.name}</p>
                           <p className="text-xs text-muted-foreground truncate max-w-[380px]">{c.subject}</p>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
+                        <TableCell className="py-3 text-xs text-muted-foreground">
                           {new Date(c.created_at).toLocaleString("pt-BR")}
                         </TableCell>
+
                         <TableCell><Badge variant="secondary" className="text-[10px]">{c.status}</Badge></TableCell>
                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex justify-end gap-1">
