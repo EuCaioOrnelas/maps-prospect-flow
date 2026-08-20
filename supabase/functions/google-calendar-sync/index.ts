@@ -295,6 +295,11 @@ serve(async (req) => {
 
       // ---- 2. Google -> Wiize ----
       if (settings.pull_enabled !== false) {
+        // Bancos que ainda não receberam o valor 'google' no enum caem para 'other'.
+        let googleType = "google";
+        const isEnumError = (msg?: string) =>
+          !!msg && msg.includes("invalid input value for enum calendar_event_type");
+
         const params = new URLSearchParams({
           timeMin: from.toISOString(),
           timeMax: to.toISOString(),
@@ -313,30 +318,50 @@ serve(async (req) => {
             errors.push(`list: ${res.status}`);
             break;
           }
-          for (const item of data.items || []) {
-            const wiizeId = item.extendedProperties?.private?.wiize_event_id;
-            const startsAt = item.start?.dateTime || (item.start?.date ? `${item.start.date}T00:00:00-03:00` : null);
-            const endsAt = item.end?.dateTime || (item.end?.date ? `${item.end.date}T23:59:00-03:00` : null);
 
-            if (item.status === "cancelled") {
-              if (wiizeId) {
-                await admin.from("calendar_events").update({ status: "cancelled" }).eq("id", wiizeId);
-              } else {
-                await admin.from("calendar_events")
-                  .update({ status: "cancelled" })
-                  .eq("external_event_id", item.id)
-                  .eq("assigned_user_id", user.id);
-              }
-              continue;
+          const items = (data.items || []) as any[];
+
+          // Cancelamentos em lote (não precisam de leitura prévia).
+          const cancelledIds = items.filter((i) => i.status === "cancelled").map((i) => i.id);
+          const cancelledWiize = items
+            .filter((i) => i.status === "cancelled" && i.extendedProperties?.private?.wiize_event_id)
+            .map((i) => i.extendedProperties.private.wiize_event_id);
+          if (cancelledWiize.length) {
+            await admin.from("calendar_events").update({ status: "cancelled" }).in("id", cancelledWiize);
+          }
+          if (cancelledIds.length) {
+            for (let i = 0; i < cancelledIds.length; i += 200) {
+              await admin
+                .from("calendar_events")
+                .update({ status: "cancelled" })
+                .eq("assigned_user_id", user.id)
+                .in("external_event_id", cancelledIds.slice(i, i + 200));
             }
-            if (wiizeId || !startsAt || !endsAt) continue; // já é nosso
+          }
 
-            const { data: existing } = await admin
+          const candidates = items.filter(
+            (i) =>
+              i.status !== "cancelled" &&
+              !i.extendedProperties?.private?.wiize_event_id &&
+              (i.start?.dateTime || i.start?.date) &&
+              (i.end?.dateTime || i.end?.date),
+          );
+
+          // Uma única leitura por página para saber o que já existe.
+          const existingMap = new Map<string, string>();
+          const ids = candidates.map((i) => i.id);
+          for (let i = 0; i < ids.length; i += 200) {
+            const { data: rows } = await admin
               .from("calendar_events")
-              .select("id")
-              .eq("external_event_id", item.id)
+              .select("id, external_event_id")
               .eq("assigned_user_id", user.id)
-              .maybeSingle();
+              .in("external_event_id", ids.slice(i, i + 200));
+            for (const r of rows || []) existingMap.set(r.external_event_id as string, r.id as string);
+          }
+
+          for (const item of candidates) {
+            const startsAt = item.start?.dateTime || `${item.start.date}T00:00:00-03:00`;
+            const endsAt = item.end?.dateTime || `${item.end.date}T23:59:00-03:00`;
 
             const base = {
               title: item.summary || "(sem título)",
@@ -348,32 +373,48 @@ serve(async (req) => {
               updated_at: new Date().toISOString(),
             };
 
-            if (existing) {
-              await admin
+            const existingId = existingMap.get(item.id);
+            if (existingId) {
+              const { error } = await admin
                 .from("calendar_events")
-                .update({ ...base, event_type: "google" })
-                .eq("id", existing.id);
-            } else {
-              const { error } = await admin.from("calendar_events").insert({
-                ...base,
-                owner_user_id: settings.owner_user_id || user.id,
-                assigned_user_id: user.id,
-                created_by: user.id,
-                event_type: "google",
-                status: "scheduled",
-                source: "import",
-                timezone: TZ,
-                external_calendar_provider: "google_import",
-                external_event_id: item.id,
-                metadata: { google_html_link: item.htmlLink || null },
-              });
-              if (error) {
-                // Conflito de horário não deve interromper a importação.
-                if ((error as any).code === "23P01") skipped++;
-                else errors.push(`insert ${item.id}: ${error.message}`);
-              } else pulled++;
+                .update({ ...base, event_type: googleType })
+                .eq("id", existingId);
+              if (error && isEnumError(error.message)) {
+                googleType = "other";
+                await admin
+                  .from("calendar_events")
+                  .update({ ...base, event_type: googleType })
+                  .eq("id", existingId);
+              }
+              continue;
             }
+
+            const insertRow = () => ({
+              ...base,
+              owner_user_id: settings.owner_user_id || user.id,
+              assigned_user_id: user.id,
+              created_by: user.id,
+              event_type: googleType,
+              status: "scheduled",
+              source: "import",
+              timezone: TZ,
+              external_calendar_provider: "google_import",
+              external_event_id: item.id,
+              metadata: { google_html_link: item.htmlLink || null },
+            });
+
+            let { error } = await admin.from("calendar_events").insert(insertRow());
+            if (error && isEnumError(error.message)) {
+              googleType = "other";
+              ({ error } = await admin.from("calendar_events").insert(insertRow()));
+            }
+            if (error) {
+              // Conflito de horário não deve interromper a importação.
+              if ((error as any).code === "23P01") skipped++;
+              else if (errors.length < 20) errors.push(`insert ${item.id}: ${error.message}`);
+            } else pulled++;
           }
+
           pageToken = data.nextPageToken;
           pages++;
         } while (pageToken && pages < 40);
@@ -381,11 +422,12 @@ serve(async (req) => {
         // Padroniza compromissos importados anteriormente.
         await admin
           .from("calendar_events")
-          .update({ event_type: "google" })
+          .update({ event_type: googleType })
           .eq("assigned_user_id", user.id)
           .eq("external_calendar_provider", "google_import")
-          .neq("event_type", "google");
+          .neq("event_type", googleType);
       }
+
 
       await admin.from("calendar_google_sync").update({
         last_sync_at: new Date().toISOString(),
