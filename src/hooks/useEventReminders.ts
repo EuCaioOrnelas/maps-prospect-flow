@@ -42,11 +42,12 @@ export function useEventReminders(events: CalendarEvent[], members: AccountMembe
       const now = Date.now();
       events.forEach((event) => {
         if (event.status === "cancelled" || event.status === "completed") return;
-        if (Array.isArray(event.reminders) && event.reminders.length === 0) return;
         const minutes = leadMinutes(event);
+        if (minutes === null) return;
         const start = new Date(event.starts_at).getTime();
         const diff = start - now;
         if (diff <= 0 || diff > minutes * 60_000) return;
+
         if (fired.current.has(event.id)) return;
 
         fired.current.add(event.id);
