@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { InfluencerDetailSheet } from "@/components/admin/partners/InfluencerDetailSheet";
+import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
+
 import { useToast } from "@/hooks/use-toast";
 import {
   PROSPECT_STATUSES,
