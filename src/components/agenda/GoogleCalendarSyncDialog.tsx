@@ -98,7 +98,7 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
 
   const progressTimer = useRef<number | null>(null);
   const syncPromise = useRef<Promise<any> | null>(null);
-  const autoSyncRef = useRef<(() => Promise<void>) | null>(null);
+  const autoSyncRef = useRef<((tokenIdOverride?: string) => Promise<void>) | null>(null);
 
 
   const call = useCallback(async (body: Record<string, unknown>) => {
