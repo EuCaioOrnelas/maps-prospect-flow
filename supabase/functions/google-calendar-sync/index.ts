@@ -253,13 +253,17 @@ serve(async (req) => {
       if (!settings) return json({ error: "Configure a sincronização primeiro." }, 400);
       if (settings.sync_enabled === false) return json({ ok: true, skipped: true });
 
-      const calendarId = encodeURIComponent(settings.calendar_id || "primary");
+      const targetCalendar = encodeURIComponent(settings.calendar_id || "primary");
       const days = settings.sync_window_days || 60;
       // Puxa tudo: um ano para trás e a janela escolhida (mínimo 365 dias) para frente.
       const from = new Date(Date.now() - 365 * 86400000);
       const to = new Date(Date.now() + Math.max(days, 365) * 86400000);
 
-      let pushed = 0, updated = 0, pulled = 0, skipped = 0, errors: string[] = [];
+      let pushed = 0, updated = 0, pulled = 0, skipped = 0;
+      const errors: string[] = [];
+      const pushError = (msg: string) => {
+        if (errors.length < 20) errors.push(msg);
+      };
 
       // ---- 1. Wiize -> Google ----
       if (settings.push_enabled !== false) {
@@ -267,183 +271,223 @@ serve(async (req) => {
           .from("calendar_events")
           .select("*")
           .eq("assigned_user_id", user.id)
+          .neq("external_calendar_provider", "google_import")
           .gte("starts_at", from.toISOString())
           .lte("starts_at", to.toISOString());
 
+        /** Cria o evento no Google; em caso de 403 por convidados, repete sem attendees. */
+        const createOnGoogle = async (ev: any) => {
+          let res = await gfetch(`/calendars/${targetCalendar}/events`, {
+            method: "POST",
+            body: JSON.stringify(eventBody(ev)),
+          });
+          if (res.status === 403) {
+            const retry = eventBody(ev);
+            delete retry.attendees;
+            res = await gfetch(`/calendars/${targetCalendar}/events`, {
+              method: "POST",
+              body: JSON.stringify(retry),
+            });
+          }
+          return res;
+        };
+
         for (const ev of events || []) {
           try {
-            if (ev.external_calendar_provider === "google_import") continue; // veio do Google
-            const body = eventBody(ev);
             if (ev.external_event_id) {
               const res = await gfetch(
-                `/calendars/${calendarId}/events/${encodeURIComponent(ev.external_event_id)}`,
-                { method: "PATCH", body: JSON.stringify(body) },
+                `/calendars/${targetCalendar}/events/${encodeURIComponent(ev.external_event_id)}`,
+                { method: "PATCH", body: JSON.stringify(eventBody(ev)) },
               );
-              if (res.status === 404) {
-                const created = await gfetch(`/calendars/${calendarId}/events`, {
-                  method: "POST",
-                  body: JSON.stringify(body),
-                });
-                const cd = await created.json();
-                if (created.ok) {
+              if (res.ok) {
+                updated++;
+                continue;
+              }
+              // 404/410: o evento sumiu do Google; recriamos do zero.
+              if (res.status === 404 || res.status === 410) {
+                const created = await createOnGoogle(ev);
+                const cd = await created.json().catch(() => ({}));
+                if (created.ok && cd.id) {
                   await admin.from("calendar_events").update({
                     external_event_id: cd.id,
                     external_calendar_provider: "google",
                   }).eq("id", ev.id);
                   pushed++;
+                } else {
+                  pushError(`envio "${ev.title}": ${cd?.error?.message || created.status}`);
                 }
-              } else if (res.ok) {
-                updated++;
-              } else {
-                errors.push(`patch ${ev.id}: ${res.status}`);
+                continue;
               }
+              const body = await res.json().catch(() => ({}));
+              pushError(`atualização "${ev.title}": ${body?.error?.message || res.status}`);
+              continue;
+            }
+
+            const created = await createOnGoogle(ev);
+            const cd = await created.json().catch(() => ({}));
+            if (created.ok && cd.id) {
+              await admin.from("calendar_events").update({
+                external_event_id: cd.id,
+                external_calendar_provider: "google",
+              }).eq("id", ev.id);
+              pushed++;
             } else {
-              const res = await gfetch(`/calendars/${calendarId}/events`, {
-                method: "POST",
-                body: JSON.stringify(body),
-              });
-              const cd = await res.json();
-              if (res.ok) {
-                await admin.from("calendar_events").update({
-                  external_event_id: cd.id,
-                  external_calendar_provider: "google",
-                }).eq("id", ev.id);
-                pushed++;
-              } else {
-                errors.push(`create ${ev.id}: ${res.status}`);
-              }
+              pushError(`envio "${ev.title}": ${cd?.error?.message || created.status}`);
             }
           } catch (e) {
-            errors.push(String((e as Error).message));
+            pushError(String((e as Error).message));
           }
         }
       }
 
-      // ---- 2. Google -> Wiize ----
+      // ---- 2. Google -> Wiize (todas as agendas do usuário) ----
       if (settings.pull_enabled !== false) {
         // Bancos que ainda não receberam o valor 'google' no enum caem para 'other'.
         let googleType = "google";
         const isEnumError = (msg?: string) =>
           !!msg && msg.includes("invalid input value for enum calendar_event_type");
 
-        const params = new URLSearchParams({
-          timeMin: from.toISOString(),
-          timeMax: to.toISOString(),
-          singleEvents: "true",
-          showDeleted: "true",
-          maxResults: "2500",
-          orderBy: "startTime",
-        });
-        let pageToken: string | undefined;
-        let pages = 0;
-        do {
-          if (pageToken) params.set("pageToken", pageToken);
-          const res = await gfetch(`/calendars/${calendarId}/events?${params.toString()}`);
-          const data = await res.json();
-          if (!res.ok) {
-            errors.push(`list: ${res.status}`);
-            break;
-          }
+        // Lembrete por e-mail é opt-in: sem opção marcada, o evento entra sem lembretes.
+        const importedReminders = settings.reminder_enabled
+          ? [Math.min(Math.max(Number(settings.reminder_minutes) || 30, 5), 1440)]
+          : [];
 
-          const items = (data.items || []) as any[];
-
-          // Cancelamentos em lote (não precisam de leitura prévia).
-          const cancelledIds = items.filter((i) => i.status === "cancelled").map((i) => i.id);
-          const cancelledWiize = items
-            .filter((i) => i.status === "cancelled" && i.extendedProperties?.private?.wiize_event_id)
-            .map((i) => i.extendedProperties.private.wiize_event_id);
-          if (cancelledWiize.length) {
-            await admin.from("calendar_events").update({ status: "cancelled" }).in("id", cancelledWiize);
+        let sourceCalendars: string[] = [settings.calendar_id || "primary"];
+        if (settings.pull_all_calendars !== false) {
+          try {
+            const items = await listCalendars();
+            const ids = items.map((c: any) => c.id).filter(Boolean);
+            if (ids.length) sourceCalendars = ids;
+          } catch (e) {
+            pushError(`agendas: ${(e as Error).message}`);
           }
-          if (cancelledIds.length) {
-            for (let i = 0; i < cancelledIds.length; i += 200) {
-              await admin
-                .from("calendar_events")
-                .update({ status: "cancelled" })
-                .eq("assigned_user_id", user.id)
-                .in("external_event_id", cancelledIds.slice(i, i + 200));
+        }
+
+        for (const sourceId of sourceCalendars) {
+          const calId = encodeURIComponent(sourceId);
+          const params = new URLSearchParams({
+            timeMin: from.toISOString(),
+            timeMax: to.toISOString(),
+            singleEvents: "true",
+            showDeleted: "true",
+            maxResults: "2500",
+            orderBy: "startTime",
+          });
+          let pageToken: string | undefined;
+          let pages = 0;
+          do {
+            if (pageToken) params.set("pageToken", pageToken);
+            const res = await gfetch(`/calendars/${calId}/events?${params.toString()}`);
+            const data = await res.json();
+            if (!res.ok) {
+              pushError(`leitura ${sourceId}: ${data?.error?.message || res.status}`);
+              break;
             }
-          }
 
-          const candidates = items.filter(
-            (i) =>
-              i.status !== "cancelled" &&
-              !i.extendedProperties?.private?.wiize_event_id &&
-              (i.start?.dateTime || i.start?.date) &&
-              (i.end?.dateTime || i.end?.date),
-          );
+            const items = (data.items || []) as any[];
 
-          // Uma única leitura por página para saber o que já existe.
-          const existingMap = new Map<string, string>();
-          const ids = candidates.map((i) => i.id);
-          for (let i = 0; i < ids.length; i += 200) {
-            const { data: rows } = await admin
-              .from("calendar_events")
-              .select("id, external_event_id")
-              .eq("assigned_user_id", user.id)
-              .in("external_event_id", ids.slice(i, i + 200));
-            for (const r of rows || []) existingMap.set(r.external_event_id as string, r.id as string);
-          }
-
-          for (const item of candidates) {
-            const startsAt = item.start?.dateTime || `${item.start.date}T00:00:00-03:00`;
-            const endsAt = item.end?.dateTime || `${item.end.date}T23:59:00-03:00`;
-
-            const base = {
-              title: item.summary || "(sem título)",
-              description: item.description || null,
-              starts_at: new Date(startsAt).toISOString(),
-              ends_at: new Date(endsAt).toISOString(),
-              all_day: !item.start?.dateTime,
-              location: item.location || null,
-              updated_at: new Date().toISOString(),
-            };
-
-            const existingId = existingMap.get(item.id);
-            if (existingId) {
-              const { error } = await admin
-                .from("calendar_events")
-                .update({ ...base, event_type: googleType })
-                .eq("id", existingId);
-              if (error && isEnumError(error.message)) {
-                googleType = "other";
+            // Cancelamentos em lote (não precisam de leitura prévia).
+            const cancelledIds = items.filter((i) => i.status === "cancelled").map((i) => i.id);
+            const cancelledWiize = items
+              .filter((i) => i.status === "cancelled" && i.extendedProperties?.private?.wiize_event_id)
+              .map((i) => i.extendedProperties.private.wiize_event_id);
+            if (cancelledWiize.length) {
+              await admin.from("calendar_events").update({ status: "cancelled" }).in("id", cancelledWiize);
+            }
+            if (cancelledIds.length) {
+              for (let i = 0; i < cancelledIds.length; i += 200) {
                 await admin
                   .from("calendar_events")
-                  .update({ ...base, event_type: googleType })
-                  .eq("id", existingId);
+                  .update({ status: "cancelled" })
+                  .eq("assigned_user_id", user.id)
+                  .in("external_event_id", cancelledIds.slice(i, i + 200));
               }
-              continue;
             }
 
-            const insertRow = () => ({
-              ...base,
-              owner_user_id: settings.owner_user_id || user.id,
-              assigned_user_id: user.id,
-              created_by: user.id,
-              event_type: googleType,
-              status: "scheduled",
-              source: "import",
-              timezone: TZ,
-              external_calendar_provider: "google_import",
-              external_event_id: item.id,
-              metadata: { google_html_link: item.htmlLink || null },
-            });
+            const candidates = items.filter(
+              (i) =>
+                i.status !== "cancelled" &&
+                !i.extendedProperties?.private?.wiize_event_id &&
+                (i.start?.dateTime || i.start?.date) &&
+                (i.end?.dateTime || i.end?.date),
+            );
 
-            let { error } = await admin.from("calendar_events").insert(insertRow());
-            if (error && isEnumError(error.message)) {
-              googleType = "other";
-              ({ error } = await admin.from("calendar_events").insert(insertRow()));
+            // Uma única leitura por página para saber o que já existe.
+            const existingMap = new Map<string, string>();
+            const ids = candidates.map((i) => i.id);
+            for (let i = 0; i < ids.length; i += 200) {
+              const { data: rows } = await admin
+                .from("calendar_events")
+                .select("id, external_event_id")
+                .eq("assigned_user_id", user.id)
+                .in("external_event_id", ids.slice(i, i + 200));
+              for (const r of rows || []) existingMap.set(r.external_event_id as string, r.id as string);
             }
-            if (error) {
-              // Conflito de horário não deve interromper a importação.
-              if ((error as any).code === "23P01") skipped++;
-              else if (errors.length < 20) errors.push(`insert ${item.id}: ${error.message}`);
-            } else pulled++;
-          }
 
-          pageToken = data.nextPageToken;
-          pages++;
-        } while (pageToken && pages < 40);
+            for (const item of candidates) {
+              const startsAt = item.start?.dateTime || `${item.start.date}T00:00:00-03:00`;
+              const endsAt = item.end?.dateTime || `${item.end.date}T23:59:00-03:00`;
+
+              const base = {
+                title: item.summary || "(sem título)",
+                description: item.description || null,
+                starts_at: new Date(startsAt).toISOString(),
+                ends_at: new Date(endsAt).toISOString(),
+                all_day: !item.start?.dateTime,
+                location: item.location || null,
+                updated_at: new Date().toISOString(),
+              };
+
+              const existingId = existingMap.get(item.id);
+              if (existingId) {
+                const { error } = await admin
+                  .from("calendar_events")
+                  .update({ ...base, event_type: googleType, reminders: importedReminders })
+                  .eq("id", existingId);
+                if (error && isEnumError(error.message)) {
+                  googleType = "other";
+                  await admin
+                    .from("calendar_events")
+                    .update({ ...base, event_type: googleType, reminders: importedReminders })
+                    .eq("id", existingId);
+                }
+                continue;
+              }
+
+              const insertRow = () => ({
+                ...base,
+                owner_user_id: settings.owner_user_id || user.id,
+                assigned_user_id: user.id,
+                created_by: user.id,
+                event_type: googleType,
+                status: "scheduled",
+                source: "import",
+                timezone: TZ,
+                reminders: importedReminders,
+                external_calendar_provider: "google_import",
+                external_event_id: item.id,
+                metadata: {
+                  google_html_link: item.htmlLink || null,
+                  google_calendar_id: sourceId,
+                },
+              });
+
+              let { error } = await admin.from("calendar_events").insert(insertRow());
+              if (error && isEnumError(error.message)) {
+                googleType = "other";
+                ({ error } = await admin.from("calendar_events").insert(insertRow()));
+              }
+              if (error) {
+                // Conflito de horário não deve interromper a importação.
+                if ((error as any).code === "23P01") skipped++;
+                else pushError(`importação ${item.id}: ${error.message}`);
+              } else pulled++;
+            }
+
+            pageToken = data.nextPageToken;
+            pages++;
+          } while (pageToken && pages < 40);
+        }
 
         // Padroniza compromissos importados anteriormente.
         await admin
@@ -464,6 +508,7 @@ serve(async (req) => {
 
       return json({ ok: true, pushed, updated, pulled, skipped, errors: errors.slice(0, 5) });
     }
+
 
     return json({ error: "Ação inválida" }, 400);
   } catch (err) {
