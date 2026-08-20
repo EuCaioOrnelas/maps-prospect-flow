@@ -58,11 +58,15 @@ export default function AdminInfluencerOutreach() {
 
   const loadProspects = useCallback(async () => {
     setLoading(true);
+    // Só entram na fila de abordagem influenciadores já qualificados (salvos na prospecção).
     const { data } = await (supabase as any)
       .from("influencer_prospects")
       .select("*")
+      .eq("saved", true)
+      .in("status", QUALIFIED_STATUSES)
       .order("fit_score", { ascending: false })
       .limit(400);
+
     const rows = data ?? [];
     setProspects(rows);
     if (rows.length) {
