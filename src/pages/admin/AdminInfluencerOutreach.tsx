@@ -20,7 +20,7 @@ import { fmtNum } from "@/lib/influencerProspecting";
 import {
   CONTACT_TYPES, CONTACT_STATUSES, DEFAULT_TEMPLATE_BODY, DEFAULT_TEMPLATE_SUBJECT,
   confidenceMeta, contactStatusLabel, contactTypeLabel, emailHtmlToText, sendStatusMeta,
-  sourceLabel, textToEmailHtml,
+  sourceLabel, textToEmailHtml, PROSPECT_OUTREACH_STATUSES, prospectOutreachLabel,
 } from "@/lib/influencerOutreach";
 import {
   Loader2, Mail, Search, Send, RefreshCw, Plus, Trash2, FileText, Users,
@@ -140,7 +140,7 @@ export default function AdminInfluencerOutreach() {
       if ((data as any)?.error) throw new Error((data as any).error);
       toast({
         title: "Busca de contatos concluída",
-        description: `${(data as any).found ?? 0} contato(s) identificado(s) em ${ids.length} canal(is).`,
+        description: `${((data as any).results ?? []).reduce((a: number, r: any) => a + (r.created ?? 0), 0)} novo(s) contato(s) em ${ids.length} canal(is).`,
       });
       await loadProspects();
     } catch (e: any) {
@@ -251,12 +251,9 @@ export default function AdminInfluencerOutreach() {
                   <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos os status</SelectItem>
-                    <SelectItem value="novo">Novo</SelectItem>
-                    <SelectItem value="contato_encontrado">Contato encontrado</SelectItem>
-                    <SelectItem value="email_enviado">E-mail enviado</SelectItem>
-                    <SelectItem value="respondeu">Respondeu</SelectItem>
-                    <SelectItem value="parceria_ativa">Parceria ativa</SelectItem>
-                    <SelectItem value="sem_interesse">Sem interesse</SelectItem>
+                    {PROSPECT_OUTREACH_STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -329,7 +326,7 @@ export default function AdminInfluencerOutreach() {
                           </TableCell>
                           <TableCell className="text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
                           <TableCell className="text-right text-sm">{p.fit_score ?? 0}</TableCell>
-                          <TableCell><Badge variant="secondary" className="text-[10px]">{p.status || "novo"}</Badge></TableCell>
+                          <TableCell><Badge variant="secondary" className="text-[10px]">{prospectOutreachLabel(p.status)}</Badge></TableCell>
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             <Button size="sm" variant="ghost" disabled={finding.includes(p.id)}
                               onClick={() => findContacts([p.id])}>
