@@ -447,9 +447,10 @@ export default function AdminInfluencerOutreach() {
                           {new Date(c.created_at).toLocaleString("pt-BR")}
                         </TableCell>
 
-                        <TableCell><Badge variant="secondary" className="text-[10px]">{c.status}</Badge></TableCell>
-                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex justify-end gap-1">
+                        <TableCell className="py-3"><Badge variant="secondary" className="text-[10px]">{c.status}</Badge></TableCell>
+                        <TableCell className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex justify-end gap-1.5">
+
                             <Button size="sm" variant="outline" disabled={processing === c.id || c.status === "cancelada"}
                               onClick={() => runQueue(c.id)}>
                               {processing === c.id
