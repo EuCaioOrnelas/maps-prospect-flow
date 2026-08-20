@@ -365,6 +365,12 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
               ))}
             </ol>
 
+            <p className="rounded-xl border border-border bg-background px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+              A conexão é individual: cada usuário da conta (dono e sub-usuários) conecta o próprio
+              Google e vê apenas os compromissos da sua agenda.
+            </p>
+
+
             {/* Estado da conexão + botão principal */}
             <div className="space-y-3 rounded-xl border border-border p-4">
               <div className="flex items-center justify-between gap-3">
