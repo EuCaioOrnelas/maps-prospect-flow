@@ -271,7 +271,7 @@ serve(async (req) => {
           .from("calendar_events")
           .select("*")
           .eq("assigned_user_id", user.id)
-          .neq("external_calendar_provider", "google_import")
+          .or("external_calendar_provider.is.null,external_calendar_provider.neq.google_import")
           .gte("starts_at", from.toISOString())
           .lte("starts_at", to.toISOString());
 
