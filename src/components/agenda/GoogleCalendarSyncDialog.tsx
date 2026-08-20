@@ -668,7 +668,7 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Salvar preferências
             </Button>
-            <Button onClick={handleSync} disabled={syncing} className="flex-1 rounded-xl">
+            <Button onClick={() => void handleSync()} disabled={syncing} className="flex-1 rounded-xl">
               {syncing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
