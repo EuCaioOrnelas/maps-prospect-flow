@@ -620,8 +620,14 @@ export default function AdminInfluencerOutreach() {
       {/* Contatos do influenciador */}
       <Dialog open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{detail?.channel_name}</DialogTitle></DialogHeader>
-          <div className="space-y-2">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <ChannelAvatar src={detail?.thumbnail_url} name={detail?.channel_name} size={40} />
+              <span className="truncate">{detail?.channel_name}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+
             {(contactsMap[detail?.id] ?? []).length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Nenhum canal de contato identificado. Use “Buscar contatos” para varrer o YouTube e o site oficial.
