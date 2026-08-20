@@ -217,7 +217,8 @@ export default function AdminInfluencerOutreach() {
     <div className="space-y-6">
       <PageHeader
         title="Abordagem de Influenciadores"
-        description="Identifique canais de contato, personalize a mensagem e acompanhe as respostas das parcerias."
+        icon={Mail}
+        subtitle="Identifique canais de contato, personalize a mensagem e acompanhe as respostas das parcerias."
       />
 
       <Tabs value={tab} onValueChange={setTab}>
