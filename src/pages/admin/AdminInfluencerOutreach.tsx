@@ -342,57 +342,63 @@ export default function AdminInfluencerOutreach() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10">
+                      <TableHead className="w-10 py-3">
                         <Checkbox checked={allVisibleSelected}
                           onCheckedChange={(v) => setSelectedIds(v ? filtered.map((p) => p.id) : [])} />
                       </TableHead>
-                      <TableHead>Canal</TableHead>
-                      <TableHead>Contatos</TableHead>
-                      <TableHead className="text-right">Inscritos</TableHead>
-                      <TableHead className="text-right">Fit</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead />
+                      <TableHead className="py-3">Canal</TableHead>
+                      <TableHead className="py-3">Contatos</TableHead>
+                      <TableHead className="text-right py-3">Inscritos</TableHead>
+                      <TableHead className="text-right py-3">Fit</TableHead>
+                      <TableHead className="py-3">Status</TableHead>
+                      <TableHead className="py-3" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={7} className="text-center py-10">
+                      <TableRow><TableCell colSpan={7} className="text-center py-12">
                         <Loader2 className="animate-spin mx-auto text-muted-foreground" size={18} />
                       </TableCell></TableRow>
                     ) : filtered.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} className="text-center py-10 text-sm text-muted-foreground">
-                        Nenhum influenciador encontrado com esses filtros.
+                      <TableRow><TableCell colSpan={7} className="text-center py-12 text-sm text-muted-foreground">
+                        Nenhum influenciador qualificado com esses filtros. Salve canais na aba de Prospecção para que apareçam aqui.
                       </TableCell></TableRow>
                     ) : filtered.slice(0, 200).map((p) => {
                       const list = contactsMap[p.id] ?? [];
                       const { email } = emailOf(p);
                       return (
                         <TableRow key={p.id} className="cursor-pointer" onClick={() => setDetail(p)}>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
+                          <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
                             <Checkbox checked={selectedIds.includes(p.id)}
                               onCheckedChange={(v) => setSelectedIds((s) => v ? [...s, p.id] : s.filter((x) => x !== p.id))} />
                           </TableCell>
-                          <TableCell className="max-w-[240px]">
-                            <p className="font-medium truncate">{p.channel_name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{p.channel_handle || "Handle não informado"}</p>
+                          <TableCell className="py-3 max-w-[260px]">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <ChannelAvatar src={p.thumbnail_url} name={p.channel_name} size={36} />
+                              <div className="min-w-0">
+                                <p className="font-medium truncate">{p.channel_name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{p.channel_handle || "Handle não informado"}</p>
+                              </div>
+                            </div>
                           </TableCell>
-                          <TableCell className="max-w-[280px]">
+                          <TableCell className="py-3 max-w-[280px]">
                             {email ? (
                               <span className="text-xs text-primary break-all">{email}</span>
                             ) : (
                               <span className="text-xs text-muted-foreground">Sem e-mail</span>
                             )}
                             {list.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-1">
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
                                 {list.filter((c) => c.type !== "email").slice(0, 4).map((c) => (
                                   <Badge key={c.id} variant="outline" className="text-[10px]">{contactTypeLabel(c.type)}</Badge>
                                 ))}
                               </div>
                             )}
                           </TableCell>
-                          <TableCell className="text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
-                          <TableCell className="text-right text-sm">{p.fit_score ?? 0}</TableCell>
-                          <TableCell><Badge variant="secondary" className="text-[10px]">{prospectOutreachLabel(p.status)}</Badge></TableCell>
+                          <TableCell className="py-3 text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
+                          <TableCell className="py-3 text-right text-sm">{p.fit_score ?? 0}</TableCell>
+                          <TableCell className="py-3"><Badge variant="secondary" className="text-[10px]">{prospectOutreachLabel(p.status)}</Badge></TableCell>
+
                           <TableCell onClick={(e) => e.stopPropagation()}>
                             <Button size="sm" variant="ghost" disabled={finding.includes(p.id)}
                               onClick={() => findContacts([p.id])}>
