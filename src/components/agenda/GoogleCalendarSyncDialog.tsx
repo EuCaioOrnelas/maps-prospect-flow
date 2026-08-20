@@ -252,17 +252,42 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
   const handleSync = async () => {
     setSyncing(true);
     startProgress();
+    const promise = runSync();
+    syncPromise.current = promise;
     try {
-      const res = await runSync();
+      const res = await promise;
+      if (syncPromise.current !== promise) return; // já foi para segundo plano
       toast.success(describe(res));
       onSynced?.();
       await loadStatus();
     } catch (err) {
+      if (syncPromise.current !== promise) return;
       toast.error(err instanceof Error ? err.message : "Falha ao sincronizar.");
     } finally {
-      stopProgress();
-      setSyncing(false);
+      if (syncPromise.current === promise) {
+        syncPromise.current = null;
+        stopProgress();
+        setSyncing(false);
+      }
     }
+  };
+
+  /** Continua a sincronização já em andamento fora do modal. */
+  const moveToBackground = () => {
+    const promise = syncPromise.current;
+    syncPromise.current = null;
+    stopProgress();
+    setSyncing(false);
+    onOpenChange(false);
+    toast.info("Sincronização continua em segundo plano. Avisamos quando terminar.");
+    void promise
+      ?.then((res) => {
+        toast.success(describe(res));
+        onSynced?.();
+      })
+      .catch((err) =>
+        toast.error(err instanceof Error ? err.message : "Falha ao sincronizar em segundo plano."),
+      );
   };
 
   const handleBackgroundSync = () => {
@@ -279,10 +304,17 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
   };
 
   const handleDisconnect = async () => {
+    const ok = window.confirm(
+      "Desincronizar? Todos os compromissos importados do Google serão removidos da Agenda Wiize e os vínculos serão apagados. Seus compromissos criados na Wiize permanecem.",
+    );
+    if (!ok) return;
     setSaving(true);
     try {
-      await call({ action: "disconnect" });
-      toast.success("Sincronização desativada.");
+      const res = await call({ action: "disconnect" });
+      toast.success(
+        `Sincronização removida.${res?.removed ? ` ${res.removed} compromisso(s) importado(s) excluído(s).` : ""}`,
+      );
+      onSynced?.();
       await loadStatus();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível desconectar.");
@@ -290,6 +322,7 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
       setSaving(false);
     }
   };
+
 
   const account = accounts.find((a) => a.id === tokenId);
   const needsScope = !!account && !account.has_calendar_scope;
