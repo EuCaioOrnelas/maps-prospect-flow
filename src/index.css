@@ -193,6 +193,18 @@
     color: hsl(220 25% 14%);
   }
 
+  /* Wordmark da logo: preta por padrão, branca só no tema escuro real.
+     Em páginas públicas (landing-light) sempre usa a versão preta. */
+  .logo-wordmark-dark { display: block; }
+  .logo-wordmark-white { display: none; }
+  .dark .logo-wordmark-dark { display: none; }
+  .dark .logo-wordmark-white { display: block; }
+  .landing-light .logo-wordmark-dark,
+  .landing-light.logo-wordmark-dark { display: block !important; }
+  .landing-light .logo-wordmark-white,
+  .landing-light.logo-wordmark-white { display: none !important; }
+
+
   /* Force all text in landing-light to use proper dark colors */
   .landing-light h1,
   .landing-light h2,
