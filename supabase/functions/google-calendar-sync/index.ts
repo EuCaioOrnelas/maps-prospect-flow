@@ -466,10 +466,10 @@ serve(async (req) => {
                 created_by: user.id,
                 event_type: googleType,
                 status: isPast ? "completed" : "scheduled",
-
                 source: "import",
                 timezone: TZ,
-                reminders: importedReminders,
+                reminders: isPast ? [] : importedReminders,
+
                 external_calendar_provider: "google_import",
                 external_event_id: item.id,
                 metadata: {
