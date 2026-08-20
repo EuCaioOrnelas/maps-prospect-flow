@@ -1660,8 +1660,11 @@ export type Database = {
           last_sync_error: string | null
           last_sync_status: string | null
           owner_user_id: string | null
+          pull_all_calendars: boolean
           pull_enabled: boolean
           push_enabled: boolean
+          reminder_enabled: boolean
+          reminder_minutes: number
           sync_enabled: boolean
           sync_window_days: number
           updated_at: string
@@ -1679,8 +1682,11 @@ export type Database = {
           last_sync_error?: string | null
           last_sync_status?: string | null
           owner_user_id?: string | null
+          pull_all_calendars?: boolean
           pull_enabled?: boolean
           push_enabled?: boolean
+          reminder_enabled?: boolean
+          reminder_minutes?: number
           sync_enabled?: boolean
           sync_window_days?: number
           updated_at?: string
@@ -1698,8 +1704,11 @@ export type Database = {
           last_sync_error?: string | null
           last_sync_status?: string | null
           owner_user_id?: string | null
+          pull_all_calendars?: boolean
           pull_enabled?: boolean
           push_enabled?: boolean
+          reminder_enabled?: boolean
+          reminder_minutes?: number
           sync_enabled?: boolean
           sync_window_days?: number
           updated_at?: string

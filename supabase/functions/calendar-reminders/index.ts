@@ -242,7 +242,7 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const DEFAULT_LEAD_MINUTES = 15;
+
 const TZ_OFFSET_MS = -3 * 60 * 60 * 1000;
 const APP_URL = "https://wiize.com.br";
 
@@ -253,14 +253,16 @@ const LEAD_STAGES: { key: string; minutes: number }[] = [
   { key: "10m", minutes: 10 },
 ];
 
+/**
+ * Lembrete por e-mail é OPT-IN: só envia quando o compromisso tem uma
+ * antecedência configurada (reminders = [minutos]). Sem configuração, não envia.
+ */
 function leadMinutes(reminders: unknown): number | null {
-  if (Array.isArray(reminders)) {
-    if (reminders.length === 0) return null; // lembrete desligado
-    const first = Number(reminders[0]);
-    if (Number.isFinite(first) && first > 0) return first;
-  }
-  return DEFAULT_LEAD_MINUTES;
+  if (!Array.isArray(reminders) || reminders.length === 0) return null;
+  const first = Number(reminders[0]);
+  return Number.isFinite(first) && first > 0 ? first : null;
 }
+
 
 function localDate(iso: string) {
   return new Date(new Date(iso).getTime() + TZ_OFFSET_MS);
