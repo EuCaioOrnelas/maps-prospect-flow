@@ -22,10 +22,12 @@ import {
   confidenceMeta, contactStatusLabel, contactTypeLabel, emailHtmlToText, sendStatusMeta,
   sourceLabel, textToEmailHtml, PROSPECT_OUTREACH_STATUSES, prospectOutreachLabel,
 } from "@/lib/influencerOutreach";
+import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 import {
   Loader2, Mail, Search, Send, RefreshCw, Plus, Trash2, FileText, Users,
-  CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter,
+  CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter, Info, Inbox,
 } from "lucide-react";
+
 
 const PAGE = 25;
 
