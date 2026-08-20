@@ -53,13 +53,8 @@ export function InfluencerDetailSheet({ prospect, open, onOpenChange, onStatusCh
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader className="text-left">
           <div className="flex items-start gap-3">
-            {prospect.thumbnail_url ? (
-              <img src={prospect.thumbnail_url} alt={prospect.channel_name} className="h-14 w-14 rounded-2xl object-cover" />
-            ) : (
-              <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
-                <Youtube size={20} className="text-muted-foreground" />
-              </div>
-            )}
+            <ChannelAvatar src={prospect.thumbnail_url} name={prospect.channel_name} size={56} className="rounded-2xl" />
+
             <div className="min-w-0">
               <SheetTitle className="truncate">{prospect.channel_name}</SheetTitle>
               <p className="text-sm text-muted-foreground truncate">
