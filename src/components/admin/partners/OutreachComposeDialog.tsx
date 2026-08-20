@@ -12,6 +12,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Send, Eye, Variable, AlertTriangle } from "lucide-react";
+import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
+
 import {
   DEFAULT_TEMPLATE_BODY,
   DEFAULT_TEMPLATE_SUBJECT,
