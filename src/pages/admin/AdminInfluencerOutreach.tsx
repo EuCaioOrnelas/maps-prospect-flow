@@ -398,8 +398,8 @@ export default function AdminInfluencerOutreach() {
                           <TableCell className="py-3 text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
                           <TableCell className="py-3 text-right text-sm">{p.fit_score ?? 0}</TableCell>
                           <TableCell className="py-3"><Badge variant="secondary" className="text-[10px]">{prospectOutreachLabel(p.status)}</Badge></TableCell>
+                          <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
 
-                          <TableCell onClick={(e) => e.stopPropagation()}>
                             <Button size="sm" variant="ghost" disabled={finding.includes(p.id)}
                               onClick={() => findContacts([p.id])}>
                               {finding.includes(p.id)
