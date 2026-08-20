@@ -494,24 +494,41 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
                 </div>
 
                 {settings?.last_sync_at && (
-                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <CheckCircle2
-                      className={cn(
-                        "h-3.5 w-3.5",
-                        settings.last_sync_status === "ok" ? "text-emerald-500" : "text-amber-500",
-                      )}
-                    />
-                    Última sincronização: {new Date(settings.last_sync_at).toLocaleString("pt-BR")}
-                    {settings.last_sync_error ? ` — ${settings.last_sync_error}` : ""}
-                  </p>
+                  <div className="rounded-xl border border-border bg-muted/30 p-3">
+                    <p className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                      <CheckCircle2
+                        className={cn(
+                          "h-3.5 w-3.5",
+                          settings.last_sync_status === "ok" ? "text-emerald-500" : "text-amber-500",
+                        )}
+                      />
+                      Última sincronização: {new Date(settings.last_sync_at).toLocaleString("pt-BR")}
+                    </p>
+                    {settings.last_sync_error && (
+                      <p className="mt-1 line-clamp-3 text-[11px] leading-relaxed text-amber-600">
+                        {settings.last_sync_error}
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {(syncing || progress > 0) && (
-                  <div className="space-y-1.5">
+                  <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3">
                     <Progress value={progress} className="h-2" />
                     <p className="text-[11px] text-muted-foreground">
-                      Sincronizando compromissos com o Google…
+                      Sincronizando compromissos com o Google… agendas grandes podem levar alguns
+                      minutos. Não feche esta janela ou continue em segundo plano.
                     </p>
+                    {syncing && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={moveToBackground}
+                        className="w-full rounded-lg text-xs"
+                      >
+                        Continuar em segundo plano
+                      </Button>
+                    )}
                   </div>
                 )}
 
@@ -543,6 +560,7 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
                 >
                   Sincronizar em segundo plano e fechar
                 </Button>
+
 
                 {settings && (
                   <Button
