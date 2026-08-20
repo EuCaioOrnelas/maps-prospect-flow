@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { InfluencerDetailSheet } from "@/components/admin/partners/InfluencerDetailSheet";
+import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
+
 import { useToast } from "@/hooks/use-toast";
 import {
   PROSPECT_STATUSES,
@@ -433,13 +435,8 @@ export default function AdminInfluencerProspecting() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3 min-w-0">
-                        {p.thumbnail_url ? (
-                          <img src={p.thumbnail_url} alt={p.channel_name} className="h-9 w-9 rounded-xl object-cover" />
-                        ) : (
-                          <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center">
-                            <Youtube size={16} className="text-muted-foreground" />
-                          </div>
-                        )}
+                        <ChannelAvatar src={p.thumbnail_url} name={p.channel_name} size={36} />
+
                         <div className="min-w-0">
                           <p className="font-medium truncate max-w-[180px]">{p.channel_name}</p>
                           <p className="text-xs text-muted-foreground truncate max-w-[180px]">

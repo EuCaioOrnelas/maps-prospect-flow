@@ -22,12 +22,27 @@ import {
   confidenceMeta, contactStatusLabel, contactTypeLabel, emailHtmlToText, sendStatusMeta,
   sourceLabel, textToEmailHtml, PROSPECT_OUTREACH_STATUSES, prospectOutreachLabel,
 } from "@/lib/influencerOutreach";
+import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 import {
   Loader2, Mail, Search, Send, RefreshCw, Plus, Trash2, FileText, Users,
-  CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter,
+  CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter, Info, Inbox,
 } from "lucide-react";
 
+
 const PAGE = 25;
+
+/** Apenas leads qualificados (salvos na prospecção) entram na esteira de abordagem. */
+const QUALIFIED_STATUSES = [
+  "qualificado",
+  "contatos_identificados",
+  "pronto_abordagem",
+  "sem_contato",
+  "email_enviado",
+  "respondeu",
+  "negociacao",
+  "parceria_ativa",
+];
+
 
 export default function AdminInfluencerOutreach() {
   const { toast } = useToast();
@@ -58,11 +73,15 @@ export default function AdminInfluencerOutreach() {
 
   const loadProspects = useCallback(async () => {
     setLoading(true);
+    // Só entram na fila de abordagem influenciadores já qualificados (salvos na prospecção).
     const { data } = await (supabase as any)
       .from("influencer_prospects")
       .select("*")
+      .eq("saved", true)
+      .in("status", QUALIFIED_STATUSES)
       .order("fit_score", { ascending: false })
       .limit(400);
+
     const rows = data ?? [];
     setProspects(rows);
     if (rows.length) {
@@ -214,24 +233,71 @@ export default function AdminInfluencerOutreach() {
   const allVisibleSelected = filtered.length > 0 && filtered.every((p) => selectedIds.includes(p.id));
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <PageHeader
         title="Abordagem de Influenciadores"
         icon={Mail}
         subtitle="Identifique canais de contato, personalize a mensagem e acompanhe as respostas das parcerias."
       />
 
-      <Tabs value={tab} onValueChange={setTab}>
+      {/* Como funciona o fluxo de abordagem */}
+      <Card className="border-primary/20 bg-primary/[0.04]">
+        <CardContent className="p-5 lg:p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center text-primary">
+              <Info size={15} />
+            </div>
+            <p className="text-sm font-semibold">Como funciona a abordagem</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              {
+                t: "1 · Qualificação",
+                d: "Só aparecem aqui os influenciadores marcados como qualificados na Prospecção. Se um canal não estiver na lista, salve-o na aba de prospecção primeiro.",
+              },
+              {
+                t: "2 · Contatos",
+                d: "“Buscar contatos” varre a página do canal, descrições de vídeos e o site oficial atrás de e-mail e redes. O melhor e-mail encontrado vira o destino da abordagem.",
+              },
+              {
+                t: "3 · Envio",
+                d: "Você seleciona os canais, escreve a mensagem (com variáveis) e cria a campanha. Os e-mails saem em lotes pela Resend, com link de descadastro obrigatório.",
+              },
+              {
+                t: "4 · Resposta",
+                d: "Cada envio tem um Reply-To único (parcerias+INF…@wiize.com.br). Quando o influenciador responde, a mensagem cai na caixa de parcerias, o envio vira “Resposta recebida” e o canal muda para “Respondeu”.",
+              },
+            ].map((s) => (
+              <div key={s.t} className="rounded-2xl border border-border bg-background p-4 space-y-1.5">
+                <p className="text-xs font-semibold text-primary">{s.t}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{s.d}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-start gap-2 rounded-xl border border-border bg-background p-3">
+            <Inbox size={14} className="text-primary mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Para responder, basta responder o e-mail direto na caixa de parcerias — a conversa segue por e-mail normalmente.
+              Dentro do sistema, acompanhe cada envio em <strong>Campanhas</strong> e use o botão de resposta para marcar
+              manualmente quem já respondeu. Quem pede descadastro é bloqueado automaticamente em envios futuros.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="abordagens">Abordagens</TabsTrigger>
           <TabsTrigger value="campanhas">Campanhas</TabsTrigger>
           <TabsTrigger value="modelos">Modelos</TabsTrigger>
         </TabsList>
 
+
         {/* ─────────────── ABORDAGENS ─────────────── */}
-        <TabsContent value="abordagens" className="space-y-4 mt-4">
+        <TabsContent value="abordagens" className="space-y-5 mt-5">
           <Card>
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-5 lg:p-6 space-y-5">
+
               <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_1fr]">
                 <div className="relative">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -276,58 +342,64 @@ export default function AdminInfluencerOutreach() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10">
+                      <TableHead className="w-10 py-3">
                         <Checkbox checked={allVisibleSelected}
                           onCheckedChange={(v) => setSelectedIds(v ? filtered.map((p) => p.id) : [])} />
                       </TableHead>
-                      <TableHead>Canal</TableHead>
-                      <TableHead>Contatos</TableHead>
-                      <TableHead className="text-right">Inscritos</TableHead>
-                      <TableHead className="text-right">Fit</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead />
+                      <TableHead className="py-3">Canal</TableHead>
+                      <TableHead className="py-3">Contatos</TableHead>
+                      <TableHead className="text-right py-3">Inscritos</TableHead>
+                      <TableHead className="text-right py-3">Fit</TableHead>
+                      <TableHead className="py-3">Status</TableHead>
+                      <TableHead className="py-3" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={7} className="text-center py-10">
+                      <TableRow><TableCell colSpan={7} className="text-center py-12">
                         <Loader2 className="animate-spin mx-auto text-muted-foreground" size={18} />
                       </TableCell></TableRow>
                     ) : filtered.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} className="text-center py-10 text-sm text-muted-foreground">
-                        Nenhum influenciador encontrado com esses filtros.
+                      <TableRow><TableCell colSpan={7} className="text-center py-12 text-sm text-muted-foreground">
+                        Nenhum influenciador qualificado com esses filtros. Salve canais na aba de Prospecção para que apareçam aqui.
                       </TableCell></TableRow>
                     ) : filtered.slice(0, 200).map((p) => {
                       const list = contactsMap[p.id] ?? [];
                       const { email } = emailOf(p);
                       return (
                         <TableRow key={p.id} className="cursor-pointer" onClick={() => setDetail(p)}>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
+                          <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
                             <Checkbox checked={selectedIds.includes(p.id)}
                               onCheckedChange={(v) => setSelectedIds((s) => v ? [...s, p.id] : s.filter((x) => x !== p.id))} />
                           </TableCell>
-                          <TableCell className="max-w-[240px]">
-                            <p className="font-medium truncate">{p.channel_name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{p.channel_handle || "Handle não informado"}</p>
+                          <TableCell className="py-3 max-w-[260px]">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <ChannelAvatar src={p.thumbnail_url} name={p.channel_name} size={36} />
+                              <div className="min-w-0">
+                                <p className="font-medium truncate">{p.channel_name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{p.channel_handle || "Handle não informado"}</p>
+                              </div>
+                            </div>
                           </TableCell>
-                          <TableCell className="max-w-[280px]">
+                          <TableCell className="py-3 max-w-[280px]">
                             {email ? (
                               <span className="text-xs text-primary break-all">{email}</span>
                             ) : (
                               <span className="text-xs text-muted-foreground">Sem e-mail</span>
                             )}
                             {list.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-1">
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
                                 {list.filter((c) => c.type !== "email").slice(0, 4).map((c) => (
                                   <Badge key={c.id} variant="outline" className="text-[10px]">{contactTypeLabel(c.type)}</Badge>
                                 ))}
                               </div>
                             )}
                           </TableCell>
-                          <TableCell className="text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
-                          <TableCell className="text-right text-sm">{p.fit_score ?? 0}</TableCell>
-                          <TableCell><Badge variant="secondary" className="text-[10px]">{prospectOutreachLabel(p.status)}</Badge></TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
+                          <TableCell className="py-3 text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
+                          <TableCell className="py-3 text-right text-sm">{p.fit_score ?? 0}</TableCell>
+                          <TableCell className="py-3"><Badge variant="secondary" className="text-[10px]">{prospectOutreachLabel(p.status)}</Badge></TableCell>
+                          <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
+
                             <Button size="sm" variant="ghost" disabled={finding.includes(p.id)}
                               onClick={() => findContacts([p.id])}>
                               {finding.includes(p.id)
@@ -346,37 +418,39 @@ export default function AdminInfluencerOutreach() {
         </TabsContent>
 
         {/* ─────────────── CAMPANHAS ─────────────── */}
-        <TabsContent value="campanhas" className="space-y-4 mt-4">
+        <TabsContent value="campanhas" className="space-y-5 mt-5">
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-5 lg:p-6">
               <div className="rounded-xl border border-border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Campanha</TableHead>
-                      <TableHead>Criada em</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
+                      <TableHead className="py-3">Campanha</TableHead>
+                      <TableHead className="py-3">Criada em</TableHead>
+                      <TableHead className="py-3">Status</TableHead>
+                      <TableHead className="text-right py-3">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {campaigns.length === 0 ? (
-                      <TableRow><TableCell colSpan={4} className="text-center py-10 text-sm text-muted-foreground">
+                      <TableRow><TableCell colSpan={4} className="text-center py-12 text-sm text-muted-foreground">
                         Nenhuma campanha criada ainda.
                       </TableCell></TableRow>
                     ) : campaigns.map((c) => (
                       <TableRow key={c.id} className="cursor-pointer"
                         onClick={() => { setOpenCampaign(c); loadRecipients(c.id); }}>
-                        <TableCell>
+                        <TableCell className="py-3">
                           <p className="font-medium">{c.name}</p>
                           <p className="text-xs text-muted-foreground truncate max-w-[380px]">{c.subject}</p>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
+                        <TableCell className="py-3 text-xs text-muted-foreground">
                           {new Date(c.created_at).toLocaleString("pt-BR")}
                         </TableCell>
-                        <TableCell><Badge variant="secondary" className="text-[10px]">{c.status}</Badge></TableCell>
-                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex justify-end gap-1">
+
+                        <TableCell className="py-3"><Badge variant="secondary" className="text-[10px]">{c.status}</Badge></TableCell>
+                        <TableCell className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex justify-end gap-1.5">
+
                             <Button size="sm" variant="outline" disabled={processing === c.id || c.status === "cancelada"}
                               onClick={() => runQueue(c.id)}>
                               {processing === c.id
@@ -401,13 +475,14 @@ export default function AdminInfluencerOutreach() {
         </TabsContent>
 
         {/* ─────────────── MODELOS ─────────────── */}
-        <TabsContent value="modelos" className="space-y-4 mt-4">
+        <TabsContent value="modelos" className="space-y-5 mt-5">
+
           <div className="flex justify-end">
             <Button size="sm" onClick={() => setEditing({ name: "", subject: DEFAULT_TEMPLATE_SUBJECT, bodyText: DEFAULT_TEMPLATE_BODY })}>
               <Plus className="mr-2" size={14} /> Novo modelo
             </Button>
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             {templates.length === 0 && (
               <Card><CardContent className="p-6 text-sm text-muted-foreground">
                 Nenhum modelo salvo. Crie modelos reutilizáveis com variáveis dinâmicas.
@@ -545,8 +620,14 @@ export default function AdminInfluencerOutreach() {
       {/* Contatos do influenciador */}
       <Dialog open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{detail?.channel_name}</DialogTitle></DialogHeader>
-          <div className="space-y-2">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <ChannelAvatar src={detail?.thumbnail_url} name={detail?.channel_name} size={40} />
+              <span className="truncate">{detail?.channel_name}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+
             {(contactsMap[detail?.id] ?? []).length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Nenhum canal de contato identificado. Use “Buscar contatos” para varrer o YouTube e o site oficial.
