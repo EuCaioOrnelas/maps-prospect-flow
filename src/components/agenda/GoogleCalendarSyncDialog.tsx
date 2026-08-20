@@ -98,6 +98,8 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
 
   const progressTimer = useRef<number | null>(null);
   const syncPromise = useRef<Promise<any> | null>(null);
+  const autoSyncRef = useRef<((tokenIdOverride?: string) => Promise<void>) | null>(null);
+
 
   const call = useCallback(async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("google-calendar-sync", { body });
@@ -128,13 +130,17 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
   const loadStatus = useCallback(async () => {
     setLoading(true);
     try {
-      applyState(await call({ action: "status" }));
+      const state = await call({ action: "status" });
+      applyState(state);
+      return state;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível carregar a conexão.");
+      return null;
     } finally {
       setLoading(false);
     }
   }, [call, applyState]);
+
 
   useEffect(() => {
     if (open) void loadStatus();
@@ -188,25 +194,36 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
       if (!data?.url) throw new Error("Não foi possível iniciar a autorização.");
       const popup = window.open(data.url, "google-oauth", "width=520,height=680,left=200,top=80");
 
+      let finished = false;
+      const finish = async (announce: boolean) => {
+        if (finished) return;
+        finished = true;
+        window.removeEventListener("message", onMessage);
+        if (announce) toast.success("Conta Google conectada.");
+        const state = await loadStatus();
+        // Primeira sincronização automática: o usuário não precisa clicar em nada.
+        const account = (state?.accounts || [])[0];
+        if (account) void autoSyncRef.current?.(state?.settings?.google_token_id || account.id);
+
+      };
+
       const onMessage = (event: MessageEvent) => {
         if ((event.data as any)?.source !== "wiize-google-oauth") return;
-        window.removeEventListener("message", onMessage);
-        toast.success("Conta Google conectada.");
-        void loadStatus();
+        void finish(true);
       };
       window.addEventListener("message", onMessage);
 
       const timer = window.setInterval(() => {
         if (popup?.closed) {
           window.clearInterval(timer);
-          window.removeEventListener("message", onMessage);
-          void loadStatus();
+          void finish(false);
         }
       }, 1000);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao conectar com o Google.");
     }
   };
+
 
   const buildSettings = () => {
     const chosen = calendars.find((c) => c.id === calendarId);
@@ -270,14 +287,20 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
       res.updated || 0
     } atualizados${res.skipped ? ` · ${res.skipped} ignorados por conflito` : ""}`;
 
-  const handleSync = async () => {
-    if (!tokenId) {
+  const handleSync = async (tokenIdOverride?: string) => {
+    const activeToken = tokenIdOverride || tokenId;
+    if (!activeToken) {
       toast.error("Conecte uma conta Google primeiro.");
       return;
     }
     setSyncing(true);
     startProgress();
-    const promise = runSync();
+    const promise = tokenIdOverride
+      ? call({
+          action: "save",
+          settings: { ...buildSettings(), google_token_id: tokenIdOverride },
+        }).then(() => call({ action: "sync" }))
+      : runSync();
     syncPromise.current = promise;
     try {
       const res = await promise;
@@ -296,6 +319,10 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
       }
     }
   };
+
+  // Permite disparar a sincronização logo após o OAuth, sem depender de estado já renderizado.
+  autoSyncRef.current = handleSync;
+
 
   /** Continua a sincronização já em andamento fora do modal. */
   const moveToBackground = () => {
@@ -323,11 +350,18 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
     setSaving(true);
     try {
       const res = await call({ action: "disconnect" });
+      // Limpa o estado local na hora — sem precisar recarregar a página.
+      setAccounts([]);
+      setSettings(null);
+      setTokenId("");
+      setCalendars([]);
+      setHealth("unknown");
       toast.success(
         `Conexão removida.${res?.removed ? ` ${res.removed} importado(s) excluído(s).` : ""}`,
       );
       onSynced?.();
       await loadStatus();
+
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível desconectar.");
     } finally {
@@ -641,7 +675,7 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Salvar preferências
             </Button>
-            <Button onClick={handleSync} disabled={syncing} className="flex-1 rounded-xl">
+            <Button onClick={() => void handleSync()} disabled={syncing} className="flex-1 rounded-xl">
               {syncing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
