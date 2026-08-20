@@ -294,9 +294,10 @@ export default function AdminInfluencerOutreach() {
 
 
         {/* ─────────────── ABORDAGENS ─────────────── */}
-        <TabsContent value="abordagens" className="space-y-4 mt-4">
+        <TabsContent value="abordagens" className="space-y-5 mt-5">
           <Card>
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-5 lg:p-6 space-y-5">
+
               <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_1fr]">
                 <div className="relative">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
