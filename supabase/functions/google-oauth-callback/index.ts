@@ -10,13 +10,13 @@ serve(async (req) => {
 
     if (error) {
       return new Response(renderHTML("Erro", `Autorização negada: ${error}`), {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
 
     if (!code || !stateParam) {
       return new Response(renderHTML("Erro", "Parâmetros inválidos"), {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
 
@@ -25,7 +25,7 @@ serve(async (req) => {
 
     if (!userId) {
       return new Response(renderHTML("Erro", "Usuário não identificado"), {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
 
@@ -53,7 +53,7 @@ serve(async (req) => {
     if (!tokenRes.ok || !tokenData.access_token) {
       console.error("Token exchange failed:", tokenData);
       return new Response(renderHTML("Erro", "Falha ao obter tokens do Google"), {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
 
@@ -83,7 +83,7 @@ serve(async (req) => {
     if (upsertError) {
       console.error("Failed to save tokens:", upsertError);
       return new Response(renderHTML("Erro", "Falha ao salvar credenciais"), {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
 
@@ -104,12 +104,12 @@ serve(async (req) => {
     }
 
     return new Response(renderHTML("Sucesso! ✅", `Conta Google (${userInfo.email || ""}) conectada com sucesso. Você pode fechar esta janela.`), {
-      headers: { "Content-Type": "text/html" },
+      headers: { "Content-Type": "text/html; charset=utf-8" },
     });
   } catch (err) {
     console.error("Error in google-oauth-callback:", err);
     return new Response(renderHTML("Erro", err.message), {
-      headers: { "Content-Type": "text/html" },
+      headers: { "Content-Type": "text/html; charset=utf-8" },
     });
   }
 });
