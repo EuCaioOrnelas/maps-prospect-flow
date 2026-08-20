@@ -350,11 +350,18 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
     setSaving(true);
     try {
       const res = await call({ action: "disconnect" });
+      // Limpa o estado local na hora — sem precisar recarregar a página.
+      setAccounts([]);
+      setSettings(null);
+      setTokenId("");
+      setCalendars([]);
+      setHealth("unknown");
       toast.success(
         `Conexão removida.${res?.removed ? ` ${res.removed} importado(s) excluído(s).` : ""}`,
       );
       onSynced?.();
       await loadStatus();
+
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível desconectar.");
     } finally {
