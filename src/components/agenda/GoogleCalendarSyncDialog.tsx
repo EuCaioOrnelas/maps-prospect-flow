@@ -98,6 +98,8 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
 
   const progressTimer = useRef<number | null>(null);
   const syncPromise = useRef<Promise<any> | null>(null);
+  const autoSyncRef = useRef<(() => Promise<void>) | null>(null);
+
 
   const call = useCallback(async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("google-calendar-sync", { body });
