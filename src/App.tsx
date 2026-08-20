@@ -171,6 +171,7 @@ const PartnerLevels = lazyWithRetry(() => import("./pages/partners/PartnerLevels
 const AdminPartnersGoals = lazyWithRetry(() => import("./pages/admin/AdminPartnersGoals"), "AdminPartnersGoals");
 const AdminPartnersLinks = lazyWithRetry(() => import("./pages/admin/AdminPartnersLinks"), "AdminPartnersLinks");
 const AdminInfluencerProspecting = lazyWithRetry(() => import("./pages/admin/AdminInfluencerProspecting"), "AdminInfluencerProspecting");
+const AdminInfluencerOutreach = lazyWithRetry(() => import("./pages/admin/AdminInfluencerOutreach"), "AdminInfluencerOutreach");
 const PartnerSlugRedirect = lazyWithRetry(() => import("./pages/PartnerSlugRedirect"), "PartnerSlugRedirect");
 const PartnersLanding = lazyWithRetry(() => import("./pages/PartnersLanding"), "PartnersLanding");
 const PartnerVerification = lazyWithRetry(() => import("./pages/PartnerVerification"), "PartnerVerification");
@@ -441,6 +442,7 @@ const App = () => (
                   <Route path="partners/metas" element={<AdminPartnersGoals />} />
                   <Route path="partners/links" element={<AdminPartnersLinks />} />
                   <Route path="partners/influenciadores" element={<AdminInfluencerProspecting />} />
+                  <Route path="partners/abordagem" element={<AdminInfluencerOutreach />} />
                 </Route>
 
                 {/* Integration Layer — ADMIN ONLY. Rota pública /integration/* removida.
