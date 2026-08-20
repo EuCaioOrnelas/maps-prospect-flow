@@ -196,16 +196,29 @@ serve(async (req) => {
       });
     }
 
+    // Confere se a conexão continua válida (token + permissão de agenda).
+    if (action === "verify") {
+      const res = await gfetch("/users/me/calendarList?maxResults=1");
+      if (res.status === 401 || res.status === 403) {
+        return json({ healthy: false, requiresAuth: true, reason: "Autorização do Google expirada." });
+      }
+      if (!res.ok) {
+        return json({ healthy: false, reason: `Google respondeu ${res.status}.` });
+      }
+      return json({ healthy: true, email: token.google_email });
+    }
+
     if (action === "sync") {
       if (!settings) return json({ error: "Configure a sincronização primeiro." }, 400);
       if (settings.sync_enabled === false) return json({ ok: true, skipped: true });
 
       const calendarId = encodeURIComponent(settings.calendar_id || "primary");
       const days = settings.sync_window_days || 60;
-      const from = new Date(Date.now() - 7 * 86400000);
-      const to = new Date(Date.now() + days * 86400000);
+      // Puxa tudo: um ano para trás e a janela escolhida (mínimo 365 dias) para frente.
+      const from = new Date(Date.now() - 365 * 86400000);
+      const to = new Date(Date.now() + Math.max(days, 365) * 86400000);
 
-      let pushed = 0, updated = 0, pulled = 0, errors: string[] = [];
+      let pushed = 0, updated = 0, pulled = 0, skipped = 0, errors: string[] = [];
 
       // ---- 1. Wiize -> Google ----
       if (settings.push_enabled !== false) {
