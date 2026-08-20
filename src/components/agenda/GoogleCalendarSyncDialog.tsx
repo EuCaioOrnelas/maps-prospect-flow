@@ -188,25 +188,34 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
       if (!data?.url) throw new Error("Não foi possível iniciar a autorização.");
       const popup = window.open(data.url, "google-oauth", "width=520,height=680,left=200,top=80");
 
+      let finished = false;
+      const finish = async (announce: boolean) => {
+        if (finished) return;
+        finished = true;
+        window.removeEventListener("message", onMessage);
+        if (announce) toast.success("Conta Google conectada.");
+        await loadStatus();
+        // Primeira sincronização automática: o usuário não precisa clicar em nada.
+        void autoSyncRef.current?.();
+      };
+
       const onMessage = (event: MessageEvent) => {
         if ((event.data as any)?.source !== "wiize-google-oauth") return;
-        window.removeEventListener("message", onMessage);
-        toast.success("Conta Google conectada.");
-        void loadStatus();
+        void finish(true);
       };
       window.addEventListener("message", onMessage);
 
       const timer = window.setInterval(() => {
         if (popup?.closed) {
           window.clearInterval(timer);
-          window.removeEventListener("message", onMessage);
-          void loadStatus();
+          void finish(false);
         }
       }, 1000);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao conectar com o Google.");
     }
   };
+
 
   const buildSettings = () => {
     const chosen = calendars.find((c) => c.id === calendarId);
