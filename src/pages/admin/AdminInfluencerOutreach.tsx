@@ -475,7 +475,8 @@ export default function AdminInfluencerOutreach() {
         </TabsContent>
 
         {/* ─────────────── MODELOS ─────────────── */}
-        <TabsContent value="modelos" className="space-y-4 mt-4">
+        <TabsContent value="modelos" className="space-y-5 mt-5">
+
           <div className="flex justify-end">
             <Button size="sm" onClick={() => setEditing({ name: "", subject: DEFAULT_TEMPLATE_SUBJECT, bodyText: DEFAULT_TEMPLATE_BODY })}>
               <Plus className="mr-2" size={14} /> Novo modelo
