@@ -202,18 +202,40 @@ serve(async (req) => {
         },
       });
 
+    /** Todas as agendas da conta (principal, trabalho, treino, compartilhadas...). */
+    const listCalendars = async () => {
+      const all: any[] = [];
+      let pageToken: string | undefined;
+      let pages = 0;
+      do {
+        const qs = new URLSearchParams({ maxResults: "250", showHidden: "true" });
+        if (pageToken) qs.set("pageToken", pageToken);
+        const res = await gfetch(`/users/me/calendarList?${qs.toString()}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error?.message || `Google respondeu ${res.status}`);
+        all.push(...(data.items || []));
+        pageToken = data.nextPageToken;
+        pages++;
+      } while (pageToken && pages < 10);
+      return all;
+    };
+
     if (action === "calendars") {
-      const res = await gfetch("/users/me/calendarList?minAccessRole=writer");
-      const data = await res.json();
-      if (!res.ok) return json({ error: "Falha ao listar agendas", details: data }, res.status);
-      return json({
-        calendars: (data.items || []).map((c: any) => ({
-          id: c.id,
-          summary: c.summary,
-          primary: !!c.primary,
-        })),
-      });
+      try {
+        const items = await listCalendars();
+        return json({
+          calendars: items.map((c: any) => ({
+            id: c.id,
+            summary: c.summaryOverride || c.summary,
+            primary: !!c.primary,
+            writable: c.accessRole === "owner" || c.accessRole === "writer",
+          })),
+        });
+      } catch (e) {
+        return json({ error: `Falha ao listar agendas: ${(e as Error).message}` }, 500);
+      }
     }
+
 
     // Confere se a conexão continua válida (token + permissão de agenda).
     if (action === "verify") {
