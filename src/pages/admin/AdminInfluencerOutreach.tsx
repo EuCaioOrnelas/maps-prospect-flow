@@ -18,11 +18,12 @@ import { OutreachComposeDialog } from "@/components/admin/partners/OutreachCompo
 import { useToast } from "@/hooks/use-toast";
 import { fmtNum } from "@/lib/influencerProspecting";
 import {
-  CONTACT_TYPES, CONTACT_STATUSES, DEFAULT_TEMPLATE_BODY, DEFAULT_TEMPLATE_SUBJECT,
-  confidenceMeta, contactStatusLabel, contactTypeLabel, emailHtmlToText, sendStatusMeta,
-  sourceLabel, textToEmailHtml, PROSPECT_OUTREACH_STATUSES, prospectOutreachLabel,
+  DEFAULT_TEMPLATE_BODY, DEFAULT_TEMPLATE_SUBJECT,
+  contactTypeLabel, emailHtmlToText, sendStatusMeta,
+  textToEmailHtml, PROSPECT_OUTREACH_STATUSES, prospectOutreachLabel,
 } from "@/lib/influencerOutreach";
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
+import { InfluencerContactsDialog } from "@/components/admin/partners/InfluencerContactsDialog";
 import {
   Loader2, Mail, Search, Send, RefreshCw, Plus, Trash2, FileText, Users,
   CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter, Info, Inbox,
@@ -121,7 +122,9 @@ export default function AdminInfluencerOutreach() {
   }, [openCampaign, loadCampaigns]);
 
   const emailOf = (p: any) => {
-    const c = (contactsMap[p.id] ?? []).find((x) => x.type === "email" && x.status !== "nao_contatar");
+    const list = contactsMap[p.id] ?? [];
+    const c = list.find((x) => x.type === "email" && x.is_primary && x.status !== "nao_contatar")
+      ?? list.find((x) => x.type === "email" && x.status !== "nao_contatar");
     return { contact: c ?? null, email: c?.value || (p.contact_email ?? "") };
   };
 
@@ -385,7 +388,9 @@ export default function AdminInfluencerOutreach() {
                             {email ? (
                               <span className="text-xs text-primary break-all">{email}</span>
                             ) : (
-                              <span className="text-xs text-muted-foreground">Sem e-mail</span>
+                              <span className="text-xs text-muted-foreground underline decoration-dotted">
+                                Sem e-mail · clique para anotar
+                              </span>
                             )}
                             {list.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -393,6 +398,9 @@ export default function AdminInfluencerOutreach() {
                                   <Badge key={c.id} variant="outline" className="text-[10px]">{contactTypeLabel(c.type)}</Badge>
                                 ))}
                               </div>
+                            )}
+                            {p.notes && (
+                              <p className="text-[10px] text-muted-foreground mt-1 truncate">📝 {p.notes}</p>
                             )}
                           </TableCell>
                           <TableCell className="py-3 text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
@@ -617,50 +625,15 @@ export default function AdminInfluencerOutreach() {
         </DialogContent>
       </Dialog>
 
-      {/* Contatos do influenciador */}
-      <Dialog open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <ChannelAvatar src={detail?.thumbnail_url} name={detail?.channel_name} size={40} />
-              <span className="truncate">{detail?.channel_name}</span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-
-            {(contactsMap[detail?.id] ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum canal de contato identificado. Use “Buscar contatos” para varrer o YouTube e o site oficial.
-              </p>
-            ) : (contactsMap[detail?.id] ?? []).map((c) => {
-              const conf = confidenceMeta(c.confidence);
-              return (
-                <div key={c.id} className="rounded-xl border border-border p-3 space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge variant="outline" className="text-[10px]">{contactTypeLabel(c.type)}</Badge>
-                    <span className={`inline-flex items-center gap-1 text-[11px] ${conf.text}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${conf.dot}`} /> Confiança {conf.label}
-                    </span>
-                  </div>
-                  <p className="text-sm break-all">{c.value}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {(c.sources ?? []).map(sourceLabel).join(" · ") || "Origem não informada"} · {contactStatusLabel(c.status)}
-                  </p>
-                  <Select value={c.status} onValueChange={async (v) => {
-                    await (supabase as any).from("influencer_contacts").update({ status: v }).eq("id", c.id);
-                    loadProspects();
-                  }}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {CONTACT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              );
-            })}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Ficha de contatos do influenciador (abre ao clicar no canal) */}
+      <InfluencerContactsDialog
+        prospect={detail}
+        contacts={contactsMap[detail?.id] ?? []}
+        onClose={() => setDetail(null)}
+        onChanged={loadProspects}
+        onFind={(id) => findContacts([id])}
+        finding={finding.includes(detail?.id)}
+      />
     </div>
   );
 }
