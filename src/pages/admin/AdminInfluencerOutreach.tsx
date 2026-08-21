@@ -122,7 +122,9 @@ export default function AdminInfluencerOutreach() {
   }, [openCampaign, loadCampaigns]);
 
   const emailOf = (p: any) => {
-    const c = (contactsMap[p.id] ?? []).find((x) => x.type === "email" && x.status !== "nao_contatar");
+    const list = contactsMap[p.id] ?? [];
+    const c = list.find((x) => x.type === "email" && x.is_primary && x.status !== "nao_contatar")
+      ?? list.find((x) => x.type === "email" && x.status !== "nao_contatar");
     return { contact: c ?? null, email: c?.value || (p.contact_email ?? "") };
   };
 
