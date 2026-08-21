@@ -53,7 +53,7 @@ export default function AdminInfluencerOutreach() {
   const [contactsMap, setContactsMap] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [contactFilter, setContactFilter] = useState("com_email");
+  const [contactFilter, setContactFilter] = useState("todos");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [finding, setFinding] = useState<string[]>([]);
