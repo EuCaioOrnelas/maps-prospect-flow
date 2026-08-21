@@ -13,7 +13,7 @@ import {
   CONTACT_TYPES, CONTACT_STATUSES, confidenceMeta, contactTypeLabel, contactStatusLabel,
 } from "@/lib/influencerOutreach";
 import {
-  Loader2, Plus, Trash2, Pencil, Check, X, ExternalLink, Save, Search, Link2,,
+  Loader2, Plus, Trash2, Pencil, Check, X, ExternalLink, Save, Search, Link2,
   MessageSquare,
 } from "lucide-react";
 
