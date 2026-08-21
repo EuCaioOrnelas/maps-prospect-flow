@@ -220,7 +220,7 @@ export function InfluencerContactsDialog({ prospect, contacts, onClose, onChange
 
                   {editId === c.id ? (
                     <div className="flex gap-2 items-center">
-                      <Input size={1} className="h-8 text-xs" value={editNote}
+                      <Input className="h-8 text-xs" value={editNote}
                         onChange={(e) => setEditNote(e.target.value)} placeholder="Nota do contato" />
                       <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" title="Salvar nota"
                         onClick={async () => {
