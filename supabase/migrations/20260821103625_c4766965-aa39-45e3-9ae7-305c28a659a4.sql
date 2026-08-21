@@ -1,0 +1,1 @@
+ALTER TABLE public.influencer_prospects ADD COLUMN IF NOT EXISTS notes text;

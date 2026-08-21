@@ -4000,6 +4000,7 @@ export type Database = {
           id: string
           instagram_url: string | null
           latest_video_at: string | null
+          notes: string | null
           platform: string
           quality_score: number | null
           reach_score: number | null
@@ -4037,6 +4038,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           latest_video_at?: string | null
+          notes?: string | null
           platform?: string
           quality_score?: number | null
           reach_score?: number | null
@@ -4074,6 +4076,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           latest_video_at?: string | null
+          notes?: string | null
           platform?: string
           quality_score?: number | null
           reach_score?: number | null
