@@ -24,9 +24,10 @@ import {
 } from "@/lib/influencerOutreach";
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 import { InfluencerContactsDialog } from "@/components/admin/partners/InfluencerContactsDialog";
+import { InfluencerThreadDialog } from "@/components/admin/partners/InfluencerThreadDialog";
 import {
   Loader2, Mail, Search, Send, RefreshCw, Plus, Trash2, FileText, Users,
-  CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter, Info, Inbox,
+  CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter, Info, Inbox, MessageSquare, SendHorizonal,
 } from "lucide-react";
 
 
@@ -60,6 +61,8 @@ export default function AdminInfluencerOutreach() {
   const [finding, setFinding] = useState<string[]>([]);
   const [composeOpen, setComposeOpen] = useState(false);
   const [detail, setDetail] = useState<any | null>(null);
+  const [thread, setThread] = useState<any | null>(null);
+  const [testingTemplate, setTestingTemplate] = useState<string | null>(null);
 
   // ── Campanhas ─────────────────────────────────────────────────────────────
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -210,6 +213,22 @@ export default function AdminInfluencerOutreach() {
     await loadCampaigns();
     if (openCampaign?.id === campaignId) await loadRecipients(campaignId);
     if (action === "retry") runQueue(campaignId);
+  };
+
+  const sendTestTemplate = async (key: string, subject: string, bodyHtml: string) => {
+    setTestingTemplate(key);
+    try {
+      const { data, error } = await supabase.functions.invoke("influencer-outreach", {
+        body: { action: "send_test", subject, body_html: bodyHtml },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({ title: "E-mail de teste enviado", description: `Enviado para ${(data as any).to}.` });
+    } catch (e: any) {
+      toast({ title: "Não foi possível enviar o teste", description: e.message, variant: "destructive" });
+    } finally {
+      setTestingTemplate(null);
+    }
   };
 
   const saveTemplate = async () => {
@@ -408,7 +427,11 @@ export default function AdminInfluencerOutreach() {
                           <TableCell className="py-3"><Badge variant="secondary" className="text-[10px]">{prospectOutreachLabel(p.status)}</Badge></TableCell>
                           <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
 
-                            <Button size="sm" variant="ghost" disabled={finding.includes(p.id)}
+                            <Button size="sm" variant="ghost" title="Abrir conversa"
+                              onClick={() => setThread(p)}>
+                              <MessageSquare size={14} />
+                            </Button>
+                            <Button size="sm" variant="ghost" title="Buscar contatos" disabled={finding.includes(p.id)}
                               onClick={() => findContacts([p.id])}>
                               {finding.includes(p.id)
                                 ? <Loader2 className="animate-spin" size={14} />
@@ -505,7 +528,12 @@ export default function AdminInfluencerOutreach() {
                       <p className="text-xs text-muted-foreground truncate">{t.subject}</p>
                     </div>
                     <div className="flex gap-1 shrink-0">
-                      <Button size="sm" variant="ghost"
+                      <Button size="sm" variant="ghost" title="Enviar teste para o meu e-mail"
+                        disabled={testingTemplate === t.id}
+                        onClick={() => sendTestTemplate(t.id, t.subject, t.body_html)}>
+                        {testingTemplate === t.id ? <Loader2 className="animate-spin" size={14} /> : <SendHorizonal size={14} />}
+                      </Button>
+                      <Button size="sm" variant="ghost" title="Editar"
                         onClick={() => setEditing({ ...t, bodyText: emailHtmlToText(t.body_html || "") })}>
                         <FileText size={14} />
                       </Button>
@@ -574,7 +602,14 @@ export default function AdminInfluencerOutreach() {
                               {r.sent_at ? new Date(r.sent_at).toLocaleString("pt-BR") : "—"}
                             </TableCell>
                             <TableCell className="text-xs text-destructive max-w-[220px] truncate">{r.error_message || "—"}</TableCell>
-                            <TableCell>
+                            <TableCell className="flex gap-1">
+                              <Button size="sm" variant="ghost" title="Abrir conversa"
+                                onClick={() => {
+                                  const p = prospects.find((x) => x.id === r.prospect_id);
+                                  if (p) { setOpenCampaign(null); setThread(p); }
+                                }}>
+                                <MessageSquare size={14} />
+                              </Button>
                               {r.status === "enviado" && (
                                 <Button size="sm" variant="ghost" title="Marcar como respondido"
                                   onClick={async () => {
@@ -618,6 +653,11 @@ export default function AdminInfluencerOutreach() {
                 onChange={(e) => setEditing((s: any) => ({ ...s, bodyText: e.target.value }))} />
             </div>
             <div className="flex justify-end gap-2">
+              <Button variant="ghost" disabled={testingTemplate === "editor"}
+                onClick={() => sendTestTemplate("editor", editing?.subject ?? "", textToEmailHtml(editing?.bodyText || ""))}>
+                {testingTemplate === "editor" ? <Loader2 className="animate-spin mr-2" size={14} /> : <SendHorizonal className="mr-2" size={14} />}
+                Enviar teste
+              </Button>
               <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
               <Button onClick={saveTemplate}>Salvar modelo</Button>
             </div>
@@ -626,12 +666,20 @@ export default function AdminInfluencerOutreach() {
       </Dialog>
 
       {/* Ficha de contatos do influenciador (abre ao clicar no canal) */}
+      <InfluencerThreadDialog
+        prospect={thread}
+        defaultEmail={thread ? emailOf(thread).email : ""}
+        onClose={() => setThread(null)}
+        onChanged={loadProspects}
+      />
+
       <InfluencerContactsDialog
         prospect={detail}
         contacts={contactsMap[detail?.id] ?? []}
         onClose={() => setDetail(null)}
         onChanged={loadProspects}
         onFind={(id) => findContacts([id])}
+        onOpenThread={() => { const p = detail; setDetail(null); setThread(p); }}
         finding={finding.includes(detail?.id)}
       />
     </div>

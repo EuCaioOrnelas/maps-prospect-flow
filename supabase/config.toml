@@ -134,3 +134,6 @@ verify_jwt = false
 
 [functions.influencer-outreach]
 verify_jwt = false
+
+[functions.influencer-email-inbound]
+verify_jwt = false
