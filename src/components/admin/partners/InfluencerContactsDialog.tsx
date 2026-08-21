@@ -13,7 +13,8 @@ import {
   CONTACT_TYPES, CONTACT_STATUSES, confidenceMeta, contactTypeLabel, contactStatusLabel,
 } from "@/lib/influencerOutreach";
 import {
-  Loader2, Plus, Trash2, Pencil, Check, X, ExternalLink, Save, Search, Link2,
+  Loader2, Plus, Trash2, Pencil, Check, X, ExternalLink, Save, Search, Link2,,
+  MessageSquare,
 } from "lucide-react";
 
 interface Props {
@@ -22,12 +23,13 @@ interface Props {
   onClose: () => void;
   onChanged: () => void;
   onFind: (id: string) => void;
+  onOpenThread?: () => void;
   finding: boolean;
 }
 
 const NEW_EMPTY = { type: "email", value: "", note: "" };
 
-export function InfluencerContactsDialog({ prospect, contacts, onClose, onChanged, onFind, finding }: Props) {
+export function InfluencerContactsDialog({ prospect, contacts, onClose, onChanged, onFind, onOpenThread, finding }: Props) {
   const { toast } = useToast();
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
@@ -136,6 +138,12 @@ export function InfluencerContactsDialog({ prospect, contacts, onClose, onChange
         </DialogHeader>
 
         <div className="space-y-5">
+          {onOpenThread && (
+            <Button size="sm" variant="outline" className="w-full" onClick={onOpenThread}>
+              <MessageSquare className="mr-2" size={13} /> Abrir conversa por e-mail
+            </Button>
+          )}
+
           {/* Links rápidos do canal */}
           {linkCells.length > 0 && (
             <div className="flex flex-wrap gap-2">
