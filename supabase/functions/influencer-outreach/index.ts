@@ -260,7 +260,7 @@ serve(async (req) => {
               "List-Unsubscribe": `<${unsubscribeUrl}>, <mailto:${REPLY_LOCAL}@${REPLY_DOMAIN}?subject=unsubscribe>`,
               "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
               "X-Entity-Ref-ID": r.reply_token,
-􀀀            },
+            },
           });
 
           if (!ok) {
