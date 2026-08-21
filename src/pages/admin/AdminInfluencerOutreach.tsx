@@ -388,7 +388,9 @@ export default function AdminInfluencerOutreach() {
                             {email ? (
                               <span className="text-xs text-primary break-all">{email}</span>
                             ) : (
-                              <span className="text-xs text-muted-foreground">Sem e-mail</span>
+                              <span className="text-xs text-muted-foreground underline decoration-dotted">
+                                Sem e-mail · clique para anotar
+                              </span>
                             )}
                             {list.length > 0 && (
                               <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -396,6 +398,9 @@ export default function AdminInfluencerOutreach() {
                                   <Badge key={c.id} variant="outline" className="text-[10px]">{contactTypeLabel(c.type)}</Badge>
                                 ))}
                               </div>
+                            )}
+                            {p.notes && (
+                              <p className="text-[10px] text-muted-foreground mt-1 truncate">📝 {p.notes}</p>
                             )}
                           </TableCell>
                           <TableCell className="py-3 text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
