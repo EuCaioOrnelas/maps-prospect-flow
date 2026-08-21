@@ -3977,6 +3977,79 @@ export type Database = {
         }
         Relationships: []
       }
+      influencer_messages: {
+        Row: {
+          attachments: Json
+          author_id: string | null
+          body_html: string | null
+          body_text: string
+          campaign_id: string | null
+          created_at: string
+          direction: string
+          from_email: string | null
+          id: string
+          prospect_id: string
+          provider_message_id: string | null
+          recipient_id: string | null
+          subject: string | null
+          to_email: string | null
+        }
+        Insert: {
+          attachments?: Json
+          author_id?: string | null
+          body_html?: string | null
+          body_text?: string
+          campaign_id?: string | null
+          created_at?: string
+          direction: string
+          from_email?: string | null
+          id?: string
+          prospect_id: string
+          provider_message_id?: string | null
+          recipient_id?: string | null
+          subject?: string | null
+          to_email?: string | null
+        }
+        Update: {
+          attachments?: Json
+          author_id?: string | null
+          body_html?: string | null
+          body_text?: string
+          campaign_id?: string | null
+          created_at?: string
+          direction?: string
+          from_email?: string | null
+          id?: string
+          prospect_id?: string
+          provider_message_id?: string | null
+          recipient_id?: string | null
+          subject?: string | null
+          to_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_messages_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "influencer_messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_campaign_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       influencer_prospects: {
         Row: {
           ai_reasoning: Json
