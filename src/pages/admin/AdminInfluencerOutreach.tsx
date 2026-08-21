@@ -18,7 +18,7 @@ import { OutreachComposeDialog } from "@/components/admin/partners/OutreachCompo
 import { useToast } from "@/hooks/use-toast";
 import { fmtNum } from "@/lib/influencerProspecting";
 import {
-  CONTACT_TYPES, DEFAULT_TEMPLATE_BODY, DEFAULT_TEMPLATE_SUBJECT,
+  DEFAULT_TEMPLATE_BODY, DEFAULT_TEMPLATE_SUBJECT,
   contactTypeLabel, emailHtmlToText, sendStatusMeta,
   textToEmailHtml, PROSPECT_OUTREACH_STATUSES, prospectOutreachLabel,
 } from "@/lib/influencerOutreach";
