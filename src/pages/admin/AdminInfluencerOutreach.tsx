@@ -620,50 +620,15 @@ export default function AdminInfluencerOutreach() {
         </DialogContent>
       </Dialog>
 
-      {/* Contatos do influenciador */}
-      <Dialog open={!!detail} onOpenChange={(v) => !v && setDetail(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <ChannelAvatar src={detail?.thumbnail_url} name={detail?.channel_name} size={40} />
-              <span className="truncate">{detail?.channel_name}</span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-
-            {(contactsMap[detail?.id] ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum canal de contato identificado. Use “Buscar contatos” para varrer o YouTube e o site oficial.
-              </p>
-            ) : (contactsMap[detail?.id] ?? []).map((c) => {
-              const conf = confidenceMeta(c.confidence);
-              return (
-                <div key={c.id} className="rounded-xl border border-border p-3 space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge variant="outline" className="text-[10px]">{contactTypeLabel(c.type)}</Badge>
-                    <span className={`inline-flex items-center gap-1 text-[11px] ${conf.text}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${conf.dot}`} /> Confiança {conf.label}
-                    </span>
-                  </div>
-                  <p className="text-sm break-all">{c.value}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {(c.sources ?? []).map(sourceLabel).join(" · ") || "Origem não informada"} · {contactStatusLabel(c.status)}
-                  </p>
-                  <Select value={c.status} onValueChange={async (v) => {
-                    await (supabase as any).from("influencer_contacts").update({ status: v }).eq("id", c.id);
-                    loadProspects();
-                  }}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {CONTACT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              );
-            })}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Ficha de contatos do influenciador (abre ao clicar no canal) */}
+      <InfluencerContactsDialog
+        prospect={detail}
+        contacts={contactsMap[detail?.id] ?? []}
+        onClose={() => setDetail(null)}
+        onChanged={loadProspects}
+        onFind={(id) => findContacts([id])}
+        finding={finding.includes(detail?.id)}
+      />
     </div>
   );
 }
