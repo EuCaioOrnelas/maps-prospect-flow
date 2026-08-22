@@ -442,7 +442,7 @@ serve(async (req) => {
       // remetente e pelos headers do provedor, sem expor plus-addressing ao contato.
       const { data: lastRec } = await admin
         .from("influencer_campaign_recipients")
-        .select("id, campaign_id, reply_token")
+        .select("id, campaign_id, reply_token, status")
         .eq("prospect_id", prospectId).order("created_at", { ascending: false }).limit(1).maybeSingle();
 
       let threadRec = lastRec;
@@ -499,7 +499,8 @@ serve(async (req) => {
       }
 
        await admin.from("influencer_campaign_recipients").update({
-         status: "enviado", provider_message_id: payload?.id ?? null, sent_at: new Date().toISOString(), error_message: null,
+         status: threadRec.status === "respondido" ? "respondido" : "enviado",
+         provider_message_id: payload?.id ?? null, sent_at: new Date().toISOString(), error_message: null,
        }).eq("id", threadRec.id);
        await refreshCampaignStatus(admin, threadRec.campaign_id);
 
