@@ -111,6 +111,7 @@ Deno.serve(async (req) => {
     const to = Array.isArray(data.to) ? data.to.join(",") : String(data.to || "");
     const cc = Array.isArray(data.cc) ? data.cc.join(",") : String(data.cc || "");
     const from = String(data.from || data.sender || "");
+    const fromAddress = (from.match(/<([^>]+)>/)?.[1] || from).trim().toLowerCase();
     const subject = String(data.subject || "");
     const text = String(data.text || data.body_plain || data.plain || "");
     const html = String(data.html || data.body_html || "");
@@ -133,13 +134,23 @@ Deno.serve(async (req) => {
     const outreachToken =
       (`${to},${cc},${headersBlob},${String(data?.envelope?.to || "")}`.match(/parcerias\+INF([a-f0-9]{8,})@/i)?.[1] || "")
         .toLowerCase();
-    if (outreachToken) {
+    const isPartnershipInbox = /(?:^|[<\s,])parcerias(?:\+INF[a-f0-9]+)?@wiize\.com\.br/i.test(`${to},${cc},${String(data?.envelope?.to || "")}`);
+    if (outreachToken || isPartnershipInbox) {
       const sbOut = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-      const { data: rec } = await sbOut
-        .from("influencer_campaign_recipients")
-        .select("id, campaign_id, prospect_id, email, reply_token")
-        .like("reply_token", `${outreachToken}%`)
-        .maybeSingle();
+      let rec: any = null;
+      if (outreachToken) {
+        const result = await sbOut.from("influencer_campaign_recipients")
+          .select("id, campaign_id, prospect_id, email, reply_token")
+          .like("reply_token", `${outreachToken}%`).order("created_at", { ascending: false }).limit(1).maybeSingle();
+        rec = result.data;
+      }
+      if (!rec && fromAddress) {
+        const result = await sbOut.from("influencer_campaign_recipients")
+          .select("id, campaign_id, prospect_id, email, reply_token")
+          .ilike("email", fromAddress).not("sent_at", "is", null)
+          .order("sent_at", { ascending: false }).limit(1).maybeSingle();
+        rec = result.data;
+      }
       if (rec) {
         const replyBody = extractBody(text, html).slice(0, 8000);
         const providerMessageId = data?.message_id || data?.email_id || data?.id || null;
@@ -150,7 +161,7 @@ Deno.serve(async (req) => {
           const { error: messageError } = await sbOut.from("influencer_messages").insert({
             prospect_id: rec.prospect_id, campaign_id: rec.campaign_id, recipient_id: rec.id,
             direction: "recebida", subject: subject.slice(0, 400), body_text: replyBody || "(mensagem sem texto)",
-            body_html: html ? html.slice(0, 60000) : null, from_email: from,
+            body_html: html ? html.slice(0, 60000) : null, from_email: fromAddress || from,
             to_email: "parcerias@wiize.com.br", provider_message_id: providerMessageId,
           });
           if (messageError) throw new Error(`Falha ao salvar resposta do influenciador: ${messageError.message}`);

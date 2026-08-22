@@ -73,7 +73,7 @@ function layout(bodyHtml: string, unsubscribeUrl: string) {
 <div style="max-width:560px;margin:0 auto;padding:24px 20px;font-size:15px;line-height:1.6;">
 ${bodyHtml}
 <p style="margin:24px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
-Equipe de Parcerias · <a href="${APP_URL}" style="color:${BRAND};text-decoration:none;">Wiize</a><br>
+Atenciosamente,<br>Equipe de Parcerias · <a href="${APP_URL}" style="color:${BRAND};text-decoration:none;">Wiize</a><br>
 <span style="font-size:12px;">Se preferir não receber novos contatos,
 <a href="${unsubscribeUrl}" style="color:#6b7280;">clique aqui</a>.</span>
 </p>
@@ -445,7 +445,26 @@ serve(async (req) => {
         .select("id, campaign_id, reply_token")
         .eq("prospect_id", prospectId).order("created_at", { ascending: false }).limit(1).maybeSingle();
 
-      const token = lastRec?.reply_token ?? crypto.randomUUID().replace(/-/g, "");
+      let threadRec = lastRec;
+      if (!threadRec) {
+        const { data: prospect } = await admin.from("influencer_prospects").select("channel_name").eq("id", prospectId).maybeSingle();
+        const { data: directCampaign, error: campaignError } = await admin.from("influencer_campaigns").insert({
+          name: `Conversa direta · ${prospect?.channel_name || to}`.slice(0, 180),
+          subject, body_html: esc(text), status: "enviando", created_by: u.user.id, started_at: new Date().toISOString(),
+        }).select("id").single();
+        if (campaignError) return json({ error: campaignError.message }, 400);
+        const { data: directRecipient, error: recipientError } = await admin.from("influencer_campaign_recipients").insert({
+          campaign_id: directCampaign.id, prospect_id: prospectId, email: to, subject,
+          body_html: esc(text), status: "enviando", attempts: 1,
+        }).select("id, campaign_id, reply_token").single();
+        if (recipientError) {
+          await admin.from("influencer_campaigns").delete().eq("id", directCampaign.id);
+          return json({ error: recipientError.message }, 400);
+        }
+        threadRec = directRecipient;
+      }
+
+      const token = threadRec.reply_token;
       const unsubscribeUrl = unsubscribeUrlFor(token);
        const cleanText = removeDuplicatedSignature(text);
        const html = layout(
@@ -472,13 +491,22 @@ serve(async (req) => {
       });
       if (!ok) {
         const message = payload?.message || payload?.error?.message || `Resend ${status}`;
+         await admin.from("influencer_campaign_recipients").update({
+           status: "falhou", error_message: String(message).slice(0, 500), failed_at: new Date().toISOString(),
+         }).eq("id", threadRec.id);
+         await refreshCampaignStatus(admin, threadRec.campaign_id);
         return json({ error: String(message) }, 400);
       }
 
+       await admin.from("influencer_campaign_recipients").update({
+         status: "enviado", provider_message_id: payload?.id ?? null, sent_at: new Date().toISOString(), error_message: null,
+       }).eq("id", threadRec.id);
+       await refreshCampaignStatus(admin, threadRec.campaign_id);
+
        const { error: historyError } = await admin.from("influencer_messages").insert({
         prospect_id: prospectId,
-        campaign_id: lastRec?.campaign_id ?? null,
-        recipient_id: lastRec?.id ?? null,
+         campaign_id: threadRec.campaign_id,
+         recipient_id: threadRec.id,
          direction: "enviada", subject, body_text: cleanText, body_html: html,
         from_email: `${REPLY_LOCAL}@${REPLY_DOMAIN}`, to_email: to,
         attachments: files.map((f) => ({ filename: f.filename })),
