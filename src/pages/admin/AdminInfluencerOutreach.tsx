@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { OutreachComposeDialog } from "@/components/admin/partners/OutreachComposeDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +33,17 @@ import {
 
 
 const PAGE = 25;
+
+function IconAction({ label, children, ...props }: React.ComponentProps<typeof Button> & { label: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button {...props} aria-label={label}>{children}</Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 /** Apenas leads qualificados (salvos na prospecção) entram na esteira de abordagem. */
 const QUALIFIED_STATUSES = [
@@ -212,7 +224,7 @@ export default function AdminInfluencerOutreach() {
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     await loadCampaigns();
     if (openCampaign?.id === campaignId) await loadRecipients(campaignId);
-    if (action === "retry") runQueue(campaignId);
+    if (action === "retry" || action === "resend_unanswered") runQueue(campaignId);
   };
 
   const sendTestTemplate = async (key: string, subject: string, bodyHtml: string) => {
@@ -255,6 +267,7 @@ export default function AdminInfluencerOutreach() {
   const allVisibleSelected = filtered.length > 0 && filtered.every((p) => selectedIds.includes(p.id));
 
   return (
+    <TooltipProvider delayDuration={250}>
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <PageHeader
         title="Abordagem de Influenciadores"
@@ -283,11 +296,11 @@ export default function AdminInfluencerOutreach() {
               },
               {
                 t: "3 · Envio",
-                d: "Você seleciona os canais, escreve a mensagem (com variáveis) e cria a campanha. Os e-mails saem em lotes pela Resend, com link de descadastro obrigatório.",
+                d: "Você seleciona os canais, escreve a mensagem com variáveis e cria a campanha. Os e-mails saem em lotes controlados, com link de descadastro obrigatório.",
               },
               {
                 t: "4 · Resposta",
-                d: "Cada envio tem um Reply-To único (parcerias+INF…@wiize.com.br). Quando o influenciador responde, a mensagem cai na caixa de parcerias, o envio vira “Resposta recebida” e o canal muda para “Respondeu”.",
+                d: "Todos os e-mails usam parcerias@wiize.com.br. A resposta é vinculada ao contato e aparece na conversa do influenciador, alterando o envio para “Resposta recebida”.",
               },
             ].map((s) => (
               <div key={s.t} className="rounded-2xl border border-border bg-background p-4 space-y-1.5">
@@ -427,16 +440,16 @@ export default function AdminInfluencerOutreach() {
                           <TableCell className="py-3"><Badge variant="secondary" className="text-[10px]">{prospectOutreachLabel(p.status)}</Badge></TableCell>
                           <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
 
-                            <Button size="sm" variant="ghost" title="Abrir conversa"
+                             <IconAction label="Abrir conversa por e-mail" size="sm" variant="ghost"
                               onClick={() => setThread(p)}>
                               <MessageSquare size={14} />
-                            </Button>
-                            <Button size="sm" variant="ghost" title="Buscar contatos" disabled={finding.includes(p.id)}
+                             </IconAction>
+                             <IconAction label="Buscar novos contatos" size="sm" variant="ghost" disabled={finding.includes(p.id)}
                               onClick={() => findContacts([p.id])}>
                               {finding.includes(p.id)
                                 ? <Loader2 className="animate-spin" size={14} />
                                 : <RefreshCw size={14} />}
-                            </Button>
+                             </IconAction>
                           </TableCell>
                         </TableRow>
                       );
@@ -482,18 +495,18 @@ export default function AdminInfluencerOutreach() {
                         <TableCell className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex justify-end gap-1.5">
 
-                            <Button size="sm" variant="outline" disabled={processing === c.id || c.status === "cancelada"}
+                             <IconAction label="Iniciar ou continuar a fila de envios" size="sm" variant="outline" disabled={processing === c.id || c.status === "cancelada"}
                               onClick={() => runQueue(c.id)}>
                               {processing === c.id
                                 ? <Loader2 className="animate-spin" size={14} />
                                 : <PlayCircle size={14} />}
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => campaignAction("retry", c.id)}>
+                             </IconAction>
+                             <IconAction label="Reenviar para contatos sem resposta" size="sm" variant="ghost" onClick={() => campaignAction("resend_unanswered", c.id)}>
                               <RefreshCw size={14} />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => campaignAction("cancel", c.id)}>
+                             </IconAction>
+                             <IconAction label="Cancelar envios pendentes" size="sm" variant="ghost" onClick={() => campaignAction("cancel", c.id)}>
                               <Ban size={14} />
-                            </Button>
+                             </IconAction>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -528,21 +541,21 @@ export default function AdminInfluencerOutreach() {
                       <p className="text-xs text-muted-foreground truncate">{t.subject}</p>
                     </div>
                     <div className="flex gap-1 shrink-0">
-                      <Button size="sm" variant="ghost" title="Enviar teste para o meu e-mail"
+                       <IconAction label="Enviar teste para o meu e-mail" size="sm" variant="ghost"
                         disabled={testingTemplate === t.id}
                         onClick={() => sendTestTemplate(t.id, t.subject, t.body_html)}>
                         {testingTemplate === t.id ? <Loader2 className="animate-spin" size={14} /> : <SendHorizonal size={14} />}
-                      </Button>
-                      <Button size="sm" variant="ghost" title="Editar"
+                       </IconAction>
+                       <IconAction label="Editar modelo" size="sm" variant="ghost"
                         onClick={() => setEditing({ ...t, bodyText: emailHtmlToText(t.body_html || "") })}>
                         <FileText size={14} />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={async () => {
+                       </IconAction>
+                       <IconAction label="Excluir modelo" size="sm" variant="ghost" onClick={async () => {
                         await (supabase as any).from("influencer_email_templates").delete().eq("id", t.id);
                         loadTemplates();
                       }}>
                         <Trash2 size={14} />
-                      </Button>
+                       </IconAction>
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">
@@ -603,15 +616,15 @@ export default function AdminInfluencerOutreach() {
                             </TableCell>
                             <TableCell className="text-xs text-destructive max-w-[220px] truncate">{r.error_message || "—"}</TableCell>
                             <TableCell className="flex gap-1">
-                              <Button size="sm" variant="ghost" title="Abrir conversa"
+                               <IconAction label="Abrir conversa com este influenciador" size="sm" variant="ghost"
                                 onClick={() => {
                                   const p = prospects.find((x) => x.id === r.prospect_id);
                                   if (p) { setOpenCampaign(null); setThread(p); }
                                 }}>
                                 <MessageSquare size={14} />
-                              </Button>
+                               </IconAction>
                               {r.status === "enviado" && (
-                                <Button size="sm" variant="ghost" title="Marcar como respondido"
+                                 <IconAction label="Marcar manualmente como respondido" size="sm" variant="ghost"
                                   onClick={async () => {
                                     await supabase.functions.invoke("influencer-outreach", {
                                       body: { action: "mark_replied", recipient_id: r.id },
@@ -619,7 +632,7 @@ export default function AdminInfluencerOutreach() {
                                     loadRecipients(openCampaign.id);
                                   }}>
                                   <MessageSquareReply size={14} />
-                                </Button>
+                                 </IconAction>
                               )}
                             </TableCell>
                           </TableRow>
@@ -683,5 +696,6 @@ export default function AdminInfluencerOutreach() {
         finding={finding.includes(detail?.id)}
       />
     </div>
+    </TooltipProvider>
   );
 }

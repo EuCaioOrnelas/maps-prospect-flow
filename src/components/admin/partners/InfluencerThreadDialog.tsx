@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
-import { prospectOutreachLabel } from "@/lib/influencerOutreach";
+import { DEFAULT_TEMPLATE_BODY, OUTREACH_VARIABLES, prospectOutreachLabel, renderTemplate } from "@/lib/influencerOutreach";
 import {
   Loader2, Send, Paperclip, X, StickyNote, Mail, MessageSquare, Inbox, ArrowUpRight,
 } from "lucide-react";
@@ -56,9 +57,21 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
 
   const load = useCallback(async (id: string) => {
     setLoading(true);
-    const { data } = await (supabase as any)
-      .from("influencer_messages").select("*").eq("prospect_id", id).order("created_at", { ascending: true });
-    setMessages(data ?? []);
+    const [{ data }, { data: sentRows }] = await Promise.all([
+      (supabase as any).from("influencer_messages").select("*").eq("prospect_id", id).order("created_at", { ascending: true }),
+      (supabase as any).from("influencer_campaign_recipients").select("id, campaign_id, prospect_id, subject, body_html, email, sent_at, provider_message_id")
+        .eq("prospect_id", id).not("sent_at", "is", null).order("sent_at", { ascending: true }),
+    ]);
+    const persisted = data ?? [];
+    const recipientIds = new Set(persisted.map((m: any) => m.recipient_id).filter(Boolean));
+    const legacy = (sentRows ?? []).filter((r: any) => !recipientIds.has(r.id)).map((r: any) => ({
+      id: `legacy-${r.id}`, prospect_id: r.prospect_id, campaign_id: r.campaign_id, recipient_id: r.id,
+      direction: "enviada", subject: r.subject,
+      body_text: String(r.body_html || "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n\n").replace(/<[^>]+>/g, "").trim(),
+      from_email: "parcerias@wiize.com.br", to_email: r.email, created_at: r.sent_at,
+      provider_message_id: r.provider_message_id, attachments: [],
+    }));
+    setMessages([...persisted, ...legacy].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
     setLoading(false);
   }, []);
 
@@ -90,6 +103,7 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
     const last = [...messages].reverse().find((m) => m.subject);
     return last?.subject ? (last.subject.startsWith("Re:") ? last.subject : `Re: ${last.subject}`) : "";
   }, [messages]);
+  const previewText = useMemo(() => renderTemplate(text, prospect), [text, prospect]);
 
   useEffect(() => { if (!subject) setSubject(lastSubject); }, [lastSubject]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -237,14 +251,39 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
                   <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Parceria Wiize" />
                 </div>
               </div>
-              <Textarea rows={4} placeholder="Escreva a mensagem para o influenciador…"
+              <Textarea rows={5} placeholder={messages.length ? "Escreva a resposta…" : "Escreva a primeira abordagem…"}
                 value={text} onChange={(e) => setText(e.target.value)} />
+              {!messages.length && !text && (
+                <Button type="button" size="sm" variant="outline" onClick={() => setText(DEFAULT_TEMPLATE_BODY)}>
+                  Usar modelo de apresentação da Wiize
+                </Button>
+              )}
+              <div className="space-y-2">
+                <Label className="text-[11px] text-muted-foreground">Variáveis de personalização</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {OUTREACH_VARIABLES.slice(0, 8).map((variable) => (
+                    <Button key={variable.key} type="button" size="sm" variant="outline" className="h-7 px-2 text-[10px]"
+                      onClick={() => setText((value) => `${value}${value ? " " : ""}{{${variable.key}}}`)}>
+                      {`{{${variable.key}}}`}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              {text.trim() && (
+                <div className="rounded-lg border border-border bg-muted/30 p-3">
+                  <p className="text-[11px] font-semibold text-muted-foreground">Prévia enviada</p>
+                  <Separator className="my-2" />
+                  <p className="text-xs whitespace-pre-wrap leading-relaxed">{previewText}</p>
+                  <p className="mt-3 text-xs text-muted-foreground">Atenciosamente,<br />Equipe de Parcerias Wiize</p>
+                </div>
+              )}
               {files.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {files.map((f) => (
                     <Badge key={f.name} variant="secondary" className="text-[10px]">
                       <Paperclip size={10} className="mr-1" /> {f.name}
-                      <button className="ml-1" onClick={() => setFiles((s) => s.filter((x) => x !== f))}><X size={10} /></button>
+                      <Button type="button" variant="ghost" size="sm" className="ml-1 h-5 w-5 p-0" aria-label={`Remover ${f.name}`}
+                        title={`Remover ${f.name}`} onClick={() => setFiles((s) => s.filter((x) => x !== f))}><X size={10} /></Button>
                     </Badge>
                   ))}
                 </div>
@@ -268,7 +307,7 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
               </div>
               <p className="text-[11px] text-muted-foreground flex items-start gap-1.5">
                 <Mail size={12} className="mt-0.5 shrink-0" />
-                A resposta do influenciador volta automaticamente para esta conversa e marca o envio como “Resposta recebida”.
+                 O envio usa parcerias@wiize.com.br. A resposta volta automaticamente para esta conversa e marca o envio como “Resposta recebida”.
               </p>
             </div>
           </TabsContent>
