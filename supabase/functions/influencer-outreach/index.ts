@@ -53,7 +53,14 @@ function htmlToText(html: string) {
 }
 
 const unsubscribeUrlFor = (token: string) => `${APP_URL}/descadastro?token=${token}`;
-const replyToFor = (token: string) => `${REPLY_LOCAL}+INF${token.slice(0, 16)}@${REPLY_DOMAIN}`;
+const cleanReplyTo = `${REPLY_LOCAL}@${REPLY_DOMAIN}`;
+
+function removeDuplicatedSignature(text: string) {
+  return String(text || "")
+    .replace(/\n*(?:abraços?|atenciosamente|cordialmente)?,?\s*\n*equipe\s+(?:de\s+parcerias\s+)?wiize\s*$/i, "")
+    .replace(/\n*equipe\s+de\s+parcerias\s*[·|-]\s*wiize\s*$/i, "")
+    .trim();
+}
 
 /**
  * Layout leve e "1:1": e-mail de primeiro contato com imagem pesada e muito HTML
@@ -244,15 +251,16 @@ serve(async (req) => {
           .update({ status: "enviando", attempts: (r.attempts ?? 0) + 1 }).eq("id", r.id);
 
         const unsubscribeUrl = unsubscribeUrlFor(r.reply_token);
-        const replyTo = replyToFor(r.reply_token);
-        const text = `${htmlToText(r.body_html)}\n\n—\nEquipe de Parcerias · Wiize (${APP_URL})\nPara não receber novos contatos: ${unsubscribeUrl}`;
-        const html = layout(r.body_html, unsubscribeUrl);
+         const cleanText = removeDuplicatedSignature(htmlToText(r.body_html));
+         const cleanHtml = cleanText.split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px;">${esc(p).replace(/\n/g, "<br>")}</p>`).join("");
+         const text = `${cleanText}\n\nAtenciosamente,\nEquipe de Parcerias Wiize\n${APP_URL}\n\nPara não receber novos contatos: ${unsubscribeUrl}`;
+         const html = layout(cleanHtml, unsubscribeUrl);
 
         try {
           const { ok, status, body: payload } = await sendEmail({
             from: FROM,
             to: [r.email],
-            reply_to: replyTo,
+             reply_to: cleanReplyTo,
             subject: r.subject,
             html,
             text,
@@ -289,12 +297,19 @@ serve(async (req) => {
               recipient_id: r.id, campaign_id: campaignId, prospect_id: r.prospect_id,
               event_type: "enviado", detail: r.subject, payload: { provider_message_id: payload?.id ?? null },
             });
-            await admin.from("influencer_messages").insert({
+             const { error: messageError } = await admin.from("influencer_messages").insert({
               prospect_id: r.prospect_id, campaign_id: campaignId, recipient_id: r.id,
               direction: "enviada", subject: r.subject, body_text: htmlToText(r.body_html),
               body_html: r.body_html, from_email: `${REPLY_LOCAL}@${REPLY_DOMAIN}`, to_email: r.email,
               provider_message_id: payload?.id ?? null, author_id: u.user.id,
             });
+             if (messageError) {
+               console.error("[influencer-outreach] sent email history failed", { recipientId: r.id, error: messageError.message });
+               await logEvent(admin, {
+                 recipient_id: r.id, campaign_id: campaignId, prospect_id: r.prospect_id,
+                 event_type: "erro_historico", detail: messageError.message.slice(0, 400),
+               });
+             }
             if (r.contact_id) {
               await admin.from("influencer_contacts")
                 .update({ status: "contatado", last_contacted_at: new Date().toISOString() })
@@ -336,6 +351,34 @@ serve(async (req) => {
       return json({ ok: true });
     }
 
+    // ---------- RESEND UNANSWERED ----------
+    if (action === "resend_unanswered") {
+      const campaignId = String(body.campaign_id || "");
+      if (!UUID_RE.test(campaignId)) return json({ error: "campaign_id inválido." }, 400);
+      const { data: rows, error: readError } = await admin
+        .from("influencer_campaign_recipients")
+        .select("id, email, status")
+        .eq("campaign_id", campaignId)
+        .in("status", ["enviado", "falhou", "cancelado"]);
+      if (readError) return json({ error: readError.message }, 400);
+
+      const emails = (rows ?? []).map((r: any) => String(r.email).toLowerCase());
+      const { data: suppressed } = emails.length
+        ? await admin.from("influencer_email_suppressions").select("email").in("email", emails)
+        : { data: [] };
+      const blocked = new Set((suppressed ?? []).map((s: any) => String(s.email).toLowerCase()));
+      const ids = (rows ?? []).filter((r: any) => !blocked.has(String(r.email).toLowerCase())).map((r: any) => r.id);
+      if (ids.length) {
+        const { error } = await admin.from("influencer_campaign_recipients").update({
+          status: "pendente", attempts: 0, error_message: null, failed_at: null,
+          provider_message_id: null, sent_at: null,
+        }).in("id", ids);
+        if (error) return json({ error: error.message }, 400);
+      }
+      await admin.from("influencer_campaigns").update({ status: ids.length ? "enviando" : "concluida", finished_at: null }).eq("id", campaignId);
+      return json({ ok: true, queued: ids.length });
+    }
+
     // ---------- CANCEL ----------
     if (action === "cancel") {
       const campaignId = String(body.campaign_id || "");
@@ -355,7 +398,8 @@ serve(async (req) => {
         .update({ status: "respondido", replied_at: new Date().toISOString() })
         .eq("id", recipientId).select("prospect_id, campaign_id, email").maybeSingle();
       if (rec) {
-        await admin.from("influencer_prospects").update({ status: "respondeu" }).eq("id", rec.prospect_id);
+        await admin.from("influencer_prospects").update({ status: "respondeu" }).eq("id", rec.prospect_id)
+          .in("status", ["novo", "qualificado", "sem_contato", "contato_encontrado", "contatos_identificados", "pronto_abordagem", "email_enviado"]);
         await logEvent(admin, {
           recipient_id: recipientId, campaign_id: rec.campaign_id, prospect_id: rec.prospect_id,
           event_type: "resposta_recebida", detail: rec.email,
@@ -394,7 +438,8 @@ serve(async (req) => {
         .from("influencer_email_suppressions").select("email").eq("email", to).maybeSingle();
       if (sup) return json({ error: "Este contato pediu descadastro e não pode ser contatado." }, 400);
 
-      // reaproveita o token da última abordagem para manter o mesmo Reply-To/threading
+      // Reaproveita o destinatário anterior; respostas novas são correlacionadas pelo
+      // remetente e pelos headers do provedor, sem expor plus-addressing ao contato.
       const { data: lastRec } = await admin
         .from("influencer_campaign_recipients")
         .select("id, campaign_id, reply_token")
@@ -402,8 +447,9 @@ serve(async (req) => {
 
       const token = lastRec?.reply_token ?? crypto.randomUUID().replace(/-/g, "");
       const unsubscribeUrl = unsubscribeUrlFor(token);
-      const html = layout(
-        text.split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px;">${esc(p).replace(/\n/g, "<br>")}</p>`).join(""),
+       const cleanText = removeDuplicatedSignature(text);
+       const html = layout(
+         cleanText.split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px;">${esc(p).replace(/\n/g, "<br>")}</p>`).join(""),
         unsubscribeUrl,
       );
 
@@ -417,10 +463,10 @@ serve(async (req) => {
       const { ok, status, body: payload } = await sendEmail({
         from: FROM,
         to: [to],
-        reply_to: replyToFor(token),
+         reply_to: cleanReplyTo,
         subject,
         html,
-        text: `${text}\n\n—\nEquipe de Parcerias · Wiize (${APP_URL})`,
+         text: `${cleanText}\n\nAtenciosamente,\nEquipe de Parcerias Wiize\n${APP_URL}`,
         ...(files.length ? { attachments: files } : {}),
         headers: { "X-Entity-Ref-ID": token },
       });
@@ -429,15 +475,20 @@ serve(async (req) => {
         return json({ error: String(message) }, 400);
       }
 
-      await admin.from("influencer_messages").insert({
+       const { error: historyError } = await admin.from("influencer_messages").insert({
         prospect_id: prospectId,
         campaign_id: lastRec?.campaign_id ?? null,
         recipient_id: lastRec?.id ?? null,
-        direction: "enviada", subject, body_text: text, body_html: html,
+         direction: "enviada", subject, body_text: cleanText, body_html: html,
         from_email: `${REPLY_LOCAL}@${REPLY_DOMAIN}`, to_email: to,
         attachments: files.map((f) => ({ filename: f.filename })),
         provider_message_id: payload?.id ?? null, author_id: u.user.id,
       });
+       if (historyError) return json({ error: `E-mail enviado, mas o histórico não foi salvo: ${historyError.message}` }, 500);
+       await admin.from("influencer_prospects").update({ status: "email_enviado" }).eq("id", prospectId)
+         .in("status", ["novo", "qualificado", "sem_contato", "contato_encontrado", "contatos_identificados", "pronto_abordagem"]);
+       await admin.from("influencer_contacts").update({ status: "contatado", last_contacted_at: new Date().toISOString() })
+         .eq("prospect_id", prospectId).eq("type", "email").eq("normalized_value", to);
       return json({ ok: true });
     }
 

@@ -129,8 +129,7 @@ Deno.serve(async (req) => {
 
     console.log("[support-email-inbound] received", { to, subject, ticketNumber, hasText: !!text, hasHtml: !!html });
 
-    // ─── Abordagem de influenciadores: parcerias+INF<token>@wiize.com.br ───
-    // Respostas de campanhas de parceria não abrem chamado — são anexadas ao influenciador.
+    // ─── Abordagem de influenciadores (compatibilidade com threads +INF antigas) ───
     const outreachToken =
       (`${to},${cc},${headersBlob},${String(data?.envelope?.to || "")}`.match(/parcerias\+INF([a-f0-9]{8,})@/i)?.[1] || "")
         .toLowerCase();
@@ -143,6 +142,19 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (rec) {
         const replyBody = extractBody(text, html).slice(0, 8000);
+        const providerMessageId = data?.message_id || data?.email_id || data?.id || null;
+        const { data: duplicate } = providerMessageId
+          ? await sbOut.from("influencer_messages").select("id").eq("provider_message_id", providerMessageId).maybeSingle()
+          : { data: null };
+        if (!duplicate) {
+          const { error: messageError } = await sbOut.from("influencer_messages").insert({
+            prospect_id: rec.prospect_id, campaign_id: rec.campaign_id, recipient_id: rec.id,
+            direction: "recebida", subject: subject.slice(0, 400), body_text: replyBody || "(mensagem sem texto)",
+            body_html: html ? html.slice(0, 60000) : null, from_email: from,
+            to_email: "parcerias@wiize.com.br", provider_message_id: providerMessageId,
+          });
+          if (messageError) throw new Error(`Falha ao salvar resposta do influenciador: ${messageError.message}`);
+        }
         await sbOut.from("influencer_campaign_recipients")
           .update({ status: "respondido", replied_at: new Date().toISOString() })
           .eq("id", rec.id);

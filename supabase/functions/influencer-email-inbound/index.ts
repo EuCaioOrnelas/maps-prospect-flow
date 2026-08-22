@@ -1,8 +1,8 @@
 // Wiize · Influenciadores — Recebimento de respostas por e-mail (webhook de inbound)
 //
 // Recebe o payload do provedor de e-mail (Resend Inbound / compatíveis) para
-// endereços do tipo parcerias+INF<token>@wiize.com.br, identifica o destinatário
-// da campanha pelo token e:
+// parcerias@wiize.com.br, identifica a conversa pelo remetente e pelos headers
+// do provedor (mantendo compatibilidade com endereços legados +INF) e:
 //   1. grava a resposta na thread (influencer_messages, direction = "recebida");
 //   2. marca o envio como "respondido" — SÓ quando existe resposta real;
 //   3. move o influenciador para o status "respondeu".
@@ -21,6 +21,7 @@ const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 const INBOUND_SECRET = Deno.env.get("INFLUENCER_INBOUND_SECRET") || "";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 
 /** Extrai o token INF de qualquer endereço parcerias+INF<token>@dominio */
 function extractToken(values: string[]): string | null {
@@ -59,6 +60,31 @@ function stripQuoted(text: string) {
     .trim();
 }
 
+function htmlToText(html: string) {
+  return stripQuoted(String(html || "")
+    .replace(/<blockquote[\s\S]*?<\/blockquote>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|li)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&")
+    .replace(/\n{3,}/g, "\n\n"));
+}
+
+async function hydrateInbound(data: any) {
+  const hasBody = Boolean(data?.text || data?.body_plain || data?.plain || data?.html || data?.body_html);
+  const id = data?.email_id || data?.id;
+  if (hasBody || !id || !RESEND_API_KEY) return data;
+  const response = await fetch(`https://api.resend.com/emails/receiving/${encodeURIComponent(id)}`, {
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
+  });
+  const detail = await response.json().catch(() => null);
+  return response.ok && detail ? { ...data, ...detail } : data;
+}
+
+function headersText(headers: any) {
+  try { return JSON.stringify(headers ?? {}); } catch { return ""; }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -70,35 +96,56 @@ serve(async (req) => {
     }
 
     const payload = await req.json().catch(() => ({}));
-    const data = payload?.data ?? payload;
+    const data = await hydrateInbound(payload?.data ?? payload);
     const eventType = String(payload?.type || "");
     if (eventType && !/received|inbound|delivered_reply/i.test(eventType) && !data?.from) {
       return json({ ok: true, ignored: eventType });
     }
 
-    const token = extractToken(collectAddresses(data));
-    if (!token) return json({ ok: true, ignored: "sem token de thread" });
-
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const token = extractToken(collectAddresses(data));
+    const from = firstAddress(data?.from);
+    const headerBlob = headersText(data?.headers);
+    const referenceIds = [...headerBlob.matchAll(/<([^<>\s]+@[^<>\s]+)>/g)].map((m) => m[1]);
 
-    const { data: rec } = await admin
-      .from("influencer_campaign_recipients")
-      .select("id, campaign_id, prospect_id, email, subject, status")
-      .ilike("reply_token", `${token}%`)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    let rec: any = null;
+    if (token) {
+      const result = await admin.from("influencer_campaign_recipients")
+        .select("id, campaign_id, prospect_id, email, subject, status")
+        .ilike("reply_token", `${token}%`).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      rec = result.data;
+    }
+    if (!rec && referenceIds.length) {
+      const result = await admin.from("influencer_campaign_recipients")
+        .select("id, campaign_id, prospect_id, email, subject, status")
+        .in("provider_message_id", referenceIds).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      rec = result.data;
+    }
+    if (!rec && from) {
+      const result = await admin.from("influencer_campaign_recipients")
+        .select("id, campaign_id, prospect_id, email, subject, status")
+        .ilike("email", from).not("sent_at", "is", null)
+        .order("sent_at", { ascending: false }).limit(1).maybeSingle();
+      rec = result.data;
+    }
     if (!rec) return json({ ok: true, ignored: "destinatário não encontrado" });
 
-    const from = firstAddress(data?.from) || rec.email;
+    const sender = from || rec.email;
     const subject = String(data?.subject || `Re: ${rec.subject ?? ""}`).slice(0, 400);
-    const text = stripQuoted(data?.text || "").slice(0, 20000);
+    const text = (stripQuoted(data?.text || data?.body_plain || data?.plain || "") || htmlToText(data?.html || data?.body_html || "")).slice(0, 20000);
     const html = typeof data?.html === "string" ? data.html.slice(0, 60000) : null;
     const attachments = Array.isArray(data?.attachments)
       ? data.attachments.map((a: any) => ({ filename: a?.filename ?? a?.name ?? "anexo", size: a?.size ?? null }))
       : [];
 
-    await admin.from("influencer_messages").insert({
+    const providerMessageId = data?.message_id ?? data?.email_id ?? data?.id ?? null;
+    if (providerMessageId) {
+      const { data: duplicate } = await admin.from("influencer_messages").select("id")
+        .eq("provider_message_id", providerMessageId).maybeSingle();
+      if (duplicate) return json({ ok: true, duplicate: true, prospect_id: rec.prospect_id });
+    }
+
+    const { error: messageError } = await admin.from("influencer_messages").insert({
       prospect_id: rec.prospect_id,
       campaign_id: rec.campaign_id,
       recipient_id: rec.id,
@@ -106,11 +153,12 @@ serve(async (req) => {
       subject,
       body_text: text || "(mensagem sem texto)",
       body_html: html,
-      from_email: from,
-      to_email: `parcerias+INF${token}@wiize.com.br`,
+      from_email: sender,
+      to_email: "parcerias@wiize.com.br",
       attachments,
-      provider_message_id: data?.message_id ?? data?.id ?? null,
+      provider_message_id: providerMessageId,
     });
+    if (messageError) throw new Error(`Falha ao salvar resposta: ${messageError.message}`);
 
     await admin.from("influencer_campaign_recipients")
       .update({ status: "respondido", replied_at: new Date().toISOString() })
@@ -123,7 +171,7 @@ serve(async (req) => {
 
     await admin.from("influencer_email_events").insert({
       recipient_id: rec.id, campaign_id: rec.campaign_id, prospect_id: rec.prospect_id,
-      event_type: "resposta_recebida", detail: from,
+      event_type: "resposta_recebida", detail: sender,
     }).then(() => {}, () => {});
 
     return json({ ok: true, prospect_id: rec.prospect_id });

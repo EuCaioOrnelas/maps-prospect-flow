@@ -159,9 +159,6 @@ Acompanhei o canal {{nome_canal}} e gostei muito da forma como você trata os te
 
 Sou da Wiize, plataforma brasileira de prospecção, CRM e atendimento com IA para times comerciais B2B. Estamos selecionando criadores para o nosso programa de parcerias, com comissão recorrente por cliente indicado e material pronto de divulgação.
 
-Faz sentido conversarmos 15 minutos nesta semana? Se preferir, respondo por aqui mesmo com todos os detalhes.
-
-Abraço,
-Equipe de Parcerias Wiize`;
+Faz sentido conversarmos 15 minutos nesta semana? Se preferir, respondo por aqui mesmo com todos os detalhes.`;
 
 export const DEFAULT_TEMPLATE_SUBJECT = "Parceria Wiize com o canal {{nome_canal}}";
