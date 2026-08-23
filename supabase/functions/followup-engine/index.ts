@@ -55,10 +55,11 @@ const STRATEGIES: Strategy[] = [
   },
   {
     key: "dor",
-    goal: "Fazer perceber o custo de manter o problema atual",
+    goal: "Falar da dor real de quem vive de conteúdo: muito trabalho, retorno financeiro pequeno",
     guide:
-      "Levante hipóteses de dor comercial (dependência de indicação, prospecção manual, poucos leads qualificados, dificuldade de falar com decisores, time comercial improdutivo). Deixe claro que são hipóteses; NUNCA afirme fatos específicos sobre a empresa que você não tenha no contexto.",
+      "Fale da rotina do criador: horas roteirizando, gravando, editando, postando e respondendo comentários — e um retorno financeiro que raramente acompanha esse esforço (AdSense baixo, publi pontual, receita instável que zera todo mês). Trate como hipótese, nunca como fato sobre o canal dele. Feche mostrando que a parceria com a Wiize cresce junto com o canal: novos temas de conteúdo para a audiência e uma nova renda recorrente pelo Wiize Partners, sem precisar produzir mais vídeos por mês. NUNCA fale em prospecção manual, dependência de indicação ou time comercial — ele é criador de conteúdo, não vendedor.",
   },
+
   {
     key: "oportunidade_financeira",
     goal: "Mostrar o potencial econômico da parceria",
@@ -75,8 +76,9 @@ const STRATEGIES: Strategy[] = [
     key: "custo_inacao",
     goal: "Mostrar o custo de não decidir",
     guide:
-      "Fale de oportunidades que deixam de ser abordadas, tempo perdido e receita recorrente não construída. Profissional e respeitoso; proibido medo artificial, ameaça ou falsa urgência.",
+      "Mostre que cada mês sem a parceria é mais um mês de conteúdo produzido sem construir renda recorrente — a audiência já existe, só não está sendo monetizada por esse caminho. Profissional e respeitoso; proibido medo artificial, ameaça ou falsa urgência.",
   },
+
   {
     key: "ultima_tentativa",
     goal: "Encerrar preservando a relação",
