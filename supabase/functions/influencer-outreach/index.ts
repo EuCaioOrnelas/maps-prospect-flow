@@ -153,27 +153,40 @@ serve(async (req) => {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const action = String(body.action || url.searchParams.get("action") || "");
 
-    // ---------- OPT-OUT (público) ----------
+    // ---------- OPT-OUT (público, com confirmação) ----------
     if (action === "unsubscribe") {
       const token = String(body.token || url.searchParams.get("token") || "");
       const wantsJson = req.method === "POST";
+      // Só remove de fato quando houver confirmação explícita (site) ou
+      // quando o cliente de e-mail usa o one-click (RFC 8058, confirm=1).
+      const confirm = body.confirm === true || url.searchParams.get("confirm") === "1";
       if (!token) return json({ error: "Token inválido." }, 400);
       const { data: rec } = await admin
         .from("influencer_campaign_recipients")
         .select("id, email, prospect_id, campaign_id").eq("reply_token", token).maybeSingle();
       if (!rec) return json({ error: "Token inválido." }, 404);
 
+      const emailLower = rec.email.toLowerCase();
+      const { data: existing } = await admin
+        .from("influencer_email_suppressions").select("email").eq("email", emailLower).maybeSingle();
+
+      if (!confirm) {
+        // Etapa 1 — apenas valida o token e devolve os dados para confirmação.
+        if (wantsJson) return json({ ok: true, pending: true, email: rec.email, already: !!existing });
+        return Response.redirect(`${APP_URL}/descadastro?token=${encodeURIComponent(token)}`, 302);
+      }
+
       await admin.from("influencer_email_suppressions")
-        .upsert({ email: rec.email.toLowerCase(), reason: "opt_out", prospect_id: rec.prospect_id }, { onConflict: "email" });
+        .upsert({ email: emailLower, reason: "opt_out", prospect_id: rec.prospect_id }, { onConflict: "email" });
       await admin.from("influencer_contacts")
         .update({ status: "nao_contatar" })
-        .eq("prospect_id", rec.prospect_id).eq("type", "email").eq("normalized_value", rec.email.toLowerCase());
+        .eq("prospect_id", rec.prospect_id).eq("type", "email").eq("normalized_value", emailLower);
       await logEvent(admin, {
         recipient_id: rec.id, campaign_id: rec.campaign_id, prospect_id: rec.prospect_id,
         event_type: "opt_out", detail: rec.email,
       });
 
-      if (wantsJson) return json({ ok: true, email: rec.email });
+      if (wantsJson) return json({ ok: true, confirmed: true, email: rec.email });
 
       const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Descadastro confirmado</title></head>
         <body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6f8;padding:48px;text-align:center;color:#1f2328;">
