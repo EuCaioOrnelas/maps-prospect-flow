@@ -188,7 +188,27 @@ serve(async (req) => {
         .order("sent_at", { ascending: false }).limit(1).maybeSingle();
       rec = result.data;
     }
-    if (!rec) return json({ ok: true, ignored: "destinatário não encontrado" });
+    // Resposta a uma mensagem manual do chat (sem campanha): identifica o prospect
+    // pelo e-mail do remetente na thread, nos contatos descobertos ou no prospect.
+    let prospectId: string | null = rec?.prospect_id ?? null;
+    if (!prospectId && from) {
+      const { data: msg } = await admin.from("influencer_messages")
+        .select("prospect_id").ilike("to_email", from)
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      prospectId = msg?.prospect_id ?? null;
+
+      if (!prospectId) {
+        const { data: contact } = await admin.from("influencer_contacts")
+          .select("prospect_id").ilike("email", from).limit(1).maybeSingle();
+        prospectId = contact?.prospect_id ?? null;
+      }
+      if (!prospectId) {
+        const { data: prospect } = await admin.from("influencer_prospects")
+          .select("id").ilike("contact_email", from).limit(1).maybeSingle();
+        prospectId = prospect?.id ?? null;
+      }
+    }
+    if (!prospectId) return json({ ok: true, ignored: "destinatário não encontrado" });
 
     const sender = from || rec.email;
     const subject = String(data?.subject || `Re: ${rec.subject ?? ""}`).slice(0, 400);
