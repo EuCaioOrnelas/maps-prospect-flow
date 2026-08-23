@@ -45,12 +45,14 @@ function IconAction({ label, children, ...props }: React.ComponentProps<typeof B
   );
 }
 
-/** Apenas leads qualificados (salvos na prospecção) entram na esteira de abordagem. */
+/** Apenas leads qualificados (ou já em abordagem) entram na esteira. */
 const QUALIFIED_STATUSES = [
   "qualificado",
+  "contato_encontrado",
   "contatos_identificados",
   "pronto_abordagem",
   "sem_contato",
+  "abordado",
   "email_enviado",
   "respondeu",
   "negociacao",
