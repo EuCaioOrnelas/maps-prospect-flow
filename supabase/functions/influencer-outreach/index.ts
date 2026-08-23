@@ -28,6 +28,8 @@ const REPLY_DOMAIN = "wiize.com.br";
 const FROM = `Parcerias Wiize <${REPLY_LOCAL}@${REPLY_DOMAIN}>`;
 const APP_URL = "https://wiize.com.br";
 const BRAND = "#0E7C3A";
+const RESEND_API_URL = "https://api.resend.com/emails";
+const FOLLOW_UP_MIN_DAYS = 5;
 
 // Cadência conservadora: reputação de domínio > velocidade.
 const BATCH_SIZE = 8;
@@ -54,6 +56,10 @@ function htmlToText(html: string) {
 
 const unsubscribeUrlFor = (token: string) => `${APP_URL}/descadastro?token=${token}`;
 const cleanReplyTo = `${REPLY_LOCAL}@${REPLY_DOMAIN}`;
+
+function oneClickUnsubscribeUrl(supabaseUrl: string, token: string) {
+  return `${supabaseUrl}/functions/v1/influencer-outreach?action=unsubscribe&token=${encodeURIComponent(token)}`;
+}
 
 function removeDuplicatedSignature(text: string) {
   return String(text || "")
@@ -95,10 +101,14 @@ async function refreshCampaignStatus(admin: any, campaignId: string) {
 }
 
 /** Envio genérico via Resend com cabeçalhos que ajudam a entregabilidade. */
-async function sendEmail(payload: Record<string, unknown>) {
-  const res = await fetch("https://api.resend.com/emails", {
+async function sendEmail(payload: Record<string, unknown>, idempotencyKey: string) {
+  const res = await fetch(RESEND_API_URL, {
     method: "POST",
-    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey.slice(0, 256),
+    },
     body: JSON.stringify(payload),
   });
   const body = await res.json().catch(() => ({}));
@@ -257,6 +267,7 @@ serve(async (req) => {
          const html = layout(cleanHtml, unsubscribeUrl);
 
         try {
+          const oneClickUrl = oneClickUnsubscribeUrl(supabaseUrl, r.reply_token);
           const { ok, status, body: payload } = await sendEmail({
             from: FROM,
             to: [r.email],
@@ -265,11 +276,10 @@ serve(async (req) => {
             html,
             text,
             headers: {
-              "List-Unsubscribe": `<${unsubscribeUrl}>, <mailto:${REPLY_LOCAL}@${REPLY_DOMAIN}?subject=unsubscribe>`,
+               "List-Unsubscribe": `<${oneClickUrl}>, <mailto:${REPLY_LOCAL}@${REPLY_DOMAIN}?subject=unsubscribe>`,
               "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-              "X-Entity-Ref-ID": r.reply_token,
             },
-          });
+          }, `influencer-campaign/${campaignId}/${r.id}`);
 
           if (!ok) {
             const message = payload?.message || payload?.error?.message || `Resend ${status}`;
@@ -357,7 +367,7 @@ serve(async (req) => {
       if (!UUID_RE.test(campaignId)) return json({ error: "campaign_id inválido." }, 400);
       const { data: rows, error: readError } = await admin
         .from("influencer_campaign_recipients")
-        .select("id, email, status")
+        .select("id, email, status, sent_at")
         .eq("campaign_id", campaignId)
         .in("status", ["enviado", "falhou", "cancelado"]);
       if (readError) return json({ error: readError.message }, 400);
@@ -367,7 +377,12 @@ serve(async (req) => {
         ? await admin.from("influencer_email_suppressions").select("email").in("email", emails)
         : { data: [] };
       const blocked = new Set((suppressed ?? []).map((s: any) => String(s.email).toLowerCase()));
-      const ids = (rows ?? []).filter((r: any) => !blocked.has(String(r.email).toLowerCase())).map((r: any) => r.id);
+      const followUpCutoff = Date.now() - FOLLOW_UP_MIN_DAYS * 24 * 60 * 60 * 1000;
+      const ids = (rows ?? []).filter((r: any) => {
+        if (blocked.has(String(r.email).toLowerCase())) return false;
+        if (!r.sent_at) return true;
+        return new Date(r.sent_at).getTime() <= followUpCutoff;
+      }).map((r: any) => r.id);
       if (ids.length) {
         const { error } = await admin.from("influencer_campaign_recipients").update({
           status: "pendente", attempts: 0, error_message: null, failed_at: null,
@@ -487,8 +502,7 @@ serve(async (req) => {
         html,
          text: `${cleanText}\n\nAtenciosamente,\nEquipe de Parcerias Wiize\n${APP_URL}`,
         ...(files.length ? { attachments: files } : {}),
-        headers: { "X-Entity-Ref-ID": token },
-      });
+      }, `influencer-thread/${prospectId}/${threadRec.id}/${crypto.randomUUID()}`);
       if (!ok) {
         const message = payload?.message || payload?.error?.message || `Resend ${status}`;
          await admin.from("influencer_campaign_recipients").update({
@@ -538,8 +552,7 @@ serve(async (req) => {
         subject: `[TESTE] ${subject}`,
         html: layout(bodyHtml, unsubscribeUrlFor(token)),
         text: htmlToText(bodyHtml),
-        headers: { "X-Entity-Ref-ID": token },
-      });
+      }, `influencer-test/${u.user.id}/${crypto.randomUUID()}`);
       if (!ok) {
         const message = payload?.message || payload?.error?.message || `Resend ${status}`;
         return json({ error: String(message) }, 400);
