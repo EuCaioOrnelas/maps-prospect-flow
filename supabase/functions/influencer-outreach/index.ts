@@ -58,7 +58,7 @@ const unsubscribeUrlFor = (token: string) => `${APP_URL}/descadastro?token=${tok
 const cleanReplyTo = `${REPLY_LOCAL}@${REPLY_DOMAIN}`;
 
 function oneClickUnsubscribeUrl(supabaseUrl: string, token: string) {
-  return `${supabaseUrl}/functions/v1/influencer-outreach?action=unsubscribe&token=${encodeURIComponent(token)}`;
+  return `${supabaseUrl}/functions/v1/influencer-outreach?action=unsubscribe&confirm=1&token=${encodeURIComponent(token)}`;
 }
 
 function removeDuplicatedSignature(text: string) {
