@@ -137,3 +137,6 @@ verify_jwt = false
 
 [functions.influencer-email-inbound]
 verify_jwt = false
+
+[functions.followup-engine]
+verify_jwt = false
