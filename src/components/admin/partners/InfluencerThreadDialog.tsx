@@ -264,7 +264,7 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
                 <div className="flex flex-wrap gap-2">
                   {OUTREACH_VARIABLES.slice(0, 8).map((variable) => (
                     <Button key={variable.key} type="button" size="sm" variant="outline" className="h-7 px-2.5 text-[11px]"
-                      onClick={() => setText((value) => `${value}${value ? " " : ""}{{{variable.key}}}`)}>
+                      onClick={() => setText((value) => `${value}${value ? " " : ""}{{${variable.key}}}`)}>
                       {`{{${variable.key}}}`}
                     </Button>
                   ))}
