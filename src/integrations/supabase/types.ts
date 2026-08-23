@@ -3292,6 +3292,27 @@ export type Database = {
         }
         Relationships: []
       }
+      email_optout_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          prospect_id: string | null
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          prospect_id?: string | null
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          prospect_id?: string | null
+          token?: string
+        }
+        Relationships: []
+      }
       email_preferences: {
         Row: {
           created_at: string
@@ -3316,6 +3337,30 @@ export type Database = {
           transactional_enabled?: boolean
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      email_suppressions: {
+        Row: {
+          created_at: string
+          email: string
+          prospect_id: string | null
+          reason: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          prospect_id?: string | null
+          reason?: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          prospect_id?: string | null
+          reason?: string
+          source?: string
         }
         Relationships: []
       }
@@ -3398,6 +3443,151 @@ export type Database = {
             columns: ["topic_id"]
             isOneToOne: false
             referencedRelation: "faq_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      followup_enrollments: {
+        Row: {
+          campaign_id: string | null
+          context: Json
+          created_at: string
+          created_by: string | null
+          current_step: number
+          email: string
+          end_reason: string | null
+          ended_at: string | null
+          first_body: string | null
+          first_subject: string | null
+          fit_level: string
+          id: string
+          last_sent_at: string | null
+          max_steps: number
+          memory: Json
+          messages_sent: number
+          next_run_at: string | null
+          prospect_id: string | null
+          recipient_id: string | null
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          context?: Json
+          created_at?: string
+          created_by?: string | null
+          current_step?: number
+          email: string
+          end_reason?: string | null
+          ended_at?: string | null
+          first_body?: string | null
+          first_subject?: string | null
+          fit_level?: string
+          id?: string
+          last_sent_at?: string | null
+          max_steps?: number
+          memory?: Json
+          messages_sent?: number
+          next_run_at?: string | null
+          prospect_id?: string | null
+          recipient_id?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          context?: Json
+          created_at?: string
+          created_by?: string | null
+          current_step?: number
+          email?: string
+          end_reason?: string | null
+          ended_at?: string | null
+          first_body?: string | null
+          first_subject?: string | null
+          fit_level?: string
+          id?: string
+          last_sent_at?: string | null
+          max_steps?: number
+          memory?: Json
+          messages_sent?: number
+          next_run_at?: string | null
+          prospect_id?: string | null
+          recipient_id?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      followup_events: {
+        Row: {
+          action: string
+          created_at: string
+          enrollment_id: string | null
+          id: string
+          payload: Json
+          prospect_id: string | null
+          reason: string | null
+          step: number | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          enrollment_id?: string | null
+          id?: string
+          payload?: Json
+          prospect_id?: string | null
+          reason?: string | null
+          step?: number | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          enrollment_id?: string | null
+          id?: string
+          payload?: Json
+          prospect_id?: string | null
+          reason?: string | null
+          step?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followup_events_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "followup_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      followup_sends: {
+        Row: {
+          enrollment_id: string
+          provider_message_id: string | null
+          sent_at: string
+          step: number
+        }
+        Insert: {
+          enrollment_id: string
+          provider_message_id?: string | null
+          sent_at?: string
+          step: number
+        }
+        Update: {
+          enrollment_id?: string
+          provider_message_id?: string | null
+          sent_at?: string
+          step?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followup_sends_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "followup_enrollments"
             referencedColumns: ["id"]
           },
         ]
@@ -4345,6 +4535,24 @@ export type Database = {
           user_agent?: string | null
           user_id?: string | null
           version?: string
+        }
+        Relationships: []
+      }
+      job_leases: {
+        Row: {
+          locked_until: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          locked_until: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          locked_until?: string
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -10553,6 +10761,10 @@ export type Database = {
         Returns: Json
       }
       account_mark_member_login: { Args: never; Returns: undefined }
+      acquire_job_lease: {
+        Args: { _name: string; _seconds: number }
+        Returns: boolean
+      }
       admin_create_partner_goal: {
         Args: {
           p_admin_id: string
@@ -10740,6 +10952,7 @@ export type Database = {
       is_account_member: { Args: { _target_owner: string }; Returns: boolean }
       is_current_user_admin: { Args: never; Returns: boolean }
       is_downgrade_protected: { Args: { _user_id: string }; Returns: boolean }
+      is_email_suppressed: { Args: { _email: string }; Returns: boolean }
       is_member_available: { Args: { _user_id: string }; Returns: boolean }
       is_user_blocked: { Args: { p_user_id: string }; Returns: boolean }
       log_plan_downgrade: {
@@ -10862,6 +11075,7 @@ export type Database = {
           referral_link_id: string
         }[]
       }
+      release_job_lease: { Args: { _name: string }; Returns: undefined }
       release_pending_commissions: { Args: never; Returns: number }
       request_partner_withdrawal: {
         Args: { p_amount_cents: number }
