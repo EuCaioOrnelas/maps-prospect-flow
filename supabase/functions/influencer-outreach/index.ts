@@ -414,17 +414,31 @@ serve(async (req) => {
       let sent = 0, failed = 0;
 
       for (const r of batch ?? []) {
+        // Guarda final de opt-out: mesmo campanhas já agendadas respeitam o descadastro.
+        if (await isSuppressed(admin, r.email)) {
+          await admin.from("influencer_campaign_recipients").update({
+            status: "falhou", error_message: "Contato descadastrado", failed_at: new Date().toISOString(),
+          }).eq("id", r.id);
+          await logEvent(admin, {
+            recipient_id: r.id, campaign_id: campaignId, prospect_id: r.prospect_id,
+            event_type: "bloqueado", detail: "opt_out",
+          });
+          failed++;
+          continue;
+        }
+
         await admin.from("influencer_campaign_recipients")
           .update({ status: "enviando", attempts: (r.attempts ?? 0) + 1 }).eq("id", r.id);
 
-        const unsubscribeUrl = unsubscribeUrlFor(r.reply_token);
+        const optoutToken = await ensureOptoutToken(admin, r.email, r.prospect_id);
+        const unsubscribeUrl = unsubscribeUrlFor(optoutToken);
          const cleanText = removeDuplicatedSignature(htmlToText(r.body_html));
          const cleanHtml = cleanText.split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px;">${esc(p).replace(/\n/g, "<br>")}</p>`).join("");
          const text = `${cleanText}\n\nAtenciosamente,\nEquipe de Parcerias Wiize\n${APP_URL}\n\nPara não receber novos contatos: ${unsubscribeUrl}`;
          const html = layout(cleanHtml, unsubscribeUrl);
 
         try {
-          const oneClickUrl = oneClickUnsubscribeUrl(supabaseUrl, r.reply_token);
+          const oneClickUrl = oneClickUnsubscribeUrl(supabaseUrl, optoutToken);
           const { ok, status, body: payload } = await sendEmail({
             from: FROM,
             to: [r.email],
