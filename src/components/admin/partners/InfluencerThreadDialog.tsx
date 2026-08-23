@@ -168,10 +168,10 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
 
   return (
     <Dialog open={!!prospect} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-5xl max-h-[96vh] flex flex-col overflow-hidden p-5 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 pr-6">
-            <ChannelAvatar src={prospect.thumbnail_url} name={prospect.channel_name} size={40} />
+            <ChannelAvatar src={prospect.thumbnail_url} name={prospect.channel_name} size={48} />
             <div className="min-w-0 text-left">
               <p className="truncate text-base">{prospect.channel_name}</p>
               <p className="text-xs font-normal text-muted-foreground truncate">
@@ -183,12 +183,12 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="self-start">
-            <TabsTrigger value="conversa"><MessageSquare size={13} className="mr-1.5" /> Conversa</TabsTrigger>
-            <TabsTrigger value="nota"><StickyNote size={13} className="mr-1.5" /> Anotação interna</TabsTrigger>
+            <TabsTrigger value="conversa"><MessageSquare size={14} className="mr-1.5" /> Conversa</TabsTrigger>
+            <TabsTrigger value="nota"><StickyNote size={14} className="mr-1.5" /> Anotação interna</TabsTrigger>
           </TabsList>
 
           {/* Histórico + resposta */}
-          <TabsContent value="conversa" className="flex-1 min-h-0 overflow-hidden flex flex-col gap-3 mt-4">
+          <TabsContent value="conversa" className="flex-1 min-h-0 overflow-hidden flex flex-col gap-4 mt-4">
             <div className="flex-1 min-h-[220px] overflow-y-auto overscroll-contain pr-3">
 
               {loading ? (
