@@ -588,6 +588,7 @@ serve(async (req) => {
       if (rec) {
         await admin.from("influencer_prospects").update({ status: "respondeu" }).eq("id", rec.prospect_id)
           .in("status", ["novo", "qualificado", "sem_contato", "contato_encontrado", "contatos_identificados", "pronto_abordagem", "email_enviado"]);
+        await killFollowups(admin, rec.email, "replied");
         await logEvent(admin, {
           recipient_id: recipientId, campaign_id: rec.campaign_id, prospect_id: rec.prospect_id,
           event_type: "resposta_recebida", detail: rec.email,
