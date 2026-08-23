@@ -625,9 +625,11 @@ serve(async (req) => {
       if (subject.length < 2) return json({ error: "Informe o assunto." }, 400);
       if (!text) return json({ error: "Escreva a mensagem." }, 400);
 
-      const { data: sup } = await admin
-        .from("influencer_email_suppressions").select("email").eq("email", to).maybeSingle();
-      if (sup) return json({ error: "Este contato pediu descadastro e não pode ser contatado." }, 400);
+      if (await isSuppressed(admin, to)) {
+        return json({ error: "Este contato pediu descadastro e não pode ser contatado." }, 400);
+      }
+      // Um humano assumiu a conversa: a automação sai de cena.
+      await killFollowups(admin, to, "manual_takeover");
 
       // Reaproveita o destinatário anterior; respostas novas são correlacionadas pelo
       // remetente e pelos headers do provedor, sem expor plus-addressing ao contato.
