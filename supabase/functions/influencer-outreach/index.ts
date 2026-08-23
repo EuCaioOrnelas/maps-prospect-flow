@@ -549,10 +549,7 @@ serve(async (req) => {
       if (readError) return json({ error: readError.message }, 400);
 
       const emails = (rows ?? []).map((r: any) => String(r.email).toLowerCase());
-      const { data: suppressed } = emails.length
-        ? await admin.from("influencer_email_suppressions").select("email").in("email", emails)
-        : { data: [] };
-      const blocked = new Set((suppressed ?? []).map((s: any) => String(s.email).toLowerCase()));
+      const blocked = await suppressedSet(admin, emails);
       const followUpCutoff = Date.now() - FOLLOW_UP_MIN_DAYS * 24 * 60 * 60 * 1000;
       const ids = (rows ?? []).filter((r: any) => {
         if (blocked.has(String(r.email).toLowerCase())) return false;
