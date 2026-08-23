@@ -74,7 +74,8 @@ function removeDuplicatedSignature(text: string) {
  */
 // Logo hospedada em storage público (URL absoluta, sem redirecionos — os
 // clientes de e-mail não seguem 308 e a imagem quebrava no domínio do site).
-const LOGO_URL = "https://wgokhkawjdxsmvfuhazb.supabase.co/storage/v1/object/public/agent-media/email%2Fwiize-logo.png";
+// v2: mesma logo da landing page (ícone + wordmark), 261x80px, ~4KB otimizada.
+const LOGO_URL = "https://wgokhkawjdxsmvfuhazb.supabase.co/storage/v1/object/public/agent-media/email%2Fwiize-logo-v2.png";
 
 function layout(bodyHtml: string, unsubscribeUrl: string) {
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
