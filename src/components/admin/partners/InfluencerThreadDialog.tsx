@@ -169,7 +169,7 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
 
   return (
     <Dialog open={!!prospect} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-5xl max-h-[96vh] flex flex-col overflow-hidden p-5 sm:p-6">
+      <DialogContent className="max-w-5xl max-h-[96vh] flex flex-col overflow-y-auto p-5 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 pr-6">
             <ChannelAvatar src={prospect.thumbnail_url} name={prospect.channel_name} size={48} />
@@ -182,16 +182,15 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
+        <Tabs value={tab} onValueChange={setTab} className="flex flex-col">
           <TabsList className="self-start">
             <TabsTrigger value="conversa"><MessageSquare size={14} className="mr-1.5" /> Conversa</TabsTrigger>
             <TabsTrigger value="nota"><StickyNote size={14} className="mr-1.5" /> Anotação interna</TabsTrigger>
           </TabsList>
 
           {/* Histórico + resposta */}
-          <TabsContent value="conversa" className="flex-1 min-h-0 overflow-hidden flex flex-col gap-4 mt-4">
-            <div className="flex-1 min-h-[420px] h-[55vh] overflow-y-auto overscroll-contain pr-3">
-
+          <TabsContent value="conversa" className="flex flex-col gap-4 mt-4">
+            <div className="rounded-2xl border border-border bg-muted/20 p-4 overflow-y-auto max-h-[55vh] min-h-[300px] overscroll-contain">
               {loading ? (
                 <div className="py-10 text-center"><Loader2 className="animate-spin mx-auto text-muted-foreground" size={18} /></div>
               ) : messages.length === 0 ? (
