@@ -91,14 +91,14 @@ export default function AdminInfluencerOutreach() {
 
   const loadProspects = useCallback(async () => {
     setLoading(true);
-    // Só entram na fila de abordagem influenciadores já qualificados (salvos na prospecção).
+    // Entram na esteira todos os influenciadores qualificados (salvos ou não),
+    // inclusive os que ainda não têm e-mail descoberto.
     const { data } = await (supabase as any)
       .from("influencer_prospects")
       .select("*")
-      .eq("saved", true)
       .in("status", QUALIFIED_STATUSES)
       .order("fit_score", { ascending: false })
-      .limit(400);
+      .limit(600);
 
     const rows = data ?? [];
     setProspects(rows);
