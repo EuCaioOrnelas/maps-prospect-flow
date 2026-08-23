@@ -125,11 +125,7 @@ async function handleDeliveryEvent(admin: any, eventType: string, data: any) {
       .limit(1)
       .maybeSingle();
 
-    await admin.from("influencer_email_suppressions").upsert({
-      email,
-      reason,
-      prospect_id: recipient?.prospect_id ?? null,
-    }, { onConflict: "email" });
+    await suppressEmail(admin, email, reason, recipient?.prospect_id ?? null);
 
     if (!recipient) continue;
     matched += 1;
@@ -155,6 +151,39 @@ async function handleDeliveryEvent(admin: any, eventType: string, data: any) {
 
 function headersText(headers: any) {
   try { return JSON.stringify(headers ?? {}); } catch { return ""; }
+}
+
+/** Encerra sequências de follow-up ativas para o endereço. */
+async function killFollowups(admin: any, email: string, reason: string) {
+  const lower = String(email || "").toLowerCase().trim();
+  if (!lower) return;
+  const { data: rows } = await admin.from("followup_enrollments")
+    .select("id, prospect_id, current_step").eq("status", "active").ilike("email", lower);
+  for (const e of rows ?? []) {
+    await admin.from("followup_enrollments").update({
+      status: "cancelled", end_reason: reason, ended_at: new Date().toISOString(), next_run_at: null,
+    }).eq("id", e.id);
+    await admin.from("followup_events").insert({
+      enrollment_id: e.id, prospect_id: e.prospect_id, step: e.current_step, action: "cancelled", reason,
+    }).then(() => {}, () => {});
+  }
+}
+
+/** Pedido explícito de descadastro escrito na resposta. */
+const OPT_OUT_PHRASES =
+  /(descadastr|remover?\s+(meu|o)\s+e-?mail|remove\s+me|n[aã]o\s+(quero|desejo)\s+(mais\s+)?receber|pare\s+de\s+enviar|sair\s+da\s+lista|unsubscribe|opt[-\s]?out|stop\s+emails?)/i;
+
+async function suppressEmail(admin: any, email: string, reason: string, prospectId: string | null) {
+  const lower = String(email || "").toLowerCase().trim();
+  if (!lower) return;
+  await admin.from("email_suppressions")
+    .upsert({ email: lower, reason, source: "influencer_inbound", prospect_id: prospectId }, { onConflict: "email" });
+  await admin.from("influencer_email_suppressions")
+    .upsert({ email: lower, reason, prospect_id: prospectId }, { onConflict: "email" });
+  await killFollowups(admin, lower, "unsubscribed");
+  await admin.from("influencer_campaign_recipients")
+    .update({ status: "falhou", error_message: "Contato descadastrado", failed_at: new Date().toISOString() })
+    .ilike("email", lower).in("status", ["pendente", "enviando"]);
 }
 
 serve(async (req) => {
@@ -266,6 +295,22 @@ serve(async (req) => {
       .update({ status: "respondeu" })
       .eq("id", prospectId)
       .in("status", ["novo", "qualificado", "sem_contato", "contato_encontrado", "contatos_identificados", "pronto_abordagem", "abordado", "email_enviado"]);
+
+    // Qualquer resposta mata a sequência automática na hora.
+    await killFollowups(admin, sender, "replied");
+
+    // Pedido de descadastro escrito na própria resposta.
+    const askedToStop = OPT_OUT_PHRASES.test(`${subject}\n${text}`);
+    if (askedToStop) {
+      await suppressEmail(admin, sender, "opt_out", prospectId);
+      await admin.from("influencer_contacts")
+        .update({ status: "nao_contatar" })
+        .eq("prospect_id", prospectId).eq("type", "email").ilike("normalized_value", sender);
+      await admin.from("influencer_email_events").insert({
+        recipient_id: rec?.id ?? null, campaign_id: rec?.campaign_id ?? null, prospect_id: prospectId,
+        event_type: "opt_out", detail: sender,
+      }).then(() => {}, () => {});
+    }
 
     await admin.from("influencer_email_events").insert({
       recipient_id: rec?.id ?? null, campaign_id: rec?.campaign_id ?? null, prospect_id: prospectId,

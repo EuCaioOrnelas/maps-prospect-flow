@@ -143,6 +143,95 @@ async function sendEmail(payload: Record<string, unknown>, idempotencyKey: strin
   return { ok: res.ok, status: res.status, body };
 }
 
+/**
+ * Token de descadastro permanente por e-mail. Não depende de campanha/destinatário
+ * (o link antigo quebrava quando o recipient era apagado).
+ */
+async function ensureOptoutToken(admin: any, email: string, prospectId: string | null) {
+  const lower = String(email).toLowerCase().trim();
+  const { data: existing } = await admin
+    .from("email_optout_tokens").select("token").eq("email", lower).maybeSingle();
+  if (existing?.token) return existing.token as string;
+  const token = crypto.randomUUID().replace(/-/g, "");
+  const { data } = await admin
+    .from("email_optout_tokens")
+    .upsert({ token, email: lower, prospect_id: prospectId }, { onConflict: "email" })
+    .select("token").maybeSingle();
+  return (data?.token as string) || token;
+}
+
+/** Guarda central: nenhum envio comercial passa sem esta checagem. */
+async function isSuppressed(admin: any, email: string) {
+  const lower = String(email).toLowerCase().trim();
+  const [{ data: a }, { data: b }] = await Promise.all([
+    admin.from("email_suppressions").select("email").eq("email", lower).maybeSingle(),
+    admin.from("influencer_email_suppressions").select("email").eq("email", lower).maybeSingle(),
+  ]);
+  return !!(a || b);
+}
+
+async function suppressedSet(admin: any, emails: string[]) {
+  if (!emails.length) return new Set<string>();
+  const [{ data: a }, { data: b }] = await Promise.all([
+    admin.from("email_suppressions").select("email").in("email", emails),
+    admin.from("influencer_email_suppressions").select("email").in("email", emails),
+  ]);
+  return new Set([...(a ?? []), ...(b ?? [])].map((s: any) => String(s.email).toLowerCase()));
+}
+
+/** Encerra sequências de follow-up ativas do endereço (resposta, opt-out, takeover). */
+async function killFollowups(admin: any, email: string, reason: string) {
+  const lower = String(email).toLowerCase().trim();
+  const { data: rows } = await admin
+    .from("followup_enrollments").select("id, prospect_id, current_step").eq("status", "active").ilike("email", lower);
+  for (const e of rows ?? []) {
+    await admin.from("followup_enrollments").update({
+      status: "cancelled", end_reason: reason, ended_at: new Date().toISOString(), next_run_at: null,
+    }).eq("id", e.id);
+    await admin.from("followup_events").insert({
+      enrollment_id: e.id, prospect_id: e.prospect_id, step: e.current_step,
+      action: "cancelled", reason,
+    }).then(() => {}, () => {});
+  }
+}
+
+/** Matricula o contato na sequência de 30 dias logo após a 1ª abordagem. */
+async function enrollFollowup(admin: any, payload: Record<string, unknown>) {
+  try {
+    const email = String(payload.email).toLowerCase().trim();
+    const { data: active } = await admin
+      .from("followup_enrollments").select("id").eq("status", "active").ilike("email", email).maybeSingle();
+    if (active) return;
+    const startedAt = new Date().toISOString();
+    const nextRun = new Date(Date.now() + 5 * 86_400_000);
+    nextRun.setUTCHours(12, 0, 0, 0); // 09h local
+    const day = nextRun.getUTCDay();
+    if (day === 0) nextRun.setUTCDate(nextRun.getUTCDate() + 1);
+    if (day === 6) nextRun.setUTCDate(nextRun.getUTCDate() + 2);
+    const { data: created } = await admin.from("followup_enrollments").insert({
+      email,
+      prospect_id: payload.prospect_id ?? null,
+      campaign_id: payload.campaign_id ?? null,
+      recipient_id: payload.recipient_id ?? null,
+      status: "active",
+      started_at: startedAt,
+      next_run_at: nextRun.toISOString(),
+      first_subject: String(payload.subject || "").slice(0, 300),
+      first_body: String(payload.body_text || "").slice(0, 8000),
+      created_by: payload.created_by ?? null,
+    }).select("id").maybeSingle();
+    if (created?.id) {
+      await admin.from("followup_events").insert({
+        enrollment_id: created.id, prospect_id: payload.prospect_id ?? null, step: 0,
+        action: "enrolled", reason: "primeira abordagem enviada",
+        payload: { next_run_at: nextRun.toISOString() },
+      });
+    }
+  } catch (e) {
+    console.error("[influencer-outreach] enroll follow-up failed", e);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -158,44 +247,73 @@ serve(async (req) => {
 
     // ---------- OPT-OUT (público, com confirmação) ----------
     if (action === "unsubscribe") {
-      const token = String(body.token || url.searchParams.get("token") || "");
+      const token = String(body.token || url.searchParams.get("token") || "").trim();
       const wantsJson = req.method === "POST";
       // Só remove de fato quando houver confirmação explícita (site) ou
       // quando o cliente de e-mail usa o one-click (RFC 8058, confirm=1).
       const confirm = body.confirm === true || url.searchParams.get("confirm") === "1";
       if (!token) return json({ error: "Token inválido." }, 400);
-      const { data: rec } = await admin
-        .from("influencer_campaign_recipients")
-        .select("id, email, prospect_id, campaign_id").eq("reply_token", token).maybeSingle();
-      if (!rec) return json({ error: "Token inválido." }, 404);
 
-      const emailLower = rec.email.toLowerCase();
-      const { data: existing } = await admin
-        .from("influencer_email_suppressions").select("email").eq("email", emailLower).maybeSingle();
+      // 1) token permanente (novo padrão) → 2) reply_token de campanha (links antigos)
+      const { data: durable } = await admin
+        .from("email_optout_tokens").select("email, prospect_id").eq("token", token).maybeSingle();
+      let email = durable?.email as string | undefined;
+      let prospectId: string | null = (durable?.prospect_id as string) ?? null;
+      let recipient: any = null;
+
+      if (!email) {
+        const { data: rec } = await admin
+          .from("influencer_campaign_recipients")
+          .select("id, email, prospect_id, campaign_id").eq("reply_token", token).maybeSingle();
+        if (rec) {
+          recipient = rec;
+          email = String(rec.email);
+          prospectId = rec.prospect_id ?? null;
+          // migra o link antigo para o token permanente
+          await admin.from("email_optout_tokens")
+            .upsert({ token, email: email.toLowerCase(), prospect_id: prospectId }, { onConflict: "email" });
+        }
+      }
+      if (!email) return json({ error: "Token inválido." }, 404);
+
+      const emailLower = email.toLowerCase();
+      const already = await isSuppressed(admin, emailLower);
 
       if (!confirm) {
         // Etapa 1 — apenas valida o token e devolve os dados para confirmação.
-        if (wantsJson) return json({ ok: true, pending: true, email: rec.email, already: !!existing });
+        if (wantsJson) return json({ ok: true, pending: true, email, already });
         return Response.redirect(`${APP_URL}/descadastro?token=${encodeURIComponent(token)}`, 302);
       }
 
+      // Bloqueio central: vale para campanhas, respostas e follow-ups automáticos.
+      await admin.from("email_suppressions")
+        .upsert({ email: emailLower, reason: "opt_out", source: "influencer_outreach", prospect_id: prospectId }, { onConflict: "email" });
       await admin.from("influencer_email_suppressions")
-        .upsert({ email: emailLower, reason: "opt_out", prospect_id: rec.prospect_id }, { onConflict: "email" });
-      await admin.from("influencer_contacts")
-        .update({ status: "nao_contatar" })
-        .eq("prospect_id", rec.prospect_id).eq("type", "email").eq("normalized_value", emailLower);
+        .upsert({ email: emailLower, reason: "opt_out", prospect_id: prospectId }, { onConflict: "email" });
+      await killFollowups(admin, emailLower, "unsubscribed");
+
+      let contactQuery = admin.from("influencer_contacts")
+        .update({ status: "nao_contatar" }).eq("type", "email").eq("normalized_value", emailLower);
+      if (prospectId) contactQuery = contactQuery.eq("prospect_id", prospectId);
+      await contactQuery;
+
+      // Campanhas agendadas/pendentes para este endereço não podem mais disparar.
+      await admin.from("influencer_campaign_recipients")
+        .update({ status: "falhou", error_message: "Contato descadastrado", failed_at: new Date().toISOString() })
+        .ilike("email", emailLower).in("status", ["pendente", "enviando"]);
+
       await logEvent(admin, {
-        recipient_id: rec.id, campaign_id: rec.campaign_id, prospect_id: rec.prospect_id,
-        event_type: "opt_out", detail: rec.email,
+        recipient_id: recipient?.id ?? null, campaign_id: recipient?.campaign_id ?? null, prospect_id: prospectId,
+        event_type: "opt_out", detail: email,
       });
 
-      if (wantsJson) return json({ ok: true, confirmed: true, email: rec.email });
+      if (wantsJson) return json({ ok: true, confirmed: true, email });
 
       const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Descadastro confirmado</title></head>
         <body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f6f8;padding:48px;text-align:center;color:#1f2328;">
         <div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e6e8eb;border-radius:12px;padding:32px;">
         <h1 style="font-size:20px;margin:0 0 12px;">Descadastro confirmado</h1>
-        <p style="font-size:15px;color:#4b5563;margin:0;">Não enviaremos novos contatos comerciais para <strong>${esc(rec.email)}</strong>.</p>
+        <p style="font-size:15px;color:#4b5563;margin:0;">Não enviaremos novos contatos comerciais para <strong>${esc(email)}</strong>.</p>
         </div></body></html>`;
       return new Response(html, { headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" } });
     }
@@ -221,9 +339,7 @@ serve(async (req) => {
       const allowDuplicates = body.allow_duplicates === true;
 
       const emails = items.map((i) => String(i.email || "").toLowerCase().trim());
-      const { data: suppressed } = await admin
-        .from("influencer_email_suppressions").select("email").in("email", emails);
-      const blocked = new Set((suppressed ?? []).map((s: any) => s.email));
+      const blocked = await suppressedSet(admin, emails);
 
       const { data: previous } = await admin
         .from("influencer_campaign_recipients").select("email").in("email", emails).not("sent_at", "is", null);
@@ -298,17 +414,31 @@ serve(async (req) => {
       let sent = 0, failed = 0;
 
       for (const r of batch ?? []) {
+        // Guarda final de opt-out: mesmo campanhas já agendadas respeitam o descadastro.
+        if (await isSuppressed(admin, r.email)) {
+          await admin.from("influencer_campaign_recipients").update({
+            status: "falhou", error_message: "Contato descadastrado", failed_at: new Date().toISOString(),
+          }).eq("id", r.id);
+          await logEvent(admin, {
+            recipient_id: r.id, campaign_id: campaignId, prospect_id: r.prospect_id,
+            event_type: "bloqueado", detail: "opt_out",
+          });
+          failed++;
+          continue;
+        }
+
         await admin.from("influencer_campaign_recipients")
           .update({ status: "enviando", attempts: (r.attempts ?? 0) + 1 }).eq("id", r.id);
 
-        const unsubscribeUrl = unsubscribeUrlFor(r.reply_token);
+        const optoutToken = await ensureOptoutToken(admin, r.email, r.prospect_id);
+        const unsubscribeUrl = unsubscribeUrlFor(optoutToken);
          const cleanText = removeDuplicatedSignature(htmlToText(r.body_html));
          const cleanHtml = cleanText.split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px;">${esc(p).replace(/\n/g, "<br>")}</p>`).join("");
          const text = `${cleanText}\n\nAtenciosamente,\nEquipe de Parcerias Wiize\n${APP_URL}\n\nPara não receber novos contatos: ${unsubscribeUrl}`;
          const html = layout(cleanHtml, unsubscribeUrl);
 
         try {
-          const oneClickUrl = oneClickUnsubscribeUrl(supabaseUrl, r.reply_token);
+          const oneClickUrl = oneClickUnsubscribeUrl(supabaseUrl, optoutToken);
           const { ok, status, body: payload } = await sendEmail({
             from: FROM,
             to: [r.email],
@@ -370,6 +500,11 @@ serve(async (req) => {
             await admin.from("influencer_prospects")
               .update({ status: "email_enviado" }).eq("id", r.prospect_id)
               .in("status", ["novo", "qualificado", "sem_contato", "contato_encontrado", "contatos_identificados", "pronto_abordagem"]);
+            // Ciclo de follow-up de 30 dias começa aqui, sem ação do operador.
+            await enrollFollowup(admin, {
+              email: r.email, prospect_id: r.prospect_id, campaign_id: campaignId, recipient_id: r.id,
+              subject: r.subject, body_text: cleanText, created_by: u.user.id,
+            });
             sent++;
           }
         } catch (e) {
@@ -414,10 +549,7 @@ serve(async (req) => {
       if (readError) return json({ error: readError.message }, 400);
 
       const emails = (rows ?? []).map((r: any) => String(r.email).toLowerCase());
-      const { data: suppressed } = emails.length
-        ? await admin.from("influencer_email_suppressions").select("email").in("email", emails)
-        : { data: [] };
-      const blocked = new Set((suppressed ?? []).map((s: any) => String(s.email).toLowerCase()));
+      const blocked = await suppressedSet(admin, emails);
       const followUpCutoff = Date.now() - FOLLOW_UP_MIN_DAYS * 24 * 60 * 60 * 1000;
       const ids = (rows ?? []).filter((r: any) => {
         if (blocked.has(String(r.email).toLowerCase())) return false;
@@ -456,6 +588,7 @@ serve(async (req) => {
       if (rec) {
         await admin.from("influencer_prospects").update({ status: "respondeu" }).eq("id", rec.prospect_id)
           .in("status", ["novo", "qualificado", "sem_contato", "contato_encontrado", "contatos_identificados", "pronto_abordagem", "email_enviado"]);
+        await killFollowups(admin, rec.email, "replied");
         await logEvent(admin, {
           recipient_id: recipientId, campaign_id: rec.campaign_id, prospect_id: rec.prospect_id,
           event_type: "resposta_recebida", detail: rec.email,
@@ -490,9 +623,11 @@ serve(async (req) => {
       if (subject.length < 2) return json({ error: "Informe o assunto." }, 400);
       if (!text) return json({ error: "Escreva a mensagem." }, 400);
 
-      const { data: sup } = await admin
-        .from("influencer_email_suppressions").select("email").eq("email", to).maybeSingle();
-      if (sup) return json({ error: "Este contato pediu descadastro e não pode ser contatado." }, 400);
+      if (await isSuppressed(admin, to)) {
+        return json({ error: "Este contato pediu descadastro e não pode ser contatado." }, 400);
+      }
+      // Um humano assumiu a conversa: a automação sai de cena.
+      await killFollowups(admin, to, "manual_takeover");
 
       // Reaproveita o destinatário anterior; respostas novas são correlacionadas pelo
       // remetente e pelos headers do provedor, sem expor plus-addressing ao contato.
