@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 import { DEFAULT_TEMPLATE_BODY, OUTREACH_VARIABLES, prospectOutreachLabel, renderTemplate } from "@/lib/influencerOutreach";
+import { cleanQuotedReply, formatChatTimestamp } from "@/lib/emailThread";
 import {
   Loader2, Send, Paperclip, X, StickyNote, Mail, MessageSquare, Inbox, ArrowUpRight,
 } from "lucide-react";
