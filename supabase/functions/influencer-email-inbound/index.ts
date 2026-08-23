@@ -296,6 +296,22 @@ serve(async (req) => {
       .eq("id", prospectId)
       .in("status", ["novo", "qualificado", "sem_contato", "contato_encontrado", "contatos_identificados", "pronto_abordagem", "abordado", "email_enviado"]);
 
+    // Qualquer resposta mata a sequência automática na hora.
+    await killFollowups(admin, sender, "replied");
+
+    // Pedido de descadastro escrito na própria resposta.
+    const askedToStop = OPT_OUT_PHRASES.test(`${subject}\n${text}`);
+    if (askedToStop) {
+      await suppressEmail(admin, sender, "opt_out", prospectId);
+      await admin.from("influencer_contacts")
+        .update({ status: "nao_contatar" })
+        .eq("prospect_id", prospectId).eq("type", "email").ilike("normalized_value", sender);
+      await admin.from("influencer_email_events").insert({
+        recipient_id: rec?.id ?? null, campaign_id: rec?.campaign_id ?? null, prospect_id: prospectId,
+        event_type: "opt_out", detail: sender,
+      }).then(() => {}, () => {});
+    }
+
     await admin.from("influencer_email_events").insert({
       recipient_id: rec?.id ?? null, campaign_id: rec?.campaign_id ?? null, prospect_id: prospectId,
       event_type: "resposta_recebida", detail: sender,
