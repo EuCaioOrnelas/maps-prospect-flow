@@ -339,9 +339,7 @@ serve(async (req) => {
       const allowDuplicates = body.allow_duplicates === true;
 
       const emails = items.map((i) => String(i.email || "").toLowerCase().trim());
-      const { data: suppressed } = await admin
-        .from("influencer_email_suppressions").select("email").in("email", emails);
-      const blocked = new Set((suppressed ?? []).map((s: any) => s.email));
+      const blocked = await suppressedSet(admin, emails);
 
       const { data: previous } = await admin
         .from("influencer_campaign_recipients").select("email").in("email", emails).not("sent_at", "is", null);
