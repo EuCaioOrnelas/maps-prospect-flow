@@ -69,39 +69,43 @@ function removeDuplicatedSignature(text: string) {
 }
 
 /**
- * Layout com identidade visual da Wiize, porém leve: HTML em tabela, sem imagens
- * externas e com boa proporção texto/markup — o que mantém a entregabilidade alta.
+ * Layout com identidade visual da Wiize: HTML em tabela, logo oficial hospedada
+ * no domínio autenticado e boa proporção texto/markup (entregabilidade alta).
  */
+const LOGO_URL = `${APP_URL}/wiize-logo.png`;
+
 function layout(bodyHtml: string, unsubscribeUrl: string) {
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
-<body style="margin:0;padding:0;background:#f4f6f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2328;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f4f6f5;padding:28px 12px;">
+<body style="margin:0;padding:0;background:#eef1ef;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2328;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#eef1ef;padding:32px 12px;">
 <tr><td align="center">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e6e9e7;border-radius:14px;overflow:hidden;">
-<tr><td style="height:4px;background:${BRAND};font-size:0;line-height:0;">&nbsp;</td></tr>
-<tr><td style="padding:22px 28px 6px;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="background:${BRAND};border-radius:9px;width:34px;height:34px;text-align:center;vertical-align:middle;color:#ffffff;font-size:17px;font-weight:700;line-height:34px;">W</td>
-<td style="padding-left:10px;vertical-align:middle;">
-<div style="font-size:16px;font-weight:700;color:#0f172a;letter-spacing:-0.2px;">Wiize</div>
-<div style="font-size:11px;color:#6b7280;letter-spacing:0.4px;text-transform:uppercase;">Parcerias &amp; Criadores</div>
-</td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #e3e7e4;border-radius:18px;overflow:hidden;">
+<tr><td style="height:5px;background:${BRAND};font-size:0;line-height:0;">&nbsp;</td></tr>
+<tr><td style="padding:26px 32px 18px;border-bottom:1px solid #f0f2f1;">
+<img src="${LOGO_URL}" width="132" alt="Wiize" style="display:block;width:132px;max-width:132px;height:auto;border:0;outline:none;text-decoration:none;">
+<div style="margin-top:8px;font-size:11px;color:#7a8580;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;">Parcerias &amp; Criadores</div>
 </td></tr>
-<tr><td style="padding:14px 28px 4px;font-size:15px;line-height:1.65;color:#1f2328;">
+<tr><td style="padding:26px 32px 8px;font-size:15.5px;line-height:1.7;color:#1f2328;">
 ${bodyHtml}
 </td></tr>
-<tr><td style="padding:8px 28px 0;">
+<tr><td style="padding:6px 32px 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
 <td style="border-top:1px solid #eceeed;font-size:0;line-height:0;height:1px;">&nbsp;</td></tr></table>
 </td></tr>
-<tr><td style="padding:16px 28px 24px;font-size:13px;line-height:1.6;color:#6b7280;">
+<tr><td style="padding:18px 32px 8px;font-size:14px;line-height:1.6;color:#4b5563;">
 Atenciosamente,<br>
-<strong style="color:#0f172a;">Equipe de Parcerias</strong> · <a href="${APP_URL}" style="color:${BRAND};text-decoration:none;font-weight:600;">wiize.com.br</a><br>
-<span style="font-size:12px;color:#9aa2a8;">Se preferir não receber novos contatos,
-<a href="${unsubscribeUrl}" style="color:#9aa2a8;">descadastre-se aqui</a>.</span>
+<strong style="color:#0f172a;">Equipe de Parcerias Wiize</strong><br>
+<a href="${APP_URL}" style="color:${BRAND};text-decoration:none;font-weight:600;">wiize.com.br</a>
+</td></tr>
+<tr><td style="padding:12px 32px 26px;">
+<div style="background:#f7f9f8;border-radius:12px;padding:14px 16px;font-size:12px;line-height:1.6;color:#8b9490;">
+Você recebeu este e-mail porque identificamos seu canal como potencial parceiro da Wiize.
+Se preferir não receber novos contatos, <a href="${unsubscribeUrl}" style="color:#6b7280;text-decoration:underline;">clique aqui para se descadastrar</a>.
+</div>
 </td></tr>
 </table>
+<div style="max-width:600px;margin:14px auto 0;font-size:11px;color:#9aa2a8;text-align:center;">Wiize · Plataforma de crescimento comercial · Brasil</div>
 </td></tr></table>
 </body></html>`;
 }
