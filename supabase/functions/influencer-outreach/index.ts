@@ -86,7 +86,7 @@ function layout(bodyHtml: string, unsubscribeUrl: string) {
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #e3e7e4;border-radius:18px;overflow:hidden;">
 <tr><td style="height:5px;background:${BRAND};font-size:0;line-height:0;">&nbsp;</td></tr>
 <tr><td style="padding:26px 32px 18px;border-bottom:1px solid #f0f2f1;">
-<img src="${LOGO_URL}" width="132" alt="Wiize" style="display:block;width:132px;max-width:132px;height:auto;border:0;outline:none;text-decoration:none;">
+<img src="${LOGO_URL}" width="131" height="40" alt="Wiize" style="display:block;width:131px;max-width:131px;height:40px;border:0;outline:none;text-decoration:none;">
 <div style="margin-top:8px;font-size:11px;color:#7a8580;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;">Parcerias &amp; Criadores</div>
 </td></tr>
 <tr><td style="padding:26px 32px 8px;font-size:15.5px;line-height:1.7;color:#1f2328;">
