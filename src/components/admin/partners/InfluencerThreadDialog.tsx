@@ -188,8 +188,9 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
           </TabsList>
 
           {/* Histórico + resposta */}
-          <TabsContent value="conversa" className="flex-1 overflow-hidden flex flex-col gap-3 mt-4">
-            <ScrollArea className="flex-1 max-h-[38vh] pr-3">
+          <TabsContent value="conversa" className="flex-1 min-h-0 overflow-hidden flex flex-col gap-3 mt-4">
+            <div className="flex-1 min-h-[220px] overflow-y-auto overscroll-contain pr-3">
+
               {loading ? (
                 <div className="py-10 text-center"><Loader2 className="animate-spin mx-auto text-muted-foreground" size={18} /></div>
               ) : messages.length === 0 ? (
