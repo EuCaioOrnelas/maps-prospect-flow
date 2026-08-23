@@ -81,6 +81,62 @@ async function hydrateInbound(data: any) {
   return response.ok && detail ? { ...data, ...detail } : data;
 }
 
+function eventRecipients(data: any): string[] {
+  const values = Array.isArray(data?.to) ? data.to : [data?.to];
+  return values
+    .map((value: any) => firstAddress(value))
+    .filter((value: string | null): value is string => Boolean(value));
+}
+
+async function handleDeliveryEvent(admin: any, eventType: string, data: any) {
+  const normalizedType = eventType.toLowerCase();
+  const providerMessageId = data?.email_id || data?.id || null;
+  const isBounce = normalizedType === "email.bounced" || normalizedType.endsWith(".bounced");
+  const isComplaint = normalizedType === "email.complained" || normalizedType.endsWith(".complained");
+
+  if (!isBounce && !isComplaint) return null;
+
+  const reason = isComplaint ? "complaint" : "bounce";
+  const status = isComplaint ? "denunciado" : "falhou";
+  const recipients = eventRecipients(data);
+  let matched = 0;
+
+  for (const email of recipients) {
+    const { data: recipient } = await admin.from("influencer_campaign_recipients")
+      .select("id, campaign_id, prospect_id")
+      .ilike("email", email)
+      .order("sent_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    await admin.from("influencer_email_suppressions").upsert({
+      email,
+      reason,
+      prospect_id: recipient?.prospect_id ?? null,
+    }, { onConflict: "email" });
+
+    if (!recipient) continue;
+    matched += 1;
+
+    await admin.from("influencer_campaign_recipients").update({
+      status,
+      failed_at: isBounce ? new Date().toISOString() : null,
+      error_message: isComplaint ? "Destinatário denunciou a mensagem como spam" : "Endereço rejeitou a entrega",
+    }).eq("id", recipient.id);
+
+    await admin.from("influencer_email_events").insert({
+      recipient_id: recipient.id,
+      campaign_id: recipient.campaign_id,
+      prospect_id: recipient.prospect_id,
+      event_type: reason,
+      detail: email,
+      payload: { provider_message_id: providerMessageId },
+    });
+  }
+
+  return json({ ok: true, event: reason, suppressed: recipients.length, matched });
+}
+
 function headersText(headers: any) {
   try { return JSON.stringify(headers ?? {}); } catch { return ""; }
 }
@@ -96,13 +152,17 @@ serve(async (req) => {
     }
 
     const payload = await req.json().catch(() => ({}));
-    const data = await hydrateInbound(payload?.data ?? payload);
     const eventType = String(payload?.type || "");
+    const rawData = payload?.data ?? payload;
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const deliveryResponse = await handleDeliveryEvent(admin, eventType, rawData);
+    if (deliveryResponse) return deliveryResponse;
+
+    const data = await hydrateInbound(rawData);
     if (eventType && !/received|inbound|delivered_reply/i.test(eventType) && !data?.from) {
       return json({ ok: true, ignored: eventType });
     }
 
-    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const token = extractToken(collectAddresses(data));
     const from = firstAddress(data?.from);
     const headerBlob = headersText(data?.headers);
