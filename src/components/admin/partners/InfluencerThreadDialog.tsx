@@ -189,45 +189,45 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
 
           {/* Histórico + resposta */}
           <TabsContent value="conversa" className="flex-1 min-h-0 overflow-hidden flex flex-col gap-4 mt-4">
-            <div className="flex-1 min-h-[220px] overflow-y-auto overscroll-contain pr-3">
+            <div className="flex-1 min-h-[420px] h-[55vh] overflow-y-auto overscroll-contain pr-3">
 
               {loading ? (
                 <div className="py-10 text-center"><Loader2 className="animate-spin mx-auto text-muted-foreground" size={18} /></div>
               ) : messages.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border p-6 text-center space-y-1.5">
-                  <Inbox className="mx-auto text-muted-foreground" size={18} />
+                <div className="rounded-xl border border-dashed border-border p-8 text-center space-y-2">
+                  <Inbox className="mx-auto text-muted-foreground" size={22} />
                   <p className="text-sm text-muted-foreground">
                     Nenhuma mensagem ainda. Envie a primeira abordagem abaixo ou crie uma campanha.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {messages.map((m) => {
                     const mine = m.direction === "enviada";
                     const isNote = m.direction === "nota";
                     return (
                       <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                         <div className={[
-                          "max-w-[82%] rounded-2xl border p-3 space-y-1.5",
+                          "max-w-[80%] rounded-2xl border p-4 space-y-2",
                           isNote ? "border-amber-500/30 bg-amber-500/10"
                             : mine ? "border-primary/25 bg-primary/10"
                               : "border-border bg-muted/60",
                         ].join(" ")}>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-[10px]">
+                            <Badge variant="outline" className="text-[11px]">
                               {isNote ? "Anotação" : mine ? "Enviada" : "Recebida"}
                             </Badge>
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-[11px] text-muted-foreground">
                               {new Date(m.created_at).toLocaleString("pt-BR")}
                             </span>
                           </div>
                           {m.subject && <p className="text-xs font-semibold">{m.subject}</p>}
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body_text}</p>
+                          <p className="text-sm sm:text-base whitespace-pre-wrap leading-relaxed">{m.body_text}</p>
                           {Array.isArray(m.attachments) && m.attachments.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 pt-1">
+                            <div className="flex flex-wrap gap-2 pt-1">
                               {m.attachments.map((a: any, i: number) => (
-                                <Badge key={i} variant="secondary" className="text-[10px]">
-                                  <Paperclip size={10} className="mr-1" /> {a.filename}
+                                <Badge key={i} variant="secondary" className="text-[11px]">
+                                  <Paperclip size={11} className="mr-1" /> {a.filename}
                                 </Badge>
                               ))}
                             </div>
