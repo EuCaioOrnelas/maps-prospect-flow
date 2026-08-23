@@ -249,7 +249,7 @@ serve(async (req) => {
     await admin.from("influencer_prospects")
       .update({ status: "respondeu" })
       .eq("id", prospectId)
-      .in("status", ["novo", "qualificado", "sem_contato", "contato_encontrado", "contatos_identificados", "pronto_abordagem", "email_enviado"]);
+      .in("status", ["novo", "qualificado", "sem_contato", "contato_encontrado", "contatos_identificados", "pronto_abordagem", "abordado", "email_enviado"]);
 
     await admin.from("influencer_email_events").insert({
       recipient_id: rec?.id ?? null, campaign_id: rec?.campaign_id ?? null, prospect_id: prospectId,
