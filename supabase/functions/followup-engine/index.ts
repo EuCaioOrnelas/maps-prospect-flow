@@ -76,8 +76,9 @@ const STRATEGIES: Strategy[] = [
     key: "custo_inacao",
     goal: "Mostrar o custo de não decidir",
     guide:
-      "Fale de oportunidades que deixam de ser abordadas, tempo perdido e receita recorrente não construída. Profissional e respeitoso; proibido medo artificial, ameaça ou falsa urgência.",
+      "Mostre que cada mês sem a parceria é mais um mês de conteúdo produzido sem construir renda recorrente — a audiência já existe, só não está sendo monetizada por esse caminho. Profissional e respeitoso; proibido medo artificial, ameaça ou falsa urgência.",
   },
+
   {
     key: "ultima_tentativa",
     goal: "Encerrar preservando a relação",
