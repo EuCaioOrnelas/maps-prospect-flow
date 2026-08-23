@@ -335,8 +335,9 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-    const cronSecret = Deno.env.get("FOLLOWUP_CRON_SECRET") || "";
-    const isService = token === serviceKey || (!!cronSecret && req.headers.get("x-cron-secret") === cronSecret);
+    const cronHeader = req.headers.get("x-cron-secret") || "";
+    const cronSecrets = [Deno.env.get("FOLLOWUP_CRON_SECRET"), Deno.env.get("SDR_CRON_SECRET")].filter(Boolean) as string[];
+    const isService = token === serviceKey || (!!cronHeader && cronSecrets.includes(cronHeader));
 
     let adminUserId: string | null = null;
     if (!isService) {
