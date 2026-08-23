@@ -239,7 +239,7 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
                   <div ref={bottomRef} />
                 </div>
               )}
-            </ScrollArea>
+            </div>
 
             <div className="rounded-2xl border border-border p-3 space-y-2.5">
               <div className="grid gap-2 sm:grid-cols-2">
