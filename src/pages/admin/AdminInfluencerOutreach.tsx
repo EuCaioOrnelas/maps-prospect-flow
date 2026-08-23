@@ -45,12 +45,14 @@ function IconAction({ label, children, ...props }: React.ComponentProps<typeof B
   );
 }
 
-/** Apenas leads qualificados (salvos na prospecção) entram na esteira de abordagem. */
+/** Apenas leads qualificados (ou já em abordagem) entram na esteira. */
 const QUALIFIED_STATUSES = [
   "qualificado",
+  "contato_encontrado",
   "contatos_identificados",
   "pronto_abordagem",
   "sem_contato",
+  "abordado",
   "email_enviado",
   "respondeu",
   "negociacao",
@@ -89,14 +91,14 @@ export default function AdminInfluencerOutreach() {
 
   const loadProspects = useCallback(async () => {
     setLoading(true);
-    // Só entram na fila de abordagem influenciadores já qualificados (salvos na prospecção).
+    // Entram na esteira todos os influenciadores qualificados (salvos ou não),
+    // inclusive os que ainda não têm e-mail descoberto.
     const { data } = await (supabase as any)
       .from("influencer_prospects")
       .select("*")
-      .eq("saved", true)
       .in("status", QUALIFIED_STATUSES)
       .order("fit_score", { ascending: false })
-      .limit(400);
+      .limit(600);
 
     const rows = data ?? [];
     setProspects(rows);

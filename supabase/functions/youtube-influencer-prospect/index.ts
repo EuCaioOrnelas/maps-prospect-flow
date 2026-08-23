@@ -248,9 +248,16 @@ serve(async (req) => {
         ? [prospect_id]
         : [];
       if (ids.length === 0) return json({ error: "Informe ao menos um prospect." }, 400);
+      // Qualificar (ou avançar) já coloca o influenciador na esteira de abordagem.
+      const OUTREACH_STATUSES = [
+        "qualificado", "contato_encontrado", "contatos_identificados", "pronto_abordagem",
+        "sem_contato", "abordado", "email_enviado", "respondeu", "negociacao", "parceria_ativa",
+      ];
+      const patch: Record<string, unknown> = { status };
+      if (OUTREACH_STATUSES.includes(status)) patch.saved = true;
       const { error } = await admin
         .from("influencer_prospects")
-        .update({ status })
+        .update(patch)
         .in("id", ids);
       if (error) return json({ error: error.message }, 400);
       return json({ ok: true, updated: ids.length });
