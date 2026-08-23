@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 import { DEFAULT_TEMPLATE_BODY, OUTREACH_VARIABLES, prospectOutreachLabel, renderTemplate } from "@/lib/influencerOutreach";
+import { cleanQuotedReply, formatChatTimestamp } from "@/lib/emailThread";
 import {
   Loader2, Send, Paperclip, X, StickyNote, Mail, MessageSquare, Inbox, ArrowUpRight,
 } from "lucide-react";
@@ -218,11 +219,13 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
                               {isNote ? "Anotação" : mine ? "Enviada" : "Recebida"}
                             </Badge>
                             <span className="text-[11px] text-muted-foreground">
-                              {new Date(m.created_at).toLocaleString("pt-BR")}
+                              {formatChatTimestamp(m.created_at)}
                             </span>
                           </div>
                           {m.subject && <p className="text-xs font-semibold">{m.subject}</p>}
-                          <p className="text-sm sm:text-base whitespace-pre-wrap leading-relaxed">{m.body_text}</p>
+                          <p className="text-sm sm:text-base whitespace-pre-wrap leading-relaxed">
+                            {cleanQuotedReply(m.body_text) || m.body_text}
+                          </p>
                           {Array.isArray(m.attachments) && m.attachments.length > 0 && (
                             <div className="flex flex-wrap gap-2 pt-1">
                               {m.attachments.map((a: any, i: number) => (

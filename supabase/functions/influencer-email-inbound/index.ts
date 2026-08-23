@@ -53,10 +53,26 @@ function firstAddress(v: any): string | null {
   return (m ? m[1] : String(v)).trim().toLowerCase();
 }
 
+// Remove o trecho citado do e-mail original ("Em ... escreveu:", "On ... wrote:",
+// cabeçalhos de encaminhamento, assinaturas de app e linhas com ">").
+const QUOTE_MARKERS: RegExp[] = [
+  /^[ \t]*(?:Em|On|El|Le)\b[\s\S]{0,400}?(?:escreveu|wrote|escribió|a écrit)\s*:?[ \t]*$/im,
+  /^[ \t]*-{2,}\s*(?:Mensagem original|Original Message|Forwarded message|Mensagem encaminhada)/im,
+  /^[ \t]*(?:De|From|Van|Von)\s*:\s*.+<[^>]+>[ \t]*$/im,
+  /^[ \t]*_{5,}[ \t]*$/m,
+  /^[ \t]*Enviado do meu \w+/im,
+];
+
 function stripQuoted(text: string) {
-  return String(text || "")
-    .split(/\n\s*(?:Em .* escreveu:|On .* wrote:|-{2,}\s*Mensagem original)/)[0]
-    .replace(/(^>.*$\n?)+/gm, "")
+  let value = String(text || "").replace(/\r\n/g, "\n");
+  let cut = value.length;
+  for (const marker of QUOTE_MARKERS) {
+    const match = value.match(marker);
+    if (match?.index !== undefined && match.index < cut) cut = match.index;
+  }
+  return value.slice(0, cut)
+    .replace(/(^[ \t]*>.*$\n?)+/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
