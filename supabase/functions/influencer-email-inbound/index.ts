@@ -210,8 +210,8 @@ serve(async (req) => {
     }
     if (!prospectId) return json({ ok: true, ignored: "destinatário não encontrado" });
 
-    const sender = from || rec.email;
-    const subject = String(data?.subject || `Re: ${rec.subject ?? ""}`).slice(0, 400);
+    const sender = from || rec?.email || "";
+    const subject = String(data?.subject || `Re: ${rec?.subject ?? ""}`).slice(0, 400);
     const text = (stripQuoted(data?.text || data?.body_plain || data?.plain || "") || htmlToText(data?.html || data?.body_html || "")).slice(0, 20000);
     const html = typeof data?.html === "string" ? data.html.slice(0, 60000) : null;
     const attachments = Array.isArray(data?.attachments)
@@ -222,13 +222,13 @@ serve(async (req) => {
     if (providerMessageId) {
       const { data: duplicate } = await admin.from("influencer_messages").select("id")
         .eq("provider_message_id", providerMessageId).maybeSingle();
-      if (duplicate) return json({ ok: true, duplicate: true, prospect_id: rec.prospect_id });
+      if (duplicate) return json({ ok: true, duplicate: true, prospect_id: prospectId });
     }
 
     const { error: messageError } = await admin.from("influencer_messages").insert({
-      prospect_id: rec.prospect_id,
-      campaign_id: rec.campaign_id,
-      recipient_id: rec.id,
+      prospect_id: prospectId,
+      campaign_id: rec?.campaign_id ?? null,
+      recipient_id: rec?.id ?? null,
       direction: "recebida",
       subject,
       body_text: text || "(mensagem sem texto)",
@@ -240,21 +240,23 @@ serve(async (req) => {
     });
     if (messageError) throw new Error(`Falha ao salvar resposta: ${messageError.message}`);
 
-    await admin.from("influencer_campaign_recipients")
-      .update({ status: "respondido", replied_at: new Date().toISOString() })
-      .eq("id", rec.id);
+    if (rec?.id) {
+      await admin.from("influencer_campaign_recipients")
+        .update({ status: "respondido", replied_at: new Date().toISOString() })
+        .eq("id", rec.id);
+    }
 
     await admin.from("influencer_prospects")
       .update({ status: "respondeu" })
-      .eq("id", rec.prospect_id)
+      .eq("id", prospectId)
       .in("status", ["novo", "qualificado", "sem_contato", "contato_encontrado", "contatos_identificados", "pronto_abordagem", "email_enviado"]);
 
     await admin.from("influencer_email_events").insert({
-      recipient_id: rec.id, campaign_id: rec.campaign_id, prospect_id: rec.prospect_id,
+      recipient_id: rec?.id ?? null, campaign_id: rec?.campaign_id ?? null, prospect_id: prospectId,
       event_type: "resposta_recebida", detail: sender,
     }).then(() => {}, () => {});
 
-    return json({ ok: true, prospect_id: rec.prospect_id });
+    return json({ ok: true, prospect_id: prospectId });
   } catch (e) {
     console.error("[influencer-email-inbound]", e);
     return json({ error: (e as Error).message }, 500);
