@@ -500,6 +500,11 @@ serve(async (req) => {
             await admin.from("influencer_prospects")
               .update({ status: "email_enviado" }).eq("id", r.prospect_id)
               .in("status", ["novo", "qualificado", "sem_contato", "contato_encontrado", "contatos_identificados", "pronto_abordagem"]);
+            // Ciclo de follow-up de 30 dias começa aqui, sem ação do operador.
+            await enrollFollowup(admin, {
+              email: r.email, prospect_id: r.prospect_id, campaign_id: campaignId, recipient_id: r.id,
+              subject: r.subject, body_text: cleanText, created_by: u.user.id,
+            });
             sent++;
           }
         } catch (e) {
