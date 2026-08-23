@@ -72,7 +72,9 @@ function removeDuplicatedSignature(text: string) {
  * Layout com identidade visual da Wiize: HTML em tabela, logo oficial hospedada
  * no domínio autenticado e boa proporção texto/markup (entregabilidade alta).
  */
-const LOGO_URL = `${APP_URL}/wiize-logo.png`;
+// Logo hospedada em storage público (URL absoluta, sem redirecionos — os
+// clientes de e-mail não seguem 308 e a imagem quebrava no domínio do site).
+const LOGO_URL = "https://wgokhkawjdxsmvfuhazb.supabase.co/storage/v1/object/public/agent-media/email%2Fwiize-logo.png";
 
 function layout(bodyHtml: string, unsubscribeUrl: string) {
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">

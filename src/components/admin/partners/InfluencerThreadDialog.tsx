@@ -133,7 +133,15 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
         files.map(async (f) => ({ filename: f.name, content: await toBase64(f) })),
       );
       const { data, error } = await supabase.functions.invoke("influencer-outreach", {
-        body: { action: "send_reply", prospect_id: prospect.id, to: to.trim(), subject: subject.trim(), body_text: text.trim(), attachments },
+        body: {
+          action: "send_reply",
+          prospect_id: prospect.id,
+          to: to.trim(),
+          // Variáveis ({{nome}}, etc.) são resolvidas antes do envio.
+          subject: renderTemplate(subject.trim(), prospect),
+          body_text: renderTemplate(text.trim(), prospect),
+          attachments,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
