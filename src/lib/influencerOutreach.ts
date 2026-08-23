@@ -157,8 +157,11 @@ export const DEFAULT_TEMPLATE_BODY = `Olá {{primeiro_nome}}, tudo bem?
 
 Acompanhei o canal {{nome_canal}} e gostei muito da forma como você trata os temas de {{tema_canal}}.
 
-Sou da Wiize, plataforma brasileira de prospecção, CRM e atendimento com IA para times comerciais B2B. Estamos selecionando criadores para o nosso programa de parcerias, com comissão recorrente por cliente indicado e material pronto de divulgação.
+Sei que por trás de cada vídeo existem horas de roteiro, gravação, edição e postagem — e nem sempre o retorno financeiro acompanha esse esforço.
+
+Sou da Wiize, plataforma brasileira de prospecção, CRM e atendimento com IA para times comerciais B2B. Estamos selecionando criadores para o Wiize Partners: você ganha um novo tema de conteúdo para a sua audiência e uma nova fonte de renda recorrente, com comissão sobre cada cliente indicado e material pronto de divulgação — sem precisar produzir mais vídeos por mês.
 
 Faz sentido conversarmos 15 minutos nesta semana? Se preferir, respondo por aqui mesmo com todos os detalhes.`;
 
 export const DEFAULT_TEMPLATE_SUBJECT = "Parceria Wiize com o canal {{nome_canal}}";
+
