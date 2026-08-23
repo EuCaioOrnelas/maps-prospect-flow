@@ -198,6 +198,7 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
 
           {/* Histórico + resposta */}
           <TabsContent value="conversa" className="flex flex-col gap-4 mt-4">
+            <FollowupPanel prospectId={prospect.id} email={to} />
             <div className="rounded-2xl border border-border bg-muted/20 p-4 overflow-y-auto max-h-[55vh] min-h-[300px] overscroll-contain">
               {loading ? (
                 <div className="py-10 text-center"><Loader2 className="animate-spin mx-auto text-muted-foreground" size={18} /></div>
