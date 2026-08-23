@@ -314,12 +314,12 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
           </TabsContent>
 
           {/* Anotação interna */}
-          <TabsContent value="nota" className="mt-4 space-y-3">
-            <Textarea rows={6} placeholder="Contexto interno da negociação (não é enviado ao influenciador)…"
+          <TabsContent value="nota" className="mt-4 flex-1 flex flex-col gap-3 min-h-0">
+            <Textarea className="flex-1 min-h-[300px] resize-none" placeholder="Contexto interno da negociação (não é enviado ao influenciador)…"
               value={note} onChange={(e) => setNote(e.target.value)} />
             <div className="flex justify-end">
               <Button size="sm" disabled={savingNote || !note.trim()} onClick={saveNote}>
-                {savingNote ? <Loader2 className="animate-spin mr-1.5" size={13} /> : <StickyNote size={13} className="mr-1.5" />}
+                {savingNote ? <Loader2 className="animate-spin mr-1.5" size={14} /> : <StickyNote size={14} className="mr-1.5" />}
                 Salvar anotação
               </Button>
             </div>
