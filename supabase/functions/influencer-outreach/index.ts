@@ -69,22 +69,43 @@ function removeDuplicatedSignature(text: string) {
 }
 
 /**
- * Layout leve e "1:1": e-mail de primeiro contato com imagem pesada e muito HTML
- * é o principal gatilho de spam. Mantemos texto real + assinatura simples.
+ * Layout com identidade visual da Wiize, porém leve: HTML em tabela, sem imagens
+ * externas e com boa proporção texto/markup — o que mantém a entregabilidade alta.
  */
 function layout(bodyHtml: string, unsubscribeUrl: string) {
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
-<body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2328;">
-<div style="max-width:560px;margin:0 auto;padding:24px 20px;font-size:15px;line-height:1.6;">
+<body style="margin:0;padding:0;background:#f4f6f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2328;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f4f6f5;padding:28px 12px;">
+<tr><td align="center">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e6e9e7;border-radius:14px;overflow:hidden;">
+<tr><td style="height:4px;background:${BRAND};font-size:0;line-height:0;">&nbsp;</td></tr>
+<tr><td style="padding:22px 28px 6px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td style="background:${BRAND};border-radius:9px;width:34px;height:34px;text-align:center;vertical-align:middle;color:#ffffff;font-size:17px;font-weight:700;line-height:34px;">W</td>
+<td style="padding-left:10px;vertical-align:middle;">
+<div style="font-size:16px;font-weight:700;color:#0f172a;letter-spacing:-0.2px;">Wiize</div>
+<div style="font-size:11px;color:#6b7280;letter-spacing:0.4px;text-transform:uppercase;">Parcerias &amp; Criadores</div>
+</td></tr></table>
+</td></tr>
+<tr><td style="padding:14px 28px 4px;font-size:15px;line-height:1.65;color:#1f2328;">
 ${bodyHtml}
-<p style="margin:24px 0 0;font-size:13px;color:#6b7280;line-height:1.5;">
-Atenciosamente,<br>Equipe de Parcerias · <a href="${APP_URL}" style="color:${BRAND};text-decoration:none;">Wiize</a><br>
-<span style="font-size:12px;">Se preferir não receber novos contatos,
-<a href="${unsubscribeUrl}" style="color:#6b7280;">clique aqui</a>.</span>
-</p>
-</div></body></html>`;
+</td></tr>
+<tr><td style="padding:8px 28px 0;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+<td style="border-top:1px solid #eceeed;font-size:0;line-height:0;height:1px;">&nbsp;</td></tr></table>
+</td></tr>
+<tr><td style="padding:16px 28px 24px;font-size:13px;line-height:1.6;color:#6b7280;">
+Atenciosamente,<br>
+<strong style="color:#0f172a;">Equipe de Parcerias</strong> · <a href="${APP_URL}" style="color:${BRAND};text-decoration:none;font-weight:600;">wiize.com.br</a><br>
+<span style="font-size:12px;color:#9aa2a8;">Se preferir não receber novos contatos,
+<a href="${unsubscribeUrl}" style="color:#9aa2a8;">descadastre-se aqui</a>.</span>
+</td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
 }
+
 
 async function logEvent(admin: any, row: Record<string, unknown>) {
   try { await admin.from("influencer_email_events").insert(row); } catch (_) { /* best-effort */ }
