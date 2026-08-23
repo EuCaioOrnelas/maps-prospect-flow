@@ -168,10 +168,10 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
 
   return (
     <Dialog open={!!prospect} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-5xl max-h-[96vh] flex flex-col overflow-hidden p-5 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 pr-6">
-            <ChannelAvatar src={prospect.thumbnail_url} name={prospect.channel_name} size={40} />
+            <ChannelAvatar src={prospect.thumbnail_url} name={prospect.channel_name} size={48} />
             <div className="min-w-0 text-left">
               <p className="truncate text-base">{prospect.channel_name}</p>
               <p className="text-xs font-normal text-muted-foreground truncate">
@@ -183,51 +183,51 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="self-start">
-            <TabsTrigger value="conversa"><MessageSquare size={13} className="mr-1.5" /> Conversa</TabsTrigger>
-            <TabsTrigger value="nota"><StickyNote size={13} className="mr-1.5" /> Anotação interna</TabsTrigger>
+            <TabsTrigger value="conversa"><MessageSquare size={14} className="mr-1.5" /> Conversa</TabsTrigger>
+            <TabsTrigger value="nota"><StickyNote size={14} className="mr-1.5" /> Anotação interna</TabsTrigger>
           </TabsList>
 
           {/* Histórico + resposta */}
-          <TabsContent value="conversa" className="flex-1 min-h-0 overflow-hidden flex flex-col gap-3 mt-4">
-            <div className="flex-1 min-h-[220px] overflow-y-auto overscroll-contain pr-3">
+          <TabsContent value="conversa" className="flex-1 min-h-0 overflow-hidden flex flex-col gap-4 mt-4">
+            <div className="flex-1 min-h-[420px] h-[55vh] overflow-y-auto overscroll-contain pr-3">
 
               {loading ? (
                 <div className="py-10 text-center"><Loader2 className="animate-spin mx-auto text-muted-foreground" size={18} /></div>
               ) : messages.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border p-6 text-center space-y-1.5">
-                  <Inbox className="mx-auto text-muted-foreground" size={18} />
+                <div className="rounded-xl border border-dashed border-border p-8 text-center space-y-2">
+                  <Inbox className="mx-auto text-muted-foreground" size={22} />
                   <p className="text-sm text-muted-foreground">
                     Nenhuma mensagem ainda. Envie a primeira abordagem abaixo ou crie uma campanha.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {messages.map((m) => {
                     const mine = m.direction === "enviada";
                     const isNote = m.direction === "nota";
                     return (
                       <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                         <div className={[
-                          "max-w-[82%] rounded-2xl border p-3 space-y-1.5",
+                          "max-w-[80%] rounded-2xl border p-4 space-y-2",
                           isNote ? "border-amber-500/30 bg-amber-500/10"
                             : mine ? "border-primary/25 bg-primary/10"
                               : "border-border bg-muted/60",
                         ].join(" ")}>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-[10px]">
+                            <Badge variant="outline" className="text-[11px]">
                               {isNote ? "Anotação" : mine ? "Enviada" : "Recebida"}
                             </Badge>
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-[11px] text-muted-foreground">
                               {new Date(m.created_at).toLocaleString("pt-BR")}
                             </span>
                           </div>
                           {m.subject && <p className="text-xs font-semibold">{m.subject}</p>}
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body_text}</p>
+                          <p className="text-sm sm:text-base whitespace-pre-wrap leading-relaxed">{m.body_text}</p>
                           {Array.isArray(m.attachments) && m.attachments.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 pt-1">
+                            <div className="flex flex-wrap gap-2 pt-1">
                               {m.attachments.map((a: any, i: number) => (
-                                <Badge key={i} variant="secondary" className="text-[10px]">
-                                  <Paperclip size={10} className="mr-1" /> {a.filename}
+                                <Badge key={i} variant="secondary" className="text-[11px]">
+                                  <Paperclip size={11} className="mr-1" /> {a.filename}
                                 </Badge>
                               ))}
                             </div>
@@ -241,18 +241,18 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
               )}
             </div>
 
-            <div className="rounded-2xl border border-border p-3 space-y-2.5">
-              <div className="grid gap-2 sm:grid-cols-2">
+            <div className="rounded-2xl border border-border p-4 space-y-3 shrink-0">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground">Para</Label>
+                  <Label className="text-xs text-muted-foreground">Para</Label>
                   <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="email@canal.com" />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground">Assunto</Label>
+                  <Label className="text-xs text-muted-foreground">Assunto</Label>
                   <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Parceria Wiize" />
                 </div>
               </div>
-              <Textarea rows={5} placeholder={messages.length ? "Escreva a resposta…" : "Escreva a primeira abordagem…"}
+              <Textarea rows={6} placeholder={messages.length ? "Escreva a resposta…" : "Escreva a primeira abordagem…"}
                 value={text} onChange={(e) => setText(e.target.value)} />
               {!messages.length && !text && (
                 <Button type="button" size="sm" variant="outline" onClick={() => setText(DEFAULT_TEMPLATE_BODY)}>
@@ -260,10 +260,10 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
                 </Button>
               )}
               <div className="space-y-2">
-                <Label className="text-[11px] text-muted-foreground">Variáveis de personalização</Label>
-                <div className="flex flex-wrap gap-1.5">
+                <Label className="text-xs text-muted-foreground">Variáveis de personalização</Label>
+                <div className="flex flex-wrap gap-2">
                   {OUTREACH_VARIABLES.slice(0, 8).map((variable) => (
-                    <Button key={variable.key} type="button" size="sm" variant="outline" className="h-7 px-2 text-[10px]"
+                    <Button key={variable.key} type="button" size="sm" variant="outline" className="h-7 px-2.5 text-[11px]"
                       onClick={() => setText((value) => `${value}${value ? " " : ""}{{${variable.key}}}`)}>
                       {`{{${variable.key}}}`}
                     </Button>
@@ -272,28 +272,28 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
               </div>
               {text.trim() && (
                 <div className="rounded-lg border border-border bg-muted/30 p-3">
-                  <p className="text-[11px] font-semibold text-muted-foreground">Prévia enviada</p>
+                  <p className="text-xs font-semibold text-muted-foreground">Prévia enviada</p>
                   <Separator className="my-2" />
-                  <p className="text-xs whitespace-pre-wrap leading-relaxed">{previewText}</p>
-                  <p className="mt-3 text-xs text-muted-foreground">Atenciosamente,<br />Equipe de Parcerias Wiize</p>
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{previewText}</p>
+                  <p className="mt-3 text-sm text-muted-foreground">Atenciosamente,<br />Equipe de Parcerias Wiize</p>
                 </div>
               )}
               {files.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {files.map((f) => (
-                    <Badge key={f.name} variant="secondary" className="text-[10px]">
-                      <Paperclip size={10} className="mr-1" /> {f.name}
+                    <Badge key={f.name} variant="secondary" className="text-[11px]">
+                      <Paperclip size={11} className="mr-1" /> {f.name}
                       <Button type="button" variant="ghost" size="sm" className="ml-1 h-5 w-5 p-0" aria-label={`Remover ${f.name}`}
                         title={`Remover ${f.name}`} onClick={() => setFiles((s) => s.filter((x) => x !== f))}><X size={10} /></Button>
                     </Badge>
                   ))}
                 </div>
               )}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <input ref={fileRef} type="file" multiple className="hidden"
                   onChange={(e) => pickFiles(e.target.files)} />
                 <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
-                  <Paperclip size={13} className="mr-1.5" /> Anexo
+                  <Paperclip size={14} className="mr-1.5" /> Anexo
                 </Button>
                 {to && (
                   <a href={`mailto:${to}`} className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1">
@@ -302,24 +302,24 @@ export function InfluencerThreadDialog({ prospect, defaultEmail, onClose, onChan
                 )}
                 <div className="flex-1" />
                 <Button size="sm" disabled={sending} onClick={sendReply}>
-                  {sending ? <Loader2 className="animate-spin mr-1.5" size={13} /> : <Send size={13} className="mr-1.5" />}
+                  {sending ? <Loader2 className="animate-spin mr-1.5" size={14} /> : <Send size={14} className="mr-1.5" />}
                   Enviar e-mail
                 </Button>
               </div>
-              <p className="text-[11px] text-muted-foreground flex items-start gap-1.5">
-                <Mail size={12} className="mt-0.5 shrink-0" />
+              <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+                <Mail size={13} className="mt-0.5 shrink-0" />
                  O envio usa parcerias@wiize.com.br. A resposta volta automaticamente para esta conversa e marca o envio como “Resposta recebida”.
               </p>
             </div>
           </TabsContent>
 
           {/* Anotação interna */}
-          <TabsContent value="nota" className="mt-4 space-y-3">
-            <Textarea rows={6} placeholder="Contexto interno da negociação (não é enviado ao influenciador)…"
+          <TabsContent value="nota" className="mt-4 flex-1 flex flex-col gap-3 min-h-0">
+            <Textarea className="flex-1 min-h-[300px] resize-none" placeholder="Contexto interno da negociação (não é enviado ao influenciador)…"
               value={note} onChange={(e) => setNote(e.target.value)} />
             <div className="flex justify-end">
               <Button size="sm" disabled={savingNote || !note.trim()} onClick={saveNote}>
-                {savingNote ? <Loader2 className="animate-spin mr-1.5" size={13} /> : <StickyNote size={13} className="mr-1.5" />}
+                {savingNote ? <Loader2 className="animate-spin mr-1.5" size={14} /> : <StickyNote size={14} className="mr-1.5" />}
                 Salvar anotação
               </Button>
             </div>
