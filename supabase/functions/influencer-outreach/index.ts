@@ -29,7 +29,6 @@ const FROM = `Parcerias Wiize <${REPLY_LOCAL}@${REPLY_DOMAIN}>`;
 const APP_URL = "https://wiize.com.br";
 const BRAND = "#0E7C3A";
 const RESEND_API_URL = "https://api.resend.com/emails";
-const RESEND_IDEMPOTENCY_TTL_HOURS = 24;
 const FOLLOW_UP_MIN_DAYS = 5;
 
 // Cadência conservadora: reputação de domínio > velocidade.
@@ -269,8 +268,6 @@ serve(async (req) => {
 
         try {
           const oneClickUrl = oneClickUnsubscribeUrl(supabaseUrl, r.reply_token);
-          const attempt = (r.attempts ?? 0) + 1;
-          const idempotencyWindow = Math.floor(Date.now() / (RESEND_IDEMPOTENCY_TTL_HOURS * 60 * 60 * 1000));
           const { ok, status, body: payload } = await sendEmail({
             from: FROM,
             to: [r.email],
@@ -282,7 +279,7 @@ serve(async (req) => {
                "List-Unsubscribe": `<${oneClickUrl}>, <mailto:${REPLY_LOCAL}@${REPLY_DOMAIN}?subject=unsubscribe>`,
               "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
             },
-          }, `influencer-campaign/${campaignId}/${r.id}/${attempt}/${idempotencyWindow}`);
+          }, `influencer-campaign/${campaignId}/${r.id}`);
 
           if (!ok) {
             const message = payload?.message || payload?.error?.message || `Resend ${status}`;
@@ -497,7 +494,6 @@ serve(async (req) => {
         files.push({ filename: String(a?.filename || "anexo").slice(0, 120), content });
       }
 
-      const idempotencyWindow = Math.floor(Date.now() / (RESEND_IDEMPOTENCY_TTL_HOURS * 60 * 60 * 1000));
       const { ok, status, body: payload } = await sendEmail({
         from: FROM,
         to: [to],
@@ -506,7 +502,7 @@ serve(async (req) => {
         html,
          text: `${cleanText}\n\nAtenciosamente,\nEquipe de Parcerias Wiize\n${APP_URL}`,
         ...(files.length ? { attachments: files } : {}),
-      }, `influencer-thread/${prospectId}/${threadRec.id}/${idempotencyWindow}`);
+      }, `influencer-thread/${prospectId}/${threadRec.id}/${crypto.randomUUID()}`);
       if (!ok) {
         const message = payload?.message || payload?.error?.message || `Resend ${status}`;
          await admin.from("influencer_campaign_recipients").update({
