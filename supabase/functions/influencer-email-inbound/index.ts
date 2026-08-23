@@ -125,11 +125,7 @@ async function handleDeliveryEvent(admin: any, eventType: string, data: any) {
       .limit(1)
       .maybeSingle();
 
-    await admin.from("influencer_email_suppressions").upsert({
-      email,
-      reason,
-      prospect_id: recipient?.prospect_id ?? null,
-    }, { onConflict: "email" });
+    await suppressEmail(admin, email, reason, recipient?.prospect_id ?? null);
 
     if (!recipient) continue;
     matched += 1;
