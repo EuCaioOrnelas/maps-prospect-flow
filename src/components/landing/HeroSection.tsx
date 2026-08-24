@@ -680,7 +680,7 @@ export const HeroSection = ({
  titleLine2 = "",
 
  titleHighlight = "Em um só lugar.",
- description = "IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.",
+ description = "Inteligência comercial que encontra, converte e gerencia oportunidades B2B com mais contexto e menos esforço operacional.",
  descriptionClassName,
 }: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
