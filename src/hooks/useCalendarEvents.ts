@@ -129,6 +129,19 @@ export function useCalendarEvents({ from, to, userFilter }: UseCalendarEventsOpt
     };
   }, [accountOwnerId, invalidate, pushToGoogle, user?.id]);
 
+  const translateError = (error: unknown) => {
+    const err = error as { code?: string; message?: string };
+    if (err?.code === CONFLICT_CODE) {
+      return new Error(
+        "Já existe um compromisso nesse horário para o responsável escolhido. Escolha outro horário.",
+      );
+    }
+    if (err?.message?.includes("calendar_events_time_check")) {
+      return new Error("O horário final precisa ser maior que o horário inicial.");
+    }
+    return new Error(err?.message || "Não foi possível salvar o compromisso.");
+  };
+
 
   const createEvent = useMutation({
     mutationFn: async (input: CalendarEventInput) => {
