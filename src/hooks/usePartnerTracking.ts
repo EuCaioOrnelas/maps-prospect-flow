@@ -325,6 +325,7 @@ export async function attributePartnerLeadOnSignup(userId: string, email: string
         try {
           localStorage.removeItem(STORAGE_KEY);
           localStorage.removeItem(CODE_KEY);
+          localStorage.removeItem(PENDING_KEY);
           document.cookie = `${COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
         } catch {}
       }

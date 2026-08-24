@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { withReferralParams } from "@/hooks/usePartnerTracking";
 
 /**
  * Close button for the public (no-login) demo.
@@ -21,7 +22,7 @@ export function PublicDemoCloseButton() {
       );
     } catch {}
     // Full reload so the demo network guard and all demo fixtures are torn down.
-    window.location.assign("/");
+    window.location.assign(withReferralParams("/"));
   };
 
   return createPortal(

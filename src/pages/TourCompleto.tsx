@@ -1,3 +1,4 @@
+import { withReferralParams } from "@/hooks/usePartnerTracking";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -132,7 +133,7 @@ const TourCompleto = () => {
               <Button
                 variant="hero"
                 size="sm"
-                onClick={() => navigate("/signup")}
+                onClick={() => navigate(withReferralParams("/signup"))}
                 className="gap-2"
               >
                 <span className="hidden sm:inline">Começar trial grátis</span>
@@ -337,7 +338,7 @@ const TourCompleto = () => {
                   <Button
                     variant="hero"
                     size="lg"
-                    onClick={() => navigate("/signup")}
+                    onClick={() => navigate(withReferralParams("/signup"))}
                     className="gap-2"
                   >
                     Começar trial gratuito de 7 dias
@@ -384,7 +385,7 @@ const TourCompleto = () => {
                 <Button
                   variant="hero"
                   size="lg"
-                  onClick={() => navigate("/signup")}
+                  onClick={() => navigate(withReferralParams("/signup"))}
                   className="gap-2"
                 >
                   Começar agora
