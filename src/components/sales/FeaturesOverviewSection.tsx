@@ -113,7 +113,7 @@ export const FeaturesOverviewSection = () => {
  <h3 className="font-semibold text-foreground text-base">Converse pelo WhatsApp oficial</h3>
  </div>
  <p className="text-sm text-muted-foreground leading-relaxed">
- Sua operação conectada ao WhatsApp Business oficial da Meta. Você fala em volume com tranquilidade, sem risco de bloqueio.
+ Sua operação conectada ao WhatsApp Business oficial da Meta. Dispare campanhas de mensagem para listas inteiras, com modelos aprovados, disparo controlado e respostas caindo direto no seu atendimento, sem risco de bloqueio.
  </p>
  </div>
  </div>
