@@ -10,13 +10,13 @@ interface MidCTASectionProps {
 export const MidCTASection = ({ onSignupClick }: MidCTASectionProps) => {
   return (
     <section className="py-12 sm:py-16">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="mx-auto max-w-3xl rounded-panel border border-border/60 bg-primary/5 px-6 py-8 text-center sm:px-10 sm:py-10"
+          className="w-full rounded-panel border border-border/60 bg-primary/5 px-6 py-8 text-center sm:px-10 sm:py-10"
         >
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
             Pronto para simplificar sua operação?
@@ -27,7 +27,7 @@ export const MidCTASection = ({ onSignupClick }: MidCTASectionProps) => {
           <p className="mt-3 text-sm text-muted-foreground sm:text-base">
             Comece a usar a Wiize e coloque sua operação B2B para trabalhar em um só lugar.
           </p>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               to="/signup/escolher-plano"
               className="w-full sm:w-auto"
@@ -45,10 +45,20 @@ export const MidCTASection = ({ onSignupClick }: MidCTASectionProps) => {
                 />
               </Button>
             </Link>
+            <Link to="/tour-guiado" className="group w-full sm:w-auto">
+              <Button
+                variant="ghost"
+                size="lg"
+                className="demo-shine w-full rounded-full text-sm sm:w-auto sm:text-base px-6 sm:px-8 h-11 sm:h-12 border border-border/60 bg-transparent hover:bg-muted/60 hover:border-foreground/20 transition-all duration-300"
+              >
+                Ver Demonstração
+              </Button>
+            </Link>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
             7 dias para testar • Sem compromisso
           </p>
+
         </motion.div>
       </div>
     </section>
