@@ -41,9 +41,6 @@ export const ProblemSection = () => {
  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
  Prospecção em uma ferramenta, WhatsApp em outra, CRM em outra, agenda em outra. A operação fica espalhada e o trabalho manual consome o dia do seu time.
  </p>
- <p className="text-base sm:text-lg text-foreground font-medium max-w-2xl mx-auto mt-4">
- A Wiize reúne essa operação em um só lugar e usa IA para automatizar o trabalho que consome seu time.
- </p>
  </motion.div>
 
  <BentoGridShowcase
