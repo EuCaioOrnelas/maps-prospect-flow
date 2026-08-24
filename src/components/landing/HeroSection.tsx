@@ -903,14 +903,14 @@ export const HeroSection = ({
  </div>
 
  {/* Fluxo da operação ponta a ponta */}
- <div className="flex items-center gap-1 mb-3 overflow-hidden">
+ <div className="flex flex-wrap items-center gap-1 mb-3">
  {flowSteps.map((step, i) => {
  const active = step.stages.includes(currentStage);
  const done = currentStage > Math.max(...step.stages);
  return (
  <div key={step.label} className="flex items-center gap-1 min-w-0">
  <div
- className={`flex items-center gap-1 rounded-xs px-1.5 py-1 border transition-colors ${
+ className={`flex items-center gap-1 rounded-xs px-1 py-0.5 border transition-colors ${
  active
  ? "bg-primary/10 border-primary/25 text-primary"
  : done
@@ -918,7 +918,7 @@ export const HeroSection = ({
  : "bg-secondary/30 border-border/30 text-muted-foreground"
  }`}
  >
- <step.icon size={10} />
+ <step.icon size={9} />
  <span className="text-[9px] font-medium whitespace-nowrap">{step.label}</span>
  </div>
  {i < flowSteps.length - 1 && (
