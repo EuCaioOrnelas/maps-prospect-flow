@@ -15,6 +15,9 @@ import { ProblemSection } from "@/components/sales/ProblemSection";
  * carrega imediatamente. Tudo abaixo é lazy via dynamic import — reduz JS inicial,
  * melhora LCP/INP e elimina jank de animações que rodavam fora da tela.
  */
+const MidCTASection = lazy(() =>
+  import("@/components/sales/MidCTASection").then((m) => ({ default: m.MidCTASection })),
+);
 const OpportunitySection = lazy(() =>
   import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
 );
@@ -142,6 +145,7 @@ const Index = () => {
             {/* Hierarquia: solução → ponte (operação conectada) → dentro da plataforma → benefício → prova → oferta */}
             <MechanismSection />
             <OpportunitySection />
+            <MidCTASection onSignupClick={trackSignupClick} />
             <PlatformModulesSection />
             <WhyItWorksSection />
             <TestimonialsSection />
