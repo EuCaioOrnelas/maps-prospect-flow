@@ -81,9 +81,14 @@ const steps = [
 
 const faq = [
   {
+    q: "Como funciona o bônus de 50% na primeira mensalidade?",
+    a: "Durante a promoção por tempo limitado, a primeira mensalidade paga por cada cliente novo indicado por você rende 50% de comissão. Da segunda mensalidade em diante, vale a comissão recorrente normal do seu nível. A promoção é temporária e pode ser encerrada a qualquer momento, sem aviso prévio — comissões já geradas não são afetadas.",
+  },
+  {
     q: "Como funciona a atribuição last-click?",
     a: "Quando alguém clica no seu link de indicação, gravamos um cookie por 2 anos. Toda venda dessa pessoa nesse período é creditada a você, mesmo que ela leve meses para concluir a contratação. Se outro parceiro for o último clique antes da compra, a comissão vai para ele — por isso vale acompanhar o lead até o fechamento.",
   },
+
   {
     q: "Quando recebo a comissão?",
     a: "Cada venda gera uma comissão pendente no seu painel. Após 30 dias (período de proteção contra estorno), ela vira disponível para saque. Você solicita o saque via Pix com saldo mínimo de R$ 100 e recebe em até 5 dias úteis.",
