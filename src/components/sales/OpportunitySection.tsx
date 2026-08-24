@@ -39,12 +39,14 @@ export const OpportunitySection = () => {
     <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative">
       <div className="container mx-auto px-4 max-w-6xl">
         <SectionHeading
-          eyebrow="A diferença"
+          eyebrow="A prova"
           title="O trabalho comercial que"
-          highlight="a Wiize faz por você"
-          description="É o mesmo trabalho que seu time faz hoje na mão. A diferença é que aqui ele acontece todos os dias, sozinho."
+          highlight="a plataforma faz por você"
+          highlightFit="tight"
+          description="É o mesmo trabalho que seu time faz hoje na mão, espalhado em várias ferramentas. Aqui ele acontece em um só lugar, todos os dias."
           isVisible={isVisible}
         />
+
 
         <motion.div
           initial={{ opacity: 0, y: 24 }}
