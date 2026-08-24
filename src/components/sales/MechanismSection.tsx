@@ -59,9 +59,7 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
  {/* Card */}
  <div className={`w-full pl-12 md:pl-0 md:w-[calc(50%-28px)] ${isLeft ? "md:mr-auto" : "md:ml-auto"}`}>
  <div
- className={`group relative rounded-card border border-border/70 p-4 sm:p-5 overflow-hidden hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.15)] hover:border-primary/30 transition-all duration-300 cursor-default text-left ${
- isLeft ? "md:text-right" : ""
- }`}
+ className="group relative rounded-card border border-border/70 p-5 sm:p-6 overflow-hidden hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.15)] hover:border-primary/30 transition-all duration-300 cursor-default text-left"
  style={{
  background: isLeft
  ? "linear-gradient(225deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--card)) 55%, hsl(var(--card)) 100%)"
