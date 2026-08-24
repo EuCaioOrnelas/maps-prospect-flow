@@ -64,7 +64,7 @@ export const OpportunitySection = () => {
             </div>
             <div className="flex min-h-20 items-center justify-center px-1 text-center">
               <span className="text-[10px] font-medium leading-tight text-muted-foreground sm:text-sm">
-                Padrão antigo
+                Antes (sem Wiize)
               </span>
             </div>
             <div className="flex min-h-20 flex-row items-center justify-center gap-2 sm:gap-3 bg-gradient-to-b from-primary to-primary/90 px-2">
