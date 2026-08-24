@@ -139,7 +139,7 @@ const Index = () => {
           <ProblemSection />
 
           <Suspense fallback={<SectionFallback />}>
-            {/* Hierarquia: diferencial → o que existe dentro → profundidade → benefício → prova */}
+            {/* Hierarquia: solução → ponte (operação conectada) → dentro da plataforma → benefício → prova → oferta */}
             <MechanismSection />
             <OpportunitySection />
             <PlatformModulesSection />
