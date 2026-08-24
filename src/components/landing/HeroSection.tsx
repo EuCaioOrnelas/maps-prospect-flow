@@ -70,14 +70,25 @@ interface Stage {
 }
 
 const stages: Stage[] = [
- { color: "text-success", label: "Captando leads qualificados", icon: Search },
- { color: "text-warning", label: "IA analisando e qualificando", icon: Brain },
- { color: "text-info", label: "Mensagens personalizadas automaticamente", icon: Sparkles },
- { color: "text-primary", label: "Enviando mensagens automaticamente", icon: Send },
- { color: "text-destructive", label: "IA conduzindo a conversa", icon: Bot },
- { color: "text-success", label: "Cliente fechado com sucesso", icon: BadgeCheck },
- { color: "text-foreground", label: "CRM atualizando automaticamente", icon: LayoutGrid },
+ { color: "text-success", label: "Oportunidade encontrada", icon: Search },
+ { color: "text-warning", label: "Analisada pela IA", icon: Brain },
+ { color: "text-info", label: "Abordagem personalizada", icon: Sparkles },
+ { color: "text-primary", label: "Abordagem enviada", icon: Send },
+ { color: "text-info", label: "Conversa iniciada e lead qualificado", icon: MessageCircle },
+ { color: "text-success", label: "Reunião agendada e venda fechada", icon: CalendarCheck },
+ { color: "text-foreground", label: "CRM atualizado", icon: LayoutGrid },
 ];
+
+/* ─── Fluxo resumido da operação (sempre visível) ─── */
+const flowSteps: { label: string; icon: typeof Search; stages: number[] }[] = [
+ { label: "Captação", icon: Search, stages: [0] },
+ { label: "Inteligência", icon: Brain, stages: [1] },
+ { label: "Abordagem", icon: Sparkles, stages: [2, 3] },
+ { label: "Conversa", icon: MessageCircle, stages: [4] },
+ { label: "Reunião", icon: CalendarCheck, stages: [5] },
+ { label: "CRM", icon: LayoutGrid, stages: [6] },
+];
+
 
 /* ─── Stage renders ─── */
 const StageCapture = ({ progress }: { progress: number }) => {
