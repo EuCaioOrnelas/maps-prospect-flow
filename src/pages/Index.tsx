@@ -85,8 +85,8 @@ const Index = () => {
   return (
     <>
       <SEO
-        description="A Wiize encontra empresas do seu perfil, inicia conversas, faz follow-up e agenda reuniões para o seu time. Menos prospecção manual, mais oportunidades no pipeline."
-        keywords="máquina de vendas B2B, prospecção B2B, encontrar clientes B2B, agendamento de reuniões, SDR com IA, follow-up automático, WhatsApp Business oficial, pipeline B2B, CRM, ICP, Wiize"
+        description="Plataforma de vendas B2B que centraliza e automatiza sua operação comercial com IA: capte oportunidades, converse com clientes, feche vendas e gerencie tudo em um só lugar."
+        keywords="plataforma de vendas B2B, software de vendas B2B, prospecção B2B, encontrar clientes B2B, agendamento de reuniões, SDR com IA, follow-up automático, WhatsApp Business oficial, pipeline B2B, CRM, ICP, Wiize"
         url="https://wiize.com.br/"
         jsonLd={[
           {
@@ -96,7 +96,7 @@ const Index = () => {
             applicationCategory: "BusinessApplication",
             operatingSystem: "Web",
             description:
-              "Máquina de vendas B2B: encontra empresas do seu ICP, analisa oportunidades, inicia conversas no WhatsApp oficial, faz follow-up, agenda reuniões e organiza tudo no CRM.",
+              "Plataforma de vendas B2B que centraliza e automatiza a operação comercial com IA: captação, análise, abordagem, conversas, follow-up, reuniões e CRM em um só lugar.",
             offers: {
               "@type": "AggregateOffer",
               priceCurrency: "BRL",
