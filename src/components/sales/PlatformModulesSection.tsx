@@ -1385,7 +1385,7 @@ export const PlatformModulesSection = () => {
           highlight="reunida em um só lugar"
           highlightFit="tight"
 
-          description="Agora que você viu a visão geral, veja o que existe dentro da plataforma: prospecção, SDR IA, agenda, campanhas, CRM, atendimento, automação e Wian."
+          description="Agora que você viu a visão geral, veja o que existe dentro da plataforma: prospecção, SDR IA, agenda, campanhas, CRM, atendimento, automação e Wian AI."
           isVisible={isVisible}
         />
 

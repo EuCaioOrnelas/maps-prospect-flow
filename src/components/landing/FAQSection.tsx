@@ -16,7 +16,19 @@ const faqs = [
  },
  {
  question: "Como a Wiize encontra as empresas?",
- answer: "Você define nicho, região e o tipo de empresa que quer alcançar. A Wiize busca essas empresas, analisa site, redes, presença digital, porte e maturidade, e mostra quais têm mais potencial. Depois escreve a abordagem de cada uma, pronta para enviar."
+ answer: "Você define nicho, região e o tipo de empresa que quer alcançar. A Wiize busca essas empresas, faz o diagnóstico e a análise de cada uma com IA (site, redes, presença digital, porte e maturidade) e mostra quais têm mais potencial. Depois gera a abordagem de cada empresa com base no perfil da sua empresa e no que você vende, pronta para enviar."
+ },
+ {
+ question: "A Wiize escreve a abordagem para mim?",
+ answer: "Sim. A partir do perfil da sua empresa, do que você vende e do diagnóstico feito em cada empresa encontrada, a IA gera uma abordagem individual e contextualizada. Você pode revisar, editar e enviar direto pela plataforma."
+ },
+ {
+ question: "Consigo disparar campanhas de mensagem no WhatsApp?",
+ answer: "Sim. Você cria campanhas de mensagem pela API oficial da Meta, usando modelos aprovados e variáveis personalizadas por empresa, com envio controlado dentro de limites seguros. As respostas caem direto no atendimento e ficam registradas no CRM."
+ },
+ {
+ question: "O que é a Wian AI?",
+ answer: "A Wian AI é a inteligência que acompanha sua operação. Todo dia ela lê o que aconteceu, monta um briefing executivo com as métricas, aponta quais oportunidades merecem atenção, o que está travando as vendas e o que fazer hoje. Você conversa com a Wian AI por texto ou áudio dentro da plataforma."
  },
  {
  question: "Como sei quais oportunidades merecem atenção?",
