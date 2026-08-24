@@ -261,6 +261,36 @@ serve(async (req) => {
 
     const targetCalendar = encodeURIComponent(settings?.calendar_id || "primary");
 
+    /**
+     * Procura no Google um evento já criado para este compromisso da Wiize.
+     * É o que garante idempotência: mesmo que dois envios aconteçam ao mesmo
+     * tempo (aba aberta + sincronização em lote), nunca cria duplicata.
+     * Retorna o id principal e os duplicados encontrados.
+     */
+    const findOnGoogle = async (wiizeId: string) => {
+      const qs = new URLSearchParams({
+        privateExtendedProperty: `wiize_event_id=${wiizeId}`,
+        showDeleted: "false",
+        maxResults: "10",
+      });
+      const res = await gfetch(`/calendars/${targetCalendar}/events?${qs.toString()}`);
+      if (!res.ok) return { id: null as string | null, duplicates: [] as string[] };
+      const data = await res.json().catch(() => ({}));
+      const items = (data.items || []).filter((i: any) => i?.id && i.status !== "cancelled");
+      return {
+        id: items[0]?.id ?? null,
+        duplicates: items.slice(1).map((i: any) => i.id as string),
+      };
+    };
+
+    const removeFromGoogle = async (externalId: string) => {
+      const res = await gfetch(
+        `/calendars/${targetCalendar}/events/${encodeURIComponent(externalId)}`,
+        { method: "DELETE" },
+      );
+      return res.ok || res.status === 404 || res.status === 410;
+    };
+
     /** Cria o evento no Google; em 403 por convidados, repete sem attendees. */
     const createOnGoogle = async (ev: any) => {
       let res = await gfetch(`/calendars/${targetCalendar}/events`, {
@@ -278,22 +308,59 @@ serve(async (req) => {
       return res;
     };
 
+    const patchOnGoogle = async (externalId: string, ev: any) => {
+      let res = await gfetch(
+        `/calendars/${targetCalendar}/events/${encodeURIComponent(externalId)}`,
+        { method: "PATCH", body: JSON.stringify(eventBody(ev)) },
+      );
+      if (res.status === 403) {
+        const retry = eventBody(ev);
+        delete retry.attendees;
+        res = await gfetch(
+          `/calendars/${targetCalendar}/events/${encodeURIComponent(externalId)}`,
+          { method: "PATCH", body: JSON.stringify(retry) },
+        );
+      }
+      return res;
+    };
+
     /** Envia (cria ou atualiza) um compromisso da Wiize para o Google. */
     const pushEvent = async (ev: any) => {
-      if (ev.external_event_id) {
-        let res = await gfetch(
-          `/calendars/${targetCalendar}/events/${encodeURIComponent(ev.external_event_id)}`,
-          { method: "PATCH", body: JSON.stringify(eventBody(ev)) },
-        );
-        if (res.ok) return { result: "updated" as const };
-        if (res.status === 403) {
-          const retry = eventBody(ev);
-          delete retry.attendees;
-          res = await gfetch(
-            `/calendars/${targetCalendar}/events/${encodeURIComponent(ev.external_event_id)}`,
-            { method: "PATCH", body: JSON.stringify(retry) },
-          );
-          if (res.ok) return { result: "updated" as const };
+      // Cancelado na Wiize => sai do Google.
+      if (ev.status === "cancelled") {
+        const known = ev.external_event_id ? [ev.external_event_id] : [];
+        const found = await findOnGoogle(ev.id);
+        const ids = [...new Set([...known, ...(found.id ? [found.id] : []), ...found.duplicates])];
+        for (const id of ids) await removeFromGoogle(id);
+        if (ev.external_event_id) {
+          await admin
+            .from("calendar_events")
+            .update({ external_event_id: null, external_calendar_provider: null })
+            .eq("id", ev.id);
+        }
+        return { result: "cancelled" as const };
+      }
+
+      let externalId: string | null = ev.external_event_id || null;
+
+      // Sempre confere o que já existe no Google antes de criar qualquer coisa.
+      const found = await findOnGoogle(ev.id);
+      if (found.id) {
+        if (!externalId || externalId !== found.id) externalId = found.id;
+        // Limpa duplicatas antigas geradas por envios simultâneos.
+        for (const dup of found.duplicates) await removeFromGoogle(dup);
+      }
+
+      if (externalId) {
+        const res = await patchOnGoogle(externalId, ev);
+        if (res.ok) {
+          if (externalId !== ev.external_event_id) {
+            await admin
+              .from("calendar_events")
+              .update({ external_event_id: externalId, external_calendar_provider: "google" })
+              .eq("id", ev.id);
+          }
+          return { result: "updated" as const };
         }
         if (res.status !== 404 && res.status !== 410) {
           const body = await res.json().catch(() => ({}));
@@ -309,10 +376,18 @@ serve(async (req) => {
           .from("calendar_events")
           .update({ external_event_id: cd.id, external_calendar_provider: "google" })
           .eq("id", ev.id);
+        // Corrida: se outro envio criou ao mesmo tempo, apaga o excedente.
+        const recheck = await findOnGoogle(ev.id);
+        for (const dup of recheck.duplicates.concat(
+          recheck.id && recheck.id !== cd.id ? [] : [],
+        )) {
+          if (dup !== cd.id) await removeFromGoogle(dup);
+        }
         return { result: "pushed" as const };
       }
       return { result: "error" as const, message: `envio "${ev.title}": ${cd?.error?.message || created.status}` };
     };
+
 
     // Envio imediato de um único compromisso (criação/edição na Wiize).
     if (action === "push_event") {

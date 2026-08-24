@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -82,8 +82,28 @@ export function useCalendarEvents({ from, to, userFilter }: UseCalendarEventsOpt
     queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
   }, [queryClient]);
 
+  /**
+   * Envio unidirecional para o Google Agenda (MVP): tudo que é criado, editado
+   * ou excluído aqui reflete lá. Nada é importado de volta.
+   * Falhas nunca bloqueiam a operação na Wiize.
+   */
+  const recentPushes = useRef<Map<string, number>>(new Map());
+
+  const pushToGoogle = useCallback((body: Record<string, unknown>) => {
+    const eventId = typeof body.event_id === "string" ? body.event_id : null;
+    if (eventId) {
+      const last = recentPushes.current.get(eventId) ?? 0;
+      // Evita disparo duplicado (mutação + realtime) para o mesmo compromisso.
+      if (Date.now() - last < 8000) return;
+      recentPushes.current.set(eventId, Date.now());
+    }
+    void supabase.functions
+      .invoke("google-calendar-sync", { body })
+      .catch(() => undefined);
+  }, []);
+
   // Realtime: qualquer inserção/alteração feita por outro usuário, pelo SDR
-  // ou em outra aba atualiza a agenda imediatamente.
+  // ou em outra aba atualiza a agenda imediatamente — e já reflete no Google.
   useEffect(() => {
     if (!accountOwnerId) return;
     const channel = supabase
@@ -91,13 +111,23 @@ export function useCalendarEvents({ from, to, userFilter }: UseCalendarEventsOpt
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "calendar_events" },
-        () => invalidate(),
+        (payload) => {
+          invalidate();
+          const row = payload.new as { id?: string; assigned_user_id?: string } | null;
+          if (
+            (payload.eventType === "INSERT" || payload.eventType === "UPDATE") &&
+            row?.id &&
+            row.assigned_user_id === user?.id
+          ) {
+            pushToGoogle({ action: "push_event", event_id: row.id });
+          }
+        },
       )
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [accountOwnerId, invalidate]);
+  }, [accountOwnerId, invalidate, pushToGoogle, user?.id]);
 
   const translateError = (error: unknown) => {
     const err = error as { code?: string; message?: string };
@@ -112,16 +142,6 @@ export function useCalendarEvents({ from, to, userFilter }: UseCalendarEventsOpt
     return new Error(err?.message || "Não foi possível salvar o compromisso.");
   };
 
-  /**
-   * Envio unidirecional para o Google Agenda (MVP): tudo que é criado, editado
-   * ou excluído aqui reflete lá. Nada é importado de volta.
-   * Falhas nunca bloqueiam a operação na Wiize.
-   */
-  const pushToGoogle = useCallback((body: Record<string, unknown>) => {
-    void supabase.functions
-      .invoke("google-calendar-sync", { body })
-      .catch(() => undefined);
-  }, []);
 
   const createEvent = useMutation({
     mutationFn: async (input: CalendarEventInput) => {
