@@ -847,15 +847,15 @@ export const HeroSection = ({
  <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
  </div>
   <h1 className="font-display font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.08] tracking-tight" style={{ animationDelay: "0.1s" }}>
-  <span className="block whitespace-normal sm:whitespace-nowrap text-[1.7rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.25rem] xl:text-[3.6rem]">{titleLine1}</span>
+  <span className="block whitespace-normal sm:whitespace-nowrap text-[2rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.25rem] xl:text-[3.6rem]">{titleLine1}</span>
   {titleLine2 ? (
-  <span className="block whitespace-normal sm:whitespace-nowrap text-[1.7rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.25rem] xl:text-[3.6rem]">{titleLine2}</span>
+  <span className="block whitespace-normal sm:whitespace-nowrap text-[2rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.25rem] xl:text-[3.6rem]">{titleLine2}</span>
   ) : null}
-  <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">{titleHighlight}</span>
+  <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[2.3rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">{titleHighlight}</span>
   </h1>
- <p className={`${descriptionClassName ?? "text-base sm:text-lg md:text-xl"} text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up`} style={{ animationDelay: "0.2s" }}>
- {description}
- </p>
+  <p className={`${descriptionClassName ?? "text-sm sm:text-lg md:text-xl"} text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up`} style={{ animationDelay: "0.2s" }}>
+  {description}
+  </p>
  <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
  {TRIAL_DISABLED ? (
  <Button
