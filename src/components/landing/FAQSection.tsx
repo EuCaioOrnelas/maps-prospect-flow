@@ -12,35 +12,35 @@ import { Link } from "react-router-dom";
 const faqs = [
  {
  question: "O que é a Wiize?",
- answer: "A Wiize é uma plataforma de inteligência comercial com IA onde a Wiize atua como copiloto da operação comercial, ajudando empresas B2B a prospectar, qualificar, atender e acompanhar leads em tempo real do primeiro contato ao fechamento."
+ answer: "A Wiize é uma máquina de vendas B2B. Você diz o que vende e quem quer alcançar, e ela encontra empresas, inicia conversas, faz follow-up, qualifica o interesse e agenda reuniões para o seu time."
  },
  {
- question: "Como funciona o SDR IA de Captação?",
- answer: "O SDR IA capta empresas por localização e nicho de atuação, encontrando negócios com perfil ideal de cliente em qualquer região e segmento. Em seguida, faz uma análise completa de cada lead: endereço, site, redes sociais, presença digital, tamanho, demanda e maturidade comercial, gerando um diagnóstico automático de dores, necessidades e oportunidades reais de vendas. Com esse contexto, o SDR IA cria abordagens personalizadas por lead e entrega oportunidades prontas para o time comercial agir."
+ question: "Como a Wiize encontra as empresas?",
+ answer: "Você define nicho, região e o tipo de empresa que quer alcançar. A Wiize busca essas empresas, analisa site, redes, presença digital, porte e maturidade, e mostra quais têm mais potencial. Depois escreve a abordagem de cada uma, pronta para enviar."
  },
  {
- question: "O que é a IA de Intenção de Compra?",
- answer: "É a camada de Inteligência Comercial da Wiize que lê engajamento, comportamento e sinais de compra em tempo real. Cada lead recebe uma leitura dinâmica de intenção, mostrando quem está quente e pronto para a venda, quem precisa de atenção agora, quem está esfriando e quem ainda está em fase de nutrição. Assim, sua equipe prioriza o lead certo, no momento certo, e para de perder tempo com quem não está pronto para comprar."
+ question: "Como sei quais oportunidades merecem atenção?",
+ answer: "A Wiize acompanha respostas e engajamento de cada contato e mostra quem está mais perto de uma reunião, quem precisa de atenção agora e quem está esfriando. Internamente isso é feito por um score de intenção, mas o que você vê é a lista de quem chamar primeiro."
  },
  {
- question: "Como funciona o Atendimento Operacional com IA?",
- answer: "O Atendimento Operacional com IA responde, qualifica e conduz conversas no WhatsApp 24/7, com tom de copiloto comercial. Integrado ao CRM e aos fluxos, ele entende contexto, atualiza estágios e passa o bastão para o humano no momento certo, operando como um SDR sênior, sem pausas."
+ question: "Quem conversa com o lead?",
+ answer: "A IA responde no WhatsApp a qualquer hora, entende o contexto, qualifica o interesse e passa a conversa para uma pessoa do time no momento certo. Tudo fica registrado no CRM."
  },
  {
- question: "O que são os Fluxos Inteligentes com IA?",
- answer: "São fluxos operacionais visuais que orquestram cada etapa da jornada do lead: mensagens, esperas, condições, coleta de dados e ações no CRM. A IA entra quando necessário para qualificar, conduzir e avançar o lead, garantindo operação comercial consistente, sem depender de execução manual."
+ question: "O que acontece quando meu time está ocupado?",
+ answer: "A máquina continua trabalhando. Follow-ups, movimentação das oportunidades, avisos e tarefas acontecem sozinhos, e a IA assume a conversa até alguém do time poder entrar."
  },
  {
- question: "O que são as campanhas inteligentes de mensagens?",
- answer: "Campanhas com IA que personalizam abordagens em escala. Você seleciona o público no CRM e a Wiize gera mensagens contextuais por lead, dispara dentro dos limites de segurança e devolve respostas e métricas em tempo real. Outbound com inteligência, não disparo cego."
+ question: "Consigo falar com muitas empresas de uma vez?",
+ answer: "Sim. Você escolhe o público e a Wiize escreve uma mensagem diferente para cada empresa, envia dentro de limites seguros e devolve as respostas no mesmo lugar. Não é disparo igual para todo mundo."
  },
  {
- question: "O que é o CRM com Inteligência Comercial?",
- answer: "Não é um CRM comum. É um cockpit comercial com visão completa do funil, oportunidades, IA de Intenção de Compra, leitura de engajamento e acompanhamento em tempo real. Toda interação de captação, atendimento e campanha aterrissa centralizada, com inteligência para decidir o próximo passo."
+ question: "Preciso trocar de CRM?",
+ answer: "A Wiize já vem com o CRM incluído. Cada conversa, atividade e oportunidade gerada pela máquina fica registrada e organizada lá automaticamente, sem alguém precisar preencher nada."
  },
  {
- question: "O que é a Meta API Oficial?",
- answer: "É a interface oficial do WhatsApp Business para operações em escala, com estabilidade, segurança e zero risco de bloqueio quando usada para relacionamento com leads opt-in. A Wiize integra a Meta API Oficial para que sua operação comercial rode com a robustez de uma infraestrutura enterprise."
+ question: "Como funciona o WhatsApp na Wiize?",
+ answer: "Você conecta sua conta ao WhatsApp Business oficial da Meta. É a mesma infraestrutura usada por grandes empresas, com estabilidade e segurança para falar em volume com leads opt-in."
  },
  {
  question: "Corro risco de bloqueio no WhatsApp?",
@@ -99,7 +99,7 @@ export const FAQSection = () => {
  Perguntas Frequentes
  </h2>
  <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
- Tudo sobre a Wiize e a operação comercial com Inteligência Operacional
+ Tudo sobre a Wiize e a sua máquina de vendas B2B
  </p>
  </div>
 
