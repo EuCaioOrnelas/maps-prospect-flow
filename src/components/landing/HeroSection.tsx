@@ -710,10 +710,10 @@ interface HeroSectionProps {
 
 export const HeroSection = ({
  onSignupClick,
- titleLine1 = "IA comercial que",
- titleLine2 = "Transforma leads em",
- titleHighlight = "Oportunidades reais",
- description = "IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.",
+ titleLine1 = "Tudo para vender B2B.",
+ titleLine2 = "",
+ titleHighlight = "Em um só lugar.",
+ description = "Inteligência comercial que encontra, converte e gerencia oportunidades B2B com mais contexto e menos esforço.",
  descriptionClassName,
 }: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
