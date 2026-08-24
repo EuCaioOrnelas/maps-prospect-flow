@@ -15,9 +15,6 @@ import {
 import { Link } from "react-router-dom";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 
-/* ─── Animated counter ─── */
-/* ─── Stage definitions ─── */
-
 /* ─── Stage definitions ─── */
 const STAGE_DURATION = 5000;
 const STAGE_CONTENT_HEIGHT = 340;
@@ -394,10 +391,10 @@ const StageAIChat = ({ progress }: { progress: number }) => {
  <div className="flex items-center gap-2 rounded-card bg-secondary/30 p-2.5 border border-border/40">
  <img src={gptIcon} alt="GPT" className="w-7 h-7 rounded-sm" />
  <div className="flex-1 min-w-0">
- <p className="text-[11px] font-medium text-primary">IA Closer respondendo em tempo real</p>
+ <p className="text-[11px] font-medium text-primary">Conversa acompanhada pela plataforma</p>
  <p className="text-[11px] text-muted-foreground truncate">Contexto, score, CRM e histórico da conversa</p>
  </div>
- <div className="rounded-xs bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">GPT ativo</div>
+ <div className="rounded-xs bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">Wian ativo</div>
  </div>
  <div className="rounded-card bg-secondary/30 p-2.5 flex-1 min-h-0">
  <div className="flex h-full flex-col justify-end gap-1.5 overflow-hidden">
