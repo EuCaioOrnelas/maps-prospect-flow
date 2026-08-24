@@ -391,9 +391,27 @@ export default function PartnersLanding() {
             })}
           </div>
 
+          {boostActive && (
+            <div className="mt-8 max-w-3xl mx-auto rounded-2xl border border-primary/40 bg-primary/5 ring-1 ring-primary/20 p-6 text-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-[11px] font-semibold uppercase tracking-wider mb-3">
+                <Sparkles size={13} /> Por tempo limitado
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold tracking-tight mb-2">
+                {settings.boostPercent}% de comissão na primeira mensalidade
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Todo cliente novo indicado por você paga <strong className="text-foreground">{settings.boostPercent}% de comissão na primeira mensalidade</strong>. A partir da segunda, vale a comissão recorrente normal do seu nível.
+                {settings.boostUntil
+                  ? ` Promoção válida até ${new Date(settings.boostUntil).toLocaleDateString("pt-BR")}.`
+                  : " Promoção temporária, sujeita a encerramento a qualquer momento sem aviso prévio."}
+              </p>
+            </div>
+          )}
+
           <p className="text-center text-sm text-muted-foreground mt-10">
             Todo parceiro começa em <strong className="text-foreground">Select ({settings.bronze}%)</strong>. A progressão é automática conforme seus clientes ativos crescem — comissão máxima do programa: <strong className="text-foreground">{displayMax}%</strong>.
           </p>
+
         </div>
       </section>
 
