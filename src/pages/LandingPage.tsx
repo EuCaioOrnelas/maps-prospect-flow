@@ -20,11 +20,6 @@ const OpportunitySection = lazy(() =>
 const MechanismSection = lazy(() =>
   import("@/components/sales/MechanismSection").then((m) => ({ default: m.MechanismSection })),
 );
-const FeaturesOverviewSection = lazy(() =>
-  import("@/components/sales/FeaturesOverviewSection").then((m) => ({
-    default: m.FeaturesOverviewSection,
-  })),
-);
 const WhyItWorksSection = lazy(() =>
   import("@/components/sales/WhyItWorksSection").then((m) => ({ default: m.WhyItWorksSection })),
 );
@@ -160,7 +155,6 @@ const LandingPage = () => {
           <Suspense fallback={<SectionFallback />}>
             <OpportunitySection />
             <MechanismSection />
-            <FeaturesOverviewSection />
             <WhyItWorksSection />
             <PlatformModulesSection />
             <TestimonialsSection />
