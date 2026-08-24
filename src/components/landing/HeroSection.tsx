@@ -16,44 +16,7 @@ import { Link } from "react-router-dom";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 
 /* ─── Animated counter ─── */
-const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?: number }) => {
- const [displayValue, setDisplayValue] = useState("0");
- const ref = useRef<HTMLSpanElement>(null);
- const hasAnimated = useRef(false);
-
- useEffect(() => {
- const el = ref.current;
- if (!el) return;
- const obs = new IntersectionObserver(([e]) => {
- if (e.isIntersecting && !hasAnimated.current) {
- hasAnimated.current = true;
- const isPercentage = value.includes('%');
- const isPlus = value.startsWith('+');
- const hasK = value.includes('K');
- const hasM = value.includes('M');
- let numericValue = parseFloat(value.replace(/[^0-9.]/g, ''));
- const startTime = performance.now();
- const animate = (t: number) => {
- const p = Math.min((t - startTime) / duration, 1);
- const ease = 1 - Math.pow(1 - p, 4);
- const cur = numericValue * ease;
- let f: string;
- if (hasM) f = cur.toFixed(1) + 'M+';
- else if (hasK) f = Math.floor(cur) + 'K+';
- else if (isPercentage) f = (isPlus ? '+' : '') + Math.floor(cur) + '%';
- else f = (isPlus ? '+' : '') + Math.floor(cur).toString();
- setDisplayValue(f);
- if (p < 1) requestAnimationFrame(animate); else setDisplayValue(value);
- };
- requestAnimationFrame(animate);
- }
- }, { threshold: 0.5 });
- obs.observe(el);
- return () => obs.disconnect();
- }, [value, duration]);
-
- return <span ref={ref}>{displayValue}</span>;
-};
+/* ─── Stage definitions ─── */
 
 /* ─── Stage definitions ─── */
 const STAGE_DURATION = 5000;
