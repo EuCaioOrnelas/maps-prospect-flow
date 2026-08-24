@@ -144,17 +144,18 @@ const Index = () => {
           <ProblemSection />
 
           <Suspense fallback={<SectionFallback />}>
-            {/* Demais seções continuam lazy para preservar performance. */}
-            <OpportunitySection />
+            {/* Hierarquia: diferencial → o que existe dentro → profundidade → benefício → prova */}
             <MechanismSection />
+            <PlatformModulesSection />
             <FeaturesOverviewSection />
             <WhyItWorksSection />
-            <PlatformModulesSection />
+            <OpportunitySection />
             <TestimonialsSection />
             <PricingSection />
             <FAQSection />
             <CTASection onSignupClick={trackSignupClick} />
           </Suspense>
+
 
 
 
