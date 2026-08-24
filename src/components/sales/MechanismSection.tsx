@@ -6,10 +6,10 @@ import { useInView } from "framer-motion";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const steps = [
- { icon: Search, title: "Capte", desc: "Encontre novas oportunidades sem fazer tudo manualmente: a plataforma busca empresas, analisa e mostra quais têm mais potencial", micro: "Busca por nicho e região · análise · diagnóstico · score" },
- { icon: Bot, title: "Converta", desc: "Transforme oportunidades em conversas e reuniões, com abordagem personalizada, atendimento e follow-up conduzidos pela IA", micro: "Abordagem personalizada · WhatsApp oficial · atendimento · follow-up · agenda" },
- { icon: LayoutGrid, title: "Gerencie", desc: "Controle toda a operação comercial em um só lugar, com cada conversa, oportunidade e venda registrada sozinha", micro: "CRM · pipeline · histórico · vendas · documentos" },
- { icon: Sparkles, title: "Otimize", desc: "Saiba quais oportunidades merecem sua atenção agora e reduza o trabalho manual do time com automação e inteligência", micro: "Engajamento · intenção · métricas · automações · Wian" },
+ { icon: Search, title: "Capte", desc: "Encontre novas oportunidades sem fazer tudo manualmente: a plataforma busca empresas, analisa e mostra quais têm mais potencial de virar reunião." },
+ { icon: Bot, title: "Converta", desc: "Transforme oportunidades em conversas e reuniões, com abordagem personalizada, atendimento e follow-up conduzidos pela IA no WhatsApp oficial." },
+ { icon: LayoutGrid, title: "Gerencie", desc: "Controle toda a operação comercial em um só lugar, com cada conversa, oportunidade e venda registrada automaticamente no CRM." },
+ { icon: Sparkles, title: "Otimize", desc: "Saiba quais oportunidades merecem atenção agora e reduza o trabalho manual do time com automação e inteligência em cada etapa." },
 
 ];
 
