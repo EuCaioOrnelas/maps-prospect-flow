@@ -126,7 +126,16 @@ export function getPartnerReferralMetadata(): Record<string, string> {
     };
   }
 
-  if (!ref) return {};
+  if (!ref) {
+    const pending = getPendingReferral();
+    if (pending) {
+      return {
+        partner_referral_code: pending.code,
+        partner_attribution_source: "referral_link",
+      };
+    }
+    return {};
+  }
 
   return {
     partner_referral_code: ref.code,
@@ -146,10 +155,53 @@ function persistReferral(data: StoredReferral) {
   } catch {}
 }
 
+/** Registers the click server-side. Returns true when persisted. */
+async function registerClick(pending: PendingReferral): Promise<boolean> {
+  try {
+    // SECURITY DEFINER RPC: atomically resolves the partner + (optional) link,
+    // inserts the click row, and returns the new click_id. Works for anon visitors
+    // without exposing any partner data.
+    const { data, error } = await supabase.rpc("register_partner_click", {
+      _referral_code: pending.code,
+      _referral_link_slug: pending.link_slug,
+      _landing_page: pending.landing_page,
+      _user_agent: navigator.userAgent.substring(0, 500),
+      _utm_source: pending.utm.utm_source ?? null,
+      _utm_medium: pending.utm.utm_medium ?? null,
+      _utm_campaign: pending.utm.utm_campaign ?? null,
+      _utm_term: pending.utm.utm_term ?? null,
+      _utm_content: pending.utm.utm_content ?? null,
+      _session_id: crypto.randomUUID(),
+    });
+    if (error) {
+      console.warn("[usePartnerTracking] register_partner_click failed:", error.message);
+      return false;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row?.click_id || !row?.partner_id) return false;
+
+    persistReferral({
+      code: pending.code,
+      partner_id: row.partner_id,
+      click_id: row.click_id,
+      referral_link_id: row.referral_link_id ?? null,
+      ts: Date.now(),
+    });
+    return true;
+  } catch (err) {
+    console.warn("[usePartnerTracking]", err);
+    return false;
+  }
+}
+
 /**
  * Captures ?ref= from URL on every public route change, registers a click,
  * and persists the partner attribution in localStorage + cookie.
  * Last-click model: a new ?ref= always overrides the previous one.
+ *
+ * On the public demo (/tour-guiado) all backend traffic is blocked, so the
+ * referral is only stored locally (pending) and the click is registered as soon
+ * as the visitor leaves the demo (e.g. lands on /signup).
  */
 export function usePartnerTracking() {
   const location = useLocation();
@@ -157,47 +209,40 @@ export function usePartnerTracking() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const ref = params.get("ref")?.trim().toLowerCase();
-    if (!ref) return;
+    const demo = isPublicDemoPath(location.pathname);
+
+    let pending: PendingReferral | null = null;
+
+    if (ref) {
+      pending = {
+        code: ref,
+        link_slug: params.get("rl")?.trim().toLowerCase() || null,
+        landing_page: location.pathname,
+        utm: {
+          utm_source: params.get("utm_source"),
+          utm_medium: params.get("utm_medium"),
+          utm_campaign: params.get("utm_campaign"),
+          utm_term: params.get("utm_term"),
+          utm_content: params.get("utm_content"),
+        },
+        ts: Date.now(),
+      };
+      // Persist immediately: attribution must survive even if the click RPC fails.
+      setPendingReferral(pending);
+    } else {
+      pending = getPendingReferral();
+    }
+
+    if (!pending || demo) return;
 
     let cancelled = false;
     (async () => {
-      try {
-        const linkSlug = params.get("rl")?.trim().toLowerCase() || null;
-        // SECURITY DEFINER RPC: atomically resolves the partner + (optional) link,
-        // inserts the click row, and returns the new click_id. Works for anon visitors
-        // without exposing any partner data.
-        const { data, error } = await supabase.rpc("register_partner_click", {
-          _referral_code: ref,
-          _referral_link_slug: linkSlug,
-          _landing_page: location.pathname,
-          _user_agent: navigator.userAgent.substring(0, 500),
-          _utm_source: params.get("utm_source"),
-          _utm_medium: params.get("utm_medium"),
-          _utm_campaign: params.get("utm_campaign"),
-          _utm_term: params.get("utm_term"),
-          _utm_content: params.get("utm_content"),
-          _session_id: crypto.randomUUID(),
-        });
-        if (error) {
-          console.warn("[usePartnerTracking] register_partner_click failed:", error.message);
-          return;
-        }
-        const row = Array.isArray(data) ? data[0] : data;
-        if (!row?.click_id || !row?.partner_id || cancelled) return;
-
-        persistReferral({
-          code: ref,
-          partner_id: row.partner_id,
-          click_id: row.click_id,
-          referral_link_id: row.referral_link_id ?? null,
-          ts: Date.now(),
-        });
-      } catch (err) {
-        console.warn("[usePartnerTracking]", err);
-      }
+      const ok = await registerClick(pending!);
+      if (ok && !cancelled) setPendingReferral(null);
     })();
 
     return () => { cancelled = true; };
+
   }, [location.search, location.pathname]);
 }
 
