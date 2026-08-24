@@ -112,6 +112,17 @@ export function useCalendarEvents({ from, to, userFilter }: UseCalendarEventsOpt
     return new Error(err?.message || "Não foi possível salvar o compromisso.");
   };
 
+  /**
+   * Envio unidirecional para o Google Agenda (MVP): tudo que é criado, editado
+   * ou excluído aqui reflete lá. Nada é importado de volta.
+   * Falhas nunca bloqueiam a operação na Wiize.
+   */
+  const pushToGoogle = useCallback((body: Record<string, unknown>) => {
+    void supabase.functions
+      .invoke("google-calendar-sync", { body })
+      .catch(() => undefined);
+  }, []);
+
   const createEvent = useMutation({
     mutationFn: async (input: CalendarEventInput) => {
       const payload = {
@@ -129,7 +140,10 @@ export function useCalendarEvents({ from, to, userFilter }: UseCalendarEventsOpt
       if (error) throw translateError(error);
       return data as unknown as CalendarEvent;
     },
-    onSuccess: invalidate,
+    onSuccess: (event) => {
+      invalidate();
+      pushToGoogle({ action: "push_event", event_id: event.id });
+    },
   });
 
   const updateEvent = useMutation({
@@ -143,16 +157,33 @@ export function useCalendarEvents({ from, to, userFilter }: UseCalendarEventsOpt
       if (error) throw translateError(error);
       return data as unknown as CalendarEvent;
     },
-    onSuccess: invalidate,
+    onSuccess: (event) => {
+      invalidate();
+      pushToGoogle({ action: "push_event", event_id: event.id });
+    },
   });
 
   const deleteEvent = useMutation({
     mutationFn: async (id: string) => {
+      const { data: existing } = await supabase
+        .from("calendar_events")
+        .select("external_event_id")
+        .eq("id", id)
+        .maybeSingle();
+
       const { error } = await supabase.from("calendar_events").delete().eq("id", id);
       if (error) throw translateError(error);
-      return id;
+      return {
+        id,
+        externalEventId: (existing as { external_event_id?: string | null } | null)?.external_event_id ?? null,
+      };
     },
-    onSuccess: invalidate,
+    onSuccess: ({ externalEventId }) => {
+      invalidate();
+      if (externalEventId) {
+        pushToGoogle({ action: "delete_event", external_event_id: externalEventId });
+      }
+    },
   });
 
   return {
