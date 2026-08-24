@@ -6,17 +6,10 @@ import { useInView } from "framer-motion";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const steps = [
- { icon: Search, title: "IA de Captação por Localização e Nicho", desc: "Encontra empresas prontas para comprar com base em região e segmento", micro: "Prospecção contínua" },
- { icon: ScanSearch, title: "IA Analisa", desc: "Entende tudo sobre a empresa: tamanho, demanda, maturidade e contexto de mercado", micro: "Leitura profunda do lead" },
- { icon: Brain, title: "Diagnóstico IA", desc: "Com base na análise, identifica necessidades, dores e oportunidades reais", micro: "Score calculado por IA" },
- { icon: Sparkles, title: "Geração de Mensagem com IA", desc: "Cria abordagem personalizada automaticamente para cada lead", micro: "Copy única por lead" },
- { icon: Send, title: "Envio", desc: "Dispara mensagens no momento ideal", micro: "Via WhatsApp oficial" },
- { icon: Headset, title: "SDR IA Assume a Conversa", desc: "Qualifica em tempo real, quebra objeções e conduz o lead pelo funil", micro: "Raciocínio em 9 camadas" },
- { icon: Bot, title: "IA Closer Responde", desc: "Conversa, qualifica e conduz o lead até o fechamento", micro: "Atendimento 24/7" },
- { icon: RefreshCw, title: "Follow-up", desc: "Recupera leads que iriam esfriar", micro: "Reengajamento automático" },
- { icon: CalendarDays, title: "Agenda Inteligente", desc: "A IA agenda a reunião direto no calendário do time, sem fricção", micro: "Slots e lembretes automáticos" },
- { icon: CalendarCheck, title: "Conversão", desc: "Gera reuniões e oportunidades reais", micro: "Pipeline alimentado" },
- { icon: LayoutGrid, title: "CRM", desc: "Organiza tudo sem esforço manual", micro: "Histórico centralizado" },
+ { icon: Search, title: "01 — Encontre", desc: "A Wiize encontra empresas que combinam com o seu cliente ideal e mostra quais têm mais potencial", micro: "Busca por nicho e região · análise · diagnóstico · score" },
+ { icon: Sparkles, title: "02 — Converse", desc: "Ela escreve a abordagem certa para cada empresa e inicia a conversa pelo WhatsApp oficial", micro: "Mensagem personalizada · campanhas · WhatsApp Business" },
+ { icon: Bot, title: "03 — Converta", desc: "A IA responde, entende o interesse, faz follow-up e marca a reunião com a sua equipe", micro: "SDR IA · atendimento · follow-up · agenda" },
+ { icon: LayoutGrid, title: "04 — Gerencie", desc: "Cada conversa e cada oportunidade fica registrada e organizada sozinha, pronta para o time trabalhar", micro: "CRM · histórico · prioridades · automações · Wian" },
 ];
 
 const floatingElements = [
@@ -139,9 +132,9 @@ export const MechanismSection = () => {
  {/* Header */}
  <SectionHeading
  eyebrow="Como funciona"
- title="O sistema por trás das"
- highlight="vendas em escala"
- description="Um fluxo contínuo que transforma leads em clientes, sem depender de operação manual."
+ title="A máquina trabalha em"
+ highlight="quatro etapas"
+ description="Você diz o que vende e quem quer alcançar. O resto acontece sozinho, todos os dias."
  isVisible={isVisible}
  />
 
@@ -199,7 +192,7 @@ export const MechanismSection = () => {
  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-50" />
  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
  </span>
- <span className="text-xs font-medium text-primary">Leads entrando continuamente</span>
+ <span className="text-xs font-medium text-primary">Seu perfil de cliente ideal</span>
  </div>
  </motion.div>
 
