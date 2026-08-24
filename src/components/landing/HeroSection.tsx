@@ -710,10 +710,10 @@ interface HeroSectionProps {
 
 export const HeroSection = ({
  onSignupClick,
- titleLine1 = "IA comercial que",
- titleLine2 = "Transforma leads em",
- titleHighlight = "Oportunidades reais",
- description = "IA comercial que encontra, analisa e qualifica oportunidades B2B para sua empresa vender com mais contexto e menos esforço operacional.",
+ titleLine1 = "Sua máquina de",
+ titleLine2 = "vendas B2B que",
+ titleHighlight = "Gera oportunidades",
+ description = "A Wiize encontra empresas do seu perfil, inicia conversas personalizadas, faz follow-up e agenda reuniões para sua equipe — automaticamente.",
  descriptionClassName,
 }: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
@@ -870,7 +870,7 @@ export const HeroSection = ({
  ) : (
   <Link to="/signup/escolher-plano" className="shrink-0" onClick={onSignupClick}>
   <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12">
-  Iniciar Teste Grátis
+  Começar gratuitamente
   <ArrowRight size={14} className="ml-1.5 sm:ml-2 group-hover:translate-x-0.5 transition-transform" />
   </Button>
   </Link>
