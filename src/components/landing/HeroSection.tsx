@@ -15,46 +15,6 @@ import {
 import { Link } from "react-router-dom";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 
-/* ─── Animated counter ─── */
-const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?: number }) => {
- const [displayValue, setDisplayValue] = useState("0");
- const ref = useRef<HTMLSpanElement>(null);
- const hasAnimated = useRef(false);
-
- useEffect(() => {
- const el = ref.current;
- if (!el) return;
- const obs = new IntersectionObserver(([e]) => {
- if (e.isIntersecting && !hasAnimated.current) {
- hasAnimated.current = true;
- const isPercentage = value.includes('%');
- const isPlus = value.startsWith('+');
- const hasK = value.includes('K');
- const hasM = value.includes('M');
- let numericValue = parseFloat(value.replace(/[^0-9.]/g, ''));
- const startTime = performance.now();
- const animate = (t: number) => {
- const p = Math.min((t - startTime) / duration, 1);
- const ease = 1 - Math.pow(1 - p, 4);
- const cur = numericValue * ease;
- let f: string;
- if (hasM) f = cur.toFixed(1) + 'M+';
- else if (hasK) f = Math.floor(cur) + 'K+';
- else if (isPercentage) f = (isPlus ? '+' : '') + Math.floor(cur) + '%';
- else f = (isPlus ? '+' : '') + Math.floor(cur).toString();
- setDisplayValue(f);
- if (p < 1) requestAnimationFrame(animate); else setDisplayValue(value);
- };
- requestAnimationFrame(animate);
- }
- }, { threshold: 0.5 });
- obs.observe(el);
- return () => obs.disconnect();
- }, [value, duration]);
-
- return <span ref={ref}>{displayValue}</span>;
-};
-
 /* ─── Stage definitions ─── */
 const STAGE_DURATION = 5000;
 const STAGE_CONTENT_HEIGHT = 340;
@@ -70,14 +30,25 @@ interface Stage {
 }
 
 const stages: Stage[] = [
- { color: "text-success", label: "Captando leads qualificados", icon: Search },
- { color: "text-warning", label: "IA analisando e qualificando", icon: Brain },
- { color: "text-info", label: "Mensagens personalizadas automaticamente", icon: Sparkles },
- { color: "text-primary", label: "Enviando mensagens automaticamente", icon: Send },
- { color: "text-destructive", label: "IA conduzindo a conversa", icon: Bot },
- { color: "text-success", label: "Cliente fechado com sucesso", icon: BadgeCheck },
- { color: "text-foreground", label: "CRM atualizando automaticamente", icon: LayoutGrid },
+ { color: "text-success", label: "Oportunidade encontrada", icon: Search },
+ { color: "text-warning", label: "Analisada pela IA", icon: Brain },
+ { color: "text-info", label: "Abordagem personalizada", icon: Sparkles },
+ { color: "text-primary", label: "Abordagem enviada", icon: Send },
+ { color: "text-info", label: "Conversa iniciada e lead qualificado", icon: MessageCircle },
+ { color: "text-success", label: "Reunião agendada e venda fechada", icon: CalendarCheck },
+ { color: "text-foreground", label: "CRM atualizado", icon: LayoutGrid },
 ];
+
+/* ─── Fluxo resumido da operação (sempre visível) ─── */
+const flowSteps: { label: string; icon: typeof Search; stages: number[] }[] = [
+ { label: "Captação", icon: Search, stages: [0] },
+ { label: "Inteligência", icon: Brain, stages: [1] },
+ { label: "Abordagem", icon: Sparkles, stages: [2, 3] },
+ { label: "Conversa", icon: MessageCircle, stages: [4] },
+ { label: "Reunião", icon: CalendarCheck, stages: [5] },
+ { label: "CRM", icon: LayoutGrid, stages: [6] },
+];
+
 
 /* ─── Stage renders ─── */
 const StageCapture = ({ progress }: { progress: number }) => {
@@ -420,10 +391,10 @@ const StageAIChat = ({ progress }: { progress: number }) => {
  <div className="flex items-center gap-2 rounded-card bg-secondary/30 p-2.5 border border-border/40">
  <img src={gptIcon} alt="GPT" className="w-7 h-7 rounded-sm" />
  <div className="flex-1 min-w-0">
- <p className="text-[11px] font-medium text-primary">IA Closer respondendo em tempo real</p>
+ <p className="text-[11px] font-medium text-primary">Conversa acompanhada pela plataforma</p>
  <p className="text-[11px] text-muted-foreground truncate">Contexto, score, CRM e histórico da conversa</p>
  </div>
- <div className="rounded-xs bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">GPT ativo</div>
+ <div className="rounded-xs bg-primary/10 px-2 py-1 text-[11px] font-medium text-primary">Wian ativo</div>
  </div>
  <div className="rounded-card bg-secondary/30 p-2.5 flex-1 min-h-0">
  <div className="flex h-full flex-col justify-end gap-1.5 overflow-hidden">
@@ -690,13 +661,8 @@ const StageCRM = ({ progress }: { progress: number }) => {
 
 const stageRenderers = [StageCapture, StageDiagnosis, StageMessage, StageSend, StageAIChat, StageClose, StageCRM];
 
-/* ─── Floating cards ─── */
-const floatingCards = [
- { icon: Send, value: "900K+", label: "Mensagens enviadas", position: "-left-[10.5rem] top-4", delay: "0.8s" },
- { icon: Users, value: "50K+", label: "Empresas prospectadas", position: "left-1/3 -top-8", delay: "1.2s" },
- { icon: TrendingUp, value: "63%", label: "Taxa de resposta", position: "-left-[7.5rem] bottom-[5.5rem]", delay: "1.6s" },
- { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 -bottom-10", delay: "2s" },
-];
+
+
 
 /* ─── Main component ─── */
 interface HeroSectionProps {
@@ -897,16 +863,21 @@ export const HeroSection = ({
  <div className="absolute -inset-4 bg-primary/8 soft-glow rounded-panel" />
 
  {/* Floating cards */}
- {floatingCards.map((card, i) => (
- <div key={i} className={`absolute ${card.position} z-30 floating-card hidden lg:block`} style={{ animationDelay: card.delay }}>
- <div className="glass rounded-card p-3 shadow-lg shadow-primary/10 border border-border/50 hover:border-primary/20 transition-all hover:scale-105">
- <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-sm bg-primary/20 flex items-center justify-center"><card.icon size={14} className="text-primary" /></div>
- <div><p className="text-sm font-bold text-foreground"><AnimatedCounter value={card.value} duration={2000} /></p><p className="text-[11px] text-muted-foreground whitespace-nowrap">{card.label}</p></div>
- </div>
- </div>
- </div>
- ))}
+        {/* Único elemento de apoio: indicação sutil da Wian */}
+        <div className="absolute -left-24 top-8 z-30 floating-card hidden 2xl:block" style={{ animationDelay: "0.8s" }}>
+          <div className="glass rounded-card px-3 py-2 shadow-lg shadow-primary/10 border border-border/50">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-sm bg-primary/15 flex items-center justify-center">
+                <Sparkles size={13} className="text-primary" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-foreground">Wian</p>
+                <p className="text-[10px] text-muted-foreground whitespace-nowrap">analisando sua operação</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
 
  <div ref={demoRef} className={`relative glass rounded-card sm:rounded-card p-4 sm:p-5 shadow-card hover:shadow-glow transition-shadow duration-500 ${isAnimating ? 'demo-animating' : 'demo-paused'}`}>
  {/* Window controls */}
@@ -920,6 +891,44 @@ export const HeroSection = ({
  </div>
 
  <div className="bg-background/50 rounded-card sm:rounded-card p-3 sm:p-4">
+ {/* Cabeçalho da plataforma: mostra que existe uma operação completa */}
+ <div className="flex items-center justify-between gap-2 mb-3">
+ <div className="min-w-0">
+ <p className="text-[13px] font-semibold text-foreground leading-tight">Operação comercial</p>
+ <p className="text-[10px] text-muted-foreground">Captação, IA, conversas, reuniões e CRM conectados</p>
+ </div>
+ <span className="text-[9px] text-muted-foreground/70 border border-border/50 rounded-xs px-1.5 py-0.5 shrink-0">
+ demonstração
+ </span>
+ </div>
+
+ {/* Fluxo da operação ponta a ponta */}
+ <div className="flex flex-wrap items-center gap-1 mb-3">
+ {flowSteps.map((step, i) => {
+ const active = step.stages.includes(currentStage);
+ const done = currentStage > Math.max(...step.stages);
+ return (
+ <div key={step.label} className="flex items-center gap-1 min-w-0">
+ <div
+ className={`flex items-center gap-1 rounded-xs px-1 py-0.5 border transition-colors ${
+ active
+ ? "bg-primary/10 border-primary/25 text-primary"
+ : done
+ ? "bg-secondary/60 border-border/40 text-foreground/70"
+ : "bg-secondary/30 border-border/30 text-muted-foreground"
+ }`}
+ >
+ <step.icon size={9} />
+ <span className="text-[9px] font-medium whitespace-nowrap">{step.label}</span>
+ </div>
+ {i < flowSteps.length - 1 && (
+ <ArrowRight size={9} className="text-muted-foreground/40 shrink-0" />
+ )}
+ </div>
+ );
+ })}
+ </div>
+
  {/* Stage indicator bar — clickable */}
  <div className="flex items-center gap-1 mb-3">
  {stages.map((s, i) => (
