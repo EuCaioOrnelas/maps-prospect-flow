@@ -863,16 +863,58 @@ export const HeroSection = ({
  <div className="absolute -inset-4 bg-primary/8 soft-glow rounded-panel" />
 
  {/* Floating cards */}
-        {/* Único elemento de apoio: indicação sutil da Wian */}
-        <div className="absolute -left-24 top-8 z-30 floating-card hidden 2xl:block" style={{ animationDelay: "0.8s" }}>
-          <div className="glass rounded-card px-3 py-2 shadow-lg shadow-primary/10 border border-border/50">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-sm bg-primary/15 flex items-center justify-center">
-                <Sparkles size={13} className="text-primary" />
+        {/* Floating stat cards */}
+        <div className="absolute -left-28 top-6 z-30 floating-card hidden 2xl:block" style={{ animationDelay: "0.6s" }}>
+          <div className="glass rounded-card px-3.5 py-2.5 shadow-lg shadow-primary/10 border border-border/50">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-sm bg-primary/15 flex items-center justify-center">
+                <Send size={14} className="text-primary" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold text-foreground">Wian</p>
-                <p className="text-[10px] text-muted-foreground whitespace-nowrap">analisando sua operação</p>
+                <p className="text-[13px] font-bold text-foreground">900K+</p>
+                <p className="text-[10px] text-muted-foreground whitespace-nowrap">Mensagens enviadas</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute -left-24 top-28 z-30 floating-card hidden 2xl:block" style={{ animationDelay: "0.9s" }}>
+          <div className="glass rounded-card px-3.5 py-2.5 shadow-lg shadow-primary/10 border border-border/50">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-sm bg-success/15 flex items-center justify-center">
+                <Search size={14} className="text-success" />
+              </div>
+              <div>
+                <p className="text-[13px] font-bold text-foreground">50K+</p>
+                <p className="text-[10px] text-muted-foreground whitespace-nowrap">Empresas prospectadas</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute -right-24 top-10 z-30 floating-card hidden 2xl:block" style={{ animationDelay: "1.2s" }}>
+          <div className="glass rounded-card px-3.5 py-2.5 shadow-lg shadow-primary/10 border border-border/50">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-sm bg-info/15 flex items-center justify-center">
+                <MessageCircle size={14} className="text-info" />
+              </div>
+              <div>
+                <p className="text-[13px] font-bold text-foreground">63%</p>
+                <p className="text-[10px] text-muted-foreground whitespace-nowrap">Taxa de resposta</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute -right-20 top-32 z-30 floating-card hidden 2xl:block" style={{ animationDelay: "1.5s" }}>
+          <div className="glass rounded-card px-3.5 py-2.5 shadow-lg shadow-primary/10 border border-border/50">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-sm bg-warning/15 flex items-center justify-center">
+                <TrendingUp size={14} className="text-warning" />
+              </div>
+              <div>
+                <p className="text-[13px] font-bold text-foreground">+40%</p>
+                <p className="text-[10px] text-muted-foreground whitespace-nowrap">Conversão vs tradicional</p>
               </div>
             </div>
           </div>
