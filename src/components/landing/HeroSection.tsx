@@ -680,7 +680,7 @@ export const HeroSection = ({
  titleLine2 = "",
 
  titleHighlight = "Em um só lugar.",
- description = "Capte oportunidades, converse com clientes, feche vendas e gerencie tudo em uma única plataforma.",
+ description = "Da primeira oportunidade ao fechamento, a Wiize usa IA para encontrar empresas, criar abordagens, conduzir conversas, fazer follow-up, agendar reuniões e organizar tudo no CRM, em uma única plataforma.",
  descriptionClassName,
 }: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
