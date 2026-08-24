@@ -186,13 +186,13 @@ ORDER BY status DESC, slug;
 --    Executa a função em um link ativo real. Retorno vazio = problema.
 -- ---------------------------------------------------------------------
 SELECT '9. RPC RESOLVE' AS bloco, l.slug,
-       public.resolve_partner_referral_link(l.slug) AS retorno,
-       CASE WHEN public.resolve_partner_referral_link(l.slug) IS NULL
-            THEN 'FALHA' ELSE 'OK' END AS status
-FROM public.partner_referral_links l
-WHERE l.is_active
-ORDER BY l.created_at DESC
-LIMIT 5;
+       to_jsonb(r.*) AS retorno,
+       CASE WHEN r IS NULL THEN 'FALHA' ELSE 'OK' END AS status
+FROM (
+  SELECT * FROM public.partner_referral_links
+  WHERE is_active ORDER BY created_at DESC LIMIT 5
+) l
+LEFT JOIN LATERAL public.resolve_partner_referral_link(l.slug) r ON true;
 
 -- ---------------------------------------------------------------------
 -- 10) FUNIL POR LINK (visão de negócio)
