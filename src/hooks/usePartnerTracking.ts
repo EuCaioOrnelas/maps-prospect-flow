@@ -253,9 +253,21 @@ export function usePartnerTracking() {
  * A code typed manually by the user wins over the automatic link attribution.
  */
 export async function attributePartnerLeadOnSignup(userId: string, email: string, name?: string) {
-  const ref = getStoredReferral();
+  let ref = getStoredReferral();
   const manualCode = getManualReferralCode();
-  if (!ref && !manualCode) return;
+  const pending = getPendingReferral();
+
+  // Visitor came through the public demo (no backend calls allowed there):
+  // register the click now so the lead is linked to the partner/link.
+  if (!ref && pending) {
+    const ok = await registerClick(pending);
+    if (ok) {
+      setPendingReferral(null);
+      ref = getStoredReferral();
+    }
+  }
+
+  if (!ref && !manualCode && !pending) return;
 
   const attempts: Array<Record<string, unknown>> = [];
 
@@ -270,7 +282,20 @@ export async function attributePartnerLeadOnSignup(userId: string, email: string
       p_referral_link_id: ref.referral_link_id ?? null,
       p_source: "signed_in_event",
     });
+  } else if (pending) {
+    // Fallback: attribute by code only (click could not be registered).
+    attempts.push({
+      p_user_id: userId,
+      p_email: email,
+      p_name: name || null,
+      p_referral_code: pending.code,
+      p_click_id: null,
+      p_partner_id: null,
+      p_referral_link_id: null,
+      p_source: "public_demo",
+    });
   }
+
 
   // Runs last on purpose: the RPC re-attributes the lead to the typed code.
   if (manualCode) {
