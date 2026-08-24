@@ -21,12 +21,17 @@ interface Settings {
   silverClients: number;
   goldClients: number;
   platinumClients: number;
+  boostEnabled: boolean;
+  boostPercent: number;
+  boostUntil: string | null;
 }
 
 const DEFAULTS: Settings = {
   bronze: 10, silver: 15, gold: 20, platinum: 25,
   silverClients: 100, goldClients: 250, platinumClients: 500,
+  boostEnabled: true, boostPercent: 50, boostUntil: null,
 };
+
 
 const MAX_COMMISSION = 20;
 const AVG_TICKET = 798;
