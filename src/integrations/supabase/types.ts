@@ -11096,6 +11096,10 @@ export type Database = {
         Args: { p_referral_link_id: string }
         Returns: undefined
       }
+      recompute_partner_totals: {
+        Args: { p_partner_id: string }
+        Returns: undefined
+      }
       refresh_my_partner_goals: { Args: never; Returns: undefined }
       register_partner_click: {
         Args: {
