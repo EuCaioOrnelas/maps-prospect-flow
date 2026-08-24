@@ -71,22 +71,21 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
 
 
  {/* Content */}
- <div className={`relative z-10 flex items-center gap-3 ${isLeft ? "md:flex-row-reverse md:text-right" : ""}`}>
+ <div className="relative z-10 flex items-center gap-4 text-left">
  <div className="flex-shrink-0">
- <span className="text-[9px] font-bold tracking-[0.14em] text-primary/35 block leading-none mb-1 hidden md:block">
+ <span className="text-[9px] font-bold tracking-[0.14em] text-primary/35 block leading-none mb-1.5 hidden md:block">
  {String(index + 1).padStart(2, "0")}
  </span>
  <div className="relative">
- <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-primary/8 pointer-events-none" />
- <div className="relative w-10 h-10 rounded-hover bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center group-hover:shadow-[0_8px_22px_-4px_hsl(var(--primary)/0.65)] group-hover:scale-110 transition-all duration-300">
- <Icon size={18} className="text-primary-foreground" />
+ <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full bg-primary/8 pointer-events-none" />
+ <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-hover bg-gradient-to-br from-primary to-primary/80 shadow-[0_8px_20px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center group-hover:shadow-[0_10px_26px_-4px_hsl(var(--primary)/0.65)] group-hover:scale-105 transition-all duration-300">
+ <Icon size={28} className="text-primary-foreground" strokeWidth={1.9} />
  </div>
  </div>
  </div>
  <div className="flex-1 min-w-0">
- <h3 className="text-sm font-bold text-foreground leading-tight mb-1">{step.title}</h3>
- <p className="text-[13px] text-muted-foreground leading-relaxed">{step.desc}</p>
- <p className="text-[11px] text-muted-foreground/50 mt-1">{step.micro}</p>
+ <h3 className="text-lg sm:text-xl font-bold text-foreground leading-tight mb-1.5">{step.title}</h3>
+ <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
  </div>
  </div>
  </div>
