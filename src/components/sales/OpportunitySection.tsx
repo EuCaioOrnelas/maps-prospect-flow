@@ -74,6 +74,10 @@ export const OpportunitySection = () => {
                 className="h-6 w-auto object-contain sm:h-8"
                 loading="lazy"
               />
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-primary-foreground sm:text-sm">
+                Wiize
+              </span>
+
             </div>
           </div>
 
