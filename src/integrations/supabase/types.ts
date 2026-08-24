@@ -11130,6 +11130,15 @@ export type Database = {
         Args: { p_endpoint: string; p_identifier: string }
         Returns: undefined
       }
+      resolve_partner_referral_link: {
+        Args: { _slug: string }
+        Returns: {
+          referral_code: string
+          utm_campaign: string
+          utm_medium: string
+          utm_source: string
+        }[]
+      }
       revenue_score_to_bucket: {
         Args: { p_score: number }
         Returns: Database["public"]["Enums"]["revenue_status_bucket"]

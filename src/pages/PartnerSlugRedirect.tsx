@@ -11,21 +11,17 @@ export default function PartnerSlugRedirect() {
   useEffect(() => {
     if (!slug) { navigate("/", { replace: true }); return; }
     (async () => {
-      const { data } = await supabase
-        .from("partner_referral_links")
-        .select("partner_id, utm_source, utm_medium, utm_campaign, is_active, expires_at, partners!inner(referral_code, status)")
-        .eq("slug", slug)
-        .maybeSingle();
+      // RPC pública (security definer): resolve o link ativo sem expor a tabela de parceiros.
+      const { data } = await (supabase as any).rpc("resolve_partner_referral_link", { _slug: slug });
+      const link = Array.isArray(data) ? data[0] : data;
 
-      const link = data as any;
-      const isExpired = link?.expires_at && new Date(link.expires_at) < new Date();
-      if (!link || !link.is_active || isExpired || link.partners?.status !== "active") {
+      if (!link?.referral_code) {
         navigate("/", { replace: true });
         return;
       }
 
       const params = new URLSearchParams();
-      params.set("ref", link.partners.referral_code);
+      params.set("ref", link.referral_code);
       params.set("rl", slug);
       if (link.utm_source) params.set("utm_source", link.utm_source);
       if (link.utm_medium) params.set("utm_medium", link.utm_medium);
@@ -33,6 +29,7 @@ export default function PartnerSlugRedirect() {
       window.location.replace(`/?${params.toString()}`);
     })();
   }, [slug, navigate]);
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
