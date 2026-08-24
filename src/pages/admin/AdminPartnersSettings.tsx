@@ -42,6 +42,10 @@ interface Settings {
   allow_multiple_pending_withdrawals: boolean;
   partner_portal_domain: string | null;
   admin_notification_emails: string[] | null;
+  first_month_boost_enabled: boolean;
+  first_month_boost_percent: number;
+  first_month_boost_until: string | null;
+
 }
 
 const levelMeta = {
