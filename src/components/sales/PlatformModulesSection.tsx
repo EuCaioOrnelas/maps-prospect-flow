@@ -1375,14 +1375,15 @@ export const PlatformModulesSection = () => {
     >
       <div className="container mx-auto px-4 max-w-6xl">
         <SectionHeading
-          eyebrow="Recursos da plataforma"
-          title="Tudo o que a máquina usa"
-          highlight="para abastecer suas vendas"
+          eyebrow="Dentro da plataforma"
+          title="Toda a operação comercial"
+          highlight="reunida em um só lugar"
           highlightFit="tight"
 
-          description="Cada recurso resolve uma parte do trabalho comercial: encontrar, abordar, conversar, acompanhar, agendar e organizar."
+          description="Captação, análise, abordagem, conversas, follow-up, reuniões, CRM, engajamento e vendas acontecem dentro da mesma plataforma."
           isVisible={isVisible}
         />
+
 
         <div className="space-y-8 sm:space-y-12 lg:space-y-16">
           {modules.map((m, i) => (
