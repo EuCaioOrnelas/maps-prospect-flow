@@ -199,6 +199,8 @@ WHERE p.proname = 'resolve_partner_referral_link'
 -- Se o bloco 9A acusar FALTANDO GRANT, rode:
 --   GRANT EXECUTE ON FUNCTION public.resolve_partner_referral_link(text) TO anon, authenticated;
 
+-- Obs.: se o 9B retornar "permission denied", significa apenas que o role
+-- do SQL Editor não tem EXECUTE — o que importa é o 9A estar OK (anon).
 SELECT '9B. RPC RESOLVE' AS bloco, l.slug,
        to_jsonb(r.*) AS retorno,
        CASE WHEN r IS NULL THEN 'FALHA' ELSE 'OK' END AS status
