@@ -169,6 +169,8 @@ const PartnerMaterials = lazyWithRetry(() => import("./pages/partners/PartnerMat
 const PartnerRanking = lazyWithRetry(() => import("./pages/partners/PartnerRanking"), "PartnerRanking");
 const PartnerGoals = lazyWithRetry(() => import("./pages/partners/PartnerGoals"), "PartnerGoals");
 const PartnerLevels = lazyWithRetry(() => import("./pages/partners/PartnerLevels"), "PartnerLevels");
+const PartnerLinks = lazyWithRetry(() => import("./pages/partners/PartnerLinks"), "PartnerLinks");
+
 const AdminPartnersGoals = lazyWithRetry(() => import("./pages/admin/AdminPartnersGoals"), "AdminPartnersGoals");
 const AdminPartnersLinks = lazyWithRetry(() => import("./pages/admin/AdminPartnersLinks"), "AdminPartnersLinks");
 const AdminInfluencerProspecting = lazyWithRetry(() => import("./pages/admin/AdminInfluencerProspecting"), "AdminInfluencerProspecting");
@@ -486,6 +488,8 @@ const App = () => (
                 <Route path="/partners" element={<LightThemeWrapper><PartnerLayout /></LightThemeWrapper>}>
                   <Route index element={<PartnerDashboard />} />
                   <Route path="leads" element={<PartnerLeads />} />
+                  <Route path="links" element={<PartnerLinks />} />
+
                   <Route path="comissoes" element={<PartnerCommissions />} />
                   <Route path="saques" element={<PartnerWithdrawals />} />
                   <Route path="materiais" element={<PartnerMaterials />} />
