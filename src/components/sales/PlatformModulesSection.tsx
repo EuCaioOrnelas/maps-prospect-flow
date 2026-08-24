@@ -1158,12 +1158,12 @@ const modules: ModuleItem[] = [
     eyebrow: "Prospecção",
     title: "Encontre empresas do seu ICP",
     description:
-      "A Wiize encontra empresas por nicho, localização e características do seu cliente ideal, e mostra quais têm mais chance de virar reunião.",
+      "A Wiize encontra empresas por nicho, localização e características do seu cliente ideal, faz o diagnóstico e a análise de cada uma com IA e gera a abordagem pronta com base no perfil da sua empresa e no que você vende.",
     benefits: [
       "Busca inteligente por nicho e localização",
-      "Score de oportunidade em tempo real",
-      "Dados enriquecidos automaticamente",
-      "Empresas prontas para abordagem",
+      "Diagnóstico e análise de cada empresa com IA",
+      "Abordagem gerada com base no perfil da sua empresa",
+      "Score de oportunidade e dados enriquecidos",
     ],
     mock: ProspectMock,
   },
@@ -1200,8 +1200,13 @@ const modules: ModuleItem[] = [
     eyebrow: "Campanhas",
     title: "Converse pelo WhatsApp oficial",
     description:
-      "Conecte sua operação ao WhatsApp Business oficial da Meta e fale com muitas empresas com segurança e estabilidade.",
-    benefits: ["API Oficial", "Alta entregabilidade", "Variáveis inteligentes", "Relatórios completos"],
+      "Conecte sua operação ao WhatsApp Business oficial da Meta e dispare campanhas de mensagem pela API oficial: modelos aprovados, variáveis por empresa, envio controlado e respostas caindo direto no atendimento.",
+    benefits: [
+      "Campanhas de mensagem via API oficial",
+      "Modelos aprovados pela Meta",
+      "Variáveis personalizadas por empresa",
+      "Envio controlado e relatórios completos",
+    ],
     mock: CampaignMock,
   },
   {
@@ -1233,11 +1238,11 @@ const modules: ModuleItem[] = [
   },
   {
     icon: BrainCircuit,
-    eyebrow: "Wian",
+    eyebrow: "Wian AI",
     title: "A inteligência por trás da sua operação",
 
     description:
-      "Todo dia a Wian lê o que aconteceu na sua operação e conta o que importa: quais oportunidades merecem atenção, o que está travando e o que fazer hoje. Você conversa com ela por texto ou áudio.",
+      "Todo dia a Wian AI lê o que aconteceu na sua operação e conta o que importa: quais oportunidades merecem atenção, o que está travando e o que fazer hoje. Você conversa com a Wian AI por texto ou áudio.",
     benefits: [
       "Briefing executivo diário",
       "Análise das métricas em tempo real",

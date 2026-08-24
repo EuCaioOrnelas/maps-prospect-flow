@@ -1,7 +1,7 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
 import { X, Check, ListChecks } from "lucide-react";
-import logoWhite from "@/assets/logo-w-white.png";
+import logoWhiteAsset from "@/assets/wiize-logo-branca.png.asset.json";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
 type Row = { strong: string; rest: string };
@@ -68,8 +68,12 @@ export const OpportunitySection = () => {
               </span>
             </div>
             <div className="flex min-h-20 flex-row items-center justify-center gap-2 sm:gap-3 bg-gradient-to-b from-primary to-primary/90 px-2">
-              <img src={logoWhite} alt="wiize" className="h-9 w-9 rounded-hover object-contain sm:h-10 sm:w-10" />
-              <span className="text-sm sm:text-lg font-bold text-primary-foreground">wiize</span>
+              <img
+                src={logoWhiteAsset.url}
+                alt="Wiize"
+                className="h-6 w-auto object-contain sm:h-8"
+                loading="lazy"
+              />
             </div>
           </div>
 
