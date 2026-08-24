@@ -157,7 +157,11 @@ export default function AdminPartnersSettings() {
         allow_multiple_pending_withdrawals: s.allow_multiple_pending_withdrawals,
         partner_portal_domain: s.partner_portal_domain,
         admin_notification_emails: emails,
+        first_month_boost_enabled: s.first_month_boost_enabled,
+        first_month_boost_percent: s.first_month_boost_percent,
+        first_month_boost_until: s.first_month_boost_until || null,
       })
+
       .eq("id", 1);
     setSaving(false);
     if (error) {
