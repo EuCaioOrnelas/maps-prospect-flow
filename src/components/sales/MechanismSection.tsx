@@ -132,12 +132,14 @@ export const MechanismSection = () => {
  <div className="container mx-auto px-4 max-w-6xl relative z-10">
  {/* Header */}
  <SectionHeading
- eyebrow="Como funciona"
- title="Sua operação comercial em"
- highlight="quatro etapas"
- description="Uma plataforma só, com IA e automação em cada etapa: captar, converter, gerenciar e otimizar."
+ eyebrow="Por que é diferente"
+ title="A Wiize centraliza e automatiza"
+ highlight="sua operação comercial com IA"
+ highlightFit="tight"
+ description="Uma única plataforma de vendas B2B para captar, converter, gerenciar e otimizar, com IA e automação em cada etapa."
  isVisible={isVisible}
  />
+
 
  {/* Timeline */}
  <div className="relative">
