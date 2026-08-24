@@ -153,10 +153,10 @@ const LandingPage = () => {
           <ProblemSection />
 
           <Suspense fallback={<SectionFallback />}>
-            <OpportunitySection />
             <MechanismSection />
-            <WhyItWorksSection />
+            <OpportunitySection />
             <PlatformModulesSection />
+            <WhyItWorksSection />
             <TestimonialsSection />
             <PricingSection />
             <FAQSection />

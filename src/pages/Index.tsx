@@ -141,9 +141,9 @@ const Index = () => {
           <Suspense fallback={<SectionFallback />}>
             {/* Hierarquia: diferencial → o que existe dentro → profundidade → benefício → prova */}
             <MechanismSection />
+            <OpportunitySection />
             <PlatformModulesSection />
             <WhyItWorksSection />
-            <OpportunitySection />
             <TestimonialsSection />
             <PricingSection />
             <FAQSection />
