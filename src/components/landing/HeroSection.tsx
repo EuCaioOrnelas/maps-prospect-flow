@@ -701,13 +701,8 @@ const StageCRM = ({ progress }: { progress: number }) => {
 
 const stageRenderers = [StageCapture, StageDiagnosis, StageMessage, StageSend, StageAIChat, StageClose, StageCRM];
 
-/* ─── Floating cards ─── */
-const floatingCards = [
- { icon: Send, value: "900K+", label: "Mensagens enviadas", position: "-left-[10.5rem] top-4", delay: "0.8s" },
- { icon: Users, value: "50K+", label: "Empresas prospectadas", position: "left-1/3 -top-8", delay: "1.2s" },
- { icon: TrendingUp, value: "63%", label: "Taxa de resposta", position: "-left-[7.5rem] bottom-[5.5rem]", delay: "1.6s" },
- { icon: Zap, value: "+40%", label: "Conversão vs tradicional", position: "-right-10 -bottom-10", delay: "2s" },
-];
+
+
 
 /* ─── Main component ─── */
 interface HeroSectionProps {
