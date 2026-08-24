@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
+import { withReferralParams } from "@/hooks/usePartnerTracking";
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowRight, Handshake, Play } from "lucide-react";
 import { SEO } from "@/components/SEO";
@@ -194,7 +195,7 @@ const Hero = () => {
           variants={fadeUp}
           className="mt-7 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
         >
-          <Link to="/signup/escolher-plano" className="w-full sm:w-auto">
+          <Link to={withReferralParams("/signup/escolher-plano")} className="w-full sm:w-auto">
             <Button
               variant="hero"
               size="lg"
