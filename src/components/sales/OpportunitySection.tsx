@@ -39,11 +39,11 @@ export const OpportunitySection = () => {
     <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative">
       <div className="container mx-auto px-4 max-w-6xl">
         <SectionHeading
-          eyebrow="A prova"
-          title="O trabalho comercial que"
-          highlight="a plataforma faz por você"
+          eyebrow="Uma operação inteira em um só lugar"
+          title="Tudo o que seu time faz para vender,"
+          highlight="conectado em um único fluxo"
           highlightFit="tight"
-          description="É o mesmo trabalho que seu time faz hoje na mão, espalhado em várias ferramentas. Aqui ele acontece em um só lugar, todos os dias."
+          description="Da busca pela oportunidade ao fechamento, a Wiize conecta prospecção, IA, conversas, follow-up, reuniões e CRM para sua operação trabalhar como uma só."
           isVisible={isVisible}
         />
 
