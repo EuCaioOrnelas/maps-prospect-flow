@@ -132,9 +132,9 @@ export const MechanismSection = () => {
  {/* Header */}
  <SectionHeading
  eyebrow="Como funciona"
- title="A máquina trabalha em"
+ title="Sua operação comercial em"
  highlight="quatro etapas"
- description="Você diz o que vende e quem quer alcançar. O resto acontece sozinho, todos os dias."
+ description="Uma plataforma só, com IA e automação em cada etapa: captar, converter, gerenciar e otimizar."
  isVisible={isVisible}
  />
 

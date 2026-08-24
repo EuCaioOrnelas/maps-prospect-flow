@@ -33,11 +33,11 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
  <span className="text-sm text-muted-foreground">Comece em menos de 1 minuto</span>
  </div>
  <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-foreground">
- Ligue sua máquina<br />
- <span className="text-shimmer-highlight">de vendas B2B</span>
+ Tudo para vender B2B<br />
+ <span className="text-shimmer-highlight">em um só lugar</span>
  </h2>
  <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
- Teste a Wiize por 7 dias com tudo liberado e veja ela encontrar empresas, iniciar conversas e marcar reuniões para o seu time. Cartão apenas como garantia, sem cobrança no período de teste e cancelamento na própria plataforma.
+ Teste a Wiize por 7 dias com tudo liberado e centralize sua operação comercial em uma única plataforma, com IA e automação em cada etapa. Cartão apenas como garantia, sem cobrança no período de teste e cancelamento na própria plataforma.
  </p>
  {TRIAL_DISABLED ? (
  <>
@@ -60,7 +60,7 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
  <>
  <Link to="/signup/escolher-plano" onClick={onSignupClick}>
  <Button variant="hero" size="xl" className="group rounded-full">
- Começar gratuitamente
+ Iniciar Teste Grátis
  <ArrowRight className="group-hover:translate-x-1 transition-transform" />
  </Button>
  </Link>

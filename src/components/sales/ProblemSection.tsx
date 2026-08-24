@@ -34,12 +34,15 @@ export const ProblemSection = () => {
  O problema
  </span>
  <h2 className="font-display text-[1.75rem] sm:text-4xl md:text-5xl font-bold text-foreground mb-4 leading-[1.15] tracking-tight">
- Seu vendedor não deveria<br className="hidden sm:block" />
+ Seu comercial não deveria<br className="hidden sm:block" />
  <span className="sm:hidden"> </span>
- <span className="text-muted-foreground">passar o dia procurando quem abordar</span>
+ <span className="text-muted-foreground">depender de várias ferramentas</span>
  </h2>
  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
- Procurar empresas, pesquisar contatos, escrever mensagens, lembrar de fazer follow-up, atualizar o CRM e marcar reuniões. É aí que o dia do seu time acaba.
+ Prospecção em uma ferramenta, WhatsApp em outra, CRM em outra, agenda em outra. A operação fica espalhada e o trabalho manual consome o dia do seu time.
+ </p>
+ <p className="text-base sm:text-lg text-foreground font-medium max-w-2xl mx-auto mt-4">
+ A Wiize reúne essa operação em um só lugar e usa IA para automatizar o trabalho que consome seu time.
  </p>
  </motion.div>
 
