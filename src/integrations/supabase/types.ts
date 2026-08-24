@@ -6337,6 +6337,9 @@ export type Database = {
           allow_multiple_pending_withdrawals: boolean
           bronze_commission_percent: number
           created_at: string
+          first_month_boost_enabled: boolean
+          first_month_boost_percent: number
+          first_month_boost_until: string | null
           gold_commission_percent: number
           gold_threshold_clients: number
           id: number
@@ -6355,6 +6358,9 @@ export type Database = {
           allow_multiple_pending_withdrawals?: boolean
           bronze_commission_percent?: number
           created_at?: string
+          first_month_boost_enabled?: boolean
+          first_month_boost_percent?: number
+          first_month_boost_until?: string | null
           gold_commission_percent?: number
           gold_threshold_clients?: number
           id?: number
@@ -6373,6 +6379,9 @@ export type Database = {
           allow_multiple_pending_withdrawals?: boolean
           bronze_commission_percent?: number
           created_at?: string
+          first_month_boost_enabled?: boolean
+          first_month_boost_percent?: number
+          first_month_boost_until?: string | null
           gold_commission_percent?: number
           gold_threshold_clients?: number
           id?: number
