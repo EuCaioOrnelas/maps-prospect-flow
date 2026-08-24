@@ -183,9 +183,23 @@ ORDER BY status DESC, slug;
 
 -- ---------------------------------------------------------------------
 -- 9) TESTE FUNCIONAL DA RPC DE RESOLUÇÃO (/r/:slug)
---    Executa a função em um link ativo real. Retorno vazio = problema.
+--    Confere se anon/authenticated podem executar a função usada no
+--    redirecionamento público e executa a RPC em links ativos reais.
 -- ---------------------------------------------------------------------
-SELECT '9. RPC RESOLVE' AS bloco, l.slug,
+SELECT '9A. RPC GRANTS' AS bloco,
+       r.rolname AS role,
+       has_function_privilege(r.rolname, p.oid, 'EXECUTE') AS pode_executar,
+       CASE WHEN has_function_privilege(r.rolname, p.oid, 'EXECUTE')
+            THEN 'OK' ELSE 'FALTANDO GRANT' END AS status
+FROM pg_proc p
+CROSS JOIN (VALUES ('anon'),('authenticated'),('service_role')) AS r(rolname)
+WHERE p.proname = 'resolve_partner_referral_link'
+  AND p.pronamespace = 'public'::regnamespace;
+
+-- Se o bloco 9A acusar FALTANDO GRANT, rode:
+--   GRANT EXECUTE ON FUNCTION public.resolve_partner_referral_link(text) TO anon, authenticated;
+
+SELECT '9B. RPC RESOLVE' AS bloco, l.slug,
        to_jsonb(r.*) AS retorno,
        CASE WHEN r IS NULL THEN 'FALHA' ELSE 'OK' END AS status
 FROM (
