@@ -60,13 +60,14 @@ export const FeaturesOverviewSection = () => {
  >
  <div className="container mx-auto px-4 max-w-6xl">
  <SectionHeading
- eyebrow="A máquina por dentro"
- title="As peças que abastecem o"
- highlight="seu pipeline B2B"
+ eyebrow="Profundidade"
+ title="Como a IA trabalha junto"
+ highlight="com a sua equipe"
  highlightFit="tight"
- description="Encontrar, abordar, conversar, acompanhar e agendar. Cada peça faz uma parte do trabalho comercial que hoje é feito na mão."
+ description="A IA encontra, analisa, personaliza a abordagem, conversa, faz follow-up e ajuda a priorizar. Sua equipe cuida do que realmente exige decisão humana."
  isVisible={isVisible}
  />
+
 
  <motion.div
  variants={containerVariants}
