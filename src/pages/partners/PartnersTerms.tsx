@@ -231,6 +231,18 @@ export default function PartnersTerms() {
               promocionais, taxas de gateway ou impostos.
             </Bullet>
             <Bullet>
+              <strong>Bônus promocional de primeira mensalidade (por tempo limitado):</strong> enquanto
+              vigente, a <strong>primeira mensalidade paga</strong> de cada novo cliente indicado gera
+              comissão de <strong>50%</strong>, substituindo o percentual do nível apenas nessa primeira
+              cobrança. Da <strong>segunda cobrança em diante</strong> volta a valer o percentual normal
+              do nível do Parceiro. Trata-se de campanha promocional temporária, que pode ser
+              <strong> alterada, suspensa ou encerrada a qualquer momento, sem aviso prévio</strong>, sem
+              afetar comissões já geradas antes do encerramento. O bônus não é cumulativo com outras
+              promoções e não se aplica a trials, upgrades da mesma assinatura, renovações, order bumps
+              posteriores ou a clientes que já tenham sido pagantes da Wiize anteriormente.
+            </Bullet>
+
+            <Bullet>
               A recorrência é paga por até <strong>24 meses</strong> a partir da primeira fatura
               paga, desde que o cliente permaneça ativo e adimplente.
             </Bullet>

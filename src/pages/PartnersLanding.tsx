@@ -21,12 +21,17 @@ interface Settings {
   silverClients: number;
   goldClients: number;
   platinumClients: number;
+  boostEnabled: boolean;
+  boostPercent: number;
+  boostUntil: string | null;
 }
 
 const DEFAULTS: Settings = {
   bronze: 10, silver: 15, gold: 20, platinum: 25,
   silverClients: 100, goldClients: 250, platinumClients: 500,
+  boostEnabled: true, boostPercent: 50, boostUntil: null,
 };
+
 
 const MAX_COMMISSION = 20;
 const AVG_TICKET = 798;
@@ -76,9 +81,14 @@ const steps = [
 
 const faq = [
   {
+    q: "Como funciona o bônus de 50% na primeira mensalidade?",
+    a: "Durante a promoção por tempo limitado, a primeira mensalidade paga por cada cliente novo indicado por você rende 50% de comissão. Da segunda mensalidade em diante, vale a comissão recorrente normal do seu nível. A promoção é temporária e pode ser encerrada a qualquer momento, sem aviso prévio — comissões já geradas não são afetadas.",
+  },
+  {
     q: "Como funciona a atribuição last-click?",
     a: "Quando alguém clica no seu link de indicação, gravamos um cookie por 2 anos. Toda venda dessa pessoa nesse período é creditada a você, mesmo que ela leve meses para concluir a contratação. Se outro parceiro for o último clique antes da compra, a comissão vai para ele — por isso vale acompanhar o lead até o fechamento.",
   },
+
   {
     q: "Quando recebo a comissão?",
     a: "Cada venda gera uma comissão pendente no seu painel. Após 30 dias (período de proteção contra estorno), ela vira disponível para saque. Você solicita o saque via Pix com saldo mínimo de R$ 100 e recebe em até 5 dias úteis.",
@@ -116,19 +126,24 @@ export default function PartnersLanding() {
     (async () => {
       const { data } = await supabase
         .from("partner_settings")
-        .select("bronze_commission_percent, silver_commission_percent, gold_commission_percent, platinum_commission_percent, silver_threshold_clients, gold_threshold_clients, platinum_threshold_clients")
+        .select("bronze_commission_percent, silver_commission_percent, gold_commission_percent, platinum_commission_percent, silver_threshold_clients, gold_threshold_clients, platinum_threshold_clients, first_month_boost_enabled, first_month_boost_percent, first_month_boost_until")
         .eq("id", 1)
         .maybeSingle();
       if (!data) return;
+      const d = data as any;
       setSettings({
-        bronze: Number(data.bronze_commission_percent),
-        silver: Number(data.silver_commission_percent),
-        gold: Number(data.gold_commission_percent),
-        platinum: Number(data.platinum_commission_percent),
-        silverClients: data.silver_threshold_clients,
-        goldClients: data.gold_threshold_clients,
-        platinumClients: data.platinum_threshold_clients,
+        bronze: Number(d.bronze_commission_percent),
+        silver: Number(d.silver_commission_percent),
+        gold: Number(d.gold_commission_percent),
+        platinum: Number(d.platinum_commission_percent),
+        silverClients: d.silver_threshold_clients,
+        goldClients: d.gold_threshold_clients,
+        platinumClients: d.platinum_threshold_clients,
+        boostEnabled: d.first_month_boost_enabled ?? false,
+        boostPercent: Number(d.first_month_boost_percent ?? 50),
+        boostUntil: d.first_month_boost_until ?? null,
       });
+
     })();
   }, []);
 
@@ -150,7 +165,13 @@ export default function PartnersLanding() {
     },
   ];
 
+  const boostActive =
+    settings.boostEnabled &&
+    settings.boostPercent > 0 &&
+    (!settings.boostUntil || new Date(settings.boostUntil) > new Date());
+
   const displayMax = MAX_COMMISSION;
+
   const formattedMaxPerReferral = MAX_PER_REFERRAL.toLocaleString("pt-BR");
   const pageTitle = `Wiize Partners — Comissão recorrente até ${displayMax}% indicando a Wiize`;
   const pageDescription = `Indique a Wiize, receba até ${displayMax}% de comissão recorrente por 24 meses. Atribuição last-click, materiais prontos e saque via Pix.`;
@@ -192,6 +213,14 @@ export default function PartnersLanding() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-6 ring-1 ring-primary/20">
             <Sparkles size={14} /> Programa oficial Wiize Partners
           </div>
+          {boostActive && (
+            <div className="flex justify-center mb-6 -mt-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold ring-1 ring-primary/30">
+                <Sparkles size={13} /> Por tempo limitado: {settings.boostPercent}% na primeira mensalidade
+              </div>
+            </div>
+          )}
+
           <h1 className="font-display font-bold tracking-tight leading-[1.05] mb-6 text-foreground">
             <span className="block text-2xl sm:text-4xl md:text-5xl mb-2">Indique a Wiize.</span>
             <span className="block text-shimmer-highlight font-extrabold text-[clamp(1.05rem,5.4vw,3.25rem)] whitespace-nowrap">
@@ -381,9 +410,27 @@ export default function PartnersLanding() {
             })}
           </div>
 
+          {boostActive && (
+            <div className="mt-8 max-w-3xl mx-auto rounded-2xl border border-primary/40 bg-primary/5 ring-1 ring-primary/20 p-6 text-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-[11px] font-semibold uppercase tracking-wider mb-3">
+                <Sparkles size={13} /> Por tempo limitado
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold tracking-tight mb-2">
+                {settings.boostPercent}% de comissão na primeira mensalidade
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Todo cliente novo indicado por você paga <strong className="text-foreground">{settings.boostPercent}% de comissão na primeira mensalidade</strong>. A partir da segunda, vale a comissão recorrente normal do seu nível.
+                {settings.boostUntil
+                  ? ` Promoção válida até ${new Date(settings.boostUntil).toLocaleDateString("pt-BR")}.`
+                  : " Promoção temporária, sujeita a encerramento a qualquer momento sem aviso prévio."}
+              </p>
+            </div>
+          )}
+
           <p className="text-center text-sm text-muted-foreground mt-10">
             Todo parceiro começa em <strong className="text-foreground">Select ({settings.bronze}%)</strong>. A progressão é automática conforme seus clientes ativos crescem — comissão máxima do programa: <strong className="text-foreground">{displayMax}%</strong>.
           </p>
+
         </div>
       </section>
 

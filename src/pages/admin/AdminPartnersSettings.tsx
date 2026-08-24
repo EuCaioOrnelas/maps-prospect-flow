@@ -42,6 +42,10 @@ interface Settings {
   allow_multiple_pending_withdrawals: boolean;
   partner_portal_domain: string | null;
   admin_notification_emails: string[] | null;
+  first_month_boost_enabled: boolean;
+  first_month_boost_percent: number;
+  first_month_boost_until: string | null;
+
 }
 
 const levelMeta = {
@@ -153,7 +157,11 @@ export default function AdminPartnersSettings() {
         allow_multiple_pending_withdrawals: s.allow_multiple_pending_withdrawals,
         partner_portal_domain: s.partner_portal_domain,
         admin_notification_emails: emails,
+        first_month_boost_enabled: s.first_month_boost_enabled,
+        first_month_boost_percent: s.first_month_boost_percent,
+        first_month_boost_until: s.first_month_boost_until || null,
       })
+
       .eq("id", 1);
     setSaving(false);
     if (error) {
@@ -272,6 +280,57 @@ export default function AdminPartnersSettings() {
             </p>
           </div>
         </SectionCard>
+
+        {/* First month boost */}
+        <SectionCard
+          icon={TrendingUp}
+          title="Bônus de Primeira Mensalidade (tempo limitado)"
+          description="Paga um percentual maior somente na primeira mensalidade de cada cliente novo indicado."
+          accent="emerald"
+        >
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-background/40 p-4 mb-4">
+            <div>
+              <Label className="text-sm font-medium">Bônus ativo</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Quando ativo, a 1ª mensalidade paga do cliente indicado usa o percentual abaixo. Da 2ª em diante volta a comissão normal do nível.
+              </p>
+            </div>
+            <Switch
+              checked={s.first_month_boost_enabled}
+              onCheckedChange={(v) => setS({ ...s, first_month_boost_enabled: v })}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-border/60 bg-background/40 p-4">
+              <Label className="text-sm font-medium">Percentual do bônus (%)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                className="mt-2"
+                value={s.first_month_boost_percent}
+                onChange={(e) => setS({ ...s, first_month_boost_percent: Number(e.target.value) })}
+              />
+            </div>
+            <div className="rounded-xl border border-border/60 bg-background/40 p-4">
+              <Label className="text-sm font-medium">Válido até (opcional)</Label>
+              <Input
+                type="date"
+                className="mt-2"
+                value={s.first_month_boost_until ? s.first_month_boost_until.slice(0, 10) : ""}
+                onChange={(e) =>
+                  setS({
+                    ...s,
+                    first_month_boost_until: e.target.value ? new Date(`${e.target.value}T23:59:59`).toISOString() : null,
+                  })
+                }
+              />
+              <p className="text-[11px] text-muted-foreground mt-2">Deixe em branco para manter até desativação manual.</p>
+            </div>
+          </div>
+        </SectionCard>
+
+
 
         {/* Auto-promotion */}
         <SectionCard

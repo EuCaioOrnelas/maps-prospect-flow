@@ -110,6 +110,28 @@ export default function PartnerLevels() {
         icon={Sparkles}
       />
 
+      {settings?.first_month_boost_enabled &&
+        Number(settings.first_month_boost_percent) > 0 &&
+        (!settings.first_month_boost_until || new Date(settings.first_month_boost_until) > new Date()) && (
+          <div className="rounded-2xl border border-primary/40 bg-primary/5 ring-1 ring-primary/20 p-5">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary/15 text-primary text-[10px] font-semibold uppercase tracking-wider mb-2">
+              <Sparkles size={12} /> Por tempo limitado
+            </div>
+            <div className="text-base font-bold tracking-tight">
+              {Number(settings.first_month_boost_percent).toFixed(0)}% de comissão na primeira mensalidade
+            </div>
+            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+              A primeira mensalidade paga de cada novo cliente indicado por você rende{" "}
+              {Number(settings.first_month_boost_percent).toFixed(0)}%. Da segunda em diante vale a comissão normal do seu nível.
+              {settings.first_month_boost_until
+                ? ` Válido até ${new Date(settings.first_month_boost_until).toLocaleDateString("pt-BR")}.`
+                : " Promoção temporária, pode ser encerrada a qualquer momento."}
+            </p>
+          </div>
+        )}
+
+
+
       {/* HERO — Current level + progress to next */}
       <Card className="relative overflow-hidden border border-border/40 bg-card/80 backdrop-blur-sm">
         <div className="pointer-events-none absolute -top-32 -right-20 h-72 w-72 rounded-full blur-3xl opacity-60 bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
