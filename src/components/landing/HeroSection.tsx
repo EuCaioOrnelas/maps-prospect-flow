@@ -908,16 +908,21 @@ export const HeroSection = ({
  <div className="absolute -inset-4 bg-primary/8 soft-glow rounded-panel" />
 
  {/* Floating cards */}
- {floatingCards.map((card, i) => (
- <div key={i} className={`absolute ${card.position} z-30 floating-card hidden lg:block`} style={{ animationDelay: card.delay }}>
- <div className="glass rounded-card p-3 shadow-lg shadow-primary/10 border border-border/50 hover:border-primary/20 transition-all hover:scale-105">
- <div className="flex items-center gap-2">
- <div className="w-8 h-8 rounded-sm bg-primary/20 flex items-center justify-center"><card.icon size={14} className="text-primary" /></div>
- <div><p className="text-sm font-bold text-foreground"><AnimatedCounter value={card.value} duration={2000} /></p><p className="text-[11px] text-muted-foreground whitespace-nowrap">{card.label}</p></div>
- </div>
- </div>
- </div>
- ))}
+        {/* Único elemento de apoio: indicação sutil da Wian */}
+        <div className="absolute -left-24 top-8 z-30 floating-card hidden 2xl:block" style={{ animationDelay: "0.8s" }}>
+          <div className="glass rounded-card px-3 py-2 shadow-lg shadow-primary/10 border border-border/50">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-sm bg-primary/15 flex items-center justify-center">
+                <Sparkles size={13} className="text-primary" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-foreground">Wian</p>
+                <p className="text-[10px] text-muted-foreground whitespace-nowrap">analisando sua operação</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
 
  <div ref={demoRef} className={`relative glass rounded-card sm:rounded-card p-4 sm:p-5 shadow-card hover:shadow-glow transition-shadow duration-500 ${isAnimating ? 'demo-animating' : 'demo-paused'}`}>
  {/* Window controls */}
