@@ -710,8 +710,9 @@ interface HeroSectionProps {
 
 export const HeroSection = ({
  onSignupClick,
- titleLine1 = "Tudo para",
- titleLine2 = "vender B2B.",
+ titleLine1 = "Tudo para vender B2B.",
+ titleLine2 = "",
+
  titleHighlight = "Em um só lugar.",
  description = "Capte oportunidades, converse com clientes, feche vendas e gerencie tudo em uma única plataforma.",
  descriptionClassName,
