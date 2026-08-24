@@ -30,14 +30,14 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
  >
  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-hover glass mb-6">
  <Zap size={16} className="text-primary" />
- <span className="text-sm text-muted-foreground">Comece em menos de 1 minuto</span>
+ <span className="text-sm text-muted-foreground">Venda B2B com uma operação mais eficiente</span>
  </div>
  <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-foreground">
- Tudo para vender B2B<br />
- <span className="text-shimmer-highlight">em um só lugar</span>
+ Tudo para vender B2B.<br />
+ <span className="text-shimmer-highlight">Em um só lugar.</span>
  </h2>
  <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
- Teste a Wiize por 7 dias com tudo liberado e centralize sua operação comercial em uma única plataforma, com IA e automação em cada etapa. Cartão apenas como garantia, sem cobrança no período de teste e cancelamento na própria plataforma.
+ Capte oportunidades, automatize o trabalho comercial e transforme conversas em reuniões e vendas com uma única plataforma.
  </p>
  {TRIAL_DISABLED ? (
  <>
