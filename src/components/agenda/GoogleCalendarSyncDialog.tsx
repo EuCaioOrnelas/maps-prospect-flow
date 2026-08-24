@@ -72,7 +72,6 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
   const [tokenId, setTokenId] = useState("");
   const [calendarId, setCalendarId] = useState("primary");
   const [syncEnabled, setSyncEnabled] = useState(true);
-  const [pushEnabled, setPushEnabled] = useState(true);
   const [windowDays, setWindowDays] = useState("60");
 
   const progressTimer = useRef<number | null>(null);
@@ -98,7 +97,6 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
     setTokenId(s?.google_token_id || firstAccount?.id || "");
     setCalendarId(s?.calendar_id || "primary");
     setSyncEnabled(s?.sync_enabled ?? true);
-    setPushEnabled(s?.push_enabled ?? true);
     setWindowDays(String(s?.sync_window_days ?? 60));
   }, []);
 
@@ -207,7 +205,7 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
       calendar_id: calendarId,
       calendar_name: chosen?.summary || null,
       sync_enabled: syncEnabled,
-      push_enabled: pushEnabled,
+      push_enabled: true,
       sync_window_days: Number(windowDays),
       default_event_type: "google",
     };
@@ -438,17 +436,15 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
                       title="Wiize → Google"
                       subtitle="Para onde vão os compromissos criados aqui"
                     />
-                    <ToggleRow
-                      label="Enviar compromissos da Wiize"
-                      description="Reuniões, demos e ligações aparecem no seu Google Agenda."
-                      checked={pushEnabled}
-                      onChange={setPushEnabled}
-                    />
+                    <p className="rounded-lg bg-muted/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+                      Cada compromisso criado, editado ou excluído na Wiize é refletido no Google
+                      Agenda automaticamente. Nada volta do Google para cá.
+                    </p>
                     <div className="space-y-1.5">
                       <Label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         Agenda de destino
                       </Label>
-                      <Select value={calendarId} onValueChange={setCalendarId} disabled={!pushEnabled}>
+                      <Select value={calendarId} onValueChange={setCalendarId} disabled={!syncEnabled}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a agenda" />
                         </SelectTrigger>
