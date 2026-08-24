@@ -160,7 +160,7 @@ export const ProblemSection = () => {
  </div>
  <div className="flex-shrink-0 text-left sm:text-right pt-3 sm:pt-0 sm:pl-6 border-t sm:border-t-0 sm:border-l border-border/50 relative z-10 w-full sm:w-auto">
                 <p className="font-display text-3xl sm:text-4xl font-bold text-destructive leading-none">-70%</p>
-                <p className="text-[11px] text-muted-foreground mt-1 max-w-[190px] sm:ml-auto">do esforço vira reunião real</p>
+                <p className="text-[11px] text-muted-foreground mt-1 max-w-[190px] sm:ml-auto">de esforço operacional com a Wiize</p>
  </div>
  </div>
  }
