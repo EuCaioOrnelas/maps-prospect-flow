@@ -6,10 +6,10 @@ import { useInView } from "framer-motion";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const steps = [
- { icon: Search, title: "01 — Encontre", desc: "A Wiize encontra empresas que combinam com o seu cliente ideal e mostra quais têm mais potencial", micro: "Busca por nicho e região · análise · diagnóstico · score" },
- { icon: Sparkles, title: "02 — Converse", desc: "Ela escreve a abordagem certa para cada empresa e inicia a conversa pelo WhatsApp oficial", micro: "Mensagem personalizada · campanhas · WhatsApp Business" },
- { icon: Bot, title: "03 — Converta", desc: "A IA responde, entende o interesse, faz follow-up e marca a reunião com a sua equipe", micro: "SDR IA · atendimento · follow-up · agenda" },
- { icon: LayoutGrid, title: "04 — Gerencie", desc: "Cada conversa e cada oportunidade fica registrada e organizada sozinha, pronta para o time trabalhar", micro: "CRM · histórico · prioridades · automações · Wian" },
+ { icon: Search, title: "Encontre", desc: "A Wiize encontra empresas que combinam com o seu cliente ideal e mostra quais têm mais potencial", micro: "Busca por nicho e região · análise · diagnóstico · score" },
+ { icon: Sparkles, title: "Converse", desc: "Ela escreve a abordagem certa para cada empresa e inicia a conversa pelo WhatsApp oficial", micro: "Mensagem personalizada · campanhas · WhatsApp Business" },
+ { icon: Bot, title: "Converta", desc: "A IA responde, entende o interesse, faz follow-up e marca a reunião com a sua equipe", micro: "SDR IA · atendimento · follow-up · agenda" },
+ { icon: LayoutGrid, title: "Gerencie", desc: "Cada conversa e cada oportunidade fica registrada e organizada sozinha, pronta para o time trabalhar", micro: "CRM · histórico · prioridades · automações · Wian" },
 ];
 
 const floatingElements = [
@@ -212,7 +212,7 @@ export const MechanismSection = () => {
  >
  <div className="flex items-center gap-2.5 px-4 py-2 rounded-hover border border-primary/25 bg-primary/10 shadow-sm">
  <CalendarCheck size={14} className="text-primary" />
- <span className="text-xs font-medium text-primary">Clientes gerados + pipeline organizado</span>
+ <span className="text-xs font-medium text-primary">Reuniões marcadas e pipeline abastecido</span>
  </div>
  </motion.div>
  </div>
@@ -224,7 +224,7 @@ export const MechanismSection = () => {
  transition={{ duration: 0.5, delay: 1.8 }}
  className="text-center text-sm text-muted-foreground mt-10 max-w-md mx-auto"
  >
- Tudo isso acontece continuamente, sem depender de operação manual.
+ Todo dia, sem alguém precisar lembrar de fazer.
  </motion.p>
  </div>
 
