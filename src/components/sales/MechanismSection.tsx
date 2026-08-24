@@ -59,7 +59,7 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
  {/* Card */}
  <div className={`w-full pl-12 md:pl-0 md:w-[calc(50%-28px)] ${isLeft ? "md:mr-auto" : "md:ml-auto"}`}>
  <div
- className="group relative rounded-card border border-border/70 p-5 sm:p-6 overflow-hidden hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.15)] hover:border-primary/30 transition-all duration-300 cursor-default text-left"
+ className="group relative rounded-card border border-border/70 p-5 sm:p-6 overflow-hidden cursor-default text-left"
  style={{
  background: isLeft
  ? "linear-gradient(225deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--card)) 55%, hsl(var(--card)) 100%)"
@@ -76,7 +76,7 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
  </span>
  <div className="relative">
  <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full bg-primary/8 pointer-events-none" />
- <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-hover bg-gradient-to-br from-primary to-primary/80 shadow-[0_8px_20px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center group-hover:shadow-[0_10px_26px_-4px_hsl(var(--primary)/0.65)] group-hover:scale-105 transition-all duration-300">
+ <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-hover bg-gradient-to-br from-primary to-primary/80 shadow-[0_8px_20px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center">
  <Icon size={28} className="text-primary-foreground" strokeWidth={1.9} />
  </div>
  </div>

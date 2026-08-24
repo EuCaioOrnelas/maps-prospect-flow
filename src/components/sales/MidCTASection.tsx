@@ -27,7 +27,7 @@ export const MidCTASection = ({ onSignupClick }: MidCTASectionProps) => {
           <p className="mt-3 text-sm text-muted-foreground sm:text-base">
             Comece a usar a Wiize e coloque sua operação B2B para trabalhar em um só lugar.
           </p>
-          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-6 flex justify-center">
             <Link
               to="/signup/escolher-plano"
               className="w-full sm:w-auto"
@@ -45,16 +45,8 @@ export const MidCTASection = ({ onSignupClick }: MidCTASectionProps) => {
                 />
               </Button>
             </Link>
-            <Link to="/tour-guiado" className="group w-full sm:w-auto">
-              <Button
-                variant="ghost"
-                size="lg"
-                className="demo-shine w-full rounded-full text-sm sm:w-auto sm:text-base px-6 sm:px-8 h-11 sm:h-12 border border-border/60 bg-transparent hover:bg-muted/60 hover:border-foreground/20 transition-all duration-300"
-              >
-                Ver Demonstração
-              </Button>
-            </Link>
           </div>
+
           <p className="mt-3 text-xs text-muted-foreground">
             7 dias para testar • Sem compromisso
           </p>
