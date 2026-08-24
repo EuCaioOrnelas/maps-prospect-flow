@@ -709,12 +709,12 @@ interface HeroSectionProps {
 }
 
 export const HeroSection = ({
- onSignupClick,
-  titleLine1 = "Tudo que você precisa",
-  titleLine2 = "para vender B2B",
-  titleHighlight = "em um só lugar",
-  description = "Inteligência comercial que encontra, converte e gerencia oportunidades B2B com IA, ajudando sua equipe a vender com mais contexto e eficiência.",
- descriptionClassName,
+  onSignupClick,
+   titleLine1 = "Tudo para vender B2B.",
+   titleLine2 = "",
+   titleHighlight = "Em um só lugar.",
+   description = "Inteligência comercial que encontra, converte e gerencia oportunidades B2B com IA, ajudando sua equipe a vender com mais contexto e eficiência.",
+  descriptionClassName,
 }: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
  const [currentStage, setCurrentStage] = useState(0);
