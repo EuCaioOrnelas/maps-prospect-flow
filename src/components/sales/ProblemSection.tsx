@@ -34,12 +34,12 @@ export const ProblemSection = () => {
  O problema
  </span>
  <h2 className="font-display text-[1.75rem] sm:text-4xl md:text-5xl font-bold text-foreground mb-4 leading-[1.15] tracking-tight">
- Seu processo comercial<br className="hidden sm:block" />
+ Seu vendedor não deveria<br className="hidden sm:block" />
  <span className="sm:hidden"> </span>
- <span className="text-muted-foreground">está perdendo clientes</span>
+ <span className="text-muted-foreground">passar o dia procurando quem abordar</span>
  </h2>
  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
- Enquanto sua operação depende de processos manuais, leads esfriam, respostas atrasam e oportunidades deixam de virar vendas.
+ Procurar empresas, pesquisar contatos, escrever mensagens, lembrar de fazer follow-up, atualizar o CRM e marcar reuniões. É aí que o dia do seu time acaba.
  </p>
  </motion.div>
 
@@ -56,7 +56,7 @@ export const ProblemSection = () => {
  </div>
  <h3 className="font-semibold text-foreground text-base mb-1">Mensagens genéricas</h3>
  <p className="text-sm text-muted-foreground leading-relaxed max-w-[260px]">
- Abordagens iguais para todos. Sem contexto, sem personalização. Leads ignoram e você perde oportunidades reais.
+ Mensagem igual para todo mundo. Sem contexto, ninguém responde e a oportunidade morre no primeiro envio.
  </p>
  </div>
 
@@ -80,7 +80,7 @@ export const ProblemSection = () => {
  <div>
  <h3 className="font-semibold text-foreground text-base mb-0.5">Leads frios</h3>
  <p className="text-sm text-muted-foreground leading-relaxed">
- Contatos sem aderência ao seu produto. Listas compradas, dados desatualizados e zero qualificação prévia.
+ Listas compradas e dados velhos. Seu time gasta tempo com quem nunca vai comprar.
  </p>
  </div>
  <div className="w-8 h-8 rounded-sm bg-destructive/10 flex items-center justify-center flex-shrink-0 ml-3">
@@ -102,7 +102,7 @@ export const ProblemSection = () => {
  <Clock size={16} className="text-destructive" />
  </div>
  <h3 className="font-semibold text-foreground text-base mb-0.5">Prospecção manual</h3>
- <p className="text-sm text-muted-foreground">Horas perdidas sem critério</p>
+ <p className="text-sm text-muted-foreground">Horas por dia só para achar quem abordar</p>
  </div>
  <div className="mt-auto pt-2 relative z-10">
  <span className="text-2xl font-bold text-destructive/80 tracking-tight">3h+</span>
@@ -118,7 +118,7 @@ export const ProblemSection = () => {
  <div>
  <h3 className="font-semibold text-foreground text-base mb-0.5">Follow-up inconsistente</h3>
  <p className="text-sm text-muted-foreground leading-relaxed">
- Sem cadência definida. Leads esfriam, oportunidades morrem e o time perde vendas por falta de acompanhamento.
+ Quem não é lembrado, não é retomado. Sem cadência, o lead esfria e a venda vai para o concorrente.
  </p>
  </div>
  <div className="w-8 h-8 rounded-sm bg-destructive/10 flex items-center justify-center flex-shrink-0 ml-3">
@@ -141,7 +141,7 @@ export const ProblemSection = () => {
  </div>
  <h3 className="font-semibold text-foreground text-base mb-0.5">Funil desorganizado</h3>
  <p className="text-sm text-muted-foreground leading-relaxed">
- Sem visibilidade do pipeline. Sem dados. Sem previsibilidade.
+ Você não sabe quantas reuniões vai ter no mês que vem.
  </p>
  </div>
  </div>
@@ -158,7 +158,7 @@ export const ProblemSection = () => {
  <h3 className="font-semibold text-foreground text-base">Baixa conversão</h3>
  </div>
  <p className="text-sm text-muted-foreground leading-relaxed">
- Esforço alto com retorno mínimo. Operação que não justifica o investimento e drena recursos do time comercial.
+ Muito esforço para pouca reunião. O time trabalha o dia inteiro e o pipeline continua vazio.
  </p>
  </div>
  <div className="flex-shrink-0 text-left sm:text-right pt-3 sm:pt-0 sm:pl-6 border-t sm:border-t-0 sm:border-l border-border/50 relative z-10 w-full sm:w-auto">
