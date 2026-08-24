@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
+import { withReferralParams } from "@/hooks/usePartnerTracking";
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowRight, Handshake, Play } from "lucide-react";
 import { SEO } from "@/components/SEO";
