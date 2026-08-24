@@ -13,6 +13,8 @@ import {
   Target,
   Sparkles,
   TrendingUp,
+  Link2,
+
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LevelBadge, LEVEL_META, type PartnerLevel } from "@/components/partners/LevelBadge";
@@ -90,6 +92,8 @@ export default function PartnerLayout() {
   const items = [
     { to: "/partners", label: "Dashboard", icon: LayoutDashboard, end: true },
     { to: "/partners/leads", label: "Meus leads", icon: Users },
+    { to: "/partners/links", label: "Links", icon: Link2 },
+
     { to: "/partners/comissoes", label: "Comissões", icon: Coins },
     { to: "/partners/saques", label: "Saques", icon: Wallet },
     { to: "/partners/metas", label: "Metas", icon: Target },

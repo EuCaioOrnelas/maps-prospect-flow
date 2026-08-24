@@ -158,11 +158,7 @@ export const ProblemSection = () => {
  Muito esforço para pouca reunião. O time trabalha o dia inteiro e o pipeline continua vazio.
  </p>
  </div>
- <div className="flex-shrink-0 text-left sm:text-right pt-3 sm:pt-0 sm:pl-6 border-t sm:border-t-0 sm:border-l border-border/50 relative z-10 w-full sm:w-auto">
-                <p className="text-sm sm:text-base font-semibold text-foreground leading-snug max-w-[240px] sm:ml-auto">
-                  O problema não é falta de leads. É fazer as oportunidades avançarem.
-                </p>
- </div>
+ 
 
 
  </div>

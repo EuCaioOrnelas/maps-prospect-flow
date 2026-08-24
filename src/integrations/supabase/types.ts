@@ -11051,6 +11051,38 @@ export type Database = {
         Args: { p_cpf: string; p_email: string }
         Returns: Json
       }
+      partner_create_referral_link: {
+        Args: { _label: string; _video_title?: string }
+        Returns: {
+          created_at: string
+          created_by_admin_id: string | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          internal_name: string | null
+          is_active: boolean
+          label: string
+          partner_id: string
+          slug: string
+          total_clicks: number
+          total_leads: number
+          total_paid_clients: number
+          updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "partner_referral_links"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      partner_set_referral_link_status: {
+        Args: { _is_active: boolean; _link_id: string }
+        Returns: boolean
+      }
       purge_operational_logs: { Args: never; Returns: Json }
       recompute_meta_campaign_cost: {
         Args: { p_campaign_id: string }
