@@ -208,6 +208,14 @@ export default function PartnersLanding() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-6 ring-1 ring-primary/20">
             <Sparkles size={14} /> Programa oficial Wiize Partners
           </div>
+          {boostActive && (
+            <div className="flex justify-center mb-6 -mt-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold ring-1 ring-primary/30">
+                <Sparkles size={13} /> Por tempo limitado: {settings.boostPercent}% na primeira mensalidade
+              </div>
+            </div>
+          )}
+
           <h1 className="font-display font-bold tracking-tight leading-[1.05] mb-6 text-foreground">
             <span className="block text-2xl sm:text-4xl md:text-5xl mb-2">Indique a Wiize.</span>
             <span className="block text-shimmer-highlight font-extrabold text-[clamp(1.05rem,5.4vw,3.25rem)] whitespace-nowrap">
