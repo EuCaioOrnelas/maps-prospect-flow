@@ -45,12 +45,14 @@ export const WhyItWorksSection = () => {
  <div className="container mx-auto px-4 relative z-10 max-w-6xl">
  {/* Header padronizado */}
  <SectionHeading
- eyebrow="Por que funciona"
- title="Por que esse sistema gera"
- highlight="mais vendas consistentes"
- description="Não é sobre trabalhar mais. É sobre ter o processo certo em cada etapa e deixar a estrutura fazer o trabalho pesado por você."
+ eyebrow="O benefício"
+ title="Mais eficiência comercial"
+ highlight="com menos trabalho manual"
+ highlightFit="tight"
+ description="A operação deixa de depender de várias ferramentas e de tarefas repetitivas. O time foca em conversas e reuniões que geram venda."
  isVisible={isVisible}
  />
+
 
  {/* 3 Pilares — mesmo padrão visual dos cards da section anterior */}
  <div className="relative grid md:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">

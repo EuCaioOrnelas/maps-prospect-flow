@@ -710,8 +710,9 @@ interface HeroSectionProps {
 
 export const HeroSection = ({
  onSignupClick,
- titleLine1 = "Tudo para",
- titleLine2 = "vender B2B.",
+ titleLine1 = "Tudo para vender B2B.",
+ titleLine2 = "",
+
  titleHighlight = "Em um só lugar.",
  description = "Capte oportunidades, converse com clientes, feche vendas e gerencie tudo em uma única plataforma.",
  descriptionClassName,
@@ -847,8 +848,11 @@ export const HeroSection = ({
  <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
  </div>
   <h1 className="font-display font-bold mb-4 sm:mb-6 animate-slide-up text-foreground leading-[1.08] tracking-tight" style={{ animationDelay: "0.1s" }}>
-  <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">{titleLine1}</span>
-  <span className="block whitespace-nowrap text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.5rem] xl:text-[3.9rem]">{titleLine2}</span>
+  <span className="block whitespace-normal sm:whitespace-nowrap text-[1.7rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.25rem] xl:text-[3.6rem]">{titleLine1}</span>
+  {titleLine2 ? (
+  <span className="block whitespace-normal sm:whitespace-nowrap text-[1.7rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.25rem] xl:text-[3.6rem]">{titleLine2}</span>
+  ) : null}
+
   <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[1.95rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">{titleHighlight}</span>
   </h1>
  <p className={`${descriptionClassName ?? "text-base sm:text-lg md:text-xl"} text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up`} style={{ animationDelay: "0.2s" }}>

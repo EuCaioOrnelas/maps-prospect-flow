@@ -6,10 +6,11 @@ import { useInView } from "framer-motion";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const steps = [
- { icon: Search, title: "Encontre", desc: "A Wiize encontra empresas que combinam com o seu cliente ideal e mostra quais têm mais potencial", micro: "Busca por nicho e região · análise · diagnóstico · score" },
- { icon: Sparkles, title: "Converse", desc: "Ela escreve a abordagem certa para cada empresa e inicia a conversa pelo WhatsApp oficial", micro: "Mensagem personalizada · campanhas · WhatsApp Business" },
- { icon: Bot, title: "Converta", desc: "A IA responde, entende o interesse, faz follow-up e marca a reunião com a sua equipe", micro: "SDR IA · atendimento · follow-up · agenda" },
- { icon: LayoutGrid, title: "Gerencie", desc: "Cada conversa e cada oportunidade fica registrada e organizada sozinha, pronta para o time trabalhar", micro: "CRM · histórico · prioridades · automações · Wian" },
+ { icon: Search, title: "Capte", desc: "Encontre novas oportunidades sem fazer tudo manualmente: a plataforma busca empresas, analisa e mostra quais têm mais potencial", micro: "Busca por nicho e região · análise · diagnóstico · score" },
+ { icon: Bot, title: "Converta", desc: "Transforme oportunidades em conversas e reuniões, com abordagem personalizada, atendimento e follow-up conduzidos pela IA", micro: "Abordagem personalizada · WhatsApp oficial · atendimento · follow-up · agenda" },
+ { icon: LayoutGrid, title: "Gerencie", desc: "Controle toda a operação comercial em um só lugar, com cada conversa, oportunidade e venda registrada sozinha", micro: "CRM · pipeline · histórico · vendas · documentos" },
+ { icon: Sparkles, title: "Otimize", desc: "Saiba quais oportunidades merecem sua atenção agora e reduza o trabalho manual do time com automação e inteligência", micro: "Engajamento · intenção · métricas · automações · Wian" },
+
 ];
 
 const floatingElements = [
@@ -131,12 +132,14 @@ export const MechanismSection = () => {
  <div className="container mx-auto px-4 max-w-6xl relative z-10">
  {/* Header */}
  <SectionHeading
- eyebrow="Como funciona"
- title="Sua operação comercial em"
- highlight="quatro etapas"
- description="Uma plataforma só, com IA e automação em cada etapa: captar, converter, gerenciar e otimizar."
+ eyebrow="Por que é diferente"
+ title="A Wiize centraliza e automatiza"
+ highlight="sua operação comercial com IA"
+ highlightFit="tight"
+ description="Uma única plataforma de vendas B2B para captar, converter, gerenciar e otimizar, com IA e automação em cada etapa."
  isVisible={isVisible}
  />
+
 
  {/* Timeline */}
  <div className="relative">
