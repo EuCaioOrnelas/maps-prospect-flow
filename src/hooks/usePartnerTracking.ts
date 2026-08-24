@@ -1,9 +1,11 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { isPublicDemoPath } from "@/lib/publicDemo";
 
 const STORAGE_KEY = "wiize_referral";
 const CODE_KEY = "wiize_referral_code";
+const PENDING_KEY = "wiize_referral_pending";
 const COOKIE_KEY = "wiize_ref";
 const COOKIE_DAYS = 365 * 2; // 2 years (last-click persistence)
 
@@ -14,6 +16,50 @@ interface StoredReferral {
   referral_link_id?: string | null;
   ts: number;
 }
+
+/**
+ * Referral captured from the URL but not yet registered as a click.
+ * Happens on the public demo (/tour-guiado), where all backend traffic is
+ * blocked — we still keep the code so the trial signup gets attributed.
+ */
+interface PendingReferral {
+  code: string;
+  link_slug: string | null;
+  landing_page: string;
+  utm: Record<string, string | null>;
+  ts: number;
+}
+
+export function getPendingReferral(): PendingReferral | null {
+  try {
+    const raw = localStorage.getItem(PENDING_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.code ? parsed : null;
+  } catch { return null; }
+}
+
+function setPendingReferral(value: PendingReferral | null) {
+  try {
+    if (!value) localStorage.removeItem(PENDING_KEY);
+    else localStorage.setItem(PENDING_KEY, JSON.stringify(value));
+  } catch {}
+}
+
+/** Preserves ?ref=/?rl=/utm_* when navigating out of a public page. */
+export function withReferralParams(path: string): string {
+  try {
+    const current = new URLSearchParams(window.location.search);
+    const keep = ["ref", "rl", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
+    const url = new URL(path, window.location.origin);
+    keep.forEach((k) => {
+      const v = current.get(k);
+      if (v && !url.searchParams.get(k)) url.searchParams.set(k, v);
+    });
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch { return path; }
+}
+
 
 
 function setCookie(name: string, value: string, days: number) {
