@@ -7,31 +7,31 @@ const pillars = [
  {
  icon: Search,
  eyebrow: "Dados reais",
- title: "Prospecção baseada em evidências",
+ title: "Você fala com quem pode comprar",
  description:
- "A plataforma cruza dados de atividade, nicho e presença digital para encontrar empresas com potencial real de compra, eliminando leads frios da sua operação.",
+ "A Wiize olha nicho, porte e presença digital de cada empresa antes de indicar. Seu time para de perder tempo com contato frio.",
  },
  {
  icon: Brain,
  eyebrow: "IA contextual",
- title: "Abordagem sob medida para cada lead",
+ title: "A mensagem faz sentido para quem recebe",
  description:
- "Cada mensagem é construída com base no perfil real da empresa. Não é template genérico, é comunicação que parece humana e relevante desde o primeiro contato.",
+ "Cada abordagem é escrita a partir do que a Wiize descobriu sobre aquela empresa. Não parece disparo em massa, e por isso as pessoas respondem.",
  },
  {
  icon: Zap,
  eyebrow: "Operação autônoma",
- title: "Processo comercial que escala sozinho",
+ title: "Nada depende de alguém lembrar",
  description:
- "Do primeiro contato ao follow-up, a estrutura opera sem depender de esforço manual. Você configura uma vez e o sistema executa de forma consistente.",
+ "Do primeiro contato ao follow-up, a máquina segue trabalhando enquanto seu time está em reunião. Você configura uma vez e ela executa todos os dias.",
  },
 ];
 
 const results = [
- { metric: "3x", label: "mais respostas", description: "Mensagens contextuais geram engajamento real" },
- { metric: "24/7", label: "operação contínua", description: "Leads contatados no momento certo, sem espera" },
- { metric: "100%", label: "follow-up garantido", description: "Nenhuma oportunidade esquecida no funil" },
- { metric: "Total", label: "visibilidade do funil", description: "Dados reais para decisões baseadas em evidências" },
+ { metric: "3x", label: "mais respostas", description: "Mensagem com contexto tem muito mais retorno" },
+ { metric: "24/7", label: "sempre trabalhando", description: "O lead é respondido na hora, não no dia seguinte" },
+ { metric: "100%", label: "follow-up garantido", description: "Ninguém fica sem retorno por esquecimento" },
+ { metric: "Total", label: "visibilidade do pipeline", description: "Você sabe o que vem pela frente no mês" },
 ];
 
 export const WhyItWorksSection = () => {
@@ -100,10 +100,10 @@ export const WhyItWorksSection = () => {
   Resultados na prática
   </span>
   <h3 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-2">
-  O que isso muda no dia a dia
+  O que muda no seu dia a dia
   </h3>
   <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-  Cada etapa do processo foi desenhada para eliminar gargalos e maximizar conversão.
+  Menos prospecção manual. Mais oportunidades no pipeline.
   </p>
   </div>
 

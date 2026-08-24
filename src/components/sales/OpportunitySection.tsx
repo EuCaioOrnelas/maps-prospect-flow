@@ -7,17 +7,17 @@ import { SectionHeading } from "@/components/landing/SectionHeading";
 type Row = { strong: string; rest: string };
 
 const rows: Row[] = [
-  { strong: "SDR IA encontra e qualifica leads", rest: "prontos para comprar" },
-  { strong: "Qualificação inteligente com IA", rest: "baseada em intenção e comportamento" },
-  { strong: "IA gera mensagens personalizadas", rest: "para cada lead automaticamente" },
-  { strong: "Atendimento operacional com IA 24/7", rest: "integrado ao CRM" },
-  { strong: "Follow-up inteligente no momento ideal", rest: "sem esforço manual" },
-  { strong: "CRM com inteligência comercial", rest: "e visão completa do funil" },
-  { strong: "IA de Intenção de Compra", rest: "analisa engajamento em tempo real" },
-  { strong: "Campanhas inteligentes com IA", rest: "e personalização em escala" },
-  { strong: "Prospecção IA encontra empresas", rest: "no nicho, região e tamanho ideais" },
-  { strong: "Agenda Inteligente", rest: "marca reuniões automaticamente no calendário" },
-  { strong: "Fluxos de Automação", rest: "conectam WhatsApp, CRM e disparos inteligentes" },
+  { strong: "Encontra empresas do seu ICP", rest: "por nicho, região e características" },
+  { strong: "Mostra quais têm mais potencial", rest: "antes de você gastar tempo com elas" },
+  { strong: "Escreve a abordagem de cada empresa", rest: "com o contexto real do negócio" },
+  { strong: "Inicia a conversa pelo WhatsApp oficial", rest: "com segurança e entrega garantida" },
+  { strong: "Responde e qualifica o interesse", rest: "24 horas por dia, sem fila de espera" },
+  { strong: "Faz follow-up de quem não respondeu", rest: "sem ninguém precisar lembrar" },
+  { strong: "Marca a reunião na agenda do time", rest: "no horário que estiver livre" },
+  { strong: "Registra tudo no CRM sozinha", rest: "conversas, histórico e etapa do funil" },
+  { strong: "Mostra quem merece atenção agora", rest: "com base no interesse demonstrado" },
+  { strong: "Continua trabalhando quando o time para", rest: "com automações e follow-up contínuo" },
+  { strong: "Mostra o que está travando as vendas", rest: "com o resumo diário do Wian" },
 ];
 
 const OldCell = () => (
@@ -39,10 +39,10 @@ export const OpportunitySection = () => {
     <section ref={ref as React.RefObject<HTMLElement>} className="py-12 sm:py-20 w-full relative">
       <div className="container mx-auto px-4 max-w-6xl">
         <SectionHeading
-          eyebrow="A oportunidade"
-          title="O novo padrão para"
-          highlight="vender B2B"
-          description="Empresas que crescem mais rápido não vendem mais. Vendem melhor, com processo, dados e inteligência."
+          eyebrow="A diferença"
+          title="O trabalho comercial que"
+          highlight="a Wiize faz por você"
+          description="É o mesmo trabalho que seu time faz hoje na mão. A diferença é que aqui ele acontece todos os dias, sozinho."
           isVisible={isVisible}
         />
 

@@ -1156,9 +1156,9 @@ const modules: ModuleItem[] = [
   {
     icon: Search,
     eyebrow: "Prospecção",
-    title: "Prospecção Inteligente com IA",
+    title: "Encontre empresas do seu ICP",
     description:
-      "Encontre empresas com potencial real de compra utilizando IA, localização, nicho e sinais comerciais para gerar oportunidades qualificadas automaticamente.",
+      "A Wiize encontra empresas por nicho, localização e características do seu cliente ideal, e mostra quais têm mais chance de virar reunião.",
     benefits: [
       "Busca inteligente por nicho e localização",
       "Score de oportunidade em tempo real",
@@ -1170,9 +1170,9 @@ const modules: ModuleItem[] = [
   {
     icon: Bot,
     eyebrow: "SDR IA",
-    title: "SDR Inteligente",
+    title: "Deixe a IA conduzir a conversa",
     description:
-      "Seu vendedor com IA conversa, responde dúvidas, qualifica, faz follow-up, agenda reuniões e conduz o lead automaticamente pelo WhatsApp.",
+      "A IA responde, entende o contexto, tira dúvidas, qualifica o interesse e leva o potencial cliente até o próximo passo pelo WhatsApp.",
     benefits: [
       "Conversas naturais",
       "Qualificação automática",
@@ -1184,9 +1184,9 @@ const modules: ModuleItem[] = [
   {
     icon: CalendarDays,
     eyebrow: "Agenda",
-    title: "Agenda Inteligente",
+    title: "Transforme interesse em reunião",
     description:
-      "Nunca mais perca uma oportunidade. Sua agenda é sincronizada automaticamente e o SDR agenda reuniões no melhor horário disponível.",
+      "Quando o potencial cliente está pronto, a Wiize encontra um horário livre no calendário do time e marca a reunião automaticamente.",
     benefits: [
       "Sincronização automática",
       "Google Calendar",
@@ -1198,46 +1198,46 @@ const modules: ModuleItem[] = [
   {
     icon: Send,
     eyebrow: "Campanhas",
-    title: "Campanhas via API Oficial Meta",
+    title: "Converse pelo WhatsApp oficial",
     description:
-      "Envie mensagens utilizando a API Oficial do WhatsApp Business com segurança, estabilidade e conformidade com as políticas da Meta.",
+      "Conecte sua operação ao WhatsApp Business oficial da Meta e fale com muitas empresas com segurança e estabilidade.",
     benefits: ["API Oficial", "Alta entregabilidade", "Variáveis inteligentes", "Relatórios completos"],
     mock: CampaignMock,
   },
   {
     icon: LayoutDashboard,
     eyebrow: "CRM",
-    title: "CRM Inteligente com IA",
+    title: "Tenha todas as oportunidades sob controle",
     description:
-      "Acompanhe cada oportunidade enquanto a IA identifica automaticamente quem possui maior intenção de compra e quem deve ser priorizado.",
+      "Conversas, atividades, histórico e etapa comercial ficam organizados sozinhos. Você vê na hora quais oportunidades merecem atenção.",
     benefits: ["Pipeline inteligente", "Score de intenção", "Histórico completo", "Priorização automática"],
     mock: CrmMock,
   },
   {
     icon: MessageSquare,
     eyebrow: "Atendimento",
-    title: "Central de Conversas",
+    title: "Todas as conversas em um lugar só",
     description:
-      "Gerencie todas as conversas em um único lugar enquanto a IA responde automaticamente sempre que possível.",
+      "Sua equipe responde quando quiser assumir e a IA responde quando ninguém está disponível. Nada fica parado.",
     benefits: ["Atendimento híbrido", "IA + Humano", "Histórico unificado", "Respostas inteligentes"],
     mock: ChatMock,
   },
   {
     icon: Workflow,
     eyebrow: "Automação",
-    title: "Fluxos Inteligentes",
+    title: "A máquina continua quando o time para",
     description:
-      "Automatize processos comerciais completos através de fluxos visuais que conectam WhatsApp, CRM, Agenda e SDR Inteligente.",
+      "Follow-up, movimentação de oportunidades, tarefas e avisos acontecem sozinhos, ligando WhatsApp, CRM, agenda e SDR IA.",
     benefits: ["Fluxos visuais", "Gatilhos inteligentes", "Automação comercial", "Integração completa"],
     mock: FlowMock,
   },
   {
     icon: BrainCircuit,
     eyebrow: "Wian",
-    title: "Wian, sua Assistência Comercial com IA",
+    title: "A inteligência por trás da sua operação",
 
     description:
-      "Sua analista comercial dentro da plataforma. Todo dia a Wian lê o cockpit, o CRM, as vendas, o atendimento e a agenda, aponta o que está travando a operação e entrega o plano de ação com metas numéricas. Você conversa com ela por texto ou áudio.",
+      "Todo dia a Wian lê o que aconteceu na sua operação e conta o que importa: quais oportunidades merecem atenção, o que está travando e o que fazer hoje. Você conversa com ela por texto ou áudio.",
     benefits: [
       "Briefing executivo diário",
       "Análise das métricas em tempo real",
@@ -1346,7 +1346,7 @@ export const platformModulesJsonLd = {
   "@id": "https://wiize.com.br/#recursos",
   name: "Recursos da plataforma Wiize",
   description:
-    "Módulos de IA comercial da Wiize: prospecção, SDR, agenda, campanhas via API oficial da Meta, CRM, central de conversas e fluxos inteligentes.",
+    "Recursos da máquina de vendas B2B da Wiize: prospecção de empresas, SDR com IA, agendamento de reuniões, WhatsApp oficial da Meta, CRM, central de conversas e automações.",
   itemListElement: modules.map((m, i) => ({
     "@type": "ListItem",
     position: i + 1,
@@ -1376,11 +1376,11 @@ export const PlatformModulesSection = () => {
       <div className="container mx-auto px-4 max-w-6xl">
         <SectionHeading
           eyebrow="Recursos da plataforma"
-          title="Tudo o que você precisa"
-          highlight="para vender mais com Eficiência"
+          title="Tudo o que a máquina usa"
+          highlight="para abastecer suas vendas"
           highlightFit="tight"
 
-          description="Conheça os módulos que trabalham juntos para transformar sua operação comercial em uma máquina de geração de oportunidades."
+          description="Cada recurso resolve uma parte do trabalho comercial: encontrar, abordar, conversar, acompanhar, agendar e organizar."
           isVisible={isVisible}
         />
 
