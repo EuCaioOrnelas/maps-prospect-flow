@@ -160,7 +160,13 @@ export default function PartnersLanding() {
     },
   ];
 
+  const boostActive =
+    settings.boostEnabled &&
+    settings.boostPercent > 0 &&
+    (!settings.boostUntil || new Date(settings.boostUntil) > new Date());
+
   const displayMax = MAX_COMMISSION;
+
   const formattedMaxPerReferral = MAX_PER_REFERRAL.toLocaleString("pt-BR");
   const pageTitle = `Wiize Partners — Comissão recorrente até ${displayMax}% indicando a Wiize`;
   const pageDescription = `Indique a Wiize, receba até ${displayMax}% de comissão recorrente por 24 meses. Atribuição last-click, materiais prontos e saque via Pix.`;
