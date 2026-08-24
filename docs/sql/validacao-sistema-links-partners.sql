@@ -36,7 +36,7 @@ SELECT '2. COLUNAS' AS bloco,
 FROM (VALUES
   ('partner_referral_links','partner_id'),
   ('partner_referral_links','slug'),
-  ('partner_referral_links','destination_path'),
+  ('partner_referral_links','label'),
   ('partner_referral_links','utm_source'),
   ('partner_referral_links','utm_medium'),
   ('partner_referral_links','utm_campaign'),
@@ -44,7 +44,7 @@ FROM (VALUES
   ('partner_referral_links','is_active'),
   ('partner_referral_links','total_clicks'),
   ('partner_referral_links','total_leads'),
-  ('partner_referral_links','total_customers'),
+  ('partner_referral_links','total_paid_clients'),
   ('partner_clicks','referral_link_id'),
   ('partner_clicks','partner_id'),
   ('partner_leads','referral_link_id'),
@@ -163,20 +163,20 @@ SELECT '7. DADOS','leads_com_link_inexistente', count(*)::text,
 -- ---------------------------------------------------------------------
 WITH reais AS (
   SELECT l.id, l.slug,
-         l.total_clicks, l.total_leads, l.total_customers,
+         l.total_clicks, l.total_leads, l.total_paid_clients,
          (SELECT count(*) FROM public.partner_clicks c WHERE c.referral_link_id = l.id) AS clicks_reais,
          (SELECT count(*) FROM public.partner_leads pl WHERE pl.referral_link_id = l.id) AS leads_reais,
          (SELECT count(*) FROM public.partner_leads pl
-           WHERE pl.referral_link_id = l.id AND pl.status IN ('customer','paid','active','converted')) AS clientes_reais
+           WHERE pl.referral_link_id = l.id AND pl.is_paid) AS clientes_reais
   FROM public.partner_referral_links l
 )
 SELECT '8. METRICAS' AS bloco, slug,
        total_clicks, clicks_reais,
        total_leads, leads_reais,
-       total_customers, clientes_reais,
+       total_paid_clients, clientes_reais,
        CASE WHEN COALESCE(total_clicks,0)=clicks_reais
              AND COALESCE(total_leads,0)=leads_reais
-             AND COALESCE(total_customers,0)=clientes_reais
+             AND COALESCE(total_paid_clients,0)=clientes_reais
             THEN 'OK' ELSE 'DIVERGENTE' END AS status
 FROM reais
 ORDER BY status DESC, slug;
@@ -200,16 +200,16 @@ LIMIT 5;
 SELECT '10. FUNIL' AS bloco,
        p.referral_code AS parceiro,
        l.slug,
-       l.destination_path,
+       l.label,
        l.utm_source, l.utm_campaign,
        COALESCE(l.total_clicks,0)    AS cliques,
        COALESCE(l.total_leads,0)     AS leads,
-       COALESCE(l.total_customers,0) AS clientes,
+       COALESCE(l.total_paid_clients,0) AS clientes,
        CASE WHEN COALESCE(l.total_clicks,0) > 0
             THEN round(100.0 * COALESCE(l.total_leads,0) / l.total_clicks, 1)
             ELSE 0 END AS taxa_lead_pct,
        CASE WHEN COALESCE(l.total_leads,0) > 0
-            THEN round(100.0 * COALESCE(l.total_customers,0) / l.total_leads, 1)
+            THEN round(100.0 * COALESCE(l.total_paid_clients,0) / l.total_leads, 1)
             ELSE 0 END AS taxa_cliente_pct,
        l.is_active, l.expires_at
 FROM public.partner_referral_links l
