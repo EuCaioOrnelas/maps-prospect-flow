@@ -47,16 +47,33 @@ async function ensureAccessToken(admin: any, token: any): Promise<string | null>
   return data.access_token;
 }
 
+/** Monta o corpo do evento do Google a partir do compromisso da Wiize. */
 function eventBody(ev: any) {
+  const parts = [ev.description, ev.notes, ev.company_name ? `Empresa: ${ev.company_name}` : null,
+    ev.contact_name ? `Contato: ${ev.contact_name}` : null,
+    ev.contact_phone ? `Telefone: ${ev.contact_phone}` : null]
+    .filter(Boolean);
+
   const body: any = {
     summary: ev.title,
-    description: ev.description || ev.notes || "",
+    description: parts.join("\n") || "",
     location: ev.location || undefined,
     start: { dateTime: new Date(ev.starts_at).toISOString(), timeZone: ev.timezone || TZ },
     end: { dateTime: new Date(ev.ends_at).toISOString(), timeZone: ev.timezone || TZ },
     status: ev.status === "cancelled" ? "cancelled" : "confirmed",
     extendedProperties: { private: { wiize_event_id: ev.id } },
   };
+
+  const reminders = Array.isArray(ev.reminders)
+    ? ev.reminders.map((m: any) => Number(m)).filter((m: number) => Number.isFinite(m) && m > 0)
+    : [];
+  if (reminders.length) {
+    body.reminders = {
+      useDefault: false,
+      overrides: reminders.slice(0, 5).map((minutes: number) => ({ method: "popup", minutes })),
+    };
+  }
+
   if (ev.contact_email) body.attendees = [{ email: ev.contact_email }];
   return body;
 }
@@ -108,15 +125,8 @@ serve(async (req) => {
 
     if (action === "status") return json(await loadState());
 
-    // Desconectar: remove a configuração e TODO o rastro da sincronização
-    // (eventos importados do Google + vínculos dos eventos da Wiize).
+    // Desconectar: apaga a configuração e limpa os vínculos dos compromissos da Wiize.
     if (action === "disconnect") {
-      const { count: removed } = await admin
-        .from("calendar_events")
-        .delete({ count: "exact" })
-        .eq("assigned_user_id", user.id)
-        .eq("external_calendar_provider", "google_import");
-
       await admin
         .from("calendar_events")
         .update({ external_event_id: null, external_calendar_provider: null })
@@ -124,9 +134,8 @@ serve(async (req) => {
         .not("external_event_id", "is", null);
 
       await admin.from("calendar_google_sync").delete().eq("user_id", user.id);
-      return json({ ok: true, removed: removed || 0 });
+      return json({ ok: true });
     }
-
 
     if (action === "save") {
       const s = payload.settings || {};
@@ -154,11 +163,12 @@ serve(async (req) => {
         calendar_id: s.calendar_id || "primary",
         calendar_name: s.calendar_name || null,
         sync_enabled: s.sync_enabled !== false,
-        push_enabled: s.push_enabled !== false,
-        pull_enabled: s.pull_enabled !== false,
-        pull_all_calendars: s.pull_all_calendars !== false,
-        reminder_enabled: s.reminder_enabled === true,
-        reminder_minutes: Math.min(Math.max(Number(s.reminder_minutes) || 30, 5), 1440),
+        push_enabled: true,
+        // MVP: envio unidirecional. Nada é importado do Google.
+        pull_enabled: false,
+        pull_all_calendars: false,
+        reminder_enabled: false,
+        reminder_minutes: 30,
         sync_window_days: Math.min(Math.max(Number(s.sync_window_days) || 60, 7), 365),
         default_event_type: s.default_event_type || "meeting",
         updated_at: new Date().toISOString(),
@@ -169,7 +179,6 @@ serve(async (req) => {
       if (error) return json({ error: error.message }, 500);
       return json(await loadState());
     }
-
 
     // ---------- ações que precisam de token válido ----------
     const { data: settings } = await admin
@@ -202,7 +211,7 @@ serve(async (req) => {
         },
       });
 
-    /** Todas as agendas da conta (principal, trabalho, treino, compartilhadas...). */
+    /** Todas as agendas graváveis da conta. */
     const listCalendars = async () => {
       const all: any[] = [];
       let pageToken: string | undefined;
@@ -224,18 +233,19 @@ serve(async (req) => {
       try {
         const items = await listCalendars();
         return json({
-          calendars: items.map((c: any) => ({
-            id: c.id,
-            summary: c.summaryOverride || c.summary,
-            primary: !!c.primary,
-            writable: c.accessRole === "owner" || c.accessRole === "writer",
-          })),
+          calendars: items
+            .map((c: any) => ({
+              id: c.id,
+              summary: c.summaryOverride || c.summary,
+              primary: !!c.primary,
+              writable: c.accessRole === "owner" || c.accessRole === "writer",
+            }))
+            .filter((c: any) => c.writable),
         });
       } catch (e) {
         return json({ error: `Falha ao listar agendas: ${(e as Error).message}` }, 500);
       }
     }
-
 
     // Confere se a conexão continua válida (token + permissão de agenda).
     if (action === "verify") {
@@ -249,261 +259,123 @@ serve(async (req) => {
       return json({ healthy: true, email: token.google_email });
     }
 
+    const targetCalendar = encodeURIComponent(settings?.calendar_id || "primary");
+
+    /** Cria o evento no Google; em 403 por convidados, repete sem attendees. */
+    const createOnGoogle = async (ev: any) => {
+      let res = await gfetch(`/calendars/${targetCalendar}/events`, {
+        method: "POST",
+        body: JSON.stringify(eventBody(ev)),
+      });
+      if (res.status === 403) {
+        const retry = eventBody(ev);
+        delete retry.attendees;
+        res = await gfetch(`/calendars/${targetCalendar}/events`, {
+          method: "POST",
+          body: JSON.stringify(retry),
+        });
+      }
+      return res;
+    };
+
+    /** Envia (cria ou atualiza) um compromisso da Wiize para o Google. */
+    const pushEvent = async (ev: any) => {
+      if (ev.external_event_id) {
+        let res = await gfetch(
+          `/calendars/${targetCalendar}/events/${encodeURIComponent(ev.external_event_id)}`,
+          { method: "PATCH", body: JSON.stringify(eventBody(ev)) },
+        );
+        if (res.ok) return { result: "updated" as const };
+        if (res.status === 403) {
+          const retry = eventBody(ev);
+          delete retry.attendees;
+          res = await gfetch(
+            `/calendars/${targetCalendar}/events/${encodeURIComponent(ev.external_event_id)}`,
+            { method: "PATCH", body: JSON.stringify(retry) },
+          );
+          if (res.ok) return { result: "updated" as const };
+        }
+        if (res.status !== 404 && res.status !== 410) {
+          const body = await res.json().catch(() => ({}));
+          return { result: "error" as const, message: `atualização "${ev.title}": ${body?.error?.message || res.status}` };
+        }
+        // 404/410: sumiu do Google, recria abaixo.
+      }
+
+      const created = await createOnGoogle(ev);
+      const cd = await created.json().catch(() => ({}));
+      if (created.ok && cd.id) {
+        await admin
+          .from("calendar_events")
+          .update({ external_event_id: cd.id, external_calendar_provider: "google" })
+          .eq("id", ev.id);
+        return { result: "pushed" as const };
+      }
+      return { result: "error" as const, message: `envio "${ev.title}": ${cd?.error?.message || created.status}` };
+    };
+
+    // Envio imediato de um único compromisso (criação/edição na Wiize).
+    if (action === "push_event") {
+      if (settings?.sync_enabled === false) return json({ ok: true, skipped: true });
+      const eventId = String(payload.event_id || "");
+      if (!eventId) return json({ error: "event_id obrigatório" }, 400);
+
+      const { data: ev } = await admin
+        .from("calendar_events")
+        .select("*")
+        .eq("id", eventId)
+        .eq("assigned_user_id", user.id)
+        .maybeSingle();
+      if (!ev) return json({ ok: true, skipped: true });
+
+      const res = await pushEvent(ev);
+      if (res.result === "error") return json({ ok: false, error: res.message }, 502);
+      return json({ ok: true, result: res.result });
+    }
+
+    // Remove do Google um compromisso excluído na Wiize.
+    if (action === "delete_event") {
+      const externalId = String(payload.external_event_id || "");
+      if (!externalId) return json({ ok: true, skipped: true });
+      const res = await gfetch(
+        `/calendars/${targetCalendar}/events/${encodeURIComponent(externalId)}`,
+        { method: "DELETE" },
+      );
+      if (res.ok || res.status === 404 || res.status === 410) return json({ ok: true });
+      const body = await res.json().catch(() => ({}));
+      return json({ ok: false, error: body?.error?.message || res.status }, 502);
+    }
+
+    // Sincronização em lote: apenas Wiize -> Google.
     if (action === "sync") {
       if (!settings) return json({ error: "Configure a sincronização primeiro." }, 400);
       if (settings.sync_enabled === false) return json({ ok: true, skipped: true });
 
-      const targetCalendar = encodeURIComponent(settings.calendar_id || "primary");
       const days = settings.sync_window_days || 60;
-      // Puxa tudo: um ano para trás e a janela escolhida (mínimo 365 dias) para frente.
-      const from = new Date(Date.now() - 365 * 86400000);
-      const to = new Date(Date.now() + Math.max(days, 365) * 86400000);
+      const from = new Date(Date.now() - 30 * 86400000);
+      const to = new Date(Date.now() + Math.max(days, 30) * 86400000);
 
-      let pushed = 0, updated = 0, pulled = 0, skipped = 0;
+      let pushed = 0, updated = 0;
       const errors: string[] = [];
-      const pushError = (msg: string) => {
-        if (errors.length < 20) errors.push(msg);
-      };
 
-      // ---- 1. Wiize -> Google ----
-      if (settings.push_enabled !== false) {
-        const { data: events } = await admin
-          .from("calendar_events")
-          .select("*")
-          .eq("assigned_user_id", user.id)
-          .or("external_calendar_provider.is.null,external_calendar_provider.neq.google_import")
-          .gte("starts_at", from.toISOString())
-          .lte("starts_at", to.toISOString());
+      const { data: events } = await admin
+        .from("calendar_events")
+        .select("*")
+        .eq("assigned_user_id", user.id)
+        .neq("source", "import")
+        .gte("starts_at", from.toISOString())
+        .lte("starts_at", to.toISOString());
 
-        /** Cria o evento no Google; em caso de 403 por convidados, repete sem attendees. */
-        const createOnGoogle = async (ev: any) => {
-          let res = await gfetch(`/calendars/${targetCalendar}/events`, {
-            method: "POST",
-            body: JSON.stringify(eventBody(ev)),
-          });
-          if (res.status === 403) {
-            const retry = eventBody(ev);
-            delete retry.attendees;
-            res = await gfetch(`/calendars/${targetCalendar}/events`, {
-              method: "POST",
-              body: JSON.stringify(retry),
-            });
-          }
-          return res;
-        };
-
-        for (const ev of events || []) {
-          try {
-            if (ev.external_event_id) {
-              const res = await gfetch(
-                `/calendars/${targetCalendar}/events/${encodeURIComponent(ev.external_event_id)}`,
-                { method: "PATCH", body: JSON.stringify(eventBody(ev)) },
-              );
-              if (res.ok) {
-                updated++;
-                continue;
-              }
-              // 404/410: o evento sumiu do Google; recriamos do zero.
-              if (res.status === 404 || res.status === 410) {
-                const created = await createOnGoogle(ev);
-                const cd = await created.json().catch(() => ({}));
-                if (created.ok && cd.id) {
-                  await admin.from("calendar_events").update({
-                    external_event_id: cd.id,
-                    external_calendar_provider: "google",
-                  }).eq("id", ev.id);
-                  pushed++;
-                } else {
-                  pushError(`envio "${ev.title}": ${cd?.error?.message || created.status}`);
-                }
-                continue;
-              }
-              const body = await res.json().catch(() => ({}));
-              pushError(`atualização "${ev.title}": ${body?.error?.message || res.status}`);
-              continue;
-            }
-
-            const created = await createOnGoogle(ev);
-            const cd = await created.json().catch(() => ({}));
-            if (created.ok && cd.id) {
-              await admin.from("calendar_events").update({
-                external_event_id: cd.id,
-                external_calendar_provider: "google",
-              }).eq("id", ev.id);
-              pushed++;
-            } else {
-              pushError(`envio "${ev.title}": ${cd?.error?.message || created.status}`);
-            }
-          } catch (e) {
-            pushError(String((e as Error).message));
-          }
+      for (const ev of events || []) {
+        try {
+          const res = await pushEvent(ev);
+          if (res.result === "pushed") pushed++;
+          else if (res.result === "updated") updated++;
+          else if (errors.length < 20) errors.push(res.message);
+        } catch (e) {
+          if (errors.length < 20) errors.push(String((e as Error).message));
         }
       }
-
-      // ---- 2. Google -> Wiize (todas as agendas do usuário) ----
-      if (settings.pull_enabled !== false) {
-        // Bancos que ainda não receberam o valor 'google' no enum caem para 'other'.
-        let googleType = "google";
-        const isEnumError = (msg?: string) =>
-          !!msg && msg.includes("invalid input value for enum calendar_event_type");
-
-        // Lembrete por e-mail é opt-in: sem opção marcada, o evento entra sem lembretes.
-        const importedReminders = settings.reminder_enabled
-          ? [Math.min(Math.max(Number(settings.reminder_minutes) || 30, 5), 1440)]
-          : [];
-
-        let sourceCalendars: string[] = [settings.calendar_id || "primary"];
-        if (settings.pull_all_calendars !== false) {
-          try {
-            const items = await listCalendars();
-            const ids = items.map((c: any) => c.id).filter(Boolean);
-            if (ids.length) sourceCalendars = ids;
-          } catch (e) {
-            pushError(`agendas: ${(e as Error).message}`);
-          }
-        }
-
-        for (const sourceId of sourceCalendars) {
-          const calId = encodeURIComponent(sourceId);
-          const params = new URLSearchParams({
-            timeMin: from.toISOString(),
-            timeMax: to.toISOString(),
-            singleEvents: "true",
-            showDeleted: "true",
-            maxResults: "2500",
-            orderBy: "startTime",
-          });
-          let pageToken: string | undefined;
-          let pages = 0;
-          do {
-            if (pageToken) params.set("pageToken", pageToken);
-            const res = await gfetch(`/calendars/${calId}/events?${params.toString()}`);
-            const data = await res.json();
-            if (!res.ok) {
-              pushError(`leitura ${sourceId}: ${data?.error?.message || res.status}`);
-              break;
-            }
-
-            const items = (data.items || []) as any[];
-
-            // Cancelamentos em lote (não precisam de leitura prévia).
-            const cancelledIds = items.filter((i) => i.status === "cancelled").map((i) => i.id);
-            const cancelledWiize = items
-              .filter((i) => i.status === "cancelled" && i.extendedProperties?.private?.wiize_event_id)
-              .map((i) => i.extendedProperties.private.wiize_event_id);
-            if (cancelledWiize.length) {
-              await admin.from("calendar_events").update({ status: "cancelled" }).in("id", cancelledWiize);
-            }
-            if (cancelledIds.length) {
-              for (let i = 0; i < cancelledIds.length; i += 200) {
-                await admin
-                  .from("calendar_events")
-                  .update({ status: "cancelled" })
-                  .eq("assigned_user_id", user.id)
-                  .in("external_event_id", cancelledIds.slice(i, i + 200));
-              }
-            }
-
-            const candidates = items.filter(
-              (i) =>
-                i.status !== "cancelled" &&
-                !i.extendedProperties?.private?.wiize_event_id &&
-                (i.start?.dateTime || i.start?.date) &&
-                (i.end?.dateTime || i.end?.date),
-            );
-
-            // Uma única leitura por página para saber o que já existe.
-            const existingMap = new Map<string, string>();
-            const ids = candidates.map((i) => i.id);
-            for (let i = 0; i < ids.length; i += 200) {
-              const { data: rows } = await admin
-                .from("calendar_events")
-                .select("id, external_event_id")
-                .eq("assigned_user_id", user.id)
-                .in("external_event_id", ids.slice(i, i + 200));
-              for (const r of rows || []) existingMap.set(r.external_event_id as string, r.id as string);
-            }
-
-            for (const item of candidates) {
-              const startsAt = item.start?.dateTime || `${item.start.date}T00:00:00-03:00`;
-              const endsAt = item.end?.dateTime || `${item.end.date}T23:59:00-03:00`;
-
-              // Compromissos que já passaram entram como concluídos (histórico).
-              const isPast = new Date(endsAt).getTime() < Date.now();
-
-              const base = {
-                title: item.summary || "(sem título)",
-                description: item.description || null,
-                starts_at: new Date(startsAt).toISOString(),
-                ends_at: new Date(endsAt).toISOString(),
-                all_day: !item.start?.dateTime,
-                location: item.location || null,
-                updated_at: new Date().toISOString(),
-              };
-
-              const existingId = existingMap.get(item.id);
-              if (existingId) {
-                const patch: any = { ...base, event_type: googleType, reminders: isPast ? [] : importedReminders };
-                if (isPast) patch.status = "completed";
-                const { error } = await admin
-                  .from("calendar_events")
-                  .update(patch)
-                  .eq("id", existingId);
-                if (error && isEnumError(error.message)) {
-                  googleType = "other";
-                  await admin
-                    .from("calendar_events")
-                    .update({ ...patch, event_type: googleType })
-                    .eq("id", existingId);
-                }
-                continue;
-              }
-
-              const insertRow = () => ({
-                ...base,
-                owner_user_id: settings.owner_user_id || user.id,
-                assigned_user_id: user.id,
-                created_by: user.id,
-                event_type: googleType,
-                status: isPast ? "completed" : "scheduled",
-                source: "import",
-                timezone: TZ,
-                reminders: isPast ? [] : importedReminders,
-
-                external_calendar_provider: "google_import",
-                external_event_id: item.id,
-                metadata: {
-                  google_html_link: item.htmlLink || null,
-                  google_calendar_id: sourceId,
-                },
-              });
-
-              let { error } = await admin.from("calendar_events").insert(insertRow());
-              if (error && isEnumError(error.message)) {
-                googleType = "other";
-                ({ error } = await admin.from("calendar_events").insert(insertRow()));
-              }
-              if (error) {
-                // Conflito de horário não deve interromper a importação.
-                if ((error as any).code === "23P01") skipped++;
-                else pushError(`importação ${item.id}: ${error.message}`);
-              } else pulled++;
-            }
-
-            pageToken = data.nextPageToken;
-            pages++;
-          } while (pageToken && pages < 40);
-        }
-
-        // Padroniza compromissos importados anteriormente.
-        await admin
-          .from("calendar_events")
-          .update({ event_type: googleType })
-          .eq("assigned_user_id", user.id)
-          .eq("external_calendar_provider", "google_import")
-          .neq("event_type", googleType);
-      }
-
 
       await admin.from("calendar_google_sync").update({
         last_sync_at: new Date().toISOString(),
@@ -512,9 +384,8 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       }).eq("user_id", user.id);
 
-      return json({ ok: true, pushed, updated, pulled, skipped, errors: errors.slice(0, 5) });
+      return json({ ok: true, pushed, updated, errors: errors.slice(0, 5) });
     }
-
 
     return json({ error: "Ação inválida" }, 400);
   } catch (err) {

@@ -68,14 +68,26 @@ serve(async (req) => {
 
     const expiresAt = new Date(Date.now() + (tokenData.expires_in || 3600) * 1000).toISOString();
 
+    // Preserva o refresh_token e acumula os escopos já concedidos:
+    // conectar a Agenda não pode derrubar o acesso a Sheets/Drive e vice-versa.
+    const { data: existing } = await supabase
+      .from("user_google_tokens")
+      .select("refresh_token, scopes")
+      .eq("user_id", userId)
+      .eq("google_email", userInfo.email || null)
+      .maybeSingle();
+
+    const newScopes = tokenData.scope ? tokenData.scope.split(" ") : [];
+    const mergedScopes = Array.from(new Set([...(existing?.scopes || []), ...newScopes]));
+
     const { error: upsertError } = await supabase
       .from("user_google_tokens")
       .upsert({
         user_id: userId,
         access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
+        refresh_token: tokenData.refresh_token || existing?.refresh_token || null,
         token_expires_at: expiresAt,
-        scopes: tokenData.scope ? tokenData.scope.split(" ") : [],
+        scopes: mergedScopes,
         google_email: userInfo.email || null,
         updated_at: new Date().toISOString(),
       }, { onConflict: "user_id,google_email" });
