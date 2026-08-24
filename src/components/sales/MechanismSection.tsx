@@ -6,10 +6,10 @@ import { useInView } from "framer-motion";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
 const steps = [
- { icon: Search, title: "Capte", desc: "Encontre novas oportunidades sem fazer tudo manualmente: a plataforma busca empresas, analisa e mostra quais têm mais potencial", micro: "Busca por nicho e região · análise · diagnóstico · score" },
- { icon: Bot, title: "Converta", desc: "Transforme oportunidades em conversas e reuniões, com abordagem personalizada, atendimento e follow-up conduzidos pela IA", micro: "Abordagem personalizada · WhatsApp oficial · atendimento · follow-up · agenda" },
- { icon: LayoutGrid, title: "Gerencie", desc: "Controle toda a operação comercial em um só lugar, com cada conversa, oportunidade e venda registrada sozinha", micro: "CRM · pipeline · histórico · vendas · documentos" },
- { icon: Sparkles, title: "Otimize", desc: "Saiba quais oportunidades merecem sua atenção agora e reduza o trabalho manual do time com automação e inteligência", micro: "Engajamento · intenção · métricas · automações · Wian" },
+ { icon: Search, title: "Capte", desc: "Encontre novas oportunidades sem fazer tudo manualmente: a plataforma busca empresas, analisa e mostra quais têm mais potencial de virar reunião." },
+ { icon: Bot, title: "Converta", desc: "Transforme oportunidades em conversas e reuniões, com abordagem personalizada, atendimento e follow-up conduzidos pela IA no WhatsApp oficial." },
+ { icon: LayoutGrid, title: "Gerencie", desc: "Controle toda a operação comercial em um só lugar, com cada conversa, oportunidade e venda registrada automaticamente no CRM." },
+ { icon: Sparkles, title: "Otimize", desc: "Saiba quais oportunidades merecem atenção agora e reduza o trabalho manual do time com automação e inteligência em cada etapa." },
 
 ];
 
@@ -59,9 +59,7 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
  {/* Card */}
  <div className={`w-full pl-12 md:pl-0 md:w-[calc(50%-28px)] ${isLeft ? "md:mr-auto" : "md:ml-auto"}`}>
  <div
- className={`group relative rounded-card border border-border/70 p-4 sm:p-5 overflow-hidden hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.15)] hover:border-primary/30 transition-all duration-300 cursor-default text-left ${
- isLeft ? "md:text-right" : ""
- }`}
+ className="group relative rounded-card border border-border/70 p-5 sm:p-6 overflow-hidden hover:shadow-[0_4px_24px_-6px_hsl(var(--primary)/0.15)] hover:border-primary/30 transition-all duration-300 cursor-default text-left"
  style={{
  background: isLeft
  ? "linear-gradient(225deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--card)) 55%, hsl(var(--card)) 100%)"
@@ -71,22 +69,21 @@ function StepCard({ step, index, isLeft }: { step: typeof steps[0]; index: numbe
 
 
  {/* Content */}
- <div className={`relative z-10 flex items-center gap-3 ${isLeft ? "md:flex-row-reverse md:text-right" : ""}`}>
+ <div className="relative z-10 flex items-center gap-4 text-left">
  <div className="flex-shrink-0">
- <span className="text-[9px] font-bold tracking-[0.14em] text-primary/35 block leading-none mb-1 hidden md:block">
+ <span className="text-[9px] font-bold tracking-[0.14em] text-primary/35 block leading-none mb-1.5 hidden md:block">
  {String(index + 1).padStart(2, "0")}
  </span>
  <div className="relative">
- <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-primary/8 pointer-events-none" />
- <div className="relative w-10 h-10 rounded-hover bg-gradient-to-br from-primary to-primary/80 shadow-[0_6px_16px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center group-hover:shadow-[0_8px_22px_-4px_hsl(var(--primary)/0.65)] group-hover:scale-110 transition-all duration-300">
- <Icon size={18} className="text-primary-foreground" />
+ <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full bg-primary/8 pointer-events-none" />
+ <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-hover bg-gradient-to-br from-primary to-primary/80 shadow-[0_8px_20px_-4px_hsl(var(--primary)/0.5)] flex items-center justify-center group-hover:shadow-[0_10px_26px_-4px_hsl(var(--primary)/0.65)] group-hover:scale-105 transition-all duration-300">
+ <Icon size={28} className="text-primary-foreground" strokeWidth={1.9} />
  </div>
  </div>
  </div>
  <div className="flex-1 min-w-0">
- <h3 className="text-sm font-bold text-foreground leading-tight mb-1">{step.title}</h3>
- <p className="text-[13px] text-muted-foreground leading-relaxed">{step.desc}</p>
- <p className="text-[11px] text-muted-foreground/50 mt-1">{step.micro}</p>
+ <h3 className="text-lg sm:text-xl font-bold text-foreground leading-tight mb-1.5">{step.title}</h3>
+ <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
  </div>
  </div>
  </div>
