@@ -1380,7 +1380,7 @@ export const PlatformModulesSection = () => {
           highlight="reunida em um só lugar"
           highlightFit="tight"
 
-          description="Captação, análise, abordagem, conversas, follow-up, reuniões, CRM, engajamento e vendas acontecem dentro da mesma plataforma."
+          description="Agora que você viu a visão geral, veja o que existe dentro da plataforma: prospecção, SDR IA, agenda, campanhas, CRM, atendimento, automação e Wian."
           isVisible={isVisible}
         />
 

@@ -91,8 +91,7 @@ export const ProblemSection = () => {
  </div>
  </div>
  <div className="mt-auto pt-2 relative z-10">
- <span className="text-2xl font-bold text-destructive/80 tracking-tight">82%</span>
- <p className="text-[11px] text-muted-foreground mt-0.5">dos leads são descartados</p>
+ <p className="text-[11px] text-muted-foreground mt-0.5">Base desatualizada vira esforço desperdiçado</p>
  </div>
  </div>
  }
@@ -108,8 +107,7 @@ export const ProblemSection = () => {
  <p className="text-sm text-muted-foreground">Horas por dia só para achar quem abordar</p>
  </div>
  <div className="mt-auto pt-2 relative z-10">
- <span className="text-2xl font-bold text-destructive/80 tracking-tight">3h+</span>
- <p className="text-[11px] text-muted-foreground mt-0.5">por dia em busca manual</p>
+ <p className="text-[11px] text-muted-foreground mt-0.5">Tempo do time gasto antes da primeira conversa</p>
  </div>
  </div>
  }
@@ -129,8 +127,7 @@ export const ProblemSection = () => {
  </div>
  </div>
  <div className="mt-auto pt-2 relative z-10">
- <span className="text-2xl font-bold text-destructive/80 tracking-tight">67%</span>
- <p className="text-[11px] text-muted-foreground mt-0.5">dos deals morrem sem follow-up</p>
+ <p className="text-[11px] text-muted-foreground mt-0.5">Sem cadência, a negociação simplesmente para</p>
  </div>
  </div>
  }
@@ -165,8 +162,7 @@ export const ProblemSection = () => {
  </p>
  </div>
  <div className="flex-shrink-0 text-left sm:text-right pt-3 sm:pt-0 sm:pl-6 border-t sm:border-t-0 sm:border-l border-border/50 relative z-10 w-full sm:w-auto">
- <span className="text-4xl font-bold text-destructive/80 tracking-tight">0,5%</span>
- <p className="text-[11px] text-muted-foreground mt-0.5">a cada 200 prospecções, 1 venda</p>
+ <p className="text-[11px] text-muted-foreground mt-0.5 max-w-[190px] sm:ml-auto">Muito volume de trabalho para poucas reuniões reais</p>
  </div>
  </div>
  }

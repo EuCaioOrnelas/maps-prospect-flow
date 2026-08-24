@@ -28,9 +28,9 @@ const pillars = [
 ];
 
 const results = [
- { metric: "3x", label: "mais respostas", description: "Mensagem com contexto tem muito mais retorno" },
- { metric: "24/7", label: "sempre trabalhando", description: "O lead é respondido na hora, não no dia seguinte" },
- { metric: "100%", label: "follow-up garantido", description: "Ninguém fica sem retorno por esquecimento" },
+ { metric: "Mais", label: "respostas", description: "Abordagens escritas com o contexto real de cada empresa" },
+ { metric: "Sempre", label: "disponível", description: "Atendimento contínuo mesmo quando o time está ocupado" },
+ { metric: "Zero", label: "esquecimento", description: "Follow-ups automáticos sem depender da memória do vendedor" },
  { metric: "Total", label: "visibilidade do pipeline", description: "Você sabe o que vem pela frente no mês" },
 ];
 

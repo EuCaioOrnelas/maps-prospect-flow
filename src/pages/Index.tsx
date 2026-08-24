@@ -21,11 +21,6 @@ const OpportunitySection = lazy(() =>
 const MechanismSection = lazy(() =>
   import("@/components/sales/MechanismSection").then((m) => ({ default: m.MechanismSection })),
 );
-const FeaturesOverviewSection = lazy(() =>
-  import("@/components/sales/FeaturesOverviewSection").then((m) => ({
-    default: m.FeaturesOverviewSection,
-  })),
-);
 const WhyItWorksSection = lazy(() =>
   import("@/components/sales/WhyItWorksSection").then((m) => ({ default: m.WhyItWorksSection })),
 );
@@ -144,12 +139,11 @@ const Index = () => {
           <ProblemSection />
 
           <Suspense fallback={<SectionFallback />}>
-            {/* Hierarquia: diferencial → o que existe dentro → profundidade → benefício → prova */}
+            {/* Hierarquia: solução → ponte (operação conectada) → dentro da plataforma → benefício → prova → oferta */}
             <MechanismSection />
-            <PlatformModulesSection />
-            <FeaturesOverviewSection />
-            <WhyItWorksSection />
             <OpportunitySection />
+            <PlatformModulesSection />
+            <WhyItWorksSection />
             <TestimonialsSection />
             <PricingSection />
             <FAQSection />
