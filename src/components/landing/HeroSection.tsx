@@ -936,6 +936,44 @@ export const HeroSection = ({
  </div>
 
  <div className="bg-background/50 rounded-card sm:rounded-card p-3 sm:p-4">
+ {/* Cabeçalho da plataforma: mostra que existe uma operação completa */}
+ <div className="flex items-center justify-between gap-2 mb-3">
+ <div className="min-w-0">
+ <p className="text-[13px] font-semibold text-foreground leading-tight">Operação comercial</p>
+ <p className="text-[10px] text-muted-foreground">Captação, IA, conversas, reuniões e CRM conectados</p>
+ </div>
+ <span className="text-[9px] text-muted-foreground/70 border border-border/50 rounded-xs px-1.5 py-0.5 shrink-0">
+ demonstração
+ </span>
+ </div>
+
+ {/* Fluxo da operação ponta a ponta */}
+ <div className="flex items-center gap-1 mb-3 overflow-hidden">
+ {flowSteps.map((step, i) => {
+ const active = step.stages.includes(currentStage);
+ const done = currentStage > Math.max(...step.stages);
+ return (
+ <div key={step.label} className="flex items-center gap-1 min-w-0">
+ <div
+ className={`flex items-center gap-1 rounded-xs px-1.5 py-1 border transition-colors ${
+ active
+ ? "bg-primary/10 border-primary/25 text-primary"
+ : done
+ ? "bg-secondary/60 border-border/40 text-foreground/70"
+ : "bg-secondary/30 border-border/30 text-muted-foreground"
+ }`}
+ >
+ <step.icon size={10} />
+ <span className="text-[9px] font-medium whitespace-nowrap">{step.label}</span>
+ </div>
+ {i < flowSteps.length - 1 && (
+ <ArrowRight size={9} className="text-muted-foreground/40 shrink-0" />
+ )}
+ </div>
+ );
+ })}
+ </div>
+
  {/* Stage indicator bar — clickable */}
  <div className="flex items-center gap-1 mb-3">
  {stages.map((s, i) => (
