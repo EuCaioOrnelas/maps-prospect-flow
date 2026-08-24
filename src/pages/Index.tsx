@@ -85,8 +85,8 @@ const Index = () => {
   return (
     <>
       <SEO
-        description="A Wiize é uma plataforma de IA Comercial desenvolvida para apoiar equipes comerciais em toda a operação, conectando dados, processos e inteligência para transformar oportunidades em resultados."
-        keywords="inteligência comercial, prospecção B2B, dados B2B, dados qualificados, enriquecimento de dados, sales intelligence, qualificação de leads, ICP, automação de vendas, CRM inteligente, agente de IA comercial, Wiize"
+        description="A Wiize encontra empresas do seu perfil, inicia conversas, faz follow-up e agenda reuniões para o seu time. Menos prospecção manual, mais oportunidades no pipeline."
+        keywords="máquina de vendas B2B, prospecção B2B, encontrar clientes B2B, agendamento de reuniões, SDR com IA, follow-up automático, WhatsApp Business oficial, pipeline B2B, CRM, ICP, Wiize"
         url="https://wiize.com.br/"
         jsonLd={[
           {
@@ -96,7 +96,7 @@ const Index = () => {
             applicationCategory: "BusinessApplication",
             operatingSystem: "Web",
             description:
-              "Inteligência comercial B2B: prospecção com IA, dados qualificados de empresas, diagnóstico de leads, CRM e automação de vendas.",
+              "Máquina de vendas B2B: encontra empresas do seu ICP, analisa oportunidades, inicia conversas no WhatsApp oficial, faz follow-up, agenda reuniões e organiza tudo no CRM.",
             offers: {
               "@type": "AggregateOffer",
               priceCurrency: "BRL",
