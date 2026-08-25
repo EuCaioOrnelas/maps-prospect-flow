@@ -18,7 +18,7 @@ import {
   IG_PROGRESS_STEPS,
   fitBadgeVariant,
   fmtNum,
-  fmtPct,
+  fmtPct, engagementQuality, engagementDotClass,
   statusLabel,
 } from "@/lib/influencerProspecting";
 import {
@@ -694,6 +694,15 @@ export function InstagramProspectingPanel() {
                         <Heart size={12} className="text-primary/70" />
                         {fmtPct(p.engagement_rate)}
                       </span>
+                      {(() => {
+                        const q = engagementQuality(p.engagement_rate, p.subscriber_count);
+                        return (
+                          <span className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground" title={q.hint}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${engagementDotClass(q.tone)}`} />
+                            {q.label.replace("Engajamento ", "")}
+                          </span>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="text-sm">{fmtNum(p.video_count)}</TableCell>
                     <TableCell>
