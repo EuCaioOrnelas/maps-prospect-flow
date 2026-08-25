@@ -740,31 +740,30 @@ serve(async (req) => {
         })
         .eq("id", searchRow.id);
 
-      return json({
-        search_id: searchRow.id,
-        prospects: results,
-        discovered: allUsernames.length,
-        duplicated,
-        analyzed,
-        filtered_out: filteredOut,
-        serp_credits: SERP_CREDITS_USED,
-        usage: await getUsage(admin, u.user.id),
-      });
-    } catch (e) {
-      const msg = (e as Error).message;
-      await failSearch(msg);
-      console.error("[instagram-prospect] erro", msg, e);
-      if (msg.startsWith("SERPAPI_EXHAUSTED"))
-        return json(
-          { error: "Todas as chaves da SerpApi falharam ou estão sem créditos. Verifique as chaves no painel de APIs." },
-          429,
-        );
-      if (msg === "SERPAPI_NOT_CONFIGURED")
-        return json({ error: "Nenhuma chave da SerpApi está configurada no backend." }, 500);
-      if (msg.startsWith("OPENAI_"))
-        return json({ error: "A análise por IA falhou temporariamente. Tente novamente em alguns instantes." }, 502);
-      return json({ error: "Não foi possível concluir a prospecção. Tente novamente." }, 500);
-    }
+      } catch (e) {
+        const msg = (e as Error).message;
+        console.error("[instagram-prospect] erro", msg, e);
+        if (msg.startsWith("SERPAPI_EXHAUSTED"))
+          await failSearch("Todas as chaves da SerpApi falharam ou estão sem créditos. Verifique as chaves no painel de APIs.");
+        else if (msg === "SERPAPI_NOT_CONFIGURED")
+          await failSearch("Nenhuma chave da SerpApi está configurada no backend.");
+        else if (msg.startsWith("OPENAI_"))
+          await failSearch("A análise por IA falhou temporariamente. Tente novamente em alguns instantes.");
+        else await failSearch("Não foi possível concluir a prospecção. Tente novamente.");
+      }
+    };
+
+    // Executa em segundo plano: a busca pode passar de 150s (limite de idle da edge function).
+    // @ts-ignore EdgeRuntime é global no runtime do Supabase
+    if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(runPipeline());
+    else runPipeline();
+
+    return json({
+      search_id: searchRow.id,
+      status: "running",
+      async: true,
+      usage: await getUsage(admin, u.user.id),
+    });
   } catch (e) {
     console.error("[instagram-prospect] erro inesperado", e);
     return json({ error: "Erro inesperado. Tente novamente." }, 500);
