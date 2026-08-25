@@ -54,3 +54,18 @@ export const PROGRESS_STEPS = [
   "Organizando resultados",
   "Concluído",
 ];
+
+export const IG_PROGRESS_STEPS = [
+  "Interpretando ICP",
+  "Gerando consultas de busca",
+  "Descobrindo perfis no Instagram",
+  "Eliminando duplicados",
+  "Coletando dados dos perfis",
+  "Analisando conteúdo com IA",
+  "Calculando Fit Score",
+  "Organizando resultados",
+  "Concluído",
+];
+
+export const fmtPct = (n: number | null | undefined) =>
+  n === null || n === undefined ? "Não informado" : `${Number(n).toFixed(2).replace(".", ",")}%`;
