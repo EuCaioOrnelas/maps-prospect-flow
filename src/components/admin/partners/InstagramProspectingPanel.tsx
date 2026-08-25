@@ -176,14 +176,44 @@ export function InstagramProspectingPanel() {
       }
       if (data?.error) throw new Error(data.error);
       applyUsage(data?.usage);
-      setLastRun(data);
+
+      // A busca roda em segundo plano na edge function (pode passar de 150s).
+      // Acompanhamos o progresso pelo registro em influencer_searches.
+      let finalRow: any = null;
+      if (data?.search_id) {
+        const deadline = Date.now() + 15 * 60 * 1000;
+        while (Date.now() < deadline) {
+          await new Promise((r) => setTimeout(r, 5000));
+          const { data: row } = await supabase
+            .from("influencer_searches")
+            .select("status, results_found, stats, error_message")
+            .eq("id", data.search_id)
+            .maybeSingle();
+          if (!row) continue;
+          if (row.status === "error") throw new Error(row.error_message || "A prospecção falhou.");
+          if (row.status === "done") { finalRow = row; break; }
+        }
+        if (!finalRow) throw new Error("A prospecção demorou mais que o esperado. Recarregue em instantes para ver os resultados.");
+      }
+
+      const stats = (finalRow?.stats ?? {}) as any;
+      setLastRun({
+        search_id: data?.search_id,
+        prospects: new Array(finalRow?.results_found ?? 0),
+        discovered: stats.discovered,
+        duplicated: stats.duplicated,
+        analyzed: stats.analyzed,
+        filtered_out: stats.filtered_out,
+        serp_credits: stats.serp_credits,
+      });
       await loadProspects();
+      loadUsage();
       setPage(1);
       setStep(IG_PROGRESS_STEPS.length - 1);
       toast({
-        title: data?.prospects?.length
-          ? `Encontramos ${data.prospects.length} perfis do Instagram.`
-          : data?.message || "Nenhum perfil encontrado.",
+        title: finalRow?.results_found
+          ? `Encontramos ${finalRow.results_found} perfis do Instagram.`
+          : finalRow?.error_message || "Nenhum perfil encontrado.",
       });
     } catch (e: any) {
       toast({ title: "Não foi possível concluir a prospecção", description: e.message, variant: "destructive" });
