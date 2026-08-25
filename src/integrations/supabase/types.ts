@@ -4246,11 +4246,15 @@ export type Database = {
           ai_recommendation: string | null
           ai_summary: string | null
           audience_fit_score: number | null
+          avg_comments: number | null
+          avg_likes: number | null
           avg_recent_views: number | null
+          category_name: string | null
           channel_description: string | null
           channel_handle: string | null
           channel_name: string
           channel_url: string | null
+          collected_at: string | null
           commercial_score: number | null
           contact_email: string | null
           contact_links: Json
@@ -4258,13 +4262,20 @@ export type Database = {
           country: string | null
           created_at: string
           created_by: string | null
+          engagement_rate: number | null
           fit_category: string | null
           fit_score: number | null
+          following_count: number | null
           id: string
           instagram_url: string | null
+          is_business_account: boolean | null
+          is_private: boolean | null
+          is_professional_account: boolean | null
+          is_verified: boolean | null
           latest_video_at: string | null
           notes: string | null
           platform: string
+          profile_id: string | null
           quality_score: number | null
           reach_score: number | null
           relevance_reason: string | null
@@ -4275,6 +4286,7 @@ export type Database = {
           thumbnail_url: string | null
           total_view_count: number | null
           updated_at: string
+          username: string | null
           video_count: number | null
           website_url: string | null
           youtube_channel_id: string
@@ -4284,11 +4296,15 @@ export type Database = {
           ai_recommendation?: string | null
           ai_summary?: string | null
           audience_fit_score?: number | null
+          avg_comments?: number | null
+          avg_likes?: number | null
           avg_recent_views?: number | null
+          category_name?: string | null
           channel_description?: string | null
           channel_handle?: string | null
           channel_name: string
           channel_url?: string | null
+          collected_at?: string | null
           commercial_score?: number | null
           contact_email?: string | null
           contact_links?: Json
@@ -4296,13 +4312,20 @@ export type Database = {
           country?: string | null
           created_at?: string
           created_by?: string | null
+          engagement_rate?: number | null
           fit_category?: string | null
           fit_score?: number | null
+          following_count?: number | null
           id?: string
           instagram_url?: string | null
+          is_business_account?: boolean | null
+          is_private?: boolean | null
+          is_professional_account?: boolean | null
+          is_verified?: boolean | null
           latest_video_at?: string | null
           notes?: string | null
           platform?: string
+          profile_id?: string | null
           quality_score?: number | null
           reach_score?: number | null
           relevance_reason?: string | null
@@ -4313,6 +4336,7 @@ export type Database = {
           thumbnail_url?: string | null
           total_view_count?: number | null
           updated_at?: string
+          username?: string | null
           video_count?: number | null
           website_url?: string | null
           youtube_channel_id: string
@@ -4322,11 +4346,15 @@ export type Database = {
           ai_recommendation?: string | null
           ai_summary?: string | null
           audience_fit_score?: number | null
+          avg_comments?: number | null
+          avg_likes?: number | null
           avg_recent_views?: number | null
+          category_name?: string | null
           channel_description?: string | null
           channel_handle?: string | null
           channel_name?: string
           channel_url?: string | null
+          collected_at?: string | null
           commercial_score?: number | null
           contact_email?: string | null
           contact_links?: Json
@@ -4334,13 +4362,20 @@ export type Database = {
           country?: string | null
           created_at?: string
           created_by?: string | null
+          engagement_rate?: number | null
           fit_category?: string | null
           fit_score?: number | null
+          following_count?: number | null
           id?: string
           instagram_url?: string | null
+          is_business_account?: boolean | null
+          is_private?: boolean | null
+          is_professional_account?: boolean | null
+          is_verified?: boolean | null
           latest_video_at?: string | null
           notes?: string | null
           platform?: string
+          profile_id?: string | null
           quality_score?: number | null
           reach_score?: number | null
           relevance_reason?: string | null
@@ -4351,6 +4386,7 @@ export type Database = {
           thumbnail_url?: string | null
           total_view_count?: number | null
           updated_at?: string
+          username?: string | null
           video_count?: number | null
           website_url?: string | null
           youtube_channel_id?: string
@@ -4378,11 +4414,14 @@ export type Database = {
           max_subscribers: number
           min_subscribers: number
           min_views: number | null
+          platform: string
           query_description: string
           recency_days: number
           results_found: number
           results_requested: number
+          stats: Json
           status: string
+          terms: string[]
           updated_at: string
         }
         Insert: {
@@ -4397,11 +4436,14 @@ export type Database = {
           max_subscribers?: number
           min_subscribers?: number
           min_views?: number | null
+          platform?: string
           query_description: string
           recency_days?: number
           results_found?: number
           results_requested?: number
+          stats?: Json
           status?: string
+          terms?: string[]
           updated_at?: string
         }
         Update: {
@@ -4416,11 +4458,14 @@ export type Database = {
           max_subscribers?: number
           min_subscribers?: number
           min_views?: number | null
+          platform?: string
           query_description?: string
           recency_days?: number
           results_found?: number
           results_requested?: number
+          stats?: Json
           status?: string
+          terms?: string[]
           updated_at?: string
         }
         Relationships: []
