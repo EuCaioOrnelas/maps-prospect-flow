@@ -204,7 +204,9 @@ export function InstagramProspectingPanel() {
         duplicated: stats.duplicated,
         analyzed: stats.analyzed,
         filtered_out: stats.filtered_out,
+        prescreen_dropped: stats.prescreen_dropped,
         serp_credits: stats.serp_credits,
+
       });
       await loadProspects();
       loadUsage();
