@@ -710,9 +710,9 @@ interface HeroSectionProps {
 
 export const HeroSection = ({
   onSignupClick,
-   titleLine1 = "Tudo para vender B2B.",
+   titleLine1 = "Tudo para vender B2B",
    titleLine2 = "",
-   titleHighlight = "Em um só lugar.",
+   titleHighlight = "Em um só lugar",
    description = "Inteligência comercial que encontra, converte e gerencia oportunidades B2B com IA, ajudando sua equipe a vender com mais contexto e eficiência.",
   descriptionClassName,
 }: HeroSectionProps) => {
