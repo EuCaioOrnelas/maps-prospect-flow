@@ -525,13 +525,64 @@ serve(async (req) => {
           .eq("id", searchRow.id);
         return;
       }
-
+      // 3.5) Triagem por IA ANTES de gastar créditos de perfil.
+      // Usa só o que já temos de graça (username + título + snippet do Google) para
+      // descartar perfis claramente fora do ICP (lojas, marcas, agregadores, fora do idioma).
+      let prescreenKept = 0;
+      let prescreenDropped = 0;
+      let ordered = candidates;
+      try {
+        const sample = candidates.slice(0, 150).map((u) => ({
+          username: u,
+          title: (found.get(u)?.title ?? "").slice(0, 120),
+          snippet: (found.get(u)?.snippet ?? "").slice(0, 220),
+        }));
+        const screen = await openai(
+          [
+            {
+              role: "system",
+              content:
+                'Você faz uma TRIAGEM barata de perfis do Instagram antes de uma coleta paga. Recebe uma lista de candidatos (username + título + snippet do Google) e o ICP desejado. Responda SOMENTE JSON {"keep":[{"username":"...","p":0-100}]} contendo apenas os candidatos que TÊM CHANCE REAL de ser criadores de conteúdo relevantes para o ICP, ordenados do mais promissor para o menos. Descarte: lojas/e-commerce, marcas grandes, páginas de agregação/repost, perfis claramente de outro idioma/país, links de post/reel/explore e qualquer coisa fora do tema. Na dúvida com sinal fraco, descarte. Nunca invente usernames que não estejam na lista.',
+            },
+            {
+              role: "user",
+              content: JSON.stringify({
+                icp: description || terms.join(", "),
+                keywords,
+                country,
+                language,
+                candidates: sample,
+              }),
+            },
+          ],
+          openaiKey,
+          "instagram-prospect (pré-triagem)",
+        );
+        const valid = new Set(candidates);
+        const keep = (screen?.keep ?? [])
+          .filter((k: any) => k && valid.has(String(k.username).toLowerCase()))
+          .sort((a: any, b: any) => Number(b.p ?? 0) - Number(a.p ?? 0))
+          .map((k: any) => String(k.username).toLowerCase());
+        const keepUnique = Array.from(new Set(keep));
+        if (keepUnique.length > 0) {
+          const rest = candidates.filter((u) => !keepUnique.includes(u));
+          ordered = keepUnique;
+          prescreenKept = keepUnique.length;
+          prescreenDropped = candidates.length - keepUnique.length;
+          // Se a triagem foi agressiva demais e sobrou menos do que o pedido,
+          // completa com os descartados para não devolver a busca vazia.
+          if (ordered.length < resultsRequested) ordered = [...ordered, ...rest];
+        }
+      } catch (e) {
+        console.error("[prescreen] falhou, seguindo sem triagem", e);
+      }
 
       // 4) Coleta de perfis (1 crédito SerpApi por perfil) — limitada ao pedido
-      const toFetch = candidates.slice(0, Math.min(resultsRequested * 2, LIMITS.MAX_RESULTS_PER_SEARCH * 2));
+      const toFetch = ordered.slice(0, Math.min(resultsRequested * 2, LIMITS.MAX_RESULTS_PER_SEARCH * 2));
       const results: any[] = [];
       let analyzed = 0;
       let filteredOut = 0;
+
 
       const processProfile = async (username: string) => {
         if (results.length >= resultsRequested) return;
