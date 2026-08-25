@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { InfluencerDetailSheet } from "@/components/admin/partners/InfluencerDetailSheet";
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
+import { InstagramProspectingPanel } from "@/components/admin/partners/InstagramProspectingPanel";
 
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -27,7 +28,7 @@ import {
   Loader2, Search, Youtube, X, Plus, BookmarkPlus, CheckCircle2, Gauge,
   Globe, Languages, ListOrdered, CalendarClock, Users, TrendingUp, Eye,
   Tags, SlidersHorizontal, Sparkles, Target, Filter, ArrowUpDown, Bookmark,
-  CheckSquare, ListChecks, FileSpreadsheet, FileText, ChevronLeft, ChevronRight,
+  CheckSquare, ListChecks, FileSpreadsheet, FileText, ChevronLeft, ChevronRight, Instagram,
 } from "lucide-react";
 
 function FieldLabel({ icon: Icon, children }: { icon: any; children: React.ReactNode }) {
@@ -788,6 +789,10 @@ export default function AdminInfluencerProspecting() {
           </Card>
 
           <ResultsTable rows={viewProspects} showSave page={page} onPageChange={setPage} onBulkStatusChange={updateStatusBulk} />
+        </TabsContent>
+
+        <TabsContent value="instagram" className="mt-6">
+          <InstagramProspectingPanel />
         </TabsContent>
 
         <TabsContent value="saved" className="mt-6">
