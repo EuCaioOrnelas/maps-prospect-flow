@@ -11,16 +11,14 @@ import { LandingPageSkeleton } from "@/components/landing/LandingPageSkeleton";
 import { FloatingChatButton } from "@/components/landing/FloatingChatButton";
 import { ProblemSection } from "@/components/sales/ProblemSection";
 
+const MidCTASection = lazy(() =>
+  import("@/components/sales/MidCTASection").then((m) => ({ default: m.MidCTASection })),
+);
 const OpportunitySection = lazy(() =>
   import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
 );
 const MechanismSection = lazy(() =>
   import("@/components/sales/MechanismSection").then((m) => ({ default: m.MechanismSection })),
-);
-const FeaturesOverviewSection = lazy(() =>
-  import("@/components/sales/FeaturesOverviewSection").then((m) => ({
-    default: m.FeaturesOverviewSection,
-  })),
 );
 const WhyItWorksSection = lazy(() =>
   import("@/components/sales/WhyItWorksSection").then((m) => ({ default: m.WhyItWorksSection })),
@@ -133,11 +131,10 @@ const Prospeccao = () => {
           <Navbar onSignupClick={trackSignupClick} />
           <HeroSection
             onSignupClick={trackSignupClick}
-            titleLine1="Sistema de Prospecção"
-            titleLine2="Que encontra e analisa"
-            titleHighlight="Seus clientes ideais"
-
-            description="Nossa IA encontra empresas, analisa cada oportunidade e gera um diagnóstico comercial identificando dores, oportunidades e o potencial de cada cliente para sua equipe vender com mais eficiência."
+            titleLine1="Encontre os clientes certos"
+            titleLine2="e venda com mais eficiência.."
+            titleHighlight=""
+            description="Nossa IA encontra empresas, analisa cada oportunidade e gera um diagnóstico comercial com as principais dores, oportunidades e potencial de cada cliente, ajudando sua equipe a vender com mais contexto e eficiência."
             descriptionClassName="text-sm sm:text-base md:text-[1.05rem] leading-relaxed"
           />
           <TrustedBySection />
@@ -145,11 +142,11 @@ const Prospeccao = () => {
           <ProblemSection />
 
           <Suspense fallback={<SectionFallback />}>
-            <OpportunitySection />
             <MechanismSection />
-            <FeaturesOverviewSection />
-            <WhyItWorksSection />
+            <OpportunitySection />
+            <MidCTASection onSignupClick={trackSignupClick} />
             <PlatformModulesSection />
+            <WhyItWorksSection />
             <TestimonialsSection />
             <PricingSection />
             <FAQSection />
