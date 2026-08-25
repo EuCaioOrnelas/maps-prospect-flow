@@ -543,10 +543,14 @@ export default function AdminInfluencerProspecting() {
           <TabsTrigger value="youtube" className="gap-1.5">
             <Youtube size={14} /> YouTube Prospecting
           </TabsTrigger>
+          <TabsTrigger value="instagram" className="gap-1.5">
+            <Instagram size={14} /> Instagram Prospecting
+          </TabsTrigger>
           <TabsTrigger value="saved" className="gap-1.5">
             <Bookmark size={14} /> Salvos ({saved.length})
           </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="youtube" className="space-y-6 mt-6">
           {usage && (
