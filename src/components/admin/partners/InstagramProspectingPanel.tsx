@@ -511,6 +511,12 @@ export function InstagramProspectingPanel() {
               <Badge variant="outline">{lastRun.duplicated ?? 0} duplicados ignorados</Badge>
               <Badge variant="outline">{lastRun.analyzed ?? 0} analisados pela IA</Badge>
               <Badge variant="outline">{lastRun.filtered_out ?? 0} fora dos filtros</Badge>
+              {(lastRun.prescreen_dropped ?? 0) > 0 && (
+                <Badge variant="outline" title="Descartados pela triagem de IA antes de gastar crédito de perfil">
+                  {lastRun.prescreen_dropped} descartados na triagem (0 crédito)
+                </Badge>
+              )}
+
               <Badge variant="secondary">{lastRun.serp_credits ?? 0} créditos SerpApi usados</Badge>
             </div>
           )}
