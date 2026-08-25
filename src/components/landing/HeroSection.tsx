@@ -709,12 +709,12 @@ interface HeroSectionProps {
 }
 
 export const HeroSection = ({
- onSignupClick,
-  titleLine1 = "Tudo que você precisa",
-  titleLine2 = "para vender B2B",
-  titleHighlight = "em um só lugar",
-  description = "Inteligência comercial que encontra, converte e gerencia oportunidades B2B com IA, ajudando sua equipe a vender com mais contexto e eficiência.",
- descriptionClassName,
+  onSignupClick,
+   titleLine1 = "Tudo para vender B2B.",
+   titleLine2 = "",
+   titleHighlight = "Em um só lugar.",
+   description = "Inteligência comercial que encontra, converte e gerencia oportunidades B2B com IA, ajudando sua equipe a vender com mais contexto e eficiência.",
+  descriptionClassName,
 }: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
  const [currentStage, setCurrentStage] = useState(0);
@@ -851,7 +851,7 @@ export const HeroSection = ({
   {titleLine2 ? (
   <span className="block whitespace-normal sm:whitespace-nowrap text-[2rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.25rem] xl:text-[3.6rem]">{titleLine2}</span>
   ) : null}
-  <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[2.3rem] sm:text-[2.65rem] md:text-[3.3rem] lg:text-[3.7rem] xl:text-[4.05rem] leading-[1.05] mt-1 sm:mt-2">{titleHighlight}</span>
+  <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold text-[2.5rem] sm:text-[2.85rem] md:text-[3.5rem] lg:text-[3.95rem] xl:text-[4.3rem] leading-[1.05] mt-1 sm:mt-2 drop-shadow-sm">{titleHighlight}</span>
   </h1>
   <p className={`${descriptionClassName ?? "text-sm sm:text-lg md:text-xl"} text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up`} style={{ animationDelay: "0.2s" }}>
   {description}
