@@ -10,7 +10,18 @@ export const PROSPECT_STATUSES = [
   { value: "descartado", label: "Descartado" },
 ];
 
-export const statusLabel = (v: string) => PROSPECT_STATUSES.find((s) => s.value === v)?.label ?? v;
+/** Status internos que não são escolhidos manualmente, mas precisam de rótulo. */
+export const EXTRA_STATUS_LABELS: Record<string, string> = {
+  aguardando_analise: "Aguardando análise",
+  contatos_identificados: "Contatos identificados",
+  pronto_abordagem: "Pronto para abordagem",
+  sem_contato: "Sem contato",
+  email_enviado: "E-mail enviado",
+};
+
+export const statusLabel = (v: string) =>
+  PROSPECT_STATUSES.find((s) => s.value === v)?.label ?? EXTRA_STATUS_LABELS[v] ?? v;
+
 
 export function fitCategory(score: number | null | undefined) {
   const s = score ?? 0;
@@ -43,3 +54,18 @@ export const PROGRESS_STEPS = [
   "Organizando resultados",
   "Concluído",
 ];
+
+export const IG_PROGRESS_STEPS = [
+  "Interpretando ICP",
+  "Gerando consultas de busca",
+  "Descobrindo perfis no Instagram",
+  "Eliminando duplicados",
+  "Coletando dados dos perfis",
+  "Analisando conteúdo com IA",
+  "Calculando Fit Score",
+  "Organizando resultados",
+  "Concluído",
+];
+
+export const fmtPct = (n: number | null | undefined) =>
+  n === null || n === undefined ? "Não informado" : `${Number(n).toFixed(2).replace(".", ",")}%`;

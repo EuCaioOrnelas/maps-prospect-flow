@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { InfluencerDetailSheet } from "@/components/admin/partners/InfluencerDetailSheet";
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
+import { InstagramProspectingPanel } from "@/components/admin/partners/InstagramProspectingPanel";
 
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -27,7 +28,7 @@ import {
   Loader2, Search, Youtube, X, Plus, BookmarkPlus, CheckCircle2, Gauge,
   Globe, Languages, ListOrdered, CalendarClock, Users, TrendingUp, Eye,
   Tags, SlidersHorizontal, Sparkles, Target, Filter, ArrowUpDown, Bookmark,
-  CheckSquare, ListChecks, FileSpreadsheet, FileText, ChevronLeft, ChevronRight,
+  CheckSquare, ListChecks, FileSpreadsheet, FileText, ChevronLeft, ChevronRight, Instagram,
 } from "lucide-react";
 
 function FieldLabel({ icon: Icon, children }: { icon: any; children: React.ReactNode }) {
@@ -101,10 +102,12 @@ export default function AdminInfluencerProspecting() {
     const { data } = await (supabase as any)
       .from("influencer_prospects")
       .select("*")
+      .eq("platform", "youtube")
       .order("fit_score", { ascending: false })
       .limit(2000);
     setProspects(data ?? []);
   };
+
 
   const applyUsage = (u: any) => {
     if (!u) return;
@@ -541,10 +544,14 @@ export default function AdminInfluencerProspecting() {
           <TabsTrigger value="youtube" className="gap-1.5">
             <Youtube size={14} /> YouTube Prospecting
           </TabsTrigger>
+          <TabsTrigger value="instagram" className="gap-1.5">
+            <Instagram size={14} /> Instagram Prospecting
+          </TabsTrigger>
           <TabsTrigger value="saved" className="gap-1.5">
             <Bookmark size={14} /> Salvos ({saved.length})
           </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="youtube" className="space-y-6 mt-6">
           {usage && (
@@ -782,6 +789,10 @@ export default function AdminInfluencerProspecting() {
           </Card>
 
           <ResultsTable rows={viewProspects} showSave page={page} onPageChange={setPage} onBulkStatusChange={updateStatusBulk} />
+        </TabsContent>
+
+        <TabsContent value="instagram" className="mt-6">
+          <InstagramProspectingPanel />
         </TabsContent>
 
         <TabsContent value="saved" className="mt-6">
