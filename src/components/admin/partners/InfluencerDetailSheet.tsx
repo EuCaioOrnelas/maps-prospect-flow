@@ -83,6 +83,30 @@ export function InfluencerDetailSheet({ prospect, open, onOpenChange, onStatusCh
           <Separator />
 
           <section>
+            <h3 className="text-sm font-semibold mb-2">Qualidade do engajamento</h3>
+            {(() => {
+              const q = engagementQuality(prospect.engagement_rate, prospect.subscriber_count);
+              return (
+                <div className="rounded-xl border border-border p-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${engagementDotClass(q.tone)}`} />
+                    <span className="text-sm font-medium">{q.label}</span>
+                    <Badge variant={q.variant} className="ml-auto">{fmtPct(prospect.engagement_rate)}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">{q.hint}</p>
+                  <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
+                    <div><p className="text-muted-foreground">Média de curtidas</p><p className="font-medium">{fmtNum(prospect.avg_likes)}</p></div>
+                    <div><p className="text-muted-foreground">Média de comentários</p><p className="font-medium">{fmtNum(prospect.avg_comments)}</p></div>
+                    <div><p className="text-muted-foreground">Publicações</p><p className="font-medium">{fmtNum(prospect.video_count)}</p></div>
+                  </div>
+                </div>
+              );
+            })()}
+          </section>
+
+          <Separator />
+
+          <section>
             <h3 className="text-sm font-semibold mb-2">Contato encontrado</h3>
             <div className="space-y-1.5 text-sm">
               <div className="flex items-center gap-2">
