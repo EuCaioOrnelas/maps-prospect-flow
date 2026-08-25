@@ -516,20 +516,15 @@ serve(async (req) => {
           .update({
             status: "done",
             results_found: 0,
+            error_message: allUsernames.length
+              ? "Todos os perfis encontrados já haviam sido prospectados antes. Marque \"incluir já prospectados\" ou tente outros termos."
+              : "Nenhum perfil do Instagram foi encontrado para esses termos. Tente palavras-chave mais amplas.",
             stats: { discovered: allUsernames.length, duplicated, analyzed: 0, serp_credits: SERP_CREDITS_USED },
           })
           .eq("id", searchRow.id);
-        return json({
-          search_id: searchRow.id,
-          prospects: [],
-          discovered: allUsernames.length,
-          duplicated,
-          message: allUsernames.length
-            ? "Todos os perfis encontrados já haviam sido prospectados antes. Marque \"incluir já prospectados\" ou tente outros termos."
-            : "Nenhum perfil do Instagram foi encontrado para esses termos. Tente palavras-chave mais amplas.",
-          usage: await getUsage(admin, u.user.id),
-        });
+        return;
       }
+
 
       // 4) Coleta de perfis (1 crédito SerpApi por perfil) — limitada ao pedido
       const toFetch = candidates.slice(0, Math.min(resultsRequested * 2, LIMITS.MAX_RESULTS_PER_SEARCH * 2));
