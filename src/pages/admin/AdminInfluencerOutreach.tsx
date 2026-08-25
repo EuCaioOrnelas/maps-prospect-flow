@@ -414,7 +414,12 @@ export default function AdminInfluencerOutreach() {
                               <ChannelAvatar src={p.thumbnail_url} name={p.channel_name} size={36} />
                               <div className="min-w-0">
                                 <p className="font-medium truncate">{p.channel_name}</p>
-                                <p className="text-xs text-muted-foreground truncate">{p.channel_handle || "Handle não informado"}</p>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  <span className="uppercase tracking-wide mr-1">
+                                    {p.platform === "instagram" ? "Instagram" : "YouTube"}
+                                  </span>
+                                  · {p.channel_handle || "Handle não informado"}
+                                </p>
                               </div>
                             </div>
                           </TableCell>

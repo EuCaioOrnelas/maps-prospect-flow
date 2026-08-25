@@ -578,6 +578,13 @@ serve(async (req) => {
             : null;
         const latestPostAt = posts.map((p) => p.published_at).filter(Boolean).sort().reverse()[0] ?? null;
 
+        // A SerpApi devolve a contagem de posts com nomes diferentes conforme o perfil.
+        // Nunca reportar menos posts do que os que realmente coletamos.
+        const rawPostsCount = Number(
+          pr.posts_count ?? pr.media_count ?? pr.post_count ?? pr.edge_owner_to_timeline_media?.count ?? 0,
+        );
+        const postsCount = Math.max(Number.isFinite(rawPostsCount) ? rawPostsCount : 0, posts.length);
+
         const bioLinks = (pr.bio_links ?? []).map((l: any) => l?.url).filter(Boolean);
         const contacts = extractContacts(
           [pr.biography, ...posts.map((p) => p.description)],
@@ -604,7 +611,7 @@ serve(async (req) => {
                     category: pr.category_name,
                     followers,
                     following: Number(pr.following ?? 0),
-                    posts_count: Number(pr.posts_count ?? 0),
+                    posts_count: postsCount,
                     is_verified: !!pr.is_verified,
                     is_business_account: !!pr.is_business_account,
                     is_private: !!pr.is_private,
@@ -646,7 +653,7 @@ serve(async (req) => {
           country: country,
           subscriber_count: followers,
           following_count: Number(pr.following ?? 0),
-          video_count: Number(pr.posts_count ?? 0),
+          video_count: postsCount,
           category_name: pr.category_name && pr.category_name !== "None" ? pr.category_name : null,
           is_verified: !!pr.is_verified,
           is_business_account: !!pr.is_business_account,

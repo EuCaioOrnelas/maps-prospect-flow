@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { ExternalLink, Globe, Instagram, Loader2, Mail, Youtube } from "lucide-react";
-import { PROSPECT_STATUSES, fitBadgeVariant, fmtNum } from "@/lib/influencerProspecting";
+import { PROSPECT_STATUSES, fitBadgeVariant, fmtNum, fmtPct, engagementQuality, engagementDotClass } from "@/lib/influencerProspecting";
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 
 
@@ -78,6 +78,30 @@ export function InfluencerDetailSheet({ prospect, open, onOpenChange, onStatusCh
           <section>
             <h3 className="text-sm font-semibold mb-2">Por que este canal é relevante?</h3>
             <p className="text-sm text-muted-foreground">{prospect.ai_summary || "Não informado"}</p>
+          </section>
+
+          <Separator />
+
+          <section>
+            <h3 className="text-sm font-semibold mb-2">Qualidade do engajamento</h3>
+            {(() => {
+              const q = engagementQuality(prospect.engagement_rate, prospect.subscriber_count);
+              return (
+                <div className="rounded-xl border border-border p-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${engagementDotClass(q.tone)}`} />
+                    <span className="text-sm font-medium">{q.label}</span>
+                    <Badge variant={q.variant} className="ml-auto">{fmtPct(prospect.engagement_rate)}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">{q.hint}</p>
+                  <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
+                    <div><p className="text-muted-foreground">Média de curtidas</p><p className="font-medium">{fmtNum(prospect.avg_likes)}</p></div>
+                    <div><p className="text-muted-foreground">Média de comentários</p><p className="font-medium">{fmtNum(prospect.avg_comments)}</p></div>
+                    <div><p className="text-muted-foreground">Publicações</p><p className="font-medium">{fmtNum(prospect.video_count)}</p></div>
+                  </div>
+                </div>
+              );
+            })()}
           </section>
 
           <Separator />
