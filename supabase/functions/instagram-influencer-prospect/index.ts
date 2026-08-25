@@ -437,7 +437,8 @@ serve(async (req) => {
       await admin.from("influencer_searches").update({ status: "error", error_message: message }).eq("id", searchRow.id);
     };
 
-    try {
+    const runPipeline = async () => {
+      try {
       // 1) Gerar consultas de descoberta com IA
       const queryGen = await openai(
         [
