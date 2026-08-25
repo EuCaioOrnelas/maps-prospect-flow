@@ -789,6 +789,9 @@ serve(async (req) => {
             duplicated,
             analyzed,
             filtered_out: filteredOut,
+            prescreen_kept: prescreenKept,
+            prescreen_dropped: prescreenDropped,
+
             serp_credits: SERP_CREDITS_USED,
           },
         })
