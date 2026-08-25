@@ -101,10 +101,12 @@ export default function AdminInfluencerProspecting() {
     const { data } = await (supabase as any)
       .from("influencer_prospects")
       .select("*")
+      .eq("platform", "youtube")
       .order("fit_score", { ascending: false })
       .limit(2000);
     setProspects(data ?? []);
   };
+
 
   const applyUsage = (u: any) => {
     if (!u) return;
