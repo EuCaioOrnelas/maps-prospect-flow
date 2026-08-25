@@ -25,3 +25,12 @@ Regras adicionais da busca (v3 — funil largo):
 - Fit Score: 1 chamada de IA por canal, concorrência 10.
 - Contatos públicos extraídos por regex: `contact_email`, `instagram_url`, `website_url`, `contact_links`.
 
+
+## Instagram (SerpApi) — edge function `instagram-influencer-prospect`
+- Descoberta: `engine=google` com `site:instagram.com <termo>` (até 3 páginas × 12 consultas geradas por IA).
+- Coleta: `engine=instagram_profile&profile_id=<username>` (1 crédito SerpApi por perfil).
+- Chaves: `SERP_API_KEY`..`SERP_API_KEY_6` com fallback automático. Nunca no frontend.
+- Mesmos limites do YouTube (10/admin/24h, 25 globais, cooldown 60s, rajada 3/10min, 50 perfis por busca), contados só para `influencer_searches.platform='instagram'`.
+- Dedupe por `influencer_prospects.username` (platform='instagram'); `youtube_channel_id` guarda `ig:<username>` para reaproveitar a unique (platform, youtube_channel_id).
+- Perfis coletados há menos de 7 dias não são recoletados (cache).
+- Action `reanalyze` roda só a IA (sem gastar SerpApi).
