@@ -708,6 +708,14 @@ export default function AdminInfluencerOutreach() {
         onOpenThread={() => { const p = detail; setDetail(null); setThread(p); }}
         finding={finding.includes(detail?.id)}
       />
+
+      <InfluencerApproachDialog
+        open={!!approach}
+        onOpenChange={(v) => !v && setApproach(null)}
+        prospect={approach?.prospect ?? null}
+        email={approach?.email ?? ""}
+        onSent={() => { loadProspects(); loadCampaigns(); }}
+      />
     </div>
     </TooltipProvider>
   );
