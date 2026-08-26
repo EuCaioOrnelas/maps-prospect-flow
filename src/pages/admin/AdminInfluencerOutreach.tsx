@@ -451,6 +451,10 @@ export default function AdminInfluencerOutreach() {
                               onClick={() => setThread(p)}>
                               <MessageSquare size={14} />
                              </IconAction>
+                             <IconAction label="Criar abordagem com IA" size="sm" variant="ghost"
+                              onClick={() => setApproach({ prospect: p, email })}>
+                              <Sparkles size={14} className="text-primary" />
+                             </IconAction>
                              <IconAction label="Buscar novos contatos" size="sm" variant="ghost" disabled={finding.includes(p.id)}
                               onClick={() => findContacts([p.id])}>
                               {finding.includes(p.id)
