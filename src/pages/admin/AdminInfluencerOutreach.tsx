@@ -26,9 +26,10 @@ import {
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 import { InfluencerContactsDialog } from "@/components/admin/partners/InfluencerContactsDialog";
 import { InfluencerThreadDialog } from "@/components/admin/partners/InfluencerThreadDialog";
+import { InfluencerApproachDialog } from "@/components/admin/partners/InfluencerApproachDialog";
 import {
   Loader2, Mail, Search, Send, RefreshCw, Plus, Trash2, FileText, Users,
-  CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter, Info, Inbox, MessageSquare, SendHorizonal,
+  CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter, Info, Inbox, MessageSquare, SendHorizonal, Sparkles,
 } from "lucide-react";
 
 
@@ -76,6 +77,7 @@ export default function AdminInfluencerOutreach() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [detail, setDetail] = useState<any | null>(null);
   const [thread, setThread] = useState<any | null>(null);
+  const [approach, setApproach] = useState<{ prospect: any; email: string } | null>(null);
   const [testingTemplate, setTestingTemplate] = useState<string | null>(null);
 
   // ── Campanhas ─────────────────────────────────────────────────────────────
