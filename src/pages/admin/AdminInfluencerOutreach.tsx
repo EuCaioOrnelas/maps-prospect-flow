@@ -26,9 +26,10 @@ import {
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 import { InfluencerContactsDialog } from "@/components/admin/partners/InfluencerContactsDialog";
 import { InfluencerThreadDialog } from "@/components/admin/partners/InfluencerThreadDialog";
+import { InfluencerApproachDialog } from "@/components/admin/partners/InfluencerApproachDialog";
 import {
   Loader2, Mail, Search, Send, RefreshCw, Plus, Trash2, FileText, Users,
-  CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter, Info, Inbox, MessageSquare, SendHorizonal,
+  CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter, Info, Inbox, MessageSquare, SendHorizonal, Sparkles,
 } from "lucide-react";
 
 
@@ -76,6 +77,7 @@ export default function AdminInfluencerOutreach() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [detail, setDetail] = useState<any | null>(null);
   const [thread, setThread] = useState<any | null>(null);
+  const [approach, setApproach] = useState<{ prospect: any; email: string } | null>(null);
   const [testingTemplate, setTestingTemplate] = useState<string | null>(null);
 
   // ── Campanhas ─────────────────────────────────────────────────────────────
@@ -451,6 +453,10 @@ export default function AdminInfluencerOutreach() {
                               onClick={() => setThread(p)}>
                               <MessageSquare size={14} />
                              </IconAction>
+                             <IconAction label="Criar abordagem com IA" size="sm" variant="ghost"
+                              onClick={() => setApproach({ prospect: p, email })}>
+                              <Sparkles size={14} className="text-primary" />
+                             </IconAction>
                              <IconAction label="Buscar novos contatos" size="sm" variant="ghost" disabled={finding.includes(p.id)}
                               onClick={() => findContacts([p.id])}>
                               {finding.includes(p.id)
@@ -701,6 +707,14 @@ export default function AdminInfluencerOutreach() {
         onFind={(id) => findContacts([id])}
         onOpenThread={() => { const p = detail; setDetail(null); setThread(p); }}
         finding={finding.includes(detail?.id)}
+      />
+
+      <InfluencerApproachDialog
+        open={!!approach}
+        onOpenChange={(v) => !v && setApproach(null)}
+        prospect={approach?.prospect ?? null}
+        email={approach?.email ?? ""}
+        onSent={() => { loadProspects(); loadCampaigns(); }}
       />
     </div>
     </TooltipProvider>

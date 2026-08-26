@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -3801,6 +3801,56 @@ export type Database = {
             columns: ["whatsapp_number_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_ai_approaches: {
+        Row: {
+          admin_id: string | null
+          analysis: Json
+          channel: string | null
+          created_at: string
+          id: string
+          message: string
+          prospect_id: string
+          research: Json
+          sent_at: string | null
+          status: string
+          subject: string
+        }
+        Insert: {
+          admin_id?: string | null
+          analysis?: Json
+          channel?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          prospect_id: string
+          research?: Json
+          sent_at?: string | null
+          status?: string
+          subject: string
+        }
+        Update: {
+          admin_id?: string | null
+          analysis?: Json
+          channel?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          prospect_id?: string
+          research?: Json
+          sent_at?: string | null
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_ai_approaches_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_prospects"
             referencedColumns: ["id"]
           },
         ]
