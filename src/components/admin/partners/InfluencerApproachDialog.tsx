@@ -82,6 +82,34 @@ export function InfluencerApproachDialog({ open, onOpenChange, prospect, email, 
     }
   }, [prospect]);
 
+  /** Carrega o rascunho já salvo; só gera com IA quando não existir nenhum. */
+  const loadOrGenerate = useCallback(async () => {
+    if (!prospect) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await supabase.functions.invoke("influencer-ai-approach", {
+        body: { action: "latest", prospect_id: prospect.id },
+      });
+      const a = (data as any)?.approach;
+      if (a?.message) {
+        setApproachId(a.id);
+        setAnalysis(a.analysis ?? null);
+        setResearch(a.research ?? null);
+        setSubject(a.subject || "");
+        setMessage(a.message || "");
+        setSaved(true);
+        historyRef.current = [a.message];
+        setLoading(false);
+        return;
+      }
+    } catch {
+      /* segue para geração */
+    }
+    setLoading(false);
+    generate(false);
+  }, [prospect, generate]);
+
   useEffect(() => {
     if (!open || !prospect) return;
     variantRef.current = 0;
@@ -91,13 +119,24 @@ export function InfluencerApproachDialog({ open, onOpenChange, prospect, email, 
     setSubject("");
     setMessage("");
     setApproachId(null);
-    generate(false);
+    setSaved(false);
+    loadOrGenerate();
   }, [open, prospect?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveDraft = useCallback(async (silent = false) => {
+    if (!approachId) return;
+    await supabase.functions.invoke("influencer-ai-approach", {
+      body: { action: "save", approach_id: approachId, subject, message },
+    });
+    setSaved(true);
+    if (!silent) toast({ title: "Rascunho salvo" });
+  }, [approachId, subject, message, toast]);
 
   const copy = async () => {
     await navigator.clipboard.writeText(`${subject}\n\n${message}`);
     toast({ title: "Abordagem copiada" });
   };
+
 
   const send = async () => {
     if (!prospect || !email) return;
