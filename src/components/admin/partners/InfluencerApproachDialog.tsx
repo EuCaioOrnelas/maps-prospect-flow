@@ -195,7 +195,7 @@ export function InfluencerApproachDialog({ open, onOpenChange, prospect, email, 
             <Sparkles size={18} className="text-primary" /> Abordagem personalizada por IA
           </DialogTitle>
           <DialogDescription>
-            A IA pesquisa o criador antes de escrever. Só usa informações reais encontradas — nada é inventado.
+            A IA pesquisa o criador antes de escrever e só usa informações reais — nada é inventado. O rascunho fica salvo: só gera de novo se você clicar em Regenerar.
           </DialogDescription>
         </DialogHeader>
 
@@ -304,7 +304,8 @@ export function InfluencerApproachDialog({ open, onOpenChange, prospect, email, 
 
         <Separator />
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={sending}>Fechar</Button>
+          <Button variant="ghost" disabled={sending}
+            onClick={async () => { if (!saved) await saveDraft(true); onOpenChange(false); }}>Fechar</Button>
           <Button variant="outline" onClick={() => generate(true)} disabled={loading || sending}>
             <RefreshCw size={14} className="mr-2" /> Regenerar
           </Button>
