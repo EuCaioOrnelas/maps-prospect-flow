@@ -179,11 +179,13 @@ function qualityCheck(out: any) {
   let msg = String(out?.mensagem || "").trim();
   const words = msg.split(/\s+/).filter(Boolean).length;
   if (!msg) issues.push("Mensagem vazia.");
-  if (words < 80) issues.push("Mensagem muito curta.");
-  if (words > 230) issues.push("Mensagem longa demais.");
-  if (!/\?\s*$|\?\s*\n*$|\?/.test(msg)) issues.push("Sem pergunta final (CTA).");
-  const genericos = /(seu conte[úu]do é incr[íi]vel|adorei seu perfil|trabalho sensacional|espero que esta mensagem)/i;
+  if (words < 100) issues.push("Mensagem muito curta.");
+  if (words > 240) issues.push("Mensagem longa demais.");
+  if (!/\?/.test(msg)) issues.push("Sem pergunta final (CTA).");
+  const genericos = /(seu conte[úu]do é incr[íi]vel|adorei seu perfil|trabalho sensacional|espero que esta mensagem|grande autoridade)/i;
   if (genericos.test(msg)) issues.push("Elogio genérico detectado.");
+  if (/afiliad|cupom|renda extra|multin[íi]vel/i.test(msg)) issues.push("Linguagem de afiliado detectada — deveria soar como parceria.");
+  if (!/parceri/i.test(msg)) issues.push("A mensagem não posiciona a oportunidade como parceria.");
   // Nunca prometer ganho garantido.
   msg = msg.replace(/voc[êe] (vai|irá) (ganhar|faturar|receber)/gi, "é possível chegar a");
   return { message: msg, words, issues };
