@@ -17,7 +17,7 @@ import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 import { textToEmailHtml } from "@/lib/influencerOutreach";
 import {
   Loader2, Sparkles, Send, Copy, RefreshCw, Search, AlertTriangle,
-  CheckCircle2, Target, FileText, Wand2,
+  CheckCircle2, Target, FileText, Wand2, Save,
 } from "lucide-react";
 
 interface Props {
@@ -45,6 +45,7 @@ export function InfluencerApproachDialog({ open, onOpenChange, prospect, email, 
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [saved, setSaved] = useState(false);
   const variantRef = useRef(0);
   const historyRef = useRef<string[]>([]);
 
@@ -72,6 +73,7 @@ export function InfluencerApproachDialog({ open, onOpenChange, prospect, email, 
       setResearch(d.research);
       setSubject(d.subject || "");
       setMessage(d.message || "");
+      setSaved(true);
       historyRef.current = [...historyRef.current, d.message || ""].slice(-3);
     } catch (e: any) {
       setError(e?.message || "Não foi possível gerar a abordagem.");
@@ -82,6 +84,34 @@ export function InfluencerApproachDialog({ open, onOpenChange, prospect, email, 
     }
   }, [prospect]);
 
+  /** Carrega o rascunho já salvo; só gera com IA quando não existir nenhum. */
+  const loadOrGenerate = useCallback(async () => {
+    if (!prospect) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await supabase.functions.invoke("influencer-ai-approach", {
+        body: { action: "latest", prospect_id: prospect.id },
+      });
+      const a = (data as any)?.approach;
+      if (a?.message) {
+        setApproachId(a.id);
+        setAnalysis(a.analysis ?? null);
+        setResearch(a.research ?? null);
+        setSubject(a.subject || "");
+        setMessage(a.message || "");
+        setSaved(true);
+        historyRef.current = [a.message];
+        setLoading(false);
+        return;
+      }
+    } catch {
+      /* segue para geração */
+    }
+    setLoading(false);
+    generate(false);
+  }, [prospect, generate]);
+
   useEffect(() => {
     if (!open || !prospect) return;
     variantRef.current = 0;
@@ -91,13 +121,24 @@ export function InfluencerApproachDialog({ open, onOpenChange, prospect, email, 
     setSubject("");
     setMessage("");
     setApproachId(null);
-    generate(false);
+    setSaved(false);
+    loadOrGenerate();
   }, [open, prospect?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveDraft = useCallback(async (silent = false) => {
+    if (!approachId) return;
+    await supabase.functions.invoke("influencer-ai-approach", {
+      body: { action: "save", approach_id: approachId, subject, message },
+    });
+    setSaved(true);
+    if (!silent) toast({ title: "Rascunho salvo" });
+  }, [approachId, subject, message, toast]);
 
   const copy = async () => {
     await navigator.clipboard.writeText(`${subject}\n\n${message}`);
     toast({ title: "Abordagem copiada" });
   };
+
 
   const send = async () => {
     if (!prospect || !email) return;
@@ -154,7 +195,7 @@ export function InfluencerApproachDialog({ open, onOpenChange, prospect, email, 
             <Sparkles size={18} className="text-primary" /> Abordagem personalizada por IA
           </DialogTitle>
           <DialogDescription>
-            A IA pesquisa o criador antes de escrever. Só usa informações reais encontradas — nada é inventado.
+            A IA pesquisa o criador antes de escrever e só usa informações reais — nada é inventado. O rascunho fica salvo: só gera de novo se você clicar em Regenerar.
           </DialogDescription>
         </DialogHeader>
 
@@ -250,11 +291,11 @@ export function InfluencerApproachDialog({ open, onOpenChange, prospect, email, 
             <div className="flex flex-col min-h-0 space-y-3">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Assunto</Label>
-                <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
+                <Input value={subject} onChange={(e) => { setSubject(e.target.value); setSaved(false); }} />
               </div>
               <div className="space-y-1.5 flex-1 min-h-0 flex flex-col">
                 <Label className="text-xs text-muted-foreground">Mensagem</Label>
-                <Textarea rows={16} value={message} onChange={(e) => setMessage(e.target.value)}
+                <Textarea rows={16} value={message} onChange={(e) => { setMessage(e.target.value); setSaved(false); }}
                   className="leading-relaxed flex-1 min-h-[320px]" />
               </div>
             </div>
@@ -263,9 +304,13 @@ export function InfluencerApproachDialog({ open, onOpenChange, prospect, email, 
 
         <Separator />
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={sending}>Fechar</Button>
+          <Button variant="ghost" disabled={sending}
+            onClick={async () => { if (!saved) await saveDraft(true); onOpenChange(false); }}>Fechar</Button>
           <Button variant="outline" onClick={() => generate(true)} disabled={loading || sending}>
             <RefreshCw size={14} className="mr-2" /> Regenerar
+          </Button>
+          <Button variant="outline" onClick={() => saveDraft(false)} disabled={loading || sending || !approachId || saved}>
+            <Save size={14} className="mr-2" /> {saved ? "Salvo" : "Salvar rascunho"}
           </Button>
           <Button variant="outline" onClick={copy} disabled={loading || !message}>
             <Copy size={14} className="mr-2" /> Copiar
