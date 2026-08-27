@@ -222,6 +222,26 @@ serve(async (req) => {
       return json({ ok: true, items: data ?? [] });
     }
 
+    // Último rascunho salvo — evita regerar (e gastar IA) a cada abertura do modal.
+    if (action === "latest") {
+      if (!UUID_RE.test(prospectId)) return json({ error: "prospect_id inválido." }, 400);
+      const { data } = await admin.from("influencer_ai_approaches")
+        .select("*").eq("prospect_id", prospectId)
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      return json({ ok: true, approach: data ?? null });
+    }
+
+    // Salva edições manuais do admin no rascunho.
+    if (action === "save") {
+      const id = String(body.approach_id || "");
+      if (!UUID_RE.test(id)) return json({ error: "approach_id inválido." }, 400);
+      await admin.from("influencer_ai_approaches").update({
+        ...(body.subject !== undefined ? { subject: String(body.subject).slice(0, 300) } : {}),
+        ...(body.message !== undefined ? { message: String(body.message).slice(0, 8000) } : {}),
+      }).eq("id", id);
+      return json({ ok: true });
+    }
+
     if (action === "mark_sent") {
       const id = String(body.approach_id || "");
       if (!UUID_RE.test(id)) return json({ error: "approach_id inválido." }, 400);
