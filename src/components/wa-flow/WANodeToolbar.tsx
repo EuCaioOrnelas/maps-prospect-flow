@@ -4,8 +4,7 @@ import {
   HeadphonesIcon, CircleStop, Star, Send, MessageCircleReply,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import whatsappLogo from "@/assets/logos/whatsapp.svg";
-import instagramLogo from "@/assets/logos/instagram.svg";
+import { FaWhatsapp, FaInstagram } from "react-icons/fa6";
 import { isNodeAllowedInChannel, type FlowChannel } from "@/lib/flowChannels";
 
 interface WANodeToolbarProps {

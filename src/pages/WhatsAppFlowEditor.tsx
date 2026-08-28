@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   ArrowLeft, Undo2, Redo2, Trash2, PlayCircle, PanelLeftOpen, PanelLeftClose,
-  Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
+  MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
   HeadphonesIcon, CircleStop, Bot, ChevronDown, FlaskConical, Shuffle, Sheet, CalendarPlus, Mail, Database, BarChart3,
   Save, AlertCircle, Loader2, Star, Timer, Instagram, Send, MessageCircleReply,
 } from "lucide-react";
@@ -281,7 +281,9 @@ export default function WhatsAppFlowEditor() {
   const [testResetVersion, setTestResetVersion] = useState(0);
   const [clipboard, setClipboard] = useState<Node | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
-  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
+  const [openCategories, setOpenCategories] = useState<Set<string>>(
+    () => new Set(sidebarCategories.map((c) => c.label)),
+  );
   const [edgeToDelete, setEdgeToDelete] = useState<string | null>(null);
   const [editingEdge, setEditingEdge] = useState<{ id: string; label: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
