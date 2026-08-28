@@ -187,7 +187,6 @@ const sidebarCategories = [
     items: [
       { type: "action", icon: Settings, label: "Ação", desc: "Tag, Kanban, CRM", color: "text-cyan-400 bg-cyan-400/10" },
       { type: "handoff", icon: HeadphonesIcon, label: "Humano", desc: "Transferir para humano", color: "text-orange-400 bg-orange-400/10" },
-      { type: "ig_reply_comment", icon: MessageCircleReply, label: "Responder comentário", desc: "Resposta pública + direct", color: "text-fuchsia-500 bg-fuchsia-500/10", iconImg: instagramLogo },
       { type: "end", icon: CircleStop, label: "Encerramento", desc: "Encerrar o fluxo", color: "text-red-400 bg-red-400/10" },
     ],
   },
