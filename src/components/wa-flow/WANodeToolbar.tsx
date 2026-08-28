@@ -48,11 +48,7 @@ export function WANodeToolbar({ onAddNode, channel = "whatsapp" }: WANodeToolbar
               className="h-8 w-8 rounded-full hover:bg-muted"
               onClick={() => onAddNode(btn.type)}
             >
-              {btn.img ? (
-                <img src={btn.img} alt={btn.label} width={15} height={15} className="w-[15px] h-[15px] object-contain" />
-              ) : (
-                <btn.icon size={15} className={btn.color} />
-              )}
+              <btn.icon size={15} className={btn.color} />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-xs">
