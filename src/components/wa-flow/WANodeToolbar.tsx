@@ -14,15 +14,14 @@ interface WANodeToolbarProps {
 
 type ToolbarButton = {
   type: string;
-  icon?: any;
-  img?: string;
+  icon: any;
   label: string;
   color?: string;
 };
 
 const nodeButtons: ToolbarButton[] = [
-  { type: "entry", img: whatsappLogo, label: "Entrada WhatsApp" },
-  { type: "instagram_entry", img: instagramLogo, label: "Entrada Instagram" },
+  { type: "entry", icon: FaWhatsapp, label: "Entrada WhatsApp", color: "text-emerald-500" },
+  { type: "instagram_entry", icon: FaInstagram, label: "Entrada Instagram", color: "text-pink-500" },
   { type: "message", icon: MessageSquare, label: "Mensagem", color: "text-blue-400" },
   { type: "ig_send_dm", icon: Send, label: "Enviar Direct", color: "text-pink-500" },
   { type: "buttons", icon: ToggleLeft, label: "Botões", color: "text-indigo-400" },
