@@ -67,6 +67,18 @@ const OPENAI_MODEL = "gpt-4o";
 const MAX_NODES = 25;
 const MAX_GENERATION_ATTEMPTS = 2;
 
+const INSTAGRAM_ADDENDUM = `
+
+=== CANAL: INSTAGRAM ===
+Este fluxo será executado no Instagram (API oficial da Meta), não no WhatsApp.
+- Continue começando o fluxo com um nó "entry" — ele será convertido automaticamente no gatilho do Instagram.
+- Escreva no tom do Instagram: mais direto, informal e curto. Emojis com moderação.
+- Mensagens de texto têm limite de 1000 caracteres por envio.
+- Botões viram respostas rápidas: até 13 opções, cada título com no máximo 20 caracteres.
+- NÃO use documentos (PDF/arquivo) — no Instagram eles são entregues apenas como link.
+- Se o pedido do usuário citar comentários em publicações, deixe claro na primeira mensagem que o contato veio do comentário.
+`;
+
 const SYSTEM_PROMPT = `Você é um arquiteto expert em fluxos conversacionais para WhatsApp Business.
 Sua missão é transformar o pedido do usuário em um fluxo EXECUTÁVEL no editor, com nós preenchidos, conexões corretas e conteúdo real dentro dos cards.
 
@@ -954,14 +966,14 @@ const buildFlowRequestMessage = (prompt: string, feedback?: string) => {
   return parts.join("\n\n");
 };
 
-const callOpenAIForFlow = async (apiKey: string, prompt: string, feedback?: string): Promise<FlowDraft> => {
+const callOpenAIForFlow = async (apiKey: string, prompt: string, feedback?: string, channel: string = "whatsapp"): Promise<FlowDraft> => {
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: OPENAI_MODEL,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: channel === "instagram" ? SYSTEM_PROMPT + INSTAGRAM_ADDENDUM : SYSTEM_PROMPT },
         { role: "user", content: buildFlowRequestMessage(prompt, feedback) },
       ],
       tools: [FLOW_TOOL],
@@ -1150,7 +1162,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, flow_id } = await req.json();
+    const { prompt, flow_id, channel: channelInput } = await req.json();
+    const channel = channelInput === "instagram" ? "instagram" : "whatsapp";
     if (!prompt || !flow_id) {
       return new Response(JSON.stringify({ error: "prompt e flow_id são obrigatórios" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -1165,7 +1178,7 @@ serve(async (req) => {
 
     for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
       console.log(`[generate-wa-flow] Calling OpenAI attempt ${attempt}/${MAX_GENERATION_ATTEMPTS}...`);
-      const rawDraft = await callOpenAIForFlow(OPENAI_API_KEY, prompt, attempt > 1 && lastIssues.length > 0 ? lastIssues.map((i) => `- ${i}`).join("\n") : undefined);
+      const rawDraft = await callOpenAIForFlow(OPENAI_API_KEY, prompt, attempt > 1 && lastIssues.length > 0 ? lastIssues.map((i) => `- ${i}`).join("\n") : undefined, channel);
       const normalizedDraft = normalizeFlowDraft(rawDraft, prompt);
       const enrichedDraft = enrichFlowDraft(normalizedDraft, prompt);
       const simplifiedDraft = simplifyNonDynamicAiAgents(enrichedDraft, prompt);
@@ -1188,15 +1201,38 @@ serve(async (req) => {
     await sb.from("wa_flow_edges").delete().eq("flow_id", flow_id);
     await sb.from("wa_flow_nodes").delete().eq("flow_id", flow_id);
 
+    // Canal Instagram: o gatilho gerado como "entry" vira "instagram_entry"
+    // já vinculado à conta conectada do fluxo.
+    let igConnectionId: string | null = null;
+    if (channel === "instagram") {
+      const { data: flowRow } = await sb
+        .from("wa_automation_flows")
+        .select("instagram_connection_id")
+        .eq("id", flow_id)
+        .maybeSingle();
+      igConnectionId = (flowRow?.instagram_connection_id as string) || null;
+    }
+
     // Insert nodes
     const nodeIdMap: Record<string, string> = {};
     for (const node of flowDraft.nodes) {
       let nodeConfig = node.config || {};
       if (node.type === "buttons") nodeConfig = normalizeButtonsConfig(nodeConfig);
 
+      let nodeType: string = node.type;
+      if (channel === "instagram" && node.type === "entry") {
+        nodeType = "instagram_entry";
+        const kws = String(nodeConfig.keywords || "").trim();
+        nodeConfig = {
+          ...nodeConfig,
+          instagram_connection_id: igConnectionId,
+          trigger_type: kws ? "dm_keyword" : "any_dm",
+        };
+      }
+
       const { data, error } = await sb.from("wa_flow_nodes").insert({
         flow_id,
-        node_type: node.type,
+        node_type: nodeType,
         name: node.label || node.type,
         config: nodeConfig,
         position_x: node.position_x || 0,

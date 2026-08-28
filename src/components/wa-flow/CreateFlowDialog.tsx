@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Workflow, Sparkles, ArrowLeft, Loader2, Wand2, RefreshCw, ShieldAlert } from "lucide-react";
+import { Workflow, Sparkles, ArrowLeft, Loader2, Wand2, RefreshCw, ShieldAlert, Instagram, MessageSquare, Plus } from "lucide-react";
+import { useInstagramAccounts } from "@/hooks/useInstagramAccounts";
+import { InstagramConnectDialog } from "./InstagramConnectDialog";
+import type { FlowChannel } from "@/lib/flowChannels";
+import { cn } from "@/lib/utils";
 
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,13 +39,20 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
   const { user } = useAuth();
   const navigate = useNavigate();
   const { connections, loading: loadingGate } = useWebhookGate();
+  const [channel, setChannel] = useState<FlowChannel>("whatsapp");
+  const [igDialogOpen, setIgDialogOpen] = useState(false);
+  const { accounts: igAccounts, isLoading: loadingIg } = useInstagramAccounts();
+  const defaultIgAccount = igAccounts.find((a) => a.status === "active") || igAccounts[0] || null;
 
   // Only Meta connections with verified webhook can power a flow.
   const eligible = (connections || []).filter(
     (c) => !!c.webhook_verified_at && (c.status === "connected" || c.status === "active"),
   );
-  const hasEligible = eligible.length > 0;
+  const hasMetaEligible = eligible.length > 0;
   const defaultConnection = eligible[0] || null;
+  const isInstagram = channel === "instagram";
+  const hasEligible = isInstagram ? !!defaultIgAccount : hasMetaEligible;
+  const gateLoading = isInstagram ? loadingIg : loadingGate;
 
   useEffect(() => {
     if (open) {
@@ -52,15 +63,22 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
 
   const createBlank = useMutation({
     mutationFn: async () => {
-      if (!defaultConnection) throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos.");
+      if (isInstagram && !defaultIgAccount) {
+        throw new Error("Conecte uma conta profissional do Instagram antes de criar fluxos.");
+      }
+      if (!isInstagram && !defaultConnection) {
+        throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos.");
+      }
       const { data, error } = await supabase
         .from("wa_automation_flows")
         .insert({
           user_id: user!.id,
-          name: "Novo Fluxo",
+          name: isInstagram ? "Novo Fluxo Instagram" : "Novo Fluxo",
+          channel,
           api_type: "meta",
-          waba_connection_id: defaultConnection.id,
-        })
+          waba_connection_id: isInstagram ? null : defaultConnection!.id,
+          instagram_connection_id: isInstagram ? defaultIgAccount!.id : null,
+        } as any)
         .select()
         .single();
       if (error) throw error;
@@ -80,7 +98,10 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
         throw new Error("Descreva o que deseja para o fluxo");
       }
 
-      if (!defaultConnection) {
+      if (isInstagram && !defaultIgAccount) {
+        throw new Error("Conecte uma conta profissional do Instagram antes de criar fluxos.");
+      }
+      if (!isInstagram && !defaultConnection) {
         throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos.");
       }
 
@@ -89,10 +110,12 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
         .from("wa_automation_flows")
         .insert({
           user_id: user!.id,
-          name: "Fluxo IA",
+          name: isInstagram ? "Fluxo IA Instagram" : "Fluxo IA",
+          channel,
           api_type: "meta",
-          waba_connection_id: defaultConnection.id,
-        })
+          waba_connection_id: isInstagram ? null : defaultConnection!.id,
+          instagram_connection_id: isInstagram ? defaultIgAccount!.id : null,
+        } as any)
         .select()
         .single();
       if (flowErr) throw flowErr;
@@ -100,7 +123,7 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
 
       // 2. Call edge function to generate
       const { data: result, error: fnErr } = await supabase.functions.invoke("generate-wa-flow", {
-        body: { prompt: prompt.trim(), flow_id: flow.id },
+        body: { prompt: prompt.trim(), flow_id: flow.id, channel },
       });
 
       if (fnErr) throw fnErr;
@@ -135,6 +158,8 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
   };
 
   return (
+    <>
+    <InstagramConnectDialog open={igDialogOpen} onOpenChange={setIgDialogOpen} />
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden border-border/50 bg-card">
         {mode === "choose" ? (
@@ -144,7 +169,45 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
               <p className="text-sm text-muted-foreground">Escolha como deseja começar</p>
             </div>
 
-            {!loadingGate && !hasEligible && (
+            {/* Seletor de canal */}
+            <div className="mb-5 grid grid-cols-2 gap-2 p-1 rounded-xl bg-muted/40 border border-border">
+              {([
+                { id: "whatsapp" as const, label: "WhatsApp", Icon: MessageSquare },
+                { id: "instagram" as const, label: "Instagram", Icon: Instagram },
+              ]).map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => setChannel(id)}
+                  className={cn(
+                    "flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors",
+                    channel === id
+                      ? "bg-card text-foreground shadow-sm border border-border"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Icon size={14} className={id === "instagram" ? "text-pink-500" : "text-emerald-500"} />
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {isInstagram && !loadingIg && !defaultIgAccount && (
+              <div className="mb-6 flex items-start gap-3 rounded-lg border border-pink-500/40 bg-pink-500/5 p-3 text-sm">
+                <Instagram className="h-5 w-5 text-pink-500 shrink-0 mt-0.5" />
+                <div className="space-y-2">
+                  <p className="font-semibold text-foreground">Conecte uma conta do Instagram</p>
+                  <p className="text-xs text-muted-foreground">
+                    É necessário um perfil Empresa/Criador vinculado a uma Página do Facebook. O WhatsApp continua
+                    funcionando normalmente.
+                  </p>
+                  <Button size="sm" variant="outline" className="gap-1.5 h-7 text-xs" onClick={() => setIgDialogOpen(true)}>
+                    <Plus size={12} /> Conectar Instagram
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {!isInstagram && !loadingGate && !hasEligible && (
               <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
                 <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-1">
@@ -160,7 +223,7 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
               {/* Blank */}
               <button
                 onClick={() => createBlank.mutate()}
-                disabled={createBlank.isPending || !hasEligible || loadingGate}
+                disabled={createBlank.isPending || !hasEligible || gateLoading}
                 className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all text-center disabled:opacity-50 disabled:cursor-not-allowed"
 
               >
@@ -178,7 +241,7 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
               {/* AI */}
               <button
                 onClick={() => hasEligible && setMode("ai")}
-                disabled={!hasEligible || loadingGate}
+                disabled={!hasEligible || gateLoading}
                 className="group relative flex flex-col items-center gap-4 p-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 hover:bg-emerald-500/10 transition-all text-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Badge className="absolute -top-2 right-3 bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 shadow-md">
@@ -277,5 +340,6 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 }
