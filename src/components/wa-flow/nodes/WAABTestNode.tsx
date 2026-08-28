@@ -37,8 +37,8 @@ export function WAABTestNode({ data }: NodeProps) {
     <div ref={nodeRef} className="bg-card border border-border rounded-xl shadow-sm w-56 relative">
       <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
-        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-          <FlaskConical size={16} className="text-emerald-400" />
+        <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+          <FlaskConical size={16} className="text-purple-400" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">

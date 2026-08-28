@@ -16,8 +16,8 @@ export function WAHandoffNode({ data }: NodeProps) {
     <div className="bg-card border border-border rounded-xl shadow-sm w-52">
       <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-4 py-3">
-        <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
-          <HeadphonesIcon size={16} className="text-orange-400" />
+        <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0">
+          <HeadphonesIcon size={16} className="text-cyan-400" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">{String((data as any).label || "Humano")}</p>
