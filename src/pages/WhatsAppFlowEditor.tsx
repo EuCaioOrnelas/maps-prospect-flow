@@ -26,7 +26,8 @@ import {
 } from "lucide-react";
 import gmailIcon from "@/assets/icons/gmail-sm.png";
 import sheetsIcon from "@/assets/icons/google-sheets-sm.png";
-import { FaWhatsapp, FaInstagram } from "react-icons/fa6";
+import { FaInstagram } from "react-icons/fa";
+import { FaWhatsapp } from "react-icons/fa6";
 import calendarIcon from "@/assets/icons/google-calendar-sm.png";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
@@ -482,7 +483,9 @@ export default function WhatsAppFlowEditor() {
       const newY = lastNode ? lastNode.position.y + (offsetIndex % 3) * 30 : 200;
 
       const nameMap: Record<string, string> = {
-        entry: "Entrada", message: "Mensagem", buttons: "Botões",
+        entry: "Entrada WhatsApp", instagram_entry: "Entrada Instagram",
+        ig_send_dm: "Enviar Direct", ig_reply_comment: "Responder comentário",
+        message: "Mensagem", buttons: "Botões",
         condition: "Condição", wait: "Espera", action: "Ação",
         handoff: "Humano", end: "Encerramento", ai_agent: "Agente IA",
         ab_test: "Teste A/B", random_split: "Random Split",
@@ -520,6 +523,14 @@ export default function WhatsAppFlowEditor() {
           no_suggestion_message: "Obrigado pelo seu feedback. Sua avaliação foi registrada.",
         },
         message: { after_send: "continue" },
+        instagram_entry: {
+          instagram_connection_id: null,
+          trigger_type: "any_dm",
+          keywords: "",
+          exact_match: false,
+        },
+        ig_send_dm: { contents: [], after_send: "continue" },
+        ig_reply_comment: { reply_text: "", dm_text: "", hide_comment: false },
       };
 
       const newNode: Node = {
@@ -608,13 +619,9 @@ export default function WhatsAppFlowEditor() {
   const channel = useMemo(() => normalizeChannel((flow as any)?.channel), [flow]);
   const channelMeta = FLOW_CHANNELS[channel];
 
-  const visibleCategories = useMemo(
-    () =>
-      sidebarCategories
-        .map((cat) => ({ ...cat, items: cat.items.filter((it) => isNodeAllowedInChannel(it.type, channel)) }))
-        .filter((cat) => cat.items.length > 0),
-    [channel],
-  );
+  // Keep both channel categories visible so users can discover the Instagram blocks.
+  // Incompatible cards remain disabled; a flow itself continues to run on one channel only.
+  const visibleCategories = sidebarCategories;
 
   const igEntryConfig = useMemo(() => {
     const n = nodes.find((x) => x.type === "instagram_entry");
@@ -1120,13 +1127,34 @@ export default function WhatsAppFlowEditor() {
                       {cat.items.map((item) => (
                         <div
                           key={item.type}
-                          draggable
+                          draggable={isNodeAllowedInChannel(item.type, channel)}
                           onDragStart={(e) => {
+                            if (!isNodeAllowedInChannel(item.type, channel)) {
+                              e.preventDefault();
+                              return;
+                            }
                             e.dataTransfer.setData("application/wa-node-type", item.type);
                             e.dataTransfer.effectAllowed = "move";
                           }}
-                          onClick={() => handleAddNode(item.type)}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:bg-muted/40 hover:border-primary/30 transition-all duration-200 text-left group shadow-sm cursor-grab active:cursor-grabbing active:shadow-lg active:scale-[1.02] active:border-primary/50"
+                          onClick={() => {
+                            if (!isNodeAllowedInChannel(item.type, channel)) {
+                              toast.info(
+                                channel === "whatsapp"
+                                  ? "Este card está disponível em fluxos do Instagram. Crie um novo fluxo e selecione Instagram."
+                                  : "Este card está disponível em fluxos do WhatsApp.",
+                              );
+                              return;
+                            }
+                            handleAddNode(item.type);
+                          }}
+                          aria-disabled={!isNodeAllowedInChannel(item.type, channel)}
+                          title={!isNodeAllowedInChannel(item.type, channel) ? `Disponível em fluxos do ${item.type === "entry" ? "WhatsApp" : "Instagram"}` : undefined}
+                          className={cn(
+                            "w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card transition-all duration-200 text-left group shadow-sm",
+                            isNodeAllowedInChannel(item.type, channel)
+                              ? "hover:bg-muted/40 hover:border-primary/30 cursor-grab active:cursor-grabbing active:shadow-lg active:scale-[1.02] active:border-primary/50"
+                              : "cursor-not-allowed opacity-50",
+                          )}
                         >
                           <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
                             {(item as any).iconImg ? (
@@ -1158,6 +1186,10 @@ export default function WhatsAppFlowEditor() {
             e.preventDefault();
             const type = e.dataTransfer.getData("application/wa-node-type");
             if (!type || !reactFlowWrapper.current) return;
+            if (!isNodeAllowedInChannel(type, channel)) {
+              toast.error(`Este bloco não pertence ao canal ${channelMeta.label}.`);
+              return;
+            }
             const bounds = reactFlowWrapper.current.getBoundingClientRect();
             // Use screenToFlowPosition if available via ref, otherwise fallback with viewport calc
             const rfInstance = (reactFlowWrapper.current as any).__rfInstance;
@@ -1168,7 +1200,9 @@ export default function WhatsAppFlowEditor() {
               position = { x: e.clientX - bounds.left - 100, y: e.clientY - bounds.top - 40 };
             }
             const nameMap: Record<string, string> = {
-              entry: "Entrada", message: "Mensagem", buttons: "Botões",
+              entry: "Entrada WhatsApp", instagram_entry: "Entrada Instagram",
+              ig_send_dm: "Enviar Direct", ig_reply_comment: "Responder comentário",
+              message: "Mensagem", buttons: "Botões",
               condition: "Condição", wait: "Espera", action: "Ação",
               handoff: "Humano", end: "Encerramento", ai_agent: "Agente IA",
               ab_test: "Teste A/B", random_split: "Random Split",
@@ -1188,6 +1222,14 @@ export default function WhatsAppFlowEditor() {
                   { id: "out_1", name: "Saída 2" },
                 ],
               },
+              instagram_entry: {
+                instagram_connection_id: null,
+                trigger_type: "any_dm",
+                keywords: "",
+                exact_match: false,
+              },
+              ig_send_dm: { contents: [], after_send: "continue" },
+              ig_reply_comment: { reply_text: "", dm_text: "", hide_comment: false },
             };
             const newNode: Node = {
               id: `temp-${Date.now()}`,
