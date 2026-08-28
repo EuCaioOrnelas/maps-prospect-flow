@@ -1,7 +1,7 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
 import { Phone, AlertTriangle, Radio, Wifi } from "lucide-react";
-import whatsappLogo from "@/assets/logos/whatsapp.svg";
+import { FaWhatsapp } from "react-icons/fa6";
 
 const triggerLabels: Record<string, string> = {
   keyword: "Palavra-chave",
