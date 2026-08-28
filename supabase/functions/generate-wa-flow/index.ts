@@ -67,6 +67,18 @@ const OPENAI_MODEL = "gpt-4o";
 const MAX_NODES = 25;
 const MAX_GENERATION_ATTEMPTS = 2;
 
+const INSTAGRAM_ADDENDUM = `
+
+=== CANAL: INSTAGRAM ===
+Este fluxo será executado no Instagram (API oficial da Meta), não no WhatsApp.
+- Continue começando o fluxo com um nó "entry" — ele será convertido automaticamente no gatilho do Instagram.
+- Escreva no tom do Instagram: mais direto, informal e curto. Emojis com moderação.
+- Mensagens de texto têm limite de 1000 caracteres por envio.
+- Botões viram respostas rápidas: até 13 opções, cada título com no máximo 20 caracteres.
+- NÃO use documentos (PDF/arquivo) — no Instagram eles são entregues apenas como link.
+- Se o pedido do usuário citar comentários em publicações, deixe claro na primeira mensagem que o contato veio do comentário.
+`;
+
 const SYSTEM_PROMPT = `Você é um arquiteto expert em fluxos conversacionais para WhatsApp Business.
 Sua missão é transformar o pedido do usuário em um fluxo EXECUTÁVEL no editor, com nós preenchidos, conexões corretas e conteúdo real dentro dos cards.
 
@@ -961,7 +973,7 @@ const callOpenAIForFlow = async (apiKey: string, prompt: string, feedback?: stri
     body: JSON.stringify({
       model: OPENAI_MODEL,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: channel === "instagram" ? SYSTEM_PROMPT + INSTAGRAM_ADDENDUM : SYSTEM_PROMPT },
         { role: "user", content: buildFlowRequestMessage(prompt, feedback) },
       ],
       tools: [FLOW_TOOL],

@@ -40,8 +40,9 @@ const CHANNEL_ONLY_NODES: Record<string, FlowChannel> = {
 /** Blocos que o canal não suporta tecnicamente. */
 const UNSUPPORTED_BY_CHANNEL: Record<FlowChannel, string[]> = {
   whatsapp: [],
-  // O Instagram não tem listas interativas nem templates fora da janela.
-  instagram: ["rating"],
+  // Listas interativas e templates fora da janela viram quick replies no Instagram,
+  // então todos os blocos genéricos continuam disponíveis.
+  instagram: [],
 };
 
 export function isNodeAllowedInChannel(nodeType: string, channel: FlowChannel): boolean {
