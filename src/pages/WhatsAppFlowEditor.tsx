@@ -160,45 +160,45 @@ const sidebarCategories = [
   {
     label: "Instagram",
     items: [
-      { type: "ig_send_dm", icon: Send, label: "Enviar Direct", desc: "Mensagem no direct do Instagram", color: STD },
-      { type: "ig_reply_comment", icon: MessageCircleReply, label: "Responder comentário", desc: "Resposta pública + direct", color: STD },
+      { type: "ig_send_dm", icon: Send, label: "Enviar Direct", desc: "Mensagem no direct do Instagram", color: COLOR_INSTAGRAM },
+      { type: "ig_reply_comment", icon: MessageCircleReply, label: "Responder comentário", desc: "Resposta pública + direct", color: COLOR_INSTAGRAM },
     ],
   },
   {
     label: "Mensagens",
     items: [
-      { type: "message", icon: MessageSquare, label: "Mensagem", desc: "Texto, imagem, áudio, vídeo", color: STD },
-      { type: "buttons", icon: ToggleLeft, label: "Botões", desc: "Respostas rápidas ou lista", color: STD },
+      { type: "message", icon: MessageSquare, label: "Mensagem", desc: "Texto, imagem, áudio, vídeo", color: COLOR_MESSAGES },
+      { type: "buttons", icon: ToggleLeft, label: "Botões", desc: "Respostas rápidas ou lista", color: COLOR_MESSAGES },
     ],
   },
   {
     label: "Lógica",
     items: [
-      { type: "condition", icon: GitBranch, label: "Condição", desc: "Sim/Não para bifurcação", color: STD },
-      { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: STD },
-      { type: "data_collect", icon: Database, label: "Coleta de Dados", desc: "Pergunta e salva em variável", color: STD },
-      { type: "ab_test", icon: FlaskConical, label: "Teste A/B", desc: "Divide leads e metrifica", color: STD },
-      { type: "random_split", icon: Shuffle, label: "Random Split", desc: "Distribui aleatoriamente", color: STD },
+      { type: "condition", icon: GitBranch, label: "Condição", desc: "Sim/Não para bifurcação", color: COLOR_LOGIC },
+      { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: COLOR_LOGIC },
+      { type: "data_collect", icon: Database, label: "Coleta de Dados", desc: "Pergunta e salva em variável", color: COLOR_LOGIC },
+      { type: "ab_test", icon: FlaskConical, label: "Teste A/B", desc: "Divide leads e metrifica", color: COLOR_LOGIC },
+      { type: "random_split", icon: Shuffle, label: "Random Split", desc: "Distribui aleatoriamente", color: COLOR_LOGIC },
     ],
   },
   {
     label: "Inteligência",
     items: [
-      { type: "ai_agent", icon: Bot, label: "Agente IA", desc: "IA responde e direciona", color: STD },
+      { type: "ai_agent", icon: Bot, label: "Agente IA", desc: "IA responde e direciona", color: COLOR_AI },
     ],
   },
   {
     label: "Atendimento",
     items: [
-      { type: "rating", icon: Star, label: "Avaliação", desc: "NPS, estrelas, feedback e sugestões", color: STD },
+      { type: "rating", icon: Star, label: "Avaliação", desc: "NPS, estrelas, feedback e sugestões", color: COLOR_SERVICE },
     ],
   },
   {
     label: "Ações",
     items: [
-      { type: "action", icon: Settings, label: "Ação", desc: "Tag, Kanban, CRM", color: STD },
-      { type: "handoff", icon: HeadphonesIcon, label: "Humano", desc: "Transferir para humano", color: STD },
-      { type: "end", icon: CircleStop, label: "Encerramento", desc: "Encerrar o fluxo", color: STD },
+      { type: "action", icon: Settings, label: "Ação", desc: "Tag, Kanban, CRM", color: COLOR_ACTIONS },
+      { type: "handoff", icon: HeadphonesIcon, label: "Humano", desc: "Transferir para humano", color: COLOR_ACTIONS },
+      { type: "end", icon: CircleStop, label: "Encerramento", desc: "Encerrar o fluxo", color: COLOR_ACTIONS },
     ],
   },
   {
