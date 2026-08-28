@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Workflow, Sparkles, ArrowLeft, Loader2, Wand2, RefreshCw, ShieldAlert, Instagram, MessageSquare, Plus } from "lucide-react";
 import { useInstagramAccounts } from "@/hooks/useInstagramAccounts";
 import { InstagramConnectDialog } from "./InstagramConnectDialog";
+import { InstagramAISimulation } from "./InstagramAISimulation";
 import type { FlowChannel } from "@/lib/flowChannels";
 import { cn } from "@/lib/utils";
 
