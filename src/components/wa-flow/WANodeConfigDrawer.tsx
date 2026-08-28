@@ -2865,6 +2865,10 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
     }));
   };
 
+  const updateConfigPatch = (patch: Record<string, any>) => {
+    setConfig((prev: any) => ({ ...prev, ...patch }));
+  };
+
   const getNextInteractiveId = (items: any[], prefix: "btn" | "item") => {
     const highestIndex = items.reduce((max: number, item: any) => {
       const rawId = typeof item === "string" ? "" : String(item?.id || "");
@@ -2937,7 +2941,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== INSTAGRAM: ENTRADA ===== */}
           {node.type === "instagram_entry" && (
-            <IGEntryConfig config={config} updateConfig={updateConfig} />
+            <IGEntryConfig config={config} updateConfig={updateConfigPatch} />
           )}
 
           {/* ===== INSTAGRAM: ENVIAR DIRECT ===== */}
@@ -2952,7 +2956,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
                 </div>
                 <Switch
                   checked={config.after_send === "wait"}
-                  onCheckedChange={(v) => updateConfig({ after_send: v ? "wait" : "continue" })}
+                  onCheckedChange={(v) => updateConfig("after_send", v ? "wait" : "continue")}
                 />
               </div>
             </div>
@@ -2960,7 +2964,7 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
 
           {/* ===== INSTAGRAM: RESPONDER COMENTÁRIO ===== */}
           {node.type === "ig_reply_comment" && (
-            <IGReplyCommentConfig config={config} updateConfig={updateConfig} />
+            <IGReplyCommentConfig config={config} updateConfig={updateConfigPatch} />
           )}
 
           {/* ===== MESSAGE NODE ===== */}
