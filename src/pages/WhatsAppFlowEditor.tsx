@@ -26,8 +26,7 @@ import {
 } from "lucide-react";
 import gmailIcon from "@/assets/icons/gmail-sm.png";
 import sheetsIcon from "@/assets/icons/google-sheets-sm.png";
-import whatsappLogo from "@/assets/logos/whatsapp.svg";
-import instagramLogo from "@/assets/logos/instagram.svg";
+import { FaWhatsapp, FaInstagram } from "react-icons/fa6";
 import calendarIcon from "@/assets/icons/google-calendar-sm.png";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
