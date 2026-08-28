@@ -58,8 +58,8 @@ export function WAButtonsNode({ data }: NodeProps) {
       )}
       <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
-        <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
-          <Icon size={16} className="text-indigo-400" />
+        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+          <Icon size={16} className="text-blue-400" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">{String((data as any).label || "Botões")}</p>
@@ -83,7 +83,7 @@ export function WAButtonsNode({ data }: NodeProps) {
               ref={(el) => { itemRefs.current[i] = el; }}
               className="text-[10px] bg-muted/50 rounded px-2 py-1.5 truncate text-foreground/80 flex items-center gap-1.5"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
               {item.title}
             </div>
           ))}
