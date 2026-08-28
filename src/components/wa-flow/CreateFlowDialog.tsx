@@ -340,5 +340,6 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 }
