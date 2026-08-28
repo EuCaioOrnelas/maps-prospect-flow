@@ -1,6 +1,6 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
-import { FaInstagram } from "react-icons/fa6";
+import { FaInstagram } from "react-icons/fa";
 import { igTriggerLabel } from "@/lib/flowChannels";
 
 export function IGEntryNode({ data }: NodeProps) {
