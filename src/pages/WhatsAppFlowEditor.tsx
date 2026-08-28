@@ -140,7 +140,14 @@ const defaultEdgeOptions = {
 };
 
 // Cor padrão usada por todas as categorias (exceto Gatilho de Ativação e Integrações)
-const STD = "text-primary bg-primary/10";
+// Cores por categoria — cada categoria tem sua cor, espelhada nos cards do canvas.
+// Exceções: "Gatilho de Ativação" e "Integrações" usam cores de marca por item.
+const COLOR_INSTAGRAM = "text-pink-500 bg-pink-500/10";
+const COLOR_MESSAGES = "text-blue-500 bg-blue-500/10";
+const COLOR_LOGIC = "text-purple-500 bg-purple-500/10";
+const COLOR_AI = "text-violet-500 bg-violet-500/10";
+const COLOR_SERVICE = "text-amber-500 bg-amber-500/10";
+const COLOR_ACTIONS = "text-cyan-500 bg-cyan-500/10";
 
 const sidebarCategories = [
   {
