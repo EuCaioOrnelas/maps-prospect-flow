@@ -396,6 +396,130 @@ Deno.serve(async (req) => {
         }
       }
 
+      // ============================================================
+      // INSTAGRAM (Meta oficial) — DMs, respostas de story e comentários
+      // Não altera nada do fluxo do WhatsApp: é um ramo isolado.
+      // ============================================================
+      if (body.object === 'instagram') {
+        const SB_URL_IG = Deno.env.get('SUPABASE_URL')!;
+        const SB_KEY_IG = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+        const runIgFlow = async (payload: Record<string, unknown>) => {
+          await fetch(`${SB_URL_IG}/functions/v1/wa-flow-runner`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SB_KEY_IG}` },
+            body: JSON.stringify(payload),
+          }).catch((e) => console.error('[meta-webhook] IG wa-flow-runner failed:', e));
+        };
+
+        for (const entry of body.entry || []) {
+          const igUserId = String(entry.id || '');
+          if (!igUserId) continue;
+
+          const { data: igConn } = await supabase
+            .from('user_instagram_connections')
+            .select('id, user_id, owner_user_id, ig_user_id')
+            .eq('ig_user_id', igUserId)
+            .eq('status', 'active')
+            .limit(1)
+            .maybeSingle();
+
+          if (!igConn) {
+            console.warn(`[meta-webhook] IG ${igUserId} sem conexão ativa — ignorando`);
+            continue;
+          }
+          const igUser = igConn.user_id as string;
+          const igOwner = (igConn.owner_user_id as string) || igUser;
+
+          // ---------- Mensagens diretas / respostas de story ----------
+          for (const ev of (entry.messaging || []) as any[]) {
+            const msg = ev.message;
+            if (!msg || msg.is_echo) continue; // ignora eco das próprias mensagens
+            const senderId = String(ev.sender?.id || '');
+            if (!senderId || senderId === igUserId) continue;
+
+            const text = String(msg.text || msg.quick_reply?.payload || '');
+            const isStoryReply = !!msg.reply_to?.story;
+            const eventType = isStoryReply ? 'story_reply' : 'dm';
+
+            const { error: dedupErr } = await supabase.from('instagram_webhook_events').insert({
+              connection_id: igConn.id,
+              owner_user_id: igOwner,
+              ig_user_id: igUserId,
+              event_type: eventType,
+              external_id: msg.mid ? String(msg.mid) : null,
+              sender_id: senderId,
+              payload: ev,
+              processed: true,
+            });
+            if (dedupErr && String(dedupErr.code) === '23505') {
+              console.log('[meta-webhook] IG evento duplicado ignorado', msg.mid);
+              continue;
+            }
+
+            await runIgFlow({
+              channel: 'instagram',
+              user_id: igUser,
+              contact_ref: senderId,
+              lead_phone: senderId,
+              lead_name: null,
+              incoming_text: text || null,
+              button_id: msg.quick_reply?.payload || null,
+              button_title: null,
+              ig_event_type: eventType,
+              thread_ref: senderId,
+              instagram_connection_id: igConn.id,
+              source: 'instagram',
+            });
+          }
+
+          // ---------- Comentários e menções ----------
+          for (const change of (entry.changes || []) as any[]) {
+            const field = change.field;
+            const value = change.value || {};
+            if (field !== 'comments' && field !== 'mentions') continue;
+
+            const commentId = String(value.id || value.comment_id || '');
+            const fromId = String(value.from?.id || '');
+            if (fromId && fromId === igUserId) continue; // comentário da própria conta
+            const text = String(value.text || '');
+            const eventType = field === 'mentions' ? 'mention' : 'comment';
+
+            const { error: dedupErr } = await supabase.from('instagram_webhook_events').insert({
+              connection_id: igConn.id,
+              owner_user_id: igOwner,
+              ig_user_id: igUserId,
+              event_type: eventType,
+              external_id: commentId || null,
+              sender_id: fromId || null,
+              payload: value,
+              processed: true,
+            });
+            if (dedupErr && String(dedupErr.code) === '23505') {
+              console.log('[meta-webhook] IG comentário duplicado ignorado', commentId);
+              continue;
+            }
+
+            await runIgFlow({
+              channel: 'instagram',
+              user_id: igUser,
+              contact_ref: fromId || commentId,
+              lead_phone: fromId || commentId,
+              lead_name: value.from?.username || null,
+              incoming_text: text || null,
+              ig_event_type: eventType,
+              comment_id: commentId || null,
+              media_id: value.media?.id || null,
+              thread_ref: fromId || null,
+              instagram_connection_id: igConn.id,
+              source: 'instagram',
+            });
+          }
+        }
+
+        return new Response('OK', { status: 200 });
+      }
+
       if (body.object !== 'whatsapp_business_account') {
         return new Response('OK', { status: 200 });
       }

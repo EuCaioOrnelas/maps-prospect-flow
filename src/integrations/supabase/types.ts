@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -4566,6 +4566,56 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "influencer_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instagram_webhook_events: {
+        Row: {
+          connection_id: string | null
+          created_at: string
+          error: string | null
+          event_type: string
+          external_id: string | null
+          id: string
+          ig_user_id: string | null
+          owner_user_id: string | null
+          payload: Json
+          processed: boolean
+          sender_id: string | null
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string
+          error?: string | null
+          event_type: string
+          external_id?: string | null
+          id?: string
+          ig_user_id?: string | null
+          owner_user_id?: string | null
+          payload?: Json
+          processed?: boolean
+          sender_id?: string | null
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string
+          error?: string | null
+          event_type?: string
+          external_id?: string | null
+          id?: string
+          ig_user_id?: string | null
+          owner_user_id?: string | null
+          payload?: Json
+          processed?: boolean
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_webhook_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_instagram_connections"
             referencedColumns: ["id"]
           },
         ]
@@ -9469,6 +9519,63 @@ export type Database = {
         }
         Relationships: []
       }
+      user_instagram_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          id: string
+          ig_name: string | null
+          ig_user_id: string
+          ig_username: string | null
+          last_checked_at: string | null
+          last_error: string | null
+          owner_user_id: string
+          page_id: string | null
+          page_name: string | null
+          profile_picture_url: string | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          id?: string
+          ig_name?: string | null
+          ig_user_id: string
+          ig_username?: string | null
+          last_checked_at?: string | null
+          last_error?: string | null
+          owner_user_id: string
+          page_id?: string | null
+          page_name?: string | null
+          profile_picture_url?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          id?: string
+          ig_name?: string | null
+          ig_user_id?: string
+          ig_username?: string | null
+          last_checked_at?: string | null
+          last_error?: string | null
+          owner_user_id?: string
+          page_id?: string | null
+          page_name?: string | null
+          profile_picture_url?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_landing_source: {
         Row: {
           created_at: string
@@ -9831,6 +9938,7 @@ export type Database = {
       wa_automation_flows: {
         Row: {
           api_type: string | null
+          channel: string
           created_at: string
           default_out_of_window_template: Json | null
           description: string | null
@@ -9840,6 +9948,7 @@ export type Database = {
           inactivity_reset_enabled: boolean
           inactivity_target_node_id: string | null
           inactivity_timeout_seconds: number | null
+          instagram_connection_id: string | null
           name: string
           owner_user_id: string | null
           phone_number_id: string | null
@@ -9854,6 +9963,7 @@ export type Database = {
         }
         Insert: {
           api_type?: string | null
+          channel?: string
           created_at?: string
           default_out_of_window_template?: Json | null
           description?: string | null
@@ -9863,6 +9973,7 @@ export type Database = {
           inactivity_reset_enabled?: boolean
           inactivity_target_node_id?: string | null
           inactivity_timeout_seconds?: number | null
+          instagram_connection_id?: string | null
           name?: string
           owner_user_id?: string | null
           phone_number_id?: string | null
@@ -9877,6 +9988,7 @@ export type Database = {
         }
         Update: {
           api_type?: string | null
+          channel?: string
           created_at?: string
           default_out_of_window_template?: Json | null
           description?: string | null
@@ -9886,6 +9998,7 @@ export type Database = {
           inactivity_reset_enabled?: boolean
           inactivity_target_node_id?: string | null
           inactivity_timeout_seconds?: number | null
+          instagram_connection_id?: string | null
           name?: string
           owner_user_id?: string | null
           phone_number_id?: string | null
@@ -9959,8 +10072,11 @@ export type Database = {
         Row: {
           awaiting_input_until: string | null
           awaiting_node_id: string | null
+          channel: string
+          channel_account_id: string | null
           collected_data: Json | null
           completed_at: string | null
+          contact_ref: string | null
           created_at: string
           current_node_id: string | null
           current_node_name: string | null
@@ -9977,6 +10093,9 @@ export type Database = {
           owner_user_id: string | null
           started_at: string
           status: string
+          thread_ref: string | null
+          trigger_data: Json
+          trigger_type: string | null
           updated_at: string
           user_id: string
           wait_until: string | null
@@ -9984,8 +10103,11 @@ export type Database = {
         Insert: {
           awaiting_input_until?: string | null
           awaiting_node_id?: string | null
+          channel?: string
+          channel_account_id?: string | null
           collected_data?: Json | null
           completed_at?: string | null
+          contact_ref?: string | null
           created_at?: string
           current_node_id?: string | null
           current_node_name?: string | null
@@ -10002,6 +10124,9 @@ export type Database = {
           owner_user_id?: string | null
           started_at?: string
           status?: string
+          thread_ref?: string | null
+          trigger_data?: Json
+          trigger_type?: string | null
           updated_at?: string
           user_id: string
           wait_until?: string | null
@@ -10009,8 +10134,11 @@ export type Database = {
         Update: {
           awaiting_input_until?: string | null
           awaiting_node_id?: string | null
+          channel?: string
+          channel_account_id?: string | null
           collected_data?: Json | null
           completed_at?: string | null
+          contact_ref?: string | null
           created_at?: string
           current_node_id?: string | null
           current_node_name?: string | null
@@ -10027,6 +10155,9 @@ export type Database = {
           owner_user_id?: string | null
           started_at?: string
           status?: string
+          thread_ref?: string | null
+          trigger_data?: Json
+          trigger_type?: string | null
           updated_at?: string
           user_id?: string
           wait_until?: string | null
@@ -11331,6 +11462,9 @@ export type Database = {
         | "google_calendar"
         | "gmail"
         | "rating"
+        | "instagram_entry"
+        | "ig_reply_comment"
+        | "ig_send_dm"
       wa_flow_status: "draft" | "active" | "paused" | "archived"
       withdrawal_status: "pending" | "approved" | "rejected" | "paid"
     }
@@ -11524,6 +11658,9 @@ export const Constants = {
         "google_calendar",
         "gmail",
         "rating",
+        "instagram_entry",
+        "ig_reply_comment",
+        "ig_send_dm",
       ],
       wa_flow_status: ["draft", "active", "paused", "archived"],
       withdrawal_status: ["pending", "approved", "rejected", "paid"],

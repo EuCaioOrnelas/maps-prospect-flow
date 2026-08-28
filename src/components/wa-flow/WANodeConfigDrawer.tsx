@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, X, Upload, Info, MessageSquare, Image, FileAudio, Video, FileText, FileUp, AlertTriangle, CheckCircle2, Loader2, ExternalLink, ChevronDown, ChevronUp, KeyRound, BotMessageSquare, Bot, PowerOff, Calendar, Clock, Type, Mail, Bell, UserPlus, ListOrdered, Zap, MousePointerClick, List, Check, Target, ArrowRight, Repeat, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { MessageContentBuilder } from "./MessageContentBuilder";
+import { IGEntryConfig, IGReplyCommentConfig } from "./InstagramNodeConfig";
 import { OutOfWindowTemplateSection } from "./OutOfWindowTemplateSection";
 import type { Node, Edge } from "@xyflow/react";
 import { cn } from "@/lib/utils";
@@ -2932,6 +2933,34 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {/* ===== ENTRY NODE ===== */}
           {node.type === "entry" && (
             <EntryNodeConfig config={config} updateConfig={updateConfig} renderInfoBanner={renderInfoBanner} />
+          )}
+
+          {/* ===== INSTAGRAM: ENTRADA ===== */}
+          {node.type === "instagram_entry" && (
+            <IGEntryConfig config={config} updateConfig={updateConfig} />
+          )}
+
+          {/* ===== INSTAGRAM: ENVIAR DIRECT ===== */}
+          {node.type === "ig_send_dm" && (
+            <div className="space-y-4">
+              {renderInfoBanner("Mensagem enviada no direct do Instagram. Texto, imagem, vídeo e áudio são suportados; documentos viram link.")}
+              <MessageContentBuilder config={config} updateConfig={updateConfig} />
+              <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 p-3">
+                <div className="pr-3">
+                  <p className="text-xs font-medium text-foreground">Aguardar resposta</p>
+                  <p className="text-[11px] text-muted-foreground">Pausa o fluxo até o contato responder no direct</p>
+                </div>
+                <Switch
+                  checked={config.after_send === "wait"}
+                  onCheckedChange={(v) => updateConfig({ after_send: v ? "wait" : "continue" })}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ===== INSTAGRAM: RESPONDER COMENTÁRIO ===== */}
+          {node.type === "ig_reply_comment" && (
+            <IGReplyCommentConfig config={config} updateConfig={updateConfig} />
           )}
 
           {/* ===== MESSAGE NODE ===== */}

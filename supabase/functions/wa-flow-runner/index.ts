@@ -118,13 +118,21 @@ function interactiveItems(cfg: Record<string, any>): Array<{ id: string; title: 
 }
 
 // ---------- Meta Cloud API ----------
+type FlowChannel = "whatsapp" | "instagram";
+
 interface SendCtx {
+  channel: FlowChannel;
   token: string;
   phoneNumberId: string;
+  /** ID da conta profissional do Instagram (IG User ID) — usado no canal instagram */
+  igUserId?: string;
+  /** Comentário que originou a execução (canal instagram) */
+  commentId?: string | null;
   to: string;
   convId: string | null;
   userId: string;
   ownerId: string;
+  connectionId?: string | null;
 }
 
 async function logOutbound(ctx: SendCtx, content: string, type: string, wamid: string | null, ok: boolean) {
@@ -152,7 +160,112 @@ async function logOutbound(ctx: SendCtx, content: string, type: string, wamid: s
   }
 }
 
+/**
+ * Traduz o payload no formato WhatsApp Cloud para uma ou mais mensagens
+ * do Instagram Messaging (Send API). Mantém o motor único: os nós de
+ * mensagem/botões continuam iguais, só a entrega muda.
+ */
+function igMessagesFromPayload(payload: Record<string, any>, logText: string): Record<string, any>[] {
+  const t = payload.type;
+  const clip = (v: unknown) => String(v ?? "").slice(0, 1000);
+
+  if (t === "text") return [{ text: clip(payload.text?.body || logText) }];
+
+  if (t === "image" || t === "video") {
+    const url = payload[t]?.link;
+    const caption = payload[t]?.caption;
+    const msgs: Record<string, any>[] = [];
+    if (url) msgs.push({ attachment: { type: t, payload: { url, is_reusable: true } } });
+    if (caption) msgs.push({ text: clip(caption) });
+    return msgs.length ? msgs : [{ text: clip(logText) }];
+  }
+
+  if (t === "audio") {
+    const url = payload.audio?.link;
+    return url
+      ? [{ attachment: { type: "audio", payload: { url, is_reusable: true } } }]
+      : [{ text: clip(logText) }];
+  }
+
+  if (t === "document") {
+    // Instagram não aceita documentos: envia link + legenda como texto
+    const url = payload.document?.link;
+    const cap = payload.document?.caption;
+    return [{ text: clip([cap, url].filter(Boolean).join("\n") || logText) }];
+  }
+
+  if (t === "interactive") {
+    const i = payload.interactive || {};
+    const body = i.body?.text || logText;
+    const rows = i.type === "list"
+      ? (i.action?.sections?.[0]?.rows || []).map((r: any) => ({ id: r.id, title: r.title }))
+      : (i.action?.buttons || []).map((b: any) => ({ id: b.reply?.id, title: b.reply?.title }));
+    const quick = rows
+      .filter((r: any) => r?.title)
+      .slice(0, 13)
+      .map((r: any) => ({ content_type: "text", title: String(r.title).slice(0, 20), payload: String(r.id ?? r.title) }));
+    const msg: Record<string, any> = { text: clip(body) };
+    if (quick.length) msg.quick_replies = quick;
+    return [msg];
+  }
+
+  return [{ text: clip(logText) }];
+}
+
+async function igSend(ctx: SendCtx, payload: Record<string, any>, logText: string, logType: string) {
+  if (!ctx.igUserId) {
+    console.error("[wa-flow-runner] Instagram sem ig_user_id no contexto");
+    return false;
+  }
+  const messages = igMessagesFromPayload(payload, logText);
+  let ok = true;
+  for (const message of messages) {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${ctx.igUserId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${ctx.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ recipient: { id: ctx.to }, message }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      console.error("[wa-flow-runner] Instagram erro:", res.status, JSON.stringify(data));
+      ok = false;
+      break;
+    }
+  }
+  await logOutbound(ctx, logText, logType, null, ok);
+  return ok;
+}
+
+/** Responde publicamente a um comentário do Instagram. */
+async function igReplyComment(ctx: SendCtx, commentId: string, message: string) {
+  if (!commentId || !message?.trim()) return false;
+  const res = await fetch(`https://graph.facebook.com/v21.0/${commentId}/replies`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${ctx.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ message: message.slice(0, 2200) }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    console.error("[wa-flow-runner] Instagram reply comment erro:", res.status, JSON.stringify(data));
+    return false;
+  }
+  return true;
+}
+
+/** Oculta/exibe um comentário do Instagram. */
+async function igHideComment(ctx: SendCtx, commentId: string, hide: boolean) {
+  if (!commentId) return false;
+  const res = await fetch(`https://graph.facebook.com/v21.0/${commentId}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${ctx.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ hide }),
+  });
+  if (!res.ok) console.error("[wa-flow-runner] Instagram hide comment falhou:", res.status);
+  return res.ok;
+}
+
 async function metaSend(ctx: SendCtx, payload: Record<string, any>, logText: string, logType = "text") {
+  if (ctx.channel === "instagram") return await igSend(ctx, payload, logText, logType);
   const res = await fetch(`https://graph.facebook.com/v21.0/${ctx.phoneNumberId}/messages`, {
     method: "POST",
     headers: { Authorization: `Bearer ${ctx.token}`, "Content-Type": "application/json" },
@@ -910,6 +1023,54 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
 
       }
 
+      // ===== Instagram =====
+      case "instagram_entry":
+        currentId = defaultTarget(edges, node.id);
+        break;
+
+      case "ig_send_dm": {
+        if (ctx.send.channel !== "instagram") {
+          console.warn("[wa-flow-runner] nó ig_send_dm ignorado fora do canal Instagram");
+          currentId = defaultTarget(edges, node.id);
+          break;
+        }
+        await sendMessageNode(ctx.send, cfg, runtime.vars);
+        if (cfg.after_send === "wait") {
+          await persist(execution.id, {
+            status: "awaiting_input",
+            awaiting_node_id: node.id,
+            current_node_id: node.id,
+            current_node_name: node.name,
+            node_history: history,
+            collected_data: runtime.vars,
+          });
+          return;
+        }
+        currentId = defaultTarget(edges, node.id);
+        break;
+      }
+
+      case "ig_reply_comment": {
+        if (ctx.send.channel !== "instagram") {
+          console.warn("[wa-flow-runner] nó ig_reply_comment ignorado fora do canal Instagram");
+          currentId = defaultTarget(edges, node.id);
+          break;
+        }
+        const commentId =
+          ctx.send.commentId ||
+          (execution.trigger_data as any)?.comment_id ||
+          (execution.entry_data as any)?.comment_id ||
+          null;
+        const reply = interpolate(cfg.reply_text || cfg.content || "", runtime.vars);
+        if (commentId && reply) await igReplyComment(ctx.send, String(commentId), reply);
+        else if (!commentId) console.warn("[wa-flow-runner] ig_reply_comment sem comment_id no contexto");
+        if (commentId && cfg.hide_comment) await igHideComment(ctx.send, String(commentId), true);
+        const dm = interpolate(cfg.dm_text || "", runtime.vars);
+        if (dm) await sendText(ctx.send, dm);
+        currentId = defaultTarget(edges, node.id);
+        break;
+      }
+
       case "end": {
         const msg = interpolate(cfg.end_message || "", runtime.vars);
         if (msg) await sendText(ctx.send, msg);
@@ -950,6 +1111,31 @@ async function loadFlow(flowId: string) {
 }
 
 async function buildSendCtx(flow: any, phone: string, leadName: string | null, userId: string, ownerId: string): Promise<SendCtx | null> {
+  // ---- Canal Instagram ----
+  if ((flow.channel || "whatsapp") === "instagram") {
+    let igQuery = supabase
+      .from("user_instagram_connections")
+      .select("id,access_token,ig_user_id")
+      .eq("status", "active");
+    igQuery = flow.instagram_connection_id
+      ? igQuery.eq("id", flow.instagram_connection_id)
+      : igQuery.eq("owner_user_id", ownerId);
+    const { data: igConn } = await igQuery.limit(1).maybeSingle();
+    if (!igConn?.access_token || !igConn.ig_user_id) return null;
+    return {
+      channel: "instagram",
+      token: igConn.access_token,
+      phoneNumberId: "",
+      igUserId: igConn.ig_user_id,
+      commentId: null,
+      to: String(phone),
+      convId: null,
+      userId,
+      ownerId,
+      connectionId: igConn.id,
+    };
+  }
+
   let connQuery = supabase.from("user_waba_connections").select("id,access_token,phone_number_id").eq("status", "active");
   connQuery = flow.waba_connection_id
     ? connQuery.eq("id", flow.waba_connection_id)
@@ -985,12 +1171,14 @@ async function buildSendCtx(flow: any, phone: string, leadName: string | null, u
   }
 
   return {
+    channel: "whatsapp",
     token: conn.access_token,
     phoneNumberId: flow.phone_number_id || conn.phone_number_id,
     to: digits(phone),
     convId,
     userId,
     ownerId,
+    connectionId: conn.id,
   };
 }
 
@@ -1021,10 +1209,43 @@ function entryMatches(cfg: Record<string, any>, text: string, isFirstMessage: bo
   return false;
 }
 
+/**
+ * Gatilhos do canal Instagram.
+ * event: "comment" | "dm" | "story_reply" | "mention"
+ */
+function igEntryMatches(cfg: Record<string, any>, text: string, event: string, isFirstMessage: boolean): boolean {
+  const trigger = cfg.trigger_type || "any_dm";
+  const normalized = stripAccents(text || "").toLowerCase().trim();
+  const hasKeyword = () => {
+    const kws = String(cfg.keywords || "")
+      .split(",")
+      .map((k) => stripAccents(k.trim()).toLowerCase())
+      .filter(Boolean);
+    if (!kws.length) return false;
+    return cfg.exact_match ? kws.includes(normalized) : kws.some((k) => normalized.includes(k));
+  };
+
+  switch (trigger) {
+    case "any_dm": return event === "dm";
+    case "first_dm": return event === "dm" && isFirstMessage;
+    case "dm_keyword": return event === "dm" && hasKeyword();
+    case "any_comment": return event === "comment";
+    case "comment_keyword": return event === "comment" && hasKeyword();
+    case "story_reply": return event === "story_reply";
+    case "mention": return event === "mention";
+    default: return false;
+  }
+}
+
 // ---------- handler inbound ----------
 async function handleInbound(body: Record<string, any>) {
-  const phone = digits(body.lead_phone);
-  if (!phone) return json({ skipped: "sem telefone" });
+  const channel: FlowChannel = body.channel === "instagram" ? "instagram" : "whatsapp";
+  const isIg = channel === "instagram";
+  const igEvent = String(body.ig_event_type || "dm");
+  const commentId = body.comment_id ? String(body.comment_id) : null;
+
+  const phone = isIg ? String(body.contact_ref || body.lead_phone || "").trim() : digits(body.lead_phone);
+  if (!phone) return json({ skipped: isIg ? "sem contato do Instagram" : "sem telefone" });
   const userId = body.user_id;
   const tail = phone.slice(-8);
 
@@ -1046,6 +1267,7 @@ async function handleInbound(body: Record<string, any>) {
     .from("wa_flow_executions")
     .select("*")
     .eq("owner_user_id", ownerId)
+    .eq("channel", channel)
     .in("status", ["active", "running", "waiting", "awaiting_input"])
     .ilike("lead_phone", `%${tail}`)
     .order("updated_at", { ascending: false })
@@ -1057,7 +1279,8 @@ async function handleInbound(body: Record<string, any>) {
     if (!flow) return json({ skipped: "fluxo removido" });
     const { nodes, edges } = await loadFlow(flow.id);
     const send = await buildSendCtx(flow, phone, body.lead_name || running.lead_name, userId, ownerId);
-    if (!send) return json({ skipped: "sem conexão WhatsApp ativa" });
+    if (!send) return json({ skipped: isIg ? "sem conta Instagram ativa" : "sem conexão WhatsApp ativa" });
+    if (isIg) send.commentId = commentId || (running.trigger_data as any)?.comment_id || null;
 
     const vars = { ...(running.collected_data || {}), nome: body.lead_name || running.lead_name || "", telefone: phone };
     const runtime = { ...runtimeBase, vars };
@@ -1107,35 +1330,51 @@ async function handleInbound(body: Record<string, any>) {
   if (!flows?.length) return json({ skipped: "nenhum fluxo ativo" });
 
   // "primeira mensagem" é por contato (não por conta inteira)
-  const { data: convForCount } = await supabase
-    .from("chat_conversations")
-    .select("id")
-    .eq("owner_user_id", ownerId)
-    .ilike("contact_phone", `%${tail}`)
-    .limit(1)
-    .maybeSingle();
-  let previous = 0;
-  if (convForCount?.id) {
+  let isFirstMessage = true;
+  if (isIg) {
     const { count } = await supabase
-      .from("chat_messages")
+      .from("wa_flow_executions")
       .select("id", { count: "exact", head: true })
-      .eq("conversation_id", convForCount.id)
-      .eq("direction", "inbound");
-    previous = count ?? 0;
+      .eq("owner_user_id", ownerId)
+      .eq("channel", "instagram")
+      .eq("contact_ref", phone);
+    isFirstMessage = (count ?? 0) === 0;
+  } else {
+    const { data: convForCount } = await supabase
+      .from("chat_conversations")
+      .select("id")
+      .eq("owner_user_id", ownerId)
+      .ilike("contact_phone", `%${tail}`)
+      .limit(1)
+      .maybeSingle();
+    let previous = 0;
+    if (convForCount?.id) {
+      const { count } = await supabase
+        .from("chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("conversation_id", convForCount.id)
+        .eq("direction", "inbound");
+      previous = count ?? 0;
+    }
+    isFirstMessage = previous <= 1;
   }
-  const isFirstMessage = previous <= 1;
 
 
   for (const flow of flows) {
-    if (flow.test_mode && digits(flow.test_phone).slice(-8) !== tail) continue;
-    if (body.waba_connection_id && flow.waba_connection_id && flow.waba_connection_id !== body.waba_connection_id) continue;
+    if ((flow.channel || "whatsapp") !== channel) continue;
+    if (!isIg && flow.test_mode && digits(flow.test_phone).slice(-8) !== tail) continue;
+    if (!isIg && body.waba_connection_id && flow.waba_connection_id && flow.waba_connection_id !== body.waba_connection_id) continue;
+    if (isIg && body.instagram_connection_id && flow.instagram_connection_id && flow.instagram_connection_id !== body.instagram_connection_id) continue;
     const { nodes, edges } = await loadFlow(flow.id);
-    const entry = nodes.find((n) => n.node_type === "entry");
+    const entry = nodes.find((n) => (isIg ? n.node_type === "instagram_entry" : n.node_type === "entry"));
     if (!entry) continue;
-    if (!entryMatches(entry.config || {}, text, isFirstMessage)) continue;
+    if (isIg) {
+      if (!igEntryMatches(entry.config || {}, text, igEvent, isFirstMessage)) continue;
+    } else if (!entryMatches(entry.config || {}, text, isFirstMessage)) continue;
 
     const send = await buildSendCtx(flow, phone, body.lead_name || null, userId, ownerId);
     if (!send) continue;
+    if (isIg) send.commentId = commentId;
 
     const { data: execution } = await supabase
       .from("wa_flow_executions")
@@ -1146,9 +1385,17 @@ async function handleInbound(body: Record<string, any>) {
         lead_phone: phone,
         lead_name: body.lead_name || null,
         status: "active",
+        channel,
+        contact_ref: isIg ? phone : digits(phone),
+        thread_ref: body.thread_ref || null,
+        trigger_type: isIg ? (entry.config?.trigger_type || igEvent) : (entry.config?.trigger_type || null),
+        trigger_data: isIg
+          ? { ig_event: igEvent, comment_id: commentId, media_id: body.media_id || null, username: body.lead_name || null }
+          : {},
+        channel_account_id: isIg ? (send.connectionId || null) : (send.connectionId || null),
         current_node_id: entry.id,
         current_node_name: entry.name,
-        entry_data: { text, button_id: body.button_id || null, source: body.source || "meta" },
+        entry_data: { text, button_id: body.button_id || null, source: body.source || "meta", comment_id: commentId },
         last_user_message_at: new Date().toISOString(),
       })
       .select("*")
@@ -1190,9 +1437,10 @@ async function handleTick() {
       const ownerId = exec.owner_user_id || exec.user_id;
       const send = await buildSendCtx(flow, exec.lead_phone, exec.lead_name, exec.user_id, ownerId);
       if (!send) {
-        await persist(exec.id, { last_error: "Sem conexão WhatsApp ativa" });
+        await persist(exec.id, { last_error: "Sem conexão de canal ativa" });
         continue;
       }
+      if (send.channel === "instagram") send.commentId = (exec.trigger_data as any)?.comment_id || null;
       const vars = { ...(exec.collected_data || {}), nome: exec.lead_name || "", telefone: digits(exec.lead_phone) };
       await persist(exec.id, { status: "active", wait_until: null, awaiting_node_id: null });
       await run(
