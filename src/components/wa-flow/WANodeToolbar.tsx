@@ -1,30 +1,47 @@
 import { Button } from "@/components/ui/button";
-import { 
-  Zap, MessageSquare, ToggleLeft, GitBranch, Clock, Settings, 
-  HeadphonesIcon, CircleStop, Star
+import {
+  MessageSquare, ToggleLeft, GitBranch, Clock, Settings,
+  HeadphonesIcon, CircleStop, Star, Send, MessageCircleReply,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import whatsappLogo from "@/assets/logos/whatsapp.svg";
+import instagramLogo from "@/assets/logos/instagram.svg";
+import { isNodeAllowedInChannel, type FlowChannel } from "@/lib/flowChannels";
 
 interface WANodeToolbarProps {
   onAddNode: (type: string) => void;
+  channel?: FlowChannel;
 }
 
-const nodeButtons = [
-  { type: "entry", icon: Zap, label: "Entrada", color: "text-primary" },
+type ToolbarButton = {
+  type: string;
+  icon?: any;
+  img?: string;
+  label: string;
+  color?: string;
+};
+
+const nodeButtons: ToolbarButton[] = [
+  { type: "entry", img: whatsappLogo, label: "Entrada WhatsApp" },
+  { type: "instagram_entry", img: instagramLogo, label: "Entrada Instagram" },
   { type: "message", icon: MessageSquare, label: "Mensagem", color: "text-blue-400" },
+  { type: "ig_send_dm", icon: Send, label: "Enviar Direct", color: "text-pink-500" },
   { type: "buttons", icon: ToggleLeft, label: "Botões", color: "text-indigo-400" },
   { type: "condition", icon: GitBranch, label: "Condição", color: "text-purple-400" },
   { type: "wait", icon: Clock, label: "Espera", color: "text-amber-400" },
   { type: "rating", icon: Star, label: "Avaliação", color: "text-amber-400" },
   { type: "action", icon: Settings, label: "Ação", color: "text-cyan-400" },
+  { type: "ig_reply_comment", icon: MessageCircleReply, label: "Responder comentário", color: "text-fuchsia-500" },
   { type: "handoff", icon: HeadphonesIcon, label: "Humano", color: "text-orange-400" },
   { type: "end", icon: CircleStop, label: "Encerramento", color: "text-red-400" },
 ];
 
-export function WANodeToolbar({ onAddNode }: WANodeToolbarProps) {
+export function WANodeToolbar({ onAddNode, channel = "whatsapp" }: WANodeToolbarProps) {
+  const buttons = nodeButtons.filter((btn) => isNodeAllowedInChannel(btn.type, channel));
+
   return (
     <div className="flex items-center gap-1 bg-card/95 backdrop-blur-sm border border-border rounded-full px-2 py-1.5 shadow-lg">
-      {nodeButtons.map((btn) => (
+      {buttons.map((btn) => (
         <Tooltip key={btn.type}>
           <TooltipTrigger asChild>
             <Button
@@ -33,7 +50,11 @@ export function WANodeToolbar({ onAddNode }: WANodeToolbarProps) {
               className="h-8 w-8 rounded-full hover:bg-muted"
               onClick={() => onAddNode(btn.type)}
             >
-              <btn.icon size={15} className={btn.color} />
+              {btn.img ? (
+                <img src={btn.img} alt={btn.label} width={15} height={15} className="w-[15px] h-[15px] object-contain" />
+              ) : (
+                <btn.icon size={15} className={btn.color} />
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-xs">
