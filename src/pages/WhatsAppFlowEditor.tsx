@@ -140,10 +140,17 @@ const defaultEdgeOptions = {
 
 const sidebarCategories = [
   {
-    label: "Gatilhos",
+    label: "Gatilho WhatsApp",
     items: [
-      { type: "entry", icon: Zap, label: "Entrada WhatsApp", desc: "Gatilho inicial do fluxo no WhatsApp", color: "text-emerald-500 bg-emerald-500/10", iconImg: whatsappLogo },
-      { type: "instagram_entry", icon: Instagram, label: "Entrada Instagram", desc: "Direct, story, comentário ou menção", color: "text-pink-500 bg-pink-500/10", iconImg: instagramLogo },
+      { type: "entry", icon: FaWhatsapp, label: "Entrada WhatsApp", desc: "Gatilho inicial do fluxo no WhatsApp", color: "text-emerald-500 bg-emerald-500/10" },
+    ],
+  },
+  {
+    label: "Instagram",
+    items: [
+      { type: "instagram_entry", icon: FaInstagram, label: "Entrada Instagram", desc: "Direct, story, comentário ou menção", color: "text-pink-500 bg-pink-500/10" },
+      { type: "ig_send_dm", icon: Send, label: "Enviar Direct", desc: "Mensagem no direct do Instagram", color: "text-pink-500 bg-pink-500/10" },
+      { type: "ig_reply_comment", icon: MessageCircleReply, label: "Responder comentário", desc: "Resposta pública + direct", color: "text-fuchsia-500 bg-fuchsia-500/10" },
     ],
   },
   {
@@ -151,7 +158,6 @@ const sidebarCategories = [
     items: [
       { type: "message", icon: MessageSquare, label: "Mensagem", desc: "Texto, imagem, áudio, vídeo", color: "text-blue-400 bg-blue-400/10" },
       { type: "buttons", icon: ToggleLeft, label: "Botões", desc: "Respostas rápidas ou lista", color: "text-indigo-400 bg-indigo-400/10" },
-      { type: "ig_send_dm", icon: Send, label: "Enviar Direct", desc: "Mensagem no direct do Instagram", color: "text-pink-500 bg-pink-500/10", iconImg: instagramLogo },
     ],
   },
   {
