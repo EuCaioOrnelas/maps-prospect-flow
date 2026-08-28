@@ -1,7 +1,7 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
 import { Phone, AlertTriangle, Radio, Wifi } from "lucide-react";
-import whatsappLogo from "@/assets/logos/whatsapp.svg";
+import { FaWhatsapp } from "react-icons/fa6";
 
 const triggerLabels: Record<string, string> = {
   keyword: "Palavra-chave",
@@ -26,7 +26,7 @@ export function WAEntryNode({ data }: NodeProps) {
 
       <div className="flex items-center gap-2.5 px-4 py-3">
         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-          <img src={whatsappLogo} alt="WhatsApp" width={18} height={18} className="w-[18px] h-[18px] object-contain" />
+          <FaWhatsapp size={18} className="text-emerald-500" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">{String((data as any).label || "Entrada WhatsApp")}</p>

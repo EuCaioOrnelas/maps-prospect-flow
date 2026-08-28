@@ -4,8 +4,7 @@ import {
   HeadphonesIcon, CircleStop, Star, Send, MessageCircleReply,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import whatsappLogo from "@/assets/logos/whatsapp.svg";
-import instagramLogo from "@/assets/logos/instagram.svg";
+import { FaWhatsapp, FaInstagram } from "react-icons/fa6";
 import { isNodeAllowedInChannel, type FlowChannel } from "@/lib/flowChannels";
 
 interface WANodeToolbarProps {
@@ -15,15 +14,14 @@ interface WANodeToolbarProps {
 
 type ToolbarButton = {
   type: string;
-  icon?: any;
-  img?: string;
+  icon: any;
   label: string;
   color?: string;
 };
 
 const nodeButtons: ToolbarButton[] = [
-  { type: "entry", img: whatsappLogo, label: "Entrada WhatsApp" },
-  { type: "instagram_entry", img: instagramLogo, label: "Entrada Instagram" },
+  { type: "entry", icon: FaWhatsapp, label: "Entrada WhatsApp", color: "text-emerald-500" },
+  { type: "instagram_entry", icon: FaInstagram, label: "Entrada Instagram", color: "text-pink-500" },
   { type: "message", icon: MessageSquare, label: "Mensagem", color: "text-blue-400" },
   { type: "ig_send_dm", icon: Send, label: "Enviar Direct", color: "text-pink-500" },
   { type: "buttons", icon: ToggleLeft, label: "Botões", color: "text-indigo-400" },
@@ -50,11 +48,7 @@ export function WANodeToolbar({ onAddNode, channel = "whatsapp" }: WANodeToolbar
               className="h-8 w-8 rounded-full hover:bg-muted"
               onClick={() => onAddNode(btn.type)}
             >
-              {btn.img ? (
-                <img src={btn.img} alt={btn.label} width={15} height={15} className="w-[15px] h-[15px] object-contain" />
-              ) : (
-                <btn.icon size={15} className={btn.color} />
-              )}
+              <btn.icon size={15} className={btn.color} />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-xs">

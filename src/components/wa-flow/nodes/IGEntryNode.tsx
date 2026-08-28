@@ -1,6 +1,6 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
-import { Instagram } from "lucide-react";
+import { FaInstagram } from "react-icons/fa6";
 import { igTriggerLabel } from "@/lib/flowChannels";
 
 export function IGEntryNode({ data }: NodeProps) {
@@ -11,7 +11,7 @@ export function IGEntryNode({ data }: NodeProps) {
     <div className="bg-card border border-border rounded-xl shadow-sm w-52">
       <div className="flex items-center gap-2.5 px-4 py-3">
         <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center shrink-0">
-          <Instagram size={16} className="text-pink-500" />
+          <FaInstagram size={16} className="text-pink-500" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">
