@@ -139,56 +139,59 @@ const defaultEdgeOptions = {
   style: { strokeWidth: 2, stroke: "hsl(var(--muted-foreground) / 0.45)", strokeLinecap: "round" as const },
 };
 
+// Cor padrão usada por todas as categorias (exceto Gatilho de Ativação e Integrações)
+const STD = "text-primary bg-primary/10";
+
 const sidebarCategories = [
   {
-    label: "Gatilho WhatsApp",
+    label: "Gatilho de Ativação",
     items: [
       { type: "entry", icon: FaWhatsapp, label: "Entrada WhatsApp", desc: "Gatilho inicial do fluxo no WhatsApp", color: "text-emerald-500 bg-emerald-500/10" },
+      { type: "instagram_entry", icon: FaInstagram, label: "Entrada Instagram", desc: "Direct, story, comentário ou menção", color: "text-pink-500 bg-pink-500/10" },
     ],
   },
   {
     label: "Instagram",
     items: [
-      { type: "instagram_entry", icon: FaInstagram, label: "Entrada Instagram", desc: "Direct, story, comentário ou menção", color: "text-pink-500 bg-pink-500/10" },
-      { type: "ig_send_dm", icon: Send, label: "Enviar Direct", desc: "Mensagem no direct do Instagram", color: "text-pink-500 bg-pink-500/10" },
-      { type: "ig_reply_comment", icon: MessageCircleReply, label: "Responder comentário", desc: "Resposta pública + direct", color: "text-fuchsia-500 bg-fuchsia-500/10" },
+      { type: "ig_send_dm", icon: Send, label: "Enviar Direct", desc: "Mensagem no direct do Instagram", color: STD },
+      { type: "ig_reply_comment", icon: MessageCircleReply, label: "Responder comentário", desc: "Resposta pública + direct", color: STD },
     ],
   },
   {
     label: "Mensagens",
     items: [
-      { type: "message", icon: MessageSquare, label: "Mensagem", desc: "Texto, imagem, áudio, vídeo", color: "text-blue-400 bg-blue-400/10" },
-      { type: "buttons", icon: ToggleLeft, label: "Botões", desc: "Respostas rápidas ou lista", color: "text-indigo-400 bg-indigo-400/10" },
+      { type: "message", icon: MessageSquare, label: "Mensagem", desc: "Texto, imagem, áudio, vídeo", color: STD },
+      { type: "buttons", icon: ToggleLeft, label: "Botões", desc: "Respostas rápidas ou lista", color: STD },
     ],
   },
   {
     label: "Lógica",
     items: [
-      { type: "condition", icon: GitBranch, label: "Condição", desc: "Sim/Não para bifurcação", color: "text-purple-400 bg-purple-400/10" },
-      { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: "text-amber-400 bg-amber-400/10" },
-      { type: "data_collect", icon: Database, label: "Coleta de Dados", desc: "Pergunta e salva em variável", color: "text-teal-400 bg-teal-400/10" },
-      { type: "ab_test", icon: FlaskConical, label: "Teste A/B", desc: "Divide leads e metrifica", color: "text-emerald-400 bg-emerald-400/10" },
-      { type: "random_split", icon: Shuffle, label: "Random Split", desc: "Distribui aleatoriamente", color: "text-sky-400 bg-sky-400/10" },
+      { type: "condition", icon: GitBranch, label: "Condição", desc: "Sim/Não para bifurcação", color: STD },
+      { type: "wait", icon: Clock, label: "Espera", desc: "Delay antes do próximo nó", color: STD },
+      { type: "data_collect", icon: Database, label: "Coleta de Dados", desc: "Pergunta e salva em variável", color: STD },
+      { type: "ab_test", icon: FlaskConical, label: "Teste A/B", desc: "Divide leads e metrifica", color: STD },
+      { type: "random_split", icon: Shuffle, label: "Random Split", desc: "Distribui aleatoriamente", color: STD },
     ],
   },
   {
     label: "Inteligência",
     items: [
-      { type: "ai_agent", icon: Bot, label: "Agente IA", desc: "IA responde e direciona", color: "text-violet-400 bg-violet-400/10" },
+      { type: "ai_agent", icon: Bot, label: "Agente IA", desc: "IA responde e direciona", color: STD },
     ],
   },
   {
     label: "Atendimento",
     items: [
-      { type: "rating", icon: Star, label: "Avaliação", desc: "NPS, estrelas, feedback e sugestões", color: "text-amber-400 bg-amber-400/10" },
+      { type: "rating", icon: Star, label: "Avaliação", desc: "NPS, estrelas, feedback e sugestões", color: STD },
     ],
   },
   {
     label: "Ações",
     items: [
-      { type: "action", icon: Settings, label: "Ação", desc: "Tag, Kanban, CRM", color: "text-cyan-400 bg-cyan-400/10" },
-      { type: "handoff", icon: HeadphonesIcon, label: "Humano", desc: "Transferir para humano", color: "text-orange-400 bg-orange-400/10" },
-      { type: "end", icon: CircleStop, label: "Encerramento", desc: "Encerrar o fluxo", color: "text-red-400 bg-red-400/10" },
+      { type: "action", icon: Settings, label: "Ação", desc: "Tag, Kanban, CRM", color: STD },
+      { type: "handoff", icon: HeadphonesIcon, label: "Humano", desc: "Transferir para humano", color: STD },
+      { type: "end", icon: CircleStop, label: "Encerramento", desc: "Encerrar o fluxo", color: STD },
     ],
   },
   {

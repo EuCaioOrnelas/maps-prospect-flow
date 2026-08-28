@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Workflow, Sparkles, ArrowLeft, Loader2, Wand2, RefreshCw, ShieldAlert, Instagram, MessageSquare, Plus } from "lucide-react";
 import { useInstagramAccounts } from "@/hooks/useInstagramAccounts";
 import { InstagramConnectDialog } from "./InstagramConnectDialog";
+import { InstagramAISimulation } from "./InstagramAISimulation";
 import type { FlowChannel } from "@/lib/flowChannels";
 import { cn } from "@/lib/utils";
 
@@ -162,7 +163,11 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
     <InstagramConnectDialog open={igDialogOpen} onOpenChange={setIgDialogOpen} />
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden border-border/50 bg-card">
-        {mode === "choose" ? (
+        {isInstagram && createWithAI.isPending ? (
+          <div className="flex items-center justify-center py-8 px-4 relative overflow-hidden">
+            <InstagramAISimulation userPrompt={prompt} isFinished={createWithAI.isSuccess} />
+          </div>
+        ) : mode === "choose" ? (
           <div className="p-8">
             <div className="text-center mb-6">
               <h2 className="text-xl font-bold text-foreground mb-1">Criar Novo Fluxo</h2>
