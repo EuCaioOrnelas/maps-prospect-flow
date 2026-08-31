@@ -249,6 +249,23 @@ export default function AdminUserDetail() {
         </div>
       </div>
 
+      {/* Aquisição */}
+      <Card className="border-border/40">
+        <CardContent className="p-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">
+            Origem da aquisição
+          </div>
+          <Badge variant="outline" className="text-xs">
+            {acquisitionLabel(acquisition?.source)}
+          </Badge>
+          {acquisition?.source === "other" && acquisition?.other && (
+            <div className="text-sm text-muted-foreground">
+              Detalhes: <span className="text-foreground">{acquisition.other}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Date filter */}
       <Card className="border-border/40">
         <CardContent className="p-4 flex flex-wrap items-end gap-3">
