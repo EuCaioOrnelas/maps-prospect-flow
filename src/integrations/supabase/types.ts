@@ -9629,6 +9629,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_mfa_sessions: {
+        Row: {
+          expires_at: string
+          ip_address: string | null
+          session_id: string
+          user_agent: string | null
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          expires_at?: string
+          ip_address?: string | null
+          session_id: string
+          user_agent?: string | null
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          expires_at?: string
+          ip_address?: string | null
+          session_id?: string
+          user_agent?: string | null
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
       user_onboarding: {
         Row: {
           biggest_challenge: string | null
@@ -9689,6 +9716,30 @@ export type Database = {
           tour_completed_at?: string | null
           user_id?: string
           user_profile?: string | null
+        }
+        Relationships: []
+      }
+      user_recovery_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -9877,6 +9928,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_security: {
+        Row: {
+          created_at: string
+          enabled_at: string | null
+          failed_attempts: number
+          last_verified_at: string | null
+          locked_until: string | null
+          pending_created_at: string | null
+          pending_secret_encrypted: string | null
+          totp_secret_encrypted: string | null
+          two_factor_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled_at?: string | null
+          failed_attempts?: number
+          last_verified_at?: string | null
+          locked_until?: string | null
+          pending_created_at?: string | null
+          pending_secret_encrypted?: string | null
+          totp_secret_encrypted?: string | null
+          two_factor_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled_at?: string | null
+          failed_attempts?: number
+          last_verified_at?: string | null
+          locked_until?: string | null
+          pending_created_at?: string | null
+          pending_secret_encrypted?: string | null
+          totp_secret_encrypted?: string | null
+          two_factor_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_waba_connections: {
         Row: {
@@ -10970,6 +11063,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_2fa_status: {
+        Row: {
+          enabled_at: string | null
+          two_factor_enabled: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          enabled_at?: string | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          enabled_at?: string | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accessible_owner_ids: { Args: never; Returns: string[] }
@@ -11189,6 +11303,7 @@ export type Database = {
       is_downgrade_protected: { Args: { _user_id: string }; Returns: boolean }
       is_email_suppressed: { Args: { _email: string }; Returns: boolean }
       is_member_available: { Args: { _user_id: string }; Returns: boolean }
+      is_my_account_member: { Args: { _uid: string }; Returns: boolean }
       is_user_blocked: { Args: { p_user_id: string }; Returns: boolean }
       log_plan_downgrade: {
         Args: {
@@ -11269,6 +11384,7 @@ export type Database = {
         Args: { p_amount: number; p_currency: string }
         Returns: number
       }
+      mfa_satisfied: { Args: never; Returns: boolean }
       normalize_brazilian_phone: {
         Args: { phone_input: string }
         Returns: string
