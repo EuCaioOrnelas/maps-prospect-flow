@@ -1189,7 +1189,11 @@ const Profile = () => {
           </>
           )}
 
+          {/* Segurança — 2FA opcional por usuário */}
+          <SecuritySection />
+
           {/* Email Preferences Card */}
+
           <Card className="border-border/50">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
