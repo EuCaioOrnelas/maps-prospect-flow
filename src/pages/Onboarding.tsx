@@ -222,11 +222,29 @@ export default function Onboarding() {
   );
 
   const selected = currentStep ? answers[currentStep.key] : "";
-  const canContinue = currentStep?.optional || !!selected;
+  const needsOtherText =
+    currentStep?.key === "acquisition_source" &&
+    selected === "other" &&
+    !acquisitionOther.trim();
+  const canContinue = (currentStep?.optional || !!selected) && !needsOtherText;
 
   const handleSelect = (id: string) => {
     if (!currentStep) return;
+    if (currentStep.key === "acquisition_source" && id === "other") {
+      setOtherDraft(acquisitionOther);
+      setOtherOpen(true);
+      return;
+    }
+    if (currentStep.key === "acquisition_source") setAcquisitionOther("");
     setAnswers((prev) => ({ ...prev, [currentStep.key]: id }));
+  };
+
+  const confirmOther = () => {
+    const text = otherDraft.trim();
+    if (!text) return;
+    setAcquisitionOther(text);
+    setAnswers((prev) => ({ ...prev, acquisition_source: "other" }));
+    setOtherOpen(false);
   };
 
   const handleNext = () => {
