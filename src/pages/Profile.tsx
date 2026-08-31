@@ -568,7 +568,7 @@ const Profile = () => {
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl lg:pl-14">
         {/* Page Title */}
         <div className="mb-6">
-          <h1 className="font-display text-2xl font-bold">Meu Perfil</h1>
+          <h1 className="font-display text-xl font-semibold tracking-tight">Meu Perfil</h1>
           <p className="text-muted-foreground text-sm">Gerencie suas configurações de conta</p>
         </div>
         <div className="grid gap-6">
@@ -737,12 +737,12 @@ const Profile = () => {
 
           {hasOpps && (<>
           {/* Company Profile Card */}
-          <Card className="border-border/50">
+          <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-primary" />
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
                     Perfil da Empresa
                   </CardTitle>
                   <CardDescription>
@@ -936,12 +936,12 @@ const Profile = () => {
           </Card>
 
           {/* Services Card */}
-          <Card className="border-border/50">
+          <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-primary" />
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
                     Serviços Vendidos
                   </CardTitle>
                   <CardDescription>
@@ -1095,7 +1095,7 @@ const Profile = () => {
 
           {/* Plan Card — Owner vê completo; Admin/Operational vê resumo somente leitura */}
           {isSubUser ? (
-            <Card className="border-border/50">
+            <Card className="border-border/50 shadow-none">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-warning" />
@@ -1126,7 +1126,7 @@ const Profile = () => {
           ) : (
           <>
           {/* Plan Card */}
-          <Card className="border-border/50">
+          <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-warning" />
@@ -1269,10 +1269,10 @@ const Profile = () => {
 
           {/* Email Preferences Card */}
 
-          <Card className="border-border/50">
+          <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-primary" />
+                <Bell className="h-4 w-4 text-muted-foreground" />
                 Notificações por e-mail
               </CardTitle>
               <CardDescription>
@@ -1321,10 +1321,10 @@ const Profile = () => {
 
           {/* Tour guiado — apenas owner. Subusuários compartilham a conta. */}
           {!isSubUser && (
-            <Card className="border-border/50">
+            <Card className="border-border/50 shadow-none">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
-                  <PlayCircle className="h-5 w-5 text-primary" />
+                  <PlayCircle className="h-4 w-4 text-muted-foreground" />
                   Tour guiado
                 </CardTitle>
                 <CardDescription>
@@ -1345,10 +1345,10 @@ const Profile = () => {
             </Card>
           )}
 
-          <Card className="border-border/50">
+          <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-primary" />
+                <MessageCircle className="h-4 w-4 text-muted-foreground" />
                 Suporte
               </CardTitle>
               <CardDescription>
@@ -1380,7 +1380,7 @@ const Profile = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-primary" />
+              <Lock className="h-4 w-4 text-muted-foreground" />
               Alterar senha
             </DialogTitle>
             <DialogDescription>
