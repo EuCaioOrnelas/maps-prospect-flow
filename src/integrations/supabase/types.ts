@@ -9934,6 +9934,7 @@ export type Database = {
           created_at: string
           enabled_at: string | null
           failed_attempts: number
+          last_totp_counter: number | null
           last_verified_at: string | null
           locked_until: string | null
           pending_created_at: string | null
@@ -9947,6 +9948,7 @@ export type Database = {
           created_at?: string
           enabled_at?: string | null
           failed_attempts?: number
+          last_totp_counter?: number | null
           last_verified_at?: string | null
           locked_until?: string | null
           pending_created_at?: string | null
@@ -9960,6 +9962,7 @@ export type Database = {
           created_at?: string
           enabled_at?: string | null
           failed_attempts?: number
+          last_totp_counter?: number | null
           last_verified_at?: string | null
           locked_until?: string | null
           pending_created_at?: string | null

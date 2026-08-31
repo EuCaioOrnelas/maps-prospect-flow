@@ -56,7 +56,7 @@ export function ThemeToggle() {
     <Card className="border-border/50 shadow-none">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
-          <Palette className="h-4 w-4 text-muted-foreground" />
+          <Palette className="h-4 w-4 text-primary" />
           Aparência
         </CardTitle>
         <CardDescription className="text-xs">

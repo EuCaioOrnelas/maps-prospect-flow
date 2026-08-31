@@ -70,18 +70,32 @@ async function totpAt(secretB32: string, counter: number): Promise<string> {
   return String(bin % 1_000_000).padStart(6, "0");
 }
 
-async function verifyTotp(secretB32: string, code: string): Promise<boolean> {
+/**
+ * Verifica um código TOTP. Retorna o contador (janela) usado ou null se inválido.
+ * `minCounter` bloqueia replay: um código já usado não vale novamente.
+ */
+async function verifyTotpCounter(
+  secretB32: string,
+  code: string,
+  minCounter?: number | null,
+): Promise<number | null> {
   const clean = (code || "").replace(/\D/g, "");
-  if (clean.length !== 6) return false;
+  if (clean.length !== 6) return null;
   const counter = Math.floor(Date.now() / 30000);
   for (const drift of [-1, 0, 1]) {
-    const expected = await totpAt(secretB32, counter + drift);
+    const c = counter + drift;
+    if (minCounter != null && c <= minCounter) continue; // anti-replay
+    const expected = await totpAt(secretB32, c);
     // constant-time-ish comparison
     let diff = expected.length ^ clean.length;
     for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ clean.charCodeAt(i);
-    if (diff === 0) return true;
+    if (diff === 0) return c;
   }
-  return false;
+  return null;
+}
+
+async function verifyTotp(secretB32: string, code: string, minCounter?: number | null): Promise<boolean> {
+  return (await verifyTotpCounter(secretB32, code, minCounter)) !== null;
 }
 
 async function sha256Hex(s: string): Promise<string> {
@@ -126,7 +140,9 @@ Deno.serve(async (req) => {
     if (userErr || !user) return json({ error: "unauthorized" }, 401);
 
     const payload = jwtPayload(token);
-    const sessionId: string = payload?.session_id || "";
+    // Sessões Supabase trazem session_id; se faltar, derivamos um id estável do próprio token
+    // (nunca armazenamos o token — apenas o hash) para não permitir bypass do gate de 2FA.
+    const sessionId: string = payload?.session_id || `tok:${(await sha256Hex(token)).slice(0, 40)}`;
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
     const ua = req.headers.get("user-agent") || null;
 
@@ -202,7 +218,8 @@ Deno.serve(async (req) => {
       if (row.locked_until && new Date(row.locked_until) > new Date()) return json({ error: "locked", locked_until: row.locked_until }, 429);
 
       const secret = await decryptSecret(row.pending_secret_encrypted);
-      const ok = await verifyTotp(secret, String(body.code || ""));
+      const usedCounter = await verifyTotpCounter(secret, String(body.code || ""), row.last_totp_counter);
+      const ok = usedCounter !== null;
       if (!ok) {
         const attempts = (row.failed_attempts || 0) + 1;
         await admin.from("user_security").update({
@@ -220,6 +237,7 @@ Deno.serve(async (req) => {
         pending_created_at: null,
         enabled_at: new Date().toISOString(),
         last_verified_at: new Date().toISOString(),
+        last_totp_counter: usedCounter,
         failed_attempts: 0,
         locked_until: null,
       }).eq("user_id", user.id);
@@ -251,9 +269,13 @@ Deno.serve(async (req) => {
       const rawCode = String(body.code || "").trim();
       let ok = false;
       let usedRecovery = false;
+      let usedCounter: number | null = null;
 
       if (/^\d{6}$/.test(rawCode.replace(/\s/g, ""))) {
-        ok = await verifyTotp(await decryptSecret(row.totp_secret_encrypted), rawCode);
+        usedCounter = await verifyTotpCounter(
+          await decryptSecret(row.totp_secret_encrypted), rawCode, row.last_totp_counter,
+        );
+        ok = usedCounter !== null;
       } else if (rawCode.length >= 8) {
         const hash = await sha256Hex(rawCode.toUpperCase());
         const { data: rc } = await admin
@@ -283,6 +305,7 @@ Deno.serve(async (req) => {
 
       await admin.from("user_security").update({
         failed_attempts: 0, locked_until: null, last_verified_at: new Date().toISOString(),
+        ...(usedCounter !== null ? { last_totp_counter: usedCounter } : {}),
       }).eq("user_id", user.id);
 
       if (sessionId) {
@@ -308,12 +331,14 @@ Deno.serve(async (req) => {
       const { error: pwErr } = await anon.auth.signInWithPassword({ email: user.email, password });
       if (pwErr) { await audit("2fa_disable_denied", { reason: "invalid_password" }); return json({ error: "invalid_password" }, 400); }
 
-      const ok = await verifyTotp(await decryptSecret(row.totp_secret_encrypted), String(body.code || ""));
-      if (!ok) { await audit("2fa_disable_denied", { reason: "invalid_code" }); return json({ error: "invalid_code" }, 400); }
+      const disableCounter = await verifyTotpCounter(
+        await decryptSecret(row.totp_secret_encrypted), String(body.code || ""), row.last_totp_counter,
+      );
+      if (disableCounter === null) { await audit("2fa_disable_denied", { reason: "invalid_code" }); return json({ error: "invalid_code" }, 400); }
 
       await admin.from("user_security").update({
         two_factor_enabled: false, totp_secret_encrypted: null, pending_secret_encrypted: null,
-        enabled_at: null, failed_attempts: 0, locked_until: null,
+        enabled_at: null, failed_attempts: 0, locked_until: null, last_totp_counter: null,
       }).eq("user_id", user.id);
       await admin.from("user_recovery_codes").delete().eq("user_id", user.id);
       await admin.from("user_mfa_sessions").delete().eq("user_id", user.id);
@@ -325,8 +350,11 @@ Deno.serve(async (req) => {
     if (action === "regenerate_recovery") {
       const row = await loadRow();
       if (!row?.two_factor_enabled) return json({ error: "not_enabled" }, 400);
-      const ok = await verifyTotp(await decryptSecret(row.totp_secret_encrypted), String(body.code || ""));
-      if (!ok) { await audit("2fa_invalid_code", { context: "regenerate" }); return json({ error: "invalid_code" }, 400); }
+      const regenCounter = await verifyTotpCounter(
+        await decryptSecret(row.totp_secret_encrypted), String(body.code || ""), row.last_totp_counter,
+      );
+      if (regenCounter === null) { await audit("2fa_invalid_code", { context: "regenerate" }); return json({ error: "invalid_code" }, 400); }
+      await admin.from("user_security").update({ last_totp_counter: regenCounter }).eq("user_id", user.id);
       const codes = genRecoveryCodes();
       await admin.from("user_recovery_codes").delete().eq("user_id", user.id);
       await admin.from("user_recovery_codes").insert(
@@ -357,7 +385,7 @@ Deno.serve(async (req) => {
 
       await admin.from("user_security").update({
         two_factor_enabled: false, totp_secret_encrypted: null, pending_secret_encrypted: null,
-        enabled_at: null, failed_attempts: 0, locked_until: null,
+        enabled_at: null, failed_attempts: 0, locked_until: null, last_totp_counter: null,
       }).eq("user_id", memberId);
       await admin.from("user_recovery_codes").delete().eq("user_id", memberId);
       await admin.from("user_mfa_sessions").delete().eq("user_id", memberId);

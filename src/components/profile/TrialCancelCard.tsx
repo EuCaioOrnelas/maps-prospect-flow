@@ -80,7 +80,7 @@ export const TrialCancelCard = () => {
     <Card className="border-border/50 shadow-none">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
-          <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+          <ShieldCheck className="h-4 w-4 text-primary" />
           Ativação automática após o teste
         </CardTitle>
         <CardDescription className="text-xs">
@@ -90,7 +90,7 @@ export const TrialCancelCard = () => {
       <CardContent className="space-y-4">
         {cancelled ? (
           <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
-            <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />
+            <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0 text-muted-foreground" />
             <div className="flex-1 text-sm">
               <p className="font-semibold text-foreground">Ativação automática cancelada</p>
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -101,8 +101,8 @@ export const TrialCancelCard = () => {
           </div>
         ) : (
           <>
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
-              <Calendar className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-card border border-border shadow-sm">
+              <Calendar className="h-5 w-5 mt-0.5 flex-shrink-0 text-muted-foreground" />
               <div className="flex-1 text-sm">
                 <p className="font-semibold text-foreground">
                   {chargeDate
@@ -125,7 +125,7 @@ export const TrialCancelCard = () => {
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button size="sm" variant="outline" className="w-full rounded-lg hover:bg-accent transition-colors" disabled={loading}>
+                <Button size="sm" variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/10 hover:text-primary font-normal" disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Cancelando...
