@@ -238,7 +238,7 @@ export function GuidedTour() {
           setRect(null);
         }
         attempts += 1;
-        if (attempts < 60) {
+        if (attempts < 150) {
           // Keep the previous spotlight visible while we wait for the new target
           // to appear — prevents the "focus on nothing" flicker between steps.
           pollTimeoutId = window.setTimeout(() => {
@@ -411,11 +411,12 @@ export function GuidedTour() {
 
       if (space < 272) {
         // Modal takes nearly the whole viewport: dock the card at the bottom,
-        // above the navigation bar, so both stay readable.
+        // above the navigation bar, so both stay readable. Usamos left numérico
+        // (não "50%"/transform) para que a trava anti-sobreposição também
+        // funcione neste caso — o card nunca cobre o foco destacado.
         popupStyle = {
           top: Math.max(POPUP_GAP, window.innerHeight - popupHeight - 104),
-          left: "50%",
-          transform: "translateX(-50%)",
+          left: Math.max(POPUP_GAP, (window.innerWidth - availableWidth) / 2),
           width: availableWidth,
         };
       } else {
