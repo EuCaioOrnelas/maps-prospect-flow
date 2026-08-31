@@ -65,6 +65,30 @@ Deno.serve(async (req) => {
         return new Response("Missing url param", { status: 400 });
       }
 
+      // Open-redirect protection: only https links to Wiize-controlled hosts.
+      const ALLOWED_HOSTS = [
+        "wiize.com.br",
+        "www.wiize.com.br",
+        "app.wiize.com.br",
+        "wiize-lb2.lovable.app",
+      ];
+      let parsedRedirect: URL;
+      try {
+        parsedRedirect = new URL(redirectUrl);
+      } catch {
+        return new Response("Invalid url param", { status: 400 });
+      }
+      const hostAllowed =
+        parsedRedirect.protocol === "https:" &&
+        ALLOWED_HOSTS.some(
+          (h) => parsedRedirect.hostname === h || parsedRedirect.hostname.endsWith(`.${h}`),
+        );
+      if (!hostAllowed) {
+        console.warn("[email-tracker] blocked redirect:", parsedRedirect.hostname);
+        return new Response("Redirect not allowed", { status: 400 });
+      }
+      const safeRedirect = parsedRedirect.toString();
+
       // Increment click count, set clicked_at on first click
       const { data: log } = await supabase
         .from("email_logs")
@@ -85,7 +109,7 @@ Deno.serve(async (req) => {
       // Redirect to original URL
       return new Response(null, {
         status: 302,
-        headers: { Location: redirectUrl },
+        headers: { Location: safeRedirect },
       });
     }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -377,7 +378,7 @@ export function PixEmailTemplatesTab() {
                 className={`mx-auto bg-[#f4f4f5] rounded-lg p-4 ${
                   previewMode === "mobile" ? "max-w-[375px]" : "max-w-full"
                 }`}
-                dangerouslySetInnerHTML={{ __html: renderPreviewHtml(previewTemplate) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(renderPreviewHtml(previewTemplate)) }}
               />
             </div>
           )}

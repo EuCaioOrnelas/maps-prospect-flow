@@ -15,6 +15,7 @@ import { Navbar } from "@/components/landing/Navbar";
 import { ArticleCard } from "@/components/ui/blog-post-card";
 import { Sparkles, ArrowRight } from "lucide-react";
 import wianAvatar from "@/assets/wian-avatar.png";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -451,7 +452,7 @@ export default function BlogPost() {
 
         <div className="blog-content max-w-none">
           {/^\s*</.test(post.content) ? (
-            <div dangerouslySetInnerHTML={{ __html: post.content }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }} />
           ) : (
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
           )}

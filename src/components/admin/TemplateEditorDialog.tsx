@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -216,7 +217,7 @@ export function TemplateEditorDialog({ open, onOpenChange, template, onSave }: T
                     })}
                   </p>
                 </div>
-                <div dangerouslySetInnerHTML={{ __html: getPreviewHtml() }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(getPreviewHtml()) }} />
               </div>
             </TabsContent>
           </Tabs>

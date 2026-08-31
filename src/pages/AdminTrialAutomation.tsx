@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -452,7 +453,7 @@ export default function AdminTrialAutomation() {
                       </div>
 
                       {/* Preview snippet */}
-                      <div className="mt-3 text-[10px] text-muted-foreground/60 bg-muted/20 rounded p-2 max-h-12 overflow-hidden leading-relaxed" dangerouslySetInnerHTML={{ __html: template.body.substring(0, 120) + "..." }} />
+                      <div className="mt-3 text-[10px] text-muted-foreground/60 bg-muted/20 rounded p-2 max-h-12 overflow-hidden leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeHtml(template.body.substring(0, 120) + "...") }} />
                     </CardContent>
                   </Card>
                 );
