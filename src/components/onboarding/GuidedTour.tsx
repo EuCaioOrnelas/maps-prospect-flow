@@ -503,13 +503,19 @@ export function GuidedTour() {
     popupStyle = resolvedPlacement
       ? computePlacementStyle(resolvedPlacement)
       : // Alvo grande demais (ex.: card do briefing da Wian ocupa quase toda a
-        // tela): não existe espaço externo. Nesse caso "ancoramos" o card em um
-        // canto livre em vez de jogá-lo por cima do foco.
+        // tela): não existe espaço externo. Nesse caso "ancoramos" o card no
+        // canto diagonalmente oposto ao foco — nunca por cima dele.
         (() => {
           const width = Math.min(popupWidth, 340);
+          const placeRight = spotBounds.left + (spotBounds.right - spotBounds.left) / 2 < window.innerWidth / 2;
+          const placeBottom = spotBounds.top + (spotBounds.bottom - spotBounds.top) / 2 < window.innerHeight / 2;
           return {
-            top: Math.max(bounds.top, Math.min(window.innerHeight - popupHeight - 104, spotBounds.top + 8)),
-            left: Math.max(bounds.left, window.innerWidth - width - viewportMargin),
+            top: placeBottom
+              ? Math.max(bounds.top, window.innerHeight - popupHeight - 104)
+              : bounds.top,
+            left: placeRight
+              ? Math.max(bounds.left, window.innerWidth - width - viewportMargin)
+              : bounds.left,
             width,
           };
         })();
