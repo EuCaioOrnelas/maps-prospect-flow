@@ -1451,7 +1451,7 @@ function RestartTourButton() {
   };
 
   return (
-    <Button onClick={handleClick} disabled={loading} variant="default" className="gap-2">
+    <Button size="sm" onClick={handleClick} disabled={loading} variant="outline" className="gap-2 rounded-lg hover:bg-accent transition-colors">
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
       Refazer tutorial
     </Button>
