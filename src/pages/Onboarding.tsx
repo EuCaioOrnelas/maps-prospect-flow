@@ -76,6 +76,7 @@ interface Answers {
   sales_method: string;
   monthly_revenue: string;
   goal_90d: string;
+  acquisition_source: string;
 }
 
 const STEPS: StepDef[] = [
@@ -153,6 +154,19 @@ const STEPS: StepDef[] = [
       { id: "fechar-mais", label: "Fechar mais negócios", icon: Trophy },
       { id: "escalar-time", label: "Escalar time", icon: Scale },
       { id: "automatizar", label: "Automatizar operação", icon: Workflow },
+    ],
+  },
+  {
+    key: "acquisition_source",
+    title: "Como você conheceu o Wiize?",
+    subtitle: "Só para sabermos por onde você chegou até aqui.",
+    options: [
+      { id: "youtube", label: "YouTube", icon: Youtube },
+      { id: "google", label: "Google", icon: Search },
+      { id: "instagram_tiktok", label: "Instagram / TikTok", icon: Instagram },
+      { id: "indicacao", label: "Indicação", icon: Share2 },
+      { id: "influenciador_parceiro", label: "Influenciador / Parceiro", icon: Handshake },
+      { id: "other", label: "Outro", icon: HelpCircle },
     ],
   },
 ];
