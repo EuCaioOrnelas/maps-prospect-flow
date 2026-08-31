@@ -105,6 +105,20 @@ export default function AdminUserDetail() {
         .maybeSingle();
       setProfile((data as any) || null);
       setLoadingProfile(false);
+
+      const { data: onb } = await supabase
+        .from("user_onboarding")
+        .select("acquisition_source, acquisition_source_other")
+        .eq("user_id", userId)
+        .maybeSingle();
+      setAcquisition(
+        onb
+          ? {
+              source: (onb as any).acquisition_source ?? null,
+              other: (onb as any).acquisition_source_other ?? null,
+            }
+          : null
+      );
     })();
   }, [userId]);
 
