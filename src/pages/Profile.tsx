@@ -692,39 +692,41 @@ const Profile = () => {
             </Card>
 
             {/* Security Card - right 40% (senha + 2FA) */}
-            <Card className="border-border/50 h-full">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
+            <Card className="border-border/50 shadow-none h-full">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
                   Segurança
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs">
                   Gerencie o acesso e a proteção da sua conta
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
                 {/* Senha */}
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <Lock className="h-4 w-4 text-primary" />
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted">
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                     </div>
-                    <span className="font-medium leading-none">Trocar senha</span>
+                    <span className="text-sm font-medium leading-none">Trocar senha</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground/90 leading-relaxed">
                     Enviamos um link seguro por e-mail para você definir uma nova senha.
                   </p>
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => setShowPasswordModal(true)}
-                    className="gap-2 w-full"
+                    className="gap-2 w-full font-normal"
                   >
-                    <Lock className="h-4 w-4" />
+                    <Lock className="h-3.5 w-3.5" />
                     Alterar senha
                   </Button>
                 </div>
 
-                <Separator />
+                <Separator className="opacity-60" />
+
 
                 {/* Autenticação de dois fatores */}
                 <TwoFactorPanel />
