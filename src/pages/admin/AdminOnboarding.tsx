@@ -50,6 +50,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { ACQUISITION_SOURCE_LABELS } from "@/lib/acquisitionSources";
 
 // ============================================================
 // Mapeamento (precisa bater com src/pages/Onboarding.tsx)
