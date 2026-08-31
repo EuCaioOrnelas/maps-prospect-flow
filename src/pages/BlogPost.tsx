@@ -15,6 +15,7 @@ import { Navbar } from "@/components/landing/Navbar";
 import { ArticleCard } from "@/components/ui/blog-post-card";
 import { Sparkles, ArrowRight } from "lucide-react";
 import wianAvatar from "@/assets/wian-avatar.png";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import {
   DropdownMenu,
   DropdownMenuContent,

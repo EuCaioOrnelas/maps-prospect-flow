@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -349,7 +350,7 @@ function EmailDetailView({ group, onBack }: { group: GroupedEmail; onBack: () =>
               </div>
               <div
                 className="px-8 py-6 text-sm text-foreground leading-relaxed prose prose-sm max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: emailContent }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(emailContent) }}
               />
               <div className="px-8 py-4 bg-muted/30 border-t border-border text-center">
                 <p className="text-[11px] text-muted-foreground m-0">
