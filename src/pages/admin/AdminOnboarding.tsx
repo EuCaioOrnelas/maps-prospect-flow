@@ -109,6 +109,7 @@ const VALUE_LABELS: Record<string, Record<string, string>> = {
     "escalar-time": "Escalar time",
     automatizar: "Automatizar operação",
   },
+  acquisition_source: ACQUISITION_SOURCE_LABELS,
 };
 
 const ANSWER_FIELDS: Array<keyof typeof FIELD_LABELS> = [
@@ -118,6 +119,7 @@ const ANSWER_FIELDS: Array<keyof typeof FIELD_LABELS> = [
   "sales_method",
   "monthly_revenue",
   "goal_90d",
+  "acquisition_source",
 ];
 
 const labelOf = (field: string, value: string | null) => {
@@ -134,6 +136,8 @@ interface OnboardingRow {
   sales_method: string | null;
   monthly_revenue: string | null;
   goal_90d: string | null;
+  acquisition_source: string | null;
+  acquisition_source_other: string | null;
   skipped: boolean | null;
   created_at: string;
   completed_at: string | null;
