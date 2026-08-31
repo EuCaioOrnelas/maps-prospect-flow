@@ -579,6 +579,33 @@ export default function Onboarding() {
           Pular por enquanto
         </button>
       )}
+
+      <Dialog open={otherOpen} onOpenChange={setOtherOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Como você conheceu o Wiize?</DialogTitle>
+            <DialogDescription>
+              Escreva com suas palavras por onde você chegou até a gente.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={otherDraft}
+            onChange={(e) => setOtherDraft(e.target.value)}
+            placeholder="Digite aqui..."
+            maxLength={280}
+            rows={3}
+            autoFocus
+          />
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setOtherOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmOther} disabled={!otherDraft.trim()}>
+              Continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
