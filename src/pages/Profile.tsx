@@ -568,24 +568,25 @@ const Profile = () => {
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl lg:pl-14">
         {/* Page Title */}
         <div className="mb-6">
-          <h1 className="font-display text-2xl font-bold">Meu Perfil</h1>
+          <h1 className="font-display text-xl font-semibold tracking-tight">Meu Perfil</h1>
           <p className="text-muted-foreground text-sm">Gerencie suas configurações de conta</p>
         </div>
         <div className="grid gap-6">
           {/* Row: Informações Pessoais (60%) + Segurança (40%) */}
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
             {/* Profile Card - left 60% */}
-            <Card className="border-border/50">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
+            <Card className="border-border/50 shadow-none">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <User className="h-4 w-4 text-muted-foreground" />
                   Informações Pessoais
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs">
                   Gerencie suas informações de perfil
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+
                 {/* Avatar Section */}
                 <div className="flex items-center gap-6">
                   <div className="relative group">
@@ -622,43 +623,22 @@ const Profile = () => {
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <h3 className="text-xl font-semibold">{profile?.name || 'Usuário'}</h3>
-                    <p className="text-sm text-muted-foreground">{user?.email}</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <div className="space-y-1 min-w-0">
+                    <h3 className="text-lg font-semibold truncate">{profile?.name || 'Usuário'}</h3>
+                    <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+                    <p className="text-xs text-muted-foreground/80 flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       Membro desde {profile?.created_at ? formatDate(profile.created_at) : 'N/A'}
                     </p>
                   </div>
                 </div>
 
-                <Separator />
-
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    E-mail cadastrado
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Input 
-                      value={user?.email || ''} 
-                      disabled 
-                      className="bg-muted/50"
-                    />
-                    <div className="flex items-center gap-1 text-xs text-emerald-500">
-                      <Check className="h-3 w-3" />
-                      Verificado
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
+                <Separator className="opacity-60" />
 
                 {/* Nome de usuário */}
                 <div className="space-y-2">
-                  <Label htmlFor="display-name" className="text-sm text-muted-foreground flex items-center gap-2">
-                    <User className="h-4 w-4" />
+                  <Label htmlFor="display-name" className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                    <User className="h-3.5 w-3.5" />
                     Nome de usuário
                   </Label>
                   <div className="flex items-center gap-2">
@@ -668,11 +648,13 @@ const Profile = () => {
                       onChange={(e) => setDisplayName(e.target.value)}
                       placeholder="Como você quer ser chamado"
                       maxLength={60}
+                      className="h-10"
                     />
                     <Button
+                      variant="outline"
                       onClick={handleSaveName}
                       disabled={isSavingName || !displayName.trim() || displayName.trim() === (profile?.name || "")}
-                      className="gap-2 shrink-0"
+                      className="gap-2 shrink-0 h-10"
                     >
                       {isSavingName ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -682,47 +664,69 @@ const Profile = () => {
                       Salvar
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground/80">
                     Esse nome aparece no seu perfil e nas conversas atribuídas a você.
                   </p>
                 </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5" />
+                    E-mail cadastrado
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={user?.email || ''}
+                      disabled
+                      className="h-10 bg-muted/40"
+                    />
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      Verificado
+                    </div>
+                  </div>
+                </div>
+
               </CardContent>
             </Card>
 
             {/* Security Card - right 40% (senha + 2FA) */}
-            <Card className="border-border/50 h-full">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
+            <Card className="border-border/50 shadow-none h-full">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
                   Segurança
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs">
                   Gerencie o acesso e a proteção da sua conta
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
                 {/* Senha */}
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <Lock className="h-4 w-4 text-primary" />
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted">
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                     </div>
-                    <span className="font-medium leading-none">Trocar senha</span>
+                    <span className="text-sm font-medium leading-none">Trocar senha</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground/90 leading-relaxed">
                     Enviamos um link seguro por e-mail para você definir uma nova senha.
                   </p>
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => setShowPasswordModal(true)}
-                    className="gap-2 w-full"
+                    className="gap-2 w-full font-normal"
                   >
-                    <Lock className="h-4 w-4" />
+                    <Lock className="h-3.5 w-3.5" />
                     Alterar senha
                   </Button>
                 </div>
 
-                <Separator />
+                <Separator className="opacity-60" />
+
 
                 {/* Autenticação de dois fatores */}
                 <TwoFactorPanel />
@@ -733,12 +737,12 @@ const Profile = () => {
 
           {hasOpps && (<>
           {/* Company Profile Card */}
-          <Card className="border-border/50">
+          <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-primary" />
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
                     Perfil da Empresa
                   </CardTitle>
                   <CardDescription>
@@ -932,12 +936,12 @@ const Profile = () => {
           </Card>
 
           {/* Services Card */}
-          <Card className="border-border/50">
+          <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-primary" />
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
                     Serviços Vendidos
                   </CardTitle>
                   <CardDescription>
@@ -1091,7 +1095,7 @@ const Profile = () => {
 
           {/* Plan Card — Owner vê completo; Admin/Operational vê resumo somente leitura */}
           {isSubUser ? (
-            <Card className="border-border/50">
+            <Card className="border-border/50 shadow-none">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="h-5 w-5 text-warning" />
@@ -1122,7 +1126,7 @@ const Profile = () => {
           ) : (
           <>
           {/* Plan Card */}
-          <Card className="border-border/50">
+          <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-warning" />
@@ -1265,10 +1269,10 @@ const Profile = () => {
 
           {/* Email Preferences Card */}
 
-          <Card className="border-border/50">
+          <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-primary" />
+                <Bell className="h-4 w-4 text-muted-foreground" />
                 Notificações por e-mail
               </CardTitle>
               <CardDescription>
@@ -1317,10 +1321,10 @@ const Profile = () => {
 
           {/* Tour guiado — apenas owner. Subusuários compartilham a conta. */}
           {!isSubUser && (
-            <Card className="border-border/50">
+            <Card className="border-border/50 shadow-none">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
-                  <PlayCircle className="h-5 w-5 text-primary" />
+                  <PlayCircle className="h-4 w-4 text-muted-foreground" />
                   Tour guiado
                 </CardTitle>
                 <CardDescription>
@@ -1341,10 +1345,10 @@ const Profile = () => {
             </Card>
           )}
 
-          <Card className="border-border/50">
+          <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-primary" />
+                <MessageCircle className="h-4 w-4 text-muted-foreground" />
                 Suporte
               </CardTitle>
               <CardDescription>
@@ -1376,7 +1380,7 @@ const Profile = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-primary" />
+              <Lock className="h-4 w-4 text-muted-foreground" />
               Alterar senha
             </DialogTitle>
             <DialogDescription>
