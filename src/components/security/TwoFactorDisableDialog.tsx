@@ -43,16 +43,17 @@ export function TwoFactorDisableDialog({ open, onOpenChange, onDisabled }: Props
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldOff className="h-5 w-5 text-destructive" />
-            Desativar autenticação de dois fatores
-          </DialogTitle>
-          <DialogDescription>
-            Por segurança, confirme sua senha atual e um código do seu aplicativo autenticador.
-            O segredo e os códigos de recuperação atuais serão invalidados.
+        <DialogHeader className="space-y-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10">
+            <ShieldOff className="h-7 w-7 text-destructive" />
+          </div>
+          <DialogTitle className="text-xl">Desativar autenticação de dois fatores</DialogTitle>
+          <DialogDescription className="text-sm leading-relaxed">
+            Sua conta voltará a ser protegida apenas pela senha. Confirme sua senha atual e um código do
+            aplicativo autenticador — o segredo e os códigos de recuperação serão invalidados.
           </DialogDescription>
         </DialogHeader>
+
         <div className="space-y-4 py-2">
           <div className="space-y-2">
             <Label htmlFor="2fa-pass">Senha atual</Label>

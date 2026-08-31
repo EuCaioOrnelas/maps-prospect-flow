@@ -68,7 +68,7 @@ import { PlayCircle } from "lucide-react";
 import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
-import { SecuritySection } from "@/components/security/SecuritySection";
+import { TwoFactorPanel } from "@/components/security/TwoFactorPanel";
 
 
 
@@ -626,7 +626,7 @@ const Profile = () => {
               </CardContent>
             </Card>
 
-            {/* Security Card - right 40% */}
+            {/* Security Card - right 40% (senha + 2FA) */}
             <Card className="border-border/50 h-full">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
@@ -634,22 +634,23 @@ const Profile = () => {
                   Segurança
                 </CardTitle>
                 <CardDescription>
-                  Gerencie a segurança da sua conta
+                  Gerencie o acesso e a proteção da sua conta
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Lock className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Senha</span>
+              <CardContent className="space-y-5">
+                {/* Senha */}
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Lock className="h-4 w-4 text-primary" />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Altere sua senha de acesso
-                    </p>
+                    <span className="font-medium leading-none">Senha de acesso</span>
                   </div>
-                  <Button 
-                    variant="outline" 
+                  <p className="text-sm text-muted-foreground">
+                    Enviamos um link seguro por e-mail para você definir uma nova senha.
+                  </p>
+                  <Button
+                    variant="outline"
                     onClick={() => setShowPasswordModal(true)}
                     className="gap-2 w-full"
                   >
@@ -657,8 +658,14 @@ const Profile = () => {
                     Alterar senha
                   </Button>
                 </div>
+
+                <Separator />
+
+                {/* Autenticação de dois fatores */}
+                <TwoFactorPanel />
               </CardContent>
             </Card>
+
           </div>
 
           {hasOpps && (<>
@@ -1191,8 +1198,7 @@ const Profile = () => {
           </>
           )}
 
-          {/* Segurança — 2FA opcional por usuário */}
-          <SecuritySection />
+
 
           {/* Email Preferences Card */}
 
