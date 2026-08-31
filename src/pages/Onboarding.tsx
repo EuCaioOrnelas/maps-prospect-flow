@@ -480,23 +480,11 @@ export default function Onboarding() {
                 })}
               </div>
 
-              {currentStep.key === "acquisition_source" &&
-                answers.acquisition_source === "other" &&
-                acquisitionOther && (
-                  <div className="mt-6 flex items-center justify-center gap-3 text-sm text-[hsl(220,12%,46%)]">
-                    <span className="max-w-xl truncate">“{acquisitionOther}”</span>
-                    <button
-                      type="button"
-                      className="underline text-[hsl(158,72%,30%)]"
-                      onClick={() => {
-                        setOtherDraft(acquisitionOther);
-                        setOtherOpen(true);
-                      }}
-                    >
-                      Editar
-                    </button>
-                  </div>
-                )}
+              {currentStep.multi && (
+                <p className="mt-6 text-center text-xs text-[hsl(220,12%,46%)]">
+                  Você pode selecionar mais de uma opção.
+                </p>
+              )}
 
               <div className="mt-12 flex items-center justify-between">
                 <Button
@@ -561,32 +549,6 @@ export default function Onboarding() {
         </button>
       )}
 
-      <Dialog open={otherOpen} onOpenChange={setOtherOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Como você conheceu o Wiize?</DialogTitle>
-            <DialogDescription>
-              Escreva com suas palavras por onde você chegou até a gente.
-            </DialogDescription>
-          </DialogHeader>
-          <Textarea
-            value={otherDraft}
-            onChange={(e) => setOtherDraft(e.target.value)}
-            placeholder="Digite aqui..."
-            maxLength={280}
-            rows={3}
-            autoFocus
-          />
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setOtherOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmOther} disabled={!otherDraft.trim()}>
-              Continuar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
