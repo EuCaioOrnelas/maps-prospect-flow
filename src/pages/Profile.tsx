@@ -68,6 +68,8 @@ import { PlayCircle } from "lucide-react";
 import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
+import { SecuritySection } from "@/components/security/SecuritySection";
+
 
 
 const Profile = () => {
