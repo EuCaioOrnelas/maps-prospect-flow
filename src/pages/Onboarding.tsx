@@ -499,6 +499,24 @@ export default function Onboarding() {
                 })}
               </div>
 
+              {currentStep.key === "acquisition_source" &&
+                answers.acquisition_source === "other" &&
+                acquisitionOther && (
+                  <div className="mt-6 flex items-center justify-center gap-3 text-sm text-[hsl(220,12%,46%)]">
+                    <span className="max-w-xl truncate">“{acquisitionOther}”</span>
+                    <button
+                      type="button"
+                      className="underline text-[hsl(158,72%,30%)]"
+                      onClick={() => {
+                        setOtherDraft(acquisitionOther);
+                        setOtherOpen(true);
+                      }}
+                    >
+                      Editar
+                    </button>
+                  </div>
+                )}
+
               <div className="mt-12 flex items-center justify-between">
                 <Button
                   variant="ghost"
