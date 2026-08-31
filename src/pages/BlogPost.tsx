@@ -451,7 +451,7 @@ export default function BlogPost() {
 
         <div className="blog-content max-w-none">
           {/^\s*</.test(post.content) ? (
-            <div dangerouslySetInnerHTML={{ __html: post.content }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }} />
           ) : (
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
           )}
