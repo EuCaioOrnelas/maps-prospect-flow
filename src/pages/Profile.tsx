@@ -90,6 +90,35 @@ const Profile = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  useEffect(() => {
+    if (profile?.name !== undefined && profile?.name !== null) {
+      setDisplayName(profile.name);
+    }
+  }, [profile?.name]);
+
+  const handleSaveName = async () => {
+    if (!user) return;
+    const trimmed = displayName.trim();
+    if (!trimmed) {
+      toast({ title: "Nome inválido", description: "Informe um nome de usuário.", variant: "destructive" });
+      return;
+    }
+    setIsSavingName(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ name: trimmed })
+      .eq("id", user.id);
+    setIsSavingName(false);
+    if (error) {
+      toast({ title: "Erro ao salvar nome", description: "Tente novamente em instantes.", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Nome atualizado", description: "Seu nome de usuário foi salvo com sucesso." });
+    refreshProfile?.();
+  };
   const [transactionalEnabled, setTransactionalEnabled] = useState(true);
   const [marketingEnabled, setMarketingEnabled] = useState(true);
   const [isLoadingEmailPrefs, setIsLoadingEmailPrefs] = useState(true);
