@@ -1198,8 +1198,7 @@ const Profile = () => {
           </>
           )}
 
-          {/* Segurança — 2FA opcional por usuário */}
-          <SecuritySection />
+
 
           {/* Email Preferences Card */}
 
