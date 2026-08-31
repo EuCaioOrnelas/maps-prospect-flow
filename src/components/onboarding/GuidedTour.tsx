@@ -535,21 +535,28 @@ export function GuidedTour() {
   popupStyle.maxWidth = `calc(100vw - ${POPUP_GAP * 2}px)`;
   popupStyle.maxHeight = `${Math.max(180, window.innerHeight - NAV_SAFE - POPUP_GAP * 2)}px`;
 
-  // Se, mesmo após o clamp, o card ainda cobrir o centro do destaque, movemos
-  // para o canto com menos sobreposição — nunca no meio do conteúdo focado.
+  // Se, mesmo após o clamp, o card ainda cobrir o destaque, movemos para o
+  // canto diagonalmente oposto ao foco — nunca no meio do conteúdo focado.
+  // Limiar baixo (15%) porque até sobreposições parciais atrapalham a leitura.
   if (spot && typeof popupStyle.top === "number" && typeof popupStyle.left === "number") {
     const w = typeof popupStyle.width === "number" ? popupStyle.width : availableWidth;
     const h = popupSize.height || 196;
     const overlapX = Math.max(0, Math.min(popupStyle.left + w, spot.left + spot.width) - Math.max(popupStyle.left, spot.left));
     const overlapY = Math.max(0, Math.min(popupStyle.top + h, spot.top + spot.height) - Math.max(popupStyle.top, spot.top));
     const overlapRatio = (overlapX * overlapY) / Math.max(1, w * h);
-    if (overlapRatio > 0.35) {
+    if (overlapRatio > 0.15) {
       const width = Math.min(w, 340);
+      const placeRight = spot.left + spot.width / 2 < window.innerWidth / 2;
+      const placeBottom = spot.top + spot.height / 2 < window.innerHeight / 2;
       popupStyle = {
         ...popupStyle,
         width,
-        top: Math.max(POPUP_GAP, Math.min(window.innerHeight - h - NAV_SAFE - POPUP_GAP, spot.top + 8)),
-        left: Math.max(POPUP_GAP, window.innerWidth - width - POPUP_GAP),
+        top: placeBottom
+          ? Math.max(POPUP_GAP, window.innerHeight - h - NAV_SAFE - POPUP_GAP)
+          : POPUP_GAP,
+        left: placeRight
+          ? Math.max(POPUP_GAP, window.innerWidth - width - POPUP_GAP)
+          : POPUP_GAP,
         transform: undefined,
       };
     }
