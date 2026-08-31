@@ -209,11 +209,25 @@ export function GuidedTour() {
     let attempts = 0;
     let lastSerialized = "";
     let stableFrames = 0;
-    // Body scroll fica travado durante o tour, então scrollIntoView pode nunca
-    // "resolver" o clipping — limitamos as tentativas para não entrar em loop
-    // de scroll + re-medição (que causava tremedeira/piscar da tela).
+    // Limitamos as tentativas de scroll para não entrar em loop de
+    // scroll + re-medição (que causava tremedeira/piscar da tela).
     let scrollFixes = 0;
-    const MAX_SCROLL_FIXES = 2;
+    const MAX_SCROLL_FIXES = 3;
+
+    // O tour trava o scroll do body/html (overflow hidden), o que torna
+    // scrollIntoView um NO-OP no document scroller — o alvo ficava focado
+    // fora da tela. Aqui destravamos temporariamente, rolamos e re-travamos.
+    const scrollElIntoView = (el: HTMLElement) => {
+      const bodyOverflow = document.body.style.overflow;
+      const htmlOverflow = document.documentElement.style.overflow;
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      try {
+        el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+      } catch {}
+      document.body.style.overflow = bodyOverflow;
+      document.documentElement.style.overflow = htmlOverflow;
+    };
 
     const startedAt = performance.now();
 
@@ -224,7 +238,7 @@ export function GuidedTour() {
           setRect(null);
         }
         attempts += 1;
-        if (attempts < 60) {
+        if (attempts < 150) {
           // Keep the previous spotlight visible while we wait for the new target
           // to appear — prevents the "focus on nothing" flicker between steps.
           pollTimeoutId = window.setTimeout(() => {
@@ -247,13 +261,17 @@ export function GuidedTour() {
       if (step.keepViewportTop) {
         if (window.scrollY !== 0 && scrollFixes < MAX_SCROLL_FIXES) {
           scrollFixes += 1;
+          const bodyOverflow = document.body.style.overflow;
+          const htmlOverflow = document.documentElement.style.overflow;
+          document.body.style.overflow = "";
+          document.documentElement.style.overflow = "";
           window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+          document.body.style.overflow = bodyOverflow;
+          document.documentElement.style.overflow = htmlOverflow;
         }
         if (isClipped && scrollFixes < MAX_SCROLL_FIXES) {
           scrollFixes += 1;
-          try {
-            el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
-          } catch {}
+          scrollElIntoView(el);
         }
         if (shouldScrollIntoView) {
           lastScrolledStepRef.current = step.id;
@@ -261,9 +279,7 @@ export function GuidedTour() {
       } else if (isClipped && scrollFixes < MAX_SCROLL_FIXES) {
         scrollFixes += 1;
         lastScrolledStepRef.current = step.id;
-        try {
-          el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
-        } catch {}
+        scrollElIntoView(el);
       } else if (shouldScrollIntoView) {
         lastScrolledStepRef.current = step.id;
       }
@@ -395,11 +411,12 @@ export function GuidedTour() {
 
       if (space < 272) {
         // Modal takes nearly the whole viewport: dock the card at the bottom,
-        // above the navigation bar, so both stay readable.
+        // above the navigation bar, so both stay readable. Usamos left numérico
+        // (não "50%"/transform) para que a trava anti-sobreposição também
+        // funcione neste caso — o card nunca cobre o foco destacado.
         popupStyle = {
           top: Math.max(POPUP_GAP, window.innerHeight - popupHeight - 104),
-          left: "50%",
-          transform: "translateX(-50%)",
+          left: Math.max(POPUP_GAP, (window.innerWidth - availableWidth) / 2),
           width: availableWidth,
         };
       } else {
@@ -486,13 +503,19 @@ export function GuidedTour() {
     popupStyle = resolvedPlacement
       ? computePlacementStyle(resolvedPlacement)
       : // Alvo grande demais (ex.: card do briefing da Wian ocupa quase toda a
-        // tela): não existe espaço externo. Nesse caso "ancoramos" o card em um
-        // canto livre em vez de jogá-lo por cima do foco.
+        // tela): não existe espaço externo. Nesse caso "ancoramos" o card no
+        // canto diagonalmente oposto ao foco — nunca por cima dele.
         (() => {
           const width = Math.min(popupWidth, 340);
+          const placeRight = spotBounds.left + (spotBounds.right - spotBounds.left) / 2 < window.innerWidth / 2;
+          const placeBottom = spotBounds.top + (spotBounds.bottom - spotBounds.top) / 2 < window.innerHeight / 2;
           return {
-            top: Math.max(bounds.top, Math.min(window.innerHeight - popupHeight - 104, spotBounds.top + 8)),
-            left: Math.max(bounds.left, window.innerWidth - width - viewportMargin),
+            top: placeBottom
+              ? Math.max(bounds.top, window.innerHeight - popupHeight - 104)
+              : bounds.top,
+            left: placeRight
+              ? Math.max(bounds.left, window.innerWidth - width - viewportMargin)
+              : bounds.left,
             width,
           };
         })();
@@ -512,21 +535,28 @@ export function GuidedTour() {
   popupStyle.maxWidth = `calc(100vw - ${POPUP_GAP * 2}px)`;
   popupStyle.maxHeight = `${Math.max(180, window.innerHeight - NAV_SAFE - POPUP_GAP * 2)}px`;
 
-  // Se, mesmo após o clamp, o card ainda cobrir o centro do destaque, movemos
-  // para o canto com menos sobreposição — nunca no meio do conteúdo focado.
+  // Se, mesmo após o clamp, o card ainda cobrir o destaque, movemos para o
+  // canto diagonalmente oposto ao foco — nunca no meio do conteúdo focado.
+  // Limiar baixo (15%) porque até sobreposições parciais atrapalham a leitura.
   if (spot && typeof popupStyle.top === "number" && typeof popupStyle.left === "number") {
     const w = typeof popupStyle.width === "number" ? popupStyle.width : availableWidth;
     const h = popupSize.height || 196;
     const overlapX = Math.max(0, Math.min(popupStyle.left + w, spot.left + spot.width) - Math.max(popupStyle.left, spot.left));
     const overlapY = Math.max(0, Math.min(popupStyle.top + h, spot.top + spot.height) - Math.max(popupStyle.top, spot.top));
     const overlapRatio = (overlapX * overlapY) / Math.max(1, w * h);
-    if (overlapRatio > 0.35) {
+    if (overlapRatio > 0.15) {
       const width = Math.min(w, 340);
+      const placeRight = spot.left + spot.width / 2 < window.innerWidth / 2;
+      const placeBottom = spot.top + spot.height / 2 < window.innerHeight / 2;
       popupStyle = {
         ...popupStyle,
         width,
-        top: Math.max(POPUP_GAP, Math.min(window.innerHeight - h - NAV_SAFE - POPUP_GAP, spot.top + 8)),
-        left: Math.max(POPUP_GAP, window.innerWidth - width - POPUP_GAP),
+        top: placeBottom
+          ? Math.max(POPUP_GAP, window.innerHeight - h - NAV_SAFE - POPUP_GAP)
+          : POPUP_GAP,
+        left: placeRight
+          ? Math.max(POPUP_GAP, window.innerWidth - width - POPUP_GAP)
+          : POPUP_GAP,
         transform: undefined,
       };
     }
