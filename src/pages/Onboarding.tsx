@@ -45,15 +45,6 @@ import {
   Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -67,6 +58,7 @@ type StepDef = {
   subtitle: string;
   options: OptionDef[];
   optional?: boolean;
+  multi?: boolean;
 };
 
 interface Answers {
@@ -121,7 +113,8 @@ const STEPS: StepDef[] = [
   {
     key: "sales_method",
     title: "Como vocês vendem hoje?",
-    subtitle: "Conta a real, vamos te mostrar onde dá pra evoluir.",
+    subtitle: "Pode marcar mais de uma opção, vamos te mostrar onde dá pra evoluir.",
+    multi: true,
     options: [
       { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
       { id: "crm", label: "CRM tradicional", icon: Database },
@@ -190,9 +183,6 @@ export default function Onboarding() {
     acquisition_source: "",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [otherOpen, setOtherOpen] = useState(false);
-  const [otherDraft, setOtherDraft] = useState("");
-  const [acquisitionOther, setAcquisitionOther] = useState("");
 
   // Auth guard + skip se já completou
   useEffect(() => {
@@ -222,29 +212,21 @@ export default function Onboarding() {
   );
 
   const selected = currentStep ? answers[currentStep.key] : "";
-  const needsOtherText =
-    currentStep?.key === "acquisition_source" &&
-    selected === "other" &&
-    !acquisitionOther.trim();
-  const canContinue = (currentStep?.optional || !!selected) && !needsOtherText;
+  const canContinue = currentStep?.optional || !!selected;
 
   const handleSelect = (id: string) => {
     if (!currentStep) return;
-    if (currentStep.key === "acquisition_source" && id === "other") {
-      setOtherDraft(acquisitionOther);
-      setOtherOpen(true);
+    if (currentStep.multi) {
+      setAnswers((prev) => {
+        const current = prev[currentStep.key] ? prev[currentStep.key].split(",") : [];
+        const next = current.includes(id)
+          ? current.filter((v) => v !== id)
+          : [...current, id];
+        return { ...prev, [currentStep.key]: next.join(",") };
+      });
       return;
     }
-    if (currentStep.key === "acquisition_source") setAcquisitionOther("");
     setAnswers((prev) => ({ ...prev, [currentStep.key]: id }));
-  };
-
-  const confirmOther = () => {
-    const text = otherDraft.trim();
-    if (!text) return;
-    setAcquisitionOther(text);
-    setAnswers((prev) => ({ ...prev, acquisition_source: "other" }));
-    setOtherOpen(false);
   };
 
   const handleNext = () => {
@@ -284,8 +266,7 @@ export default function Onboarding() {
       monthly_revenue: answers.monthly_revenue || null,
       goal_90d: answers.goal_90d || null,
       acquisition_source: answers.acquisition_source || null,
-      acquisition_source_other:
-        answers.acquisition_source === "other" ? acquisitionOther.trim() || null : null,
+      acquisition_source_other: null,
       skipped,
       completed_at: new Date().toISOString(),
     };
@@ -461,7 +442,9 @@ export default function Onboarding() {
               >
                 {currentStep.options.map((opt) => {
                   const Icon = opt.icon;
-                  const isSelected = selected === opt.id;
+                  const isSelected = currentStep.multi
+                    ? selected.split(",").includes(opt.id)
+                    : selected === opt.id;
                   return (
                     <button
                       key={opt.id}
@@ -499,23 +482,11 @@ export default function Onboarding() {
                 })}
               </div>
 
-              {currentStep.key === "acquisition_source" &&
-                answers.acquisition_source === "other" &&
-                acquisitionOther && (
-                  <div className="mt-6 flex items-center justify-center gap-3 text-sm text-[hsl(220,12%,46%)]">
-                    <span className="max-w-xl truncate">“{acquisitionOther}”</span>
-                    <button
-                      type="button"
-                      className="underline text-[hsl(158,72%,30%)]"
-                      onClick={() => {
-                        setOtherDraft(acquisitionOther);
-                        setOtherOpen(true);
-                      }}
-                    >
-                      Editar
-                    </button>
-                  </div>
-                )}
+              {currentStep.multi && (
+                <p className="mt-6 text-center text-xs text-[hsl(220,12%,46%)]">
+                  Você pode selecionar mais de uma opção.
+                </p>
+              )}
 
               <div className="mt-12 flex items-center justify-between">
                 <Button
@@ -580,32 +551,6 @@ export default function Onboarding() {
         </button>
       )}
 
-      <Dialog open={otherOpen} onOpenChange={setOtherOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Como você conheceu o Wiize?</DialogTitle>
-            <DialogDescription>
-              Escreva com suas palavras por onde você chegou até a gente.
-            </DialogDescription>
-          </DialogHeader>
-          <Textarea
-            value={otherDraft}
-            onChange={(e) => setOtherDraft(e.target.value)}
-            placeholder="Digite aqui..."
-            maxLength={280}
-            rows={3}
-            autoFocus
-          />
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setOtherOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmOther} disabled={!otherDraft.trim()}>
-              Continuar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
