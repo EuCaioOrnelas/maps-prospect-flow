@@ -221,10 +221,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
 
   return (
     <DashboardThemeProvider>
-      {children}
-      {mustChangePassword && (
-        <MustChangePasswordDialog open={true} onCompleted={() => setMustChangePassword(false)} />
-      )}
+      <TwoFactorGate>
+        {children}
+        {mustChangePassword && (
+          <MustChangePasswordDialog open={true} onCompleted={() => setMustChangePassword(false)} />
+        )}
+      </TwoFactorGate>
     </DashboardThemeProvider>
   );
 };
