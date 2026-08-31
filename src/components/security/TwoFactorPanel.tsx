@@ -52,10 +52,11 @@ export function TwoFactorPanel() {
             Códigos de recuperação
           </Button>
           <Button
-            variant="ghost"
-            className="w-full text-muted-foreground hover:text-destructive"
+            variant="outline"
+            className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
             onClick={() => setDisableOpen(true)}
           >
+            <ShieldAlert className="h-4 w-4" />
             Desativar dois fatores
           </Button>
         </div>

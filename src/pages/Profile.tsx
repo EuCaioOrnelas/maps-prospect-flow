@@ -707,7 +707,7 @@ const Profile = () => {
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                       <Lock className="h-4 w-4 text-primary" />
                     </div>
-                    <span className="font-medium leading-none">Senha de acesso</span>
+                    <span className="font-medium leading-none">Trocar senha</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Enviamos um link seguro por e-mail para você definir uma nova senha.
