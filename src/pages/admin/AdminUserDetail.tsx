@@ -23,6 +23,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { acquisitionLabel } from "@/lib/acquisitionSources";
 
 interface ProfileLite {
   id: string;
