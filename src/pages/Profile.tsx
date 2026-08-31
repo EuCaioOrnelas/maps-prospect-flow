@@ -90,6 +90,35 @@ const Profile = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
+
+  useEffect(() => {
+    if (profile?.name !== undefined && profile?.name !== null) {
+      setDisplayName(profile.name);
+    }
+  }, [profile?.name]);
+
+  const handleSaveName = async () => {
+    if (!user) return;
+    const trimmed = displayName.trim();
+    if (!trimmed) {
+      toast({ title: "Nome inválido", description: "Informe um nome de usuário.", variant: "destructive" });
+      return;
+    }
+    setIsSavingName(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ name: trimmed })
+      .eq("id", user.id);
+    setIsSavingName(false);
+    if (error) {
+      toast({ title: "Erro ao salvar nome", description: "Tente novamente em instantes.", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Nome atualizado", description: "Seu nome de usuário foi salvo com sucesso." });
+    refreshProfile?.();
+  };
   const [transactionalEnabled, setTransactionalEnabled] = useState(true);
   const [marketingEnabled, setMarketingEnabled] = useState(true);
   const [isLoadingEmailPrefs, setIsLoadingEmailPrefs] = useState(true);
@@ -623,6 +652,40 @@ const Profile = () => {
                     </div>
                   </div>
                 </div>
+
+                <Separator />
+
+                {/* Nome de usuário */}
+                <div className="space-y-2">
+                  <Label htmlFor="display-name" className="text-sm text-muted-foreground flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Nome de usuário
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="display-name"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Como você quer ser chamado"
+                      maxLength={60}
+                    />
+                    <Button
+                      onClick={handleSaveName}
+                      disabled={isSavingName || !displayName.trim() || displayName.trim() === (profile?.name || "")}
+                      className="gap-2 shrink-0"
+                    >
+                      {isSavingName ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
+                      Salvar
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Esse nome aparece no seu perfil e nas conversas atribuídas a você.
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
@@ -644,7 +707,7 @@ const Profile = () => {
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                       <Lock className="h-4 w-4 text-primary" />
                     </div>
-                    <span className="font-medium leading-none">Senha de acesso</span>
+                    <span className="font-medium leading-none">Trocar senha</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Enviamos um link seguro por e-mail para você definir uma nova senha.
