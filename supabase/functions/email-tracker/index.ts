@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       // Redirect to original URL
       return new Response(null, {
         status: 302,
-        headers: { Location: redirectUrl },
+        headers: { Location: safeRedirect },
       });
     }
 
