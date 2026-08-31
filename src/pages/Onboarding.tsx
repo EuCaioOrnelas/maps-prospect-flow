@@ -283,6 +283,9 @@ export default function Onboarding() {
       sales_method: answers.sales_method || null,
       monthly_revenue: answers.monthly_revenue || null,
       goal_90d: answers.goal_90d || null,
+      acquisition_source: answers.acquisition_source || null,
+      acquisition_source_other:
+        answers.acquisition_source === "other" ? acquisitionOther.trim() || null : null,
       skipped,
       completed_at: new Date().toISOString(),
     };
