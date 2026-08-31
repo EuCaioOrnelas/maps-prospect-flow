@@ -125,7 +125,7 @@ export const TrialCancelCard = () => {
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button size="sm" variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/10 hover:text-primary font-normal" disabled={loading}>
+                <Button size="sm" variant="outline" className="w-full" disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Cancelando...

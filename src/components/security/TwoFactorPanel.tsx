@@ -49,7 +49,7 @@ export function TwoFactorPanel() {
 
       {enabled ? (
         <div className="flex flex-col gap-2">
-          <Button variant="outline" size="sm" className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary font-normal" onClick={() => setRecoveryOpen(true)}>
+          <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => setRecoveryOpen(true)}>
             <KeyRound className="h-3.5 w-3.5" />
             Códigos de recuperação
           </Button>
@@ -64,7 +64,7 @@ export function TwoFactorPanel() {
           </Button>
         </div>
       ) : (
-        <Button variant="outline" size="sm" className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary font-normal" onClick={() => setSetupOpen(true)} disabled={loading}>
+        <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => setSetupOpen(true)} disabled={loading}>
           <ShieldCheck className="h-3.5 w-3.5" />
           Ativar dois fatores
         </Button>
