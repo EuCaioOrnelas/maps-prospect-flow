@@ -623,43 +623,22 @@ const Profile = () => {
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <h3 className="text-xl font-semibold">{profile?.name || 'Usuário'}</h3>
-                    <p className="text-sm text-muted-foreground">{user?.email}</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <div className="space-y-1 min-w-0">
+                    <h3 className="text-lg font-semibold truncate">{profile?.name || 'Usuário'}</h3>
+                    <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+                    <p className="text-xs text-muted-foreground/80 flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       Membro desde {profile?.created_at ? formatDate(profile.created_at) : 'N/A'}
                     </p>
                   </div>
                 </div>
 
-                <Separator />
-
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    E-mail cadastrado
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Input 
-                      value={user?.email || ''} 
-                      disabled 
-                      className="bg-muted/50"
-                    />
-                    <div className="flex items-center gap-1 text-xs text-emerald-500">
-                      <Check className="h-3 w-3" />
-                      Verificado
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
+                <Separator className="opacity-60" />
 
                 {/* Nome de usuário */}
                 <div className="space-y-2">
-                  <Label htmlFor="display-name" className="text-sm text-muted-foreground flex items-center gap-2">
-                    <User className="h-4 w-4" />
+                  <Label htmlFor="display-name" className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                    <User className="h-3.5 w-3.5" />
                     Nome de usuário
                   </Label>
                   <div className="flex items-center gap-2">
@@ -669,11 +648,13 @@ const Profile = () => {
                       onChange={(e) => setDisplayName(e.target.value)}
                       placeholder="Como você quer ser chamado"
                       maxLength={60}
+                      className="h-10"
                     />
                     <Button
+                      variant="outline"
                       onClick={handleSaveName}
                       disabled={isSavingName || !displayName.trim() || displayName.trim() === (profile?.name || "")}
-                      className="gap-2 shrink-0"
+                      className="gap-2 shrink-0 h-10"
                     >
                       {isSavingName ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -683,10 +664,30 @@ const Profile = () => {
                       Salvar
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground/80">
                     Esse nome aparece no seu perfil e nas conversas atribuídas a você.
                   </p>
                 </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5" />
+                    E-mail cadastrado
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={user?.email || ''}
+                      disabled
+                      className="h-10 bg-muted/40"
+                    />
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      Verificado
+                    </div>
+                  </div>
+                </div>
+
               </CardContent>
             </Card>
 
