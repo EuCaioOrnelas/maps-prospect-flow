@@ -575,17 +575,18 @@ const Profile = () => {
           {/* Row: Informações Pessoais (60%) + Segurança (40%) */}
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
             {/* Profile Card - left 60% */}
-            <Card className="border-border/50">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
+            <Card className="border-border/50 shadow-none">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <User className="h-4 w-4 text-muted-foreground" />
                   Informações Pessoais
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs">
                   Gerencie suas informações de perfil
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+
                 {/* Avatar Section */}
                 <div className="flex items-center gap-6">
                   <div className="relative group">
