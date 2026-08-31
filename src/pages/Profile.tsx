@@ -68,6 +68,8 @@ import { PlayCircle } from "lucide-react";
 import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
+import { SecuritySection } from "@/components/security/SecuritySection";
+
 
 
 const Profile = () => {
@@ -1189,7 +1191,11 @@ const Profile = () => {
           </>
           )}
 
+          {/* Segurança — 2FA opcional por usuário */}
+          <SecuritySection />
+
           {/* Email Preferences Card */}
+
           <Card className="border-border/50">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">

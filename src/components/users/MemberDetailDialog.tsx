@@ -15,6 +15,8 @@ import { ROLE_LABEL } from "@/lib/accountPermissions";
 import type { AccountMember } from "@/hooks/useAccountMembers";
 import { downloadCsv, fmtDuration, rangeToDates, toDateInputValue, type UserMonitoringRange } from "@/lib/userMonitoring";
 import { MemberAvailabilityCard } from "@/components/users/MemberAvailabilityCard";
+import { MemberSecurityCard } from "@/components/security/MemberSecurityCard";
+
 
 interface Props {
   member: AccountMember | null;
@@ -128,7 +130,9 @@ export function MemberDetailDialog({ member, open, onOpenChange }: Props) {
                 value={member.must_change_password ? "Pendente" : "OK"}
               />
             </div>
+            <MemberSecurityCard memberUserId={member.user_id} memberName={member.name || member.email} />
           </TabsContent>
+
 
           <TabsContent value="availability" className="mt-0 min-w-0 space-y-4 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0">
             <MemberAvailabilityCard userId={member.user_id} title={`Disponibilidade de ${member.name || member.email}`} />

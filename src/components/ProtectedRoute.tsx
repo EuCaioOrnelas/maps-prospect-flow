@@ -10,6 +10,8 @@ import { getFeatureForPath, profileHasFeature } from '@/lib/featurePermissions';
 import { planHasFeature } from '@/lib/planAccess';
 import { getRolePermissionForPath, roleHasPermission, getDefaultHomeForRole, type AccountRole } from '@/lib/accountPermissions';
 import { MustChangePasswordDialog } from '@/components/users/MustChangePasswordDialog';
+import { TwoFactorGate } from '@/components/security/TwoFactorGate';
+
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -221,10 +223,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
 
   return (
     <DashboardThemeProvider>
-      {children}
-      {mustChangePassword && (
-        <MustChangePasswordDialog open={true} onCompleted={() => setMustChangePassword(false)} />
-      )}
+      <TwoFactorGate>
+        {children}
+        {mustChangePassword && (
+          <MustChangePasswordDialog open={true} onCompleted={() => setMustChangePassword(false)} />
+        )}
+      </TwoFactorGate>
     </DashboardThemeProvider>
   );
 };
