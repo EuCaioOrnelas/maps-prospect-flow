@@ -113,7 +113,8 @@ const STEPS: StepDef[] = [
   {
     key: "sales_method",
     title: "Como vocês vendem hoje?",
-    subtitle: "Conta a real, vamos te mostrar onde dá pra evoluir.",
+    subtitle: "Pode marcar mais de uma opção, vamos te mostrar onde dá pra evoluir.",
+    multi: true,
     options: [
       { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
       { id: "crm", label: "CRM tradicional", icon: Database },
@@ -182,9 +183,6 @@ export default function Onboarding() {
     acquisition_source: "",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [otherOpen, setOtherOpen] = useState(false);
-  const [otherDraft, setOtherDraft] = useState("");
-  const [acquisitionOther, setAcquisitionOther] = useState("");
 
   // Auth guard + skip se já completou
   useEffect(() => {
