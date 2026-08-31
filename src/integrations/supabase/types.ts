@@ -11063,27 +11063,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_2fa_status: {
-        Row: {
-          enabled_at: string | null
-          two_factor_enabled: boolean | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          enabled_at?: string | null
-          two_factor_enabled?: boolean | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          enabled_at?: string | null
-          two_factor_enabled?: boolean | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       accessible_owner_ids: { Args: never; Returns: string[] }
@@ -11240,6 +11219,14 @@ export type Database = {
         Returns: string
       }
       generate_partner_verification_code: { Args: never; Returns: string }
+      get_2fa_status: {
+        Args: { _user_id?: string }
+        Returns: {
+          enabled_at: string
+          two_factor_enabled: boolean
+          user_id: string
+        }[]
+      }
       get_account_owner: { Args: { _uid: string }; Returns: string }
       get_account_role: {
         Args: { _user_id: string }
