@@ -741,16 +741,16 @@ const Profile = () => {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     Perfil da Empresa
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-xs">
                     Informações usadas pela IA para personalizar mensagens de prospecção
                   </CardDescription>
                 </div>
                 {companyProfile && !isEditingCompany && (
-                  <Button variant="outline" size="sm" onClick={() => setIsEditingCompany(true)} className="gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setIsEditingCompany(true)} className="gap-2 rounded-lg hover:bg-accent transition-colors">
                     <Pencil className="h-3.5 w-3.5" />
                     Editar
                   </Button>
@@ -768,7 +768,7 @@ const Profile = () => {
                   <p className="text-sm text-muted-foreground">
                     Você ainda não configurou o perfil da sua empresa. Configure para que a IA gere mensagens personalizadas.
                   </p>
-                  <Button onClick={() => setIsEditingCompany(true)} className="gap-2">
+                  <Button size="sm" onClick={() => setIsEditingCompany(true)} className="gap-2 rounded-lg">
                     <Sparkles className="h-4 w-4" />
                     Configurar agora
                   </Button>
@@ -888,7 +888,7 @@ const Profile = () => {
                   </div>
                   <div className="flex gap-2 justify-end">
                     {companyProfile && (
-                      <Button variant="outline" onClick={() => {
+                      <Button size="sm" variant="outline" className="rounded-lg" onClick={() => {
                         setIsEditingCompany(false);
                         setCompanyForm({
                           company_name: companyProfile.company_name || "",
@@ -903,7 +903,7 @@ const Profile = () => {
                         Cancelar
                       </Button>
                     )}
-                    <Button onClick={handleSaveCompanyProfile} disabled={isSavingCompany} className="gap-2">
+                    <Button size="sm" onClick={handleSaveCompanyProfile} disabled={isSavingCompany} className="gap-2 rounded-lg">
                       {isSavingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                       Salvar
                     </Button>
@@ -920,7 +920,7 @@ const Profile = () => {
                     { icon: Sparkles, label: "Diferencial", value: companyProfile.company_differential },
                     { icon: Rocket, label: "Objetivo", value: companyProfile.company_objective },
                   ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 p-3.5 rounded-lg border border-border/30 bg-background/80 shadow-[0_0_15px_-3px_hsl(var(--primary)/0.06)]">
+                    <div key={i} className="flex items-start gap-3 p-3.5 rounded-xl border border-border/40 bg-muted/20">
                       <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                         <item.icon className="h-4 w-4 text-primary" />
                       </div>
@@ -940,11 +940,11 @@ const Profile = () => {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                     Serviços Vendidos
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-xs">
                     Serviços e ticket médio usados pela IA para calcular oportunidades e forecast
                   </CardDescription>
                 </div>
@@ -952,7 +952,7 @@ const Profile = () => {
                   <Button variant="outline" size="sm" onClick={() => {
                     setServiceForm(services.map(s => ({ name: s.name, average_ticket: s.average_ticket, description: s.description || "" })));
                     setIsEditingServices(true);
-                  }} className="gap-2">
+                  }} className="gap-2 rounded-lg hover:bg-accent transition-colors">
                     <Pencil className="h-3.5 w-3.5" />
                     Editar
                   </Button>
@@ -973,7 +973,7 @@ const Profile = () => {
                   <Button onClick={() => {
                     setServiceForm([{ name: "", average_ticket: 0, description: "" }]);
                     setIsEditingServices(true);
-                  }} className="gap-2">
+                  }} className="gap-2 rounded-lg">
                     <Plus className="h-4 w-4" />
                     Adicionar serviços
                   </Button>
@@ -1027,21 +1027,21 @@ const Profile = () => {
                   </div>
 
                   {serviceForm.length < 10 && (
-                    <Button variant="outline" size="sm" onClick={() => setServiceForm(prev => [...prev, { name: "", average_ticket: 0, description: "" }])} className="gap-1.5 text-xs w-full">
+                    <Button variant="outline" size="sm" onClick={() => setServiceForm(prev => [...prev, { name: "", average_ticket: 0, description: "" }])} className="gap-1.5 text-xs w-full rounded-lg border-dashed hover:bg-accent transition-colors">
                       <Plus size={14} />
                       Adicionar outro serviço
                     </Button>
                   )}
 
                   {serviceForm.some(s => s.average_ticket > 0) && (
-                    <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg">
+                    <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-xl border border-border/40">
                       <span className="font-medium text-foreground">Ticket médio geral: </span>
                       R$ {(serviceForm.filter(s => s.average_ticket > 0).reduce((a, b) => a + b.average_ticket, 0) / serviceForm.filter(s => s.average_ticket > 0).length).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
                     </div>
                   )}
 
                   <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setIsEditingServices(false)}>
+                    <Button size="sm" variant="outline" className="rounded-lg" onClick={() => setIsEditingServices(false)}>
                       Cancelar
                     </Button>
                     <Button
@@ -1055,8 +1055,9 @@ const Profile = () => {
                         setIsEditingServices(false);
                         toast({ title: "Serviços salvos!", description: "O forecast e oportunidades serão recalculados." });
                       }}
+                      size="sm"
                       disabled={upsertServices.isPending}
-                      className="gap-2"
+                      className="gap-2 rounded-lg"
                     >
                       {upsertServices.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                       Salvar
@@ -1066,7 +1067,7 @@ const Profile = () => {
               ) : (
                 <div className="space-y-3">
                   {services.map((service, i) => (
-                    <div key={service.id} className="flex items-start gap-3 p-3.5 rounded-lg border border-border/30 bg-background/80 shadow-[0_0_15px_-3px_hsl(var(--primary)/0.06)]">
+                    <div key={service.id} className="flex items-start gap-3 p-3.5 rounded-xl border border-border/40 bg-muted/20">
                       <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                         <DollarSign className="h-4 w-4 text-primary" />
                       </div>
@@ -1081,7 +1082,7 @@ const Profile = () => {
                       </div>
                     </div>
                   ))}
-                  <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg">
+                  <div className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-xl border border-border/40">
                     <span className="font-medium text-foreground">Ticket médio geral: </span>
                     R$ {(services.reduce((a, b) => a + Number(b.average_ticket), 0) / services.length).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
                   </div>
@@ -1097,16 +1098,16 @@ const Profile = () => {
           {isSubUser ? (
             <Card className="border-border/50 shadow-none">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <Crown className="h-5 w-5 text-warning" />
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Crown className="h-4 w-4 text-muted-foreground" />
                   Plano da conta
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs">
                   Apenas o dono da conta gerencia assinatura e faturamento
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/40">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">Plano atual:</span>
@@ -1128,16 +1129,16 @@ const Profile = () => {
           {/* Plan Card */}
           <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
-                <Crown className="h-5 w-5 text-warning" />
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <Crown className="h-4 w-4 text-muted-foreground" />
                 Plano e Assinatura
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs">
                 Gerencie seu plano e pagamentos
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/40">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Plano atual:</span>
@@ -1192,7 +1193,7 @@ const Profile = () => {
                   </div>
                 ) : (
                   <Link to="/upgrade">
-                    <Button variant="default" className="gap-2">
+                    <Button size="sm" variant="outline" className="gap-2 rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors">
                       <Crown className="h-4 w-4" />
                       Fazer upgrade
                     </Button>
@@ -1203,7 +1204,7 @@ const Profile = () => {
               {!isFreePlan && (
                 <>
                   {((profile as any)?.payment_provider === 'abacate_pay' || ((profile as any)?.payment_provider == null && !(profile as any)?.stripe_customer_id)) && (profile as any)?.payment_provider !== 'stripe' ? (
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-muted/40">
+                    <div className="flex items-center justify-between p-4 rounded-xl border border-border/40 bg-muted/30">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
@@ -1222,14 +1223,14 @@ const Profile = () => {
                         )}
                       </div>
                       <Link to="/minha-assinatura">
-                        <Button variant="outline" className="gap-2">
+                        <Button size="sm" variant="outline" className="gap-2 rounded-lg hover:bg-accent transition-colors">
                           <ExternalLink className="h-4 w-4" />
                           Gerenciar
                         </Button>
                       </Link>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-muted/40">
+                    <div className="flex items-center justify-between p-4 rounded-xl border border-border/40 bg-muted/30">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
@@ -1248,7 +1249,7 @@ const Profile = () => {
                         )}
                       </div>
                       <Link to="/minha-assinatura">
-                        <Button variant="outline" className="gap-2">
+                        <Button size="sm" variant="outline" className="gap-2 rounded-lg hover:bg-accent transition-colors">
                           <ExternalLink className="h-4 w-4" />
                           Gerenciar
                         </Button>
@@ -1271,16 +1272,16 @@ const Profile = () => {
 
           <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
                 <Bell className="h-4 w-4 text-muted-foreground" />
                 Notificações por e-mail
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs">
                 Controle quais e-mails você deseja receber
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/40">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
@@ -1297,7 +1298,7 @@ const Profile = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border/50">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/40">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
@@ -1323,11 +1324,11 @@ const Profile = () => {
           {!isSubUser && (
             <Card className="border-border/50 shadow-none">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
                   <PlayCircle className="h-4 w-4 text-muted-foreground" />
                   Tour guiado
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs">
                   Refaça o passo a passo para entender melhor como a Wiize funciona
                 </CardDescription>
               </CardHeader>
@@ -1347,11 +1348,11 @@ const Profile = () => {
 
           <Card className="border-border/50 shadow-none">
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
                 <MessageCircle className="h-4 w-4 text-muted-foreground" />
                 Suporte
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs">
                 Precisa de ajuda? Entre em contato conosco
               </CardDescription>
             </CardHeader>
@@ -1364,7 +1365,7 @@ const Profile = () => {
                   </p>
                 </div>
                 <Link to="/contato">
-                  <Button variant="default" className="gap-2">
+                  <Button size="sm" variant="outline" className="gap-2 rounded-lg hover:bg-accent transition-colors">
                     <MessageCircle className="h-4 w-4" />
                     Entrar em contato
                   </Button>
@@ -1450,7 +1451,7 @@ function RestartTourButton() {
   };
 
   return (
-    <Button onClick={handleClick} disabled={loading} variant="default" className="gap-2">
+    <Button size="sm" onClick={handleClick} disabled={loading} variant="outline" className="gap-2 rounded-lg hover:bg-accent transition-colors">
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
       Refazer tutorial
     </Button>

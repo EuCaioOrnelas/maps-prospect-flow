@@ -53,13 +53,13 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/50 shadow-none">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2">
-          <Palette className="h-5 w-5 text-primary" />
+        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <Palette className="h-4 w-4 text-muted-foreground" />
           Aparência
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-xs">
           Escolha o tema da interface do dashboard
         </CardDescription>
       </CardHeader>
@@ -77,7 +77,7 @@ export function ThemeToggle() {
                   "relative rounded-xl border-2 p-1 transition-all duration-200 text-left group",
                   isSelected
                     ? "border-primary ring-2 ring-primary/20"
-                    : "border-border/50 hover:border-border"
+                    : "border-border/40 hover:border-border hover:bg-accent/40"
                 )}
               >
                 {/* Mini preview */}
