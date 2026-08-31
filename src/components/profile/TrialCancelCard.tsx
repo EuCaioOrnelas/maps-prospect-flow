@@ -77,19 +77,19 @@ export const TrialCancelCard = () => {
   };
 
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/50 shadow-none">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-primary" />
+        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <ShieldCheck className="h-4 w-4 text-muted-foreground" />
           Ativação automática após o teste
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-xs">
           Seu cartão foi cadastrado como garantia de compromisso — não como cobrança imediata.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {cancelled ? (
-          <div className="flex items-start gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
             <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />
             <div className="flex-1 text-sm">
               <p className="font-semibold text-foreground">Ativação automática cancelada</p>
@@ -101,7 +101,7 @@ export const TrialCancelCard = () => {
           </div>
         ) : (
           <>
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/40 border border-border/50">
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border border-border/40">
               <Calendar className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />
               <div className="flex-1 text-sm">
                 <p className="font-semibold text-foreground">
@@ -125,7 +125,7 @@ export const TrialCancelCard = () => {
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full" disabled={loading}>
+                <Button size="sm" variant="outline" className="w-full rounded-lg hover:bg-accent transition-colors" disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Cancelando...
