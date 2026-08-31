@@ -651,6 +651,7 @@ const Profile = () => {
                       className="h-10"
                     />
                     <Button
+                      variant="outline"
                       onClick={handleSaveName}
                       disabled={isSavingName || !displayName.trim() || displayName.trim() === (profile?.name || "")}
                       className="gap-2 shrink-0 h-10 rounded-sm"
@@ -714,6 +715,7 @@ const Profile = () => {
                     Enviamos um link seguro por e-mail para você definir uma nova senha.
                   </p>
                   <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => setShowPasswordModal(true)}
                     className="gap-2 w-full"
@@ -748,7 +750,7 @@ const Profile = () => {
                   </CardDescription>
                 </div>
                 {companyProfile && !isEditingCompany && (
-                  <Button size="sm" onClick={() => setIsEditingCompany(true)} className="gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setIsEditingCompany(true)} className="gap-2">
                     <Pencil className="h-3.5 w-3.5" />
                     Editar
                   </Button>
@@ -766,7 +768,7 @@ const Profile = () => {
                   <p className="text-sm text-muted-foreground">
                     Você ainda não configurou o perfil da sua empresa. Configure para que a IA gere mensagens personalizadas.
                   </p>
-                  <Button size="sm" onClick={() => setIsEditingCompany(true)} className="gap-2">
+                  <Button size="sm" onClick={() => setIsEditingCompany(true)} className="gap-2" variant="outline">
                     <Sparkles className="h-4 w-4" />
                     Configurar agora
                   </Button>
@@ -901,7 +903,7 @@ const Profile = () => {
                         Cancelar
                       </Button>
                     )}
-                    <Button size="sm" onClick={handleSaveCompanyProfile} disabled={isSavingCompany} className="gap-2">
+                    <Button size="sm" onClick={handleSaveCompanyProfile} disabled={isSavingCompany} className="gap-2" variant="outline">
                       {isSavingCompany ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                       Salvar
                     </Button>
@@ -947,7 +949,7 @@ const Profile = () => {
                   </CardDescription>
                 </div>
                 {!isEditingServices && services.length > 0 && (
-                  <Button size="sm" onClick={() => {
+                  <Button variant="outline" size="sm" onClick={() => {
                     setServiceForm(services.map(s => ({ name: s.name, average_ticket: s.average_ticket, description: s.description || "" })));
                     setIsEditingServices(true);
                   }} className="gap-2">
@@ -971,7 +973,7 @@ const Profile = () => {
                   <Button onClick={() => {
                     setServiceForm([{ name: "", average_ticket: 0, description: "" }]);
                     setIsEditingServices(true);
-                  }} className="gap-2">
+                  }} className="gap-2" variant="outline">
                     <Plus className="h-4 w-4" />
                     Adicionar serviços
                   </Button>
@@ -1055,7 +1057,7 @@ const Profile = () => {
                       }}
                       size="sm"
                       disabled={upsertServices.isPending}
-                      className="gap-2"
+                      className="gap-2" variant="outline"
                     >
                       {upsertServices.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                       Salvar
@@ -1191,7 +1193,7 @@ const Profile = () => {
                   </div>
                 ) : (
                   <Link to="/upgrade">
-                    <Button size="sm" className="gap-2">
+                    <Button size="sm" variant="outline" className="gap-2">
                       <Crown className="h-4 w-4" />
                       Fazer upgrade
                     </Button>
@@ -1221,7 +1223,7 @@ const Profile = () => {
                         )}
                       </div>
                       <Link to="/minha-assinatura">
-                        <Button size="sm" className="gap-2">
+                        <Button size="sm" variant="outline" className="gap-2">
                           <ExternalLink className="h-4 w-4" />
                           Gerenciar
                         </Button>
@@ -1247,7 +1249,7 @@ const Profile = () => {
                         )}
                       </div>
                       <Link to="/minha-assinatura">
-                        <Button size="sm" className="gap-2">
+                        <Button size="sm" variant="outline" className="gap-2">
                           <ExternalLink className="h-4 w-4" />
                           Gerenciar
                         </Button>
@@ -1363,7 +1365,7 @@ const Profile = () => {
                   </p>
                 </div>
                 <Link to="/contato">
-                  <Button size="sm" className="gap-2">
+                  <Button size="sm" variant="outline" className="gap-2">
                     <MessageCircle className="h-4 w-4" />
                     Entrar em contato
                   </Button>
@@ -1413,6 +1415,7 @@ const Profile = () => {
               onClick={handleSendPasswordResetEmail}
               disabled={isSendingResetEmail}
               size="sm"
+              variant="outline"
               className="gap-2"
             >
               {isSendingResetEmail ? (
@@ -1450,7 +1453,7 @@ function RestartTourButton() {
   };
 
   return (
-    <Button size="sm" onClick={handleClick} disabled={loading} className="gap-2">
+    <Button size="sm" onClick={handleClick} disabled={loading} variant="outline" className="gap-2">
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
       Refazer tutorial
     </Button>
