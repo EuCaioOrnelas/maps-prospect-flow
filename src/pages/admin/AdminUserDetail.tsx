@@ -79,6 +79,11 @@ export default function AdminUserDetail() {
 
   const [profile, setProfile] = useState<ProfileLite | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [acquisition, setAcquisition] = useState<{
+    source: string | null;
+    other: string | null;
+  } | null>(null);
+
 
   const [from, setFrom] = useState<string>(searchParams.get("from") || daysAgoISO(29));
   const [to, setTo] = useState<string>(searchParams.get("to") || todayISO());
