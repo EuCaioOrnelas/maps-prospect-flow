@@ -187,8 +187,12 @@ export default function Onboarding() {
     sales_method: "",
     monthly_revenue: "",
     goal_90d: "",
+    acquisition_source: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [otherOpen, setOtherOpen] = useState(false);
+  const [otherDraft, setOtherDraft] = useState("");
+  const [acquisitionOther, setAcquisitionOther] = useState("");
 
   // Auth guard + skip se já completou
   useEffect(() => {
