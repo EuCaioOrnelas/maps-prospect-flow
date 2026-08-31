@@ -85,9 +85,9 @@ const STEPS: StepDef[] = [
     title: "Qual opção melhor descreve você?",
     subtitle: "Vamos personalizar a Wiize para o seu papel no time.",
     options: [
-      { id: "founder", label: "Founder / Dono", icon: Crown },
-      { id: "gestor", label: "Gestor Comercial", icon: Briefcase },
-      { id: "sdr", label: "SDR / Vendas", icon: Headphones },
+      { id: "founder", label: "Founder / Dono / Sócio", icon: Crown },
+      { id: "gestor", label: "Gerente", icon: Briefcase },
+      { id: "sdr", label: "Colaborador", icon: Headphones },
       { id: "marketing", label: "Marketing", icon: Megaphone },
       { id: "consultor", label: "Consultor / Agência", icon: Compass },
       { id: "outro", label: "Outro", icon: HelpCircle },
