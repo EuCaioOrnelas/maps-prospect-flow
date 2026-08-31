@@ -442,7 +442,9 @@ export default function Onboarding() {
               >
                 {currentStep.options.map((opt) => {
                   const Icon = opt.icon;
-                  const isSelected = selected === opt.id;
+                  const isSelected = currentStep.multi
+                    ? selected.split(",").includes(opt.id)
+                    : selected === opt.id;
                   return (
                     <button
                       key={opt.id}
