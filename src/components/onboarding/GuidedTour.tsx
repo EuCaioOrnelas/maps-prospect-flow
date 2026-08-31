@@ -261,13 +261,17 @@ export function GuidedTour() {
       if (step.keepViewportTop) {
         if (window.scrollY !== 0 && scrollFixes < MAX_SCROLL_FIXES) {
           scrollFixes += 1;
+          const bodyOverflow = document.body.style.overflow;
+          const htmlOverflow = document.documentElement.style.overflow;
+          document.body.style.overflow = "";
+          document.documentElement.style.overflow = "";
           window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+          document.body.style.overflow = bodyOverflow;
+          document.documentElement.style.overflow = htmlOverflow;
         }
         if (isClipped && scrollFixes < MAX_SCROLL_FIXES) {
           scrollFixes += 1;
-          try {
-            el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
-          } catch {}
+          scrollElIntoView(el);
         }
         if (shouldScrollIntoView) {
           lastScrolledStepRef.current = step.id;
@@ -275,9 +279,7 @@ export function GuidedTour() {
       } else if (isClipped && scrollFixes < MAX_SCROLL_FIXES) {
         scrollFixes += 1;
         lastScrolledStepRef.current = step.id;
-        try {
-          el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
-        } catch {}
+        scrollElIntoView(el);
       } else if (shouldScrollIntoView) {
         lastScrolledStepRef.current = step.id;
       }
