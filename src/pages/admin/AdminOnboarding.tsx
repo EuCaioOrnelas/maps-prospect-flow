@@ -624,7 +624,16 @@ export default function AdminOnboarding() {
                       className="flex justify-between items-start gap-4 p-3 rounded-lg border"
                     >
                       <div className="text-sm font-medium">{FIELD_LABELS[field]}</div>
-                      <div className="text-sm text-right">{labelOf(field, value)}</div>
+                      <div className="text-sm text-right">
+                        {labelOf(field, value)}
+                        {field === "acquisition_source" &&
+                          value === "other" &&
+                          selectedRow.acquisition_source_other && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              “{selectedRow.acquisition_source_other}”
+                            </div>
+                          )}
+                      </div>
                     </div>
                   );
                 })}
