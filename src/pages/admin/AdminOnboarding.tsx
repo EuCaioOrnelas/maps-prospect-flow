@@ -50,6 +50,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { ACQUISITION_SOURCE_LABELS } from "@/lib/acquisitionSources";
 
 // ============================================================
 // Mapeamento (precisa bater com src/pages/Onboarding.tsx)
@@ -61,6 +62,7 @@ const FIELD_LABELS: Record<string, string> = {
   sales_method: "Como vendem hoje",
   monthly_revenue: "Faturamento mensal",
   goal_90d: "Objetivo 90 dias",
+  acquisition_source: "Origem da aquisição",
 };
 
 const VALUE_LABELS: Record<string, Record<string, string>> = {
@@ -109,6 +111,7 @@ const VALUE_LABELS: Record<string, Record<string, string>> = {
     "escalar-time": "Escalar time",
     automatizar: "Automatizar operação",
   },
+  acquisition_source: ACQUISITION_SOURCE_LABELS,
 };
 
 const ANSWER_FIELDS: Array<keyof typeof FIELD_LABELS> = [
@@ -118,6 +121,7 @@ const ANSWER_FIELDS: Array<keyof typeof FIELD_LABELS> = [
   "sales_method",
   "monthly_revenue",
   "goal_90d",
+  "acquisition_source",
 ];
 
 const labelOf = (field: string, value: string | null) => {
@@ -134,6 +138,8 @@ interface OnboardingRow {
   sales_method: string | null;
   monthly_revenue: string | null;
   goal_90d: string | null;
+  acquisition_source: string | null;
+  acquisition_source_other: string | null;
   skipped: boolean | null;
   created_at: string;
   completed_at: string | null;
@@ -618,7 +624,16 @@ export default function AdminOnboarding() {
                       className="flex justify-between items-start gap-4 p-3 rounded-lg border"
                     >
                       <div className="text-sm font-medium">{FIELD_LABELS[field]}</div>
-                      <div className="text-sm text-right">{labelOf(field, value)}</div>
+                      <div className="text-sm text-right">
+                        {labelOf(field, value)}
+                        {field === "acquisition_source" &&
+                          value === "other" &&
+                          selectedRow.acquisition_source_other && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              “{selectedRow.acquisition_source_other}”
+                            </div>
+                          )}
+                      </div>
                     </div>
                   );
                 })}

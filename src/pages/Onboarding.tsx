@@ -39,8 +39,21 @@ import {
   ArrowRight,
   Check,
   Loader2,
+  Youtube,
+  Search,
+  Instagram,
+  Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -63,6 +76,7 @@ interface Answers {
   sales_method: string;
   monthly_revenue: string;
   goal_90d: string;
+  acquisition_source: string;
 }
 
 const STEPS: StepDef[] = [
@@ -142,6 +156,19 @@ const STEPS: StepDef[] = [
       { id: "automatizar", label: "Automatizar operação", icon: Workflow },
     ],
   },
+  {
+    key: "acquisition_source",
+    title: "Como você conheceu o Wiize?",
+    subtitle: "Só para sabermos por onde você chegou até aqui.",
+    options: [
+      { id: "youtube", label: "YouTube", icon: Youtube },
+      { id: "google", label: "Google", icon: Search },
+      { id: "instagram_tiktok", label: "Instagram / TikTok", icon: Instagram },
+      { id: "indicacao", label: "Indicação", icon: Share2 },
+      { id: "influenciador_parceiro", label: "Influenciador / Parceiro", icon: Handshake },
+      { id: "other", label: "Outro", icon: HelpCircle },
+    ],
+  },
 ];
 
 const TOTAL_STEPS = STEPS.length;
@@ -160,8 +187,12 @@ export default function Onboarding() {
     sales_method: "",
     monthly_revenue: "",
     goal_90d: "",
+    acquisition_source: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [otherOpen, setOtherOpen] = useState(false);
+  const [otherDraft, setOtherDraft] = useState("");
+  const [acquisitionOther, setAcquisitionOther] = useState("");
 
   // Auth guard + skip se já completou
   useEffect(() => {
@@ -191,11 +222,29 @@ export default function Onboarding() {
   );
 
   const selected = currentStep ? answers[currentStep.key] : "";
-  const canContinue = currentStep?.optional || !!selected;
+  const needsOtherText =
+    currentStep?.key === "acquisition_source" &&
+    selected === "other" &&
+    !acquisitionOther.trim();
+  const canContinue = (currentStep?.optional || !!selected) && !needsOtherText;
 
   const handleSelect = (id: string) => {
     if (!currentStep) return;
+    if (currentStep.key === "acquisition_source" && id === "other") {
+      setOtherDraft(acquisitionOther);
+      setOtherOpen(true);
+      return;
+    }
+    if (currentStep.key === "acquisition_source") setAcquisitionOther("");
     setAnswers((prev) => ({ ...prev, [currentStep.key]: id }));
+  };
+
+  const confirmOther = () => {
+    const text = otherDraft.trim();
+    if (!text) return;
+    setAcquisitionOther(text);
+    setAnswers((prev) => ({ ...prev, acquisition_source: "other" }));
+    setOtherOpen(false);
   };
 
   const handleNext = () => {
@@ -234,6 +283,9 @@ export default function Onboarding() {
       sales_method: answers.sales_method || null,
       monthly_revenue: answers.monthly_revenue || null,
       goal_90d: answers.goal_90d || null,
+      acquisition_source: answers.acquisition_source || null,
+      acquisition_source_other:
+        answers.acquisition_source === "other" ? acquisitionOther.trim() || null : null,
       skipped,
       completed_at: new Date().toISOString(),
     };
@@ -447,6 +499,24 @@ export default function Onboarding() {
                 })}
               </div>
 
+              {currentStep.key === "acquisition_source" &&
+                answers.acquisition_source === "other" &&
+                acquisitionOther && (
+                  <div className="mt-6 flex items-center justify-center gap-3 text-sm text-[hsl(220,12%,46%)]">
+                    <span className="max-w-xl truncate">“{acquisitionOther}”</span>
+                    <button
+                      type="button"
+                      className="underline text-[hsl(158,72%,30%)]"
+                      onClick={() => {
+                        setOtherDraft(acquisitionOther);
+                        setOtherOpen(true);
+                      }}
+                    >
+                      Editar
+                    </button>
+                  </div>
+                )}
+
               <div className="mt-12 flex items-center justify-between">
                 <Button
                   variant="ghost"
@@ -509,6 +579,33 @@ export default function Onboarding() {
           Pular por enquanto
         </button>
       )}
+
+      <Dialog open={otherOpen} onOpenChange={setOtherOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Como você conheceu o Wiize?</DialogTitle>
+            <DialogDescription>
+              Escreva com suas palavras por onde você chegou até a gente.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={otherDraft}
+            onChange={(e) => setOtherDraft(e.target.value)}
+            placeholder="Digite aqui..."
+            maxLength={280}
+            rows={3}
+            autoFocus
+          />
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setOtherOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmOther} disabled={!otherDraft.trim()}>
+              Continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -23,6 +23,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { acquisitionLabel } from "@/lib/acquisitionSources";
 
 interface ProfileLite {
   id: string;
@@ -79,6 +80,11 @@ export default function AdminUserDetail() {
 
   const [profile, setProfile] = useState<ProfileLite | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [acquisition, setAcquisition] = useState<{
+    source: string | null;
+    other: string | null;
+  } | null>(null);
+
 
   const [from, setFrom] = useState<string>(searchParams.get("from") || daysAgoISO(29));
   const [to, setTo] = useState<string>(searchParams.get("to") || todayISO());
@@ -100,6 +106,20 @@ export default function AdminUserDetail() {
         .maybeSingle();
       setProfile((data as any) || null);
       setLoadingProfile(false);
+
+      const { data: onb } = await supabase
+        .from("user_onboarding")
+        .select("acquisition_source, acquisition_source_other")
+        .eq("user_id", userId)
+        .maybeSingle();
+      setAcquisition(
+        onb
+          ? {
+              source: (onb as any).acquisition_source ?? null,
+              other: (onb as any).acquisition_source_other ?? null,
+            }
+          : null
+      );
     })();
   }, [userId]);
 
@@ -229,6 +249,23 @@ export default function AdminUserDetail() {
           )}
         </div>
       </div>
+
+      {/* Aquisição */}
+      <Card className="border-border/40">
+        <CardContent className="p-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">
+            Origem da aquisição
+          </div>
+          <Badge variant="outline" className="text-xs">
+            {acquisitionLabel(acquisition?.source)}
+          </Badge>
+          {acquisition?.source === "other" && acquisition?.other && (
+            <div className="text-sm text-muted-foreground">
+              Detalhes: <span className="text-foreground">{acquisition.other}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Date filter */}
       <Card className="border-border/40">

@@ -9658,6 +9658,8 @@ export type Database = {
       }
       user_onboarding: {
         Row: {
+          acquisition_source: string | null
+          acquisition_source_other: string | null
           biggest_challenge: string | null
           completed_at: string | null
           created_at: string
@@ -9678,6 +9680,8 @@ export type Database = {
           user_profile: string | null
         }
         Insert: {
+          acquisition_source?: string | null
+          acquisition_source_other?: string | null
           biggest_challenge?: string | null
           completed_at?: string | null
           created_at?: string
@@ -9698,6 +9702,8 @@ export type Database = {
           user_profile?: string | null
         }
         Update: {
+          acquisition_source?: string | null
+          acquisition_source_other?: string | null
           biggest_challenge?: string | null
           completed_at?: string | null
           created_at?: string
