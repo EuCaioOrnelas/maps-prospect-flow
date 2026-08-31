@@ -62,6 +62,7 @@ const FIELD_LABELS: Record<string, string> = {
   sales_method: "Como vendem hoje",
   monthly_revenue: "Faturamento mensal",
   goal_90d: "Objetivo 90 dias",
+  acquisition_source: "Origem da aquisição",
 };
 
 const VALUE_LABELS: Record<string, Record<string, string>> = {
