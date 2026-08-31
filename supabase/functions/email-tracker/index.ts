@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
         console.warn("[email-tracker] blocked redirect:", parsedRedirect.hostname);
         return new Response("Redirect not allowed", { status: 400 });
       }
-      redirectUrl = parsedRedirect.toString();
+      const safeRedirect = parsedRedirect.toString();
 
       // Increment click count, set clicked_at on first click
       const { data: log } = await supabase
