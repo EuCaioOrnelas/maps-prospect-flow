@@ -29,6 +29,8 @@ export interface ProductStep {
 export interface ProductFeature {
   eyebrow: string;
   title: string;
+  /** Trecho do título que recebe destaque visual (deve estar contido em title) */
+  titleHighlight?: string;
   description: string;
   bullets: string[];
   /** inverte o lado do mockup */
@@ -56,6 +58,8 @@ export interface ProductConfig {
   seoDescription: string;
   keywords: string;
   howItWorksTitle: string;
+  /** Trecho do título "Como funciona" que recebe destaque visual (deve estar contido em howItWorksTitle) */
+  howItWorksHighlight?: string;
   howItWorks: ProductStep[];
   features: ProductFeature[];
   proof: { label: string; value: string; hint: string }[];
@@ -83,6 +87,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "prospecção B2B, pipeline comercial, ICP, geração de oportunidades, inteligência comercial, dados de empresas",
     howItWorksTitle: "De uma busca manual a um processo comercial inteligente",
+    howItWorksHighlight: "processo comercial inteligente",
     howItWorks: [
       {
         title: "Defina quem você quer encontrar",
@@ -107,6 +112,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Pipeline",
         title: "Pare de gastar horas procurando quem pode comprar de você",
+        titleHighlight: "quem pode comprar de você",
         description:
           "Prospectar deixa de ser uma tarefa manual e passa a ser um processo que se repete toda semana. Sua equipe começa o dia com oportunidades para trabalhar, não com uma planilha em branco.",
         bullets: [
@@ -122,6 +128,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Priorização",
         title: "Saiba onde a sua equipe deve começar",
+        titleHighlight: "onde a sua equipe deve começar",
         description:
           "Nem toda empresa encontrada merece o mesmo esforço. A inteligência da Wiize organiza a fila por aderência ao seu perfil de cliente e por sinais observados no mercado.",
         bullets: [
@@ -134,6 +141,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Contexto",
         title: "Comece a conversa sabendo com quem está falando",
+        titleHighlight: "sabendo com quem está falando",
         description:
           "Cada oportunidade chega com contexto do negócio e uma sugestão de abordagem específica. A primeira mensagem deixa de ser um template e passa a ser uma conversa.",
         bullets: [
@@ -170,6 +178,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "SDR digital, qualificação de leads, pré-vendas B2B, atendimento comercial, conversas comerciais",
     howItWorksTitle: "Da primeira conversa à oportunidade qualificada",
+    howItWorksHighlight: "oportunidade qualificada",
     howItWorks: [
       {
         title: "Inicie a conversa",
@@ -194,6 +203,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Continuidade",
         title: "Nenhuma conversa fica sem resposta",
+        titleHighlight: "sem resposta",
         description:
           "Leads que chegam à noite, no fim de semana ou em um pico de mensagens continuam sendo atendidos. A equipe deixa de perder oportunidades por indisponibilidade.",
         bullets: [
@@ -209,6 +219,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Follow-up",
         title: "Oportunidades não esfriam por esquecimento",
+        titleHighlight: "não esfriam por esquecimento",
         description:
           "O acompanhamento deixa de depender da memória do vendedor. Quem parou de responder volta para a conversa com contexto, no tempo certo e sem repetição.",
         bullets: [
@@ -221,6 +232,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Controle",
         title: "A equipe continua no comando",
+        titleHighlight: "no comando",
         description:
           "O SDR apoia o time comercial, não substitui vendedores. Você acompanha cada conversa, assume o teclado quando quiser e mantém o histórico completo no CRM.",
         bullets: [
@@ -257,6 +269,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "agendamento comercial, reuniões B2B, agenda de vendas, confirmação de reunião, Google Agenda",
     howItWorksTitle: "Do interesse ao compromisso confirmado",
+    howItWorksHighlight: "compromisso confirmado",
     howItWorks: [
       {
         title: "Identifique o momento certo",
@@ -281,6 +294,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Menos atrito",
         title: "Reuniões deixam de se perder na negociação de horário",
+        titleHighlight: "na negociação de horário",
         description:
           "O intervalo entre 'tenho interesse' e 'reunião marcada' é onde mais oportunidades esfriam. A Wiize encurta esse caminho com opções claras e disponibilidade real.",
         bullets: [
@@ -296,6 +310,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Acompanhamento",
         title: "Nada se perde entre marcar e realizar",
+        titleHighlight: "entre marcar e realizar",
         description:
           "Lembretes, status de atraso e reagendamento simples mantêm o compromisso vivo — e a operação sabe exatamente o que aconteceu com cada reunião.",
         bullets: [
@@ -333,6 +348,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "reativação de oportunidades, engajamento comercial, follow-up inteligente, análise de conversas, base de leads",
     howItWorksTitle: "Você já tem oportunidades. Talvez só não esteja enxergando.",
+    howItWorksHighlight: "oportunidades",
     howItWorks: [
       {
         title: "Analise suas conversas",
@@ -357,6 +373,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Inteligência",
         title: "Interesse que não aparece em uma planilha",
+        titleHighlight: "não aparece em uma planilha",
         description:
           "Boa parte da receita possível de uma empresa já passou pelo seu WhatsApp. A Wiize organiza esse histórico por temperatura, motivo de parada e potencial de retomada.",
         bullets: [
@@ -372,6 +389,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Relacionamento",
         title: "Reativar sem parecer disparo em massa",
+        titleHighlight: "sem parecer disparo em massa",
         description:
           "Cada retomada parte do contexto real da última conversa, com variação de abordagem, ritmo respeitoso e saída fácil para quem não quer mais ser contatado.",
         bullets: [
@@ -409,6 +427,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "automação comercial, fluxos de vendas, follow-up automático, processos comerciais, WhatsApp e Instagram",
     howItWorksTitle: "Como um processo repetitivo vira um fluxo que trabalha por você",
+    howItWorksHighlight: "fluxo que trabalha por você",
     howItWorks: [
       {
         title: "Defina o processo",
@@ -433,6 +452,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Eficiência",
         title: "Automatizar é tirar tarefas desnecessárias das pessoas",
+        titleHighlight: "tirar tarefas desnecessárias das pessoas",
         description:
           "Sua equipe não precisa lembrar de cada follow-up, atualizar cada card e repetir a mesma mensagem dezenas de vezes. Isso é trabalho de processo, não de vendedor.",
         bullets: [
@@ -448,6 +468,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Conexão",
         title: "Integrado ao resto da sua operação",
+        titleHighlight: "ao resto da sua operação",
         description:
           "Os fluxos conversam com o CRM, a agenda, o e-mail e as planilhas que sua empresa já usa. A automação faz parte da operação, não é um sistema à parte.",
         bullets: [
@@ -485,6 +506,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "gestão de contratos, renovação de contratos, receita recorrente, retenção B2B, previsibilidade comercial",
     howItWorksTitle: "Do fechamento à renovação, sem depender de lembrete",
+    howItWorksHighlight: "renovação",
     howItWorks: [
       {
         title: "Centralize seus contratos",
@@ -509,6 +531,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Visibilidade",
         title: "Saiba o que vence antes que vença",
+        titleHighlight: "antes que vença",
         description:
           "Perder um cliente por falta de acompanhamento custa mais caro do que conquistar um novo. A Wiize mostra contratos ativos, vencendo e vencidos e o valor em risco em cada mês.",
         bullets: [
@@ -524,6 +547,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Retenção",
         title: "Renovar vira processo, não sorte",
+        titleHighlight: "processo, não sorte",
         description:
           "Avisos, comunicação padronizada e renovação em poucos cliques transformam retenção em rotina previsível — e mantêm a previsão de receita confiável.",
         bullets: [

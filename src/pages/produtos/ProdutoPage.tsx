@@ -48,7 +48,11 @@ export default function ProdutoPage() {
 
         {/* Conteúdo acima da faixa de plasma que cruza o fim do hero */}
         <div className="relative z-10">
-          <ProductHowItWorks title={product.howItWorksTitle} steps={product.howItWorks} />
+          <ProductHowItWorks
+            title={product.howItWorksTitle}
+            highlight={product.howItWorksHighlight}
+            steps={product.howItWorks}
+          />
 
           {product.features.map((feature) => (
             <ProductFeatureBlock key={feature.title} feature={feature} visual={product.key} />
