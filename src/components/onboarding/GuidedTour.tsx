@@ -200,6 +200,15 @@ function splitBodyForScan(body: string): string[] {
 export function GuidedTour() {
   const { isActive, isTransitioning, currentStepIndex, steps, direction, isReplay, next, prev, finish } = useGuidedTour();
   const navigate = useNavigate();
+  const viewport = useViewportSize();
+  const reducedMotion = usePrefersReducedMotion();
+  // Telas pequenas/baixa resolução: transição mais curta e safe-area menor para
+  // o dock de navegação — o foco acompanha sem "lag" e o card sempre cabe.
+  const isCompactViewport = viewport.w < 640 || viewport.h < 700;
+  const transitionMs = reducedMotion ? 0 : isCompactViewport ? 220 : 300;
+  const geometryTransition = `top ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), left ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), width ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), height ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+  const popupTransition = `top ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), left ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+  const NAV_SAFE = isCompactViewport ? 76 : 96;
   const step = steps[currentStepIndex];
   const hideOnLoad = step?.hideSpotlightWhileTargetLoads === "always" || (!!step?.hideSpotlightWhileTargetLoads && direction === "next");
   const [rect, setRect] = useState<Rect | null>(null);
