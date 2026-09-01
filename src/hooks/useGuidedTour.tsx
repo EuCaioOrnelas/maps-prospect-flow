@@ -155,12 +155,20 @@ async function openDemoLeadDialog() {
     await new Promise((resolve) => setTimeout(resolve, 90));
   }
 
-  const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 80, 40);
+  // Primeiro acesso: a linha do lead demo pode demorar bem mais que 3s para
+  // ser injetada (dados ainda carregando). Esperamos até ~15s.
+  const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 250, 60);
   row?.click();
 
-  return waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-dados"]', 60, 40).then(
-    (tab) => (tab?.closest('[role="dialog"]') as HTMLElement | null) ?? null
-  );
+  let tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-dados"]', 60, 50);
+  if (!tab) {
+    // Segunda tentativa de clique: o primeiro pode ter ocorrido durante um
+    // re-render da tabela e ter sido perdido.
+    const retryRow = queryTargetElement<HTMLElement>('[data-tour="lead-row-demo"]');
+    retryRow?.click();
+    tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-dados"]', 120, 50);
+  }
+  return (tab?.closest('[role="dialog"]') as HTMLElement | null) ?? null;
 }
 
 /**
