@@ -1,14 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { MenuColumn, MenuItem } from "./navMenuData";
 
 interface NavMegaMenuProps {
   columns: MenuColumn[];
-  sideColumns?: MenuColumn[];
   onNavigate?: () => void;
-  /** Quando true, links usam hover "glass" (sem fundo/cor alterada, apenas fonte e seta) */
-  glass?: boolean;
 }
 
 function MenuLink({ item, onNavigate, compact }: { item: MenuItem; onNavigate?: () => void; compact?: boolean }) {
@@ -47,7 +43,7 @@ function MenuLink({ item, onNavigate, compact }: { item: MenuItem; onNavigate?: 
           <Icon
             size={compact ? 15 : 17}
             strokeWidth={1.9}
-            className="mt-0.5 shrink-0 text-muted-foreground"
+            className="mt-0.5 shrink-0 text-primary"
           />
         )}
         <span className="min-w-0">
@@ -69,43 +65,36 @@ function MenuLink({ item, onNavigate, compact }: { item: MenuItem; onNavigate?: 
   );
 }
 
-export const NavMegaMenu = ({ columns, sideColumns, onNavigate, glass }: NavMegaMenuProps) => {
+function MenuColumnBlock({ col, onNavigate }: { col: MenuColumn; onNavigate?: () => void }) {
   return (
-    <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-[1fr_1fr_minmax(0,0.9fr)]">
-      {columns.map((col) => (
-        <div key={col.title}>
-          <p className="mb-3 border-b border-border pb-2 text-[13px] font-semibold text-foreground/70">
-            {col.title}
-          </p>
-          <div className="space-y-1">
-            {col.items.map((item) => (
-              <MenuLink key={item.label + item.to} item={item} onNavigate={onNavigate} />
-            ))}
-          </div>
-        </div>
-      ))}
+    <div className="group/col">
+      <div className="relative mb-3 pb-2">
+        {/* Linha base */}
+        <span className="absolute bottom-0 left-0 right-0 h-px bg-border" />
+        {/* Degradê verde — cresce quando qualquer item da coluna está em hover */}
+        <span
+          className="absolute bottom-0 left-0 h-[2px] w-full origin-left scale-x-0 rounded-full bg-gradient-to-r from-primary via-primary to-primary/40 transition-transform duration-300 ease-out group-hover/col:scale-x-100"
+          aria-hidden="true"
+        />
+        <p className="text-[13px] font-semibold text-primary">
+          {col.title}
+        </p>
+      </div>
+      <div className="space-y-1">
+        {col.items.map((item) => (
+          <MenuLink key={item.label + item.to} item={item} onNavigate={onNavigate} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
-      {sideColumns && sideColumns.length > 0 && (
-        <div
-          className={cn(
-            "rounded-xl p-4 space-y-5",
-            glass ? "bg-background/40" : "bg-muted/40"
-          )}
-        >
-          {sideColumns.map((col) => (
-            <div key={col.title}>
-              <p className="mb-1.5 px-3 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {col.title}
-              </p>
-              <div className="space-y-0.5">
-                {col.items.map((item) => (
-                  <MenuLink key={item.label + item.to} item={item} onNavigate={onNavigate} compact />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+export const NavMegaMenu = ({ columns, onNavigate }: NavMegaMenuProps) => {
+  return (
+    <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
+      {columns.map((col) => (
+        <MenuColumnBlock key={col.title} col={col} onNavigate={onNavigate} />
+      ))}
     </div>
   );
 };

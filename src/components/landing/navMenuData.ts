@@ -1,22 +1,16 @@
 import {
-  Search,
   Bot,
   CalendarClock,
   Sparkles,
   Workflow,
   FileSignature,
-  Users,
-  MessageSquare,
-  Send,
-  Target,
-  BarChart3,
+  Search,
+  LifeBuoy,
+  HelpCircle,
+  Mail,
   ShieldCheck,
   BookOpen,
-  HelpCircle,
-  LifeBuoy,
-  Handshake,
-  Rocket,
-  Mail,
+  BarChart3,
   FileText,
   type LucideIcon,
 } from "lucide-react";
@@ -34,7 +28,7 @@ export interface MenuColumn {
   items: MenuItem[];
 }
 
-/** Produtos — páginas dedicadas de produto (algumas ainda em construção) */
+/** Produtos — páginas dedicadas de produto */
 export const PRODUCT_COLUMNS: MenuColumn[] = [
   {
     title: "Prospecção & Vendas",
@@ -84,17 +78,8 @@ export const PRODUCT_COLUMNS: MenuColumn[] = [
   },
 ];
 
-/** Recursos — módulos e materiais existentes na plataforma */
+/** Recursos — módulos, materiais e suporte */
 export const RESOURCE_COLUMNS: MenuColumn[] = [
-  {
-    title: "Plataforma",
-    items: [
-      { label: "CRM de Vendas", description: "Pipeline, score e negociações", to: "/#features", icon: Users },
-      { label: "Chat Multicanal", description: "WhatsApp e Instagram oficiais", to: "/#features", icon: MessageSquare },
-      { label: "Campanhas Meta", description: "Disparos oficiais e templates", to: "/#features", icon: Send },
-      { label: "Score de Leads", description: "Priorize quem tem intenção real", to: "/#features", icon: Target },
-    ],
-  },
   {
     title: "Conteúdo & Confiança",
     items: [
@@ -104,32 +89,12 @@ export const RESOURCE_COLUMNS: MenuColumn[] = [
       { label: "Diretrizes de envio", description: "Boas práticas de mensageria", to: "/diretrizes-de-envio", icon: FileText },
     ],
   },
-];
-
-/** Coluna lateral destacada (igual ao anexo 3) */
-export const MENU_SIDE_LINKS: MenuColumn[] = [
-  {
-    title: "Comece agora",
-    items: [
-      { label: "Criar conta gratuita", to: "/signup/escolher-plano", icon: Rocket },
-      { label: "Planos e preços", to: "/#pricing", icon: FileText },
-      { label: "Ver demonstração", to: "/demonstracao", icon: BarChart3 },
-    ],
-  },
   {
     title: "Suporte",
     items: [
-      { label: "Central de ajuda", to: "/ajuda", icon: LifeBuoy },
-      { label: "FAQ", to: "/ajuda/faq", icon: HelpCircle },
-      { label: "Falar com vendas", to: "/contato", icon: Mail },
-    ],
-  },
-  {
-    title: "Parcerias",
-    items: [
-      { label: "Seja parceiro Wiize", to: "/partners/apply", icon: Handshake },
-      { label: "Wiize Partners", to: "/partners/login", icon: Users },
-      { label: "Enterprise", to: "/enterprise", icon: ShieldCheck },
+      { label: "Central de ajuda", description: "Tutoriais e guias da plataforma", to: "/ajuda", icon: LifeBuoy },
+      { label: "FAQ", description: "Perguntas frequentes", to: "/ajuda/faq", icon: HelpCircle },
+      { label: "Falar com vendas", description: "Converse com nosso time", to: "/contato", icon: Mail },
     ],
   },
 ];

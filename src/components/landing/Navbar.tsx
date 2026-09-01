@@ -5,7 +5,7 @@ import { Menu, X, Lock, ChevronDown, ArrowRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { NavMegaMenu } from "./NavMegaMenu";
-import { PRODUCT_COLUMNS, RESOURCE_COLUMNS, MENU_SIDE_LINKS, type MenuColumn, type MenuItem } from "./navMenuData";
+import { PRODUCT_COLUMNS, RESOURCE_COLUMNS, type MenuItem } from "./navMenuData";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
@@ -13,8 +13,8 @@ interface NavbarProps {
 }
 
 const MENUS = [
-  { key: "produtos", label: "Produtos", columns: PRODUCT_COLUMNS, side: undefined as MenuColumn[] | undefined },
-  { key: "recursos", label: "Recursos", columns: RESOURCE_COLUMNS, side: MENU_SIDE_LINKS as MenuColumn[] },
+  { key: "produtos", label: "Produtos", columns: PRODUCT_COLUMNS },
+  { key: "recursos", label: "Recursos", columns: RESOURCE_COLUMNS },
 ];
 
 export const Navbar = ({ onSignupClick }: NavbarProps) => {
@@ -146,11 +146,13 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             // Nunca aumenta a largura quando o menu abre — mantém a mesma do estado atual
             maxWidth: scrolled ? '920px' : '1280px',
             borderRadius: scrolled ? '18px' : openMenu ? '18px' : '0px',
-            backgroundColor: openMenu || scrolled
-              ? 'hsl(var(--background) / 0.55)'
-              : 'transparent',
-            backdropFilter: openMenu || scrolled ? 'blur(16px) saturate(180%)' : 'none',
-            WebkitBackdropFilter: openMenu || scrolled ? 'blur(16px) saturate(180%)' : 'none',
+            backgroundColor: openMenu
+              ? 'hsl(var(--background))'
+              : scrolled
+                ? 'hsl(var(--background) / 0.55)'
+                : 'transparent',
+            backdropFilter: openMenu ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
+            WebkitBackdropFilter: openMenu ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
             border: openMenu || scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
             boxShadow: openMenu || scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
             paddingTop: scrolled ? '8px' : '16px',
@@ -254,8 +256,6 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
               <div className="animate-fade-in">
                 <NavMegaMenu
                   columns={activeMenu.columns}
-                  sideColumns={activeMenu.side}
-                  glass
                   onNavigate={() => setOpenMenu(null)}
                 />
               </div>
@@ -293,13 +293,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                   <div className="animate-fade-in">
                     {menu.columns.map((col) => (
                       <div key={col.title} className="py-1">
-                        <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{col.title}</p>
-                        {renderMobileMenuItems(col.items)}
-                      </div>
-                    ))}
-                    {menu.side?.map((col) => (
-                      <div key={col.title} className="py-1">
-                        <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{col.title}</p>
+                        <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-primary">{col.title}</p>
                         {renderMobileMenuItems(col.items)}
                       </div>
                     ))}
