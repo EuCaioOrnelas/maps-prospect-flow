@@ -87,7 +87,6 @@ const Prospeccao = () => (
       </div>
     </div>
     <div className="relative flex flex-col gap-1.5 overflow-hidden rounded-xl bg-secondary/30 p-2">
-      <div className="pv-scan pv-anim pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-primary/25 to-transparent" aria-hidden />
       {[
         { n: "Odonto Prime", s: "912" },
         { n: "Clínica Sorriso+", s: "874" },
