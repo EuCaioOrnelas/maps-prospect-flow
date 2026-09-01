@@ -53,6 +53,7 @@ export default function ProdutoPage() {
             title={product.howItWorksTitle}
             highlight={product.howItWorksHighlight}
             steps={product.howItWorks}
+            product={product}
           />
 
           {product.features.map((feature) => (

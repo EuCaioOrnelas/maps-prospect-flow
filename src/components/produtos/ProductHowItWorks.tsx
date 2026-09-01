@@ -32,7 +32,7 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
   );
 }
 
-export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorksProps) => {
+export const ProductHowItWorks = ({ title, highlight, steps, product }: ProductHowItWorksProps) => {
   const listRef = useRef<HTMLOListElement>(null);
   const [active, setActive] = useState(0);
 
@@ -58,8 +58,11 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
               Como funciona
             </span>
             <SplitTitle title={title} highlight={highlight} />
-            {/* Âncora do visual flutuante que desce do hero */}
-            <div id={PV_STEPS_ANCHOR} className="mt-8 hidden w-full xl:block" />
+            {product && (
+              <div className="mt-8 hidden w-full xl:block">
+                <ProductVisualContent product={product} />
+              </div>
+            )}
           </div>
 
           <ol ref={listRef} className="relative space-y-8 pl-6 sm:space-y-10 sm:pl-8">
