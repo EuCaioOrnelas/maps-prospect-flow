@@ -87,6 +87,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "prospecção B2B, pipeline comercial, ICP, geração de oportunidades, inteligência comercial, dados de empresas",
     howItWorksTitle: "De uma busca manual a um processo comercial inteligente",
+    howItWorksHighlight: "processo comercial inteligente",
     howItWorks: [
       {
         title: "Defina quem você quer encontrar",
