@@ -37,9 +37,9 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
 
 export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatureBlockProps) => {
   const reversed = feature.reverse ?? index % 2 === 1;
-  const gridCols = reversed
-    ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]"
-    : "lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)]";
+  // Mantém as laterais alinhadas entre seções: a coluna da esquerda sempre
+  // mede 0.9fr e a da direita 1fr, independente de ser texto+imagem ou imagem+texto.
+  const gridCols = "lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)]";
 
   const textColumn = (
     <motion.div
