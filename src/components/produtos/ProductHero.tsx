@@ -38,9 +38,9 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
 
 
       <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-        <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-2 xl:gap-[10%]">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[45%_50%] lg:gap-[5%]">
 
-          <div className="relative z-20 text-center xl:text-left">
+          <div className="relative z-20 text-center lg:text-left">
             <div className="animate-fade-in mb-6 inline-flex items-center gap-1.5 rounded-hover border border-primary/10 glass px-2.5 py-1.5 sm:mb-8 sm:gap-2.5 sm:px-3.5 sm:py-2">
               <div className="flex -space-x-1 sm:-space-x-1.5">
                 <img src={avatar1} alt="" className="h-4 w-4 rounded-full border border-background object-cover sm:h-7 sm:w-7 sm:border-2" width={28} height={28} />
@@ -64,14 +64,14 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
             </h1>
 
             <p
-              className="animate-slide-up mx-auto mb-6 max-w-xl text-sm text-muted-foreground sm:mb-8 sm:text-lg xl:mx-0"
+              className="animate-slide-up mx-auto mb-6 max-w-xl text-sm text-muted-foreground sm:mb-8 sm:text-lg lg:mx-0"
               style={{ animationDelay: "0.2s" }}
             >
               {product.heroDescription}
             </p>
 
             <div
-              className="animate-slide-up flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 xl:justify-start"
+              className="animate-slide-up flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 lg:justify-start"
               style={{ animationDelay: "0.3s" }}
             >
               {TRIAL_DISABLED ? (
@@ -118,7 +118,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
           </div>
 
           <div
-            className="animate-slide-up relative mt-10 flex w-full justify-center sm:mt-14 xl:mt-16 xl:justify-end"
+            className="animate-slide-up relative mt-10 flex w-full justify-start sm:mt-14 lg:mt-16"
             style={{ animationDelay: "0.45s" }}
           >
             {/* Faixa de plasma (verde Wiize) — sempre atrás do mockup, inclusive no mobile */}
@@ -128,8 +128,8 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
             >
               <div className="wz-band absolute inset-0" />
             </div>
-            {/* Âncora: em telas grandes o visual é renderizado flutuante e segue o scroll */}
-            <div className="relative z-10 w-full xl:w-[185%] xl:translate-x-[14%]">
+            {/* O mockup ocupa visualmente toda a metade direita do hero. */}
+            <div className={`relative z-10 w-full origin-left ${product.key === "prospeccao" ? "lg:w-[220%] xl:w-[235%]" : "lg:w-[135%] xl:w-[150%]"}`}>
               <ProductVisualContent product={product} />
             </div>
           </div>
