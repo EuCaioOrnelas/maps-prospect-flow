@@ -768,11 +768,11 @@ export function GuidedTour() {
                 {isTransitioning ? <Loader2 size={14} className="animate-spin" /> : <ArrowLeft size={14} />}
                 {isTransitioning ? "Carregando" : "Voltar"}
               </Button>
-              <div className="flex items-center gap-2 px-3">
-                <span className="text-sm font-semibold text-foreground">
+              <div className={`flex items-center gap-2 ${isCompactViewport ? "px-1.5" : "px-3"}`}>
+                <span className="text-sm font-semibold text-foreground hidden min-[460px]:inline">
                   {currentPillar.label}
                 </span>
-                <span className="text-sm font-semibold text-muted-foreground tabular-nums">
+                <span className="text-sm font-semibold text-muted-foreground tabular-nums whitespace-nowrap">
                   {currentPillar.number}/{String(TOUR_PILLARS.length).padStart(2, "0")}
                 </span>
               </div>
