@@ -128,7 +128,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Priorização",
         title: "Saiba onde a sua equipe deve começar",
-        titleHighlight: "onde a sua equipe deve começar",
+        titleHighlight: "equipe deve começar",
         description:
           "Nem toda empresa encontrada merece o mesmo esforço. A inteligência da Wiize organiza a fila por aderência ao seu perfil de cliente e por sinais observados no mercado.",
         bullets: [

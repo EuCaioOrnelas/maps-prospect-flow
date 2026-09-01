@@ -48,12 +48,12 @@ export default function ProdutoPage() {
       <main>
         {/* Um único mockup acompanha Hero + Como funciona pela coluna direita. */}
         <div className="relative">
-          <div className="pointer-events-none absolute inset-0 z-20 hidden xl:block">
-            <div className="container mx-auto grid h-full w-full max-w-[90rem] grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] gap-12 px-6 sm:px-10 lg:px-16">
+          <div className="pointer-events-none absolute inset-0 z-20 hidden lg:block">
+            <div className="container mx-auto grid h-full w-full max-w-[90rem] grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] gap-12 lg:gap-12 px-6 sm:px-10 lg:px-16">
               <div aria-hidden="true" />
               <div className="h-full min-w-0">
                 <div className="sticky top-24 flex min-h-[calc(100vh-7rem)] items-center">
-                  <div className="mx-auto w-full max-w-[26rem] min-w-0 2xl:max-w-[30rem]">
+                  <div className="mx-auto w-full min-w-0" style={{ maxWidth: "clamp(19rem, 32vw, 32rem)" }}>
                     <ProductVisualContent product={product} />
                   </div>
                 </div>
@@ -73,8 +73,8 @@ export default function ProdutoPage() {
         {/* Conteúdo posterior à jornada inicial do produto. */}
         <div className="relative z-10">
 
-          {product.features.map((feature) => (
-            <ProductFeatureBlock key={feature.title} feature={feature} visual={product.key} />
+          {product.features.map((feature, i) => (
+            <ProductFeatureBlock key={feature.title} feature={feature} visual={product.key} index={i} />
           ))}
 
           {/* Prova visual */}

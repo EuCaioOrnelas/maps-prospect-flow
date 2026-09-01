@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
-import { ProductHeroVisual } from "./ProductHeroVisual";
+import { ProductStageShowcase } from "./ProductStageShowcase";
 import type { ProductFeature, ProductVisualKey } from "@/data/products";
 
 interface ProductFeatureBlockProps {
   feature: ProductFeature;
   visual: ProductVisualKey;
+  index?: number;
 }
 
 function SplitTitle({ title, highlight }: { title: string; highlight?: string }) {
@@ -23,13 +24,15 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
   return (
     <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-foreground sm:text-3xl">
       {parts.before && <span>{parts.before}</span>}
-      {parts.match && <span className="text-shimmer-highlight whitespace-nowrap">{parts.match}</span>}
+      {parts.match && (
+        <span className="block text-shimmer-highlight whitespace-nowrap">{parts.match}</span>
+      )}
       {parts.after && <span>{parts.after}</span>}
     </h2>
   );
 }
 
-export const ProductFeatureBlock = ({ feature, visual }: ProductFeatureBlockProps) => (
+export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatureBlockProps) => (
   <section className="w-full py-12 sm:py-16">
     <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
       <div
@@ -79,7 +82,7 @@ export const ProductFeatureBlock = ({ feature, visual }: ProductFeatureBlockProp
           transition={{ duration: 0.55, delay: 0.05, ease: "easeOut" }}
           className="flex justify-center lg:justify-end"
         >
-          <ProductHeroVisual visual={visual} />
+          <ProductStageShowcase visual={visual} stageIndex={index} />
         </motion.div>
       </div>
     </div>
