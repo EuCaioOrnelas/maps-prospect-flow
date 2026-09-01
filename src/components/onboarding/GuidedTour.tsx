@@ -89,6 +89,60 @@ function clampRectToClip(r: DOMRect, clip: ReturnType<typeof getClipRect>): Rect
   return { top, left, width: right - left, height: bottom - top };
 }
 
+/** Nearest scrollable ancestor (or null when the page scroller should be used). */
+function getScrollParent(el: HTMLElement): HTMLElement | null {
+  let node = el.parentElement;
+  while (node && node !== document.body && node !== document.documentElement) {
+    const style = window.getComputedStyle(node);
+    const canScroll = /(auto|scroll|overlay)/.test(style.overflowY);
+    if (canScroll && node.scrollHeight > node.clientHeight + 4) return node;
+    node = node.parentElement;
+  }
+  return null;
+}
+
+/**
+ * Scroll o MÍNIMO necessário para o alvo caber na área visível, respeitando
+ * uma margem superior e uma margem inferior generosa (o card do tour e o dock
+ * de navegação ficam embaixo). Nunca centraliza o alvo — evita o "pulo".
+ */
+const SCROLL_MARGIN_TOP = 96;
+const SCROLL_MARGIN_BOTTOM = 260;
+
+function scrollTargetIntoComfortableView(el: HTMLElement) {
+  const container = getScrollParent(el);
+  const r = el.getBoundingClientRect();
+
+  const viewTop = container ? container.getBoundingClientRect().top : 0;
+  const viewBottom = container
+    ? container.getBoundingClientRect().bottom
+    : window.innerHeight;
+
+  const topLimit = viewTop + Math.min(SCROLL_MARGIN_TOP, (viewBottom - viewTop) * 0.15);
+  const bottomLimit =
+    viewBottom - Math.min(SCROLL_MARGIN_BOTTOM, (viewBottom - viewTop) * 0.35);
+
+  let delta = 0;
+  if (r.bottom > bottomLimit) delta = r.bottom - bottomLimit;
+  if (r.top - delta < topLimit) delta = r.top - topLimit;
+  if (Math.abs(delta) < 2) return;
+
+  if (container) {
+    container.scrollBy({ top: delta, behavior: "smooth" });
+    return;
+  }
+
+  const bodyOverflow = document.body.style.overflow;
+  const htmlOverflow = document.documentElement.style.overflow;
+  document.body.style.overflow = "";
+  document.documentElement.style.overflow = "";
+  window.scrollBy({ top: delta, left: 0, behavior: "smooth" });
+  document.body.style.overflow = bodyOverflow;
+  document.documentElement.style.overflow = htmlOverflow;
+}
+
+
+
 
 function getPillarKey(stepId: string) {
   return TOUR_CONTENT.find((step) => step.id === stepId)?.pillar ?? "gestao";
@@ -209,24 +263,19 @@ export function GuidedTour() {
     let attempts = 0;
     let lastSerialized = "";
     let stableFrames = 0;
-    // Limitamos as tentativas de scroll para não entrar em loop de
-    // scroll + re-medição (que causava tremedeira/piscar da tela).
+    // Rolamos no MÁXIMO duas vezes por passo (e nunca em sequência rápida),
+    // para não entrar em loop de scroll + re-medição (tremedeira/piscar).
     let scrollFixes = 0;
-    const MAX_SCROLL_FIXES = 3;
+    let lastScrollAt = 0;
+    const MAX_SCROLL_FIXES = 2;
 
-    // O tour trava o scroll do body/html (overflow hidden), o que torna
-    // scrollIntoView um NO-OP no document scroller — o alvo ficava focado
-    // fora da tela. Aqui destravamos temporariamente, rolamos e re-travamos.
-    const scrollElIntoView = (el: HTMLElement) => {
-      const bodyOverflow = document.body.style.overflow;
-      const htmlOverflow = document.documentElement.style.overflow;
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-      try {
-        el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
-      } catch {}
-      document.body.style.overflow = bodyOverflow;
-      document.documentElement.style.overflow = htmlOverflow;
+    const doScroll = (el: HTMLElement) => {
+      const now = performance.now();
+      if (scrollFixes >= MAX_SCROLL_FIXES) return;
+      if (now - lastScrollAt < 500) return;
+      scrollFixes += 1;
+      lastScrollAt = now;
+      scrollTargetIntoComfortableView(el);
     };
 
     const startedAt = performance.now();
@@ -251,42 +300,22 @@ export function GuidedTour() {
       const currentRect = el.getBoundingClientRect();
       const clip = getClipRect(el);
       const shouldScrollIntoView = lastScrolledStepRef.current !== step.id;
-      // Clipped by ANY scroll ancestor (dialog body, scrollable panel) or by the viewport.
+      // Clipped by ANY scroll ancestor (dialog body, scrollable panel) or by the viewport,
+      // considerando o espaço reservado para o card do tour embaixo.
       const isClipped =
         currentRect.top < clip.top + POPUP_GAP ||
-        currentRect.bottom > clip.bottom - POPUP_GAP ||
+        currentRect.bottom > Math.min(clip.bottom, window.innerHeight - 200) ||
         currentRect.left < clip.left ||
         currentRect.right > clip.right;
 
-      if (step.keepViewportTop) {
-        // Nunca combinar "voltar ao topo" com "rolar até o alvo": as duas ações
-        // brigavam entre si e o foco ficava indo e voltando. Se o alvo está
-        // recortado, o scroll até ele tem prioridade absoluta.
-        if (isClipped) {
-          if (scrollFixes < MAX_SCROLL_FIXES) {
-            scrollFixes += 1;
-            scrollElIntoView(el);
-          }
-        } else if (window.scrollY !== 0 && scrollFixes === 0) {
-          scrollFixes += 1;
-          const bodyOverflow = document.body.style.overflow;
-          const htmlOverflow = document.documentElement.style.overflow;
-          document.body.style.overflow = "";
-          document.documentElement.style.overflow = "";
-          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-          document.body.style.overflow = bodyOverflow;
-          document.documentElement.style.overflow = htmlOverflow;
-        }
-        if (shouldScrollIntoView) {
-          lastScrolledStepRef.current = step.id;
-        }
-      } else if (isClipped && scrollFixes < MAX_SCROLL_FIXES) {
-        scrollFixes += 1;
+      if (isClipped) {
         lastScrolledStepRef.current = step.id;
-        scrollElIntoView(el);
+        doScroll(el);
       } else if (shouldScrollIntoView) {
         lastScrolledStepRef.current = step.id;
       }
+
+
 
 
       const rawNext = el.getBoundingClientRect();
@@ -317,7 +346,7 @@ export function GuidedTour() {
 
       // Keep polling for up to 700ms after step start, OR until we get 6 stable frames
       const elapsed = performance.now() - startedAt;
-      if (elapsed < 700 && stableFrames < 6) {
+      if (elapsed < 1600 && stableFrames < 10) {
         rafId = window.requestAnimationFrame(measure);
       }
     };
@@ -643,7 +672,7 @@ export function GuidedTour() {
               "0 0 24px hsl(var(--primary) / 0.28)",
             ].join(", "),
             transition:
-              "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1), width 480ms cubic-bezier(0.2, 0.8, 0.2, 1), height 480ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 480ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+              "top 300ms cubic-bezier(0.22, 1, 0.36, 1), left 300ms cubic-bezier(0.22, 1, 0.36, 1), width 300ms cubic-bezier(0.22, 1, 0.36, 1), height 300ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         />
       )}
@@ -661,7 +690,7 @@ export function GuidedTour() {
               ...popupStyle,
               zIndex: 2147483646,
               boxShadow: "0 24px 80px hsl(var(--foreground) / 0.12), 0 8px 28px hsl(var(--foreground) / 0.08)",
-              transition: "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+              transition: "top 300ms cubic-bezier(0.22, 1, 0.36, 1), left 300ms cubic-bezier(0.22, 1, 0.36, 1)",
             }}
           >
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary mb-2.5">
