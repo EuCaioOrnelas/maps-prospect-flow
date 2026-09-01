@@ -4,14 +4,16 @@ import { Button } from "@/components/ui/button";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { ProductHeroVisual } from "./ProductHeroVisual";
 import type { ProductConfig } from "@/data/products";
+import avatar1 from "@/assets/avatars/avatar1.jpg";
+import avatar2 from "@/assets/avatars/avatar2.jpg";
+import avatar3 from "@/assets/avatars/avatar3.jpg";
+import avatar4 from "@/assets/avatars/avatar4.jpg";
 
 interface ProductHeroProps {
   product: ProductConfig;
 }
 
 export const ProductHero = ({ product }: ProductHeroProps) => {
-  const Icon = product.icon;
-
   return (
     <section className="relative -mt-[72px] w-full overflow-x-clip pb-32 pt-[120px] sm:-mt-[80px] sm:pb-44 sm:pt-[136px]">
       <div
@@ -39,10 +41,15 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
         <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-[1.3fr_1fr] xl:gap-4">
 
           <div className="relative z-20 text-center xl:text-left">
-            <span className="animate-fade-in mb-6 inline-flex items-center gap-2 rounded-hover border border-primary/15 glass px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary sm:mb-8">
-              <Icon size={13} />
-              {product.category}
-            </span>
+            <div className="animate-fade-in mb-6 inline-flex items-center gap-1.5 rounded-hover border border-primary/10 glass px-2.5 py-1.5 sm:mb-8 sm:gap-2.5 sm:px-3.5 sm:py-2">
+              <div className="flex -space-x-1 sm:-space-x-1.5">
+                <img src={avatar1} alt="" className="h-4 w-4 rounded-full border border-background object-cover sm:h-7 sm:w-7 sm:border-2" width={28} height={28} />
+                <img src={avatar2} alt="" className="h-4 w-4 rounded-full border border-background object-cover sm:h-7 sm:w-7 sm:border-2" width={28} height={28} />
+                <img src={avatar3} alt="" className="h-4 w-4 rounded-full border border-background object-cover sm:h-7 sm:w-7 sm:border-2" width={28} height={28} />
+                <img src={avatar4} alt="" className="h-4 w-4 rounded-full border border-background object-cover sm:h-7 sm:w-7 sm:border-2" width={28} height={28} />
+              </div>
+              <span className="text-[10px] font-medium tracking-tight text-foreground sm:text-xs">+500 Empresas já utilizam a Wiize</span>
+            </div>
 
             <h1
               className="animate-slide-up mb-4 font-display font-bold leading-[1.08] tracking-tight text-foreground sm:mb-6"
@@ -101,9 +108,9 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
                 <Button
                   variant="ghost"
                   size="lg"
-                  className="demo-shine h-11 rounded-full border border-border/60 bg-transparent px-6 text-sm transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:bg-muted/60 sm:h-12 sm:px-8 sm:text-base"
+                  className="demo-shine h-11 rounded-full border border-border/60 bg-transparent px-6 text-sm transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:bg-muted/60 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.15)] sm:h-12 sm:px-8 sm:text-base"
                 >
-                  Teste uma demonstração
+                  Ver Demonstração
                 </Button>
               </Link>
 

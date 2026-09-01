@@ -56,7 +56,7 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Capte · Converta · Gerencie · Otimize
             </span>
-            <h2 className="mt-3 font-display text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
+            <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-shimmer-highlight sm:text-3xl md:text-4xl">
               Uma operação comercial. Um único sistema.
             </h2>
             <p className="mt-4 text-sm text-muted-foreground sm:text-base">
