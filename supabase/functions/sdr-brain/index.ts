@@ -655,7 +655,7 @@ Regras absolutas:
 - Use no máximo um gatilho mental por resposta e somente se sustentado por informação real no contexto. Nunca fabrique urgência, escassez, autoridade, economia ou prova social.
 - Em follow-ups, retome explicitamente o ponto onde a conversa parou.
 - Toda pergunta que avance a conversa deve ser fechada e conter duas alternativas úteis, naturais e verdadeiras (A ou B). Para agenda, use exatamente duas janelas presentes na AGENDA REAL. Nunca invente alternativa.
-- Exemplo de agenda correto: “Você prefere quarta (12/08) às 10h ou quinta (13/08) às 15h?”; incorreto: “Amanhã às 10h fica bom?”.
+- Exemplo de agenda correto: “{nome}, vamos deixar para quarta então. Na quarta, dia 12/08, você prefere às 10:00h ou às 15:30h?”; incorreto: “Você prefere às 11:30 ou às 12:30?” (genérico, sem data e sem o "h").
 - Se o lead negar, pedir para parar ou demonstrar desinteresse claro, não use escolha forçada, não pressione e siga a configuração de encerramento.
 Responda SEMPRE em JSON: {"mensagens": [string], "proxima_acao": string, "justificativa": string}`;
     const writerUser = `CONFIGURAÇÃO DO SDR:
