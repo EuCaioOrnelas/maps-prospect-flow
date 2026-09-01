@@ -203,6 +203,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Continuidade",
         title: "Nenhuma conversa fica sem resposta",
+        titleHighlight: "sem resposta",
         description:
           "Leads que chegam à noite, no fim de semana ou em um pico de mensagens continuam sendo atendidos. A equipe deixa de perder oportunidades por indisponibilidade.",
         bullets: [
