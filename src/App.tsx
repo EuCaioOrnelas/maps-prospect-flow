@@ -108,6 +108,7 @@ const MetaConnectGuide = lazyWithRetry(() => import("./pages/MetaConnectGuide"),
 const MetaConfiguracoes = lazyWithRetry(() => import("./pages/meta/MetaConfiguracoes"), "MetaConfiguracoes");
 
 const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"), "EnterpriseContact");
+const ProdutoPage = lazyWithRetry(() => import("./pages/produtos/ProdutoPage"), "ProdutoPage");
 const Blog = lazyWithRetry(() => import("./pages/Blog"), "Blog");
 const BlogPost = lazyWithRetry(() => import("./pages/BlogPost"), "BlogPost");
 const TrialExpired = lazyWithRetry(() => import("./pages/TrialExpired"), "TrialExpired");
@@ -288,6 +289,7 @@ const App = () => (
                 
                 <Route path="/enterprise" element={<LightThemeWrapper><EnterpriseContact /></LightThemeWrapper>} />
                 <Route path="/blog" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Blog /></Suspense></LightThemeWrapper>} />
+                <Route path="/produtos/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><ProdutoPage /></Suspense></LightThemeWrapper>} />
                 <Route path="/blog/categoria/:categorySlug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><Blog /></Suspense></LightThemeWrapper>} />
                 <Route path="/blog/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><BlogPost /></Suspense></LightThemeWrapper>} />
                 <Route path="/login" element={<LightThemeWrapper><Login /></LightThemeWrapper>} />
