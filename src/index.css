@@ -1857,34 +1857,34 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
   isolation: isolate;
   background: hsl(158 72% 38%);
 }
-/* Plasma: muitos blobs pequenos e suaves do verde Wiize derivando devagar,
-   sem rotação (evita efeito "card andando") — cores se misturam entre si */
+/* Plasma: blobs suaves em variações do verde Wiize, todos claros
+   (sem tons escuros => sem "linhas" escuras atravessando a faixa) */
 .wz-band::before,
 .wz-band::after {
   content: "";
   position: absolute;
-  inset: -60%;
+  inset: -70%;
   will-change: transform;
-  filter: blur(56px) saturate(1.2);
+  filter: blur(64px) saturate(1.15);
 }
 .wz-band::before {
   background:
-    radial-gradient(16% 55% at 12% 50%, hsl(158 85% 55%) 0%, transparent 72%),
-    radial-gradient(14% 52% at 30% 42%, hsl(152 78% 46%) 0%, transparent 72%),
-    radial-gradient(17% 56% at 50% 58%, hsl(164 80% 50%) 0%, transparent 72%),
-    radial-gradient(14% 52% at 68% 44%, hsl(156 84% 56%) 0%, transparent 72%),
-    radial-gradient(16% 55% at 86% 56%, hsl(160 78% 46%) 0%, transparent 72%);
-  animation: wzPlasmaA 26s ease-in-out infinite alternate;
+    radial-gradient(22% 60% at 12% 50%, hsl(158 78% 52%) 0%, transparent 75%),
+    radial-gradient(20% 58% at 34% 44%, hsl(150 70% 44%) 0%, transparent 75%),
+    radial-gradient(24% 62% at 54% 58%, hsl(164 72% 50%) 0%, transparent 75%),
+    radial-gradient(20% 58% at 74% 44%, hsl(156 76% 54%) 0%, transparent 75%),
+    radial-gradient(22% 60% at 92% 56%, hsl(160 70% 45%) 0%, transparent 75%);
+  animation: wzPlasmaA 28s ease-in-out infinite alternate;
+  opacity: 0.9;
 }
 .wz-band::after {
   background:
-    radial-gradient(15% 54% at 20% 60%, hsl(149 76% 32%) 0%, transparent 72%),
-    radial-gradient(16% 56% at 40% 40%, hsl(162 86% 58%) 0%, transparent 72%),
-    radial-gradient(14% 52% at 60% 62%, hsl(154 80% 48%) 0%, transparent 72%),
-    radial-gradient(17% 58% at 80% 42%, hsl(166 78% 46%) 0%, transparent 72%);
-  animation: wzPlasmaB 34s ease-in-out infinite alternate;
-  mix-blend-mode: screen;
-  opacity: 0.95;
+    radial-gradient(22% 60% at 22% 60%, hsl(152 68% 46%) 0%, transparent 75%),
+    radial-gradient(24% 62% at 44% 40%, hsl(162 80% 56%) 0%, transparent 75%),
+    radial-gradient(20% 58% at 64% 62%, hsl(154 72% 48%) 0%, transparent 75%),
+    radial-gradient(24% 64% at 84% 42%, hsl(168 70% 50%) 0%, transparent 75%);
+  animation: wzPlasmaB 36s ease-in-out infinite alternate;
+  opacity: 0.75;
 }
 @keyframes wzPlasmaA {
   0%   { transform: translate3d(-4%, -3%, 0) scale(1); }
@@ -1911,6 +1911,47 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
   50%      { transform: translate3d(0, -8px, 0); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .wz-band::before, .wz-band::after, .pv-float { animation: none; }
+/* ── Animações internas dos mockups: só rodam quando visíveis ── */
+.pv-anim { animation-play-state: paused; }
+.pv-live .pv-anim { animation-play-state: running; }
+
+@keyframes pvCycle {
+  0%   { opacity: 0.2; transform: translateY(6px); }
+  10%  { opacity: 1; transform: translateY(0); }
+  80%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0.2; transform: translateY(6px); }
 }
+.pv-cycle { animation: pvCycle 6s ease-in-out infinite both; }
+
+@keyframes pvScan {
+  0%   { transform: translateY(-10%); opacity: 0; }
+  20%  { opacity: 0.9; }
+  80%  { opacity: 0.9; }
+  100% { transform: translateY(320%); opacity: 0; }
+}
+.pv-scan { animation: pvScan 3.2s ease-in-out infinite; }
+
+@keyframes pvBlink {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 1; }
+}
+.pv-blink { animation: pvBlink 1.4s ease-in-out infinite; }
+
+@keyframes pvBar {
+  0%   { transform: scaleX(0); }
+  70%  { transform: scaleX(1); }
+  100% { transform: scaleX(1); }
+}
+.pv-bar { transform-origin: left center; animation: pvBar 6s ease-in-out infinite; }
+
+@keyframes pvCount {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
+.pv-count { animation: pvCount 3s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wz-band::before, .wz-band::after, .pv-float,
+  .pv-cycle, .pv-scan, .pv-blink, .pv-bar, .pv-count { animation: none; }
+}
+

@@ -31,18 +31,14 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
         aria-hidden
       />
 
-      {/* Faixa de plasma diagonal (verde Wiize) — fina, contínua, topo sempre atrás do mockup */}
-      <div className="pointer-events-none absolute inset-0 overflow-x-clip" aria-hidden>
-        <div className="absolute -inset-x-[25%] top-full h-24 -translate-y-[125%] -rotate-[5deg] sm:h-32">
-          <div className="wz-band absolute inset-0" />
-        </div>
-      </div>
+
+
 
 
       <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
         <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-[1.3fr_1fr] xl:gap-4">
 
-          <div className="text-center xl:text-left">
+          <div className="relative z-20 text-center xl:text-left">
             <span className="animate-fade-in mb-6 inline-flex items-center gap-2 rounded-hover border border-primary/15 glass px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary sm:mb-8">
               <Icon size={13} />
               {product.category}
@@ -114,11 +110,21 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
           </div>
 
           <div
-            className="animate-slide-up mt-6 flex w-full justify-center sm:mt-10 xl:mt-16 xl:justify-end"
+            className="animate-slide-up relative mt-10 flex w-full justify-center sm:mt-14 xl:mt-16 xl:justify-end"
             style={{ animationDelay: "0.45s" }}
           >
-            <ProductHeroVisual visual={product.key} />
+            {/* Faixa de plasma (verde Wiize) — sempre atrás do mockup, inclusive no mobile */}
+            <div
+              className="pointer-events-none absolute left-1/2 top-[112%] z-0 h-24 w-[220vw] -translate-x-1/2 -translate-y-1/2 -rotate-[4deg] overflow-hidden sm:h-32"
+              aria-hidden
+            >
+              <div className="wz-band absolute inset-0" />
+            </div>
+            <div className="relative z-10">
+              <ProductHeroVisual visual={product.key} />
+            </div>
           </div>
+
         </div>
       </div>
     </section>
