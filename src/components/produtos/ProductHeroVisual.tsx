@@ -15,7 +15,7 @@ import type { ProductVisualKey } from "@/data/products";
 
 /* Frame padrão — janela "Wiize Platform" igual à linguagem do hero da LP */
 const Frame = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="relative w-full max-w-[30rem]">
+  <div className="pv-float relative w-full max-w-[30rem]">
     <div className="absolute -inset-4 rounded-3xl bg-primary/8 soft-glow" aria-hidden />
     <div className="relative glass rounded-2xl p-4 sm:p-5 shadow-card">
       <div className="mb-3 flex items-center justify-between">

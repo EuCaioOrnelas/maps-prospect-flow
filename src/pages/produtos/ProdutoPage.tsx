@@ -60,7 +60,7 @@ export default function ProdutoPage() {
 
         {/* Prova visual */}
         <section className="w-full py-12 sm:py-16">
-          <div className="container mx-auto max-w-6xl px-4">
+          <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
             <div className="grid gap-4 sm:grid-cols-3">
               {product.proof.map((p, i) => (
                 <motion.div

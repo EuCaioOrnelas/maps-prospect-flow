@@ -8,7 +8,7 @@ interface ProductSectionDividerProps {
  * Implementado só com gradientes + transform/opacity, respeitando prefers-reduced-motion.
  */
 export const ProductSectionDivider = ({ label, className = "" }: ProductSectionDividerProps) => (
-  <div className={`container mx-auto max-w-6xl px-4 py-10 sm:py-14 ${className}`}>
+  <div className={`container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16 py-10 sm:py-14 ${className}`}>
     <div className="relative h-32 w-full overflow-hidden rounded-panel border border-border/50 sm:h-44">
       <div className="wz-plasma absolute inset-0" aria-hidden />
       <div className="absolute inset-0 bg-gradient-to-t from-background/25 to-transparent" aria-hidden />
