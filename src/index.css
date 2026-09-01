@@ -1855,48 +1855,49 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
 .wz-band {
   overflow: hidden;
   isolation: isolate;
-  background: linear-gradient(90deg,
-    hsl(158 72% 36%) 0%,
-    hsl(158 74% 42%) 28%,
-    hsl(162 70% 38%) 55%,
-    hsl(155 72% 40%) 78%,
-    hsl(158 72% 36%) 100%);
+  background: hsl(158 72% 38%);
 }
+/* Plasma: muitos blobs pequenos e suaves do verde Wiize derivando devagar,
+   sem rotação (evita efeito "card andando") — cores se misturam entre si */
 .wz-band::before,
 .wz-band::after {
   content: "";
   position: absolute;
-  inset: -40%;
+  inset: -60%;
   will-change: transform;
-  filter: blur(34px) saturate(1.15);
+  filter: blur(48px) saturate(1.15);
 }
 .wz-band::before {
   background:
-    radial-gradient(28% 62% at 18% 45%, hsl(158 80% 52%) 0%, transparent 60%),
-    radial-gradient(26% 58% at 45% 60%, hsl(164 76% 46%) 0%, transparent 60%),
-    radial-gradient(30% 62% at 74% 40%, hsl(152 78% 48%) 0%, transparent 60%);
-  animation: wzPlasmaA 18s ease-in-out infinite alternate;
+    radial-gradient(14% 40% at 12% 50%, hsl(158 82% 52%) 0%, transparent 65%),
+    radial-gradient(12% 38% at 30% 42%, hsl(152 76% 44%) 0%, transparent 65%),
+    radial-gradient(15% 42% at 50% 58%, hsl(164 78% 48%) 0%, transparent 65%),
+    radial-gradient(12% 38% at 68% 44%, hsl(156 80% 54%) 0%, transparent 65%),
+    radial-gradient(14% 40% at 86% 56%, hsl(160 74% 42%) 0%, transparent 65%);
+  animation: wzPlasmaA 26s ease-in-out infinite alternate;
 }
 .wz-band::after {
   background:
-    radial-gradient(24% 55% at 30% 65%, hsl(158 70% 30%) 0%, transparent 58%),
-    radial-gradient(26% 58% at 62% 35%, hsl(160 82% 54%) 0%, transparent 58%),
-    radial-gradient(28% 60% at 90% 62%, hsl(150 74% 40%) 0%, transparent 58%);
-  animation: wzPlasmaB 23s ease-in-out infinite alternate;
+    radial-gradient(13% 40% at 20% 60%, hsl(150 74% 34%) 0%, transparent 65%),
+    radial-gradient(14% 42% at 40% 40%, hsl(162 84% 56%) 0%, transparent 65%),
+    radial-gradient(12% 38% at 60% 62%, hsl(154 78% 46%) 0%, transparent 65%),
+    radial-gradient(15% 44% at 80% 42%, hsl(166 76% 44%) 0%, transparent 65%);
+  animation: wzPlasmaB 34s ease-in-out infinite alternate;
   mix-blend-mode: screen;
-  opacity: 0.8;
+  opacity: 0.75;
 }
 @keyframes wzPlasmaA {
-  0%   { transform: translate3d(-6%, -4%, 0) scale(1.05) rotate(0deg); }
-  33%  { transform: translate3d(4%, 5%, 0) scale(1.18) rotate(4deg); }
-  66%  { transform: translate3d(8%, -6%, 0) scale(1.1) rotate(-3deg); }
-  100% { transform: translate3d(-3%, 3%, 0) scale(1.2) rotate(2deg); }
+  0%   { transform: translate3d(-4%, -3%, 0) scale(1); }
+  25%  { transform: translate3d(3%, 4%, 0) scale(1.1); }
+  50%  { transform: translate3d(6%, -2%, 0) scale(1.04); }
+  75%  { transform: translate3d(-2%, 3%, 0) scale(1.12); }
+  100% { transform: translate3d(-5%, -4%, 0) scale(1.06); }
 }
 @keyframes wzPlasmaB {
-  0%   { transform: translate3d(5%, 4%, 0) scale(1.15) rotate(-2deg); }
-  40%  { transform: translate3d(-7%, -5%, 0) scale(1.05) rotate(3deg); }
-  75%  { transform: translate3d(3%, 6%, 0) scale(1.22) rotate(-4deg); }
-  100% { transform: translate3d(-4%, -3%, 0) scale(1.08) rotate(1deg); }
+  0%   { transform: translate3d(4%, 3%, 0) scale(1.08); }
+  30%  { transform: translate3d(-5%, -4%, 0) scale(1); }
+  60%  { transform: translate3d(-2%, 5%, 0) scale(1.14); }
+  100% { transform: translate3d(5%, -3%, 0) scale(1.05); }
 }
 
 

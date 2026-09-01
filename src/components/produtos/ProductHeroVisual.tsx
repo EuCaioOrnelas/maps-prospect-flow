@@ -17,7 +17,7 @@ import type { ProductVisualKey } from "@/data/products";
 const Frame = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="pv-float relative w-full max-w-[30rem]">
     <div className="absolute -inset-4 rounded-3xl bg-primary/8 soft-glow" aria-hidden />
-    <div className="relative glass rounded-2xl p-4 sm:p-5 shadow-card">
+    <div className="relative rounded-2xl border border-border/50 bg-card p-4 shadow-card sm:p-5">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
@@ -28,7 +28,7 @@ const Frame = ({ title, children }: { title: string; children: React.ReactNode }
           {title}
         </span>
       </div>
-      <div className="rounded-xl bg-background/60 p-3 sm:p-4">{children}</div>
+      <div className="rounded-xl bg-background p-3 sm:p-4">{children}</div>
       <div className="absolute bottom-2 left-4 text-[10px] font-medium tracking-wide text-muted-foreground/40">
         @wiizebrasil
       </div>
@@ -44,7 +44,7 @@ const Row = ({
   delay?: number;
 }) => (
   <div
-    className="pv-rise flex items-center gap-2 rounded-lg border border-border/40 bg-background/55 p-2"
+    className="pv-rise flex items-center gap-2 rounded-lg border border-border/40 bg-background p-2"
     style={{ animationDelay: `${delay}ms` }}
   >
     {children}
