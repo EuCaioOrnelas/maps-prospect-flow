@@ -547,6 +547,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Retenção",
         title: "Renovar vira processo, não sorte",
+        titleHighlight: "processo, não sorte",
         description:
           "Avisos, comunicação padronizada e renovação em poucos cliques transformam retenção em rotina previsível — e mantêm a previsão de receita confiável.",
         bullets: [
