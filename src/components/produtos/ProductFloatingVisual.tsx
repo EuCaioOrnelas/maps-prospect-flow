@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProductHeroVisual } from "./ProductHeroVisual";
 import prospeccaoHeroAsset from "@/assets/prospeccao-hero-v2.png.asset.json";
 import type { ProductConfig } from "@/data/products";
@@ -37,6 +37,7 @@ type Pos = { left: number; top: number; width: number };
  */
 export const ProductFloatingVisual = ({ product }: { product: ProductConfig }) => {
   const [pos, setPos] = useState<Pos | null>(null);
+  const elRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1280px)");
@@ -95,6 +96,7 @@ export const ProductFloatingVisual = ({ product }: { product: ProductConfig }) =
 
   return (
     <div
+      ref={elRef}
       className="pointer-events-none fixed z-30 hidden xl:block"
       style={{ left: pos.left, top: pos.top, width: pos.width, willChange: "transform" }}
       aria-hidden
