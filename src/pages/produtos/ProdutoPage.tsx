@@ -5,7 +5,7 @@ import { Footer } from "@/components/landing/Footer";
 import { CTASection } from "@/components/landing/CTASection";
 import { SEO } from "@/components/SEO";
 import { ProductHero } from "@/components/produtos/ProductHero";
-import { ProductFloatingVisual } from "@/components/produtos/ProductFloatingVisual";
+
 import { ProductHowItWorks } from "@/components/produtos/ProductHowItWorks";
 import { ProductFeatureBlock } from "@/components/produtos/ProductFeatureBlock";
 import { RelatedProducts } from "@/components/produtos/RelatedProducts";
@@ -46,7 +46,6 @@ export default function ProdutoPage() {
 
       <main>
         <ProductHero product={product} />
-        <ProductFloatingVisual key={product.key} product={product} />
 
         {/* Conteúdo acima da faixa de plasma que cruza o fim do hero */}
         <div className="relative z-10">
@@ -54,6 +53,7 @@ export default function ProdutoPage() {
             title={product.howItWorksTitle}
             highlight={product.howItWorksHighlight}
             steps={product.howItWorks}
+            product={product}
           />
 
           {product.features.map((feature) => (

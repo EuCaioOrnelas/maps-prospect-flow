@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
-import { ProductVisualContent, PV_HERO_ANCHOR } from "./ProductFloatingVisual";
+import { ProductVisualContent } from "./ProductFloatingVisual";
 import type { ProductConfig } from "@/data/products";
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
@@ -129,10 +129,8 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
               <div className="wz-band absolute inset-0" />
             </div>
             {/* Âncora: em telas grandes o visual é renderizado flutuante e segue o scroll */}
-            <div id={PV_HERO_ANCHOR} className="relative z-10 w-full xl:w-[128%]">
-              <div className="xl:invisible">
-                <ProductVisualContent product={product} />
-              </div>
+            <div className="relative z-10 w-full xl:w-[185%] xl:translate-x-[14%]">
+              <ProductVisualContent product={product} />
             </div>
           </div>
 
