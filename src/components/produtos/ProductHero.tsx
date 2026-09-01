@@ -115,7 +115,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
           >
             {/* Faixa de plasma (verde Wiize) — sempre atrás do mockup, inclusive no mobile */}
             <div
-              className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-24 w-[220vw] -translate-x-1/2 -translate-y-1/2 -rotate-[5deg] overflow-hidden sm:h-32"
+              className="pointer-events-none absolute left-1/2 top-[82%] z-0 h-24 w-[220vw] -translate-x-1/2 -translate-y-1/2 -rotate-[4deg] overflow-hidden sm:h-32"
               aria-hidden
             >
               <div className="wz-band absolute inset-0" />
