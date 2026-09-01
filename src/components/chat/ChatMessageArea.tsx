@@ -1281,7 +1281,7 @@ export function ChatMessageArea({
                     onClick={() => handleConfirmDeleteMessages("all")}
                     className="w-full px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 text-sm font-medium transition-colors"
                   >
-                    Apagar para todos
+                    Apagar para todos (na Wiize)
                   </button>
                 )}
                 <button
