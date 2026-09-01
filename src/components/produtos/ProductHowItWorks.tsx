@@ -2,7 +2,8 @@ import { useRef, useState, useMemo } from "react";
 import { motion, useScroll, useSpring, useMotionValueEvent, useTransform } from "framer-motion";
 import { Check } from "lucide-react";
 import type { ProductStep } from "@/data/products";
-import { PV_STEPS_ANCHOR, PV_STEPS_SECTION } from "./ProductFloatingVisual";
+import { PV_STEPS_SECTION, ProductVisualContent } from "./ProductFloatingVisual";
+import type { ProductConfig } from "@/data/products";
 
 interface ProductHowItWorksProps {
   title: string;
