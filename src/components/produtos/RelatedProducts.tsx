@@ -37,9 +37,10 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
                 className="group flex h-full flex-col overflow-hidden rounded-panel border border-border/60 bg-card/60 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_18px_40px_-24px_hsl(var(--primary)/0.45)]"
               >
                 <div className="relative h-40 overflow-hidden border-b border-border/50 bg-gradient-to-br from-primary/8 via-background to-background">
-                  <div className="pointer-events-none absolute left-1/2 top-6 w-[22rem] -translate-x-1/2 scale-[0.62] origin-top">
+                  <div className="pointer-events-none absolute left-1/2 top-6 w-[22rem] origin-top -translate-x-1/2 scale-[0.62] transition-transform duration-500 group-hover:scale-[0.65]">
                     <ProductHeroVisual visual={p.key} />
                   </div>
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card to-transparent" />
                 </div>
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-start justify-between gap-3">
