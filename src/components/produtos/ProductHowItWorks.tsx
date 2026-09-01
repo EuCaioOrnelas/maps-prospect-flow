@@ -2,6 +2,7 @@ import { useRef, useState, useMemo } from "react";
 import { motion, useScroll, useSpring, useMotionValueEvent, useTransform } from "framer-motion";
 import { Check } from "lucide-react";
 import type { ProductStep } from "@/data/products";
+import { PV_STEPS_ANCHOR, PV_STEPS_SECTION } from "./ProductFloatingVisual";
 
 interface ProductHowItWorksProps {
   title: string;
@@ -47,7 +48,7 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
   });
 
   return (
-    <section className="w-full py-16 sm:py-24">
+    <section id={PV_STEPS_SECTION} className="w-full py-16 sm:py-24">
       <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1fr] lg:gap-16">
           <div className="lg:sticky lg:top-28 lg:self-start">
@@ -55,6 +56,8 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
               Como funciona
             </span>
             <SplitTitle title={title} highlight={highlight} />
+            {/* Âncora do visual flutuante que desce do hero */}
+            <div id={PV_STEPS_ANCHOR} className="mt-8 hidden w-full xl:block" />
           </div>
 
           <ol ref={listRef} className="relative space-y-8 pl-6 sm:space-y-10 sm:pl-8">

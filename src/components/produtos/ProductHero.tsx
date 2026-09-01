@@ -2,9 +2,8 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
-import { ProductHeroVisual } from "./ProductHeroVisual";
+import { ProductVisualContent, PV_HERO_ANCHOR } from "./ProductFloatingVisual";
 import type { ProductConfig } from "@/data/products";
-import prospeccaoHeroAsset from "@/assets/prospeccao-hero.png.asset.json";
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
@@ -39,7 +38,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
 
 
       <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-        <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-[1.3fr_1fr] xl:gap-4">
+        <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-2 xl:gap-[10%]">
 
           <div className="relative z-20 text-center xl:text-left">
             <div className="animate-fade-in mb-6 inline-flex items-center gap-1.5 rounded-hover border border-primary/10 glass px-2.5 py-1.5 sm:mb-8 sm:gap-2.5 sm:px-3.5 sm:py-2">
@@ -129,19 +128,11 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
             >
               <div className="wz-band absolute inset-0" />
             </div>
-            <div className="relative z-10">
-              {product.key === "prospeccao" ? (
-                <div className="pv-float relative w-full max-w-[32rem]">
-                  <img
-                    src={prospeccaoHeroAsset.url}
-                    alt="Painel de Prospecção Inteligente Wiize: busca de empresas, análise com score e próximo passo"
-                    className="h-auto w-full rounded-2xl shadow-card"
-                    loading="eager"
-                  />
-                </div>
-              ) : (
-                <ProductHeroVisual visual={product.key} />
-              )}
+            {/* Âncora: em telas grandes o visual é renderizado flutuante e segue o scroll */}
+            <div id={PV_HERO_ANCHOR} className="relative z-10 w-full xl:w-[128%]">
+              <div className="xl:invisible">
+                <ProductVisualContent product={product} />
+              </div>
             </div>
           </div>
 
