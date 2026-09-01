@@ -183,8 +183,8 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                 <button
                   key={menu.key}
                   type="button"
-                  onMouseEnter={() => { cancelClose(); setOpenMenu(menu.key); }}
-                  onClick={() => setOpenMenu(openMenu === menu.key ? null : menu.key)}
+                  onMouseEnter={() => { cancelClose(); openMenuWithDirection(menu.key); }}
+                  onClick={() => openMenuWithDirection(openMenu === menu.key ? null : menu.key)}
                   className={cn(
                     "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-[font-weight] duration-150",
                     openMenu === menu.key && "font-bold"
@@ -266,6 +266,8 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             >
               <div className="animate-fade-in">
                 <NavMegaMenu
+                  key={activeMenu.key}
+                  direction={menuDirection}
                   columns={activeMenu.columns}
                   onNavigate={() => setOpenMenu(null)}
                 />
