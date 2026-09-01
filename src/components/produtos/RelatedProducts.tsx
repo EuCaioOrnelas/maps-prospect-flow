@@ -99,7 +99,7 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
 
         <div
           ref={trackRef}
-          className="-m-2 mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto p-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-m-4 mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto p-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {others.map((p, i) => (
             <motion.div

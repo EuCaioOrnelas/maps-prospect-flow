@@ -99,9 +99,9 @@ export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatu
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.25 }}
       transition={{ duration: 0.55, delay: 0.05, ease: "easeOut" }}
-      className="flex min-w-0 justify-center"
+      className={`flex min-w-0 ${reversed ? "justify-start" : "justify-end"}`}
     >
-      <div className="mx-auto w-full min-w-0" style={{ maxWidth: "clamp(19rem, 32vw, 32rem)" }}>
+      <div className={`w-full min-w-0 ${reversed ? "mr-auto" : "ml-auto"}`} style={{ maxWidth: "clamp(19rem, 32vw, 32rem)" }}>
         <ProductStageShowcase visual={visual} stageIndex={index} playOnce />
       </div>
     </motion.div>
