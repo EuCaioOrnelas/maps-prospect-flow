@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { ProductHeroVisual } from "./ProductHeroVisual";
 import type { ProductConfig } from "@/data/products";
+import prospeccaoHeroAsset from "@/assets/prospeccao-hero.png.asset.json";
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
@@ -58,7 +59,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
               <span className="block text-[2rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.1rem]">
                 {product.heroTitle}
               </span>
-              <span className="mt-1 block text-shimmer-highlight text-[2.3rem] font-extrabold leading-[1.05] drop-shadow-sm sm:mt-2 sm:text-[2.7rem] md:text-[3.2rem] lg:text-[3.5rem]">
+              <span className="mt-1 block whitespace-nowrap text-shimmer-highlight text-[2.3rem] font-extrabold leading-[1.05] drop-shadow-sm sm:mt-2 sm:text-[2.7rem] md:text-[3.2rem] lg:text-[3.5rem]">
                 {product.heroHighlight}
               </span>
             </h1>
@@ -129,7 +130,18 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
               <div className="wz-band absolute inset-0" />
             </div>
             <div className="relative z-10">
-              <ProductHeroVisual visual={product.key} />
+              {product.key === "prospeccao" ? (
+                <div className="pv-float relative w-full max-w-[32rem]">
+                  <img
+                    src={prospeccaoHeroAsset.url}
+                    alt="Painel de Prospecção Inteligente Wiize: busca de empresas, análise com score e próximo passo"
+                    className="h-auto w-full rounded-2xl shadow-card"
+                    loading="eager"
+                  />
+                </div>
+              ) : (
+                <ProductHeroVisual visual={product.key} />
+              )}
             </div>
           </div>
 

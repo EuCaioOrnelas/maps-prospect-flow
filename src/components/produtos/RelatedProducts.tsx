@@ -54,11 +54,11 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-              Capte · Converta · Gerencie · Otimize
+              Escolha seu caminho
             </span>
             <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
-              Uma operação comercial.{" "}
-              <span className="text-shimmer-highlight">Um único sistema.</span>
+              Tudo para vender B2B.{" "}
+              <span className="whitespace-nowrap text-shimmer-highlight">Em um só lugar.</span>
             </h2>
             <p className="mt-4 text-sm text-muted-foreground sm:text-base">
               Você não precisa montar sua operação com várias ferramentas desconectadas. Cada produto
