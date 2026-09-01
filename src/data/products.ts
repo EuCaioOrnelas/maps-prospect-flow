@@ -219,6 +219,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Follow-up",
         title: "Oportunidades não esfriam por esquecimento",
+        titleHighlight: "não esfriam por esquecimento",
         description:
           "O acompanhamento deixa de depender da memória do vendedor. Quem parou de responder volta para a conversa com contexto, no tempo certo e sem repetição.",
         bullets: [
