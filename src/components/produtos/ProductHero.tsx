@@ -27,20 +27,6 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
         }}
         aria-hidden
       />
-      {/* Plasma verde animado (WebGL) — some suavemente no fim da section */}
-      <div
-        className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.26] mix-blend-multiply blur-[2px]"
-        style={{
-          WebkitMaskImage:
-            "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.3) 68%, transparent 92%)",
-          maskImage:
-            "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.3) 68%, transparent 92%)",
-        }}
-        aria-hidden
-      >
-
-        <ShaderBackground className="h-full w-full" />
-      </div>
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.14]"
         style={{
@@ -145,6 +131,10 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
               aria-hidden
             >
               <div className="wz-band absolute inset-0" />
+              {/* Plasma verde WebGL — visível somente dentro da faixa */}
+              <div className="absolute inset-0 overflow-hidden opacity-90 mix-blend-screen">
+                <ShaderBackground className="h-[400%] w-full -translate-y-[37.5%]" />
+              </div>
             </div>
             {/* No desktop, o mesmo visual atravessa Hero + Como funciona via sticky no template. */}
             <div className={`relative z-10 mx-auto w-full max-w-[24rem] sm:max-w-[26rem] lg:max-w-[clamp(19rem,32vw,32rem)] ${sharedDesktopVisual ? "lg:invisible" : ""}`}>
