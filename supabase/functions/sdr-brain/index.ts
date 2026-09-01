@@ -661,6 +661,7 @@ Escreva a sequência de mensagens.`;
     const validatorSystem = `Você é um revisor crítico de mensagens de vendas no WhatsApp.
 Checklist: respondeu o lead? avançou a negociação? manteve contexto? usou o nome conhecido sem perguntar novamente? evitou perguntar fatos já presentes na análise/memória/histórico? identificou ou avançou respeitosamente até o decisor? objetivo continua vivo? soa humano? mensagens curtas? educada? não insistiu demais? criou valor? conectou dor ao produto certo sem inventar? toda pergunta de avanço tem exatamente duas alternativas reais? horários vieram da agenda? gatilho comercial tem fundamento explícito? respeitou eventual recusa? tem próximo passo?
 Se reprovar em qualquer item, reescreva.
+REGRA ABSOLUTA: o campo "mensagens_finais" contém APENAS o texto que será enviado ao lead, escrito em segunda pessoa falando COM ele. Nunca coloque ali crítica, análise, instrução interna, comentário sobre "as mensagens propostas", nem frases como "é importante apresentar...". Toda crítica vai exclusivamente no campo "motivo".
 Responda SEMPRE em JSON: {"aprovado": boolean, "checklist": {"[item]": boolean}, "mensagens_finais": [string], "motivo": string}`;
     const validatorUser = `CONFIGURAÇÃO:
 ${brief}
@@ -686,13 +687,31 @@ ${historyText}`;
       metadata: { agent_id: agentId },
     });
 
-    if (Array.isArray(validation.mensagens_finais) && validation.mensagens_finais.length) {
-      messages = validation.mensagens_finais.filter((m: any) => typeof m === "string" && m.trim());
+    const writerMessages = messages;
+    const validatedMessages = Array.isArray(validation.mensagens_finais)
+      ? validation.mensagens_finais.filter((m: any) => typeof m === "string" && m.trim())
+      : [];
+
+    if (validatedMessages.length) {
+      // Blindagem: se o revisor devolver crítica interna no lugar da resposta,
+      // usamos as mensagens originais do redator em vez de vazar a anotação ao lead.
+      messages = validatedMessages.some(isInternalNote) ? writerMessages : validatedMessages;
+      if (validatedMessages.some(isInternalNote)) {
+        console.error("[sdr-brain] validator returned internal critique as message; falling back to writer output");
+      }
     } else if (validation.aprovado === false) {
       console.error("[sdr-brain] validator rejected response without a safe rewrite", validation.motivo);
       messages = [];
       written.proxima_acao = "aguardar";
     }
+
+    // Nada que soe como anotação interna pode ir para o WhatsApp do lead.
+    const leaked = messages.filter(isInternalNote);
+    if (leaked.length) {
+      console.error("[sdr-brain] blocked internal note leak", leaked);
+      messages = messages.filter((text) => !isInternalNote(text));
+    }
+
 
     // Regra fixa: com "nunca falar preço sem reunião", o SDR NUNCA informa valores.
     // Quando a reunião é confirmada o objetivo está concluído e a conversa sai do SDR.
