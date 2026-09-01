@@ -43,14 +43,15 @@ export type TourStep = {
 
 interface GuidedTourContextValue {
   isActive: boolean;
+  isTransitioning: boolean;
   currentStepIndex: number;
   steps: TourStep[];
   direction: "next" | "prev";
   /** True when the user manually restarted the tour (Perfil → refazer tutorial) */
   isReplay: boolean;
   start: () => void;
-  next: () => void;
-  prev: () => void;
+  next: () => Promise<void>;
+  prev: () => Promise<void>;
   finish: () => void;
 }
 
@@ -227,9 +228,12 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const [isReplay, setIsReplay] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const transitionLockRef = useRef(false);
   const startedRef = useRef(false);
   const pendingTourPathRef = useRef<string | null>(null);
   const publicDemoSessionRef = useRef(false);
+  const leadPrewarmPromiseRef = useRef<Promise<void> | null>(null);
   /** Independente do tour interno: garante que o demo público sempre inicie. */
   const publicDemoStartedRef = useRef(false);
 
@@ -354,7 +358,13 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       waitMs: 700,
       onEnter: async () => {
         // Pré-carrega (invisível) o modal do lead usado no próximo passo.
-        setTimeout(() => { void prewarmDemoLeadDialog(); }, 250);
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        const prewarmPromise = prewarmDemoLeadDialog();
+        leadPrewarmPromiseRef.current = prewarmPromise;
+        await prewarmPromise;
+        if (leadPrewarmPromiseRef.current === prewarmPromise) {
+          leadPrewarmPromiseRef.current = null;
+        }
       },
     },
     diagnosis: {
@@ -365,6 +375,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       resolveTargetAfterEnter: true,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
+        // Nunca disputa o modal/abas com o pré-carregamento da etapa anterior.
+        if (leadPrewarmPromiseRef.current) {
+          await leadPrewarmPromiseRef.current;
+          leadPrewarmPromiseRef.current = null;
+        }
         document.body.classList.remove("tour-prewarm-lead");
         const dialog = await openDemoLeadDialog();
         if (!dialog) return;
@@ -722,6 +737,10 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       const targetRoute = isPublicDemo ? "/tour-guiado" : step.route;
       pendingTourPathRef.current = targetRoute ?? location.pathname;
 
+      // O índice muda no início para que o demo público monte a tela correta,
+      // mas a navegação permanece bloqueada até rota, popup e alvo estarem prontos.
+      setCurrentStepIndex(index);
+
       // PRE-APPLY sidebar classes BEFORE navigating/measuring so the sidebar
       // is already expanded with the CORRECT submenu open by the time the
       // spotlight measures the target. This prevents the "icon-then-expand"
@@ -789,6 +808,17 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
         await step.onEnter();
       }
 
+      // Garante que o alvo está realmente visível e mensurável antes de liberar
+      // Próximo/Voltar. Evita texto novo com o foco da etapa anterior.
+      if (step.target) {
+        const readyTarget = await waitForElement<HTMLElement>(step.target, 80, 100);
+        if (readyTarget) {
+          await new Promise<void>((resolve) => {
+            window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
+          });
+        }
+      }
+
       // Transição concluída: volta a monitorar navegações externas.
       pendingTourPathRef.current = null;
     },
@@ -811,23 +841,37 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
     goToStep(0);
   }, [goToStep]);
 
-  const next = useCallback(() => {
+  const next = useCallback(async () => {
+    if (transitionLockRef.current) return;
+    const ni = Math.min(currentStepIndex + 1, steps.length - 1);
+    if (ni === currentStepIndex) return;
+    transitionLockRef.current = true;
+    setIsTransitioning(true);
     setDirection("next");
-    setCurrentStepIndex((i) => {
-      const ni = Math.min(i + 1, steps.length - 1);
-      goToStep(ni);
-      return ni;
-    });
-  }, [goToStep, steps.length]);
+    try {
+      await goToStep(ni);
+    } finally {
+      pendingTourPathRef.current = null;
+      transitionLockRef.current = false;
+      setIsTransitioning(false);
+    }
+  }, [currentStepIndex, goToStep, steps.length]);
 
-  const prev = useCallback(() => {
+  const prev = useCallback(async () => {
+    if (transitionLockRef.current) return;
+    const ni = Math.max(currentStepIndex - 1, 0);
+    if (ni === currentStepIndex) return;
+    transitionLockRef.current = true;
+    setIsTransitioning(true);
     setDirection("prev");
-    setCurrentStepIndex((i) => {
-      const ni = Math.max(i - 1, 0);
-      goToStep(ni);
-      return ni;
-    });
-  }, [goToStep]);
+    try {
+      await goToStep(ni);
+    } finally {
+      pendingTourPathRef.current = null;
+      transitionLockRef.current = false;
+      setIsTransitioning(false);
+    }
+  }, [currentStepIndex, goToStep]);
 
   const persistCompletion = useCallback(async () => {
     if (isPublicDemo) return;
@@ -869,7 +913,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
   return (
     <GuidedTourContext.Provider
-      value={{ isActive, currentStepIndex, steps, direction, isReplay, start, next, prev, finish }}
+      value={{ isActive, isTransitioning, currentStepIndex, steps, direction, isReplay, start, next, prev, finish }}
     >
       {children}
     </GuidedTourContext.Provider>
@@ -878,6 +922,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
 const NOOP_TOUR_CTX: GuidedTourContextValue = {
   isActive: false,
+  isTransitioning: false,
   currentStepIndex: 0,
   steps: [],
   direction: "next",
@@ -887,8 +932,8 @@ const NOOP_TOUR_CTX: GuidedTourContextValue = {
       console.warn("[useGuidedTour] start() called outside GuidedTourProvider — no-op");
     }
   },
-  next: () => {},
-  prev: () => {},
+  next: async () => {},
+  prev: async () => {},
   finish: () => {},
 };
 

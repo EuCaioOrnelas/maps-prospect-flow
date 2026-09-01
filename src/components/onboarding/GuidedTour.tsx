@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Headphones, Kanban, MessageCircle, Rocket, Search, Send, Sparkles, X, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Headphones, Kanban, Loader2, MessageCircle, Rocket, Search, Send, Sparkles, X, Zap } from "lucide-react";
 import { isPublicDemoPath } from "@/lib/publicDemo";
 import { FaWhatsapp } from "react-icons/fa";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
@@ -128,7 +128,9 @@ function scrollTargetIntoComfortableView(el: HTMLElement) {
   if (Math.abs(delta) < 2) return;
 
   if (container) {
-    container.scrollBy({ top: delta, behavior: "smooth" });
+    // O spotlight já anima a geometria; scroll nativo suave em paralelo gerava
+    // dezenas de eventos intermediários e fazia o foco oscilar.
+    container.scrollBy({ top: delta, behavior: "auto" });
     return;
   }
 
@@ -136,7 +138,7 @@ function scrollTargetIntoComfortableView(el: HTMLElement) {
   const htmlOverflow = document.documentElement.style.overflow;
   document.body.style.overflow = "";
   document.documentElement.style.overflow = "";
-  window.scrollBy({ top: delta, left: 0, behavior: "smooth" });
+  window.scrollBy({ top: delta, left: 0, behavior: "auto" });
   document.body.style.overflow = bodyOverflow;
   document.documentElement.style.overflow = htmlOverflow;
 }
@@ -161,7 +163,7 @@ function splitBodyForScan(body: string): string[] {
 }
 
 export function GuidedTour() {
-  const { isActive, currentStepIndex, steps, direction, isReplay, next, prev, finish } = useGuidedTour();
+  const { isActive, isTransitioning, currentStepIndex, steps, direction, isReplay, next, prev, finish } = useGuidedTour();
   const navigate = useNavigate();
   const step = steps[currentStepIndex];
   const hideOnLoad = step?.hideSpotlightWhileTargetLoads === "always" || (!!step?.hideSpotlightWhileTargetLoads && direction === "next");
@@ -179,8 +181,9 @@ export function GuidedTour() {
   const isWaitingForTarget = !!step?.target && hideOnLoad && !rect && targetEverFoundRef.current !== step?.id;
   // Once the target was found in this step, keep using a rect so the spotlight
   // never collapses back into the dark fallback overlay (which causes flicker).
-  const spotlightRect =
-    rect ?? (targetEverFoundRef.current === step?.id ? popupAnchorRect : null);
+  const spotlightRect = isTransitioning
+    ? null
+    : rect ?? (targetEverFoundRef.current === step?.id ? popupAnchorRect : null);
 
   // Lock body + html scroll while tour is active
   useEffect(() => {
@@ -250,9 +253,10 @@ export function GuidedTour() {
       return;
     }
 
-    if (hideOnLoad) {
-      setRect(null);
-    }
+    // Nunca reutilize a geometria da etapa anterior. Era isso que fazia o foco
+    // do passo 4 cobrir os cards do cockpit enquanto o menu ainda carregava.
+    setRect(null);
+    setPopupAnchorRect(null);
     if (targetEverFoundRef.current !== step.id) {
       targetEverFoundRef.current = null;
     }
@@ -715,12 +719,12 @@ export function GuidedTour() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={prev}
-                disabled={isFirst}
+                onClick={() => void prev()}
+                disabled={isFirst || isTransitioning}
                 className="rounded-hover gap-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
               >
-                <ArrowLeft size={14} />
-                Voltar
+                {isTransitioning ? <Loader2 size={14} className="animate-spin" /> : <ArrowLeft size={14} />}
+                {isTransitioning ? "Carregando" : "Voltar"}
               </Button>
               <div className="flex items-center gap-2 px-3">
                 <span className="text-sm font-semibold text-foreground">
@@ -732,11 +736,12 @@ export function GuidedTour() {
               </div>
               <Button
                 size="sm"
-                onClick={next}
+                onClick={() => void next()}
+                disabled={isTransitioning}
                 className="rounded-hover gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                Próximo
-                <ArrowRight size={14} />
+                {isTransitioning ? "Carregando" : "Próximo"}
+                {isTransitioning ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
               </Button>
             </div>
           </div>
