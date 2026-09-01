@@ -338,6 +338,17 @@ export function useChat() {
           }));
         }
       })
+      .on("postgres_changes", {
+        event: "DELETE",
+        schema: "public",
+        table: "chat_messages",
+      }, (payload) => {
+        // "Apagar para mim" remove a linha no banco: propaga a remoção para
+        // todas as abas/usuários da conta que estejam com a conversa aberta.
+        const removedId = (payload.old as { id?: string } | null)?.id;
+        if (!removedId) return;
+        setMessages(prev => prev.filter(m => m.id !== removedId));
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
