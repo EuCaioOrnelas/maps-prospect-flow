@@ -70,29 +70,15 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
             >
               <Link
                 to={`/produtos/${p.slug}`}
-                className="group flex h-full flex-col overflow-hidden rounded-panel border border-border/60 bg-card/60 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_18px_40px_-24px_hsl(var(--primary)/0.45)]"
+                className="group flex h-full flex-col overflow-hidden rounded-panel border border-border/60 bg-card/60 transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.02]"
               >
-                <div className="relative h-44 overflow-hidden border-b border-border/50">
-                  {/* fundo colorido vivo */}
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        "radial-gradient(80% 90% at 15% 15%, hsl(158 72% 55% / 0.35) 0%, transparent 60%), radial-gradient(80% 90% at 85% 20%, hsl(186 80% 55% / 0.28) 0%, transparent 62%), radial-gradient(90% 100% at 60% 100%, hsl(150 70% 45% / 0.22) 0%, transparent 65%), linear-gradient(160deg, hsl(158 40% 96%) 0%, hsl(var(--background)) 70%)",
-                    }}
-                    aria-hidden
-                  />
-                  <div
-                    className="pointer-events-none absolute inset-x-[-10%] bottom-[-30%] h-[70%] -rotate-[10deg] opacity-60"
-                    aria-hidden
-                  >
-                    <div className="wz-band absolute inset-0" />
-                  </div>
+                <div className="relative h-44 overflow-hidden border-b border-border/50 bg-secondary/30">
                   <div className="pointer-events-none absolute left-1/2 top-6 w-[22rem] origin-top -translate-x-1/2 scale-[0.62] transition-transform duration-500 group-hover:scale-[0.66]">
                     <ProductHeroVisual visual={p.key} />
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card to-transparent" />
                 </div>
+
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-base font-semibold text-foreground">{p.name}</h3>
