@@ -10,7 +10,7 @@ export const STAGE_DURATION = 5000;
 export const STAGE_CONTENT_HEIGHT = 340;
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
-const segmentProgress = (progress: number, start: number, end: number) =>
+export const segmentProgress = (progress: number, start: number, end: number) =>
  clamp01((progress - start) / (end - start));
 
 export interface Stage {
