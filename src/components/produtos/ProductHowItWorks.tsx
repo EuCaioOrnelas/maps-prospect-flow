@@ -9,7 +9,7 @@ interface ProductHowItWorksProps {
 
 export const ProductHowItWorks = ({ title, steps }: ProductHowItWorksProps) => (
   <section className="w-full py-16 sm:py-24">
-    <div className="container mx-auto max-w-6xl px-4">
+    <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
       <div className="grid gap-10 lg:grid-cols-[0.95fr_1fr] lg:gap-16">
         <div className="lg:sticky lg:top-28 lg:self-start">
           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">

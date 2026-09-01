@@ -154,9 +154,9 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         ref={navRef}
         className="fixed left-0 right-0 z-50 top-0"
         style={{
-          paddingTop: scrolled ? '10px' : '0',
-          paddingLeft: scrolled ? '16px' : '0',
-          paddingRight: scrolled ? '16px' : '0',
+          paddingTop: scrolled || openMenu ? '10px' : '0',
+          paddingLeft: scrolled || openMenu ? '16px' : '0',
+          paddingRight: scrolled || openMenu ? '16px' : '0',
           transition: 'padding 500ms cubic-bezier(0.22,1,0.36,1)',
           willChange: 'padding',
         }}
@@ -177,7 +177,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             WebkitBackdropFilter: openMenu ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
             border: openMenu || scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
             boxShadow: openMenu || scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
-            paddingTop: scrolled ? '8px' : '16px',
+            paddingTop: scrolled ? '8px' : openMenu ? '12px' : '16px',
             paddingBottom: openMenu ? '16px' : scrolled ? '8px' : '16px',
             paddingLeft: scrolled ? '24px' : '16px',
             paddingRight: scrolled ? '12px' : '16px',

@@ -30,14 +30,17 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
         }}
         aria-hidden
       />
-      <div
-        className="pointer-events-none absolute -left-32 -bottom-40 h-[600px] w-[600px] rounded-full opacity-40"
-        style={{ background: "radial-gradient(circle, hsl(158 60% 55% / 0.05) 0%, transparent 65%)" }}
-        aria-hidden
-      />
+
+      {/* Faixa de plasma diagonal de fora a fora (verde Wiize) */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-[-6%] h-[52%] overflow-hidden" aria-hidden>
+        <div className="absolute -inset-x-[15%] top-1/2 h-[58%] -translate-y-1/2 -rotate-[9deg]">
+          <div className="wz-band absolute inset-0" />
+        </div>
+      </div>
 
       <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-        <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-[1.15fr_1fr] xl:gap-6">
+        <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-[1.3fr_1fr] xl:gap-4">
+
           <div className="text-center xl:text-left">
             <span className="animate-fade-in mb-6 inline-flex items-center gap-2 rounded-hover border border-primary/15 glass px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary sm:mb-8">
               <Icon size={13} />
@@ -89,7 +92,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
                     size="lg"
                     className="group h-11 rounded-full px-6 text-sm sm:h-12 sm:px-8 sm:text-base"
                   >
-                    Comece agora
+                    Iniciar Teste Grátis
                     <ArrowRight
                       size={14}
                       className="ml-1.5 transition-transform group-hover:translate-x-0.5 sm:ml-2"
@@ -103,11 +106,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
                   size="lg"
                   className="demo-shine h-11 rounded-full border border-border/60 bg-transparent px-6 text-sm transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:bg-muted/60 sm:h-12 sm:px-8 sm:text-base"
                 >
-                  Teste uma demonstração
-                  <ArrowRight
-                    size={14}
-                    className="ml-1.5 transition-transform group-hover:translate-x-0.5 sm:ml-2"
-                  />
+                  Ver Demonstração
                 </Button>
               </Link>
             </div>

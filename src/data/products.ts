@@ -39,6 +39,8 @@ export interface ProductConfig {
   category: string;
   name: string;
   shortDescription: string;
+  /** Descrição mais completa usada nos cards de outros produtos */
+  cardDescription?: string;
   icon: LucideIcon;
   heroTitle: string;
   heroHighlight: string;
@@ -59,6 +61,8 @@ export const PRODUCTS: ProductConfig[] = [
     category: "Prospecção",
     name: "Prospecção Inteligente",
     shortDescription: "Encontre empresas prontas para comprar",
+    cardDescription:
+      "Busque empresas por nicho e região, receba um score de 0 a 1000 com base em sinais reais de intenção e comece a conversa com dados de contato já validados.",
     icon: Search,
     heroTitle: "Pare de garimpar listas.",
     heroHighlight: "Encontre quem já quer comprar.",
@@ -142,6 +146,8 @@ export const PRODUCTS: ProductConfig[] = [
     category: "SDR com IA",
     name: "SDR Inteligente",
     shortDescription: "IA que qualifica e agenda no WhatsApp",
+    cardDescription:
+      "Uma IA que responde no WhatsApp em segundos, descobre quem decide, qualifica a necessidade e leva o lead até uma reunião confirmada na sua agenda.",
     icon: Bot,
     heroTitle: "Um SDR que responde sempre.",
     heroHighlight: "Qualifica e agenda por você.",
@@ -224,6 +230,8 @@ export const PRODUCTS: ProductConfig[] = [
     category: "Agenda",
     name: "Agenda Inteligente",
     shortDescription: "Reuniões marcadas sem esforço manual",
+    cardDescription:
+      "Disponibilidade sincronizada, sugestões inteligentes de horário, confirmações e lembretes automáticos — sem trocas infinitas de mensagens para marcar uma reunião.",
     icon: CalendarClock,
     heroTitle: "Menos idas e vindas.",
     heroHighlight: "Mais reuniões confirmadas.",
@@ -295,6 +303,8 @@ export const PRODUCTS: ProductConfig[] = [
     category: "Engajamento",
     name: "IA de Engajamento",
     shortDescription: "Conversas que reativam oportunidades",
+    cardDescription:
+      "A IA lê o histórico de cada conversa, identifica intenção de compra e reativa oportunidades esquecidas com mensagens contextualizadas no momento certo.",
     icon: Sparkles,
     heroTitle: "Sua base já tem vendas.",
     heroHighlight: "A IA volta a conversar.",
@@ -366,6 +376,8 @@ export const PRODUCTS: ProductConfig[] = [
     category: "Automação",
     name: "Automação Comercial",
     shortDescription: "Fluxos multicanal WhatsApp e Instagram",
+    cardDescription:
+      "Monte fluxos visuais com gatilhos, condições, mídias e ações no CRM para automatizar atendimento e follow-up no WhatsApp e no Instagram.",
     icon: Workflow,
     heroTitle: "Sua operação rodando sozinha.",
     heroHighlight: "WhatsApp e Instagram.",
@@ -437,6 +449,8 @@ export const PRODUCTS: ProductConfig[] = [
     category: "Receita",
     name: "Gestão de Contratos",
     shortDescription: "Renovações, vencimentos e receita",
+    cardDescription:
+      "Acompanhe contratos ativos, vencimentos e renovações com avisos automáticos, visão de receita recorrente e menos perda de clientes por esquecimento.",
     icon: FileSignature,
     heroTitle: "Nenhuma renovação perdida.",
     heroHighlight: "Receita recorrente sob controle.",
