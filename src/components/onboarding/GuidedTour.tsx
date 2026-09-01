@@ -89,6 +89,60 @@ function clampRectToClip(r: DOMRect, clip: ReturnType<typeof getClipRect>): Rect
   return { top, left, width: right - left, height: bottom - top };
 }
 
+/** Nearest scrollable ancestor (or null when the page scroller should be used). */
+function getScrollParent(el: HTMLElement): HTMLElement | null {
+  let node = el.parentElement;
+  while (node && node !== document.body && node !== document.documentElement) {
+    const style = window.getComputedStyle(node);
+    const canScroll = /(auto|scroll|overlay)/.test(style.overflowY);
+    if (canScroll && node.scrollHeight > node.clientHeight + 4) return node;
+    node = node.parentElement;
+  }
+  return null;
+}
+
+/**
+ * Scroll o MÍNIMO necessário para o alvo caber na área visível, respeitando
+ * uma margem superior e uma margem inferior generosa (o card do tour e o dock
+ * de navegação ficam embaixo). Nunca centraliza o alvo — evita o "pulo".
+ */
+const SCROLL_MARGIN_TOP = 96;
+const SCROLL_MARGIN_BOTTOM = 260;
+
+function scrollTargetIntoComfortableView(el: HTMLElement) {
+  const container = getScrollParent(el);
+  const r = el.getBoundingClientRect();
+
+  const viewTop = container ? container.getBoundingClientRect().top : 0;
+  const viewBottom = container
+    ? container.getBoundingClientRect().bottom
+    : window.innerHeight;
+
+  const topLimit = viewTop + Math.min(SCROLL_MARGIN_TOP, (viewBottom - viewTop) * 0.15);
+  const bottomLimit =
+    viewBottom - Math.min(SCROLL_MARGIN_BOTTOM, (viewBottom - viewTop) * 0.35);
+
+  let delta = 0;
+  if (r.bottom > bottomLimit) delta = r.bottom - bottomLimit;
+  if (r.top - delta < topLimit) delta = r.top - topLimit;
+  if (Math.abs(delta) < 2) return;
+
+  if (container) {
+    container.scrollBy({ top: delta, behavior: "smooth" });
+    return;
+  }
+
+  const bodyOverflow = document.body.style.overflow;
+  const htmlOverflow = document.documentElement.style.overflow;
+  document.body.style.overflow = "";
+  document.documentElement.style.overflow = "";
+  window.scrollBy({ top: delta, left: 0, behavior: "smooth" });
+  document.body.style.overflow = bodyOverflow;
+  document.documentElement.style.overflow = htmlOverflow;
+}
+
+
+
 
 function getPillarKey(stepId: string) {
   return TOUR_CONTENT.find((step) => step.id === stepId)?.pillar ?? "gestao";
