@@ -497,7 +497,8 @@
   }
 
   html, body {
-    @apply overflow-x-hidden;
+    /* clip (em vez de hidden) evita criar scroll container e mantém position: sticky funcionando */
+    overflow-x: clip;
     max-width: 100vw;
   }
 
