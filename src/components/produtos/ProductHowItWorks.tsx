@@ -1,14 +1,35 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { motion, useScroll, useSpring, useMotionValueEvent, useTransform } from "framer-motion";
 import { Check } from "lucide-react";
 import type { ProductStep } from "@/data/products";
 
 interface ProductHowItWorksProps {
   title: string;
+  highlight?: string;
   steps: ProductStep[];
 }
 
-export const ProductHowItWorks = ({ title, steps }: ProductHowItWorksProps) => {
+function SplitTitle({ title, highlight }: { title: string; highlight?: string }) {
+  const parts = useMemo(() => {
+    if (!highlight || !title.includes(highlight)) return { before: title, match: "", after: "" };
+    const idx = title.indexOf(highlight);
+    return {
+      before: title.slice(0, idx),
+      match: highlight,
+      after: title.slice(idx + highlight.length),
+    };
+  }, [title, highlight]);
+
+  return (
+    <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
+      {parts.before && <span>{parts.before}</span>}
+      {parts.match && <span className="text-shimmer-highlight">{parts.match}</span>}
+      {parts.after && <span>{parts.after}</span>}
+    </h2>
+  );
+}
+
+export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorksProps) => {
   const listRef = useRef<HTMLOListElement>(null);
   const [active, setActive] = useState(0);
 
@@ -33,9 +54,7 @@ export const ProductHowItWorks = ({ title, steps }: ProductHowItWorksProps) => {
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Como funciona
             </span>
-            <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-shimmer-highlight sm:text-3xl md:text-4xl">
-              {title}
-            </h2>
+            <SplitTitle title={title} highlight={highlight} />
           </div>
 
           <ol ref={listRef} className="relative space-y-8 pl-6 sm:space-y-10 sm:pl-8">
