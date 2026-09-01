@@ -5,7 +5,7 @@ import { Menu, X, Lock, ChevronDown, ArrowRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { NavMegaMenu } from "./NavMegaMenu";
-import { PRODUCT_COLUMNS, RESOURCE_COLUMNS, MENU_SIDE_LINKS, type MenuColumn, type MenuItem } from "./navMenuData";
+import { PRODUCT_COLUMNS, RESOURCE_COLUMNS, type MenuItem } from "./navMenuData";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
@@ -13,8 +13,8 @@ interface NavbarProps {
 }
 
 const MENUS = [
-  { key: "produtos", label: "Produtos", columns: PRODUCT_COLUMNS, side: undefined as MenuColumn[] | undefined },
-  { key: "recursos", label: "Recursos", columns: RESOURCE_COLUMNS, side: MENU_SIDE_LINKS as MenuColumn[] },
+  { key: "produtos", label: "Produtos", columns: PRODUCT_COLUMNS },
+  { key: "recursos", label: "Recursos", columns: RESOURCE_COLUMNS },
 ];
 
 export const Navbar = ({ onSignupClick }: NavbarProps) => {
