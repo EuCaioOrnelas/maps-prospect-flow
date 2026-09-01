@@ -1855,7 +1855,13 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
 .wz-band {
   overflow: hidden;
   isolation: isolate;
-  background: hsl(158 72% 38%);
+  background: linear-gradient(
+    115deg,
+    hsl(158 72% 30%) 0%,
+    hsl(158 72% 38%) 35%,
+    hsl(156 70% 44%) 65%,
+    hsl(158 72% 34%) 100%
+  );
 }
 /* Plasma: blobs suaves em variações do verde Wiize, todos claros
    (sem tons escuros => sem "linhas" escuras atravessando a faixa) */
