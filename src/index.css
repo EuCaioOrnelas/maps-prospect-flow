@@ -1873,26 +1873,28 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
   position: absolute;
   inset: -80%;
   will-change: transform;
-  filter: blur(48px) saturate(1.2);
+  filter: blur(40px) saturate(1.15);
 }
+/* Blobs em torno do verde oficial: alguns mais claros, alguns mais escuros,
+   se misturando sobre a base #178C61 sem clarear a faixa inteira */
 .wz-band::before {
   background:
-    radial-gradient(24% 62% at 10% 50%, #2fce8b 0%, transparent 72%),
-    radial-gradient(22% 60% at 30% 42%, #7be495 0%, transparent 72%),
-    radial-gradient(26% 66% at 50% 60%, #23c17f 0%, transparent 72%),
-    radial-gradient(22% 58% at 70% 42%, #9ff0b2 0%, transparent 72%),
-    radial-gradient(24% 62% at 90% 58%, #1fb98a 0%, transparent 72%);
+    radial-gradient(20% 55% at 10% 50%, #23b57e 0%, transparent 70%),
+    radial-gradient(18% 50% at 30% 42%, #4ed39a 0%, transparent 70%),
+    radial-gradient(22% 58% at 50% 60%, #0f7a52 0%, transparent 70%),
+    radial-gradient(18% 50% at 70% 42%, #35c98a 0%, transparent 70%),
+    radial-gradient(20% 55% at 90% 58%, #12684a 0%, transparent 70%);
   animation: wzPlasmaA 30s ease-in-out infinite alternate;
-  opacity: 0.7;
+  opacity: 0.8;
 }
 .wz-band::after {
   background:
-    radial-gradient(24% 64% at 18% 60%, #35d491 0%, transparent 72%),
-    radial-gradient(26% 66% at 40% 38%, #6ee7a8 0%, transparent 72%),
-    radial-gradient(22% 60% at 62% 62%, #1aa86e 0%, transparent 72%),
-    radial-gradient(26% 66% at 84% 40%, #57e39e 0%, transparent 72%);
+    radial-gradient(20% 56% at 18% 60%, #1da572 0%, transparent 70%),
+    radial-gradient(22% 58% at 40% 38%, #57e39e 0%, transparent 70%),
+    radial-gradient(18% 52% at 62% 62%, #178C61 0%, transparent 70%),
+    radial-gradient(22% 58% at 84% 40%, #2fce8b 0%, transparent 70%);
   animation: wzPlasmaB 40s ease-in-out infinite alternate;
-  opacity: 0.55;
+  opacity: 0.65;
 }
 @keyframes wzPlasmaA {
   0%   { transform: translate3d(-6%, -4%, 0) rotate(0deg) scale(1); }
