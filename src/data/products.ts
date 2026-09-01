@@ -232,6 +232,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Controle",
         title: "A equipe continua no comando",
+        titleHighlight: "no comando",
         description:
           "O SDR apoia o time comercial, não substitui vendedores. Você acompanha cada conversa, assume o teclado quando quiser e mantém o histórico completo no CRM.",
         bullets: [
