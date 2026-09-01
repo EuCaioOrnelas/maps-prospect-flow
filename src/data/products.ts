@@ -452,6 +452,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Eficiência",
         title: "Automatizar é tirar tarefas desnecessárias das pessoas",
+        titleHighlight: "tirar tarefas desnecessárias das pessoas",
         description:
           "Sua equipe não precisa lembrar de cada follow-up, atualizar cada card e repetir a mesma mensagem dezenas de vezes. Isso é trabalho de processo, não de vendedor.",
         bullets: [
