@@ -9,6 +9,7 @@ interface ProductHowItWorksProps {
   title: string;
   highlight?: string;
   steps: ProductStep[];
+  product?: ProductConfig;
 }
 
 function SplitTitle({ title, highlight }: { title: string; highlight?: string }) {
