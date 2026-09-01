@@ -59,10 +59,19 @@ export const ProductFloatingVisual = ({ product }: { product: ProductConfig }) =
       const raw = end > start ? (scrollY - start) / (end - start) : 0;
       const t = Math.min(1, Math.max(0, raw));
       const e = t * t * (3 - 2 * t);
+      const width = ra.width + (rb.width - ra.width) * e;
+      const height = elRef.current?.offsetHeight ?? 0;
+      const rs = section.getBoundingClientRect();
+      // "sticky" manual: fica ancorado enquanto a seção Como funciona estiver visível
+      const sticky = Math.min(
+        Math.max(rb.top, 112),
+        Math.max(112, rs.bottom - height - 32),
+      );
+      const targetTop = t >= 1 ? sticky : rb.top;
       setPos({
         left: ra.left + (rb.left - ra.left) * e,
-        top: ra.top + (rb.top - ra.top) * e,
-        width: ra.width + (rb.width - ra.width) * e,
+        top: ra.top + (targetTop - ra.top) * e,
+        width,
       });
     };
 
