@@ -531,6 +531,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Visibilidade",
         title: "Saiba o que vence antes que vença",
+        titleHighlight: "antes que vença",
         description:
           "Perder um cliente por falta de acompanhamento custa mais caro do que conquistar um novo. A Wiize mostra contratos ativos, vencendo e vencidos e o valor em risco em cada mês.",
         bullets: [
