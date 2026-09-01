@@ -604,7 +604,6 @@ export function GuidedTour() {
   }
 
   // Trava final: o card nunca pode sair da tela (nem por baixo da barra de navegação).
-  const NAV_SAFE = 96;
   if (typeof popupStyle.top === "number") {
     const maxTop = Math.max(POPUP_GAP, window.innerHeight - (popupSize.height || 196) - NAV_SAFE);
     popupStyle.top = Math.max(POPUP_GAP, Math.min(maxTop, popupStyle.top));
