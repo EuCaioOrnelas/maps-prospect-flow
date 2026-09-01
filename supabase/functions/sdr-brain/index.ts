@@ -188,6 +188,30 @@ const SITUATION_GUIDE: Record<string, Record<string, string>> = {
   },
 };
 
+/**
+ * Detecta texto de bastidor (crítica do revisor, análise, instrução interna)
+ * que jamais pode ser enviado ao lead como se fosse resposta.
+ */
+const INTERNAL_NOTE_PATTERNS: RegExp[] = [
+  /mensagens?\s+propostas?/i,
+  /\b(o|a)\s+lead\b/i,
+  /\bo\s+sdr\b/i,
+  /\bchecklist\b/i,
+  /\bmicro-?objetivo\b/i,
+  /\bmensagens?_finais\b/i,
+  /\b(aprovado|reprovado)\b/i,
+  /é\s+(importante|fundamental|necessário)\s+(apresentar|criar|avançar|demonstrar|conectar)/i,
+  /não\s+(avançam|criam|cria)\s+.{0,30}(negocia|valor)/i,
+  /\bpróximo\s+passo\s+para\s+marcar\s+a\s+reunião\b/i,
+  /\b(deve-se|sugere-se|recomenda-se)\b/i,
+];
+
+function isInternalNote(text: unknown): boolean {
+  if (typeof text !== "string") return true;
+  return INTERNAL_NOTE_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+
 /** Próxima abertura do horário comercial configurado no agente (America/Sao_Paulo). */
 function nextScheduleOpening(schedule: any): string {
   const localNow = new Date(Date.now() - 3 * 60 * 60 * 1000);
