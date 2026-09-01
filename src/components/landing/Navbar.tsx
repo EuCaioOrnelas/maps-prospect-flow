@@ -254,8 +254,6 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
               <div className="animate-fade-in">
                 <NavMegaMenu
                   columns={activeMenu.columns}
-                  sideColumns={activeMenu.side}
-                  glass
                   onNavigate={() => setOpenMenu(null)}
                 />
               </div>
@@ -293,13 +291,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                   <div className="animate-fade-in">
                     {menu.columns.map((col) => (
                       <div key={col.title} className="py-1">
-                        <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{col.title}</p>
-                        {renderMobileMenuItems(col.items)}
-                      </div>
-                    ))}
-                    {menu.side?.map((col) => (
-                      <div key={col.title} className="py-1">
-                        <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{col.title}</p>
+                        <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-primary">{col.title}</p>
                         {renderMobileMenuItems(col.items)}
                       </div>
                     ))}
