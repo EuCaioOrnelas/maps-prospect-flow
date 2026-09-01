@@ -23,7 +23,8 @@ export const Logo = ({
   iconOnly = false,
   asLink = true
 }: LogoProps) => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
+  const isAuthenticated = !!user || !!session;
   
   const sizes = {
     sm: { icon: "h-10 w-10", text: "text-2xl" },
@@ -38,7 +39,7 @@ export const Logo = ({
   const mobileEffectiveSize = mobileSize ? sizes[mobileSize] : effectiveSize;
 
   // Determine destination based on auth status
-  const destination = user ? "/dashboard" : "/";
+  const destination = isAuthenticated ? "/dashboard" : "/";
 
   const logoContent = (
     <div className="flex items-center justify-center gap-0">
