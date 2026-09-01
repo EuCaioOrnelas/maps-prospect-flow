@@ -155,12 +155,20 @@ async function openDemoLeadDialog() {
     await new Promise((resolve) => setTimeout(resolve, 90));
   }
 
-  const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 80, 40);
+  // Primeiro acesso: a linha do lead demo pode demorar bem mais que 3s para
+  // ser injetada (dados ainda carregando). Esperamos até ~15s.
+  const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 250, 60);
   row?.click();
 
-  return waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-dados"]', 60, 40).then(
-    (tab) => (tab?.closest('[role="dialog"]') as HTMLElement | null) ?? null
-  );
+  let tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-dados"]', 60, 50);
+  if (!tab) {
+    // Segunda tentativa de clique: o primeiro pode ter ocorrido durante um
+    // re-render da tabela e ter sido perdido.
+    const retryRow = queryTargetElement<HTMLElement>('[data-tour="lead-row-demo"]');
+    retryRow?.click();
+    tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-dados"]', 120, 50);
+  }
+  return (tab?.closest('[role="dialog"]') as HTMLElement | null) ?? null;
 }
 
 /**
@@ -173,15 +181,19 @@ async function prewarmDemoLeadDialog() {
   try {
     if (document.querySelector('[role="dialog"] [data-tour="lead-tab-dados"]')) return;
     document.body.classList.add("tour-prewarm-lead");
-    const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 80, 40);
+    const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 250, 60);
     if (!row) {
       document.body.classList.remove("tour-prewarm-lead");
       return;
     }
     row.click();
-    const tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-score"]', 80, 40);
+    let tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-score"]', 80, 50);
+    if (!tab) {
+      queryTargetElement<HTMLElement>('[data-tour="lead-row-demo"]')?.click();
+      tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-score"]', 120, 50);
+    }
     tab?.click();
-    await waitForElement('[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]', 80, 40);
+    await waitForElement('[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]', 120, 50);
   } catch {
     document.body.classList.remove("tour-prewarm-lead");
   }
@@ -311,7 +323,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       route: "/oportunidades",
       target: '[data-tour="search-button"] || button[type="submit"]',
       waitMs: 500,
-      keepViewportTop: true,
+      // Sem keepViewportTop: o botão fica abaixo da dobra e forçar o topo
+      // brigava com o scrollIntoView (foco "ia e voltava"). Agora rola até
+      // o botão e centraliza, igual às sections do cockpit.
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
         const btn = await waitForElement<HTMLElement>('[data-tour="search-button"]', 40, 100);
