@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/landing/Navbar";
@@ -17,6 +18,14 @@ const SITE_URL = "https://wiize.com.br";
 export default function ProdutoPage() {
   const { slug } = useParams();
   const product = getProductBySlug(slug);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   if (!product) {
     return <Navigate to={`/produtos/${PRODUCTS[0].slug}`} replace />;
