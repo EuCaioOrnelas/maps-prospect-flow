@@ -625,17 +625,17 @@ export function GuidedTour() {
     const overlapY = Math.max(0, Math.min(popupStyle.top + h, spot.top + spot.height) - Math.max(popupStyle.top, spot.top));
     const overlapRatio = (overlapX * overlapY) / Math.max(1, w * h);
     if (overlapRatio > 0.15) {
-      const width = Math.min(w, 340);
-      const placeRight = spot.left + spot.width / 2 < window.innerWidth / 2;
-      const placeBottom = spot.top + spot.height / 2 < window.innerHeight / 2;
+      const width = Math.min(w, isCompactViewport ? 300 : 340);
+      const placeRight = spot.left + spot.width / 2 < viewport.w / 2;
+      const placeBottom = spot.top + spot.height / 2 < viewport.h / 2;
       popupStyle = {
         ...popupStyle,
         width,
         top: placeBottom
-          ? Math.max(POPUP_GAP, window.innerHeight - h - NAV_SAFE - POPUP_GAP)
+          ? Math.max(POPUP_GAP, viewport.h - h - NAV_SAFE - POPUP_GAP)
           : POPUP_GAP,
         left: placeRight
-          ? Math.max(POPUP_GAP, window.innerWidth - width - POPUP_GAP)
+          ? Math.max(POPUP_GAP, viewport.w - width - POPUP_GAP)
           : POPUP_GAP,
         transform: undefined,
       };
