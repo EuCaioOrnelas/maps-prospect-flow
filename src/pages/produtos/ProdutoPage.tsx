@@ -81,22 +81,35 @@ export default function ProdutoPage() {
           <section className="w-full py-12 sm:py-16">
             <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
               <div className="grid gap-4 sm:grid-cols-3">
-                {product.proof.map((p, i) => (
-                  <motion.div
-                    key={p.label}
-                    initial={{ opacity: 0, y: 16 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{ duration: 0.4, delay: i * 0.05, ease: "easeOut" }}
-                    className="rounded-panel border border-border/60 bg-card/60 p-5"
-                  >
-                    <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-                      {p.label}
-                    </p>
-                    <p className="mt-2 font-display text-2xl font-bold text-foreground">{p.value}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{p.hint}</p>
-                  </motion.div>
-                ))}
+                {product.proof.map((p, i) => {
+                  const Icon = PROOF_ICONS[i % PROOF_ICONS.length];
+                  return (
+                    <motion.div
+                      key={p.label}
+                      initial={{ opacity: 0, y: 16 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.3 }}
+                      transition={{ duration: 0.4, delay: i * 0.05, ease: "easeOut" }}
+                      className="group relative overflow-hidden rounded-panel border border-primary/20 bg-gradient-to-br from-primary/[0.07] via-card to-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_20px_44px_-24px_hsl(var(--primary)/0.55)]"
+                    >
+                      <span
+                        className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-primary/10 blur-2xl transition-opacity duration-300 group-hover:opacity-80"
+                        aria-hidden
+                      />
+                      <span className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <p className="relative mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        {p.label}
+                      </p>
+                      <p className="relative mt-1.5 font-display text-2xl font-extrabold text-primary">
+                        {p.value}
+                      </p>
+                      <p className="relative mt-1 text-sm text-muted-foreground">{p.hint}</p>
+                    </motion.div>
+                  );
+                })}
+
               </div>
             </div>
           </section>
