@@ -7,10 +7,13 @@ import type { ProductVisualKey } from "@/data/products";
 export const ProductStageShowcase = ({
   visual,
   stageIndex,
+  playOnce = false,
 }: {
   visual: ProductVisualKey;
   /** Fixa a animação em um estágio específico do produto (usado nos blocos de features). */
   stageIndex?: number;
+  /** Roda a animação do início ao fim uma única vez e para no estado final. */
+  playOnce?: boolean;
 }) => {
   const all = PRODUCT_STAGES[visual];
   const stages = stageIndex == null ? all : [all[stageIndex % all.length]];
@@ -20,6 +23,7 @@ export const ProductStageShowcase = ({
   const frameRef = useRef<HTMLDivElement>(null);
   const startRef = useRef(0);
   const elapsedRef = useRef(0);
+  const doneRef = useRef(false);
 
   useEffect(() => {
     const el = frameRef.current;
@@ -40,10 +44,19 @@ export const ProductStageShowcase = ({
   useEffect(() => {
     if (!live) return;
     const total = STAGE_DURATION * stages.length;
+    if (playOnce && doneRef.current) return;
     startRef.current = performance.now() - elapsedRef.current;
     let raf = 0;
     const tick = (now: number) => {
-      const cycle = (now - startRef.current) % total;
+      const raw = now - startRef.current;
+      if (playOnce && raw >= total) {
+        doneRef.current = true;
+        elapsedRef.current = total;
+        setIndex(stages.length - 1);
+        setProgress(1);
+        return;
+      }
+      const cycle = raw % total;
       elapsedRef.current = cycle;
       const next = Math.floor(cycle / STAGE_DURATION);
       setIndex((prev) => (prev === next ? prev : next));
@@ -52,7 +65,7 @@ export const ProductStageShowcase = ({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [live, stages.length]);
+  }, [live, stages.length, playOnce]);
 
   const stage = stages[Math.min(index, stages.length - 1)];
   const Render = stage.render;
@@ -80,6 +93,7 @@ export const ProductStageShowcase = ({
                 type="button"
                 title={s.label}
                 onClick={() => {
+                  doneRef.current = false;
                   elapsedRef.current = i * STAGE_DURATION;
                   startRef.current = performance.now() - elapsedRef.current;
                   setIndex(i);
