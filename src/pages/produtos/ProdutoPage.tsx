@@ -7,7 +7,6 @@ import { SEO } from "@/components/SEO";
 import { ProductHero } from "@/components/produtos/ProductHero";
 import { ProductHowItWorks } from "@/components/produtos/ProductHowItWorks";
 import { ProductFeatureBlock } from "@/components/produtos/ProductFeatureBlock";
-import { ProductSectionDivider } from "@/components/produtos/ProductSectionDivider";
 import { RelatedProducts } from "@/components/produtos/RelatedProducts";
 import { getProductBySlug, PRODUCTS } from "@/data/products";
 
@@ -51,11 +50,8 @@ export default function ProdutoPage() {
         <div className="relative z-10">
           <ProductHowItWorks title={product.howItWorksTitle} steps={product.howItWorks} />
 
-          {product.features.map((feature, i) => (
-            <div key={feature.title}>
-              {i === 2 && <ProductSectionDivider />}
-              <ProductFeatureBlock feature={feature} visual={product.key} />
-            </div>
+          {product.features.map((feature) => (
+            <ProductFeatureBlock key={feature.title} feature={feature} visual={product.key} />
           ))}
 
           {/* Prova visual */}
