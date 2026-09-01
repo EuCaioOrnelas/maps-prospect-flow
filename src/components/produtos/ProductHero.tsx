@@ -29,15 +29,16 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
       />
       {/* Plasma verde animado (WebGL) — some suavemente no fim da section */}
       <div
-        className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.42] mix-blend-multiply"
+        className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.26] mix-blend-multiply blur-[2px]"
         style={{
           WebkitMaskImage:
-            "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.9) 35%, rgba(0,0,0,0.35) 75%, transparent 100%)",
+            "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.3) 68%, transparent 92%)",
           maskImage:
-            "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.9) 35%, rgba(0,0,0,0.35) 75%, transparent 100%)",
+            "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.3) 68%, transparent 92%)",
         }}
         aria-hidden
       >
+
         <ShaderBackground className="h-full w-full" />
       </div>
       <div
