@@ -181,15 +181,19 @@ async function prewarmDemoLeadDialog() {
   try {
     if (document.querySelector('[role="dialog"] [data-tour="lead-tab-dados"]')) return;
     document.body.classList.add("tour-prewarm-lead");
-    const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 80, 40);
+    const row = await waitForElement<HTMLElement>('[data-tour="lead-row-demo"]', 250, 60);
     if (!row) {
       document.body.classList.remove("tour-prewarm-lead");
       return;
     }
     row.click();
-    const tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-score"]', 80, 40);
+    let tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-score"]', 80, 50);
+    if (!tab) {
+      queryTargetElement<HTMLElement>('[data-tour="lead-row-demo"]')?.click();
+      tab = await waitForElement<HTMLElement>('[role="dialog"] [data-tour="lead-tab-score"]', 120, 50);
+    }
     tab?.click();
-    await waitForElement('[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]', 80, 40);
+    await waitForElement('[data-tour="lead-score-focus"] || [data-tour="lead-score-summary"]', 120, 50);
   } catch {
     document.body.classList.remove("tour-prewarm-lead");
   }
