@@ -39,9 +39,9 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
 
 
       <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[45%_50%] lg:gap-[5%]">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:gap-12">
 
-          <div className="relative z-20 text-center lg:text-left">
+          <div className="relative z-20 min-w-0 text-center lg:text-left">
             <div className="animate-fade-in mb-6 inline-flex items-center gap-1.5 rounded-hover border border-primary/10 glass px-2.5 py-1.5 sm:mb-8 sm:gap-2.5 sm:px-3.5 sm:py-2">
               <div className="flex -space-x-1 sm:-space-x-1.5">
                 <img src={avatar1} alt="" className="h-4 w-4 rounded-full border border-background object-cover sm:h-7 sm:w-7 sm:border-2" width={28} height={28} />
