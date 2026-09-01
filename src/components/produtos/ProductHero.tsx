@@ -132,7 +132,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
             >
               <div className="wz-band absolute inset-0" />
               {/* Plasma verde WebGL — visível somente dentro da faixa */}
-              <div className="absolute inset-0 overflow-hidden opacity-90 mix-blend-screen">
+              <div className="absolute inset-0 overflow-hidden opacity-55 mix-blend-screen">
                 <ShaderBackground className="h-[400%] w-full -translate-y-[37.5%]" />
               </div>
             </div>

@@ -38,11 +38,7 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
 export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatureBlockProps) => (
   <section className="w-full py-12 sm:py-16">
     <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-      <div
-        className={`grid items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:gap-12 ${
-          feature.reverse ? "lg:[&>*:first-child]:order-2" : ""
-        }`}
-      >
+      <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:gap-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -73,19 +69,18 @@ export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatu
                 return (
                   <div
                     key={m.label}
-                    className="group relative overflow-hidden rounded-panel border border-primary/20 bg-gradient-to-br from-primary/[0.07] via-card to-card p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_14px_34px_-20px_hsl(var(--primary)/0.55)]"
+                    className="flex items-center gap-3 rounded-panel border border-border/50 p-3.5"
                   >
-                    <span className="absolute inset-y-0 left-0 w-[3px] bg-primary/70" aria-hidden />
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20">
-                        <Icon className="h-[18px] w-[18px]" />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                          {m.label}
-                        </p>
-                        <p className="mt-1 font-display text-base font-bold text-primary">{m.value}</p>
-                      </div>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                      <Icon className="h-[18px] w-[18px]" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase leading-tight tracking-[0.14em] text-muted-foreground">
+                        {m.label}
+                      </p>
+                      <p className="mt-0.5 font-display text-base font-bold leading-tight text-primary">
+                        {m.value}
+                      </p>
                     </div>
                   </div>
                 );
