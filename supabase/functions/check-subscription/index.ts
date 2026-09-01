@@ -816,10 +816,11 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in check-subscription", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    const transient = error instanceof TransientBackendError;
+    logStep("ERROR in check-subscription", { message: errorMessage, transient });
+    return new Response(JSON.stringify({ error: errorMessage, retryable: transient }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: transient ? 503 : 500,
     });
   }
 });
