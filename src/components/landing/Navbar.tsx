@@ -146,11 +146,13 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             // Nunca aumenta a largura quando o menu abre — mantém a mesma do estado atual
             maxWidth: scrolled ? '920px' : '1280px',
             borderRadius: scrolled ? '18px' : openMenu ? '18px' : '0px',
-            backgroundColor: openMenu || scrolled
-              ? 'hsl(var(--background) / 0.55)'
-              : 'transparent',
-            backdropFilter: openMenu || scrolled ? 'blur(16px) saturate(180%)' : 'none',
-            WebkitBackdropFilter: openMenu || scrolled ? 'blur(16px) saturate(180%)' : 'none',
+            backgroundColor: openMenu
+              ? 'hsl(var(--background))'
+              : scrolled
+                ? 'hsl(var(--background) / 0.55)'
+                : 'transparent',
+            backdropFilter: openMenu ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
+            WebkitBackdropFilter: openMenu ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
             border: openMenu || scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
             boxShadow: openMenu || scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
             paddingTop: scrolled ? '8px' : '16px',
