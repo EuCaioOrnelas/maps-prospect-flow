@@ -718,8 +718,7 @@ export function GuidedTour() {
               "0 0 0 4px hsl(var(--primary) / 0.16)",
               "0 0 24px hsl(var(--primary) / 0.28)",
             ].join(", "),
-            transition:
-              "top 300ms cubic-bezier(0.22, 1, 0.36, 1), left 300ms cubic-bezier(0.22, 1, 0.36, 1), width 300ms cubic-bezier(0.22, 1, 0.36, 1), height 300ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1)",
+            transition: geometryTransition,
           }}
         />
       )}
