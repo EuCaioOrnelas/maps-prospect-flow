@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { ProductHeroVisual } from "./ProductHeroVisual";
 import type { ProductConfig } from "@/data/products";
+import prospeccaoHeroAsset from "@/assets/prospeccao-hero.png.asset.json";
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
