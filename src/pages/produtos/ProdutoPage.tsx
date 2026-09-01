@@ -53,7 +53,7 @@ export default function ProdutoPage() {
               <div aria-hidden="true" />
               <div className="h-full">
                 <div className="sticky top-28 flex min-h-[calc(100vh-8rem)] items-center">
-                  <div className={`w-full origin-left ${product.key === "prospeccao" ? "scale-[1.42]" : "scale-[1.16]"}`}>
+                  <div className="w-full origin-left scale-[1.06]">
                     <ProductVisualContent product={product} />
                   </div>
                 </div>
