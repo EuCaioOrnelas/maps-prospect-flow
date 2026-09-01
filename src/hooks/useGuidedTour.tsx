@@ -311,7 +311,9 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       route: "/oportunidades",
       target: '[data-tour="search-button"] || button[type="submit"]',
       waitMs: 500,
-      keepViewportTop: true,
+      // Sem keepViewportTop: o botão fica abaixo da dobra e forçar o topo
+      // brigava com o scrollIntoView (foco "ia e voltava"). Agora rola até
+      // o botão e centraliza, igual às sections do cockpit.
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
         const btn = await waitForElement<HTMLElement>('[data-tour="search-button"]', 40, 100);
