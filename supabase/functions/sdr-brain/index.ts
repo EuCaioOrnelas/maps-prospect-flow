@@ -528,6 +528,7 @@ ${freeSlots.map((s) => `- ${s.label} | iso: ${s.iso}`).join("\n")}
 
 REGRAS DE AGENDAMENTO (inegociáveis):
 - Ofereça EXATAMENTE 2 opções por mensagem, sempre retiradas da lista acima, numa única pergunta de escolha ("você prefere A ou B?"). Se só existir 1 opção livre, peça permissão para confirmar essa única janela sem inventar outra.
+- Prefira duas opções VARIADAS: períodos diferentes (uma de manhã e outra à tarde) e, se a lista tiver, dias diferentes. Só ofereça dois horários próximos no mesmo período quando a lista não tiver alternativa.
 - NUNCA sugira, confirme ou aceite um horário que não esteja na lista: ele está ocupado ou fora do atendimento.
 - Se o lead pedir um horário fora da lista, diga que aquele horário não está disponível e ofereça as opções livres mais próximas.
 - Só marque como confirmado quando o lead escolher explicitamente uma das opções.`
