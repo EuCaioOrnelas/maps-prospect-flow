@@ -64,10 +64,7 @@ export const ProductFloatingVisual = ({ product }: { product: ProductConfig }) =
       const height = elRef.current?.offsetHeight ?? 0;
       const rs = section.getBoundingClientRect();
       // "sticky" manual: fica ancorado enquanto a seção Como funciona estiver visível
-      const sticky = Math.min(
-        Math.max(rb.top, 112),
-        Math.max(112, rs.bottom - height - 32),
-      );
+      const sticky = Math.min(Math.max(rb.top, 112), rs.bottom - height - 32);
       const targetTop = t >= 1 ? sticky : rb.top;
       setPos({
         left: ra.left + (rb.left - ra.left) * e,
