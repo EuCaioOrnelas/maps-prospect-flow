@@ -1265,7 +1265,10 @@ export function ChatMessageArea({
               {pendingDeleteIds.length === 1 ? "Apagar mensagem?" : `Apagar ${pendingDeleteIds.length} mensagens?`}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Você pode apagar mensagens somente para você ou para todos. Esta ação não pode ser desfeita.
+              Você pode apagar mensagens somente para você ou para todos os usuários da sua conta. Esta ação não pode ser desfeita.
+              <span className="mt-2 block text-xs text-muted-foreground">
+                Importante: a API oficial do WhatsApp (Meta) não permite apagar mensagens já entregues no aparelho do cliente — a mensagem continuará visível no WhatsApp dele.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           {(() => {
