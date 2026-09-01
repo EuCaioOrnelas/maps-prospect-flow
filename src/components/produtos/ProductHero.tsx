@@ -31,9 +31,9 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
         aria-hidden
       />
 
-      {/* Faixa de plasma diagonal (verde Wiize) — fina, contínua, cruza para a seção seguinte */}
+      {/* Faixa de plasma diagonal (verde Wiize) — fina, contínua, topo sempre atrás do mockup */}
       <div className="pointer-events-none absolute inset-0 overflow-x-clip" aria-hidden>
-        <div className="absolute -inset-x-[25%] top-full h-24 -translate-y-1/2 -rotate-[6deg] sm:h-32">
+        <div className="absolute -inset-x-[25%] top-full h-24 -translate-y-[125%] -rotate-[5deg] sm:h-32">
           <div className="wz-band absolute inset-0" />
         </div>
       </div>
