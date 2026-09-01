@@ -112,6 +112,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Pipeline",
         title: "Pare de gastar horas procurando quem pode comprar de você",
+        titleHighlight: "quem pode comprar de você",
         description:
           "Prospectar deixa de ser uma tarefa manual e passa a ser um processo que se repete toda semana. Sua equipe começa o dia com oportunidades para trabalhar, não com uma planilha em branco.",
         bullets: [
