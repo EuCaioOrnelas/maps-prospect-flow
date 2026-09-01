@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { ProductHeroVisual } from "./ProductHeroVisual";
@@ -6,6 +7,26 @@ import type { ProductFeature, ProductVisualKey } from "@/data/products";
 interface ProductFeatureBlockProps {
   feature: ProductFeature;
   visual: ProductVisualKey;
+}
+
+function SplitTitle({ title, highlight }: { title: string; highlight?: string }) {
+  const parts = useMemo(() => {
+    if (!highlight || !title.includes(highlight)) return { before: title, match: "", after: "" };
+    const idx = title.indexOf(highlight);
+    return {
+      before: title.slice(0, idx),
+      match: highlight,
+      after: title.slice(idx + highlight.length),
+    };
+  }, [title, highlight]);
+
+  return (
+    <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-foreground sm:text-3xl">
+      {parts.before && <span>{parts.before}</span>}
+      {parts.match && <span className="text-shimmer-highlight">{parts.match}</span>}
+      {parts.after && <span>{parts.after}</span>}
+    </h2>
+  );
 }
 
 export const ProductFeatureBlock = ({ feature, visual }: ProductFeatureBlockProps) => (
@@ -25,9 +46,7 @@ export const ProductFeatureBlock = ({ feature, visual }: ProductFeatureBlockProp
           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             {feature.eyebrow}
           </span>
-          <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-shimmer-highlight sm:text-3xl">
-            {feature.title}
-          </h2>
+          <SplitTitle title={feature.title} highlight={feature.titleHighlight} />
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
             {feature.description}
           </p>
