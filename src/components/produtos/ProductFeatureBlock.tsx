@@ -35,75 +35,97 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
   );
 }
 
-export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatureBlockProps) => (
-  <section className="w-full py-12 sm:py-16">
-    <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-      <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:gap-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-          <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-            {feature.eyebrow}
-          </span>
-          <SplitTitle title={feature.title} highlight={feature.titleHighlight} />
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-            {feature.description}
-          </p>
-          <ul className="mt-6 space-y-3">
-            {feature.bullets.map((b) => (
-              <li key={b} className="flex items-start gap-3 text-sm text-foreground/85">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/15">
-                  <HiCheckCircle className="h-3.5 w-3.5 text-primary" />
+export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatureBlockProps) => {
+  const reversed = feature.reverse ?? index % 2 === 1;
+  const gridCols = reversed
+    ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]"
+    : "lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)]";
+
+  const textColumn = (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
+      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+        {feature.eyebrow}
+      </span>
+      <SplitTitle title={feature.title} highlight={feature.titleHighlight} />
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+        {feature.description}
+      </p>
+      <ul className="mt-6 space-y-3">
+        {feature.bullets.map((b) => (
+          <li key={b} className="flex items-start gap-3 text-sm text-foreground/85">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/15">
+              <HiCheckCircle className="h-3.5 w-3.5 text-primary" />
+            </span>
+            {b}
+          </li>
+        ))}
+      </ul>
+      {feature.metrics && (
+        <div className="mt-7 grid max-w-md grid-cols-1 gap-3 sm:grid-cols-2">
+          {feature.metrics.map((m, mi) => {
+            const Icon = METRIC_ICONS[mi % METRIC_ICONS.length];
+            return (
+              <div
+                key={m.label}
+                className="flex items-center gap-3 rounded-panel border border-border/50 p-3.5"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                  <Icon className="h-[18px] w-[18px]" />
                 </span>
-                {b}
-              </li>
-            ))}
-          </ul>
-          {feature.metrics && (
-            <div className="mt-7 grid max-w-md grid-cols-1 gap-3 sm:grid-cols-2">
-              {feature.metrics.map((m, mi) => {
-                const Icon = METRIC_ICONS[mi % METRIC_ICONS.length];
-                return (
-                  <div
-                    key={m.label}
-                    className="flex items-center gap-3 rounded-panel border border-border/50 p-3.5"
-                  >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                      <Icon className="h-[18px] w-[18px]" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase leading-tight tracking-[0.14em] text-muted-foreground">
-                        {m.label}
-                      </p>
-                      <p className="mt-0.5 font-display text-base font-bold leading-tight text-primary">
-                        {m.value}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase leading-tight tracking-[0.14em] text-muted-foreground">
+                    {m.label}
+                  </p>
+                  <p className="mt-0.5 font-display text-base font-bold leading-tight text-primary">
+                    {m.value}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </motion.div>
+  );
 
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.55, delay: 0.05, ease: "easeOut" }}
-          className="flex min-w-0 justify-center"
-        >
-          <div className="mx-auto w-full min-w-0" style={{ maxWidth: "clamp(19rem, 32vw, 32rem)" }}>
-            <ProductStageShowcase visual={visual} stageIndex={index} playOnce />
-          </div>
-        </motion.div>
+  const visualColumn = (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.55, delay: 0.05, ease: "easeOut" }}
+      className="flex min-w-0 justify-center"
+    >
+      <div className="mx-auto w-full min-w-0" style={{ maxWidth: "clamp(19rem, 32vw, 32rem)" }}>
+        <ProductStageShowcase visual={visual} stageIndex={index} playOnce />
       </div>
-    </div>
-  </section>
-);
+    </motion.div>
+  );
+
+  return (
+    <section className="w-full py-12 sm:py-16">
+      <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
+        <div className={`grid items-center gap-10 ${gridCols} lg:gap-12`}>
+          {reversed ? (
+            <>
+              {visualColumn}
+              {textColumn}
+            </>
+          ) : (
+            <>
+              {textColumn}
+              {visualColumn}
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
 
 export default ProductFeatureBlock;
