@@ -128,19 +128,11 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
             >
               <div className="wz-band absolute inset-0" />
             </div>
-            <div className="relative z-10">
-              {product.key === "prospeccao" ? (
-                <div className="pv-float relative w-full max-w-[32rem]">
-                  <img
-                    src={prospeccaoHeroAsset.url}
-                    alt="Painel de Prospecção Inteligente Wiize: busca de empresas, análise com score e próximo passo"
-                    className="h-auto w-full rounded-2xl shadow-card"
-                    loading="eager"
-                  />
-                </div>
-              ) : (
-                <ProductHeroVisual visual={product.key} />
-              )}
+            {/* Âncora: em telas grandes o visual é renderizado flutuante e segue o scroll */}
+            <div id={PV_HERO_ANCHOR} className="relative z-10 w-full">
+              <div className="xl:invisible">
+                <ProductVisualContent product={product} />
+              </div>
             </div>
           </div>
 
