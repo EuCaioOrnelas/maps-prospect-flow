@@ -688,8 +688,9 @@ export function useChat() {
     if (activeConversationId === conversationId) setActiveConversationId(null);
   }, [activeConversationId]);
 
-  // Delete messages. mode 'me' = remove locally (hard delete row).
-  // mode 'all' = soft-delete: mark deleted_for_all_at so UI renders "Esta mensagem foi apagada" (WhatsApp style).
+  // Delete messages. mode 'me' = remove from the current Wiize account (hard delete row).
+  // mode 'all' = soft-delete for every user of the Wiize account. The official Meta API
+  // does not support revoking a delivered message from the contact's WhatsApp.
   const deleteMessages = useCallback(async (messageIds: string[], mode: "me" | "all" = "me") => {
     if (!messageIds.length) return;
     const idSet = new Set(messageIds);
