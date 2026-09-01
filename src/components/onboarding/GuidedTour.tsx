@@ -205,7 +205,7 @@ export function GuidedTour() {
   // Telas pequenas/baixa resolução: transição mais curta e safe-area menor para
   // o dock de navegação — o foco acompanha sem "lag" e o card sempre cabe.
   const isCompactViewport = viewport.w < 640 || viewport.h < 700;
-  const transitionMs = reducedMotion ? 0 : isCompactViewport ? 220 : 300;
+  const transitionMs = reducedMotion ? 0 : isCompactViewport ? 140 : 200;
   const geometryTransition = `top ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), left ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), width ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), height ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
   const popupTransition = `top ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), left ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
   const NAV_SAFE = isCompactViewport ? 76 : 96;
@@ -217,6 +217,9 @@ export function GuidedTour() {
   const popupCardRef = useRef<HTMLDivElement | null>(null);
   const lastScrolledStepRef = useRef<string | null>(null);
   const targetEverFoundRef = useRef<string | null>(null);
+  // Última geometria válida do foco — usada SÓ como visual enquanto o próximo
+  // alvo é medido, para a borda verde "deslizar" em vez de sumir e reaparecer.
+  const lastRectRef = useRef<Rect | null>(null);
   const popupRect = rect ?? popupAnchorRect;
   // While waiting for the target to appear, we hide the SPOTLIGHT only — the
   // popup card stays visible (centered as a fallback) so the user always sees
@@ -225,9 +228,9 @@ export function GuidedTour() {
   const isWaitingForTarget = !!step?.target && hideOnLoad && !rect && targetEverFoundRef.current !== step?.id;
   // Once the target was found in this step, keep using a rect so the spotlight
   // never collapses back into the dark fallback overlay (which causes flicker).
-  const spotlightRect = isTransitioning
-    ? null
-    : rect ?? (targetEverFoundRef.current === step?.id ? popupAnchorRect : null);
+  const spotlightRect = rect
+    ?? (isTransitioning ? lastRectRef.current : null)
+    ?? (targetEverFoundRef.current === step?.id ? popupAnchorRect : null);
 
   // Lock body + html scroll while tour is active
   useEffect(() => {
@@ -297,8 +300,10 @@ export function GuidedTour() {
       return;
     }
 
-    // Nunca reutilize a geometria da etapa anterior. Era isso que fazia o foco
-    // do passo 4 cobrir os cards do cockpit enquanto o menu ainda carregava.
+    // Nunca reutilize a geometria da etapa anterior como MEDIDA. Guardamos
+    // apenas uma cópia visual em lastRectRef para a transição do foco ser
+    // contínua (a medição real sempre parte do zero).
+    if (rect) lastRectRef.current = rect;
     setRect(null);
     setPopupAnchorRect(null);
     if (targetEverFoundRef.current !== step.id) {
@@ -340,7 +345,7 @@ export function GuidedTour() {
           // to appear — prevents the "focus on nothing" flicker between steps.
           pollTimeoutId = window.setTimeout(() => {
             rafId = window.requestAnimationFrame(measure);
-          }, 80);
+          }, 40);
         }
         return;
       }
