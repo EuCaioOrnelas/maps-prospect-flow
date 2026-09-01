@@ -28,10 +28,10 @@ export function PublicDemoCloseButton() {
   return createPortal(
     <div
       data-tour-ui="true"
+      // Em telas pequenas vai para o topo para não colidir com o dock de
+      // navegação do tour (Voltar/Próximo) que fica no rodapé.
+      className="fixed max-sm:top-3 max-sm:right-3 max-sm:bottom-auto sm:bottom-5 sm:right-5"
       style={{
-        position: "fixed",
-        bottom: 20,
-        right: 20,
         zIndex: 2147483647,
         isolation: "isolate",
         filter: "none",

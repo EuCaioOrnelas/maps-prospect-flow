@@ -150,6 +150,41 @@ function getPillarKey(stepId: string) {
   return TOUR_CONTENT.find((step) => step.id === stepId)?.pillar ?? "gestao";
 }
 
+/** Re-render em resize/orientação — posições do card e do foco dependem do viewport. */
+function useViewportSize() {
+  const [size, setSize] = useState(() => ({
+    w: typeof window === "undefined" ? 1280 : window.innerWidth,
+    h: typeof window === "undefined" ? 800 : window.innerHeight,
+  }));
+  useEffect(() => {
+    const onResize = () => setSize({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, []);
+  return size;
+}
+
+/** Respeita "reduzir movimento" do SO — desliga transições/animações do tour. */
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(() =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false
+  );
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+  return reduced;
+}
+
 // Split body text into ~2 short scannable lines on the first sentence break.
 function splitBodyForScan(body: string): string[] {
   if (!body) return [];
@@ -165,6 +200,15 @@ function splitBodyForScan(body: string): string[] {
 export function GuidedTour() {
   const { isActive, isTransitioning, currentStepIndex, steps, direction, isReplay, next, prev, finish } = useGuidedTour();
   const navigate = useNavigate();
+  const viewport = useViewportSize();
+  const reducedMotion = usePrefersReducedMotion();
+  // Telas pequenas/baixa resolução: transição mais curta e safe-area menor para
+  // o dock de navegação — o foco acompanha sem "lag" e o card sempre cabe.
+  const isCompactViewport = viewport.w < 640 || viewport.h < 700;
+  const transitionMs = reducedMotion ? 0 : isCompactViewport ? 220 : 300;
+  const geometryTransition = `top ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), left ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), width ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), height ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+  const popupTransition = `top ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), left ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+  const NAV_SAFE = isCompactViewport ? 76 : 96;
   const step = steps[currentStepIndex];
   const hideOnLoad = step?.hideSpotlightWhileTargetLoads === "always" || (!!step?.hideSpotlightWhileTargetLoads && direction === "next");
   const [rect, setRect] = useState<Rect | null>(null);
@@ -306,9 +350,12 @@ export function GuidedTour() {
       const shouldScrollIntoView = lastScrolledStepRef.current !== step.id;
       // Clipped by ANY scroll ancestor (dialog body, scrollable panel) or by the viewport,
       // considerando o espaço reservado para o card do tour embaixo.
+      // Reserva inferior para o card/dock do tour — menor em telas baixas para
+      // não forçar scroll desnecessário.
+      const bottomReserve = window.innerHeight < 700 ? 130 : 200;
       const isClipped =
         currentRect.top < clip.top + POPUP_GAP ||
-        currentRect.bottom > Math.min(clip.bottom, window.innerHeight - 200) ||
+        currentRect.bottom > Math.min(clip.bottom, window.innerHeight - bottomReserve) ||
         currentRect.left < clip.left ||
         currentRect.right > clip.right;
 
@@ -405,19 +452,19 @@ export function GuidedTour() {
 
   // Spotlight rect (with padding), sempre clampado ao viewport para nunca
   // "vazar" da tela em resoluções pequenas.
-  const VIEW_MARGIN = 12;
+  const VIEW_MARGIN = isCompactViewport ? 6 : 12;
   const spot = spotlightRect
     ? (() => {
         const top = Math.max(VIEW_MARGIN, spotlightRect.top - PADDING);
         const left = Math.max(VIEW_MARGIN, spotlightRect.left - PADDING);
-        const bottom = Math.min(window.innerHeight - VIEW_MARGIN, spotlightRect.top + spotlightRect.height + PADDING);
-        const right = Math.min(window.innerWidth - VIEW_MARGIN, spotlightRect.left + spotlightRect.width + PADDING);
+        const bottom = Math.min(viewport.h - VIEW_MARGIN, spotlightRect.top + spotlightRect.height + PADDING);
+        const right = Math.min(viewport.w - VIEW_MARGIN, spotlightRect.left + spotlightRect.width + PADDING);
         return { top, left, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
       })()
     : null;
 
   // Largura do card sempre cabe na tela.
-  const availableWidth = Math.max(260, Math.min(POPUP_W, window.innerWidth - 32));
+  const availableWidth = Math.max(240, Math.min(POPUP_W, viewport.w - (isCompactViewport ? 20 : 32)));
 
   // Compute popup position — auto-flip so the card never overlaps the spotlight border
   let popupStyle: React.CSSProperties = {};
@@ -440,7 +487,7 @@ export function GuidedTour() {
       // Steps whose target lives inside a modal: NEVER place the card inside the
       // dialog (it gets clipped and the text disappears). Put it in the free
       // space beside the modal, or centered at the bottom when there's no room.
-      const spaceRight = window.innerWidth - dialogRect.right;
+      const spaceRight = viewport.w - dialogRect.right;
       const spaceLeft = dialogRect.left;
       const useRight = spaceRight >= spaceLeft;
       const space = useRight ? spaceRight : spaceLeft;
@@ -452,28 +499,28 @@ export function GuidedTour() {
         // (não "50%"/transform) para que a trava anti-sobreposição também
         // funcione neste caso — o card nunca cobre o foco destacado.
         popupStyle = {
-          top: Math.max(POPUP_GAP, window.innerHeight - popupHeight - 104),
-          left: Math.max(POPUP_GAP, (window.innerWidth - availableWidth) / 2),
+          top: Math.max(POPUP_GAP, viewport.h - popupHeight - NAV_SAFE - 8),
+          left: Math.max(POPUP_GAP, (viewport.w - availableWidth) / 2),
           width: availableWidth,
         };
       } else {
 
         const top = Math.max(
           POPUP_GAP,
-          Math.min(window.innerHeight - popupHeight - 96, popupRect.top + popupRect.height / 2 - popupHeight / 2)
+          Math.min(viewport.h - popupHeight - NAV_SAFE, popupRect.top + popupRect.height / 2 - popupHeight / 2)
         );
         const left = useRight
-          ? Math.min(window.innerWidth - width - POPUP_GAP, dialogRect.right + 18)
+          ? Math.min(viewport.w - width - POPUP_GAP, dialogRect.right + 18)
           : Math.max(POPUP_GAP, dialogRect.left - width - 18);
         popupStyle = { top, left, width };
       }
     } else {
     const popupWidth = Math.min(popupSize.width || POPUP_W, availableWidth);
-    const viewportMargin = POPUP_GAP;
+    const viewportMargin = isCompactViewport ? 8 : POPUP_GAP;
     const bounds = {
       top: viewportMargin,
-      right: window.innerWidth - viewportMargin,
-      bottom: window.innerHeight - viewportMargin,
+      right: viewport.w - viewportMargin,
+      bottom: viewport.h - viewportMargin,
       left: viewportMargin,
     };
 
@@ -543,15 +590,15 @@ export function GuidedTour() {
         // tela): não existe espaço externo. Nesse caso "ancoramos" o card no
         // canto diagonalmente oposto ao foco — nunca por cima dele.
         (() => {
-          const width = Math.min(popupWidth, 340);
-          const placeRight = spotBounds.left + (spotBounds.right - spotBounds.left) / 2 < window.innerWidth / 2;
-          const placeBottom = spotBounds.top + (spotBounds.bottom - spotBounds.top) / 2 < window.innerHeight / 2;
+          const width = Math.min(popupWidth, isCompactViewport ? 300 : 340);
+          const placeRight = spotBounds.left + (spotBounds.right - spotBounds.left) / 2 < viewport.w / 2;
+          const placeBottom = spotBounds.top + (spotBounds.bottom - spotBounds.top) / 2 < viewport.h / 2;
           return {
             top: placeBottom
-              ? Math.max(bounds.top, window.innerHeight - popupHeight - 104)
+              ? Math.max(bounds.top, viewport.h - popupHeight - NAV_SAFE - 8)
               : bounds.top,
             left: placeRight
-              ? Math.max(bounds.left, window.innerWidth - width - viewportMargin)
+              ? Math.max(bounds.left, viewport.w - width - viewportMargin)
               : bounds.left,
             width,
           };
@@ -560,17 +607,18 @@ export function GuidedTour() {
   }
 
   // Trava final: o card nunca pode sair da tela (nem por baixo da barra de navegação).
-  const NAV_SAFE = 96;
+  // Em telas compactas o botão "Fechar tour" fica no topo — reservamos espaço para ele.
+  const TOP_SAFE = isCompactViewport ? 56 : POPUP_GAP;
   if (typeof popupStyle.top === "number") {
-    const maxTop = Math.max(POPUP_GAP, window.innerHeight - (popupSize.height || 196) - NAV_SAFE);
-    popupStyle.top = Math.max(POPUP_GAP, Math.min(maxTop, popupStyle.top));
+    const maxTop = Math.max(TOP_SAFE, viewport.h - (popupSize.height || 196) - NAV_SAFE);
+    popupStyle.top = Math.max(TOP_SAFE, Math.min(maxTop, popupStyle.top));
   }
   if (typeof popupStyle.left === "number") {
     const w = typeof popupStyle.width === "number" ? popupStyle.width : availableWidth;
-    popupStyle.left = Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupStyle.left));
+    popupStyle.left = Math.max(POPUP_GAP, Math.min(viewport.w - w - POPUP_GAP, popupStyle.left));
   }
   popupStyle.maxWidth = `calc(100vw - ${POPUP_GAP * 2}px)`;
-  popupStyle.maxHeight = `${Math.max(180, window.innerHeight - NAV_SAFE - POPUP_GAP * 2)}px`;
+  popupStyle.maxHeight = `${Math.max(160, viewport.h - NAV_SAFE - POPUP_GAP * 2)}px`;
 
   // Se, mesmo após o clamp, o card ainda cobrir o destaque, movemos para o
   // canto diagonalmente oposto ao foco — nunca no meio do conteúdo focado.
@@ -582,17 +630,17 @@ export function GuidedTour() {
     const overlapY = Math.max(0, Math.min(popupStyle.top + h, spot.top + spot.height) - Math.max(popupStyle.top, spot.top));
     const overlapRatio = (overlapX * overlapY) / Math.max(1, w * h);
     if (overlapRatio > 0.15) {
-      const width = Math.min(w, 340);
-      const placeRight = spot.left + spot.width / 2 < window.innerWidth / 2;
-      const placeBottom = spot.top + spot.height / 2 < window.innerHeight / 2;
+      const width = Math.min(w, isCompactViewport ? 300 : 340);
+      const placeRight = spot.left + spot.width / 2 < viewport.w / 2;
+      const placeBottom = spot.top + spot.height / 2 < viewport.h / 2;
       popupStyle = {
         ...popupStyle,
         width,
         top: placeBottom
-          ? Math.max(POPUP_GAP, window.innerHeight - h - NAV_SAFE - POPUP_GAP)
-          : POPUP_GAP,
+          ? Math.max(TOP_SAFE, viewport.h - h - NAV_SAFE - POPUP_GAP)
+          : TOP_SAFE,
         left: placeRight
-          ? Math.max(POPUP_GAP, window.innerWidth - width - POPUP_GAP)
+          ? Math.max(POPUP_GAP, viewport.w - width - POPUP_GAP)
           : POPUP_GAP,
         transform: undefined,
       };
@@ -675,8 +723,7 @@ export function GuidedTour() {
               "0 0 0 4px hsl(var(--primary) / 0.16)",
               "0 0 24px hsl(var(--primary) / 0.28)",
             ].join(", "),
-            transition:
-              "top 300ms cubic-bezier(0.22, 1, 0.36, 1), left 300ms cubic-bezier(0.22, 1, 0.36, 1), width 300ms cubic-bezier(0.22, 1, 0.36, 1), height 300ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1)",
+            transition: geometryTransition,
           }}
         />
       )}
@@ -689,22 +736,22 @@ export function GuidedTour() {
         <>
           <div
             ref={popupCardRef}
-            className="fixed pointer-events-auto overflow-y-auto overflow-x-hidden bg-card text-card-foreground border border-border rounded-panel px-5 py-4 sm:px-7 sm:py-5"
+            className={`fixed pointer-events-auto overflow-y-auto overflow-x-hidden bg-card text-card-foreground border border-border rounded-panel ${isCompactViewport ? "px-4 py-3" : "px-5 py-4 sm:px-7 sm:py-5"}`}
             style={{
               ...popupStyle,
               zIndex: 2147483646,
               boxShadow: "0 24px 80px hsl(var(--foreground) / 0.12), 0 8px 28px hsl(var(--foreground) / 0.08)",
-              transition: "top 300ms cubic-bezier(0.22, 1, 0.36, 1), left 300ms cubic-bezier(0.22, 1, 0.36, 1)",
+              transition: popupTransition,
             }}
           >
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary mb-2.5">
               <Sparkles size={13} />
               Etapa {currentPillar.number} • {currentPillar.label}
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-2.5 leading-[1.15] break-words">
+            <h3 className={`${isCompactViewport ? "text-lg" : "text-xl sm:text-2xl"} font-bold tracking-tight text-foreground mb-2.5 leading-[1.15] break-words`}>
               {step.title}
             </h3>
-            <div className="space-y-2 text-sm sm:text-[15px] text-muted-foreground leading-[1.6] break-words">
+            <div className={`space-y-2 text-sm ${isCompactViewport ? "" : "sm:text-[15px]"} text-muted-foreground leading-[1.6] break-words`}>
               {splitBodyForScan(step.body).map((line, i) => (
                 <p key={i}>{line}</p>
               ))}
@@ -712,10 +759,10 @@ export function GuidedTour() {
           </div>
 
           <div
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto"
+            className={`fixed ${isCompactViewport ? "bottom-3" : "bottom-6"} left-1/2 -translate-x-1/2 pointer-events-auto max-w-[calc(100vw-16px)]`}
             style={{ zIndex: 2147483646 }}
           >
-            <div className="flex items-center gap-3 bg-card border border-border rounded-panel px-2 py-2 shadow-[0_18px_50px_hsl(var(--foreground)/0.10)]">
+            <div className={`flex items-center ${isCompactViewport ? "gap-1.5 px-1.5 py-1.5" : "gap-3 px-2 py-2"} bg-card border border-border rounded-panel shadow-[0_18px_50px_hsl(var(--foreground)/0.10)]`}>
               <Button
                 size="sm"
                 variant="ghost"
@@ -726,11 +773,11 @@ export function GuidedTour() {
                 {isTransitioning ? <Loader2 size={14} className="animate-spin" /> : <ArrowLeft size={14} />}
                 {isTransitioning ? "Carregando" : "Voltar"}
               </Button>
-              <div className="flex items-center gap-2 px-3">
-                <span className="text-sm font-semibold text-foreground">
+              <div className={`flex items-center gap-2 ${isCompactViewport ? "px-1.5" : "px-3"}`}>
+                <span className="text-sm font-semibold text-foreground hidden min-[460px]:inline">
                   {currentPillar.label}
                 </span>
-                <span className="text-sm font-semibold text-muted-foreground tabular-nums">
+                <span className="text-sm font-semibold text-muted-foreground tabular-nums whitespace-nowrap">
                   {currentPillar.number}/{String(TOUR_PILLARS.length).padStart(2, "0")}
                 </span>
               </div>
@@ -803,7 +850,7 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
       style={{ zIndex: 2147483646 }}
     >
-      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-panel shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+      <div className="relative w-full max-w-xl max-h-[calc(100dvh-32px)] overflow-y-auto bg-card text-card-foreground border border-border rounded-panel shadow-2xl p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500">
         <div
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full opacity-40 pointer-events-none blur-3xl"
           style={{
@@ -812,13 +859,13 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
           }}
         />
 
-        <div className="relative mx-auto mb-6 flex h-20 w-20 items-center justify-center">
+        <div className="relative mx-auto mb-4 sm:mb-6 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center">
           <span
-            className="absolute inset-0 rounded-full bg-primary/20 animate-ping"
+            className="absolute inset-0 rounded-full bg-primary/20 motion-safe:animate-ping"
             style={{ animationDuration: "1.8s" }}
           />
           <span className="absolute inset-2 rounded-full bg-primary/15" />
-          <div className="relative flex h-20 w-20 items-center justify-center rounded-[22px] bg-gradient-to-br from-primary to-primary/70 shadow-[0_10px_40px_hsl(var(--primary)/0.55)]">
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-[22px] bg-gradient-to-br from-primary to-primary/70 shadow-[0_10px_40px_hsl(var(--primary)/0.55)]">
             <Check
               size={40}
               strokeWidth={3}
@@ -947,7 +994,7 @@ function WelcomeStep({ title, body, onStart }: WelcomeStepProps) {
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
       style={{ zIndex: 2147483646 }}
     >
-      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-panel shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+      <div className="relative w-full max-w-xl max-h-[calc(100dvh-32px)] overflow-y-auto bg-card text-card-foreground border border-border rounded-panel shadow-2xl p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500">
         {/* Decorative gradient halo */}
         <div
           className="absolute -top-40 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full opacity-50 pointer-events-none blur-3xl"
@@ -958,16 +1005,16 @@ function WelcomeStep({ title, body, onStart }: WelcomeStepProps) {
         />
 
         {/* Logo with halo — no inner card so PNG background doesn't clash */}
-        <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center">
+        <div className="relative mx-auto mb-4 sm:mb-6 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center">
           <span
-            className="absolute inset-0 rounded-full bg-primary/15 animate-ping"
+            className="absolute inset-0 rounded-full bg-primary/15 motion-safe:animate-ping"
             style={{ animationDuration: "2.4s" }}
           />
           <span className="absolute inset-2 rounded-full bg-primary/10 blur-md" />
           <img
             src={logoIconNew}
             alt="Wiize"
-            className="relative h-20 w-20 object-contain rounded-2xl drop-shadow-[0_10px_30px_hsl(var(--primary)/0.45)] animate-in zoom-in-50 duration-500"
+            className="relative h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-2xl drop-shadow-[0_10px_30px_hsl(var(--primary)/0.45)] animate-in zoom-in-50 duration-500"
           />
         </div>
 
@@ -990,7 +1037,7 @@ function WelcomeStep({ title, body, onStart }: WelcomeStepProps) {
               return (
                 <div key={p.label} className="flex items-center gap-1.5">
                   <div
-                    className="flex flex-col items-center justify-center gap-2 px-3 py-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 min-w-[88px] animate-in fade-in slide-in-from-bottom-2 duration-500"
+                    className="flex flex-col items-center justify-center gap-2 px-2.5 py-2.5 sm:px-3 sm:py-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 min-w-[72px] sm:min-w-[88px] animate-in fade-in slide-in-from-bottom-2 duration-500"
                     style={{ animationDelay: `${idx * 120}ms`, animationFillMode: "backwards" }}
                   >
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
