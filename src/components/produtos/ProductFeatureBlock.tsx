@@ -23,7 +23,7 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
   return (
     <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-foreground sm:text-3xl">
       {parts.before && <span>{parts.before}</span>}
-      {parts.match && <span className="text-shimmer-highlight">{parts.match}</span>}
+      {parts.match && <span className="text-shimmer-highlight whitespace-nowrap">{parts.match}</span>}
       {parts.after && <span>{parts.after}</span>}
     </h2>
   );

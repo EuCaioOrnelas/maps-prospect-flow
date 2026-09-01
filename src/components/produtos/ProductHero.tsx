@@ -58,7 +58,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
               <span className="block text-[2rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.1rem]">
                 {product.heroTitle}
               </span>
-              <span className="mt-1 block text-shimmer-highlight text-[2.3rem] font-extrabold leading-[1.05] drop-shadow-sm sm:mt-2 sm:text-[2.7rem] md:text-[3.2rem] lg:text-[3.5rem]">
+              <span className="mt-1 block whitespace-nowrap text-shimmer-highlight text-[2.3rem] font-extrabold leading-[1.05] drop-shadow-sm sm:mt-2 sm:text-[2.7rem] md:text-[3.2rem] lg:text-[3.5rem]">
                 {product.heroHighlight}
               </span>
             </h1>
