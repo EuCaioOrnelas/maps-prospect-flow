@@ -22,7 +22,7 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
   }, [title, highlight]);
 
   return (
-    <h2 className="mt-3 max-w-full font-display text-[clamp(1.2rem,2.15vw,1.875rem)] font-extrabold leading-tight tracking-tight text-foreground">
+    <h2 className="mt-3 max-w-full font-display text-[clamp(1.55rem,3.05vw,2.6rem)] font-extrabold leading-[1.12] tracking-tight text-foreground">
       {parts.before && <span className={parts.match ? "block whitespace-nowrap" : "line-clamp-2"}>{parts.before.trim()}</span>}
       {parts.match && (
         <span className="block whitespace-nowrap text-shimmer-highlight">{parts.match}</span>
