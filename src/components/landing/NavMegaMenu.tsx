@@ -93,9 +93,16 @@ function MenuColumnBlock({ col, onNavigate }: { col: MenuColumn; onNavigate?: ()
   );
 }
 
-export const NavMegaMenu = ({ columns, onNavigate }: NavMegaMenuProps) => {
+export const NavMegaMenu = ({ columns, onNavigate, direction = 1 }: NavMegaMenuProps) => {
   return (
-    <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2",
+        columns.length >= 4 && "lg:grid-cols-4",
+        "animate-in fade-in duration-300 ease-out",
+        direction === 1 ? "slide-in-from-right-8" : "slide-in-from-left-8"
+      )}
+    >
       {columns.map((col) => (
         <MenuColumnBlock key={col.title} col={col} onNavigate={onNavigate} />
       ))}
