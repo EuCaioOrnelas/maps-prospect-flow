@@ -468,6 +468,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Conexão",
         title: "Integrado ao resto da sua operação",
+        titleHighlight: "ao resto da sua operação",
         description:
           "Os fluxos conversam com o CRM, a agenda, o e-mail e as planilhas que sua empresa já usa. A automação faz parte da operação, não é um sistema à parte.",
         bullets: [
