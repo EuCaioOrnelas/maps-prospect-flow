@@ -259,7 +259,15 @@ export function GuidedTour() {
         currentRect.right > clip.right;
 
       if (step.keepViewportTop) {
-        if (window.scrollY !== 0 && scrollFixes < MAX_SCROLL_FIXES) {
+        // Nunca combinar "voltar ao topo" com "rolar até o alvo": as duas ações
+        // brigavam entre si e o foco ficava indo e voltando. Se o alvo está
+        // recortado, o scroll até ele tem prioridade absoluta.
+        if (isClipped) {
+          if (scrollFixes < MAX_SCROLL_FIXES) {
+            scrollFixes += 1;
+            scrollElIntoView(el);
+          }
+        } else if (window.scrollY !== 0 && scrollFixes === 0) {
           scrollFixes += 1;
           const bodyOverflow = document.body.style.overflow;
           const htmlOverflow = document.documentElement.style.overflow;
@@ -268,10 +276,6 @@ export function GuidedTour() {
           window.scrollTo({ top: 0, left: 0, behavior: "auto" });
           document.body.style.overflow = bodyOverflow;
           document.documentElement.style.overflow = htmlOverflow;
-        }
-        if (isClipped && scrollFixes < MAX_SCROLL_FIXES) {
-          scrollFixes += 1;
-          scrollElIntoView(el);
         }
         if (shouldScrollIntoView) {
           lastScrolledStepRef.current = step.id;
