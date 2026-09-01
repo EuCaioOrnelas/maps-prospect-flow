@@ -2,14 +2,12 @@ import { useRef, useState, useMemo } from "react";
 import { motion, useScroll, useSpring, useMotionValueEvent, useTransform } from "framer-motion";
 import { Check } from "lucide-react";
 import type { ProductStep } from "@/data/products";
-import { PV_STEPS_SECTION, ProductVisualContent } from "./ProductFloatingVisual";
-import type { ProductConfig } from "@/data/products";
+import { PV_STEPS_SECTION } from "./ProductFloatingVisual";
 
 interface ProductHowItWorksProps {
   title: string;
   highlight?: string;
   steps: ProductStep[];
-  product?: ProductConfig;
 }
 
 function SplitTitle({ title, highlight }: { title: string; highlight?: string }) {
@@ -32,7 +30,7 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
   );
 }
 
-export const ProductHowItWorks = ({ title, highlight, steps, product }: ProductHowItWorksProps) => {
+export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorksProps) => {
   const listRef = useRef<HTMLOListElement>(null);
   const [active, setActive] = useState(0);
 
@@ -52,20 +50,14 @@ export const ProductHowItWorks = ({ title, highlight, steps, product }: ProductH
   return (
     <section id={PV_STEPS_SECTION} className="w-full py-16 sm:py-24">
       <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-        <div className="grid gap-10 lg:grid-cols-[0.95fr_1fr] lg:gap-16">
-          <div className="lg:sticky lg:top-28 lg:self-start">
+        <div className="grid items-start gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-[8%]">
+          <div>
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Como funciona
             </span>
             <SplitTitle title={title} highlight={highlight} />
-            {product && (
-              <div className="mt-8 hidden w-full xl:block">
-                <ProductVisualContent product={product} />
-              </div>
-            )}
-          </div>
 
-          <ol ref={listRef} className="relative space-y-8 pl-6 sm:space-y-10 sm:pl-8">
+            <ol ref={listRef} className="relative mt-10 space-y-8 pl-6 sm:mt-12 sm:space-y-10 sm:pl-8">
             {/* trilha + progresso */}
             <span className="absolute left-0 top-0 h-full w-px bg-border/70" aria-hidden />
             <motion.span
@@ -114,7 +106,10 @@ export const ProductHowItWorks = ({ title, highlight, steps, product }: ProductH
                 </div>
               </motion.li>
             ))}
-          </ol>
+            </ol>
+          </div>
+
+          <div className="hidden min-h-full lg:block" aria-hidden="true" />
         </div>
       </div>
     </section>
