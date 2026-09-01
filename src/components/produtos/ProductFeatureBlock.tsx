@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { HiCheckCircle } from "react-icons/hi2";
 import { ProductStageShowcase } from "./ProductStageShowcase";
 import type { ProductFeature, ProductVisualKey } from "@/data/products";
 
@@ -36,7 +36,7 @@ export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatu
   <section className="w-full py-12 sm:py-16">
     <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
       <div
-        className={`grid items-center gap-10 lg:grid-cols-2 lg:gap-16 ${
+        className={`grid items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:gap-12 ${
           feature.reverse ? "lg:[&>*:first-child]:order-2" : ""
         }`}
       >
@@ -56,8 +56,8 @@ export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatu
           <ul className="mt-6 space-y-3">
             {feature.bullets.map((b) => (
               <li key={b} className="flex items-start gap-3 text-sm text-foreground/85">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Check size={12} className="text-primary" />
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/15">
+                  <HiCheckCircle className="h-3.5 w-3.5 text-primary" />
                 </span>
                 {b}
               </li>
@@ -80,9 +80,11 @@ export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatu
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
           transition={{ duration: 0.55, delay: 0.05, ease: "easeOut" }}
-          className="flex justify-center lg:justify-end"
+          className="flex min-w-0 justify-center"
         >
-          <ProductStageShowcase visual={visual} stageIndex={index} />
+          <div className="mx-auto w-full min-w-0" style={{ maxWidth: "clamp(19rem, 32vw, 32rem)" }}>
+            <ProductStageShowcase visual={visual} stageIndex={index} playOnce />
+          </div>
         </motion.div>
       </div>
     </div>

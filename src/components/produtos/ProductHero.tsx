@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Lock } from "lucide-react";
+import { HiArrowRight, HiLockClosed } from "react-icons/hi2";
 import { Button } from "@/components/ui/button";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { ProductVisualContent } from "./ProductFloatingVisual";
@@ -87,7 +87,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
                     notifyTrialDisabled();
                   }}
                 >
-                  <Lock size={16} className="mr-1" />
+                  <HiLockClosed className="mr-1 h-4 w-4" />
                   Comece agora em breve
                 </Button>
               ) : (
@@ -98,7 +98,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
                     className="group h-11 rounded-full px-6 text-sm sm:h-12 sm:px-8 sm:text-base"
                   >
                     Comece agora
-                    <ArrowRight
+                    <HiArrowRight
                       size={14}
                       className="ml-1.5 transition-transform group-hover:translate-x-0.5 sm:ml-2"
                     />

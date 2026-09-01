@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { HiArrowUpRight, HiChevronLeft, HiChevronRight } from "react-icons/hi2";
 import { getRelatedProducts } from "@/data/products";
 import { ProductStageShowcase } from "./ProductStageShowcase";
 
@@ -79,7 +79,7 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
                   : "border-border/70 bg-card/70 text-foreground hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
               }`}
             >
-              <ChevronLeft size={16} />
+              <HiChevronLeft size={16} />
             </button>
             <button
               type="button"
@@ -92,7 +92,7 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
                   : "border-border/70 bg-card/70 text-foreground hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
               }`}
             >
-              <ChevronRight size={16} />
+              <HiChevronRight size={16} />
             </button>
           </div>
         </div>
@@ -141,7 +141,7 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
                   </span>
                   <div className="mt-2 flex items-start justify-between gap-3">
                     <h3 className="text-base font-semibold text-foreground">{p.name}</h3>
-                    <ArrowUpRight
+                    <HiArrowUpRight
                       size={16}
                       className="shrink-0 text-muted-foreground transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
                     />

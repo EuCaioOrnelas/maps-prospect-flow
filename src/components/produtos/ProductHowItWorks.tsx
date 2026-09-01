@@ -1,6 +1,6 @@
 import { useRef, useState, useMemo } from "react";
 import { motion, useScroll, useSpring, useMotionValueEvent, useTransform } from "framer-motion";
-import { Check } from "lucide-react";
+import { HiCheckCircle } from "react-icons/hi2";
 import type { ProductStep } from "@/data/products";
 import { PV_STEPS_SECTION } from "./ProductFloatingVisual";
 
@@ -23,8 +23,8 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
 
   return (
     <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
-      {parts.before && <span>{parts.before}</span>}
-      {parts.match && <span className="text-shimmer-highlight whitespace-nowrap">{parts.match}</span>}
+      {parts.before && <span className="block">{parts.before.trim()}</span>}
+      {parts.match && <span className="block text-shimmer-highlight">{parts.match}</span>}
       {parts.after && <span>{parts.after}</span>}
     </h2>
   );
@@ -98,7 +98,7 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
                   <ul className="space-y-2">
                     {step.preview.map((line) => (
                       <li key={line} className="flex items-center gap-2 text-[13px] text-foreground/80">
-                        <Check size={13} className="shrink-0 text-primary" />
+                        <HiCheckCircle className="h-4 w-4 shrink-0 text-primary" />
                         {line}
                       </li>
                     ))}
