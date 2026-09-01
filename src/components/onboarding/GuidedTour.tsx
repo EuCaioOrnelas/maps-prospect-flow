@@ -449,19 +449,19 @@ export function GuidedTour() {
 
   // Spotlight rect (with padding), sempre clampado ao viewport para nunca
   // "vazar" da tela em resoluções pequenas.
-  const VIEW_MARGIN = 12;
+  const VIEW_MARGIN = isCompactViewport ? 6 : 12;
   const spot = spotlightRect
     ? (() => {
         const top = Math.max(VIEW_MARGIN, spotlightRect.top - PADDING);
         const left = Math.max(VIEW_MARGIN, spotlightRect.left - PADDING);
-        const bottom = Math.min(window.innerHeight - VIEW_MARGIN, spotlightRect.top + spotlightRect.height + PADDING);
-        const right = Math.min(window.innerWidth - VIEW_MARGIN, spotlightRect.left + spotlightRect.width + PADDING);
+        const bottom = Math.min(viewport.h - VIEW_MARGIN, spotlightRect.top + spotlightRect.height + PADDING);
+        const right = Math.min(viewport.w - VIEW_MARGIN, spotlightRect.left + spotlightRect.width + PADDING);
         return { top, left, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
       })()
     : null;
 
   // Largura do card sempre cabe na tela.
-  const availableWidth = Math.max(260, Math.min(POPUP_W, window.innerWidth - 32));
+  const availableWidth = Math.max(240, Math.min(POPUP_W, viewport.w - (isCompactViewport ? 20 : 32)));
 
   // Compute popup position — auto-flip so the card never overlaps the spotlight border
   let popupStyle: React.CSSProperties = {};
