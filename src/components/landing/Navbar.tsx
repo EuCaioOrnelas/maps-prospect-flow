@@ -108,6 +108,16 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
 
   const activeMenu = MENUS.find((m) => m.key === openMenu);
 
+  const openMenuWithDirection = (key: string | null) => {
+    if (key) {
+      const nextIdx = MENUS.findIndex((m) => m.key === key);
+      const currIdx = MENUS.findIndex((m) => m.key === openMenu);
+      setMenuDirection(currIdx === -1 || nextIdx >= currIdx ? 1 : -1);
+    }
+    setOpenMenu(key);
+  };
+
+
   const renderMobileMenuItems = (items: MenuItem[]) => (
     <div className="flex flex-col gap-1 pl-2">
       {items.map((item) => {
