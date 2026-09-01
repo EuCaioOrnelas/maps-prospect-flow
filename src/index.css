@@ -1865,26 +1865,26 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
   position: absolute;
   inset: -60%;
   will-change: transform;
-  filter: blur(48px) saturate(1.15);
+  filter: blur(56px) saturate(1.2);
 }
 .wz-band::before {
   background:
-    radial-gradient(14% 40% at 12% 50%, hsl(158 82% 52%) 0%, transparent 65%),
-    radial-gradient(12% 38% at 30% 42%, hsl(152 76% 44%) 0%, transparent 65%),
-    radial-gradient(15% 42% at 50% 58%, hsl(164 78% 48%) 0%, transparent 65%),
-    radial-gradient(12% 38% at 68% 44%, hsl(156 80% 54%) 0%, transparent 65%),
-    radial-gradient(14% 40% at 86% 56%, hsl(160 74% 42%) 0%, transparent 65%);
+    radial-gradient(16% 55% at 12% 50%, hsl(158 85% 55%) 0%, transparent 72%),
+    radial-gradient(14% 52% at 30% 42%, hsl(152 78% 46%) 0%, transparent 72%),
+    radial-gradient(17% 56% at 50% 58%, hsl(164 80% 50%) 0%, transparent 72%),
+    radial-gradient(14% 52% at 68% 44%, hsl(156 84% 56%) 0%, transparent 72%),
+    radial-gradient(16% 55% at 86% 56%, hsl(160 78% 46%) 0%, transparent 72%);
   animation: wzPlasmaA 26s ease-in-out infinite alternate;
 }
 .wz-band::after {
   background:
-    radial-gradient(13% 40% at 20% 60%, hsl(150 74% 34%) 0%, transparent 65%),
-    radial-gradient(14% 42% at 40% 40%, hsl(162 84% 56%) 0%, transparent 65%),
-    radial-gradient(12% 38% at 60% 62%, hsl(154 78% 46%) 0%, transparent 65%),
-    radial-gradient(15% 44% at 80% 42%, hsl(166 76% 44%) 0%, transparent 65%);
+    radial-gradient(15% 54% at 20% 60%, hsl(149 76% 32%) 0%, transparent 72%),
+    radial-gradient(16% 56% at 40% 40%, hsl(162 86% 58%) 0%, transparent 72%),
+    radial-gradient(14% 52% at 60% 62%, hsl(154 80% 48%) 0%, transparent 72%),
+    radial-gradient(17% 58% at 80% 42%, hsl(166 78% 46%) 0%, transparent 72%);
   animation: wzPlasmaB 34s ease-in-out infinite alternate;
   mix-blend-mode: screen;
-  opacity: 0.75;
+  opacity: 0.95;
 }
 @keyframes wzPlasmaA {
   0%   { transform: translate3d(-4%, -3%, 0) scale(1); }
