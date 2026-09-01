@@ -54,16 +54,17 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-              Plataforma Wiize
+              Capte · Converta · Gerencie · Otimize
             </span>
             <h2 className="mt-3 font-display text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
-              Escolha seu caminho
+              Uma operação comercial. Um único sistema.
             </h2>
             <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-              Combine inteligência, automação e relacionamento para construir uma operação comercial
-              mais eficiente.
+              Você não precisa montar sua operação com várias ferramentas desconectadas. Cada produto
+              da Wiize cobre uma etapa da jornada comercial e trabalha conectado aos demais.
             </p>
           </div>
+
 
           <div className="flex shrink-0 items-center gap-2">
             <button
@@ -134,17 +135,22 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
                 </div>
 
                 <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-start justify-between gap-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+                    {p.stage}
+                  </span>
+                  <div className="mt-2 flex items-start justify-between gap-3">
                     <h3 className="text-base font-semibold text-foreground">{p.name}</h3>
                     <ArrowUpRight
                       size={16}
                       className="shrink-0 text-muted-foreground transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
                     />
                   </div>
+                  <p className="mt-1 text-sm font-medium text-foreground/80">{p.cardTagline}</p>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {p.cardDescription ?? p.shortDescription}
                   </p>
                 </div>
+
               </Link>
             </motion.div>
           ))}

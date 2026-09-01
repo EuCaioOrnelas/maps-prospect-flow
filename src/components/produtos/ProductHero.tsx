@@ -80,7 +80,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
                   }}
                 >
                   <Lock size={16} className="mr-1" />
-                  Teste grátis em breve
+                  Comece agora em breve
                 </Button>
               ) : (
                 <Link to="/signup/escolher-plano" className="shrink-0">
@@ -89,7 +89,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
                     size="lg"
                     className="group h-11 rounded-full px-6 text-sm sm:h-12 sm:px-8 sm:text-base"
                   >
-                    Iniciar Teste Grátis
+                    Comece agora
                     <ArrowRight
                       size={14}
                       className="ml-1.5 transition-transform group-hover:translate-x-0.5 sm:ml-2"
@@ -103,9 +103,10 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
                   size="lg"
                   className="demo-shine h-11 rounded-full border border-border/60 bg-transparent px-6 text-sm transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:bg-muted/60 sm:h-12 sm:px-8 sm:text-base"
                 >
-                  Ver Demonstração
+                  Teste uma demonstração
                 </Button>
               </Link>
+
             </div>
           </div>
 

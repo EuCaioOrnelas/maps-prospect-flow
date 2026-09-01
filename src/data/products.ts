@@ -16,6 +16,9 @@ export type ProductVisualKey =
   | "automacao"
   | "contratos";
 
+/** Etapa da operação comercial na arquitetura Wiize */
+export type ProductStage = "Capte" | "Converta" | "Gerencie" | "Otimize";
+
 export interface ProductStep {
   title: string;
   description: string;
@@ -36,9 +39,13 @@ export interface ProductFeature {
 export interface ProductConfig {
   slug: string;
   key: ProductVisualKey;
+  /** Eyebrow do hero: etapa da operação (CAPTE, CONVERTA, GERENCIE, OTIMIZE) */
   category: string;
+  stage: ProductStage;
   name: string;
   shortDescription: string;
+  /** Frase curta usada nos cards de produtos relacionados */
+  cardTagline: string;
   /** Descrição mais completa usada nos cards de outros produtos */
   cardDescription?: string;
   icon: LucideIcon;
@@ -58,233 +65,241 @@ export const PRODUCTS: ProductConfig[] = [
   {
     slug: "prospeccao-inteligente",
     key: "prospeccao",
-    category: "Prospecção",
+    category: "Capte",
+    stage: "Capte",
     name: "Prospecção Inteligente",
-    shortDescription: "Encontre empresas prontas para comprar",
+    shortDescription: "Encontre empresas prontas para vender",
+    cardTagline: "Encontre empresas prontas para vender",
     cardDescription:
-      "Busque empresas por nicho e região, receba um score de 0 a 1000 com base em sinais reais de intenção e comece a conversa com dados de contato já validados.",
+      "Construa um pipeline contínuo: encontre empresas com o perfil do seu cliente ideal, organize as oportunidades e concentre o esforço do time em quem realmente merece atenção.",
     icon: Search,
-    heroTitle: "Pare de garimpar listas.",
-    heroHighlight: "Encontre quem já quer comprar.",
+    heroTitle: "Encontre as empresas",
+    heroHighlight: "certas para vender",
     heroDescription:
-      "A Wiize pesquisa empresas do seu nicho, cruza sinais públicos de intenção e entrega uma fila de oportunidades qualificadas — com dados de contato validados e abordagem pronta para enviar.",
-    seoTitle: "Prospecção Inteligente B2B com IA",
+      "Transforme a busca por novos clientes em um processo comercial inteligente. Encontre empresas com potencial, organize oportunidades e dê à sua equipe uma lista de leads pronta para trabalhar.",
+    seoTitle: "Prospecção B2B: encontre as empresas certas",
     seoDescription:
-      "Encontre empresas prontas para comprar: busca por nicho e região, score de 0 a 1000 com inteligência comercial e abordagem personalizada gerada por IA.",
+      "Transforme a busca por clientes em um processo comercial. Encontre empresas com o perfil do seu ICP, organize oportunidades e priorize onde vale investir tempo.",
     keywords:
-      "prospecção B2B, geração de leads, inteligência comercial, dados de empresas, ICP, lead scoring",
-    howItWorksTitle: "Da busca à primeira conversa",
+      "prospecção B2B, pipeline comercial, ICP, geração de oportunidades, inteligência comercial, dados de empresas",
+    howItWorksTitle: "De uma busca manual a um processo comercial inteligente",
     howItWorks: [
       {
-        title: "Defina seu perfil de cliente ideal",
+        title: "Defina quem você quer encontrar",
         description:
-          "Escolha nicho, região e critérios do seu mercado. A Wiize entende o seu ICP e passa a procurar apenas empresas com esse perfil.",
-        preview: ["Nicho: clínicas odontológicas", "Região: São Paulo, SP", "Porte: 5 a 50 colaboradores"],
+          "Encontre empresas com o perfil que faz sentido para sua operação comercial: nicho, região, porte e os critérios que definem o seu cliente ideal.",
+        preview: ["Nicho: agências de marketing", "Região: São Paulo, SP", "Porte: 5 a 50 colaboradores"],
       },
       {
-        title: "A IA pesquisa e qualifica",
+        title: "Descubra novas oportunidades",
         description:
-          "Coletamos sinais públicos — presença digital, avaliações, site, redes e canais de contato — e transformamos tudo em um diagnóstico comparável.",
-        preview: ["Presença digital: forte", "Decisor identificado: sim", "Score: 847/1000"],
+          "A Wiize transforma dados de empresas em oportunidades organizadas para sua equipe, com contexto suficiente para iniciar uma conversa relevante.",
+        preview: ["Contexto do negócio mapeado", "Contato do responsável", "Oportunidade organizada"],
       },
       {
-        title: "Você recebe oportunidades prontas",
+        title: "Priorize onde vale investir tempo",
         description:
-          "Cada empresa chega com telefone validado, diagnóstico e uma abordagem personalizada — pronta para virar conversa no mesmo dia.",
-        preview: ["3 empresas prontas para abordar", "Abordagem gerada por IA", "Importação direta no CRM"],
+          "Use inteligência e dados para concentrar o esforço comercial nas oportunidades mais relevantes — e deixar de tratar todos os leads como iguais.",
+        preview: ["Prioridade: alta", "Fit com seu ICP", "Pronto para abordar"],
       },
     ],
     features: [
       {
-        eyebrow: "Descoberta",
-        title: "Encontre empresas com potencial real",
+        eyebrow: "Pipeline",
+        title: "Pare de gastar horas procurando quem pode comprar de você",
         description:
-          "Em vez de comprar listas frias, a Wiize descobre empresas ativas no seu mercado e organiza tudo o que você precisa para iniciar uma abordagem comercial.",
+          "Prospectar deixa de ser uma tarefa manual e passa a ser um processo que se repete toda semana. Sua equipe começa o dia com oportunidades para trabalhar, não com uma planilha em branco.",
         bullets: [
-          "Busca automática por nicho, região e porte",
-          "Telefones validados com DDI e DDD",
-          "Deduplicação contra o que já existe no seu CRM",
+          "Novas oportunidades sempre que a operação precisar",
+          "Menos tempo pesquisando, mais tempo conversando",
+          "Um pipeline que não depende da iniciativa de cada vendedor",
         ],
         metrics: [
-          { label: "Empresas por busca", value: "até 60" },
-          { label: "Dados validados", value: "100%" },
+          { label: "Origem das oportunidades", value: "processo" },
+          { label: "Trabalho manual", value: "reduzido" },
         ],
       },
       {
         eyebrow: "Priorização",
-        title: "Saiba quem merece sua atenção primeiro",
+        title: "Saiba onde a sua equipe deve começar",
         description:
-          "O score de 0 a 1000 combina sinais de intenção, fit com o seu ICP e histórico de negócios ganhos para ordenar a fila do time comercial.",
+          "Nem toda empresa encontrada merece o mesmo esforço. A inteligência da Wiize organiza a fila por aderência ao seu perfil de cliente e por sinais observados no mercado.",
         bullets: [
-          "Score adaptado ao seu nicho",
-          "Aprendizado com negócios já fechados",
-          "Radar de oportunidades quentes no cockpit",
+          "Ordenação por potencial e fit com o seu ICP",
+          "Aprendizado com os negócios que você já ganhou",
+          "Oportunidades relevantes em destaque no cockpit",
         ],
         reverse: true,
       },
       {
-        eyebrow: "Abordagem",
-        title: "A primeira mensagem já sai personalizada",
+        eyebrow: "Contexto",
+        title: "Comece a conversa sabendo com quem está falando",
         description:
-          "A IA lê o diagnóstico da empresa e escreve uma abordagem específica — sem template genérico, sem copiar e colar.",
+          "Cada oportunidade chega com contexto do negócio e uma sugestão de abordagem específica. A primeira mensagem deixa de ser um template e passa a ser uma conversa.",
         bullets: [
-          "Abordagem gerada automaticamente ao buscar",
-          "Tom de voz da sua empresa",
-          "Envio direto pelo WhatsApp conectado",
+          "Contexto do negócio antes do primeiro contato",
+          "Sugestão de abordagem no tom da sua empresa",
+          "Oportunidades organizadas direto no CRM",
         ],
       },
     ],
     proof: [
-      { label: "Tempo por lista", value: "minutos", hint: "no lugar de dias de pesquisa manual" },
-      { label: "Critérios avaliados", value: "20+", hint: "sinais comerciais por empresa" },
-      { label: "Pronto para o CRM", value: "1 clique", hint: "oportunidades já organizadas" },
+      { label: "Construção do pipeline", value: "contínua", hint: "sem depender de listas compradas" },
+      { label: "Foco da equipe", value: "priorizado", hint: "esforço onde há mais potencial" },
+      { label: "Da busca ao CRM", value: "um processo", hint: "sem planilhas paralelas" },
     ],
   },
   {
     slug: "sdr-inteligente",
     key: "sdr",
-    category: "SDR com IA",
+    category: "Converta",
+    stage: "Converta",
     name: "SDR Inteligente",
-    shortDescription: "IA que qualifica e agenda no WhatsApp",
+    shortDescription: "Transforme conversas em oportunidades",
+    cardTagline: "Transforme conversas em oportunidades",
     cardDescription:
-      "Uma IA que responde no WhatsApp em segundos, descobre quem decide, qualifica a necessidade e leva o lead até uma reunião confirmada na sua agenda.",
+      "Um SDR digital integrado ao seu processo comercial: conduz a conversa, entende o contexto do lead, qualifica o interesse e ajuda a equipe a avançar até a reunião.",
     icon: Bot,
-    heroTitle: "Um SDR que responde sempre.",
-    heroHighlight: "Qualifica e agenda por você.",
+    heroTitle: "Transforme conversas",
+    heroHighlight: "em oportunidades comerciais",
     heroDescription:
-      "O SDR Inteligente atende no WhatsApp em segundos, entende o contexto do lead, qualifica com as perguntas certas e marca a reunião direto na sua agenda — 24 horas por dia.",
-    seoTitle: "SDR Inteligente: IA que qualifica no WhatsApp",
+      "O SDR Inteligente conduz conversas, entende o contexto de cada lead, identifica oportunidades e ajuda sua equipe a avançar até a reunião — sem transformar o processo comercial em uma sequência de mensagens genéricas.",
+    seoTitle: "SDR Inteligente: conversas que viram oportunidades",
     seoDescription:
-      "IA comercial que atende no WhatsApp, qualifica leads, faz follow-up e agenda reuniões automaticamente, com transferência para humano no momento certo.",
-    keywords: "SDR com IA, qualificação de leads, WhatsApp automação, agente de IA comercial",
-    howItWorksTitle: "Do primeiro oi à reunião marcada",
+      "Um SDR digital integrado ao processo comercial: conduz conversas, entende o contexto do lead, qualifica o interesse e apoia a equipe até a reunião.",
+    keywords:
+      "SDR digital, qualificação de leads, pré-vendas B2B, atendimento comercial, conversas comerciais",
+    howItWorksTitle: "Da primeira conversa à oportunidade qualificada",
     howItWorks: [
       {
-        title: "O lead chama no WhatsApp",
+        title: "Inicie a conversa",
         description:
-          "A IA responde em segundos, coleta o nome e busca falar com o dono ou responsável pela decisão.",
-        preview: ["Lead: quero saber mais", "IA respondendo em 4s", "Nome e empresa coletados"],
+          "O lead entra em contato ou é abordado dentro do processo comercial, e a conversa começa sem depender de alguém estar disponível naquele momento.",
+        preview: ["Nova conversa recebida", "Resposta em segundos", "Nome e empresa identificados"],
       },
       {
-        title: "A IA qualifica com contexto",
+        title: "Entenda o contexto",
         description:
-          "Ela consulta o diagnóstico do lead, entende dor, urgência e orçamento e move o card no CRM conforme a conversa evolui.",
-        preview: ["Dor identificada", "Estágio CRM: qualificado", "Follow-up programado"],
+          "O SDR utiliza inteligência para interpretar a conversa e identificar intenção, necessidades e momento de compra — falando com quem realmente decide.",
+        preview: ["Necessidade identificada", "Responsável pela decisão", "Etapa do funil atualizada"],
       },
       {
-        title: "A reunião entra na agenda",
+        title: "Avance a oportunidade",
         description:
-          "A IA sugere horários reais, confirma data e hora de forma clara e cria o compromisso já sincronizado.",
-        preview: ["Terça, 12/03 às 14:30h", "Compromisso criado", "Lembrete automático"],
+          "Quando existe potencial real, a conversa pode evoluir para qualificação, follow-up e agendamento. Quando o caso pede atenção humana, o time assume.",
+        preview: ["Oportunidade qualificada", "Follow-up programado", "Reunião sugerida"],
       },
     ],
     features: [
       {
-        eyebrow: "Atendimento",
-        title: "Resposta imediata, todos os dias",
+        eyebrow: "Continuidade",
+        title: "Nenhuma conversa fica sem resposta",
         description:
-          "Nenhum lead fica sem resposta à noite, no fim de semana ou durante um pico de mensagens. A IA assume e mantém o tom da sua empresa.",
+          "Leads que chegam à noite, no fim de semana ou em um pico de mensagens continuam sendo atendidos. A equipe deixa de perder oportunidades por indisponibilidade.",
         bullets: [
-          "Atendimento 24/7 no WhatsApp oficial",
-          "Objetivos configuráveis por agente",
-          "Transferência para humano no momento certo",
+          "Atendimento contínuo no WhatsApp oficial",
+          "Objetivo comercial definido por você",
+          "Passagem para uma pessoa no momento certo",
         ],
         metrics: [
-          { label: "Tempo de resposta", value: "< 10s" },
-          { label: "Disponibilidade", value: "24/7" },
+          { label: "Conversas simultâneas", value: "sem fila" },
+          { label: "Disponibilidade", value: "contínua" },
         ],
       },
       {
         eyebrow: "Follow-up",
-        title: "Ninguém esfria por esquecimento",
+        title: "Oportunidades não esfriam por esquecimento",
         description:
-          "Ciclos de follow-up inteligentes reativam quem parou de responder, com mensagens sempre contextuais e respeitando opt-out.",
+          "O acompanhamento deixa de depender da memória do vendedor. Quem parou de responder volta para a conversa com contexto, no tempo certo e sem repetição.",
         bullets: [
-          "Cadência automática de retomada",
-          "Mensagens nunca repetidas",
-          "Pausa automática em campanhas ativas",
+          "Retomada programada dentro do processo",
+          "Mensagens sempre ligadas ao histórico",
+          "Respeito total ao opt-out do contato",
         ],
         reverse: true,
       },
       {
-        eyebrow: "Governança",
-        title: "Você continua no controle",
+        eyebrow: "Controle",
+        title: "A equipe continua no comando",
         description:
-          "Acompanhe cada conversa, veja quando a IA está atendendo, assuma o teclado quando quiser e mantenha o histórico completo no CRM.",
+          "O SDR apoia o time comercial, não substitui vendedores. Você acompanha cada conversa, assume o teclado quando quiser e mantém o histórico completo no CRM.",
         bullets: [
-          "Indicador de status do SDR em cada lead",
-          "Pausa manual instantânea",
-          "Notas internas nunca vão para o cliente",
+          "Status do atendimento visível em cada lead",
+          "Pausa manual imediata",
+          "Notas internas nunca chegam ao cliente",
         ],
       },
     ],
     proof: [
-      { label: "Conversas simultâneas", value: "ilimitadas", hint: "sem fila de espera" },
-      { label: "Qualificação", value: "automática", hint: "com critérios do seu funil" },
-      { label: "Agendamento", value: "nativo", hint: "direto na Agenda Wiize" },
+      { label: "Tempo de resposta", value: "imediato", hint: "sem depender de disponibilidade" },
+      { label: "Qualificação", value: "com contexto", hint: "critérios do seu funil" },
+      { label: "Histórico", value: "no CRM", hint: "tudo registrado automaticamente" },
     ],
   },
   {
     slug: "agenda-inteligente",
     key: "agenda",
-    category: "Agenda",
+    category: "Converta",
+    stage: "Converta",
     name: "Agenda Inteligente",
-    shortDescription: "Reuniões marcadas sem esforço manual",
+    shortDescription: "Converta interesse em reuniões",
+    cardTagline: "Converta interesse em reuniões",
     cardDescription:
-      "Disponibilidade sincronizada, sugestões inteligentes de horário, confirmações e lembretes automáticos — sem trocas infinitas de mensagens para marcar uma reunião.",
+      "Reduza o atrito entre interesse e reunião: horários sugeridos com base na disponibilidade real, confirmação clara e acompanhamento até o compromisso acontecer.",
     icon: CalendarClock,
-    heroTitle: "Menos idas e vindas.",
-    heroHighlight: "Mais reuniões confirmadas.",
+    heroTitle: "Transforme interesse",
+    heroHighlight: "em reuniões",
     heroDescription:
-      "Horários sugeridos com inteligência, confirmação clara de data e hora, lembretes automáticos e sincronização com o Google Agenda — o interesse do lead vira compromisso sem trabalho manual.",
-    seoTitle: "Agenda Inteligente para times comerciais",
+      "Quando um lead está pronto para conversar, não deixe o próximo passo depender de trocas intermináveis de mensagens. A Agenda Inteligente facilita o agendamento e conecta o interesse à reunião.",
+    seoTitle: "Agenda Inteligente: do interesse à reunião",
     seoDescription:
-      "Agende reuniões automaticamente: sugestão de horários por período, lembretes, status de atraso e sincronização com o Google Agenda.",
-    keywords: "agendamento automático, agenda comercial, reuniões B2B, Google Agenda integração",
+      "Reduza o atrito entre interesse e reunião: sugestão de horários com disponibilidade real, confirmação clara de data e hora e acompanhamento até o compromisso.",
+    keywords:
+      "agendamento comercial, reuniões B2B, agenda de vendas, confirmação de reunião, Google Agenda",
     howItWorksTitle: "Do interesse ao compromisso confirmado",
     howItWorks: [
       {
-        title: "A disponibilidade é lida em tempo real",
+        title: "Identifique o momento certo",
         description:
-          "A Wiize considera a agenda de cada responsável, períodos preferidos e conflitos antes de sugerir qualquer horário.",
-        preview: ["Manhã: 2 janelas livres", "Tarde: 3 janelas livres", "Sem conflitos"],
+          "Reconheça quando a conversa chegou ao ponto de avançar, em vez de empurrar uma reunião antes de existir interesse real.",
+        preview: ["Interesse confirmado", "Responsável definido", "Pronto para avançar"],
       },
       {
-        title: "Opções claras para o lead",
+        title: "Encontre um horário",
         description:
-          "Em vez de perguntar 'qual seu melhor horário?', a IA oferece opções em períodos diferentes e confirma dia e hora por extenso.",
-        preview: ["Terça às 11:30h", "Quinta às 14:30h", "Confirmação com data completa"],
+          "Apresente possibilidades de agenda sem depender de troca manual de mensagens, considerando a disponibilidade real de cada pessoa do time.",
+        preview: ["Terça às 11:30h", "Quinta às 14:30h", "Sem conflitos de agenda"],
       },
       {
-        title: "Compromisso criado e lembrado",
+        title: "Marque a reunião",
         description:
-          "O evento entra na agenda com lembretes por e-mail, status de atraso e opção de reagendar sem retrabalho.",
-        preview: ["Evento criado", "Lembrete 24h antes", "Sincronizado com Google Agenda"],
+          "Transforme uma oportunidade qualificada em uma reunião confirmada, com data e hora claras e acompanhamento até o dia do encontro.",
+        preview: ["Compromisso confirmado", "Lembrete automático", "Sincronizado com Google Agenda"],
       },
     ],
     features: [
       {
-        eyebrow: "Inteligência de horários",
-        title: "Sugestões que o lead realmente aceita",
+        eyebrow: "Menos atrito",
+        title: "Reuniões deixam de se perder na negociação de horário",
         description:
-          "Distribuímos as opções entre manhã e tarde, em dias diferentes, aumentando a chance de confirmação na primeira tentativa.",
+          "O intervalo entre 'tenho interesse' e 'reunião marcada' é onde mais oportunidades esfriam. A Wiize encurta esse caminho com opções claras e disponibilidade real.",
         bullets: [
-          "Sugestões por período e disponibilidade real",
+          "Sugestões em períodos e dias diferentes",
           "Confirmação sempre com data e hora completas",
           "Bloqueio automático de sobreposição",
         ],
         metrics: [
-          { label: "Conflitos de agenda", value: "zero" },
-          { label: "Sincronização", value: "Google" },
+          { label: "Conflitos de agenda", value: "evitados" },
+          { label: "Sincronização", value: "Google Agenda" },
         ],
       },
       {
         eyebrow: "Acompanhamento",
         title: "Nada se perde entre marcar e realizar",
         description:
-          "Lembretes automáticos, status de atraso e reagendamento em poucos cliques mantêm a taxa de comparecimento alta.",
+          "Lembretes, status de atraso e reagendamento simples mantêm o compromisso vivo — e a operação sabe exatamente o que aconteceu com cada reunião.",
         bullets: [
-          "Lembretes por e-mail personalizáveis",
+          "Lembretes por e-mail com a sua identidade",
           "Status visual de atrasado e concluído",
           "Reagendamento sem perder o histórico",
         ],
@@ -292,193 +307,202 @@ export const PRODUCTS: ProductConfig[] = [
       },
     ],
     proof: [
-      { label: "Trabalho manual", value: "-90%", hint: "sem troca de mensagens para marcar" },
-      { label: "Lembretes", value: "automáticos", hint: "e-mail com identidade da sua empresa" },
+      { label: "Troca de mensagens", value: "reduzida", hint: "para marcar um horário" },
+      { label: "Lembretes", value: "automáticos", hint: "antes de cada compromisso" },
       { label: "Integração", value: "Google Agenda", hint: "sincronização contínua" },
     ],
   },
   {
     slug: "ia-de-engajamento",
     key: "engajamento",
-    category: "Engajamento",
+    category: "Otimize",
+    stage: "Otimize",
     name: "IA de Engajamento",
-    shortDescription: "Conversas que reativam oportunidades",
+    shortDescription: "Recupere oportunidades esquecidas",
+    cardTagline: "Recupere oportunidades esquecidas",
     cardDescription:
-      "A IA lê o histórico de cada conversa, identifica intenção de compra e reativa oportunidades esquecidas com mensagens contextualizadas no momento certo.",
+      "Você já tem oportunidades — talvez só não esteja enxergando. Analise o histórico das conversas, identifique sinais de interesse e saiba quais merecem uma nova abordagem.",
     icon: Sparkles,
-    heroTitle: "Sua base já tem vendas.",
-    heroHighlight: "A IA volta a conversar.",
+    heroTitle: "Descubra quais conversas",
+    heroHighlight: "ainda podem virar negócio",
     heroDescription:
-      "A IA de Engajamento analisa conversas paradas, identifica intenção real e reativa oportunidades esquecidas com mensagens contextuais durante um ciclo inteligente de 30 dias.",
-    seoTitle: "IA de Engajamento: reative oportunidades paradas",
+      "Nem todo lead que parou de responder está perdido. Analise o histórico das conversas, identifique sinais de interesse e descubra quais oportunidades merecem uma nova abordagem.",
+    seoTitle: "IA de Engajamento: oportunidades que ainda podem virar negócio",
     seoDescription:
-      "Ciclos inteligentes de follow-up que analisam intenção, priorizam leads e reativam oportunidades esquecidas com mensagens sempre contextuais.",
-    keywords: "reativação de leads, follow-up automático, engajamento comercial, IA de vendas",
-    howItWorksTitle: "Como oportunidades voltam à mesa",
+      "Analise o histórico das conversas comerciais, identifique sinais de interesse e priorize as oportunidades que merecem uma nova abordagem.",
+    keywords:
+      "reativação de oportunidades, engajamento comercial, follow-up inteligente, análise de conversas, base de leads",
+    howItWorksTitle: "Você já tem oportunidades. Talvez só não esteja enxergando.",
     howItWorks: [
       {
-        title: "A IA lê o histórico",
+        title: "Analise suas conversas",
         description:
-          "Cada conversa parada é analisada: o que foi dito, qual objeção apareceu e há quanto tempo o lead sumiu.",
-        preview: ["124 conversas paradas", "Objeções mapeadas", "38 com intenção alta"],
+          "A inteligência interpreta o contexto das interações comerciais: o que foi dito, qual objeção apareceu e há quanto tempo a conversa parou.",
+        preview: ["Conversas analisadas", "Objeções mapeadas", "Contexto recuperado"],
       },
       {
-        title: "Prioriza quem vale reativar",
+        title: "Identifique sinais de oportunidade",
         description:
-          "Leads com sinais de intenção sobem na fila. Quem não tem fit fica de fora — sem disparo em massa.",
-        preview: ["Prioridade: alta", "Motivo: pediu proposta", "Melhor canal: WhatsApp"],
+          "Encontre padrões de interesse, intenção e engajamento que passam despercebidos no dia a dia de uma operação comercial cheia de conversas.",
+        preview: ["Sinais de interesse", "Motivo da parada", "Melhor canal de retomada"],
       },
       {
-        title: "Reativa com contexto",
+        title: "Saiba onde agir",
         description:
-          "Um ciclo de 30 dias com toques nos dias 0, 5, 10, 15, 20, 25 e 30 — cada mensagem diferente e ligada à última conversa.",
-        preview: ["Toque 1 enviado", "Resposta recebida em 2 dias", "Card movido no CRM"],
+          "Priorize as conversas que apresentam maior potencial de reativação, em vez de disparar a mesma mensagem para toda a base.",
+        preview: ["Prioridade definida", "Abordagem contextual", "Oportunidade de volta ao funil"],
       },
     ],
     features: [
       {
-        eyebrow: "Análise",
-        title: "Intenção que você não veria no olho",
+        eyebrow: "Inteligência",
+        title: "Interesse que não aparece em uma planilha",
         description:
-          "A IA classifica cada conversa por temperatura, motivo de parada e probabilidade de retomada, transformando histórico em fila de trabalho.",
+          "Boa parte da receita possível de uma empresa já passou pelo seu WhatsApp. A Wiize organiza esse histórico por temperatura, motivo de parada e potencial de retomada.",
         bullets: [
-          "Classificação automática por intenção",
+          "Classificação das conversas por intenção",
           "Motivos de perda identificados",
-          "Priorização contínua da base",
+          "Base revisitada de forma contínua",
         ],
         metrics: [
-          { label: "Ciclo de reativação", value: "30 dias" },
-          { label: "Toques por ciclo", value: "7" },
+          { label: "Base analisada", value: "completa" },
+          { label: "Retomada", value: "priorizada" },
         ],
       },
       {
-        eyebrow: "Conteúdo",
-        title: "Mensagens que não parecem robô",
+        eyebrow: "Relacionamento",
+        title: "Reativar sem parecer disparo em massa",
         description:
-          "Cada toque é escrito a partir do contexto real da conversa anterior, com variação de abordagem e respeito total ao opt-out.",
+          "Cada retomada parte do contexto real da última conversa, com variação de abordagem, ritmo respeitoso e saída fácil para quem não quer mais ser contatado.",
         bullets: [
-          "Nunca repete a mesma mensagem",
+          "Mensagens ligadas ao histórico do lead",
           "Descadastro em um clique",
-          "Conformidade com LGPD",
+          "Conformidade com a LGPD",
         ],
         reverse: true,
       },
     ],
     proof: [
-      { label: "Base trabalhada", value: "100%", hint: "nenhuma conversa esquecida" },
-      { label: "Toques inteligentes", value: "7 em 30 dias", hint: "sem parecer spam" },
+      { label: "Base trabalhada", value: "por inteiro", hint: "nenhuma conversa esquecida" },
+      { label: "Retomadas", value: "contextuais", hint: "sem disparo em massa" },
       { label: "Opt-out", value: "respeitado", hint: "confirmação em duas etapas" },
     ],
   },
   {
     slug: "automacao-comercial",
     key: "automacao",
-    category: "Automação",
+    category: "Otimize",
+    stage: "Otimize",
     name: "Automação Comercial",
-    shortDescription: "Fluxos multicanal WhatsApp e Instagram",
+    shortDescription: "Automatize processos comerciais",
+    cardTagline: "Automatize processos comerciais",
     cardDescription:
-      "Monte fluxos visuais com gatilhos, condições, mídias e ações no CRM para automatizar atendimento e follow-up no WhatsApp e no Instagram.",
+      "Automatizar não é tirar pessoas do processo. É tirar tarefas desnecessárias das pessoas — follow-ups, mensagens e etapas repetitivas rodando sem perder o contexto.",
     icon: Workflow,
-    heroTitle: "Sua operação rodando sozinha.",
-    heroHighlight: "WhatsApp e Instagram.",
+    heroTitle: "Automatize o trabalho",
+    heroHighlight: "que não precisa ser manual",
     heroDescription:
-      "Construa fluxos comerciais com gatilhos, condições, testes A/B e integrações — usando as APIs oficiais da Meta e sem depender de ninguém para apertar 'enviar'.",
-    seoTitle: "Automação Comercial WhatsApp e Instagram",
+      "Transforme processos comerciais repetitivos em fluxos que trabalham continuamente. Automatize follow-ups, tarefas e interações em diferentes canais sem perder o contexto da operação.",
+    seoTitle: "Automação Comercial: menos trabalho manual, mais processo",
     seoDescription:
-      "Editor visual de fluxos com IA, gatilhos de WhatsApp e Instagram, testes A/B e integrações com Google Sheets, Calendar e Gmail.",
-    keywords: "automação comercial, fluxos WhatsApp, automação Instagram, API oficial Meta",
-    howItWorksTitle: "Como um fluxo entra em produção",
+      "Transforme tarefas comerciais repetitivas em fluxos contínuos: follow-ups, mensagens e etapas automatizadas em diferentes canais, sem perder o contexto.",
+    keywords:
+      "automação comercial, fluxos de vendas, follow-up automático, processos comerciais, WhatsApp e Instagram",
+    howItWorksTitle: "Como um processo repetitivo vira um fluxo que trabalha por você",
     howItWorks: [
       {
-        title: "Escolha o gatilho",
+        title: "Defina o processo",
         description:
-          "Mensagem no WhatsApp, comentário ou direct no Instagram, entrada no CRM ou horário programado.",
-        preview: ["Gatilho: mensagem recebida", "Canal: WhatsApp oficial", "Filtro por número"],
+          "Escolha o momento e as condições que iniciam uma ação: uma mensagem recebida, uma mudança de etapa no CRM ou um horário programado.",
+        preview: ["Gatilho definido", "Canal: WhatsApp ou Instagram", "Condições configuradas"],
       },
       {
-        title: "Monte o fluxo visualmente",
+        title: "Deixe o fluxo trabalhar",
         description:
-          "Arraste nós de mensagem, espera inteligente, condição, teste A/B, coleta de dados e ações no CRM. A IA pode montar o rascunho para você.",
-        preview: ["6 nós conectados", "Teste A/B ativo", "Coleta de dados com IA"],
+          "Automatize tarefas, mensagens e etapas repetitivas da operação, mantendo o contexto de cada conversa e o registro no CRM.",
+        preview: ["Etapas conectadas", "Mensagens no tempo certo", "CRM atualizado"],
       },
       {
-        title: "Acompanhe os resultados",
+        title: "Mantenha o controle",
         description:
-          "Funil por etapa do fluxo, taxa de resposta e conversão em reunião — tudo em um painel de resultados.",
-        preview: ["Entradas: 412", "Respostas: 187", "Reuniões: 34"],
+          "Acompanhe o que está acontecendo, veja o que está funcionando e intervenha quando a equipe precisar assumir a conversa.",
+        preview: ["Resultados por etapa", "Taxa de resposta", "Intervenção humana quando necessário"],
       },
     ],
     features: [
       {
-        eyebrow: "Multicanal",
-        title: "Um fluxo, vários canais oficiais",
+        eyebrow: "Eficiência",
+        title: "Automatizar é tirar tarefas desnecessárias das pessoas",
         description:
-          "WhatsApp Cloud API e Instagram da Meta no mesmo editor, com gatilhos separados e mensagens adequadas a cada canal.",
+          "Sua equipe não precisa lembrar de cada follow-up, atualizar cada card e repetir a mesma mensagem dezenas de vezes. Isso é trabalho de processo, não de vendedor.",
         bullets: [
-          "APIs oficiais, sem risco de bloqueio",
-          "Gatilhos separados por canal",
-          "Mídia, botões e listas suportados",
+          "Tarefas repetitivas fora da rotina do time",
+          "Menos dependência da memória do vendedor",
+          "Mais tempo para conversas que exigem gente",
         ],
         metrics: [
-          { label: "Canais", value: "WhatsApp + IG" },
-          { label: "Nós disponíveis", value: "12+" },
+          { label: "Canais", value: "WhatsApp + Instagram" },
+          { label: "Operação", value: "contínua" },
         ],
       },
       {
-        eyebrow: "Integrações",
-        title: "Conectado ao resto da operação",
+        eyebrow: "Conexão",
+        title: "Integrado ao resto da sua operação",
         description:
-          "Envie dados para planilhas, crie eventos, dispare e-mails e atualize o CRM sem sair do fluxo.",
+          "Os fluxos conversam com o CRM, a agenda, o e-mail e as planilhas que sua empresa já usa. A automação faz parte da operação, não é um sistema à parte.",
         bullets: [
+          "Ações no CRM e transferência para humano",
           "Google Sheets, Calendar e Gmail",
-          "Ações de CRM e transferência para humano",
-          "Limites de segurança e delays automáticos",
+          "APIs oficiais da Meta e limites de segurança",
         ],
         reverse: true,
       },
     ],
     proof: [
-      { label: "Criação com IA", value: "1 prompt", hint: "fluxo montado automaticamente" },
-      { label: "Testes A/B", value: "nativos", hint: "compare abordagens no mesmo fluxo" },
-      { label: "Conformidade", value: "Meta oficial", hint: "sem automações não autorizadas" },
+      { label: "Trabalho repetitivo", value: "reduzido", hint: "sem tirar pessoas do processo" },
+      { label: "Comparação de abordagens", value: "nativa", hint: "teste variações no mesmo fluxo" },
+      { label: "Conformidade", value: "canais oficiais", hint: "sem automações não autorizadas" },
     ],
   },
   {
     slug: "gestao-de-contratos",
     key: "contratos",
-    category: "Receita",
+    category: "Gerencie",
+    stage: "Gerencie",
     name: "Gestão de Contratos",
-    shortDescription: "Renovações, vencimentos e receita",
+    shortDescription: "Proteja renovações e receitas",
+    cardTagline: "Proteja renovações e receitas",
     cardDescription:
-      "Acompanhe contratos ativos, vencimentos e renovações com avisos automáticos, visão de receita recorrente e menos perda de clientes por esquecimento.",
+      "Contratos organizados, vencimentos visíveis e renovações acompanhadas como processo — para que nenhuma receita dependa da memória de alguém do time.",
     icon: FileSignature,
-    heroTitle: "Nenhuma renovação perdida.",
-    heroHighlight: "Receita recorrente sob controle.",
+    heroTitle: "Não deixe contratos e receitas",
+    heroHighlight: "dependerem da memória",
     heroDescription:
-      "Acompanhe contratos ativos, vencendo e vencidos, receba avisos antes do prazo e renove com um clique — mantendo a previsão de receita sempre atualizada.",
-    seoTitle: "Gestão de Contratos e Renovações",
+      "Organize contratos, acompanhe vencimentos e renovações e mantenha sua operação comercial preparada para agir antes que uma oportunidade de receita seja perdida.",
+    seoTitle: "Gestão de Contratos: renovações e receita sob controle",
     seoDescription:
-      "Controle contratos, vencimentos e renovações com avisos automáticos, status vencendo e visão de receita recorrente.",
-    keywords: "gestão de contratos, renovação de contratos, receita recorrente, churn B2B",
-    howItWorksTitle: "Do fechamento à renovação",
+      "Centralize contratos, antecipe vencimentos e transforme renovação em processo acompanhável, protegendo a receita já conquistada.",
+    keywords:
+      "gestão de contratos, renovação de contratos, receita recorrente, retenção B2B, previsibilidade comercial",
+    howItWorksTitle: "Do fechamento à renovação, sem depender de lembrete",
     howItWorks: [
       {
-        title: "Contrato registrado no fechamento",
+        title: "Centralize seus contratos",
         description:
-          "Ao ganhar o negócio, o contrato entra com valor, vigência e responsável — sem planilha paralela.",
-        preview: ["Valor: R$ 4.800/mês", "Vigência: 12 meses", "Responsável definido"],
+          "Tenha informações importantes organizadas em um único lugar: valor, vigência, responsável e histórico do cliente — sem planilha paralela.",
+        preview: ["Contrato registrado", "Vigência definida", "Responsável atribuído"],
       },
       {
-        title: "Alertas antes do vencimento",
+        title: "Antecipe vencimentos",
         description:
-          "O status muda para 'vencendo' com antecedência e o responsável recebe o aviso para agir a tempo.",
-        preview: ["12 contratos vencendo", "Aviso enviado", "Tarefa criada"],
+          "Saiba quais contratos precisam de atenção antes que o prazo chegue e organize a conversa de renovação com tempo para agir.",
+        preview: ["Status: vencendo", "Aviso ao responsável", "Conversa programada"],
       },
       {
-        title: "Renovação em um clique",
+        title: "Proteja oportunidades de receita",
         description:
-          "Renove estendendo a vigência, atualizando valor e mantendo todo o histórico do cliente.",
-        preview: ["Renovado por 12 meses", "Reajuste aplicado", "Receita atualizada"],
+          "Transforme renovação e relacionamento em processos acompanháveis, com visibilidade do que está em risco em cada período.",
+        preview: ["Renovação registrada", "Histórico preservado", "Previsão de receita atualizada"],
       },
     ],
     features: [
@@ -486,7 +510,7 @@ export const PRODUCTS: ProductConfig[] = [
         eyebrow: "Visibilidade",
         title: "Saiba o que vence antes que vença",
         description:
-          "Painéis por status mostram contratos ativos, vencendo e vencidos, com valor em risco a cada mês.",
+          "Perder um cliente por falta de acompanhamento custa mais caro do que conquistar um novo. A Wiize mostra contratos ativos, vencendo e vencidos e o valor em risco em cada mês.",
         bullets: [
           "Status ativo, vencendo e vencido",
           "Valor em risco por período",
@@ -494,25 +518,25 @@ export const PRODUCTS: ProductConfig[] = [
         ],
         metrics: [
           { label: "Aviso antecipado", value: "configurável" },
-          { label: "Visão de receita", value: "mensal" },
+          { label: "Visão de receita", value: "por período" },
         ],
       },
       {
         eyebrow: "Retenção",
         title: "Renovar vira processo, não sorte",
         description:
-          "Avisos automáticos, e-mails padronizados e botão de renovação transformam retenção em rotina previsível.",
+          "Avisos, comunicação padronizada e renovação em poucos cliques transformam retenção em rotina previsível — e mantêm a previsão de receita confiável.",
         bullets: [
-          "E-mails de renovação com sua identidade",
-          "Botão renovar contrato no card",
-          "Histórico completo de renovações",
+          "E-mails de renovação com a sua identidade",
+          "Renovação direto no card do contrato",
+          "Histórico completo de cada renovação",
         ],
         reverse: true,
       },
     ],
     proof: [
-      { label: "Perda por esquecimento", value: "zero", hint: "avisos automáticos" },
-      { label: "Renovação", value: "1 clique", hint: "sem refazer o contrato" },
+      { label: "Renovação", value: "acompanhada", hint: "sem depender de lembrete pessoal" },
+      { label: "Receita em risco", value: "visível", hint: "antes do vencimento" },
       { label: "Previsão de receita", value: "atualizada", hint: "no cockpit de crescimento" },
     ],
   },
