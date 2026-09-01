@@ -494,6 +494,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "gestão de contratos, renovação de contratos, receita recorrente, retenção B2B, previsibilidade comercial",
     howItWorksTitle: "Do fechamento à renovação, sem depender de lembrete",
+    howItWorksHighlight: "renovação",
     howItWorks: [
       {
         title: "Centralize seus contratos",
