@@ -54,16 +54,17 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-              Plataforma Wiize
+              Capte · Converta · Gerencie · Otimize
             </span>
             <h2 className="mt-3 font-display text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
-              Escolha seu caminho
+              Uma operação comercial. Um único sistema.
             </h2>
             <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-              Combine inteligência, automação e relacionamento para construir uma operação comercial
-              mais eficiente.
+              Você não precisa montar sua operação com várias ferramentas desconectadas. Cada produto
+              da Wiize cobre uma etapa da jornada comercial e trabalha conectado aos demais.
             </p>
           </div>
+
 
           <div className="flex shrink-0 items-center gap-2">
             <button
