@@ -10,8 +10,11 @@ SELECT 'function' AS tipo, n.nspname || '.' || p.proname AS objeto
 FROM pg_proc p
 JOIN pg_namespace n ON n.oid = p.pronamespace
 WHERE n.nspname = 'public'
-  AND pg_get_functiondef(p.oid) ILIKE '%account_owner_id%'
-  AND pg_get_functiondef(p.oid) ILIKE '%account_members%'
+  -- pg_proc também contém agregados; pg_get_functiondef(array_agg)
+  -- causa ERROR 42809. prokind/prosrc evitam esse problema.
+  AND p.prokind IN ('f', 'p')
+  AND p.prosrc ILIKE '%account_owner_id%'
+  AND p.prosrc ILIKE '%account_members%'
 UNION ALL
 SELECT 'policy', schemaname || '.' || tablename || ' :: ' || policyname
 FROM pg_policies
@@ -48,19 +51,24 @@ LANGUAGE sql
 STABLE SECURITY DEFINER
 SET search_path TO 'public'
 AS $function$
-  SELECT COALESCE(array_agg(DISTINCT oid), ARRAY[]::uuid[])
-  FROM (
-    SELECT auth.uid() AS oid WHERE auth.uid() IS NOT NULL
-    UNION
-    SELECT p.parent_owner_id
-      FROM public.profiles p
-     WHERE p.id = auth.uid() AND p.parent_owner_id IS NOT NULL
-    UNION
-    SELECT am.owner_user_id
-      FROM public.account_members am
-     WHERE am.user_id = auth.uid() AND am.status = 'active'
-  ) s
-  WHERE oid IS NOT NULL;
+  SELECT COALESCE(
+    ARRAY(
+      SELECT DISTINCT oid
+      FROM (
+        SELECT auth.uid() AS oid WHERE auth.uid() IS NOT NULL
+        UNION
+        SELECT p.parent_owner_id
+          FROM public.profiles p
+         WHERE p.id = auth.uid() AND p.parent_owner_id IS NOT NULL
+        UNION
+        SELECT am.owner_user_id
+          FROM public.account_members am
+         WHERE am.user_id = auth.uid() AND am.status = 'active'
+      ) s
+      WHERE oid IS NOT NULL
+    ),
+    ARRAY[]::uuid[]
+  );
 $function$;
 
 CREATE OR REPLACE FUNCTION public.current_account_role()

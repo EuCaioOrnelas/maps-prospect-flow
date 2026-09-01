@@ -10,8 +10,11 @@ SELECT 'function' AS tipo, n.nspname || '.' || p.proname AS objeto
 FROM pg_proc p
 JOIN pg_namespace n ON n.oid = p.pronamespace
 WHERE n.nspname = 'public'
-  AND pg_get_functiondef(p.oid) ILIKE '%account_owner_id%'
-  AND pg_get_functiondef(p.oid) ILIKE '%account_members%'
+  -- Não use pg_get_functiondef() aqui: pg_proc também contém agregados,
+  -- e chamá-la em array_agg gera o erro PostgreSQL 42809.
+  AND p.prokind IN ('f', 'p')
+  AND p.prosrc ILIKE '%account_owner_id%'
+  AND p.prosrc ILIKE '%account_members%'
 UNION ALL
 SELECT 'policy', schemaname || '.' || tablename || ' :: ' || policyname
 FROM pg_policies
