@@ -12,6 +12,12 @@ import {
   BookOpen,
   BarChart3,
   FileText,
+  Handshake,
+  UserPlus,
+  LogIn,
+  Rocket,
+  CreditCard,
+  PlayCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -97,4 +103,21 @@ export const RESOURCE_COLUMNS: MenuColumn[] = [
       { label: "Falar com vendas", description: "Converse com nosso time", to: "/contato", icon: Mail },
     ],
   },
+  {
+    title: "Wiize Partners",
+    items: [
+      { label: "Seja parceiro", description: "Indique e ganhe comissões", to: "/parceiros", icon: Handshake },
+      { label: "Candidatar-se", description: "Envie sua candidatura agora", to: "/partners/apply", icon: UserPlus },
+      { label: "Área do parceiro", description: "Acesse seu painel de parceiro", to: "/parceiros/login", icon: LogIn },
+    ],
+  },
+  {
+    title: "Comece agora",
+    items: [
+      { label: "Criar conta", description: "Comece seu teste em minutos", to: "/signup/escolher-plano", icon: Rocket },
+      { label: "Planos e preços", description: "Escolha o plano ideal", to: "/#pricing", icon: CreditCard },
+      { label: "Ver demonstração", description: "Explore a plataforma sem login", to: "/demonstracao", icon: PlayCircle },
+    ],
+  },
 ];
+

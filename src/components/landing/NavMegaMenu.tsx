@@ -1,11 +1,15 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import type { MenuColumn, MenuItem } from "./navMenuData";
+import { cn } from "@/lib/utils";
 
 interface NavMegaMenuProps {
   columns: MenuColumn[];
   onNavigate?: () => void;
+  /** 1 = avanço (esquerda → direita), -1 = regresso */
+  direction?: 1 | -1;
 }
+
 
 function MenuLink({ item, onNavigate, compact }: { item: MenuItem; onNavigate?: () => void; compact?: boolean }) {
   const Icon = item.icon;
@@ -89,9 +93,16 @@ function MenuColumnBlock({ col, onNavigate }: { col: MenuColumn; onNavigate?: ()
   );
 }
 
-export const NavMegaMenu = ({ columns, onNavigate }: NavMegaMenuProps) => {
+export const NavMegaMenu = ({ columns, onNavigate, direction = 1 }: NavMegaMenuProps) => {
   return (
-    <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2",
+        columns.length >= 4 && "lg:grid-cols-4",
+        "animate-in fade-in duration-300 ease-out",
+        direction === 1 ? "slide-in-from-right-8" : "slide-in-from-left-8"
+      )}
+    >
       {columns.map((col) => (
         <MenuColumnBlock key={col.title} col={col} onNavigate={onNavigate} />
       ))}

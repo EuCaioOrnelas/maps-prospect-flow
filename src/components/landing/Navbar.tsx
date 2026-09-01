@@ -22,6 +22,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
   const [mobileOpenMenu, setMobileOpenMenu] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [menuDirection, setMenuDirection] = useState<1 | -1>(1);
   const closeTimerRef = useRef<number | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const tickingRef = useRef(false);
@@ -107,6 +108,16 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
 
   const activeMenu = MENUS.find((m) => m.key === openMenu);
 
+  const openMenuWithDirection = (key: string | null) => {
+    if (key) {
+      const nextIdx = MENUS.findIndex((m) => m.key === key);
+      const currIdx = MENUS.findIndex((m) => m.key === openMenu);
+      setMenuDirection(currIdx === -1 || nextIdx >= currIdx ? 1 : -1);
+    }
+    setOpenMenu(key);
+  };
+
+
   const renderMobileMenuItems = (items: MenuItem[]) => (
     <div className="flex flex-col gap-1 pl-2">
       {items.map((item) => {
@@ -172,8 +183,8 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                 <button
                   key={menu.key}
                   type="button"
-                  onMouseEnter={() => { cancelClose(); setOpenMenu(menu.key); }}
-                  onClick={() => setOpenMenu(openMenu === menu.key ? null : menu.key)}
+                  onMouseEnter={() => { cancelClose(); openMenuWithDirection(menu.key); }}
+                  onClick={() => openMenuWithDirection(openMenu === menu.key ? null : menu.key)}
                   className={cn(
                     "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-[font-weight] duration-150",
                     openMenu === menu.key && "font-bold"
@@ -255,6 +266,8 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             >
               <div className="animate-fade-in">
                 <NavMegaMenu
+                  key={activeMenu.key}
+                  direction={menuDirection}
                   columns={activeMenu.columns}
                   onNavigate={() => setOpenMenu(null)}
                 />
