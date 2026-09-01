@@ -829,8 +829,8 @@ ${historyText}`;
       if (eventError) {
         // Conflito de horário (exclusion constraint) ou falha: não quebra a conversa
         console.error("[sdr-brain] falha ao criar evento na agenda:", eventError.message);
-        messages = ["Esse horário acabou de ficar indisponível.", freeSlots.length >= 2
-          ? `Você prefere ${freeSlots[0].label} ou ${freeSlots[1].label}?`
+        messages = ["Poxa, esse horário acabou de ser preenchido na agenda.", freeSlots.length >= 2
+          ? `Consigo te atender ${freeSlots[0].label} ou ${freeSlots[1].label}. Qual fica melhor pra você?`
           : "Vou validar a próxima janela livre e retorno para você."];
       } else if (existingMeeting) {
         messages = ["Seu horário já está reservado na nossa agenda."];
