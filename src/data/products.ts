@@ -29,6 +29,8 @@ export interface ProductStep {
 export interface ProductFeature {
   eyebrow: string;
   title: string;
+  /** Trecho do título que recebe destaque visual (deve estar contido em title) */
+  titleHighlight?: string;
   description: string;
   bullets: string[];
   /** inverte o lado do mockup */
