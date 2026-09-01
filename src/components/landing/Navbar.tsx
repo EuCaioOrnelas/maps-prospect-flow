@@ -22,6 +22,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
   const [mobileOpenMenu, setMobileOpenMenu] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [menuDirection, setMenuDirection] = useState<1 | -1>(1);
   const closeTimerRef = useRef<number | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const tickingRef = useRef(false);
