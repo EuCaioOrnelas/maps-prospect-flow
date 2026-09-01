@@ -38,7 +38,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
       <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
         <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-[1.3fr_1fr] xl:gap-4">
 
-          <div className="text-center xl:text-left">
+          <div className="relative z-20 text-center xl:text-left">
             <span className="animate-fade-in mb-6 inline-flex items-center gap-2 rounded-hover border border-primary/15 glass px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-primary sm:mb-8">
               <Icon size={13} />
               {product.category}
@@ -115,7 +115,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
           >
             {/* Faixa de plasma (verde Wiize) — sempre atrás do mockup, inclusive no mobile */}
             <div
-              className="pointer-events-none absolute left-1/2 top-[82%] z-0 h-24 w-[220vw] -translate-x-1/2 -translate-y-1/2 -rotate-[4deg] overflow-hidden sm:h-32"
+              className="pointer-events-none absolute left-1/2 top-[95%] z-0 h-24 w-[220vw] -translate-x-1/2 -translate-y-1/2 -rotate-[4deg] overflow-hidden sm:h-32"
               aria-hidden
             >
               <div className="wz-band absolute inset-0" />
