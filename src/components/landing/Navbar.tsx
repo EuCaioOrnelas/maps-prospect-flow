@@ -108,6 +108,16 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
 
   const activeMenu = MENUS.find((m) => m.key === openMenu);
 
+  // Overlay de fundo levemente desfocado quando qualquer menu está aberto
+  const menuOverlay = (openMenu || mobileMenuOpen) ? (
+    <div
+      aria-hidden="true"
+      className="fixed inset-0 z-40 animate-fade-in bg-background/30 backdrop-blur-[3px] transition-opacity"
+      onClick={() => { setOpenMenu(null); setMobileMenuOpen(false); setMobileOpenMenu(null); }}
+    />
+  ) : null;
+
+
   const openMenuWithDirection = (key: string | null) => {
     if (key) {
       const nextIdx = MENUS.findIndex((m) => m.key === key);
@@ -139,6 +149,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
 
   return (
     <>
+      {menuOverlay}
       <nav
         ref={navRef}
         className="fixed left-0 right-0 z-50 top-0"
@@ -315,25 +326,25 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
               </div>
             ))}
             {navLinks.map(link => (
-              link.to ? (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className="text-muted-foreground hover:text-foreground transition-colors py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ) : (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors py-2 cursor-pointer"
-                  onClick={(e) => handleNavLinkClick(e, link.href!)}
-                >
-                  {link.label}
-                </a>
-              )
+              <div key={link.label} className="border-b border-border/60 pb-2">
+                {link.to ? (
+                  <Link
+                    to={link.to}
+                    className="flex w-full items-center justify-between py-2 text-left text-sm font-semibold text-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    href={link.href}
+                    className="flex w-full items-center justify-between py-2 text-left text-sm font-semibold text-foreground cursor-pointer"
+                    onClick={(e) => handleNavLinkClick(e, link.href!)}
+                  >
+                    {link.label}
+                  </a>
+                )}
+              </div>
             ))}
             <div className="flex flex-col gap-2 pt-2 border-t border-border">
               <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
