@@ -4,8 +4,16 @@ import { PRODUCT_STAGES } from "./productStages";
 import type { ProductVisualKey } from "@/data/products";
 
 /** Janela "Wiize Platform" com a animação correspondente ao produto. */
-export const ProductStageShowcase = ({ visual }: { visual: ProductVisualKey }) => {
-  const stages = PRODUCT_STAGES[visual];
+export const ProductStageShowcase = ({
+  visual,
+  stageIndex,
+}: {
+  visual: ProductVisualKey;
+  /** Fixa a animação em um estágio específico do produto (usado nos blocos de features). */
+  stageIndex?: number;
+}) => {
+  const all = PRODUCT_STAGES[visual];
+  const stages = stageIndex == null ? all : [all[stageIndex % all.length]];
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [live, setLive] = useState(false);

@@ -50,7 +50,7 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
   return (
     <section id={PV_STEPS_SECTION} className="w-full py-16 sm:py-24">
       <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-        <div className="grid items-start gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-[8%]">
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:gap-12">
           <div>
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Como funciona

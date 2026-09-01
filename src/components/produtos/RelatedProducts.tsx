@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { getRelatedProducts } from "@/data/products";
-import { ProductHeroVisual } from "./ProductHeroVisual";
+import { ProductStageShowcase } from "./ProductStageShowcase";
 
 /* Paleta viva por card (tons que conversam com o verde Wiize) */
 const CARD_THEMES: Record<string, string> = {
@@ -130,7 +130,7 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
                     aria-hidden
                   />
                   <div className="pointer-events-none absolute left-1/2 top-7 w-[22rem] origin-top -translate-x-1/2 scale-[0.66] transition-transform duration-500 group-hover:scale-[0.7]">
-                    <ProductHeroVisual visual={p.key} />
+                    <ProductStageShowcase visual={p.key} />
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card via-card/70 to-transparent" />
                 </div>
