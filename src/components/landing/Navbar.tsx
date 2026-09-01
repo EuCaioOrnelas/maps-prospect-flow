@@ -1,9 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Lock } from "lucide-react";
+import { Menu, X, Lock, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
+import { NavMegaMenu } from "./NavMegaMenu";
+import { PRODUCT_COLUMNS, RESOURCE_COLUMNS, MENU_SIDE_LINKS } from "./navMenuData";
+import { cn } from "@/lib/utils";
+
 
 interface NavbarProps {
  onSignupClick?: () => void;
