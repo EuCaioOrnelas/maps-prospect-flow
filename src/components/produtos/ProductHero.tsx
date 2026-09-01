@@ -59,10 +59,10 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
               className="animate-slide-up mb-4 font-display font-bold leading-[1.08] tracking-tight text-foreground sm:mb-6"
               style={{ animationDelay: "0.1s" }}
             >
-              <span className="block text-balance text-[clamp(2rem,6vw,3rem)] lg:text-[clamp(2.3rem,3.1vw,3.4rem)]">
+              <span className="block text-balance text-[clamp(2.2rem,7vw,3.2rem)] lg:text-[clamp(2.5rem,3.7vw,3.95rem)]">
                 {product.heroTitle}
               </span>
-              <span className="mt-1 block text-balance text-shimmer-highlight text-[clamp(2.15rem,6.6vw,3.35rem)] font-extrabold leading-[1.06] drop-shadow-sm sm:mt-2 lg:text-[clamp(2.5rem,3.5vw,3.75rem)]">
+              <span className="mt-1 block text-balance text-shimmer-highlight text-[clamp(2.35rem,7.6vw,3.55rem)] font-extrabold leading-[1.06] drop-shadow-sm sm:mt-2 lg:text-[clamp(2.7rem,4vw,4.2rem)]">
                 {product.heroHighlight}
               </span>
             </h1>
