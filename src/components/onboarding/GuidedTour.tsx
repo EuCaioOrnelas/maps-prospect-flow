@@ -992,7 +992,7 @@ function WelcomeStep({ title, body, onStart }: WelcomeStepProps) {
       className="fixed inset-0 flex items-center justify-center px-4 pointer-events-auto"
       style={{ zIndex: 2147483646 }}
     >
-      <div className="relative w-full max-w-xl bg-card text-card-foreground border border-border rounded-panel shadow-2xl p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+      <div className="relative w-full max-w-xl max-h-[calc(100dvh-32px)] overflow-y-auto bg-card text-card-foreground border border-border rounded-panel shadow-2xl p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-500">
         {/* Decorative gradient halo */}
         <div
           className="absolute -top-40 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full opacity-50 pointer-events-none blur-3xl"
@@ -1003,16 +1003,16 @@ function WelcomeStep({ title, body, onStart }: WelcomeStepProps) {
         />
 
         {/* Logo with halo — no inner card so PNG background doesn't clash */}
-        <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center">
+        <div className="relative mx-auto mb-4 sm:mb-6 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center">
           <span
-            className="absolute inset-0 rounded-full bg-primary/15 animate-ping"
+            className="absolute inset-0 rounded-full bg-primary/15 motion-safe:animate-ping"
             style={{ animationDuration: "2.4s" }}
           />
           <span className="absolute inset-2 rounded-full bg-primary/10 blur-md" />
           <img
             src={logoIconNew}
             alt="Wiize"
-            className="relative h-20 w-20 object-contain rounded-2xl drop-shadow-[0_10px_30px_hsl(var(--primary)/0.45)] animate-in zoom-in-50 duration-500"
+            className="relative h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-2xl drop-shadow-[0_10px_30px_hsl(var(--primary)/0.45)] animate-in zoom-in-50 duration-500"
           />
         </div>
 
