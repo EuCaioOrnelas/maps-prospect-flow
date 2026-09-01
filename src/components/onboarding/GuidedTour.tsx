@@ -205,7 +205,7 @@ export function GuidedTour() {
   // Telas pequenas/baixa resolução: transição mais curta e safe-area menor para
   // o dock de navegação — o foco acompanha sem "lag" e o card sempre cabe.
   const isCompactViewport = viewport.w < 640 || viewport.h < 700;
-  const transitionMs = reducedMotion ? 0 : isCompactViewport ? 220 : 300;
+  const transitionMs = reducedMotion ? 0 : isCompactViewport ? 140 : 200;
   const geometryTransition = `top ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), left ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), width ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), height ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
   const popupTransition = `top ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), left ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
   const NAV_SAFE = isCompactViewport ? 76 : 96;
@@ -340,7 +340,7 @@ export function GuidedTour() {
           // to appear — prevents the "focus on nothing" flicker between steps.
           pollTimeoutId = window.setTimeout(() => {
             rafId = window.requestAnimationFrame(measure);
-          }, 80);
+          }, 40);
         }
         return;
       }

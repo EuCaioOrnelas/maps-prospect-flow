@@ -135,7 +135,7 @@ function queryTargetElement<T extends Element = HTMLElement>(selector: string) {
   return null;
 }
 
-async function waitForElement<T extends Element = HTMLElement>(selector: string, attempts = 30, delay = 120) {
+async function waitForElement<T extends Element = HTMLElement>(selector: string, attempts = 30, delay = 60) {
   for (let i = 0; i < attempts; i++) {
     const element = queryTargetElement<T>(selector);
     if (element) return element;
@@ -777,7 +777,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       // Navigate first
       if (targetRoute && location.pathname !== targetRoute) {
         navigate(targetRoute);
-        await new Promise((r) => setTimeout(r, step.waitMs ?? 500));
+        await new Promise((r) => setTimeout(r, step.waitMs ?? 250));
       } else if (step.waitMs) {
         await new Promise((r) => setTimeout(r, step.waitMs));
       }
@@ -791,17 +791,18 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       // Robust: if the step targets a real selector, wait for it to mount
       // (handles slower external environments where waitMs isn't enough).
       if (step.target) {
-        await waitForElement(step.target, 60, 120);
+        await waitForElement(step.target, 60, 60);
       }
 
       if (step.keepViewportTop) {
         scrollTourViewportTop();
       }
 
-      // For sidebar steps, wait for the full sidebar expansion (300ms width)
-      // + submenu expansion (300ms max-height) before measuring.
+      // For sidebar steps, wait for the sidebar expansion before measuring.
+      // 300ms cobre a transição de largura; o submenu abre junto via classes
+      // pré-aplicadas no início do passo, então não precisa de espera extra.
       if (step.sidebarSection) {
-        await new Promise((r) => setTimeout(r, 450));
+        await new Promise((r) => setTimeout(r, 280));
       }
 
       if (!shouldResolveTargetAfterEnter && step.onEnter) {
@@ -811,7 +812,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       // Garante que o alvo está realmente visível e mensurável antes de liberar
       // Próximo/Voltar. Evita texto novo com o foco da etapa anterior.
       if (step.target) {
-        const readyTarget = await waitForElement<HTMLElement>(step.target, 80, 100);
+        const readyTarget = await waitForElement<HTMLElement>(step.target, 60, 50);
         if (readyTarget) {
           await new Promise<void>((resolve) => {
             window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
