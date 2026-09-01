@@ -56,10 +56,10 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
               className="animate-slide-up mb-4 font-display font-bold leading-[1.08] tracking-tight text-foreground sm:mb-6"
               style={{ animationDelay: "0.1s" }}
             >
-              <span className="block text-balance text-[clamp(1.75rem,5.4vw,2.6rem)] lg:text-[clamp(1.9rem,2.6vw,2.9rem)]">
+              <span className="block text-balance text-[clamp(2rem,6vw,3rem)] lg:text-[clamp(2.3rem,3.1vw,3.4rem)]">
                 {product.heroTitle}
               </span>
-              <span className="mt-1 block text-balance text-shimmer-highlight text-[clamp(1.9rem,6vw,2.9rem)] font-extrabold leading-[1.06] drop-shadow-sm sm:mt-2 lg:text-[clamp(2.1rem,3vw,3.2rem)]">
+              <span className="mt-1 block text-balance text-shimmer-highlight text-[clamp(2.15rem,6.6vw,3.35rem)] font-extrabold leading-[1.06] drop-shadow-sm sm:mt-2 lg:text-[clamp(2.5rem,3.5vw,3.75rem)]">
                 {product.heroHighlight}
               </span>
             </h1>
@@ -130,7 +130,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
               <div className="wz-band absolute inset-0" />
             </div>
             {/* No desktop, o mesmo visual atravessa Hero + Como funciona via sticky no template. */}
-            <div className={`relative z-10 w-full ${sharedDesktopVisual ? "lg:invisible" : ""}`}>
+            <div className={`relative z-10 mx-auto w-full max-w-[34rem] ${sharedDesktopVisual ? "lg:invisible" : ""}`}>
               <ProductVisualContent product={product} />
             </div>
           </div>
