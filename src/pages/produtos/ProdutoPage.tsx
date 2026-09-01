@@ -95,22 +95,20 @@ export default function ProdutoPage() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true, amount: 0.3 }}
                       transition={{ duration: 0.4, delay: i * 0.05, ease: "easeOut" }}
-                      className="group relative overflow-hidden rounded-panel border border-primary/20 bg-gradient-to-br from-primary/[0.07] via-card to-card p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_20px_44px_-24px_hsl(var(--primary)/0.55)]"
+                      className="flex items-center gap-4 rounded-panel border border-border/50 p-5"
                     >
-                      <span
-                        className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-primary/10 blur-2xl transition-opacity duration-300 group-hover:opacity-80"
-                        aria-hidden
-                      />
-                      <span className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
                         <Icon className="h-5 w-5" />
                       </span>
-                      <p className="relative mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        {p.label}
-                      </p>
-                      <p className="relative mt-1.5 font-display text-2xl font-extrabold text-primary">
-                        {p.value}
-                      </p>
-                      <p className="relative mt-1 text-sm text-muted-foreground">{p.hint}</p>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold uppercase leading-tight tracking-[0.16em] text-muted-foreground">
+                          {p.label}
+                        </p>
+                        <p className="mt-1 font-display text-xl font-extrabold leading-tight text-primary">
+                          {p.value}
+                        </p>
+                        <p className="mt-1 text-sm leading-snug text-muted-foreground">{p.hint}</p>
+                      </div>
                     </motion.div>
                   );
                 })}
