@@ -607,9 +607,11 @@ export function GuidedTour() {
   }
 
   // Trava final: o card nunca pode sair da tela (nem por baixo da barra de navegação).
+  // Em telas compactas o botão "Fechar tour" fica no topo — reservamos espaço para ele.
+  const TOP_SAFE = isCompactViewport ? 56 : POPUP_GAP;
   if (typeof popupStyle.top === "number") {
-    const maxTop = Math.max(POPUP_GAP, viewport.h - (popupSize.height || 196) - NAV_SAFE);
-    popupStyle.top = Math.max(POPUP_GAP, Math.min(maxTop, popupStyle.top));
+    const maxTop = Math.max(TOP_SAFE, viewport.h - (popupSize.height || 196) - NAV_SAFE);
+    popupStyle.top = Math.max(TOP_SAFE, Math.min(maxTop, popupStyle.top));
   }
   if (typeof popupStyle.left === "number") {
     const w = typeof popupStyle.width === "number" ? popupStyle.width : availableWidth;
