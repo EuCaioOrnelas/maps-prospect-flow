@@ -1,11 +1,15 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import type { MenuColumn, MenuItem } from "./navMenuData";
+import { cn } from "@/lib/utils";
 
 interface NavMegaMenuProps {
   columns: MenuColumn[];
   onNavigate?: () => void;
+  /** 1 = avanço (esquerda → direita), -1 = regresso */
+  direction?: 1 | -1;
 }
+
 
 function MenuLink({ item, onNavigate, compact }: { item: MenuItem; onNavigate?: () => void; compact?: boolean }) {
   const Icon = item.icon;
