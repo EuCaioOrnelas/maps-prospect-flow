@@ -64,15 +64,32 @@ export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatu
             ))}
           </ul>
           {feature.metrics && (
-            <div className="mt-7 grid max-w-md grid-cols-2 gap-3">
-              {feature.metrics.map((m) => (
-                <div key={m.label} className="rounded-panel border border-border/60 bg-card/60 p-3">
-                  <p className="text-[11px] text-muted-foreground">{m.label}</p>
-                  <p className="text-base font-semibold text-foreground">{m.value}</p>
-                </div>
-              ))}
+            <div className="mt-7 grid max-w-md grid-cols-1 gap-3 sm:grid-cols-2">
+              {feature.metrics.map((m, mi) => {
+                const Icon = METRIC_ICONS[mi % METRIC_ICONS.length];
+                return (
+                  <div
+                    key={m.label}
+                    className="group relative overflow-hidden rounded-panel border border-primary/20 bg-gradient-to-br from-primary/[0.07] via-card to-card p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_14px_34px_-20px_hsl(var(--primary)/0.55)]"
+                  >
+                    <span className="absolute inset-y-0 left-0 w-[3px] bg-primary/70" aria-hidden />
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20">
+                        <Icon className="h-[18px] w-[18px]" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                          {m.label}
+                        </p>
+                        <p className="mt-1 font-display text-base font-bold text-primary">{m.value}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
+
         </motion.div>
 
         <motion.div
