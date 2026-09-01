@@ -16,7 +16,7 @@ export const ProductHowItWorks = ({ title, steps }: ProductHowItWorksProps) => {
     target: listRef,
     offset: ["start 70%", "end 60%"],
   });
-  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 24, mass: 0.4 });
+  const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 30, mass: 0.6 });
   const dotTop = useTransform(progress, (v) => `${Math.min(100, Math.max(0, v * 100))}%`);
 
   useMotionValueEvent(progress, "change", (v) => {
