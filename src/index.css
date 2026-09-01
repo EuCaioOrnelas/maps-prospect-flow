@@ -1848,3 +1848,35 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
   .pv-rise { animation: none; }
   .wz-plasma { animation: none; }
 }
+
+/* ── Faixa de plasma diagonal das páginas de produto (leve, CSS puro) ── */
+.wz-band {
+  background:
+    radial-gradient(45% 120% at 12% 45%, hsl(158 80% 45% / 0.95) 0%, transparent 62%),
+    radial-gradient(42% 120% at 38% 55%, hsl(172 85% 46% / 0.9) 0%, transparent 62%),
+    radial-gradient(45% 130% at 62% 40%, hsl(186 80% 48% / 0.8) 0%, transparent 62%),
+    radial-gradient(45% 130% at 88% 60%, hsl(150 75% 40% / 0.9) 0%, transparent 62%),
+    linear-gradient(90deg, hsl(150 70% 38%) 0%, hsl(165 72% 42%) 35%, hsl(178 70% 44%) 65%, hsl(158 72% 40%) 100%);
+  filter: blur(26px) saturate(1.15);
+  will-change: transform;
+  animation: wzBandFlow 24s ease-in-out infinite alternate;
+}
+@keyframes wzBandFlow {
+  0%   { transform: translate3d(-3%, 0, 0) scaleY(1); }
+  50%  { transform: translate3d(2%, -1.5%, 0) scaleY(1.12); }
+  100% { transform: translate3d(-1%, 1.5%, 0) scaleY(0.95); }
+}
+
+/* ── Flutuação sutil dos mockups de produto ── */
+.pv-float {
+  animation: pvFloat 9s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes pvFloat {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -8px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wz-band, .pv-float { animation: none; }
+}
