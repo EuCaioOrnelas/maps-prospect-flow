@@ -63,7 +63,8 @@ function formatSlotLabel(iso: string) {
   const month = String(parts.month + 1).padStart(2, "0");
   const hours = String(parts.hours).padStart(2, "0");
   const minutes = String(parts.minutes).padStart(2, "0");
-  return `${WEEKDAY_LABEL[parts.weekday]} (${day}/${month}) às ${hours}:${minutes}`;
+  // Formato padrão da Wiize: dia da semana + data + hora 24h com "h" no final.
+  return `${WEEKDAY_LABEL[parts.weekday]}, dia ${day}/${month}, às ${hours}:${minutes}h`;
 }
 
 function periodOf(iso: string): "manha" | "tarde" | "noite" {
