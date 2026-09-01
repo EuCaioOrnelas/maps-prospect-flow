@@ -340,6 +340,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "reativação de oportunidades, engajamento comercial, follow-up inteligente, análise de conversas, base de leads",
     howItWorksTitle: "Você já tem oportunidades. Talvez só não esteja enxergando.",
+    howItWorksHighlight: "oportunidades",
     howItWorks: [
       {
         title: "Analise suas conversas",
