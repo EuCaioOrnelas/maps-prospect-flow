@@ -1906,5 +1906,5 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wz-band, .pv-float { animation: none; }
+  .wz-band::before, .wz-band::after, .pv-float { animation: none; }
 }
