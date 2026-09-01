@@ -1883,7 +1883,7 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
     radial-gradient(22% 58% at 70% 42%, #9ff0b2 0%, transparent 72%),
     radial-gradient(24% 62% at 90% 58%, #1fb98a 0%, transparent 72%);
   animation: wzPlasmaA 30s ease-in-out infinite alternate;
-  opacity: 0.95;
+  opacity: 0.7;
 }
 .wz-band::after {
   background:
@@ -1892,7 +1892,7 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
     radial-gradient(22% 60% at 62% 62%, #1aa86e 0%, transparent 72%),
     radial-gradient(26% 66% at 84% 40%, #57e39e 0%, transparent 72%);
   animation: wzPlasmaB 40s ease-in-out infinite alternate;
-  opacity: 0.85;
+  opacity: 0.55;
 }
 @keyframes wzPlasmaA {
   0%   { transform: translate3d(-6%, -4%, 0) rotate(0deg) scale(1); }

@@ -7,12 +7,12 @@ import { ProductHeroVisual } from "./ProductHeroVisual";
 
 /* Paleta viva por card (tons que conversam com o verde Wiize) */
 const CARD_THEMES: Record<string, string> = {
-  prospeccao: "from-emerald-500/25 via-teal-400/10 to-lime-400/20",
-  sdr: "from-teal-400/25 via-emerald-400/10 to-cyan-400/20",
-  agenda: "from-lime-400/25 via-emerald-400/10 to-teal-400/20",
-  engajamento: "from-emerald-400/25 via-lime-400/15 to-emerald-500/20",
+  prospeccao: "from-emerald-500/35 via-teal-400/18 to-lime-400/30",
+  sdr: "from-teal-400/35 via-emerald-400/18 to-cyan-400/30",
+  agenda: "from-lime-400/35 via-emerald-400/18 to-teal-400/30",
+  engajamento: "from-emerald-400/35 via-lime-400/15 to-emerald-500/30",
   automacao: "from-cyan-400/20 via-teal-400/15 to-emerald-400/25",
-  contratos: "from-emerald-500/25 via-emerald-300/10 to-lime-300/20",
+  contratos: "from-emerald-500/35 via-emerald-300/18 to-lime-300/30",
 };
 
 export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
@@ -120,11 +120,11 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
                 >
                   {/* brilhos internos coloridos */}
                   <div
-                    className="pointer-events-none absolute -left-8 top-4 h-24 w-24 rounded-full bg-emerald-400/30 blur-2xl"
+                    className="pointer-events-none absolute -left-8 top-4 h-24 w-24 rounded-full bg-emerald-400/45 blur-2xl"
                     aria-hidden
                   />
                   <div
-                    className="pointer-events-none absolute -right-6 bottom-8 h-20 w-20 rounded-full bg-teal-400/25 blur-2xl"
+                    className="pointer-events-none absolute -right-6 bottom-8 h-20 w-20 rounded-full bg-teal-400/40 blur-2xl"
                     aria-hidden
                   />
                   <div className="pointer-events-none absolute left-1/2 top-7 w-[22rem] origin-top -translate-x-1/2 scale-[0.66] transition-transform duration-500 group-hover:scale-[0.7]">
