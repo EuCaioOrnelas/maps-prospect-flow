@@ -20,7 +20,8 @@ export const ProductHowItWorks = ({ title, steps }: ProductHowItWorksProps) => {
   const dotTop = useTransform(progress, (v) => `${Math.min(100, Math.max(0, v * 100))}%`);
 
   useMotionValueEvent(progress, "change", (v) => {
-    const idx = Math.min(steps.length - 1, Math.max(0, Math.round(v * (steps.length - 1))));
+    // Ativa o passo assim que a bolinha alcança a posição do número
+    const idx = Math.min(steps.length - 1, Math.max(0, Math.floor(v * steps.length)));
     setActive(idx);
   });
 
@@ -32,7 +33,7 @@ export const ProductHowItWorks = ({ title, steps }: ProductHowItWorksProps) => {
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Como funciona
             </span>
-            <h2 className="mt-3 font-display text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
+            <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-shimmer-highlight sm:text-3xl md:text-4xl">
               {title}
             </h2>
           </div>
