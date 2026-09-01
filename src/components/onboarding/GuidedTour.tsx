@@ -346,7 +346,7 @@ export function GuidedTour() {
 
       // Keep polling for up to 700ms after step start, OR until we get 6 stable frames
       const elapsed = performance.now() - startedAt;
-      if (elapsed < 700 && stableFrames < 6) {
+      if (elapsed < 1600 && stableFrames < 10) {
         rafId = window.requestAnimationFrame(measure);
       }
     };
@@ -672,7 +672,7 @@ export function GuidedTour() {
               "0 0 24px hsl(var(--primary) / 0.28)",
             ].join(", "),
             transition:
-              "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1), width 480ms cubic-bezier(0.2, 0.8, 0.2, 1), height 480ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 480ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+              "top 300ms cubic-bezier(0.22, 1, 0.36, 1), left 300ms cubic-bezier(0.22, 1, 0.36, 1), width 300ms cubic-bezier(0.22, 1, 0.36, 1), height 300ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 300ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         />
       )}
@@ -690,7 +690,7 @@ export function GuidedTour() {
               ...popupStyle,
               zIndex: 2147483646,
               boxShadow: "0 24px 80px hsl(var(--foreground) / 0.12), 0 8px 28px hsl(var(--foreground) / 0.08)",
-              transition: "top 480ms cubic-bezier(0.2, 0.8, 0.2, 1), left 480ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+              transition: "top 300ms cubic-bezier(0.22, 1, 0.36, 1), left 300ms cubic-bezier(0.22, 1, 0.36, 1)",
             }}
           >
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary mb-2.5">
