@@ -195,7 +195,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                   onMouseEnter={() => { cancelClose(); openMenuWithDirection(menu.key); }}
                   onClick={() => openMenuWithDirection(openMenu === menu.key ? null : menu.key)}
                   className={cn(
-                    "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-[font-weight] duration-150",
+                    "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150",
                     openMenu === menu.key && "font-bold"
                   )}
                   aria-expanded={openMenu === menu.key}
@@ -213,7 +213,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                     key={link.to}
                     to={link.to}
                     onMouseEnter={() => { cancelClose(); setOpenMenu(null); }}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-[font-weight] duration-150 hover:font-bold"
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 hover:text-primary"
                   >
                     {link.label}
                   </Link>
@@ -223,7 +223,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                     href={link.href}
                     onMouseEnter={() => { cancelClose(); setOpenMenu(null); }}
                     onClick={(e) => handleNavLinkClick(e, link.href!)}
-                    className="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-[font-weight] duration-150 hover:font-bold"
+                    className="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 hover:text-primary"
                   >
                     {link.label}
                   </a>
