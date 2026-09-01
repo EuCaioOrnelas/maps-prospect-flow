@@ -110,11 +110,21 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
           </div>
 
           <div
-            className="animate-slide-up mt-6 flex w-full justify-center sm:mt-10 xl:mt-16 xl:justify-end"
+            className="animate-slide-up relative mt-10 flex w-full justify-center sm:mt-14 xl:mt-16 xl:justify-end"
             style={{ animationDelay: "0.45s" }}
           >
-            <ProductHeroVisual visual={product.key} />
+            {/* Faixa de plasma (verde Wiize) — sempre atrás do mockup, inclusive no mobile */}
+            <div
+              className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-24 w-[220vw] -translate-x-1/2 -translate-y-1/2 -rotate-[5deg] overflow-hidden sm:h-32"
+              aria-hidden
+            >
+              <div className="wz-band absolute inset-0" />
+            </div>
+            <div className="relative z-10">
+              <ProductHeroVisual visual={product.key} />
+            </div>
           </div>
+
         </div>
       </div>
     </section>
