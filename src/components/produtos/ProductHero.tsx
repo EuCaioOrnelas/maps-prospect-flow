@@ -31,12 +31,8 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
         aria-hidden
       />
 
-      {/* Faixa de plasma diagonal (verde Wiize) — fina, contínua, topo sempre atrás do mockup */}
-      <div className="pointer-events-none absolute inset-0 overflow-x-clip" aria-hidden>
-        <div className="absolute -inset-x-[25%] top-full h-24 -translate-y-[125%] -rotate-[5deg] sm:h-32">
-          <div className="wz-band absolute inset-0" />
-        </div>
-      </div>
+
+
 
 
       <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
