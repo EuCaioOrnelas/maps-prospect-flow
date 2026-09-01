@@ -150,6 +150,41 @@ function getPillarKey(stepId: string) {
   return TOUR_CONTENT.find((step) => step.id === stepId)?.pillar ?? "gestao";
 }
 
+/** Re-render em resize/orientação — posições do card e do foco dependem do viewport. */
+function useViewportSize() {
+  const [size, setSize] = useState(() => ({
+    w: typeof window === "undefined" ? 1280 : window.innerWidth,
+    h: typeof window === "undefined" ? 800 : window.innerHeight,
+  }));
+  useEffect(() => {
+    const onResize = () => setSize({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, []);
+  return size;
+}
+
+/** Respeita "reduzir movimento" do SO — desliga transições/animações do tour. */
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(() =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false
+  );
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+  return reduced;
+}
+
 // Split body text into ~2 short scannable lines on the first sentence break.
 function splitBodyForScan(body: string): string[] {
   if (!body) return [];
