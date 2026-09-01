@@ -417,6 +417,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "automação comercial, fluxos de vendas, follow-up automático, processos comerciais, WhatsApp e Instagram",
     howItWorksTitle: "Como um processo repetitivo vira um fluxo que trabalha por você",
+    howItWorksHighlight: "fluxo que trabalha por você",
     howItWorks: [
       {
         title: "Defina o processo",
