@@ -12,6 +12,12 @@ import {
   BookOpen,
   BarChart3,
   FileText,
+  Handshake,
+  UserPlus,
+  LogIn,
+  Rocket,
+  CreditCard,
+  PlayCircle,
   type LucideIcon,
 } from "lucide-react";
 
