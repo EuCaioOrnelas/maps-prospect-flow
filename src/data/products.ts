@@ -373,6 +373,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Inteligência",
         title: "Interesse que não aparece em uma planilha",
+        titleHighlight: "não aparece em uma planilha",
         description:
           "Boa parte da receita possível de uma empresa já passou pelo seu WhatsApp. A Wiize organiza esse histórico por temperatura, motivo de parada e potencial de retomada.",
         bullets: [
