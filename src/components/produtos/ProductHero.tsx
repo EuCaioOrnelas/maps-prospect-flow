@@ -38,7 +38,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
 
 
       <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-        <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-[1.3fr_1fr] xl:gap-4">
+        <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-2 xl:gap-[10%]">
 
           <div className="relative z-20 text-center xl:text-left">
             <div className="animate-fade-in mb-6 inline-flex items-center gap-1.5 rounded-hover border border-primary/10 glass px-2.5 py-1.5 sm:mb-8 sm:gap-2.5 sm:px-3.5 sm:py-2">
@@ -129,7 +129,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
               <div className="wz-band absolute inset-0" />
             </div>
             {/* Âncora: em telas grandes o visual é renderizado flutuante e segue o scroll */}
-            <div id={PV_HERO_ANCHOR} className="relative z-10 w-full">
+            <div id={PV_HERO_ANCHOR} className="relative z-10 w-full xl:w-[128%]">
               <div className="xl:invisible">
                 <ProductVisualContent product={product} />
               </div>
