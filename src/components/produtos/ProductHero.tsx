@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { HiArrowRight, HiLockClosed } from "react-icons/hi2";
 import { Button } from "@/components/ui/button";
+import { ShaderBackground } from "@/components/ui/warmth-ripple";
+
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { ProductVisualContent } from "./ProductFloatingVisual";
 import type { ProductConfig } from "@/data/products";
