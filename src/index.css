@@ -1853,9 +1853,8 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
 /* Faixa "plasma" sólida: bordas nítidas, cores fluindo dentro (óleo na água) */
 .wz-band {
   overflow: hidden;
-
-  overflow: hidden;
   isolation: isolate;
+
   background: linear-gradient(90deg, hsl(150 72% 38%) 0%, hsl(165 74% 42%) 32%, hsl(176 72% 45%) 62%, hsl(155 74% 40%) 100%);
 }
 .wz-band::before,
