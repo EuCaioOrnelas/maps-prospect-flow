@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/landing/Navbar";
@@ -17,6 +18,14 @@ const SITE_URL = "https://wiize.com.br";
 export default function ProdutoPage() {
   const { slug } = useParams();
   const product = getProductBySlug(slug);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   if (!product) {
     return <Navigate to={`/produtos/${PRODUCTS[0].slug}`} replace />;
@@ -25,7 +34,7 @@ export default function ProdutoPage() {
   const url = `${SITE_URL}/produtos/${product.slug}`;
 
   return (
-    <div className="min-h-screen w-full overflow-x-clip bg-background">
+    <div className="min-h-screen w-full bg-background">
       <SEO
         title={product.seoTitle}
         description={product.seoDescription}
@@ -49,11 +58,15 @@ export default function ProdutoPage() {
         {/* Um único mockup acompanha Hero + Como funciona pela coluna direita. */}
         <div className="relative">
           <div className="pointer-events-none absolute inset-0 z-20 hidden lg:block">
-            <div className="container mx-auto grid h-full w-full max-w-[90rem] grid-cols-[45%_50%] gap-[5%] px-6 sm:px-10 lg:px-16">
+            <div className="container mx-auto grid h-full w-full max-w-[90rem] grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] gap-12 px-6 sm:px-10 lg:px-16">
               <div aria-hidden="true" />
-              <div className="h-full">
-                <div className="sticky top-28 flex min-h-[calc(100vh-8rem)] items-center">
-                  <div className="w-full origin-left scale-[1.06]">
+              <div className="h-full min-w-0">
+                <div className="sticky top-24 flex min-h-[calc(100vh-7rem)] items-center">
+                  <div
+                    className={`w-full min-w-0 origin-center transition-transform duration-500 ease-out ${
+                      scrolled ? "scale-[0.9]" : "animate-float scale-100"
+                    }`}
+                  >
                     <ProductVisualContent product={product} />
                   </div>
                 </div>

@@ -39,9 +39,9 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
 
 
       <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[45%_50%] lg:gap-[5%]">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:gap-12">
 
-          <div className="relative z-20 text-center lg:text-left">
+          <div className="relative z-20 min-w-0 text-center lg:text-left">
             <div className="animate-fade-in mb-6 inline-flex items-center gap-1.5 rounded-hover border border-primary/10 glass px-2.5 py-1.5 sm:mb-8 sm:gap-2.5 sm:px-3.5 sm:py-2">
               <div className="flex -space-x-1 sm:-space-x-1.5">
                 <img src={avatar1} alt="" className="h-4 w-4 rounded-full border border-background object-cover sm:h-7 sm:w-7 sm:border-2" width={28} height={28} />
@@ -56,16 +56,16 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
               className="animate-slide-up mb-4 font-display font-bold leading-[1.08] tracking-tight text-foreground sm:mb-6"
               style={{ animationDelay: "0.1s" }}
             >
-              <span className="block text-[2rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.1rem]">
+              <span className="block text-balance text-[clamp(1.75rem,5.4vw,2.6rem)] lg:text-[clamp(1.9rem,2.6vw,2.9rem)]">
                 {product.heroTitle}
               </span>
-              <span className="mt-1 block whitespace-nowrap text-shimmer-highlight text-[2.3rem] font-extrabold leading-[1.05] drop-shadow-sm sm:mt-2 sm:text-[2.7rem] md:text-[3.2rem] lg:text-[3.5rem]">
+              <span className="mt-1 block text-balance text-shimmer-highlight text-[clamp(1.9rem,6vw,2.9rem)] font-extrabold leading-[1.06] drop-shadow-sm sm:mt-2 lg:text-[clamp(2.1rem,3vw,3.2rem)]">
                 {product.heroHighlight}
               </span>
             </h1>
 
             <p
-              className="animate-slide-up mx-auto mb-6 max-w-xl text-sm text-muted-foreground sm:mb-8 sm:text-lg lg:mx-0"
+              className="animate-slide-up mx-auto mb-6 max-w-xl text-pretty text-sm text-muted-foreground sm:mb-8 sm:text-lg lg:mx-0"
               style={{ animationDelay: "0.2s" }}
             >
               {product.heroDescription}
@@ -119,7 +119,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
           </div>
 
           <div
-            className="animate-slide-up relative mt-10 flex w-full justify-start sm:mt-14 lg:mt-16"
+            className="animate-slide-up relative mt-10 flex w-full min-w-0 justify-start sm:mt-14 lg:mt-16"
             style={{ animationDelay: "0.45s" }}
           >
             {/* Faixa de plasma (verde Wiize) — sempre atrás do mockup, inclusive no mobile */}
