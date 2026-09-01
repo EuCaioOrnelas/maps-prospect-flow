@@ -93,6 +93,7 @@ export const ProductStageShowcase = ({
                 type="button"
                 title={s.label}
                 onClick={() => {
+                  doneRef.current = false;
                   elapsedRef.current = i * STAGE_DURATION;
                   startRef.current = performance.now() - elapsedRef.current;
                   setIndex(i);
