@@ -484,7 +484,7 @@ export function GuidedTour() {
       // Steps whose target lives inside a modal: NEVER place the card inside the
       // dialog (it gets clipped and the text disappears). Put it in the free
       // space beside the modal, or centered at the bottom when there's no room.
-      const spaceRight = window.innerWidth - dialogRect.right;
+      const spaceRight = viewport.w - dialogRect.right;
       const spaceLeft = dialogRect.left;
       const useRight = spaceRight >= spaceLeft;
       const space = useRight ? spaceRight : spaceLeft;
@@ -496,28 +496,28 @@ export function GuidedTour() {
         // (não "50%"/transform) para que a trava anti-sobreposição também
         // funcione neste caso — o card nunca cobre o foco destacado.
         popupStyle = {
-          top: Math.max(POPUP_GAP, window.innerHeight - popupHeight - 104),
-          left: Math.max(POPUP_GAP, (window.innerWidth - availableWidth) / 2),
+          top: Math.max(POPUP_GAP, viewport.h - popupHeight - NAV_SAFE - 8),
+          left: Math.max(POPUP_GAP, (viewport.w - availableWidth) / 2),
           width: availableWidth,
         };
       } else {
 
         const top = Math.max(
           POPUP_GAP,
-          Math.min(window.innerHeight - popupHeight - 96, popupRect.top + popupRect.height / 2 - popupHeight / 2)
+          Math.min(viewport.h - popupHeight - NAV_SAFE, popupRect.top + popupRect.height / 2 - popupHeight / 2)
         );
         const left = useRight
-          ? Math.min(window.innerWidth - width - POPUP_GAP, dialogRect.right + 18)
+          ? Math.min(viewport.w - width - POPUP_GAP, dialogRect.right + 18)
           : Math.max(POPUP_GAP, dialogRect.left - width - 18);
         popupStyle = { top, left, width };
       }
     } else {
     const popupWidth = Math.min(popupSize.width || POPUP_W, availableWidth);
-    const viewportMargin = POPUP_GAP;
+    const viewportMargin = isCompactViewport ? 8 : POPUP_GAP;
     const bounds = {
       top: viewportMargin,
-      right: window.innerWidth - viewportMargin,
-      bottom: window.innerHeight - viewportMargin,
+      right: viewport.w - viewportMargin,
+      bottom: viewport.h - viewportMargin,
       left: viewportMargin,
     };
 
