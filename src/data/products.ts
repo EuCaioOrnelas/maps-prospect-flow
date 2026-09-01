@@ -141,6 +141,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Contexto",
         title: "Comece a conversa sabendo com quem está falando",
+        titleHighlight: "sabendo com quem está falando",
         description:
           "Cada oportunidade chega com contexto do negócio e uma sugestão de abordagem específica. A primeira mensagem deixa de ser um template e passa a ser uma conversa.",
         bullets: [
