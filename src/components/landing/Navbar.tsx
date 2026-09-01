@@ -108,6 +108,16 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
 
   const activeMenu = MENUS.find((m) => m.key === openMenu);
 
+  // Overlay de fundo levemente desfocado quando qualquer menu está aberto
+  const menuOverlay = (openMenu || mobileMenuOpen) ? (
+    <div
+      aria-hidden="true"
+      className="fixed inset-0 z-40 animate-fade-in bg-background/30 backdrop-blur-[3px] transition-opacity"
+      onClick={() => { setOpenMenu(null); setMobileMenuOpen(false); setMobileOpenMenu(null); }}
+    />
+  ) : null;
+
+
   const openMenuWithDirection = (key: string | null) => {
     if (key) {
       const nextIdx = MENUS.findIndex((m) => m.key === key);
