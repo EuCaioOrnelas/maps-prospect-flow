@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { HiArrowRight, HiLockClosed } from "react-icons/hi2";
 import { Button } from "@/components/ui/button";
+import { ShaderBackground } from "@/components/ui/warmth-ripple";
+
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { ProductVisualContent } from "./ProductFloatingVisual";
 import type { ProductConfig } from "@/data/products";
@@ -25,6 +27,20 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
         }}
         aria-hidden
       />
+      {/* Plasma verde animado (WebGL) — some suavemente no fim da section */}
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.26] mix-blend-multiply blur-[2px]"
+        style={{
+          WebkitMaskImage:
+            "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.3) 68%, transparent 92%)",
+          maskImage:
+            "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.3) 68%, transparent 92%)",
+        }}
+        aria-hidden
+      >
+
+        <ShaderBackground className="h-full w-full" />
+      </div>
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.14]"
         style={{
@@ -33,6 +49,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
         }}
         aria-hidden
       />
+
 
 
 
