@@ -15,8 +15,12 @@ export const ProductStageShowcase = ({
   /** Roda a animação do início ao fim uma única vez e para no estado final. */
   playOnce?: boolean;
 }) => {
-  const all = PRODUCT_STAGES[visual];
-  const stages = stageIndex == null ? all : [all[stageIndex % all.length]];
+  const configuredStages = PRODUCT_STAGES[visual];
+  const fallbackStages = PRODUCT_STAGES.prospeccao;
+  const all = configuredStages?.length ? configuredStages : fallbackStages;
+  const requestedStage =
+    stageIndex == null ? undefined : all[((stageIndex % all.length) + all.length) % all.length];
+  const stages = requestedStage ? [requestedStage] : all;
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [live, setLive] = useState(false);
@@ -67,8 +71,10 @@ export const ProductStageShowcase = ({
     return () => cancelAnimationFrame(raf);
   }, [live, stages.length, playOnce]);
 
-  const stage = stages[Math.min(index, stages.length - 1)];
-  const Render = stage.render;
+  const stage = stages[Math.min(index, stages.length - 1)] ?? fallbackStages[0];
+  const Render = stage?.render;
+
+  if (!stage || !Render) return null;
 
   return (
     <div ref={frameRef} className="pv-float relative w-full max-w-[30rem]">

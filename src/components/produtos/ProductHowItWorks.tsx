@@ -22,9 +22,9 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
   }, [title, highlight]);
 
   return (
-    <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
-      {parts.before && <span className="block">{parts.before.trim()}</span>}
-      {parts.match && <span className="block text-shimmer-highlight">{parts.match}</span>}
+    <h2 className="mt-3 max-w-full font-display text-[clamp(1.25rem,2.4vw,2.25rem)] font-extrabold leading-tight tracking-tight text-foreground">
+      {parts.before && <span className="block whitespace-nowrap">{parts.before.trim()}</span>}
+      {parts.match && <span className="block whitespace-nowrap text-shimmer-highlight">{parts.match}</span>}
       {parts.after && <span>{parts.after}</span>}
     </h2>
   );
