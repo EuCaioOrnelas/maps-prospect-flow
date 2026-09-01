@@ -731,22 +731,22 @@ export function GuidedTour() {
         <>
           <div
             ref={popupCardRef}
-            className="fixed pointer-events-auto overflow-y-auto overflow-x-hidden bg-card text-card-foreground border border-border rounded-panel px-5 py-4 sm:px-7 sm:py-5"
+            className={`fixed pointer-events-auto overflow-y-auto overflow-x-hidden bg-card text-card-foreground border border-border rounded-panel ${isCompactViewport ? "px-4 py-3" : "px-5 py-4 sm:px-7 sm:py-5"}`}
             style={{
               ...popupStyle,
               zIndex: 2147483646,
               boxShadow: "0 24px 80px hsl(var(--foreground) / 0.12), 0 8px 28px hsl(var(--foreground) / 0.08)",
-              transition: "top 300ms cubic-bezier(0.22, 1, 0.36, 1), left 300ms cubic-bezier(0.22, 1, 0.36, 1)",
+              transition: popupTransition,
             }}
           >
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary mb-2.5">
               <Sparkles size={13} />
               Etapa {currentPillar.number} • {currentPillar.label}
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-2.5 leading-[1.15] break-words">
+            <h3 className={`${isCompactViewport ? "text-lg" : "text-xl sm:text-2xl"} font-bold tracking-tight text-foreground mb-2.5 leading-[1.15] break-words`}>
               {step.title}
             </h3>
-            <div className="space-y-2 text-sm sm:text-[15px] text-muted-foreground leading-[1.6] break-words">
+            <div className={`space-y-2 text-sm ${isCompactViewport ? "" : "sm:text-[15px]"} text-muted-foreground leading-[1.6] break-words`}>
               {splitBodyForScan(step.body).map((line, i) => (
                 <p key={i}>{line}</p>
               ))}
@@ -754,10 +754,10 @@ export function GuidedTour() {
           </div>
 
           <div
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto"
+            className={`fixed ${isCompactViewport ? "bottom-3" : "bottom-6"} left-1/2 -translate-x-1/2 pointer-events-auto max-w-[calc(100vw-16px)]`}
             style={{ zIndex: 2147483646 }}
           >
-            <div className="flex items-center gap-3 bg-card border border-border rounded-panel px-2 py-2 shadow-[0_18px_50px_hsl(var(--foreground)/0.10)]">
+            <div className={`flex items-center ${isCompactViewport ? "gap-1.5 px-1.5 py-1.5" : "gap-3 px-2 py-2"} bg-card border border-border rounded-panel shadow-[0_18px_50px_hsl(var(--foreground)/0.10)]`}>
               <Button
                 size="sm"
                 variant="ghost"
