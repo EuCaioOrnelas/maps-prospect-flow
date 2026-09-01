@@ -605,15 +605,15 @@ export function GuidedTour() {
 
   // Trava final: o card nunca pode sair da tela (nem por baixo da barra de navegação).
   if (typeof popupStyle.top === "number") {
-    const maxTop = Math.max(POPUP_GAP, window.innerHeight - (popupSize.height || 196) - NAV_SAFE);
+    const maxTop = Math.max(POPUP_GAP, viewport.h - (popupSize.height || 196) - NAV_SAFE);
     popupStyle.top = Math.max(POPUP_GAP, Math.min(maxTop, popupStyle.top));
   }
   if (typeof popupStyle.left === "number") {
     const w = typeof popupStyle.width === "number" ? popupStyle.width : availableWidth;
-    popupStyle.left = Math.max(POPUP_GAP, Math.min(window.innerWidth - w - POPUP_GAP, popupStyle.left));
+    popupStyle.left = Math.max(POPUP_GAP, Math.min(viewport.w - w - POPUP_GAP, popupStyle.left));
   }
   popupStyle.maxWidth = `calc(100vw - ${POPUP_GAP * 2}px)`;
-  popupStyle.maxHeight = `${Math.max(180, window.innerHeight - NAV_SAFE - POPUP_GAP * 2)}px`;
+  popupStyle.maxHeight = `${Math.max(160, viewport.h - NAV_SAFE - POPUP_GAP * 2)}px`;
 
   // Se, mesmo após o clamp, o card ainda cobrir o destaque, movemos para o
   // canto diagonalmente oposto ao foco — nunca no meio do conteúdo focado.
