@@ -69,13 +69,19 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
  scrollToId(id);
  };
 
- const navLinks: Array<{ href?: string; to?: string; label: string }> = [
- { href: "#features", label: "Recursos" },
- { href: "#testimonials", label: "Depoimentos" },
- { href: "#pricing", label: "Planos" },
- { href: "#faq", label: "FAQ" },
- { to: "/blog", label: "Blog" },
- ];
+  const navLinks: Array<{ href?: string; to?: string; label: string }> = [
+    { href: "#pricing", label: "Planos" },
+    { href: "#faq", label: "FAQ" },
+    { to: "/blog", label: "Blog" },
+  ];
+
+  const MENUS = [
+    { key: "produtos", label: "Produtos", columns: PRODUCT_COLUMNS },
+    { key: "recursos", label: "Recursos", columns: RESOURCE_COLUMNS },
+  ] as const;
+  const activeMenu = MENUS.find((m) => m.key === openMenu);
+  const solid = scrolled || !!openMenu;
+
 
  return (
  <>
