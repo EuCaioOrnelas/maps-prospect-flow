@@ -135,17 +135,22 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
                 </div>
 
                 <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-start justify-between gap-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+                    {p.stage}
+                  </span>
+                  <div className="mt-2 flex items-start justify-between gap-3">
                     <h3 className="text-base font-semibold text-foreground">{p.name}</h3>
                     <ArrowUpRight
                       size={16}
                       className="shrink-0 text-muted-foreground transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
                     />
                   </div>
+                  <p className="mt-1 text-sm font-medium text-foreground/80">{p.cardTagline}</p>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {p.cardDescription ?? p.shortDescription}
                   </p>
                 </div>
+
               </Link>
             </motion.div>
           ))}
