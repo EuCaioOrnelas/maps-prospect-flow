@@ -389,6 +389,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Relacionamento",
         title: "Reativar sem parecer disparo em massa",
+        titleHighlight: "sem parecer disparo em massa",
         description:
           "Cada retomada parte do contexto real da última conversa, com variação de abordagem, ritmo respeitoso e saída fácil para quem não quer mais ser contatado.",
         bullets: [
