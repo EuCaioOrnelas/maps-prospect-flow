@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import {
   Search,
   MapPin,
@@ -14,8 +15,23 @@ import {
 import type { ProductVisualKey } from "@/data/products";
 
 /* Frame padrão — janela "Wiize Platform" igual à linguagem do hero da LP */
-const Frame = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="pv-float relative w-full max-w-[30rem]">
+const Frame = ({ title, children }: { title: string; children: React.ReactNode }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => setLive(entry.isIntersecting),
+      { threshold: 0.15 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+  <div ref={ref} className={`pv-float relative w-full max-w-[30rem] ${live ? "pv-live" : ""}`}>
     <div className="absolute -inset-4 rounded-3xl bg-primary/8 soft-glow" aria-hidden />
     <div className="relative rounded-2xl border border-border/50 bg-card p-4 shadow-card sm:p-5">
       <div className="mb-3 flex items-center justify-between">
@@ -34,7 +50,8 @@ const Frame = ({ title, children }: { title: string; children: React.ReactNode }
       </div>
     </div>
   </div>
-);
+  );
+};
 
 const Row = ({
   children,
@@ -44,7 +61,7 @@ const Row = ({
   delay?: number;
 }) => (
   <div
-    className="pv-rise flex items-center gap-2 rounded-lg border border-border/40 bg-background p-2"
+    className="pv-rise pv-cycle pv-anim flex items-center gap-2 rounded-lg border border-border/40 bg-background p-2"
     style={{ animationDelay: `${delay}ms` }}
   >
     {children}
@@ -69,7 +86,8 @@ const Prospeccao = () => (
         Buscar
       </div>
     </div>
-    <div className="flex flex-col gap-1.5 rounded-xl bg-secondary/30 p-2">
+    <div className="relative flex flex-col gap-1.5 overflow-hidden rounded-xl bg-secondary/30 p-2">
+      <div className="pv-scan pv-anim pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-primary/25 to-transparent" aria-hidden />
       {[
         { n: "Odonto Prime", s: "912" },
         { n: "Clínica Sorriso+", s: "874" },
@@ -102,7 +120,7 @@ const SDR = () => (
     ].map((m, i) => (
       <div
         key={i}
-        className={`pv-rise max-w-[85%] rounded-2xl px-3 py-2 text-[12px] leading-snug ${
+        className={`pv-rise pv-cycle pv-anim max-w-[85%] rounded-2xl px-3 py-2 text-[12px] leading-snug ${
           m.me
             ? "self-end bg-primary/12 text-foreground"
             : "self-start border border-border/50 bg-secondary/60 text-foreground"
@@ -113,7 +131,7 @@ const SDR = () => (
       </div>
     ))}
     <div className="mt-1 flex items-center gap-2 rounded-lg border border-border/40 bg-success/8 p-2 text-[11px] font-medium text-success">
-      <Bot size={12} /> Reunião confirmada · terça, 12/03 às 11:30h
+      <Bot size={12} className="pv-blink pv-anim" /> Reunião confirmada · terça, 12/03 às 11:30h
     </div>
   </div>
 );
@@ -168,7 +186,7 @@ const Engajamento = () => (
       ].map((m) => (
         <div key={m.l} className="rounded-lg border border-border/40 bg-secondary/40 p-2">
           <p className="text-[10px] text-muted-foreground">{m.l}</p>
-          <p className="text-sm font-semibold text-foreground">{m.v}</p>
+          <p className="pv-count pv-anim text-sm font-semibold text-foreground">{m.v}</p>
         </div>
       ))}
     </div>
@@ -180,7 +198,7 @@ const Engajamento = () => (
         {[0, 5, 10, 15, 20, 25, 30].map((d, i) => (
           <div key={d} className="flex-1 text-center">
             <div
-              className={`pv-rise mx-auto h-1.5 rounded-full ${i <= 3 ? "bg-primary" : "bg-secondary"}`}
+              className={`pv-rise pv-cycle pv-anim mx-auto h-1.5 rounded-full ${i <= 3 ? "bg-primary" : "bg-secondary"}`}
               style={{ animationDelay: `${i * 90}ms` }}
             />
             <span className="text-[9px] text-muted-foreground">{d}</span>
@@ -226,7 +244,7 @@ const Automacao = () => (
       ].map((m) => (
         <div key={m.l} className="rounded-lg bg-secondary/40 p-2">
           <p className="text-[10px] text-muted-foreground">{m.l}</p>
-          <p className="text-sm font-semibold text-foreground">{m.v}</p>
+          <p className="pv-count pv-anim text-sm font-semibold text-foreground">{m.v}</p>
         </div>
       ))}
     </div>
