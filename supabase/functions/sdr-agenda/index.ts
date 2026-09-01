@@ -66,6 +66,50 @@ function formatSlotLabel(iso: string) {
   return `${WEEKDAY_LABEL[parts.weekday]} (${day}/${month}) às ${hours}:${minutes}`;
 }
 
+function periodOf(iso: string): "manha" | "tarde" | "noite" {
+  const { hours } = toLocalParts(new Date(iso));
+  if (hours < 12) return "manha";
+  if (hours < 18) return "tarde";
+  return "noite";
+}
+
+function dayKeyOf(iso: string) {
+  const p = toLocalParts(new Date(iso));
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
+/**
+ * Espalha as opções: quando a agenda está folgada, alterna dia e período
+ * (manhã/tarde) em vez de devolver sempre os primeiros horários do dia.
+ * Com poucas vagas, cai no critério cronológico simples.
+ */
+function diversifySlots(all: FreeSlot[], maxSlots: number): FreeSlot[] {
+  if (all.length <= maxSlots) return all.slice(0, maxSlots);
+  const picked: FreeSlot[] = [];
+  const usedDayPeriod = new Set<string>();
+  const usedDay = new Map<string, number>();
+
+  const tryPick = (maxPerDay: number, uniqueDayPeriod: boolean) => {
+    for (const slot of all) {
+      if (picked.length >= maxSlots) return;
+      if (picked.includes(slot)) continue;
+      const day = dayKeyOf(slot.iso);
+      const key = `${day}|${periodOf(slot.iso)}`;
+      if (uniqueDayPeriod && usedDayPeriod.has(key)) continue;
+      if ((usedDay.get(day) ?? 0) >= maxPerDay) continue;
+      picked.push(slot);
+      usedDayPeriod.add(key);
+      usedDay.set(day, (usedDay.get(day) ?? 0) + 1);
+    }
+  };
+
+  tryPick(1, true); // 1 por dia: dias diferentes primeiro
+  tryPick(2, true); // depois um segundo período no mesmo dia
+  tryPick(maxSlots, false); // completa cronologicamente se ainda faltar
+
+  return picked.sort((a, b) => new Date(a.iso).getTime() - new Date(b.iso).getTime()).slice(0, maxSlots);
+}
+
 function buildFreeSlots(options: {
   schedule: Record<string, unknown>;
   busy: BusyBlock[];
@@ -82,26 +126,28 @@ function buildFreeSlots(options: {
   const days = configuredDays.length ? configuredDays.map((day) => Number(day)) : [1, 2, 3, 4, 5];
   const start = parseHm(options.schedule.start, always ? "09:00" : "08:30");
   const end = parseHm(options.schedule.end, "18:00");
-  const slots: FreeSlot[] = [];
+  const candidates: FreeSlot[] = [];
   const base = toLocalParts(now);
+  const HARD_CAP = 200;
 
-  for (let offset = 0; offset <= options.daysAhead && slots.length < options.maxSlots; offset += 1) {
+  for (let offset = 0; offset <= options.daysAhead && candidates.length < HARD_CAP; offset += 1) {
     const dayStart = fromLocal(base.year, base.month, base.day + offset, start.hours, start.minutes);
     const dayEnd = fromLocal(base.year, base.month, base.day + offset, end.hours, end.minutes);
     const weekday = toLocalParts(dayStart).weekday;
     if (!days.includes(weekday)) continue;
 
     for (let time = dayStart.getTime(); time + duration <= dayEnd.getTime(); time += duration) {
-      if (slots.length >= options.maxSlots) break;
+      if (candidates.length >= HARD_CAP) break;
       if (time < earliest) continue;
       if (options.busy.some((block) => time < block.end && time + duration > block.start)) continue;
       const iso = new Date(time).toISOString();
-      slots.push({ iso, label: formatSlotLabel(iso) });
+      candidates.push({ iso, label: formatSlotLabel(iso) });
     }
   }
 
-  return slots;
+  return diversifySlots(candidates, options.maxSlots);
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
