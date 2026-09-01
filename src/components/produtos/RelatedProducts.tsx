@@ -1,13 +1,41 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { getRelatedProducts } from "@/data/products";
 import { ProductHeroVisual } from "./ProductHeroVisual";
 
+/* Paleta viva por card (tons que conversam com o verde Wiize) */
+const CARD_THEMES: Record<string, string> = {
+  prospeccao: "from-emerald-500/25 via-teal-400/10 to-lime-400/20",
+  sdr: "from-teal-400/25 via-emerald-400/10 to-cyan-400/20",
+  agenda: "from-lime-400/25 via-emerald-400/10 to-teal-400/20",
+  engajamento: "from-emerald-400/25 via-lime-400/15 to-emerald-500/20",
+  automacao: "from-cyan-400/20 via-teal-400/15 to-emerald-400/25",
+  contratos: "from-emerald-500/25 via-emerald-300/10 to-lime-300/20",
+};
+
 export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
   const others = getRelatedProducts(currentSlug);
   const trackRef = useRef<HTMLDivElement>(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const update = () => {
+      setAtStart(el.scrollLeft <= 8);
+      setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 8);
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
 
   const scrollBy = (dir: 1 | -1) => {
     const el = trackRef.current;
@@ -16,6 +44,9 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
     const amount = card ? card.offsetWidth + 20 : el.clientWidth * 0.8;
     el.scrollBy({ left: dir * amount, behavior: "smooth" });
   };
+
+  const arrowBase =
+    "flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-300";
 
   return (
     <section className="w-full py-16 sm:py-24">
@@ -39,7 +70,12 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
               type="button"
               aria-label="Ver produtos anteriores"
               onClick={() => scrollBy(-1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-card/70 text-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
+              disabled={atStart}
+              className={`${arrowBase} ${
+                atStart
+                  ? "cursor-not-allowed border-border/40 bg-muted/40 text-muted-foreground/40"
+                  : "border-border/70 bg-card/70 text-foreground hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
+              }`}
             >
               <ChevronLeft size={16} />
             </button>
@@ -47,7 +83,12 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
               type="button"
               aria-label="Ver próximos produtos"
               onClick={() => scrollBy(1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-card/70 text-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
+              disabled={atEnd}
+              className={`${arrowBase} ${
+                atEnd
+                  ? "cursor-not-allowed border-border/40 bg-muted/40 text-muted-foreground/40"
+                  : "border-border/70 bg-card/70 text-foreground hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
+              }`}
             >
               <ChevronRight size={16} />
             </button>
@@ -66,14 +107,27 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.45, delay: i * 0.05, ease: "easeOut" }}
-              className="w-[78%] shrink-0 snap-start sm:w-[46%] lg:w-[31%]"
+              className="w-[76%] shrink-0 snap-start sm:w-[44%] lg:w-[28.5%]"
             >
               <Link
                 to={`/produtos/${p.slug}`}
                 className="group flex h-full flex-col overflow-hidden rounded-panel border border-border/60 bg-card/60 transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.02]"
               >
-                <div className="relative h-44 overflow-hidden border-b border-border/50 bg-gradient-to-br from-primary/15 via-primary/5 to-emerald-400/10">
-                  <div className="pointer-events-none absolute left-1/2 top-6 w-[22rem] origin-top -translate-x-1/2 scale-[0.62] transition-transform duration-500 group-hover:scale-[0.66]">
+                <div
+                  className={`relative h-52 overflow-hidden border-b border-border/50 bg-gradient-to-br ${
+                    CARD_THEMES[p.key] ?? "from-primary/20 via-primary/8 to-emerald-400/15"
+                  }`}
+                >
+                  {/* brilhos internos coloridos */}
+                  <div
+                    className="pointer-events-none absolute -left-8 top-4 h-24 w-24 rounded-full bg-emerald-400/30 blur-2xl"
+                    aria-hidden
+                  />
+                  <div
+                    className="pointer-events-none absolute -right-6 bottom-8 h-20 w-20 rounded-full bg-teal-400/25 blur-2xl"
+                    aria-hidden
+                  />
+                  <div className="pointer-events-none absolute left-1/2 top-7 w-[22rem] origin-top -translate-x-1/2 scale-[0.66] transition-transform duration-500 group-hover:scale-[0.7]">
                     <ProductHeroVisual visual={p.key} />
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card via-card/70 to-transparent" />
