@@ -245,26 +245,27 @@ void main() {
 `;
 
 const UNIFORMS = {
-  // Paleta verde Wiize: verde profundo -> esmeralda -> verde claro -> quase branco
+  // Paleta verde Wiize: só tons de verde, sem estouros brancos.
+  // verde profundo -> esmeralda -> verde médio -> verde vivo -> verde claro -> verde pálido
   colors: [
     [0.035, 0.176, 0.117],
     [0.062, 0.427, 0.278],
-    [0.239, 0.776, 0.478],
-    [0.898, 0.980, 0.937],
-    [0.898, 0.980, 0.937],
-    [0.898, 0.980, 0.937],
-    [0.898, 0.980, 0.937],
-    [0.898, 0.980, 0.937],
+    [0.130, 0.580, 0.340],
+    [0.220, 0.740, 0.460],
+    [0.360, 0.820, 0.520],
+    [0.480, 0.900, 0.620],
+    [0.360, 0.820, 0.520],
+    [0.220, 0.740, 0.460],
   ] as [number, number, number][],
-  colorCount: 4,
-  scale: 1.64,
-  intensity: 0.3,
+  colorCount: 6,
+  scale: 3.6,
+  intensity: 0.55,
   paramA: 0.5,
   warp: 0.0,
-  detail: 2.4,
-  contrast: 1.005,
-  brightness: 0.0,
-  saturation: 1.0,
+  detail: 3.2,
+  contrast: 1.02,
+  brightness: -0.04,
+  saturation: 1.05,
   hue: 0.0,
   vignette: 0.0,
   blur: 0.0,

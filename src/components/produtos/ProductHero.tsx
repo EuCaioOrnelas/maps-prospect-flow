@@ -131,9 +131,9 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
               aria-hidden
             >
               <div className="wz-band absolute inset-0" />
-              {/* Plasma verde WebGL — visível somente dentro da faixa */}
-              <div className="absolute inset-0 overflow-hidden opacity-90 mix-blend-screen">
-                <ShaderBackground className="h-[400%] w-full -translate-y-[37.5%]" />
+              {/* Plasma verde WebGL — visível somente dentro da faixa, preenche toda a área */}
+              <div className="absolute inset-0 overflow-hidden opacity-70 mix-blend-screen">
+                <ShaderBackground className="h-full w-full" />
               </div>
             </div>
             {/* No desktop, o mesmo visual atravessa Hero + Como funciona via sticky no template. */}
