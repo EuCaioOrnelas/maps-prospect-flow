@@ -56,16 +56,16 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
               className="animate-slide-up mb-4 font-display font-bold leading-[1.08] tracking-tight text-foreground sm:mb-6"
               style={{ animationDelay: "0.1s" }}
             >
-              <span className="block text-[2rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.1rem]">
+              <span className="block text-balance text-[clamp(1.75rem,5.4vw,2.6rem)] lg:text-[clamp(1.9rem,2.6vw,2.9rem)]">
                 {product.heroTitle}
               </span>
-              <span className="mt-1 block whitespace-nowrap text-shimmer-highlight text-[2.3rem] font-extrabold leading-[1.05] drop-shadow-sm sm:mt-2 sm:text-[2.7rem] md:text-[3.2rem] lg:text-[3.5rem]">
+              <span className="mt-1 block text-balance text-shimmer-highlight text-[clamp(1.9rem,6vw,2.9rem)] font-extrabold leading-[1.06] drop-shadow-sm sm:mt-2 lg:text-[clamp(2.1rem,3vw,3.2rem)]">
                 {product.heroHighlight}
               </span>
             </h1>
 
             <p
-              className="animate-slide-up mx-auto mb-6 max-w-xl text-sm text-muted-foreground sm:mb-8 sm:text-lg lg:mx-0"
+              className="animate-slide-up mx-auto mb-6 max-w-xl text-pretty text-sm text-muted-foreground sm:mb-8 sm:text-lg lg:mx-0"
               style={{ animationDelay: "0.2s" }}
             >
               {product.heroDescription}
