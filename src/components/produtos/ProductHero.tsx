@@ -13,7 +13,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
   const Icon = product.icon;
 
   return (
-    <section className="relative -mt-[72px] w-full overflow-x-clip pb-16 pt-[120px] sm:-mt-[80px] sm:pb-20 sm:pt-[136px]">
+    <section className="relative -mt-[72px] w-full overflow-x-clip pb-28 pt-[120px] sm:-mt-[80px] sm:pb-36 sm:pt-[136px]">
       <div
         className="absolute inset-0"
         style={{
@@ -31,12 +31,13 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
         aria-hidden
       />
 
-      {/* Faixa de plasma diagonal de fora a fora (verde Wiize) */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-[-6%] h-[52%] overflow-hidden" aria-hidden>
-        <div className="absolute -inset-x-[15%] top-1/2 h-[58%] -translate-y-1/2 -rotate-[9deg]">
+      {/* Faixa de plasma diagonal de fora a fora (verde Wiize) — sólida e inteira */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+        <div className="absolute -inset-x-[25%] top-[80%] h-[22%] -translate-y-1/2 -rotate-[9deg]">
           <div className="wz-band absolute inset-0" />
         </div>
       </div>
+
 
       <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
         <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-[1.3fr_1fr] xl:gap-4">
