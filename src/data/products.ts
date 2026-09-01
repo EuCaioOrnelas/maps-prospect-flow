@@ -294,6 +294,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Menos atrito",
         title: "Reuniões deixam de se perder na negociação de horário",
+        titleHighlight: "na negociação de horário",
         description:
           "O intervalo entre 'tenho interesse' e 'reunião marcada' é onde mais oportunidades esfriam. A Wiize encurta esse caminho com opções claras e disponibilidade real.",
         bullets: [
