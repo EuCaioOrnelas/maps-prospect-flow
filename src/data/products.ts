@@ -58,6 +58,8 @@ export interface ProductConfig {
   seoDescription: string;
   keywords: string;
   howItWorksTitle: string;
+  /** Trecho do título "Como funciona" que recebe destaque visual (deve estar contido em howItWorksTitle) */
+  howItWorksHighlight?: string;
   howItWorks: ProductStep[];
   features: ProductFeature[];
   proof: { label: string; value: string; hint: string }[];
