@@ -350,9 +350,12 @@ export function GuidedTour() {
       const shouldScrollIntoView = lastScrolledStepRef.current !== step.id;
       // Clipped by ANY scroll ancestor (dialog body, scrollable panel) or by the viewport,
       // considerando o espaço reservado para o card do tour embaixo.
+      // Reserva inferior para o card/dock do tour — menor em telas baixas para
+      // não forçar scroll desnecessário.
+      const bottomReserve = window.innerHeight < 700 ? 130 : 200;
       const isClipped =
         currentRect.top < clip.top + POPUP_GAP ||
-        currentRect.bottom > Math.min(clip.bottom, window.innerHeight - 200) ||
+        currentRect.bottom > Math.min(clip.bottom, window.innerHeight - bottomReserve) ||
         currentRect.left < clip.left ||
         currentRect.right > clip.right;
 
