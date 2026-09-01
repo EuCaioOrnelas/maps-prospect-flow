@@ -5,6 +5,7 @@ import { Footer } from "@/components/landing/Footer";
 import { CTASection } from "@/components/landing/CTASection";
 import { SEO } from "@/components/SEO";
 import { ProductHero } from "@/components/produtos/ProductHero";
+import { ProductVisualContent } from "@/components/produtos/ProductFloatingVisual";
 
 import { ProductHowItWorks } from "@/components/produtos/ProductHowItWorks";
 import { ProductFeatureBlock } from "@/components/produtos/ProductFeatureBlock";
@@ -45,16 +46,32 @@ export default function ProdutoPage() {
       <Navbar />
 
       <main>
-        <ProductHero product={product} />
+        {/* Um único mockup acompanha Hero + Como funciona pela coluna direita. */}
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-0 z-20 hidden lg:block">
+            <div className="container mx-auto grid h-full w-full max-w-[90rem] grid-cols-[45%_50%] gap-[5%] px-6 sm:px-10 lg:px-16">
+              <div aria-hidden="true" />
+              <div className="h-full">
+                <div className="sticky top-28 flex min-h-[calc(100vh-8rem)] items-center">
+                  <div className={`w-full origin-left ${product.key === "prospeccao" ? "scale-[1.42]" : "scale-[1.16]"}`}>
+                    <ProductVisualContent product={product} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {/* Conteúdo acima da faixa de plasma que cruza o fim do hero */}
-        <div className="relative z-10">
+          <ProductHero product={product} sharedDesktopVisual />
+
           <ProductHowItWorks
             title={product.howItWorksTitle}
             highlight={product.howItWorksHighlight}
             steps={product.howItWorks}
-            product={product}
           />
+        </div>
+
+        {/* Conteúdo posterior à jornada inicial do produto. */}
+        <div className="relative z-10">
 
           {product.features.map((feature) => (
             <ProductFeatureBlock key={feature.title} feature={feature} visual={product.key} />

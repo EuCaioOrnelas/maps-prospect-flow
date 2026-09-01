@@ -11,9 +11,10 @@ import avatar4 from "@/assets/avatars/avatar4.jpg";
 
 interface ProductHeroProps {
   product: ProductConfig;
+  sharedDesktopVisual?: boolean;
 }
 
-export const ProductHero = ({ product }: ProductHeroProps) => {
+export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHeroProps) => {
   return (
     <section className="relative -mt-[72px] w-full overflow-x-clip pb-32 pt-[120px] sm:-mt-[80px] sm:pb-44 sm:pt-[136px]">
       <div
@@ -128,8 +129,8 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
             >
               <div className="wz-band absolute inset-0" />
             </div>
-            {/* O mockup ocupa visualmente toda a metade direita do hero. */}
-            <div className={`relative z-10 w-full origin-left ${product.key === "prospeccao" ? "lg:w-[220%] xl:w-[235%]" : "lg:w-[135%] xl:w-[150%]"}`}>
+            {/* No desktop, o mesmo visual atravessa Hero + Como funciona via sticky no template. */}
+            <div className={`relative z-10 w-full ${sharedDesktopVisual ? "lg:invisible" : ""}`}>
               <ProductVisualContent product={product} />
             </div>
           </div>

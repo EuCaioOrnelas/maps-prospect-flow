@@ -2,14 +2,12 @@ import { useRef, useState, useMemo } from "react";
 import { motion, useScroll, useSpring, useMotionValueEvent, useTransform } from "framer-motion";
 import { Check } from "lucide-react";
 import type { ProductStep } from "@/data/products";
-import { PV_STEPS_SECTION, ProductVisualContent } from "./ProductFloatingVisual";
-import type { ProductConfig } from "@/data/products";
+import { PV_STEPS_SECTION } from "./ProductFloatingVisual";
 
 interface ProductHowItWorksProps {
   title: string;
   highlight?: string;
   steps: ProductStep[];
-  product?: ProductConfig;
 }
 
 function SplitTitle({ title, highlight }: { title: string; highlight?: string }) {
@@ -32,7 +30,7 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
   );
 }
 
-export const ProductHowItWorks = ({ title, highlight, steps, product }: ProductHowItWorksProps) => {
+export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorksProps) => {
   const listRef = useRef<HTMLOListElement>(null);
   const [active, setActive] = useState(0);
 
@@ -111,13 +109,7 @@ export const ProductHowItWorks = ({ title, highlight, steps, product }: ProductH
             </ol>
           </div>
 
-          {product && (
-            <div className="hidden h-full lg:block">
-              <div className="sticky top-28 w-full self-start">
-                <ProductVisualContent product={product} />
-              </div>
-            </div>
-          )}
+          <div className="hidden min-h-full lg:block" aria-hidden="true" />
         </div>
       </div>
     </section>
