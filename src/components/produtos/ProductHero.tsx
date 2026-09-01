@@ -129,7 +129,7 @@ export const ProductHero = ({ product }: ProductHeroProps) => {
               <div className="wz-band absolute inset-0" />
             </div>
             {/* Âncora: em telas grandes o visual é renderizado flutuante e segue o scroll */}
-            <div className="relative z-10 w-full xl:w-[190%]">
+            <div className="relative z-10 w-full xl:w-[185%] xl:translate-x-[14%]">
               <ProductVisualContent product={product} />
             </div>
           </div>
