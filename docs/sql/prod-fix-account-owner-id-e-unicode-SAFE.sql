@@ -79,7 +79,7 @@ BEGIN
   IF p_text IS NULL THEN
     RETURN NULL;
   END IF;
-  RETURN replace(p_text, E'\u0000', '');
+  RETURN replace(p_text, chr(0), '');
 END;
 $$;
 
