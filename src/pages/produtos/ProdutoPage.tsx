@@ -12,7 +12,12 @@ import { ProductFeatureBlock } from "@/components/produtos/ProductFeatureBlock";
 import { RelatedProducts } from "@/components/produtos/RelatedProducts";
 import { getProductBySlug, PRODUCTS } from "@/data/products";
 
+import { HiRocketLaunch, HiChartBarSquare, HiShieldCheck } from "react-icons/hi2";
+
+const PROOF_ICONS = [HiRocketLaunch, HiChartBarSquare, HiShieldCheck];
+
 const SITE_URL = "https://wiize.com.br";
+
 
 export default function ProdutoPage() {
   const { slug } = useParams();
