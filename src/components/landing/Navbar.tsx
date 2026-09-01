@@ -1,9 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Lock } from "lucide-react";
+import { Menu, X, Lock, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
+import { NavMegaMenu } from "./NavMegaMenu";
+import { PRODUCT_COLUMNS, RESOURCE_COLUMNS, MENU_SIDE_LINKS } from "./navMenuData";
+import { cn } from "@/lib/utils";
+
 
 interface NavbarProps {
  onSignupClick?: () => void;
@@ -12,6 +16,7 @@ interface NavbarProps {
 export const Navbar = ({ onSignupClick }: NavbarProps) => {
  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
  const [scrolled, setScrolled] = useState(false);
+ const [openMenu, setOpenMenu] = useState<string | null>(null);
  const navRef = useRef<HTMLElement>(null);
  const tickingRef = useRef(false);
  const lastScrolledRef = useRef(false);
@@ -65,62 +70,104 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
  scrollToId(id);
  };
 
- const navLinks: Array<{ href?: string; to?: string; label: string }> = [
- { href: "#features", label: "Recursos" },
- { href: "#testimonials", label: "Depoimentos" },
- { href: "#pricing", label: "Planos" },
- { href: "#faq", label: "FAQ" },
- { to: "/blog", label: "Blog" },
- ];
+  const navLinks: Array<{ href?: string; to?: string; label: string }> = [
+    { href: "#pricing", label: "Planos" },
+    { href: "#faq", label: "FAQ" },
+    { to: "/blog", label: "Blog" },
+  ];
+
+  const MENUS = [
+    { key: "produtos", label: "Produtos", columns: PRODUCT_COLUMNS },
+    { key: "recursos", label: "Recursos", columns: RESOURCE_COLUMNS },
+  ] as const;
+  const activeMenu = MENUS.find((m) => m.key === openMenu);
+  const solid = scrolled || !!openMenu;
+
 
  return (
  <>
- <nav
- ref={navRef}
- className="fixed left-0 right-0 z-50 top-0"
- style={{
- paddingTop: scrolled ? '10px' : '0',
- paddingLeft: scrolled ? '16px' : '0',
- paddingRight: scrolled ? '16px' : '0',
- transition: 'padding 500ms cubic-bezier(0.22,1,0.36,1)',
- willChange: 'padding',
- }}
- >
- <div
- className="mx-auto"
- style={{
- maxWidth: scrolled ? '920px' : '1280px',
- borderRadius: scrolled ? '18px' : '0px',
- backgroundColor: scrolled ? 'hsl(var(--background) / 0.55)' : 'transparent',
- backdropFilter: scrolled ? 'blur(16px) saturate(180%)' : 'none',
- WebkitBackdropFilter: scrolled ? 'blur(16px) saturate(180%)' : 'none',
- border: scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
- boxShadow: scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
- paddingTop: scrolled ? '8px' : '16px',
- paddingBottom: scrolled ? '8px' : '16px',
- paddingLeft: scrolled ? '24px' : '16px',
- paddingRight: scrolled ? '12px' : '16px',
- transition: 'max-width 500ms cubic-bezier(0.22,1,0.36,1), border-radius 300ms ease-out, background-color 300ms ease-out, box-shadow 300ms ease-out, padding 500ms cubic-bezier(0.22,1,0.36,1)',
- willChange: 'max-width, padding',
- transform: 'translateZ(0)',
- }}
- >
- <div className="flex items-center justify-between mx-auto w-full gap-8">
- <Logo size="md" mobileSize="md" />
- 
- <div className="hidden md:flex items-center gap-7">
- {navLinks.map(link => (
- link.to ? (
- <Link key={link.to} to={link.to} className="text-sm font-medium text-foreground hover:text-foreground/80 transition-colors">
- {link.label}
- </Link>
- ) : (
- <a key={link.href} href={link.href} onClick={(e) => handleNavLinkClick(e, link.href!)} className="text-sm font-medium text-foreground hover:text-foreground/80 transition-colors cursor-pointer">
- {link.label}
- </a>
- )
- ))}
- </div>
+      <nav
+        ref={navRef}
+        className="fixed left-0 right-0 z-50 top-0"
+        onMouseLeave={() => setOpenMenu(null)}
+        style={{
+          paddingTop: scrolled ? '10px' : '0',
+          paddingLeft: scrolled ? '16px' : '0',
+          paddingRight: scrolled ? '16px' : '0',
+          transition: 'padding 500ms cubic-bezier(0.22,1,0.36,1)',
+          willChange: 'padding',
+        }}
+      >
+        <div
+          className="mx-auto"
+          style={{
+            maxWidth: openMenu ? '1280px' : scrolled ? '920px' : '1280px',
+            borderRadius: openMenu ? '0px' : scrolled ? '18px' : '0px',
+            backgroundColor: openMenu
+              ? 'hsl(var(--background))'
+              : scrolled ? 'hsl(var(--background) / 0.55)' : 'transparent',
+            backdropFilter: solid && !openMenu ? 'blur(16px) saturate(180%)' : 'none',
+            WebkitBackdropFilter: solid && !openMenu ? 'blur(16px) saturate(180%)' : 'none',
+            border: solid ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
+            boxShadow: solid ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
+            paddingTop: scrolled ? '8px' : '16px',
+            paddingBottom: scrolled ? '8px' : '16px',
+            paddingLeft: scrolled ? '24px' : '16px',
+            paddingRight: scrolled ? '12px' : '16px',
+            transition: 'max-width 500ms cubic-bezier(0.22,1,0.36,1), border-radius 300ms ease-out, background-color 300ms ease-out, box-shadow 300ms ease-out, padding 500ms cubic-bezier(0.22,1,0.36,1)',
+            willChange: 'max-width, padding',
+            transform: 'translateZ(0)',
+          }}
+        >
+          <div className="flex items-center justify-between mx-auto w-full gap-8">
+            <Logo size="md" mobileSize="md" />
+
+            <div className="hidden md:flex items-center gap-1">
+              {MENUS.map((menu) => (
+                <button
+                  key={menu.key}
+                  type="button"
+                  onMouseEnter={() => setOpenMenu(menu.key)}
+                  onClick={() => setOpenMenu(openMenu === menu.key ? null : menu.key)}
+                  className={cn(
+                    "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    openMenu === menu.key
+                      ? "bg-muted/70 text-primary"
+                      : "text-foreground hover:bg-muted/60 hover:text-primary"
+                  )}
+                  aria-expanded={openMenu === menu.key}
+                >
+                  {menu.label}
+                  <ChevronDown
+                    size={14}
+                    className={cn("transition-transform duration-200", openMenu === menu.key && "rotate-180")}
+                  />
+                </button>
+              ))}
+              {navLinks.map(link => (
+                link.to ? (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onMouseEnter={() => setOpenMenu(null)}
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/60 hover:text-primary"
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onMouseEnter={() => setOpenMenu(null)}
+                    onClick={(e) => handleNavLinkClick(e, link.href!)}
+                    className="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/60 hover:text-primary"
+                  >
+                    {link.label}
+                  </a>
+                )
+              ))}
+            </div>
+
 
  <div className="hidden sm:flex items-center gap-2">
  <Link to="/login">
