@@ -128,7 +128,9 @@ function scrollTargetIntoComfortableView(el: HTMLElement) {
   if (Math.abs(delta) < 2) return;
 
   if (container) {
-    container.scrollBy({ top: delta, behavior: "smooth" });
+    // O spotlight já anima a geometria; scroll nativo suave em paralelo gerava
+    // dezenas de eventos intermediários e fazia o foco oscilar.
+    container.scrollBy({ top: delta, behavior: "auto" });
     return;
   }
 
@@ -136,7 +138,7 @@ function scrollTargetIntoComfortableView(el: HTMLElement) {
   const htmlOverflow = document.documentElement.style.overflow;
   document.body.style.overflow = "";
   document.documentElement.style.overflow = "";
-  window.scrollBy({ top: delta, left: 0, behavior: "smooth" });
+  window.scrollBy({ top: delta, left: 0, behavior: "auto" });
   document.body.style.overflow = bodyOverflow;
   document.documentElement.style.overflow = htmlOverflow;
 }

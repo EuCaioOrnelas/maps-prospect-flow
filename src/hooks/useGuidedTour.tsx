@@ -233,6 +233,7 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const startedRef = useRef(false);
   const pendingTourPathRef = useRef<string | null>(null);
   const publicDemoSessionRef = useRef(false);
+  const leadPrewarmPromiseRef = useRef<Promise<void> | null>(null);
   /** Independente do tour interno: garante que o demo público sempre inicie. */
   const publicDemoStartedRef = useRef(false);
 
@@ -357,7 +358,13 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       waitMs: 700,
       onEnter: async () => {
         // Pré-carrega (invisível) o modal do lead usado no próximo passo.
-        setTimeout(() => { void prewarmDemoLeadDialog(); }, 250);
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        const prewarmPromise = prewarmDemoLeadDialog();
+        leadPrewarmPromiseRef.current = prewarmPromise;
+        await prewarmPromise;
+        if (leadPrewarmPromiseRef.current === prewarmPromise) {
+          leadPrewarmPromiseRef.current = null;
+        }
       },
     },
     diagnosis: {
@@ -368,6 +375,11 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       resolveTargetAfterEnter: true,
       hideSpotlightWhileTargetLoads: "always",
       onEnter: async () => {
+        // Nunca disputa o modal/abas com o pré-carregamento da etapa anterior.
+        if (leadPrewarmPromiseRef.current) {
+          await leadPrewarmPromiseRef.current;
+          leadPrewarmPromiseRef.current = null;
+        }
         document.body.classList.remove("tour-prewarm-lead");
         const dialog = await openDemoLeadDialog();
         if (!dialog) return;
