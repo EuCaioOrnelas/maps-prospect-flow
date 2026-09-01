@@ -105,27 +105,69 @@ const shouldPreservePaidAccess = (profile?: BillingProfileState | null) => {
   return hasFuturePaidWindow(profile);
 };
 
+class TransientBackendError extends Error {}
+
+const isTransientDbError = (error: any) =>
+  !!error &&
+  (error.code === "PGRST002" ||
+    error.code === "PGRST001" ||
+    error.code === "57P03" ||
+    String(error.message || "").toLowerCase().includes("schema cache"));
+
 async function ensureProfileAndApplyPendingCheckout(
   supabaseClient: any,
   userId: string,
   userEmail: string,
 ) {
-  const { data: existingProfile } = await supabaseClient
-    .from("profiles")
-    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
-    .eq("id", userId)
-    .maybeSingle();
+  const profileColumns =
+    "id, email, searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen";
+
+  let existingProfile: any = null;
+  let lastProfileError: any = null;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data, error } = await supabaseClient
+      .from("profiles")
+      .select(profileColumns)
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!error) {
+      existingProfile = data;
+      lastProfileError = null;
+      break;
+    }
+
+    lastProfileError = error;
+    if (!isTransientDbError(error)) break;
+    await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+  }
 
   if (existingProfile) {
     return existingProfile as BillingProfileState;
   }
 
+  // Nunca recriar o profile quando o banco está apenas indisponível/instável:
+  // isso mascarava o erro real e estourava em "Failed to load auth user".
+  if (lastProfileError) {
+    logStep("Profile read failed, backend unavailable", {
+      code: lastProfileError.code,
+      message: lastProfileError.message,
+    });
+    throw new TransientBackendError(
+      "Backend temporariamente indisponível ao ler o perfil. Tente novamente em instantes.",
+    );
+  }
+
   logStep("Profile missing, recreating from auth user", { userId, email: userEmail });
 
   const { data: authUserData, error: authUserError } = await supabaseClient.auth.admin.getUserById(userId);
-  if (authUserError) {
-    throw new Error(`Failed to load auth user: ${authUserError.message}`);
+  if (authUserError || !authUserData?.user) {
+    throw new TransientBackendError(
+      `Failed to load auth user: ${authUserError?.message || authUserError?.name || "unknown error"}`,
+    );
   }
+
 
   const metadata = authUserData.user?.user_metadata ?? {};
   const nowIso = new Date().toISOString();
@@ -774,10 +816,11 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in check-subscription", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    const transient = error instanceof TransientBackendError;
+    logStep("ERROR in check-subscription", { message: errorMessage, transient });
+    return new Response(JSON.stringify({ error: errorMessage, retryable: transient }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: transient ? 503 : 500,
     });
   }
 });
