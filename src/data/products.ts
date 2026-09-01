@@ -175,6 +175,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "SDR digital, qualificação de leads, pré-vendas B2B, atendimento comercial, conversas comerciais",
     howItWorksTitle: "Da primeira conversa à oportunidade qualificada",
+    howItWorksHighlight: "oportunidade qualificada",
     howItWorks: [
       {
         title: "Inicie a conversa",
