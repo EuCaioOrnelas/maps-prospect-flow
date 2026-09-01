@@ -637,8 +637,8 @@ export function GuidedTour() {
         ...popupStyle,
         width,
         top: placeBottom
-          ? Math.max(POPUP_GAP, viewport.h - h - NAV_SAFE - POPUP_GAP)
-          : POPUP_GAP,
+          ? Math.max(TOP_SAFE, viewport.h - h - NAV_SAFE - POPUP_GAP)
+          : TOP_SAFE,
         left: placeRight
           ? Math.max(POPUP_GAP, viewport.w - width - POPUP_GAP)
           : POPUP_GAP,
