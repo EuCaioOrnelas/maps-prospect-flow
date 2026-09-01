@@ -263,24 +263,19 @@ export function GuidedTour() {
     let attempts = 0;
     let lastSerialized = "";
     let stableFrames = 0;
-    // Limitamos as tentativas de scroll para não entrar em loop de
-    // scroll + re-medição (que causava tremedeira/piscar da tela).
+    // Rolamos no MÁXIMO duas vezes por passo (e nunca em sequência rápida),
+    // para não entrar em loop de scroll + re-medição (tremedeira/piscar).
     let scrollFixes = 0;
-    const MAX_SCROLL_FIXES = 3;
+    let lastScrollAt = 0;
+    const MAX_SCROLL_FIXES = 2;
 
-    // O tour trava o scroll do body/html (overflow hidden), o que torna
-    // scrollIntoView um NO-OP no document scroller — o alvo ficava focado
-    // fora da tela. Aqui destravamos temporariamente, rolamos e re-travamos.
-    const scrollElIntoView = (el: HTMLElement) => {
-      const bodyOverflow = document.body.style.overflow;
-      const htmlOverflow = document.documentElement.style.overflow;
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-      try {
-        el.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
-      } catch {}
-      document.body.style.overflow = bodyOverflow;
-      document.documentElement.style.overflow = htmlOverflow;
+    const doScroll = (el: HTMLElement) => {
+      const now = performance.now();
+      if (scrollFixes >= MAX_SCROLL_FIXES) return;
+      if (now - lastScrollAt < 500) return;
+      scrollFixes += 1;
+      lastScrollAt = now;
+      scrollTargetIntoComfortableView(el);
     };
 
     const startedAt = performance.now();
@@ -305,42 +300,22 @@ export function GuidedTour() {
       const currentRect = el.getBoundingClientRect();
       const clip = getClipRect(el);
       const shouldScrollIntoView = lastScrolledStepRef.current !== step.id;
-      // Clipped by ANY scroll ancestor (dialog body, scrollable panel) or by the viewport.
+      // Clipped by ANY scroll ancestor (dialog body, scrollable panel) or by the viewport,
+      // considerando o espaço reservado para o card do tour embaixo.
       const isClipped =
         currentRect.top < clip.top + POPUP_GAP ||
-        currentRect.bottom > clip.bottom - POPUP_GAP ||
+        currentRect.bottom > Math.min(clip.bottom, window.innerHeight - 200) ||
         currentRect.left < clip.left ||
         currentRect.right > clip.right;
 
-      if (step.keepViewportTop) {
-        // Nunca combinar "voltar ao topo" com "rolar até o alvo": as duas ações
-        // brigavam entre si e o foco ficava indo e voltando. Se o alvo está
-        // recortado, o scroll até ele tem prioridade absoluta.
-        if (isClipped) {
-          if (scrollFixes < MAX_SCROLL_FIXES) {
-            scrollFixes += 1;
-            scrollElIntoView(el);
-          }
-        } else if (window.scrollY !== 0 && scrollFixes === 0) {
-          scrollFixes += 1;
-          const bodyOverflow = document.body.style.overflow;
-          const htmlOverflow = document.documentElement.style.overflow;
-          document.body.style.overflow = "";
-          document.documentElement.style.overflow = "";
-          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-          document.body.style.overflow = bodyOverflow;
-          document.documentElement.style.overflow = htmlOverflow;
-        }
-        if (shouldScrollIntoView) {
-          lastScrolledStepRef.current = step.id;
-        }
-      } else if (isClipped && scrollFixes < MAX_SCROLL_FIXES) {
-        scrollFixes += 1;
+      if (isClipped) {
         lastScrolledStepRef.current = step.id;
-        scrollElIntoView(el);
+        doScroll(el);
       } else if (shouldScrollIntoView) {
         lastScrolledStepRef.current = step.id;
       }
+
+
 
 
       const rawNext = el.getBoundingClientRect();
