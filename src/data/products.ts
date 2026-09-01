@@ -310,6 +310,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         eyebrow: "Acompanhamento",
         title: "Nada se perde entre marcar e realizar",
+        titleHighlight: "entre marcar e realizar",
         description:
           "Lembretes, status de atraso e reagendamento simples mantêm o compromisso vivo — e a operação sabe exatamente o que aconteceu com cada reunião.",
         bullets: [
