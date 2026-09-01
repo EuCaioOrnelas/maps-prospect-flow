@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { HiCheckCircle } from "react-icons/hi2";
+import { HiCheckCircle, HiBolt, HiArrowTrendingUp, HiSparkles, HiShieldCheck } from "react-icons/hi2";
+
+const METRIC_ICONS = [HiArrowTrendingUp, HiBolt, HiSparkles, HiShieldCheck];
+
 import { ProductStageShowcase } from "./ProductStageShowcase";
 import type { ProductFeature, ProductVisualKey } from "@/data/products";
 
