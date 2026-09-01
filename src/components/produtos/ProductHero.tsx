@@ -137,7 +137,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
               </div>
             </div>
             {/* No desktop, o mesmo visual atravessa Hero + Como funciona via sticky no template. */}
-            <div className={`relative z-10 mx-auto w-full max-w-[24rem] sm:max-w-[26rem] lg:max-w-[clamp(19rem,32vw,32rem)] ${sharedDesktopVisual ? "lg:invisible" : ""}`}>
+            <div className={`relative z-10 mx-auto w-full max-w-[22rem] sm:max-w-[26rem] lg:mx-0 lg:ml-auto lg:mr-0 lg:max-w-[clamp(19rem,32vw,30rem)] ${sharedDesktopVisual ? "lg:invisible" : ""}`}>
               <ProductVisualContent product={product} />
             </div>
           </div>

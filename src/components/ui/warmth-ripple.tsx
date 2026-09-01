@@ -290,10 +290,19 @@ export function ShaderBackground({ className }: { className?: string }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    // Dispositivos fracos / mobile / usuários com movimento reduzido: não inicializa WebGL.
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const weak =
+      typeof navigator !== "undefined" &&
+      ((navigator.hardwareConcurrency ?? 8) <= 4 ||
+        (typeof window !== "undefined" && window.innerWidth < 768));
+    if (reduced || weak) return;
     const pendingRelease = pendingContextReleases.get(canvas);
     if (pendingRelease !== undefined) window.clearTimeout(pendingRelease);
     pendingContextReleases.delete(canvas);
-    const gl = canvas.getContext("webgl", { antialias: false });
+    const gl = canvas.getContext("webgl", { antialias: false, powerPreference: "low-power" });
     if (!gl) return;
 
     const compile = (type: number, src: string) => {
@@ -355,10 +364,10 @@ export function ShaderBackground({ className }: { className?: string }) {
     const timeAnimated = Math.abs(UNIFORMS.timeScale) > 0.0001;
 
     const resizeCanvas = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       const rawWidth = Math.max(1, Math.round(bounds.width * dpr));
       const rawHeight = Math.max(1, Math.round(bounds.height * dpr));
-      const pixelScale = Math.min(1, Math.sqrt(2_000_000 / Math.max(1, rawWidth * rawHeight)));
+      const pixelScale = Math.min(1, Math.sqrt(1_000_000 / Math.max(1, rawWidth * rawHeight)));
       const width = Math.max(1, Math.round(rawWidth * pixelScale));
       const height = Math.max(1, Math.round(rawHeight * pixelScale));
       if (canvas.width !== width || canvas.height !== height) {

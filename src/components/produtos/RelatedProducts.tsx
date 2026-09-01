@@ -99,7 +99,7 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
 
         <div
           ref={trackRef}
-          className="-m-8 mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto p-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-m-8 mt-10 flex snap-x snap-mandatory scroll-pl-8 scroll-pr-8 gap-5 overflow-x-auto p-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {others.map((p, i) => (
             <motion.div
@@ -113,7 +113,7 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
             >
               <Link
                 to={`/produtos/${p.slug}`}
-                className="group flex h-full flex-col overflow-hidden rounded-panel border border-border/60 bg-card/60 transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.02]"
+                className="group flex h-full flex-col overflow-hidden rounded-panel border border-border/60 bg-card/60 transition-transform duration-300 will-change-transform hover:-translate-y-1"
               >
                 <div
                   className={`relative h-52 overflow-hidden border-b border-border/50 bg-gradient-to-br ${

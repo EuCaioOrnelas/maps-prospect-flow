@@ -112,7 +112,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
   const menuOverlay = (openMenu || mobileMenuOpen) ? (
     <div
       aria-hidden="true"
-      className="fixed inset-0 z-40 animate-fade-in bg-background/30 backdrop-blur-[3px] transition-opacity"
+      className="fixed inset-0 z-40 animate-fade-in bg-background/40 transition-opacity duration-200"
       onClick={() => { setOpenMenu(null); setMobileMenuOpen(false); setMobileOpenMenu(null); }}
     />
   ) : null;
@@ -157,8 +157,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           paddingTop: scrolled ? '10px' : '0',
           paddingLeft: scrolled ? '16px' : '0',
           paddingRight: scrolled ? '16px' : '0',
-          transition: 'padding 500ms cubic-bezier(0.22,1,0.36,1)',
-          willChange: 'padding',
+          transition: 'padding 320ms cubic-bezier(0.22,1,0.36,1)',
         }}
       >
         <div
@@ -181,8 +180,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             paddingBottom: scrolled ? '8px' : '16px',
             paddingLeft: scrolled ? '24px' : '16px',
             paddingRight: scrolled ? '12px' : '16px',
-            transition: 'max-width 500ms cubic-bezier(0.22,1,0.36,1), border-radius 300ms ease-out, background-color 300ms ease-out, box-shadow 300ms ease-out, padding 500ms cubic-bezier(0.22,1,0.36,1)',
-            willChange: 'max-width, padding',
+            transition: 'max-width 320ms cubic-bezier(0.22,1,0.36,1), border-radius 220ms ease-out, background-color 220ms ease-out, box-shadow 220ms ease-out, padding 320ms cubic-bezier(0.22,1,0.36,1)',
             transform: 'translateZ(0)',
           }}
         >
@@ -197,7 +195,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                   onMouseEnter={() => { cancelClose(); openMenuWithDirection(menu.key); }}
                   onClick={() => openMenuWithDirection(openMenu === menu.key ? null : menu.key)}
                   className={cn(
-                    "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-[font-weight] duration-150",
+                    "flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150",
                     openMenu === menu.key && "font-bold"
                   )}
                   aria-expanded={openMenu === menu.key}
@@ -215,7 +213,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                     key={link.to}
                     to={link.to}
                     onMouseEnter={() => { cancelClose(); setOpenMenu(null); }}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-[font-weight] duration-150 hover:font-bold"
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 hover:text-primary"
                   >
                     {link.label}
                   </Link>
@@ -225,7 +223,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
                     href={link.href}
                     onMouseEnter={() => { cancelClose(); setOpenMenu(null); }}
                     onClick={(e) => handleNavLinkClick(e, link.href!)}
-                    className="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-[font-weight] duration-150 hover:font-bold"
+                    className="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 hover:text-primary"
                   >
                     {link.label}
                   </a>

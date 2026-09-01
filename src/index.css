@@ -1966,3 +1966,31 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
   .pv-cycle, .pv-scan, .pv-blink, .pv-bar, .pv-count { animation: none; }
 }
 
+
+/* ── Performance & acessibilidade de movimento ─────────────────────────── */
+/* Rolagem suave nativa e animações leves em máquinas menos potentes. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Em telas pequenas, animações infinitas decorativas ficam mais econômicas. */
+@media (max-width: 767px) {
+  .pv-float,
+  .float-animation,
+  .floating-cards {
+    animation: none !important;
+  }
+}
