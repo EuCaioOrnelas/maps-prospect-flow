@@ -587,15 +587,15 @@ export function GuidedTour() {
         // tela): não existe espaço externo. Nesse caso "ancoramos" o card no
         // canto diagonalmente oposto ao foco — nunca por cima dele.
         (() => {
-          const width = Math.min(popupWidth, 340);
-          const placeRight = spotBounds.left + (spotBounds.right - spotBounds.left) / 2 < window.innerWidth / 2;
-          const placeBottom = spotBounds.top + (spotBounds.bottom - spotBounds.top) / 2 < window.innerHeight / 2;
+          const width = Math.min(popupWidth, isCompactViewport ? 300 : 340);
+          const placeRight = spotBounds.left + (spotBounds.right - spotBounds.left) / 2 < viewport.w / 2;
+          const placeBottom = spotBounds.top + (spotBounds.bottom - spotBounds.top) / 2 < viewport.h / 2;
           return {
             top: placeBottom
-              ? Math.max(bounds.top, window.innerHeight - popupHeight - 104)
+              ? Math.max(bounds.top, viewport.h - popupHeight - NAV_SAFE - 8)
               : bounds.top,
             left: placeRight
-              ? Math.max(bounds.left, window.innerWidth - width - viewportMargin)
+              ? Math.max(bounds.left, viewport.w - width - viewportMargin)
               : bounds.left,
             width,
           };
