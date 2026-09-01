@@ -25,7 +25,7 @@ export const ProductFeatureBlock = ({ feature, visual }: ProductFeatureBlockProp
           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             {feature.eyebrow}
           </span>
-          <h2 className="mt-3 font-display text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+          <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-shimmer-highlight sm:text-3xl">
             {feature.title}
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">

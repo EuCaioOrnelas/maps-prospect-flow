@@ -14,8 +14,6 @@ interface ProductHeroProps {
 }
 
 export const ProductHero = ({ product }: ProductHeroProps) => {
-  const Icon = product.icon;
-
   return (
     <section className="relative -mt-[72px] w-full overflow-x-clip pb-32 pt-[120px] sm:-mt-[80px] sm:pb-44 sm:pt-[136px]">
       <div
