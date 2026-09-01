@@ -119,7 +119,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
           </div>
 
           <div
-            className="animate-slide-up relative mt-10 flex w-full justify-start sm:mt-14 lg:mt-16"
+            className="animate-slide-up relative mt-10 flex w-full min-w-0 justify-start sm:mt-14 lg:mt-16"
             style={{ animationDelay: "0.45s" }}
           >
             {/* Faixa de plasma (verde Wiize) — sempre atrás do mockup, inclusive no mobile */}
