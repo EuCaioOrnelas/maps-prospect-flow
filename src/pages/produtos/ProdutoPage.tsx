@@ -47,8 +47,6 @@ export default function ProdutoPage() {
       <main>
         <ProductHero product={product} />
 
-        <ProductSectionDivider label={product.shortDescription} />
-
         <ProductHowItWorks title={product.howItWorksTitle} steps={product.howItWorks} />
 
         {product.features.map((feature, i) => (
