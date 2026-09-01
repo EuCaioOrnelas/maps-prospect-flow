@@ -1850,22 +1850,50 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
 }
 
 /* ── Faixa de plasma diagonal das páginas de produto (leve, CSS puro) ── */
+/* Faixa "plasma" sólida: bordas nítidas, cores fluindo dentro (óleo na água) */
 .wz-band {
-  background:
-    radial-gradient(45% 120% at 12% 45%, hsl(158 80% 45% / 0.95) 0%, transparent 62%),
-    radial-gradient(42% 120% at 38% 55%, hsl(172 85% 46% / 0.9) 0%, transparent 62%),
-    radial-gradient(45% 130% at 62% 40%, hsl(186 80% 48% / 0.8) 0%, transparent 62%),
-    radial-gradient(45% 130% at 88% 60%, hsl(150 75% 40% / 0.9) 0%, transparent 62%),
-    linear-gradient(90deg, hsl(150 70% 38%) 0%, hsl(165 72% 42%) 35%, hsl(178 70% 44%) 65%, hsl(158 72% 40%) 100%);
-  filter: blur(26px) saturate(1.15);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(90deg, hsl(150 72% 38%) 0%, hsl(165 74% 42%) 32%, hsl(176 72% 45%) 62%, hsl(155 74% 40%) 100%);
+}
+.wz-band::before,
+.wz-band::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
   will-change: transform;
-  animation: wzBandFlow 24s ease-in-out infinite alternate;
+  filter: blur(38px) saturate(1.2);
 }
-@keyframes wzBandFlow {
-  0%   { transform: translate3d(-3%, 0, 0) scaleY(1); }
-  50%  { transform: translate3d(2%, -1.5%, 0) scaleY(1.12); }
-  100% { transform: translate3d(-1%, 1.5%, 0) scaleY(0.95); }
+.wz-band::before {
+  background:
+    radial-gradient(28% 60% at 18% 45%, hsl(158 90% 48%) 0%, transparent 60%),
+    radial-gradient(26% 58% at 45% 60%, hsl(172 92% 50%) 0%, transparent 60%),
+    radial-gradient(30% 62% at 74% 40%, hsl(186 88% 52%) 0%, transparent 60%);
+  animation: wzPlasmaA 18s ease-in-out infinite alternate;
 }
+.wz-band::after {
+  background:
+    radial-gradient(24% 55% at 30% 65%, hsl(145 85% 42%) 0%, transparent 58%),
+    radial-gradient(26% 58% at 62% 35%, hsl(168 95% 55%) 0%, transparent 58%),
+    radial-gradient(28% 60% at 90% 62%, hsl(150 80% 38%) 0%, transparent 58%);
+  animation: wzPlasmaB 23s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+@keyframes wzPlasmaA {
+  0%   { transform: translate3d(-6%, -4%, 0) scale(1.05) rotate(0deg); }
+  33%  { transform: translate3d(4%, 5%, 0) scale(1.18) rotate(4deg); }
+  66%  { transform: translate3d(8%, -6%, 0) scale(1.1) rotate(-3deg); }
+  100% { transform: translate3d(-3%, 3%, 0) scale(1.2) rotate(2deg); }
+}
+@keyframes wzPlasmaB {
+  0%   { transform: translate3d(5%, 4%, 0) scale(1.15) rotate(-2deg); }
+  40%  { transform: translate3d(-7%, -5%, 0) scale(1.05) rotate(3deg); }
+  75%  { transform: translate3d(3%, 6%, 0) scale(1.22) rotate(-4deg); }
+  100% { transform: translate3d(-4%, -3%, 0) scale(1.08) rotate(1deg); }
+}
+
 
 /* ── Flutuação sutil dos mockups de produto ── */
 .pv-float {
