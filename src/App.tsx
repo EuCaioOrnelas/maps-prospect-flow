@@ -108,6 +108,7 @@ const MetaConnectGuide = lazyWithRetry(() => import("./pages/MetaConnectGuide"),
 const MetaConfiguracoes = lazyWithRetry(() => import("./pages/meta/MetaConfiguracoes"), "MetaConfiguracoes");
 
 const EnterpriseContact = lazyWithRetry(() => import("./pages/EnterpriseContact"), "EnterpriseContact");
+const ProdutoPage = lazyWithRetry(() => import("./pages/produtos/ProdutoPage"), "ProdutoPage");
 const Blog = lazyWithRetry(() => import("./pages/Blog"), "Blog");
 const BlogPost = lazyWithRetry(() => import("./pages/BlogPost"), "BlogPost");
 const TrialExpired = lazyWithRetry(() => import("./pages/TrialExpired"), "TrialExpired");
