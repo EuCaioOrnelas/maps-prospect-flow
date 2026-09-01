@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { motion, useScroll, useSpring, useMotionValueEvent } from "framer-motion";
+import { motion, useScroll, useSpring, useMotionValueEvent, useTransform } from "framer-motion";
 import { Check } from "lucide-react";
 import type { ProductStep } from "@/data/products";
 
@@ -17,6 +17,7 @@ export const ProductHowItWorks = ({ title, steps }: ProductHowItWorksProps) => {
     offset: ["start 70%", "end 60%"],
   });
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 24, mass: 0.4 });
+  const dotTop = useTransform(progress, (v) => `${Math.min(100, Math.max(0, v * 100))}%`);
 
   useMotionValueEvent(progress, "change", (v) => {
     const idx = Math.min(steps.length - 1, Math.max(0, Math.round(v * (steps.length - 1))));
@@ -47,7 +48,7 @@ export const ProductHowItWorks = ({ title, steps }: ProductHowItWorksProps) => {
             {/* bolinha que acompanha o scroll */}
             <motion.span
               className="absolute -left-[5px] top-0 h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]"
-              style={{ top: useTopPercent(progress) }}
+              style={{ top: dotTop }}
               aria-hidden
             />
 
