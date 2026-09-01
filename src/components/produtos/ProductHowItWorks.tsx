@@ -16,7 +16,7 @@ export const ProductHowItWorks = ({ title, steps }: ProductHowItWorksProps) => {
     target: listRef,
     offset: ["start 70%", "end 60%"],
   });
-  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 24, mass: 0.4 });
+  const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 30, mass: 0.6 });
   const dotTop = useTransform(progress, (v) => `${Math.min(100, Math.max(0, v * 100))}%`);
 
   useMotionValueEvent(progress, "change", (v) => {
@@ -64,11 +64,11 @@ export const ProductHowItWorks = ({ title, steps }: ProductHowItWorksProps) => {
                 <motion.span
                   animate={
                     active === i
-                      ? { scale: 1.18, backgroundColor: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }
-                      : { scale: 1, backgroundColor: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary))" }
+                      ? { scale: 1.16, backgroundColor: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", borderColor: "hsl(var(--primary))" }
+                      : { scale: 1, backgroundColor: "hsl(var(--card))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
                   }
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="absolute -left-[2.1rem] flex h-7 w-7 items-center justify-center rounded-full border border-primary/20 text-[11px] font-bold sm:-left-[2.6rem]"
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute -left-[2.1rem] z-10 flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-bold shadow-[0_0_0_4px_hsl(var(--background))] sm:-left-[2.6rem]"
                 >
                   {String(i + 1).padStart(2, "0")}
                 </motion.span>

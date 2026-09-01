@@ -66,17 +66,17 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.45, delay: i * 0.05, ease: "easeOut" }}
-              className="w-[85%] shrink-0 snap-start sm:w-[calc(50%-0.625rem)] lg:w-[calc(33.333%-0.834rem)]"
+              className="w-[78%] shrink-0 snap-start sm:w-[46%] lg:w-[31%]"
             >
               <Link
                 to={`/produtos/${p.slug}`}
                 className="group flex h-full flex-col overflow-hidden rounded-panel border border-border/60 bg-card/60 transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.02]"
               >
-                <div className="relative h-44 overflow-hidden border-b border-border/50 bg-secondary/30">
+                <div className="relative h-44 overflow-hidden border-b border-border/50 bg-gradient-to-br from-primary/15 via-primary/5 to-emerald-400/10">
                   <div className="pointer-events-none absolute left-1/2 top-6 w-[22rem] origin-top -translate-x-1/2 scale-[0.62] transition-transform duration-500 group-hover:scale-[0.66]">
                     <ProductHeroVisual visual={p.key} />
                   </div>
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card to-transparent" />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card via-card/70 to-transparent" />
                 </div>
 
                 <div className="flex flex-1 flex-col p-5">
