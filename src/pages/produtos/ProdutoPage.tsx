@@ -34,7 +34,7 @@ export default function ProdutoPage() {
   const url = `${SITE_URL}/produtos/${product.slug}`;
 
   return (
-    <div className="min-h-screen w-full overflow-x-clip bg-background">
+    <div className="min-h-screen w-full bg-background">
       <SEO
         title={product.seoTitle}
         description={product.seoDescription}
