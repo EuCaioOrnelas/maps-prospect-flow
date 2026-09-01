@@ -263,6 +263,7 @@ export const PRODUCTS: ProductConfig[] = [
     keywords:
       "agendamento comercial, reuniões B2B, agenda de vendas, confirmação de reunião, Google Agenda",
     howItWorksTitle: "Do interesse ao compromisso confirmado",
+    howItWorksHighlight: "compromisso confirmado",
     howItWorks: [
       {
         title: "Identifique o momento certo",
