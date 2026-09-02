@@ -161,11 +161,12 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         }}
       >
         <div
-          className="mx-auto"
+          className={scrolled ? "mx-auto pl-6 pr-3" : "mx-auto px-6 sm:px-10 lg:px-16"}
           onMouseLeave={scheduleClose}
           style={{
             // Abrir o menu NÃO altera tamanho, largura, padding ou posição — só revela o fundo
-            maxWidth: scrolled ? '920px' : '1280px',
+            // Fora do scroll a navbar acompanha o container das páginas (max-w-[90rem]).
+            maxWidth: scrolled ? '920px' : '90rem',
             borderRadius: scrolled || openMenu ? '18px' : '0px',
             backgroundColor: openMenu
               ? 'hsl(var(--background))'
@@ -178,12 +179,11 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             boxShadow: openMenu || scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
             paddingTop: scrolled ? '8px' : '16px',
             paddingBottom: scrolled ? '8px' : '16px',
-            paddingLeft: scrolled ? '24px' : '16px',
-            paddingRight: scrolled ? '12px' : '16px',
             transition: 'max-width 320ms cubic-bezier(0.22,1,0.36,1), border-radius 220ms ease-out, background-color 220ms ease-out, box-shadow 220ms ease-out, padding 320ms cubic-bezier(0.22,1,0.36,1)',
             transform: 'translateZ(0)',
           }}
         >
+
           <div className="flex items-center justify-between mx-auto w-full gap-8">
             <Logo size="md" mobileSize="md" />
 
