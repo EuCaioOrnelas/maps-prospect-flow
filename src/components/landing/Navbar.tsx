@@ -177,7 +177,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           {(openMenu || mobileMenuOpen) ? (
             <div
               aria-hidden="true"
-              className="absolute left-[24px] right-[24px] sm:left-[40px] sm:right-[40px] lg:left-[64px] lg:right-[64px] top-0 bottom-0 rounded-[18px]"
+              className="absolute left-[16px] right-[16px] sm:left-[28px] sm:right-[28px] lg:left-[48px] lg:right-[48px] top-0 bottom-0 rounded-[18px]"
               style={{
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border) / 0.82)',
@@ -187,7 +187,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           ) : (
             <div
               aria-hidden="true"
-              className="absolute left-[24px] right-[24px] sm:left-[40px] sm:right-[40px] lg:left-[64px] lg:right-[64px] top-0 bottom-0"
+              className="absolute left-[16px] right-[16px] sm:left-[28px] sm:right-[28px] lg:left-[48px] lg:right-[48px] top-0 bottom-0"
               style={{
                 borderRadius: scrolled ? '18px' : '0px',
                 backgroundColor: scrolled ? 'hsl(var(--background) / 0.55)' : 'transparent',
