@@ -1334,42 +1334,29 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           </ul>
         </div>
 
-        {/* Área do mockup — fundo verde ocupando toda a altura/largura da coluna,
-            encostado nas bordas verticais do card, com desfoque na base da imagem */}
+        {/* Área do mockup — mesmo estilo dos cards "Escolha seu caminho":
+            fundo em degradê colorido no tom verde e mock encostado na borda inferior */}
         <div
           className={cn(
-            "relative overflow-hidden",
+            "relative overflow-hidden px-4 sm:px-6 lg:px-8",
             "flex items-end justify-center h-full",
             "bg-gradient-to-br",
             MODULE_THEMES[index % MODULE_THEMES.length],
-            reversed ? "lg:rounded-l-card" : "lg:rounded-r-card",
           )}
         >
           {/* brilhos suaves sobre o degradê */}
           <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-white/25 blur-2xl pointer-events-none" aria-hidden="true" />
           <div className="absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/15 blur-2xl pointer-events-none" aria-hidden="true" />
-          <div className="relative w-full h-full flex items-end justify-center">
-            <div
-              className="w-full translate-y-8 sm:translate-y-12 lg:translate-y-14"
-              style={{
-                maskImage: "linear-gradient(to bottom, black 96%, transparent 100%)",
-                WebkitMaskImage: "linear-gradient(to bottom, black 96%, transparent 100%)",
-              }}
-            >
-              <MockStage>
-                <Mock />
-              </MockStage>
-            </div>
-            {/* Efeito de desfoque na base da imagem — parece que o mockup está surgindo */}
-            <div
-              className="absolute inset-x-0 bottom-0 h-20 sm:h-28 pointer-events-none"
-              style={{
-                background: "linear-gradient(to top, hsl(var(--card) / 0.42), hsl(var(--card) / 0.18) 40%, transparent)",
-                backdropFilter: "blur(10px)",
-                WebkitBackdropFilter: "blur(10px)",
-              }}
-              aria-hidden="true"
-            />
+          <div
+            className="relative w-full translate-y-8 sm:translate-y-12 lg:translate-y-14"
+            style={{
+              maskImage: "linear-gradient(to bottom, black 98%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 98%, transparent 100%)",
+            }}
+          >
+            <MockStage>
+              <Mock />
+            </MockStage>
           </div>
         </div>
 
