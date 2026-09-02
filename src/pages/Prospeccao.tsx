@@ -132,8 +132,8 @@ const Prospeccao = () => {
           <HeroSection
             onSignupClick={trackSignupClick}
             titleLine1="Encontre empresas"
-            titleLine2="Venda com eficiência"
-            titleHighlight=""
+            titleLine2=""
+            titleHighlight="Venda com eficiência"
             description="Nossa IA encontra empresas, analisa cada oportunidade e gera um diagnóstico comercial com as principais dores, oportunidades e potencial de cada cliente, ajudando sua equipe a vender com mais contexto e eficiência."
             descriptionClassName="text-sm sm:text-base md:text-[1.05rem] leading-relaxed"
           />
