@@ -170,12 +170,12 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             paddingBottom: '8px',
           }}
         >
-          {/* Card de fundo: acompanha as bordas do conteúdo e ultrapassa só 2px,
-              sem ocupar toda a largura externa do container. */}
+          {/* Card de fundo: acompanha as bordas do conteúdo com um leve respiro
+              lateral suave, sem ocupar toda a largura externa do container. */}
           {(openMenu || mobileMenuOpen) ? (
             <div
               aria-hidden="true"
-              className="absolute left-[22px] right-[22px] sm:left-[38px] sm:right-[38px] lg:left-[62px] lg:right-[62px] top-0 bottom-0 rounded-[18px]"
+              className="absolute left-[24px] right-[24px] sm:left-[40px] sm:right-[40px] lg:left-[64px] lg:right-[64px] top-0 bottom-0 rounded-[18px]"
               style={{
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border) / 0.82)',
@@ -185,7 +185,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           ) : (
             <div
               aria-hidden="true"
-              className="absolute inset-0"
+              className="absolute left-[24px] right-[24px] sm:left-[40px] sm:right-[40px] lg:left-[64px] lg:right-[64px] top-0 bottom-0"
               style={{
                 borderRadius: scrolled ? '18px' : '0px',
                 backgroundColor: scrolled ? 'hsl(var(--background) / 0.55)' : 'transparent',
@@ -298,10 +298,10 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             </div>
           )}
 
-          {/* Mobile menu — ultrapassa apenas 2px das bordas do conteúdo */}
+          {/* Mobile menu — mesmo respiro lateral suave do card de fundo */}
           {mobileMenuOpen && (
             <div
-              className="sm:hidden absolute left-[22px] right-[22px] top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
+              className="sm:hidden absolute left-[24px] right-[24px] top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
               style={{
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border) / 0.82)',
