@@ -58,12 +58,14 @@ function StepRow({
   step,
   index,
   isLeft,
-  active,
+  passed,
+  nodeRef,
 }: {
   step: typeof steps[0];
   index: number;
   isLeft: boolean;
-  active: boolean;
+  passed: boolean;
+  nodeRef: (el: HTMLSpanElement | null) => void;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const inView = useInView(rowRef, { once: true, amount: 0.25 });
