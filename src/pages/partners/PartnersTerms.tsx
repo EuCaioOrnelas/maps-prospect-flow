@@ -243,12 +243,12 @@ export default function PartnersTerms() {
             </Bullet>
 
             <Bullet>
-              A recorrência é paga por até <strong>24 meses</strong> a partir da primeira fatura
+              A recorrência é paga por até <strong>12 meses</strong> a partir da primeira fatura
               paga, desde que o cliente permaneça ativo e adimplente.
             </Bullet>
             <Bullet>
               A atribuição é feita por <strong>last-click</strong> com janela de cookie de
-              <strong> 2 anos</strong>. Apenas vendas <strong>registradas, aprovadas e efetivamente
+              <strong> 1 ano</strong>. Apenas vendas <strong>registradas, aprovadas e efetivamente
               pagas</strong> no sistema da Wiize geram comissão.
             </Bullet>
             <Bullet>

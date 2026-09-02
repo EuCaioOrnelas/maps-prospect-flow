@@ -38,10 +38,10 @@ const AVG_TICKET = 798;
 const MAX_PER_REFERRAL = Math.round(AVG_TICKET * (MAX_COMMISSION / 100) * 24); // R$ 3.830
 
 const benefits = [
-  { icon: Wallet, title: "Comissão recorrente por 24 meses", desc: "Você ganha sobre cada renovação do cliente indicado, mês após mês, durante 2 anos." },
+  { icon: Wallet, title: "Comissão recorrente por 12 meses", desc: "Você ganha sobre cada renovação do cliente indicado, mês após mês, durante 1 ano." },
   { icon: TrendingUp, title: "Níveis progressivos", desc: "Quanto mais clientes ativos, maior sua porcentagem sobre cada venda — automaticamente." },
   { icon: Megaphone, title: "Materiais prontos", desc: "Banners, copies, posts e roteiros validados — você só compartilha o seu link exclusivo." },
-  { icon: Target, title: "Atribuição last-click 2 anos", desc: "Mesmo que o lead leve meses para fechar, a venda continua vinculada a você." },
+  { icon: Target, title: "Atribuição last-click 1 ano", desc: "Mesmo que o lead leve meses para fechar, a venda continua vinculada a você." },
   { icon: Users, title: "Painel completo em tempo real", desc: "Cliques, leads, conversões, comissões pendentes e disponíveis para saque, num só lugar." },
   { icon: Sparkles, title: "Saque a partir de R$ 100", desc: "Pix em até 5 dias úteis após aprovação. Sem burocracia, sem letra miúda." },
 ];
@@ -57,7 +57,7 @@ const steps = [
     n: "02",
     icon: Link2,
     t: "Receba seu link exclusivo",
-    d: "Aprovado, você ganha acesso ao portal Wiize Partners com um link único de indicação (ex.: wiize.com.br/?ref=seu-codigo). Toda venda que vier por ele fica vinculada a você por 2 anos via cookie last-click.",
+    d: "Aprovado, você ganha acesso ao portal Wiize Partners com um link único de indicação (ex.: wiize.com.br/?ref=seu-codigo). Toda venda que vier por ele fica vinculada a você por 1 ano via cookie last-click.",
   },
   {
     n: "03",
@@ -86,7 +86,7 @@ const faq = [
   },
   {
     q: "Como funciona a atribuição last-click?",
-    a: "Quando alguém clica no seu link de indicação, gravamos um cookie por 2 anos. Toda venda dessa pessoa nesse período é creditada a você, mesmo que ela leve meses para concluir a contratação. Se outro parceiro for o último clique antes da compra, a comissão vai para ele — por isso vale acompanhar o lead até o fechamento.",
+    a: "Quando alguém clica no seu link de indicação, gravamos um cookie por 1 ano. Toda venda dessa pessoa nesse período é creditada a você, mesmo que ela leve meses para concluir a contratação. Se outro parceiro for o último clique antes da compra, a comissão vai para ele — por isso vale acompanhar o lead até o fechamento.",
   },
 
   {
@@ -95,7 +95,7 @@ const faq = [
   },
   {
     q: "A comissão é realmente recorrente?",
-    a: "Sim. Você recebe sobre cada renovação do cliente indicado durante 24 meses. Se o cliente assinar o plano mensal, você ganha todo mês. Se assinar o anual, ganha sobre cada renovação anual dentro da janela de 24 meses.",
+    a: "Sim. Você recebe sobre cada renovação do cliente indicado durante 12 meses. Se o cliente assinar o plano mensal, você ganha todo mês. Se assinar o anual, ganha sobre cada renovação anual dentro da janela de 12 meses.",
   },
   {
     q: "Como subo de nível?",
@@ -174,7 +174,7 @@ export default function PartnersLanding() {
 
   const formattedMaxPerReferral = MAX_PER_REFERRAL.toLocaleString("pt-BR");
   const pageTitle = `Wiize Partners — Comissão recorrente até ${displayMax}% indicando a Wiize`;
-  const pageDescription = `Indique a Wiize, receba até ${displayMax}% de comissão recorrente por 24 meses. Atribuição last-click, materiais prontos e saque via Pix.`;
+  const pageDescription = `Indique a Wiize, receba até ${displayMax}% de comissão recorrente por 12 meses. Atribuição last-click, materiais prontos e saque via Pix.`;
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
@@ -223,7 +223,7 @@ export default function PartnersLanding() {
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] mb-6 text-foreground">
             Indique a Wiize.<br />
-            Receba até {displayMax}% por 24 meses.
+            Receba até {displayMax}% por 12 meses.
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
             Comissão recorrente sobre toda venda gerada pelo seu link.
@@ -242,7 +242,7 @@ export default function PartnersLanding() {
           <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 max-w-3xl mx-auto">
             {[
               { v: `${displayMax}%`, l: "comissão máxima" },
-              { v: "24 meses", l: "recorrência" },
+              { v: "12 meses", l: "recorrência" },
               { v: "R$ 100", l: "saque mínimo" },
               { v: null, prefix: "Até", amount: `R$ ${formattedMaxPerReferral}`, l: "por indicação¹" },
             ].map((s) => (
@@ -260,7 +260,7 @@ export default function PartnersLanding() {
             ))}
           </div>
           <p className="mt-4 text-[11px] text-muted-foreground/80 max-w-2xl mx-auto px-2 leading-relaxed">
-            ¹ Estimativa conservadora considerando o ticket médio de R$ {AVG_TICKET.toLocaleString("pt-BR")}/mês × {displayMax}% × 24 meses. Os planos da Wiize são modulares e contam com diversos adicionais conforme a demanda de cada cliente, podendo ultrapassar R$ 10 mil/mês — ou seja, <strong className="text-foreground">não há teto fixo</strong> e o ganho real por indicação pode ser significativamente maior.
+            ¹ Estimativa conservadora considerando o ticket médio de R$ {AVG_TICKET.toLocaleString("pt-BR")}/mês × {displayMax}% × 12 meses. Os planos da Wiize são modulares e contam com diversos adicionais conforme a demanda de cada cliente, podendo ultrapassar R$ 10 mil/mês — ou seja, <strong className="text-foreground">não há teto fixo</strong> e o ganho real por indicação pode ser significativamente maior.
           </p>
         </div>
       </section>
@@ -337,7 +337,7 @@ export default function PartnersLanding() {
               <Target size={16} className="text-primary" /> Sobre o link de divulgação
             </p>
             <p>
-              Cada parceiro recebe <strong className="text-foreground">um único link rastreável</strong> (ex.: <code className="px-1.5 py-0.5 rounded bg-card border border-border/60 text-foreground text-xs break-all">wiize.com.br/?ref=seu-codigo</code>). Quando alguém clica, gravamos um cookie de <strong className="text-foreground">2 anos</strong> no navegador. Toda venda feita por esse usuário dentro desse período é creditada automaticamente a você — mesmo que ele cadastre por outro caminho depois. Sem código pra colar, sem integração, sem complicação.
+              Cada parceiro recebe <strong className="text-foreground">um único link rastreável</strong> (ex.: <code className="px-1.5 py-0.5 rounded bg-card border border-border/60 text-foreground text-xs break-all">wiize.com.br/?ref=seu-codigo</code>). Quando alguém clica, gravamos um cookie de <strong className="text-foreground">1 ano</strong> no navegador. Toda venda feita por esse usuário dentro desse período é creditada automaticamente a você — mesmo que ele cadastre por outro caminho depois. Sem código pra colar, sem integração, sem complicação.
             </p>
           </div>
         </div>
@@ -568,7 +568,7 @@ export default function PartnersLanding() {
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
               Candidate-se ao Wiize Partners e tenha acesso ao portal exclusivo,
-              link de indicação, materiais prontos e comissão recorrente por 24 meses.
+              link de indicação, materiais prontos e comissão recorrente por 12 meses.
             </p>
             <Button size="lg" className="gap-2 px-8 shadow-lg shadow-primary/25" asChild>
               <Link to={APPLY_PATH}>
