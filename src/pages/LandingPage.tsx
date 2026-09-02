@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { SEO } from "@/components/SEO";
+import { SEO, siteNavigationSchema } from "@/components/SEO";
 import { faqJsonLd } from "@/components/landing/FAQSection";
 import { platformModulesJsonLd } from "@/components/sales/PlatformModulesSection";
 import { Navbar } from "@/components/landing/Navbar";
@@ -128,6 +128,7 @@ const LandingPage = () => {
           },
           platformModulesJsonLd,
           faqJsonLd,
+          siteNavigationSchema,
         ]}
       />
       <main className="landing-light min-h-screen bg-background overflow-x-hidden overflow-y-auto w-full max-w-full relative">
