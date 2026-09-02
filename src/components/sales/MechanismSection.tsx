@@ -7,7 +7,7 @@ import {
   useTransform,
   useMotionValueEvent,
 } from "framer-motion";
-import { Search, Bot, LayoutGrid, Sparkles, CalendarCheck, CheckCircle2 } from "lucide-react";
+import { Search, Bot, LayoutGrid, Sparkles, CalendarCheck, CheckCircle2, MessageCircle, TrendingUp, Users, Target } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
@@ -58,12 +58,14 @@ function StepRow({
   step,
   index,
   isLeft,
-  active,
+  passed,
+  nodeRef,
 }: {
   step: typeof steps[0];
   index: number;
   isLeft: boolean;
-  active: boolean;
+  passed: boolean;
+  nodeRef: (el: HTMLSpanElement | null) => void;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const inView = useInView(rowRef, { once: true, amount: 0.25 });
@@ -75,6 +77,7 @@ function StepRow({
           motion only animates scale/opacity on the inner span so the
           Tailwind translate centering is never overridden */}
       <span
+        ref={nodeRef}
         className="absolute left-[15px] top-8 z-20 -translate-x-1/2 md:left-1/2 md:top-1/2 md:-translate-y-1/2"
         aria-hidden
       >
@@ -86,7 +89,7 @@ function StepRow({
         >
           <motion.span
             animate={
-              active
+              passed
                 ? {
                     backgroundColor: "hsl(var(--primary))",
                     color: "hsl(var(--primary-foreground))",
@@ -140,21 +143,43 @@ function StepRow({
   );
 }
 
+const floatingChips = [
+  { icon: MessageCircle, label: "Follow-up automático", className: "left-[3%] top-[18%]", delay: 0 },
+  { icon: TrendingUp, label: "+ Reuniões na agenda", className: "right-[4%] top-[26%]", delay: 1.2 },
+  { icon: Users, label: "Leads qualificados", className: "left-[5%] bottom-[22%]", delay: 2.1 },
+  { icon: Target, label: "Pipeline organizado", className: "right-[3%] bottom-[14%]", delay: 0.7 },
+];
+
 export const MechanismSection = () => {
   const { ref, isVisible } = useScrollAnimation();
   const trackRef = useRef<HTMLDivElement>(null);
+  const nodeRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const nodeYs = useRef<number[]>([]);
   const [trackH, setTrackH] = useState(0);
-  const [active, setActive] = useState(0);
+  const [passedCount, setPassedCount] = useState(0);
 
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
-    const update = () => setTrackH(el.getBoundingClientRect().height);
+    const update = () => {
+      const tr = el.getBoundingClientRect();
+      setTrackH(tr.height);
+      // Posição vertical do centro de cada nó numerado, relativa à trilha
+      nodeYs.current = nodeRefs.current.map((n) => {
+        if (!n) return Number.POSITIVE_INFINITY;
+        const r = n.getBoundingClientRect();
+        return r.top + r.height / 2 - tr.top;
+      });
+    };
     update();
-    if (typeof ResizeObserver === "undefined") return;
+    const t = window.setTimeout(update, 350);
+    if (typeof ResizeObserver === "undefined") return () => window.clearTimeout(t);
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      window.clearTimeout(t);
+    };
   }, []);
 
   const { scrollYProgress } = useScroll({
@@ -168,10 +193,15 @@ export const MechanismSection = () => {
     restDelta: 0.0005,
   });
   const dotY = useTransform(progress, (v) => Math.min(1, Math.max(0, v)) * trackH);
+  const lineH = useTransform(dotY, (y) => Math.max(0, y - 5));
 
-  useMotionValueEvent(progress, "change", (v) => {
-    const idx = Math.min(steps.length - 1, Math.max(0, Math.floor(v * steps.length)));
-    setActive((prev) => (prev === idx ? prev : idx));
+  useMotionValueEvent(dotY, "change", (y) => {
+    // O nó só ganha foco verde quando a bola já passou pelo centro dele
+    let count = 0;
+    nodeYs.current.forEach((ny) => {
+      if (y >= ny - 4) count += 1;
+    });
+    setPassedCount((prev) => (prev === count ? prev : count));
   });
 
   return (
@@ -179,6 +209,24 @@ export const MechanismSection = () => {
       ref={ref as React.RefObject<HTMLElement>}
       className="relative w-full overflow-hidden py-12 sm:py-20"
     >
+      {/* Mini cards flutuantes discretos no fundo */}
+      {floatingChips.map((chip) => (
+        <motion.div
+          key={chip.label}
+          initial={{ opacity: 0, y: 12 }}
+          animate={isVisible ? { opacity: 1, y: [0, -8, 0] } : {}}
+          transition={{
+            opacity: { duration: 0.6, delay: 0.4 + chip.delay * 0.2 },
+            y: { duration: 5, repeat: Infinity, ease: "easeInOut", delay: chip.delay },
+          }}
+          className={`pointer-events-none absolute z-0 hidden items-center gap-2 rounded-hover border border-border/60 bg-card/80 px-3 py-2 shadow-sm xl:flex ${chip.className}`}
+          aria-hidden
+        >
+          <chip.icon size={14} className="text-primary" strokeWidth={2} />
+          <span className="text-[11px] font-medium text-muted-foreground">{chip.label}</span>
+        </motion.div>
+      ))}
+
       <div className="container relative z-10 mx-auto max-w-6xl px-4">
         <SectionHeading
           eyebrow="Por que é diferente"
@@ -212,19 +260,35 @@ export const MechanismSection = () => {
             className="absolute left-[15px] top-0 z-0 h-full w-px bg-border/70 md:left-1/2"
             aria-hidden
           />
+          {/* preenchimento verde — termina exatamente no topo da bola,
+              nunca passa por cima dela nem deixa gap no início */}
           <motion.span
             className="absolute left-[15px] top-0 z-0 w-px bg-primary md:left-1/2"
-            style={{ height: dotY }}
+            style={{ height: lineH }}
             aria-hidden
           />
-          <motion.span
-            className="absolute left-[15px] top-0 z-10 h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18)] md:left-1/2"
-            style={{ y: dotY, marginTop: -5, willChange: "transform" }}
+          {/* bola — wrapper puro cuida da centralização; o motion só anima Y */}
+          <span
+            className="absolute left-[15px] top-0 z-10 -translate-x-1/2 md:left-1/2"
             aria-hidden
-          />
+          >
+            <motion.span
+              className="block h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18)]"
+              style={{ y: dotY, marginTop: -5, willChange: "transform" }}
+            />
+          </span>
 
           {steps.map((step, i) => (
-            <StepRow key={step.title} step={step} index={i} isLeft={i % 2 === 0} active={active === i} />
+            <StepRow
+              key={step.title}
+              step={step}
+              index={i}
+              isLeft={i % 2 === 0}
+              passed={i < passedCount}
+              nodeRef={(el) => {
+                nodeRefs.current[i] = el;
+              }}
+            />
           ))}
         </div>
 
