@@ -160,11 +160,13 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         }}
       >
         <div
-          className="relative mx-auto w-full px-6 sm:px-10 lg:px-16"
+          className="relative mx-auto w-full px-4 sm:px-7 lg:px-12"
           onMouseLeave={scheduleClose}
           style={{
-            // Mesma largura/padding do container da página (max-w-[90rem]).
-            // O navbar NUNCA muda de tamanho/posição ao abrir os links.
+            // O container tem padding reduzido para que o card de fundo fique
+            // levemente recuado das bordas da página. O wrapper interno dos
+            // links adiciona o padding lateral pedido, mantendo o conteúdo
+            // alinhado ao max-width da página.
             maxWidth: '90rem',
             paddingTop: '8px',
             paddingBottom: '8px',
