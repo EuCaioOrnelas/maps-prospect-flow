@@ -23,16 +23,28 @@ const defaultMeta = {
   type: 'website',
 };
 
-// Sitelinks navigation (Teste grátis, Entrar, Prospecção, Contato)
+// Sitelinks navigation — influences Google sitelinks for brand queries
 export const siteNavigationSchema = {
   '@context': 'https://schema.org',
   '@type': 'ItemList',
   '@id': `${SITE_URL}/#sitenav`,
+  name: 'Navegação principal Wiize',
   itemListElement: [
-    { '@type': 'SiteNavigationElement', position: 1, name: 'Teste grátis por 7 dias', description: 'Crie sua conta e use a Wiize completa por 7 dias.', url: `${SITE_URL}/signup/escolher-plano` },
-    { '@type': 'SiteNavigationElement', position: 2, name: 'Entrar', description: 'Acesse sua conta Wiize.', url: `${SITE_URL}/login` },
-    { '@type': 'SiteNavigationElement', position: 3, name: 'Prospecção B2B com IA', description: 'Prospecte, analise e diagnostique empresas automaticamente.', url: `${SITE_URL}/prospeccao` },
-    { '@type': 'SiteNavigationElement', position: 4, name: 'Contato', description: 'Fale com a central de contato da Wiize.', url: `${SITE_URL}/contato` },
+    { '@type': 'SiteNavigationElement', position: 1, name: 'Login', description: 'Acesse sua conta Wiize.', url: `${SITE_URL}/login` },
+    { '@type': 'SiteNavigationElement', position: 2, name: 'Teste Grátis', description: 'Crie sua conta e use a Wiize completa por 7 dias.', url: `${SITE_URL}/signup/escolher-plano` },
+    { '@type': 'SiteNavigationElement', position: 3, name: 'Contato', description: 'Fale com a central de atendimento da Wiize.', url: `${SITE_URL}/contato` },
+    { '@type': 'SiteNavigationElement', position: 4, name: 'Política de Privacidade', description: 'Saiba como a Wiize protege seus dados.', url: `${SITE_URL}/privacy` },
+    { '@type': 'SiteNavigationElement', position: 5, name: 'Termos de Uso', description: 'Termos e condições de uso da plataforma Wiize.', url: `${SITE_URL}/terms` },
+  ],
+};
+
+// BreadcrumbList for the homepage
+export const homeBreadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  '@id': `${SITE_URL}/#breadcrumb`,
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Wiize', item: SITE_URL },
   ],
 };
 
