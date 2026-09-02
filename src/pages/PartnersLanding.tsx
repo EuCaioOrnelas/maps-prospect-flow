@@ -35,7 +35,7 @@ const DEFAULTS: Settings = {
 
 const MAX_COMMISSION = 20;
 const AVG_TICKET = 798;
-const MAX_PER_REFERRAL = Math.round(AVG_TICKET * (MAX_COMMISSION / 100) * 24); // R$ 3.830
+const MAX_PER_REFERRAL = Math.round(AVG_TICKET * (MAX_COMMISSION / 100) * 12);
 
 const benefits = [
   { icon: Wallet, title: "Comissão recorrente por 12 meses", desc: "Você ganha sobre cada renovação do cliente indicado, mês após mês, durante 1 ano." },
