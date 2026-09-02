@@ -187,9 +187,13 @@ export const MechanismSection = () => {
   });
   const dotY = useTransform(progress, (v) => Math.min(1, Math.max(0, v)) * trackH);
 
-  useMotionValueEvent(progress, "change", (v) => {
-    const idx = Math.min(steps.length - 1, Math.max(0, Math.floor(v * steps.length)));
-    setActive((prev) => (prev === idx ? prev : idx));
+  useMotionValueEvent(dotY, "change", (y) => {
+    // O nó só ganha foco verde quando a bola já passou pelo centro dele
+    let count = 0;
+    nodeYs.current.forEach((ny) => {
+      if (y >= ny - 4) count += 1;
+    });
+    setPassedCount((prev) => (prev === count ? prev : count));
   });
 
   return (
