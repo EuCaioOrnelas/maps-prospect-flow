@@ -166,12 +166,12 @@ export const PRODUCTS: ProductConfig[] = [
     shortDescription: "Um SDR autônomo que conversa, qualifica e agenda",
     cardTagline: "Um SDR autônomo que conversa, qualifica e agenda",
     cardDescription:
-      "Um SDR autônomo de verdade: atende, conversa, compreende o contexto, diagnostica a necessidade, qualifica, vende e agenda reuniões pela Agenda Inteligente — sozinho, o dia inteiro.",
+      "Um SDR autônomo de verdade: atende, conversa, compreende o contexto, diagnostica a necessidade, qualifica, vende e agenda reuniões pela Agenda Inteligente, sozinho, o dia inteiro.",
     icon: Bot,
     heroTitle: "SDR Inteligente que",
     heroHighlight: "vende sozinho",
     heroDescription:
-      "O SDR Inteligente conversa como gente: compreende o que o lead diz, entende o momento dele, diagnostica a necessidade, apresenta a solução, contorna objeções e agenda a reunião pela Agenda Inteligente — sem precisar de alguém disponível.",
+      "O SDR Inteligente conversa como gente: compreende o que o lead diz, entende o momento dele, diagnostica a necessidade, apresenta a solução, contorna objeções e agenda a reunião pela Agenda Inteligente, sem precisar de alguém disponível.",
     seoTitle: "SDR Inteligente: SDR autônomo que atende, qualifica e agenda",
     seoDescription:
       "Um SDR autônomo que conversa, compreende, diagnostica, qualifica, vende e agenda reuniões automaticamente pela Agenda Inteligente, com histórico completo no CRM.",
@@ -183,7 +183,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         title: "Atende e conversa",
         description:
-          "O lead chega pelo WhatsApp e é atendido na hora, com linguagem natural e o tom da sua empresa — de dia, de madrugada ou em pico de mensagens.",
+          "O lead chega pelo WhatsApp e é atendido na hora, com linguagem natural e o tom da sua empresa, de dia, de madrugada ou em pico de mensagens.",
         preview: ["Resposta imediata", "Conversa natural", "Nome e empresa identificados"],
       },
       {
@@ -221,7 +221,7 @@ export const PRODUCTS: ProductConfig[] = [
         title: "Reuniões marcadas direto na Agenda Inteligente",
         titleHighlight: "direto na Agenda Inteligente",
         description:
-          "Quando o lead está pronto, o SDR consulta a disponibilidade real do time, oferece horários e confirma o compromisso — sem troca de mensagens com o vendedor.",
+          "Quando o lead está pronto, o SDR consulta a disponibilidade real do time, oferece horários e confirma o compromisso, sem troca de mensagens com o vendedor.",
         bullets: [
           "Horários com base na agenda de cada pessoa",
           "Confirmação com data e hora completas",
@@ -257,7 +257,7 @@ export const PRODUCTS: ProductConfig[] = [
     shortDescription: "Compromissos marcados pelo SDR IA, sozinho",
     cardTagline: "Compromissos marcados pelo SDR IA, sozinho",
     cardDescription:
-      "Conectada ao SDR Inteligente: a IA conversa com o contato e marca o compromisso de forma autônoma, com base na disponibilidade real da sua agenda — e avisa você e o cliente antes da hora.",
+      "Conectada ao SDR Inteligente: a IA conversa com o contato e marca o compromisso de forma autônoma, com base na disponibilidade real da sua agenda, e avisa você e o cliente antes da hora.",
     icon: CalendarClock,
     heroTitle: "Agende compromissos",
     heroHighlight: "sem trocar mensagens",
@@ -312,7 +312,7 @@ export const PRODUCTS: ProductConfig[] = [
         title: "Avisa você e avisa o seu cliente",
         titleHighlight: "e avisa o seu cliente",
         description:
-          "Antes de cada compromisso, a agenda notifica o responsável do time e o próprio lead ou cliente — reduzindo esquecimento, atraso e reunião perdida.",
+          "Antes de cada compromisso, a agenda notifica o responsável do time e o próprio lead ou cliente, reduzindo esquecimento, atraso e reunião perdida.",
         bullets: [
           "Aviso ao responsável antes do horário",
           "Lembrete ao lead ou cliente com a sua identidade",
@@ -438,7 +438,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         title: "Monte o atendimento",
         description:
-          "Crie menus, respostas, coletas de dados e etapas para atendimento, suporte, pedidos e consultas — tudo com o contexto da conversa preservado.",
+          "Crie menus, respostas, coletas de dados e etapas para atendimento, suporte, pedidos e consultas, tudo com o contexto da conversa preservado.",
         preview: ["Atendimento e suporte", "Pedidos e consultas", "Dados coletados na conversa"],
       },
       {
@@ -494,7 +494,7 @@ export const PRODUCTS: ProductConfig[] = [
     shortDescription: "Proteja renovações e receitas",
     cardTagline: "Proteja renovações e receitas",
     cardDescription:
-      "Contratos organizados, vencimentos visíveis e renovações acompanhadas como processo — para que nenhuma receita dependa da memória de alguém do time.",
+      "Contratos organizados, vencimentos visíveis e renovações acompanhadas como processo, para que nenhuma receita dependa da memória de alguém do time.",
     icon: FileSignature,
     heroTitle: "Controle receita e contratos",
     heroHighlight: "com previsibilidade",
@@ -511,7 +511,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         title: "Centralize seus contratos",
         description:
-          "Tenha informações importantes organizadas em um único lugar: valor, vigência, responsável e histórico do cliente — sem planilha paralela.",
+          "Tenha informações importantes organizadas em um único lugar: valor, vigência, responsável e histórico do cliente, sem planilha paralela.",
         preview: ["Contrato registrado", "Vigência definida", "Responsável atribuído"],
       },
       {
@@ -549,7 +549,7 @@ export const PRODUCTS: ProductConfig[] = [
         title: "Renovar vira processo, não sorte",
         titleHighlight: "processo, não sorte",
         description:
-          "Avisos, comunicação padronizada e renovação em poucos cliques transformam retenção em rotina previsível — e mantêm a previsão de receita confiável.",
+          "Avisos, comunicação padronizada e renovação em poucos cliques transformam retenção em rotina previsível e mantêm a previsão de receita confiável.",
         bullets: [
           "E-mails de renovação com a sua identidade",
           "Renovação direto no card do contrato",
