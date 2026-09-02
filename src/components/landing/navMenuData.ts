@@ -90,9 +90,8 @@ export const RESOURCE_COLUMNS: MenuColumn[] = [
     title: "Conteúdo & Confiança",
     items: [
       { label: "Blog", description: "Estratégias de vendas B2B", to: "/blog", icon: BookOpen },
-      { label: "Tour completo", description: "Veja a plataforma por dentro", to: "/tour-completo", icon: BarChart3 },
+      { label: "Tour completo", description: "Veja a plataforma por dentro", to: "/tour-guiado", icon: BarChart3 },
       { label: "Segurança & LGPD", description: "Como protegemos seus dados", to: "/seguranca-faq", icon: ShieldCheck },
-      { label: "Diretrizes de envio", description: "Boas práticas de mensageria", to: "/diretrizes-de-envio", icon: FileText },
     ],
   },
   {
@@ -108,7 +107,7 @@ export const RESOURCE_COLUMNS: MenuColumn[] = [
     items: [
       { label: "Seja parceiro", description: "Indique e ganhe comissões", to: "/parceiros", icon: Handshake },
       { label: "Candidatar-se", description: "Envie sua candidatura agora", to: "/partners/apply", icon: UserPlus },
-      { label: "Área do parceiro", description: "Acesse seu painel de parceiro", to: "/parceiros/login", icon: LogIn },
+      { label: "Área do parceiro", description: "Acesse seu painel de parceiro", to: "/partners/login", icon: LogIn },
     ],
   },
   {
@@ -116,7 +115,7 @@ export const RESOURCE_COLUMNS: MenuColumn[] = [
     items: [
       { label: "Criar conta", description: "Comece seu teste em minutos", to: "/signup/escolher-plano", icon: Rocket },
       { label: "Planos e preços", description: "Escolha o plano ideal", to: "/#pricing", icon: CreditCard },
-      { label: "Ver demonstração", description: "Explore a plataforma sem login", to: "/demonstracao", icon: PlayCircle },
+      { label: "Ver demonstração", description: "Explore a plataforma sem login", to: "/tour-guiado", icon: PlayCircle },
     ],
   },
 ];
