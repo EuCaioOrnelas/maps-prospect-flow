@@ -1282,7 +1282,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       className={cn(
         "relative overflow-hidden rounded-card border border-border",
         "w-full lg:min-h-[560px]",
-        "shadow-[0_6px_18px_-10px_hsl(var(--foreground)/0.18)]",
+        "shadow-[0_28px_70px_-28px_hsl(var(--foreground)/0.22)]",
       )}
     >
       {/* Textura sutil de grid no fundo do card */}
@@ -1335,10 +1335,10 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
         </div>
 
         {/* Área do mockup — mesmo estilo dos cards "Escolha seu caminho":
-            fundo em degradê colorido no tom verde e mock levemente cortado/esmaecido embaixo */}
+            fundo em degradê colorido no tom verde e mock encostado na borda inferior */}
         <div
           className={cn(
-            "relative overflow-hidden p-4 sm:p-6 lg:p-8 pb-0 sm:pb-0 lg:pb-0",
+            "relative overflow-hidden px-4 sm:px-6 lg:px-8",
             "flex items-end justify-center h-full",
             "bg-gradient-to-br",
             MODULE_THEMES[index % MODULE_THEMES.length],
@@ -1348,10 +1348,10 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-white/25 blur-2xl pointer-events-none" aria-hidden="true" />
           <div className="absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/15 blur-2xl pointer-events-none" aria-hidden="true" />
           <div
-            className="relative w-full translate-y-6 sm:translate-y-9 lg:translate-y-11"
+            className="relative w-full translate-y-8 sm:translate-y-12 lg:translate-y-14"
             style={{
-              maskImage: "linear-gradient(to bottom, black 94%, transparent 100%)",
-              WebkitMaskImage: "linear-gradient(to bottom, black 94%, transparent 100%)",
+              maskImage: "linear-gradient(to bottom, black 98%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 98%, transparent 100%)",
             }}
           >
             <MockStage>
