@@ -86,7 +86,7 @@ const MockShell = ({
   badge?: string;
   children: ReactNode;
 }) => (
-  <div className="w-full rounded-card border border-border/70 bg-card overflow-hidden shadow-[0_4px_14px_-8px_hsl(var(--foreground)/0.18)]">
+  <div className="w-full rounded-t-card border border-b-0 border-border/70 bg-card overflow-hidden shadow-[0_4px_14px_-8px_hsl(var(--foreground)/0.18)]">
     <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border/60 bg-gradient-to-r from-primary/[0.07] via-transparent to-transparent">
       <span className="w-2 h-2 rounded-full bg-destructive/40" />
       <span className="w-2 h-2 rounded-full bg-amber-400/50" />
@@ -101,11 +101,9 @@ const MockShell = ({
         </span>
       )}
     </div>
-    <div className="p-3 sm:p-3.5 pb-4 sm:pb-5 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] min-h-[300px] sm:min-h-[380px] lg:h-[420px] overflow-hidden flex flex-col justify-start">
+    <div className="p-3 sm:p-3.5 pb-0 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] min-h-[300px] sm:min-h-[380px] lg:h-[420px] overflow-hidden flex flex-col justify-start">
       {children}
     </div>
-
-
   </div>
 );
 
