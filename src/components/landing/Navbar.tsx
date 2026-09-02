@@ -159,17 +159,19 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           scrolled ? "px-6 sm:px-10 lg:px-16" : "px-0",
         )}
         style={{
-          paddingTop: scrolled ? '10px' : openMenu ? '12px' : '0',
+          // Abrir o menu NÃO desloca o navbar: o respiro do topo é o mesmo nos dois estados.
+          paddingTop: scrolled || openMenu ? '10px' : '0',
           transition: 'padding 320ms cubic-bezier(0.22,1,0.36,1)',
         }}
       >
         <div
-          className={scrolled ? "mx-auto w-[97%] pl-6 pr-3" : "mx-auto w-full px-6 sm:px-10 lg:px-16"}
+          className={scrolled ? "mx-auto w-full pl-6 pr-3" : "mx-auto w-full px-6 sm:px-10 lg:px-16"}
           onMouseLeave={scheduleClose}
           style={{
             // Abrir o menu NÃO altera tamanho, largura, padding ou posição — só revela o fundo.
-            // Estado flutuante (glass) fica um pouco mais estreito que o fixo, em qualquer largura.
-            maxWidth: scrolled ? '80rem' : '90rem',
+            // Estado flutuante (glass) usa o MESMO max-width do container da página (90rem),
+            // então a borda do navbar fica alinhada com o conteúdo em qualquer resolução.
+            maxWidth: '90rem',
 
 
 
