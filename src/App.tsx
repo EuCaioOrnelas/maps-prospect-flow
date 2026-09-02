@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import ScrollToTop from "@/components/ScrollToTop";
+
 import { AuthProvider } from "@/contexts/AuthContext";
 import { MetricStateCacheProvider } from "@/hooks/useMetricStateCache";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
