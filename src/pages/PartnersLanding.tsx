@@ -222,7 +222,7 @@ export default function PartnersLanding() {
           )}
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] mb-6 text-foreground">
-            Indique a Wiize.
+            <span className="block">Indique a Wiize.</span>
             <span className="block whitespace-nowrap text-shimmer-highlight font-extrabold mt-1 sm:mt-2 drop-shadow-sm">
               Receba até {displayMax}% por 12 meses.
             </span>
