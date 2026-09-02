@@ -18,18 +18,26 @@ interface ProductHeroProps {
 
 export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHeroProps) => {
   return (
-    <section className="relative -mt-[72px] w-full overflow-x-clip pb-24 pt-[120px] sm:-mt-[80px] sm:pb-40 sm:pt-[136px] lg:pb-44">
+    <section className="relative -mt-[72px] w-full overflow-x-clip pb-16 pt-[120px] sm:-mt-[80px] sm:pb-40 sm:pt-[136px] lg:pb-44">
       {/* Faixa de plasma (verde Wiize) — diagonal na base do hero, dividindo hero e "Como funciona";
-          somente a imagem do hero (z-30) passa por cima dela */}
+          somente a imagem do hero (z-30) passa por cima dela.
+          O translateY compensa a subida causada pela rotação em telas largas (4K),
+          mantendo a faixa sempre na mesma posição visual do layout 1440p. */}
       <div
-        className="pointer-events-none absolute bottom-[-4rem] left-1/2 z-[5] h-24 w-[220vw] -translate-x-1/2 origin-left -rotate-[4deg] overflow-hidden sm:bottom-[-7rem] sm:h-32"
+        className="pointer-events-none absolute bottom-[-2.5rem] left-1/2 z-[5] h-24 w-[220vw] origin-center overflow-hidden sm:bottom-[-7rem] sm:h-32"
+        style={{
+          transform:
+            "translateX(-50%) translateY(max(0px, calc(7.7vw - 111px))) rotate(-4deg)",
+        }}
         aria-hidden
       >
+
         <div className="wz-band absolute inset-0" />
         <div className="absolute inset-0 overflow-hidden opacity-70 mix-blend-screen">
           <ShaderBackground className="h-[300%] w-full -translate-y-[33.33%]" />
         </div>
       </div>
+
       <div
         className="absolute inset-0"
         style={{
