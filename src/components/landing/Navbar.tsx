@@ -283,10 +283,10 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             </button>
           </div>
 
-          {/* Mega menu desktop — dentro do container, sem mudar largura */}
+          {/* Mega menu desktop — dentro do container, com padding lateral leve */}
           {activeMenu && (
             <div
-              className="relative hidden md:block overflow-hidden pt-4"
+              className="relative hidden md:block overflow-hidden pt-4 px-2 sm:px-3 lg:px-4"
               onMouseEnter={cancelClose}
             >
               <div className="animate-fade-in">
