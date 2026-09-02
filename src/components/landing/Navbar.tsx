@@ -160,22 +160,27 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         }}
       >
         <div
-          className="mx-auto w-full px-6 sm:px-10 lg:px-16"
+          className={cn(
+            "relative mx-auto w-full px-6 sm:px-10 lg:px-16",
+            // Quando o menu desktop abre, o card branco expande 10px para cada lado
+            // enquanto o conteúdo (logo, links) permanece alinhado ao max-width da página.
+            openMenu && "-mx-[10px] px-[34px] sm:px-[50px] lg:px-[74px]"
+          )}
           onMouseLeave={scheduleClose}
           style={{
             // Mesma largura/padding do container da página (max-w-[90rem]),
             // então a logo e as bordas do navbar ficam alinhadas com o conteúdo.
             maxWidth: '90rem',
-            borderRadius: scrolled || openMenu ? '18px' : '0px',
-            backgroundColor: openMenu
+            borderRadius: scrolled || openMenu || mobileMenuOpen ? '18px' : '0px',
+            backgroundColor: openMenu || mobileMenuOpen
               ? 'hsl(var(--background))'
               : scrolled
                 ? 'hsl(var(--background) / 0.55)'
                 : 'transparent',
-            backdropFilter: openMenu ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
-            WebkitBackdropFilter: openMenu ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
-            border: openMenu || scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
-            boxShadow: openMenu || scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
+            backdropFilter: openMenu || mobileMenuOpen ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
+            WebkitBackdropFilter: openMenu || mobileMenuOpen ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
+            border: openMenu || mobileMenuOpen || scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
+            boxShadow: openMenu || mobileMenuOpen || scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
             paddingTop: '8px',
             paddingBottom: '8px',
             transition: 'border-radius 220ms ease-out, background-color 220ms ease-out, box-shadow 220ms ease-out',
@@ -282,97 +287,93 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
               </div>
             </div>
           )}
+
+          {/* Mobile menu - dentro do container, expande 10px nas laterais como o desktop */}
+          {mobileMenuOpen && (
+            <div
+              className="sm:hidden absolute -left-[10px] -right-[10px] top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
+              style={{
+                backgroundColor: 'hsl(var(--background))',
+                border: '1px solid hsl(var(--border) / 0.6)',
+                boxShadow: '0 12px 40px hsl(var(--background) / 0.4)',
+              }}
+            >
+              <div className="flex flex-col gap-2">
+                {MENUS.map((menu) => (
+                  <div key={menu.key} className="border-b border-border/60 pb-2">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between py-2 text-left text-sm font-semibold text-foreground"
+                      onClick={() => setMobileOpenMenu(mobileOpenMenu === menu.key ? null : menu.key)}
+                      aria-expanded={mobileOpenMenu === menu.key}
+                    >
+                      {menu.label}
+                      <ChevronDown size={16} className={cn("transition-transform duration-200", mobileOpenMenu === menu.key && "rotate-180")} />
+                    </button>
+                    {mobileOpenMenu === menu.key && (
+                      <div className="animate-fade-in">
+                        {menu.columns.map((col) => (
+                          <div key={col.title} className="py-1">
+                            <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-primary">{col.title}</p>
+                            {renderMobileMenuItems(col.items)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {navLinks.map(link => (
+                  <div key={link.label} className="border-b border-border/60 pb-2">
+                    {link.to ? (
+                      <Link
+                        to={link.to}
+                        className="flex w-full items-center justify-between py-2 text-left text-sm font-semibold text-foreground"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="flex w-full items-center justify-between py-2 text-left text-sm font-semibold text-foreground cursor-pointer"
+                        onClick={(e) => handleNavLinkClick(e, link.href!)}
+                      >
+                        {link.label}
+                      </a>
+                    )}
+                  </div>
+                ))}
+                <div className="flex flex-col gap-2 pt-2 border-t border-border">
+                  <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-center">
+                      Entrar
+                    </Button>
+                  </Link>
+                  {TRIAL_DISABLED ? (
+                    <Button
+                      variant="hero"
+                      size="sm"
+                      className="w-full justify-center opacity-60 cursor-not-allowed"
+                      disabled
+                      aria-disabled="true"
+                      onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
+                    >
+                      <Lock size={14} className="mr-1" />
+                      Indisponível
+                    </Button>
+                  ) : (
+                    <Link to="/signup/escolher-plano" onClick={() => { setMobileMenuOpen(false); handleSignupClick(); }}>
+                      <Button variant="hero" size="sm" className="w-full justify-center">
+                        Iniciar Teste Grátis
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
-
-      {/* Mobile menu - rendered outside the glass container so it isn't affected by backdrop-blur */}
-      {mobileMenuOpen && (
-        <div
-          className="sm:hidden fixed left-4 right-4 z-50 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto"
-          style={{
-            // Altura do navbar agora é fixa no topo, então o menu mobile também fica
-            // sempre na mesma posição, independente do scroll.
-            top: '76px',
-            backgroundColor: 'hsl(var(--background))',
-            border: '1px solid hsl(var(--border) / 0.6)',
-            boxShadow: '0 12px 40px hsl(var(--background) / 0.4)',
-            padding: '16px',
-          }}
-        >
-          <div className="flex flex-col gap-2">
-            {MENUS.map((menu) => (
-              <div key={menu.key} className="border-b border-border/60 pb-2">
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between py-2 text-left text-sm font-semibold text-foreground"
-                  onClick={() => setMobileOpenMenu(mobileOpenMenu === menu.key ? null : menu.key)}
-                  aria-expanded={mobileOpenMenu === menu.key}
-                >
-                  {menu.label}
-                  <ChevronDown size={16} className={cn("transition-transform duration-200", mobileOpenMenu === menu.key && "rotate-180")} />
-                </button>
-                {mobileOpenMenu === menu.key && (
-                  <div className="animate-fade-in">
-                    {menu.columns.map((col) => (
-                      <div key={col.title} className="py-1">
-                        <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-primary">{col.title}</p>
-                        {renderMobileMenuItems(col.items)}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-            {navLinks.map(link => (
-              <div key={link.label} className="border-b border-border/60 pb-2">
-                {link.to ? (
-                  <Link
-                    to={link.to}
-                    className="flex w-full items-center justify-between py-2 text-left text-sm font-semibold text-foreground"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ) : (
-                  <a
-                    href={link.href}
-                    className="flex w-full items-center justify-between py-2 text-left text-sm font-semibold text-foreground cursor-pointer"
-                    onClick={(e) => handleNavLinkClick(e, link.href!)}
-                  >
-                    {link.label}
-                  </a>
-                )}
-              </div>
-            ))}
-            <div className="flex flex-col gap-2 pt-2 border-t border-border">
-              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="ghost" size="sm" className="w-full justify-center">
-                  Entrar
-                </Button>
-              </Link>
-              {TRIAL_DISABLED ? (
-                <Button
-                  variant="hero"
-                  size="sm"
-                  className="w-full justify-center opacity-60 cursor-not-allowed"
-                  disabled
-                  aria-disabled="true"
-                  onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
-                >
-                  <Lock size={14} className="mr-1" />
-                  Indisponível
-                </Button>
-              ) : (
-                <Link to="/signup/escolher-plano" onClick={() => { setMobileMenuOpen(false); handleSignupClick(); }}>
-                  <Button variant="hero" size="sm" className="w-full justify-center">
-                    Iniciar Teste Grátis
-                  </Button>
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Spacer */}
       <div className="h-[72px] sm:h-[80px]" />
