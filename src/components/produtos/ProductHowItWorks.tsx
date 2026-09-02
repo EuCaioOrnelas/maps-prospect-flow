@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { motion, useScroll, useSpring, useMotionValueEvent, useTransform } from "framer-motion";
 import { HiCheckCircle } from "react-icons/hi2";
 import type { ProductStep } from "@/data/products";
@@ -33,22 +33,37 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
 export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorksProps) => {
   const listRef = useRef<HTMLOListElement>(null);
   const [active, setActive] = useState(0);
+  const [trackH, setTrackH] = useState(0);
+
+  // Mede a altura da trilha para animar só com transform (sem layout por frame)
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const update = () => setTrackH(el.getBoundingClientRect().height);
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: listRef,
-    offset: ["start 75%", "end 65%"],
+    // Trecho de scroll mais longo = animação mais lenta e confortável
+    offset: ["start 92%", "end 30%"],
   });
-  // Spring mais leve = movimento contínuo, sem travadas em telas fracas
-  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 34, mass: 0.35 });
-  // A bolinha vive no fim da trilha preenchida (mesma origem do scaleY),
-  // evitando dessincronia entre linha e ponto.
-  const fillHeight = useTransform(progress, (v) => `${Math.min(100, Math.max(0, v * 100))}%`);
+  // Spring suave: sem travadas e sem "pulos" em telas fracas
+  const progress = useSpring(scrollYProgress, { stiffness: 55, damping: 26, mass: 0.4 });
+  // Linha e bolinha usam a MESMA fonte, só com transform (GPU)
+  const fillScale = useTransform(progress, (v) => Math.min(1, Math.max(0, v)));
+  const dotY = useTransform(progress, (v) => Math.min(1, Math.max(0, v)) * trackH);
 
   useMotionValueEvent(progress, "change", (v) => {
     // Ativa o passo assim que a bolinha alcança a posição do número
     const idx = Math.min(steps.length - 1, Math.max(0, Math.floor(v * steps.length)));
     setActive((prev) => (prev === idx ? prev : idx));
   });
+
 
 
   return (
@@ -62,15 +77,20 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
             <SplitTitle title={title} highlight={highlight} />
 
             <ol ref={listRef} className="relative mt-10 space-y-8 pl-6 sm:mt-12 sm:space-y-10 sm:pl-8">
-            {/* trilha + progresso + bolinha (mesma origem, sempre sincronizados) */}
+            {/* trilha + progresso + bolinha (mesma origem, só transform) */}
             <span className="absolute left-0 top-0 h-full w-px bg-border/70" aria-hidden />
             <motion.span
-              className="absolute left-0 top-0 w-px bg-primary"
-              style={{ height: fillHeight, willChange: "height" }}
+              className="absolute left-0 top-0 h-full w-px origin-top bg-primary"
+              style={{ scaleY: fillScale, willChange: "transform" }}
               aria-hidden
-            >
-              <span className="absolute -bottom-[5px] -left-[5px] h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]" />
-            </motion.span>
+            />
+            <motion.span
+              className="absolute -left-[5px] top-0 h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]"
+              style={{ y: dotY, marginTop: -5, willChange: "transform" }}
+              aria-hidden
+            />
+
+
 
 
             {steps.map((step, i) => (
