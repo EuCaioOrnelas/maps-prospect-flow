@@ -172,11 +172,11 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           }}
         >
           {/* Card de fundo: aparece atrás do navbar quando o menu está aberto,
-              expandindo 10px nas laterais sem mover nada do conteúdo */}
+              expandindo 6px nas laterais sem mover nada do conteúdo */}
           {(openMenu || mobileMenuOpen) ? (
             <div
               aria-hidden="true"
-              className="absolute -left-[10px] -right-[10px] top-0 bottom-0 rounded-[18px]"
+              className="absolute -left-[6px] -right-[6px] top-0 bottom-0 rounded-[18px]"
               style={{
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border) / 0.4)',
