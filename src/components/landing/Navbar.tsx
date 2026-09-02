@@ -164,10 +164,10 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           className={scrolled ? "mx-auto pl-6 pr-3" : "mx-auto px-6 sm:px-10 lg:px-16"}
           onMouseLeave={scheduleClose}
           style={{
-            // Abrir o menu NÃO altera tamanho, largura, padding ou posição — só revela o fundo
-            // Navbar sempre acompanha o container das páginas (max-w-[90rem]),
-            // inclusive no estado flutuante (glass).
-            maxWidth: '90rem',
+            // Abrir o menu NÃO altera tamanho, largura, padding ou posição — só revela o fundo.
+            // Estado flutuante (glass) fica um pouco mais estreito que o fixo.
+            maxWidth: scrolled ? '80rem' : '90rem',
+
 
             borderRadius: scrolled || openMenu ? '18px' : '0px',
             backgroundColor: openMenu
