@@ -160,35 +160,46 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         }}
       >
         <div
-          className={cn(
-            "relative mx-auto w-full px-6 sm:px-10 lg:px-16",
-            // Quando o menu desktop abre, o card branco expande 10px para cada lado
-            // enquanto o conteúdo (logo, links) permanece alinhado ao max-width da página.
-            openMenu && "-mx-[10px] px-[34px] sm:px-[50px] lg:px-[74px]"
-          )}
+          className="relative mx-auto w-full px-6 sm:px-10 lg:px-16"
           onMouseLeave={scheduleClose}
           style={{
-            // Mesma largura/padding do container da página (max-w-[90rem]),
-            // então a logo e as bordas do navbar ficam alinhadas com o conteúdo.
+            // Mesma largura/padding do container da página (max-w-[90rem]).
+            // O navbar NUNCA muda de tamanho/posição — abrir os links apenas
+            // revela o card branco por trás, que expande 10px para cada lado.
             maxWidth: '90rem',
-            borderRadius: scrolled || openMenu || mobileMenuOpen ? '18px' : '0px',
-            backgroundColor: openMenu || mobileMenuOpen
-              ? 'hsl(var(--background))'
-              : scrolled
-                ? 'hsl(var(--background) / 0.55)'
-                : 'transparent',
-            backdropFilter: openMenu || mobileMenuOpen ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
-            WebkitBackdropFilter: openMenu || mobileMenuOpen ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
-            border: openMenu || mobileMenuOpen || scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
-            boxShadow: openMenu || mobileMenuOpen || scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
             paddingTop: '8px',
             paddingBottom: '8px',
-            transition: 'border-radius 220ms ease-out, background-color 220ms ease-out, box-shadow 220ms ease-out',
-            transform: 'translateZ(0)',
           }}
         >
+          {/* Card de fundo: aparece atrás do navbar quando o menu está aberto,
+              expandindo 10px nas laterais sem mover nada do conteúdo */}
+          {(openMenu || mobileMenuOpen) ? (
+            <div
+              aria-hidden="true"
+              className="absolute -left-[10px] -right-[10px] top-0 bottom-0 rounded-[18px]"
+              style={{
+                backgroundColor: 'hsl(var(--background))',
+                border: '1px solid hsl(var(--border) / 0.4)',
+                boxShadow: '0 8px 32px hsl(var(--background) / 0.3)',
+              }}
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0"
+              style={{
+                borderRadius: scrolled ? '18px' : '0px',
+                backgroundColor: scrolled ? 'hsl(var(--background) / 0.55)' : 'transparent',
+                backdropFilter: scrolled ? 'blur(16px) saturate(180%)' : 'none',
+                WebkitBackdropFilter: scrolled ? 'blur(16px) saturate(180%)' : 'none',
+                border: scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
+                boxShadow: scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
+                transition: 'border-radius 220ms ease-out, background-color 220ms ease-out, box-shadow 220ms ease-out',
+              }}
+            />
+          )}
 
-          <div className="flex items-center justify-between mx-auto w-full gap-8">
+          <div className="relative flex items-center justify-between mx-auto w-full gap-8">
             <Logo size="md" mobileSize="md" />
 
             <div className="hidden md:flex items-center gap-1">
