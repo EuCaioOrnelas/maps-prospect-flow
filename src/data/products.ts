@@ -72,40 +72,40 @@ export const PRODUCTS: ProductConfig[] = [
     category: "Capte",
     stage: "Capte",
     name: "Prospecção Inteligente",
-    shortDescription: "Encontre empresas prontas para vender",
-    cardTagline: "Encontre empresas prontas para vender",
+    shortDescription: "Encontre oportunidades com diagnóstico de IA",
+    cardTagline: "Encontre oportunidades com diagnóstico de IA",
     cardDescription:
-      "Construa um pipeline contínuo: encontre empresas com o perfil do seu cliente ideal, organize as oportunidades e concentre o esforço do time em quem realmente merece atenção.",
+      "A IA analisa concorrência regional, demanda, redes sociais e sites das empresas, diagnostica dores e necessidades, monta a oferta certa e cria uma abordagem personalizada para cada lead.",
     icon: Search,
-    heroTitle: "Encontre as empresas",
-    heroHighlight: "certas para vender",
+    heroTitle: "Encontre oportunidades",
+    heroHighlight: "com diagnóstico de IA",
     heroDescription:
-      "Transforme a busca por novos clientes em um processo comercial inteligente. Encontre empresas com potencial, organize oportunidades e dê à sua equipe uma lista de leads pronta para trabalhar.",
-    seoTitle: "Prospecção B2B: encontre as empresas certas",
+      "A IA da Wiize analisa concorrência regional, demanda do mercado, redes sociais e sites das empresas, identifica dores e necessidades reais, sugere soluções, monta a oferta e escreve uma abordagem personalizada para cada lead.",
+    seoTitle: "Prospecção com IA: oportunidades com diagnóstico pronto",
     seoDescription:
-      "Transforme a busca por clientes em um processo comercial. Encontre empresas com o perfil do seu ICP, organize oportunidades e priorize onde vale investir tempo.",
+      "A IA analisa concorrência regional, demanda, redes sociais e sites, diagnostica dores e necessidades, monta a oferta e cria a abordagem personalizada para cada lead.",
     keywords:
-      "prospecção B2B, pipeline comercial, ICP, geração de oportunidades, inteligência comercial, dados de empresas",
-    howItWorksTitle: "De uma busca manual a um processo comercial inteligente",
-    howItWorksHighlight: "processo comercial inteligente",
+      "prospecção com IA, diagnóstico comercial, análise de concorrência, oportunidades B2B, ICP, abordagem personalizada",
+    howItWorksTitle: "De uma busca manual a um diagnóstico comercial inteligente",
+    howItWorksHighlight: "diagnóstico comercial inteligente",
     howItWorks: [
       {
         title: "Defina quem você quer encontrar",
         description:
-          "Encontre empresas com o perfil que faz sentido para sua operação comercial: nicho, região, porte e os critérios que definem o seu cliente ideal.",
+          "Escolha nicho, região, porte e os critérios do seu cliente ideal. A Wiize passa a procurar empresas com esse perfil sempre que a operação precisar.",
         preview: ["Nicho: agências de marketing", "Região: São Paulo, SP", "Porte: 5 a 50 colaboradores"],
       },
       {
-        title: "Descubra novas oportunidades",
+        title: "A IA analisa cada empresa",
         description:
-          "A Wiize transforma dados de empresas em oportunidades organizadas para sua equipe, com contexto suficiente para iniciar uma conversa relevante.",
-        preview: ["Contexto do negócio mapeado", "Contato do responsável", "Oportunidade organizada"],
+          "Site, redes sociais, presença digital, demanda da região e concorrência local entram na análise para revelar o que está funcionando e o que está faltando naquele negócio.",
+        preview: ["Site e redes analisados", "Concorrência regional mapeada", "Demanda da região avaliada"],
       },
       {
-        title: "Priorize onde vale investir tempo",
+        title: "Receba o diagnóstico e a abordagem",
         description:
-          "Use inteligência e dados para concentrar o esforço comercial nas oportunidades mais relevantes — e deixar de tratar todos os leads como iguais.",
-        preview: ["Prioridade: alta", "Fit com seu ICP", "Pronto para abordar"],
+          "Cada oportunidade chega com dores identificadas, soluções sugeridas, oferta montada e uma primeira mensagem escrita para aquele lead específico.",
+        preview: ["Dores e necessidades", "Oferta sugerida", "Abordagem personalizada pronta"],
       },
     ],
     features: [
@@ -114,7 +114,7 @@ export const PRODUCTS: ProductConfig[] = [
         title: "Pare de gastar horas procurando quem pode comprar de você",
         titleHighlight: "quem pode comprar de você",
         description:
-          "Prospectar deixa de ser uma tarefa manual e passa a ser um processo que se repete toda semana. Sua equipe começa o dia com oportunidades para trabalhar, não com uma planilha em branco.",
+          "Prospectar deixa de ser uma tarefa manual e passa a ser um processo que se repete toda semana. Sua equipe começa o dia com oportunidades analisadas, não com uma planilha em branco.",
         bullets: [
           "Novas oportunidades sempre que a operação precisar",
           "Menos tempo pesquisando, mais tempo conversando",
@@ -126,35 +126,35 @@ export const PRODUCTS: ProductConfig[] = [
         ],
       },
       {
-        eyebrow: "Priorização",
-        title: "Saiba onde a sua equipe deve começar",
-        titleHighlight: "equipe deve começar",
+        eyebrow: "Diagnóstico",
+        title: "A IA entende o negócio antes de você falar com ele",
+        titleHighlight: "antes de você falar com ele",
         description:
-          "Nem toda empresa encontrada merece o mesmo esforço. A inteligência da Wiize organiza a fila por aderência ao seu perfil de cliente e por sinais observados no mercado.",
+          "A inteligência cruza presença digital, concorrência da região e sinais de demanda para apontar as dores mais prováveis de cada empresa e as soluções que fazem sentido oferecer.",
         bullets: [
-          "Ordenação por potencial e fit com o seu ICP",
-          "Aprendizado com os negócios que você já ganhou",
-          "Oportunidades relevantes em destaque no cockpit",
+          "Análise de site, redes sociais e reputação local",
+          "Comparação com a concorrência da mesma região",
+          "Dores, necessidades e soluções sugeridas",
         ],
         reverse: true,
       },
       {
-        eyebrow: "Contexto",
-        title: "Comece a conversa sabendo com quem está falando",
-        titleHighlight: "sabendo com quem está falando",
+        eyebrow: "Abordagem",
+        title: "Comece a conversa com uma oferta feita para aquele lead",
+        titleHighlight: "uma oferta feita para aquele lead",
         description:
-          "Cada oportunidade chega com contexto do negócio e uma sugestão de abordagem específica. A primeira mensagem deixa de ser um template e passa a ser uma conversa.",
+          "Com o diagnóstico pronto, a IA monta a oferta e escreve a primeira mensagem no tom da sua empresa. A abordagem deixa de ser template e passa a ser conversa.",
         bullets: [
-          "Contexto do negócio antes do primeiro contato",
-          "Sugestão de abordagem no tom da sua empresa",
+          "Oferta montada a partir do diagnóstico",
+          "Mensagem personalizada por lead",
           "Oportunidades organizadas direto no CRM",
         ],
       },
     ],
     proof: [
-      { label: "Construção do pipeline", value: "contínua", hint: "sem depender de listas compradas" },
-      { label: "Foco da equipe", value: "priorizado", hint: "esforço onde há mais potencial" },
-      { label: "Da busca ao CRM", value: "um processo", hint: "sem planilhas paralelas" },
+      { label: "Análise por empresa", value: "com IA", hint: "site, redes, demanda e concorrência" },
+      { label: "Diagnóstico", value: "automático", hint: "dores, necessidades e soluções" },
+      { label: "Abordagem", value: "personalizada", hint: "uma mensagem para cada lead" },
     ],
   },
   {
