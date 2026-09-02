@@ -77,15 +77,20 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
             <SplitTitle title={title} highlight={highlight} />
 
             <ol ref={listRef} className="relative mt-10 space-y-8 pl-6 sm:mt-12 sm:space-y-10 sm:pl-8">
-            {/* trilha + progresso + bolinha (mesma origem, sempre sincronizados) */}
+            {/* trilha + progresso + bolinha (mesma origem, só transform) */}
             <span className="absolute left-0 top-0 h-full w-px bg-border/70" aria-hidden />
             <motion.span
-              className="absolute left-0 top-0 w-px bg-primary"
-              style={{ height: fillHeight, willChange: "height" }}
+              className="absolute left-0 top-0 h-full w-px origin-top bg-primary"
+              style={{ scaleY: fillScale, willChange: "transform" }}
               aria-hidden
-            >
-              <span className="absolute -bottom-[5px] -left-[5px] h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]" />
-            </motion.span>
+            />
+            <motion.span
+              className="absolute -left-[5px] top-0 h-[11px] w-[11px] -translate-y-[5px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]"
+              style={{ y: dotY, willChange: "transform" }}
+              aria-hidden
+            />
+
+
 
 
             {steps.map((step, i) => (
