@@ -19,17 +19,11 @@ interface ProductHeroProps {
 export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHeroProps) => {
   return (
     <section className="relative -mt-[72px] w-full overflow-x-clip pb-16 pt-[120px] sm:-mt-[80px] sm:pb-40 sm:pt-[136px] lg:pb-44">
-      {/* Faixa de plasma (verde Wiize) — diagonal na base do hero, dividindo hero e "Como funciona";
-          somente a imagem do hero (z-30) passa por cima dela.
-          O translateY compensa a subida causada pela rotação em telas largas (4K),
-          mantendo a faixa sempre na mesma posição visual do layout 1440p. */}
+      {/* Faixa de plasma centralizada exatamente na divisória entre o hero e "Como funciona".
+          O offset corresponde à metade da altura da faixa, mantendo seu centro na base do hero
+          em qualquer resolução; somente a imagem do hero (z-30) pode passar por cima dela. */}
       <div
-        className="pointer-events-none absolute bottom-[-2.5rem] left-1/2 z-[5] h-24 w-[220vw] origin-center overflow-hidden sm:bottom-[-5.5rem] sm:h-32"
-
-        style={{
-          transform:
-            "translateX(-50%) translateY(max(0px, calc(7.7vw - 111px))) rotate(-4deg)",
-        }}
+        className="pointer-events-none absolute bottom-[-3rem] left-1/2 z-[5] h-24 w-[120vw] origin-center -translate-x-1/2 -rotate-[4deg] overflow-hidden sm:bottom-[-4rem] sm:h-32"
         aria-hidden
       >
 
