@@ -67,7 +67,7 @@ const profileOptions = [
 
 const yearsOptions = [
   { id: "beginner", label: "Iniciante" },
-  { id: "1-2", label: "1-1 ano" },
+  { id: "1-2", label: "1-2 anos" },
   { id: "3-5", label: "3-5 anos" },
   { id: "5+", label: "5+ anos" },
 ];
