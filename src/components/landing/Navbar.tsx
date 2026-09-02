@@ -152,7 +152,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
       {menuOverlay}
       <nav
         ref={navRef}
-        className="fixed left-0 right-0 z-50 top-0 px-0"
+        className="fixed left-0 right-0 z-50 top-0 px-4 sm:px-6 lg:px-8"
         style={{
           // Mantém o navbar já na posição final: o respiro do topo é o mesmo no topo da
           // página e quando o menu está aberto, então abrir os links não desloca nada.
@@ -160,12 +160,12 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         }}
       >
         <div
-          className="mx-auto w-full px-6 sm:px-10 lg:px-16"
+          className="mx-auto w-full px-4 sm:px-6 lg:px-8"
           onMouseLeave={scheduleClose}
           style={{
             // Mesma largura/padding do container da página, então a borda do navbar
             // fica alinhada com o conteúdo no topo, no scroll e com o menu aberto.
-            maxWidth: '90rem',
+            maxWidth: '78rem',
             borderRadius: scrolled || openMenu ? '18px' : '0px',
             backgroundColor: openMenu
               ? 'hsl(var(--background))'
