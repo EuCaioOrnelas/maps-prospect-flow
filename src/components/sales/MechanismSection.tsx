@@ -7,7 +7,7 @@ import {
   useTransform,
   useMotionValueEvent,
 } from "framer-motion";
-import { Search, Bot, LayoutGrid, Sparkles, CalendarCheck } from "lucide-react";
+import { Search, Bot, LayoutGrid, Sparkles, CalendarCheck, CheckCircle2 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
@@ -16,21 +16,41 @@ const steps = [
     icon: Search,
     title: "Capte",
     desc: "Encontre novas oportunidades sem fazer tudo manualmente: a plataforma busca empresas, analisa e mostra quais têm mais potencial de virar reunião.",
+    bullets: [
+      "Novas oportunidades sempre que a operação precisar",
+      "Menos tempo pesquisando, mais tempo conversando",
+      "Um pipeline que não depende da iniciativa de cada vendedor",
+    ],
   },
   {
     icon: Bot,
     title: "Converta",
     desc: "Transforme oportunidades em conversas e reuniões, com abordagem personalizada, atendimento e follow-up conduzidos pela IA no WhatsApp oficial.",
+    bullets: [
+      "Abordagem personalizada para cada empresa",
+      "Atendimento e follow-up sem depender de horário",
+      "Reuniões agendadas direto na sua agenda",
+    ],
   },
   {
     icon: LayoutGrid,
     title: "Gerencie",
     desc: "Controle toda a operação comercial em um só lugar, com cada conversa, oportunidade e venda registrada automaticamente no CRM.",
+    bullets: [
+      "Histórico completo de cada negociação",
+      "CRM atualizado sem preenchimento manual",
+      "Visão clara do que está travado no funil",
+    ],
   },
   {
     icon: Sparkles,
     title: "Otimize",
     desc: "Saiba quais oportunidades merecem atenção agora e reduza o trabalho manual do time com automação e inteligência em cada etapa.",
+    bullets: [
+      "Priorização de quem está pronto para comprar",
+      "Alertas do que precisa de atenção hoje",
+      "Menos trabalho repetitivo para o time",
+    ],
   },
 ];
 
@@ -51,36 +71,40 @@ function StepRow({
 
   return (
     <div ref={rowRef} className="relative md:grid md:grid-cols-2 md:items-center md:gap-16">
-      {/* Numbered node on the center line */}
-      <motion.span
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={inView ? { opacity: 1, scale: 1 } : {}}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      {/* Numbered node on the center line — positioning wrapper is plain,
+          motion only animates scale/opacity on the inner span so the
+          Tailwind translate centering is never overridden */}
+      <span
         className="absolute left-[15px] top-8 z-20 -translate-x-1/2 md:left-1/2 md:top-1/2 md:-translate-y-1/2"
         aria-hidden
       >
         <motion.span
-          animate={
-            active
-              ? {
-                  backgroundColor: "hsl(var(--primary))",
-                  color: "hsl(var(--primary-foreground))",
-                  borderColor: "hsl(var(--primary))",
-                  scale: 1.1,
-                }
-              : {
-                  backgroundColor: "hsl(var(--card))",
-                  color: "hsl(var(--muted-foreground))",
-                  borderColor: "hsl(var(--border))",
-                  scale: 1,
-                }
-          }
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="flex h-9 w-9 items-center justify-center rounded-full border text-[11px] font-bold tracking-wide shadow-[0_0_0_6px_hsl(var(--background))]"
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={inView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="block"
         >
-          {String(index + 1).padStart(2, "0")}
+          <motion.span
+            animate={
+              active
+                ? {
+                    backgroundColor: "hsl(var(--primary))",
+                    color: "hsl(var(--primary-foreground))",
+                    borderColor: "hsl(var(--primary))",
+                  }
+                : {
+                    backgroundColor: "hsl(var(--card))",
+                    color: "hsl(var(--muted-foreground))",
+                    borderColor: "hsl(var(--border))",
+                  }
+            }
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="flex h-9 w-9 items-center justify-center rounded-full border text-[11px] font-bold tracking-wide shadow-[0_0_0_6px_hsl(var(--background))]"
+          >
+            {String(index + 1).padStart(2, "0")}
+          </motion.span>
         </motion.span>
-      </motion.span>
+      </span>
 
       {/* Card */}
       <motion.div
@@ -89,7 +113,7 @@ function StepRow({
         transition={{ duration: 0.5, ease: "easeOut" }}
         className={`pl-12 md:pl-0 ${isLeft ? "md:col-start-1" : "md:col-start-2"}`}
       >
-        <div className="group rounded-panel border border-border/60 bg-card p-5 transition-colors duration-300 hover:border-primary/30 sm:p-6">
+        <div className="group rounded-panel border border-border/60 bg-card p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_12px_32px_-18px_hsl(var(--primary)/0.35)] sm:p-6">
           <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-card bg-primary/10 transition-colors duration-300 group-hover:bg-primary/15">
             <Icon size={20} className="text-primary" strokeWidth={1.9} />
           </div>
@@ -97,8 +121,21 @@ function StepRow({
             {step.title}
           </h3>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
+          <ul className="mt-4 space-y-2.5 border-t border-border/60 pt-4">
+            {step.bullets.map((b) => (
+              <li key={b} className="flex items-start gap-2.5">
+                <CheckCircle2
+                  size={17}
+                  className="mt-[1px] shrink-0 text-primary"
+                  strokeWidth={2}
+                />
+                <span className="text-sm leading-snug text-foreground/80">{b}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </motion.div>
+
     </div>
   );
 }
@@ -130,7 +167,6 @@ export const MechanismSection = () => {
     mass: 0.22,
     restDelta: 0.0005,
   });
-  const fillScale = useTransform(progress, (v) => Math.min(1, Math.max(0, v)));
   const dotY = useTransform(progress, (v) => Math.min(1, Math.max(0, v)) * trackH);
 
   useMotionValueEvent(progress, "change", (v) => {
@@ -177,12 +213,12 @@ export const MechanismSection = () => {
             aria-hidden
           />
           <motion.span
-            className="absolute left-[15px] top-0 z-0 h-full w-px origin-top bg-primary md:left-1/2"
-            style={{ scaleY: fillScale, willChange: "transform" }}
+            className="absolute left-[15px] top-0 z-0 w-px bg-primary md:left-1/2"
+            style={{ height: dotY }}
             aria-hidden
           />
           <motion.span
-            className="absolute left-[15px] top-0 z-0 h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18)] md:left-1/2"
+            className="absolute left-[15px] top-0 z-10 h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18)] md:left-1/2"
             style={{ y: dotY, marginTop: -5, willChange: "transform" }}
             aria-hidden
           />
