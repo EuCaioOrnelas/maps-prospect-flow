@@ -160,11 +160,13 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         }}
       >
         <div
-          className="relative mx-auto w-full px-6 sm:px-10 lg:px-16"
+          className="relative mx-auto w-full px-4 sm:px-7 lg:px-12"
           onMouseLeave={scheduleClose}
           style={{
-            // Mesma largura/padding do container da página (max-w-[90rem]).
-            // O navbar NUNCA muda de tamanho/posição ao abrir os links.
+            // O container tem padding reduzido para que o card de fundo fique
+            // levemente recuado das bordas da página. O wrapper interno dos
+            // links adiciona o padding lateral pedido, mantendo o conteúdo
+            // alinhado ao max-width da página.
             maxWidth: '90rem',
             paddingTop: '8px',
             paddingBottom: '8px',
@@ -175,7 +177,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           {(openMenu || mobileMenuOpen) ? (
             <div
               aria-hidden="true"
-              className="absolute left-[24px] right-[24px] sm:left-[40px] sm:right-[40px] lg:left-[64px] lg:right-[64px] top-0 bottom-0 rounded-[18px]"
+              className="absolute left-[16px] right-[16px] sm:left-[28px] sm:right-[28px] lg:left-[48px] lg:right-[48px] top-0 bottom-0 rounded-[18px]"
               style={{
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border) / 0.82)',
@@ -185,7 +187,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           ) : (
             <div
               aria-hidden="true"
-              className="absolute left-[24px] right-[24px] sm:left-[40px] sm:right-[40px] lg:left-[64px] lg:right-[64px] top-0 bottom-0"
+              className="absolute left-[16px] right-[16px] sm:left-[28px] sm:right-[28px] lg:left-[48px] lg:right-[48px] top-0 bottom-0"
               style={{
                 borderRadius: scrolled ? '18px' : '0px',
                 backgroundColor: scrolled ? 'hsl(var(--background) / 0.55)' : 'transparent',
@@ -198,7 +200,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             />
           )}
 
-          <div className="relative flex items-center justify-between mx-auto w-full gap-8">
+          <div className="relative flex items-center justify-between mx-auto w-full gap-8 px-2 sm:px-3 lg:px-4">
             <Logo size="md" mobileSize="md" />
 
             <div className="hidden md:flex items-center gap-1">
@@ -281,10 +283,10 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             </button>
           </div>
 
-          {/* Mega menu desktop — dentro do container, sem mudar largura */}
+          {/* Mega menu desktop — dentro do container, com padding lateral leve */}
           {activeMenu && (
             <div
-              className="relative hidden md:block overflow-hidden pt-4"
+              className="relative hidden md:block overflow-hidden pt-4 px-2 sm:px-3 lg:px-4"
               onMouseEnter={cancelClose}
             >
               <div className="animate-fade-in">
@@ -301,7 +303,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           {/* Mobile menu — mesmo respiro lateral suave do card de fundo */}
           {mobileMenuOpen && (
             <div
-              className="sm:hidden absolute left-[24px] right-[24px] top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
+              className="sm:hidden absolute left-[16px] right-[16px] top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
               style={{
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border) / 0.82)',
