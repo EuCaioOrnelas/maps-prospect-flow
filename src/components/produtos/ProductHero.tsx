@@ -18,7 +18,7 @@ interface ProductHeroProps {
 
 export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHeroProps) => {
   return (
-    <section className="relative -mt-[72px] w-full overflow-x-clip pb-32 pt-[120px] sm:-mt-[80px] sm:pb-44 sm:pt-[136px]">
+    <section className="relative -mt-[72px] w-full overflow-x-clip pb-24 pt-[120px] sm:-mt-[80px] sm:pb-28 sm:pt-[136px] lg:pb-32">
       <div
         className="absolute inset-0"
         style={{
@@ -122,12 +122,12 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
           </div>
 
           <div
-            className="animate-slide-up relative mt-10 flex w-full min-w-0 justify-start sm:mt-14 lg:mt-16"
+            className="animate-slide-up relative mt-6 flex w-full min-w-0 justify-start sm:mt-8 lg:mt-10"
             style={{ animationDelay: "0.45s" }}
           >
             {/* Faixa de plasma (verde Wiize) — sempre atrás do mockup, inclusive no mobile */}
             <div
-              className="pointer-events-none absolute left-1/2 top-[112%] z-0 h-24 w-[220vw] -translate-x-1/2 -translate-y-1/2 -rotate-[4deg] overflow-hidden sm:h-32"
+              className="pointer-events-none absolute left-1/2 top-[110%] z-0 h-24 w-[220vw] -translate-x-1/2 -translate-y-1/2 -rotate-[4deg] overflow-hidden sm:h-32"
               aria-hidden
             >
               <div className="wz-band absolute inset-0" />
