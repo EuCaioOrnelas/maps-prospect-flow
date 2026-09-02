@@ -142,7 +142,6 @@ const Index = () => {
             {/* Hierarquia: solução → ponte (operação conectada) → dentro da plataforma → benefício → prova → oferta */}
             <MechanismSection />
             <OpportunitySection />
-            <MidCTASection onSignupClick={trackSignupClick} />
             <PlatformModulesSection />
             <WhyItWorksSection />
             <TestimonialsSection />
