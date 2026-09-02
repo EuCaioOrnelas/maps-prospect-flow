@@ -7,7 +7,7 @@ const STORAGE_KEY = "wiize_referral";
 const CODE_KEY = "wiize_referral_code";
 const PENDING_KEY = "wiize_referral_pending";
 const COOKIE_KEY = "wiize_ref";
-const COOKIE_DAYS = 365 * 2; // 2 years (last-click persistence)
+const COOKIE_DAYS = 365; // 1 year (last-click persistence)
 
 interface StoredReferral {
   code: string;

@@ -171,7 +171,7 @@ function buildEmail(type: string, data: any): { subject: string; html: string } 
         p("A sua candidatura foi aprovada. A partir de agora você ganha comissão recorrente sobre cada cliente que indicar para a Wiize.") +
         credentialsBlock +
         refBlock +
-        p("Compartilhe seu link em WhatsApp, redes sociais e e-mails. Toda venda gerada nos próximos <strong>2 anos</strong> é vinculada à sua conta.") +
+        p("Compartilhe seu link em WhatsApp, redes sociais e e-mails. Toda venda gerada nos próximos <strong>1 ano</strong> é vinculada à sua conta.") +
         btn(portalLogin, "Acessar meu portal") +
         small("Comece pelo painel — você encontra materiais prontos, métricas de conversão e seu saldo em tempo real."),
         "Sua conta de parceiro foi aprovada"

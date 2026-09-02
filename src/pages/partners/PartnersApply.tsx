@@ -45,10 +45,10 @@ const STEPS = [
 ];
 
 const benefits = [
-  { icon: Wallet, title: "Comissão recorrente até 24 meses", desc: "Receba todo mês enquanto seu indicado for cliente." },
+  { icon: Wallet, title: "Comissão recorrente até 12 meses", desc: "Receba todo mês enquanto seu indicado for cliente." },
   { icon: TrendingUp, title: "Níveis até 25%", desc: "Quanto mais vendas, maior sua comissão." },
   { icon: Megaphone, title: "Materiais prontos", desc: "Banners, copies e roteiros validados." },
-  { icon: Target, title: "Atribuição last-click 2 anos", desc: "A venda continua sua mesmo se demorar a fechar." },
+  { icon: Target, title: "Atribuição last-click 1 ano", desc: "A venda continua sua mesmo se demorar a fechar." },
   { icon: Users, title: "Painel exclusivo", desc: "Cliques, leads, vendas e comissões em tempo real." },
   { icon: ShieldCheck, title: "Saque a partir de R$ 100", desc: "Pix em até 5 dias úteis após aprovação." },
 ];
@@ -459,7 +459,7 @@ export default function PartnersApply() {
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Indique clientes, monetize sua audiência ou ofereça Wiize aos seus clientes
-            e receba comissões recorrentes por até 24 meses.
+            e receba comissões recorrentes por até 12 meses.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
             <Button size="xl" onClick={() => setStarted(true)} className="gap-2">
