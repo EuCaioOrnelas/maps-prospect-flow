@@ -22,7 +22,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
       {/* Faixa de plasma (verde Wiize) — fixa na base do hero, acima do fundo (z-[5])
           e abaixo de todo o conteúdo; somente a imagem do hero (z-30) passa por cima dela */}
       <div
-        className="pointer-events-none absolute bottom-28 left-1/2 z-[5] h-24 w-[220vw] -translate-x-1/2 -rotate-[4deg] overflow-hidden sm:bottom-32 sm:h-32"
+        className="pointer-events-none absolute bottom-36 left-1/2 z-[5] h-24 w-[220vw] -translate-x-1/2 -rotate-[2deg] overflow-hidden sm:bottom-40 sm:h-32"
         aria-hidden
       >
         <div className="wz-band absolute inset-0" />
