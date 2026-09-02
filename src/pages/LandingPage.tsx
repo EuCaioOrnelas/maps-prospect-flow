@@ -128,6 +128,7 @@ const LandingPage = () => {
           },
           platformModulesJsonLd,
           faqJsonLd,
+          siteNavigationSchema,
         ]}
       />
       <main className="landing-light min-h-screen bg-background overflow-x-hidden overflow-y-auto w-full max-w-full relative">
