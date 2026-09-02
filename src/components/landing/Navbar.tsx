@@ -303,7 +303,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           {/* Mobile menu — mesmo respiro lateral suave do card de fundo */}
           {mobileMenuOpen && (
             <div
-              className="sm:hidden absolute left-[24px] right-[24px] top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
+              className="sm:hidden absolute left-[16px] right-[16px] top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
               style={{
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border) / 0.82)',
