@@ -146,18 +146,33 @@ function StepRow({
 export const MechanismSection = () => {
   const { ref, isVisible } = useScrollAnimation();
   const trackRef = useRef<HTMLDivElement>(null);
+  const nodeRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const nodeYs = useRef<number[]>([]);
   const [trackH, setTrackH] = useState(0);
-  const [active, setActive] = useState(0);
+  const [passedCount, setPassedCount] = useState(0);
 
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
-    const update = () => setTrackH(el.getBoundingClientRect().height);
+    const update = () => {
+      const tr = el.getBoundingClientRect();
+      setTrackH(tr.height);
+      // Posição vertical do centro de cada nó numerado, relativa à trilha
+      nodeYs.current = nodeRefs.current.map((n) => {
+        if (!n) return Number.POSITIVE_INFINITY;
+        const r = n.getBoundingClientRect();
+        return r.top + r.height / 2 - tr.top;
+      });
+    };
     update();
-    if (typeof ResizeObserver === "undefined") return;
+    const t = window.setTimeout(update, 350);
+    if (typeof ResizeObserver === "undefined") return () => window.clearTimeout(t);
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      window.clearTimeout(t);
+    };
   }, []);
 
   const { scrollYProgress } = useScroll({
