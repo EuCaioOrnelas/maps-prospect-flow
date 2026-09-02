@@ -14,9 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProblemSection } from "@/components/sales/ProblemSection";
 import NotFound from "./NotFound";
 
-const MidCTASection = lazy(() =>
-  import("@/components/sales/MidCTASection").then((m) => ({ default: m.MidCTASection })),
-);
 const OpportunitySection = lazy(() =>
   import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
 );
