@@ -24,7 +24,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
           O translateY compensa a subida causada pela rotação em telas largas (4K),
           mantendo a faixa sempre na mesma posição visual do layout 1440p. */}
       <div
-        className="pointer-events-none absolute bottom-[-2.5rem] left-1/2 z-[5] h-24 w-[220vw] origin-center overflow-hidden sm:bottom-[2.5rem] sm:h-32"
+        className="pointer-events-none absolute bottom-[-2.5rem] left-1/2 z-[5] h-24 w-[220vw] origin-center overflow-hidden sm:bottom-[-5.5rem] sm:h-32"
 
         style={{
           transform:
