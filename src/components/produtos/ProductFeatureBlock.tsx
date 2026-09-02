@@ -5,6 +5,7 @@ import { HiCheckCircle, HiBolt, HiArrowTrendingUp, HiSparkles, HiShieldCheck } f
 const METRIC_ICONS = [HiArrowTrendingUp, HiBolt, HiSparkles, HiShieldCheck];
 
 import { ProductStageShowcase } from "./ProductStageShowcase";
+import { getCardTheme } from "./productCardThemes";
 import type { ProductFeature, ProductVisualKey } from "@/data/products";
 
 interface ProductFeatureBlockProps {
