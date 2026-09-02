@@ -77,6 +77,7 @@ function StepRow({
           motion only animates scale/opacity on the inner span so the
           Tailwind translate centering is never overridden */}
       <span
+        ref={nodeRef}
         className="absolute left-[15px] top-8 z-20 -translate-x-1/2 md:left-1/2 md:top-1/2 md:-translate-y-1/2"
         aria-hidden
       >
@@ -88,7 +89,7 @@ function StepRow({
         >
           <motion.span
             animate={
-              active
+              passed
                 ? {
                     backgroundColor: "hsl(var(--primary))",
                     color: "hsl(var(--primary-foreground))",
