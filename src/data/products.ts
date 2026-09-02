@@ -412,56 +412,56 @@ export const PRODUCTS: ProductConfig[] = [
     category: "Otimize",
     stage: "Otimize",
     name: "Automação Comercial",
-    shortDescription: "Automatize processos comerciais",
-    cardTagline: "Automatize processos comerciais",
+    shortDescription: "Automatize o atendimento no WhatsApp",
+    cardTagline: "Automatize o atendimento no WhatsApp",
     cardDescription:
-      "Automatizar não é tirar pessoas do processo. É tirar tarefas desnecessárias das pessoas — follow-ups, mensagens e etapas repetitivas rodando sem perder o contexto.",
+      "Automações no WhatsApp para atendimento ao cliente, suporte, pedidos e consultas: o cliente é respondido na hora e sua equipe só entra quando realmente precisa.",
     icon: Workflow,
-    heroTitle: "Automatize o trabalho",
-    heroHighlight: "que não precisa ser manual",
+    heroTitle: "Automatize atendimento",
+    heroHighlight: "e suporte no WhatsApp",
     heroDescription:
-      "Transforme processos comerciais repetitivos em fluxos que trabalham continuamente. Automatize follow-ups, tarefas e interações em diferentes canais sem perder o contexto da operação.",
-    seoTitle: "Automação Comercial: menos trabalho manual, mais processo",
+      "Crie automações no WhatsApp para atender clientes, resolver suporte, receber pedidos e responder consultas. O cliente tem resposta imediata, o processo roda sozinho e sua equipe assume apenas os casos que exigem gente.",
+    seoTitle: "Automação no WhatsApp: atendimento, suporte, pedidos e consultas",
     seoDescription:
-      "Transforme tarefas comerciais repetitivas em fluxos contínuos: follow-ups, mensagens e etapas automatizadas em diferentes canais, sem perder o contexto.",
+      "Automatize o WhatsApp da sua empresa: atendimento ao cliente, suporte, pedidos e consultas resolvidos automaticamente, com transferência para humano quando necessário.",
     keywords:
-      "automação comercial, fluxos de vendas, follow-up automático, processos comerciais, WhatsApp oficial",
-    howItWorksTitle: "Como um processo repetitivo vira um fluxo que trabalha por você",
-    howItWorksHighlight: "fluxo que trabalha por você",
+      "automação WhatsApp, atendimento automatizado, suporte no WhatsApp, pedidos, consultas, WhatsApp oficial",
+    howItWorksTitle: "Como o atendimento no WhatsApp passa a rodar sozinho",
+    howItWorksHighlight: "passa a rodar sozinho",
     howItWorks: [
       {
-        title: "Defina o processo",
+        title: "Defina o gatilho",
         description:
-          "Escolha o momento e as condições que iniciam uma ação: uma mensagem recebida, uma mudança de etapa no CRM ou um horário programado.",
+          "Escolha o que inicia a automação: uma mensagem recebida no WhatsApp, uma palavra específica, uma mudança de etapa no CRM ou um horário programado.",
         preview: ["Gatilho definido", "Canal: WhatsApp oficial", "Condições configuradas"],
       },
       {
-        title: "Deixe o fluxo trabalhar",
+        title: "Monte o atendimento",
         description:
-          "Automatize tarefas, mensagens e etapas repetitivas da operação, mantendo o contexto de cada conversa e o registro no CRM.",
-        preview: ["Etapas conectadas", "Mensagens no tempo certo", "CRM atualizado"],
+          "Crie menus, respostas, coletas de dados e etapas para atendimento, suporte, pedidos e consultas — tudo com o contexto da conversa preservado.",
+        preview: ["Atendimento e suporte", "Pedidos e consultas", "Dados coletados na conversa"],
       },
       {
-        title: "Mantenha o controle",
+        title: "Humano só quando precisa",
         description:
-          "Acompanhe o que está acontecendo, veja o que está funcionando e intervenha quando a equipe precisar assumir a conversa.",
-        preview: ["Resultados por etapa", "Taxa de resposta", "Intervenção humana quando necessário"],
+          "A automação resolve o que é repetitivo e transfere para a equipe quando o caso exige atenção humana, com todo o histórico registrado no CRM.",
+        preview: ["Casos simples resolvidos", "Transferência para humano", "CRM atualizado"],
       },
     ],
     features: [
       {
-        eyebrow: "Eficiência",
-        title: "Automatizar é tirar tarefas desnecessárias das pessoas",
-        titleHighlight: "tirar tarefas desnecessárias das pessoas",
+        eyebrow: "Atendimento",
+        title: "Seu cliente é respondido na hora, sempre",
+        titleHighlight: "na hora, sempre",
         description:
-          "Sua equipe não precisa lembrar de cada follow-up, atualizar cada card e repetir a mesma mensagem dezenas de vezes. Isso é trabalho de processo, não de vendedor.",
+          "Dúvidas frequentes, status de pedido, consultas e solicitações de suporte deixam de esperar por alguém livre. A automação responde no WhatsApp em segundos.",
         bullets: [
-          "Tarefas repetitivas fora da rotina do time",
-          "Menos dependência da memória do vendedor",
-          "Mais tempo para conversas que exigem gente",
+          "Atendimento ao cliente e suporte automatizados",
+          "Pedidos e consultas resolvidos na conversa",
+          "Fila menor para a equipe humana",
         ],
         metrics: [
-          { label: "Canais", value: "WhatsApp oficial" },
+          { label: "Canal", value: "WhatsApp oficial" },
           { label: "Operação", value: "contínua" },
         ],
       },
@@ -474,15 +474,15 @@ export const PRODUCTS: ProductConfig[] = [
         bullets: [
           "Ações no CRM e transferência para humano",
           "Google Sheets, Calendar e Gmail",
-          "APIs oficiais da Meta e limites de segurança",
+          "API oficial da Meta e limites de segurança",
         ],
         reverse: true,
       },
     ],
     proof: [
+      { label: "Atendimento", value: "imediato", hint: "suporte, pedidos e consultas" },
       { label: "Trabalho repetitivo", value: "reduzido", hint: "sem tirar pessoas do processo" },
-      { label: "Comparação de abordagens", value: "nativa", hint: "teste variações no mesmo fluxo" },
-      { label: "Conformidade", value: "canais oficiais", hint: "sem automações não autorizadas" },
+      { label: "Conformidade", value: "canal oficial", hint: "sem automações não autorizadas" },
     ],
   },
   {
