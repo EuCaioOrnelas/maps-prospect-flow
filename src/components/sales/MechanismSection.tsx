@@ -167,7 +167,6 @@ export const MechanismSection = () => {
     mass: 0.22,
     restDelta: 0.0005,
   });
-  const fillScale = useTransform(progress, (v) => Math.min(1, Math.max(0, v)));
   const dotY = useTransform(progress, (v) => Math.min(1, Math.max(0, v)) * trackH);
 
   useMotionValueEvent(progress, "change", (v) => {
