@@ -58,13 +58,13 @@ function StepRow({
   step,
   index,
   isLeft,
-  passed,
+  active,
   nodeRef,
 }: {
   step: typeof steps[0];
   index: number;
   isLeft: boolean;
-  passed: boolean;
+  active: boolean;
   nodeRef: (el: HTMLSpanElement | null) => void;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
@@ -89,7 +89,7 @@ function StepRow({
         >
           <motion.span
             animate={
-              passed
+              active
                 ? {
                     backgroundColor: "hsl(var(--primary))",
                     color: "hsl(var(--primary-foreground))",
