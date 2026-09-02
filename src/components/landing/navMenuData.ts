@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   BookOpen,
   BarChart3,
-  FileText,
+  
   Handshake,
   UserPlus,
   LogIn,
