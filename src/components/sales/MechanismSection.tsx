@@ -196,7 +196,8 @@ export const MechanismSection = () => {
       if (!n) return;
       const r = n.getBoundingClientRect();
       const ny = r.top + r.height / 2 - tr.top;
-      if (y >= ny - 4) current = i;
+      // Ativa assim que a borda superior da bola encosta no topo do número
+      if (y >= ny - r.height / 2 - 6) current = i;
     });
     setActiveIndex((prev) => (prev === current ? prev : current));
   });
