@@ -154,9 +154,9 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         ref={navRef}
         className={cn(
           "fixed left-0 right-0 z-50 top-0",
-          // No estado flutuante o respiro lateral acompanha o container da página,
-          // então a borda do navbar fica alinhada com o max-width do conteúdo.
-          scrolled ? "px-6 sm:px-10 lg:px-16" : "px-0",
+          // Nos estados flutuante e menu-aberto o respiro lateral acompanha o container
+          // da página, então a borda do navbar fica alinhada com o max-width do conteúdo.
+          scrolled || openMenu ? "px-6 sm:px-10 lg:px-16" : "px-0",
         )}
         style={{
           // Abrir o menu NÃO desloca o navbar: o respiro do topo é o mesmo nos dois estados.
