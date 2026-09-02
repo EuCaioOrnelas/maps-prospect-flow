@@ -186,6 +186,7 @@ export const MechanismSection = () => {
     restDelta: 0.0005,
   });
   const dotY = useTransform(progress, (v) => Math.min(1, Math.max(0, v)) * trackH);
+  const lineH = useTransform(dotY, (y) => Math.max(0, y - 5));
 
   useMotionValueEvent(dotY, "change", (y) => {
     // O nó só ganha foco verde quando a bola já passou pelo centro dele
@@ -234,19 +235,35 @@ export const MechanismSection = () => {
             className="absolute left-[15px] top-0 z-0 h-full w-px bg-border/70 md:left-1/2"
             aria-hidden
           />
+          {/* preenchimento verde — termina exatamente no topo da bola,
+              nunca passa por cima dela nem deixa gap no início */}
           <motion.span
             className="absolute left-[15px] top-0 z-0 w-px bg-primary md:left-1/2"
-            style={{ height: dotY }}
+            style={{ height: lineH }}
             aria-hidden
           />
-          <motion.span
-            className="absolute left-[15px] top-0 z-10 h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18)] md:left-1/2"
-            style={{ y: dotY, marginTop: -5, willChange: "transform" }}
+          {/* bola — wrapper puro cuida da centralização; o motion só anima Y */}
+          <span
+            className="absolute left-[15px] top-0 z-10 -translate-x-1/2 md:left-1/2"
             aria-hidden
-          />
+          >
+            <motion.span
+              className="block h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18)]"
+              style={{ y: dotY, marginTop: -5, willChange: "transform" }}
+            />
+          </span>
 
           {steps.map((step, i) => (
-            <StepRow key={step.title} step={step} index={i} isLeft={i % 2 === 0} active={active === i} />
+            <StepRow
+              key={step.title}
+              step={step}
+              index={i}
+              isLeft={i % 2 === 0}
+              passed={i < passedCount}
+              nodeRef={(el) => {
+                nodeRefs.current[i] = el;
+              }}
+            />
           ))}
         </div>
 
