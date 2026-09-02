@@ -164,22 +164,21 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           onMouseLeave={scheduleClose}
           style={{
             // Mesma largura/padding do container da página (max-w-[90rem]).
-            // O navbar NUNCA muda de tamanho/posição — abrir os links apenas
-            // revela o card branco por trás, que expande 10px para cada lado.
+            // O navbar NUNCA muda de tamanho/posição ao abrir os links.
             maxWidth: '90rem',
             paddingTop: '8px',
             paddingBottom: '8px',
           }}
         >
-          {/* Card de fundo: aparece atrás do navbar quando o menu está aberto,
-              expandindo 2px nas laterais sem mover nada do conteúdo */}
+          {/* Card de fundo: acompanha as bordas do conteúdo e ultrapassa só 2px,
+              sem ocupar toda a largura externa do container. */}
           {(openMenu || mobileMenuOpen) ? (
             <div
               aria-hidden="true"
-              className="absolute -left-[2px] -right-[2px] top-0 bottom-0 rounded-[18px]"
+              className="absolute left-[22px] right-[22px] sm:left-[38px] sm:right-[38px] lg:left-[62px] lg:right-[62px] top-0 bottom-0 rounded-[18px]"
               style={{
                 backgroundColor: 'hsl(var(--background))',
-                border: '1px solid hsl(var(--border) / 0.55)',
+                border: '1px solid hsl(var(--border) / 0.82)',
                 boxShadow: '0 8px 32px hsl(var(--background) / 0.3)',
               }}
             />
@@ -299,13 +298,13 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             </div>
           )}
 
-          {/* Mobile menu — card flutuante alinhado às bordas do conteúdo do navbar */}
+          {/* Mobile menu — ultrapassa apenas 2px das bordas do conteúdo */}
           {mobileMenuOpen && (
             <div
-              className="sm:hidden absolute left-0 right-0 top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
+              className="sm:hidden absolute left-[22px] right-[22px] top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
               style={{
                 backgroundColor: 'hsl(var(--background))',
-                border: '1px solid hsl(var(--border) / 0.6)',
+                border: '1px solid hsl(var(--border) / 0.82)',
                 boxShadow: '0 12px 40px hsl(var(--background) / 0.4)',
               }}
             >
