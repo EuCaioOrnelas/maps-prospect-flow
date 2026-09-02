@@ -1329,11 +1329,30 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           </ul>
         </div>
 
-        {/* Área do mockup — fundo levemente diferenciado para separar visualmente */}
-        <div className="p-5 sm:p-8 lg:p-10 bg-muted/60 flex items-center justify-center h-full">
-          <MockStage>
-            <Mock />
-          </MockStage>
+        {/* Área do mockup — mesmo estilo dos cards "Escolha seu caminho":
+            fundo em degradê colorido no tom verde e mock levemente cortado/esmaecido embaixo */}
+        <div
+          className={cn(
+            "relative overflow-hidden p-5 sm:p-8 lg:p-10 pb-0 sm:pb-0 lg:pb-0",
+            "flex items-end justify-center h-full",
+            "bg-gradient-to-br",
+            MODULE_THEMES[index % MODULE_THEMES.length],
+          )}
+        >
+          {/* brilhos suaves sobre o degradê */}
+          <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-white/25 blur-2xl pointer-events-none" aria-hidden="true" />
+          <div className="absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/15 blur-2xl pointer-events-none" aria-hidden="true" />
+          <div
+            className="relative w-full translate-y-6 sm:translate-y-8"
+            style={{
+              maskImage: "linear-gradient(to bottom, black 78%, transparent 98%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 78%, transparent 98%)",
+            }}
+          >
+            <MockStage>
+              <Mock />
+            </MockStage>
+          </div>
         </div>
 
       </div>
