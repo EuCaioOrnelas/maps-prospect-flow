@@ -7,7 +7,7 @@ import {
   useTransform,
   useMotionValueEvent,
 } from "framer-motion";
-import { Search, Bot, LayoutGrid, Sparkles, CalendarCheck, CheckCircle2 } from "lucide-react";
+import { Search, Bot, LayoutGrid, Sparkles, CalendarCheck, CheckCircle2, MessageCircle, TrendingUp, Users, Target } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
@@ -142,6 +142,13 @@ function StepRow({
     </div>
   );
 }
+
+const floatingChips = [
+  { icon: MessageCircle, label: "Follow-up automático", className: "left-[3%] top-[18%]", delay: 0 },
+  { icon: TrendingUp, label: "+ Reuniões na agenda", className: "right-[4%] top-[26%]", delay: 1.2 },
+  { icon: Users, label: "Leads qualificados", className: "left-[5%] bottom-[22%]", delay: 2.1 },
+  { icon: Target, label: "Pipeline organizado", className: "right-[3%] bottom-[14%]", delay: 0.7 },
+];
 
 export const MechanismSection = () => {
   const { ref, isVisible } = useScrollAnimation();
