@@ -36,16 +36,20 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
 
   const { scrollYProgress } = useScroll({
     target: listRef,
-    offset: ["start 70%", "end 60%"],
+    offset: ["start 75%", "end 65%"],
   });
-  const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 30, mass: 0.6 });
-  const dotTop = useTransform(progress, (v) => `${Math.min(100, Math.max(0, v * 100))}%`);
+  // Spring mais leve = movimento contínuo, sem travadas em telas fracas
+  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 34, mass: 0.35 });
+  // A bolinha vive no fim da trilha preenchida (mesma origem do scaleY),
+  // evitando dessincronia entre linha e ponto.
+  const fillHeight = useTransform(progress, (v) => `${Math.min(100, Math.max(0, v * 100))}%`);
 
   useMotionValueEvent(progress, "change", (v) => {
     // Ativa o passo assim que a bolinha alcança a posição do número
     const idx = Math.min(steps.length - 1, Math.max(0, Math.floor(v * steps.length)));
-    setActive(idx);
+    setActive((prev) => (prev === idx ? prev : idx));
   });
+
 
   return (
     <section id={PV_STEPS_SECTION} className="w-full py-16 sm:py-24">
