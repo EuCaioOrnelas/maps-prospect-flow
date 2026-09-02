@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { motion, useScroll, useSpring, useMotionValueEvent, useTransform } from "framer-motion";
 import { HiCheckCircle } from "react-icons/hi2";
 import type { ProductStep } from "@/data/products";
@@ -85,8 +85,8 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
               aria-hidden
             />
             <motion.span
-              className="absolute -left-[5px] top-0 h-[11px] w-[11px] -translate-y-[5px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]"
-              style={{ y: dotY, willChange: "transform" }}
+              className="absolute -left-[5px] top-0 h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]"
+              style={{ y: dotY, marginTop: -5, willChange: "transform" }}
               aria-hidden
             />
 
