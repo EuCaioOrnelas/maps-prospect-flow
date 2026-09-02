@@ -155,7 +155,6 @@ const LandingPage = () => {
           <Suspense fallback={<SectionFallback />}>
             <MechanismSection />
             <OpportunitySection />
-            <MidCTASection onSignupClick={trackSignupClick} />
             <PlatformModulesSection />
             <WhyItWorksSection />
             <TestimonialsSection />
