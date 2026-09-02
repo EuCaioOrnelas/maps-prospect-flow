@@ -18,17 +18,36 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import {
+  HiArrowTrendingUp,
+  HiBolt,
+  HiChatBubbleLeftRight,
+  HiCheckBadge,
+  HiClock,
+  HiCurrencyDollar,
+  HiDocumentCheck,
+  HiEnvelopeOpen,
+  HiFire,
+  HiRectangleGroup,
+  HiShieldCheck,
+  HiSignal,
+  HiSparkles,
+  HiSquares2X2,
+  HiUserCircle,
+  HiArrowPathRoundedSquare,
+  HiBellAlert,
+} from "react-icons/hi2";
+import {
   StageCapture,
   StageDiagnosis,
   StageMessage,
   StageSend,
   StageAIChat,
   StageClose,
-  StageCRM,
   segmentProgress,
   type Stage,
 } from "@/components/landing/heroStages";
 import type { ProductVisualKey } from "@/data/products";
+
 
 /* ══════════ AGENDA ══════════ */
 const StageAgendaSlots = ({ progress }: { progress: number }) => {
