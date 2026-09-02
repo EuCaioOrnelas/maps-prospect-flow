@@ -1,17 +1,11 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MidCTASectionProps {
   onSignupClick?: () => void;
 }
-
-const proofPoints = [
-  "Setup em menos de 10 minutos",
-  "IA operando no seu WhatsApp",
-  "Sem cartão de crédito",
-];
 
 export const MidCTASection = ({ onSignupClick }: MidCTASectionProps) => {
   return (
@@ -77,19 +71,6 @@ export const MidCTASection = ({ onSignupClick }: MidCTASectionProps) => {
             <p className="mt-4 text-xs font-medium text-muted-foreground sm:text-sm">
               7 dias para testar <span className="mx-1 text-border">•</span> Sem compromisso
             </p>
-
-            {/* provas de confiança */}
-            <div className="mx-auto mt-9 flex max-w-2xl flex-col items-center justify-center gap-3 border-t border-border/50 pt-7 sm:flex-row sm:gap-8">
-              {proofPoints.map((point) => (
-                <span
-                  key={point}
-                  className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground sm:text-[13px]"
-                >
-                  <CheckCircle2 size={15} className="text-primary" strokeWidth={2.2} />
-                  {point}
-                </span>
-              ))}
-            </div>
           </div>
         </motion.div>
       </div>
