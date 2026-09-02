@@ -137,7 +137,7 @@ const Row = ({ children, className = "" }: { children: ReactNode; className?: st
 const MockStage = ({ children }: { children: ReactNode }) => (
   <div className="relative w-full h-full flex flex-col rounded-t-card bg-transparent">
     {/* imagem deslocada para baixo com espaçamento superior e sem espaços brancos */}
-    <div className="relative flex-1 flex flex-col min-h-[330px] sm:min-h-[390px] [zoom:0.86] sm:[zoom:1.04] lg:[zoom:1.12] mt-6 sm:mt-8">
+    <div className="relative flex-1 flex flex-col min-h-[330px] sm:min-h-[390px] [zoom:0.86] sm:[zoom:1.04] lg:[zoom:1.12] mt-10 sm:mt-14">
       <div className="w-full flex-1 flex flex-col">{children}</div>
     </div>
   </div>
