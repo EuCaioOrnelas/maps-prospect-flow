@@ -160,22 +160,27 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         }}
       >
         <div
-          className="mx-auto w-full px-6 sm:px-10 lg:px-16"
+          className={cn(
+            "relative mx-auto w-full px-6 sm:px-10 lg:px-16",
+            // Quando o menu desktop abre, o card branco expande 10px para cada lado
+            // enquanto o conteúdo (logo, links) permanece alinhado ao max-width da página.
+            openMenu && "-mx-[10px] px-[34px] sm:px-[50px] lg:px-[74px]"
+          )}
           onMouseLeave={scheduleClose}
           style={{
             // Mesma largura/padding do container da página (max-w-[90rem]),
             // então a logo e as bordas do navbar ficam alinhadas com o conteúdo.
             maxWidth: '90rem',
-            borderRadius: scrolled || openMenu ? '18px' : '0px',
-            backgroundColor: openMenu
+            borderRadius: scrolled || openMenu || mobileMenuOpen ? '18px' : '0px',
+            backgroundColor: openMenu || mobileMenuOpen
               ? 'hsl(var(--background))'
               : scrolled
                 ? 'hsl(var(--background) / 0.55)'
                 : 'transparent',
-            backdropFilter: openMenu ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
-            WebkitBackdropFilter: openMenu ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
-            border: openMenu || scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
-            boxShadow: openMenu || scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
+            backdropFilter: openMenu || mobileMenuOpen ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
+            WebkitBackdropFilter: openMenu || mobileMenuOpen ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
+            border: openMenu || mobileMenuOpen || scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
+            boxShadow: openMenu || mobileMenuOpen || scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
             paddingTop: '8px',
             paddingBottom: '8px',
             transition: 'border-radius 220ms ease-out, background-color 220ms ease-out, box-shadow 220ms ease-out',
