@@ -86,7 +86,7 @@ const MockShell = ({
   badge?: string;
   children: ReactNode;
 }) => (
-  <div className="w-full rounded-card border border-border/70 bg-card overflow-hidden shadow-[0_4px_14px_-8px_hsl(var(--foreground)/0.18)]">
+  <div className="w-full rounded-t-card border border-b-0 border-border/70 bg-card overflow-hidden shadow-[0_4px_14px_-8px_hsl(var(--foreground)/0.18)]">
     <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border/60 bg-gradient-to-r from-primary/[0.07] via-transparent to-transparent">
       <span className="w-2 h-2 rounded-full bg-destructive/40" />
       <span className="w-2 h-2 rounded-full bg-amber-400/50" />
@@ -101,11 +101,9 @@ const MockShell = ({
         </span>
       )}
     </div>
-    <div className="p-3 sm:p-3.5 pb-4 sm:pb-5 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] min-h-[300px] sm:min-h-[380px] lg:h-[420px] overflow-hidden flex flex-col justify-start">
+    <div className="p-3 sm:p-3.5 pb-0 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] min-h-[300px] sm:min-h-[380px] lg:h-[420px] overflow-hidden flex flex-col justify-start">
       {children}
     </div>
-
-
   </div>
 );
 
@@ -137,13 +135,10 @@ const Row = ({ children, className = "" }: { children: ReactNode; className?: st
 );
 
 const MockStage = ({ children }: { children: ReactNode }) => (
-  <div className="relative w-full rounded-card p-1.5 sm:p-2.5 pb-3 sm:pb-4 bg-primary/[0.04] ring-1 ring-inset ring-primary/15">
-    <span className="pointer-events-none absolute left-1.5 top-1.5 w-3 h-3 border-l-2 border-t-2 border-primary/30 rounded-tl-xs" aria-hidden="true" />
-    <span className="pointer-events-none absolute right-1.5 top-1.5 w-3 h-3 border-r-2 border-t-2 border-primary/30 rounded-tr-xs" aria-hidden="true" />
-    <span className="pointer-events-none absolute left-1.5 bottom-1.5 w-3 h-3 border-l-2 border-b-2 border-primary/30 rounded-bl-xs" aria-hidden="true" />
-    <span className="pointer-events-none absolute right-1.5 bottom-1.5 w-3 h-3 border-r-2 border-b-2 border-primary/30 rounded-br-xs" aria-hidden="true" />
-    {/* zoom em telas pequenas: o mockup mantém o layout de desktop sem cortar conteúdo */}
-    <div className="relative flex items-center justify-center min-h-[300px] sm:min-h-[360px] lg:min-h-[400px] [zoom:0.72] sm:[zoom:0.9] lg:[zoom:1]">
+  <div className="relative w-full rounded-t-card bg-transparent">
+    {/* cantos decorativos e borda verde removidos para imagem limpa */}
+    {/* zoom aumentado para preencher o card após retirar a borda */}
+    <div className="relative flex items-center justify-center min-h-[330px] sm:min-h-[390px] lg:min-h-[430px] [zoom:0.86] sm:[zoom:1.04] lg:[zoom:1.12]">
       <div className="w-full">{children}</div>
     </div>
   </div>
@@ -1343,7 +1338,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             fundo em degradê colorido no tom verde e mock levemente cortado/esmaecido embaixo */}
         <div
           className={cn(
-            "relative overflow-hidden p-5 sm:p-8 lg:p-10 pb-0 sm:pb-0 lg:pb-0",
+            "relative overflow-hidden p-4 sm:p-6 lg:p-8 pb-0 sm:pb-0 lg:pb-0",
             "flex items-end justify-center h-full",
             "bg-gradient-to-br",
             MODULE_THEMES[index % MODULE_THEMES.length],
@@ -1353,10 +1348,10 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-white/25 blur-2xl pointer-events-none" aria-hidden="true" />
           <div className="absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/15 blur-2xl pointer-events-none" aria-hidden="true" />
           <div
-            className="relative w-full translate-y-6 sm:translate-y-8"
+            className="relative w-full translate-y-6 sm:translate-y-9 lg:translate-y-11"
             style={{
-              maskImage: "linear-gradient(to bottom, black 78%, transparent 98%)",
-              WebkitMaskImage: "linear-gradient(to bottom, black 78%, transparent 98%)",
+              maskImage: "linear-gradient(to bottom, black 94%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 94%, transparent 100%)",
             }}
           >
             <MockStage>
