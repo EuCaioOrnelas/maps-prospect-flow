@@ -1,0 +1,10 @@
+REVOKE EXECUTE ON FUNCTION public.generate_commission_for_sale() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.recalc_partner_level(uuid, text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.recompute_partner_referral_link_stats(uuid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.recompute_partner_totals(uuid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.partner_create_referral_link(text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.partner_create_referral_link(text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.generate_commission_for_sale() TO service_role;
+GRANT EXECUTE ON FUNCTION public.recalc_partner_level(uuid, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.recompute_partner_referral_link_stats(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.recompute_partner_totals(uuid) TO service_role;

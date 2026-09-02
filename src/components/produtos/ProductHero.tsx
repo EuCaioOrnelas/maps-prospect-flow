@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { HiArrowRight, HiLockClosed } from "react-icons/hi2";
 import { Button } from "@/components/ui/button";
 import { ShaderBackground } from "@/components/ui/warmth-ripple";
+import { withReferralParams } from "@/hooks/usePartnerTracking";
 
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { ProductVisualContent } from "./ProductFloatingVisual";
@@ -107,7 +108,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
                   Comece agora em breve
                 </Button>
               ) : (
-                <Link to="/signup/escolher-plano" className="shrink-0">
+                <Link to={withReferralParams("/signup/escolher-plano")} className="shrink-0">
                   <Button
                     variant="hero"
                     size="lg"
@@ -121,7 +122,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
                   </Button>
                 </Link>
               )}
-              <Link to="/tour-guiado" className="group shrink-0">
+              <Link to={withReferralParams("/tour-guiado")} className="group shrink-0">
                 <Button
                   variant="ghost"
                   size="lg"

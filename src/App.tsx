@@ -491,6 +491,7 @@ const App = () => (
                 <Route path="/partners/verify" element={<LightThemeWrapper><PartnerVerification /></LightThemeWrapper>} />
                 <Route path="/partners/login" element={<LightThemeWrapper><PartnerLogin /></LightThemeWrapper>} />
                 <Route path="/r/:slug" element={<LightThemeWrapper><PartnerSlugRedirect /></LightThemeWrapper>} />
+                <Route path="/go/:slug" element={<LightThemeWrapper><PartnerSlugRedirect /></LightThemeWrapper>} />
                 <Route path="/partners" element={<LightThemeWrapper><PartnerLayout /></LightThemeWrapper>}>
                   <Route index element={<PartnerDashboard />} />
                   <Route path="leads" element={<PartnerLeads />} />
