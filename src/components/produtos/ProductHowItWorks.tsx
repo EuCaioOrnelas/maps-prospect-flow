@@ -84,7 +84,7 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
               aria-hidden
             />
             <motion.span
-              className="absolute -left-[5px] top-0 z-20 h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--background))]"
+              className="absolute -left-[5px] top-0 z-0 h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18)]"
               style={{ y: dotY, marginTop: -5, willChange: "transform" }}
               aria-hidden
             />
