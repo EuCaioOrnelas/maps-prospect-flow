@@ -1354,11 +1354,11 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           </div>
           {/* efeito de surgir na parte inferior: sombra branca com verde */}
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-20 sm:h-24 bg-gradient-to-t from-white/85 via-white/35 to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-24 sm:h-28 bg-gradient-to-t from-white via-white/55 to-transparent"
             aria-hidden="true"
           />
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-14 sm:h-16 bg-gradient-to-t from-primary/25 via-primary/10 to-transparent mix-blend-multiply"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-20 sm:h-24 bg-gradient-to-t from-primary/30 via-primary/12 to-transparent mix-blend-multiply"
             aria-hidden="true"
           />
         </div>
