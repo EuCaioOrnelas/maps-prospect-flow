@@ -214,12 +214,12 @@ export const MechanismSection = () => {
             aria-hidden
           />
           <motion.span
-            className="absolute left-[15px] top-0 z-0 h-full w-px origin-top bg-primary md:left-1/2"
-            style={{ scaleY: fillScale, willChange: "transform" }}
+            className="absolute left-[15px] top-0 z-0 w-px bg-primary md:left-1/2"
+            style={{ height: dotY }}
             aria-hidden
           />
           <motion.span
-            className="absolute left-[15px] top-0 z-0 h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18)] md:left-1/2"
+            className="absolute left-[15px] top-0 z-10 h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.18)] md:left-1/2"
             style={{ y: dotY, marginTop: -5, willChange: "transform" }}
             aria-hidden
           />
