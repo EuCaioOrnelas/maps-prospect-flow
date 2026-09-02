@@ -1348,10 +1348,10 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-white/25 blur-2xl pointer-events-none" aria-hidden="true" />
           <div className="absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/15 blur-2xl pointer-events-none" aria-hidden="true" />
           <div
-            className="relative w-full translate-y-5 sm:translate-y-7 lg:translate-y-9"
+            className="relative w-full translate-y-6 sm:translate-y-9 lg:translate-y-11"
             style={{
-              maskImage: "linear-gradient(to bottom, black 92%, transparent 100%)",
-              WebkitMaskImage: "linear-gradient(to bottom, black 92%, transparent 100%)",
+              maskImage: "linear-gradient(to bottom, black 94%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 94%, transparent 100%)",
             }}
           >
             <MockStage>
