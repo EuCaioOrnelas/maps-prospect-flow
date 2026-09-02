@@ -1347,7 +1347,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-white/25 blur-2xl pointer-events-none" aria-hidden="true" />
           <div className="absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/15 blur-2xl pointer-events-none" aria-hidden="true" />
           {/* mockup esticado para ocupar a altura total do card, encostado nas bordas superior e inferior */}
-          <div className="relative w-full flex-1 flex flex-col min-h-0 pt-4 sm:pt-6">
+          <div className="relative w-full flex-1 flex flex-col min-h-0">
             <MockStage>
               <Mock />
             </MockStage>
