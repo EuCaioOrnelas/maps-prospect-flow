@@ -58,13 +58,13 @@ function StepRow({
   step,
   index,
   isLeft,
-  passed,
+  active,
   nodeRef,
 }: {
   step: typeof steps[0];
   index: number;
   isLeft: boolean;
-  passed: boolean;
+  active: boolean;
   nodeRef: (el: HTMLSpanElement | null) => void;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
@@ -89,7 +89,7 @@ function StepRow({
         >
           <motion.span
             animate={
-              passed
+              active
                 ? {
                     backgroundColor: "hsl(var(--primary))",
                     color: "hsl(var(--primary-foreground))",
@@ -155,7 +155,7 @@ export const MechanismSection = () => {
   const trackRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const [trackH, setTrackH] = useState(0);
-  const [passedCount, setPassedCount] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   useEffect(() => {
     const el = trackRef.current;
@@ -187,17 +187,18 @@ export const MechanismSection = () => {
 
   useMotionValueEvent(dotY, "change", (y) => {
     // Mede na hora — evita posições desatualizadas por animações/resize.
-    // O nó só ganha foco verde quando a bola já passou pelo centro dele.
+    // Apenas o nó que a bola está tocando/ultrapassando por último fica verde;
+    // os anteriores perdem o foco.
     const tr = trackRef.current?.getBoundingClientRect();
     if (!tr) return;
-    let count = 0;
-    nodeRefs.current.forEach((n) => {
+    let current = -1;
+    nodeRefs.current.forEach((n, i) => {
       if (!n) return;
       const r = n.getBoundingClientRect();
       const ny = r.top + r.height / 2 - tr.top;
-      if (y >= ny - 2) count += 1;
+      if (y >= ny - 4) current = i;
     });
-    setPassedCount((prev) => (prev === count ? prev : count));
+    setActiveIndex((prev) => (prev === current ? prev : current));
   });
 
   return (
@@ -280,7 +281,7 @@ export const MechanismSection = () => {
               step={step}
               index={i}
               isLeft={i % 2 === 0}
-              passed={i < passedCount}
+              active={i === activeIndex}
               nodeRef={(el) => {
                 nodeRefs.current[i] = el;
               }}
