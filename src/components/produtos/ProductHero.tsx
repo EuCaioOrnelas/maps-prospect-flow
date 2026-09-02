@@ -22,12 +22,12 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
       {/* Faixa de plasma (verde Wiize) — fixa na base do hero, acima do fundo (z-[5])
           e abaixo de todo o conteúdo; somente a imagem do hero (z-30) passa por cima dela */}
       <div
-        className="pointer-events-none absolute bottom-0 left-1/2 z-[5] h-24 w-[220vw] -translate-x-1/2 -rotate-[4deg] overflow-hidden sm:h-32"
+        className="pointer-events-none absolute bottom-6 left-1/2 z-[5] h-36 w-[220vw] -translate-x-1/2 -rotate-[4deg] overflow-hidden sm:bottom-8 sm:h-44"
         aria-hidden
       >
         <div className="wz-band absolute inset-0" />
-        <div className="absolute inset-0 overflow-hidden opacity-55 mix-blend-screen">
-          <ShaderBackground className="h-[400%] w-full -translate-y-[37.5%]" />
+        <div className="absolute inset-0 overflow-hidden opacity-90 mix-blend-screen">
+          <ShaderBackground className="h-[300%] w-full -translate-y-[33.33%]" />
         </div>
       </div>
       <div
@@ -133,7 +133,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
           </div>
 
           <div
-            className="animate-slide-up relative z-30 mt-8 flex w-full min-w-0 translate-y-14 justify-start sm:mt-10 sm:translate-y-16 lg:mt-4"
+            className="animate-slide-up relative z-30 flex w-full min-w-0 justify-start"
             style={{ animationDelay: "0.45s" }}
           >
             {/* No desktop, o mesmo visual atravessa Hero + Como funciona via sticky no template. */}
