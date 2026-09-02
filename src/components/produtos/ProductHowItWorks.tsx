@@ -49,11 +49,10 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
 
   const { scrollYProgress } = useScroll({
     target: listRef,
-    // Trecho de scroll mais longo = animação mais lenta e confortável
-    offset: ["start 92%", "end 30%"],
+    offset: ["start 85%", "end 55%"],
   });
-  // Spring suave: sem travadas e sem "pulos" em telas fracas
-  const progress = useSpring(scrollYProgress, { stiffness: 55, damping: 26, mass: 0.4 });
+  // Spring rápido o suficiente para acompanhar o scroll sem parecer travado
+  const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.25 });
   // Linha e bolinha usam a MESMA fonte, só com transform (GPU)
   const fillScale = useTransform(progress, (v) => Math.min(1, Math.max(0, v)));
   const dotY = useTransform(progress, (v) => Math.min(1, Math.max(0, v)) * trackH);
