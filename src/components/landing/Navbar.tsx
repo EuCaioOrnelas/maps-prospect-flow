@@ -152,29 +152,20 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
       {menuOverlay}
       <nav
         ref={navRef}
-        className={cn(
-          "fixed left-0 right-0 z-50 top-0",
-          // Nos estados flutuante e menu-aberto o respiro lateral acompanha o container
-          // da página, então a borda do navbar fica alinhada com o max-width do conteúdo.
-          scrolled || openMenu ? "px-6 sm:px-10 lg:px-16" : "px-0",
-        )}
+        className="fixed left-0 right-0 z-50 top-0 px-0"
         style={{
-          // Abrir o menu NÃO desloca o navbar: o respiro do topo é o mesmo nos dois estados.
-          paddingTop: scrolled || openMenu ? '10px' : '0',
-          transition: 'padding 320ms cubic-bezier(0.22,1,0.36,1)',
+          // Mantém o navbar já na posição final: o respiro do topo é o mesmo no topo da
+          // página e quando o menu está aberto, então abrir os links não desloca nada.
+          paddingTop: '16px',
         }}
       >
         <div
-          className={scrolled ? "mx-auto w-full pl-6 pr-3" : "mx-auto w-full px-6 sm:px-10 lg:px-16"}
+          className="mx-auto w-full px-6 sm:px-10 lg:px-16"
           onMouseLeave={scheduleClose}
           style={{
-            // Abrir o menu NÃO altera tamanho, largura, padding ou posição — só revela o fundo.
-            // Estado flutuante (glass) usa o MESMO max-width do container da página (90rem),
-            // então a borda do navbar fica alinhada com o conteúdo em qualquer resolução.
+            // Mesma largura/padding do container da página, então a borda do navbar
+            // fica alinhada com o conteúdo no topo, no scroll e com o menu aberto.
             maxWidth: '90rem',
-
-
-
             borderRadius: scrolled || openMenu ? '18px' : '0px',
             backgroundColor: openMenu
               ? 'hsl(var(--background))'
@@ -185,9 +176,9 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             WebkitBackdropFilter: openMenu ? 'none' : scrolled ? 'blur(16px) saturate(180%)' : 'none',
             border: openMenu || scrolled ? '1px solid hsl(var(--border) / 0.4)' : '1px solid transparent',
             boxShadow: openMenu || scrolled ? '0 8px 32px hsl(var(--background) / 0.3)' : 'none',
-            paddingTop: scrolled ? '8px' : '16px',
-            paddingBottom: scrolled ? '8px' : '16px',
-            transition: 'max-width 320ms cubic-bezier(0.22,1,0.36,1), border-radius 220ms ease-out, background-color 220ms ease-out, box-shadow 220ms ease-out, padding 320ms cubic-bezier(0.22,1,0.36,1)',
+            paddingTop: '8px',
+            paddingBottom: '8px',
+            transition: 'border-radius 220ms ease-out, background-color 220ms ease-out, box-shadow 220ms ease-out',
             transform: 'translateZ(0)',
           }}
         >
@@ -299,12 +290,13 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         <div
           className="sm:hidden fixed left-4 right-4 z-50 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto"
           style={{
-            top: scrolled ? '90px' : '88px',
+            // Altura do navbar agora é fixa no topo, então o menu mobile também fica
+            // sempre na mesma posição, independente do scroll.
+            top: '76px',
             backgroundColor: 'hsl(var(--background))',
             border: '1px solid hsl(var(--border) / 0.6)',
             boxShadow: '0 12px 40px hsl(var(--background) / 0.4)',
             padding: '16px',
-            transition: 'top 300ms ease-out',
           }}
         >
           <div className="flex flex-col gap-2">
