@@ -1352,6 +1352,15 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
               <Mock />
             </MockStage>
           </div>
+          {/* efeito de surgir na parte inferior: sombra branca com verde */}
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-20 sm:h-24 bg-gradient-to-t from-white/85 via-white/35 to-transparent"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-14 sm:h-16 bg-gradient-to-t from-primary/25 via-primary/10 to-transparent mix-blend-multiply"
+            aria-hidden="true"
+          />
         </div>
 
       </div>
