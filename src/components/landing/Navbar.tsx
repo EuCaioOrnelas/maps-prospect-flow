@@ -287,6 +287,91 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
               </div>
             </div>
           )}
+
+          {/* Mobile menu - dentro do container, expande 10px nas laterais como o desktop */}
+          {mobileMenuOpen && (
+            <div
+              className="sm:hidden absolute -left-[10px] -right-[10px] top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
+              style={{
+                backgroundColor: 'hsl(var(--background))',
+                border: '1px solid hsl(var(--border) / 0.6)',
+                boxShadow: '0 12px 40px hsl(var(--background) / 0.4)',
+              }}
+            >
+              <div className="flex flex-col gap-2">
+                {MENUS.map((menu) => (
+                  <div key={menu.key} className="border-b border-border/60 pb-2">
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between py-2 text-left text-sm font-semibold text-foreground"
+                      onClick={() => setMobileOpenMenu(mobileOpenMenu === menu.key ? null : menu.key)}
+                      aria-expanded={mobileOpenMenu === menu.key}
+                    >
+                      {menu.label}
+                      <ChevronDown size={16} className={cn("transition-transform duration-200", mobileOpenMenu === menu.key && "rotate-180")} />
+                    </button>
+                    {mobileOpenMenu === menu.key && (
+                      <div className="animate-fade-in">
+                        {menu.columns.map((col) => (
+                          <div key={col.title} className="py-1">
+                            <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-primary">{col.title}</p>
+                            {renderMobileMenuItems(col.items)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {navLinks.map(link => (
+                  <div key={link.label} className="border-b border-border/60 pb-2">
+                    {link.to ? (
+                      <Link
+                        to={link.to}
+                        className="flex w-full items-center justify-between py-2 text-left text-sm font-semibold text-foreground"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="flex w-full items-center justify-between py-2 text-left text-sm font-semibold text-foreground cursor-pointer"
+                        onClick={(e) => handleNavLinkClick(e, link.href!)}
+                      >
+                        {link.label}
+                      </a>
+                    )}
+                  </div>
+                ))}
+                <div className="flex flex-col gap-2 pt-2 border-t border-border">
+                  <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-center">
+                      Entrar
+                    </Button>
+                  </Link>
+                  {TRIAL_DISABLED ? (
+                    <Button
+                      variant="hero"
+                      size="sm"
+                      className="w-full justify-center opacity-60 cursor-not-allowed"
+                      disabled
+                      aria-disabled="true"
+                      onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
+                    >
+                      <Lock size={14} className="mr-1" />
+                      Indisponível
+                    </Button>
+                  ) : (
+                    <Link to="/signup/escolher-plano" onClick={() => { setMobileMenuOpen(false); handleSignupClick(); }}>
+                      <Button variant="hero" size="sm" className="w-full justify-center">
+                        Iniciar Teste Grátis
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
