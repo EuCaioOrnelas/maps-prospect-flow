@@ -411,17 +411,23 @@ export default function PartnersLanding() {
           </div>
 
           {boostActive && (
-            <div className="mt-10 relative w-full overflow-hidden rounded-[28px] border border-primary/25 bg-gradient-to-br from-primary/[0.09] via-card to-primary/[0.05] px-6 py-10 sm:px-12 sm:py-12 shadow-[0_30px_80px_-32px_hsl(var(--primary)/0.35)]">
+            <div className="mt-10 relative w-full overflow-hidden rounded-[28px] border border-primary/25 bg-gradient-to-br from-primary/[0.11] via-card to-primary/[0.06] px-6 py-10 sm:px-12 sm:py-12 shadow-[0_30px_80px_-32px_hsl(var(--primary)/0.35)]">
               <div className="pointer-events-none absolute -top-28 left-1/2 h-64 w-[32rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" aria-hidden />
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" aria-hidden />
 
               <div className="relative flex flex-col items-center gap-8 text-center md:flex-row md:items-center md:gap-12 md:text-left">
                 <div className="shrink-0">
-                  <div className="relative flex h-32 w-32 items-center justify-center rounded-3xl border border-primary/25 bg-card/70 shadow-[0_18px_40px_-16px_hsl(var(--primary)/0.45)] sm:h-36 sm:w-36">
+                  <div className="relative flex h-32 w-32 flex-col items-center justify-center rounded-3xl border border-primary/30 bg-gradient-to-br from-card via-card to-primary/[0.08] shadow-[0_18px_44px_-16px_hsl(var(--primary)/0.55)] ring-1 ring-primary/20 sm:h-36 sm:w-36">
                     <div className="absolute inset-0 rounded-3xl bg-primary/10 blur-xl" aria-hidden />
-                    <div className="relative flex items-baseline">
-                      <span className="text-5xl font-extrabold tracking-tight text-primary sm:text-6xl">{settings.boostPercent}</span>
-                      <span className="text-2xl font-bold text-primary/80">%</span>
+                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-primary/20 via-transparent to-white/10" aria-hidden />
+                    <div className="relative flex flex-col items-center">
+                      <div className="mb-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_-4px_hsl(var(--primary)/0.7)]">
+                        <Zap size={18} fill="currentColor" strokeWidth={2.2} />
+                      </div>
+                      <div className="flex items-baseline">
+                        <span className="text-5xl font-extrabold tracking-tight text-primary sm:text-6xl drop-shadow-[0_2px_10px_hsl(var(--primary)/0.35)]">{settings.boostPercent}</span>
+                        <span className="text-2xl font-bold text-primary/80">%</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -430,8 +436,11 @@ export default function PartnersLanding() {
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
                     <Sparkles size={13} /> Por tempo limitado
                   </div>
-                  <h3 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                    {settings.boostPercent}% de comissão na primeira mensalidade
+                  <h3 className="font-bold tracking-tight text-foreground">
+                    <span className="block text-2xl sm:text-3xl">{settings.boostPercent}% de comissão na</span>
+                    <span className="block text-shimmer-highlight font-extrabold whitespace-nowrap text-[clamp(1.4rem,5vw,3rem)] mt-1">
+                      primeira mensalidade
+                    </span>
                   </h3>
                   <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
                     Todo cliente novo indicado por você paga <strong className="text-foreground">{settings.boostPercent}% de comissão na primeira mensalidade</strong>. A partir da segunda, vale a comissão recorrente normal do seu nível.
