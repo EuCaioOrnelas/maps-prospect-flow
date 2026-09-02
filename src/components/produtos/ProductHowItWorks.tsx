@@ -77,14 +77,14 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
 
             <ol ref={listRef} className="relative mt-10 space-y-8 pl-6 sm:mt-12 sm:space-y-10 sm:pl-8">
             {/* trilha + progresso + bolinha (mesma origem, só transform) */}
-            <span className="absolute left-0 top-0 h-full w-px bg-border/70" aria-hidden />
+            <span className="absolute left-0 top-0 z-0 h-full w-px bg-border/70" aria-hidden />
             <motion.span
-              className="absolute left-0 top-0 h-full w-px origin-top bg-primary"
+              className="absolute left-0 top-0 z-0 h-full w-px origin-top bg-primary"
               style={{ scaleY: fillScale, willChange: "transform" }}
               aria-hidden
             />
             <motion.span
-              className="absolute -left-[5px] top-0 h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]"
+              className="absolute -left-[5px] top-0 z-20 h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--background))]"
               style={{ y: dotY, marginTop: -5, willChange: "transform" }}
               aria-hidden
             />
