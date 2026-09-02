@@ -112,7 +112,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
   const menuOverlay = (openMenu || mobileMenuOpen) ? (
     <div
       aria-hidden="true"
-      className="fixed inset-0 z-40 animate-fade-in bg-background/40 transition-opacity duration-200"
+      className="fixed inset-0 z-40 animate-fade-in bg-background/30 backdrop-blur-sm transition-opacity duration-200"
       onClick={() => { setOpenMenu(null); setMobileMenuOpen(false); setMobileOpenMenu(null); }}
     />
   ) : null;
