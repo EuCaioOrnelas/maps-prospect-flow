@@ -51,6 +51,16 @@ import wianAvatar from "@/assets/wian-avatar.png";
 
 const contactAvatars = [avatar1, avatar2, avatar3, avatar4, avatar5, avatar6];
 
+/* Degradês coloridos em tons de verde (mesma linguagem dos cards "Escolha seu caminho") */
+const MODULE_THEMES = [
+  "from-emerald-500/35 via-teal-400/18 to-lime-400/30",
+  "from-teal-400/35 via-emerald-400/18 to-cyan-400/30",
+  "from-lime-400/35 via-emerald-400/18 to-teal-400/30",
+  "from-emerald-400/35 via-lime-400/15 to-emerald-500/30",
+  "from-cyan-400/20 via-teal-400/15 to-emerald-400/25",
+  "from-emerald-500/35 via-emerald-300/18 to-lime-300/30",
+];
+
 const ContactAvatar = ({ index, className = "" }: { index: number; className?: string }) => (
   <img
     src={contactAvatars[index % contactAvatars.length]}
