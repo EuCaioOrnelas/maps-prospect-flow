@@ -11,9 +11,6 @@ import { LandingPageSkeleton } from "@/components/landing/LandingPageSkeleton";
 import { FloatingChatButton } from "@/components/landing/FloatingChatButton";
 import { ProblemSection } from "@/components/sales/ProblemSection";
 
-const MidCTASection = lazy(() =>
-  import("@/components/sales/MidCTASection").then((m) => ({ default: m.MidCTASection })),
-);
 const OpportunitySection = lazy(() =>
   import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
 );
@@ -144,7 +141,6 @@ const Prospeccao = () => {
           <Suspense fallback={<SectionFallback />}>
             <MechanismSection />
             <OpportunitySection />
-            <MidCTASection onSignupClick={trackSignupClick} />
             <PlatformModulesSection />
             <WhyItWorksSection />
             <TestimonialsSection />
