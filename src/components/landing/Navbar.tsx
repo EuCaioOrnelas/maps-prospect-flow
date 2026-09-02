@@ -165,8 +165,10 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           onMouseLeave={scheduleClose}
           style={{
             // Abrir o menu NÃO altera tamanho, largura, padding ou posição — só revela o fundo
-            // Fora do scroll a navbar acompanha o container das páginas (max-w-[90rem]).
-            maxWidth: scrolled ? '920px' : '90rem',
+            // Navbar sempre acompanha o container das páginas (max-w-[90rem]),
+            // inclusive no estado flutuante (glass).
+            maxWidth: '90rem',
+
             borderRadius: scrolled || openMenu ? '18px' : '0px',
             backgroundColor: openMenu
               ? 'hsl(var(--background))'
