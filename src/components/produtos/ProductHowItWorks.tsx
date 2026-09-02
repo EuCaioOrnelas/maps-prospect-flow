@@ -49,11 +49,10 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
 
   const { scrollYProgress } = useScroll({
     target: listRef,
-    // Trecho de scroll mais longo = animação mais lenta e confortável
-    offset: ["start 92%", "end 30%"],
+    offset: ["start 85%", "end 55%"],
   });
-  // Spring suave: sem travadas e sem "pulos" em telas fracas
-  const progress = useSpring(scrollYProgress, { stiffness: 55, damping: 26, mass: 0.4 });
+  // Spring rápido o suficiente para acompanhar o scroll sem parecer travado
+  const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.25 });
   // Linha e bolinha usam a MESMA fonte, só com transform (GPU)
   const fillScale = useTransform(progress, (v) => Math.min(1, Math.max(0, v)));
   const dotY = useTransform(progress, (v) => Math.min(1, Math.max(0, v)) * trackH);
@@ -78,14 +77,14 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
 
             <ol ref={listRef} className="relative mt-10 space-y-8 pl-6 sm:mt-12 sm:space-y-10 sm:pl-8">
             {/* trilha + progresso + bolinha (mesma origem, só transform) */}
-            <span className="absolute left-0 top-0 h-full w-px bg-border/70" aria-hidden />
+            <span className="absolute left-0 top-0 z-0 h-full w-px bg-border/70" aria-hidden />
             <motion.span
-              className="absolute left-0 top-0 h-full w-px origin-top bg-primary"
+              className="absolute left-0 top-0 z-0 h-full w-px origin-top bg-primary"
               style={{ scaleY: fillScale, willChange: "transform" }}
               aria-hidden
             />
             <motion.span
-              className="absolute -left-[5px] top-0 h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--primary)/0.15)]"
+              className="absolute -left-[5px] top-0 z-20 h-[11px] w-[11px] rounded-full bg-primary shadow-[0_0_0_4px_hsl(var(--background))]"
               style={{ y: dotY, marginTop: -5, willChange: "transform" }}
               aria-hidden
             />
