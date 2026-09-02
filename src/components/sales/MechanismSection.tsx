@@ -209,6 +209,24 @@ export const MechanismSection = () => {
       ref={ref as React.RefObject<HTMLElement>}
       className="relative w-full overflow-hidden py-12 sm:py-20"
     >
+      {/* Mini cards flutuantes discretos no fundo */}
+      {floatingChips.map((chip) => (
+        <motion.div
+          key={chip.label}
+          initial={{ opacity: 0, y: 12 }}
+          animate={isVisible ? { opacity: 1, y: [0, -8, 0] } : {}}
+          transition={{
+            opacity: { duration: 0.6, delay: 0.4 + chip.delay * 0.2 },
+            y: { duration: 5, repeat: Infinity, ease: "easeInOut", delay: chip.delay },
+          }}
+          className={`pointer-events-none absolute z-0 hidden items-center gap-2 rounded-hover border border-border/60 bg-card/80 px-3 py-2 shadow-sm xl:flex ${chip.className}`}
+          aria-hidden
+        >
+          <chip.icon size={14} className="text-primary" strokeWidth={2} />
+          <span className="text-[11px] font-medium text-muted-foreground">{chip.label}</span>
+        </motion.div>
+      ))}
+
       <div className="container relative z-10 mx-auto max-w-6xl px-4">
         <SectionHeading
           eyebrow="Por que é diferente"
