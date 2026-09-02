@@ -273,7 +273,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <PasswordRecoveryRedirect />
+
           <AuthProvider>
             <MetricStateCacheProvider>
             <GuidedTourProvider>
