@@ -123,7 +123,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
                 <Button
                   variant="ghost"
                   size="lg"
-                  className="demo-shine h-11 rounded-full border border-border/60 bg-transparent px-6 text-sm transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:bg-muted/60 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.15)] sm:h-12 sm:px-8 sm:text-base"
+                  className="demo-shine h-11 rounded-full border border-border/70 bg-background/80 px-6 text-sm font-medium text-foreground backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-foreground/25 hover:bg-background hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.15)] sm:h-12 sm:px-8 sm:text-base"
                 >
                   Ver Demonstração
                 </Button>
@@ -133,22 +133,11 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
           </div>
 
           <div
-            className="animate-slide-up relative mt-10 flex w-full min-w-0 justify-start sm:mt-14 lg:mt-16"
+            className="animate-slide-up relative z-30 mt-8 flex w-full min-w-0 translate-y-14 justify-start sm:mt-10 sm:translate-y-16 lg:mt-4"
             style={{ animationDelay: "0.45s" }}
           >
-            {/* Faixa de plasma (verde Wiize) — sempre atrás do mockup, inclusive no mobile */}
-            <div
-              className="pointer-events-none absolute left-1/2 top-[100%] z-0 h-24 w-[220vw] -translate-x-1/2 -translate-y-1/2 -rotate-[4deg] overflow-hidden sm:h-32"
-              aria-hidden
-            >
-              <div className="wz-band absolute inset-0" />
-              {/* Plasma verde WebGL — visível somente dentro da faixa */}
-              <div className="absolute inset-0 overflow-hidden opacity-55 mix-blend-screen">
-                <ShaderBackground className="h-[400%] w-full -translate-y-[37.5%]" />
-              </div>
-            </div>
             {/* No desktop, o mesmo visual atravessa Hero + Como funciona via sticky no template. */}
-            <div className={`relative z-10 mx-auto w-full max-w-[22rem] sm:max-w-[26rem] lg:mx-0 lg:ml-auto lg:mr-0 lg:max-w-[clamp(19rem,32vw,30rem)] ${sharedDesktopVisual ? "lg:invisible" : ""}`}>
+            <div className={`relative z-30 mx-auto w-full max-w-[22rem] sm:max-w-[26rem] lg:mx-0 lg:ml-auto lg:mr-0 lg:max-w-[clamp(19rem,32vw,30rem)] ${sharedDesktopVisual ? "lg:invisible" : ""}`}>
 
               <ProductVisualContent product={product} />
             </div>
