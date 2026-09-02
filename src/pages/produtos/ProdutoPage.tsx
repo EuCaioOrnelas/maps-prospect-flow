@@ -57,7 +57,7 @@ export default function ProdutoPage() {
             <div className="container mx-auto grid h-full w-full max-w-[90rem] grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] gap-12 lg:gap-12 px-6 sm:px-10 lg:px-16">
               <div aria-hidden="true" />
               <div className="h-full min-w-0">
-                <div className="sticky top-16 flex min-h-[calc(100vh-3rem)] items-center">
+                <div className="sticky top-16 flex min-h-[calc(100vh-3rem)] items-start pt-[72px]">
                   <div className="ml-auto mr-0 w-full min-w-0" style={{ maxWidth: "clamp(19rem, 32vw, 30rem)" }}>
                     <ProductVisualContent product={product} />
                   </div>

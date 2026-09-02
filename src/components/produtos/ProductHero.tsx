@@ -73,7 +73,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
               <span className="block text-balance text-[clamp(2.1rem,6.5vw,3.1rem)] lg:text-[clamp(2.3rem,3.4vw,3.6rem)]">
                 {product.heroTitle}
               </span>
-              <span className="mt-1 block whitespace-nowrap text-shimmer-highlight text-[clamp(1.05rem,5.4vw,2.35rem)] font-extrabold leading-[1.15] drop-shadow-sm sm:mt-2 lg:text-[clamp(1.3rem,2.3vw,2.35rem)]">
+              <span className="mt-1 block whitespace-nowrap text-shimmer-highlight text-[clamp(2.1rem,6.5vw,3.1rem)] font-bold leading-[1.08] drop-shadow-sm sm:mt-2 lg:text-[clamp(2.3rem,3.4vw,3.6rem)]">
                 {product.heroHighlight}
               </span>
             </h1>

@@ -78,7 +78,7 @@ export const PRODUCTS: ProductConfig[] = [
       "A IA analisa concorrência regional, demanda, redes sociais e sites das empresas, diagnostica dores e necessidades, monta a oferta certa e cria uma abordagem personalizada para cada lead.",
     icon: Search,
     heroTitle: "Encontre os clientes certos",
-    heroHighlight: "e venda com mais eficiência.",
+    heroHighlight: "e venda com eficiência",
     heroDescription:
       "A IA da Wiize analisa concorrência regional, demanda do mercado, redes sociais e sites das empresas, identifica dores e necessidades reais, sugere soluções, monta a oferta e escreve uma abordagem personalizada para cada lead.",
     seoTitle: "Prospecção com IA: oportunidades com diagnóstico pronto",
@@ -166,12 +166,12 @@ export const PRODUCTS: ProductConfig[] = [
     shortDescription: "Um SDR autônomo que conversa, qualifica e agenda",
     cardTagline: "Um SDR autônomo que conversa, qualifica e agenda",
     cardDescription:
-      "Um SDR autônomo de verdade: atende, conversa, compreende o contexto, diagnostica a necessidade, qualifica, vende e agenda reuniões pela Agenda Inteligente — sozinho, o dia inteiro.",
+      "Um SDR autônomo de verdade: atende, conversa, compreende o contexto, diagnostica a necessidade, qualifica, vende e agenda reuniões pela Agenda Inteligente, sozinho, o dia inteiro.",
     icon: Bot,
     heroTitle: "SDR Inteligente que",
-    heroHighlight: "vende sozinho.",
+    heroHighlight: "vende sozinho",
     heroDescription:
-      "O SDR Inteligente conversa como gente: compreende o que o lead diz, entende o momento dele, diagnostica a necessidade, apresenta a solução, contorna objeções e agenda a reunião pela Agenda Inteligente — sem precisar de alguém disponível.",
+      "O SDR Inteligente conversa como gente: compreende o que o lead diz, entende o momento dele, diagnostica a necessidade, apresenta a solução, contorna objeções e agenda a reunião pela Agenda Inteligente, sem precisar de alguém disponível.",
     seoTitle: "SDR Inteligente: SDR autônomo que atende, qualifica e agenda",
     seoDescription:
       "Um SDR autônomo que conversa, compreende, diagnostica, qualifica, vende e agenda reuniões automaticamente pela Agenda Inteligente, com histórico completo no CRM.",
@@ -183,7 +183,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         title: "Atende e conversa",
         description:
-          "O lead chega pelo WhatsApp e é atendido na hora, com linguagem natural e o tom da sua empresa — de dia, de madrugada ou em pico de mensagens.",
+          "O lead chega pelo WhatsApp e é atendido na hora, com linguagem natural e o tom da sua empresa, de dia, de madrugada ou em pico de mensagens.",
         preview: ["Resposta imediata", "Conversa natural", "Nome e empresa identificados"],
       },
       {
@@ -221,7 +221,7 @@ export const PRODUCTS: ProductConfig[] = [
         title: "Reuniões marcadas direto na Agenda Inteligente",
         titleHighlight: "direto na Agenda Inteligente",
         description:
-          "Quando o lead está pronto, o SDR consulta a disponibilidade real do time, oferece horários e confirma o compromisso — sem troca de mensagens com o vendedor.",
+          "Quando o lead está pronto, o SDR consulta a disponibilidade real do time, oferece horários e confirma o compromisso, sem troca de mensagens com o vendedor.",
         bullets: [
           "Horários com base na agenda de cada pessoa",
           "Confirmação com data e hora completas",
@@ -257,10 +257,10 @@ export const PRODUCTS: ProductConfig[] = [
     shortDescription: "Compromissos marcados pelo SDR IA, sozinho",
     cardTagline: "Compromissos marcados pelo SDR IA, sozinho",
     cardDescription:
-      "Conectada ao SDR Inteligente: a IA conversa com o contato e marca o compromisso de forma autônoma, com base na disponibilidade real da sua agenda — e avisa você e o cliente antes da hora.",
+      "Conectada ao SDR Inteligente: a IA conversa com o contato e marca o compromisso de forma autônoma, com base na disponibilidade real da sua agenda, e avisa você e o cliente antes da hora.",
     icon: CalendarClock,
     heroTitle: "Agende compromissos",
-    heroHighlight: "sem trocar mensagens.",
+    heroHighlight: "sem trocar mensagens",
     heroDescription:
       "A Agenda Inteligente é conectada ao SDR IA: ele fala com o contato, consulta a disponibilidade real da sua agenda e agenda o compromisso de forma autônoma. Depois, avisa você e também o seu lead ou cliente antes do horário.",
     seoTitle: "Agenda Inteligente: agendamento autônomo com IA",
@@ -312,7 +312,7 @@ export const PRODUCTS: ProductConfig[] = [
         title: "Avisa você e avisa o seu cliente",
         titleHighlight: "e avisa o seu cliente",
         description:
-          "Antes de cada compromisso, a agenda notifica o responsável do time e o próprio lead ou cliente — reduzindo esquecimento, atraso e reunião perdida.",
+          "Antes de cada compromisso, a agenda notifica o responsável do time e o próprio lead ou cliente, reduzindo esquecimento, atraso e reunião perdida.",
         bullets: [
           "Aviso ao responsável antes do horário",
           "Lembrete ao lead ou cliente com a sua identidade",
@@ -338,8 +338,8 @@ export const PRODUCTS: ProductConfig[] = [
     cardDescription:
       "A IA analisa as conversas e atribui pontuação por mensagem, palavras usadas, intenção e tempo de resposta. Você vê quem está engajado, quem está pronto para comprar e quem está esfriando.",
     icon: Sparkles,
-    heroTitle: "Saiba quem está engajado.",
-    heroHighlight: "E quem precisa de atenção.",
+    heroTitle: "Entenda seus leads",
+    heroHighlight: "Priorize quem compra",
     heroDescription:
       "A IA de Engajamento analisa as conversas com seus contatos e atribui pontuação por mensagem, palavras utilizadas, intenção demonstrada e tempo de resposta. O resultado é uma leitura clara de quem está pronto para comprar, quem precisa de atenção e quem está perdendo o interesse.",
     seoTitle: "IA de Engajamento: pontuação de conversas e intenção de compra",
@@ -417,8 +417,8 @@ export const PRODUCTS: ProductConfig[] = [
     cardDescription:
       "Automações no WhatsApp para atendimento ao cliente, suporte, pedidos e consultas: o cliente é respondido na hora e sua equipe só entra quando realmente precisa.",
     icon: Workflow,
-    heroTitle: "Automatize seu atendimento.",
-    heroHighlight: "Direto pelo WhatsApp.",
+    heroTitle: "Automatize seu atendimento",
+    heroHighlight: "Direto pelo WhatsApp",
     heroDescription:
       "Crie automações no WhatsApp para atender clientes, resolver suporte, receber pedidos e responder consultas. O cliente tem resposta imediata, o processo roda sozinho e sua equipe assume apenas os casos que exigem gente.",
     seoTitle: "Automação no WhatsApp: atendimento, suporte, pedidos e consultas",
@@ -438,7 +438,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         title: "Monte o atendimento",
         description:
-          "Crie menus, respostas, coletas de dados e etapas para atendimento, suporte, pedidos e consultas — tudo com o contexto da conversa preservado.",
+          "Crie menus, respostas, coletas de dados e etapas para atendimento, suporte, pedidos e consultas, tudo com o contexto da conversa preservado.",
         preview: ["Atendimento e suporte", "Pedidos e consultas", "Dados coletados na conversa"],
       },
       {
@@ -494,10 +494,10 @@ export const PRODUCTS: ProductConfig[] = [
     shortDescription: "Proteja renovações e receitas",
     cardTagline: "Proteja renovações e receitas",
     cardDescription:
-      "Contratos organizados, vencimentos visíveis e renovações acompanhadas como processo — para que nenhuma receita dependa da memória de alguém do time.",
+      "Contratos organizados, vencimentos visíveis e renovações acompanhadas como processo, para que nenhuma receita dependa da memória de alguém do time.",
     icon: FileSignature,
     heroTitle: "Controle receita e contratos",
-    heroHighlight: "com previsibilidade e eficiência.",
+    heroHighlight: "com previsibilidade",
     heroDescription:
       "Organize contratos, acompanhe vencimentos e renovações e mantenha sua operação comercial preparada para agir antes que uma oportunidade de receita seja perdida.",
     seoTitle: "Gestão de Contratos: renovações e receita sob controle",
@@ -511,7 +511,7 @@ export const PRODUCTS: ProductConfig[] = [
       {
         title: "Centralize seus contratos",
         description:
-          "Tenha informações importantes organizadas em um único lugar: valor, vigência, responsável e histórico do cliente — sem planilha paralela.",
+          "Tenha informações importantes organizadas em um único lugar: valor, vigência, responsável e histórico do cliente, sem planilha paralela.",
         preview: ["Contrato registrado", "Vigência definida", "Responsável atribuído"],
       },
       {
@@ -549,7 +549,7 @@ export const PRODUCTS: ProductConfig[] = [
         title: "Renovar vira processo, não sorte",
         titleHighlight: "processo, não sorte",
         description:
-          "Avisos, comunicação padronizada e renovação em poucos cliques transformam retenção em rotina previsível — e mantêm a previsão de receita confiável.",
+          "Avisos, comunicação padronizada e renovação em poucos cliques transformam retenção em rotina previsível e mantêm a previsão de receita confiável.",
         bullets: [
           "E-mails de renovação com a sua identidade",
           "Renovação direto no card do contrato",
