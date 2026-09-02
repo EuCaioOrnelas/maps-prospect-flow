@@ -639,13 +639,13 @@ const StageContracts = ({ progress }: { progress: number }) => {
             <HiArrowTrendingUp className="h-3 w-3" /> +12,4% no mês
           </span>
         </div>
-        <div className="mt-2 flex items-end gap-1">
+        <div className="mt-2 flex h-[26px] items-end gap-1">
           {[38, 44, 41, 52, 58, 64, 71, 78].map((h, i) => (
             <span
               key={i}
               className="flex-1 rounded-t bg-primary/25"
               style={{
-                height: `${Math.max(4, h * 0.42 * ramp)}px`,
+                height: `${Math.max(4, h * 0.33 * ramp)}px`,
                 background: i > 5 ? "hsl(var(--primary))" : undefined,
                 transition: "height 320ms ease-out",
               }}
@@ -654,13 +654,13 @@ const StageContracts = ({ progress }: { progress: number }) => {
         </div>
       </Panel>
 
-      <div className="flex flex-1 min-h-0 flex-col gap-1.5 overflow-hidden">
+      <div className="flex flex-1 min-h-0 flex-col justify-center gap-1.5">
         {rows.map((c, i) => {
           const on = progress > 0.1 + i * 0.14;
           return (
             <div
               key={c.n}
-              className="rounded-xl border border-border/50 bg-background/70 p-2"
+              className="shrink-0 rounded-xl border border-border/50 bg-background/70 p-1.5"
               style={{
                 opacity: on ? 1 : 0,
                 transform: `translateX(${on ? 0 : -14}px)`,
@@ -670,14 +670,16 @@ const StageContracts = ({ progress }: { progress: number }) => {
               <div className="flex items-center gap-2">
                 <IconBadge icon={HiDocumentCheck} tone={c.tone === "warning" ? "warning" : "primary"} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[11px] font-semibold text-foreground">{c.n}</p>
-                  <p className="text-[9px] text-muted-foreground">
-                    {c.v} · responsável: {c.r}
+                  <p className="truncate text-[11px] font-semibold leading-tight text-foreground">{c.n}</p>
+                  <p className="truncate text-[9px] leading-tight text-muted-foreground">
+                    {c.v} · {c.r}
                   </p>
                 </div>
-                <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${badge[c.tone]}`}>{c.s}</span>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${badge[c.tone]}`}>
+                  {c.s}
+                </span>
               </div>
-              <span className="mt-1.5 block h-1 w-full overflow-hidden rounded-full bg-secondary">
+              <span className="mt-1 block h-1 w-full overflow-hidden rounded-full bg-secondary">
                 <span
                   className={`block h-1 rounded-full ${bar[c.tone]}`}
                   style={{ width: `${on ? c.w : 0}%`, transition: "width 700ms ease-out" }}
@@ -687,6 +689,7 @@ const StageContracts = ({ progress }: { progress: number }) => {
           );
         })}
       </div>
+
 
       <div
         className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/[0.06] p-2"
