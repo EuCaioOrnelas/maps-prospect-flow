@@ -154,7 +154,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         ref={navRef}
         className="fixed left-0 right-0 z-50 top-0"
         style={{
-          paddingTop: scrolled ? '10px' : '0',
+          paddingTop: scrolled ? '10px' : openMenu ? '12px' : '0',
           paddingLeft: scrolled ? '16px' : '0',
           paddingRight: scrolled ? '16px' : '0',
           transition: 'padding 320ms cubic-bezier(0.22,1,0.36,1)',
