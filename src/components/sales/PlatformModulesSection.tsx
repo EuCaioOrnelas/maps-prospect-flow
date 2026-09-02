@@ -135,10 +135,10 @@ const Row = ({ children, className = "" }: { children: ReactNode; className?: st
 );
 
 const MockStage = ({ children }: { children: ReactNode }) => (
-  <div className="relative w-full rounded-card bg-transparent">
-    {/* cantos decorativos removidos junto com a borda verde para imagem limpa */}
-    {/* zoom aumentado para compensar a retirada da borda e preencher o card */}
-    <div className="relative flex items-center justify-center min-h-[320px] sm:min-h-[380px] lg:min-h-[420px] [zoom:0.82] sm:[zoom:1] lg:[zoom:1.08]">
+  <div className="relative w-full rounded-t-card bg-transparent">
+    {/* cantos decorativos e borda verde removidos para imagem limpa */}
+    {/* zoom aumentado para preencher o card após retirar a borda */}
+    <div className="relative flex items-center justify-center min-h-[330px] sm:min-h-[390px] lg:min-h-[430px] [zoom:0.86] sm:[zoom:1.04] lg:[zoom:1.12]">
       <div className="w-full">{children}</div>
     </div>
   </div>
