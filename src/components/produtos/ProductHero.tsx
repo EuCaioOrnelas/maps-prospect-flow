@@ -18,7 +18,7 @@ interface ProductHeroProps {
 
 export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHeroProps) => {
   return (
-    <section className="relative -mt-[72px] w-full overflow-x-clip pb-32 pt-[120px] sm:-mt-[80px] sm:pb-44 sm:pt-[136px]">
+    <section className="relative -mt-[72px] w-full overflow-x-clip pb-24 pt-[120px] sm:-mt-[80px] sm:pb-28 sm:pt-[136px] lg:pb-32">
       <div
         className="absolute inset-0"
         style={{
