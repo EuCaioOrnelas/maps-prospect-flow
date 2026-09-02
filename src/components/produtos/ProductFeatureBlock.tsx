@@ -27,9 +27,9 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
 
   return (
     <h2 className="mt-3 max-w-full font-display text-[clamp(1.55rem,3.05vw,2.6rem)] font-extrabold leading-[1.12] tracking-tight text-foreground">
-      {parts.before && <span className={parts.match ? "block whitespace-nowrap" : "line-clamp-2"}>{parts.before.trim()}</span>}
+      {parts.before && <span className={parts.match ? "block text-balance sm:whitespace-nowrap" : "line-clamp-2"}>{parts.before.trim()}</span>}
       {parts.match && (
-        <span className="block whitespace-nowrap text-shimmer-highlight">{parts.match}</span>
+        <span className="block text-balance text-shimmer-highlight sm:whitespace-nowrap">{parts.match}</span>
       )}
       {parts.after && <span>{parts.after}</span>}
     </h2>
@@ -48,6 +48,7 @@ export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatu
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
+      className="order-1 min-w-0 lg:order-none"
     >
       <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
         {feature.eyebrow}
@@ -100,10 +101,10 @@ export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatu
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.25 }}
       transition={{ duration: 0.55, delay: 0.05, ease: "easeOut" }}
-      className={`flex min-w-0 ${reversed ? "justify-start" : "justify-end"}`}
+      className={`order-2 flex min-w-0 justify-center lg:order-none ${reversed ? "lg:justify-start" : "lg:justify-end"}`}
     >
       <div
-        className={`group w-full min-w-0 ${reversed ? "mr-auto" : "ml-auto"}`}
+        className={`group mx-auto w-full min-w-0 lg:mx-0 ${reversed ? "lg:mr-auto" : "lg:ml-auto"}`}
         style={{ maxWidth: "clamp(19rem, 32vw, 30rem)" }}
       >
         <div className="overflow-hidden rounded-panel border border-border/60 bg-card/60">
@@ -133,7 +134,7 @@ export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatu
   return (
     <section className="w-full py-12 sm:py-16">
       <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-        <div className={`grid items-center gap-10 ${gridCols} lg:gap-12`}>
+        <div className={`grid grid-cols-1 items-center gap-8 sm:gap-10 ${gridCols} lg:gap-12`}>
           {reversed ? (
             <>
               {visualColumn}

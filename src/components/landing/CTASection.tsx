@@ -28,11 +28,11 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
  }`}
  >
- <div className="inline-flex items-center gap-2 px-4 py-2 rounded-hover glass mb-6">
- <Zap size={16} className="text-primary" />
- <span className="text-sm text-muted-foreground">Venda B2B com uma operação mais eficiente</span>
- </div>
- <h2 className="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-foreground">
+  <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-hover glass mb-5 sm:mb-6">
+  <Zap size={14} className="text-primary" />
+  <span className="text-[11px] sm:text-sm text-muted-foreground">Venda B2B com uma operação mais eficiente</span>
+  </div>
+  <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-foreground">
  Tudo para vender B2B.<br />
  <span className="text-shimmer-highlight">Em um só lugar.</span>
  </h2>

@@ -56,7 +56,7 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Escolha seu caminho
             </span>
-            <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
+            <h2 className="mt-3 font-display text-[1.7rem] font-extrabold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
               Tudo para vender B2B.{" "}
               <span className="whitespace-nowrap text-shimmer-highlight">Em um só lugar.</span>
             </h2>
