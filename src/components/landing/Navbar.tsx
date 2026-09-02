@@ -290,12 +290,13 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
         <div
           className="sm:hidden fixed left-4 right-4 z-50 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto"
           style={{
-            top: scrolled ? '90px' : '88px',
+            // Altura do navbar agora é fixa no topo, então o menu mobile também fica
+            // sempre na mesma posição, independente do scroll.
+            top: '76px',
             backgroundColor: 'hsl(var(--background))',
             border: '1px solid hsl(var(--border) / 0.6)',
             boxShadow: '0 12px 40px hsl(var(--background) / 0.4)',
             padding: '16px',
-            transition: 'top 300ms ease-out',
           }}
         >
           <div className="flex flex-col gap-2">
