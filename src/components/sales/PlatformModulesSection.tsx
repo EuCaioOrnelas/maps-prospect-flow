@@ -1340,7 +1340,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
             fundo em degradê colorido no tom verde e mock levemente cortado/esmaecido embaixo */}
         <div
           className={cn(
-            "relative overflow-hidden p-5 sm:p-8 lg:p-10 pb-0 sm:pb-0 lg:pb-0",
+            "relative overflow-hidden p-4 sm:p-6 lg:p-8 pb-0 sm:pb-0 lg:pb-0",
             "flex items-end justify-center h-full",
             "bg-gradient-to-br",
             MODULE_THEMES[index % MODULE_THEMES.length],
@@ -1350,10 +1350,10 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-white/25 blur-2xl pointer-events-none" aria-hidden="true" />
           <div className="absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/15 blur-2xl pointer-events-none" aria-hidden="true" />
           <div
-            className="relative w-full translate-y-6 sm:translate-y-8"
+            className="relative w-full translate-y-4 sm:translate-y-5 lg:translate-y-6"
             style={{
-              maskImage: "linear-gradient(to bottom, black 78%, transparent 98%)",
-              WebkitMaskImage: "linear-gradient(to bottom, black 78%, transparent 98%)",
+              maskImage: "linear-gradient(to bottom, black 88%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 88%, transparent 100%)",
             }}
           >
             <MockStage>
