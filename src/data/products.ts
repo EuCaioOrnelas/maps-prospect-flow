@@ -254,51 +254,51 @@ export const PRODUCTS: ProductConfig[] = [
     category: "Converta",
     stage: "Converta",
     name: "Agenda Inteligente",
-    shortDescription: "Converta interesse em reuniões",
-    cardTagline: "Converta interesse em reuniões",
+    shortDescription: "Compromissos marcados pelo SDR IA, sozinho",
+    cardTagline: "Compromissos marcados pelo SDR IA, sozinho",
     cardDescription:
-      "Reduza o atrito entre interesse e reunião: horários sugeridos com base na disponibilidade real, confirmação clara e acompanhamento até o compromisso acontecer.",
+      "Conectada ao SDR Inteligente: a IA conversa com o contato e marca o compromisso de forma autônoma, com base na disponibilidade real da sua agenda — e avisa você e o cliente antes da hora.",
     icon: CalendarClock,
-    heroTitle: "Transforme interesse",
-    heroHighlight: "em reuniões",
+    heroTitle: "A IA conversa e marca",
+    heroHighlight: "o compromisso por você",
     heroDescription:
-      "Quando um lead está pronto para conversar, não deixe o próximo passo depender de trocas intermináveis de mensagens. A Agenda Inteligente facilita o agendamento e conecta o interesse à reunião.",
-    seoTitle: "Agenda Inteligente: do interesse à reunião",
+      "A Agenda Inteligente é conectada ao SDR IA: ele fala com o contato, consulta a disponibilidade real da sua agenda e agenda o compromisso de forma autônoma. Depois, avisa você e também o seu lead ou cliente antes do horário.",
+    seoTitle: "Agenda Inteligente: agendamento autônomo com IA",
     seoDescription:
-      "Reduza o atrito entre interesse e reunião: sugestão de horários com disponibilidade real, confirmação clara de data e hora e acompanhamento até o compromisso.",
+      "Conectada ao SDR IA: a inteligência conversa com o contato, agenda de forma autônoma conforme a disponibilidade da sua agenda e avisa você e o cliente antes do compromisso.",
     keywords:
-      "agendamento comercial, reuniões B2B, agenda de vendas, confirmação de reunião, Google Agenda",
-    howItWorksTitle: "Do interesse ao compromisso confirmado",
-    howItWorksHighlight: "compromisso confirmado",
+      "agendamento automático, agenda com IA, reuniões B2B, lembrete de compromisso, Google Agenda, SDR IA",
+    howItWorksTitle: "Da conversa ao compromisso, sem você digitar nada",
+    howItWorksHighlight: "sem você digitar nada",
     howItWorks: [
       {
-        title: "Identifique o momento certo",
+        title: "O SDR IA conduz a conversa",
         description:
-          "Reconheça quando a conversa chegou ao ponto de avançar, em vez de empurrar uma reunião antes de existir interesse real.",
-        preview: ["Interesse confirmado", "Responsável definido", "Pronto para avançar"],
+          "Conectada ao SDR Inteligente, a agenda entra em cena assim que o contato demonstra interesse real em avançar para uma conversa.",
+        preview: ["Interesse confirmado", "Responsável definido", "SDR IA no comando"],
       },
       {
-        title: "Encontre um horário",
+        title: "A IA consulta a sua disponibilidade",
         description:
-          "Apresente possibilidades de agenda sem depender de troca manual de mensagens, considerando a disponibilidade real de cada pessoa do time.",
+          "Ela lê a disponibilidade real de cada pessoa do time, evita sobreposição e oferece horários que realmente existem na sua agenda.",
         preview: ["Terça às 11:30h", "Quinta às 14:30h", "Sem conflitos de agenda"],
       },
       {
-        title: "Marque a reunião",
+        title: "Agenda e avisa todo mundo",
         description:
-          "Transforme uma oportunidade qualificada em uma reunião confirmada, com data e hora claras e acompanhamento até o dia do encontro.",
-        preview: ["Compromisso confirmado", "Lembrete automático", "Sincronizado com Google Agenda"],
+          "O compromisso é criado sozinho, sincronizado com o Google Agenda, e os lembretes saem para você e para o lead ou cliente antes do horário.",
+        preview: ["Compromisso criado sozinho", "Aviso para você", "Aviso para o lead ou cliente"],
       },
     ],
     features: [
       {
-        eyebrow: "Menos atrito",
-        title: "Reuniões deixam de se perder na negociação de horário",
-        titleHighlight: "na negociação de horário",
+        eyebrow: "Autonomia",
+        title: "O agendamento acontece sem depender de ninguém",
+        titleHighlight: "sem depender de ninguém",
         description:
-          "O intervalo entre 'tenho interesse' e 'reunião marcada' é onde mais oportunidades esfriam. A Wiize encurta esse caminho com opções claras e disponibilidade real.",
+          "O SDR IA fala com o contato, propõe horários e fecha o compromisso com base na disponibilidade real da sua agenda. Você só aparece na hora da reunião.",
         bullets: [
-          "Sugestões em períodos e dias diferentes",
+          "Horários sugeridos conforme a agenda de cada pessoa",
           "Confirmação sempre com data e hora completas",
           "Bloqueio automático de sobreposição",
         ],
@@ -308,22 +308,22 @@ export const PRODUCTS: ProductConfig[] = [
         ],
       },
       {
-        eyebrow: "Acompanhamento",
-        title: "Nada se perde entre marcar e realizar",
-        titleHighlight: "entre marcar e realizar",
+        eyebrow: "Lembretes",
+        title: "Avisa você e avisa o seu cliente",
+        titleHighlight: "e avisa o seu cliente",
         description:
-          "Lembretes, status de atraso e reagendamento simples mantêm o compromisso vivo — e a operação sabe exatamente o que aconteceu com cada reunião.",
+          "Antes de cada compromisso, a agenda notifica o responsável do time e o próprio lead ou cliente — reduzindo esquecimento, atraso e reunião perdida.",
         bullets: [
-          "Lembretes por e-mail com a sua identidade",
-          "Status visual de atrasado e concluído",
+          "Aviso ao responsável antes do horário",
+          "Lembrete ao lead ou cliente com a sua identidade",
           "Reagendamento sem perder o histórico",
         ],
         reverse: true,
       },
     ],
     proof: [
-      { label: "Troca de mensagens", value: "reduzida", hint: "para marcar um horário" },
-      { label: "Lembretes", value: "automáticos", hint: "antes de cada compromisso" },
+      { label: "Agendamento", value: "autônomo", hint: "feito pelo SDR IA na conversa" },
+      { label: "Avisos", value: "dos dois lados", hint: "para você e para o cliente" },
       { label: "Integração", value: "Google Agenda", hint: "sincronização contínua" },
     ],
   },
