@@ -19,11 +19,10 @@ interface ProductHeroProps {
 export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHeroProps) => {
   return (
     <section className="relative -mt-[72px] w-full overflow-x-clip pb-16 pt-[120px] sm:-mt-[80px] sm:pb-40 sm:pt-[136px] lg:pb-44">
-      {/* Faixa de plasma centralizada exatamente na divisória entre o hero e "Como funciona".
-          O offset corresponde à metade da altura da faixa, mantendo seu centro na base do hero
-          em qualquer resolução; somente a imagem do hero (z-30) pode passar por cima dela. */}
+      {/* Faixa de plasma ancorada à divisória entre o hero e "Como funciona" e elevada 60px
+          de forma constante em qualquer resolução; somente a imagem do hero pode sobrepô-la. */}
       <div
-        className="pointer-events-none absolute bottom-[-3rem] left-1/2 z-[5] h-24 w-[120vw] origin-center -translate-x-1/2 -rotate-[4deg] overflow-hidden sm:bottom-[-4rem] sm:h-32"
+        className="pointer-events-none absolute bottom-[-3rem] left-1/2 z-[5] h-24 w-[120vw] origin-center -translate-x-1/2 -translate-y-[60px] -rotate-[4deg] overflow-hidden sm:bottom-[-4rem] sm:h-32"
         aria-hidden
       >
 
