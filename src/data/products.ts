@@ -163,53 +163,53 @@ export const PRODUCTS: ProductConfig[] = [
     category: "Converta",
     stage: "Converta",
     name: "SDR Inteligente",
-    shortDescription: "Transforme conversas em oportunidades",
-    cardTagline: "Transforme conversas em oportunidades",
+    shortDescription: "Um SDR autônomo que conversa, qualifica e agenda",
+    cardTagline: "Um SDR autônomo que conversa, qualifica e agenda",
     cardDescription:
-      "Um SDR digital integrado ao seu processo comercial: conduz a conversa, entende o contexto do lead, qualifica o interesse e ajuda a equipe a avançar até a reunião.",
+      "Um SDR autônomo de verdade: atende, conversa, compreende o contexto, diagnostica a necessidade, qualifica, vende e agenda reuniões pela Agenda Inteligente — sozinho, o dia inteiro.",
     icon: Bot,
-    heroTitle: "Transforme conversas",
-    heroHighlight: "em oportunidades comerciais",
+    heroTitle: "Um SDR autônomo que",
+    heroHighlight: "atende, qualifica e agenda",
     heroDescription:
-      "O SDR Inteligente conduz conversas, entende o contexto de cada lead, identifica oportunidades e ajuda sua equipe a avançar até a reunião — sem transformar o processo comercial em uma sequência de mensagens genéricas.",
-    seoTitle: "SDR Inteligente: conversas que viram oportunidades",
+      "O SDR Inteligente conversa como gente: compreende o que o lead diz, entende o momento dele, diagnostica a necessidade, apresenta a solução, contorna objeções e agenda a reunião pela Agenda Inteligente — sem precisar de alguém disponível.",
+    seoTitle: "SDR Inteligente: SDR autônomo que atende, qualifica e agenda",
     seoDescription:
-      "Um SDR digital integrado ao processo comercial: conduz conversas, entende o contexto do lead, qualifica o interesse e apoia a equipe até a reunião.",
+      "Um SDR autônomo que conversa, compreende, diagnostica, qualifica, vende e agenda reuniões automaticamente pela Agenda Inteligente, com histórico completo no CRM.",
     keywords:
-      "SDR digital, qualificação de leads, pré-vendas B2B, atendimento comercial, conversas comerciais",
-    howItWorksTitle: "Da primeira conversa à oportunidade qualificada",
-    howItWorksHighlight: "oportunidade qualificada",
+      "SDR autônomo, SDR com IA, qualificação de leads, pré-vendas B2B, agendamento automático, atendimento no WhatsApp",
+    howItWorksTitle: "Da primeira mensagem à reunião agendada sozinho",
+    howItWorksHighlight: "reunião agendada sozinho",
     howItWorks: [
       {
-        title: "Inicie a conversa",
+        title: "Atende e conversa",
         description:
-          "O lead entra em contato ou é abordado dentro do processo comercial, e a conversa começa sem depender de alguém estar disponível naquele momento.",
-        preview: ["Nova conversa recebida", "Resposta em segundos", "Nome e empresa identificados"],
+          "O lead chega pelo WhatsApp e é atendido na hora, com linguagem natural e o tom da sua empresa — de dia, de madrugada ou em pico de mensagens.",
+        preview: ["Resposta imediata", "Conversa natural", "Nome e empresa identificados"],
       },
       {
-        title: "Entenda o contexto",
+        title: "Compreende e diagnostica",
         description:
-          "O SDR utiliza inteligência para interpretar a conversa e identificar intenção, necessidades e momento de compra — falando com quem realmente decide.",
-        preview: ["Necessidade identificada", "Responsável pela decisão", "Etapa do funil atualizada"],
+          "Interpreta o que foi dito, faz as perguntas certas, entende a dor, o orçamento e a urgência, e qualifica o lead pelos critérios do seu funil.",
+        preview: ["Necessidade diagnosticada", "Decisor identificado", "Lead qualificado no CRM"],
       },
       {
-        title: "Avance a oportunidade",
+        title: "Vende e agenda a reunião",
         description:
-          "Quando existe potencial real, a conversa pode evoluir para qualificação, follow-up e agendamento. Quando o caso pede atenção humana, o time assume.",
-        preview: ["Oportunidade qualificada", "Follow-up programado", "Reunião sugerida"],
+          "Apresenta a solução, responde objeções e, quando o lead está pronto, agenda a reunião pela Agenda Inteligente respeitando a disponibilidade real do time.",
+        preview: ["Proposta apresentada", "Objeções respondidas", "Reunião agendada na agenda"],
       },
     ],
     features: [
       {
-        eyebrow: "Continuidade",
-        title: "Nenhuma conversa fica sem resposta",
-        titleHighlight: "sem resposta",
+        eyebrow: "Autonomia",
+        title: "Ele conduz a conversa do início ao fim",
+        titleHighlight: "do início ao fim",
         description:
-          "Leads que chegam à noite, no fim de semana ou em um pico de mensagens continuam sendo atendidos. A equipe deixa de perder oportunidades por indisponibilidade.",
+          "Não é um robô de respostas prontas. O SDR entende o contexto, sustenta a conversa, apresenta a oferta, contorna objeções e leva o lead até o próximo passo sozinho.",
         bullets: [
           "Atendimento contínuo no WhatsApp oficial",
-          "Objetivo comercial definido por você",
-          "Passagem para uma pessoa no momento certo",
+          "Diagnóstico e qualificação em conversa natural",
+          "Vende, atende e responde dúvidas do seu produto",
         ],
         metrics: [
           { label: "Conversas simultâneas", value: "sem fila" },
@@ -217,15 +217,15 @@ export const PRODUCTS: ProductConfig[] = [
         ],
       },
       {
-        eyebrow: "Follow-up",
-        title: "Oportunidades não esfriam por esquecimento",
-        titleHighlight: "não esfriam por esquecimento",
+        eyebrow: "Agendamento",
+        title: "Reuniões marcadas direto na Agenda Inteligente",
+        titleHighlight: "direto na Agenda Inteligente",
         description:
-          "O acompanhamento deixa de depender da memória do vendedor. Quem parou de responder volta para a conversa com contexto, no tempo certo e sem repetição.",
+          "Quando o lead está pronto, o SDR consulta a disponibilidade real do time, oferece horários e confirma o compromisso — sem troca de mensagens com o vendedor.",
         bullets: [
-          "Retomada programada dentro do processo",
-          "Mensagens sempre ligadas ao histórico",
-          "Respeito total ao opt-out do contato",
+          "Horários com base na agenda de cada pessoa",
+          "Confirmação com data e hora completas",
+          "Lembretes automáticos para você e para o lead",
         ],
         reverse: true,
       },
@@ -234,7 +234,7 @@ export const PRODUCTS: ProductConfig[] = [
         title: "A equipe continua no comando",
         titleHighlight: "no comando",
         description:
-          "O SDR apoia o time comercial, não substitui vendedores. Você acompanha cada conversa, assume o teclado quando quiser e mantém o histórico completo no CRM.",
+          "O SDR trabalha sozinho, mas você acompanha cada conversa, assume o teclado quando quiser e mantém todo o histórico registrado no CRM.",
         bullets: [
           "Status do atendimento visível em cada lead",
           "Pausa manual imediata",
@@ -243,8 +243,8 @@ export const PRODUCTS: ProductConfig[] = [
       },
     ],
     proof: [
-      { label: "Tempo de resposta", value: "imediato", hint: "sem depender de disponibilidade" },
-      { label: "Qualificação", value: "com contexto", hint: "critérios do seu funil" },
+      { label: "Atendimento", value: "autônomo", hint: "conversa, diagnostica e qualifica" },
+      { label: "Reuniões", value: "agendadas", hint: "direto na Agenda Inteligente" },
       { label: "Histórico", value: "no CRM", hint: "tudo registrado automaticamente" },
     ],
   },
