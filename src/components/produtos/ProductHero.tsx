@@ -22,7 +22,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
       {/* Faixa de plasma ancorada à divisória entre o hero e "Como funciona" e elevada 60px
           de forma constante em qualquer resolução; somente a imagem do hero pode sobrepô-la. */}
       <div
-        className="pointer-events-none absolute bottom-[-3rem] left-1/2 z-[5] h-24 w-[120vw] origin-center -translate-x-1/2 -translate-y-[60px] -rotate-[4deg] overflow-hidden sm:bottom-[-4rem] sm:h-32"
+        className="pointer-events-none absolute bottom-[-3rem] left-1/2 z-[5] h-24 w-[120vw] origin-center -translate-x-1/2 translate-y-[-60px] -rotate-[4deg] overflow-hidden sm:bottom-[-4rem] sm:h-32"
         aria-hidden
       >
 
