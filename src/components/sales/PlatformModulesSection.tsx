@@ -86,7 +86,7 @@ const MockShell = ({
   badge?: string;
   children: ReactNode;
 }) => (
-  <div className="w-full rounded-t-card border border-b-0 border-border/70 bg-card overflow-hidden shadow-[0_4px_14px_-8px_hsl(var(--foreground)/0.18)]">
+  <div className="w-full h-full flex flex-col rounded-t-card border border-b-0 border-border/70 bg-card overflow-hidden shadow-[0_4px_14px_-8px_hsl(var(--foreground)/0.18)]">
     <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-border/60 bg-gradient-to-r from-primary/[0.07] via-transparent to-transparent">
       <span className="w-2 h-2 rounded-full bg-destructive/40" />
       <span className="w-2 h-2 rounded-full bg-amber-400/50" />
@@ -101,7 +101,7 @@ const MockShell = ({
         </span>
       )}
     </div>
-    <div className="p-3 sm:p-3.5 pb-0 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] min-h-[300px] sm:min-h-[380px] lg:h-[420px] overflow-hidden flex flex-col justify-start">
+    <div className="p-3 sm:p-3.5 pb-0 bg-gradient-to-br from-transparent via-transparent to-primary/[0.04] flex-1 min-h-[300px] sm:min-h-[380px] overflow-hidden flex flex-col justify-start">
       {children}
     </div>
   </div>
@@ -135,11 +135,10 @@ const Row = ({ children, className = "" }: { children: ReactNode; className?: st
 );
 
 const MockStage = ({ children }: { children: ReactNode }) => (
-  <div className="relative w-full rounded-t-card bg-transparent">
-    {/* cantos decorativos e borda verde removidos para imagem limpa */}
-    {/* zoom aumentado para preencher o card após retirar a borda */}
-    <div className="relative flex items-center justify-center min-h-[330px] sm:min-h-[390px] lg:min-h-[430px] [zoom:0.86] sm:[zoom:1.04] lg:[zoom:1.12]">
-      <div className="w-full">{children}</div>
+  <div className="relative w-full h-full flex flex-col rounded-t-card bg-transparent">
+    {/* ocupa a altura total do card, sem espaços brancos acima ou abaixo */}
+    <div className="relative flex-1 flex flex-col min-h-[330px] sm:min-h-[390px] [zoom:0.86] sm:[zoom:1.04] lg:[zoom:1.12]">
+      <div className="w-full flex-1 flex flex-col">{children}</div>
     </div>
   </div>
 );
@@ -1298,7 +1297,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
 
       <div
         className={cn(
-          "relative z-10 w-full h-full grid lg:grid-cols-2",
+          "relative z-10 w-full h-full grid lg:grid-cols-2 lg:min-h-[560px]",
           reversed && "lg:[&>*:first-child]:order-2",
         )}
       >
@@ -1339,7 +1338,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
         <div
           className={cn(
             "relative overflow-hidden px-4 sm:px-6 lg:px-8",
-            "flex items-end justify-center h-full",
+            "flex flex-col h-full",
             "bg-gradient-to-br",
             MODULE_THEMES[index % MODULE_THEMES.length],
           )}
@@ -1347,13 +1346,8 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           {/* brilhos suaves sobre o degradê */}
           <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-white/25 blur-2xl pointer-events-none" aria-hidden="true" />
           <div className="absolute -bottom-12 -right-12 w-56 h-56 rounded-full bg-primary/15 blur-2xl pointer-events-none" aria-hidden="true" />
-          <div
-            className="relative w-full translate-y-8 sm:translate-y-12 lg:translate-y-14"
-            style={{
-              maskImage: "linear-gradient(to bottom, black 98%, transparent 100%)",
-              WebkitMaskImage: "linear-gradient(to bottom, black 98%, transparent 100%)",
-            }}
-          >
+          {/* mockup esticado para ocupar a altura total do card, encostado nas bordas superior e inferior */}
+          <div className="relative w-full flex-1 flex flex-col min-h-0">
             <MockStage>
               <Mock />
             </MockStage>
