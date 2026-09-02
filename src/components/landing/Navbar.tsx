@@ -285,7 +285,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
           {/* Mega menu desktop — dentro do container, sem mudar largura */}
           {activeMenu && (
             <div
-              className="hidden md:block overflow-hidden pt-4"
+              className="relative hidden md:block overflow-hidden pt-4"
               onMouseEnter={cancelClose}
             >
               <div className="animate-fade-in">
@@ -299,10 +299,10 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             </div>
           )}
 
-          {/* Mobile menu - dentro do container, expande 10px nas laterais como o desktop */}
+          {/* Mobile menu — card flutuante alinhado às bordas do conteúdo do navbar */}
           {mobileMenuOpen && (
             <div
-              className="sm:hidden absolute -left-[10px] -right-[10px] top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
+              className="sm:hidden absolute left-0 right-0 top-full z-50 mt-2 animate-fade-in rounded-panel max-h-[75vh] overflow-y-auto px-[10px] py-[10px]"
               style={{
                 backgroundColor: 'hsl(var(--background))',
                 border: '1px solid hsl(var(--border) / 0.6)',
