@@ -411,19 +411,38 @@ export default function PartnersLanding() {
           </div>
 
           {boostActive && (
-            <div className="mt-8 max-w-3xl mx-auto rounded-2xl border border-primary/40 bg-primary/5 ring-1 ring-primary/20 p-6 text-center">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-[11px] font-semibold uppercase tracking-wider mb-3">
-                <Sparkles size={13} /> Por tempo limitado
+            <div className="mt-10 relative w-full overflow-hidden rounded-[28px] border border-primary/25 bg-gradient-to-br from-primary/[0.09] via-card to-primary/[0.05] px-6 py-10 sm:px-12 sm:py-12 shadow-[0_30px_80px_-32px_hsl(var(--primary)/0.35)]">
+              <div className="pointer-events-none absolute -top-28 left-1/2 h-64 w-[32rem] -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" aria-hidden />
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" aria-hidden />
+
+              <div className="relative flex flex-col items-center gap-8 text-center md:flex-row md:items-center md:gap-12 md:text-left">
+                <div className="shrink-0">
+                  <div className="relative flex h-32 w-32 items-center justify-center rounded-3xl border border-primary/25 bg-card/70 shadow-[0_18px_40px_-16px_hsl(var(--primary)/0.45)] sm:h-36 sm:w-36">
+                    <div className="absolute inset-0 rounded-3xl bg-primary/10 blur-xl" aria-hidden />
+                    <div className="relative flex items-baseline">
+                      <span className="text-5xl font-extrabold tracking-tight text-primary sm:text-6xl">{settings.boostPercent}</span>
+                      <span className="text-2xl font-bold text-primary/80">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1">
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
+                    <Sparkles size={13} /> Por tempo limitado
+                  </div>
+                  <h3 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                    {settings.boostPercent}% de comissão na primeira mensalidade
+                  </h3>
+                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                    Todo cliente novo indicado por você paga <strong className="text-foreground">{settings.boostPercent}% de comissão na primeira mensalidade</strong>. A partir da segunda, vale a comissão recorrente normal do seu nível.
+                  </p>
+                  <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-4 py-1.5 text-xs font-medium text-muted-foreground">
+                    {settings.boostUntil
+                      ? `Válido até ${new Date(settings.boostUntil).toLocaleDateString("pt-BR")}`
+                      : "Promoção temporária — pode ser encerrada a qualquer momento"}
+                  </p>
+                </div>
               </div>
-              <h3 className="text-xl sm:text-2xl font-bold tracking-tight mb-2">
-                {settings.boostPercent}% de comissão na primeira mensalidade
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Todo cliente novo indicado por você paga <strong className="text-foreground">{settings.boostPercent}% de comissão na primeira mensalidade</strong>. A partir da segunda, vale a comissão recorrente normal do seu nível.
-                {settings.boostUntil
-                  ? ` Promoção válida até ${new Date(settings.boostUntil).toLocaleDateString("pt-BR")}.`
-                  : " Promoção temporária, sujeita a encerramento a qualquer momento sem aviso prévio."}
-              </p>
             </div>
           )}
 
