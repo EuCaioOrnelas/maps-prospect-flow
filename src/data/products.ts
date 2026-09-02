@@ -425,7 +425,7 @@ export const PRODUCTS: ProductConfig[] = [
     seoDescription:
       "Transforme tarefas comerciais repetitivas em fluxos contínuos: follow-ups, mensagens e etapas automatizadas em diferentes canais, sem perder o contexto.",
     keywords:
-      "automação comercial, fluxos de vendas, follow-up automático, processos comerciais, WhatsApp e Instagram",
+      "automação comercial, fluxos de vendas, follow-up automático, processos comerciais, WhatsApp oficial",
     howItWorksTitle: "Como um processo repetitivo vira um fluxo que trabalha por você",
     howItWorksHighlight: "fluxo que trabalha por você",
     howItWorks: [
@@ -433,7 +433,7 @@ export const PRODUCTS: ProductConfig[] = [
         title: "Defina o processo",
         description:
           "Escolha o momento e as condições que iniciam uma ação: uma mensagem recebida, uma mudança de etapa no CRM ou um horário programado.",
-        preview: ["Gatilho definido", "Canal: WhatsApp ou Instagram", "Condições configuradas"],
+        preview: ["Gatilho definido", "Canal: WhatsApp oficial", "Condições configuradas"],
       },
       {
         title: "Deixe o fluxo trabalhar",
@@ -461,7 +461,7 @@ export const PRODUCTS: ProductConfig[] = [
           "Mais tempo para conversas que exigem gente",
         ],
         metrics: [
-          { label: "Canais", value: "WhatsApp + Instagram" },
+          { label: "Canais", value: "WhatsApp oficial" },
           { label: "Operação", value: "contínua" },
         ],
       },
