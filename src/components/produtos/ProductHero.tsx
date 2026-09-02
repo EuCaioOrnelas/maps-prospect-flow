@@ -122,12 +122,12 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
           </div>
 
           <div
-            className="animate-slide-up relative mt-6 flex w-full min-w-0 justify-start sm:mt-8 lg:mt-10"
+            className="animate-slide-up relative mt-10 flex w-full min-w-0 justify-start sm:mt-14 lg:mt-16"
             style={{ animationDelay: "0.45s" }}
           >
             {/* Faixa de plasma (verde Wiize) — sempre atrás do mockup, inclusive no mobile */}
             <div
-              className="pointer-events-none absolute left-1/2 top-[110%] z-0 h-24 w-[220vw] -translate-x-1/2 -translate-y-1/2 -rotate-[4deg] overflow-hidden sm:h-32"
+              className="pointer-events-none absolute left-1/2 top-[100%] z-0 h-24 w-[220vw] -translate-x-1/2 -translate-y-1/2 -rotate-[4deg] overflow-hidden sm:h-32"
               aria-hidden
             >
               <div className="wz-band absolute inset-0" />
@@ -138,6 +138,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
             </div>
             {/* No desktop, o mesmo visual atravessa Hero + Como funciona via sticky no template. */}
             <div className={`relative z-10 mx-auto w-full max-w-[22rem] sm:max-w-[26rem] lg:mx-0 lg:ml-auto lg:mr-0 lg:max-w-[clamp(19rem,32vw,30rem)] ${sharedDesktopVisual ? "lg:invisible" : ""}`}>
+
               <ProductVisualContent product={product} />
             </div>
           </div>
