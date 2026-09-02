@@ -294,10 +294,10 @@ export function ShaderBackground({ className }: { className?: string }) {
     const reduced =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Só desativa em hardware realmente muito fraco; o plasma deve aparecer no desktop comum.
     const weak =
       typeof navigator !== "undefined" &&
-      ((navigator.hardwareConcurrency ?? 8) <= 4 ||
-        (typeof window !== "undefined" && window.innerWidth < 768));
+      (navigator.hardwareConcurrency ?? 8) <= 2;
     if (reduced || weak) return;
     const pendingRelease = pendingContextReleases.get(canvas);
     if (pendingRelease !== undefined) window.clearTimeout(pendingRelease);
