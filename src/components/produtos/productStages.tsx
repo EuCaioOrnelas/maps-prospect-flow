@@ -820,7 +820,7 @@ export const PRODUCT_STAGES: Record<ProductVisualKey, ProductStage[]> = {
   ],
   automacao: [
     { color: "text-primary", label: "A máquina continua quando o time para", icon: Workflow, render: StageFlow },
-    { color: "text-foreground", label: "CRM atualizando automaticamente", icon: Check, render: StageCRM },
+    { color: "text-foreground", label: "CRM atualizando automaticamente", icon: Check, render: StageFlowCRM },
   ],
   contratos: [
     { color: "text-success", label: "Contratos e receita sob controle", icon: Wallet, render: StageContracts },
