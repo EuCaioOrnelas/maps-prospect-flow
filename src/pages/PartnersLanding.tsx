@@ -221,11 +221,9 @@ export default function PartnersLanding() {
             </div>
           )}
 
-          <h1 className="font-display font-bold tracking-tight leading-[1.05] mb-6 text-foreground">
-            <span className="block text-2xl sm:text-4xl md:text-5xl mb-2">Indique a Wiize.</span>
-            <span className="block text-shimmer-highlight font-extrabold text-[clamp(1.05rem,5.4vw,3.25rem)] whitespace-nowrap">
-              Receba até {displayMax}% por 24 meses.
-            </span>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] mb-6 text-foreground">
+            Indique a Wiize.<br />
+            Receba até {displayMax}% por 24 meses.
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
             Comissão recorrente sobre toda venda gerada pelo seu link.
