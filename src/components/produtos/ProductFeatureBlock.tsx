@@ -102,10 +102,29 @@ export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatu
       className={`flex min-w-0 ${reversed ? "justify-start" : "justify-end"}`}
     >
       <div
-        className={`w-full min-w-0 ${reversed ? "mr-auto" : "ml-auto"}`}
+        className={`group w-full min-w-0 ${reversed ? "mr-auto" : "ml-auto"}`}
         style={{ maxWidth: "clamp(19rem, 32vw, 30rem)" }}
       >
-        <ProductStageShowcase visual={visual} stageIndex={index} playOnce />
+        <div className="overflow-hidden rounded-panel border border-border/60 bg-card/60">
+          <div
+            className={`relative h-[clamp(19rem,26vw,24rem)] overflow-hidden bg-gradient-to-br ${getCardTheme(visual)}`}
+          >
+            <div
+              className="pointer-events-none absolute -left-10 top-6 h-32 w-32 rounded-full bg-emerald-400/40 blur-3xl"
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute -right-8 bottom-10 h-28 w-28 rounded-full bg-teal-400/35 blur-3xl"
+              aria-hidden
+            />
+            <div className="pointer-events-none absolute inset-x-0 top-7 flex justify-center px-6">
+              <div className="w-full max-w-[26rem] origin-top scale-[0.94] transition-transform duration-500 group-hover:scale-[0.97]">
+                <ProductStageShowcase visual={visual} stageIndex={index} playOnce />
+              </div>
+            </div>
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card via-card/70 to-transparent" />
+          </div>
+        </div>
       </div>
     </motion.div>
   );
