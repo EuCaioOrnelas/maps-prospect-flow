@@ -196,10 +196,16 @@ export const MechanismSection = () => {
   const lineH = useTransform(dotY, (y) => Math.max(0, y - 5));
 
   useMotionValueEvent(dotY, "change", (y) => {
-    // O nó só ganha foco verde quando a bola já passou pelo centro dele
+    // Mede na hora — evita posições desatualizadas por animações/resize.
+    // O nó só ganha foco verde quando a bola já passou pelo centro dele.
+    const tr = trackRef.current?.getBoundingClientRect();
+    if (!tr) return;
     let count = 0;
-    nodeYs.current.forEach((ny) => {
-      if (y >= ny - 4) count += 1;
+    nodeRefs.current.forEach((n) => {
+      if (!n) return;
+      const r = n.getBoundingClientRect();
+      const ny = r.top + r.height / 2 - tr.top;
+      if (y >= ny - 2) count += 1;
     });
     setPassedCount((prev) => (prev === count ? prev : count));
   });
