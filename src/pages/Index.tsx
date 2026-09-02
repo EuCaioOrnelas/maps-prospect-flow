@@ -107,6 +107,7 @@ const Index = () => {
             },
           },
           siteNavigationSchema,
+          homeBreadcrumbSchema,
           faqJsonLd,
         ]}
       />
