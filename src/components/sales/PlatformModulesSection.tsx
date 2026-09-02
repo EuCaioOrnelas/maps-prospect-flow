@@ -1297,7 +1297,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
 
       <div
         className={cn(
-          "relative z-10 w-full h-full grid lg:grid-cols-2",
+          "relative z-10 w-full h-full grid lg:grid-cols-2 lg:min-h-[560px]",
           reversed && "lg:[&>*:first-child]:order-2",
         )}
       >
