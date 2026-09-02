@@ -1,17 +1,11 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MidCTASectionProps {
   onSignupClick?: () => void;
 }
-
-const proofPoints = [
-  "Setup em menos de 10 minutos",
-  "IA operando no seu WhatsApp",
-  "Sem cartão de crédito",
-];
 
 export const MidCTASection = ({ onSignupClick }: MidCTASectionProps) => {
   return (
