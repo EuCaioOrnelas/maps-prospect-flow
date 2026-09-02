@@ -18,11 +18,11 @@ interface ProductHeroProps {
 
 export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHeroProps) => {
   return (
-    <section className="relative -mt-[72px] w-full overflow-x-clip pb-36 pt-[120px] sm:-mt-[80px] sm:pb-40 sm:pt-[136px] lg:pb-44">
+    <section className="relative -mt-[72px] w-full overflow-x-clip pb-24 pt-[120px] sm:-mt-[80px] sm:pb-40 sm:pt-[136px] lg:pb-44">
       {/* Faixa de plasma (verde Wiize) — diagonal na base do hero, dividindo hero e "Como funciona";
           somente a imagem do hero (z-30) passa por cima dela */}
       <div
-        className="pointer-events-none absolute bottom-[-5.5rem] left-1/2 z-[5] h-24 w-[220vw] -translate-x-1/2 origin-left -rotate-[4deg] overflow-hidden sm:bottom-[-6rem] sm:h-32"
+        className="pointer-events-none absolute bottom-[-4rem] left-1/2 z-[5] h-24 w-[220vw] -translate-x-1/2 origin-left -rotate-[4deg] overflow-hidden sm:bottom-[-7rem] sm:h-32"
         aria-hidden
       >
         <div className="wz-band absolute inset-0" />
