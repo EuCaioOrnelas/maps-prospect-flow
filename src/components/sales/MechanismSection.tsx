@@ -154,23 +154,13 @@ export const MechanismSection = () => {
   const { ref, isVisible } = useScrollAnimation();
   const trackRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const nodeYs = useRef<number[]>([]);
   const [trackH, setTrackH] = useState(0);
   const [passedCount, setPassedCount] = useState(0);
 
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
-    const update = () => {
-      const tr = el.getBoundingClientRect();
-      setTrackH(tr.height);
-      // Posição vertical do centro de cada nó numerado, relativa à trilha
-      nodeYs.current = nodeRefs.current.map((n) => {
-        if (!n) return Number.POSITIVE_INFINITY;
-        const r = n.getBoundingClientRect();
-        return r.top + r.height / 2 - tr.top;
-      });
-    };
+    const update = () => setTrackH(el.getBoundingClientRect().height);
     update();
     const t = window.setTimeout(update, 350);
     if (typeof ResizeObserver === "undefined") return () => window.clearTimeout(t);
@@ -196,10 +186,16 @@ export const MechanismSection = () => {
   const lineH = useTransform(dotY, (y) => Math.max(0, y - 5));
 
   useMotionValueEvent(dotY, "change", (y) => {
-    // O nó só ganha foco verde quando a bola já passou pelo centro dele
+    // Mede na hora — evita posições desatualizadas por animações/resize.
+    // O nó só ganha foco verde quando a bola já passou pelo centro dele.
+    const tr = trackRef.current?.getBoundingClientRect();
+    if (!tr) return;
     let count = 0;
-    nodeYs.current.forEach((ny) => {
-      if (y >= ny - 4) count += 1;
+    nodeRefs.current.forEach((n) => {
+      if (!n) return;
+      const r = n.getBoundingClientRect();
+      const ny = r.top + r.height / 2 - tr.top;
+      if (y >= ny - 2) count += 1;
     });
     setPassedCount((prev) => (prev === count ? prev : count));
   });
