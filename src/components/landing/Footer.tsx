@@ -10,21 +10,24 @@ export const Footer = () => {
  <div className="flex flex-col items-center gap-6 text-center">
  <div className="flex flex-col items-center gap-4 sm:gap-6 md:flex-row md:justify-between md:text-left w-full">
  <Logo size="sm" />
- 
- <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-sm text-muted-foreground">
+
+ <nav aria-label="Links institucionais" className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-muted-foreground">
+ <Link to="/login" className="hover:text-foreground transition-colors">
+ Login
+ </Link>
+ <Link to="/signup/escolher-plano" className="hover:text-foreground transition-colors">
+ Teste Grátis
+ </Link>
+ <Link to="/contato" className="hover:text-foreground transition-colors">
+ Contato
+ </Link>
  <Link to="/terms" className="hover:text-foreground transition-colors">
  Termos de Uso
  </Link>
  <Link to="/privacy" className="hover:text-foreground transition-colors">
- Privacidade
+ Política de Privacidade
  </Link>
- <Link to="/seguranca-faq" className="hover:text-foreground transition-colors">
- Segurança FAQ
- </Link>
- <Link to="/ajuda" className="hover:text-foreground transition-colors">
- Central de Ajuda
- </Link>
- </div>
+ </nav>
 
  <p className="text-sm text-muted-foreground">
  © {currentYear} Wiize. Todos os direitos reservados.
