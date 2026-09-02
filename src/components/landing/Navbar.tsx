@@ -200,7 +200,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
             />
           )}
 
-          <div className="relative flex items-center justify-between mx-auto w-full gap-8">
+          <div className="relative flex items-center justify-between mx-auto w-full gap-8 px-2 sm:px-3 lg:px-4">
             <Logo size="md" mobileSize="md" />
 
             <div className="hidden md:flex items-center gap-1">
