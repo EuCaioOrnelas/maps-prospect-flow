@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Award, TrendingUp, Users, Wallet, Sparkles, ArrowRight,
+  Award, TrendingUp, Users, Wallet, Sparkles, ArrowRight, Zap,
   Megaphone, Target, Rocket, ShieldCheck, Check,
   ScrollText, UserPlus, Link2, Share2, BarChart3, Banknote,
 } from "lucide-react";
