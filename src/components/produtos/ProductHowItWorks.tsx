@@ -33,22 +33,37 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
 export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorksProps) => {
   const listRef = useRef<HTMLOListElement>(null);
   const [active, setActive] = useState(0);
+  const [trackH, setTrackH] = useState(0);
+
+  // Mede a altura da trilha para animar só com transform (sem layout por frame)
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const update = () => setTrackH(el.getBoundingClientRect().height);
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: listRef,
-    offset: ["start 75%", "end 65%"],
+    // Trecho de scroll mais longo = animação mais lenta e confortável
+    offset: ["start 92%", "end 30%"],
   });
-  // Spring mais leve = movimento contínuo, sem travadas em telas fracas
-  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 34, mass: 0.35 });
-  // A bolinha vive no fim da trilha preenchida (mesma origem do scaleY),
-  // evitando dessincronia entre linha e ponto.
-  const fillHeight = useTransform(progress, (v) => `${Math.min(100, Math.max(0, v * 100))}%`);
+  // Spring suave: sem travadas e sem "pulos" em telas fracas
+  const progress = useSpring(scrollYProgress, { stiffness: 55, damping: 26, mass: 0.4 });
+  // Linha e bolinha usam a MESMA fonte, só com transform (GPU)
+  const fillScale = useTransform(progress, (v) => Math.min(1, Math.max(0, v)));
+  const dotY = useTransform(progress, (v) => Math.min(1, Math.max(0, v)) * trackH);
 
   useMotionValueEvent(progress, "change", (v) => {
     // Ativa o passo assim que a bolinha alcança a posição do número
     const idx = Math.min(steps.length - 1, Math.max(0, Math.floor(v * steps.length)));
     setActive((prev) => (prev === idx ? prev : idx));
   });
+
 
 
   return (
