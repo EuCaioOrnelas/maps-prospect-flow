@@ -298,27 +298,29 @@ Retorne APENAS JSON válido:
 
     const parsed = JSON.parse(content);
 
-    // Store the message on the lead
-    const { error: updateErr } = await supabase
-      .from("leads")
-      .update({
-        ai_approach_message: parsed.mensagem || "",
-        enrichment_data: {
-          ...(typeof lead.enrichment_data === 'object' && lead.enrichment_data ? lead.enrichment_data : {}),
-          approach_analysis: {
-            analise_nicho: parsed.analise_nicho || "",
-            analise_cidade: parsed.analise_cidade || "",
-            pontos_fracos: parsed.pontos_fracos || [],
-            estrategia: parsed.estrategia || "",
-            produto_sugerido: parsed.produto_sugerido || "",
-            generated_at: new Date().toISOString(),
+    if (lead_id && !internalMode) {
+      // Store the message on the lead
+      const { error: updateErr } = await supabase
+        .from("leads")
+        .update({
+          ai_approach_message: parsed.mensagem || "",
+          enrichment_data: {
+            ...(typeof lead.enrichment_data === 'object' && lead.enrichment_data ? lead.enrichment_data : {}),
+            approach_analysis: {
+              analise_nicho: parsed.analise_nicho || "",
+              analise_cidade: parsed.analise_cidade || "",
+              pontos_fracos: parsed.pontos_fracos || [],
+              estrategia: parsed.estrategia || "",
+              produto_sugerido: parsed.produto_sugerido || "",
+              generated_at: new Date().toISOString(),
+            },
           },
-        },
-      })
-      .eq("id", lead_id)
-      .eq("user_id", user.id);
+        })
+        .eq("id", lead_id)
+        .eq("user_id", user.id);
 
-    if (updateErr) console.error("Update error:", updateErr);
+      if (updateErr) console.error("Update error:", updateErr);
+    }
 
     return new Response(
       JSON.stringify({
