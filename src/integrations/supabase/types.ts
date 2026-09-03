@@ -11386,6 +11386,7 @@ export type Database = {
         Row: {
           auto_topup_amount_brl: number
           auto_topup_enabled: boolean
+          auto_topup_monthly_limit_brl: number
           auto_topup_threshold_tokens: number
           balance_tokens: number
           created_at: string
@@ -11402,6 +11403,7 @@ export type Database = {
         Insert: {
           auto_topup_amount_brl?: number
           auto_topup_enabled?: boolean
+          auto_topup_monthly_limit_brl?: number
           auto_topup_threshold_tokens?: number
           balance_tokens?: number
           created_at?: string
@@ -11418,6 +11420,7 @@ export type Database = {
         Update: {
           auto_topup_amount_brl?: number
           auto_topup_enabled?: boolean
+          auto_topup_monthly_limit_brl?: number
           auto_topup_threshold_tokens?: number
           balance_tokens?: number
           created_at?: string
