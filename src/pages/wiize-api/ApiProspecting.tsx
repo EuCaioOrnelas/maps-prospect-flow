@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { ArrowLeft, BookOpen, KeyRound, Search, Gauge, Stethoscope, MessageSquare } from "lucide-react";
+import { ArrowLeft, BookOpen, KeyRound, Search, Gauge, Stethoscope, MessageSquare, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";

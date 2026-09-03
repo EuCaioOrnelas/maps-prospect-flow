@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { BarChart3, TrendingUp } from "lucide-react";
+import { BarChart3, TrendingUp, Activity } from "lucide-react";
 import {
   Area,
   AreaChart,
