@@ -320,33 +320,42 @@ serve(async (req) => {
 
     const limits = await getLimits();
 
+    // ---- antifraude: bloqueio por IP antes de qualquer trabalho ----
+    const ipBan = await checkBans(null, null, ip);
+    if (ipBan.banned) {
+      return apiError(
+        "ACCOUNT_BANNED",
+        `Acesso temporariamente bloqueado por atividade suspeita. ${ipBan.reason || ""}`.trim(),
+        403,
+        requestId,
+        ipBan.retry_after ? { "Retry-After": String(ipBan.retry_after) } : {},
+      );
+    }
+
     // ---- autenticação por API Key ----
     const headerKey = req.headers.get("x-wiize-api-key");
     const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
     const rawKey = (headerKey || bearer || "").trim();
 
     if (!rawKey || !/^wk_(live|test)_[a-zA-Z0-9]{24,}$/.test(rawKey)) {
-      await rateLimit(ip, "wiize_api_auth_fail", 20, 60);
+      await registerAbuse(null, null, ip, "auth_failure", { reason: "malformed_key" });
       return apiError("UNAUTHORIZED", "API Key ausente ou em formato inválido.", 401, requestId);
     }
 
     const prefix = rawKey.slice(0, 20);
+    const hash = await sha256Hex(rawKey);
     const { data: keyRow } = await admin
       .from("wiize_api_keys")
       .select("id, user_id, status, permissions, environment, rate_limit_per_minute")
       .eq("prefix", prefix)
+      .eq("secret_hash", hash)
       .maybeSingle();
 
-    const hash = await sha256Hex(rawKey);
-    const { data: verified } = keyRow
-      ? await admin.from("wiize_api_keys").select("id").eq("id", (keyRow as any).id).eq("secret_hash", hash).maybeSingle()
-      : { data: null };
-
-    if (!keyRow || !verified) {
-      const guard = await rateLimit(ip, "wiize_api_auth_fail", 20, 60);
-      if (!guard.allowed) {
-        return apiError("RATE_LIMIT_EXCEEDED", "Muitas tentativas inválidas.", 429, requestId, {
-          "Retry-After": String(guard.retryAfter),
+    if (!keyRow) {
+      const abuse = await registerAbuse(null, null, ip, "auth_failure", { reason: "invalid_key", prefix });
+      if (abuse.banned) {
+        return apiError("ACCOUNT_BANNED", "Muitas tentativas inválidas. Acesso bloqueado temporariamente.", 403, requestId, {
+          "Retry-After": String(abuse.retry_after || 900),
         });
       }
       return apiError("UNAUTHORIZED", "API Key inválida.", 401, requestId);
@@ -362,30 +371,68 @@ serve(async (req) => {
 
     const userId: string = key.user_id;
 
-    // ---- rate limit ----
-    const perMinute = Number(key.rate_limit_per_minute || limits.ratePerMinuteKey);
-    const rlKey = await rateLimit(key.id, "wiize_api_key_minute", perMinute, 60);
-    const rlAccount10 = await rateLimit(userId, "wiize_api_account_10min", limits.ratePer10minAccount, 600);
-    const rlAccountDay = await rateLimit(userId, "wiize_api_account_day", limits.ratePerDayAccount, 86400);
+    // ---- antifraude: bloqueio por conta ou chave ----
+    const ban = await checkBans(userId, key.id, ip);
+    if (ban.banned) {
+      await logRequest({
+        user_id: userId, api_key_id: key.id, request_id: requestId, endpoint: path,
+        environment: key.environment, status_code: 403, error_code: "ACCOUNT_BANNED",
+        duration_ms: Date.now() - startedAt, ip_address: ip, user_agent: req.headers.get("user-agent"),
+        metadata: { scope: ban.scope },
+      });
+      return apiError(
+        "ACCOUNT_BANNED",
+        ban.permanent
+          ? "Acesso bloqueado permanentemente por violação da política de uso. Fale com o suporte."
+          : `Acesso bloqueado temporariamente por atividade suspeita. ${ban.reason || ""}`.trim(),
+        403,
+        requestId,
+        ban.retry_after ? { "Retry-After": String(ban.retry_after) } : {},
+      );
+    }
 
-    const rateHeaders = {
+    // ---- rate limit multi-camada (rajada / minuto / hora / conta / dia) ----
+    const perMinute = Number(key.rate_limit_per_minute || limits.ratePerMinuteKey);
+    const burstLimit = Math.max(1, Math.min(limits.burstPer10sKey, Math.ceil(perMinute / 2)));
+
+    const tiers = [
+      { name: "burst", res: await rateCheck(`k:${key.id}:10s`, burstLimit, 10) },
+      { name: "key_minute", res: await rateCheck(`k:${key.id}:60s`, perMinute, 60) },
+      { name: "key_hour", res: await rateCheck(`k:${key.id}:1h`, limits.ratePerHourKey, 3600) },
+      { name: "account_minute", res: await rateCheck(`a:${userId}:60s`, limits.ratePerMinuteAccount, 60) },
+      { name: "account_10min", res: await rateCheck(`a:${userId}:10m`, limits.ratePer10minAccount, 600) },
+      { name: "account_day", res: await rateCheck(`a:${userId}:1d`, limits.ratePerDayAccount, 86400) },
+    ];
+    const minuteTier = tiers[1].res;
+
+    const rateHeaders: Record<string, string> = {
       "X-RateLimit-Limit": String(perMinute),
-      "X-RateLimit-Remaining": String(Math.max(rlKey.remaining, 0)),
-      "X-RateLimit-Reset": String(Math.floor(Date.now() / 1000) + 60),
+      "X-RateLimit-Remaining": String(Math.max(minuteTier.remaining, 0)),
+      "X-RateLimit-Reset": String(minuteTier.resetAt || Math.floor(Date.now() / 1000) + 60),
+      "X-RateLimit-Burst-Limit": String(burstLimit),
+      "X-RateLimit-Daily-Limit": String(limits.ratePerDayAccount),
+      "X-RateLimit-Daily-Remaining": String(Math.max(tiers[5].res.remaining, 0)),
     };
 
-    const blocked = [rlKey, rlAccount10, rlAccountDay].find((r) => !r.allowed);
+    const blocked = tiers.find((t) => !t.res.allowed);
     if (blocked) {
+      const abuse = await registerAbuse(userId, key.id, ip, "rate_limit", { tier: blocked.name });
       await logRequest({
         user_id: userId, api_key_id: key.id, request_id: requestId, endpoint: path,
         environment: key.environment, status_code: 429, error_code: "RATE_LIMIT_EXCEEDED",
         duration_ms: Date.now() - startedAt, ip_address: ip, user_agent: req.headers.get("user-agent"),
+        metadata: { tier: blocked.name },
       });
-      return apiError("RATE_LIMIT_EXCEEDED", "Limite de requisições excedido.", 429, requestId, {
-        ...rateHeaders,
-        "Retry-After": String(blocked.retryAfter),
-      });
+      return apiError(
+        "RATE_LIMIT_EXCEEDED",
+        `Limite de requisições excedido (${blocked.name}). Aguarde e tente novamente.`,
+        429,
+        requestId,
+        { ...rateHeaders, "Retry-After": String(blocked.res.retryAfter), "X-RateLimit-Scope": blocked.name },
+        { scope: blocked.name, limit: blocked.res.limit, retry_after: blocked.res.retryAfter, banned: !!abuse.banned },
+      );
     }
+
 
     // ---- corpo ----
     const raw = await req.text();
