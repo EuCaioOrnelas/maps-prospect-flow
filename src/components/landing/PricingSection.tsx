@@ -94,6 +94,7 @@ const mainPlans = {
  price: "396",
  anchorPrice: "792",
  opportunities: "10.000", usageLabel: "Até 10.000 contatos no CRM",
+ prospectionLabel: "Até 1.000 prospecções com IA / mês",
  description: "Para prospectar, analisar, qualificar e converter oportunidades B2B com Wiize AI.",
  features: [
  { text: "Tudo do plano Atendimento" },
@@ -149,6 +150,7 @@ const mainPlans = {
  price: "596",
  anchorPrice: "792",
  opportunities: "10.000", usageLabel: "Até 10.000 contatos no CRM",
+ prospectionLabel: "Até 1.000 prospecções com IA / mês",
  description: "Para prospectar, analisar, qualificar e converter oportunidades B2B com Wiize AI.",
  features: [
  { text: "Tudo do plano Atendimento" },
