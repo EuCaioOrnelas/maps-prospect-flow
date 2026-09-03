@@ -28,9 +28,11 @@ export default function WiizeApiLayout() {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getUser().then(async ({ data }) => {
+
+    // Sessão local primeiro (instantâneo), validação com o servidor em seguida.
+    supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
-      const user = data.user;
+      const user = data.session?.user;
       if (!user) {
         navigate("/api/login", { replace: true });
         return;
@@ -38,33 +40,38 @@ export default function WiizeApiLayout() {
       setEmail(user.email ?? null);
       setLoading(false);
 
-      // Sincroniza o cadastro (nome, documento e endereço) coletado no signup.
       const m = (user.user_metadata || {}) as Record<string, string>;
-      if (m.wiize_product === "wiize_api") {
-        await (supabase.from("wiize_api_profiles" as any) as any).upsert(
-          {
-            user_id: user.id,
-            full_name: m.full_name || "",
-            company_name: m.company_name || "",
-            phone: m.api_phone || null,
-            doc_type: m.api_doc_type || "cnpj",
-            doc_number: m.api_doc_number || null,
-            postal_code: m.api_postal_code || null,
-            street: m.api_street || null,
-            street_number: m.api_street_number || null,
-            complement: m.api_complement || null,
-            neighborhood: m.api_neighborhood || null,
-            city: m.api_city || null,
-            state: m.api_state || null,
-          },
-          { onConflict: "user_id" },
-        );
+      if (m.wiize_product !== "wiize_api") {
+        supabase.auth.signOut().finally(() => navigate("/api/login", { replace: true }));
+        return;
       }
+
+      // Sincroniza o cadastro coletado no signup (não bloqueia a renderização).
+      void (supabase.from("wiize_api_profiles" as any) as any).upsert(
+        {
+          user_id: user.id,
+          full_name: m.full_name || "",
+          company_name: m.company_name || "",
+          phone: m.api_phone || null,
+          doc_type: m.api_doc_type || "cnpj",
+          doc_number: m.api_doc_number || null,
+          postal_code: m.api_postal_code || null,
+          street: m.api_street || null,
+          street_number: m.api_street_number || null,
+          complement: m.api_complement || null,
+          neighborhood: m.api_neighborhood || null,
+          city: m.api_city || null,
+          state: m.api_state || null,
+        },
+        { onConflict: "user_id" },
+      );
     });
+
     return () => {
       active = false;
     };
   }, [navigate]);
+
 
   const logout = async () => {
     await supabase.auth.signOut();
