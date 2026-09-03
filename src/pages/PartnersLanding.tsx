@@ -125,7 +125,7 @@ export default function PartnersLanding() {
     (async () => {
       const { data } = await supabase
         .from("partner_settings")
-        .select("bronze_commission_percent, silver_commission_percent, gold_commission_percent, platinum_commission_percent, silver_threshold_clients, gold_threshold_clients, platinum_threshold_clients, first_month_boost_enabled, first_month_boost_percent, first_month_boost_until")
+        .select("bronze_commission_percent, silver_commission_percent, gold_commission_percent, silver_threshold_clients, gold_threshold_clients, first_month_boost_enabled, first_month_boost_percent, first_month_boost_until")
         .eq("id", 1)
         .maybeSingle();
       if (!data) return;
@@ -134,10 +134,9 @@ export default function PartnersLanding() {
         bronze: Number(d.bronze_commission_percent),
         silver: Number(d.silver_commission_percent),
         gold: Number(d.gold_commission_percent),
-        platinum: Number(d.platinum_commission_percent),
         silverClients: d.silver_threshold_clients,
         goldClients: d.gold_threshold_clients,
-        platinumClients: d.platinum_threshold_clients,
+
         boostEnabled: d.first_month_boost_enabled ?? false,
         boostPercent: Number(d.first_month_boost_percent ?? 50),
         boostUntil: d.first_month_boost_until ?? null,
