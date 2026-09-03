@@ -271,33 +271,47 @@ serve(async (req) => {
 
     // Create Supabase client with user's token
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    
+
     // Verify user token
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
-    if (authError || !user) {
-      console.error('Auth error:', authError);
-      return new Response(
-        JSON.stringify({ error: 'Usuário não autenticado' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+
+    // Modo interno (Wiize API V1): chamada servidor-a-servidor autenticada pela service role.
+    // O saldo/rate limit é controlado pelo gateway wiize-api-v1, não pelo plano da Wiize.
+    const internalUserId = req.headers.get('x-wiize-api-user');
+    const internalMode = !!internalUserId && !!SUPABASE_SERVICE_ROLE_KEY && token === SUPABASE_SERVICE_ROLE_KEY;
+
+    let user: { id: string } | null = null;
+    if (internalMode) {
+      user = { id: internalUserId! };
+    } else {
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !authUser) {
+        console.error('Auth error:', authError);
+        return new Response(
+          JSON.stringify({ error: 'Usuário não autenticado' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      user = authUser;
     }
 
-    console.log('User authenticated:', user.id);
+    console.log('User authenticated:', user.id, internalMode ? '(internal)' : '');
 
     // Per-user rate limit: 1 prospecção / 60s (chave = auth.uid, isolado por usuário)
-    const userRl = await checkRateLimit(supabase, user.id, 'search_leads_user', 1, 60);
-    if (!userRl.allowed) {
-      return new Response(
-        JSON.stringify({
-          error: 'rate_limited',
-          message: `Aguarde ${userRl.retryAfter || 60} segundos antes de realizar uma nova prospecção.`,
-          retry_after: userRl.retryAfter || 60,
-        }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(userRl.retryAfter || 60) } }
-      );
+    if (!internalMode) {
+      const userRl = await checkRateLimit(supabase, user.id, 'search_leads_user', 1, 60);
+      if (!userRl.allowed) {
+        return new Response(
+          JSON.stringify({
+            error: 'rate_limited',
+            message: `Aguarde ${userRl.retryAfter || 60} segundos antes de realizar uma nova prospecção.`,
+            retry_after: userRl.retryAfter || 60,
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(userRl.retryAfter || 60) } }
+        );
+      }
     }
+
 
     // Get user profile to check opportunity limits
     const { data: profile, error: profileError } = await supabase
