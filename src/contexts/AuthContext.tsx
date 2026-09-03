@@ -298,6 +298,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sincroniza estado da conta (assinatura + reset mensal de buscas) e atualiza o profile.
   const syncAccountState = async (userId: string, reason: string, email?: string | null) => {
     try {
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/api')) {
+        return;
+      }
       // O AuthProvider também envolve as áreas Wiize API e Partners. Essas contas
       // têm ciclo de cobrança próprio e nunca devem disparar a conciliação da
       // assinatura da plataforma principal.
@@ -401,7 +404,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setProfile((prev) => (profilesEqual(prev, profileData) ? prev : profileData));
 
             const product = newSession.user.user_metadata?.wiize_product;
-            const isMainPlatformAccount = product !== 'wiize_api' && product !== 'wiize_partners';
+            const isProductRoute = window.location.pathname.startsWith('/api');
+            const isMainPlatformAccount = !isProductRoute && product !== 'wiize_api' && product !== 'wiize_partners';
 
             if (event === 'SIGNED_IN' && isMainPlatformAccount) {
               setTimeout(() => {
@@ -484,7 +488,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
           const product = session.user.user_metadata?.wiize_product;
-          if (product !== 'wiize_api' && product !== 'wiize_partners') {
+          if (!window.location.pathname.startsWith('/api') && product !== 'wiize_api' && product !== 'wiize_partners') {
             // Sync on initial load somente para a plataforma principal.
             setTimeout(() => {
               syncAccountState(session.user.id, 'initial', session.user.email);

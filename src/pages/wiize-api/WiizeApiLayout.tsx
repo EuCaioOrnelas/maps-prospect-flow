@@ -15,6 +15,7 @@ import {
 import { WiizeApiNav } from "@/components/wiize-api/WiizeApiNav";
 import { TwoFactorGate } from "@/components/security/TwoFactorGate";
 import { mockBalance, brl } from "@/data/wiizeApiMocks";
+import { resolveWiizeApiAccess } from "@/lib/wiizeApiAuth";
 
 /**
  * Shell do Wiize API. Exige sessão válida e, quando o 2FA está ativo,
@@ -30,41 +31,21 @@ export default function WiizeApiLayout() {
     let active = true;
 
     // Sessão local primeiro (instantâneo), validação com o servidor em seguida.
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return;
       const user = data.session?.user;
       if (!user) {
         navigate("/api/login", { replace: true });
         return;
       }
-      setEmail(user.email ?? null);
-      setLoading(false);
-
-      const m = (user.user_metadata || {}) as Record<string, string>;
-      if (m.wiize_product !== "wiize_api") {
-        supabase.auth.signOut({ scope: "local" }).finally(() => navigate("/api/login", { replace: true }));
+      const access = await resolveWiizeApiAccess(user);
+      if (!active) return;
+      if (!access.hasAccess) {
+        navigate("/api/login", { replace: true });
         return;
       }
-
-      // Sincroniza o cadastro coletado no signup (não bloqueia a renderização).
-      void (supabase.from("wiize_api_profiles" as any) as any).upsert(
-        {
-          user_id: user.id,
-          full_name: m.full_name || "",
-          company_name: m.company_name || "",
-          phone: m.api_phone || null,
-          doc_type: m.api_doc_type || "cnpj",
-          doc_number: m.api_doc_number || null,
-          postal_code: m.api_postal_code || null,
-          street: m.api_street || null,
-          street_number: m.api_street_number || null,
-          complement: m.api_complement || null,
-          neighborhood: m.api_neighborhood || null,
-          city: m.api_city || null,
-          state: m.api_state || null,
-        },
-        { onConflict: "user_id" },
-      );
+      setEmail(user.email ?? null);
+      setLoading(false);
     });
 
     return () => {
@@ -74,7 +55,7 @@ export default function WiizeApiLayout() {
 
 
   const logout = async () => {
-    await supabase.auth.signOut({ scope: "local" });
+    await supabase.auth.signOut();
     navigate("/api/login", { replace: true });
   };
 

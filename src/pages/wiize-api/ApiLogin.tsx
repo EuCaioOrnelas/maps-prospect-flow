@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, Lock, ArrowLeft, ArrowRight, Check, MapPin } from "lucide-react";
+import { Loader2, Lock, ArrowLeft, ArrowRight, Check, MapPin, CircleAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { PasswordField, isStrongPassword } from "@/components/wiize-api/Password
 import { maskCEP, maskCNPJ, maskCPF, maskPhone, onlyDigits, BR_STATES, isValidCNPJ, isValidCPF } from "@/lib/brMasks";
 import { cn } from "@/lib/utils";
 import wiizeLogo from "@/assets/logo-icon-new.png";
+import { createWiizeApiAccess, resolveWiizeApiAccess, type WiizeApiProfileInput } from "@/lib/wiizeApiAuth";
 
 type Mode = "login" | "signup";
 
@@ -85,6 +86,7 @@ export default function ApiLogin() {
   const [loading, setLoading] = useState(false);
   const [awaitingConfirm, setAwaitingConfirm] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -94,11 +96,23 @@ export default function ApiLogin() {
     setMode(next);
     setStep(1);
     setAwaitingConfirm(null);
+    setAuthMessage(null);
     const p = new URLSearchParams(params);
     if (next === "signup") p.set("modo", "cadastro");
     else p.delete("modo");
     setParams(p, { replace: true });
   };
+
+  useEffect(() => {
+    let active = true;
+    void supabase.auth.getSession().then(async ({ data }) => {
+      const user = data.session?.user;
+      if (!active || !user) return;
+      const access = await resolveWiizeApiAccess(user);
+      if (active && access.hasAccess) navigate("/api/dashboard", { replace: true });
+    });
+    return () => { active = false; };
+  }, [navigate]);
 
 
   // ViaCEP — mesmo mecanismo do checkout
@@ -157,7 +171,22 @@ export default function ApiLogin() {
 
   const doSignup = async () => {
     setLoading(true);
+    setAuthMessage(null);
     try {
+      const profile: WiizeApiProfileInput = {
+        full_name: name.trim(),
+        company_name: company.trim(),
+        phone: onlyDigits(phone),
+        doc_type: docType,
+        doc_number: onlyDigits(docNumber),
+        postal_code: onlyDigits(cep),
+        street: street.trim(),
+        street_number: streetNumber.trim(),
+        complement: complement.trim(),
+        neighborhood: neighborhood.trim(),
+        city: city.trim(),
+        state: uf,
+      };
       const { data, error } = await withTimeout(
         supabase.auth.signUp({
           email: email.trim(),
@@ -184,8 +213,30 @@ export default function ApiLogin() {
       );
       if (error) throw error;
 
-      // Já veio sessão (auto confirm ligado): entra direto.
+      // Para evitar enumeração de usuários, o Auth retorna sucesso sem identidade
+      // quando o e-mail já existe. Nesse caso, validamos a senha informada e
+      // vinculamos o perfil da API à identidade já confirmada.
+      const existingEmail = Array.isArray(data.user?.identities) && data.user.identities.length === 0;
+      if (existingEmail) {
+        const { data: loginData, error: loginError } = await withTimeout(
+          supabase.auth.signInWithPassword({ email: email.trim(), password }),
+          10000,
+        );
+        if (loginError || !loginData.user) {
+          setAuthMessage("Este e-mail já está cadastrado. Entre com sua senha ou use “Esqueci minha senha”.");
+          setMode("login");
+          setStep(1);
+          return;
+        }
+        const { error: profileError } = await createWiizeApiAccess(loginData.user.id, profile);
+        if (profileError) throw profileError;
+        navigate("/api/dashboard", { replace: true });
+        return;
+      }
+
       if (data.session) {
+        const { error: profileError } = await createWiizeApiAccess(data.session.user.id, profile);
+        if (profileError) throw profileError;
         navigate("/api/dashboard", { replace: true });
         return;
       }
@@ -237,6 +288,7 @@ export default function ApiLogin() {
     }
 
     setLoading(true);
+    setAuthMessage(null);
     try {
       const { data, error } = await withTimeout(
         supabase.auth.signInWithPassword({ email: email.trim(), password }),
@@ -252,29 +304,21 @@ export default function ApiLogin() {
         return;
       }
 
-      // Contas são separadas: Wiize API não aceita login da Wiize principal / Partners.
-      const meta = (user.user_metadata || {}) as Record<string, string>;
-      if (meta.wiize_product !== "wiize_api") {
-        await supabase.auth.signOut({ scope: "local" });
-        toast({
-          title: "Conta não pertence ao Wiize API",
-          description: "Crie uma conta Wiize API. O acesso é separado da Wiize principal e do Partners.",
-          variant: "destructive",
-        });
+      const access = await resolveWiizeApiAccess(user);
+      if (access.error) throw access.error;
+      if (!access.hasAccess) {
+        setAuthMessage("Este e-mail ainda não possui acesso à Wiize API. Crie sua conta grátis para continuar.");
         return;
       }
 
       navigate("/api/dashboard", { replace: true });
     } catch (err: any) {
       const msg = String(err?.message || "");
-      toast({
-        title: "Falha no login",
-        description: /not confirmed/i.test(msg)
-          ? "Confirme seu e-mail antes de entrar."
-          : msg || "Credenciais inválidas",
-        variant: "destructive",
-      });
-      if (/not confirmed/i.test(msg)) setAwaitingConfirm(email.trim());
+      if (/not confirmed/i.test(msg)) {
+        setAwaitingConfirm(email.trim());
+      } else {
+        setAuthMessage(msg || "E-mail ou senha inválidos. Verifique os dados e tente novamente.");
+      }
     } finally {
       setLoading(false);
     }
@@ -639,6 +683,13 @@ export default function ApiLogin() {
                 >
                   <ArrowLeft size={16} /> Voltar
                 </Button>
+              )}
+
+              {authMessage && (
+                <div role="alert" className="flex items-start gap-2 rounded-lg border border-destructive/25 bg-destructive/5 px-3 py-2.5 text-left text-xs leading-relaxed text-foreground">
+                  <CircleAlert size={15} className="mt-0.5 shrink-0 text-destructive" />
+                  <span>{authMessage}</span>
+                </div>
               )}
             </div>
           </form>
