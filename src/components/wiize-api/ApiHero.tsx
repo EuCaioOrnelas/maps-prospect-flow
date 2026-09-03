@@ -117,30 +117,27 @@ export const ApiHero = () => {
             </div>
 
             <div className="mx-auto max-w-xl text-left xl:hidden">
-              <div className="relative">
-                <div className="absolute -inset-4 rounded-3xl bg-primary/10 soft-glow" aria-hidden />
+              <div className="rounded-xl border border-border/60 bg-card p-1 shadow-xl shadow-foreground/[0.04]">
                 <CodeBlock
                   code={sample}
                   lang="bash"
                   filename="quickstart.sh"
                   theme="light"
-                  className="relative min-h-[18rem] border border-primary/15 shadow-[0_28px_70px_-32px_hsl(158_60%_22%/0.45)]"
+                  className="min-h-[18rem] border-0 shadow-none"
                 />
               </div>
             </div>
           </div>
 
           <div className="relative z-10 hidden w-full animate-slide-up xl:flex xl:justify-end" style={{ animationDelay: "0.5s" }}>
-            <div className="relative w-full max-w-[38rem] text-left">
-              <div className="absolute -inset-6 rounded-3xl bg-primary/10 soft-glow" aria-hidden />
-              <div className="absolute -inset-1 rounded-2xl bg-primary/20 blur-xl" aria-hidden />
+            <div className="w-full max-w-[38rem] rounded-xl border border-border/60 bg-card p-1 text-left shadow-xl shadow-foreground/[0.04]">
               <CodeBlock
                 code={sample}
                 lang="bash"
                 filename="quickstart.sh"
                 theme="light"
                 showLineNumbers
-                className="relative min-h-[24rem] border border-primary/15 shadow-[0_32px_80px_-36px_hsl(158_60%_22%/0.5)]"
+                className="min-h-[24rem] border-0 shadow-none"
               />
             </div>
           </div>

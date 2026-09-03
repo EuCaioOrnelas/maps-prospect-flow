@@ -99,7 +99,7 @@ export const RESOURCE_COLUMNS: MenuColumn[] = [
     title: "Suporte",
     items: [
       { label: "Central de ajuda", description: "Tutoriais e guias da plataforma", to: "/ajuda", icon: LifeBuoy },
-      { label: "API", description: "Wiize API para desenvolvedores", to: "/api", icon: Code2 },
+      { label: "FAQ", description: "Perguntas frequentes sobre a plataforma", to: "/ajuda/faq", icon: HelpCircle },
       { label: "Falar com vendas", description: "Converse com nosso time", to: "/contato", icon: Mail },
     ],
   },
