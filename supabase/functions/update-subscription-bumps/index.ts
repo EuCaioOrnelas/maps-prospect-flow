@@ -58,7 +58,7 @@ serve(async (req) => {
     // Carrega profile
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id, plan, payment_provider, extra_numbers, extra_contacts_packs, extra_opportunities_packs")
+      .select("id, plan, payment_provider, created_at, subscription_price_cents, extra_numbers, extra_contacts_packs, extra_opportunities_packs")
       .eq("id", userId)
       .maybeSingle();
     if (!profile) throw new Error("Profile not found");
@@ -191,7 +191,12 @@ serve(async (req) => {
       // Calcula novo value
       let bumpsTotal = 0;
       for (const [id, qty] of Object.entries(desired)) bumpsTotal += BUMP_CATALOG[id].asaasMonthly * qty;
-      const planPrice = PLAN_MONTHLY_PRICE[planKey] || 0;
+      // Grandfathering: usa o valor realmente contratado quando disponível
+      // (clientes antigos do Growth continuam em R$ 696).
+      const contractedCents = Number((profile as any)?.subscription_price_cents) || 0;
+      const planPrice = contractedCents > 0
+        ? contractedCents / 100
+        : (PLAN_MONTHLY_PRICE[planKey] || 0);
       const newValue = planPrice + bumpsTotal;
 
       const updRes = await fetch(`https://api.asaas.com/v3/pix/automatic/authorizations/${active.id}`, {
@@ -228,7 +233,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ success: true, bumps: desired }), {
+    return new Response(JSON.stringify({ success: true, bumps: desired, provider }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
