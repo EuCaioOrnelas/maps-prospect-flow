@@ -17,7 +17,7 @@ import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 // ============================================================
 
 /** Plan monthly prices (R$). Used as fallback when subscription_price_cents is null. */
-const PLAN_PRICES_MONTHLY: Record<string, number> = { start: 296, growth: 696, scale: 897 };
+const PLAN_PRICES_MONTHLY: Record<string, number> = { start: 196, growth: 396, scale: 897 };
 
 /** Auto-refresh interval (ms). Page reloads data every 5 minutes. */
 const AUTO_REFRESH_MS = 5 * 60 * 1000;

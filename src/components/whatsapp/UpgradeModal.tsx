@@ -69,7 +69,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                 <Users className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium">Até 5 números WhatsApp</p>
+                <p className="text-sm font-medium">Até 2 números WhatsApp</p>
                 <p className="text-xs text-muted-foreground">Conecte múltiplos números</p>
               </div>
             </div>
