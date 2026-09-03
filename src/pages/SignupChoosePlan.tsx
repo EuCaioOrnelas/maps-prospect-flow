@@ -296,7 +296,7 @@ export default function SignupChoosePlan() {
                       <p
                         className={cn(
                           "text-[13px] font-medium leading-snug",
-                          "prospectionLabel" in plan && plan.prospectionLabel ? "text-muted-foreground/80" : "invisible",
+                          "prospectionLabel" in plan && plan.prospectionLabel ? "text-muted-foreground" : "invisible",
                         )}
                         aria-hidden={!("prospectionLabel" in plan && plan.prospectionLabel)}
                       >
