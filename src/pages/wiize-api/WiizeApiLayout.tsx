@@ -42,7 +42,7 @@ export default function WiizeApiLayout() {
 
       const m = (user.user_metadata || {}) as Record<string, string>;
       if (m.wiize_product !== "wiize_api") {
-        supabase.auth.signOut().finally(() => navigate("/api/login", { replace: true }));
+        supabase.auth.signOut({ scope: "local" }).finally(() => navigate("/api/login", { replace: true }));
         return;
       }
 
@@ -74,7 +74,7 @@ export default function WiizeApiLayout() {
 
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     navigate("/api/login", { replace: true });
   };
 
