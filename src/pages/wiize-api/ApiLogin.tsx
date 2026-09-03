@@ -18,6 +18,16 @@ import wiizeLogo from "@/assets/logo-icon-new.png";
 
 type Mode = "login" | "signup";
 
+/** Evita spinner infinito quando o backend demora a responder. */
+function withTimeout<T>(p: PromiseLike<T>, ms = 15000): Promise<T> {
+  return Promise.race([
+    Promise.resolve(p),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("Tempo esgotado. Tente novamente em instantes.")), ms),
+    ),
+  ]);
+}
+
 /** Container que anima a altura conforme o conteúdo muda (evita "pulos" no toggle). */
 function AutoHeight({ children, deps }: { children: React.ReactNode; deps: unknown[] }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -37,12 +47,13 @@ function AutoHeight({ children, deps }: { children: React.ReactNode; deps: unkno
   return (
     <div
       style={{ height: height ? `${height}px` : undefined }}
-      className="overflow-hidden transition-[height] duration-300 ease-out"
+      className="-mx-2 overflow-hidden px-2 transition-[height] duration-300 ease-out"
     >
       <div ref={ref}>{children}</div>
     </div>
   );
 }
+
 
 export default function ApiLogin() {
   const [params, setParams] = useSearchParams();
