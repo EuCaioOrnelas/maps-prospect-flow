@@ -54,9 +54,9 @@ export const ApiHero = () => {
         }}
       />
 
-      {/* Faixa de plasma diagonal na divisória do hero */}
+      {/* Faixa de plasma diagonal na divisória do hero — ancorada na borda inferior */}
       <div
-        className="pointer-events-none absolute bottom-[-4rem] left-1/2 z-[5] h-28 w-[120vw] origin-center -translate-x-1/2 translate-y-[10px] -rotate-[4deg] overflow-hidden sm:bottom-[-5rem] sm:h-36 lg:bottom-[-6rem] lg:h-44"
+        className="pointer-events-none absolute bottom-[-7rem] left-1/2 z-[5] h-40 w-[120vw] origin-center -translate-x-1/2 -rotate-[4deg] overflow-hidden sm:bottom-[-8rem] sm:h-48 lg:bottom-[-9.5rem] lg:h-56"
         aria-hidden
       >
         <div className="wz-band absolute inset-0" />
