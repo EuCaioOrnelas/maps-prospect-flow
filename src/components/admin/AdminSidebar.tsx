@@ -18,6 +18,7 @@ import {
   TrendingUp,
   UserCheck,
   Zap,
+  Plug,
   Globe,
   Server,
   Wifi,
@@ -70,6 +71,7 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Billing", url: "/admin/pix-billing", icon: Receipt },
       
       { title: "Assinaturas", url: "/admin/assinaturas", icon: FileText },
+      { title: "Wiize API", url: "/admin/wiize-api", icon: Plug },
       { title: "Auditoria MRR", url: "/admin/mrr-audit", icon: ClipboardList },
       { title: "Churn", url: "/admin/churn", icon: TrendingUp },
       { title: "Forecast", url: "/admin/forecast", icon: PieChart },

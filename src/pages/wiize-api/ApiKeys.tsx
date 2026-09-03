@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { KeyRound, Copy, Eye, EyeOff, Plus, ShieldAlert } from "lucide-react";
+import { KeyRound, Copy, Plus, ShieldAlert, RotateCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -13,37 +14,68 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader, EmptyState, SectionCard } from "@/components/wiize-api/WiizeApiUI";
-import { mockApiKeys, mockApiCatalog, type MockApiKey } from "@/data/wiizeApiMocks";
+import { useApiKeys, useApiKeyMutations } from "@/hooks/useWiizeApi";
+
+const ALL_PERMISSIONS = ["prospecting:search", "prospecting:analyze", "prospecting:approach"];
+
+const fmtDate = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "Nunca";
 
 export default function ApiKeys() {
   const { toast } = useToast();
-  const [keys, setKeys] = useState<MockApiKey[]>(mockApiKeys);
-  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ api: "prospecting", name: "", env: "production" });
+  const { data: keys = [], isLoading } = useApiKeys();
+  const { create, revoke, rotate } = useApiKeyMutations();
 
-  const createKey = () => {
-    // Interface apenas — nenhuma chave real é gerada nesta etapa.
-    toast({
-      title: "Interface de demonstração",
-      description: "A geração real de API Keys será habilitada na implementação do backend.",
-    });
-    setOpen(false);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", environment: "live" as "live" | "test" });
+  const [secret, setSecret] = useState<string | null>(null);
+
+  const handleCreate = async () => {
+    try {
+      const res = await create.mutateAsync({
+        name: form.name.trim() || "Minha aplicação",
+        environment: form.environment,
+        permissions: ALL_PERMISSIONS,
+      });
+      setOpen(false);
+      setForm({ name: "", environment: "live" });
+      setSecret(res.secret);
+    } catch (e) {
+      toast({
+        title: "Não foi possível criar a chave",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const revoke = (id: string) => {
-    setKeys((prev) => prev.map((k) => (k.id === id ? { ...k, status: "revoked" } : k)));
-    toast({ title: "Chave revogada", description: "Ação simulada nesta versão de interface." });
+  const handleRotate = async (id: string) => {
+    try {
+      const res = await rotate.mutateAsync(id);
+      setSecret(res.secret);
+    } catch (e) {
+      toast({
+        title: "Não foi possível rotacionar",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRevoke = async (id: string) => {
+    try {
+      await revoke.mutateAsync(id);
+      toast({ title: "Chave revogada" });
+    } catch (e) {
+      toast({
+        title: "Não foi possível revogar",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -65,11 +97,16 @@ export default function ApiKeys() {
 
       <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
         <ShieldAlert size={15} className="mt-0.5 shrink-0 text-primary" strokeWidth={1.75} />
-        Cada API possui sua própria chave. Guarde as credenciais no servidor da sua aplicação —
-        nunca no frontend ou em repositórios públicos.
+        O segredo completo é exibido uma única vez, no momento da criação ou rotação. Guarde a chave no
+        servidor da sua aplicação — nunca no frontend ou em repositórios públicos.
       </div>
 
-      {keys.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      ) : keys.length === 0 ? (
         <EmptyState
           icon={KeyRound}
           title="Você ainda não possui nenhuma API Key."
@@ -81,115 +118,63 @@ export default function ApiKeys() {
           }
         />
       ) : (
-        <div className="space-y-4">
-          {mockApiCatalog
-            .filter((api) => keys.some((k) => k.apiSlug === api.id))
-            .map((api) => (
-              <SectionCard
-                key={api.id}
-                title={api.name}
-                description="Credenciais específicas desta API"
-              >
-                <ul className="space-y-3">
-                  {keys
-                    .filter((k) => k.apiSlug === api.id)
-                    .map((k) => (
-                      <li
-                        key={k.id}
-                        className="rounded-lg border border-border/70 p-4 transition-colors hover:bg-muted/30"
-                      >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-medium">{k.name}</span>
-                          <Badge variant="secondary" className="text-[10px] uppercase">
-                            {k.environment === "production" ? "Production" : "Test"}
-                          </Badge>
-                          {k.status === "active" ? (
-                            <Badge className="bg-primary/10 text-[10px] text-primary hover:bg-primary/10">
-                              Ativa
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                              Revogada
-                            </Badge>
-                          )}
-                        </div>
+        <SectionCard icon={KeyRound} title="Prospecting Intelligence API" description="Credenciais desta conta">
+          <ul className="space-y-3">
+            {keys.map((k) => (
+              <li key={k.id} className="rounded-lg border border-border/70 p-4 transition-colors hover:bg-muted/30">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium">{k.name}</span>
+                  <Badge variant="secondary" className="text-[10px] uppercase">{k.environment}</Badge>
+                  {k.status === "active" ? (
+                    <Badge className="bg-primary/10 text-[10px] text-primary hover:bg-primary/10">Ativa</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] text-muted-foreground">Revogada</Badge>
+                  )}
+                </div>
 
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <code className="min-w-0 flex-1 truncate rounded-md bg-muted px-3 py-2 font-mono text-xs">
-                            {revealed[k.id] ? k.revealedKey : k.maskedKey}
-                          </code>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5"
-                            onClick={() =>
-                              setRevealed((p) => ({ ...p, [k.id]: !p[k.id] }))
-                            }
-                          >
-                            {revealed[k.id] ? <EyeOff size={14} /> : <Eye size={14} />}
-                            {revealed[k.id] ? "Ocultar" : "Ver chave"}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5"
-                            onClick={() => {
-                              navigator.clipboard?.writeText(k.revealedKey);
-                              toast({ title: "Chave copiada" });
-                            }}
-                          >
-                            <Copy size={14} /> Copiar
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            disabled={k.status !== "active"}
-                            onClick={() => revoke(k.id)}
-                          >
-                            Revogar
-                          </Button>
-                        </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <code className="min-w-0 flex-1 truncate rounded-md bg-muted px-3 py-2 font-mono text-xs">
+                    {k.prefix}••••{k.last_four || ""}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    disabled={k.status !== "active" || rotate.isPending}
+                    onClick={() => handleRotate(k.id)}
+                  >
+                    <RotateCw size={14} /> Rotacionar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    disabled={k.status !== "active" || revoke.isPending}
+                    onClick={() => handleRevoke(k.id)}
+                  >
+                    Revogar
+                  </Button>
+                </div>
 
-                        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
-                          <span>Criada em: {k.createdAt}</span>
-                          <span>Último uso: {k.lastUsed ?? "Nunca"}</span>
-                        </div>
-                      </li>
-                    ))}
-                </ul>
-              </SectionCard>
+                <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
+                  <span>Criada em: {fmtDate(k.created_at)}</span>
+                  <span>Último uso: {fmtDate(k.last_used_at)}</span>
+                  <span>Permissões: {(k.permissions || []).length}</span>
+                </div>
+              </li>
             ))}
-        </div>
+          </ul>
+        </SectionCard>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="bg-background sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Gerar API Key</DialogTitle>
-            <DialogDescription>
-              Cada chave pertence a uma única API e ambiente.
-            </DialogDescription>
+            <DialogDescription>Cada chave pertence a um ambiente e é exibida uma única vez.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Selecionar API</Label>
-              <Select value={form.api} onValueChange={(v) => setForm((f) => ({ ...f, api: v }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  {mockApiCatalog.map((api) => (
-                    <SelectItem key={api.id} value={api.id} disabled={api.status === "soon"}>
-                      {api.name}
-                      {api.status === "soon" ? " (em breve)" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="key-name">Nome da chave</Label>
               <Input
@@ -203,12 +188,12 @@ export default function ApiKeys() {
             <div className="space-y-2">
               <Label>Ambiente</Label>
               <RadioGroup
-                value={form.env}
-                onValueChange={(v) => setForm((f) => ({ ...f, env: v }))}
+                value={form.environment}
+                onValueChange={(v) => setForm((f) => ({ ...f, environment: v as "live" | "test" }))}
                 className="grid grid-cols-2 gap-2"
               >
                 {[
-                  { v: "production", l: "Production" },
+                  { v: "live", l: "Production" },
                   { v: "test", l: "Test" },
                 ].map((o) => (
                   <Label
@@ -223,10 +208,34 @@ export default function ApiKeys() {
           </div>
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>
-              Cancelar
+            <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreate} disabled={create.isPending} className="gap-2">
+              {create.isPending && <Loader2 size={14} className="animate-spin" />} Gerar chave
             </Button>
-            <Button onClick={createKey}>Gerar chave</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!secret} onOpenChange={(v) => !v && setSecret(null)}>
+        <DialogContent className="bg-background sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Copie sua API Key agora</DialogTitle>
+            <DialogDescription>
+              Este segredo não será exibido novamente. Guarde-o em local seguro.
+            </DialogDescription>
+          </DialogHeader>
+          <code className="block break-all rounded-md bg-muted px-3 py-3 font-mono text-xs">{secret}</code>
+          <DialogFooter>
+            <Button
+              className="gap-2"
+              onClick={async () => {
+                if (secret) await navigator.clipboard.writeText(secret);
+                toast({ title: "Chave copiada" });
+                setSecret(null);
+              }}
+            >
+              <Copy size={14} /> Copiar e fechar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

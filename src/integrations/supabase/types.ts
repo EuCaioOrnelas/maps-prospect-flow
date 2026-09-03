@@ -11260,6 +11260,66 @@ export type Database = {
           },
         ]
       }
+      wiize_api_topups: {
+        Row: {
+          amount_brl: number
+          asaas_customer_id: string | null
+          asaas_payment_id: string | null
+          created_at: string
+          credited_at: string | null
+          expires_at: string
+          id: string
+          metadata: Json
+          method: string
+          paid_at: string | null
+          pix_payload: string | null
+          pix_qr_image: string | null
+          provider: string
+          status: string
+          tokens: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_brl: number
+          asaas_customer_id?: string | null
+          asaas_payment_id?: string | null
+          created_at?: string
+          credited_at?: string | null
+          expires_at?: string
+          id?: string
+          metadata?: Json
+          method?: string
+          paid_at?: string | null
+          pix_payload?: string | null
+          pix_qr_image?: string | null
+          provider?: string
+          status?: string
+          tokens: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_brl?: number
+          asaas_customer_id?: string | null
+          asaas_payment_id?: string | null
+          created_at?: string
+          credited_at?: string | null
+          expires_at?: string
+          id?: string
+          metadata?: Json
+          method?: string
+          paid_at?: string | null
+          pix_payload?: string | null
+          pix_qr_image?: string | null
+          provider?: string
+          status?: string
+          tokens?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wiize_api_wallet_transactions: {
         Row: {
           amount_brl: number
