@@ -10,9 +10,6 @@ import {
   FileBarChart,
   Loader2,
   Send,
-  Sun,
-  Moon,
-  Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -22,8 +19,7 @@ import { PageHeader, SectionCard } from "@/components/wiize-api/WiizeApiUI";
 import { TwoFactorPanel } from "@/components/security/TwoFactorPanel";
 import { mockSecurityActivity, mockSessions } from "@/data/wiizeApiMocks";
 import { supabase } from "@/integrations/supabase/client";
-import { useTheme } from "@/contexts/ThemeContext";
-import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 type PrefKey = "low_balance" | "request_errors" | "monthly_report";
 
