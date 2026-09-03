@@ -81,12 +81,12 @@ export default function ApiKeys() {
   return (
     <>
       <Helmet>
-        <title>API Keys — Wiize API</title>
+        <title>Chaves de API — Wiize API</title>
         <meta name="description" content="Gerencie as credenciais usadas para conectar seus sistemas às APIs da Wiize." />
       </Helmet>
 
       <PageHeader
-        title="API Keys"
+        title="Chaves de API"
         description="Gerencie as credenciais usadas para conectar seus sistemas às APIs da Wiize."
         actions={
           <Button className="gap-2" onClick={() => setOpen(true)}>

@@ -41,12 +41,12 @@ export default function ApiDashboard() {
   return (
     <>
       <Helmet>
-        <title>Overview — Wiize API</title>
+        <title>Visão geral — Wiize API</title>
         <meta name="description" content="Saldo, consumo de tokens e atividade recente do seu workspace Wiize API." />
       </Helmet>
 
       <PageHeader
-        title="Overview"
+        title="Visão geral"
         description="Acompanhe saldo, consumo de Wiize Tokens e atividade das suas integrações."
         actions={
           <div className="flex rounded-lg border border-border p-0.5">
