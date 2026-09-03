@@ -15,6 +15,7 @@ const corsHeaders = {
 // Mesma lista de price IDs que get-stripe-mrr usa para identificar produtos Wiize
 const WIIZE_PRICE_IDS = [
   "price_1TYl5KK8CM0R6xMMeHUhKt7s",
+  "price_1UBNs5K8CM0R6xMMJAnZEQdm",
   "price_1TYl6iK8CM0R6xMMd23UBpIz",
   "price_1TLZi1K8CM0R6xMMDOg3MSTp",
   "price_1TLZkSK8CM0R6xMMwr1Ke1IX",
@@ -34,6 +35,7 @@ const WIIZE_PRICE_IDS = [
 
 const PRICE_TO_PLAN: Record<string, string> = {
   price_1TYl5KK8CM0R6xMMeHUhKt7s: "start",
+  "price_1UBNs5K8CM0R6xMMJAnZEQdm": "growth",
   price_1TYl6iK8CM0R6xMMd23UBpIz: "growth",
   price_1TLZi1K8CM0R6xMMDOg3MSTp: "start",
   price_1TLZkSK8CM0R6xMMwr1Ke1IX: "start",

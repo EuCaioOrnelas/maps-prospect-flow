@@ -20,7 +20,7 @@ const PLAN_PRICES: Record<string, { monthly: string; annual: string; name: strin
     name: "Wiize Atendimento",
   },
   growth: {
-    monthly: "price_1TYl6iK8CM0R6xMMd23UBpIz", // R$696 (novo)
+    monthly: "price_1UBNs5K8CM0R6xMMJAnZEQdm", // R$396 (v3)
     annual: "price_1TLZn8K8CM0R6xMMaEz5JuVW",
     name: "Wiize Growth IA",
   },

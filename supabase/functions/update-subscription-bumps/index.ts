@@ -31,7 +31,7 @@ const BUMP_CATALOG: Record<string, {
 
 const PLAN_MONTHLY_PRICE: Record<string, number> = {
   start: 196.00,
-  growth: 696.00,
+  growth: 396.00,
   scale: 1496.00,
 };
 

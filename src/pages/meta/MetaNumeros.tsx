@@ -41,6 +41,8 @@ export interface WabaConnection {
 }
 
 
+import { getNumbersLimit } from "@/lib/planAccess";
+
 const META_PLAN_LIMITS: Record<string, number> = {
   free: 1, trial: 1, start: 2, growth: 5, scale: 10,
 };
@@ -93,9 +95,9 @@ export default function MetaNumeros() {
 
 
   const userPlan = (profile?.plan || "free").toLowerCase();
-  const basePlanNumbers = META_PLAN_LIMITS[userPlan] ?? 1;
   const extraNumbers = ((profile as any)?.extra_numbers as number | undefined) ?? 0;
-  const maxMetaConnections = basePlanNumbers + extraNumbers;
+  const numbersLimit = getNumbersLimit(profile as any);
+  const maxMetaConnections = Number.isFinite(numbersLimit) ? numbersLimit : (META_PLAN_LIMITS[userPlan] ?? 1) + extraNumbers;
   const reachedConnectionLimit = connections.length >= maxMetaConnections;
   const expiredConnections = connections.filter((c) => expiredTokenIds.has(c.id));
   const hasExpired = expiredConnections.length > 0;

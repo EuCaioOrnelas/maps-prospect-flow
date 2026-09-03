@@ -20,7 +20,7 @@ const TIMER_SECONDS = 10 * 60;
 
 const PRICE_IDS = {
   start: "price_1TYl5KK8CM0R6xMMeHUhKt7s",
-  growth: "price_1TYl6iK8CM0R6xMMd23UBpIz",
+  growth: "price_1UBNs5K8CM0R6xMMJAnZEQdm",
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 

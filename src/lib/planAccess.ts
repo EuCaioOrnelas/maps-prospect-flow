@@ -17,10 +17,30 @@ import type { FeatureKey } from "@/lib/featurePermissions";
 
 export const NEW_PLAN_CUTOFF = "2026-05-18T00:00:00Z";
 
+/**
+ * Segundo corte (v3) — 2026-09-03.
+ * A partir dele:
+ *  - Growth IA: R$ 396/mês, 1.000 oportunidades, 2 números, 3 assentos (dono + 2)
+ *  - Atendimento: R$ 196/mês, 1 número, 2 assentos (dono + 1)
+ *  - Sem planos anuais para novas assinaturas.
+ * Clientes criados ANTES mantêm o padrão anterior (R$ 696 / 3.000 / 5 / 5).
+ */
+export const PLAN_V3_CUTOFF = "2026-09-03T00:00:00Z";
+
 type ProfileLike = {
   plan?: string | null;
   created_at?: string | null;
+  extra_numbers?: number | null;
+  extra_opportunities_packs?: number | null;
+  extra_contacts_packs?: number | null;
 } | null | undefined;
+
+/** Usuário do novo padrão (v3): criado a partir do corte de 2026-09-03. */
+export function isV3PlanUser(profile: ProfileLike): boolean {
+  if (!profile?.created_at) return false;
+  return new Date(profile.created_at).getTime() >= new Date(PLAN_V3_CUTOFF).getTime();
+}
+
 
 /**
  * Usuário é "legado" (mantém regras antigas) se foi criado antes do cutoff.
@@ -113,4 +133,49 @@ export function getPlanDisplayName(profile: ProfileLike): string {
   if (plan === "scale") return "Enterprise";
   if (plan === "free") return "Free";
   return profile.plan;
+}
+
+/**
+ * Oportunidades incluídas no plano (sem add-ons e sem bônus).
+ * Growth: 3.000 (legado) / 1.000 (v3). Atendimento novo: 0.
+ */
+export function getIncludedOpportunities(profile: ProfileLike): number {
+  const plan = (profile?.plan || "free").toLowerCase();
+  if (plan === "growth") return isV3PlanUser(profile) ? 1000 : 3000;
+  if (plan === "scale") return 10000;
+  if (plan === "start") return isLegacyPlanUser(profile) ? 1000 : 0;
+  return 10;
+}
+
+/** Números WhatsApp incluídos no plano (sem add-ons). */
+export function getBaseNumbersLimit(profile: ProfileLike): number {
+  const plan = (profile?.plan || "free").toLowerCase();
+  if (plan === "start") return isV3PlanUser(profile) ? 1 : 2;
+  if (plan === "growth") return isV3PlanUser(profile) ? 2 : 5;
+  if (plan === "scale") return Infinity;
+  return 1;
+}
+
+/** Números WhatsApp totais = plano + add-ons (`extra_numbers`). */
+export function getNumbersLimit(profile: ProfileLike): number {
+  const base = getBaseNumbersLimit(profile);
+  if (!Number.isFinite(base)) return base;
+  return base + (Number(profile?.extra_numbers) || 0);
+}
+
+/**
+ * Assentos (dono + sub usuários) incluídos no plano.
+ * Cada add-on de número inclui +1 usuário.
+ */
+export function getBaseSeatLimit(profile: ProfileLike): number {
+  const plan = (profile?.plan || "free").toLowerCase();
+  if (plan === "start") return isV3PlanUser(profile) ? 2 : 3;
+  if (plan === "growth") return isV3PlanUser(profile) ? 3 : 6;
+  return Infinity;
+}
+
+export function getSeatLimit(profile: ProfileLike): number {
+  const base = getBaseSeatLimit(profile);
+  if (!Number.isFinite(base)) return base;
+  return base + (Number(profile?.extra_numbers) || 0);
 }

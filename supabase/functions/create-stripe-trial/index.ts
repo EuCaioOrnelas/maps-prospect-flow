@@ -33,7 +33,7 @@ const corsHeaders = {
 
 const PLAN_TO_MONTHLY_PRICE: Record<string, string> = {
   start: "price_1TYl5KK8CM0R6xMMeHUhKt7s", // R$196 (novo)
-  growth: "price_1TYl6iK8CM0R6xMMd23UBpIz", // R$696 (novo)
+  growth: "price_1UBNs5K8CM0R6xMMJAnZEQdm", // R$396 (v3)
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 

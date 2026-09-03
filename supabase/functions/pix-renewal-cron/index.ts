@@ -21,20 +21,20 @@ const PRODUCT_IDS: Record<string, string> = {
 
 const PLAN_NAMES: Record<string, string> = {
   start: "Wiize Start",
-  growth: "Wiize Growth",
+  growth: "Wiize Growth IA",
   scale: "Wiize Scale",
 };
 
 // New prices for NEW subscribers (used as fallback)
 const PLAN_PRICES: Record<string, string> = {
-  start: "R$ 296",
-  growth: "R$ 696",
+  start: "R$ 196",
+  growth: "R$ 396",
   scale: "R$ 897",
 };
 
 const PLAN_PRICES_CENTS: Record<string, number> = {
-  start: 29700,    // R$ 297/mês — PIX é apenas mensal
-  growth: 69600,   // R$ 696/mês
+  start: 19600,    // R$ 196/mês — PIX é apenas mensal
+  growth: 39600,   // R$ 396/mês (novo padrão)
   scale: 89700,    // R$ 897/mês
 };
 

@@ -14,7 +14,7 @@ const log = (step: string, details?: any) => {
 };
 
 const PLAN_TIER: Record<string, number> = { free: 0, start: 1, growth: 2, scale: 3 };
-const PLAN_PRICE_MONTHLY: Record<string, number> = { start: 296, growth: 696, scale: 897 };
+const PLAN_PRICE_MONTHLY: Record<string, number> = { start: 196, growth: 396, scale: 897 };
 // Annual TOTAL price (full year, charged up-front for annual subscribers)
 const PLAN_PRICE_ANNUAL: Record<string, number> = { start: 2952, growth: 7152, scale: 897 };
 

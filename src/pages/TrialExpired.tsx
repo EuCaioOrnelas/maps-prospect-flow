@@ -12,7 +12,7 @@ import type { LucideIcon } from "lucide-react";
 const PRICE_IDS: Record<string, Record<string, string>> = {
   monthly: {
     start: "price_1TYl5KK8CM0R6xMMeHUhKt7s",
-    growth: "price_1TYl6iK8CM0R6xMMd23UBpIz",
+    growth: "price_1UBNs5K8CM0R6xMMJAnZEQdm",
     scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
   },
   annual: {
@@ -53,7 +53,7 @@ const mainPlans: Record<string, PlanDef[]> = {
         { text: "IA analisa cada lead e identifica oportunidades reais" },
         { text: "CRM integrado" },
         { text: "Campanhas via Meta API oficial" },
-        { text: "Até 2 números WhatsApp" },
+        { text: "Até 1 número WhatsApp" },
         { text: "Suporte via email" },
         { text: "Sem automação", disabled: true },
         { text: "Sem follow-up", disabled: true },
@@ -62,14 +62,14 @@ const mainPlans: Record<string, PlanDef[]> = {
       popular: false, icon: Rocket,
     },
     {
-      name: "Growth", key: "growth", price: "696", anchorPrice: "1.392", opportunities: "3.000",
+      name: "Growth", key: "growth", price: "396", anchorPrice: "792", opportunities: "1.000",
       description: "Para escalar e converter oportunidades com IA",
       features: [
         { text: "Geração de mensagens com IA" },
         { text: "IA analisa cada lead e identifica oportunidades reais" },
         { text: "CRM integrado" },
         { text: "Campanhas via Meta API oficial" },
-        { text: "Até 5 números WhatsApp" },
+        { text: "Até 1 número WhatsApp" },
         { text: "Automação de atendimento" },
         { text: "Follow-up inteligente" },
         { text: "Agente de IA operacional" },
@@ -87,7 +87,7 @@ const mainPlans: Record<string, PlanDef[]> = {
         { text: "IA analisa cada lead e identifica oportunidades reais" },
         { text: "CRM integrado" },
         { text: "Campanhas via Meta API oficial" },
-        { text: "Até 2 números WhatsApp" },
+        { text: "Até 1 número WhatsApp" },
         { text: "Suporte via email" },
         { text: "Sem automação", disabled: true },
         { text: "Sem follow-up", disabled: true },
@@ -96,14 +96,14 @@ const mainPlans: Record<string, PlanDef[]> = {
       popular: false, icon: Rocket,
     },
     {
-      name: "Growth", key: "growth", price: "596", anchorPrice: "1.392", opportunities: "3.000",
+      name: "Growth", key: "growth", price: "596", anchorPrice: "792", opportunities: "1.000",
       description: "Para escalar e converter oportunidades com IA",
       features: [
         { text: "Geração de mensagens com IA" },
         { text: "IA analisa cada lead e identifica oportunidades reais" },
         { text: "CRM integrado" },
         { text: "Campanhas via Meta API oficial" },
-        { text: "Até 5 números WhatsApp" },
+        { text: "Até 1 número WhatsApp" },
         { text: "Automação de atendimento" },
         { text: "Follow-up inteligente" },
         { text: "Agente de IA operacional" },

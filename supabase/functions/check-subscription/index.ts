@@ -16,6 +16,7 @@ const logStep = (step: string, details?: any) => {
 const PRICE_TO_PLAN: Record<string, string> = {
   // Current prices (2026-05)
   "price_1TYl5KK8CM0R6xMMeHUhKt7s": "start",   // R$196/month (atual)
+  "price_1UBNs5K8CM0R6xMMJAnZEQdm": "growth",  // R$396/month (v3, 1.000 oportunidades)
   "price_1TYl6iK8CM0R6xMMd23UBpIz": "growth",  // R$696/month (atual)
   // Previous monthly prices - mantidos para reconhecer assinaturas legadas
   "price_1TLZi1K8CM0R6xMMDOg3MSTp": "start",   // R$296/month (legado)
@@ -42,6 +43,20 @@ const PLAN_LIMITS: Record<string, number> = {
   "growth": 3000,
   "scale": 10000,
 };
+
+// Novo padrão (v3, a partir de 2026-09-03): Growth IA R$396 com 1.000 oportunidades.
+// Preços antigos continuam com os limites legados (grandfathering).
+const PRICE_LIMIT_OVERRIDE: Record<string, number> = {
+  "price_1UBNs5K8CM0R6xMMJAnZEQdm": 1000, // Growth IA R$396/mês (v3)
+};
+
+// Limites do novo padrão (v3) para novas assinaturas sem price ID em contexto.
+const PLAN_LIMITS_V3: Record<string, number> = { free: 10, start: 1000, growth: 1000, scale: 10000 };
+
+function limitForPlan(plan: string, priceId?: string | null): number {
+  if (priceId && PRICE_LIMIT_OVERRIDE[priceId] !== undefined) return PRICE_LIMIT_OVERRIDE[priceId];
+  return PLAN_LIMITS[plan] ?? PLAN_LIMITS["free"];
+}
 
 const PLAN_NAME_TO_KEY: Record<string, string> = {
   "Wiize Start": "start",
@@ -213,7 +228,7 @@ async function ensureProfileAndApplyPendingCheckout(
       .from("profiles")
       .update({
         plan: planKey,
-        searches_limit: PLAN_LIMITS[planKey] || PLAN_LIMITS.free,
+        searches_limit: PLAN_LIMITS_V3[planKey] ?? PLAN_LIMITS[planKey] ?? PLAN_LIMITS.free,
         searches_used: 0,
         subscription_current_period_end: subscriptionEnd.toISOString(),
         updated_at: nowIso,
@@ -298,7 +313,7 @@ async function reconcileCompletedPixCheckout(
     .from("profiles")
     .update({
       plan: planKey,
-      searches_limit: PLAN_LIMITS[planKey] || PLAN_LIMITS.free,
+      searches_limit: PLAN_LIMITS_V3[planKey] ?? PLAN_LIMITS[planKey] ?? PLAN_LIMITS.free,
       searches_used: 0,
       subscription_current_period_end: subscriptionEnd.toISOString(),
       payment_provider: "asaas",
@@ -637,7 +652,7 @@ serve(async (req) => {
       const subscription = best.sub;
       const priceId = best.priceId as string;
       plan = best.mappedPlan as string;
-      const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+      const basePlanLimit = limitForPlan(plan, priceId);
 
       try {
         if (subscription.current_period_end && typeof subscription.current_period_end === 'number') {

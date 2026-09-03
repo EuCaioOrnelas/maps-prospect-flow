@@ -14,7 +14,7 @@ const logStep = (step: string, details?: any) => {
 
 const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number; priceAnnual: number }> = {
   start: { name: "Wiize Atendimento", priceMonthly: 196.00, priceAnnual: 1957.00 },
-  growth: { name: "Wiize Growth IA", priceMonthly: 696.00, priceAnnual: 7152.00 },
+  growth: { name: "Wiize Growth IA", priceMonthly: 396.00, priceAnnual: 7152.00 },
   scale: { name: "Wiize Enterprise", priceMonthly: 1496.00, priceAnnual: 1496.00 },
 };
 

@@ -351,6 +351,7 @@ async function reconcileBumpsFromSubscription(
 const PRICE_TO_PLAN: Record<string, string> = {
   // Current prices (2026-05)
   "price_1TYl5KK8CM0R6xMMeHUhKt7s": "start",   // R$196/month (atual)
+  "price_1UBNs5K8CM0R6xMMJAnZEQdm": "growth",  // R$396/month (v3, 1.000 oportunidades)
   "price_1TYl6iK8CM0R6xMMd23UBpIz": "growth",  // R$696/month (atual)
   // Previous prices - mantidos para reconhecer assinaturas legadas
   "price_1TLZi1K8CM0R6xMMDOg3MSTp": "start",   // R$296/month (legado)
@@ -377,6 +378,17 @@ const PLAN_LIMITS: Record<string, number> = {
   "growth": 3000,
   "scale": 10000,
 };
+
+// Novo padrão (v3, a partir de 2026-09-03): Growth IA R$396 com 1.000 oportunidades.
+// Preços antigos continuam com os limites legados (grandfathering).
+const PRICE_LIMIT_OVERRIDE: Record<string, number> = {
+  "price_1UBNs5K8CM0R6xMMJAnZEQdm": 1000, // Growth IA R$396/mês (v3)
+};
+
+function limitForPlan(plan: string, priceId?: string | null): number {
+  if (priceId && PRICE_LIMIT_OVERRIDE[priceId] !== undefined) return PRICE_LIMIT_OVERRIDE[priceId];
+  return PLAN_LIMITS[plan] ?? PLAN_LIMITS["free"];
+}
 
 // Plan hierarchy for upgrade/downgrade detection
 const PLAN_ORDER: Record<string, number> = {
@@ -592,7 +604,7 @@ serve(async (req) => {
               const priceId = priceItem?.id;
               const stripePriceCents = priceItem?.unit_amount || 0;
               const plan = PRICE_TO_PLAN[priceId] || "free";
-              const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+              const basePlanLimit = limitForPlan(plan, priceId);
 
               const isPaidCheckout = session.payment_status === "paid" && (session.amount_total || 0) > 0;
 
@@ -781,7 +793,7 @@ serve(async (req) => {
               const priceId = priceItem2?.id;
               const subPriceCents = priceItem2?.unit_amount || 0;
               const plan = PRICE_TO_PLAN[priceId] || "free";
-              const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+              const basePlanLimit = limitForPlan(plan, priceId);
 
               // Calculate period end from Stripe (CRITICAL for check-subscription)
               const subscriptionEndIso = subscription.current_period_end
@@ -1054,7 +1066,7 @@ serve(async (req) => {
             if (profile) {
               const priceId = subscription.items.data[0]?.price.id;
               const plan = PRICE_TO_PLAN[priceId] || profile.plan;
-              const basePlanLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+              const basePlanLimit = limitForPlan(plan, priceId);
               
               // Calculate subscription end date
               const subscriptionEnd = subscription.current_period_end 
@@ -1322,7 +1334,7 @@ serve(async (req) => {
 
         const priceId = subscription.items.data[0]?.price.id;
         const plan = PRICE_TO_PLAN[priceId] || "free";
-        const planLimit = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+        const planLimit = limitForPlan(plan, priceId);
         const trialEnd = subscription.trial_end
           ? new Date(subscription.trial_end * 1000).toISOString()
           : null;

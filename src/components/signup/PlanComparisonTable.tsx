@@ -112,7 +112,7 @@ const GROUPS: Array<{ title: string; icon: LucideIcon; rows: Row[] }> = [
       { label: "Enriquecimento inteligente de empresas e contatos", start: false, growth: true, scale: true },
       { label: "Segmentação por nicho, região e porte da empresa", start: false, growth: true, scale: true },
       { label: "Oportunidades com alto potencial de fechamento", start: false, growth: true, scale: true },
-      { label: "Volume de oportunidades captadas / mês", start: "Não incluso", growth: "3.000", scale: "Sob demanda" },
+      { label: "Volume de oportunidades captadas / mês", start: "Não incluso", growth: "1.000", scale: "Sob demanda" },
     ],
   },
   {
@@ -171,7 +171,7 @@ const GROUPS: Array<{ title: string; icon: LucideIcon; rows: Row[] }> = [
     title: "Infraestrutura e suporte",
     icon: Headphones,
     rows: [
-      { label: "Números WhatsApp conectados", start: "Até 2", growth: "Até 5", scale: "Ilimitados" },
+      { label: "Números WhatsApp conectados", start: "Até 1", growth: "Até 2", scale: "Ilimitados" },
       { label: "Proxy dedicado e rotação automática", start: true, growth: true, scale: true },
       { label: "Backup de conversas e dados", start: true, growth: true, scale: true },
       { label: "Suporte", start: "Email", growth: "Prioritário", scale: "Gerente dedicado" },
@@ -231,7 +231,7 @@ export default function PlanComparisonTable() {
         </div>
         {[
           { name: "Atendimento", price: "196", popular: false },
-          { name: "Growth IA", price: "696", popular: true },
+          { name: "Growth IA", price: "396", popular: true },
           { name: "Enterprise", price: "Sob medida", popular: false, custom: true as const },
         ].map((col) => (
           <div key={col.name} className="text-center px-1">

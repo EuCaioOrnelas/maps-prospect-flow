@@ -124,7 +124,7 @@ export function useAccountMembers() {
     load();
   }, [load]);
 
-  const seat = buildSeatInfo(profile?.plan, members.length);
+  const seat = buildSeatInfo(profile?.plan, members.length, profile as any);
 
   return { loading, members, ownerUserId, seat, refresh: load };
 }
