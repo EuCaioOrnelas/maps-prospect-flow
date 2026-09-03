@@ -120,13 +120,24 @@ export function WiizeApiNav({ isExpanded, email, name, onNavigate, onLogout }: W
 
           {onLogout && (
             <li>
-              <SidebarNavItem
-                title="Sair"
-                icon={LogOut}
+              <button
+                type="button"
                 onClick={onLogout}
-                isExpanded={isExpanded}
-                tooltip="Sair"
-              />
+                title="Sair"
+                aria-label="Sair"
+                className={cn(
+                  "relative flex h-10 items-center justify-start overflow-hidden rounded-hover transition-[background-color,color,width] duration-300 ease-out",
+                  isExpanded ? "w-full pl-12 pr-2.5" : "w-10",
+                  "text-sidebar-foreground/40 hover:bg-destructive/[0.06] hover:text-destructive",
+                )}
+              >
+                <span className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center">
+                  <LogOut size={11} strokeWidth={1.75} />
+                </span>
+                {isExpanded && (
+                  <span className="flex-1 truncate whitespace-nowrap text-xs">Sair</span>
+                )}
+              </button>
             </li>
           )}
         </ul>

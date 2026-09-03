@@ -6,7 +6,6 @@ import {
   Coins,
   Receipt,
   Activity,
-  Plus,
   ArrowUpRight,
 } from "lucide-react";
 import {
@@ -63,11 +62,6 @@ export default function ApiDashboard() {
                 </button>
               ))}
             </div>
-            <Button asChild className="gap-2">
-              <Link to="/api/credits">
-                <Plus size={16} /> Adicionar saldo
-              </Link>
-            </Button>
           </>
         }
       />
