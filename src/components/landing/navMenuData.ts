@@ -7,6 +7,7 @@ import {
   Search,
   LifeBuoy,
   HelpCircle,
+  Code2,
   Mail,
   ShieldCheck,
   BookOpen,
@@ -98,7 +99,7 @@ export const RESOURCE_COLUMNS: MenuColumn[] = [
     title: "Suporte",
     items: [
       { label: "Central de ajuda", description: "Tutoriais e guias da plataforma", to: "/ajuda", icon: LifeBuoy },
-      { label: "FAQ", description: "Perguntas frequentes", to: "/ajuda/faq", icon: HelpCircle },
+      { label: "API", description: "Wiize API para desenvolvedores", to: "/api", icon: Code2 },
       { label: "Falar com vendas", description: "Converse com nosso time", to: "/contato", icon: Mail },
     ],
   },
