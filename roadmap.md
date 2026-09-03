@@ -14,3 +14,12 @@
 - [x] Corrigir cadastro com e-mail já existente sem falsa confirmação
 - [x] Vincular acesso da API por perfil próprio e validar rotas protegidas
 - [x] Exibir erros de acesso inline e estabilizar login/logout
+
+## Wiize API V1 — Prospecting Intelligence
+- [x] Fase 1: fundação financeira (carteira, transações, chaves, reservas, logs, pricing, limites)
+- [x] Fase 2: gateway público `wiize-api-v1` (auth por API Key, rate limit, idempotência, reserva/cobrança, logs)
+- [x] Modo interno em `search-leads`, `score-opportunity` e `approach-lead`
+- [x] Gestão de chaves (`wiize-api-keys`: list/create/revoke/rotate)
+- [ ] Fase 3: recargas (Asaas/PIX + Stripe) e webhooks de crédito
+- [ ] Fase 4: frontend real (substituir mocks de `src/data/wiizeApiMocks.ts`)
+- [ ] Fase 5: admin, auditoria, reembolsos e testes de concorrência
