@@ -698,6 +698,40 @@ serve(async (req) => {
       const paymentId = payment?.id || null;
       logStep("Payment refunded/deleted", { event, externalReference, paymentId });
 
+      // Wiize API: estorna a recarga (debita os tokens creditados) ou cancela a cobrança pendente
+      if (typeof externalReference === "string" && externalReference.startsWith("wiize_api_topup_")) {
+        const topupId = externalReference.replace("wiize_api_topup_", "");
+        const { data: topup } = await supabaseClient
+          .from("wiize_api_topups")
+          .select("id, user_id, tokens, amount_brl, status")
+          .eq("id", topupId)
+          .maybeSingle();
+
+        if (topup?.status === "paid") {
+          await supabaseClient.rpc("wiize_api_credit_wallet", {
+            _user_id: topup.user_id,
+            _tokens: -Math.abs(topup.tokens),
+            _amount_brl: -Math.abs(Number(topup.amount_brl)),
+            _type: "refund",
+            _description: `Estorno da recarga de R$ ${Number(topup.amount_brl).toFixed(2)}`,
+            _reference_type: "wiize_api_topup_refund",
+            _reference_id: topup.id,
+            _idempotency_key: `topup_refund_${topup.id}`,
+          });
+        }
+        if (topup) {
+          await supabaseClient
+            .from("wiize_api_topups")
+            .update({ status: topup.status === "paid" ? "refunded" : "canceled" })
+            .eq("id", topup.id);
+        }
+        return new Response(JSON.stringify({ received: true, action: "wiize_api_topup_refunded" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+
+
       let profileId: string | null = null;
       if (externalReference) {
         const profile = await findProfile(supabaseClient, externalReference, null);
