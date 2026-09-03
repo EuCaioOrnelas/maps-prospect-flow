@@ -34,6 +34,55 @@ const COLOR: Record<string, { color: string; fontStyle?: string; fontWeight?: nu
   text: { color: "#D4D4D4" },
 };
 
+// ---- Palette (VS Code Light+) — usada quando theme="light" ----
+const COLOR_LIGHT: typeof COLOR = {
+  comment: { color: "#7A8B78", fontStyle: "italic" },
+  string: { color: "#B04A2B" },
+  number: { color: "#0F7B6C" },
+  keyword: { color: "#8B2FA8" },
+  control: { color: "#1F5FBF" },
+  type: { color: "#0F7B6C" },
+  function: { color: "#8A6D1F" },
+  property: { color: "#1F5FBF" },
+  variable: { color: "#1F5FBF" },
+  boolean: { color: "#1F5FBF" },
+  operator: { color: "#5A6472" },
+  punctuation: { color: "#8A93A0" },
+  regex: { color: "#B04A2B" },
+  tag: { color: "#1F5FBF" },
+  attr: { color: "#1F5FBF" },
+  header: { color: "#1F5FBF", fontWeight: 600 },
+  flag: { color: "#8A6D1F" },
+  url: { color: "#B04A2B", textDecoration: "underline dotted" },
+  text: { color: "#3A4250" },
+};
+
+const THEME = {
+  dark: {
+    palette: COLOR,
+    shell: "#1e1e1e",
+    border: "#1e1e1e",
+    tabBg: "#252526",
+    tabText: "#cccccc",
+    gutterText: "#858585",
+    gutterBorder: "#2d2d2d",
+    body: "#d4d4d4",
+    copyHover: "hover:bg-white/5",
+  },
+  light: {
+    palette: COLOR_LIGHT,
+    shell: "#F7F8F8",
+    border: "#E4E7E9",
+    tabBg: "#EFF1F2",
+    tabText: "#6B7280",
+    gutterText: "#A7AEB6",
+    gutterBorder: "#E4E7E9",
+    body: "#3A4250",
+    copyHover: "hover:bg-black/5",
+  },
+} as const;
+
+
 // Fresh regexes per language (must all be /g).
 const RULES: Record<string, () => Rule[]> = {
   typescript: () => [
@@ -146,10 +195,12 @@ export interface CodeBlockProps {
   lang?: "typescript" | "python" | "json" | "bash" | "sql" | string;
   filename?: string;
   showLineNumbers?: boolean;
+  /** "dark" (padrão, estilo VS Code Dark+) ou "light" (fundo claro, para uso em seções claras). */
+  theme?: "dark" | "light";
   className?: string;
 }
 
-export function CodeBlock({ code, lang, filename, showLineNumbers = false, className }: CodeBlockProps) {
+export function CodeBlock({ code, lang, filename, showLineNumbers = false, theme = "dark", className }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
   const tokens = useMemo(() => {
     const rules = lang && RULES[lang] ? RULES[lang]() : null;
@@ -161,6 +212,9 @@ export function CodeBlock({ code, lang, filename, showLineNumbers = false, class
     return code.split("\n").length;
   }, [code, showLineNumbers]);
 
+  const th = THEME[theme];
+  const palette = th.palette;
+
   function copy() {
     navigator.clipboard.writeText(code);
     setCopied(true);
@@ -169,24 +223,22 @@ export function CodeBlock({ code, lang, filename, showLineNumbers = false, class
 
   return (
     <div
-      className={cn(
-        "group rounded-lg overflow-hidden border border-[#1e1e1e] bg-[#1e1e1e] shadow-sm",
-        className,
-      )}
+      className={cn("group rounded-lg overflow-hidden border shadow-sm", className)}
+      style={{ borderColor: th.border, backgroundColor: th.shell }}
     >
-      {/* Header — VS Code editor tab */}
-      <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ backgroundColor: "#252526", borderColor: "#1e1e1e" }}>
+      {/* Header — editor tab */}
+      <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ backgroundColor: th.tabBg, borderColor: th.border }}>
         <div className="flex items-center gap-2 min-w-0">
           <span className={cn("h-2 w-2 rounded-full shrink-0", langDot(lang))} />
-          <span className="text-[11px] font-mono truncate" style={{ color: "#cccccc" }}>
+          <span className="text-[11px] font-mono truncate" style={{ color: th.tabText }}>
             {filename ?? langLabel(lang) ?? "code"}
           </span>
         </div>
         <button
           type="button"
           onClick={copy}
-          className="opacity-70 hover:opacity-100 transition p-1 rounded hover:bg-white/5"
-          style={{ color: "#cccccc" }}
+          className={cn("opacity-70 hover:opacity-100 transition p-1 rounded", th.copyHover)}
+          style={{ color: th.tabText }}
           aria-label="Copiar código"
         >
           {copied ? <Check className="h-3.5 w-3.5" style={{ color: "#4EC9B0" }} /> : <Copy className="h-3.5 w-3.5" />}
@@ -196,16 +248,19 @@ export function CodeBlock({ code, lang, filename, showLineNumbers = false, class
       {/* Body */}
       <div className="flex overflow-x-auto text-[12.5px] leading-[1.6] font-mono">
         {showLineNumbers && lines ? (
-          <div className="select-none shrink-0 px-3 py-3 text-right text-[#858585] bg-[#1e1e1e] border-r border-[#2d2d2d]">
+          <div
+            className="select-none shrink-0 px-3 py-3 text-right border-r"
+            style={{ color: th.gutterText, backgroundColor: th.shell, borderColor: th.gutterBorder }}
+          >
             {Array.from({ length: lines }).map((_, i) => (
               <div key={i}>{i + 1}</div>
             ))}
           </div>
         ) : null}
-        <pre className="flex-1 px-4 py-3 whitespace-pre" style={{ color: "#d4d4d4" }}>
+        <pre className="flex-1 px-4 py-3 whitespace-pre" style={{ color: th.body }}>
           <code>
             {tokens.map((t, i) => (
-              <span key={i} style={COLOR[t.type] ?? COLOR.text}>{t.value}</span>
+              <span key={i} style={palette[t.type] ?? palette.text}>{t.value}</span>
             ))}
           </code>
         </pre>
