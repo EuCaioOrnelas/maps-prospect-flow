@@ -12,7 +12,7 @@ const sample = `curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
 /** Hero público do Wiize API — mesma linguagem visual do hero da LP principal. */
 export const ApiHero = () => {
   return (
-    <section className="relative -mt-[72px] w-full overflow-x-clip pb-16 pt-[112px] sm:-mt-[80px] sm:pb-24 sm:pt-[128px]">
+    <section className="relative -mt-[72px] w-full overflow-x-clip pb-24 pt-[112px] sm:-mt-[80px] sm:pb-32 sm:pt-[128px] lg:pb-40">
       <div
         className="absolute inset-0"
         aria-hidden
@@ -40,7 +40,7 @@ export const ApiHero = () => {
 
       {/* Faixa de plasma diagonal na divisória do hero */}
       <div
-        className="pointer-events-none absolute bottom-[-3rem] left-1/2 z-[5] h-24 w-[120vw] origin-center -translate-x-1/2 translate-y-[-60px] -rotate-[4deg] overflow-hidden sm:h-32"
+        className="pointer-events-none absolute bottom-[-4rem] left-1/2 z-[5] h-28 w-[120vw] origin-center -translate-x-1/2 translate-y-[10px] -rotate-[4deg] overflow-hidden sm:bottom-[-5rem] sm:h-36 lg:bottom-[-6rem] lg:h-44"
         aria-hidden
       >
         <div className="wz-band absolute inset-0" />
