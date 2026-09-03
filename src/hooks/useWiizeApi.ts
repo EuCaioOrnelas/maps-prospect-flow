@@ -258,3 +258,27 @@ export function buildDailySeries(rows: ApiRequestRow[], days: number) {
   }
   return Array.from(map.values());
 }
+
+/** Preferências da carteira (recarga automática e alerta de saldo baixo). */
+export function useUpdateWalletPrefs() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (prefs: {
+      auto_topup_enabled?: boolean;
+      auto_topup_threshold_tokens?: number;
+      auto_topup_amount_brl?: number;
+      auto_topup_monthly_limit_brl?: number;
+      low_balance_threshold_tokens?: number;
+    }) => {
+      const uid = await currentUserId();
+      if (!uid) throw new Error("Sessão expirada.");
+      const { error } = await supabase
+        .from("wiize_api_wallets")
+        .update(prefs)
+        .eq("user_id", uid);
+      if (error) throw new Error(error.message);
+      return true;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["wiize-api", "wallet"] }),
+  });
+}
