@@ -24,7 +24,7 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
     phone: "",
     company: "",
     tax_id: "",
-    level: "bronze" as const,
+    level: "select" as const,
     custom_commission_percent: "",
     internal_notes: "",
     referral_code: "",
@@ -37,7 +37,7 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
   const reset = () => {
     setForm({
       full_name: "", email: "", password: "", phone: "", company: "", tax_id: "",
-      level: "bronze", custom_commission_percent: "", internal_notes: "", referral_code: "",
+      level: "select", custom_commission_percent: "", internal_notes: "", referral_code: "",
     });
     setEmailCheck({ checking: false, exists: false, isAlreadyPartner: false });
   };
@@ -158,9 +158,9 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
             <Select value={form.level} onValueChange={(v: any) => setForm({ ...form, level: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="bronze">Select (10%)</SelectItem>
-                <SelectItem value="silver">Signature (12%)</SelectItem>
-                <SelectItem value="gold">Prime (15%)</SelectItem>
+                <SelectItem value="select">Select (10%)</SelectItem>
+                <SelectItem value="signature">Signature (12%)</SelectItem>
+                <SelectItem value="prime">Prime (15%)</SelectItem>
 
               </SelectContent>
             </Select>

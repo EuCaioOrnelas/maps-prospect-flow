@@ -31,12 +31,12 @@ import { useToast } from "@/hooks/use-toast";
 interface Settings {
   id: number;
   program_enabled: boolean;
-  bronze_commission_percent: number;
-  silver_commission_percent: number;
-  gold_commission_percent: number;
-  platinum_commission_percent: number;
-  silver_threshold_clients: number;
-  gold_threshold_clients: number;
+  select_commission_percent: number;
+  signature_commission_percent: number;
+  prime_commission_percent: number;
+  prime_commission_percent: number;
+  signature_threshold_clients: number;
+  prime_threshold_clients: number;
   release_days: number;
   minimum_withdrawal_cents: number;
   allow_multiple_pending_withdrawals: boolean;
@@ -49,9 +49,9 @@ interface Settings {
 }
 
 const levelMeta = {
-  bronze: { icon: Medal, color: "text-foreground/70", bg: "from-muted/40 to-transparent", ring: "ring-border" },
-  silver: { icon: Award, color: "text-foreground/70", bg: "from-muted/40 to-transparent", ring: "ring-border" },
-  gold: { icon: Crown, color: "text-primary", bg: "from-primary/10 to-transparent", ring: "ring-primary/30" },
+  select: { icon: Medal, color: "text-foreground/70", bg: "from-muted/40 to-transparent", ring: "ring-border" },
+  signature: { icon: Award, color: "text-foreground/70", bg: "from-muted/40 to-transparent", ring: "ring-border" },
+  prime: { icon: Crown, color: "text-primary", bg: "from-primary/10 to-transparent", ring: "ring-primary/30" },
 } as const;
 
 
@@ -146,12 +146,12 @@ export default function AdminPartnersSettings() {
       .from("partner_settings")
       .update({
         program_enabled: s.program_enabled,
-        bronze_commission_percent: s.bronze_commission_percent,
-        silver_commission_percent: s.silver_commission_percent,
-        gold_commission_percent: s.gold_commission_percent,
-        platinum_commission_percent: s.platinum_commission_percent,
-        silver_threshold_clients: s.silver_threshold_clients,
-        gold_threshold_clients: s.gold_threshold_clients,
+        select_commission_percent: s.select_commission_percent,
+        signature_commission_percent: s.signature_commission_percent,
+        prime_commission_percent: s.prime_commission_percent,
+        prime_commission_percent: s.prime_commission_percent,
+        signature_threshold_clients: s.signature_threshold_clients,
+        prime_threshold_clients: s.prime_threshold_clients,
         release_days: s.release_days,
         minimum_withdrawal_cents: s.minimum_withdrawal_cents,
         allow_multiple_pending_withdrawals: s.allow_multiple_pending_withdrawals,
@@ -240,10 +240,10 @@ export default function AdminPartnersSettings() {
           accent="primary"
         >
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {(["bronze", "silver", "gold"] as const).map((lvl) => {
+            {(["select", "signature", "prime"] as const).map((lvl) => {
               const meta = levelMeta[lvl];
               const Icon = meta.icon;
-              const tierLabel = ({ bronze: "Select", silver: "Signature", gold: "Prime" } as const)[lvl];
+              const tierLabel = ({ select: "Select", signature: "Signature", prime: "Prime" } as const)[lvl];
 
               return (
                 <div
@@ -276,7 +276,7 @@ export default function AdminPartnersSettings() {
           <div className="mt-4 flex items-start gap-2 rounded-lg bg-muted/40 p-3">
             <HelpCircle size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Exemplo: parceiro <strong>Gold</strong> com 30% indicando uma assinatura Growth de R$ 396/mês recebe{" "}
+              Exemplo: parceiro <strong>Prime</strong> com 30% indicando uma assinatura Growth de R$ 396/mês recebe{" "}
               <strong>R$ 208,80 todo mês</strong> enquanto o cliente permanecer ativo.
             </p>
           </div>
@@ -343,9 +343,9 @@ export default function AdminPartnersSettings() {
           <div className="mb-4 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/40 p-3">
             <Layers size={16} className="mt-0.5 shrink-0 text-primary" />
             <div className="text-xs text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">Como funciona:</strong> todo parceiro começa em <em>Bronze</em>. Ao
-              atingir o <em>Threshold Silver</em> de clientes pagantes, é promovido para Silver (e passa a ganhar a
-              comissão Silver). Atingindo o <em>Threshold Gold</em>, vai para Gold. Platinum é promoção manual feita por
+              <strong className="text-foreground">Como funciona:</strong> todo parceiro começa em <em>Select</em>. Ao
+              atingir o <em>Threshold Signature</em> de clientes pagantes, é promovido para Signature (e passa a ganhar a
+              comissão Signature). Atingindo o <em>Threshold Prime</em>, vai para Prime. Prime é promoção manual feita por
               vocês.
             </div>
           </div>
@@ -355,19 +355,19 @@ export default function AdminPartnersSettings() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Award size={14} className="text-muted-foreground" />
-                  <Label className="text-sm font-medium">Threshold Silver</Label>
+                  <Label className="text-sm font-medium">Threshold Signature</Label>
                 </div>
-                <HelpHint text="Quantidade de clientes pagantes ativos que o parceiro precisa ter para ser promovido automaticamente de Bronze para Silver." />
+                <HelpHint text="Quantidade de clientes pagantes ativos que o parceiro precisa ter para ser promovido automaticamente de Select para Signature." />
               </div>
               <Input
                 type="number"
                 min="0"
-                value={s.silver_threshold_clients}
-                onChange={(e) => setS({ ...s, silver_threshold_clients: Number(e.target.value) })}
+                value={s.signature_threshold_clients}
+                onChange={(e) => setS({ ...s, signature_threshold_clients: Number(e.target.value) })}
                 className="bg-background/80"
               />
               <p className="text-xs text-muted-foreground mt-2">
-                Atingiu <strong>{s.silver_threshold_clients}</strong> clientes pagos → vira Silver
+                Atingiu <strong>{s.signature_threshold_clients}</strong> clientes pagos → vira Signature
               </p>
             </div>
 
@@ -375,19 +375,19 @@ export default function AdminPartnersSettings() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Crown size={14} className="text-muted-foreground" />
-                  <Label className="text-sm font-medium">Threshold Gold</Label>
+                  <Label className="text-sm font-medium">Threshold Prime</Label>
                 </div>
-                <HelpHint text="Quantidade de clientes pagantes ativos para o parceiro ser promovido de Silver para Gold automaticamente." />
+                <HelpHint text="Quantidade de clientes pagantes ativos para o parceiro ser promovido de Signature para Prime automaticamente." />
               </div>
               <Input
                 type="number"
                 min="0"
-                value={s.gold_threshold_clients}
-                onChange={(e) => setS({ ...s, gold_threshold_clients: Number(e.target.value) })}
+                value={s.prime_threshold_clients}
+                onChange={(e) => setS({ ...s, prime_threshold_clients: Number(e.target.value) })}
                 className="bg-background/80"
               />
               <p className="text-xs text-muted-foreground mt-2">
-                Atingiu <strong>{s.gold_threshold_clients}</strong> clientes pagos → vira Gold
+                Atingiu <strong>{s.prime_threshold_clients}</strong> clientes pagos → vira Prime
               </p>
             </div>
           </div>

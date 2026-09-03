@@ -207,7 +207,7 @@ export default function AdminPartnersApplications() {
   const approve = async (a: Application) => {
     setSubmitting(true);
     const { data, error } = await supabase.functions.invoke("approve-partner-application", {
-      body: { application_id: a.id, level: "bronze" },
+      body: { application_id: a.id, level: "select" },
     });
     if (error || !data?.success) {
       const msg = await extractFnError(error, data, "Não foi possível aprovar.");

@@ -9,7 +9,7 @@ import { Sparkles, TrendingUp, Users, DollarSign, Repeat, ArrowRight, Lock, Chec
 import { fmtBRL } from "@/lib/partnerFormat";
 import { cn } from "@/lib/utils";
 
-const LEVEL_ORDER: PartnerLevel[] = ["bronze", "silver", "gold"];
+const LEVEL_ORDER: PartnerLevel[] = ["select", "signature", "prime"];
 
 interface LevelTier {
   key: PartnerLevel;
@@ -51,28 +51,28 @@ export default function PartnerLevels() {
     if (!settings) return [];
     return [
       {
-        key: "bronze",
+        key: "select",
         thresholdClients: 0,
-        commissionPercent: Number(settings.bronze_commission_percent),
+        commissionPercent: Number(settings.select_commission_percent),
         perks: ["Acesso ao programa Wiize Partners", "Materiais oficiais de divulgação", "Saque a partir de R$ 100"],
       },
       {
-        key: "silver",
-        thresholdClients: settings.silver_threshold_clients,
-        commissionPercent: Number(settings.silver_commission_percent),
+        key: "signature",
+        thresholdClients: settings.signature_threshold_clients,
+        commissionPercent: Number(settings.signature_commission_percent),
         perks: ["Comissão Signature em todas as vendas", "Selo Signature no perfil público", "Suporte prioritário"],
       },
       {
-        key: "gold",
-        thresholdClients: settings.gold_threshold_clients,
-        commissionPercent: Number(settings.gold_commission_percent),
+        key: "prime",
+        thresholdClients: settings.prime_threshold_clients,
+        commissionPercent: Number(settings.prime_commission_percent),
         perks: ["Comissão Prime — máxima do programa", "Acesso antecipado a campanhas", "Convite para eventos exclusivos"],
       },
     ];
 
   }, [settings]);
 
-  const currentLevel = (partnerData?.level || "bronze") as PartnerLevel;
+  const currentLevel = (partnerData?.level || "select") as PartnerLevel;
   const currentIdx = LEVEL_ORDER.indexOf(currentLevel);
   const nextTier = tiers[currentIdx + 1];
   const currentTier = tiers[currentIdx];

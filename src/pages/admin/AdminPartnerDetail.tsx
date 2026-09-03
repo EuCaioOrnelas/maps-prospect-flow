@@ -22,7 +22,7 @@ import {
 import { PartnerGoalsTab } from "@/components/admin/partners/PartnerGoalsTab";
 import { PartnerLinksTab } from "@/components/admin/partners/PartnerLinksTab";
 
-type Level = "bronze" | "silver" | "gold";
+type Level = "select" | "signature" | "prime";
 type Status = "active" | "inactive" | "blocked";
 
 interface Partner {
@@ -63,7 +63,7 @@ const fmtBRL = (cents: number) =>
 const fmtDate = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
-const levelLabel: Record<string, string> = { bronze: "Select", silver: "Signature", gold: "Prime" };
+const levelLabel: Record<string, string> = { select: "Select", signature: "Signature", prime: "Prime" };
 const statusLabel: Record<Status, string> = { active: "Ativo", inactive: "Inativo", blocked: "Bloqueado" };
 
 const statusBadge: Record<Status, string> = {
@@ -96,7 +96,7 @@ export default function AdminPartnerDetail() {
     phone: "",
     company: "",
     tax_id: "",
-    level: "bronze" as Level,
+    level: "select" as Level,
     status: "active" as Status,
     custom_commission_percent: "" as string,
     internal_notes: "",
@@ -122,7 +122,7 @@ export default function AdminPartnerDetail() {
       phone: p.phone || "",
       company: p.company || "",
       tax_id: p.tax_id || "",
-      level: (p.level === "platinum" ? "gold" : p.level) as Level,
+      level: (p.level === "prime" ? "prime" : p.level) as Level,
       status: p.status,
       custom_commission_percent: p.custom_commission_percent != null ? String(p.custom_commission_percent) : "",
       internal_notes: p.internal_notes || "",
@@ -569,9 +569,9 @@ export default function AdminPartnerDetail() {
                   <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v as Level })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="bronze">Select (10%)</SelectItem>
-                      <SelectItem value="silver">Signature (12%)</SelectItem>
-                      <SelectItem value="gold">Prime (15%)</SelectItem>
+                      <SelectItem value="select">Select (10%)</SelectItem>
+                      <SelectItem value="signature">Signature (12%)</SelectItem>
+                      <SelectItem value="prime">Prime (15%)</SelectItem>
 
                     </SelectContent>
                   </Select>
