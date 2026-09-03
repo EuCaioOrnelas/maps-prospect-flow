@@ -18,6 +18,7 @@ export interface ApiWallet {
   auto_topup_enabled: boolean;
   auto_topup_amount_brl: number;
   auto_topup_threshold_tokens: number;
+  auto_topup_monthly_limit_brl: number;
   low_balance_threshold_tokens: number;
 }
 
