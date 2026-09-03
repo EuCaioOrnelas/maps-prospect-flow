@@ -72,6 +72,7 @@ const PLANS = [
     monthly: 396,
     opportunities: "1.000",
     usageLabel: "Até 10.000 contatos no CRM",
+    prospectionLabel: "Até 1.000 prospecções com IA / mês",
     desc: "Para prospectar, analisar, qualificar e converter oportunidades B2B com Wiize AI.",
     highlight: true,
     perks: [
@@ -287,9 +288,20 @@ export default function SignupChoosePlan() {
                       </span>
                       <span className="text-sm font-medium text-foreground">hoje</span>
                     </div>
-                    <p className="text-sm font-medium text-primary mt-1.5">
-                      {plan.usageLabel}
-                    </p>
+                    <div className="mt-1.5 min-h-[2.9rem] flex flex-col justify-start gap-0.5">
+                      <p className="text-sm font-medium text-primary leading-snug">
+                        {plan.usageLabel}
+                      </p>
+                      <p
+                        className={cn(
+                          "text-[13px] font-medium leading-snug",
+                          "prospectionLabel" in plan && plan.prospectionLabel ? "text-foreground/80" : "invisible",
+                        )}
+                        aria-hidden={!("prospectionLabel" in plan && plan.prospectionLabel)}
+                      >
+                        {"prospectionLabel" in plan && plan.prospectionLabel ? plan.prospectionLabel : "placeholder"}
+                      </p>
+                    </div>
                     <div className="mt-3 rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
                       <p className="text-xs text-foreground">
                         Depois do trial: <span className="font-semibold">R$ {plan.monthly.toLocaleString("pt-BR")}/mês</span>. Você só é cobrado se decidir continuar.
