@@ -6480,64 +6480,58 @@ export type Database = {
         Row: {
           admin_notification_emails: string[] | null
           allow_multiple_pending_withdrawals: boolean
-          bronze_commission_percent: number
           created_at: string
           first_month_boost_enabled: boolean
           first_month_boost_percent: number
           first_month_boost_until: string | null
-          gold_commission_percent: number
-          gold_threshold_clients: number
           id: number
           minimum_withdrawal_cents: number
           partner_portal_domain: string | null
-          platinum_commission_percent: number
-          platinum_threshold_clients: number
+          prime_commission_percent: number
+          prime_threshold_clients: number
           program_enabled: boolean
           release_days: number
-          silver_commission_percent: number
-          silver_threshold_clients: number
+          select_commission_percent: number
+          signature_commission_percent: number
+          signature_threshold_clients: number
           updated_at: string
         }
         Insert: {
           admin_notification_emails?: string[] | null
           allow_multiple_pending_withdrawals?: boolean
-          bronze_commission_percent?: number
           created_at?: string
           first_month_boost_enabled?: boolean
           first_month_boost_percent?: number
           first_month_boost_until?: string | null
-          gold_commission_percent?: number
-          gold_threshold_clients?: number
           id?: number
           minimum_withdrawal_cents?: number
           partner_portal_domain?: string | null
-          platinum_commission_percent?: number
-          platinum_threshold_clients?: number
+          prime_commission_percent?: number
+          prime_threshold_clients?: number
           program_enabled?: boolean
           release_days?: number
-          silver_commission_percent?: number
-          silver_threshold_clients?: number
+          select_commission_percent?: number
+          signature_commission_percent?: number
+          signature_threshold_clients?: number
           updated_at?: string
         }
         Update: {
           admin_notification_emails?: string[] | null
           allow_multiple_pending_withdrawals?: boolean
-          bronze_commission_percent?: number
           created_at?: string
           first_month_boost_enabled?: boolean
           first_month_boost_percent?: number
           first_month_boost_until?: string | null
-          gold_commission_percent?: number
-          gold_threshold_clients?: number
           id?: number
           minimum_withdrawal_cents?: number
           partner_portal_domain?: string | null
-          platinum_commission_percent?: number
-          platinum_threshold_clients?: number
+          prime_commission_percent?: number
+          prime_threshold_clients?: number
           program_enabled?: boolean
           release_days?: number
-          silver_commission_percent?: number
-          silver_threshold_clients?: number
+          select_commission_percent?: number
+          signature_commission_percent?: number
+          signature_threshold_clients?: number
           updated_at?: string
         }
         Relationships: []
@@ -11561,7 +11555,7 @@ export type Database = {
       partner_goal_prize_status: "not_claimed" | "requested" | "paid"
       partner_goal_status: "active" | "completed" | "expired" | "cancelled"
       partner_goal_type: "revenue" | "paid_clients" | "leads" | "mrr"
-      partner_level: "bronze" | "silver" | "gold" | "platinum"
+      partner_level: "select" | "signature" | "prime"
       partner_status: "active" | "inactive" | "blocked"
       revenue_risk_state: "OK" | "COOLING" | "AT_RISK"
       revenue_status_bucket: "COLD" | "ENGAGED" | "HOT" | "VERY_HOT"
@@ -11757,7 +11751,7 @@ export const Constants = {
       partner_goal_prize_status: ["not_claimed", "requested", "paid"],
       partner_goal_status: ["active", "completed", "expired", "cancelled"],
       partner_goal_type: ["revenue", "paid_clients", "leads", "mrr"],
-      partner_level: ["bronze", "silver", "gold", "platinum"],
+      partner_level: ["select", "signature", "prime"],
       partner_status: ["active", "inactive", "blocked"],
       revenue_risk_state: ["OK", "COOLING", "AT_RISK"],
       revenue_status_bucket: ["COLD", "ENGAGED", "HOT", "VERY_HOT"],

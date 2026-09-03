@@ -20,9 +20,9 @@ export const fmtDateTime = (iso: string | null | undefined) => {
 };
 
 export const levelColors: Record<string, string> = {
-  bronze: "bg-primary/10 text-primary border-primary/25",
-  silver: "bg-primary/15 text-primary border-primary/30",
-  gold: "bg-primary/20 text-primary border-primary/35",
+  select: "bg-primary/10 text-primary border-primary/25",
+  signature: "bg-primary/15 text-primary border-primary/30",
+  prime: "bg-primary/20 text-primary border-primary/35",
 };
 
 
@@ -57,9 +57,9 @@ export const withdrawalStatusLabel: Record<string, string> = {
 };
 
 export const levelLabel: Record<string, string> = {
-  bronze: "Select",
-  silver: "Signature",
-  gold: "Prime",
+  select: "Select",
+  signature: "Signature",
+  prime: "Prime",
 };
 
 

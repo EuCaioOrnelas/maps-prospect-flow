@@ -14,19 +14,19 @@ import wiizeLogo from "@/assets/logos/wiize-logo.png";
 const APPLY_PATH = "/partners/apply";
 
 interface Settings {
-  bronze: number;
-  silver: number;
-  gold: number;
-  silverClients: number;
-  goldClients: number;
+  select: number;
+  signature: number;
+  prime: number;
+  signatureClients: number;
+  primeClients: number;
   boostEnabled: boolean;
   boostPercent: number;
   boostUntil: string | null;
 }
 
 const DEFAULTS: Settings = {
-  bronze: 10, silver: 12, gold: 15,
-  silverClients: 100, goldClients: 250,
+  select: 10, signature: 12, prime: 15,
+  signatureClients: 100, primeClients: 250,
   boostEnabled: true, boostPercent: 50, boostUntil: null,
 };
 
@@ -125,17 +125,17 @@ export default function PartnersLanding() {
     (async () => {
       const { data } = await supabase
         .from("partner_settings")
-        .select("bronze_commission_percent, silver_commission_percent, gold_commission_percent, silver_threshold_clients, gold_threshold_clients, first_month_boost_enabled, first_month_boost_percent, first_month_boost_until")
+        .select("select_commission_percent, signature_commission_percent, prime_commission_percent, signature_threshold_clients, prime_threshold_clients, first_month_boost_enabled, first_month_boost_percent, first_month_boost_until")
         .eq("id", 1)
         .maybeSingle();
       if (!data) return;
       const d = data as any;
       setSettings({
-        bronze: Number(d.bronze_commission_percent),
-        silver: Number(d.silver_commission_percent),
-        gold: Number(d.gold_commission_percent),
-        silverClients: d.silver_threshold_clients,
-        goldClients: d.gold_threshold_clients,
+        select: Number(d.select_commission_percent),
+        signature: Number(d.signature_commission_percent),
+        prime: Number(d.prime_commission_percent),
+        signatureClients: d.signature_threshold_clients,
+        primeClients: d.prime_threshold_clients,
 
         boostEnabled: d.first_month_boost_enabled ?? false,
         boostPercent: Number(d.first_month_boost_percent ?? 50),
@@ -147,18 +147,18 @@ export default function PartnersLanding() {
 
   const tiers = [
     {
-      name: "Select", percent: settings.bronze,
-      range: `0 – ${settings.silverClients - 1} clientes`,
+      name: "Select", percent: settings.select,
+      range: `0 – ${settings.signatureClients - 1} clientes`,
       icon: ShieldCheck,
     },
     {
-      name: "Signature", percent: settings.silver,
-      range: `${settings.silverClients} – ${settings.goldClients - 1} clientes`,
+      name: "Signature", percent: settings.signature,
+      range: `${settings.signatureClients} – ${settings.primeClients - 1} clientes`,
       icon: Award,
     },
     {
-      name: "Prime", percent: Math.min(settings.gold, MAX_COMMISSION),
-      range: `${settings.goldClients}+ clientes`,
+      name: "Prime", percent: Math.min(settings.prime, MAX_COMMISSION),
+      range: `${settings.primeClients}+ clientes`,
       icon: Rocket,
     },
   ];
@@ -445,7 +445,7 @@ export default function PartnersLanding() {
           )}
 
           <p className="text-center text-sm text-muted-foreground mt-10">
-            Todo parceiro começa em <strong className="text-foreground">Select ({settings.bronze}%)</strong>. A progressão é automática conforme seus clientes ativos crescem — comissão máxima do programa: <strong className="text-foreground">{displayMax}%</strong>.
+            Todo parceiro começa em <strong className="text-foreground">Select ({settings.select}%)</strong>. A progressão é automática conforme seus clientes ativos crescem — comissão máxima do programa: <strong className="text-foreground">{displayMax}%</strong>.
           </p>
 
         </div>

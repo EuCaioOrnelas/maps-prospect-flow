@@ -74,7 +74,7 @@ interface CreatePartnerBody {
   company?: string;
   tax_id?: string;
   country?: string;
-  level?: "bronze" | "silver" | "gold" | "platinum";
+  level?: "select" | "signature" | "prime";
   custom_commission_percent?: number | null;
   internal_notes?: string;
   status?: "active" | "inactive" | "blocked";
@@ -256,7 +256,7 @@ serve(async (req) => {
         tax_id: body.tax_id || null,
         country: body.country || "BR",
         referral_code: referralCode,
-        level: body.level || "bronze",
+        level: body.level || "select",
         status: body.status || "active",
         custom_commission_percent: body.custom_commission_percent ?? null,
         internal_notes: body.internal_notes || null,

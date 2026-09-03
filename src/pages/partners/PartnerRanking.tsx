@@ -7,12 +7,12 @@ import { fmtBRL, levelLabel } from "@/lib/partnerFormat";
 import { cn } from "@/lib/utils";
 
 const levelIcons: Record<string, any> = {
-  bronze: ShieldCheck, silver: Award, gold: Rocket,
+  select: ShieldCheck, signature: Award, prime: Rocket,
 };
 const levelGradients: Record<string, string> = {
-  bronze: "from-muted/50 to-muted/10 text-muted-foreground",
-  silver: "from-muted/70 to-muted/20 text-foreground/80",
-  gold: "from-foreground/[0.08] to-foreground/[0.02] text-foreground",
+  select: "from-muted/50 to-muted/10 text-muted-foreground",
+  signature: "from-muted/70 to-muted/20 text-foreground/80",
+  prime: "from-foreground/[0.08] to-foreground/[0.02] text-foreground",
 };
 
 
@@ -48,9 +48,9 @@ export default function PartnerRanking() {
   }, []);
 
   const tierThresholds = settings ? [
-    { level: "bronze", minClients: 0, label: "Select", percent: Number(settings.bronze_commission_percent) },
-    { level: "silver", minClients: settings.silver_threshold_clients, label: "Signature", percent: Number(settings.silver_commission_percent) },
-    { level: "gold", minClients: settings.gold_threshold_clients, label: "Prime", percent: Number(settings.gold_commission_percent) },
+    { level: "select", minClients: 0, label: "Select", percent: Number(settings.select_commission_percent) },
+    { level: "signature", minClients: settings.signature_threshold_clients, label: "Signature", percent: Number(settings.signature_commission_percent) },
+    { level: "prime", minClients: settings.prime_threshold_clients, label: "Prime", percent: Number(settings.prime_commission_percent) },
 
   ] : [];
 

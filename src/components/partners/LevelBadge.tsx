@@ -1,7 +1,7 @@
 import { Award, Crown, Medal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type PartnerLevel = "bronze" | "silver" | "gold";
+export type PartnerLevel = "select" | "signature" | "prime";
 
 /**
  * Visual system for partner tiers.
@@ -15,7 +15,7 @@ export const LEVEL_META: Record<PartnerLevel, {
   glow: string;
   ring: string;
 }> = {
-  bronze: {
+  select: {
     label: "Select",
     icon: Medal,
     fg: "text-primary",
@@ -23,7 +23,7 @@ export const LEVEL_META: Record<PartnerLevel, {
     glow: "",
     ring: "ring-primary/25",
   },
-  silver: {
+  signature: {
     label: "Signature",
     icon: Award,
     fg: "text-primary",
@@ -31,7 +31,7 @@ export const LEVEL_META: Record<PartnerLevel, {
     glow: "",
     ring: "ring-primary/30",
   },
-  gold: {
+  prime: {
     label: "Prime",
     icon: Crown,
     fg: "text-primary",
@@ -50,8 +50,8 @@ interface Props {
 }
 
 export function LevelBadge({ level, size = "md", showLabel = true, className }: Props) {
-  const key = (String(level || "bronze").toLowerCase() as PartnerLevel);
-  const meta = LEVEL_META[key] ?? LEVEL_META.bronze;
+  const key = (String(level || "select").toLowerCase() as PartnerLevel);
+  const meta = LEVEL_META[key] ?? LEVEL_META.select;
   const Icon = meta.icon;
 
   const dims = {

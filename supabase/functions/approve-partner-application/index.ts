@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
         company: app.company_name,
         tax_id: app.cnpj || app.cpf,
         country: app.country || "BR",
-        level: level || "bronze",
+        level: level || "select",
         custom_commission_percent: custom_commission_percent ?? null,
         internal_notes: `Aprovado via candidatura #${app.id}. Score: ${app.internal_score || 0}.`,
         status: "active",
