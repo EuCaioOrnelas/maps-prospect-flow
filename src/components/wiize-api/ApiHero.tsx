@@ -79,12 +79,13 @@ export const ApiHero = () => {
               className="mb-4 animate-slide-up font-display font-bold leading-[1.08] tracking-tight text-foreground sm:mb-6"
               style={{ animationDelay: "0.1s" }}
             >
-              <span className="block text-[2rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.25rem] xl:text-[3.6rem]">
+              <span className="block text-[1.75rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.25rem] xl:text-[3.6rem]">
                 A inteligência da Wiize
               </span>
-              <span className="mt-1 block whitespace-nowrap text-shimmer-highlight text-[2.5rem] font-extrabold leading-[1.05] drop-shadow-sm sm:mt-2 sm:text-[2.85rem] md:text-[3.5rem] lg:text-[3.95rem] xl:text-[4.3rem]">
+              <span className="mt-1 block text-shimmer-highlight text-[2rem] font-extrabold leading-[1.05] drop-shadow-sm sm:mt-2 sm:whitespace-nowrap sm:text-[2.85rem] md:text-[3.5rem] lg:text-[3.95rem] xl:text-[4.3rem]">
                 Dentro do seu sistema
               </span>
+
             </h1>
 
             <p
