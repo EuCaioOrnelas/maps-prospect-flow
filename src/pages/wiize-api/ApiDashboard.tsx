@@ -41,12 +41,12 @@ export default function ApiDashboard() {
   return (
     <>
       <Helmet>
-        <title>Overview — Wiize API</title>
+        <title>Visão geral — Wiize API</title>
         <meta name="description" content="Saldo, consumo de tokens e atividade recente do seu workspace Wiize API." />
       </Helmet>
 
       <PageHeader
-        title="Overview"
+        title="Visão geral"
         description="Acompanhe saldo, consumo de Wiize Tokens e atividade das suas integrações."
         actions={
           <div className="flex rounded-lg border border-border p-0.5">
@@ -153,7 +153,7 @@ export default function ApiDashboard() {
               Novas APIs (Engagement Intelligence e Wian) aparecerão aqui automaticamente quando estiverem disponíveis.
             </div>
             <Button asChild variant="outline" size="sm" className="w-full gap-2">
-              <Link to="/api/apis">
+              <Link to="/api/docs">
                 Ver catálogo de APIs <ArrowUpRight size={14} />
               </Link>
             </Button>

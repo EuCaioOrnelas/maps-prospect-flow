@@ -74,12 +74,12 @@ export default function ApiUsage() {
   return (
     <>
       <Helmet>
-        <title>Usage — Wiize API</title>
+        <title>Consumo — Wiize API</title>
         <meta name="description" content="Acompanhe o consumo de tokens, custos e status das chamadas às APIs da Wiize." />
       </Helmet>
 
       <PageHeader
-        title="Usage"
+        title="Consumo"
         description="Acompanhe consumo, custos e status das suas requisições."
         actions={
           <Button variant="outline" size="sm" className="gap-2" onClick={exportCsv} disabled={rows.length === 0}>

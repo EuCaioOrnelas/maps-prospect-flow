@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.wiize_api_wallet_guard_prefs() FROM PUBLIC, anon, authenticated;

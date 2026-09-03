@@ -190,10 +190,7 @@ const ApiLanding = lazyWithRetry(() => import("./pages/wiize-api/ApiLanding"), "
 const ApiLogin = lazyWithRetry(() => import("./pages/wiize-api/ApiLogin"), "ApiLogin");
 const WiizeApiLayout = lazyWithRetry(() => import("./pages/wiize-api/WiizeApiLayout"), "WiizeApiLayout");
 const ApiDashboard = lazyWithRetry(() => import("./pages/wiize-api/ApiDashboard"), "ApiDashboard");
-const ApiCatalog = lazyWithRetry(() => import("./pages/wiize-api/ApiCatalog"), "ApiCatalog");
-const ApiProspecting = lazyWithRetry(() => import("./pages/wiize-api/ApiProspecting"), "ApiProspecting");
 const ApiKeys = lazyWithRetry(() => import("./pages/wiize-api/ApiKeys"), "ApiKeys");
-const ApiCredits = lazyWithRetry(() => import("./pages/wiize-api/ApiCredits"), "ApiCredits");
 const ApiUsage = lazyWithRetry(() => import("./pages/wiize-api/ApiUsage"), "ApiUsage");
 const ApiDocs = lazyWithRetry(() => import("./pages/wiize-api/ApiDocs"), "ApiDocs");
 const ApiBilling = lazyWithRetry(() => import("./pages/wiize-api/ApiBilling"), "ApiBilling");
@@ -528,10 +525,10 @@ const App = () => (
                 <Route path="/api/login" element={<LightThemeWrapper><ApiLogin /></LightThemeWrapper>} />
                 <Route path="/api" element={<WiizeApiLayout />}>
                   <Route path="dashboard" element={<ApiDashboard />} />
-                  <Route path="apis" element={<ApiCatalog />} />
-                  <Route path="apis/prospecting" element={<ApiProspecting />} />
                   <Route path="keys" element={<ApiKeys />} />
-                  <Route path="credits" element={<ApiCredits />} />
+                  <Route path="credits" element={<Navigate to="/api/billing" replace />} />
+                  <Route path="apis" element={<Navigate to="/api/docs" replace />} />
+                  <Route path="apis/prospecting" element={<Navigate to="/api/docs" replace />} />
                   <Route path="usage" element={<ApiUsage />} />
                   <Route path="docs" element={<ApiDocs />} />
                   <Route path="billing" element={<ApiBilling />} />

@@ -1,9 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  Boxes,
   KeyRound,
-  Wallet,
   BarChart3,
   BookOpen,
   CreditCard,
@@ -16,13 +14,11 @@ import { SidebarNavItem } from "@/components/layout/SidebarNavItem";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 
 export const wiizeApiNavItems: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
-  { to: "/api/dashboard", label: "Overview", icon: LayoutDashboard, end: true },
-  { to: "/api/apis", label: "APIs", icon: Boxes },
-  { to: "/api/keys", label: "API Keys", icon: KeyRound },
-  { to: "/api/credits", label: "Credits", icon: Wallet },
-  { to: "/api/usage", label: "Usage", icon: BarChart3 },
-  { to: "/api/docs", label: "Documentation", icon: BookOpen },
-  { to: "/api/billing", label: "Billing", icon: CreditCard },
+  { to: "/api/dashboard", label: "Visão geral", icon: LayoutDashboard, end: true },
+  { to: "/api/keys", label: "Chaves de API", icon: KeyRound },
+  { to: "/api/usage", label: "Consumo", icon: BarChart3 },
+  { to: "/api/billing", label: "Cobrança", icon: CreditCard },
+  { to: "/api/docs", label: "Documentação da API", icon: BookOpen },
 ];
 
 interface WiizeApiNavProps {
@@ -128,14 +124,14 @@ export function WiizeApiNav({ isExpanded, email, name, onNavigate, onLogout }: W
                 className={cn(
                   "relative flex h-10 items-center justify-start overflow-hidden rounded-hover transition-[background-color,color,width] duration-300 ease-out",
                   isExpanded ? "w-full pl-12 pr-2.5" : "w-10",
-                  "text-sidebar-foreground/40 hover:bg-destructive/[0.06] hover:text-destructive",
+                  "text-sidebar-foreground/60 hover:bg-destructive/[0.07] hover:text-destructive",
                 )}
               >
                 <span className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center">
-                  <LogOut size={11} strokeWidth={1.75} />
+                  <LogOut size={18} strokeWidth={1.75} />
                 </span>
                 {isExpanded && (
-                  <span className="flex-1 truncate whitespace-nowrap text-xs">Sair</span>
+                  <span className="flex-1 truncate whitespace-nowrap text-sm">Sair</span>
                 )}
               </button>
             </li>
