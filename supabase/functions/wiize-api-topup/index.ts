@@ -99,7 +99,7 @@ async function creditTopup(row: any, paidAt: string) {
     _user_id: row.user_id,
     _tokens: row.tokens,
     _amount_brl: Number(row.amount_brl),
-    _type: "topup",
+    _type: "CREDIT_PURCHASE",
     _description: `Recarga PIX de R$ ${Number(row.amount_brl).toFixed(2)}`,
     _reference_type: "wiize_api_topup",
     _reference_id: row.id,
