@@ -84,7 +84,7 @@ export const ApiFeatureBlock = ({ feature, index = 0 }: Props) => {
 
   return (
     <section className="w-full py-12 sm:py-16">
-      <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
+      <div className="container mx-auto w-full max-w-[90rem] px-4 sm:px-10 lg:px-16">
         <div className="grid grid-cols-1 items-center gap-8 sm:gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:gap-12">
           {reversed ? (
             <>

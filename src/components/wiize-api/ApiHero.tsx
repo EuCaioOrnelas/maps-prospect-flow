@@ -65,7 +65,7 @@ export const ApiHero = () => {
         </div>
       </div>
 
-      <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
+      <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-4 sm:px-10 lg:px-16">
         <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-[1.15fr_1fr] xl:gap-12">
           <div className="text-center xl:text-left">
             <div className="mb-6 inline-flex animate-fade-in items-center gap-2 rounded-hover border border-primary/10 glass px-3 py-1.5 sm:mb-8 sm:px-3.5 sm:py-2">
