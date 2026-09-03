@@ -2,196 +2,295 @@ import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  Boxes,
-  Coins,
-  Gauge,
   KeyRound,
-  MessageSquare,
-  Search,
   ShieldCheck,
-  Stethoscope,
-  Zap,
+  Gauge,
+  Webhook,
+  Boxes,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { ApiPublicNavbar } from "@/components/wiize-api/ApiPublicNavbar";
+import { ApiHero } from "@/components/wiize-api/ApiHero";
+import { ApiFeatureBlock, type ApiFeature } from "@/components/wiize-api/ApiFeatureBlock";
+import { ApiCTASection } from "@/components/wiize-api/ApiCTASection";
+import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 
-const sample = `curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
-  -H "Authorization: Bearer wk_live_sua_chave" \\
-  -H "Content-Type: application/json" \\
-  -d '{ "company": { "name": "Empresa Exemplo" } }'`;
-
-const capabilities = [
-  { icon: Search, title: "Find Companies", desc: "Encontre empresas por nicho, região e sinais comerciais." },
-  { icon: Gauge, title: "Analyze Company", desc: "Score de oportunidade calculado com IA." },
-  { icon: Stethoscope, title: "Diagnose Lead", desc: "Diagnóstico comercial com oportunidades priorizadas." },
-  { icon: MessageSquare, title: "Generate Approach", desc: "Abordagem personalizada pronta para envio." },
+const FEATURES: ApiFeature[] = [
+  {
+    eyebrow: "Descoberta",
+    title: "Encontre empresas reais",
+    titleHighlight: "com filtros de mercado",
+    description:
+      "Consulte empresas por nicho, região e presença digital e receba dados estruturados prontos para entrar no seu funil, sem raspagem manual e sem planilha.",
+    bullets: [
+      "Busca por segmento, cidade e estado",
+      "Dados normalizados de contato e presença digital",
+      "Resposta em JSON pronta para persistir",
+    ],
+    visual: "prospeccao",
+  },
+  {
+    eyebrow: "Diagnóstico",
+    title: "Analise cada empresa",
+    titleHighlight: "com inteligência aplicada",
+    description:
+      "Cada empresa retorna com leitura de maturidade digital, sinais comerciais e pontos de atenção, o mesmo motor de análise que roda dentro da plataforma Wiize.",
+    bullets: [
+      "Sinais de site, redes e reputação",
+      "Score de oportunidade explicável",
+      "Pontos fortes e gargalos identificados",
+    ],
+    visual: "sdr",
+  },
+  {
+    eyebrow: "Abordagem",
+    title: "Gere mensagens comerciais",
+    titleHighlight: "personalizadas por contexto",
+    description:
+      "Transforme o diagnóstico em uma abordagem pronta para envio, escrita no tom do seu negócio e ancorada em evidências concretas da empresa analisada.",
+    bullets: [
+      "Mensagem estruturada e contextual",
+      "Tom de voz configurável por requisição",
+      "Pronta para WhatsApp, e-mail ou CRM",
+    ],
+    visual: "engajamento",
+  },
 ];
 
-const steps = [
-  { icon: KeyRound, title: "Crie sua API Key", desc: "Gere uma chave de produção ou de teste em segundos." },
-  { icon: Coins, title: "Adicione saldo", desc: "Sem mensalidade. Você paga apenas pelo que consumir." },
-  { icon: Zap, title: "Faça sua primeira chamada", desc: "Uma requisição e a inteligência já está no seu produto." },
+const CAPABILITIES = [
+  {
+    icon: KeyRound,
+    title: "API Keys por ambiente",
+    text: "Chaves separadas por ambiente, revogáveis a qualquer momento e com rastreio de uso individual.",
+  },
+  {
+    icon: Gauge,
+    title: "Rate limit previsível",
+    text: "Limites claros por chave, com headers de controle em toda resposta para você se planejar.",
+  },
+  {
+    icon: Webhook,
+    title: "Webhooks assinados",
+    text: "Receba eventos de processamento com assinatura HMAC e reentrega automática em falhas.",
+  },
+  {
+    icon: Boxes,
+    title: "Respostas estruturadas",
+    text: "Contratos estáveis em JSON, versionados, com erros padronizados e mensagens objetivas.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Segurança por padrão",
+    text: "TLS obrigatório, isolamento por workspace e histórico de auditoria das chamadas.",
+  },
+  {
+    icon: BookOpen,
+    title: "Documentação viva",
+    text: "Referência completa de endpoints, exemplos por linguagem e playground autenticado.",
+  },
 ];
+
+const STEPS = [
+  {
+    n: "01",
+    title: "Crie sua conta grátis",
+    text: "Cadastro em segundos, sem cartão de crédito e sem compromisso.",
+  },
+  {
+    n: "02",
+    title: "Gere sua API Key",
+    text: "Uma chave por API e por ambiente, com controle total de revogação.",
+  },
+  {
+    n: "03",
+    title: "Faça sua primeira chamada",
+    text: "Copie um exemplo da documentação e receba dados estruturados na hora.",
+  },
+];
+
+const responseSample = `{
+  "id": "opp_8f21c0",
+  "company": { "name": "Empresa Exemplo", "city": "Curitiba", "uf": "PR" },
+  "diagnosis": {
+    "score": 82,
+    "signals": ["site sem captura", "anúncios ativos", "resposta lenta"]
+  },
+  "approach": {
+    "channel": "whatsapp",
+    "message": "Olá! Vi que a operação de vocês..."
+  }
+}`;
 
 export default function ApiLanding() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen w-full overflow-x-clip bg-background">
       <Helmet>
-        <title>Wiize API — Inteligência comercial para o seu sistema</title>
+        <title>Wiize API — Inteligência de prospecção via API REST</title>
         <meta
           name="description"
-          content="Integre prospecção, análise de leads e diagnóstico comercial com IA ao seu produto. Sem mensalidade: pague apenas pelo que consumir."
+          content="Integre descoberta de empresas, diagnóstico com IA e geração de abordagem comercial ao seu sistema com a Wiize API. Conta gratuita e documentação completa."
         />
         <link rel="canonical" href="https://wiize.com.br/api" />
-        <meta property="og:title" content="Wiize API — Inteligência comercial para o seu sistema" />
-        <meta property="og:description" content="Prospecção, análise e diagnóstico comercial com IA via API. Pague apenas pelo que consumir." />
+        <meta property="og:title" content="Wiize API — Inteligência de prospecção via API REST" />
+        <meta
+          property="og:description"
+          content="Descoberta de empresas, diagnóstico com IA e abordagem comercial em uma API REST simples e documentada."
+        />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
 
-      <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link to="/api" className="flex items-center gap-2.5">
-            <img src={wiizeLogo} alt="Wiize" className="h-8 w-8 object-contain" />
-            <span className="text-base font-bold tracking-tight">
-              Wiize <span className="font-semibold text-muted-foreground">API</span>
+      <ApiPublicNavbar />
+      <ApiHero />
+
+      <TrustedBySection />
+
+      {/* Recursos em blocos alternados com mockups animados */}
+      <div id="recursos" className="scroll-mt-24">
+        {FEATURES.map((f, i) => (
+          <ApiFeatureBlock key={f.title} feature={f} index={i} />
+        ))}
+      </div>
+
+      {/* Capacidades da plataforma */}
+      <section className="w-full py-16 sm:py-20">
+        <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+              Plataforma
             </span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/api/docs">Documentação</Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link to="/api/login">Acessar painel</Link>
-            </Button>
+            <h2 className="mt-3 font-display text-[clamp(1.6rem,3vw,2.5rem)] font-extrabold leading-tight tracking-tight text-foreground">
+              Construída para times que <span className="text-shimmer-highlight">colocam em produção</span>
+            </h2>
+            <p className="mt-4 text-sm text-muted-foreground sm:text-base">
+              Tudo o que uma integração séria exige, disponível desde a primeira chamada.
+            </p>
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {CAPABILITIES.map((c) => (
+              <div
+                key={c.title}
+                className="rounded-panel border border-border/60 bg-card/60 p-6 transition-colors hover:border-primary/30"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                  <c.icon size={18} strokeWidth={1.75} />
+                </span>
+                <h3 className="mt-4 text-base font-semibold tracking-tight text-foreground">{c.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.text}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </header>
+      </section>
 
-      <main>
-        <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
-          <div className="max-w-2xl">
-            <Badge variant="outline" className="mb-5 gap-1.5 text-[11px] font-medium text-muted-foreground">
-              <Boxes size={12} /> Infraestrutura de inteligência comercial
-            </Badge>
-            <h1 className="text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl">
-              A inteligência comercial da Wiize dentro do seu sistema
-            </h1>
-            <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Encontre empresas, analise leads e gere diagnósticos comerciais com IA através de uma
-              API simples. Sem mensalidade — você adiciona saldo e paga apenas pelo que consumir.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="gap-2">
-                <Link to="/api/login">
-                  Começar agora <ArrowRight size={16} />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/api/docs">Ver documentação</Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="mt-14 max-w-3xl">
-            <CodeBlock code={sample} lang="bash" filename="quickstart.sh" />
-          </div>
-        </section>
-
-        <section className="border-y border-border bg-muted/30">
-          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">O que você pode construir</h2>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Quatro endpoints cobrem todo o ciclo de descoberta e qualificação comercial.
-            </p>
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {capabilities.map((c) => (
-                <Card key={c.title} className="border-border/70 shadow-none">
-                  <CardContent className="p-5">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                      <c.icon size={18} className="text-primary" strokeWidth={1.75} />
-                    </div>
-                    <h3 className="mt-4 text-sm font-semibold">{c.title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{c.desc}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <div className="grid gap-10 lg:grid-cols-2">
+      {/* Como funciona */}
+      <section id="como-funciona" className="w-full scroll-mt-24 py-16 sm:py-20">
+        <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Comece em três passos</h2>
-              <ul className="mt-8 space-y-6">
-                {steps.map((s, i) => (
-                  <li key={s.title} className="flex gap-4">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border text-sm font-semibold tabular-nums">
-                      {i + 1}
-                    </div>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                Como funciona
+              </span>
+              <h2 className="mt-3 font-display text-[clamp(1.6rem,3vw,2.5rem)] font-extrabold leading-tight tracking-tight text-foreground">
+                Três passos até a <span className="text-shimmer-highlight">primeira integração</span>
+              </h2>
+              <div className="mt-8 space-y-6">
+                {STEPS.map((s) => (
+                  <div key={s.n} className="flex gap-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary font-display text-sm font-bold text-primary-foreground">
+                      {s.n}
+                    </span>
                     <div>
-                      <p className="text-sm font-semibold">{s.title}</p>
-                      <p className="mt-0.5 text-sm text-muted-foreground">{s.desc}</p>
+                      <h3 className="text-base font-semibold tracking-tight text-foreground">{s.title}</h3>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.text}</p>
                     </div>
+                  </div>
+                ))}
+              </div>
+              <Link to="/api/login?modo=cadastro" className="mt-8 inline-block">
+                <Button variant="hero" className="group rounded-full">
+                  Criar conta grátis
+                  <ArrowRight size={16} className="ml-1.5 transition-transform group-hover:translate-x-0.5" />
+                </Button>
+              </Link>
+            </div>
+
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Exemplo de resposta
+              </p>
+              <CodeBlock code={responseSample} lang="json" filename="response.json" showLineNumbers />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Segurança */}
+      <section id="seguranca" className="w-full scroll-mt-24 py-16 sm:py-20">
+        <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
+          <div className="rounded-panel border border-border/60 bg-card/60 p-8 sm:p-12">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-14">
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                  Segurança
+                </span>
+                <h2 className="mt-3 font-display text-[clamp(1.5rem,2.6vw,2.2rem)] font-extrabold leading-tight tracking-tight text-foreground">
+                  Seus dados isolados,
+                  <br />
+                  <span className="text-shimmer-highlight">suas chaves sob controle</span>
+                </h2>
+              </div>
+              <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {[
+                  "Isolamento total por workspace",
+                  "Chaves com escopo e revogação imediata",
+                  "TLS obrigatório em todas as chamadas",
+                  "Registro de auditoria por requisição",
+                  "Webhooks assinados com HMAC",
+                  "Conformidade com a LGPD",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-sm text-foreground/85">
+                    <ShieldCheck size={16} className="mt-0.5 shrink-0 text-primary" strokeWidth={1.75} />
+                    {item}
                   </li>
                 ))}
               </ul>
             </div>
-
-            <Card className="border-border/70 shadow-none">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold tracking-tight">Preço transparente</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Sem plano, sem fidelidade. O consumo é medido em Wiize Tokens.
-                </p>
-                <div className="mt-6 flex items-baseline gap-2">
-                  <span className="text-4xl font-semibold tracking-tight">R$ 0,15</span>
-                  <span className="text-sm text-muted-foreground">por Wiize Token</span>
-                </div>
-                <ul className="mt-6 space-y-2.5 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2"><Coins size={14} className="text-primary" /> Saldo mínimo de R$ 30,00</li>
-                  <li className="flex items-center gap-2"><Zap size={14} className="text-primary" /> Recarga automática opcional</li>
-                  <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-primary" /> Chaves de teste sem custo de setup</li>
-                </ul>
-                <Button asChild className="mt-7 w-full gap-2">
-                  <Link to="/api/login">
-                    Criar minha API Key <ArrowRight size={15} />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="border-t border-border bg-muted/30">
-          <div className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Pronto para integrar a Wiize ao seu produto?
-            </h2>
-            <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
-              Crie sua conta, adicione saldo e faça a primeira chamada hoje mesmo.
-            </p>
-            <Button asChild size="lg" className="mt-7 gap-2">
-              <Link to="/api/login">
-                Acessar o painel <ArrowRight size={16} />
-              </Link>
-            </Button>
-          </div>
-        </section>
-      </main>
+      <ApiCTASection />
 
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-xs text-muted-foreground sm:flex-row sm:px-6">
-          <span>© {new Date().getFullYear()} Wiize. Todos os direitos reservados.</span>
-          <div className="flex gap-5">
-            <Link to="/api/docs" className="hover:text-foreground">Documentação</Link>
-            <Link to="/privacy" className="hover:text-foreground">Privacidade</Link>
-            <Link to="/terms" className="hover:text-foreground">Termos</Link>
+      <footer className="border-t border-border py-10">
+        <div className="container mx-auto flex w-full max-w-[90rem] flex-col items-center justify-between gap-4 px-6 sm:flex-row sm:px-10 lg:px-16">
+          <div className="flex items-center gap-2.5">
+            <img src={wiizeLogo} alt="Wiize" className="h-7 w-7 object-contain" />
+            <span className="text-sm font-semibold text-foreground">
+              Wiize <span className="text-muted-foreground">API</span>
+            </span>
           </div>
+          <div className="flex flex-wrap items-center justify-center gap-5 text-sm text-muted-foreground">
+            <Link to="/api/login" className="hover:text-foreground">
+              Entrar
+            </Link>
+            <Link to="/api/login?modo=cadastro" className="hover:text-foreground">
+              Criar conta
+            </Link>
+            <Link to="/privacy" className="hover:text-foreground">
+              Política de Privacidade
+            </Link>
+            <Link to="/terms" className="hover:text-foreground">
+              Termos
+            </Link>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Wiize
+          </p>
         </div>
       </footer>
     </div>

@@ -1,25 +1,83 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, ShieldCheck, KeyRound, Terminal, Lock } from "lucide-react";
+import { Loader2, ShieldCheck, KeyRound, Terminal, Lock, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { ShaderBackground } from "@/components/ui/warmth-ripple";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 
+type Mode = "login" | "signup";
+
 export default function ApiLogin() {
+  const [params, setParams] = useSearchParams();
+  const initialMode: Mode = params.get("modo") === "cadastro" ? "signup" : "login";
+  const [mode, setMode] = useState<Mode>(initialMode);
+  const [name, setName] = useState("");
+  const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const isSignup = mode === "signup";
+
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    const p = new URLSearchParams(params);
+    if (next === "signup") p.set("modo", "cadastro");
+    else p.delete("modo");
+    setParams(p, { replace: true });
+  };
+
+  const highlights = useMemo(
+    () => [
+      { icon: Terminal, text: "Endpoints de análise, diagnóstico e abordagem comercial" },
+      { icon: KeyRound, text: "Uma API Key por API, com ambientes separados" },
+      { icon: ShieldCheck, text: "Segurança e auditoria do ecossistema Wiize" },
+    ],
+    []
+  );
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
     setLoading(true);
+
+    if (isSignup) {
+      const { error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/api/login`,
+          data: {
+            full_name: name.trim(),
+            company_name: company.trim(),
+            wiize_product: "wiize_api",
+          },
+        },
+      });
+      setLoading(false);
+      if (error) {
+        toast({
+          title: "Não foi possível criar a conta",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: "Conta criada",
+        description: "Confirme seu e-mail para ativar o acesso ao Wiize API.",
+      });
+      switchMode("login");
+      return;
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
@@ -39,18 +97,29 @@ export default function ApiLogin() {
   return (
     <div className="flex min-h-screen bg-background">
       <Helmet>
-        <title>Entrar no Wiize API — Workspace, API Keys e créditos</title>
+        <title>{isSignup ? "Criar conta no Wiize API" : "Entrar no Wiize API"}</title>
         <meta
           name="description"
           content="Acesse seu workspace Wiize API para gerenciar API Keys, créditos e consumo da inteligência de prospecção."
         />
+        <meta name="robots" content="noindex" />
       </Helmet>
 
-      {/* Painel de contexto */}
+      {/* Painel esquerdo com plasma verde */}
       <div className="relative hidden w-1/2 overflow-hidden border-r border-border bg-card lg:block">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,hsl(var(--primary)/0.10),transparent_55%)]" />
+        <div className="absolute inset-0 opacity-70">
+          <ShaderBackground className="h-full w-full" />
+        </div>
+        <div
+          className="absolute inset-0"
+          aria-hidden
+          style={{
+            background:
+              "linear-gradient(180deg, hsl(var(--card) / 0.72) 0%, hsl(var(--card) / 0.58) 55%, hsl(var(--card) / 0.8) 100%)",
+          }}
+        />
         <div className="relative z-10 flex h-full flex-col justify-between p-12">
-          <div className="flex items-center gap-3">
+          <Link to="/api" className="flex items-center gap-3">
             <img src={wiizeLogo} alt="Wiize" className="h-9 w-9 object-contain" />
             <div className="leading-tight">
               <div className="text-base font-bold tracking-tight">Wiize</div>
@@ -58,25 +127,19 @@ export default function ApiLogin() {
                 API
               </div>
             </div>
-          </div>
+          </Link>
 
           <div className="space-y-8">
-            <h2 className="max-w-md text-3xl font-semibold leading-tight tracking-tight">
+            <h2 className="max-w-md font-display text-3xl font-semibold leading-tight tracking-tight">
               Inteligência de prospecção para o seu sistema
             </h2>
-            <ul className="space-y-4 text-sm text-muted-foreground">
-              <li className="flex items-start gap-3">
-                <Terminal size={16} className="mt-0.5 text-primary" strokeWidth={1.75} />
-                Endpoints de análise, diagnóstico e abordagem comercial
-              </li>
-              <li className="flex items-start gap-3">
-                <KeyRound size={16} className="mt-0.5 text-primary" strokeWidth={1.75} />
-                Uma API Key por API, com ambientes separados
-              </li>
-              <li className="flex items-start gap-3">
-                <ShieldCheck size={16} className="mt-0.5 text-primary" strokeWidth={1.75} />
-                Autenticação em dois fatores do ecossistema Wiize
-              </li>
+            <ul className="space-y-4 text-sm text-foreground/80">
+              {highlights.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-start gap-3">
+                  <Icon size={16} className="mt-0.5 text-primary" strokeWidth={1.75} />
+                  {text}
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -89,21 +152,76 @@ export default function ApiLogin() {
       {/* Formulário */}
       <div className="flex w-full items-center justify-center px-5 py-12 lg:w-1/2">
         <div className="w-full max-w-[400px]">
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <img src={wiizeLogo} alt="Wiize" className="h-8 w-8 object-contain" />
-            <span className="text-sm font-semibold">
-              Wiize <span className="text-muted-foreground">API</span>
+          <Link
+            to="/api"
+            className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft size={16} />
+            Voltar para o site
+          </Link>
+
+          <div className="mb-6 flex items-center gap-3">
+            <img src={wiizeLogo} alt="Wiize" className="h-9 w-9 object-contain" />
+            <span className="text-lg font-bold tracking-tight">
+              Wiize <span className="font-semibold text-muted-foreground">API</span>
             </span>
           </div>
 
-          <h1 className="text-2xl font-semibold tracking-tight">Entrar no Wiize API</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {isSignup ? "Criar conta grátis" : "Entrar no Wiize API"}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Acesse seu workspace, API Keys, créditos e uso.
+            {isSignup
+              ? "Sem cartão de crédito. Gere sua API Key em minutos."
+              : "Acesse seu workspace, API Keys, créditos e uso."}
           </p>
 
-          <form onSubmit={submit} className="mt-8 space-y-4">
+          {/* Toggle login / cadastro */}
+          <div className="mt-6 grid grid-cols-2 gap-1 rounded-xl border border-border bg-muted/50 p-1">
+            {(["login", "signup"] as Mode[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => switchMode(m)}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  mode === m
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {m === "login" ? "Entrar" : "Cadastrar-se"}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={submit} className="mt-6 space-y-4">
+            {isSignup && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="api-name">Nome completo</Label>
+                  <Input
+                    id="api-name"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Seu nome"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="api-company">Empresa</Label>
+                  <Input
+                    id="api-company"
+                    required
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    placeholder="Nome da empresa"
+                  />
+                </div>
+              </>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="api-email">E-mail</Label>
+              <Label htmlFor="api-email">E-mail corporativo</Label>
               <Input
                 id="api-email"
                 type="email"
@@ -114,35 +232,46 @@ export default function ApiLogin() {
                 placeholder="voce@empresa.com.br"
               />
             </div>
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="api-password">Senha</Label>
-                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                  Esqueci minha senha
-                </Link>
+                {!isSignup && (
+                  <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                    Esqueci minha senha
+                  </Link>
+                )}
               </div>
               <Input
                 id="api-password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete={isSignup ? "new-password" : "current-password"}
                 required
+                minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
               />
+              {isSignup && (
+                <p className="text-xs text-muted-foreground">Mínimo de 8 caracteres.</p>
+              )}
             </div>
 
             <Button type="submit" className="w-full gap-2" disabled={loading}>
               {loading && <Loader2 size={16} className="animate-spin" />}
-              Entrar
+              {isSignup ? "Criar conta grátis" : "Entrar"}
             </Button>
           </form>
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Não tenho uma conta{" "}
-            <Link to="/signup" className="font-medium text-primary hover:underline">
-              Criar conta
-            </Link>
+            {isSignup ? "Já tem uma conta? " : "Não tem uma conta? "}
+            <button
+              type="button"
+              onClick={() => switchMode(isSignup ? "login" : "signup")}
+              className="font-medium text-primary hover:underline"
+            >
+              {isSignup ? "Entrar" : "Criar conta grátis"}
+            </button>
           </p>
 
           <div className="mt-8 flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3.5 py-3 text-xs leading-relaxed text-muted-foreground">
