@@ -32,6 +32,8 @@ const responseSample = `{
 }`;
 
 export default function ApiProspecting() {
+  const { resolvedTheme } = useTheme();
+  const codeTheme = resolvedTheme === "dark" ? "dark" : "light";
   return (
     <>
       <Helmet>
