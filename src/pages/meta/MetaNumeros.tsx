@@ -97,6 +97,7 @@ export default function MetaNumeros() {
   const userPlan = (profile?.plan || "free").toLowerCase();
   const extraNumbers = ((profile as any)?.extra_numbers as number | undefined) ?? 0;
   const numbersLimit = getNumbersLimit(profile as any);
+  const basePlanNumbers = Math.max(0, (Number.isFinite(numbersLimit) ? numbersLimit : (META_PLAN_LIMITS[userPlan] ?? 1) + extraNumbers) - extraNumbers);
   const maxMetaConnections = Number.isFinite(numbersLimit) ? numbersLimit : (META_PLAN_LIMITS[userPlan] ?? 1) + extraNumbers;
   const reachedConnectionLimit = connections.length >= maxMetaConnections;
   const expiredConnections = connections.filter((c) => expiredTokenIds.has(c.id));
