@@ -20,6 +20,7 @@
 - [x] Fase 2: gateway público `wiize-api-v1` (auth por API Key, rate limit, idempotência, reserva/cobrança, logs)
 - [x] Modo interno em `search-leads`, `score-opportunity` e `approach-lead`
 - [x] Gestão de chaves (`wiize-api-keys`: list/create/revoke/rotate)
-- [ ] Fase 3: recargas (Asaas/PIX + Stripe) e webhooks de crédito
-- [ ] Fase 4: frontend real (substituir mocks de `src/data/wiizeApiMocks.ts`)
-- [ ] Fase 5: admin, auditoria, reembolsos e testes de concorrência
+- [x] Fase 3: recargas PIX via Asaas (`wiize-api-topup`: create/status/cancel, crédito idempotente)
+- [x] Fase 4: frontend real (mocks removidos; dashboard, créditos, uso, billing, chaves e settings com dados reais)
+- [x] Fase 5 (parcial): painel admin `/admin/wiize-api` (contas, saldos, consumo, receita, custo, margem, ajustes e bloqueio)
+- [ ] Fase 5 (restante): testes de contrato/concorrência e reembolsos automatizados
