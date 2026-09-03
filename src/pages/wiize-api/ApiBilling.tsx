@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { CreditCard, Plus, QrCode, Receipt, Wallet } from "lucide-react";
+import { Plus, QrCode, Receipt, Wallet, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -13,36 +11,47 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
 import { PageHeader, StatCard, SectionCard, EmptyState } from "@/components/wiize-api/WiizeApiUI";
-import {
-  brl,
-  mockAutoReload,
-  mockBalance,
-  mockCards,
-  mockTransactions,
-} from "@/data/wiizeApiMocks";
+import { brl, brlForTokens } from "@/data/wiizeApi";
+import { useApiTopups, useApiTransactions, useApiWallet } from "@/hooks/useWiizeApi";
+
+const statusLabel: Record<string, string> = {
+  paid: "Pago",
+  pending: "Pendente",
+  expired: "Expirado",
+  canceled: "Cancelado",
+  failed: "Falhou",
+};
+
+const typeLabel: Record<string, string> = {
+  credit: "Recarga",
+  debit: "Consumo",
+  refund: "Estorno",
+  adjustment: "Ajuste manual",
+};
+
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 export default function ApiBilling() {
-  const { toast } = useToast();
-  const [cards, setCards] = useState(mockCards);
-  const [auto, setAuto] = useState(mockAutoReload.enabled);
-  const demo = () =>
-    toast({
-      title: "Interface de demonstração",
-      description: "Os meios de pagamento serão habilitados na implementação do backend.",
-    });
+  const { data: wallet, isLoading } = useApiWallet();
+  const { data: transactions = [] } = useApiTransactions();
+  const { data: topups = [] } = useApiTopups();
+
+  const spent = transactions
+    .filter((t) => t.type === "debit")
+    .reduce((s, t) => s + Math.abs(t.tokens || 0), 0);
 
   return (
     <>
       <Helmet>
         <title>Billing — Wiize API</title>
-        <meta name="description" content="Saldo, métodos de pagamento, histórico de transações e recarga automática do Wiize API." />
+        <meta name="description" content="Saldo, recargas via PIX e histórico de transações do Wiize API." />
       </Helmet>
 
       <PageHeader
         title="Billing"
-        description="Saldo, métodos de pagamento, histórico e recarga automática."
+        description="Saldo, recargas via PIX e histórico financeiro da sua conta API."
         actions={
           <Button asChild className="gap-2">
             <Link to="/api/credits">
@@ -53,134 +62,102 @@ export default function ApiBilling() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Saldo disponível" value={brl(mockBalance.balance)} hint="Sem mensalidade" icon={Wallet} />
-        <StatCard label="Consumo do mês" value={brl(mockBalance.costPeriod)} hint="Últimos 30 dias" icon={Receipt} />
         <StatCard
-          label="Recarga automática"
-          value={auto ? "Ativa" : "Desativada"}
-          hint={auto ? `Abaixo de ${brl(mockAutoReload.threshold)} → +${brl(mockAutoReload.amount)}` : "Configure em Créditos"}
-          icon={CreditCard}
+          label="Saldo disponível"
+          value={brl(brlForTokens(wallet?.balance_tokens ?? 0))}
+          hint="Sem mensalidade"
+          icon={Wallet}
+          loading={isLoading}
+        />
+        <StatCard
+          label="Total consumido"
+          value={brl(brlForTokens(spent))}
+          hint={`${spent.toLocaleString("pt-BR")} tokens`}
+          icon={Receipt}
+          loading={isLoading}
+        />
+        <StatCard
+          label="Total recarregado"
+          value={brl(brlForTokens(wallet?.lifetime_credited_tokens ?? 0))}
+          hint="Desde o início da conta"
+          icon={Coins}
+          loading={isLoading}
         />
       </div>
 
-      <SectionCard
-        title="Forma de pagamento padrão"
-        description="Cartão utilizado para adição de saldo em 1 clique"
-        actions={
-          <Button variant="outline" size="sm" className="gap-2" onClick={demo}>
-            <Plus size={14} /> Adicionar cartão
-          </Button>
-        }
-      >
-        {cards.length === 0 ? (
+      <SectionCard icon={QrCode} title="Recargas PIX" description="Cobranças geradas na sua conta">
+        {topups.length === 0 ? (
           <EmptyState
-            icon={CreditCard}
-            title="Nenhum cartão cadastrado."
-            description="Salve um cartão para adicionar saldo com um clique."
-            action={<Button onClick={demo}>Adicionar cartão</Button>}
+            icon={QrCode}
+            title="Nenhuma recarga gerada."
+            description="Adicione saldo via PIX para começar a usar a API."
+            action={
+              <Button asChild>
+                <Link to="/api/credits">Adicionar saldo</Link>
+              </Button>
+            }
           />
-        ) : (
-          <ul className="space-y-3">
-            {cards.map((c) => (
-              <li
-                key={c.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-12 items-center justify-center rounded-md bg-muted text-[11px] font-semibold">
-                    {c.brand}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {c.brand} •••• {c.last4}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Expira em {c.expiry}</p>
-                  </div>
-                  {c.isDefault && (
-                    <Badge className="bg-primary/10 text-[10px] text-primary hover:bg-primary/10">Principal</Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={c.isDefault}
-                    onClick={() =>
-                      setCards((prev) => prev.map((x) => ({ ...x, isDefault: x.id === c.id })))
-                    }
-                  >
-                    Tornar padrão
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => setCards((prev) => prev.filter((x) => x.id !== c.id))}
-                  >
-                    Remover
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted">
-              <QrCode size={16} className="text-muted-foreground" strokeWidth={1.75} />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Pagamento via PIX</p>
-              <p className="text-xs text-muted-foreground">
-                Adição de saldo por QR Code — disponível na próxima etapa.
-              </p>
-            </div>
-          </div>
-          <Badge variant="outline" className="text-[10px] text-muted-foreground">Em preparação</Badge>
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Recarga automática"
-        description="Evite interrupções mantendo saldo mínimo na conta"
-        actions={<Switch checked={auto} onCheckedChange={setAuto} aria-label="Recarga automática" />}
-      >
-        <p className="text-sm text-muted-foreground">
-          Quando seu saldo ficar abaixo de {brl(mockAutoReload.threshold)}, adicionaremos{" "}
-          {brl(mockAutoReload.amount)} automaticamente usando {mockAutoReload.method}.{" "}
-          <Link to="/api/credits" className="font-medium text-primary hover:underline">
-            Configurar
-          </Link>
-        </p>
-      </SectionCard>
-
-      <SectionCard icon={Receipt} title="Histórico de transações" description="Adições de saldo e recargas">
-        {mockTransactions.length === 0 ? (
-          <EmptyState icon={Receipt} title="Nenhuma transação realizada." />
         ) : (
           <div className="-mx-5 overflow-x-auto px-5">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Data</TableHead>
-                  <TableHead>Descrição</TableHead>
                   <TableHead>Método</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Tokens</TableHead>
                   <TableHead className="text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockTransactions.map((t) => (
+                {topups.map((t) => (
                   <TableRow key={t.id}>
-                    <TableCell className="whitespace-nowrap text-sm">{t.date}</TableCell>
-                    <TableCell className="text-sm">{t.description}</TableCell>
-                    <TableCell className="text-sm">{t.method}</TableCell>
-                    <TableCell className="text-right tabular-nums">{brl(t.amount)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">{fmtDate(t.created_at)}</TableCell>
+                    <TableCell className="text-sm uppercase">{t.method}</TableCell>
+                    <TableCell className="text-right tabular-nums">{brl(t.amount_brl)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{t.tokens.toLocaleString("pt-BR")}</TableCell>
                     <TableCell className="text-right">
-                      <Badge className="bg-primary/10 text-[10px] text-primary hover:bg-primary/10">
-                        {t.status}
+                      <Badge
+                        variant={t.status === "paid" ? "default" : "outline"}
+                        className={t.status === "paid" ? "bg-primary/10 text-[10px] text-primary hover:bg-primary/10" : "text-[10px]"}
+                      >
+                        {statusLabel[t.status] || t.status}
                       </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard icon={Receipt} title="Extrato da carteira" description="Créditos, consumos e ajustes">
+        {transactions.length === 0 ? (
+          <EmptyState icon={Receipt} title="Nenhuma movimentação registrada." />
+        ) : (
+          <div className="-mx-5 overflow-x-auto px-5">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="text-right">Tokens</TableHead>
+                  <TableHead className="text-right">Saldo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactions.map((t) => (
+                  <TableRow key={t.id}>
+                    <TableCell className="whitespace-nowrap text-sm">{fmtDate(t.created_at)}</TableCell>
+                    <TableCell className="text-sm">{typeLabel[t.type] || t.type}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{t.description || "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {t.tokens > 0 ? `+${t.tokens}` : t.tokens}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {t.balance_after?.toLocaleString("pt-BR")}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/wiize-api/WiizeApiUI";
-import { mockApiCatalog } from "@/data/wiizeApiMocks";
+import { apiCatalog } from "@/data/wiizeApi";
 
 export default function ApiCatalog() {
   return (
@@ -21,7 +21,7 @@ export default function ApiCatalog() {
       />
 
       <div className="grid gap-4 md:grid-cols-2">
-        {mockApiCatalog.map((api) => {
+        {apiCatalog.map((api) => {
           const available = api.status === "available";
           return (
             <Card key={api.id} className="border-border/70 shadow-none">

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { BarChart3, TrendingUp, Activity } from "lucide-react";
+import { BarChart3, TrendingUp, Activity, Download } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -27,33 +28,48 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader, StatCard, SectionCard, EmptyState } from "@/components/wiize-api/WiizeApiUI";
-import {
-  brl,
-  mockUsageRows,
-  mockUsageSeries,
-  periodOptions,
-  type PeriodKey,
-} from "@/data/wiizeApiMocks";
+import { brl, brlForTokens, periodOptions, type PeriodKey } from "@/data/wiizeApi";
+import { buildDailySeries, useApiRequests } from "@/hooks/useWiizeApi";
+
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 export default function ApiUsage() {
   const [period, setPeriod] = useState<PeriodKey>("30d");
   const [endpoint, setEndpoint] = useState("all");
   const [status, setStatus] = useState("all");
 
+  const days = periodOptions.find((p) => p.key === period)?.days ?? 30;
+  const { data: requests = [], isLoading } = useApiRequests(period);
+
   const rows = useMemo(
     () =>
-      mockUsageRows.filter(
+      requests.filter(
         (r) =>
           (endpoint === "all" || r.endpoint === endpoint) &&
-          (status === "all" ||
-            (status === "ok" ? r.status.startsWith("2") : !r.status.startsWith("2"))),
+          (status === "all" || (status === "ok" ? r.status_code < 400 : r.status_code >= 400)),
       ),
-    [endpoint, status],
+    [requests, endpoint, status],
   );
 
-  const series = mockUsageSeries[period];
-  const total = series.reduce((s, p) => s + p.tokens, 0);
-  const daily = Math.round(total / series.length);
+  const series = useMemo(() => buildDailySeries(requests, days), [requests, days]);
+  const total = requests.reduce((s, r) => s + (r.tokens_charged || 0), 0);
+  const daily = Math.round(total / Math.max(series.length, 1));
+
+  const exportCsv = () => {
+    const header = "data,endpoint,status,tokens,custo_brl,duracao_ms\n";
+    const body = rows
+      .map((r) =>
+        [r.created_at, r.endpoint, r.status_code, r.tokens_charged, brlForTokens(r.tokens_charged).toFixed(2), r.duration_ms ?? ""].join(","),
+      )
+      .join("\n");
+    const url = URL.createObjectURL(new Blob([header + body], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `wiize-api-usage-${period}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <>
@@ -62,16 +78,25 @@ export default function ApiUsage() {
         <meta name="description" content="Acompanhe o consumo de tokens, custos e status das chamadas às APIs da Wiize." />
       </Helmet>
 
-      <PageHeader title="Usage" description="Acompanhe consumo, custos e status das suas requisições." />
+      <PageHeader
+        title="Usage"
+        description="Acompanhe consumo, custos e status das suas requisições."
+        actions={
+          <Button variant="outline" size="sm" className="gap-2" onClick={exportCsv} disabled={rows.length === 0}>
+            <Download size={14} /> Exportar CSV
+          </Button>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Consumo atual" value={`${total.toLocaleString("pt-BR")} tokens`} hint="No período" icon={BarChart3} />
-        <StatCard label="Média diária" value={`${daily.toLocaleString("pt-BR")} tokens`} hint="Base do período" icon={TrendingUp} />
+        <StatCard label="Consumo atual" value={`${total.toLocaleString("pt-BR")} tokens`} hint="No período" icon={BarChart3} loading={isLoading} />
+        <StatCard label="Média diária" value={`${daily.toLocaleString("pt-BR")} tokens`} hint="Base do período" icon={TrendingUp} loading={isLoading} />
         <StatCard
           label="Estimativa mensal"
-          value={brl(daily * 30 * 0.15)}
+          value={brl(brlForTokens(daily * 30))}
           hint={`${(daily * 30).toLocaleString("pt-BR")} tokens projetados`}
           icon={TrendingUp}
+          loading={isLoading}
         />
       </div>
 
@@ -85,20 +110,13 @@ export default function ApiUsage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value="prospecting" onValueChange={() => {}}>
-            <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-popover">
-              <SelectItem value="prospecting">Prospecting Intelligence API</SelectItem>
-            </SelectContent>
-          </Select>
           <Select value={endpoint} onValueChange={setEndpoint}>
-            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[230px]"><SelectValue /></SelectTrigger>
             <SelectContent className="bg-popover">
               <SelectItem value="all">Todos endpoints</SelectItem>
-              <SelectItem value="/companies">/companies</SelectItem>
-              <SelectItem value="/analyze">/analyze</SelectItem>
-              <SelectItem value="/diagnose">/diagnose</SelectItem>
-              <SelectItem value="/approach">/approach</SelectItem>
+              <SelectItem value="/v1/prospecting/search">/v1/prospecting/search</SelectItem>
+              <SelectItem value="/v1/prospecting/analyze">/v1/prospecting/analyze</SelectItem>
+              <SelectItem value="/v1/prospecting/approach">/v1/prospecting/approach</SelectItem>
             </SelectContent>
           </Select>
           <Select value={status} onValueChange={setStatus}>
@@ -142,27 +160,31 @@ export default function ApiUsage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Data</TableHead>
-                  <TableHead>API</TableHead>
                   <TableHead>Endpoint</TableHead>
+                  <TableHead>Ambiente</TableHead>
                   <TableHead className="text-right">Tokens</TableHead>
                   <TableHead className="text-right">Custo</TableHead>
+                  <TableHead className="text-right">Latência</TableHead>
                   <TableHead className="text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r) => (
+                {rows.slice(0, 200).map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="whitespace-nowrap text-sm">{r.date}</TableCell>
-                    <TableCell className="whitespace-nowrap text-sm">{r.api}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">{fmtDate(r.created_at)}</TableCell>
                     <TableCell className="whitespace-nowrap font-mono text-xs">{r.endpoint}</TableCell>
-                    <TableCell className="text-right tabular-nums">{r.tokens}</TableCell>
-                    <TableCell className="text-right tabular-nums">{brl(r.cost)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{r.environment}</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.tokens_charged}</TableCell>
+                    <TableCell className="text-right tabular-nums">{brl(brlForTokens(r.tokens_charged))}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {r.duration_ms ? `${r.duration_ms} ms` : "—"}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Badge
-                        variant={r.status.startsWith("2") ? "secondary" : "outline"}
-                        className={r.status.startsWith("2") ? "bg-primary/10 text-primary hover:bg-primary/10" : "text-destructive"}
+                        variant={r.status_code < 400 ? "secondary" : "outline"}
+                        className={r.status_code < 400 ? "bg-primary/10 text-primary hover:bg-primary/10" : "text-destructive"}
                       >
-                        {r.status}
+                        {r.status_code}
                       </Badge>
                     </TableCell>
                   </TableRow>

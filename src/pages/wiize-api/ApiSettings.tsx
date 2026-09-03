@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  Monitor,
   ShieldCheck,
   Bell,
   History,
@@ -13,11 +12,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader, SectionCard } from "@/components/wiize-api/WiizeApiUI";
 import { TwoFactorPanel } from "@/components/security/TwoFactorPanel";
-import { mockSecurityActivity, mockSessions } from "@/data/wiizeApiMocks";
+import { useApiKeys } from "@/hooks/useWiizeApi";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
@@ -31,6 +29,7 @@ const NOTIFICATIONS: { key: PrefKey; label: string; desc: string; icon: typeof B
 
 export default function ApiSettings() {
   const { toast } = useToast();
+  const { data: keys = [] } = useApiKeys();
   const [prefs, setPrefs] = useState<Record<PrefKey, boolean>>({
     low_balance: true,
     request_errors: true,
@@ -131,34 +130,6 @@ export default function ApiSettings() {
         </Button>
       </SectionCard>
 
-      <SectionCard title="Sessões ativas" description="Dispositivos com acesso à sua conta" icon={Monitor}>
-        <ul className="space-y-3">
-          {mockSessions.map((s) => (
-            <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-hover bg-primary/10">
-                  <Monitor size={16} className="text-primary" strokeWidth={1.75} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">{s.device}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {s.location} · {s.lastAccess}
-                  </p>
-                </div>
-                {s.current && (
-                  <Badge className="bg-primary/10 text-[10px] text-primary hover:bg-primary/10">Sessão atual</Badge>
-                )}
-              </div>
-              {!s.current && (
-                <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={demo}>
-                  Encerrar
-                </Button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </SectionCard>
-
       <SectionCard
         title="Notificações"
         description="Avisos por e-mail sobre a sua operação"
@@ -195,20 +166,30 @@ export default function ApiSettings() {
       </SectionCard>
 
       <SectionCard title="Atividade de segurança" description="Últimos eventos registrados na conta" icon={History}>
-        <ul className="space-y-3">
-          {mockSecurityActivity.map((e) => (
-            <li key={e.id} className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-hover bg-primary/10">
-                <History size={13} className="text-primary" strokeWidth={1.75} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm">{e.event}</p>
-                <p className="text-xs text-muted-foreground">{e.detail}</p>
-              </div>
-              <span className="shrink-0 text-xs text-muted-foreground">{e.when}</span>
-            </li>
-          ))}
-        </ul>
+        {keys.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum evento registrado ainda.</p>
+        ) : (
+          <ul className="space-y-3">
+            {keys.slice(0, 8).map((k) => (
+              <li key={k.id} className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-hover bg-primary/10">
+                  <History size={13} className="text-primary" strokeWidth={1.75} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm">
+                    {k.status === "active" ? "API Key criada" : "API Key revogada"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {k.name} ({k.environment})
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {new Date(k.revoked_at || k.created_at).toLocaleDateString("pt-BR")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </SectionCard>
     </>
   );
