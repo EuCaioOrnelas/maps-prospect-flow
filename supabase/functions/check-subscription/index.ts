@@ -135,6 +135,7 @@ const shouldPreservePaidAccess = (profile?: BillingProfileState | null) => {
 };
 
 class TransientBackendError extends Error {}
+class AuthenticationError extends Error {}
 
 const isTransientDbError = (error: any) =>
   !!error &&
@@ -397,6 +398,10 @@ serve(async (req) => {
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
+    const jwtPayload = token.split(".")[1];
+    if (!jwtPayload) {
+      throw new AuthenticationError("Sessão inválida ou expirada");
+    }
     
     // Try getClaims first (faster, doesn't require network call)
     let userId: string;
@@ -408,8 +413,8 @@ serve(async (req) => {
       // Fallback to getUser if getClaims fails
       logStep("getClaims failed, falling back to getUser", { error: claimsError?.message });
       const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-      if (userError) throw new Error(`Authentication error: ${userError.message}`);
-      if (!userData.user?.email) throw new Error("User not authenticated or email not available");
+      if (userError) throw new AuthenticationError("Sessão inválida ou expirada");
+      if (!userData.user?.email) throw new AuthenticationError("Usuário não autenticado");
       
       userId = userData.user.id;
       userEmail = userData.user.email;
@@ -846,10 +851,11 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const transient = error instanceof TransientBackendError;
+    const authentication = error instanceof AuthenticationError;
     logStep("ERROR in check-subscription", { message: errorMessage, transient });
     return new Response(JSON.stringify({ error: errorMessage, retryable: transient }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: transient ? 503 : 500,
+      status: authentication ? 401 : transient ? 503 : 500,
     });
   }
 });

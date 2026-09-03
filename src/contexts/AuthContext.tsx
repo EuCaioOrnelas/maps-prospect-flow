@@ -298,6 +298,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sincroniza estado da conta (assinatura + reset mensal de buscas) e atualiza o profile.
   const syncAccountState = async (userId: string, reason: string, email?: string | null) => {
     try {
+      // O AuthProvider também envolve as áreas Wiize API e Partners. Essas contas
+      // têm ciclo de cobrança próprio e nunca devem disparar a conciliação da
+      // assinatura da plataforma principal.
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentProduct = currentSession?.user?.user_metadata?.wiize_product;
+      if (!currentSession?.user || currentSession.user.id !== userId || currentProduct === 'wiize_api' || currentProduct === 'wiize_partners') {
+        return;
+      }
+
       console.log(`[AuthContext] Sync account state (${reason})...`);
       lastSyncAtRef.current = Date.now();
 
@@ -391,7 +400,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const profileData = await fetchProfile(newSession.user.id);
             setProfile((prev) => (profilesEqual(prev, profileData) ? prev : profileData));
 
-            if (event === 'SIGNED_IN') {
+            const product = newSession.user.user_metadata?.wiize_product;
+            const isMainPlatformAccount = product !== 'wiize_api' && product !== 'wiize_partners';
+
+            if (event === 'SIGNED_IN' && isMainPlatformAccount) {
               setTimeout(() => {
                 syncAccountState(newSession.user.id, event, newSession.user.email);
               }, 500);
@@ -471,10 +483,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (error) console.debug('[AuthContext] initial last_login_at:', error.message);
             });
 
-          // Sync on initial load
-          setTimeout(() => {
-            syncAccountState(session.user.id, 'initial', session.user.email);
-          }, 500);
+          const product = session.user.user_metadata?.wiize_product;
+          if (product !== 'wiize_api' && product !== 'wiize_partners') {
+            // Sync on initial load somente para a plataforma principal.
+            setTimeout(() => {
+              syncAccountState(session.user.id, 'initial', session.user.email);
+            }, 500);
+          }
         }
       } catch (error) {
         console.error('[AuthContext] Initial session load failed:', error);
