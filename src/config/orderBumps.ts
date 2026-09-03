@@ -42,9 +42,9 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
   {
     id: "numbers",
     title: "Expansão de Atendimento",
-    shortLabel: "Expansão de Atendimento: +1 Número",
-    description: "Conecte mais um número de WhatsApp para escalar disparo, atendimento e contornar limites diários.",
-    unit: "número",
+    shortLabel: "Expansão de Atendimento: +1 Número e +1 Usuário",
+    description: "Conecte mais um número de WhatsApp e libere mais 1 usuário na conta para escalar atendimento e disparos.",
+    unit: "número + usuário",
     step: 1,
     monthlyPriceCents: 9600,
     stripePriceIdMonthly: "price_1TYdiXK8CM0R6xMMqnhxGM1V",

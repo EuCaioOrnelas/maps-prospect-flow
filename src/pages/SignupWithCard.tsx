@@ -50,7 +50,7 @@ type PendingSetup = { customerId: string; setupIntentId: string; planKey: string
 
 const PLAN_INFO: Record<string, { name: string; monthly: number }> = {
   start: { name: "Wiize Start", monthly: 296 },
-  growth: { name: "Wiize Growth", monthly: 696 },
+  growth: { name: "Wiize Growth IA", monthly: 396 },
   scale: { name: "Wiize Enterprise", monthly: 1496 },
 };
 

@@ -13,7 +13,7 @@ const logStep = (step: string, details?: any) => {
 };
 
 function getPlanSearchesLimit(planKey: string): number {
-  const limits: Record<string, number> = { start: 1000, growth: 3000, scale: 10000 };
+  const limits: Record<string, number> = { start: 1000, growth: 1000, scale: 10000 };
   return limits[planKey] || 1000;
 }
 

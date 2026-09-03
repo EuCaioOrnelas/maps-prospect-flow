@@ -24,7 +24,7 @@ const corsHeaders = {
 
 const PLAN_VALUES: Record<string, number> = {
   start: 296.0,
-  growth: 696.0,
+  growth: 396.0,
   scale: 1496.0,
 };
 const PLAN_NAMES: Record<string, string> = {

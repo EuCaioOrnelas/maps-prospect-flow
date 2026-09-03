@@ -14,6 +14,8 @@
  * O acesso final é a interseção dos três.
  */
 
+import { getSeatLimit } from "@/lib/planAccess";
+
 export type AccountRole = "owner" | "admin" | "operational";
 
 export type AccountPermission =
@@ -133,19 +135,26 @@ export interface SeatInfo {
 
 /**
  * Limite total de usuários (owner + sub usuários) baseado no plano.
- * - Atendimento (start): 3 (1 owner + 2 sub)
- * - Growth: 6 (1 owner + 5 sub)
+ * Delegado para `planAccess.getSeatLimit` (que considera grandfathering
+ * e add-ons — cada número extra inclui +1 usuário).
+ *
+ * - Atendimento (start): 2 (v3) / 3 (legado)
+ * - Growth: 3 (v3) / 6 (legado)
  * - Demais (scale, legados, free): ilimitado
  */
-export function getSeatLimitForPlan(plan: string | null | undefined): number {
-  const p = (plan || "").toLowerCase();
-  if (p === "start") return 3;
-  if (p === "growth") return 6;
-  return Infinity;
+export function getSeatLimitForPlan(
+  plan: string | null | undefined,
+  profile?: { created_at?: string | null; extra_numbers?: number | null } | null,
+): number {
+  return getSeatLimit({ plan, created_at: profile?.created_at, extra_numbers: profile?.extra_numbers });
 }
 
-export function buildSeatInfo(plan: string | null | undefined, used: number): SeatInfo {
-  const limit = getSeatLimitForPlan(plan);
+export function buildSeatInfo(
+  plan: string | null | undefined,
+  used: number,
+  profile?: { created_at?: string | null; extra_numbers?: number | null } | null,
+): SeatInfo {
+  const limit = getSeatLimitForPlan(plan, profile);
   const unlimited = !isFinite(limit);
   return {
     used,
@@ -154,3 +163,4 @@ export function buildSeatInfo(plan: string | null | undefined, used: number): Se
     unlimited,
   };
 }
+

@@ -1,3 +1,5 @@
+import { getNumbersLimit } from "@/lib/planAccess";
+
 // Configuração e tipos do SDR Inteligente
 // Cada número de WhatsApp (plano + order-bumps) libera 1 SDR.
 
@@ -11,10 +13,9 @@ export const SDR_PLAN_NUMBERS: Record<string, number> = {
 };
 
 export function getSdrLimit(profile: any): number {
-  const plan = String(profile?.plan || "free").toLowerCase();
-  const base = SDR_PLAN_NUMBERS[plan] ?? 1;
-  const extra = Number(profile?.extra_numbers ?? 0) || 0;
-  return base + extra;
+  // Cada número (plano + add-on) libera 1 SDR. Regra centralizada em planAccess.
+  const limit = getNumbersLimit(profile);
+  return Number.isFinite(limit) ? limit : 99;
 }
 
 export type SdrObjective =

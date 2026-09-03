@@ -131,7 +131,7 @@ async function cancelPartnerCommissionsForRefund(
 }
 
 function getPlanSearchesLimit(planKey: string): number {
-  const limits: Record<string, number> = { start: 1000, growth: 3000, scale: 10000 };
+  const limits: Record<string, number> = { start: 1000, growth: 1000, scale: 10000 };
   return limits[planKey] || 1000;
 }
 
@@ -146,7 +146,7 @@ function extractPlanFromDescription(description: string): string | null {
 function extractPlanFromValue(value: number): string | null {
   // Support old and new prices
   if (value === 196 || value === 197 || value === 296) return "start"; // 197 legado
-  if (value === 497 || value === 696) return "growth";
+  if (value === 396 || value === 497 || value === 696) return "growth";
   if (value === 897 || value === 1496) return "scale";
   return null;
 }
@@ -320,7 +320,7 @@ async function activatePlan(
   }
 
   // Calculate price in cents from payment value (grandfathering support)
-  const defaultPrices: Record<string, number> = { start: 19600, growth: 69600, scale: 149600 };
+  const defaultPrices: Record<string, number> = { start: 19600, growth: 39600, scale: 149600 };
   const priceCents = paymentValue ? Math.round(paymentValue * 100) : (defaultPrices[planKey] || 0);
 
   // Build update payload — preserve bonus_searches (carried from previous plan)

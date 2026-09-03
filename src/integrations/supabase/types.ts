@@ -11217,6 +11217,10 @@ export type Database = {
       compute_partner_balance: { Args: { p_partner_id: string }; Returns: Json }
       compute_partner_mrr: { Args: { p_partner_id: string }; Returns: number }
       count_account_members: { Args: { _owner: string }; Returns: number }
+      count_partner_active_clients: {
+        Args: { p_partner_id: string }
+        Returns: number
+      }
       current_account_owner: { Args: never; Returns: string }
       current_account_role: { Args: never; Returns: string }
       decrement_blog_post_like: {
@@ -11422,6 +11426,10 @@ export type Database = {
         Returns: boolean
       }
       purge_operational_logs: { Args: never; Returns: Json }
+      recalc_partner_level: {
+        Args: { p_partner_id: string; p_reason?: string }
+        Returns: Database["public"]["Enums"]["partner_level"]
+      }
       recompute_meta_campaign_cost: {
         Args: { p_campaign_id: string }
         Returns: undefined

@@ -16,13 +16,13 @@ const logStep = (step: string, details?: unknown) => {
 
 const PLAN_NAMES: Record<string, string> = {
   start: "Wiize Start",
-  growth: "Wiize Growth",
+  growth: "Wiize Growth IA",
   scale: "Wiize Scale",
 };
 
 const PLAN_PRICES_CENTS: Record<string, number> = {
-  start: 29700,
-  growth: 69600,
+  start: 19600,
+  growth: 39600,
   scale: 89700,
 };
 
