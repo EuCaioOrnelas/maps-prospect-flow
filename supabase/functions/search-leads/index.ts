@@ -569,81 +569,83 @@ serve(async (req) => {
     const validCount = leads.length;
     const invalidCount = totalWithPhone - allValidLeads.length;
 
-    // Update user's opportunity count (each lead = 1 opportunity)
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ searches_used: profile.searches_used + leads.length })
-      .eq('id', user.id);
+    if (!internalMode) {
+      // Update user's opportunity count (each lead = 1 opportunity)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ searches_used: profile.searches_used + leads.length })
+        .eq('id', user.id);
 
-    if (updateError) {
-      console.error('Error updating opportunity count:', updateError);
-    }
-
-    // Save leads to the leads table with enriched data
-    const leadsToInsert = leads.map(lead => ({
-      user_id: user.id,
-      company_name: lead.name !== '-' ? lead.name : null,
-      phone: lead.phone,
-      category: lead.category !== '-' ? lead.category : null,
-      city: lead.city !== '-' ? lead.city : null,
-      website: lead.website !== '-' ? lead.website : null,
-      google_maps_link: lead.mapsLink !== '-' ? lead.mapsLink : null,
-      address: lead.address !== '-' ? lead.address : null,
-      rating: lead.rating || null,
-      review_count: lead.reviewCount || null,
-      origin: 'oportunidades',
-      prospected_at: new Date().toISOString(),
-    }));
-
-    // Use upsert to avoid duplicate phone errors
-    if (leadsToInsert.length > 0) {
-      const { error: insertError } = await supabase
-        .from('leads')
-        .upsert(leadsToInsert, { 
-          onConflict: 'user_id,phone',
-          ignoreDuplicates: true 
-        });
-      
-      if (insertError) {
-        console.error('Error saving leads to table:', insertError);
-      } else {
-        console.log(`Saved ${leadsToInsert.length} leads to leads table`);
+      if (updateError) {
+        console.error('Error updating opportunity count:', updateError);
       }
-    }
 
-    // Save search to history with leads data
-    const { error: historyError } = await supabase
-      .from('search_history')
-      .insert({
+      // Save leads to the leads table with enriched data
+      const leadsToInsert = leads.map(lead => ({
         user_id: user.id,
-        keyword,
-        location,
-        results_count: leads.length,
-        leads: leads, // Store the leads for future retrieval
-      });
+        company_name: lead.name !== '-' ? lead.name : null,
+        phone: lead.phone,
+        category: lead.category !== '-' ? lead.category : null,
+        city: lead.city !== '-' ? lead.city : null,
+        website: lead.website !== '-' ? lead.website : null,
+        google_maps_link: lead.mapsLink !== '-' ? lead.mapsLink : null,
+        address: lead.address !== '-' ? lead.address : null,
+        rating: lead.rating || null,
+        review_count: lead.reviewCount || null,
+        origin: 'oportunidades',
+        prospected_at: new Date().toISOString(),
+      }));
 
-    if (historyError) {
-      console.error('Error saving search history:', historyError);
-    }
-
-    // Delete oldest searches if user has more than 50
-    const { data: historyCount } = await supabase
-      .from('search_history')
-      .select('id, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (historyCount && historyCount.length > 50) {
-      const idsToDelete = historyCount.slice(50).map(h => h.id);
-      console.log(`Deleting ${idsToDelete.length} old search history entries`);
+      // Use upsert to avoid duplicate phone errors
+      if (leadsToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from('leads')
+          .upsert(leadsToInsert, { 
+            onConflict: 'user_id,phone',
+            ignoreDuplicates: true 
+          });
       
-      const { error: deleteError } = await supabase
-        .from('search_history')
-        .delete()
-        .in('id', idsToDelete);
+        if (insertError) {
+          console.error('Error saving leads to table:', insertError);
+        } else {
+          console.log(`Saved ${leadsToInsert.length} leads to leads table`);
+        }
+      }
 
-      if (deleteError) {
-        console.error('Error deleting old search history:', deleteError);
+      // Save search to history with leads data
+      const { error: historyError } = await supabase
+        .from('search_history')
+        .insert({
+          user_id: user.id,
+          keyword,
+          location,
+          results_count: leads.length,
+          leads: leads, // Store the leads for future retrieval
+        });
+
+      if (historyError) {
+        console.error('Error saving search history:', historyError);
+      }
+
+      // Delete oldest searches if user has more than 50
+      const { data: historyCount } = await supabase
+        .from('search_history')
+        .select('id, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (historyCount && historyCount.length > 50) {
+        const idsToDelete = historyCount.slice(50).map(h => h.id);
+        console.log(`Deleting ${idsToDelete.length} old search history entries`);
+      
+        const { error: deleteError } = await supabase
+          .from('search_history')
+          .delete()
+          .in('id', idsToDelete);
+
+        if (deleteError) {
+          console.error('Error deleting old search history:', deleteError);
+        }
       }
     }
 
