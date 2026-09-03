@@ -10952,6 +10952,36 @@ export type Database = {
         }
         Relationships: []
       }
+      wiize_api_notification_prefs: {
+        Row: {
+          created_at: string
+          low_balance: boolean
+          low_balance_threshold: number
+          monthly_report: boolean
+          request_errors: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          low_balance?: boolean
+          low_balance_threshold?: number
+          monthly_report?: boolean
+          request_errors?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          low_balance?: boolean
+          low_balance_threshold?: number
+          monthly_report?: boolean
+          request_errors?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wiize_api_profiles: {
         Row: {
           city: string | null
