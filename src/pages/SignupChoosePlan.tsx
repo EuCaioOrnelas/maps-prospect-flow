@@ -290,13 +290,13 @@ export default function SignupChoosePlan() {
                       <span className="text-sm font-medium text-foreground">hoje</span>
                     </div>
                     <div className="mt-1.5 min-h-[2.9rem] flex flex-col justify-start gap-0.5">
-                      <p className="text-sm font-medium text-foreground leading-snug">
+                      <p className="text-sm font-medium text-muted-foreground leading-snug">
                         {plan.usageLabel}
                       </p>
                       <p
                         className={cn(
                           "text-[13px] font-medium leading-snug",
-                          "prospectionLabel" in plan && plan.prospectionLabel ? "text-foreground/80" : "invisible",
+                          "prospectionLabel" in plan && plan.prospectionLabel ? "text-muted-foreground/80" : "invisible",
                         )}
                         aria-hidden={!("prospectionLabel" in plan && plan.prospectionLabel)}
                       >
