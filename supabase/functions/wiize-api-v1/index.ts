@@ -492,6 +492,10 @@ serve(async (req) => {
     if (!reserve.ok) {
       const code = reserve.code === "ACCOUNT_SUSPENDED" ? "ACCOUNT_SUSPENDED" : "INSUFFICIENT_BALANCE";
       const status = code === "ACCOUNT_SUSPENDED" ? 403 : 402;
+      if (code === "INSUFFICIENT_BALANCE") {
+        await registerAbuse(userId, key.id, ip, "insufficient_balance", { endpoint: path });
+      }
+
       await logRequest({
         user_id: userId, api_key_id: key.id, request_id: requestId, endpoint: path,
         environment: key.environment, status_code: status, error_code: code,
