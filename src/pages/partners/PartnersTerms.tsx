@@ -205,7 +205,7 @@ export default function PartnersTerms() {
             A comissão é calculada sobre o valor líquido efetivamente pago pelo cliente indicado
             (plano + order bumps − descontos − impostos retidos pela operadora de pagamento) e segue
             a estrutura de três níveis abaixo, vigente a partir de 09/06/2026. A comissão
-            <strong> máxima do programa é limitada a 20%</strong>.
+            <strong> máxima do programa é limitada a 15%</strong>.
           </p>
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm">
@@ -218,8 +218,8 @@ export default function PartnersTerms() {
               </thead>
               <tbody className="text-foreground/90">
                 <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Select</td><td className="px-4 py-2.5">10%</td><td className="px-4 py-2.5 text-muted-foreground">0 a 99 clientes ativos</td></tr>
-                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Signature</td><td className="px-4 py-2.5">15%</td><td className="px-4 py-2.5 text-muted-foreground">100 a 249 clientes ativos</td></tr>
-                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Prime</td><td className="px-4 py-2.5">20%</td><td className="px-4 py-2.5 text-muted-foreground">A partir de 250 clientes ativos</td></tr>
+                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Signature</td><td className="px-4 py-2.5">12%</td><td className="px-4 py-2.5 text-muted-foreground">100 a 249 clientes ativos</td></tr>
+                <tr className="border-t border-border"><td className="px-4 py-2.5 font-medium">Prime</td><td className="px-4 py-2.5">15%</td><td className="px-4 py-2.5 text-muted-foreground">A partir de 250 clientes ativos</td></tr>
               </tbody>
             </table>
           </div>
