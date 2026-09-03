@@ -487,10 +487,15 @@ export const PricingSection = () => {
  </span>
  <span className="text-[10.5px] sm:text-sm font-medium text-muted-foreground">/ mês</span>
  </div>
- <p className="text-primary mt-1.5 sm:mt-2 text-[10.5px] sm:text-sm font-medium">
- {plan.usageLabel}
- </p>
- </div>
+  <div className="mt-1.5 sm:mt-2 min-h-[2.6rem] sm:min-h-[2.9rem] flex flex-col justify-start gap-0.5">
+  <p className="text-primary text-[10.5px] sm:text-sm font-medium leading-snug">
+  {plan.usageLabel}
+  </p>
+  <p className={`text-[10px] sm:text-[13px] font-medium leading-snug ${('prospectionLabel' in plan && plan.prospectionLabel) ? 'text-foreground/80' : 'invisible'}`} aria-hidden={!('prospectionLabel' in plan && plan.prospectionLabel)}>
+  {('prospectionLabel' in plan && plan.prospectionLabel) ? plan.prospectionLabel : 'placeholder'}
+  </p>
+  </div>
+  </div>
 
  {expanded && (
  <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8 flex-grow">
@@ -569,10 +574,15 @@ export const PricingSection = () => {
  Sob medida
  </span>
  </div>
- <p className="text-primary mt-1.5 sm:mt-2 text-[10.5px] sm:text-sm font-medium">
- Oportunidades sob demanda
- </p>
- </div>
+  <div className="mt-1.5 sm:mt-2 min-h-[2.6rem] sm:min-h-[2.9rem] flex flex-col justify-start gap-0.5">
+  <p className="text-primary text-[10.5px] sm:text-sm font-medium leading-snug">
+  Oportunidades sob demanda
+  </p>
+  <p className="text-[10px] sm:text-[13px] font-medium leading-snug text-foreground/80">
+  Prospecção com IA sob medida
+  </p>
+  </div>
+  </div>
 
  {expanded && (
  <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8 flex-grow">
