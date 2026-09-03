@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader, SectionCard } from "@/components/wiize-api/WiizeApiUI";
+import { TwoFactorPanel } from "@/components/security/TwoFactorPanel";
 import { mockSecurityActivity, mockSessions } from "@/data/wiizeApiMocks";
 
 export default function ApiSettings() {
@@ -29,23 +30,15 @@ export default function ApiSettings() {
       <PageHeader title="Settings" description="Segurança, sessões, webhooks e notificações." />
 
       <SectionCard title="Segurança" description="Proteja o acesso à sua conta de infraestrutura">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-              <ShieldCheck size={16} className="text-primary" strokeWidth={1.75} />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Autenticação em duas etapas</p>
-              <p className="text-xs text-muted-foreground">Exigir código do aplicativo autenticador a cada acesso.</p>
-            </div>
-          </div>
-          <Badge className="bg-primary/10 text-[10px] text-primary hover:bg-primary/10">Ativado</Badge>
+        <div className="rounded-lg border border-border/70 p-4">
+          <TwoFactorPanel />
         </div>
 
         <Button variant="outline" size="sm" className="mt-4" onClick={demo}>
           Alterar senha
         </Button>
       </SectionCard>
+
 
       <SectionCard title="Sessões ativas" description="Dispositivos com acesso à sua conta">
         <ul className="space-y-3">

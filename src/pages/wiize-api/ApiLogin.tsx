@@ -1,25 +1,76 @@
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, Lock, ArrowLeft } from "lucide-react";
+import { Loader2, Lock, ArrowLeft, ArrowRight, Check, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ShaderBackground } from "@/components/ui/warmth-ripple";
+import { PasswordField, isStrongPassword } from "@/components/wiize-api/PasswordField";
+import { maskCEP, maskCNPJ, maskCPF, maskPhone, onlyDigits, BR_STATES, isValidCNPJ, isValidCPF } from "@/lib/brMasks";
+import { cn } from "@/lib/utils";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 
 type Mode = "login" | "signup";
+
+/** Container que anima a altura conforme o conteúdo muda (evita "pulos" no toggle). */
+function AutoHeight({ children, deps }: { children: React.ReactNode; deps: unknown[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setHeight(el.scrollHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+
+  return (
+    <div
+      style={{ height: height ? `${height}px` : undefined }}
+      className="overflow-hidden transition-[height] duration-300 ease-out"
+    >
+      <div ref={ref}>{children}</div>
+    </div>
+  );
+}
 
 export default function ApiLogin() {
   const [params, setParams] = useSearchParams();
   const initialMode: Mode = params.get("modo") === "cadastro" ? "signup" : "login";
   const [mode, setMode] = useState<Mode>(initialMode);
+  const [step, setStep] = useState<1 | 2>(1);
+
+  // Passo 1
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // Passo 2
+  const [docType, setDocType] = useState<"cnpj" | "cpf">("cnpj");
+  const [docNumber, setDocNumber] = useState("");
+  const [phone, setPhone] = useState("");
+  const [cep, setCep] = useState("");
+  const [street, setStreet] = useState("");
+  const [streetNumber, setStreetNumber] = useState("");
+  const [complement, setComplement] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+  const [city, setCity] = useState("");
+  const [uf, setUf] = useState("");
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepError, setCepError] = useState("");
+  const [cepOk, setCepOk] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -28,47 +79,123 @@ export default function ApiLogin() {
 
   const switchMode = (next: Mode) => {
     setMode(next);
+    setStep(1);
     const p = new URLSearchParams(params);
     if (next === "signup") p.set("modo", "cadastro");
     else p.delete("modo");
     setParams(p, { replace: true });
   };
 
+  // ViaCEP — mesmo mecanismo do checkout
+  useEffect(() => {
+    const clean = onlyDigits(cep);
+    if (clean.length !== 8) {
+      setCepOk(false);
+      setCepError("");
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setCepLoading(true);
+      setCepError("");
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+        const data = await res.json();
+        if (cancelled) return;
+        if (data.erro) {
+          setCepOk(false);
+          setCepError("CEP não encontrado");
+        } else {
+          setCepOk(true);
+          setStreet(data.logradouro || "");
+          setNeighborhood(data.bairro || "");
+          setCity(data.localidade || "");
+          setUf(data.uf || "");
+        }
+      } catch {
+        if (!cancelled) {
+          setCepOk(false);
+          setCepError("Erro ao validar CEP");
+        }
+      } finally {
+        if (!cancelled) setCepLoading(false);
+      }
+    }, 400);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [cep]);
+
+  const step1Valid =
+    name.trim().length >= 3 &&
+    company.trim().length >= 2 &&
+    /\S+@\S+\.\S+/.test(email.trim()) &&
+    isStrongPassword(password);
+
+  const docValid = docType === "cnpj" ? isValidCNPJ(docNumber) : isValidCPF(docNumber);
+  const step2Valid =
+    docValid &&
+    onlyDigits(phone).length >= 10 &&
+    cepOk &&
+    street.trim().length > 2 &&
+    streetNumber.trim().length > 0 &&
+    city.trim().length > 1 &&
+    uf.length === 2;
+
+  const doSignup = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/api/login`,
+        data: {
+          full_name: name.trim(),
+          company_name: company.trim(),
+          wiize_product: "wiize_api",
+          api_doc_type: docType,
+          api_doc_number: onlyDigits(docNumber),
+          api_phone: onlyDigits(phone),
+          api_postal_code: onlyDigits(cep),
+          api_street: street.trim(),
+          api_street_number: streetNumber.trim(),
+          api_complement: complement.trim(),
+          api_neighborhood: neighborhood.trim(),
+          api_city: city.trim(),
+          api_state: uf,
+        },
+      },
+    });
+    setLoading(false);
+    if (error) {
+      toast({
+        title: "Não foi possível criar a conta",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Conta criada",
+      description: "Confirme seu e-mail para ativar o acesso ao Wiize API.",
+    });
+    switchMode("login");
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
-    setLoading(true);
 
     if (isSignup) {
-      const { error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/api/login`,
-          data: {
-            full_name: name.trim(),
-            company_name: company.trim(),
-            wiize_product: "wiize_api",
-          },
-        },
-      });
-      setLoading(false);
-      if (error) {
-        toast({
-          title: "Não foi possível criar a conta",
-          description: error.message,
-          variant: "destructive",
-        });
+      if (step === 1) {
+        if (!step1Valid) return;
+        setStep(2);
         return;
       }
-      toast({
-        title: "Conta criada",
-        description: "Confirme seu e-mail para ativar o acesso ao Wiize API.",
-      });
-      switchMode("login");
+      if (!step2Valid) return;
+      await doSignup();
       return;
     }
 
+    setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
@@ -116,7 +243,7 @@ export default function ApiLogin() {
 
       {/* Formulário */}
       <div className="flex w-full items-center justify-center px-5 py-12 lg:w-1/2">
-        <div className="w-full max-w-[400px]">
+        <div className="w-full max-w-[430px]">
           <Link
             to="/api"
             className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -137,95 +264,287 @@ export default function ApiLogin() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isSignup
-              ? "Sem cartão de crédito. Gere sua API Key em minutos."
+              ? step === 1
+                ? "Sem cartão de crédito. Gere sua API Key em minutos."
+                : "Dados de faturamento para acelerar sua primeira compra."
               : "Acesse seu workspace, API Keys, créditos e uso."}
           </p>
 
-          {/* Toggle login / cadastro */}
-          <div className="mt-6 grid grid-cols-2 gap-1 rounded-xl border border-border bg-muted/50 p-1">
+          {/* Toggle login / cadastro com indicador deslizante */}
+          <div className="relative mt-6 grid grid-cols-2 gap-1 rounded-xl border border-border bg-muted/50 p-1">
+            <div
+              aria-hidden
+              className="absolute inset-y-1 w-[calc(50%-0.25rem)] rounded-lg bg-background shadow-sm transition-transform duration-300 ease-out"
+              style={{ transform: `translateX(${isSignup ? "calc(100% + 0.25rem)" : "0px"})`, left: "0.25rem" }}
+            />
             {(["login", "signup"] as Mode[]).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => switchMode(m)}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  mode === m
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={cn(
+                  "relative z-10 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200",
+                  mode === m ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
               >
                 {m === "login" ? "Entrar" : "Cadastrar-se"}
               </button>
             ))}
           </div>
 
-          <form onSubmit={submit} className="mt-6 space-y-4">
-            {isSignup && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="api-name">Nome completo</Label>
-                  <Input
-                    id="api-name"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Seu nome"
-                  />
+          {/* Indicador de etapas */}
+          {isSignup && (
+            <div className="mt-5 flex items-center gap-3">
+              {[1, 2].map((s) => (
+                <div key={s} className="flex flex-1 items-center gap-2">
+                  <span
+                    className={cn(
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold transition-colors duration-300",
+                      step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {step > s ? <Check size={13} strokeWidth={3} /> : s}
+                  </span>
+                  <span className={cn("text-xs transition-colors", step >= s ? "text-foreground" : "text-muted-foreground")}>
+                    {s === 1 ? "Sua conta" : "Endereço"}
+                  </span>
+                  {s === 1 && (
+                    <span className="h-px flex-1 bg-border">
+                      <span
+                        className="block h-px bg-primary transition-all duration-300"
+                        style={{ width: step > 1 ? "100%" : "0%" }}
+                      />
+                    </span>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="api-company">Empresa</Label>
-                  <Input
-                    id="api-company"
-                    required
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    placeholder="Nome da empresa"
-                  />
-                </div>
-              </>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="api-email">E-mail corporativo</Label>
-              <Input
-                id="api-email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="voce@empresa.com.br"
-              />
+              ))}
             </div>
+          )}
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="api-password">Senha</Label>
-                {!isSignup && (
-                  <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                    Esqueci minha senha
-                  </Link>
+          <form onSubmit={submit} className="mt-6">
+            <AutoHeight deps={[mode, step]}>
+              <div key={`${mode}-${step}`} className="animate-fade-in space-y-4 pb-1">
+                {isSignup && step === 1 && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="api-name">Nome completo</Label>
+                      <Input
+                        id="api-name"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Seu nome"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="api-company">Empresa</Label>
+                      <Input
+                        id="api-company"
+                        required
+                        value={company}
+                        onChange={(e) => setCompany(e.target.value)}
+                        placeholder="Nome da empresa"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {(!isSignup || step === 1) && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="api-email">E-mail corporativo</Label>
+                      <Input
+                        id="api-email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="voce@empresa.com.br"
+                      />
+                    </div>
+
+                    <PasswordField
+                      id="api-password"
+                      value={password}
+                      onChange={setPassword}
+                      autoComplete={isSignup ? "new-password" : "current-password"}
+                      showStrength={isSignup}
+                      rightSlot={
+                        !isSignup ? (
+                          <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                            Esqueci minha senha
+                          </Link>
+                        ) : null
+                      }
+                    />
+                  </>
+                )}
+
+                {isSignup && step === 2 && (
+                  <>
+                    <div className="grid grid-cols-[110px_1fr] gap-3">
+                      <div className="space-y-2">
+                        <Label>Documento</Label>
+                        <Select value={docType} onValueChange={(v) => { setDocType(v as "cnpj" | "cpf"); setDocNumber(""); }}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-popover">
+                            <SelectItem value="cnpj">CNPJ</SelectItem>
+                            <SelectItem value="cpf">CPF</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="api-doc">{docType === "cnpj" ? "CNPJ da empresa" : "CPF"}</Label>
+                        <Input
+                          id="api-doc"
+                          required
+                          inputMode="numeric"
+                          value={docNumber}
+                          onChange={(e) => setDocNumber(docType === "cnpj" ? maskCNPJ(e.target.value) : maskCPF(e.target.value))}
+                          placeholder={docType === "cnpj" ? "00.000.000/0000-00" : "000.000.000-00"}
+                          className={cn(docNumber && !docValid && "border-destructive")}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="api-phone">Telefone</Label>
+                      <Input
+                        id="api-phone"
+                        required
+                        inputMode="numeric"
+                        value={phone}
+                        onChange={(e) => setPhone(maskPhone(e.target.value))}
+                        placeholder="(11) 99999-9999"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-[150px_1fr] gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="api-cep">CEP</Label>
+                        <div className="relative">
+                          <Input
+                            id="api-cep"
+                            required
+                            inputMode="numeric"
+                            value={cep}
+                            onChange={(e) => setCep(maskCEP(e.target.value))}
+                            placeholder="00000-000"
+                            className={cn("pr-9", cepError && "border-destructive")}
+                          />
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                            {cepLoading ? (
+                              <Loader2 size={14} className="animate-spin text-muted-foreground" />
+                            ) : cepOk ? (
+                              <Check size={14} className="text-primary" />
+                            ) : (
+                              <MapPin size={14} className="text-muted-foreground" />
+                            )}
+                          </span>
+                        </div>
+                        {cepError && <p className="text-[11px] text-destructive">{cepError}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="api-street">Endereço</Label>
+                        <Input
+                          id="api-street"
+                          required
+                          value={street}
+                          onChange={(e) => setStreet(e.target.value)}
+                          placeholder="Rua, avenida..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="api-number">Número</Label>
+                        <Input
+                          id="api-number"
+                          required
+                          value={streetNumber}
+                          onChange={(e) => setStreetNumber(e.target.value)}
+                          placeholder="123"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="api-complement">Complemento</Label>
+                        <Input
+                          id="api-complement"
+                          value={complement}
+                          onChange={(e) => setComplement(e.target.value)}
+                          placeholder="Sala, andar (opcional)"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="api-neighborhood">Bairro</Label>
+                      <Input
+                        id="api-neighborhood"
+                        value={neighborhood}
+                        onChange={(e) => setNeighborhood(e.target.value)}
+                        placeholder="Bairro"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-[1fr_110px] gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="api-city">Cidade</Label>
+                        <Input
+                          id="api-city"
+                          required
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          placeholder="Cidade"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>UF</Label>
+                        <Select value={uf} onValueChange={setUf}>
+                          <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
+                          <SelectContent className="max-h-64 bg-popover">
+                            {BR_STATES.map((s) => (
+                              <SelectItem key={s} value={s}>{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <p className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground">
+                      Usamos esses dados apenas para emissão fiscal e para agilizar suas compras de créditos
+                      no PIX ou cartão, sem pedir tudo de novo.
+                    </p>
+                  </>
                 )}
               </div>
-              <Input
-                id="api-password"
-                type="password"
-                autoComplete={isSignup ? "new-password" : "current-password"}
-                required
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-              />
-              {isSignup && (
-                <p className="text-xs text-muted-foreground">Mínimo de 8 caracteres.</p>
+            </AutoHeight>
+
+            <div className="mt-5 space-y-2">
+              <Button
+                type="submit"
+                className="w-full gap-2"
+                disabled={loading || (isSignup && (step === 1 ? !step1Valid : !step2Valid))}
+              >
+                {loading && <Loader2 size={16} className="animate-spin" />}
+                {isSignup ? (step === 1 ? "Continuar" : "Criar conta grátis") : "Entrar"}
+                {isSignup && step === 1 && !loading && <ArrowRight size={16} />}
+              </Button>
+
+              {isSignup && step === 2 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full gap-2 text-muted-foreground"
+                  onClick={() => setStep(1)}
+                  disabled={loading}
+                >
+                  <ArrowLeft size={16} /> Voltar
+                </Button>
               )}
             </div>
-
-            <Button type="submit" className="w-full gap-2" disabled={loading}>
-              {loading && <Loader2 size={16} className="animate-spin" />}
-              {isSignup ? "Criar conta grátis" : "Entrar"}
-            </Button>
           </form>
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
