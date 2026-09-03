@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShaderBackground } from "@/components/ui/warmth-ripple";
-import { ProductStageShowcase } from "@/components/produtos/ProductStageShowcase";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 
 const sample = `curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
@@ -101,26 +100,22 @@ export const ApiHero = () => {
               </a>
             </div>
 
-            <div className="mx-auto max-w-xl text-left xl:mx-0">
-              <CodeBlock code={sample} lang="bash" filename="quickstart.sh" />
+            <div className="mx-auto max-w-xl text-left xl:hidden">
+              <CodeBlock code={sample} lang="bash" filename="quickstart.sh" theme="light" />
             </div>
           </div>
 
-          <div className="hidden w-full animate-slide-up xl:flex xl:justify-end" style={{ animationDelay: "0.5s" }}>
-            <div className="relative w-full max-w-[30rem]">
-              <div className="absolute -inset-4 rounded-3xl bg-primary/8 soft-glow" />
-              <div className="relative overflow-hidden rounded-panel border border-border/60 bg-card/60">
-                <div className="relative h-[26rem] overflow-hidden bg-gradient-to-br from-emerald-500/35 via-teal-400/18 to-lime-400/30">
-                  <div className="pointer-events-none absolute -left-10 top-6 h-32 w-32 rounded-full bg-emerald-400/40 blur-3xl" aria-hidden />
-                  <div className="pointer-events-none absolute -right-8 bottom-10 h-28 w-28 rounded-full bg-teal-400/35 blur-3xl" aria-hidden />
-                  <div className="pointer-events-none absolute inset-x-0 top-7 flex justify-center px-6">
-                    <div className="w-full max-w-[26rem] origin-top scale-[0.94]">
-                      <ProductStageShowcase visual="prospeccao" />
-                    </div>
-                  </div>
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card via-card/70 to-transparent" />
-                </div>
-              </div>
+          <div className="relative z-10 hidden w-full animate-slide-up xl:flex xl:justify-end" style={{ animationDelay: "0.5s" }}>
+            <div className="relative w-full max-w-[34rem] text-left">
+              <div className="absolute -inset-5 rounded-3xl bg-primary/8 soft-glow" aria-hidden />
+              <CodeBlock
+                code={sample}
+                lang="bash"
+                filename="quickstart.sh"
+                theme="light"
+                showLineNumbers
+                className="relative shadow-[0_24px_60px_-30px_hsl(158_60%_25%/0.35)]"
+              />
             </div>
           </div>
         </div>

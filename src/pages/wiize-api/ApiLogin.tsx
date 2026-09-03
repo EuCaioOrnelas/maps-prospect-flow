@@ -106,8 +106,11 @@ export default function ApiLogin() {
       </Helmet>
 
       {/* Painel esquerdo com plasma verde */}
-      <div className="relative hidden w-1/2 overflow-hidden border-r border-border bg-card lg:block">
-        <div className="absolute inset-0 opacity-70">
+      <div
+        className="relative hidden w-1/2 overflow-hidden border-r border-primary/20 lg:block"
+        style={{ backgroundColor: "hsl(var(--primary))" }}
+      >
+        <div className="absolute inset-0 opacity-40 mix-blend-screen">
           <ShaderBackground className="h-full w-full" />
         </div>
         <div
@@ -115,35 +118,36 @@ export default function ApiLogin() {
           aria-hidden
           style={{
             background:
-              "linear-gradient(180deg, hsl(var(--card) / 0.72) 0%, hsl(var(--card) / 0.58) 55%, hsl(var(--card) / 0.8) 100%)",
+              "radial-gradient(ellipse at 25% 15%, hsl(0 0% 100% / 0.18) 0%, transparent 55%), linear-gradient(180deg, hsl(158 60% 26% / 0.25) 0%, hsl(158 65% 20% / 0.45) 100%)",
           }}
         />
+
         <div className="relative z-10 flex h-full flex-col justify-between p-12">
           <Link to="/api" className="flex items-center gap-3">
             <img src={wiizeLogo} alt="Wiize" className="h-9 w-9 object-contain" />
             <div className="leading-tight">
-              <div className="text-base font-bold tracking-tight">Wiize</div>
-              <div className="-mt-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <div className="text-base font-bold tracking-tight text-white">Wiize</div>
+              <div className="-mt-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/60">
                 API
               </div>
             </div>
           </Link>
 
           <div className="space-y-8">
-            <h2 className="max-w-md font-display text-3xl font-semibold leading-tight tracking-tight">
+            <h2 className="max-w-md font-display text-3xl font-semibold leading-tight tracking-tight text-white">
               Inteligência de prospecção para o seu sistema
             </h2>
-            <ul className="space-y-4 text-sm text-foreground/80">
+            <ul className="space-y-4 text-sm text-white/85">
               {highlights.map(({ icon: Icon, text }) => (
                 <li key={text} className="flex items-start gap-3">
-                  <Icon size={16} className="mt-0.5 text-primary" strokeWidth={1.75} />
+                  <Icon size={16} className="mt-0.5 text-white" strokeWidth={1.75} />
                   {text}
                 </li>
               ))}
             </ul>
           </div>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-white/60">
             © {new Date().getFullYear()} Wiize — Infraestrutura de inteligência comercial
           </p>
         </div>
