@@ -281,10 +281,10 @@ export default function ApiLanding() {
             <Link to="/api/login?modo=cadastro" className="hover:text-foreground">
               Criar conta
             </Link>
-            <Link to="/privacidade" className="hover:text-foreground">
+            <Link to="/privacy" className="hover:text-foreground">
               Política de Privacidade
             </Link>
-            <Link to="/termos" className="hover:text-foreground">
+            <Link to="/terms" className="hover:text-foreground">
               Termos
             </Link>
           </div>
