@@ -10952,6 +10952,78 @@ export type Database = {
         }
         Relationships: []
       }
+      wiize_api_keys: {
+        Row: {
+          api_id: string
+          created_at: string
+          environment: string
+          id: string
+          last_four: string | null
+          last_used_at: string | null
+          name: string
+          permissions: string[]
+          prefix: string
+          rate_limit_per_minute: number | null
+          revoked_at: string | null
+          secret_hash: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          api_id?: string
+          created_at?: string
+          environment?: string
+          id?: string
+          last_four?: string | null
+          last_used_at?: string | null
+          name: string
+          permissions?: string[]
+          prefix: string
+          rate_limit_per_minute?: number | null
+          revoked_at?: string | null
+          secret_hash: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          api_id?: string
+          created_at?: string
+          environment?: string
+          id?: string
+          last_four?: string | null
+          last_used_at?: string | null
+          name?: string
+          permissions?: string[]
+          prefix?: string
+          rate_limit_per_minute?: number | null
+          revoked_at?: string | null
+          secret_hash?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wiize_api_limits: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
       wiize_api_notification_prefs: {
         Row: {
           created_at: string
@@ -10979,6 +11051,33 @@ export type Database = {
           request_errors?: boolean
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      wiize_api_pricing: {
+        Row: {
+          active: boolean
+          api_id: string
+          label: string
+          operation: string
+          tokens: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          api_id?: string
+          label: string
+          operation: string
+          tokens: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          api_id?: string
+          label?: string
+          operation?: string
+          tokens?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -11031,6 +11130,244 @@ export type Database = {
           state?: string | null
           street?: string | null
           street_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wiize_api_requests: {
+        Row: {
+          api_id: string
+          api_key_id: string | null
+          created_at: string
+          duration_ms: number | null
+          endpoint: string
+          environment: string
+          error_code: string | null
+          id: string
+          idempotency_key: string | null
+          ip_address: string | null
+          metadata: Json
+          method: string
+          request_id: string
+          status_code: number
+          tokens_charged: number
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          api_id?: string
+          api_key_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          endpoint: string
+          environment?: string
+          error_code?: string | null
+          id?: string
+          idempotency_key?: string | null
+          ip_address?: string | null
+          metadata?: Json
+          method?: string
+          request_id: string
+          status_code: number
+          tokens_charged?: number
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          api_id?: string
+          api_key_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          endpoint?: string
+          environment?: string
+          error_code?: string | null
+          id?: string
+          idempotency_key?: string | null
+          ip_address?: string | null
+          metadata?: Json
+          method?: string
+          request_id?: string
+          status_code?: number
+          tokens_charged?: number
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiize_api_requests_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "wiize_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wiize_api_reservations: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          operation: string
+          request_id: string | null
+          settled_at: string | null
+          status: string
+          tokens: number
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          operation: string
+          request_id?: string | null
+          settled_at?: string | null
+          status?: string
+          tokens: number
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          operation?: string
+          request_id?: string | null
+          settled_at?: string | null
+          status?: string
+          tokens?: number
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiize_api_reservations_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "wiize_api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiize_api_reservations_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wiize_api_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wiize_api_wallet_transactions: {
+        Row: {
+          amount_brl: number
+          balance_after: number
+          balance_before: number
+          created_at: string
+          description: string | null
+          id: string
+          idempotency_key: string | null
+          metadata: Json
+          reference_id: string | null
+          reference_type: string | null
+          status: string
+          tokens: number
+          type: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          amount_brl?: number
+          balance_after: number
+          balance_before: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          idempotency_key?: string | null
+          metadata?: Json
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string
+          tokens: number
+          type: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          amount_brl?: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          idempotency_key?: string | null
+          metadata?: Json
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string
+          tokens?: number
+          type?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiize_api_wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wiize_api_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wiize_api_wallets: {
+        Row: {
+          auto_topup_amount_brl: number
+          auto_topup_enabled: boolean
+          auto_topup_threshold_tokens: number
+          balance_tokens: number
+          created_at: string
+          id: string
+          lifetime_credited_tokens: number
+          lifetime_spent_tokens: number
+          low_balance_notified_at: string | null
+          low_balance_threshold_tokens: number
+          reserved_tokens: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_topup_amount_brl?: number
+          auto_topup_enabled?: boolean
+          auto_topup_threshold_tokens?: number
+          balance_tokens?: number
+          created_at?: string
+          id?: string
+          lifetime_credited_tokens?: number
+          lifetime_spent_tokens?: number
+          low_balance_notified_at?: string | null
+          low_balance_threshold_tokens?: number
+          reserved_tokens?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_topup_amount_brl?: number
+          auto_topup_enabled?: boolean
+          auto_topup_threshold_tokens?: number
+          balance_tokens?: number
+          created_at?: string
+          id?: string
+          lifetime_credited_tokens?: number
+          lifetime_spent_tokens?: number
+          low_balance_notified_at?: string | null
+          low_balance_threshold_tokens?: number
+          reserved_tokens?: number
+          status?: string
           updated_at?: string
           user_id?: string
         }
@@ -11597,6 +11934,39 @@ export type Database = {
       verify_webhook_signature: {
         Args: { p_payload: string; p_secret_name: string; p_signature: string }
         Returns: boolean
+      }
+      wiize_api_commit_reservation: {
+        Args: { _reference_id: string; _reservation_id: string }
+        Returns: Json
+      }
+      wiize_api_credit_wallet: {
+        Args: {
+          _amount_brl: number
+          _description: string
+          _idempotency_key: string
+          _reference_id: string
+          _reference_type: string
+          _tokens: number
+          _type: string
+          _user_id: string
+        }
+        Returns: Json
+      }
+      wiize_api_ensure_wallet: { Args: { _user_id: string }; Returns: string }
+      wiize_api_expire_reservations: { Args: never; Returns: number }
+      wiize_api_release_reservation: {
+        Args: { _reservation_id: string }
+        Returns: Json
+      }
+      wiize_api_reserve_tokens: {
+        Args: {
+          _api_key_id: string
+          _operation: string
+          _request_id: string
+          _tokens: number
+          _user_id: string
+        }
+        Returns: Json
       }
     }
     Enums: {
