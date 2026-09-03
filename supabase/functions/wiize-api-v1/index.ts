@@ -51,7 +51,10 @@ async function getLimits() {
   const map: Record<string, number> = {};
   for (const row of data || []) map[(row as any).key] = Number((row as any).value);
   return {
+    burstPer10sKey: map.burst_per_10s_key ?? 20,
     ratePerMinuteKey: map.rate_per_minute_key ?? 60,
+    ratePerHourKey: map.rate_per_hour_key ?? 3000,
+    ratePerMinuteAccount: map.rate_per_minute_account ?? 300,
     ratePer10minAccount: map.rate_per_10min_account ?? 600,
     ratePerDayAccount: map.rate_per_day_account ?? 10000,
     maxBodyBytes: map.max_body_bytes ?? 32768,
@@ -69,20 +72,58 @@ async function getPrice(operation: string): Promise<number | null> {
   return Number((data as any).tokens);
 }
 
-async function rateLimit(identifier: string, endpoint: string, max: number, windowSeconds: number) {
-  const { data, error } = await admin.rpc("check_rate_limit", {
-    p_identifier: identifier,
-    p_endpoint: endpoint,
-    p_max_requests: max,
-    p_window_seconds: windowSeconds,
+type RateResult = { allowed: boolean; retryAfter: number; remaining: number; limit: number; resetAt: number };
+
+// Janela deslizante dedicada da API (não compartilha tabela com o app interno).
+async function rateCheck(bucket: string, limit: number, windowSeconds: number): Promise<RateResult> {
+  const { data, error } = await admin.rpc("wiize_api_rate_check", {
+    _bucket: bucket,
+    _limit: limit,
+    _window_seconds: windowSeconds,
   });
-  if (error) return { allowed: true, retryAfter: 0, remaining: max };
+  if (error) {
+    console.error("[wiize-api-v1] rate_check falhou", error.message);
+    return { allowed: true, retryAfter: 0, remaining: limit, limit, resetAt: 0 };
+  }
   const d = (data || {}) as any;
   return {
     allowed: d.allowed !== false,
     retryAfter: Number(d.retry_after || windowSeconds),
-    remaining: Number(d.remaining ?? Math.max(max - 1, 0)),
+    remaining: Number(d.remaining ?? 0),
+    limit: Number(d.limit ?? limit),
+    resetAt: Number(d.reset_at || 0),
   };
+}
+
+async function checkBans(userId: string | null, apiKeyId: string | null, ip: string) {
+  const { data } = await admin.rpc("wiize_api_check_bans", {
+    _user_id: userId,
+    _api_key_id: apiKeyId,
+    _ip: ip,
+  });
+  return (data || { banned: false }) as any;
+}
+
+async function registerAbuse(
+  userId: string | null,
+  apiKeyId: string | null,
+  ip: string,
+  kind: string,
+  details: Json = {},
+) {
+  try {
+    const { data } = await admin.rpc("wiize_api_register_abuse", {
+      _user_id: userId,
+      _api_key_id: apiKeyId,
+      _ip: ip,
+      _kind: kind,
+      _details: details,
+    });
+    return (data || {}) as any;
+  } catch (e) {
+    console.error("[wiize-api-v1] abuse falhou", String(e));
+    return {};
+  }
 }
 
 async function logRequest(entry: Record<string, unknown>) {
@@ -92,6 +133,7 @@ async function logRequest(entry: Record<string, unknown>) {
     console.error("[wiize-api-v1] log falhou", String(e));
   }
 }
+
 
 // Remove qualquer campo interno/sensível antes de devolver ao cliente
 const FORBIDDEN_KEYS = /(prompt|system|api_key|apikey|token|secret|service_role|authorization|internal|user_id|owner_id)/i;
