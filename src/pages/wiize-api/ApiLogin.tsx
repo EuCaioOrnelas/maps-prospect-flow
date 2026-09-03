@@ -157,42 +157,68 @@ export default function ApiLogin() {
 
   const doSignup = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/api/login`,
-        data: {
-          full_name: name.trim(),
-          company_name: company.trim(),
-          wiize_product: "wiize_api",
-          api_doc_type: docType,
-          api_doc_number: onlyDigits(docNumber),
-          api_phone: onlyDigits(phone),
-          api_postal_code: onlyDigits(cep),
-          api_street: street.trim(),
-          api_street_number: streetNumber.trim(),
-          api_complement: complement.trim(),
-          api_neighborhood: neighborhood.trim(),
-          api_city: city.trim(),
-          api_state: uf,
-        },
-      },
-    });
-    setLoading(false);
-    if (error) {
+    try {
+      const { data, error } = await withTimeout(
+        supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/api/login`,
+            data: {
+              full_name: name.trim(),
+              company_name: company.trim(),
+              wiize_product: "wiize_api",
+              api_doc_type: docType,
+              api_doc_number: onlyDigits(docNumber),
+              api_phone: onlyDigits(phone),
+              api_postal_code: onlyDigits(cep),
+              api_street: street.trim(),
+              api_street_number: streetNumber.trim(),
+              api_complement: complement.trim(),
+              api_neighborhood: neighborhood.trim(),
+              api_city: city.trim(),
+              api_state: uf,
+            },
+          },
+        }),
+      );
+      if (error) throw error;
+
+      // Já veio sessão (auto confirm ligado): entra direto.
+      if (data.session) {
+        navigate("/api/dashboard", { replace: true });
+        return;
+      }
+      setAwaitingConfirm(email.trim());
+    } catch (err: any) {
       toast({
         title: "Não foi possível criar a conta",
-        description: error.message,
+        description: err?.message || "Tente novamente em instantes.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-    toast({
-      title: "Conta criada",
-      description: "Confirme seu e-mail para ativar o acesso ao Wiize API.",
-    });
-    switchMode("login");
+  };
+
+  const resendConfirmation = async () => {
+    if (!awaitingConfirm) return;
+    setResending(true);
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.resend({
+          type: "signup",
+          email: awaitingConfirm,
+          options: { emailRedirectTo: `${window.location.origin}/api/login` },
+        }),
+      );
+      if (error) throw error;
+      toast({ title: "E-mail reenviado", description: "Confira sua caixa de entrada e o spam." });
+    } catch (err: any) {
+      toast({ title: "Falha ao reenviar", description: err?.message, variant: "destructive" });
+    } finally {
+      setResending(false);
+    }
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -211,21 +237,49 @@ export default function ApiLogin() {
     }
 
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    setLoading(false);
-    if (error || !data.user) {
+    try {
+      const { data, error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email: email.trim(), password }),
+      );
+      if (error) throw error;
+      const user = data.user;
+      if (!user) throw new Error("Credenciais inválidas");
+
+      // E-mail ainda não confirmado: bloqueia e oferece reenvio.
+      if (!user.email_confirmed_at) {
+        await supabase.auth.signOut();
+        setAwaitingConfirm(email.trim());
+        return;
+      }
+
+      // Contas são separadas: Wiize API não aceita login da Wiize principal / Partners.
+      const meta = (user.user_metadata || {}) as Record<string, string>;
+      if (meta.wiize_product !== "wiize_api") {
+        await supabase.auth.signOut();
+        toast({
+          title: "Conta não pertence ao Wiize API",
+          description: "Crie uma conta Wiize API. O acesso é separado da Wiize principal e do Partners.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      navigate("/api/dashboard", { replace: true });
+    } catch (err: any) {
+      const msg = String(err?.message || "");
       toast({
         title: "Falha no login",
-        description: error?.message || "Credenciais inválidas",
+        description: /not confirmed/i.test(msg)
+          ? "Confirme seu e-mail antes de entrar."
+          : msg || "Credenciais inválidas",
         variant: "destructive",
       });
-      return;
+      if (/not confirmed/i.test(msg)) setAwaitingConfirm(email.trim());
+    } finally {
+      setLoading(false);
     }
-    navigate("/api/dashboard", { replace: true });
   };
+
 
   return (
     <div className="flex min-h-screen bg-background">
