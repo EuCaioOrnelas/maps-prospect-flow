@@ -9,3 +9,8 @@
 - [x] Add-on de número passa a incluir +1 usuário
 - [x] Section de Expansões Comerciais nas configurações (1 clique cartão / PIX recorrente Asaas)
 - [x] Ajustar e-mails de cobrança com os novos valores
+
+## Autenticação Wiize API
+- [x] Corrigir cadastro com e-mail já existente sem falsa confirmação
+- [x] Vincular acesso da API por perfil próprio e validar rotas protegidas
+- [x] Exibir erros de acesso inline e estabilizar login/logout

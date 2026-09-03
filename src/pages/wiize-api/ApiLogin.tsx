@@ -223,6 +223,7 @@ export default function ApiLogin() {
           10000,
         );
         if (loginError || !loginData.user) {
+          await supabase.auth.signOut({ scope: "local" });
           setAuthMessage("Este e-mail já está cadastrado. Entre com sua senha ou use “Esqueci minha senha”.");
           setMode("login");
           setStep(1);
@@ -307,6 +308,7 @@ export default function ApiLogin() {
       const access = await resolveWiizeApiAccess(user);
       if (access.error) throw access.error;
       if (!access.hasAccess) {
+        await supabase.auth.signOut({ scope: "local" });
         setAuthMessage("Este e-mail ainda não possui acesso à Wiize API. Crie sua conta grátis para continuar.");
         return;
       }
