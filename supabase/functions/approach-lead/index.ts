@@ -74,35 +74,54 @@ serve(async (req) => {
       });
     }
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
-    if (authErr || !user) {
-      return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+
+    // Modo interno (Wiize API V1): service role + id da conta API no header
+    const internalUserId = req.headers.get("x-wiize-api-user");
+    const internalMode = !!internalUserId && token === SUPABASE_SERVICE_ROLE_KEY;
+
+    let user: { id: string } | null = null;
+    if (internalMode) {
+      user = { id: internalUserId! };
+    } else {
+      const { data: { user: authUser }, error: authErr } = await supabase.auth.getUser(token);
+      if (authErr || !authUser) {
+        return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      user = authUser;
     }
 
     const body = await req.json();
     const { lead_id } = body;
 
-    if (!lead_id) {
-      return new Response(JSON.stringify({ error: "lead_id é obrigatório" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // No modo interno o lead chega inline no corpo (a conta API não tem CRM na Wiize)
+    let lead: any = null;
+    if (internalMode && body?.lead && typeof body.lead === "object") {
+      lead = body.lead;
+    } else {
+      if (!lead_id) {
+        return new Response(JSON.stringify({ error: "lead_id é obrigatório" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Fetch the lead
+      const { data: leadRow, error: leadErr } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("id", lead_id)
+        .eq("user_id", user.id)
+        .single();
+
+      if (leadErr || !leadRow) {
+        return new Response(JSON.stringify({ error: "Lead não encontrado" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      lead = leadRow;
     }
 
-    // Fetch the lead
-    const { data: lead, error: leadErr } = await supabase
-      .from("leads")
-      .select("*")
-      .eq("id", lead_id)
-      .eq("user_id", user.id)
-      .single();
-
-    if (leadErr || !lead) {
-      return new Response(JSON.stringify({ error: "Lead não encontrado" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     // Fetch the company profile for personalization
     const { data: companyProfile } = await supabase
@@ -279,27 +298,29 @@ Retorne APENAS JSON válido:
 
     const parsed = JSON.parse(content);
 
-    // Store the message on the lead
-    const { error: updateErr } = await supabase
-      .from("leads")
-      .update({
-        ai_approach_message: parsed.mensagem || "",
-        enrichment_data: {
-          ...(typeof lead.enrichment_data === 'object' && lead.enrichment_data ? lead.enrichment_data : {}),
-          approach_analysis: {
-            analise_nicho: parsed.analise_nicho || "",
-            analise_cidade: parsed.analise_cidade || "",
-            pontos_fracos: parsed.pontos_fracos || [],
-            estrategia: parsed.estrategia || "",
-            produto_sugerido: parsed.produto_sugerido || "",
-            generated_at: new Date().toISOString(),
+    if (lead_id && !internalMode) {
+      // Store the message on the lead
+      const { error: updateErr } = await supabase
+        .from("leads")
+        .update({
+          ai_approach_message: parsed.mensagem || "",
+          enrichment_data: {
+            ...(typeof lead.enrichment_data === 'object' && lead.enrichment_data ? lead.enrichment_data : {}),
+            approach_analysis: {
+              analise_nicho: parsed.analise_nicho || "",
+              analise_cidade: parsed.analise_cidade || "",
+              pontos_fracos: parsed.pontos_fracos || [],
+              estrategia: parsed.estrategia || "",
+              produto_sugerido: parsed.produto_sugerido || "",
+              generated_at: new Date().toISOString(),
+            },
           },
-        },
-      })
-      .eq("id", lead_id)
-      .eq("user_id", user.id);
+        })
+        .eq("id", lead_id)
+        .eq("user_id", user.id);
 
-    if (updateErr) console.error("Update error:", updateErr);
+      if (updateErr) console.error("Update error:", updateErr);
+    }
 
     return new Response(
       JSON.stringify({

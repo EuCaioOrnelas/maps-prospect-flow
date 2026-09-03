@@ -1304,13 +1304,25 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
-    if (authErr || !user) {
-      return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+
+    // Modo interno (Wiize API V1): service role + id da conta API no header
+    const internalUserId = req.headers.get("x-wiize-api-user");
+    const internalMode = !!internalUserId && token === SUPABASE_SERVICE_ROLE_KEY;
+
+    let user: { id: string } | null = null;
+    if (internalMode) {
+      user = { id: internalUserId! };
+    } else {
+      const { data: { user: authUser }, error: authErr } = await supabase.auth.getUser(token);
+      if (authErr || !authUser) {
+        return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      user = authUser;
     }
+
 
     const body = await req.json();
     const lead_id = toSafeString(body?.lead_id);

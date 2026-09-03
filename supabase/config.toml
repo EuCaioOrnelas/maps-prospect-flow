@@ -140,3 +140,6 @@ verify_jwt = false
 
 [functions.followup-engine]
 verify_jwt = false
+
+[functions.wiize-api-v1]
+verify_jwt = false

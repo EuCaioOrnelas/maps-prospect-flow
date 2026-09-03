@@ -271,76 +271,101 @@ serve(async (req) => {
 
     // Create Supabase client with user's token
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    
+
     // Verify user token
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
-    if (authError || !user) {
-      console.error('Auth error:', authError);
-      return new Response(
-        JSON.stringify({ error: 'Usuário não autenticado' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+
+    // Modo interno (Wiize API V1): chamada servidor-a-servidor autenticada pela service role.
+    // O saldo/rate limit é controlado pelo gateway wiize-api-v1, não pelo plano da Wiize.
+    const internalUserId = req.headers.get('x-wiize-api-user');
+    const internalMode = !!internalUserId && !!SUPABASE_SERVICE_ROLE_KEY && token === SUPABASE_SERVICE_ROLE_KEY;
+
+    let user: { id: string } | null = null;
+    if (internalMode) {
+      user = { id: internalUserId! };
+    } else {
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !authUser) {
+        console.error('Auth error:', authError);
+        return new Response(
+          JSON.stringify({ error: 'Usuário não autenticado' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      user = authUser;
     }
 
-    console.log('User authenticated:', user.id);
+    console.log('User authenticated:', user.id, internalMode ? '(internal)' : '');
 
     // Per-user rate limit: 1 prospecção / 60s (chave = auth.uid, isolado por usuário)
-    const userRl = await checkRateLimit(supabase, user.id, 'search_leads_user', 1, 60);
-    if (!userRl.allowed) {
-      return new Response(
-        JSON.stringify({
-          error: 'rate_limited',
-          message: `Aguarde ${userRl.retryAfter || 60} segundos antes de realizar uma nova prospecção.`,
-          retry_after: userRl.retryAfter || 60,
-        }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(userRl.retryAfter || 60) } }
-      );
+    if (!internalMode) {
+      const userRl = await checkRateLimit(supabase, user.id, 'search_leads_user', 1, 60);
+      if (!userRl.allowed) {
+        return new Response(
+          JSON.stringify({
+            error: 'rate_limited',
+            message: `Aguarde ${userRl.retryAfter || 60} segundos antes de realizar uma nova prospecção.`,
+            retry_after: userRl.retryAfter || 60,
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(userRl.retryAfter || 60) } }
+        );
+      }
     }
 
-    // Get user profile to check opportunity limits
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('searches_used, searches_limit, plan, bonus_searches, extra_opportunities_packs')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError) {
-      console.error('Profile error:', profileError);
-      return new Response(
-        JSON.stringify({ error: 'Erro ao buscar perfil do usuário' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Effective limit = plan + add-on packs (1k each) + carried bonus
-    const extraPacks = (profile as any).extra_opportunities_packs || 0;
-    const bonus = (profile as any).bonus_searches || 0;
-    const effectiveLimit = profile.searches_limit + extraPacks * 1000 + bonus;
-    const remainingOpportunities = effectiveLimit - profile.searches_used;
-
-    if (remainingOpportunities <= 0) {
-      console.log('Opportunity limit reached for user:', user.id);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Limite de oportunidades atingido',
-          message: 'Faça upgrade do seu plano ou adicione a Expansão Comercial (+1.000 oportunidades) para continuar prospectando',
-          limitReached: true
-        }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     // Parse request body
-    const { keyword, location } = await req.json();
-    
+    const rawBody = await req.json().catch(() => ({}));
+    const { keyword, location } = rawBody || {};
+
     if (!keyword || !location) {
       return new Response(
         JSON.stringify({ error: 'Palavra-chave e localização são obrigatórios' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Get user profile to check opportunity limits (não se aplica ao modo interno da Wiize API)
+    let profile: { searches_used: number; searches_limit: number } = { searches_used: 0, searches_limit: 0 };
+    let remainingOpportunities: number;
+
+    if (internalMode) {
+      const requested = Number(rawBody?.limit);
+      remainingOpportunities = Math.min(Number.isFinite(requested) && requested > 0 ? requested : 20, 60);
+    } else {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('searches_used, searches_limit, plan, bonus_searches, extra_opportunities_packs')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        console.error('Profile error:', profileError);
+        return new Response(
+          JSON.stringify({ error: 'Erro ao buscar perfil do usuário' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      profile = profileData as any;
+      // Effective limit = plan + add-on packs (1k each) + carried bonus
+      const extraPacks = (profileData as any).extra_opportunities_packs || 0;
+      const bonus = (profileData as any).bonus_searches || 0;
+      const effectiveLimit = profileData.searches_limit + extraPacks * 1000 + bonus;
+      remainingOpportunities = effectiveLimit - profileData.searches_used;
+
+      if (remainingOpportunities <= 0) {
+        console.log('Opportunity limit reached for user:', user.id);
+        return new Response(
+          JSON.stringify({
+            error: 'Limite de oportunidades atingido',
+            message: 'Faça upgrade do seu plano ou adicione a Expansão Comercial (+1.000 oportunidades) para continuar prospectando',
+            limitReached: true
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
 
     console.log(`Searching for: ${keyword} in ${location}`);
 
@@ -544,81 +569,83 @@ serve(async (req) => {
     const validCount = leads.length;
     const invalidCount = totalWithPhone - allValidLeads.length;
 
-    // Update user's opportunity count (each lead = 1 opportunity)
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ searches_used: profile.searches_used + leads.length })
-      .eq('id', user.id);
+    if (!internalMode) {
+      // Update user's opportunity count (each lead = 1 opportunity)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ searches_used: profile.searches_used + leads.length })
+        .eq('id', user.id);
 
-    if (updateError) {
-      console.error('Error updating opportunity count:', updateError);
-    }
-
-    // Save leads to the leads table with enriched data
-    const leadsToInsert = leads.map(lead => ({
-      user_id: user.id,
-      company_name: lead.name !== '-' ? lead.name : null,
-      phone: lead.phone,
-      category: lead.category !== '-' ? lead.category : null,
-      city: lead.city !== '-' ? lead.city : null,
-      website: lead.website !== '-' ? lead.website : null,
-      google_maps_link: lead.mapsLink !== '-' ? lead.mapsLink : null,
-      address: lead.address !== '-' ? lead.address : null,
-      rating: lead.rating || null,
-      review_count: lead.reviewCount || null,
-      origin: 'oportunidades',
-      prospected_at: new Date().toISOString(),
-    }));
-
-    // Use upsert to avoid duplicate phone errors
-    if (leadsToInsert.length > 0) {
-      const { error: insertError } = await supabase
-        .from('leads')
-        .upsert(leadsToInsert, { 
-          onConflict: 'user_id,phone',
-          ignoreDuplicates: true 
-        });
-      
-      if (insertError) {
-        console.error('Error saving leads to table:', insertError);
-      } else {
-        console.log(`Saved ${leadsToInsert.length} leads to leads table`);
+      if (updateError) {
+        console.error('Error updating opportunity count:', updateError);
       }
-    }
 
-    // Save search to history with leads data
-    const { error: historyError } = await supabase
-      .from('search_history')
-      .insert({
+      // Save leads to the leads table with enriched data
+      const leadsToInsert = leads.map(lead => ({
         user_id: user.id,
-        keyword,
-        location,
-        results_count: leads.length,
-        leads: leads, // Store the leads for future retrieval
-      });
+        company_name: lead.name !== '-' ? lead.name : null,
+        phone: lead.phone,
+        category: lead.category !== '-' ? lead.category : null,
+        city: lead.city !== '-' ? lead.city : null,
+        website: lead.website !== '-' ? lead.website : null,
+        google_maps_link: lead.mapsLink !== '-' ? lead.mapsLink : null,
+        address: lead.address !== '-' ? lead.address : null,
+        rating: lead.rating || null,
+        review_count: lead.reviewCount || null,
+        origin: 'oportunidades',
+        prospected_at: new Date().toISOString(),
+      }));
 
-    if (historyError) {
-      console.error('Error saving search history:', historyError);
-    }
-
-    // Delete oldest searches if user has more than 50
-    const { data: historyCount } = await supabase
-      .from('search_history')
-      .select('id, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (historyCount && historyCount.length > 50) {
-      const idsToDelete = historyCount.slice(50).map(h => h.id);
-      console.log(`Deleting ${idsToDelete.length} old search history entries`);
+      // Use upsert to avoid duplicate phone errors
+      if (leadsToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from('leads')
+          .upsert(leadsToInsert, { 
+            onConflict: 'user_id,phone',
+            ignoreDuplicates: true 
+          });
       
-      const { error: deleteError } = await supabase
-        .from('search_history')
-        .delete()
-        .in('id', idsToDelete);
+        if (insertError) {
+          console.error('Error saving leads to table:', insertError);
+        } else {
+          console.log(`Saved ${leadsToInsert.length} leads to leads table`);
+        }
+      }
 
-      if (deleteError) {
-        console.error('Error deleting old search history:', deleteError);
+      // Save search to history with leads data
+      const { error: historyError } = await supabase
+        .from('search_history')
+        .insert({
+          user_id: user.id,
+          keyword,
+          location,
+          results_count: leads.length,
+          leads: leads, // Store the leads for future retrieval
+        });
+
+      if (historyError) {
+        console.error('Error saving search history:', historyError);
+      }
+
+      // Delete oldest searches if user has more than 50
+      const { data: historyCount } = await supabase
+        .from('search_history')
+        .select('id, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (historyCount && historyCount.length > 50) {
+        const idsToDelete = historyCount.slice(50).map(h => h.id);
+        console.log(`Deleting ${idsToDelete.length} old search history entries`);
+      
+        const { error: deleteError } = await supabase
+          .from('search_history')
+          .delete()
+          .in('id', idsToDelete);
+
+        if (deleteError) {
+          console.error('Error deleting old search history:', deleteError);
+        }
       }
     }
 
