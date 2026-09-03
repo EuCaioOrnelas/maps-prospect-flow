@@ -1,12 +1,11 @@
-import { Award, Crown, Gem, Medal } from "lucide-react";
+import { Award, Crown, Medal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type PartnerLevel = "bronze" | "silver" | "gold" | "platinum";
+export type PartnerLevel = "bronze" | "silver" | "gold";
 
 /**
  * Visual system for partner tiers.
- * Clean monochrome scale — all tiers use neutral surfaces with a single
- * subtle accent. Differentiation comes from the icon, not from rainbow colors.
+ * Three levels only: Select, Signature, Prime.
  */
 export const LEVEL_META: Record<PartnerLevel, {
   label: string;
@@ -40,15 +39,8 @@ export const LEVEL_META: Record<PartnerLevel, {
     glow: "",
     ring: "ring-primary/35",
   },
-  platinum: {
-    label: "Exclusive",
-    icon: Gem,
-    fg: "text-white",
-    bg: "bg-foreground",
-    glow: "shadow-[0_2px_10px_-3px_hsl(var(--foreground)/0.35)]",
-    ring: "ring-foreground/40",
-  },
 };
+
 
 interface Props {
   level: PartnerLevel | string;

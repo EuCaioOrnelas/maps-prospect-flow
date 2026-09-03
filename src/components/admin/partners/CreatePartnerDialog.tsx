@@ -159,9 +159,9 @@ export const CreatePartnerDialog = ({ open, onOpenChange, onCreated }: Props) =>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="bronze">Select (10%)</SelectItem>
-                <SelectItem value="silver">Signature (15%)</SelectItem>
-                <SelectItem value="gold">Prime (20%)</SelectItem>
-                <SelectItem value="platinum">Exclusive (25%)</SelectItem>
+                <SelectItem value="silver">Signature (12%)</SelectItem>
+                <SelectItem value="gold">Prime (15%)</SelectItem>
+
               </SelectContent>
             </Select>
           </div>

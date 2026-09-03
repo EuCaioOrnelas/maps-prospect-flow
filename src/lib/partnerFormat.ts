@@ -23,8 +23,8 @@ export const levelColors: Record<string, string> = {
   bronze: "bg-primary/10 text-primary border-primary/25",
   silver: "bg-primary/15 text-primary border-primary/30",
   gold: "bg-primary/20 text-primary border-primary/35",
-  platinum: "bg-foreground text-background border-foreground/40",
 };
+
 
 export const commissionStatusColors: Record<string, string> = {
   pending: "bg-amber-500/10 text-amber-600 border-amber-500/30",
@@ -60,8 +60,8 @@ export const levelLabel: Record<string, string> = {
   bronze: "Select",
   silver: "Signature",
   gold: "Prime",
-  platinum: "Exclusive",
 };
+
 
 export const goalStatusColors: Record<string, string> = {
   active: "bg-blue-500/10 text-blue-600 border-blue-500/30",

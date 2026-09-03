@@ -22,7 +22,7 @@ import {
 import { PartnerGoalsTab } from "@/components/admin/partners/PartnerGoalsTab";
 import { PartnerLinksTab } from "@/components/admin/partners/PartnerLinksTab";
 
-type Level = "bronze" | "silver" | "gold" | "platinum";
+type Level = "bronze" | "silver" | "gold";
 type Status = "active" | "inactive" | "blocked";
 
 interface Partner {
@@ -63,7 +63,7 @@ const fmtBRL = (cents: number) =>
 const fmtDate = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
-const levelLabel: Record<Level, string> = { bronze: "Select", silver: "Signature", gold: "Prime", platinum: "Exclusive" };
+const levelLabel: Record<string, string> = { bronze: "Select", silver: "Signature", gold: "Prime" };
 const statusLabel: Record<Status, string> = { active: "Ativo", inactive: "Inativo", blocked: "Bloqueado" };
 
 const statusBadge: Record<Status, string> = {
@@ -122,7 +122,7 @@ export default function AdminPartnerDetail() {
       phone: p.phone || "",
       company: p.company || "",
       tax_id: p.tax_id || "",
-      level: p.level,
+      level: (p.level === "platinum" ? "gold" : p.level) as Level,
       status: p.status,
       custom_commission_percent: p.custom_commission_percent != null ? String(p.custom_commission_percent) : "",
       internal_notes: p.internal_notes || "",
@@ -570,9 +570,9 @@ export default function AdminPartnerDetail() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="bronze">Select (10%)</SelectItem>
-                      <SelectItem value="silver">Signature (15%)</SelectItem>
-                      <SelectItem value="gold">Prime (20%)</SelectItem>
-                      <SelectItem value="platinum">Exclusive (25%)</SelectItem>
+                      <SelectItem value="silver">Signature (12%)</SelectItem>
+                      <SelectItem value="gold">Prime (15%)</SelectItem>
+
                     </SelectContent>
                   </Select>
                 </FormField>
