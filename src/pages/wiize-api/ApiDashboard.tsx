@@ -153,7 +153,7 @@ export default function ApiDashboard() {
               Novas APIs (Engagement Intelligence e Wian) aparecerão aqui automaticamente quando estiverem disponíveis.
             </div>
             <Button asChild variant="outline" size="sm" className="w-full gap-2">
-              <Link to="/api/apis">
+              <Link to="/api/docs">
                 Ver catálogo de APIs <ArrowUpRight size={14} />
               </Link>
             </Button>
