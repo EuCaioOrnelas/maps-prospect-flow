@@ -28,7 +28,7 @@ curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
 /** Hero público do Wiize API — mesma linguagem visual do hero da LP principal. */
 export const ApiHero = () => {
   return (
-    <section className="relative -mt-[72px] w-full overflow-x-clip pb-24 pt-[112px] sm:-mt-[80px] sm:pb-32 sm:pt-[128px] lg:pb-40">
+    <section className="relative -mt-[72px] w-full overflow-x-clip pb-36 pt-[112px] sm:-mt-[80px] sm:pb-44 sm:pt-[128px] lg:pb-56">
       <div
         className="absolute inset-0"
         aria-hidden
