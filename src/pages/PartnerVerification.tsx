@@ -62,7 +62,8 @@ export default function PartnerVerification() {
       return;
     }
     const row = Array.isArray(data) ? data[0] : data;
-    setResult({ state: "found", data: row });
+    setResult({ state: "found", data: row as any });
+
   };
 
   // Auto-lookup if URL has ?code=

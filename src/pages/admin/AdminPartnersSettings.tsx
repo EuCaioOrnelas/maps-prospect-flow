@@ -52,8 +52,8 @@ const levelMeta = {
   bronze: { icon: Medal, color: "text-foreground/70", bg: "from-muted/40 to-transparent", ring: "ring-border" },
   silver: { icon: Award, color: "text-foreground/70", bg: "from-muted/40 to-transparent", ring: "ring-border" },
   gold: { icon: Crown, color: "text-primary", bg: "from-primary/10 to-transparent", ring: "ring-primary/30" },
-  platinum: { icon: Gem, color: "text-foreground", bg: "from-foreground/5 to-transparent", ring: "ring-foreground/20" },
 } as const;
+
 
 function HelpHint({ text }: { text: string }) {
   return (
@@ -240,10 +240,11 @@ export default function AdminPartnersSettings() {
           accent="primary"
         >
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {(["bronze", "silver", "gold", "platinum"] as const).map((lvl) => {
+            {(["bronze", "silver", "gold"] as const).map((lvl) => {
               const meta = levelMeta[lvl];
               const Icon = meta.icon;
-              const tierLabel = ({ bronze: "Select", silver: "Signature", gold: "Prime", platinum: "Exclusive" } as const)[lvl];
+              const tierLabel = ({ bronze: "Select", silver: "Signature", gold: "Prime" } as const)[lvl];
+
               return (
                 <div
                   key={lvl}

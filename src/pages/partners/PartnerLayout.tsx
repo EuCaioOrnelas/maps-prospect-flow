@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { LevelBadge, LEVEL_META, type PartnerLevel } from "@/components/partners/LevelBadge";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 
-const LEVEL_ORDER: PartnerLevel[] = ["bronze", "silver", "gold", "platinum"];
+const LEVEL_ORDER: PartnerLevel[] = ["bronze", "silver", "gold"];
 
 export default function PartnerLayout() {
   const navigate = useNavigate();
@@ -68,7 +68,7 @@ export default function PartnerLayout() {
       { key: "bronze" as PartnerLevel, threshold: 0, percent: Number(settings.bronze_commission_percent) },
       { key: "silver" as PartnerLevel, threshold: settings.silver_threshold_clients, percent: Number(settings.silver_commission_percent) },
       { key: "gold" as PartnerLevel, threshold: settings.gold_threshold_clients, percent: Number(settings.gold_commission_percent) },
-      { key: "platinum" as PartnerLevel, threshold: settings.platinum_threshold_clients ?? Math.max(settings.gold_threshold_clients * 2, 500), percent: Number(settings.platinum_commission_percent) },
+
     ];
     const idx = LEVEL_ORDER.indexOf(lvl);
     const cur = tiers[idx];

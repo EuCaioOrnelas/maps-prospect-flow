@@ -16,7 +16,7 @@ interface Partner {
   full_name: string;
   email: string;
   referral_code: string;
-  level: "bronze" | "silver" | "gold" | "platinum";
+  level: "bronze" | "silver" | "gold";
   status: "active" | "inactive" | "blocked";
   total_leads: number;
   total_paid_clients: number;
@@ -28,8 +28,8 @@ const levelMeta = {
   bronze: { icon: Medal, classes: "bg-muted/60 text-muted-foreground border-border/60", label: "Select" },
   silver: { icon: Award, classes: "bg-muted text-foreground/80 border-border", label: "Signature" },
   gold: { icon: Crown, classes: "bg-foreground/[0.06] text-foreground border-foreground/15", label: "Prime" },
-  platinum: { icon: Gem, classes: "bg-foreground text-background border-foreground/40", label: "Exclusive" },
 } as const;
+
 
 const statusMeta: Record<Partner["status"], { dot: string; classes: string; label: string }> = {
   active: { dot: "bg-emerald-500 shadow-emerald-500/50 shadow-md", classes: "bg-emerald-500/10 text-emerald-500 border-emerald-500/30", label: "Ativo" },

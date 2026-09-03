@@ -2,19 +2,19 @@ import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Award, ShieldCheck, Rocket, Crown } from "lucide-react";
+import { Trophy, Award, ShieldCheck, Rocket } from "lucide-react";
 import { fmtBRL, levelLabel } from "@/lib/partnerFormat";
 import { cn } from "@/lib/utils";
 
 const levelIcons: Record<string, any> = {
-  bronze: ShieldCheck, silver: Award, gold: Rocket, platinum: Crown,
+  bronze: ShieldCheck, silver: Award, gold: Rocket,
 };
 const levelGradients: Record<string, string> = {
   bronze: "from-muted/50 to-muted/10 text-muted-foreground",
   silver: "from-muted/70 to-muted/20 text-foreground/80",
   gold: "from-foreground/[0.08] to-foreground/[0.02] text-foreground",
-  platinum: "from-foreground/90 to-foreground/70 text-background",
 };
+
 
 interface RankRow {
   id: string;
@@ -51,7 +51,7 @@ export default function PartnerRanking() {
     { level: "bronze", minClients: 0, label: "Select", percent: Number(settings.bronze_commission_percent) },
     { level: "silver", minClients: settings.silver_threshold_clients, label: "Signature", percent: Number(settings.silver_commission_percent) },
     { level: "gold", minClients: settings.gold_threshold_clients, label: "Prime", percent: Number(settings.gold_commission_percent) },
-    { level: "platinum", minClients: settings.platinum_threshold_clients ?? 500, label: "Exclusive", percent: Number(settings.platinum_commission_percent) },
+
   ] : [];
 
   const me = rows.find((r) => r.id === partner.id);

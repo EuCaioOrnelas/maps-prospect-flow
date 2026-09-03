@@ -9,7 +9,7 @@ import { Sparkles, TrendingUp, Users, DollarSign, Repeat, ArrowRight, Lock, Chec
 import { fmtBRL } from "@/lib/partnerFormat";
 import { cn } from "@/lib/utils";
 
-const LEVEL_ORDER: PartnerLevel[] = ["bronze", "silver", "gold", "platinum"];
+const LEVEL_ORDER: PartnerLevel[] = ["bronze", "silver", "gold"];
 
 interface LevelTier {
   key: PartnerLevel;
@@ -66,15 +66,10 @@ export default function PartnerLevels() {
         key: "gold",
         thresholdClients: settings.gold_threshold_clients,
         commissionPercent: Number(settings.gold_commission_percent),
-        perks: ["Comissão Prime em todas as vendas", "Acesso antecipado a campanhas", "Convite para eventos exclusivos"],
-      },
-      {
-        key: "platinum",
-        thresholdClients: settings.platinum_threshold_clients ?? Math.max(settings.gold_threshold_clients * 2, 500),
-        commissionPercent: Number(settings.platinum_commission_percent),
-        perks: ["Comissão Exclusive — máxima do programa", "Co-marketing dedicado pela Wiize", "Gerente de parceria 1:1"],
+        perks: ["Comissão Prime — máxima do programa", "Acesso antecipado a campanhas", "Convite para eventos exclusivos"],
       },
     ];
+
   }, [settings]);
 
   const currentLevel = (partnerData?.level || "bronze") as PartnerLevel;
@@ -186,10 +181,9 @@ export default function PartnerLevels() {
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <LevelBadge level={nextTier.key} size="md" />
                     <span className="text-sm font-medium text-muted-foreground">
-                      {nextTier.key === "platinum"
-                        ? <>nível <span className="text-foreground font-bold">sob convite</span></>
-                        : <>sobe para <span className="text-foreground font-bold">{nextTier.commissionPercent.toFixed(0)}%</span> de comissão</>}
+                      sobe para <span className="text-foreground font-bold">{nextTier.commissionPercent.toFixed(0)}%</span> de comissão
                     </span>
+
                   </div>
 
                 </div>
@@ -279,27 +273,20 @@ export default function PartnerLevels() {
                     <div className="min-w-0">
                       <div className="text-base font-bold tracking-tight">{meta.label}</div>
                       <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                        {tier.key === "platinum"
-                          ? "Sob convite"
-                          : tier.thresholdClients === 0
-                            ? "Início"
-                            : `≥ ${tier.thresholdClients} clientes ativos`}
+                        {tier.thresholdClients === 0
+                          ? "Início"
+                          : `≥ ${tier.thresholdClients} clientes ativos`}
                       </div>
                     </div>
                   </div>
 
-                  {tier.key === "platinum" ? (
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-lg font-bold tracking-tight">Comissão sob convite</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-3xl font-bold tracking-tight">
-                        {tier.commissionPercent.toFixed(0)}
-                      </span>
-                      <span className="text-base font-semibold text-muted-foreground">% comissão</span>
-                    </div>
-                  )}
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl font-bold tracking-tight">
+                      {tier.commissionPercent.toFixed(0)}
+                    </span>
+                    <span className="text-base font-semibold text-muted-foreground">% comissão</span>
+                  </div>
+
 
 
                   <ul className="space-y-1.5 pt-1 border-t border-border/40">
