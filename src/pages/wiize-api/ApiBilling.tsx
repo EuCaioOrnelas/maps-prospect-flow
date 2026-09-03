@@ -155,7 +155,7 @@ export default function ApiBilling() {
         </p>
       </SectionCard>
 
-      <SectionCard title="Histórico de transações" description="Adições de saldo e recargas">
+      <SectionCard icon={Receipt} title="Histórico de transações" description="Adições de saldo e recargas">
         {mockTransactions.length === 0 ? (
           <EmptyState icon={Receipt} title="Nenhuma transação realizada." />
         ) : (

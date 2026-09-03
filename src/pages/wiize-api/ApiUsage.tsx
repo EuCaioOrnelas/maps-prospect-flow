@@ -75,7 +75,7 @@ export default function ApiUsage() {
         />
       </div>
 
-      <SectionCard title="Tokens utilizados" description="Evolução ao longo do tempo">
+      <SectionCard icon={BarChart3} title="Tokens utilizados" description="Evolução ao longo do tempo">
         <div className="mb-4 flex flex-wrap gap-2">
           <Select value={period} onValueChange={(v) => setPeriod(v as PeriodKey)}>
             <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
@@ -133,7 +133,7 @@ export default function ApiUsage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Requisições" description="Detalhamento por chamada">
+      <SectionCard icon={Activity} title="Requisições" description="Detalhamento por chamada">
         {rows.length === 0 ? (
           <EmptyState icon={BarChart3} title="Nenhuma utilização encontrada." description="Ajuste os filtros ou aguarde novas chamadas." />
         ) : (

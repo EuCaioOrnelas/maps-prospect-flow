@@ -61,7 +61,7 @@ export default function ApiProspecting() {
         }
       />
 
-      <SectionCard title="Endpoints" description="Consumo estimado por chamada">
+      <SectionCard icon={BookOpen} title="Endpoints" description="Consumo estimado por chamada">
         <ul className="space-y-3">
           {endpoints.map((e) => (
             <li key={e.path} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 p-4">
@@ -85,10 +85,10 @@ export default function ApiProspecting() {
       </SectionCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <SectionCard title="Request" description="POST /v1/prospecting/analyze">
+        <SectionCard icon={ArrowUpRight} title="Request" description="POST /v1/prospecting/analyze">
           <CodeBlock code={requestSample} lang="json" theme={codeTheme} />
         </SectionCard>
-        <SectionCard title="Response" description="200 OK">
+        <SectionCard icon={ArrowDownLeft} title="Response" description="200 OK">
           <CodeBlock code={responseSample} lang="json" theme={codeTheme} />
         </SectionCard>
       </div>
