@@ -101,6 +101,7 @@ export default function ApiDashboard() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <SectionCard
+          icon={Activity}
           title="Consumo de tokens"
           description="Evolução diária no período selecionado"
           className="lg:col-span-2"
@@ -148,7 +149,7 @@ export default function ApiDashboard() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Uso por API" description="Distribuição do consumo">
+        <SectionCard icon={Coins} title="Uso por API" description="Distribuição do consumo">
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between text-sm">
@@ -171,6 +172,7 @@ export default function ApiDashboard() {
       </div>
 
       <SectionCard
+        icon={Receipt}
         title="Atividade recente"
         description="Últimas chamadas registradas no workspace"
         actions={

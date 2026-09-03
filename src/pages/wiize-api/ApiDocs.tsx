@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 import { PageHeader } from "@/components/wiize-api/WiizeApiUI";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const sections = [
   { id: "intro", label: "Introdução" },
@@ -55,6 +56,8 @@ function Doc({ id, title, children }: { id: string; title: string; children: Rea
 
 export default function ApiDocs() {
   const [active, setActive] = useState("intro");
+  const { resolvedTheme } = useTheme();
+  const codeTheme = resolvedTheme === "dark" ? "dark" : "light";
 
   return (
     <>
@@ -100,14 +103,14 @@ export default function ApiDocs() {
               Chaves de produção começam com <code>wk_live_</code> e chaves de teste com <code>wk_test_</code>.
               Nunca exponha sua chave no frontend.
             </p>
-            <CodeBlock code={authSample} lang="bash" />
+            <CodeBlock code={authSample} lang="bash" theme={codeTheme} />
           </Doc>
 
           <Doc id="quickstart" title="Primeira requisição">
             <p>Analise uma empresa e receba um opportunity score em uma única chamada.</p>
             <div className="grid gap-4 lg:grid-cols-2">
-              <CodeBlock code={quickSample} lang="bash" filename="request.sh" />
-              <CodeBlock code={quickResponse} lang="json" filename="response.json" />
+              <CodeBlock code={quickSample} lang="bash" filename="request.sh" theme={codeTheme} />
+              <CodeBlock code={quickResponse} lang="json" filename="response.json" theme={codeTheme} />
             </div>
           </Doc>
 
@@ -136,7 +139,7 @@ export default function ApiDocs() {
 
           <Doc id="errors" title="Erros">
             <p>Erros seguem o padrão HTTP com um corpo descritivo.</p>
-            <CodeBlock code={errorSample} lang="json" />
+            <CodeBlock code={errorSample} lang="json" theme={codeTheme} />
             <ul className="list-inside list-disc space-y-1">
               <li><strong className="text-foreground">401</strong> — chave inválida ou ausente</li>
               <li><strong className="text-foreground">402</strong> — saldo insuficiente</li>
@@ -157,7 +160,7 @@ export default function ApiDocs() {
               Configure uma URL para receber eventos de saldo baixo, recarga concluída e falhas de
               cobrança. Cada envio inclui assinatura HMAC no cabeçalho <code>X-Wiize-Signature</code>.
             </p>
-            <CodeBlock code={webhookSample} lang="json" />
+            <CodeBlock code={webhookSample} lang="json" theme={codeTheme} />
           </Doc>
         </div>
       </div>

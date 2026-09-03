@@ -1,10 +1,11 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { ArrowLeft, BookOpen, KeyRound, Search, Gauge, Stethoscope, MessageSquare } from "lucide-react";
+import { ArrowLeft, BookOpen, KeyRound, Search, Gauge, Stethoscope, MessageSquare, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 import { PageHeader, SectionCard } from "@/components/wiize-api/WiizeApiUI";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const endpoints = [
   { method: "POST", path: "/v1/prospecting/companies", icon: Search, title: "Find Companies", desc: "Encontre empresas por nicho, região e sinais comerciais.", tokens: "90 tokens" },
@@ -31,6 +32,8 @@ const responseSample = `{
 }`;
 
 export default function ApiProspecting() {
+  const { resolvedTheme } = useTheme();
+  const codeTheme = resolvedTheme === "dark" ? "dark" : "light";
   return (
     <>
       <Helmet>
@@ -58,7 +61,7 @@ export default function ApiProspecting() {
         }
       />
 
-      <SectionCard title="Endpoints" description="Consumo estimado por chamada">
+      <SectionCard icon={BookOpen} title="Endpoints" description="Consumo estimado por chamada">
         <ul className="space-y-3">
           {endpoints.map((e) => (
             <li key={e.path} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 p-4">
@@ -82,11 +85,11 @@ export default function ApiProspecting() {
       </SectionCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <SectionCard title="Request" description="POST /v1/prospecting/analyze">
-          <CodeBlock code={requestSample} lang="json" />
+        <SectionCard icon={ArrowUpRight} title="Request" description="POST /v1/prospecting/analyze">
+          <CodeBlock code={requestSample} lang="json" theme={codeTheme} />
         </SectionCard>
-        <SectionCard title="Response" description="200 OK">
-          <CodeBlock code={responseSample} lang="json" />
+        <SectionCard icon={ArrowDownLeft} title="Response" description="200 OK">
+          <CodeBlock code={responseSample} lang="json" theme={codeTheme} />
         </SectionCard>
       </div>
     </>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { Wallet, Coins, Zap, Info } from "lucide-react";
+import { Wallet, Coins, Zap, Info, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,7 +63,7 @@ export default function ApiCredits() {
         Wiize Tokens — saldo e tokens são exibidos separadamente para total clareza.
       </div>
 
-      <SectionCard title="Adicionar saldo" description="Escolha um pacote ou defina o valor desejado">
+      <SectionCard icon={Plus} title="Adicionar saldo" description="Escolha um pacote ou defina o valor desejado">
         <div className="grid gap-3 sm:grid-cols-3">
           {mockCreditPackages.map((p) => (
             <button

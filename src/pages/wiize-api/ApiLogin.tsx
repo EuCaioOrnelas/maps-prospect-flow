@@ -231,15 +231,19 @@ export default function ApiLogin() {
         }
         const { error: profileError } = await createWiizeApiAccess(loginData.user.id, profile);
         if (profileError) throw profileError;
+        if (!loginData.user.email_confirmed_at) {
+          await supabase.auth.signOut({ scope: "local" });
+          setAwaitingConfirm(email.trim());
+          return;
+        }
         navigate("/api/dashboard", { replace: true });
         return;
       }
 
+      // Cadastro novo: sempre exige confirmação de e-mail antes de liberar o painel.
       if (data.session) {
-        const { error: profileError } = await createWiizeApiAccess(data.session.user.id, profile);
-        if (profileError) throw profileError;
-        navigate("/api/dashboard", { replace: true });
-        return;
+        await createWiizeApiAccess(data.session.user.id, profile);
+        await supabase.auth.signOut({ scope: "local" });
       }
       setAwaitingConfirm(email.trim());
     } catch (err: any) {
@@ -467,7 +471,7 @@ export default function ApiLogin() {
             </div>
           )}
 
-          <form onSubmit={submit} className="mt-6">
+          <form onSubmit={submit} className="mt-6 [&_button[role=combobox]]:focus:ring-0 [&_button[role=combobox]]:focus:ring-offset-0 [&_button[role=combobox]]:focus:border-foreground/25 [&_input]:transition-colors [&_input]:focus-visible:ring-0 [&_input]:focus-visible:ring-offset-0 [&_input]:focus-visible:border-foreground/30">
             <AutoHeight deps={[mode, step]}>
               <div key={`${mode}-${step}`} className="animate-fade-in space-y-4 pb-1">
                 {isSignup && step === 1 && (
@@ -549,7 +553,7 @@ export default function ApiLogin() {
                           value={docNumber}
                           onChange={(e) => setDocNumber(docType === "cnpj" ? maskCNPJ(e.target.value) : maskCPF(e.target.value))}
                           placeholder={docType === "cnpj" ? "00.000.000/0000-00" : "000.000.000-00"}
-                          className={cn(docNumber && !docValid && "border-destructive")}
+                          className={cn(docNumber && !docValid && "border-destructive focus-visible:!border-destructive")}
                         />
                       </div>
                     </div>
@@ -577,7 +581,7 @@ export default function ApiLogin() {
                             value={cep}
                             onChange={(e) => setCep(maskCEP(e.target.value))}
                             placeholder="00000-000"
-                            className={cn("pr-9", cepError && "border-destructive")}
+                            className={cn("pr-9", cepError && "border-destructive focus-visible:!border-destructive")}
                           />
                           <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
                             {cepLoading ? (

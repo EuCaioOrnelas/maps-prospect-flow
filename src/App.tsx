@@ -524,7 +524,7 @@ const App = () => (
                 {/* Wiize API */}
                 <Route path="/api" element={<LightThemeWrapper><ApiLanding /></LightThemeWrapper>} />
                 <Route path="/api/login" element={<LightThemeWrapper><ApiLogin /></LightThemeWrapper>} />
-                <Route path="/api" element={<LightThemeWrapper><WiizeApiLayout /></LightThemeWrapper>}>
+                <Route path="/api" element={<WiizeApiLayout />}>
                   <Route path="dashboard" element={<ApiDashboard />} />
                   <Route path="apis" element={<ApiCatalog />} />
                   <Route path="apis/prospecting" element={<ApiProspecting />} />
