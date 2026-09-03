@@ -247,7 +247,7 @@ export default function ApiLogin() {
 
       // E-mail ainda não confirmado: bloqueia e oferece reenvio.
       if (!user.email_confirmed_at) {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: "local" });
         setAwaitingConfirm(email.trim());
         return;
       }
@@ -255,7 +255,7 @@ export default function ApiLogin() {
       // Contas são separadas: Wiize API não aceita login da Wiize principal / Partners.
       const meta = (user.user_metadata || {}) as Record<string, string>;
       if (meta.wiize_product !== "wiize_api") {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: "local" });
         toast({
           title: "Conta não pertence ao Wiize API",
           description: "Crie uma conta Wiize API. O acesso é separado da Wiize principal e do Partners.",
