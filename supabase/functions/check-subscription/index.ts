@@ -53,6 +53,19 @@ const PRICE_LIMIT_OVERRIDE: Record<string, number> = {
 // Limites do novo padrão (v3) para novas assinaturas sem price ID em contexto.
 const PLAN_LIMITS_V3: Record<string, number> = { free: 10, start: 1000, growth: 1000, scale: 10000 };
 
+// Grandfathering v3 (corte 2026-09-03): novos = 1.000 oportunidades no Growth,
+// legados mantêm 3.000.
+const V3_CUTOFF_MS = Date.parse("2026-09-03T00:00:00Z");
+function isV3User(createdAt?: string | null): boolean {
+  if (!createdAt) return false;
+  const t = Date.parse(createdAt);
+  return !Number.isNaN(t) && t >= V3_CUTOFF_MS;
+}
+function limitForPlanByUser(planKey: string, createdAt?: string | null): number {
+  const table = isV3User(createdAt) ? PLAN_LIMITS_V3 : PLAN_LIMITS;
+  return table[planKey] ?? PLAN_LIMITS.free;
+}
+
 function limitForPlan(plan: string, priceId?: string | null): number {
   if (priceId && PRICE_LIMIT_OVERRIDE[priceId] !== undefined) return PRICE_LIMIT_OVERRIDE[priceId];
   return PLAN_LIMITS[plan] ?? PLAN_LIMITS["free"];
@@ -75,6 +88,7 @@ interface BillingProfileState {
   trial_will_charge_at?: string | null;
   trial_auto_charge_cancelled?: boolean | null;
   trial_plan_chosen?: string | null;
+  created_at?: string | null;
 }
 
 interface CheckoutLeadState {
@@ -97,7 +111,7 @@ const getActiveTrialAccess = (profile?: BillingProfileState | null) => {
 
   return {
     plan: trialPlan,
-    searchesLimit: PLAN_LIMITS[trialPlan],
+    searchesLimit: limitForPlanByUser(trialPlan, profile.created_at),
     subscriptionEnd: endsAt.toISOString(),
   };
 };
@@ -228,7 +242,7 @@ async function ensureProfileAndApplyPendingCheckout(
       .from("profiles")
       .update({
         plan: planKey,
-        searches_limit: PLAN_LIMITS_V3[planKey] ?? PLAN_LIMITS[planKey] ?? PLAN_LIMITS.free,
+        searches_limit: limitForPlanByUser(planKey, nowIso),
         searches_used: 0,
         subscription_current_period_end: subscriptionEnd.toISOString(),
         updated_at: nowIso,
@@ -313,7 +327,7 @@ async function reconcileCompletedPixCheckout(
     .from("profiles")
     .update({
       plan: planKey,
-      searches_limit: PLAN_LIMITS_V3[planKey] ?? PLAN_LIMITS[planKey] ?? PLAN_LIMITS.free,
+      searches_limit: limitForPlanByUser(planKey, (profile as any)?.created_at ?? null),
       searches_used: 0,
       subscription_current_period_end: subscriptionEnd.toISOString(),
       payment_provider: "asaas",
