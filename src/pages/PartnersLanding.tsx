@@ -17,20 +17,19 @@ interface Settings {
   bronze: number;
   silver: number;
   gold: number;
-  platinum: number;
   silverClients: number;
   goldClients: number;
-  platinumClients: number;
   boostEnabled: boolean;
   boostPercent: number;
   boostUntil: string | null;
 }
 
 const DEFAULTS: Settings = {
-  bronze: 10, silver: 12, gold: 15, platinum: 15,
-  silverClients: 100, goldClients: 250, platinumClients: 500,
+  bronze: 10, silver: 12, gold: 15,
+  silverClients: 100, goldClients: 250,
   boostEnabled: true, boostPercent: 50, boostUntil: null,
 };
+
 
 
 const MAX_COMMISSION = 15;
