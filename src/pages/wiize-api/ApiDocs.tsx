@@ -66,7 +66,7 @@ export default function ApiDocs() {
         <meta name="description" content="Guia de integração da Wiize API: autenticação, primeira requisição, tokens, erros e webhooks." />
       </Helmet>
 
-      <PageHeader title="Documentação" description="Tudo o que você precisa para integrar a Wiize ao seu sistema." />
+      <PageHeader title="Documentação da API" description="Tudo o que você precisa para integrar a Wiize ao seu sistema." />
 
       <div className="flex gap-8">
         <nav className="sticky top-20 hidden h-fit w-52 shrink-0 space-y-0.5 xl:block">
