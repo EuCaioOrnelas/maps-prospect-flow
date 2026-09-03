@@ -19,7 +19,7 @@ import {
   Award,
   Crown,
   Medal,
-  Gem,
+  
   Mail,
   Globe,
   Clock,
