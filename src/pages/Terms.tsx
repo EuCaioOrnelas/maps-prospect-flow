@@ -166,6 +166,27 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">9.1. Wiize API (api.wiize.com.br)</h2>
+              <p>
+                O <strong>Wiize API</strong> é o produto de acesso programático da Wiize, com conta
+                própria, gratuita na criação e independente da conta da plataforma principal e do
+                programa de parceiros. Ao utilizá-lo, aplicam-se estes Termos e as condições abaixo.
+              </p>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li><strong>Escopo</strong>: endpoints de busca de empresas, análise de leads, diagnóstico comercial e geração de abordagens com IA, expostos via API REST sobre HTTPS/TLS obrigatório.</li>
+                <li><strong>Chaves de API</strong>: cada chave (<em>API Key</em>) é pessoal, tem escopo definido, ambientes separados (teste e produção) e pode ser revogada a qualquer momento. O cliente é o único responsável pela guarda das chaves e por todo uso realizado com elas, inclusive por terceiros que as obtenham por negligência.</li>
+                <li><strong>Créditos e consumo</strong>: o uso é medido por requisição/crédito conforme o catálogo vigente. Créditos consumidos não são reembolsáveis, ainda que o resultado retornado não seja aproveitado comercialmente pelo cliente.</li>
+                <li><strong>Limites</strong>: aplicam-se limites de taxa por chave e por workspace. Excedentes podem ser recusados (HTTP 429) ou cobrados conforme o plano contratado.</li>
+                <li><strong>Webhooks</strong>: eventos são assinados com <strong>HMAC SHA-256</strong>. É obrigação do cliente validar a assinatura antes de processar qualquer evento e tratar reentregas de forma idempotente.</li>
+                <li><strong>Uso permitido</strong>: exclusivamente para finalidades <strong>B2B</strong> e legítimas. É vedado revender, expor publicamente ou empacotar os endpoints como produto concorrente, treinar modelos com os retornos, ou usá-los para prospecção de pessoas físicas, spam, discriminação ilegal ou enriquecimento de dados pessoais sensíveis.</li>
+                <li><strong>Qualidade dos dados</strong>: os retornos derivam de fontes públicas e de modelos de IA, podendo conter imprecisões. Cabe ao cliente validar as informações antes de qualquer decisão comercial, contratual ou creditícia.</li>
+                <li><strong>Disponibilidade</strong>: endpoints, contratos de resposta e versões podem evoluir. Alterações incompatíveis serão versionadas (ex.: <em>/v1</em>) com aviso razoável; versões descontinuadas podem ser desativadas após o período de transição comunicado.</li>
+                <li><strong>Suspensão</strong>: a Wiize pode bloquear chaves, workspaces ou IPs de imediato em caso de abuso, risco de segurança, inadimplência ou violação destes Termos.</li>
+              </ul>
+            </section>
+
+
+            <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Planos, cobrança, teste gratuito e cancelamento</h2>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
                 <li>Planos são cobrados de forma recorrente (mensal ou anual) por gateways integrados (Stripe e Asaas), no cartão ou PIX conforme a modalidade.</li>

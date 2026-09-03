@@ -4,15 +4,31 @@ import { Button } from "@/components/ui/button";
 import { ShaderBackground } from "@/components/ui/warmth-ripple";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 
-const sample = `curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
-  -H "Authorization: Bearer wk_live_sua_chave" \\
+const sample = `# 1. exporte sua chave (ambiente de produção)
+export WIIZE_API_KEY="wk_live_sua_chave"
+
+# 2. analise uma empresa e receba diagnóstico + abordagem
+curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
+  -H "Authorization: Bearer $WIIZE_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{ "company": { "name": "Empresa Exemplo" } }'`;
+  -d '{
+    "company": {
+      "name": "Empresa Exemplo",
+      "site": "empresaexemplo.com.br",
+      "segmento": "logística"
+    },
+    "output": ["diagnostico", "abordagem"],
+    "webhook_url": "https://seusistema.com/webhooks/wiize"
+  }'
+
+# 3. resposta imediata com o id do processamento
+# { "id": "an_9fd2", "status": "processing", "credits": 3 }`;
+
 
 /** Hero público do Wiize API — mesma linguagem visual do hero da LP principal. */
 export const ApiHero = () => {
   return (
-    <section className="relative -mt-[72px] w-full overflow-x-clip pb-24 pt-[112px] sm:-mt-[80px] sm:pb-32 sm:pt-[128px] lg:pb-40">
+    <section className="relative -mt-[72px] w-full overflow-x-clip pb-36 pt-[112px] sm:-mt-[80px] sm:pb-44 sm:pt-[128px] lg:pb-56">
       <div
         className="absolute inset-0"
         aria-hidden
@@ -38,9 +54,9 @@ export const ApiHero = () => {
         }}
       />
 
-      {/* Faixa de plasma diagonal na divisória do hero */}
+      {/* Faixa de plasma diagonal na divisória do hero — ancorada na borda inferior */}
       <div
-        className="pointer-events-none absolute bottom-[-4rem] left-1/2 z-[5] h-28 w-[120vw] origin-center -translate-x-1/2 translate-y-[10px] -rotate-[4deg] overflow-hidden sm:bottom-[-5rem] sm:h-36 lg:bottom-[-6rem] lg:h-44"
+        className="pointer-events-none absolute bottom-[-7rem] left-1/2 z-[5] h-40 w-[120vw] origin-center -translate-x-1/2 -rotate-[4deg] overflow-hidden sm:bottom-[-8rem] sm:h-48 lg:bottom-[-9.5rem] lg:h-56"
         aria-hidden
       >
         <div className="wz-band absolute inset-0" />

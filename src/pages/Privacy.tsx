@@ -161,6 +161,44 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">7.1. Wiize API (api.wiize.com.br)</h2>
+              <p>
+                O <strong>Wiize API</strong> possui conta própria, separada da plataforma principal e do
+                programa de parceiros. Nele tratamos:
+              </p>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li><strong>Dados de conta do desenvolvedor</strong>: nome, e-mail corporativo, empresa, senha (armazenada com <em>hash</em>) e registros de autenticação.</li>
+                <li><strong>Credenciais de acesso</strong>: chaves de API armazenadas apenas em formato irreversível (<em>hash</em>) — a chave em texto claro é exibida uma única vez, no momento da criação.</li>
+                <li><strong>Metadados de requisição</strong>: data e hora, endpoint, chave utilizada, IP de origem, status, latência e créditos consumidos, para segurança, auditoria, antiabuso e faturamento.</li>
+                <li><strong>Conteúdo enviado nas chamadas</strong>: dados de empresas (pessoas jurídicas) enviados pelo cliente para análise, diagnóstico ou geração de abordagem. Nesse tratamento a Wiize atua como <strong>operadora</strong>, seguindo as instruções do cliente, que é o <strong>controlador</strong>.</li>
+              </ul>
+              <p>
+                <strong>Isolamento e segurança</strong>: cada workspace opera em contexto próprio, sem
+                cruzamento de dados entre clientes; todas as chamadas exigem TLS; webhooks são assinados
+                com HMAC SHA-256; e cada requisição gera registro de auditoria.
+              </p>
+              <p>
+                <strong>Retenção</strong>: logs de requisição e faturamento são mantidos por até 12 meses
+                para fins fiscais, de segurança e prevenção a fraudes; payloads de conteúdo são retidos
+                pelo período mínimo necessário ao processamento e à investigação de incidentes. A exclusão
+                da conta remove chaves ativas e cessa o processamento, preservando apenas registros
+                exigidos por lei.
+              </p>
+              <p>
+                <strong>Uso B2B e IA</strong>: o Wiize API é destinado exclusivamente a dados de pessoas
+                jurídicas obtidos de fontes públicas ou fornecidos pelo cliente. Os conteúdos enviados
+                <strong> não</strong> são utilizados para treinar modelos próprios ou de terceiros. Provedores
+                de IA atuam como subprocessadores, conforme a seção de subprocessadores desta Política.
+              </p>
+              <p>
+                Consulte também as regras de uso do produto nos{" "}
+                <Link to="/terms" className="text-primary hover:underline">Termos de Uso</Link>.
+              </p>
+            </section>
+
+
+
+            <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">8. Compartilhamento de dados e subprocessadores</h2>
               <p>
                 A Wiize <strong>não vende</strong> dados pessoais. Compartilhamos dados apenas com prestadores
