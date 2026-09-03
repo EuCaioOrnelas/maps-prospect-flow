@@ -27,13 +27,13 @@ interface Settings {
 }
 
 const DEFAULTS: Settings = {
-  bronze: 10, silver: 15, gold: 20, platinum: 25,
+  bronze: 10, silver: 12, gold: 15, platinum: 15,
   silverClients: 100, goldClients: 250, platinumClients: 500,
   boostEnabled: true, boostPercent: 50, boostUntil: null,
 };
 
 
-const MAX_COMMISSION = 20;
+const MAX_COMMISSION = 15;
 const AVG_TICKET = 798;
 const MAX_PER_REFERRAL = Math.round(AVG_TICKET * (MAX_COMMISSION / 100) * 12);
 
