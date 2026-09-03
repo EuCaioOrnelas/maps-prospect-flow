@@ -74,7 +74,7 @@ interface CreatePartnerBody {
   company?: string;
   tax_id?: string;
   country?: string;
-  level?: "select" | "signature" | "prime" | "prime";
+  level?: "select" | "signature" | "prime";
   custom_commission_percent?: number | null;
   internal_notes?: string;
   status?: "active" | "inactive" | "blocked";

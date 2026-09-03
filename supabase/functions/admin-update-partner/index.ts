@@ -13,7 +13,7 @@ interface UpdatePartnerBody {
   phone?: string | null;
   company?: string | null;
   tax_id?: string | null;
-  level?: "select" | "signature" | "prime" | "prime";
+  level?: "select" | "signature" | "prime";
   status?: "active" | "inactive" | "blocked";
   custom_commission_percent?: number | null;
   internal_notes?: string | null;
