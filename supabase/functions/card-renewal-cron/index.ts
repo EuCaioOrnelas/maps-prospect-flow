@@ -26,6 +26,22 @@ const PLAN_PRICES_CENTS: Record<string, number> = {
   scale: 89700,
 };
 
+
+// Grandfathering: quem assinou antes do corte v3 (2026-09-03) mantém o preço
+// antigo quando não há valor travado em subscription_price_cents.
+const V3_CUTOFF_MS = Date.parse("2026-09-03T00:00:00Z");
+const LEGACY_PLAN_PRICES_CENTS: Record<string, number> = {
+  start: 19600,
+  growth: 69600,
+  scale: 89700,
+};
+function monthlyFallbackCents(plan: string, createdAt?: string | null): number {
+  const t = createdAt ? Date.parse(createdAt) : NaN;
+  const isV3 = !Number.isNaN(t) && t >= V3_CUTOFF_MS;
+  if (!isV3) return LEGACY_PLAN_PRICES_CENTS[plan] ?? PLAN_PRICES_CENTS[plan] ?? 0;
+  return PLAN_PRICES_CENTS[plan] || 0;
+}
+
 const PLAN_ANNUAL_TOTAL_CENTS: Record<string, number> = {
   start: 295200,
   growth: 715200,
@@ -106,7 +122,7 @@ Deno.serve(async (req) => {
     const { data: targetUsers, error } = await supabase
       .from("profiles")
       .select(
-        "id, email, name, plan, billing_period, subscription_current_period_end, subscription_price_cents, payment_provider, asaas_subscription_id",
+        "id, email, name, plan, billing_period, subscription_current_period_end, subscription_price_cents, payment_provider, asaas_subscription_id, created_at",
       )
       .neq("plan", "free")
       .not("subscription_current_period_end", "is", null)
@@ -144,7 +160,7 @@ Deno.serve(async (req) => {
       const isAnnual = user.billing_period === "annual";
       const fallbackCents = isAnnual
         ? PLAN_ANNUAL_TOTAL_CENTS[user.plan] || 0
-        : PLAN_PRICES_CENTS[user.plan] || 0;
+        : monthlyFallbackCents(user.plan, (user as any).created_at);
       const userPriceCents = user.subscription_price_cents || fallbackCents;
 
       // Stripe assinaturas anuais são cobradas em parcela única (1×) por padrão.
