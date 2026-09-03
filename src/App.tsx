@@ -124,6 +124,7 @@ const AdminOportunidadesUpgrade = lazyWithRetry(() => import("./pages/admin/Admi
 const AdminRelatorios = lazyWithRetry(() => import("./pages/admin/AdminRelatorios"), "AdminRelatorios");
 
 const AdminAssinaturas = lazyWithRetry(() => import("./pages/admin/AdminAssinaturas"), "AdminAssinaturas");
+const AdminWiizeApi = lazyWithRetry(() => import("./pages/admin/AdminWiizeApi"), "AdminWiizeApi");
 const AdminMrrAudit = lazyWithRetry(() => import("./pages/admin/AdminMrrAudit"), "AdminMrrAudit");
 const AdminChurn = lazyWithRetry(() => import("./pages/admin/AdminChurn"), "AdminChurn");
 const AdminForecast = lazyWithRetry(() => import("./pages/admin/AdminForecast"), "AdminForecast");
@@ -402,6 +403,7 @@ const App = () => (
                   <Route path="pix-billing" element={<AdminPixBilling />} />
                   
                   <Route path="assinaturas" element={<AdminAssinaturas />} />
+                  <Route path="wiize-api" element={<AdminWiizeApi />} />
                   <Route path="mrr-audit" element={<AdminMrrAudit />} />
                   <Route path="churn" element={<AdminChurn />} />
                   <Route path="forecast" element={<AdminForecast />} />
