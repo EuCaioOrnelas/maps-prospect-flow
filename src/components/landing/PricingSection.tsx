@@ -493,7 +493,7 @@ export const PricingSection = () => {
   <p className="text-muted-foreground text-[10.5px] sm:text-sm font-medium leading-snug">
   {plan.usageLabel}
   </p>
-  <p className={`text-[10px] sm:text-[13px] font-medium leading-snug ${('prospectionLabel' in plan && plan.prospectionLabel) ? 'text-muted-foreground/80' : 'invisible'}`} aria-hidden={!('prospectionLabel' in plan && plan.prospectionLabel)}>
+  <p className={`text-[10px] sm:text-[13px] font-medium leading-snug ${('prospectionLabel' in plan && plan.prospectionLabel) ? 'text-muted-foreground' : 'invisible'}`} aria-hidden={!('prospectionLabel' in plan && plan.prospectionLabel)}>
   {('prospectionLabel' in plan && plan.prospectionLabel) ? plan.prospectionLabel : 'placeholder'}
   </p>
   </div>
@@ -580,7 +580,7 @@ export const PricingSection = () => {
   <p className="text-muted-foreground text-[10.5px] sm:text-sm font-medium leading-snug">
   Oportunidades sob demanda
   </p>
-  <p className="text-[10px] sm:text-[13px] font-medium leading-snug text-muted-foreground/80">
+  <p className="text-[10px] sm:text-[13px] font-medium leading-snug text-muted-foreground">
   Prospecção com IA sob medida
   </p>
   </div>
