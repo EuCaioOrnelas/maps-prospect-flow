@@ -65,7 +65,7 @@ export const ApiHero = () => {
         </div>
       </div>
 
-      <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
+      <div className="container relative z-10 mx-auto w-full max-w-[90rem] px-4 sm:px-10 lg:px-16">
         <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-[1.15fr_1fr] xl:gap-12">
           <div className="text-center xl:text-left">
             <div className="mb-6 inline-flex animate-fade-in items-center gap-2 rounded-hover border border-primary/10 glass px-3 py-1.5 sm:mb-8 sm:px-3.5 sm:py-2">
@@ -79,12 +79,13 @@ export const ApiHero = () => {
               className="mb-4 animate-slide-up font-display font-bold leading-[1.08] tracking-tight text-foreground sm:mb-6"
               style={{ animationDelay: "0.1s" }}
             >
-              <span className="block text-[2rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.25rem] xl:text-[3.6rem]">
+              <span className="block text-[1.75rem] sm:text-[2.3rem] md:text-[2.9rem] lg:text-[3.25rem] xl:text-[3.6rem]">
                 A inteligência da Wiize
               </span>
-              <span className="mt-1 block whitespace-nowrap text-shimmer-highlight text-[2.5rem] font-extrabold leading-[1.05] drop-shadow-sm sm:mt-2 sm:text-[2.85rem] md:text-[3.5rem] lg:text-[3.95rem] xl:text-[4.3rem]">
+              <span className="mt-1 block text-shimmer-highlight text-[2rem] font-extrabold leading-[1.05] drop-shadow-sm sm:mt-2 sm:whitespace-nowrap sm:text-[2.85rem] md:text-[3.5rem] lg:text-[3.95rem] xl:text-[4.3rem]">
                 Dentro do seu sistema
               </span>
+
             </h1>
 
             <p

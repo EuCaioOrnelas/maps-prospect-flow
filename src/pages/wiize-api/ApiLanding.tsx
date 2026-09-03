@@ -210,7 +210,7 @@ export default function ApiLanding() {
 
       {/* Capacidades da plataforma */}
       <section className="w-full py-16 sm:py-20">
-        <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
+        <div className="container mx-auto w-full max-w-[90rem] px-4 sm:px-10 lg:px-16">
           <div className="mx-auto max-w-2xl text-center">
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Plataforma
@@ -244,7 +244,7 @@ export default function ApiLanding() {
 
       {/* Como funciona */}
       <section id="como-funciona" className="w-full scroll-mt-24 py-16 sm:py-20">
-        <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
+        <div className="container mx-auto w-full max-w-[90rem] px-4 sm:px-10 lg:px-16">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14">
             <div>
               <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
@@ -293,7 +293,7 @@ export default function ApiLanding() {
 
       {/* Segurança */}
       <section id="seguranca" className="w-full scroll-mt-24 py-16 sm:py-24">
-        <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
+        <div className="container mx-auto w-full max-w-[90rem] px-4 sm:px-10 lg:px-16">
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/[0.06] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               <ShieldCheck size={13} strokeWidth={2} />

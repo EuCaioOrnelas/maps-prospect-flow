@@ -10952,6 +10952,60 @@ export type Database = {
         }
         Relationships: []
       }
+      wiize_api_profiles: {
+        Row: {
+          city: string | null
+          company_name: string
+          complement: string | null
+          created_at: string
+          doc_number: string | null
+          doc_type: string
+          full_name: string
+          neighborhood: string | null
+          phone: string | null
+          postal_code: string | null
+          state: string | null
+          street: string | null
+          street_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          company_name?: string
+          complement?: string | null
+          created_at?: string
+          doc_number?: string | null
+          doc_type?: string
+          full_name?: string
+          neighborhood?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street?: string | null
+          street_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          company_name?: string
+          complement?: string | null
+          created_at?: string
+          doc_number?: string | null
+          doc_type?: string
+          full_name?: string
+          neighborhood?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          street?: string | null
+          street_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wiize_message_templates: {
         Row: {
           archived: boolean

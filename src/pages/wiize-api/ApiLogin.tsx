@@ -18,6 +18,16 @@ import wiizeLogo from "@/assets/logo-icon-new.png";
 
 type Mode = "login" | "signup";
 
+/** Evita spinner infinito quando o backend demora a responder. */
+function withTimeout<T>(p: PromiseLike<T>, ms = 15000): Promise<T> {
+  return Promise.race([
+    Promise.resolve(p),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("Tempo esgotado. Tente novamente em instantes.")), ms),
+    ),
+  ]);
+}
+
 /** Container que anima a altura conforme o conteúdo muda (evita "pulos" no toggle). */
 function AutoHeight({ children, deps }: { children: React.ReactNode; deps: unknown[] }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -37,12 +47,13 @@ function AutoHeight({ children, deps }: { children: React.ReactNode; deps: unkno
   return (
     <div
       style={{ height: height ? `${height}px` : undefined }}
-      className="overflow-hidden transition-[height] duration-300 ease-out"
+      className="-mx-2 overflow-hidden px-2 transition-[height] duration-300 ease-out"
     >
       <div ref={ref}>{children}</div>
     </div>
   );
 }
+
 
 export default function ApiLogin() {
   const [params, setParams] = useSearchParams();
@@ -72,6 +83,8 @@ export default function ApiLogin() {
   const [cepOk, setCepOk] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [awaitingConfirm, setAwaitingConfirm] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -80,11 +93,13 @@ export default function ApiLogin() {
   const switchMode = (next: Mode) => {
     setMode(next);
     setStep(1);
+    setAwaitingConfirm(null);
     const p = new URLSearchParams(params);
     if (next === "signup") p.set("modo", "cadastro");
     else p.delete("modo");
     setParams(p, { replace: true });
   };
+
 
   // ViaCEP — mesmo mecanismo do checkout
   useEffect(() => {
@@ -142,42 +157,68 @@ export default function ApiLogin() {
 
   const doSignup = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/api/login`,
-        data: {
-          full_name: name.trim(),
-          company_name: company.trim(),
-          wiize_product: "wiize_api",
-          api_doc_type: docType,
-          api_doc_number: onlyDigits(docNumber),
-          api_phone: onlyDigits(phone),
-          api_postal_code: onlyDigits(cep),
-          api_street: street.trim(),
-          api_street_number: streetNumber.trim(),
-          api_complement: complement.trim(),
-          api_neighborhood: neighborhood.trim(),
-          api_city: city.trim(),
-          api_state: uf,
-        },
-      },
-    });
-    setLoading(false);
-    if (error) {
+    try {
+      const { data, error } = await withTimeout(
+        supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/api/login`,
+            data: {
+              full_name: name.trim(),
+              company_name: company.trim(),
+              wiize_product: "wiize_api",
+              api_doc_type: docType,
+              api_doc_number: onlyDigits(docNumber),
+              api_phone: onlyDigits(phone),
+              api_postal_code: onlyDigits(cep),
+              api_street: street.trim(),
+              api_street_number: streetNumber.trim(),
+              api_complement: complement.trim(),
+              api_neighborhood: neighborhood.trim(),
+              api_city: city.trim(),
+              api_state: uf,
+            },
+          },
+        }),
+      );
+      if (error) throw error;
+
+      // Já veio sessão (auto confirm ligado): entra direto.
+      if (data.session) {
+        navigate("/api/dashboard", { replace: true });
+        return;
+      }
+      setAwaitingConfirm(email.trim());
+    } catch (err: any) {
       toast({
         title: "Não foi possível criar a conta",
-        description: error.message,
+        description: err?.message || "Tente novamente em instantes.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-    toast({
-      title: "Conta criada",
-      description: "Confirme seu e-mail para ativar o acesso ao Wiize API.",
-    });
-    switchMode("login");
+  };
+
+  const resendConfirmation = async () => {
+    if (!awaitingConfirm) return;
+    setResending(true);
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.resend({
+          type: "signup",
+          email: awaitingConfirm,
+          options: { emailRedirectTo: `${window.location.origin}/api/login` },
+        }),
+      );
+      if (error) throw error;
+      toast({ title: "E-mail reenviado", description: "Confira sua caixa de entrada e o spam." });
+    } catch (err: any) {
+      toast({ title: "Falha ao reenviar", description: err?.message, variant: "destructive" });
+    } finally {
+      setResending(false);
+    }
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -196,21 +237,49 @@ export default function ApiLogin() {
     }
 
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    setLoading(false);
-    if (error || !data.user) {
+    try {
+      const { data, error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email: email.trim(), password }),
+      );
+      if (error) throw error;
+      const user = data.user;
+      if (!user) throw new Error("Credenciais inválidas");
+
+      // E-mail ainda não confirmado: bloqueia e oferece reenvio.
+      if (!user.email_confirmed_at) {
+        await supabase.auth.signOut();
+        setAwaitingConfirm(email.trim());
+        return;
+      }
+
+      // Contas são separadas: Wiize API não aceita login da Wiize principal / Partners.
+      const meta = (user.user_metadata || {}) as Record<string, string>;
+      if (meta.wiize_product !== "wiize_api") {
+        await supabase.auth.signOut();
+        toast({
+          title: "Conta não pertence ao Wiize API",
+          description: "Crie uma conta Wiize API. O acesso é separado da Wiize principal e do Partners.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      navigate("/api/dashboard", { replace: true });
+    } catch (err: any) {
+      const msg = String(err?.message || "");
       toast({
         title: "Falha no login",
-        description: error?.message || "Credenciais inválidas",
+        description: /not confirmed/i.test(msg)
+          ? "Confirme seu e-mail antes de entrar."
+          : msg || "Credenciais inválidas",
         variant: "destructive",
       });
-      return;
+      if (/not confirmed/i.test(msg)) setAwaitingConfirm(email.trim());
+    } finally {
+      setLoading(false);
     }
-    navigate("/api/dashboard", { replace: true });
   };
+
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -242,7 +311,7 @@ export default function ApiLogin() {
       </div>
 
       {/* Formulário */}
-      <div className="flex w-full items-center justify-center px-5 py-12 lg:w-1/2">
+      <div className="flex w-full items-center justify-center px-6 py-10 sm:px-10 sm:py-12 lg:w-1/2">
         <div className="w-full max-w-[430px]">
           <Link
             to="/api"
@@ -259,9 +328,36 @@ export default function ApiLogin() {
             </span>
           </div>
 
+          {awaitingConfirm ? (
+            <div className="animate-fade-in">
+              <h1 className="text-2xl font-semibold tracking-tight">Confirme seu e-mail</h1>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Enviamos um link de confirmação para{" "}
+                <span className="font-medium text-foreground">{awaitingConfirm}</span>. Depois de
+                confirmar, sua conta Wiize API é liberada e você já pode entrar.
+              </p>
+              <div className="mt-6 space-y-2">
+                <Button className="w-full" variant="outline" onClick={resendConfirmation} disabled={resending}>
+                  {resending && <Loader2 size={16} className="mr-2 animate-spin" />}
+                  Reenviar e-mail de confirmação
+                </Button>
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setAwaitingConfirm(null);
+                    switchMode("login");
+                  }}
+                >
+                  Já confirmei, entrar
+                </Button>
+              </div>
+            </div>
+          ) : (
+          <>
           <h1 className="text-2xl font-semibold tracking-tight">
             {isSignup ? "Criar conta grátis" : "Entrar no Wiize API"}
           </h1>
+
           <p className="mt-1 text-sm text-muted-foreground">
             {isSignup
               ? step === 1
@@ -557,6 +653,9 @@ export default function ApiLogin() {
               {isSignup ? "Entrar" : "Criar conta grátis"}
             </button>
           </p>
+          </>
+          )}
+
 
           <div className="mt-8 flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3.5 py-3 text-xs leading-relaxed text-muted-foreground">
             <Lock size={14} className="mt-0.5 shrink-0 text-primary" strokeWidth={1.75} />
