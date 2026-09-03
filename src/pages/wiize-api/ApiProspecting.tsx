@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 import { PageHeader, SectionCard } from "@/components/wiize-api/WiizeApiUI";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const endpoints = [
   { method: "POST", path: "/v1/prospecting/companies", icon: Search, title: "Find Companies", desc: "Encontre empresas por nicho, região e sinais comerciais.", tokens: "90 tokens" },
@@ -83,10 +84,10 @@ export default function ApiProspecting() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <SectionCard title="Request" description="POST /v1/prospecting/analyze">
-          <CodeBlock code={requestSample} lang="json" />
+          <CodeBlock code={requestSample} lang="json" theme={codeTheme} />
         </SectionCard>
         <SectionCard title="Response" description="200 OK">
-          <CodeBlock code={responseSample} lang="json" />
+          <CodeBlock code={responseSample} lang="json" theme={codeTheme} />
         </SectionCard>
       </div>
     </>
