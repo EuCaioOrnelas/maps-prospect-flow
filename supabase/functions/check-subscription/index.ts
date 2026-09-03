@@ -261,7 +261,7 @@ async function ensureProfileAndApplyPendingCheckout(
 
   const { data: profileAfterRecovery } = await supabaseClient
     .from("profiles")
-    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
+    .select("id, email, searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen, created_at")
     .eq("id", userId)
     .maybeSingle();
 
@@ -327,7 +327,7 @@ async function reconcileCompletedPixCheckout(
     .from("profiles")
     .update({
       plan: planKey,
-      searches_limit: limitForPlanByUser(planKey, (profile as any)?.created_at ?? null),
+      searches_limit: limitForPlanByUser(planKey, (currentProfile as any)?.created_at ?? null),
       searches_used: 0,
       subscription_current_period_end: subscriptionEnd.toISOString(),
       payment_provider: "asaas",
@@ -346,7 +346,7 @@ async function reconcileCompletedPixCheckout(
 
   const { data: updatedProfile } = await supabaseClient
     .from("profiles")
-    .select("searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen")
+    .select("searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen, created_at")
     .eq("id", userId)
     .maybeSingle();
 
