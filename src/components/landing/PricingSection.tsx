@@ -68,8 +68,9 @@ const mainPlans = {
  key: "start",
  price: "196",
  anchorPrice: "392",
- opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
- description: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
+  opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
+  prospectionLabel: "Sem prospecção com IA",
+  description: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
  features: [
  { text: "Chat ao vivo centralizado para todos os números" },
  { text: "Atendimento contínuo com IA operacional no WhatsApp oficial" },
@@ -124,8 +125,9 @@ const mainPlans = {
  key: "start",
  price: "157",
  anchorPrice: "392",
- opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
- description: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
+  opportunities: "1.000", usageLabel: "Até 1.000 contatos no CRM",
+  prospectionLabel: "Sem prospecção com IA",
+  description: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
  features: [
  { text: "Chat ao vivo centralizado para todos os números" },
  { text: "Atendimento contínuo com IA operacional no WhatsApp oficial" },
@@ -488,7 +490,7 @@ export const PricingSection = () => {
  <span className="text-[10.5px] sm:text-sm font-medium text-muted-foreground">/ mês</span>
  </div>
   <div className="mt-1.5 sm:mt-2 min-h-[2.6rem] sm:min-h-[2.9rem] flex flex-col justify-start gap-0.5">
-  <p className="text-primary text-[10.5px] sm:text-sm font-medium leading-snug">
+  <p className="text-foreground text-[10.5px] sm:text-sm font-medium leading-snug">
   {plan.usageLabel}
   </p>
   <p className={`text-[10px] sm:text-[13px] font-medium leading-snug ${('prospectionLabel' in plan && plan.prospectionLabel) ? 'text-foreground/80' : 'invisible'}`} aria-hidden={!('prospectionLabel' in plan && plan.prospectionLabel)}>
