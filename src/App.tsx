@@ -521,6 +521,21 @@ const App = () => (
                   <Route path="banco" element={<PartnerBankAccount />} />
                 </Route>
 
+                {/* Wiize API */}
+                <Route path="/api" element={<LightThemeWrapper><ApiLanding /></LightThemeWrapper>} />
+                <Route path="/api/login" element={<LightThemeWrapper><ApiLogin /></LightThemeWrapper>} />
+                <Route path="/api" element={<LightThemeWrapper><WiizeApiLayout /></LightThemeWrapper>}>
+                  <Route path="dashboard" element={<ApiDashboard />} />
+                  <Route path="apis" element={<ApiCatalog />} />
+                  <Route path="apis/prospecting" element={<ApiProspecting />} />
+                  <Route path="keys" element={<ApiKeys />} />
+                  <Route path="credits" element={<ApiCredits />} />
+                  <Route path="usage" element={<ApiUsage />} />
+                  <Route path="docs" element={<ApiDocs />} />
+                  <Route path="billing" element={<ApiBilling />} />
+                  <Route path="settings" element={<ApiSettings />} />
+                </Route>
+
                 <Route path="/404" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
