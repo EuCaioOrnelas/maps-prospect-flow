@@ -138,13 +138,34 @@ serve(async (req) => {
     const action = String((body as any)?.action || "create");
 
     if (action === "create") {
+      const cfg = await loadLimits();
       const amount = Math.round(Number((body as any)?.amount_brl || 0) * 100) / 100;
-      if (!Number.isFinite(amount) || amount < MIN_TOPUP || amount > MAX_TOPUP) {
-        return json({ error: `Informe um valor entre R$ ${MIN_TOPUP} e R$ ${MAX_TOPUP}.` }, 422);
+      if (!Number.isFinite(amount) || amount < cfg.min || amount > cfg.max) {
+        return json({ error: `Informe um valor entre R$ ${cfg.min} e R$ ${cfg.max}.` }, 422);
       }
 
-      const tokens = Math.round(amount / TOKEN_PRICE_BRL);
+      // Antifraude: no máximo 5 recargas pendentes e 20 criadas por hora.
+      const oneHourAgo = new Date(Date.now() - 3600_000).toISOString();
+      const { count: pendingCount } = await admin
+        .from("wiize_api_topups")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("status", "pending");
+      if ((pendingCount || 0) >= 5) {
+        return json({ error: "Você já possui recargas pendentes. Conclua ou cancele antes de criar outra." }, 429);
+      }
+      const { count: hourCount } = await admin
+        .from("wiize_api_topups")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", oneHourAgo);
+      if ((hourCount || 0) >= 20) {
+        return json({ error: "Muitas recargas criadas na última hora. Tente novamente mais tarde." }, 429);
+      }
+
+      const tokens = Math.round(amount / cfg.tokenPrice);
       const customerId = await ensureCustomer(user.id, user.email || "");
+
 
       const { data: topup, error: insErr } = await admin
         .from("wiize_api_topups")
