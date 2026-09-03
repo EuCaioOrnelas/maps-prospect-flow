@@ -319,7 +319,11 @@ export default function ApiLogin() {
       if (/not confirmed/i.test(msg)) {
         setAwaitingConfirm(email.trim());
       } else {
-        setAuthMessage(msg || "E-mail ou senha inválidos. Verifique os dados e tente novamente.");
+        setAuthMessage(
+          /invalid login credentials/i.test(msg)
+            ? "E-mail ou senha inválidos. Verifique os dados e tente novamente."
+            : msg || "Não foi possível entrar agora. Tente novamente em instantes.",
+        );
       }
     } finally {
       setLoading(false);
