@@ -38,6 +38,22 @@ const PLAN_PRICES_CENTS: Record<string, number> = {
   scale: 89700,    // R$ 897/mês
 };
 
+
+// Grandfathering: quem assinou antes do corte v3 (2026-09-03) mantém o preço
+// antigo quando não há valor travado em subscription_price_cents.
+const V3_CUTOFF_MS = Date.parse("2026-09-03T00:00:00Z");
+const LEGACY_PLAN_PRICES_CENTS: Record<string, number> = {
+  start: 19600,
+  growth: 69600,
+  scale: 89700,
+};
+function monthlyFallbackCents(plan: string, createdAt?: string | null): number {
+  const t = createdAt ? Date.parse(createdAt) : NaN;
+  const isV3 = !Number.isNaN(t) && t >= V3_CUTOFF_MS;
+  if (!isV3) return LEGACY_PLAN_PRICES_CENTS[plan] ?? PLAN_PRICES_CENTS[plan] ?? 0;
+  return PLAN_PRICES_CENTS[plan] || 0;
+}
+
 // Helper to format cents to BRL string
 function formatPrice(cents: number): string {
   return `R$ ${(cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`;
@@ -95,7 +111,7 @@ Deno.serve(async (req) => {
 
     const { data: targetUsers, error } = await supabaseClient
       .from("profiles")
-      .select("id, email, name, plan, billing_period, subscription_current_period_end, is_blocked, subscription_price_cents, payment_provider")
+      .select("id, email, name, plan, billing_period, subscription_current_period_end, is_blocked, subscription_price_cents, payment_provider, created_at")
       .neq("plan", "free")
       .not("subscription_current_period_end", "is", null)
       .lt("subscription_current_period_end", sevenDaysFromNow.toISOString())
@@ -169,7 +185,7 @@ Deno.serve(async (req) => {
         const origin = "https://wiize.com.br";
         const planName = PLAN_NAMES[user.plan] || user.plan;
         // Use user's locked-in price (grandfathering), fallback to current prices
-        const userPriceCents = user.subscription_price_cents || PLAN_PRICES_CENTS[user.plan] || 0;
+        const userPriceCents = user.subscription_price_cents || monthlyFallbackCents(user.plan, (user as any).created_at);
         const planPrice = formatPlanPrice(userPriceCents, user.billing_period);
         const priceNumber = String(Math.round(userPriceCents / 100));
 

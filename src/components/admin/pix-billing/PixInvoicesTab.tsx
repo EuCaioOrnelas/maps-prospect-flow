@@ -266,7 +266,7 @@ export function PixInvoicesTab() {
         invoice.plan.toLowerCase().includes("growth") ? "growth" :
         invoice.plan.toLowerCase().includes("scale") ? "scale" : invoice.plan;
 
-      const searchesLimit = planKey === "start" ? 1000 : planKey === "growth" ? 3000 : 10000;
+      const searchesLimit = planKey === "start" ? 1000 : planKey === "growth" ? 1000 : 10000;
 
       // Update profile via admin function
       await supabase.functions.invoke("admin-create-user", {

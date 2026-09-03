@@ -12,9 +12,17 @@ const logStep = (step: string, details?: any) => {
   console.log(`[ASAAS-PAYMENT-CHECK] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 };
 
-function getPlanSearchesLimit(planKey: string): number {
-  const limits: Record<string, number> = { start: 1000, growth: 1000, scale: 10000 };
-  return limits[planKey] || 1000;
+// Grandfathering v3 (2026-09-03): Growth novo = 1.000 oportunidades, legado = 3.000.
+const V3_CUTOFF_MS = Date.parse("2026-09-03T00:00:00Z");
+function isV3User(createdAt?: string | null): boolean {
+  if (!createdAt) return false;
+  const t = Date.parse(createdAt);
+  return !Number.isNaN(t) && t >= V3_CUTOFF_MS;
+}
+function getPlanSearchesLimit(planKey: string, createdAt?: string | null): number {
+  if (planKey === "growth") return isV3User(createdAt) ? 1000 : 3000;
+  if (planKey === "scale") return 10000;
+  return 1000;
 }
 
 /**
@@ -183,7 +191,6 @@ serve(async (req) => {
           "Wiize Enterprise": "scale",
         };
         const planKey = planNameToKey[lead.plan_attempted] || "start";
-        const searchesLimit = getPlanSearchesLimit(planKey);
         const periodEnd = new Date();
         periodEnd.setDate(periodEnd.getDate() + 30);
 
@@ -200,13 +207,14 @@ serve(async (req) => {
         if (targetId) {
           const { data: targetProfile } = await supabaseClient
             .from("profiles")
-            .select("admin_assigned_plan")
+            .select("admin_assigned_plan, created_at")
             .eq("id", targetId)
             .maybeSingle();
 
           if (targetProfile?.admin_assigned_plan) {
             logStep("Skipping profile update - admin assigned plan", { userId: targetId });
           } else {
+            const searchesLimit = getPlanSearchesLimit(planKey, (targetProfile as any)?.created_at);
             await supabaseClient.from("profiles").update({
               plan: planKey,
               searches_limit: searchesLimit,

@@ -130,9 +130,17 @@ async function cancelPartnerCommissionsForRefund(
   }
 }
 
-function getPlanSearchesLimit(planKey: string): number {
-  const limits: Record<string, number> = { start: 1000, growth: 1000, scale: 10000 };
-  return limits[planKey] || 1000;
+// Grandfathering v3 (2026-09-03): Growth novo = 1.000 oportunidades, legado = 3.000.
+const V3_CUTOFF_MS = Date.parse("2026-09-03T00:00:00Z");
+function isV3User(createdAt?: string | null): boolean {
+  if (!createdAt) return false;
+  const t = Date.parse(createdAt);
+  return !Number.isNaN(t) && t >= V3_CUTOFF_MS;
+}
+function getPlanSearchesLimit(planKey: string, createdAt?: string | null): number {
+  if (planKey === "growth") return isV3User(createdAt) ? 1000 : 3000;
+  if (planKey === "scale") return 10000;
+  return 1000;
 }
 
 function extractPlanFromDescription(description: string): string | null {
@@ -222,7 +230,7 @@ async function findProfile(supabaseClient: any, externalReference: string | null
   if (externalReference && externalReference.match(/^[0-9a-f-]{36}$/i)) {
     const { data } = await supabaseClient
       .from("profiles")
-      .select("id, plan, email, subscription_current_period_end")
+      .select("id, plan, email, subscription_current_period_end, created_at")
       .eq("id", externalReference)
       .maybeSingle();
     if (data) return data;
@@ -232,7 +240,7 @@ async function findProfile(supabaseClient: any, externalReference: string | null
   if (externalReference) {
     const { data } = await supabaseClient
       .from("profiles")
-      .select("id, plan, email, subscription_current_period_end")
+      .select("id, plan, email, subscription_current_period_end, created_at")
       .eq("email", externalReference)
       .maybeSingle();
     if (data) return data;
@@ -251,7 +259,7 @@ async function findProfile(supabaseClient: any, externalReference: string | null
       if (lead.user_id) {
         const { data } = await supabaseClient
           .from("profiles")
-          .select("id, plan, email, subscription_current_period_end")
+          .select("id, plan, email, subscription_current_period_end, created_at")
           .eq("id", lead.user_id)
           .maybeSingle();
         if (data) return data;
@@ -259,7 +267,7 @@ async function findProfile(supabaseClient: any, externalReference: string | null
       if (lead.email) {
         const { data } = await supabaseClient
           .from("profiles")
-          .select("id, plan, email, subscription_current_period_end")
+          .select("id, plan, email, subscription_current_period_end, created_at")
           .eq("email", lead.email)
           .maybeSingle();
         if (data) return data;
@@ -274,7 +282,7 @@ async function findProfileForLead(supabaseClient: any, lead: any): Promise<any |
   if (lead?.user_id) {
     const { data } = await supabaseClient
       .from("profiles")
-      .select("id, plan, email, subscription_current_period_end")
+      .select("id, plan, email, subscription_current_period_end, created_at")
       .eq("id", lead.user_id)
       .maybeSingle();
     if (data) return data;
@@ -282,7 +290,7 @@ async function findProfileForLead(supabaseClient: any, lead: any): Promise<any |
   if (lead?.email) {
     const { data } = await supabaseClient
       .from("profiles")
-      .select("id, plan, email, subscription_current_period_end")
+      .select("id, plan, email, subscription_current_period_end, created_at")
       .eq("email", lead.email)
       .maybeSingle();
     if (data) return data;
@@ -299,7 +307,7 @@ async function activatePlan(
   paymentValue?: number,
   meta?: { subscriptionId?: string | null; customerId?: string | null; billingPeriod?: string | null },
 ) {
-  const searchesLimit = getPlanSearchesLimit(planKey);
+  const searchesLimit = getPlanSearchesLimit(planKey, (profile as any)?.created_at);
   const currentPeriodEnd = profile.subscription_current_period_end
     ? new Date(profile.subscription_current_period_end)
     : new Date();

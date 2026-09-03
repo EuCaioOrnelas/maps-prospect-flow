@@ -1082,10 +1082,18 @@ const Admin = () => {
   const updateUserPlan = async (userId: string, newPlan: string) => {
     setUpdating(userId);
     try {
+      // Grandfathering v3: Growth novo = 1.000 oportunidades, legado = 3.000.
+      const { data: targetProfile } = await supabase
+        .from('profiles')
+        .select('created_at')
+        .eq('id', userId)
+        .maybeSingle();
+      const isV3 = !!(targetProfile as any)?.created_at &&
+        new Date((targetProfile as any).created_at).getTime() >= new Date('2026-09-03T00:00:00Z').getTime();
       const limits: { [key: string]: number } = {
         free: 10,
         start: 1000,
-        growth: 3000,
+        growth: isV3 ? 1000 : 3000,
         scale: 10000,
       };
 

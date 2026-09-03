@@ -54,8 +54,8 @@ function getPlanCopy(planKey: string, planName: string) {
 /** Limites base por plano para cada recurso. */
 function getPlanBase(planKey: string) {
   const k = (planKey || "").toLowerCase();
-  if (k === "growth") return { numbers: 5, contacts: 10000, opportunities: 3000 };
-  if (k === "start") return { numbers: 2, contacts: 1000, opportunities: 0 };
+  if (k === "growth") return { numbers: 2, contacts: 10000, opportunities: 1000 };
+  if (k === "start") return { numbers: 1, contacts: 1000, opportunities: 0 };
   return { numbers: 0, contacts: 0, opportunities: 0 };
 }
 
