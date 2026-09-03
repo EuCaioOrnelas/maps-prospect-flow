@@ -48,11 +48,16 @@ const statusLabel: Record<string, string> = {
 };
 
 const typeLabel: Record<string, string> = {
-  credit: "Recarga",
-  debit: "Consumo",
-  refund: "Estorno",
-  adjustment: "Crédito concedido",
+  CREDIT_PURCHASE: "Recarga",
+  API_USAGE: "Consumo",
+  REFUND: "Estorno",
+  ADJUSTMENT: "Crédito concedido",
+  BONUS: "Bônus",
+  EXPIRATION: "Expiração",
+  CHARGEBACK: "Chargeback",
+  REVERSAL: "Reversão",
 };
+
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", {
