@@ -183,6 +183,20 @@ const PartnersLanding = lazyWithRetry(() => import("./pages/PartnersLanding"), "
 const PartnerVerification = lazyWithRetry(() => import("./pages/PartnerVerification"), "PartnerVerification");
 const PartnersApply = lazyWithRetry(() => import("./pages/partners/PartnersApply"), "PartnersApply");
 const PartnersTerms = lazyWithRetry(() => import("./pages/partners/PartnersTerms"), "PartnersTerms");
+
+// Wiize API (produto de infraestrutura)
+const ApiLanding = lazyWithRetry(() => import("./pages/wiize-api/ApiLanding"), "ApiLanding");
+const ApiLogin = lazyWithRetry(() => import("./pages/wiize-api/ApiLogin"), "ApiLogin");
+const WiizeApiLayout = lazyWithRetry(() => import("./pages/wiize-api/WiizeApiLayout"), "WiizeApiLayout");
+const ApiDashboard = lazyWithRetry(() => import("./pages/wiize-api/ApiDashboard"), "ApiDashboard");
+const ApiCatalog = lazyWithRetry(() => import("./pages/wiize-api/ApiCatalog"), "ApiCatalog");
+const ApiProspecting = lazyWithRetry(() => import("./pages/wiize-api/ApiProspecting"), "ApiProspecting");
+const ApiKeys = lazyWithRetry(() => import("./pages/wiize-api/ApiKeys"), "ApiKeys");
+const ApiCredits = lazyWithRetry(() => import("./pages/wiize-api/ApiCredits"), "ApiCredits");
+const ApiUsage = lazyWithRetry(() => import("./pages/wiize-api/ApiUsage"), "ApiUsage");
+const ApiDocs = lazyWithRetry(() => import("./pages/wiize-api/ApiDocs"), "ApiDocs");
+const ApiBilling = lazyWithRetry(() => import("./pages/wiize-api/ApiBilling"), "ApiBilling");
+const ApiSettings = lazyWithRetry(() => import("./pages/wiize-api/ApiSettings"), "ApiSettings");
 const AdminPartnersApplications = lazyWithRetry(() => import("./pages/admin/AdminPartnersApplications"), "AdminPartnersApplications");
 const AdminPartnersMaterials = lazyWithRetry(() => import("./pages/admin/AdminPartnersMaterials"), "AdminPartnersMaterials");
 const AdminBlogList = lazyWithRetry(() => import("./pages/admin/AdminBlogList"), "AdminBlogList");
@@ -505,6 +519,21 @@ const App = () => (
                   <Route path="ranking" element={<Navigate to="/partners/metas" replace />} />
                   <Route path="dados-bancarios" element={<PartnerBankAccount />} />
                   <Route path="banco" element={<PartnerBankAccount />} />
+                </Route>
+
+                {/* Wiize API */}
+                <Route path="/api" element={<LightThemeWrapper><ApiLanding /></LightThemeWrapper>} />
+                <Route path="/api/login" element={<LightThemeWrapper><ApiLogin /></LightThemeWrapper>} />
+                <Route path="/api" element={<LightThemeWrapper><WiizeApiLayout /></LightThemeWrapper>}>
+                  <Route path="dashboard" element={<ApiDashboard />} />
+                  <Route path="apis" element={<ApiCatalog />} />
+                  <Route path="apis/prospecting" element={<ApiProspecting />} />
+                  <Route path="keys" element={<ApiKeys />} />
+                  <Route path="credits" element={<ApiCredits />} />
+                  <Route path="usage" element={<ApiUsage />} />
+                  <Route path="docs" element={<ApiDocs />} />
+                  <Route path="billing" element={<ApiBilling />} />
+                  <Route path="settings" element={<ApiSettings />} />
                 </Route>
 
                 <Route path="/404" element={<LightThemeWrapper><NotFound /></LightThemeWrapper>} />
