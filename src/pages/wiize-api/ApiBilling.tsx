@@ -83,14 +83,15 @@ export default function ApiBilling() {
   const spent = useMemo(
     () =>
       transactions
-        .filter((t) => t.type === "debit")
+        .filter((t) => t.type === "API_USAGE")
         .reduce((s, t) => s + Math.abs(t.tokens || 0), 0),
     [transactions],
   );
   const grants = useMemo(
-    () => transactions.filter((t) => t.type === "adjustment" || t.type === "refund"),
+    () => transactions.filter((t) => ["ADJUSTMENT", "BONUS", "REFUND"].includes(t.type)),
     [transactions],
   );
+
 
   const lowBalanceValue =
     lowBalance ?? String(brlForTokens(wallet?.low_balance_threshold_tokens ?? 500));
