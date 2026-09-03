@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 
 const NAV_LINKS = [
-  { to: "/api", label: "Visão geral" },
-  { to: "/api/docs", label: "Documentação" },
-  { to: "/api/catalogo", label: "Catálogo" },
+  { to: "/api#recursos", label: "Recursos" },
+  { to: "/api#como-funciona", label: "Como funciona" },
+  { to: "/api#seguranca", label: "Segurança" },
   { to: "/", label: "Wiize Plataforma" },
 ];
 
