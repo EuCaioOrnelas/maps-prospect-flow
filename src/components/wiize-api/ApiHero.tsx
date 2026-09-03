@@ -12,7 +12,7 @@ const sample = `curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
 /** Hero público do Wiize API — mesma linguagem visual do hero da LP principal. */
 export const ApiHero = () => {
   return (
-    <section className="relative -mt-[72px] w-full overflow-x-clip pb-16 pt-[112px] sm:-mt-[80px] sm:pb-24 sm:pt-[128px]">
+    <section className="relative -mt-[72px] w-full overflow-x-clip pb-24 pt-[112px] sm:-mt-[80px] sm:pb-32 sm:pt-[128px] lg:pb-40">
       <div
         className="absolute inset-0"
         aria-hidden
@@ -40,7 +40,7 @@ export const ApiHero = () => {
 
       {/* Faixa de plasma diagonal na divisória do hero */}
       <div
-        className="pointer-events-none absolute bottom-[-3rem] left-1/2 z-[5] h-24 w-[120vw] origin-center -translate-x-1/2 translate-y-[-60px] -rotate-[4deg] overflow-hidden sm:h-32"
+        className="pointer-events-none absolute bottom-[-4rem] left-1/2 z-[5] h-28 w-[120vw] origin-center -translate-x-1/2 translate-y-[10px] -rotate-[4deg] overflow-hidden sm:bottom-[-5rem] sm:h-36 lg:bottom-[-6rem] lg:h-44"
         aria-hidden
       >
         <div className="wz-band absolute inset-0" />
@@ -101,20 +101,30 @@ export const ApiHero = () => {
             </div>
 
             <div className="mx-auto max-w-xl text-left xl:hidden">
-              <CodeBlock code={sample} lang="bash" filename="quickstart.sh" theme="light" />
+              <div className="relative">
+                <div className="absolute -inset-4 rounded-3xl bg-primary/10 soft-glow" aria-hidden />
+                <CodeBlock
+                  code={sample}
+                  lang="bash"
+                  filename="quickstart.sh"
+                  theme="light"
+                  className="relative min-h-[18rem] border border-primary/15 shadow-[0_28px_70px_-32px_hsl(158_60%_22%/0.45)]"
+                />
+              </div>
             </div>
           </div>
 
           <div className="relative z-10 hidden w-full animate-slide-up xl:flex xl:justify-end" style={{ animationDelay: "0.5s" }}>
-            <div className="relative w-full max-w-[34rem] text-left">
-              <div className="absolute -inset-5 rounded-3xl bg-primary/8 soft-glow" aria-hidden />
+            <div className="relative w-full max-w-[38rem] text-left">
+              <div className="absolute -inset-6 rounded-3xl bg-primary/10 soft-glow" aria-hidden />
+              <div className="absolute -inset-1 rounded-2xl bg-primary/20 blur-xl" aria-hidden />
               <CodeBlock
                 code={sample}
                 lang="bash"
                 filename="quickstart.sh"
                 theme="light"
                 showLineNumbers
-                className="relative shadow-[0_24px_60px_-30px_hsl(158_60%_25%/0.35)]"
+                className="relative min-h-[24rem] border border-primary/15 shadow-[0_32px_80px_-36px_hsl(158_60%_22%/0.5)]"
               />
             </div>
           </div>

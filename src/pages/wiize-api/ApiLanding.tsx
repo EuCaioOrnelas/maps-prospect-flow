@@ -294,58 +294,42 @@ export default function ApiLanding() {
       {/* Segurança */}
       <section id="seguranca" className="w-full scroll-mt-24 py-16 sm:py-24">
         <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
-          <div className="relative overflow-hidden rounded-panel border border-primary/15 bg-gradient-to-br from-primary/[0.07] via-background to-primary/[0.04] p-8 sm:p-12 lg:p-16">
-            <div
-              className="pointer-events-none absolute inset-0 opacity-[0.5]"
-              aria-hidden
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle at 15% 10%, hsl(var(--primary) / 0.10) 0%, transparent 55%), radial-gradient(circle at 90% 90%, hsl(var(--primary) / 0.08) 0%, transparent 55%)",
-              }}
-            />
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/[0.06] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+              <ShieldCheck size={13} strokeWidth={2} />
+              Segurança
+            </span>
+            <h2 className="mt-5 font-display text-[clamp(1.55rem,2.8vw,2.35rem)] font-extrabold leading-[1.12] tracking-tight text-foreground">
+              Seus dados isolados,
+              <br />
+              <span className="text-shimmer-highlight">suas chaves sob controle</span>
+            </h2>
+            <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Infraestrutura pensada para operações críticas: isolamento por workspace, rastreabilidade
+              completa e criptografia obrigatória do primeiro ao último request.
+            </p>
+          </div>
 
-            <div className="relative z-10">
-              <div className="mx-auto max-w-2xl text-center">
-                <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/[0.06] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-                  <ShieldCheck size={13} strokeWidth={2} />
-                  Segurança
+          <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden rounded-panel border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-3">
+            {SECURITY.map((s) => (
+              <div key={s.title} className="relative bg-background/95 p-6 sm:p-7">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                  <s.icon size={17} strokeWidth={1.75} />
                 </span>
-                <h2 className="mt-5 font-display text-[clamp(1.55rem,2.8vw,2.35rem)] font-extrabold leading-[1.12] tracking-tight text-foreground">
-                  Seus dados isolados,
-                  <br />
-                  <span className="text-shimmer-highlight">suas chaves sob controle</span>
-                </h2>
-                <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-                  Infraestrutura pensada para operações críticas: isolamento por workspace, rastreabilidade
-                  completa e criptografia obrigatória do primeiro ao último request.
-                </p>
+                <h3 className="mt-4 text-[0.95rem] font-semibold tracking-tight text-foreground">{s.title}</h3>
+                <p className="mt-2 text-[0.83rem] leading-relaxed text-muted-foreground">{s.text}</p>
               </div>
+            ))}
+          </div>
 
-              <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden rounded-panel border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-3">
-                {SECURITY.map((s) => (
-                  <div
-                    key={s.title}
-                    className="group relative bg-background/95 p-6 transition-colors hover:bg-primary/[0.03] sm:p-7"
-                  >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15 transition-transform duration-300 group-hover:scale-105">
-                      <s.icon size={17} strokeWidth={1.75} />
-                    </span>
-                    <h3 className="mt-4 text-[0.95rem] font-semibold tracking-tight text-foreground">{s.title}</h3>
-                    <p className="mt-2 text-[0.83rem] leading-relaxed text-muted-foreground">{s.text}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                <span>LGPD</span>
-                <span className="h-1 w-1 rounded-full bg-border" aria-hidden />
-                <span>TLS 1.2+</span>
-                <span className="h-1 w-1 rounded-full bg-border" aria-hidden />
-                <span>HMAC SHA-256</span>
-                <span className="h-1 w-1 rounded-full bg-border" aria-hidden />
-                <span>Auditoria completa</span>
-              </div>
-            </div>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            <span>LGPD</span>
+            <span className="h-1 w-1 rounded-full bg-border" aria-hidden />
+            <span>TLS 1.2+</span>
+            <span className="h-1 w-1 rounded-full bg-border" aria-hidden />
+            <span>HMAC SHA-256</span>
+            <span className="h-1 w-1 rounded-full bg-border" aria-hidden />
+            <span>Auditoria completa</span>
           </div>
         </div>
       </section>
