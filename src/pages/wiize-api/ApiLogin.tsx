@@ -34,15 +34,6 @@ export default function ApiLogin() {
     setParams(p, { replace: true });
   };
 
-  const highlights = useMemo(
-    () => [
-      { icon: Terminal, text: "Endpoints de análise, diagnóstico e abordagem comercial" },
-      { icon: KeyRound, text: "Uma API Key por API, com ambientes separados" },
-      { icon: ShieldCheck, text: "Segurança e auditoria do ecossistema Wiize" },
-    ],
-    []
-  );
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
