@@ -160,7 +160,7 @@ serve(async (req) => {
         _user_id: userId,
         _tokens: tokens,
         _amount_brl: Number((tokens * TOKEN_PRICE_BRL).toFixed(2)),
-        _type: tokens > 0 ? "adjustment_credit" : "adjustment_debit",
+        _type: "ADJUSTMENT",
         _description: reason,
         _reference_type: "admin_adjustment",
         _reference_id: user.id,

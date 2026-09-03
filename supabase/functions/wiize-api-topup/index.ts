@@ -13,9 +13,22 @@ const corsHeaders: Record<string, string> = {
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
-const TOKEN_PRICE_BRL = 0.01;
-const MIN_TOPUP = 20;
-const MAX_TOPUP = 5000;
+const DEFAULT_TOKEN_PRICE_BRL = 0.01;
+const DEFAULT_MIN_TOPUP = 30;
+const DEFAULT_MAX_TOPUP = 5000;
+
+// Limites e preço vêm da configuração central (wiize_api_limits), nada hardcoded em produção.
+async function loadLimits() {
+  const { data } = await admin.from("wiize_api_limits").select("key, value");
+  const map: Record<string, number> = {};
+  for (const row of data || []) map[(row as any).key] = Number((row as any).value);
+  return {
+    tokenPrice: map.token_price_brl || DEFAULT_TOKEN_PRICE_BRL,
+    min: map.min_topup_brl || DEFAULT_MIN_TOPUP,
+    max: map.max_topup_brl || DEFAULT_MAX_TOPUP,
+  };
+}
+
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -86,7 +99,7 @@ async function creditTopup(row: any, paidAt: string) {
     _user_id: row.user_id,
     _tokens: row.tokens,
     _amount_brl: Number(row.amount_brl),
-    _type: "topup",
+    _type: "CREDIT_PURCHASE",
     _description: `Recarga PIX de R$ ${Number(row.amount_brl).toFixed(2)}`,
     _reference_type: "wiize_api_topup",
     _reference_id: row.id,
@@ -125,13 +138,34 @@ serve(async (req) => {
     const action = String((body as any)?.action || "create");
 
     if (action === "create") {
+      const cfg = await loadLimits();
       const amount = Math.round(Number((body as any)?.amount_brl || 0) * 100) / 100;
-      if (!Number.isFinite(amount) || amount < MIN_TOPUP || amount > MAX_TOPUP) {
-        return json({ error: `Informe um valor entre R$ ${MIN_TOPUP} e R$ ${MAX_TOPUP}.` }, 422);
+      if (!Number.isFinite(amount) || amount < cfg.min || amount > cfg.max) {
+        return json({ error: `Informe um valor entre R$ ${cfg.min} e R$ ${cfg.max}.` }, 422);
       }
 
-      const tokens = Math.round(amount / TOKEN_PRICE_BRL);
+      // Antifraude: no máximo 5 recargas pendentes e 20 criadas por hora.
+      const oneHourAgo = new Date(Date.now() - 3600_000).toISOString();
+      const { count: pendingCount } = await admin
+        .from("wiize_api_topups")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("status", "pending");
+      if ((pendingCount || 0) >= 5) {
+        return json({ error: "Você já possui recargas pendentes. Conclua ou cancele antes de criar outra." }, 429);
+      }
+      const { count: hourCount } = await admin
+        .from("wiize_api_topups")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", oneHourAgo);
+      if ((hourCount || 0) >= 20) {
+        return json({ error: "Muitas recargas criadas na última hora. Tente novamente mais tarde." }, 429);
+      }
+
+      const tokens = Math.round(amount / cfg.tokenPrice);
       const customerId = await ensureCustomer(user.id, user.email || "");
+
 
       const { data: topup, error: insErr } = await admin
         .from("wiize_api_topups")

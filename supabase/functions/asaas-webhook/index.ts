@@ -509,6 +509,63 @@ serve(async (req) => {
         payerCpfCnpj: payment.customerCpfCnpj || null,
       });
 
+      // ============ WIIZE API: recarga de créditos (carteira pré-paga) ============
+      if (typeof externalReference === "string" && externalReference.startsWith("wiize_api_topup_")) {
+        const topupId = externalReference.replace("wiize_api_topup_", "");
+        const { data: topup } = await supabaseClient
+          .from("wiize_api_topups")
+          .select("id, user_id, tokens, amount_brl, status")
+          .eq("id", topupId)
+          .maybeSingle();
+
+        if (!topup) {
+          logStep("Wiize API topup not found", { topupId });
+          return new Response(JSON.stringify({ received: true, warning: "wiize_api_topup_not_found" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        if (topup.status === "paid") {
+          return new Response(JSON.stringify({ received: true, action: "wiize_api_topup_already_credited" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const { error: creditErr } = await supabaseClient.rpc("wiize_api_credit_wallet", {
+          _user_id: topup.user_id,
+          _tokens: topup.tokens,
+          _amount_brl: Number(topup.amount_brl),
+          _type: "CREDIT_PURCHASE",
+          _description: `Recarga PIX de R$ ${Number(topup.amount_brl).toFixed(2)}`,
+          _reference_type: "wiize_api_topup",
+          _reference_id: topup.id,
+          _idempotency_key: `topup_${topup.id}`,
+        });
+        if (creditErr) {
+          logStep("Wiize API credit failed", { topupId, error: creditErr.message });
+          return new Response(JSON.stringify({ received: true, error: "wiize_api_credit_failed" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        await supabaseClient
+          .from("wiize_api_topups")
+          .update({
+            status: "paid",
+            paid_at: payment.paymentDate ? new Date(payment.paymentDate).toISOString() : new Date().toISOString(),
+            credited_at: new Date().toISOString(),
+          })
+          .eq("id", topup.id);
+
+        logStep("Wiize API topup credited", { topupId, tokens: topup.tokens });
+        return new Response(JSON.stringify({ received: true, action: "wiize_api_topup_credited" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+
+
       // --- Idempotência: se já processamos esse payment.id, ignora reentrega. ---
       const { data: alreadyProcessed } = await supabaseClient
         .from("checkout_leads")
@@ -640,6 +697,40 @@ serve(async (req) => {
       const externalReference = payment?.externalReference;
       const paymentId = payment?.id || null;
       logStep("Payment refunded/deleted", { event, externalReference, paymentId });
+
+      // Wiize API: estorna a recarga (debita os tokens creditados) ou cancela a cobrança pendente
+      if (typeof externalReference === "string" && externalReference.startsWith("wiize_api_topup_")) {
+        const topupId = externalReference.replace("wiize_api_topup_", "");
+        const { data: topup } = await supabaseClient
+          .from("wiize_api_topups")
+          .select("id, user_id, tokens, amount_brl, status")
+          .eq("id", topupId)
+          .maybeSingle();
+
+        if (topup?.status === "paid") {
+          await supabaseClient.rpc("wiize_api_credit_wallet", {
+            _user_id: topup.user_id,
+            _tokens: -Math.abs(topup.tokens),
+            _amount_brl: -Math.abs(Number(topup.amount_brl)),
+            _type: "REFUND",
+            _description: `Estorno da recarga de R$ ${Number(topup.amount_brl).toFixed(2)}`,
+            _reference_type: "wiize_api_topup_refund",
+            _reference_id: topup.id,
+            _idempotency_key: `topup_refund_${topup.id}`,
+          });
+        }
+        if (topup) {
+          await supabaseClient
+            .from("wiize_api_topups")
+            .update({ status: topup.status === "paid" ? "refunded" : "canceled" })
+            .eq("id", topup.id);
+        }
+        return new Response(JSON.stringify({ received: true, action: "wiize_api_topup_refunded" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+
 
       let profileId: string | null = null;
       if (externalReference) {

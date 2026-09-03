@@ -48,11 +48,16 @@ const statusLabel: Record<string, string> = {
 };
 
 const typeLabel: Record<string, string> = {
-  credit: "Recarga",
-  debit: "Consumo",
-  refund: "Estorno",
-  adjustment: "Crédito concedido",
+  CREDIT_PURCHASE: "Recarga",
+  API_USAGE: "Consumo",
+  REFUND: "Estorno",
+  ADJUSTMENT: "Crédito concedido",
+  BONUS: "Bônus",
+  EXPIRATION: "Expiração",
+  CHARGEBACK: "Chargeback",
+  REVERSAL: "Reversão",
 };
+
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", {
@@ -78,14 +83,15 @@ export default function ApiBilling() {
   const spent = useMemo(
     () =>
       transactions
-        .filter((t) => t.type === "debit")
+        .filter((t) => t.type === "API_USAGE")
         .reduce((s, t) => s + Math.abs(t.tokens || 0), 0),
     [transactions],
   );
   const grants = useMemo(
-    () => transactions.filter((t) => t.type === "adjustment" || t.type === "refund"),
+    () => transactions.filter((t) => ["ADJUSTMENT", "BONUS", "REFUND"].includes(t.type)),
     [transactions],
   );
+
 
   const lowBalanceValue =
     lowBalance ?? String(brlForTokens(wallet?.low_balance_threshold_tokens ?? 500));

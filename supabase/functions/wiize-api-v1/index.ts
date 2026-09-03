@@ -51,7 +51,10 @@ async function getLimits() {
   const map: Record<string, number> = {};
   for (const row of data || []) map[(row as any).key] = Number((row as any).value);
   return {
+    burstPer10sKey: map.burst_per_10s_key ?? 20,
     ratePerMinuteKey: map.rate_per_minute_key ?? 60,
+    ratePerHourKey: map.rate_per_hour_key ?? 3000,
+    ratePerMinuteAccount: map.rate_per_minute_account ?? 300,
     ratePer10minAccount: map.rate_per_10min_account ?? 600,
     ratePerDayAccount: map.rate_per_day_account ?? 10000,
     maxBodyBytes: map.max_body_bytes ?? 32768,
@@ -69,20 +72,60 @@ async function getPrice(operation: string): Promise<number | null> {
   return Number((data as any).tokens);
 }
 
-async function rateLimit(identifier: string, endpoint: string, max: number, windowSeconds: number) {
-  const { data, error } = await admin.rpc("check_rate_limit", {
-    p_identifier: identifier,
-    p_endpoint: endpoint,
-    p_max_requests: max,
-    p_window_seconds: windowSeconds,
+type RateResult = { allowed: boolean; retryAfter: number; remaining: number; limit: number; resetAt: number };
+
+// Janela deslizante dedicada da API (não compartilha tabela com o app interno).
+async function rateCheck(bucket: string, limit: number, windowSeconds: number): Promise<RateResult> {
+  const { data, error } = await admin.rpc("wiize_api_rate_check", {
+    _bucket: bucket,
+    _limit: limit,
+    _window_seconds: windowSeconds,
   });
-  if (error) return { allowed: true, retryAfter: 0, remaining: max };
-  const d = (data || {}) as any;
+  if (error) {
+    console.error("[wiize-api-v1] rate_check falhou", error.message);
+    return { allowed: true, retryAfter: 0, remaining: limit, limit, resetAt: 0 };
+  }
+  const d = (typeof data === "string" ? JSON.parse(data || "{}") : (data || {})) as any;
+  if (d.remaining === undefined) console.warn("[wiize-api-v1] rate_check payload inesperado", JSON.stringify(data));
+
   return {
     allowed: d.allowed !== false,
     retryAfter: Number(d.retry_after || windowSeconds),
-    remaining: Number(d.remaining ?? Math.max(max - 1, 0)),
+    remaining: Number(d.remaining ?? 0),
+    limit: Number(d.limit ?? limit),
+    resetAt: Number(d.reset_at || 0),
   };
+}
+
+async function checkBans(userId: string | null, apiKeyId: string | null, ip: string) {
+  const { data } = await admin.rpc("wiize_api_check_bans", {
+    _user_id: userId,
+    _api_key_id: apiKeyId,
+    _ip: ip,
+  });
+  return (data || { banned: false }) as any;
+}
+
+async function registerAbuse(
+  userId: string | null,
+  apiKeyId: string | null,
+  ip: string,
+  kind: string,
+  details: Json = {},
+) {
+  try {
+    const { data } = await admin.rpc("wiize_api_register_abuse", {
+      _user_id: userId,
+      _api_key_id: apiKeyId,
+      _ip: ip,
+      _kind: kind,
+      _details: details,
+    });
+    return (data || {}) as any;
+  } catch (e) {
+    console.error("[wiize-api-v1] abuse falhou", String(e));
+    return {};
+  }
 }
 
 async function logRequest(entry: Record<string, unknown>) {
@@ -92,6 +135,7 @@ async function logRequest(entry: Record<string, unknown>) {
     console.error("[wiize-api-v1] log falhou", String(e));
   }
 }
+
 
 // Remove qualquer campo interno/sensível antes de devolver ao cliente
 const FORBIDDEN_KEYS = /(prompt|system|api_key|apikey|token|secret|service_role|authorization|internal|user_id|owner_id)/i;
@@ -258,6 +302,7 @@ serve(async (req) => {
 
   const startedAt = Date.now();
   const requestId = crypto.randomUUID();
+  let activeReservationId: string | null = null;
   const url = new URL(req.url);
   // Suporta tanto /functions/v1/wiize-api-v1/v1/... quanto /wiize-api-v1/v1/...
   const path = "/v1" + (url.pathname.split("/v1").pop() || "");
@@ -278,33 +323,42 @@ serve(async (req) => {
 
     const limits = await getLimits();
 
+    // ---- antifraude: bloqueio por IP antes de qualquer trabalho ----
+    const ipBan = await checkBans(null, null, ip);
+    if (ipBan.banned) {
+      return apiError(
+        "ACCOUNT_BANNED",
+        `Acesso temporariamente bloqueado por atividade suspeita. ${ipBan.reason || ""}`.trim(),
+        403,
+        requestId,
+        ipBan.retry_after ? { "Retry-After": String(ipBan.retry_after) } : {},
+      );
+    }
+
     // ---- autenticação por API Key ----
     const headerKey = req.headers.get("x-wiize-api-key");
     const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
     const rawKey = (headerKey || bearer || "").trim();
 
     if (!rawKey || !/^wk_(live|test)_[a-zA-Z0-9]{24,}$/.test(rawKey)) {
-      await rateLimit(ip, "wiize_api_auth_fail", 20, 60);
+      await registerAbuse(null, null, ip, "auth_failure", { reason: "malformed_key" });
       return apiError("UNAUTHORIZED", "API Key ausente ou em formato inválido.", 401, requestId);
     }
 
     const prefix = rawKey.slice(0, 20);
+    const hash = await sha256Hex(rawKey);
     const { data: keyRow } = await admin
       .from("wiize_api_keys")
       .select("id, user_id, status, permissions, environment, rate_limit_per_minute")
       .eq("prefix", prefix)
+      .eq("secret_hash", hash)
       .maybeSingle();
 
-    const hash = await sha256Hex(rawKey);
-    const { data: verified } = keyRow
-      ? await admin.from("wiize_api_keys").select("id").eq("id", (keyRow as any).id).eq("secret_hash", hash).maybeSingle()
-      : { data: null };
-
-    if (!keyRow || !verified) {
-      const guard = await rateLimit(ip, "wiize_api_auth_fail", 20, 60);
-      if (!guard.allowed) {
-        return apiError("RATE_LIMIT_EXCEEDED", "Muitas tentativas inválidas.", 429, requestId, {
-          "Retry-After": String(guard.retryAfter),
+    if (!keyRow) {
+      const abuse = await registerAbuse(null, null, ip, "auth_failure", { reason: "invalid_key", prefix });
+      if (abuse.banned) {
+        return apiError("ACCOUNT_BANNED", "Muitas tentativas inválidas. Acesso bloqueado temporariamente.", 403, requestId, {
+          "Retry-After": String(abuse.retry_after || 900),
         });
       }
       return apiError("UNAUTHORIZED", "API Key inválida.", 401, requestId);
@@ -320,30 +374,68 @@ serve(async (req) => {
 
     const userId: string = key.user_id;
 
-    // ---- rate limit ----
-    const perMinute = Number(key.rate_limit_per_minute || limits.ratePerMinuteKey);
-    const rlKey = await rateLimit(key.id, "wiize_api_key_minute", perMinute, 60);
-    const rlAccount10 = await rateLimit(userId, "wiize_api_account_10min", limits.ratePer10minAccount, 600);
-    const rlAccountDay = await rateLimit(userId, "wiize_api_account_day", limits.ratePerDayAccount, 86400);
+    // ---- antifraude: bloqueio por conta ou chave ----
+    const ban = await checkBans(userId, key.id, ip);
+    if (ban.banned) {
+      await logRequest({
+        user_id: userId, api_key_id: key.id, request_id: requestId, endpoint: path,
+        environment: key.environment, status_code: 403, error_code: "ACCOUNT_BANNED",
+        duration_ms: Date.now() - startedAt, ip_address: ip, user_agent: req.headers.get("user-agent"),
+        metadata: { scope: ban.scope },
+      });
+      return apiError(
+        "ACCOUNT_BANNED",
+        ban.permanent
+          ? "Acesso bloqueado permanentemente por violação da política de uso. Fale com o suporte."
+          : `Acesso bloqueado temporariamente por atividade suspeita. ${ban.reason || ""}`.trim(),
+        403,
+        requestId,
+        ban.retry_after ? { "Retry-After": String(ban.retry_after) } : {},
+      );
+    }
 
-    const rateHeaders = {
+    // ---- rate limit multi-camada (rajada / minuto / hora / conta / dia) ----
+    const perMinute = Number(key.rate_limit_per_minute || limits.ratePerMinuteKey);
+    const burstLimit = Math.max(1, Math.min(limits.burstPer10sKey, Math.ceil(perMinute / 2)));
+
+    const tiers = [
+      { name: "burst", res: await rateCheck(`k:${key.id}:10s`, burstLimit, 10) },
+      { name: "key_minute", res: await rateCheck(`k:${key.id}:60s`, perMinute, 60) },
+      { name: "key_hour", res: await rateCheck(`k:${key.id}:1h`, limits.ratePerHourKey, 3600) },
+      { name: "account_minute", res: await rateCheck(`a:${userId}:60s`, limits.ratePerMinuteAccount, 60) },
+      { name: "account_10min", res: await rateCheck(`a:${userId}:10m`, limits.ratePer10minAccount, 600) },
+      { name: "account_day", res: await rateCheck(`a:${userId}:1d`, limits.ratePerDayAccount, 86400) },
+    ];
+    const minuteTier = tiers[1].res;
+
+    const rateHeaders: Record<string, string> = {
       "X-RateLimit-Limit": String(perMinute),
-      "X-RateLimit-Remaining": String(Math.max(rlKey.remaining, 0)),
-      "X-RateLimit-Reset": String(Math.floor(Date.now() / 1000) + 60),
+      "X-RateLimit-Remaining": String(Math.max(minuteTier.remaining, 0)),
+      "X-RateLimit-Reset": String(minuteTier.resetAt || Math.floor(Date.now() / 1000) + 60),
+      "X-RateLimit-Burst-Limit": String(burstLimit),
+      "X-RateLimit-Daily-Limit": String(limits.ratePerDayAccount),
+      "X-RateLimit-Daily-Remaining": String(Math.max(tiers[5].res.remaining, 0)),
     };
 
-    const blocked = [rlKey, rlAccount10, rlAccountDay].find((r) => !r.allowed);
+    const blocked = tiers.find((t) => !t.res.allowed);
     if (blocked) {
+      const abuse = await registerAbuse(userId, key.id, ip, "rate_limit", { tier: blocked.name });
       await logRequest({
         user_id: userId, api_key_id: key.id, request_id: requestId, endpoint: path,
         environment: key.environment, status_code: 429, error_code: "RATE_LIMIT_EXCEEDED",
         duration_ms: Date.now() - startedAt, ip_address: ip, user_agent: req.headers.get("user-agent"),
+        metadata: { tier: blocked.name },
       });
-      return apiError("RATE_LIMIT_EXCEEDED", "Limite de requisições excedido.", 429, requestId, {
-        ...rateHeaders,
-        "Retry-After": String(blocked.retryAfter),
-      });
+      return apiError(
+        "RATE_LIMIT_EXCEEDED",
+        `Limite de requisições excedido (${blocked.name}). Aguarde e tente novamente.`,
+        429,
+        requestId,
+        { ...rateHeaders, "Retry-After": String(blocked.res.retryAfter), "X-RateLimit-Scope": blocked.name },
+        { scope: blocked.name, limit: blocked.res.limit, retry_after: blocked.res.retryAfter, banned: !!abuse.banned },
+      );
     }
+
 
     // ---- corpo ----
     const raw = await req.text();
@@ -357,8 +449,15 @@ serve(async (req) => {
 
     const validated = validate(path, body);
     if (!validated.ok) {
+      await registerAbuse(userId, key.id, ip, "validation_error", { endpoint: path });
+      await logRequest({
+        user_id: userId, api_key_id: key.id, request_id: requestId, endpoint: path,
+        environment: key.environment, status_code: 422, error_code: "VALIDATION_ERROR",
+        duration_ms: Date.now() - startedAt, ip_address: ip, user_agent: req.headers.get("user-agent"),
+      });
       return apiError("VALIDATION_ERROR", validated.message, 422, requestId, rateHeaders);
     }
+
 
     // ---- idempotência ----
     const idempotencyKey = req.headers.get("idempotency-key");
@@ -392,10 +491,15 @@ serve(async (req) => {
       _request_id: requestId,
     });
     const reserve = (reserveRes || {}) as any;
+    if (reserve.ok) activeReservationId = reserve.reservation_id ?? null;
 
     if (!reserve.ok) {
       const code = reserve.code === "ACCOUNT_SUSPENDED" ? "ACCOUNT_SUSPENDED" : "INSUFFICIENT_BALANCE";
       const status = code === "ACCOUNT_SUSPENDED" ? 403 : 402;
+      if (code === "INSUFFICIENT_BALANCE") {
+        await registerAbuse(userId, key.id, ip, "insufficient_balance", { endpoint: path });
+      }
+
       await logRequest({
         user_id: userId, api_key_id: key.id, request_id: requestId, endpoint: path,
         environment: key.environment, status_code: status, error_code: code,
@@ -444,6 +548,7 @@ serve(async (req) => {
       _reservation_id: reserve.reservation_id,
       _reference_id: requestId,
     });
+    activeReservationId = null;
     const commit = (commitRes || {}) as any;
 
     const payload = shapeResponse(path, result.data);
@@ -473,6 +578,13 @@ serve(async (req) => {
     );
   } catch (e) {
     console.error("[wiize-api-v1] erro", String(e));
+    // Falha inesperada nunca pode reter tokens do cliente.
+    if (activeReservationId) {
+      try {
+        await admin.rpc("wiize_api_release_reservation", { _reservation_id: activeReservationId });
+      } catch (_) { /* ignora */ }
+    }
+
     return apiError("INTERNAL_ERROR", "Erro interno. Tente novamente.", 500, requestId);
   }
 });
