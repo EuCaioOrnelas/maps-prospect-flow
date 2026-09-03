@@ -451,7 +451,7 @@ serve(async (req) => {
 
     const { data: existingProfile, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen')
+      .select('searches_used, searches_limit, plan, admin_assigned_plan, payment_provider, is_custom_subscription, subscription_current_period_end, trial_will_charge_at, trial_auto_charge_cancelled, trial_plan_chosen, created_at')
       .eq('id', userId)
       .maybeSingle();
 
