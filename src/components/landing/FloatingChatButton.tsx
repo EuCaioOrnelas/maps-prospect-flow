@@ -20,21 +20,13 @@ export const FloatingChatButton = () => {
       if (opened) return;
       opened = true;
       setShowPopup(true);
-      window.removeEventListener("scroll", onScroll);
     };
 
-    // Abre por scroll (>35% da página) ou por tempo de permanência (50s)
-    function onScroll() {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      if (max > 0 && window.scrollY / max > 0.35) open();
-    }
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    const timer = setTimeout(open, 50000);
+    // Abre somente após 1 minuto de permanência na página
+    const timer = setTimeout(open, 60000);
 
     return () => {
       clearTimeout(timer);
-      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 

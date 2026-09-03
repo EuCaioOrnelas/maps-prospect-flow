@@ -94,6 +94,7 @@ const mainPlans = {
  price: "396",
  anchorPrice: "792",
  opportunities: "10.000", usageLabel: "Até 10.000 contatos no CRM",
+ prospectionLabel: "Até 1.000 prospecções com IA / mês",
  description: "Para prospectar, analisar, qualificar e converter oportunidades B2B com Wiize AI.",
  features: [
  { text: "Tudo do plano Atendimento" },
@@ -149,6 +150,7 @@ const mainPlans = {
  price: "596",
  anchorPrice: "792",
  opportunities: "10.000", usageLabel: "Até 10.000 contatos no CRM",
+ prospectionLabel: "Até 1.000 prospecções com IA / mês",
  description: "Para prospectar, analisar, qualificar e converter oportunidades B2B com Wiize AI.",
  features: [
  { text: "Tudo do plano Atendimento" },
@@ -485,10 +487,15 @@ export const PricingSection = () => {
  </span>
  <span className="text-[10.5px] sm:text-sm font-medium text-muted-foreground">/ mês</span>
  </div>
- <p className="text-primary mt-1.5 sm:mt-2 text-[10.5px] sm:text-sm font-medium">
- {plan.usageLabel}
- </p>
- </div>
+  <div className="mt-1.5 sm:mt-2 min-h-[2.6rem] sm:min-h-[2.9rem] flex flex-col justify-start gap-0.5">
+  <p className="text-primary text-[10.5px] sm:text-sm font-medium leading-snug">
+  {plan.usageLabel}
+  </p>
+  <p className={`text-[10px] sm:text-[13px] font-medium leading-snug ${('prospectionLabel' in plan && plan.prospectionLabel) ? 'text-foreground/80' : 'invisible'}`} aria-hidden={!('prospectionLabel' in plan && plan.prospectionLabel)}>
+  {('prospectionLabel' in plan && plan.prospectionLabel) ? plan.prospectionLabel : 'placeholder'}
+  </p>
+  </div>
+  </div>
 
  {expanded && (
  <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8 flex-grow">
@@ -567,10 +574,15 @@ export const PricingSection = () => {
  Sob medida
  </span>
  </div>
- <p className="text-primary mt-1.5 sm:mt-2 text-[10.5px] sm:text-sm font-medium">
- Oportunidades sob demanda
- </p>
- </div>
+  <div className="mt-1.5 sm:mt-2 min-h-[2.6rem] sm:min-h-[2.9rem] flex flex-col justify-start gap-0.5">
+  <p className="text-primary text-[10.5px] sm:text-sm font-medium leading-snug">
+  Oportunidades sob demanda
+  </p>
+  <p className="text-[10px] sm:text-[13px] font-medium leading-snug text-foreground/80">
+  Prospecção com IA sob medida
+  </p>
+  </div>
+  </div>
 
  {expanded && (
  <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8 flex-grow">
