@@ -313,48 +313,59 @@ serve(async (req) => {
     }
 
 
-    // Get user profile to check opportunity limits
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('searches_used, searches_limit, plan, bonus_searches, extra_opportunities_packs')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError) {
-      console.error('Profile error:', profileError);
-      return new Response(
-        JSON.stringify({ error: 'Erro ao buscar perfil do usuário' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Effective limit = plan + add-on packs (1k each) + carried bonus
-    const extraPacks = (profile as any).extra_opportunities_packs || 0;
-    const bonus = (profile as any).bonus_searches || 0;
-    const effectiveLimit = profile.searches_limit + extraPacks * 1000 + bonus;
-    const remainingOpportunities = effectiveLimit - profile.searches_used;
-
-    if (remainingOpportunities <= 0) {
-      console.log('Opportunity limit reached for user:', user.id);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Limite de oportunidades atingido',
-          message: 'Faça upgrade do seu plano ou adicione a Expansão Comercial (+1.000 oportunidades) para continuar prospectando',
-          limitReached: true
-        }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Parse request body
-    const { keyword, location } = await req.json();
-    
+    const rawBody = await req.json().catch(() => ({}));
+    const { keyword, location } = rawBody || {};
+
     if (!keyword || !location) {
       return new Response(
         JSON.stringify({ error: 'Palavra-chave e localização são obrigatórios' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Get user profile to check opportunity limits (não se aplica ao modo interno da Wiize API)
+    let profile: { searches_used: number; searches_limit: number } = { searches_used: 0, searches_limit: 0 };
+    let remainingOpportunities: number;
+
+    if (internalMode) {
+      const requested = Number(rawBody?.limit);
+      remainingOpportunities = Math.min(Number.isFinite(requested) && requested > 0 ? requested : 20, 60);
+    } else {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('searches_used, searches_limit, plan, bonus_searches, extra_opportunities_packs')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        console.error('Profile error:', profileError);
+        return new Response(
+          JSON.stringify({ error: 'Erro ao buscar perfil do usuário' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      profile = profileData as any;
+      // Effective limit = plan + add-on packs (1k each) + carried bonus
+      const extraPacks = (profileData as any).extra_opportunities_packs || 0;
+      const bonus = (profileData as any).bonus_searches || 0;
+      const effectiveLimit = profileData.searches_limit + extraPacks * 1000 + bonus;
+      remainingOpportunities = effectiveLimit - profileData.searches_used;
+
+      if (remainingOpportunities <= 0) {
+        console.log('Opportunity limit reached for user:', user.id);
+        return new Response(
+          JSON.stringify({
+            error: 'Limite de oportunidades atingido',
+            message: 'Faça upgrade do seu plano ou adicione a Expansão Comercial (+1.000 oportunidades) para continuar prospectando',
+            limitReached: true
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
 
     console.log(`Searching for: ${keyword} in ${location}`);
 
