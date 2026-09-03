@@ -85,7 +85,9 @@ async function rateCheck(bucket: string, limit: number, windowSeconds: number): 
     console.error("[wiize-api-v1] rate_check falhou", error.message);
     return { allowed: true, retryAfter: 0, remaining: limit, limit, resetAt: 0 };
   }
-  const d = (data || {}) as any;
+  const d = (typeof data === "string" ? JSON.parse(data || "{}") : (data || {})) as any;
+  if (d.remaining === undefined) console.warn("[wiize-api-v1] rate_check payload inesperado", JSON.stringify(data));
+
   return {
     allowed: d.allowed !== false,
     retryAfter: Number(d.retry_after || windowSeconds),
