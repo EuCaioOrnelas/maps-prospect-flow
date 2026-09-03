@@ -6,7 +6,6 @@ import {
   Coins,
   Receipt,
   Activity,
-  Plus,
   ArrowUpRight,
 } from "lucide-react";
 import {

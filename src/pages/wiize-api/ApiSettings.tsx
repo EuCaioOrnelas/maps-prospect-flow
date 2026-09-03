@@ -124,38 +124,7 @@ export default function ApiSettings() {
 
       <PageHeader title="Settings" description="Segurança, sessões, aparência e notificações." />
 
-      <SectionCard
-        title="Aparência"
-        description="Escolha o tema do painel Wiize API"
-        icon={Palette}
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          {([
-            { value: "light" as const, label: "Claro", desc: "Fundo branco, blocos de código claros", icon: Sun },
-            { value: "dark" as const, label: "Escuro", desc: "Fundo escuro, blocos de código escuros", icon: Moon },
-          ]).map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setTheme(opt.value)}
-              className={cn(
-                "flex items-start gap-3 rounded-xl border p-4 text-left transition-colors",
-                theme === opt.value
-                  ? "border-primary/40 bg-primary/[0.06]"
-                  : "border-border/70 hover:border-primary/25 hover:bg-muted/40",
-              )}
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-hover bg-primary/10">
-                <opt.icon size={16} className="text-primary" strokeWidth={1.75} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-medium text-foreground">{opt.label}</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">{opt.desc}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </SectionCard>
+      <ThemeToggle />
 
       <SectionCard title="Segurança" description="Proteja o acesso à sua conta de infraestrutura" icon={ShieldCheck}>
         <div className="rounded-lg border border-border/70 p-4">
