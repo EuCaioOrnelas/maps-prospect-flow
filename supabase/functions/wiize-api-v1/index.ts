@@ -302,6 +302,7 @@ serve(async (req) => {
 
   const startedAt = Date.now();
   const requestId = crypto.randomUUID();
+  let activeReservationId: string | null = null;
   const url = new URL(req.url);
   // Suporta tanto /functions/v1/wiize-api-v1/v1/... quanto /wiize-api-v1/v1/...
   const path = "/v1" + (url.pathname.split("/v1").pop() || "");
@@ -490,6 +491,7 @@ serve(async (req) => {
       _request_id: requestId,
     });
     const reserve = (reserveRes || {}) as any;
+    if (reserve.ok) activeReservationId = reserve.reservation_id ?? null;
 
     if (!reserve.ok) {
       const code = reserve.code === "ACCOUNT_SUSPENDED" ? "ACCOUNT_SUSPENDED" : "INSUFFICIENT_BALANCE";
@@ -546,6 +548,7 @@ serve(async (req) => {
       _reservation_id: reserve.reservation_id,
       _reference_id: requestId,
     });
+    activeReservationId = null;
     const commit = (commitRes || {}) as any;
 
     const payload = shapeResponse(path, result.data);
@@ -575,6 +578,10 @@ serve(async (req) => {
     );
   } catch (e) {
     console.error("[wiize-api-v1] erro", String(e));
+    // Falha inesperada nunca pode reter tokens do cliente.
+    if (activeReservationId) {
+      await admin.rpc("wiize_api_release_reservation", { _reservation_id: activeReservationId }).catch(() => {});
+    }
     return apiError("INTERNAL_ERROR", "Erro interno. Tente novamente.", 500, requestId);
   }
 });
