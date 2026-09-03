@@ -311,7 +311,7 @@ export default function ApiLogin() {
       </div>
 
       {/* Formulário */}
-      <div className="flex w-full items-center justify-center px-5 py-12 lg:w-1/2">
+      <div className="flex w-full items-center justify-center px-6 py-10 sm:px-10 sm:py-12 lg:w-1/2">
         <div className="w-full max-w-[430px]">
           <Link
             to="/api"
@@ -328,9 +328,36 @@ export default function ApiLogin() {
             </span>
           </div>
 
+          {awaitingConfirm ? (
+            <div className="animate-fade-in">
+              <h1 className="text-2xl font-semibold tracking-tight">Confirme seu e-mail</h1>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Enviamos um link de confirmação para{" "}
+                <span className="font-medium text-foreground">{awaitingConfirm}</span>. Depois de
+                confirmar, sua conta Wiize API é liberada e você já pode entrar.
+              </p>
+              <div className="mt-6 space-y-2">
+                <Button className="w-full" variant="outline" onClick={resendConfirmation} disabled={resending}>
+                  {resending && <Loader2 size={16} className="mr-2 animate-spin" />}
+                  Reenviar e-mail de confirmação
+                </Button>
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setAwaitingConfirm(null);
+                    switchMode("login");
+                  }}
+                >
+                  Já confirmei, entrar
+                </Button>
+              </div>
+            </div>
+          ) : (
+          <>
           <h1 className="text-2xl font-semibold tracking-tight">
             {isSignup ? "Criar conta grátis" : "Entrar no Wiize API"}
           </h1>
+
           <p className="mt-1 text-sm text-muted-foreground">
             {isSignup
               ? step === 1
