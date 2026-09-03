@@ -23,6 +23,7 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ManageAddonsDialog } from "@/components/billing/ManageAddonsDialog";
+import { CommercialExpansionsSection } from "@/components/billing/CommercialExpansionsSection";
 import { ORDER_BUMPS, calcBumpsMonthlyCents, profileToBumpSelection, getBumpsForPlan } from "@/config/orderBumps";
 
 interface SubscriptionInfo {
@@ -374,6 +375,14 @@ export default function ManageSubscription() {
             </motion.div>
           );
         })()}
+
+        {/* Expansões comerciais (compra em 1 clique) */}
+        <CommercialExpansionsSection
+          profile={addonProfile || profile}
+          provider={(addonProfile as any)?.payment_provider || (profile as any)?.payment_provider || provider}
+          canPurchase={(isStripe || isPix) && hasActiveSub}
+          onChanged={fetchAddonProfile}
+        />
 
         {/* Payment Method + Help */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

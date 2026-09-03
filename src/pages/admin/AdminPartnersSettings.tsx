@@ -275,7 +275,7 @@ export default function AdminPartnersSettings() {
           <div className="mt-4 flex items-start gap-2 rounded-lg bg-muted/40 p-3">
             <HelpCircle size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Exemplo: parceiro <strong>Gold</strong> com 30% indicando uma assinatura Growth de R$ 696/mês recebe{" "}
+              Exemplo: parceiro <strong>Gold</strong> com 30% indicando uma assinatura Growth de R$ 396/mês recebe{" "}
               <strong>R$ 208,80 todo mês</strong> enquanto o cliente permanecer ativo.
             </p>
           </div>
