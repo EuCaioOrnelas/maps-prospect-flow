@@ -83,6 +83,8 @@ export default function ApiLogin() {
   const [cepOk, setCepOk] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [awaitingConfirm, setAwaitingConfirm] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -91,11 +93,13 @@ export default function ApiLogin() {
   const switchMode = (next: Mode) => {
     setMode(next);
     setStep(1);
+    setAwaitingConfirm(null);
     const p = new URLSearchParams(params);
     if (next === "signup") p.set("modo", "cadastro");
     else p.delete("modo");
     setParams(p, { replace: true });
   };
+
 
   // ViaCEP — mesmo mecanismo do checkout
   useEffect(() => {
