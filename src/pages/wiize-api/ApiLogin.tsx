@@ -653,6 +653,9 @@ export default function ApiLogin() {
               {isSignup ? "Entrar" : "Criar conta grátis"}
             </button>
           </p>
+          </>
+          )}
+
 
           <div className="mt-8 flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3.5 py-3 text-xs leading-relaxed text-muted-foreground">
             <Lock size={14} className="mt-0.5 shrink-0 text-primary" strokeWidth={1.75} />
