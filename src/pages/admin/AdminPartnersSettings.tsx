@@ -34,7 +34,6 @@ interface Settings {
   select_commission_percent: number;
   signature_commission_percent: number;
   prime_commission_percent: number;
-  prime_commission_percent: number;
   signature_threshold_clients: number;
   prime_threshold_clients: number;
   release_days: number;
@@ -148,7 +147,6 @@ export default function AdminPartnersSettings() {
         program_enabled: s.program_enabled,
         select_commission_percent: s.select_commission_percent,
         signature_commission_percent: s.signature_commission_percent,
-        prime_commission_percent: s.prime_commission_percent,
         prime_commission_percent: s.prime_commission_percent,
         signature_threshold_clients: s.signature_threshold_clients,
         prime_threshold_clients: s.prime_threshold_clients,
