@@ -102,7 +102,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
 
   const navLinks: Array<{ href?: string; to?: string; label: string }> = [
     { href: "#pricing", label: "Planos" },
-    { href: "#faq", label: "FAQ" },
+    { to: "/api", label: "API" },
     { to: "/blog", label: "Blog" },
   ];
 
