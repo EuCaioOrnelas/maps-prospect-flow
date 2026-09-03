@@ -13,9 +13,22 @@ const corsHeaders: Record<string, string> = {
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
-const TOKEN_PRICE_BRL = 0.01;
-const MIN_TOPUP = 20;
-const MAX_TOPUP = 5000;
+const DEFAULT_TOKEN_PRICE_BRL = 0.01;
+const DEFAULT_MIN_TOPUP = 30;
+const DEFAULT_MAX_TOPUP = 5000;
+
+// Limites e preço vêm da configuração central (wiize_api_limits), nada hardcoded em produção.
+async function loadLimits() {
+  const { data } = await admin.from("wiize_api_limits").select("key, value");
+  const map: Record<string, number> = {};
+  for (const row of data || []) map[(row as any).key] = Number((row as any).value);
+  return {
+    tokenPrice: map.token_price_brl || DEFAULT_TOKEN_PRICE_BRL,
+    min: map.min_topup_brl || DEFAULT_MIN_TOPUP,
+    max: map.max_topup_brl || DEFAULT_MAX_TOPUP,
+  };
+}
+
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
