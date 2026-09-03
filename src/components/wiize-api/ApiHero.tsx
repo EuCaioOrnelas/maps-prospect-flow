@@ -4,10 +4,26 @@ import { Button } from "@/components/ui/button";
 import { ShaderBackground } from "@/components/ui/warmth-ripple";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 
-const sample = `curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
-  -H "Authorization: Bearer wk_live_sua_chave" \\
+const sample = `# 1. exporte sua chave (ambiente de produção)
+export WIIZE_API_KEY="wk_live_sua_chave"
+
+# 2. analise uma empresa e receba diagnóstico + abordagem
+curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
+  -H "Authorization: Bearer $WIIZE_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{ "company": { "name": "Empresa Exemplo" } }'`;
+  -d '{
+    "company": {
+      "name": "Empresa Exemplo",
+      "site": "empresaexemplo.com.br",
+      "segmento": "logística"
+    },
+    "output": ["diagnostico", "abordagem"],
+    "webhook_url": "https://seusistema.com/webhooks/wiize"
+  }'
+
+# 3. resposta imediata com o id do processamento
+# { "id": "an_9fd2", "status": "processing", "credits": 3 }`;
+
 
 /** Hero público do Wiize API — mesma linguagem visual do hero da LP principal. */
 export const ApiHero = () => {
