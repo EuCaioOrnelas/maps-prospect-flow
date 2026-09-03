@@ -446,8 +446,15 @@ serve(async (req) => {
 
     const validated = validate(path, body);
     if (!validated.ok) {
+      await registerAbuse(userId, key.id, ip, "validation_error", { endpoint: path });
+      await logRequest({
+        user_id: userId, api_key_id: key.id, request_id: requestId, endpoint: path,
+        environment: key.environment, status_code: 422, error_code: "VALIDATION_ERROR",
+        duration_ms: Date.now() - startedAt, ip_address: ip, user_agent: req.headers.get("user-agent"),
+      });
       return apiError("VALIDATION_ERROR", validated.message, 422, requestId, rateHeaders);
     }
+
 
     // ---- idempotência ----
     const idempotencyKey = req.headers.get("idempotency-key");
