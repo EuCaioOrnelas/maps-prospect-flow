@@ -31,7 +31,6 @@ const NOTIFICATIONS: { key: PrefKey; label: string; desc: string; icon: typeof B
 
 export default function ApiSettings() {
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
   const [prefs, setPrefs] = useState<Record<PrefKey, boolean>>({
     low_balance: true,
     request_errors: true,
