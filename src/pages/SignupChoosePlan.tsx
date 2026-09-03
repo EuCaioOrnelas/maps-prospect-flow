@@ -47,6 +47,7 @@ const PLANS = [
     monthly: 196,
     opportunities: "1.000",
     usageLabel: "Até 1.000 contatos no CRM",
+    prospectionLabel: "Sem prospecção com IA",
     desc: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
     highlight: false,
     perks: [
@@ -289,7 +290,7 @@ export default function SignupChoosePlan() {
                       <span className="text-sm font-medium text-foreground">hoje</span>
                     </div>
                     <div className="mt-1.5 min-h-[2.9rem] flex flex-col justify-start gap-0.5">
-                      <p className="text-sm font-medium text-primary leading-snug">
+                      <p className="text-sm font-medium text-foreground leading-snug">
                         {plan.usageLabel}
                       </p>
                       <p
