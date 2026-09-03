@@ -10952,6 +10952,84 @@ export type Database = {
         }
         Relationships: []
       }
+      wiize_api_abuse_events: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          ip_address: string | null
+          kind: string
+          severity: number
+          user_id: string | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          ip_address?: string | null
+          kind: string
+          severity?: number
+          user_id?: string | null
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          ip_address?: string | null
+          kind?: string
+          severity?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      wiize_api_bans: {
+        Row: {
+          banned_until: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string | null
+          permanent: boolean
+          reason: string
+          released_at: string | null
+          scope: string
+          strike: number
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          banned_until?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string | null
+          permanent?: boolean
+          reason: string
+          released_at?: string | null
+          scope: string
+          strike?: number
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          banned_until?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string | null
+          permanent?: boolean
+          reason?: string
+          released_at?: string | null
+          scope?: string
+          strike?: number
+          subject?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       wiize_api_keys: {
         Row: {
           api_id: string
@@ -11132,6 +11210,24 @@ export type Database = {
           street_number?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      wiize_api_rate_counters: {
+        Row: {
+          bucket_key: string
+          count: number
+          window_start: string
+        }
+        Insert: {
+          bucket_key: string
+          count?: number
+          window_start: string
+        }
+        Update: {
+          bucket_key?: string
+          count?: number
+          window_start?: string
         }
         Relationships: []
       }
@@ -11998,6 +12094,10 @@ export type Database = {
         Args: { p_payload: string; p_secret_name: string; p_signature: string }
         Returns: boolean
       }
+      wiize_api_check_bans: {
+        Args: { _api_key_id: string; _ip: string; _user_id: string }
+        Returns: Json
+      }
       wiize_api_commit_reservation: {
         Args: { _reference_id: string; _reservation_id: string }
         Returns: Json
@@ -12017,6 +12117,21 @@ export type Database = {
       }
       wiize_api_ensure_wallet: { Args: { _user_id: string }; Returns: string }
       wiize_api_expire_reservations: { Args: never; Returns: number }
+      wiize_api_rate_check: {
+        Args: { _bucket: string; _limit: number; _window_seconds: number }
+        Returns: Json
+      }
+      wiize_api_rate_gc: { Args: never; Returns: number }
+      wiize_api_register_abuse: {
+        Args: {
+          _api_key_id: string
+          _details?: Json
+          _ip: string
+          _kind: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       wiize_api_release_reservation: {
         Args: { _reservation_id: string }
         Returns: Json
