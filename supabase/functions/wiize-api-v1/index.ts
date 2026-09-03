@@ -580,8 +580,11 @@ serve(async (req) => {
     console.error("[wiize-api-v1] erro", String(e));
     // Falha inesperada nunca pode reter tokens do cliente.
     if (activeReservationId) {
-      await admin.rpc("wiize_api_release_reservation", { _reservation_id: activeReservationId }).catch(() => {});
+      try {
+        await admin.rpc("wiize_api_release_reservation", { _reservation_id: activeReservationId });
+      } catch (_) { /* ignora */ }
     }
+
     return apiError("INTERNAL_ERROR", "Erro interno. Tente novamente.", 500, requestId);
   }
 });
