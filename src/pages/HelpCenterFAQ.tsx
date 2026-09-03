@@ -118,7 +118,7 @@ const _legacyCategories = [
       },
       {
         question: "Quantos números WhatsApp posso conectar?",
-        answer: "Depende do seu plano: Start permite 1 número (200 disparos/dia), Growth permite 2 números (400 disparos/dia no total), e Scale permite 5 números (1.000 disparos/dia no total). Cada número tem limite individual de 200 disparos."
+        answer: "Depende do seu plano: Atendimento permite 1 número (200 disparos/dia), Growth IA permite 2 números (400 disparos/dia no total), e Enterprise permite 5 números (1.000 disparos/dia no total). Cada número tem limite individual de 200 disparos."
       },
       {
         question: "Meu número pode ser bloqueado?",

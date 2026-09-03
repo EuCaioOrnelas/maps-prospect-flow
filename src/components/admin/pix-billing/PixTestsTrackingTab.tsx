@@ -64,12 +64,12 @@ function TestsSection() {
       // Build realistic price label per scenario
       let planPrice: string;
       if (paymentMethod === "pix") {
-        planPrice = "R$ 696/mês";
+        planPrice = "R$ 396/mês";
       } else if (billingPeriod === "annual") {
         // R$ 596 × 12 = R$ 7.152 total, parcelado em 12×
         planPrice = "R$ 7.152 em 12× R$ 596";
       } else {
-        planPrice = "R$ 696/mês";
+        planPrice = "R$ 396/mês";
       }
 
       const { error } = await supabase.functions.invoke("send-email", {
