@@ -122,7 +122,7 @@ export default function AdminPartnerDetail() {
       phone: p.phone || "",
       company: p.company || "",
       tax_id: p.tax_id || "",
-      level: (p.level === "prime" ? "prime" : p.level) as Level,
+      level: (p.level || "select") as Level,
       status: p.status,
       custom_commission_percent: p.custom_commission_percent != null ? String(p.custom_commission_percent) : "",
       internal_notes: p.internal_notes || "",
