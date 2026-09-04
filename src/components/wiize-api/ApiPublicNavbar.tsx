@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { to: "/api#recursos", label: "Recursos" },
   { to: "/api#como-funciona", label: "Como funciona" },
   { to: "/api#seguranca", label: "Segurança" },
+  { to: "/api/docs", label: "Documentação" },
   { to: "/", label: "Wiize Plataforma" },
 ];
 
