@@ -15,9 +15,9 @@ const BRAND = {
   from: "Wiize API <no-reply@wiize.com.br>",
 };
 
-type NotificationType = "low_balance" | "request_errors" | "monthly_report" | "test";
+type NotificationType = "low_balance" | "request_errors" | "monthly_report";
 
-const PREF_COLUMN: Record<Exclude<NotificationType, "test">, string> = {
+const PREF_COLUMN: Record<NotificationType, string> = {
   low_balance: "low_balance",
   request_errors: "request_errors",
   monthly_report: "monthly_report",
@@ -72,15 +72,6 @@ function template(type: NotificationType, payload: Record<string, unknown>) {
            <a href="${BRAND.url}/billing" style="display:inline-block;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Ver faturamento</a>`,
         ),
       };
-    default:
-      return {
-        subject: "Teste de notificações Wiize API",
-        html: layout(
-          "Teste",
-          `<h1 style="margin:0 0 12px;font-size:20px;color:#18181b;">Notificações ativas</h1>
-           <p style="margin:0;color:#3f3f46;font-size:15px;">Este é um e-mail de teste. Seus avisos do Wiize API estão configurados corretamente.</p>`,
-        ),
-      };
   }
 }
 
@@ -111,7 +102,8 @@ Deno.serve(async (req) => {
     if (userError || !user?.email) return json({ error: "Sessão inválida ou expirada" }, 401);
 
     const body = await req.json().catch(() => ({}));
-    const type = (body.type ?? "test") as NotificationType;
+    const type = body.type as NotificationType;
+    if (!type || !(type in PREF_COLUMN)) return json({ error: "Tipo de notificação inválido" }, 400);
     const payload = (body.payload ?? {}) as Record<string, unknown>;
 
     // Acesso restrito a contas Wiize API.
@@ -122,7 +114,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!apiProfile) return json({ error: "Conta sem acesso ao Wiize API" }, 403);
 
-    if (type !== "test") {
+    {
       const column = PREF_COLUMN[type];
       const { data: prefs } = await supabase
         .from("wiize_api_notification_prefs")
