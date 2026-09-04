@@ -1,139 +1,123 @@
 import { useEffect, useState } from "react";
+import { Loader2, ShieldCheck, KeyRound } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
-import { Loader2, ShieldCheck, LogOut, KeyRound } from "lucide-react";
-import { call2FA, type TwoFactorStatus } from "@/hooks/use2FA";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
-import { Logo } from "@/components/Logo";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { call2FA, use2FAStatus } from "@/hooks/use2FA";
 
 /**
- * Bloqueia o acesso enquanto a sessão atual não concluir o 2º fator.
- * Só aparece para quem ATIVOU o 2FA. A verificação real é server-side:
- * mesmo que esta tela fosse contornada no cliente, as policies RESTRICTIVE
- * (mfa_satisfied) impedem a leitura de conversas, conexões e credenciais.
+ * Exige o segundo fator a cada novo acesso: enquanto a sessão não estiver
+ * verificada, nenhum conteúdo autenticado é liberado.
  */
 export function TwoFactorGate({ children }: { children: React.ReactNode }) {
-  const { user, signOut } = useAuth();
-  const { toast } = useToast();
-  const [checked, setChecked] = useState(false);
-  const [needsChallenge, setNeedsChallenge] = useState(false);
-  const [useRecovery, setUseRecovery] = useState(false);
+  const { status, loading, refresh } = use2FAStatus();
   const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [recovery, setRecovery] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const blocked = !!status?.two_factor_enabled && !status.session_verified;
 
   useEffect(() => {
-    let cancelled = false;
-    if (!user?.id) { setChecked(true); setNeedsChallenge(false); return; }
-    setChecked(false);
-    (async () => {
-      const { data } = await call2FA<TwoFactorStatus>("status");
-      if (cancelled) return;
-      setNeedsChallenge(!!data?.two_factor_enabled && !data.session_verified);
-      setChecked(true);
-    })();
-    return () => { cancelled = true; };
-  }, [user?.id]);
-
-  const verify = async (value?: string) => {
-    const v = (value ?? code).trim();
-    setLoading(true);
-    const { error } = await call2FA("challenge_verify", { code: v });
-    setLoading(false);
-    if (error) {
-      toast({
-        title: error === "locked" ? "Muitas tentativas" : "Código inválido",
-        description: error === "locked"
-          ? "Por segurança, aguarde 15 minutos antes de tentar novamente."
-          : "Use o código atual do aplicativo autenticador ou um código de recuperação.",
-        variant: "destructive",
-      });
+    if (!blocked) {
       setCode("");
+      setError(null);
+    }
+  }, [blocked]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    const { error: err } = await call2FA("challenge_verify", recovery ? { recovery_code: code.trim() } : { code: code.trim() });
+    setSubmitting(false);
+    if (err) {
+      setError(err);
       return;
     }
-    setNeedsChallenge(false);
+    setCode("");
+    await refresh();
   };
 
-  // Enquanto verificamos, não renderizamos o app (evita flash de conteúdo protegido)
-  if (user && !checked) {
+  if (loading && !status) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  if (!needsChallenge) return <>{children}</>;
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-[420px] rounded-2xl border border-border/60 bg-card p-8 shadow-sm">
-        <div className="mb-8 flex justify-center"><Logo size="lg" /></div>
+    <>
+      {!blocked && children}
+      <Dialog open={blocked}>
+        <DialogContent className="max-w-sm [&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              Verificação em duas etapas
+            </DialogTitle>
+            <DialogDescription>
+              {recovery
+                ? "Informe um dos seus códigos de recuperação."
+                : "Digite o código de 6 dígitos do seu aplicativo autenticador."}
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-            <ShieldCheck className="h-7 w-7 text-primary" />
-          </div>
-          <h1 className="text-lg font-semibold">Verificação em duas etapas</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {useRecovery
-              ? "Digite um dos seus códigos de recuperação de uso único."
-              : "Digite o código de 6 dígitos do seu aplicativo autenticador."}
-          </p>
-        </div>
+          <form onSubmit={submit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mfa-code" className="text-xs">
+                {recovery ? "Código de recuperação" : "Código"}
+              </Label>
+              <Input
+                id="mfa-code"
+                autoFocus
+                autoComplete="one-time-code"
+                inputMode={recovery ? "text" : "numeric"}
+                maxLength={recovery ? 20 : 6}
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder={recovery ? "XXXX-XXXX" : "000000"}
+                className={recovery ? "" : "text-center text-lg tracking-[0.4em]"}
+              />
+              {error && <p className="text-xs text-destructive">{error}</p>}
+            </div>
 
-        {useRecovery ? (
-          <Input
-            autoFocus
-            placeholder="XXXX-XXXX"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && code.trim().length >= 6) verify(); }}
-            className="h-12 text-center font-mono tracking-widest"
-          />
-        ) : (
-          <div className="flex justify-center">
-            <InputOTP
-              maxLength={6}
-              value={code}
-              onChange={(v) => {
-                setCode(v);
-                if (v.length === 6 && !loading) verify(v);
-              }}
-              autoFocus
-            >
-              <InputOTPGroup>
-                {[0, 1, 2, 3, 4, 5].map((i) => (
-                  <InputOTPSlot key={i} index={i} className="h-12 w-11 text-lg" />
-                ))}
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
-        )}
+            <Button type="submit" className="w-full gap-2" disabled={submitting || code.trim().length < 6}>
+              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Verificar
+            </Button>
 
-        <Button
-          className="mt-6 w-full gap-2"
-          onClick={() => verify()}
-          disabled={loading || code.trim().length < 6}
-        >
-          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Verificar e entrar
-        </Button>
-
-        <button
-          type="button"
-          onClick={() => { setUseRecovery((v) => !v); setCode(""); }}
-          className="mt-4 flex w-full items-center justify-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <KeyRound className="h-4 w-4" />
-          {useRecovery ? "Usar código do aplicativo" : "Usar código de recuperação"}
-        </button>
-
-        <Button variant="ghost" className="mt-2 w-full gap-2 text-muted-foreground" onClick={signOut}>
-          <LogOut className="h-4 w-4" /> Sair da conta
-        </Button>
-      </div>
-    </div>
+            <div className="flex items-center justify-between">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => {
+                  setRecovery((v) => !v);
+                  setCode("");
+                  setError(null);
+                }}
+              >
+                <KeyRound className="h-3.5 w-3.5" />
+                {recovery ? "Usar aplicativo" : "Usar código de recuperação"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground"
+                onClick={() => supabase.auth.signOut()}
+              >
+                Sair
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
