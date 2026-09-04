@@ -1,0 +1,256 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Wiize API",
+    "version": "1.0.0",
+    "summary": "Inteligência comercial B2B: busca, análise e abordagem de empresas.",
+    "description": "API pré-paga em Wiize Tokens (1 token = R$ 0,01). Todos os endpoints usam POST com JSON (máx. 32 KB) e respondem com o envelope { data, usage, request_id }. Uso estritamente B2B, em conformidade com a LGPD. Documentação completa: https://wiize.com.br/api/docs",
+    "termsOfService": "https://wiize.com.br/termos",
+    "contact": { "name": "Suporte Wiize", "url": "https://wiize.com.br/api/docs" }
+  },
+  "servers": [{ "url": "https://api.wiize.com.br/v1" }],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/prospecting/search": {
+      "post": {
+        "operationId": "prospectingSearch",
+        "summary": "Busca empresas reais por termo e localização (9 tokens)",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query", "location"],
+                "properties": {
+                  "query": { "type": "string", "minLength": 2, "maxLength": 120, "example": "padaria" },
+                  "location": { "type": "string", "minLength": 2, "maxLength": 120, "example": "São Paulo, SP" },
+                  "limit": { "type": "integer", "minimum": 1, "maximum": 60, "default": 20 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Empresas encontradas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Envelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Company" } }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/prospecting/analyze": {
+      "post": {
+        "operationId": "prospectingAnalyze",
+        "summary": "Score, diagnóstico e ação recomendada para uma empresa (5 tokens)",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["company"],
+                "properties": { "company": { "$ref": "#/components/schemas/Company" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Análise gerada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Envelope" },
+                    { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Analysis" } } }
+                  ]
+                }
+              }
+            }
+          },
+          "default": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/prospecting/approach": {
+      "post": {
+        "operationId": "prospectingApproach",
+        "summary": "Mensagem de abordagem personalizada (4 tokens)",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["company"],
+                "properties": {
+                  "company": {
+                    "allOf": [
+                      { "$ref": "#/components/schemas/Company" },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+                          "diagnosis": { "type": "string" }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Abordagem gerada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Envelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "message": { "type": "string" },
+                            "channel": { "type": "string", "examples": ["whatsapp", "email"] }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API Key da Wiize com prefixo wk_live_ (produção) ou wk_test_ (teste). Alternativa: header x-wiize-api-key."
+      }
+    },
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "schema": { "type": "string", "maxLength": 128 },
+        "description": "Identificador único da operação. Reenvios em até 24h devolvem a resposta original sem cobrar tokens."
+      }
+    },
+    "schemas": {
+      "Company": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "city": { "type": "string" },
+          "category": { "type": "string" },
+          "website": { "type": "string", "format": "uri" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "rating": { "type": "number", "minimum": 0, "maximum": 5 },
+          "review_count": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "Analysis": {
+        "type": "object",
+        "properties": {
+          "company_name": { "type": "string" },
+          "opportunity_score": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "opportunity_level": { "type": "string" },
+          "close_probability": { "type": "string" },
+          "diagnosis": { "type": "string" },
+          "recommended_action": { "type": "string" },
+          "score_breakdown": { "type": "object", "additionalProperties": { "type": "number" } },
+          "strengths": { "type": "array", "items": { "type": "string" } },
+          "weaknesses": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Usage": {
+        "type": "object",
+        "properties": {
+          "operation": { "type": "string" },
+          "tokens_charged": { "type": "integer" },
+          "cost_brl": { "type": "number" },
+          "balance_tokens": { "type": "integer" }
+        }
+      },
+      "Envelope": {
+        "type": "object",
+        "properties": {
+          "data": {},
+          "usage": { "$ref": "#/components/schemas/Usage" },
+          "request_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "INVALID_REQUEST",
+                  "UNAUTHORIZED",
+                  "FORBIDDEN",
+                  "ACCOUNT_BANNED",
+                  "ACCOUNT_SUSPENDED",
+                  "NOT_FOUND",
+                  "METHOD_NOT_ALLOWED",
+                  "INSUFFICIENT_BALANCE",
+                  "PAYLOAD_TOO_LARGE",
+                  "VALIDATION_ERROR",
+                  "RATE_LIMIT_EXCEEDED",
+                  "INTERNAL_ERROR",
+                  "UPSTREAM_ERROR",
+                  "TIMEOUT"
+                ]
+              },
+              "message": { "type": "string" },
+              "request_id": { "type": "string" },
+              "details": { "type": "object", "additionalProperties": true }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Erro. Nenhum token é cobrado em falhas de autenticação, validação, rate limit, saldo insuficiente ou erro interno.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }
+      }
+    }
+  }
+}
