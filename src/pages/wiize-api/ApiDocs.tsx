@@ -4,6 +4,11 @@ import { cn } from "@/lib/utils";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 import { PageHeader } from "@/components/wiize-api/WiizeApiUI";
 import { useTheme } from "@/contexts/ThemeContext";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Bot, Copy, Download, Check } from "lucide-react";
+
+const AI_DOC_URL = "/wiize-api-llms.txt";
 
 const sections = [
   { id: "intro", label: "Introdução" },
@@ -15,7 +20,9 @@ const sections = [
   { id: "errors", label: "Erros" },
   { id: "limits", label: "Limites de uso" },
   { id: "fair-use", label: "Uso justo e bloqueios" },
+  { id: "ia", label: "Documentação para IA" },
 ];
+
 
 const authSample = `curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
   -H "Authorization: Bearer wk_live_sua_chave" \\
@@ -123,8 +130,24 @@ function Row({ cells, head = false }: { cells: string[]; head?: boolean }) {
 
 export default function ApiDocs() {
   const [active, setActive] = useState("intro");
+  const [copied, setCopied] = useState(false);
   const { resolvedTheme } = useTheme();
+  const { toast } = useToast();
   const codeTheme = resolvedTheme === "dark" ? "dark" : "light";
+
+  const copyAiDoc = async () => {
+    try {
+      const res = await fetch(AI_DOC_URL);
+      if (!res.ok) throw new Error("Falha ao carregar o documento.");
+      const text = await res.text();
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+      toast({ title: "Documentação copiada", description: "Cole no ChatGPT, Claude, Cursor ou Lovable." });
+    } catch {
+      toast({ title: "Não foi possível copiar", description: "Baixe o arquivo e cole manualmente.", variant: "destructive" });
+    }
+  };
 
   return (
     <>
@@ -136,10 +159,27 @@ export default function ApiDocs() {
         />
       </Helmet>
 
-      <PageHeader title="Documentação da API" description="Tudo o que você precisa para integrar a Wiize ao seu sistema." />
+      <PageHeader
+        title="Documentação da API"
+        description="Tudo o que você precisa para integrar a Wiize ao seu sistema."
+        actions={
+          <>
+            <Button onClick={copyAiDoc} className="gap-2">
+              {copied ? <Check className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+              {copied ? "Copiado!" : "Copiar doc para IA"}
+            </Button>
+            <Button variant="outline" asChild className="gap-2">
+              <a href={AI_DOC_URL} download="wiize-api-llms.txt">
+                <Download className="h-4 w-4" /> Baixar .txt
+              </a>
+            </Button>
+          </>
+        }
+      />
 
       <div className="flex gap-8">
-        <nav className="sticky top-20 hidden h-fit w-52 shrink-0 space-y-0.5 xl:block">
+        <nav className="sticky top-20 hidden h-fit w-52 shrink-0 space-y-0.5 lg:block">
+
           {sections.map((s) => (
             <a
               key={s.id}
@@ -331,6 +371,40 @@ export default function ApiDocs() {
               da conta, sem estorno de saldo consumido.
             </p>
           </Doc>
+
+          <Doc id="ia" title="Documentação para IA">
+            <p>
+              Preparamos um arquivo único com toda a referência da API em formato otimizado para
+              assistentes de IA (padrão <code>llms.txt</code>): endpoints, custos, erros, limites,
+              exemplos em TypeScript e regras de implementação. Copie e cole no ChatGPT, Claude,
+              Cursor, Copilot ou Lovable e peça a integração pronta.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={copyAiDoc} className="gap-2">
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? "Copiado!" : "Copiar documentação para IA"}
+              </Button>
+              <Button variant="outline" asChild className="gap-2">
+                <a href={AI_DOC_URL} download="wiize-api-llms.txt">
+                  <Download className="h-4 w-4" /> Baixar arquivo
+                </a>
+              </Button>
+              <Button variant="ghost" asChild className="gap-2">
+                <a href={AI_DOC_URL} target="_blank" rel="noreferrer">Abrir em nova aba</a>
+              </Button>
+            </div>
+            <CodeBlock
+              code={`Use o conteúdo abaixo como referência oficial da Wiize API e implemente a
+integração no meu projeto (backend Node.js), respeitando idempotência,
+backoff em 429/5xx e a chave apenas em variável de ambiente.
+
+<cole aqui o conteúdo de wiize-api-llms.txt>`}
+              lang="text"
+              filename="prompt-sugerido.txt"
+              theme={codeTheme}
+            />
+          </Doc>
+
         </div>
       </div>
     </>
