@@ -85,6 +85,11 @@ export default function ApiDocsPublic() {
                 Documentação para IA (.txt)
               </a>
             </Button>
+            <Button asChild size="sm" variant="ghost">
+              <a href="/wiize-api-documentacao.pdf" target="_blank" rel="noopener noreferrer">
+                Baixar PDF
+              </a>
+            </Button>
           </div>
         </header>
 
