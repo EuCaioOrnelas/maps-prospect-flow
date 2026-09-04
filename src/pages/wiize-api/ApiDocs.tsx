@@ -130,8 +130,24 @@ function Row({ cells, head = false }: { cells: string[]; head?: boolean }) {
 
 export default function ApiDocs() {
   const [active, setActive] = useState("intro");
+  const [copied, setCopied] = useState(false);
   const { resolvedTheme } = useTheme();
+  const { toast } = useToast();
   const codeTheme = resolvedTheme === "dark" ? "dark" : "light";
+
+  const copyAiDoc = async () => {
+    try {
+      const res = await fetch(AI_DOC_URL);
+      if (!res.ok) throw new Error("Falha ao carregar o documento.");
+      const text = await res.text();
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+      toast({ title: "Documentação copiada", description: "Cole no ChatGPT, Claude, Cursor ou Lovable." });
+    } catch {
+      toast({ title: "Não foi possível copiar", description: "Baixe o arquivo e cole manualmente.", variant: "destructive" });
+    }
+  };
 
   return (
     <>
@@ -143,10 +159,27 @@ export default function ApiDocs() {
         />
       </Helmet>
 
-      <PageHeader title="Documentação da API" description="Tudo o que você precisa para integrar a Wiize ao seu sistema." />
+      <PageHeader
+        title="Documentação da API"
+        description="Tudo o que você precisa para integrar a Wiize ao seu sistema."
+        actions={
+          <>
+            <Button onClick={copyAiDoc} className="gap-2">
+              {copied ? <Check className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+              {copied ? "Copiado!" : "Copiar doc para IA"}
+            </Button>
+            <Button variant="outline" asChild className="gap-2">
+              <a href={AI_DOC_URL} download="wiize-api-llms.txt">
+                <Download className="h-4 w-4" /> Baixar .txt
+              </a>
+            </Button>
+          </>
+        }
+      />
 
       <div className="flex gap-8">
-        <nav className="sticky top-20 hidden h-fit w-52 shrink-0 space-y-0.5 xl:block">
+        <nav className="sticky top-20 hidden h-fit w-52 shrink-0 space-y-0.5 lg:block">
+
           {sections.map((s) => (
             <a
               key={s.id}
