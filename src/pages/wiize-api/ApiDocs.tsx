@@ -4,6 +4,11 @@ import { cn } from "@/lib/utils";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 import { PageHeader } from "@/components/wiize-api/WiizeApiUI";
 import { useTheme } from "@/contexts/ThemeContext";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Bot, Copy, Download, Check } from "lucide-react";
+
+const AI_DOC_URL = "/wiize-api-llms.txt";
 
 const sections = [
   { id: "intro", label: "Introdução" },
@@ -15,7 +20,9 @@ const sections = [
   { id: "errors", label: "Erros" },
   { id: "limits", label: "Limites de uso" },
   { id: "fair-use", label: "Uso justo e bloqueios" },
+  { id: "ia", label: "Documentação para IA" },
 ];
+
 
 const authSample = `curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
   -H "Authorization: Bearer wk_live_sua_chave" \\
