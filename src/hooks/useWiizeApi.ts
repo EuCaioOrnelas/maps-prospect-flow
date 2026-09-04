@@ -282,3 +282,49 @@ export function useUpdateWalletPrefs() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["wiize-api", "wallet"] }),
   });
 }
+
+/** Aceite dos Termos guardado no perfil da conta API (pedido uma única vez). */
+export async function fetchTermsAcceptance(): Promise<string | null> {
+  const uid = await currentUserId();
+  if (!uid) return null;
+  const { data } = await supabase
+    .from("wiize_api_profiles")
+    .select("terms_accepted_at")
+    .eq("user_id", uid)
+    .maybeSingle();
+  return (data as { terms_accepted_at: string | null } | null)?.terms_accepted_at ?? null;
+}
+
+export async function acceptApiTerms(version = "2026-09") {
+  const uid = await currentUserId();
+  if (!uid) throw new Error("Sessão expirada.");
+  const { error } = await supabase
+    .from("wiize_api_profiles")
+    .update({ terms_accepted_at: new Date().toISOString(), terms_version: version })
+    .eq("user_id", uid);
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+/** Recarga PIX ainda aberta — permite retomar o pagamento após fechar a aba. */
+export async function fetchPendingTopup(): Promise<ApiTopup | null> {
+  const uid = await currentUserId();
+  if (!uid) return null;
+  const since = new Date(Date.now() - 2 * 3600_000).toISOString();
+  const { data } = await supabase
+    .from("wiize_api_topups")
+    .select("id, amount_brl, tokens, status, method, pix_payload, pix_qr_image, expires_at, created_at")
+    .eq("user_id", uid)
+    .eq("status", "pending")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data as ApiTopup | null) ?? null;
+}
+
+export async function cancelTopup(id: string) {
+  const { error } = await supabase.functions.invoke("wiize-api-topup", { body: { action: "cancel", id } });
+  if (error) throw new Error(error.message);
+  return true;
+}
