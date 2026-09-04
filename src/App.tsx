@@ -525,12 +525,12 @@ const App = () => (
                 <Route path="/api/login" element={<LightThemeWrapper><ApiLogin /></LightThemeWrapper>} />
                 <Route path="/api" element={<WiizeApiLayout />}>
                   <Route path="dashboard" element={<ApiDashboard />} />
-                  <Route path="docs" element={<ApiDocs />} />
                   <Route path="keys" element={<ApiKeys />} />
                   <Route path="credits" element={<Navigate to="/api/billing" replace />} />
                   <Route path="apis" element={<Navigate to="/api/docs" replace />} />
                   <Route path="apis/prospecting" element={<Navigate to="/api/docs" replace />} />
                   <Route path="usage" element={<ApiUsage />} />
+                  <Route path="docs" element={<ApiDocs />} />
                   <Route path="billing" element={<ApiBilling />} />
                   <Route path="settings" element={<ApiSettings />} />
                 </Route>
