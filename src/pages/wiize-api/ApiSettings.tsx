@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   FileBarChart,
   Loader2,
-  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -37,7 +36,6 @@ export default function ApiSettings() {
   });
   const [loadingPrefs, setLoadingPrefs] = useState(true);
   const [saving, setSaving] = useState<PrefKey | null>(null);
-  const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -87,25 +85,6 @@ export default function ApiSettings() {
     }
   };
 
-  const sendTestEmail = async () => {
-    setTesting(true);
-    try {
-      const { error } = await supabase.functions.invoke("wiize-api-notify", {
-        body: { type: "test" },
-      });
-      if (error) throw error;
-      toast({ title: "E-mail enviado", description: "Confira sua caixa de entrada e o spam." });
-    } catch (err: any) {
-      toast({
-        title: "Falha ao enviar",
-        description: err?.message || "Tente novamente em instantes.",
-        variant: "destructive",
-      });
-    } finally {
-      setTesting(false);
-    }
-  };
-
   const demo = () =>
     toast({ title: "Interface de demonstração", description: "Será habilitado na implementação do backend." });
 
@@ -132,14 +111,8 @@ export default function ApiSettings() {
 
       <SectionCard
         title="Notificações"
-        description="Avisos por e-mail sobre a sua operação"
+        description="Avisos automáticos por e-mail sobre a sua operação"
         icon={Bell}
-        actions={
-          <Button variant="outline" size="sm" className="gap-2" onClick={sendTestEmail} disabled={testing}>
-            {testing ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-            Enviar e-mail de teste
-          </Button>
-        }
       >
         {NOTIFICATIONS.map((n) => (
           <div key={n.key} className="flex items-center justify-between gap-4 border-b border-border/60 py-3 first:pt-0 last:border-0 last:pb-0">
