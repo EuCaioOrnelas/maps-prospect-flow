@@ -12,7 +12,11 @@ const corsHeaders: Record<string, string> = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-const CRON_SECRET = Deno.env.get("WIIZE_API_CRON_SECRET") || "";
+const CRON_SECRETS = [
+  Deno.env.get("WIIZE_API_CRON_SECRET"),
+  Deno.env.get("FOLLOWUP_CRON_SECRET"),
+  Deno.env.get("SDR_CRON_SECRET"),
+].filter(Boolean) as string[];
 const ASAAS_API = "https://api.asaas.com/v3";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
@@ -292,7 +296,7 @@ Deno.serve(async (req) => {
 
   const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "").trim() || "";
   const cronHeader = req.headers.get("x-cron-secret") || "";
-  const authorized = token === SERVICE_ROLE || (!!CRON_SECRET && cronHeader === CRON_SECRET);
+  const authorized = token === SERVICE_ROLE || (!!cronHeader && CRON_SECRETS.includes(cronHeader));
   if (!authorized) return json({ error: "Não autorizado" }, 401);
 
   try {
