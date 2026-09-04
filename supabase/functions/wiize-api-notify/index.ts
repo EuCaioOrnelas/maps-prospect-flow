@@ -73,6 +73,7 @@ function template(type: NotificationType, payload: Record<string, unknown>) {
         ),
       };
   }
+  throw new Error("Tipo de notificação inválido");
 }
 
 Deno.serve(async (req) => {
