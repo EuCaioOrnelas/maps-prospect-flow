@@ -192,7 +192,7 @@ const WiizeApiLayout = lazyWithRetry(() => import("./pages/wiize-api/WiizeApiLay
 const ApiDashboard = lazyWithRetry(() => import("./pages/wiize-api/ApiDashboard"), "ApiDashboard");
 const ApiKeys = lazyWithRetry(() => import("./pages/wiize-api/ApiKeys"), "ApiKeys");
 const ApiUsage = lazyWithRetry(() => import("./pages/wiize-api/ApiUsage"), "ApiUsage");
-const ApiDocsPublic = lazyWithRetry(() => import("./pages/wiize-api/ApiDocsPublic"), "ApiDocsPublic");
+const ApiDocs = lazyWithRetry(() => import("./pages/wiize-api/ApiDocs"), "ApiDocs");
 const ApiBilling = lazyWithRetry(() => import("./pages/wiize-api/ApiBilling"), "ApiBilling");
 const ApiSettings = lazyWithRetry(() => import("./pages/wiize-api/ApiSettings"), "ApiSettings");
 const AdminPartnersApplications = lazyWithRetry(() => import("./pages/admin/AdminPartnersApplications"), "AdminPartnersApplications");
@@ -523,10 +523,9 @@ const App = () => (
                 {/* Wiize API */}
                 <Route path="/api" element={<LightThemeWrapper><ApiLanding /></LightThemeWrapper>} />
                 <Route path="/api/login" element={<LightThemeWrapper><ApiLogin /></LightThemeWrapper>} />
-                {/* Documentação pública — sem login, indexável e legível por IAs */}
-                <Route path="/api/docs" element={<LightThemeWrapper><ApiDocsPublic /></LightThemeWrapper>} />
                 <Route path="/api" element={<WiizeApiLayout />}>
                   <Route path="dashboard" element={<ApiDashboard />} />
+                  <Route path="docs" element={<ApiDocs />} />
                   <Route path="keys" element={<ApiKeys />} />
                   <Route path="credits" element={<Navigate to="/api/billing" replace />} />
                   <Route path="apis" element={<Navigate to="/api/docs" replace />} />
