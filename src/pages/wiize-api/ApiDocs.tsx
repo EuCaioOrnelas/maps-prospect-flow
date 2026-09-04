@@ -371,6 +371,40 @@ export default function ApiDocs() {
               da conta, sem estorno de saldo consumido.
             </p>
           </Doc>
+
+          <Doc id="ia" title="Documentação para IA">
+            <p>
+              Preparamos um arquivo único com toda a referência da API em formato otimizado para
+              assistentes de IA (padrão <code>llms.txt</code>): endpoints, custos, erros, limites,
+              exemplos em TypeScript e regras de implementação. Copie e cole no ChatGPT, Claude,
+              Cursor, Copilot ou Lovable e peça a integração pronta.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={copyAiDoc} className="gap-2">
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? "Copiado!" : "Copiar documentação para IA"}
+              </Button>
+              <Button variant="outline" asChild className="gap-2">
+                <a href={AI_DOC_URL} download="wiize-api-llms.txt">
+                  <Download className="h-4 w-4" /> Baixar arquivo
+                </a>
+              </Button>
+              <Button variant="ghost" asChild className="gap-2">
+                <a href={AI_DOC_URL} target="_blank" rel="noreferrer">Abrir em nova aba</a>
+              </Button>
+            </div>
+            <CodeBlock
+              code={`Use o conteúdo abaixo como referência oficial da Wiize API e implemente a
+integração no meu projeto (backend Node.js), respeitando idempotência,
+backoff em 429/5xx e a chave apenas em variável de ambiente.
+
+<cole aqui o conteúdo de wiize-api-llms.txt>`}
+              lang="text"
+              filename="prompt-sugerido.txt"
+              theme={codeTheme}
+            />
+          </Doc>
+
         </div>
       </div>
     </>
