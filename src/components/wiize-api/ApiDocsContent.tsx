@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bot, FileJson, FileText } from "lucide-react";
+import { Bot, FileDown, FileJson, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -119,6 +119,12 @@ const AI_FILES = [
     title: "wiize-api-openapi.json",
     desc: "Especificação OpenAPI 3.1 para gerar SDKs, tools e clientes automaticamente.",
   },
+  {
+    href: "/wiize-api-documentacao.pdf",
+    icon: FileDown,
+    title: "documentacao.pdf",
+    desc: "Mesma referência em PDF, para anexar em times, propostas ou no seu assistente.",
+  },
 ];
 
 function Doc({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -195,7 +201,7 @@ export function ApiDocsContent() {
             Quer que o ChatGPT, Claude, Cursor ou qualquer agente escreva a integração por você? Toda a
             documentação está disponível em formatos legíveis por máquina, sem login:
           </p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {AI_FILES.map((f) => (
               <a
                 key={f.href}
