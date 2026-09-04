@@ -11,11 +11,11 @@ export const brl = (v: number) =>
 export const tokensForAmount = (amount: number) => Math.round(amount / WIIZE_TOKEN_PRICE);
 export const brlForTokens = (tokens: number) => tokens * WIIZE_TOKEN_PRICE;
 
-export const MIN_TOPUP_BRL = 20;
+export const MIN_TOPUP_BRL = 30;
 export const MAX_TOPUP_BRL = 5000;
 
 export const creditPackages = [
-  { amount: 20, label: "Para testar", highlight: false },
+  { amount: 30, label: "Para testar", highlight: false },
   { amount: 50, label: "Mais popular", highlight: true },
   { amount: 200, label: "Para produção", highlight: false },
 ];
