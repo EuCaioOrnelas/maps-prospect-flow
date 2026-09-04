@@ -1,0 +1,265 @@
+# Wiize API — Documentação para IA (llms.txt)
+
+> Contexto completo da Wiize API v1 (Prospecting Intelligence) para uso por assistentes de IA
+> e agentes de código. Cole este arquivo inteiro no contexto do seu assistente e peça a
+> implementação da integração. Última atualização: 2026-09-04.
+
+## 1. Visão geral
+
+- Produto: Wiize API — inteligência comercial B2B (busca de empresas, análise/diagnóstico e
+  geração de abordagem comercial).
+- Base URL: `https://api.wiize.com.br/v1`
+- Todos os endpoints são `POST`, corpo JSON (máximo 32 KB).
+- Modelo de cobrança: pré-pago em Wiize Tokens. 1 token = R$ 0,01. Não há mensalidade.
+- Plataforma estritamente B2B (LGPD). É proibido prospectar pessoas físicas.
+
+Envelope de resposta de sucesso:
+
+```json
+{
+  "data": { },
+  "usage": {
+    "operation": "prospecting.analyze",
+    "tokens_charged": 5,
+    "cost_brl": 0.05,
+    "balance_tokens": 4995
+  },
+  "request_id": "95fd8879-873d-4044-86c7-bef6a37751ff"
+}
+```
+
+Envelope de erro:
+
+```json
+{
+  "error": {
+    "code": "INSUFFICIENT_BALANCE",
+    "message": "Saldo insuficiente. Adicione créditos para continuar usando a API.",
+    "request_id": "3341f379-1c62-45dd-af79-7baf3f6446d3",
+    "details": { "required_tokens": 5, "available_tokens": 2 }
+  }
+}
+```
+
+## 2. Autenticação
+
+- Header obrigatório: `Authorization: Bearer wk_live_...` (alternativa: `x-wiize-api-key`).
+- Chaves de produção: prefixo `wk_live_`. Chaves de teste: prefixo `wk_test_`.
+- O segredo é exibido apenas uma vez, na criação da chave.
+- Chave em query string é rejeitada com HTTP 400.
+- Nunca use a chave no frontend/browser. Chame sempre a partir do seu backend.
+
+## 3. Endpoints
+
+### 3.1 POST /v1/prospecting/search — 9 tokens (R$ 0,09)
+
+Encontra empresas reais por termo e localização.
+
+Campos:
+- `query` (string, 2–120) — obrigatório
+- `location` (string, 2–120) — obrigatório
+- `limit` (int, 1–60, padrão 20)
+
+```json
+{ "query": "padaria", "location": "São Paulo, SP", "limit": 20 }
+```
+
+### 3.2 POST /v1/prospecting/analyze — 5 tokens (R$ 0,05)
+
+Gera score de oportunidade (0–100), nível, probabilidade de fechamento, diagnóstico,
+pontos fortes/fracos, breakdown do score e ação recomendada.
+
+Campos: objeto `company` com `name` (obrigatório), e opcionalmente `city`, `category`,
+`website`, `rating`, `review_count`, `phone`, `address`.
+
+```json
+{
+  "company": {
+    "name": "Padaria Bella Paulista",
+    "city": "São Paulo",
+    "category": "Padaria",
+    "website": "https://padariabellapaulista.com.br",
+    "rating": 4.5,
+    "review_count": 56846
+  }
+}
+```
+
+Resposta (`data`): `company_name`, `opportunity_score`, `opportunity_level`,
+`close_probability`, `diagnosis`, `recommended_action`, `score_breakdown`,
+`strengths[]`, `weaknesses[]`.
+
+### 3.3 POST /v1/prospecting/approach — 4 tokens (R$ 0,04)
+
+Cria mensagem de abordagem comercial personalizada. Envie o `diagnosis` e o `score`
+retornados pelo `/analyze` para maior precisão.
+
+```json
+{
+  "company": {
+    "name": "Padaria Bella Paulista",
+    "city": "São Paulo",
+    "website": "https://padariabellapaulista.com.br",
+    "score": 72,
+    "diagnosis": "Sem cardápio digital próprio."
+  }
+}
+```
+
+## 4. Cobrança em tokens
+
+- 1 Wiize Token = R$ 0,01.
+- Tokens são reservados antes da execução e efetivados só no sucesso.
+- Falha de autenticação, validação, rate limit, saldo insuficiente ou erro interno
+  NÃO consomem tokens — a reserva é devolvida automaticamente.
+- Saldo é pré-pago via PIX na área de Pagamentos. Créditos não expiram e não são
+  reembolsáveis após o consumo.
+
+| Operação | Endpoint | Custo |
+| --- | --- | --- |
+| Buscar empresas | /v1/prospecting/search | 9 tokens |
+| Analisar + diagnosticar | /v1/prospecting/analyze | 5 tokens |
+| Gerar abordagem | /v1/prospecting/approach | 4 tokens |
+
+## 5. Idempotência
+
+Envie `Idempotency-Key: <uuid>` por operação. Reenvios da mesma chave em até 24 h
+retornam a resposta original sem nova cobrança. Use sempre em retentativas após timeout.
+
+## 6. Rate limits
+
+Cabeçalhos presentes em toda resposta:
+
+```
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 57
+X-RateLimit-Reset: 1788478920
+X-RateLimit-Burst-Limit: 20
+X-RateLimit-Daily-Limit: 10000
+X-RateLimit-Daily-Remaining: 9992
+Retry-After: 27          # apenas em 429/403
+X-RateLimit-Scope: minute # camada atingida
+```
+
+| Camada | Limite padrão | Escopo |
+| --- | --- | --- |
+| Rajada | 20 req / 10 s | por chave |
+| Por minuto | 60 req / min | por chave |
+| Por hora | 3.000 req / h | por chave |
+| Conta por minuto | 300 req / min | por conta |
+| Conta por 10 min | 600 req / 10 min | por conta |
+| Conta por dia | 10.000 req / dia | por conta |
+
+## 7. Erros
+
+| Código | HTTP | Ação |
+| --- | --- | --- |
+| INVALID_REQUEST | 400 | Corrija o JSON ou remova a chave da query string |
+| UNAUTHORIZED | 401 | Chave ausente, inválida ou revogada |
+| FORBIDDEN | 403 | Chave sem permissão para o endpoint |
+| ACCOUNT_BANNED | 403 | Conta/IP bloqueado por abuso; aguarde o prazo |
+| ACCOUNT_SUSPENDED | 403 | Conta suspensa; contate o suporte |
+| NOT_FOUND | 404 | Endpoint inexistente nesta versão |
+| METHOD_NOT_ALLOWED | 405 | Use POST |
+| INSUFFICIENT_BALANCE | 402 | Adicione créditos |
+| PAYLOAD_TOO_LARGE | 413 | Corpo acima de 32 KB |
+| VALIDATION_ERROR | 422 | Parâmetros inválidos |
+| RATE_LIMIT_EXCEEDED | 429 | Aguarde `Retry-After` |
+| INTERNAL_ERROR | 500 | Falha nossa; sem cobrança |
+| UPSTREAM_ERROR / TIMEOUT | 502 / 504 | Repita com a mesma Idempotency-Key |
+
+## 8. Uso justo e bloqueios automáticos
+
+Bloqueio progressivo por chave, conta ou IP: 15 min → 1 h → 6 h → 24 h → 7 dias.
+
+| Comportamento | Gatilho |
+| --- | --- |
+| Falhas de autenticação | 25 em 10 min |
+| Chave inválida/revogada | 15 em 10 min |
+| Estouro de rate limit | 40 em 15 min |
+| Saldo insuficiente | 60 em 15 min |
+| Erros de validação | 150 em 10 min |
+
+Proibido: compartilhar chaves entre empresas, revender acesso bruto sem transformação,
+prospectar pessoas físicas.
+
+## 9. Implementação de referência (Node.js / TypeScript)
+
+```ts
+const WIIZE_BASE = "https://api.wiize.com.br/v1";
+
+type WiizeError = { code: string; message: string; request_id: string; details?: unknown };
+
+export async function wiize<T>(
+  path: "/prospecting/search" | "/prospecting/analyze" | "/prospecting/approach",
+  body: unknown,
+  opts: { apiKey: string; idempotencyKey?: string; retries?: number } ,
+): Promise<{ data: T; usage: { tokens_charged: number; balance_tokens: number }; request_id: string }> {
+  const retries = opts.retries ?? 3;
+  const idem = opts.idempotencyKey ?? crypto.randomUUID();
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(`${WIIZE_BASE}${path}`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${opts.apiKey}`,
+        "Content-Type": "application/json",
+        "Idempotency-Key": idem,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) return await res.json();
+
+    const payload = await res.json().catch(() => ({}));
+    const err: WiizeError = payload.error ?? { code: "UNKNOWN", message: res.statusText, request_id: "" };
+
+    // Retentativa apenas em 429 e 5xx — nunca em 401/402/422.
+    const retryable = res.status === 429 || res.status >= 500;
+    if (!retryable || attempt === retries) throw Object.assign(new Error(err.message), err);
+
+    const retryAfter = Number(res.headers.get("Retry-After")) || 2 ** attempt;
+    await new Promise((r) => setTimeout(r, retryAfter * 1000));
+  }
+  throw new Error("unreachable");
+}
+```
+
+Pipeline recomendado (buscar → analisar → abordar):
+
+```ts
+const { data: search } = await wiize<{ companies: any[] }>(
+  "/prospecting/search",
+  { query: "clínica odontológica", location: "Campinas, SP", limit: 20 },
+  { apiKey: process.env.WIIZE_API_KEY! },
+);
+
+for (const company of search.companies) {
+  const { data: analysis } = await wiize<any>("/prospecting/analyze", { company }, { apiKey: process.env.WIIZE_API_KEY! });
+  if (analysis.opportunity_score < 60) continue; // economize tokens
+  const { data: approach } = await wiize<any>(
+    "/prospecting/approach",
+    { company: { ...company, score: analysis.opportunity_score, diagnosis: analysis.diagnosis } },
+    { apiKey: process.env.WIIZE_API_KEY! },
+  );
+  console.log(approach.message);
+}
+```
+
+## 10. Regras para o assistente de IA
+
+Ao gerar código de integração com a Wiize API, siga obrigatoriamente:
+
+1. A API Key vive apenas no servidor, em variável de ambiente (`WIIZE_API_KEY`). Nunca no
+   cliente, nunca commitada.
+2. Sempre envie `Idempotency-Key` (UUID por operação lógica) e reutilize a mesma chave nas
+   retentativas.
+3. Retentativas apenas em 429 e 5xx, com backoff exponencial respeitando `Retry-After`.
+   Nunca faça retry em 401, 402, 403 ou 422.
+4. Antes de disparar lotes, verifique `usage.balance_tokens` e pare a fila ao receber 402.
+5. Controle a concorrência para não exceder 20 req/10 s por chave.
+6. Registre `request_id` de toda resposta (sucesso e erro) para suporte.
+7. Não invente endpoints, campos ou parâmetros: existem apenas `/prospecting/search`,
+   `/prospecting/analyze` e `/prospecting/approach`.
+8. Filtre por score antes de gerar abordagem — cada chamada consome tokens reais.
+9. Uso exclusivamente B2B: nunca processe dados de pessoas físicas.
