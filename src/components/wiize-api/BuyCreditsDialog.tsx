@@ -32,9 +32,22 @@ import {
   MIN_TOPUP_BRL,
   tokensForAmount,
 } from "@/data/wiizeApi";
-import { checkTopupStatus, useCreateTopup, type ApiTopup } from "@/hooks/useWiizeApi";
+import {
+  acceptApiTerms,
+  cancelTopup,
+  checkTopupStatus,
+  fetchPendingTopup,
+  fetchTermsAcceptance,
+  useCreateTopup,
+  type ApiTopup,
+} from "@/hooks/useWiizeApi";
 
 type Step = "method" | "amount" | "payment" | "done";
+
+/** O Asaas devolve o base64 puro; no banco gravamos já com o prefixo data URL. */
+function qrSrc(image: string) {
+  return image.startsWith("data:") ? image : `data:image/png;base64,${image}`;
+}
 
 export function BuyCreditsDialog({
   open,
@@ -51,7 +64,9 @@ export function BuyCreditsDialog({
   const [selected, setSelected] = useState<number | "custom">(50);
   const [custom, setCustom] = useState("100");
   const [accepted, setAccepted] = useState(false);
+  const [termsSaved, setTermsSaved] = useState<boolean | null>(null);
   const [topup, setTopup] = useState<ApiTopup | null>(null);
+  const [checking, setChecking] = useState(false);
   const pollRef = useRef<number | null>(null);
 
   const amount = useMemo(() => {
@@ -62,12 +77,30 @@ export function BuyCreditsDialog({
   const tokens = tokensForAmount(amount);
   const invalid = amount < MIN_TOPUP_BRL || amount > MAX_TOPUP_BRL;
 
+  // Ao abrir: recupera aceite de termos e recarga pendente (mesmo após fechar a aba).
   useEffect(() => {
     if (!open) {
       setStep("method");
       setTopup(null);
-      setAccepted(false);
+      return;
     }
+    let active = true;
+    (async () => {
+      const [acceptedAt, pending] = await Promise.all([
+        fetchTermsAcceptance().catch(() => null),
+        fetchPendingTopup().catch(() => null),
+      ]);
+      if (!active) return;
+      setTermsSaved(!!acceptedAt);
+      setAccepted(!!acceptedAt);
+      if (pending) {
+        setTopup(pending);
+        setStep("payment");
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, [open]);
 
   useEffect(() => {
@@ -78,6 +111,9 @@ export function BuyCreditsDialog({
         if (status === "paid") {
           setStep("done");
           qc.invalidateQueries({ queryKey: ["wiize-api"] });
+        } else if (status === "canceled") {
+          setTopup(null);
+          setStep("amount");
         }
       } catch {
         /* nova tentativa no próximo ciclo */
@@ -91,6 +127,10 @@ export function BuyCreditsDialog({
 
   const handleGenerate = async () => {
     try {
+      if (!termsSaved) {
+        await acceptApiTerms();
+        setTermsSaved(true);
+      }
       const created = await createTopup.mutateAsync(amount);
       setTopup(created);
       setStep("payment");
@@ -107,6 +147,33 @@ export function BuyCreditsDialog({
     if (!topup?.pix_payload) return;
     await navigator.clipboard.writeText(topup.pix_payload);
     toast({ title: "Código PIX copiado" });
+  };
+
+  const manualCheck = async () => {
+    if (!topup) return;
+    setChecking(true);
+    try {
+      const status = await checkTopupStatus(topup.id);
+      if (status === "paid") {
+        setStep("done");
+        qc.invalidateQueries({ queryKey: ["wiize-api"] });
+      } else {
+        toast({
+          title: "Pagamento ainda não identificado",
+          description: "Assim que o PIX for compensado o saldo entra automaticamente.",
+        });
+      }
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const discard = async () => {
+    if (!topup) return;
+    await cancelTopup(topup.id).catch(() => null);
+    qc.invalidateQueries({ queryKey: ["wiize-api", "topups"] });
+    setTopup(null);
+    setStep("amount");
   };
 
   return (
@@ -164,7 +231,7 @@ export function BuyCreditsDialog({
           </div>
         )}
 
-        {/* Passo 2 — valor + termos */}
+        {/* Passo 2 — valor */}
         {step === "amount" && (
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
@@ -215,25 +282,28 @@ export function BuyCreditsDialog({
               )}
             </div>
 
-            <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4">
-              <Checkbox
-                id="buy-terms"
-                checked={accepted}
-                onCheckedChange={(v) => setAccepted(v === true)}
-                className="mt-0.5"
-              />
-              <Label htmlFor="buy-terms" className="text-xs font-normal leading-relaxed text-muted-foreground">
-                Li e aceito os{" "}
-                <a href="/termos" target="_blank" className="text-primary underline underline-offset-2">
-                  Termos de Uso
-                </a>{" "}
-                e a{" "}
-                <a href="/privacidade" target="_blank" className="text-primary underline underline-offset-2">
-                  Política de Privacidade
-                </a>
-                . Os créditos são pré-pagos, não expiram e não são reembolsáveis após o consumo.
-              </Label>
-            </div>
+            {/* Termos: pedidos uma única vez e salvos no backend */}
+            {termsSaved === false && (
+              <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4">
+                <Checkbox
+                  id="buy-terms"
+                  checked={accepted}
+                  onCheckedChange={(v) => setAccepted(v === true)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="buy-terms" className="text-xs font-normal leading-relaxed text-muted-foreground">
+                  Li e aceito os{" "}
+                  <a href="/termos" target="_blank" className="text-primary underline underline-offset-2">
+                    Termos de Uso
+                  </a>{" "}
+                  e a{" "}
+                  <a href="/privacidade" target="_blank" className="text-primary underline underline-offset-2">
+                    Política de Privacidade
+                  </a>
+                  . Os créditos são pré-pagos, não expiram e não são reembolsáveis após o consumo.
+                </Label>
+              </div>
+            )}
 
             <div className="flex items-center justify-between gap-3">
               <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setStep("method")}>
@@ -252,6 +322,20 @@ export function BuyCreditsDialog({
                 Gerar QR Code
               </Button>
             </div>
+
+            {termsSaved && (
+              <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
+                Ao prosseguir você concorda com os{" "}
+                <a href="/termos" target="_blank" className="text-primary underline underline-offset-2">
+                  Termos de Uso
+                </a>{" "}
+                e a{" "}
+                <a href="/privacidade" target="_blank" className="text-primary underline underline-offset-2">
+                  Política de Privacidade
+                </a>
+                .
+              </p>
+            )}
           </div>
         )}
 
@@ -259,12 +343,16 @@ export function BuyCreditsDialog({
         {step === "payment" && topup && (
           <div className="space-y-4">
             <div className="flex flex-col items-center gap-4">
-              {topup.pix_qr_image && (
+              {topup.pix_qr_image ? (
                 <img
-                  src={`data:image/png;base64,${topup.pix_qr_image}`}
+                  src={qrSrc(topup.pix_qr_image)}
                   alt="QR Code PIX da recarga Wiize API"
-                  className="h-48 w-48 rounded-xl border border-border bg-background p-2"
+                  className="h-48 w-48 rounded-xl border border-border bg-white p-2"
                 />
+              ) : (
+                <div className="flex h-48 w-48 items-center justify-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
+                  Use o código copia e cola abaixo
+                </div>
               )}
               <div className="text-center">
                 <p className="text-lg font-semibold text-foreground">{brl(topup.amount_brl)}</p>
@@ -288,6 +376,19 @@ export function BuyCreditsDialog({
             <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Loader2 size={13} className="animate-spin text-primary" />
               Aguardando confirmação do pagamento…
+            </p>
+
+            <div className="flex items-center justify-between gap-3">
+              <Button variant="ghost" size="sm" onClick={discard}>
+                Cancelar recarga
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2" onClick={manualCheck} disabled={checking}>
+                {checking && <Loader2 size={13} className="animate-spin" />} Já paguei
+              </Button>
+            </div>
+
+            <p className="text-center text-[11px] text-muted-foreground">
+              Pode fechar esta janela: o saldo é creditado automaticamente quando o PIX é compensado.
             </p>
           </div>
         )}

@@ -11102,6 +11102,36 @@ export type Database = {
         }
         Relationships: []
       }
+      wiize_api_notification_log: {
+        Row: {
+          created_at: string
+          dedupe_key: string
+          id: string
+          kind: string
+          payload: Json
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key: string
+          id?: string
+          kind: string
+          payload?: Json
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wiize_api_notification_prefs: {
         Row: {
           created_at: string
@@ -11174,6 +11204,8 @@ export type Database = {
           state: string | null
           street: string | null
           street_number: string | null
+          terms_accepted_at: string | null
+          terms_version: string | null
           updated_at: string
           user_id: string
         }
@@ -11191,6 +11223,8 @@ export type Database = {
           state?: string | null
           street?: string | null
           street_number?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string
           user_id: string
         }
@@ -11208,6 +11242,8 @@ export type Database = {
           state?: string | null
           street?: string | null
           street_number?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -12117,6 +12153,7 @@ export type Database = {
       }
       wiize_api_ensure_wallet: { Args: { _user_id: string }; Returns: string }
       wiize_api_expire_reservations: { Args: never; Returns: number }
+      wiize_api_expire_topups: { Args: never; Returns: number }
       wiize_api_rate_check: {
         Args: { _bucket: string; _limit: number; _window_seconds: number }
         Returns: Json
