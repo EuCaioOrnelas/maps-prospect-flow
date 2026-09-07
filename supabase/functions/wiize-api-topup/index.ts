@@ -127,10 +127,19 @@ serve(async (req) => {
 
     const { data: apiProfile } = await admin
       .from("wiize_api_profiles")
-      .select("user_id")
+      .select("user_id, terms_accepted_at")
       .eq("user_id", user.id)
       .maybeSingle();
     if (!apiProfile) return json({ error: "Conta Wiize API não encontrada" }, 403);
+
+    // Aceite implícito dos termos ao avançar em uma cobrança.
+    const markTerms = async () => {
+      if ((apiProfile as any)?.terms_accepted_at) return;
+      await admin
+        .from("wiize_api_profiles")
+        .update({ terms_accepted_at: new Date().toISOString(), terms_version: "2026-09" })
+        .eq("user_id", user.id);
+    };
 
     await admin.rpc("wiize_api_ensure_wallet", { _user_id: user.id });
 
