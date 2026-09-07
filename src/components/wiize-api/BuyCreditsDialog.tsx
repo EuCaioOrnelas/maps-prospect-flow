@@ -61,13 +61,15 @@ function qrSrc(image: string) {
 export function BuyCreditsDialog({
   open,
   onOpenChange,
+  resumeTopup = null,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  resumeTopup?: ApiTopup | null;
 }) {
   return (
     <Elements stripe={stripePromise}>
-      <BuyCreditsDialogInner open={open} onOpenChange={onOpenChange} />
+      <BuyCreditsDialogInner open={open} onOpenChange={onOpenChange} resumeTopup={resumeTopup} />
     </Elements>
   );
 }
@@ -75,9 +77,11 @@ export function BuyCreditsDialog({
 function BuyCreditsDialogInner({
   open,
   onOpenChange,
+  resumeTopup,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  resumeTopup?: ApiTopup | null;
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -96,6 +100,7 @@ function BuyCreditsDialogInner({
   const [accepted, setAccepted] = useState(false);
   const [termsSaved, setTermsSaved] = useState<boolean | null>(null);
   const [topup, setTopup] = useState<ApiTopup | null>(null);
+  const [pending, setPending] = useState<ApiTopup | null>(null);
   const [checking, setChecking] = useState(false);
   const pollRef = useRef<number | null>(null);
 
