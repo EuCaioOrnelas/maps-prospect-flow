@@ -425,7 +425,18 @@ export default function ApiLogin() {
               : "Acesse seu workspace, API Keys, créditos e uso."}
           </p>
 
+          {!API_SIGNUP_ENABLED && (
+            <div className="mt-6 rounded-xl border border-border bg-muted/40 px-3.5 py-3 text-xs leading-relaxed text-muted-foreground">
+              <span className="mr-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                Beta
+              </span>
+              A Wiize API está em beta fechado: apenas alguns usuários selecionados podem testar
+              nesta fase. Em breve o acesso será aberto para todos.
+            </div>
+          )}
+
           {/* Toggle login / cadastro com indicador deslizante */}
+          {API_SIGNUP_ENABLED && (
           <div className="relative mt-6 grid grid-cols-2 gap-1 rounded-xl border border-border bg-muted/50 p-1">
             <div
               aria-hidden
@@ -446,6 +457,7 @@ export default function ApiLogin() {
               </button>
             ))}
           </div>
+          )}
 
           {/* Indicador de etapas */}
           {isSignup && (
