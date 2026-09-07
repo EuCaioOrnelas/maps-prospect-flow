@@ -160,13 +160,49 @@ serve(async (req) => {
     const { data: { user }, error: authErr } = await admin.auth.getUser(token);
     if (authErr || !user) return json({ error: "Sessão inválida ou expirada" }, 401);
 
-    const { data: apiProfile } = await admin.from("wiize_api_profiles").select("user_id").eq("user_id", user.id).maybeSingle();
+    const { data: apiProfile } = await admin
+      .from("wiize_api_profiles")
+      .select("user_id, terms_accepted_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
     if (!apiProfile) return json({ error: "Conta Wiize API não encontrada" }, 403);
 
     await admin.rpc("wiize_api_ensure_wallet", { _user_id: user.id });
 
     const body = await req.json().catch(() => ({}));
     const action = String((body as any)?.action || "setup");
+
+    // Aceite implícito dos termos: registrado no back-end ao avançar em qualquer cobrança.
+    const markTerms = async () => {
+      if ((apiProfile as any)?.terms_accepted_at) return;
+      await admin
+        .from("wiize_api_profiles")
+        .update({ terms_accepted_at: new Date().toISOString(), terms_version: "2026-09" })
+        .eq("user_id", user.id);
+    };
+
+    // --- resume: devolve o client_secret de uma cobrança de cartão ainda pendente
+    // (usuário saiu para o app do banco no 3DS e voltou) ---
+    if (action === "resume") {
+      const id = String((body as any)?.topup_id || "");
+      if (!id) return json({ error: "topup_id é obrigatório" }, 422);
+
+      const { data: topupRow } = await admin
+        .from("wiize_api_topups")
+        .select("id, status, method, stripe_payment_intent_id")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!topupRow || (topupRow as any).method !== "card" || !(topupRow as any).stripe_payment_intent_id) {
+        return json({ error: "Cobrança de cartão não encontrada" }, 404);
+      }
+      if ((topupRow as any).status === "paid") return json({ status: "paid" });
+
+      const stripe = new Stripe(STRIPE_KEY, { apiVersion: "2024-11-20.acacia" });
+      const pi = await stripe.paymentIntents.retrieve((topupRow as any).stripe_payment_intent_id);
+      return json({ status: pi.status, client_secret: pi.client_secret });
+    }
 
     // --- setup: cria PaymentIntent para pagamento com cartão (primeira vez ou avulso) ---
     if (action === "setup") {
