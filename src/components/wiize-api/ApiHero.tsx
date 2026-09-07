@@ -100,12 +100,12 @@ export const ApiHero = () => {
               className="mb-8 flex animate-slide-up flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 xl:justify-start"
               style={{ animationDelay: "0.3s" }}
             >
-              <Link to="/api/login?modo=cadastro" className="shrink-0">
-                <Button variant="hero" size="lg" className="group h-11 rounded-full px-6 text-sm sm:h-12 sm:px-8 sm:text-base">
-                  Criar conta grátis
-                  <ArrowRight size={14} className="ml-1.5 transition-transform group-hover:translate-x-0.5 sm:ml-2" />
-                </Button>
-              </Link>
+              <div className="shrink-0 rounded-full border border-border/60 bg-muted/50 px-5 py-3 text-center text-sm font-medium text-muted-foreground">
+                <span className="mr-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                  Beta
+                </span>
+                Em beta fechado — apenas usuários selecionados
+              </div>
               <a href="#como-funciona" className="shrink-0">
                 <Button
                   variant="ghost"
