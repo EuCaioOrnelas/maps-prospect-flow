@@ -559,14 +559,13 @@ function BuyCreditsDialogInner({
         {/* Passo 3 — cartão */}
         {step === "card" && (
           <div className="space-y-4">
-            {cardMode === "new" && (
-              <AnimatedCreditCard
-                cardNumber=""
-                cardHolder={cardHolder || "NOME NO CARTÃO"}
-                expiryDate="MM/AA"
-                isFlipped={cvcFocused}
-              />
-            )}
+            <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3">
+              <span className="text-xs text-muted-foreground">
+                {tokens.toLocaleString("pt-BR")} Wiize Tokens
+              </span>
+              <span className="text-sm font-semibold text-foreground">{brl(amount)}</span>
+            </div>
+
 
             <div className="rounded-xl border border-border bg-muted/20 p-4">
               {savedMethods.length > 0 && (
