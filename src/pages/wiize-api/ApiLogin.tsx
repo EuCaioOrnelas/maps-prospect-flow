@@ -721,6 +721,7 @@ export default function ApiLogin() {
             </div>
           </form>
 
+          {API_SIGNUP_ENABLED ? (
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {isSignup ? "Já tem uma conta? " : "Não tem uma conta? "}
             <button
@@ -731,6 +732,11 @@ export default function ApiLogin() {
               {isSignup ? "Entrar" : "Criar conta grátis"}
             </button>
           </p>
+          ) : (
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Ainda não tem acesso? O beta é liberado por convite.
+          </p>
+          )}
           </>
           )}
 
