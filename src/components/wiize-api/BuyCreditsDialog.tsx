@@ -25,9 +25,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
-import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 
 import {
   brl,
@@ -767,5 +766,97 @@ function BuyCreditsDialogInner({
         </p>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Cartão novo: PaymentElement (cartão + Link da Stripe) com intent diferida. */
+function NewCardSection(props: {
+  amount: number;
+  saveCard: boolean;
+  onCreateIntent: () => Promise<{ topup: ApiTopup; client_secret: string }>;
+  onPending: (t: ApiTopup) => void;
+  onPaid: () => void;
+  onError: (msg: string) => void;
+  onBack: () => void;
+}) {
+  return (
+    <Elements
+      key={`${props.amount}-${props.saveCard}`}
+      stripe={stripePromise}
+      options={{
+        mode: "payment",
+        amount: Math.max(Math.round(props.amount * 100), 100),
+        currency: "brl",
+        setupFutureUsage: props.saveCard ? "off_session" : undefined,
+        appearance: { variables: { borderRadius: "10px" } },
+      }}
+    >
+      <NewCardInner {...props} />
+    </Elements>
+  );
+}
+
+function NewCardInner({
+  amount,
+  onCreateIntent,
+  onPending,
+  onPaid,
+  onError,
+  onBack,
+}: {
+  amount: number;
+  saveCard: boolean;
+  onCreateIntent: () => Promise<{ topup: ApiTopup; client_secret: string }>;
+  onPending: (t: ApiTopup) => void;
+  onPaid: () => void;
+  onError: (msg: string) => void;
+  onBack: () => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  const pay = async () => {
+    if (!stripe || !elements) return;
+    setBusy(true);
+    try {
+      const submitted = await elements.submit();
+      if (submitted.error) throw new Error(submitted.error.message || "Revise os dados do cartão.");
+
+      const setup = await onCreateIntent();
+      onPending(setup.topup);
+
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        clientSecret: setup.client_secret,
+        redirect: "if_required",
+        confirmParams: { return_url: window.location.href },
+      });
+      if (error) throw new Error(error.message || "Falha no pagamento.");
+      if (paymentIntent?.status === "succeeded") onPaid();
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "Tente novamente em instantes.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <PaymentElement
+        options={{ layout: "tabs", wallets: { link: "auto", applePay: "auto", googlePay: "auto" } }}
+        onReady={() => setReady(true)}
+      />
+      <div className="flex items-center justify-between gap-3">
+        <Button variant="ghost" size="sm" className="gap-1.5" onClick={onBack}>
+          <ArrowLeft size={14} /> Voltar
+        </Button>
+        <Button className="gap-2" disabled={busy || !ready} onClick={pay}>
+          {busy ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
+          Pagar {brl(amount)}
+        </Button>
+      </div>
+    </div>
   );
 }
