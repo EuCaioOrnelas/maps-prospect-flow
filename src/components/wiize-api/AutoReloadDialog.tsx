@@ -115,27 +115,33 @@ export function AutoReloadDialog({
               <Label htmlFor="ar-threshold" className="text-sm font-normal">
                 Quando meu saldo chegar em:
               </Label>
-              <Input
-                id="ar-threshold"
-                value={threshold}
-                onChange={(e) => setThreshold(e.target.value)}
-                inputMode="decimal"
-                disabled={!enabled}
-                className="max-w-[140px]"
-              />
+              <div className="relative max-w-[140px]">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                <Input
+                  id="ar-threshold"
+                  value={threshold}
+                  onChange={(e) => setThreshold(e.target.value.replace(/[^\d.,]/g, ""))}
+                  inputMode="decimal"
+                  disabled={!enabled}
+                  className="pl-9"
+                />
+              </div>
             </div>
             <div className="flex items-center justify-between gap-4">
               <Label htmlFor="ar-topup" className="text-sm font-normal">
                 Recarregar até:
               </Label>
-              <Input
-                id="ar-topup"
-                value={topupTo}
-                onChange={(e) => setTopupTo(e.target.value)}
-                inputMode="decimal"
-                disabled={!enabled}
-                className="max-w-[140px]"
-              />
+              <div className="relative max-w-[140px]">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                <Input
+                  id="ar-topup"
+                  value={topupTo}
+                  onChange={(e) => setTopupTo(e.target.value.replace(/[^\d.,]/g, ""))}
+                  inputMode="decimal"
+                  disabled={!enabled}
+                  className="pl-9"
+                />
+              </div>
             </div>
             <div className="flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
               <span>Valor cobrado por recarga</span>
@@ -201,13 +207,17 @@ export function AutoReloadDialog({
               </div>
               <Switch checked={limitEnabled} onCheckedChange={setLimitEnabled} disabled={!enabled} />
             </div>
-            <Input
-              value={monthlyLimit}
-              onChange={(e) => setMonthlyLimit(e.target.value)}
-              inputMode="decimal"
-              disabled={!enabled || !limitEnabled}
-              placeholder="500"
-            />
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+              <Input
+                value={monthlyLimit}
+                onChange={(e) => setMonthlyLimit(e.target.value.replace(/[^\d.,]/g, ""))}
+                inputMode="decimal"
+                disabled={!enabled || !limitEnabled}
+                placeholder="500"
+                className="pl-9"
+              />
+            </div>
           </div>
         </div>
 
