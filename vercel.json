@@ -23,6 +23,7 @@
   ],
   "rewrites": [
     { "source": "/assinatura-email", "destination": "/assinatura-email.html" },
+    { "source": "/v1/:path*", "destination": "/api/v1/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
