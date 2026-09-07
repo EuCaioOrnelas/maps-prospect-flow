@@ -29,13 +29,13 @@ export const ApiCTASection = () => {
             </span>
           </div>
           <h2 className="mb-6 font-display text-4xl font-bold text-foreground sm:text-5xl md:text-6xl">
-            Comece a integrar hoje.
+            Estamos em beta.
             <br />
-            <span className="text-shimmer-highlight">Em minutos, não semanas.</span>
+            <span className="text-shimmer-highlight">Em breve, aberto para todos.</span>
           </h2>
           <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-            Crie sua conta, gere uma API Key e faça sua primeira chamada usando a mesma
-            inteligência que move a plataforma Wiize.
+            No momento apenas alguns usuários selecionados podem testar a Wiize API. Estamos
+            liberando novos acessos aos poucos.
           </p>
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/50 px-5 py-3 text-sm font-medium text-muted-foreground">
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
