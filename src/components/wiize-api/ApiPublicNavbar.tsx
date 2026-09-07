@@ -89,11 +89,9 @@ export const ApiPublicNavbar = () => {
                   Entrar
                 </Button>
               </Link>
-              <Link to="/api/login?modo=cadastro">
-                <Button variant="hero" size="sm" className="rounded-full border-transparent shadow-lg">
-                  Criar conta grátis
-                </Button>
-              </Link>
+              <span className="rounded-full border border-border/70 bg-muted/50 px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                Beta fechado
+              </span>
             </div>
 
             <button
