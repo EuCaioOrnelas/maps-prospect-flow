@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
+import wiizeLogo from "@/assets/logo-icon-new.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -108,9 +109,12 @@ export default function WiizeApiLayout() {
                 />
               </SheetContent>
             </Sheet>
-            <span className="text-sm font-semibold tracking-tight">
-              Wiize <span className="text-muted-foreground">API</span>
-            </span>
+            <Link to="/api/dashboard" className="flex items-center gap-2">
+              <img src={wiizeLogo} alt="Wiize" className="h-8 w-8 shrink-0 rounded-hover object-contain" />
+              <span className="text-sm font-semibold tracking-tight">
+                Wiize <span className="text-muted-foreground">API</span>
+              </span>
+            </Link>
           </div>
 
           <div className="lg:ml-[72px]">

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   Wallet,
@@ -13,6 +13,7 @@ import {
   Loader2,
   Star,
   Trash2,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,7 @@ import { PageHeader, StatCard, SectionCard, EmptyState } from "@/components/wiiz
 import { BuyCreditsDialog } from "@/components/wiize-api/BuyCreditsDialog";
 import { AutoReloadDialog } from "@/components/wiize-api/AutoReloadDialog";
 import { brl, brlForTokens, tokensForAmount, WIIZE_TOKEN_PRICE } from "@/data/wiizeApi";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useApiTopups,
   useApiTransactions,
@@ -41,6 +43,8 @@ import {
   useApiPaymentMethods,
   useSetDefaultPaymentMethod,
   useRemovePaymentMethod,
+  cancelTopup,
+  type ApiTopup,
 } from "@/hooks/useWiizeApi";
 
 const statusLabel: Record<string, string> = {
@@ -176,9 +180,12 @@ export default function ApiBilling() {
   const { data: topups = [] } = useApiTopups();
   const updatePrefs = useUpdateWalletPrefs();
 
+  const qc = useQueryClient();
   const [buyOpen, setBuyOpen] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
-  const [lowBalance, setLowBalance] = useState<string | null>(null);
+  const [resumeTopup, setResumeTopup] = useState<ApiTopup | null>(null);
+  const [lowBalance, setLowBalance] = useState("");
+  const [canceling, setCanceling] = useState<string | null>(null);
 
   const balance = wallet?.balance_tokens ?? 0;
   const spent = useMemo(
@@ -193,19 +200,62 @@ export default function ApiBilling() {
     [transactions],
   );
 
+  // Pendentes só aparecem por 24 horas; depois somem da tela automaticamente.
+  const dayAgo = Date.now() - 24 * 3600_000;
+  const pendingTopups = useMemo(
+    () => topups.filter((t) => t.status === "pending" && new Date(t.created_at).getTime() >= dayAgo),
+    [topups, dayAgo],
+  );
+  const visibleTopups = useMemo(
+    () =>
+      topups.filter(
+        (t) => t.status !== "pending" || new Date(t.created_at).getTime() >= dayAgo,
+      ),
+    [topups, dayAgo],
+  );
 
-  const lowBalanceValue =
-    lowBalance ?? String(brlForTokens(wallet?.low_balance_threshold_tokens ?? 500));
+  const handleCancelTopup = async (id: string) => {
+    setCanceling(id);
+    try {
+      await cancelTopup(id);
+      qc.invalidateQueries({ queryKey: ["wiize-api", "topups"] });
+      toast({ title: "Cobrança cancelada" });
+    } catch (e) {
+      toast({
+        title: "Não foi possível cancelar",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setCanceling(null);
+    }
+  };
+
+  // Reflete sempre o valor salvo na carteira, inclusive após recarregar a página.
+  const savedLowBalance = wallet ? brlForTokens(wallet.low_balance_threshold_tokens ?? 0) : null;
+  useEffect(() => {
+    if (savedLowBalance !== null) {
+      setLowBalance(
+        savedLowBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      );
+    }
+  }, [savedLowBalance]);
 
   const saveLowBalance = async () => {
-    const n = Number(lowBalanceValue.replace(",", "."));
+    const n = Number(String(lowBalance).replace(/\./g, "").replace(",", "."));
     if (!Number.isFinite(n) || n < 0) {
       toast({ title: "Informe um valor válido", variant: "destructive" });
       return;
     }
     try {
       await updatePrefs.mutateAsync({ low_balance_threshold_tokens: tokensForAmount(n) });
-      toast({ title: "Preferências salvas" });
+      toast({
+        title: "Preferências salvas",
+        description:
+          n > 0
+            ? `Avisaremos por e-mail quando o saldo ficar abaixo de ${brl(n)}.`
+            : "Alerta de saldo baixo desativado.",
+      });
     } catch (e) {
       toast({
         title: "Não foi possível salvar",
@@ -390,13 +440,54 @@ export default function ApiBilling() {
 
         {/* Histórico */}
         <TabsContent value="history" className="space-y-5">
+          {pendingTopups.length > 0 && (
+            <SectionCard
+              icon={Clock}
+              title="Cobranças pendentes"
+              description="Some automaticamente 24 horas após a criação"
+            >
+              <div className="space-y-2">
+                {pendingTopups.map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">
+                        {brl(t.amount_brl)} · {t.tokens.toLocaleString("pt-BR")} tokens
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {t.method?.toUpperCase()} · criada em {fmtDate(t.created_at)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" onClick={() => { setResumeTopup(t); setBuyOpen(true); }}>
+                        Finalizar pagamento
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={canceling === t.id}
+                        className="gap-2 text-destructive hover:text-destructive"
+                        onClick={() => handleCancelTopup(t.id)}
+                      >
+                        {canceling === t.id && <Loader2 size={13} className="animate-spin" />}
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+          )}
+
           <SectionCard icon={QrCode} title="Recargas" description="Cobranças geradas na sua conta">
-            {topups.length === 0 ? (
+            {visibleTopups.length === 0 ? (
               <EmptyState
                 icon={QrCode}
                 title="Nenhuma recarga gerada."
                 description="Adicione saldo via PIX para começar a usar a API."
-                action={<Button onClick={() => setBuyOpen(true)}>Comprar créditos</Button>}
+                action={<Button onClick={() => { setResumeTopup(null); setBuyOpen(true); }}>Comprar créditos</Button>}
               />
             ) : (
               <div className="-mx-5 overflow-x-auto px-5">
@@ -411,7 +502,7 @@ export default function ApiBilling() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {topups.map((t) => (
+                    {visibleTopups.map((t) => (
                       <TableRow key={t.id}>
                         <TableCell className="whitespace-nowrap text-sm">{fmtDate(t.created_at)}</TableCell>
                         <TableCell className="text-sm uppercase">{t.method}</TableCell>
@@ -543,15 +634,17 @@ export default function ApiBilling() {
                 </Label>
                 <Input
                   id="low-balance"
-                  value={lowBalanceValue}
+                  value={lowBalance}
                   inputMode="decimal"
+                  placeholder="5,00"
                   onChange={(e) => setLowBalance(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Enviamos um e-mail assim que o saldo cruzar esse limite.
+                  Enviamos um e-mail assim que o saldo cruzar esse limite. Use 0 para desativar o
+                  aviso. Saldo atual: {brl(brlForTokens(balance))}.
                 </p>
               </div>
-              <Button onClick={saveLowBalance} disabled={updatePrefs.isPending} className="gap-2">
+              <Button onClick={saveLowBalance} disabled={updatePrefs.isPending || !wallet} className="gap-2">
                 {updatePrefs.isPending && <Loader2 size={14} className="animate-spin" />}
                 Salvar preferências
               </Button>
@@ -560,7 +653,14 @@ export default function ApiBilling() {
         </TabsContent>
       </Tabs>
 
-      <BuyCreditsDialog open={buyOpen} onOpenChange={setBuyOpen} />
+      <BuyCreditsDialog
+        open={buyOpen}
+        onOpenChange={(v) => {
+          setBuyOpen(v);
+          if (!v) setResumeTopup(null);
+        }}
+        resumeTopup={resumeTopup}
+      />
       <AutoReloadDialog open={autoOpen} onOpenChange={setAutoOpen} wallet={wallet} />
     </>
   );

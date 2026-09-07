@@ -61,13 +61,15 @@ function qrSrc(image: string) {
 export function BuyCreditsDialog({
   open,
   onOpenChange,
+  resumeTopup = null,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  resumeTopup?: ApiTopup | null;
 }) {
   return (
     <Elements stripe={stripePromise}>
-      <BuyCreditsDialogInner open={open} onOpenChange={onOpenChange} />
+      <BuyCreditsDialogInner open={open} onOpenChange={onOpenChange} resumeTopup={resumeTopup} />
     </Elements>
   );
 }
@@ -75,9 +77,11 @@ export function BuyCreditsDialog({
 function BuyCreditsDialogInner({
   open,
   onOpenChange,
+  resumeTopup,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  resumeTopup?: ApiTopup | null;
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -96,6 +100,7 @@ function BuyCreditsDialogInner({
   const [accepted, setAccepted] = useState(false);
   const [termsSaved, setTermsSaved] = useState<boolean | null>(null);
   const [topup, setTopup] = useState<ApiTopup | null>(null);
+  const [pending, setPending] = useState<ApiTopup | null>(null);
   const [checking, setChecking] = useState(false);
   const pollRef = useRef<number | null>(null);
 
@@ -120,6 +125,7 @@ function BuyCreditsDialogInner({
     if (!open) {
       setStep("method");
       setTopup(null);
+      setPending(null);
       setMethod("pix");
       setCardMode(savedMethods.length ? "saved" : "new");
       setSelectedCardId(savedMethods.find((m) => m.is_default)?.id || savedMethods[0]?.id || null);
@@ -127,23 +133,25 @@ function BuyCreditsDialogInner({
     }
     let active = true;
     (async () => {
-      const [acceptedAt, pending] = await Promise.all([
+      const [acceptedAt, pendingTopup] = await Promise.all([
         fetchTermsAcceptance().catch(() => null),
-        fetchPendingTopup().catch(() => null),
+        resumeTopup ? Promise.resolve(resumeTopup) : fetchPendingTopup().catch(() => null),
       ]);
       if (!active) return;
       setTermsSaved(!!acceptedAt);
       setAccepted(!!acceptedAt);
-      if (pending) {
-        setTopup(pending);
-        setMethod(pending.method === "card" ? "card" : "pix");
+      setPending(pendingTopup ?? null);
+      // Só retoma direto quando o usuário pediu para finalizar aquela cobrança.
+      if (resumeTopup) {
+        setTopup(resumeTopup);
+        setMethod(resumeTopup.method === "card" ? "card" : "pix");
         setStep("payment");
       }
     })();
     return () => {
       active = false;
     };
-  }, [open, savedMethods]);
+  }, [open, savedMethods, resumeTopup]);
 
   useEffect(() => {
     if (step !== "payment" || !topup) return;
@@ -311,6 +319,29 @@ function BuyCreditsDialogInner({
         {/* Passo 1 — método */}
         {step === "method" && (
           <div className="space-y-3">
+            {pending && (
+              <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground">
+                    Cobrança pendente de {brl(pending.amount_brl)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Você pode finalizá-la ou seguir com uma nova recarga.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setTopup(pending);
+                    setMethod(pending.method === "card" ? "card" : "pix");
+                    setStep("payment");
+                  }}
+                >
+                  Finalizar
+                </Button>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => {
