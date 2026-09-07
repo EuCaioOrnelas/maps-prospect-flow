@@ -12,6 +12,8 @@ type VercelResponse = {
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+  res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.status(200).send(
     JSON.stringify({

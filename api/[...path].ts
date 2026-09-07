@@ -43,6 +43,8 @@ function first(value: string | string[] | undefined): string | undefined {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader(
     "Access-Control-Allow-Headers",
     "authorization, x-wiize-api-key, content-type, idempotency-key, x-client-info",
