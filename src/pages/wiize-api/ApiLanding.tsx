@@ -266,12 +266,12 @@ export default function ApiLanding() {
                   </div>
                 ))}
               </div>
-              <Link to="/api/login?modo=cadastro" className="mt-8 inline-block">
-                <Button variant="hero" className="group rounded-full">
-                  Criar conta grátis
-                  <ArrowRight size={16} className="ml-1.5 transition-transform group-hover:translate-x-0.5" />
-                </Button>
-              </Link>
+              <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/50 px-4 py-2.5 text-sm font-medium text-muted-foreground">
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                  Beta
+                </span>
+                Acesso liberado a usuários selecionados
+              </div>
             </div>
 
             <div>
