@@ -28,13 +28,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
-import AnimatedCreditCard from "@/components/ui/animated-credit-card";
+
 import {
   brl,
   creditPackages,
   MAX_TOPUP_BRL,
   MIN_TOPUP_BRL,
   tokensForAmount,
+  WIIZE_TOKEN_PRICE,
 } from "@/data/wiizeApi";
 import {
   cancelTopup,
@@ -443,51 +444,96 @@ function BuyCreditsDialogInner({
         {/* Passo 2 — valor */}
         {step === "amount" && (
           <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-3">
-              {creditPackages.map((p) => (
-                <button
-                  key={p.amount}
-                  type="button"
-                  onClick={() => setSelected(p.amount)}
-                  className={cn(
-                    "rounded-xl border p-3 text-left transition-colors",
-                    selected === p.amount ? "border-primary bg-primary/5" : "border-border",
-                  )}
-                >
-                  <div className="text-base font-semibold text-foreground">{brl(p.amount)}</div>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    {tokensForAmount(p.amount).toLocaleString("pt-BR")} tokens
-                  </p>
-                </button>
-              ))}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {creditPackages.map((p) => {
+                const active = selected === p.amount;
+                return (
+                  <button
+                    key={p.amount}
+                    type="button"
+                    onClick={() => setSelected(p.amount)}
+                    className={cn(
+                      "relative rounded-xl border p-3 text-left transition-colors",
+                      active ? "border-primary bg-primary/5" : "border-border",
+                    )}
+                  >
+                    {active && (
+                      <CheckCircle2 size={16} className="absolute right-3 top-3 text-primary" />
+                    )}
+                    <div className="text-base font-semibold text-foreground">{brl(p.amount)}</div>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      {tokensForAmount(p.amount).toLocaleString("pt-BR")} tokens
+                    </p>
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={() => setSelected("custom")}
+                className={cn(
+                  "relative rounded-xl border p-3 text-left transition-colors",
+                  selected === "custom" ? "border-primary bg-primary/5" : "border-border",
+                )}
+              >
+                {selected === "custom" && (
+                  <CheckCircle2 size={16} className="absolute right-3 top-3 text-primary" />
+                )}
+                <div className="text-base font-semibold text-foreground">Outro valor</div>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  De {brl(MIN_TOPUP_BRL)} a {brl(MAX_TOPUP_BRL)}
+                </p>
+              </button>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="buy-custom" className="text-xs">
-                Valor personalizado (em reais)
-              </Label>
-              <div className="flex flex-wrap items-center gap-3">
+            {selected === "custom" && (
+              <div className="space-y-2">
+                <Label htmlFor="buy-custom" className="text-xs">
+                  Valor personalizado (em reais)
+                </Label>
                 <Input
                   id="buy-custom"
                   value={custom}
                   inputMode="numeric"
                   placeholder="R$ 100"
-                  className="max-w-[180px]"
+                  className="max-w-[200px]"
                   onFocus={() => setSelected("custom")}
                   onChange={(e) => {
                     setCustom(maskBRL(e.target.value));
                     setSelected("custom");
                   }}
                 />
-                <span className="text-sm text-muted-foreground">
-                  {tokens.toLocaleString("pt-BR")} Wiize Tokens
-                </span>
+                {invalid && (
+                  <p className="text-xs text-destructive">
+                    Informe um valor entre {brl(MIN_TOPUP_BRL)} e {brl(MAX_TOPUP_BRL)}.
+                  </p>
+                )}
               </div>
-              {invalid && (
-                <p className="text-xs text-destructive">
-                  Informe um valor entre {brl(MIN_TOPUP_BRL)} e {brl(MAX_TOPUP_BRL)}.
-                </p>
-              )}
+            )}
+
+            {/* Resumo da compra */}
+            <div className="rounded-xl border border-border bg-muted/30 p-4">
+              <p className="text-xs font-medium text-foreground">Resumo da compra</p>
+              <div className="mt-2 space-y-1.5 text-xs text-muted-foreground">
+                <div className="flex items-center justify-between">
+                  <span>Wiize Tokens</span>
+                  <span className="font-medium text-foreground">
+                    {tokens.toLocaleString("pt-BR")}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Preço por token</span>
+                  <span>{brl(WIIZE_TOKEN_PRICE)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Forma de pagamento</span>
+                  <span>{method === "pix" ? "PIX" : "Cartão de crédito"}</span>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+                <span className="text-sm font-medium text-foreground">Total</span>
+                <span className="text-lg font-semibold text-foreground">{brl(amount)}</span>
+              </div>
             </div>
 
             <div className="flex items-center justify-between gap-3">
@@ -513,14 +559,13 @@ function BuyCreditsDialogInner({
         {/* Passo 3 — cartão */}
         {step === "card" && (
           <div className="space-y-4">
-            {cardMode === "new" && (
-              <AnimatedCreditCard
-                cardNumber=""
-                cardHolder={cardHolder || "NOME NO CARTÃO"}
-                expiryDate="MM/AA"
-                isFlipped={cvcFocused}
-              />
-            )}
+            <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3">
+              <span className="text-xs text-muted-foreground">
+                {tokens.toLocaleString("pt-BR")} Wiize Tokens
+              </span>
+              <span className="text-sm font-semibold text-foreground">{brl(amount)}</span>
+            </div>
+
 
             <div className="rounded-xl border border-border bg-muted/20 p-4">
               {savedMethods.length > 0 && (
