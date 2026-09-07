@@ -24,12 +24,12 @@ const sections = [
 ];
 
 
-const authSample = `curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
+const authSample = `curl -X POST https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/wiize-api-v1/v1/prospecting/analyze \\
   -H "Authorization: Bearer wk_live_sua_chave" \\
   -H "Content-Type: application/json" \\
   -d '{ "company": { "name": "Empresa Exemplo" } }'`;
 
-const quickSample = `curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
+const quickSample = `curl -X POST https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/wiize-api-v1/v1/prospecting/analyze \\
   -H "Authorization: Bearer wk_live_sua_chave" \\
   -H "Content-Type: application/json" \\
   -H "Idempotency-Key: 8f2a1c34" \\
@@ -204,7 +204,7 @@ export default function ApiDocs() {
               oportunidades e gerar abordagens. Não existe mensalidade — você adiciona saldo e consome
               conforme a necessidade, em Wiize Tokens.
             </p>
-            <p className="font-mono text-xs text-foreground">Base URL: https://api.wiize.com.br/v1</p>
+            <p className="font-mono text-xs text-foreground">Base URL: https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/wiize-api-v1/v1</p>
             <p>
               Todas as requisições usam <code>POST</code> com corpo JSON (máximo de 32 KB) e devolvem um
               envelope com <code>data</code>, <code>usage</code> e <code>request_id</code>. Informe o{" "}
