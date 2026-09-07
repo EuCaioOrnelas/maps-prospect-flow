@@ -8,7 +8,7 @@
 
 - Produto: Wiize API — inteligência comercial B2B (busca de empresas, análise/diagnóstico e
   geração de abordagem comercial).
-- Base URL: `https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/wiize-api-v1/v1`
+- Base URL: `https://api.wiize.com.br/v1`
 - Todos os endpoints são `POST`, corpo JSON (máximo 32 KB).
 - Modelo de cobrança: pré-pago em Wiize Tokens. 1 token = R$ 0,01. Não há mensalidade.
 - Plataforma estritamente B2B (LGPD). É proibido prospectar pessoas físicas.
@@ -186,7 +186,7 @@ prospectar pessoas físicas.
 ## 9. Implementação de referência (Node.js / TypeScript)
 
 ```ts
-const WIIZE_BASE = "https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/wiize-api-v1/v1";
+const WIIZE_BASE = "https://api.wiize.com.br/v1";
 
 type WiizeError = { code: string; message: string; request_id: string; details?: unknown };
 
