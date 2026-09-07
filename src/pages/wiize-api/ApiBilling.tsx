@@ -632,15 +632,17 @@ export default function ApiBilling() {
                 </Label>
                 <Input
                   id="low-balance"
-                  value={lowBalanceValue}
+                  value={lowBalance}
                   inputMode="decimal"
+                  placeholder="5,00"
                   onChange={(e) => setLowBalance(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Enviamos um e-mail assim que o saldo cruzar esse limite.
+                  Enviamos um e-mail assim que o saldo cruzar esse limite. Use 0 para desativar o
+                  aviso. Saldo atual: {brl(brlForTokens(balance))}.
                 </p>
               </div>
-              <Button onClick={saveLowBalance} disabled={updatePrefs.isPending} className="gap-2">
+              <Button onClick={saveLowBalance} disabled={updatePrefs.isPending || !wallet} className="gap-2">
                 {updatePrefs.isPending && <Loader2 size={14} className="animate-spin" />}
                 Salvar preferências
               </Button>
@@ -649,7 +651,14 @@ export default function ApiBilling() {
         </TabsContent>
       </Tabs>
 
-      <BuyCreditsDialog open={buyOpen} onOpenChange={setBuyOpen} />
+      <BuyCreditsDialog
+        open={buyOpen}
+        onOpenChange={(v) => {
+          setBuyOpen(v);
+          if (!v) setResumeTopup(null);
+        }}
+        resumeTopup={resumeTopup}
+      />
       <AutoReloadDialog open={autoOpen} onOpenChange={setAutoOpen} wallet={wallet} />
     </>
   );
