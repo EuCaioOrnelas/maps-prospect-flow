@@ -247,7 +247,6 @@ serve(async (req) => {
         confirm: true,
         description: `Recarga Wiize API — ${tokens.toLocaleString("pt-BR")} tokens`,
         metadata: { wiize_api_topup_id: topup.id, wiize_api_user_id: user.id },
-        automatic_tax: { enabled: false },
       });
 
       await admin
