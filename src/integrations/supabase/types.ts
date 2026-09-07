@@ -5913,6 +5913,7 @@ export type Database = {
           partner_id: string
           partner_level: Database["public"]["Enums"]["partner_level"]
           partner_sale_id: string
+          product_breakdown: Json
           status: Database["public"]["Enums"]["commission_status"]
           updated_at: string
         }
@@ -5930,6 +5931,7 @@ export type Database = {
           partner_id: string
           partner_level: Database["public"]["Enums"]["partner_level"]
           partner_sale_id: string
+          product_breakdown?: Json
           status?: Database["public"]["Enums"]["commission_status"]
           updated_at?: string
         }
@@ -5947,6 +5949,7 @@ export type Database = {
           partner_id?: string
           partner_level?: Database["public"]["Enums"]["partner_level"]
           partner_sale_id?: string
+          product_breakdown?: Json
           status?: Database["public"]["Enums"]["commission_status"]
           updated_at?: string
         }
@@ -6341,6 +6344,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      partner_product_prices: {
+        Row: {
+          created_at: string
+          label: string
+          monthly_price_cents: number
+          product_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          label: string
+          monthly_price_cents: number
+          product_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          label?: string
+          monthly_price_cents?: number
+          product_key?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       partner_referral_links: {
         Row: {
