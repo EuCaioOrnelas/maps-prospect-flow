@@ -28,7 +28,7 @@
       "has": [{ "type": "host", "value": "api.wiize.com.br" }]
     },
     {
-      "source": "/(.*)",
+      "source": "/",
       "destination": "/api/health",
       "has": [{ "type": "host", "value": "api.wiize.com.br" }]
     },
