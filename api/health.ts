@@ -12,6 +12,8 @@ type VercelResponse = {
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+  res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.status(200).send(
     JSON.stringify({
@@ -19,6 +21,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       status: "ok",
       docs: "https://wiize.com.br/api/docs",
       base_url: "https://api.wiize.com.br/v1",
+      health: "/v1/health",
       endpoints: [
         "/v1/prospecting/search",
         "/v1/prospecting/analyze",

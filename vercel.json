@@ -3,6 +3,13 @@
   "buildCommand": "npm run build",
   "headers": [
     {
+      "source": "/v1/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    },
+    {
       "source": "/index.html",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
@@ -24,12 +31,11 @@
   "rewrites": [
     {
       "source": "/v1/:path*",
-      "destination": "/api/v1/:path*",
-      "has": [{ "type": "host", "value": "api.wiize.com.br" }]
+      "destination": "https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/wiize-api-v1/v1/:path*"
     },
     {
       "source": "/",
-      "destination": "/api/health",
+      "destination": "https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/wiize-api-v1/v1/health",
       "has": [{ "type": "host", "value": "api.wiize.com.br" }]
     },
     { "source": "/assinatura-email", "destination": "/assinatura-email.html" },

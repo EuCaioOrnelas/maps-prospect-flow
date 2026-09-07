@@ -345,6 +345,23 @@ serve(async (req) => {
       return apiError("INVALID_REQUEST", "API Key não pode ser enviada por query string.", 400, requestId);
     }
 
+    if (path === "/v1/health") {
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        return apiError("METHOD_NOT_ALLOWED", "Utilize GET neste endpoint.", 405, requestId);
+      }
+      return json({
+        service: "Wiize API",
+        status: "ok",
+        version: "v1",
+        endpoints: [
+          "/v1/prospecting/search",
+          "/v1/prospecting/analyze",
+          "/v1/prospecting/approach",
+        ],
+        request_id: requestId,
+      }, 200, { "Cache-Control": "no-store" });
+    }
+
     const route = ROUTES[path];
     if (!route) {
       return apiError("NOT_FOUND", `Endpoint ${path} não existe nesta versão da API.`, 404, requestId);
