@@ -68,7 +68,7 @@ const elementOptions: StripeCardNumberElementOptions = {
 };
 
 export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
-  ({ cardHolder, onCardHolderChange, onCardChange, onCvcFocus, onCvcBlur, disabled }, ref) => {
+  ({ cardHolder, onCardHolderChange, onCardChange, onCvcFocus, onCvcBlur, disabled, nameCase = "upper" }, ref) => {
     const stripe = useStripe();
     const elements = useElements();
     const [error, setError] = useState<string | null>(null);
@@ -104,9 +104,13 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           </Label>
           <Input
             id="card-holder"
-            placeholder="NOME IMPRESSO NO CARTÃO"
+            placeholder={nameCase === "title" ? "Nome Impresso No Cartão" : "NOME IMPRESSO NO CARTÃO"}
             value={cardHolder}
-            onChange={(e) => onCardHolderChange(e.target.value.toUpperCase())}
+            onChange={(e) =>
+              onCardHolderChange(
+                nameCase === "title" ? toTitleCase(e.target.value) : e.target.value.toUpperCase(),
+              )
+            }
             disabled={disabled}
           />
         </div>
