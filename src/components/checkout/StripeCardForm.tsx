@@ -43,6 +43,14 @@ interface Props {
   onCvcFocus?: () => void;
   onCvcBlur?: () => void;
   disabled?: boolean;
+  /** "upper" (padrão) deixa tudo maiúsculo; "title" capitaliza cada palavra. */
+  nameCase?: "upper" | "title";
+}
+
+function toTitleCase(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/(^|[\s'-])([\p{L}])/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
 }
 
 const elementOptions: StripeCardNumberElementOptions = {
