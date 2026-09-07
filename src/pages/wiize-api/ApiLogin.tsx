@@ -61,7 +61,8 @@ function AutoHeight({ children, deps }: { children: React.ReactNode; deps: unkno
 
 export default function ApiLogin() {
   const [params, setParams] = useSearchParams();
-  const initialMode: Mode = params.get("modo") === "cadastro" ? "signup" : "login";
+  const initialMode: Mode =
+    API_SIGNUP_ENABLED && params.get("modo") === "cadastro" ? "signup" : "login";
   const [mode, setMode] = useState<Mode>(initialMode);
   const [step, setStep] = useState<1 | 2>(1);
 
