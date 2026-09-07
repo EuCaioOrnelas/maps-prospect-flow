@@ -8,7 +8,7 @@ const sample = `# 1. exporte sua chave (ambiente de produção)
 export WIIZE_API_KEY="wk_live_sua_chave"
 
 # 2. analise uma empresa e receba diagnóstico + abordagem
-curl -X POST https://api.wiize.com.br/v1/prospecting/analyze \\
+curl -X POST https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/wiize-api-v1/v1/prospecting/analyze \\
   -H "Authorization: Bearer $WIIZE_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
