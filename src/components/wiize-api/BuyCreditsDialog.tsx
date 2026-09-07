@@ -125,6 +125,7 @@ function BuyCreditsDialogInner({
     if (!open) {
       setStep("method");
       setTopup(null);
+      setPending(null);
       setMethod("pix");
       setCardMode(savedMethods.length ? "saved" : "new");
       setSelectedCardId(savedMethods.find((m) => m.is_default)?.id || savedMethods[0]?.id || null);
@@ -132,23 +133,25 @@ function BuyCreditsDialogInner({
     }
     let active = true;
     (async () => {
-      const [acceptedAt, pending] = await Promise.all([
+      const [acceptedAt, pendingTopup] = await Promise.all([
         fetchTermsAcceptance().catch(() => null),
-        fetchPendingTopup().catch(() => null),
+        resumeTopup ? Promise.resolve(resumeTopup) : fetchPendingTopup().catch(() => null),
       ]);
       if (!active) return;
       setTermsSaved(!!acceptedAt);
       setAccepted(!!acceptedAt);
-      if (pending) {
-        setTopup(pending);
-        setMethod(pending.method === "card" ? "card" : "pix");
+      setPending(pendingTopup ?? null);
+      // Só retoma direto quando o usuário pediu para finalizar aquela cobrança.
+      if (resumeTopup) {
+        setTopup(resumeTopup);
+        setMethod(resumeTopup.method === "card" ? "card" : "pix");
         setStep("payment");
       }
     })();
     return () => {
       active = false;
     };
-  }, [open, savedMethods]);
+  }, [open, savedMethods, resumeTopup]);
 
   useEffect(() => {
     if (step !== "payment" || !topup) return;
