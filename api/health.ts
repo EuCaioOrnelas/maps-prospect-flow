@@ -19,7 +19,11 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       status: "ok",
       docs: "https://wiize.com.br/api/docs",
       base_url: "https://api.wiize.com.br/v1",
-      endpoints: ["/v1/leads/search", "/v1/opportunities/score", "/v1/leads/approach"],
+      endpoints: [
+        "/v1/prospecting/search",
+        "/v1/prospecting/analyze",
+        "/v1/prospecting/approach",
+      ],
     }),
   );
 }
