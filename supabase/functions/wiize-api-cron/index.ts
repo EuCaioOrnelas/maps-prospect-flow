@@ -505,11 +505,19 @@ Deno.serve(async (req) => {
     const credited = await reconcileTopups();
     const creditedCards = await reconcileStripeCardTopups();
     const { data: expired } = await admin.rpc("wiize_api_expire_topups");
+    const autoReloaded = await autoReload(tokenPrice);
     const lowBalance = await lowBalanceAlerts(tokenPrice);
     const errors = await errorAlerts();
     const monthly = await monthlyReports(tokenPrice, force);
 
-    return json({ ok: true, credited, creditedCards, expired: expired ?? 0, emails: { lowBalance, errors, monthly } });
+    return json({
+      ok: true,
+      credited,
+      creditedCards,
+      expired: expired ?? 0,
+      autoReloaded,
+      emails: { lowBalance, errors, monthly },
+    });
   } catch (e) {
     console.error("[wiize-api-cron]", String(e));
     return json({ error: String((e as Error)?.message || e) }, 500);
