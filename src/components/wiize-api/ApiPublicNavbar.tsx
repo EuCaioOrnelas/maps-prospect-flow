@@ -8,7 +8,7 @@ const NAV_LINKS = [
   { to: "/api#recursos", label: "Recursos" },
   { to: "/api#como-funciona", label: "Como funciona" },
   { to: "/api#seguranca", label: "Segurança" },
-  { to: "/", label: "Wiize Plataforma" },
+  { to: "/", label: "Home" },
 ];
 
 /** Navbar pública do Wiize API — fixa no topo e vira card glass flutuante ao rolar. */
