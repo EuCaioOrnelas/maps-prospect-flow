@@ -96,7 +96,8 @@ export default function ApiLogin() {
 
   const isSignup = mode === "signup";
 
-  const switchMode = (next: Mode) => {
+  const switchMode = (nextMode: Mode) => {
+    const next: Mode = API_SIGNUP_ENABLED ? nextMode : "login";
     setMode(next);
     setStep(1);
     setAwaitingConfirm(null);
