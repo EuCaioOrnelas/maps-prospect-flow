@@ -21,6 +21,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       status: "ok",
       docs: "https://wiize.com.br/api/docs",
       base_url: "https://api.wiize.com.br/v1",
+      health: "/v1/health",
       endpoints: [
         "/v1/prospecting/search",
         "/v1/prospecting/analyze",
