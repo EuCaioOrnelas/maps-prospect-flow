@@ -19,6 +19,9 @@ import { createWiizeApiAccess, resolveWiizeApiAccess, type WiizeApiProfileInput 
 
 type Mode = "login" | "signup";
 
+/** Beta fechado: cadastro público desativado temporariamente. */
+export const API_SIGNUP_ENABLED = false;
+
 /** Evita spinner infinito quando o backend demora a responder. */
 function withTimeout<T>(p: PromiseLike<T>, ms = 15000): Promise<T> {
   return Promise.race([
