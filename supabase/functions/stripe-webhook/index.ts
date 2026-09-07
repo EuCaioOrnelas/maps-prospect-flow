@@ -1345,6 +1345,59 @@ serve(async (req) => {
         })
         .eq("id", (topup as any).id);
       logStep("WIIZE API topup credited", { topupId, tokens: (topup as any).tokens });
+
+      // Salvar cartão na conta para recargas futuras (1 clique / automático)
+      if (pi.payment_method && pi.customer && pi.setup_future_usage === "off_session") {
+        try {
+          const stripeForPm = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, { apiVersion: "2024-11-20.acacia" });
+          const pm = await stripeForPm.paymentMethods.retrieve(String(pi.payment_method));
+          if (pm && pm.card) {
+            const existing = await supabaseClient
+              .from("wiize_api_payment_methods")
+              .select("id, is_default")
+              .eq("user_id", (topup as any).user_id)
+              .eq("stripe_payment_method_id", pm.id)
+              .maybeSingle();
+
+            const payload = {
+              user_id: (topup as any).user_id,
+              stripe_payment_method_id: pm.id,
+              stripe_customer_id: String(pi.customer),
+              brand: pm.card?.brand || "unknown",
+              last4: pm.card?.last4 || "",
+              exp_month: pm.card?.exp_month || null,
+              exp_year: pm.card?.exp_year || null,
+              status: "active",
+            };
+
+            if (!existing?.data) {
+              const count = await supabaseClient
+                .from("wiize_api_payment_methods")
+                .select("id", { count: "exact", head: true })
+                .eq("user_id", (topup as any).user_id)
+                .eq("status", "active");
+              const isDefault = (count.count || 0) === 0;
+              await supabaseClient
+                .from("wiize_api_payment_methods")
+                .insert({ ...payload, is_default: isDefault });
+              if (isDefault) {
+                await supabaseClient
+                  .from("wiize_api_wallets")
+                  .update({ auto_topup_payment_method_id: pm.id })
+                  .eq("user_id", (topup as any).user_id);
+              }
+            } else {
+              await supabaseClient
+                .from("wiize_api_payment_methods")
+                .update(payload)
+                .eq("id", existing.data.id);
+            }
+            logStep("WIIZE API payment method saved", { pm: pm.id });
+          }
+        } catch (pmErr) {
+          logStep("WIIZE API payment method save failed", { error: String(pmErr) });
+        }
+      }
     } else {
       logStep("WIIZE API topup credit failed", { topupId, error: error.message });
     }
