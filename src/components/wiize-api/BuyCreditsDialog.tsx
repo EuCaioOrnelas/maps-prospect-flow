@@ -25,9 +25,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
-import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 
 import {
   brl,
@@ -117,12 +116,8 @@ function BuyCreditsDialogInner({
   // Cartão
   const [cardMode, setCardMode] = useState<CardMode>("saved");
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const [cardHolder, setCardHolder] = useState("");
-  const [cardComplete, setCardComplete] = useState(false);
-  const [cvcFocused, setCvcFocused] = useState(false);
   const [saveCard, setSaveCard] = useState(true);
   const [paying, setPaying] = useState(false);
-  const cardFormRef = useRef<StripeCardFormHandle>(null);
 
   const amount = useMemo(
     () => (selected === "custom" ? unmaskBRL(custom) : selected),
@@ -264,28 +259,6 @@ function BuyCreditsDialogInner({
         return;
       }
 
-      // Primeiro cartão: 3DS obrigatório.
-      const paymentMethodId = await cardFormRef.current!.createPaymentMethod({
-        name: cardHolder,
-        email: "",
-      });
-
-      const setup = await createCardTopup.mutateAsync({ amount_brl: amount, save_card: saveCard });
-      setTopup(setup.topup);
-      setStep("payment");
-      setNeeds3ds(setup.client_secret);
-
-      const confirm = await stripe.confirmCardPayment(setup.client_secret, {
-        payment_method: paymentMethodId,
-        ...(saveCard ? { setup_future_usage: "off_session" as const } : {}),
-      });
-
-      if (confirm.error) throw new Error(confirm.error.message || "Falha no pagamento do cartão.");
-      if (confirm.paymentIntent?.status === "succeeded") {
-        setNeeds3ds(null);
-        setStep("done");
-        qc.invalidateQueries({ queryKey: ["wiize-api"] });
-      }
     } catch (e) {
       toast({
         title: "Erro no pagamento",
@@ -331,9 +304,7 @@ function BuyCreditsDialogInner({
     setStep("amount");
   };
 
-  const canPayCard =
-    (cardMode === "saved" && !!selectedCardId) ||
-    (cardMode === "new" && cardComplete && cardHolder.trim().length > 2);
+  const canPayCard = cardMode === "saved" && !!selectedCardId;
 
   const termsNote = (
     <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
@@ -619,15 +590,24 @@ function BuyCreditsDialogInner({
 
               {cardMode === "new" && (
                 <div className="space-y-3">
-                  <StripeCardForm
-                    ref={cardFormRef}
-                    cardHolder={cardHolder}
-                    nameCase="title"
-                    onCardHolderChange={setCardHolder}
-                    onCardChange={(d) => setCardComplete(!!d.complete)}
-                    onCvcFocus={() => setCvcFocused(true)}
-                    onCvcBlur={() => setCvcFocused(false)}
-                    disabled={paying}
+                  <NewCardSection
+                    amount={amount}
+                    saveCard={saveCard}
+                    onCreateIntent={() =>
+                      createCardTopup.mutateAsync({ amount_brl: amount, save_card: saveCard })
+                    }
+                    onPending={(t) => {
+                      setTopup(t);
+                      setStep("payment");
+                    }}
+                    onPaid={() => {
+                      setStep("done");
+                      qc.invalidateQueries({ queryKey: ["wiize-api"] });
+                    }}
+                    onError={(msg) =>
+                      toast({ title: "Erro no pagamento", description: msg, variant: "destructive" })
+                    }
+                    onBack={() => setStep("amount")}
                   />
                   <div className="flex items-start gap-2">
                     <Checkbox
@@ -647,15 +627,18 @@ function BuyCreditsDialogInner({
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-3">
-              <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setStep("amount")}>
-                <ArrowLeft size={14} /> Voltar
-              </Button>
-              <Button className="gap-2" disabled={invalid || paying || !canPayCard} onClick={handleCardPayment}>
-                {paying ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
-                Pagar {brl(amount)}
-              </Button>
-            </div>
+            {cardMode === "saved" && (
+              <div className="flex items-center justify-between gap-3">
+                <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setStep("amount")}>
+                  <ArrowLeft size={14} /> Voltar
+                </Button>
+                <Button className="gap-2" disabled={invalid || paying || !canPayCard} onClick={handleCardPayment}>
+                  {paying ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
+                  Pagar {brl(amount)}
+                </Button>
+              </div>
+            )}
+
 
             {termsNote}
           </div>
@@ -755,5 +738,97 @@ function BuyCreditsDialogInner({
         </p>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Cartão novo: PaymentElement (cartão + Link da Stripe) com intent diferida. */
+function NewCardSection(props: {
+  amount: number;
+  saveCard: boolean;
+  onCreateIntent: () => Promise<{ topup: ApiTopup; client_secret: string }>;
+  onPending: (t: ApiTopup) => void;
+  onPaid: () => void;
+  onError: (msg: string) => void;
+  onBack: () => void;
+}) {
+  return (
+    <Elements
+      key={`${props.amount}-${props.saveCard}`}
+      stripe={stripePromise}
+      options={{
+        mode: "payment",
+        amount: Math.max(Math.round(props.amount * 100), 100),
+        currency: "brl",
+        setupFutureUsage: props.saveCard ? "off_session" : undefined,
+        appearance: { variables: { borderRadius: "10px" } },
+      }}
+    >
+      <NewCardInner {...props} />
+    </Elements>
+  );
+}
+
+function NewCardInner({
+  amount,
+  onCreateIntent,
+  onPending,
+  onPaid,
+  onError,
+  onBack,
+}: {
+  amount: number;
+  saveCard: boolean;
+  onCreateIntent: () => Promise<{ topup: ApiTopup; client_secret: string }>;
+  onPending: (t: ApiTopup) => void;
+  onPaid: () => void;
+  onError: (msg: string) => void;
+  onBack: () => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  const pay = async () => {
+    if (!stripe || !elements) return;
+    setBusy(true);
+    try {
+      const submitted = await elements.submit();
+      if (submitted.error) throw new Error(submitted.error.message || "Revise os dados do cartão.");
+
+      const setup = await onCreateIntent();
+      onPending(setup.topup);
+
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        clientSecret: setup.client_secret,
+        redirect: "if_required",
+        confirmParams: { return_url: window.location.href },
+      });
+      if (error) throw new Error(error.message || "Falha no pagamento.");
+      if (paymentIntent?.status === "succeeded") onPaid();
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "Tente novamente em instantes.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <PaymentElement
+        options={{ layout: "tabs", wallets: { link: "auto", applePay: "auto", googlePay: "auto" } }}
+        onReady={() => setReady(true)}
+      />
+      <div className="flex items-center justify-between gap-3">
+        <Button variant="ghost" size="sm" className="gap-1.5" onClick={onBack}>
+          <ArrowLeft size={14} /> Voltar
+        </Button>
+        <Button className="gap-2" disabled={busy || !ready} onClick={pay}>
+          {busy ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
+          Pagar {brl(amount)}
+        </Button>
+      </div>
+    </div>
   );
 }
