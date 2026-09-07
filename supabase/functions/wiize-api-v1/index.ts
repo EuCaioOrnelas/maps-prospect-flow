@@ -46,6 +46,38 @@ function clientIp(req: Request) {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
 }
 
+function ipv4ToInt(ip: string): number | null {
+  const parts = ip.split(".");
+  if (parts.length !== 4) return null;
+  let n = 0;
+  for (const p of parts) {
+    const v = Number(p);
+    if (!Number.isInteger(v) || v < 0 || v > 255) return null;
+    n = (n << 8) + v;
+  }
+  return n >>> 0;
+}
+
+// Permite IP exato (IPv4/IPv6) ou faixa CIDR IPv4.
+function ipAllowed(ip: string, allowed: string[]): boolean {
+  if (!ip || ip === "unknown") return false;
+  for (const entry of allowed) {
+    const rule = entry.trim();
+    if (!rule) continue;
+    if (rule === ip) return true;
+    if (rule.includes("/")) {
+      const [base, bitsRaw] = rule.split("/");
+      const bits = Number(bitsRaw);
+      const a = ipv4ToInt(base);
+      const b = ipv4ToInt(ip);
+      if (a === null || b === null || !Number.isInteger(bits) || bits < 0 || bits > 32) continue;
+      const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
+      if ((a & mask) === (b & mask)) return true;
+    }
+  }
+  return false;
+}
+
 async function getLimits() {
   const { data } = await admin.from("wiize_api_limits").select("key, value");
   const map: Record<string, number> = {};
@@ -349,7 +381,7 @@ serve(async (req) => {
     const hash = await sha256Hex(rawKey);
     const { data: keyRow } = await admin
       .from("wiize_api_keys")
-      .select("id, user_id, status, permissions, environment, rate_limit_per_minute")
+      .select("id, user_id, status, permissions, environment, rate_limit_per_minute, allowed_ips")
       .eq("prefix", prefix)
       .eq("secret_hash", hash)
       .maybeSingle();
@@ -367,6 +399,11 @@ serve(async (req) => {
     const key = keyRow as any;
     if (key.status !== "active") {
       return apiError("KEY_REVOKED", "Esta API Key foi revogada.", 403, requestId);
+    }
+    const allowedIps: string[] = Array.isArray(key.allowed_ips) ? key.allowed_ips : [];
+    if (allowedIps.length > 0 && !ipAllowed(ip, allowedIps)) {
+      await registerAbuse(key.user_id, key.id, ip, "auth_failure", { reason: "ip_not_allowed" });
+      return apiError("IP_NOT_ALLOWED", "Este IP não está autorizado para esta API Key.", 403, requestId);
     }
     if (!(key.permissions || []).includes(route.permission)) {
       return apiError("FORBIDDEN", `A chave não possui a permissão ${route.permission}.`, 403, requestId);
