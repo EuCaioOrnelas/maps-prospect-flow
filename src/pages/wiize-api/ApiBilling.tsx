@@ -636,13 +636,19 @@ export default function ApiBilling() {
                 <Label htmlFor="low-balance" className="text-xs">
                   Avisar quando o saldo ficar abaixo de (R$)
                 </Label>
-                <Input
-                  id="low-balance"
-                  value={lowBalance}
-                  inputMode="decimal"
-                  placeholder="5,00"
-                  onChange={(e) => setLowBalance(e.target.value)}
-                />
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    R$
+                  </span>
+                  <Input
+                    id="low-balance"
+                    value={lowBalance}
+                    inputMode="decimal"
+                    placeholder="5,00"
+                    className="pl-9"
+                    onChange={(e) => setLowBalance(e.target.value.replace(/[^\d.,]/g, ""))}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Enviamos um e-mail assim que o saldo cruzar esse limite. Use 0 para desativar o
                   aviso. Saldo atual: {brl(brlForTokens(balance))}.
