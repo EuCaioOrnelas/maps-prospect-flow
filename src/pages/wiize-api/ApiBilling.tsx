@@ -390,13 +390,52 @@ export default function ApiBilling() {
 
         {/* Histórico */}
         <TabsContent value="history" className="space-y-5">
+          {pendingTopups.length > 0 && (
+            <SectionCard
+              icon={Clock}
+              title="Cobranças pendentes"
+              description="Some automaticamente 24 horas após a criação"
+            >
+              <div className="space-y-2">
+                {pendingTopups.map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">
+                        {brl(t.amount_brl)} · {t.tokens.toLocaleString("pt-BR")} tokens
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {t.method?.toUpperCase()} · criada em {fmtDate(t.created_at)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" onClick={() => { setResumeTopup(t); setBuyOpen(true); }}>
+                        Finalizar pagamento
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleCancelTopup(t.id)}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+          )}
+
           <SectionCard icon={QrCode} title="Recargas" description="Cobranças geradas na sua conta">
-            {topups.length === 0 ? (
+            {visibleTopups.length === 0 ? (
               <EmptyState
                 icon={QrCode}
                 title="Nenhuma recarga gerada."
                 description="Adicione saldo via PIX para começar a usar a API."
-                action={<Button onClick={() => setBuyOpen(true)}>Comprar créditos</Button>}
+                action={<Button onClick={() => { setResumeTopup(null); setBuyOpen(true); }}>Comprar créditos</Button>}
               />
             ) : (
               <div className="-mx-5 overflow-x-auto px-5">
@@ -411,7 +450,7 @@ export default function ApiBilling() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {topups.map((t) => (
+                    {visibleTopups.map((t) => (
                       <TableRow key={t.id}>
                         <TableCell className="whitespace-nowrap text-sm">{fmtDate(t.created_at)}</TableCell>
                         <TableCell className="text-sm uppercase">{t.method}</TableCell>
