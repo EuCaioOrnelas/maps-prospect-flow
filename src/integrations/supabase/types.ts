@@ -5967,45 +5967,6 @@ export type Database = {
           },
         ]
       }
-      partner_customer_products: {
-        Row: {
-          commissions_count: number
-          created_at: string
-          customer_user_id: string
-          id: string
-          partner_id: string
-          product_key: string
-          started_at: string
-          unit_price_cents: number
-          units: number
-          updated_at: string
-        }
-        Insert: {
-          commissions_count?: number
-          created_at?: string
-          customer_user_id: string
-          id?: string
-          partner_id: string
-          product_key: string
-          started_at?: string
-          unit_price_cents?: number
-          units?: number
-          updated_at?: string
-        }
-        Update: {
-          commissions_count?: number
-          created_at?: string
-          customer_user_id?: string
-          id?: string
-          partner_id?: string
-          product_key?: string
-          started_at?: string
-          unit_price_cents?: number
-          units?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       partner_fraud_attempts: {
         Row: {
           created_at: string
@@ -6380,27 +6341,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      partner_product_prices: {
-        Row: {
-          created_at: string
-          monthly_price_cents: number
-          product_key: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          monthly_price_cents: number
-          product_key: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          monthly_price_cents?: number
-          product_key?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       partner_referral_links: {
         Row: {
