@@ -123,9 +123,27 @@ export default function PartnerCommissions() {
                   <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
                     {items.length === 0 ? "Nenhuma comissão ainda." : "Nenhuma comissão corresponde aos filtros."}
                   </TableCell></TableRow>
-                ) : filtered.map((c: any) => (
+                ) : filtered.map((c: any) => {
+                  const items = Array.isArray(c.product_breakdown) ? c.product_breakdown : [];
+                  const open = !!expanded[c.id];
+                  return (
+                  <>
                   <TableRow key={c.id}>
-                    <TableCell><span className="text-sm capitalize">{c.sale?.plan || "—"}</span></TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        {items.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setExpanded((p) => ({ ...p, [c.id]: !open }))}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Ver produtos"
+                          >
+                            <ChevronRight size={14} className={open ? "rotate-90 transition-transform" : "transition-transform"} />
+                          </button>
+                        )}
+                        <span className="text-sm capitalize">{c.sale?.plan || "—"}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(c.sale?.paid_at)}</TableCell>
                     <TableCell className="text-right text-sm">{fmtBRL(c.base_amount_cents)}</TableCell>
                     <TableCell className="text-right text-sm">{c.commission_percent}%</TableCell>
@@ -134,7 +152,26 @@ export default function PartnerCommissions() {
                     <TableCell className="text-sm">{c.status === "pending" ? fmtDate(c.available_at) : "—"}</TableCell>
                     <TableCell className="text-sm">{fmtDate(c.paid_at)}</TableCell>
                   </TableRow>
-                ))}
+                  {open && items.length > 0 && (
+                    <TableRow key={`${c.id}-detail`} className="bg-muted/20 hover:bg-muted/20">
+                      <TableCell colSpan={8} className="py-3">
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-medium text-muted-foreground">Comissão por produto</p>
+                          {items.map((p: any, i: number) => (
+                            <div key={i} className="flex flex-wrap items-center gap-2 text-sm">
+                              <span className="min-w-[200px]">{p.label}{p.units > 1 ? ` (${p.units}x)` : ""}</span>
+                              <span className="text-muted-foreground text-xs">{fmtBRL(p.base_amount_cents)} × {p.commission_percent}%</span>
+                              <span className="font-semibold">{fmtBRL(p.commission_amount_cents)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  </>
+                  );
+                })}
+
               </TableBody>
             </Table>
           </div>
