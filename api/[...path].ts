@@ -7,6 +7,8 @@ const REQUEST_HEADERS = [
   "idempotency-key",
   "x-wiize-api-key",
   "x-client-info",
+  "x-forwarded-for",
+  "x-real-ip",
 ] as const;
 
 const RESPONSE_HEADERS = [
@@ -61,6 +63,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const rawPath = req.query.path;
   const path = (Array.isArray(rawPath) ? rawPath : [rawPath])
     .filter((part): part is string => typeof part === "string" && part.length > 0)
+    .flatMap((part) => part.split("/"))
+    .filter(Boolean)
     .map(encodeURIComponent)
     .join("/");
 
