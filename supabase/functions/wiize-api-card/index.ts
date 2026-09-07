@@ -62,7 +62,7 @@ async function ensureStripeCustomer(userId: string, email: string) {
   const customer = await stripe.customers.create({
     email,
     name: profile?.company_name || profile?.full_name || email,
-    ...(cpfCnpj ? { tax_id_data: [{ type: cpfCnpj.length === 11 ? "cpf" : "cnpj", value: cpfCnpj }] } : {}),
+    ...(cpfCnpj ? { tax_id_data: [{ type: cpfCnpj.length === 11 ? "br_cpf" : "br_cnpj", value: cpfCnpj }] } : {}),
     phone: String(profile?.phone || "").replace(/\D/g, "") || undefined,
     address: {
       postal_code: String(profile?.postal_code || "").replace(/\D/g, "") || undefined,
@@ -191,7 +191,6 @@ serve(async (req) => {
         description: `Recarga Wiize API — ${tokens.toLocaleString("pt-BR")} tokens`,
         metadata: { wiize_api_topup_id: topup.id, wiize_api_user_id: user.id },
         ...(saveCard ? { setup_future_usage: "off_session" } : {}),
-        automatic_tax: { enabled: false },
       });
 
       await admin
@@ -248,7 +247,6 @@ serve(async (req) => {
         confirm: true,
         description: `Recarga Wiize API — ${tokens.toLocaleString("pt-BR")} tokens`,
         metadata: { wiize_api_topup_id: topup.id, wiize_api_user_id: user.id },
-        automatic_tax: { enabled: false },
       });
 
       await admin
