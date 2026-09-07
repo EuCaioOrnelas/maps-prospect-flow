@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DollarSign, Search, Wallet, Clock, TrendingUp, CheckCircle2, RefreshCw } from "lucide-react";
+import { DollarSign, Search, Wallet, Clock, TrendingUp, CheckCircle2, RefreshCw, ChevronRight } from "lucide-react";
 import { fmtBRL, fmtDate, commissionStatusColors, commissionStatusLabel } from "@/lib/partnerFormat";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { StatCard } from "@/components/partners/StatCard";
@@ -21,6 +21,7 @@ export default function PartnerCommissions() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [refreshing, setRefreshing] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const fetchCommissions = async () => {
     if (!partner?.id) return;
@@ -123,9 +124,27 @@ export default function PartnerCommissions() {
                   <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
                     {items.length === 0 ? "Nenhuma comissão ainda." : "Nenhuma comissão corresponde aos filtros."}
                   </TableCell></TableRow>
-                ) : filtered.map((c: any) => (
-                  <TableRow key={c.id}>
-                    <TableCell><span className="text-sm capitalize">{c.sale?.plan || "—"}</span></TableCell>
+                ) : filtered.map((c: any) => {
+                  const prods: any[] = Array.isArray(c.product_breakdown) ? c.product_breakdown : [];
+                  const open = !!expanded[c.id];
+                  return (
+                  <Fragment key={c.id}>
+                  <TableRow>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        {prods.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setExpanded((p) => ({ ...p, [c.id]: !open }))}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Ver produtos"
+                          >
+                            <ChevronRight size={14} className={open ? "rotate-90 transition-transform" : "transition-transform"} />
+                          </button>
+                        )}
+                        <span className="text-sm capitalize">{c.sale?.plan || "—"}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(c.sale?.paid_at)}</TableCell>
                     <TableCell className="text-right text-sm">{fmtBRL(c.base_amount_cents)}</TableCell>
                     <TableCell className="text-right text-sm">{c.commission_percent}%</TableCell>
@@ -134,7 +153,26 @@ export default function PartnerCommissions() {
                     <TableCell className="text-sm">{c.status === "pending" ? fmtDate(c.available_at) : "—"}</TableCell>
                     <TableCell className="text-sm">{fmtDate(c.paid_at)}</TableCell>
                   </TableRow>
-                ))}
+                  {open && prods.length > 0 && (
+                    <TableRow key={`${c.id}-detail`} className="bg-muted/20 hover:bg-muted/20">
+                      <TableCell colSpan={8} className="py-3">
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-medium text-muted-foreground">Comissão por produto</p>
+                          {prods.map((p: any, i: number) => (
+                            <div key={i} className="flex flex-wrap items-center gap-2 text-sm">
+                              <span className="min-w-[200px]">{p.label}{p.units > 1 ? ` (${p.units}x)` : ""}</span>
+                              <span className="text-muted-foreground text-xs">{fmtBRL(p.base_amount_cents)} × {p.commission_percent}%</span>
+                              <span className="font-semibold">{fmtBRL(p.commission_amount_cents)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  </Fragment>
+                  );
+                })}
+
               </TableBody>
             </Table>
           </div>
