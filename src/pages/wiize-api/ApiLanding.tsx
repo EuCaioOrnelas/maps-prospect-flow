@@ -229,7 +229,7 @@ export default function ApiLanding() {
             {CAPABILITIES.map((c) => (
               <div
                 key={c.title}
-                className="rounded-panel border border-border/60 bg-card/60 p-6 transition-colors hover:border-primary/30"
+                className="rounded-panel border border-border/60 bg-card/60 p-6"
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
                   <c.icon size={18} strokeWidth={1.75} />

@@ -108,9 +108,12 @@ export default function WiizeApiLayout() {
                 />
               </SheetContent>
             </Sheet>
-            <span className="text-sm font-semibold tracking-tight">
-              Wiize <span className="text-muted-foreground">API</span>
-            </span>
+            <Link to="/api/dashboard" className="flex items-center gap-2">
+              <img src={wiizeLogo} alt="Wiize" className="h-8 w-8 shrink-0 rounded-hover object-contain" />
+              <span className="text-sm font-semibold tracking-tight">
+                Wiize <span className="text-muted-foreground">API</span>
+              </span>
+            </Link>
           </div>
 
           <div className="lg:ml-[72px]">

@@ -42,12 +42,7 @@ export function StatCard({
   className?: string;
 }) {
   return (
-    <Card
-      className={cn(
-        "border-border/70 shadow-none transition-colors hover:border-primary/30",
-        className,
-      )}
-    >
+    <Card className={cn("border-border/70 shadow-none", className)}>
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
