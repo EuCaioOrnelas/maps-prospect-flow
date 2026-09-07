@@ -1,8 +1,10 @@
 // Rotina automática da Wiize API:
 // 1) concilia recargas PIX pendentes com o Asaas (credita mesmo com a aba fechada)
-// 2) cancela recargas vencidas
-// 3) dispara os e-mails de saldo baixo, erros de requisição e relatório mensal
+// 2) concilia recargas de cartão pendentes com o Stripe
+// 3) cancela recargas vencidas
+// 4) dispara os e-mails de saldo baixo, erros de requisição e relatório mensal
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -142,6 +144,59 @@ async function reconcileTopups() {
       }
     } catch (e) {
       console.error("[wiize-api-cron] reconcile", (row as any).id, String(e));
+    }
+  }
+  return credited;
+}
+
+/** 2) Concilia recargas de cartão pendentes diretamente no Stripe. */
+async function reconcileStripeCardTopups() {
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+  if (!stripeKey) return 0;
+
+  const stripe = new Stripe(stripeKey, { apiVersion: "2024-11-20.acacia" });
+  const since = new Date(Date.now() - 24 * 3600_000).toISOString();
+
+  const { data: rows } = await admin
+    .from("wiize_api_topups")
+    .select("*")
+    .eq("status", "pending")
+    .eq("provider", "stripe")
+    .eq("method", "card")
+    .not("stripe_payment_intent_id", "is", null)
+    .gte("created_at", since)
+    .limit(200);
+
+  let credited = 0;
+  for (const row of rows || []) {
+    try {
+      const pi = await stripe.paymentIntents.retrieve((row as any).stripe_payment_intent_id);
+      if (pi.status === "succeeded") {
+        const { error } = await admin.rpc("wiize_api_credit_wallet", {
+          _user_id: (row as any).user_id,
+          _tokens: (row as any).tokens,
+          _amount_brl: Number((row as any).amount_brl),
+          _type: "CREDIT_PURCHASE",
+          _description: `Recarga cartão de ${Number((row as any).amount_brl).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+          _reference_type: "wiize_api_topup",
+          _reference_id: (row as any).id,
+          _idempotency_key: `topup_${(row as any).id}`,
+        });
+        if (!error) {
+          await admin
+            .from("wiize_api_topups")
+            .update({ status: "paid", paid_at: new Date().toISOString(), credited_at: new Date().toISOString() })
+            .eq("id", (row as any).id);
+          credited++;
+        }
+      } else if (["canceled", "payment_failed"].includes(pi.status)) {
+        await admin
+          .from("wiize_api_topups")
+          .update({ status: "canceled", metadata: { failure_message: pi.last_payment_error?.message || "Pagamento recusado" } })
+          .eq("id", (row as any).id);
+      }
+    } catch (e) {
+      console.error("[wiize-api-cron] stripe reconcile", (row as any).id, String(e));
     }
   }
   return credited;
@@ -309,12 +364,13 @@ Deno.serve(async (req) => {
     const tokenPrice = map.token_price_brl || 0.01;
 
     const credited = await reconcileTopups();
+    const creditedCards = await reconcileStripeCardTopups();
     const { data: expired } = await admin.rpc("wiize_api_expire_topups");
     const lowBalance = await lowBalanceAlerts(tokenPrice);
     const errors = await errorAlerts();
     const monthly = await monthlyReports(tokenPrice, force);
 
-    return json({ ok: true, credited, expired: expired ?? 0, emails: { lowBalance, errors, monthly } });
+    return json({ ok: true, credited, creditedCards, expired: expired ?? 0, emails: { lowBalance, errors, monthly } });
   } catch (e) {
     console.error("[wiize-api-cron]", String(e));
     return json({ error: String((e as Error)?.message || e) }, 500);

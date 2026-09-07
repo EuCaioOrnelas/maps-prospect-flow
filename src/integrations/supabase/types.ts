@@ -11162,6 +11162,51 @@ export type Database = {
         }
         Relationships: []
       }
+      wiize_api_payment_methods: {
+        Row: {
+          brand: string | null
+          created_at: string
+          exp_month: number | null
+          exp_year: number | null
+          id: string
+          is_default: boolean
+          last4: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_payment_method_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand?: string | null
+          created_at?: string
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string
+          is_default?: boolean
+          last4?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_method_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand?: string | null
+          created_at?: string
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string
+          is_default?: boolean
+          last4?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wiize_api_pricing: {
         Row: {
           active: boolean
@@ -11204,6 +11249,7 @@ export type Database = {
           state: string | null
           street: string | null
           street_number: string | null
+          stripe_customer_id: string | null
           terms_accepted_at: string | null
           terms_version: string | null
           updated_at: string
@@ -11223,6 +11269,7 @@ export type Database = {
           state?: string | null
           street?: string | null
           street_number?: string | null
+          stripe_customer_id?: string | null
           terms_accepted_at?: string | null
           terms_version?: string | null
           updated_at?: string
@@ -11242,6 +11289,7 @@ export type Database = {
           state?: string | null
           street?: string | null
           street_number?: string | null
+          stripe_customer_id?: string | null
           terms_accepted_at?: string | null
           terms_version?: string | null
           updated_at?: string
@@ -11408,6 +11456,8 @@ export type Database = {
           pix_qr_image: string | null
           provider: string
           status: string
+          stripe_customer_id: string | null
+          stripe_payment_intent_id: string | null
           tokens: number
           updated_at: string
           user_id: string
@@ -11427,6 +11477,8 @@ export type Database = {
           pix_qr_image?: string | null
           provider?: string
           status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
           tokens: number
           updated_at?: string
           user_id: string
@@ -11446,6 +11498,8 @@ export type Database = {
           pix_qr_image?: string | null
           provider?: string
           status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
           tokens?: number
           updated_at?: string
           user_id?: string
@@ -11519,6 +11573,7 @@ export type Database = {
           auto_topup_amount_brl: number
           auto_topup_enabled: boolean
           auto_topup_monthly_limit_brl: number
+          auto_topup_payment_method_id: string | null
           auto_topup_threshold_tokens: number
           balance_tokens: number
           created_at: string
@@ -11536,6 +11591,7 @@ export type Database = {
           auto_topup_amount_brl?: number
           auto_topup_enabled?: boolean
           auto_topup_monthly_limit_brl?: number
+          auto_topup_payment_method_id?: string | null
           auto_topup_threshold_tokens?: number
           balance_tokens?: number
           created_at?: string
@@ -11553,6 +11609,7 @@ export type Database = {
           auto_topup_amount_brl?: number
           auto_topup_enabled?: boolean
           auto_topup_monthly_limit_brl?: number
+          auto_topup_payment_method_id?: string | null
           auto_topup_threshold_tokens?: number
           balance_tokens?: number
           created_at?: string
@@ -11566,7 +11623,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wiize_api_wallets_auto_topup_payment_method_id_fkey"
+            columns: ["auto_topup_payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "wiize_api_payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wiize_message_templates: {
         Row: {

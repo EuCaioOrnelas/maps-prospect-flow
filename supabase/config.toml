@@ -143,3 +143,6 @@ verify_jwt = false
 
 [functions.wiize-api-v1]
 verify_jwt = false
+
+[functions.wiize-api-card]
+verify_jwt = false

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, CreditCard, Star } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { brl, brlForTokens, tokensForAmount } from "@/data/wiizeApi";
-import { useUpdateWalletPrefs, type ApiWallet } from "@/hooks/useWiizeApi";
+import { useUpdateWalletPrefs, useApiPaymentMethods, useSetDefaultPaymentMethod, type ApiWallet } from "@/hooks/useWiizeApi";
 
 export function AutoReloadDialog({
   open,
@@ -27,12 +28,17 @@ export function AutoReloadDialog({
 }) {
   const { toast } = useToast();
   const update = useUpdateWalletPrefs();
+  const { data: methods = [], isLoading: loadingMethods } = useApiPaymentMethods();
+  const setDefault = useSetDefaultPaymentMethod();
 
   const [enabled, setEnabled] = useState(false);
   const [threshold, setThreshold] = useState("5");
   const [topupTo, setTopupTo] = useState("50");
   const [limitEnabled, setLimitEnabled] = useState(true);
   const [monthlyLimit, setMonthlyLimit] = useState("500");
+  const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
+
+  const defaultMethod = methods.find((m) => m.is_default) || methods[0];
 
   useEffect(() => {
     if (!wallet || !open) return;
@@ -41,11 +47,26 @@ export function AutoReloadDialog({
     setTopupTo(String(wallet.auto_topup_amount_brl ?? 50));
     setMonthlyLimit(String(wallet.auto_topup_monthly_limit_brl ?? 500));
     setLimitEnabled((wallet.auto_topup_monthly_limit_brl ?? 0) > 0);
-  }, [wallet, open]);
+    setSelectedMethodId(wallet.auto_topup_payment_method_id || defaultMethod?.id || null);
+  }, [wallet, open, defaultMethod?.id]);
 
   const num = (v: string) => {
     const n = Number(v.replace(",", "."));
     return Number.isFinite(n) ? n : 0;
+  };
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      await setDefault.mutateAsync(id);
+      setSelectedMethodId(id);
+      toast({ title: "Cartão definido como padrão" });
+    } catch (e) {
+      toast({
+        title: "Erro",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const save = async () => {
@@ -55,6 +76,7 @@ export function AutoReloadDialog({
         auto_topup_threshold_tokens: tokensForAmount(num(threshold)),
         auto_topup_amount_brl: num(topupTo),
         auto_topup_monthly_limit_brl: limitEnabled ? num(monthlyLimit) : 0,
+        auto_topup_payment_method_id: enabled ? selectedMethodId : null,
       });
       toast({ title: "Recarga automática atualizada" });
       onOpenChange(false);
@@ -82,7 +104,7 @@ export function AutoReloadDialog({
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">Usar recarga automática</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                A cobrança é gerada via PIX e creditada após a confirmação.
+                A cobrança é cobrada no cartão salvo e creditada automaticamente.
               </p>
             </div>
             <Switch checked={enabled} onCheckedChange={setEnabled} />
@@ -121,6 +143,54 @@ export function AutoReloadDialog({
             </div>
           </div>
 
+          {/* Cartão padrão para recarga automática */}
+          <div className="space-y-3 border-t border-border pt-4">
+            <Label className="text-sm font-normal">Cartão para recarga automática</Label>
+            {loadingMethods ? (
+              <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+                <Loader2 size={14} className="animate-spin" /> Carregando…
+              </div>
+            ) : methods.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+                Nenhum cartão salvo. Adicione um cartão ao comprar créditos para ativar a recarga automática.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {methods.map((m) => (
+                  <label
+                    key={m.id}
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
+                      selectedMethodId === m.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="auto-card"
+                      checked={selectedMethodId === m.id}
+                      onChange={() => {
+                        setSelectedMethodId(m.id);
+                        if (!m.is_default) handleSetDefault(m.id);
+                      }}
+                      disabled={!enabled}
+                      className="accent-primary"
+                    />
+                    <CreditCard size={16} className="text-muted-foreground" />
+                    <span className="min-w-0 flex-1 text-sm text-foreground">
+                      {m.brand?.toUpperCase()} •••• {m.last4}
+                    </span>
+                    {m.is_default && (
+                      <Badge variant="outline" className="gap-1 text-[10px]">
+                        <Star size={10} /> Padrão
+                      </Badge>
+                    )}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="space-y-3 border-t border-border pt-4">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
@@ -145,7 +215,11 @@ export function AutoReloadDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={save} disabled={update.isPending} className="gap-2">
+          <Button
+            onClick={save}
+            disabled={update.isPending || (enabled && !selectedMethodId)}
+            className="gap-2"
+          >
             {update.isPending && <Loader2 size={14} className="animate-spin" />}
             Salvar
           </Button>

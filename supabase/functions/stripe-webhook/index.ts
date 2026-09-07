@@ -1298,17 +1298,161 @@ serve(async (req) => {
               logStep("Failed cancelling partner commissions on refund", { error: String(e) });
             }
 
-            logStep("Refund processed: user downgraded to free", { 
-              email: customer.email, 
-              amount: refundAmount,
-              previousPlan,
-            });
-          }
-        }
-        break;
+        logStep("Refund processed: user downgraded to free", { 
+          email: customer.email, 
+          amount: refundAmount,
+          previousPlan,
+        });
       }
+    }
+    break;
+  }
 
-      case "customer.subscription.created": {
+  // ========== WIIZE API TOPUPS (cartão) ==========
+  case "payment_intent.succeeded": {
+    const pi = event.data.object as Stripe.PaymentIntent;
+    const topupId = pi.metadata?.wiize_api_topup_id;
+    if (!topupId) break;
+
+    logStep("WIIZE API topup payment_intent.succeeded", { topupId, pi: pi.id });
+
+    const { data: topup } = await supabaseClient
+      .from("wiize_api_topups")
+      .select("id, user_id, amount_brl, tokens, status")
+      .eq("id", topupId)
+      .maybeSingle();
+
+    if (!topup || (topup as any).status === "paid") break;
+
+    const { error } = await supabaseClient.rpc("wiize_api_credit_wallet", {
+      _user_id: (topup as any).user_id,
+      _tokens: (topup as any).tokens,
+      _amount_brl: Number((topup as any).amount_brl),
+      _type: "CREDIT_PURCHASE",
+      _description: `Recarga cartão de ${Number((topup as any).amount_brl).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+      _reference_type: "wiize_api_topup",
+      _reference_id: (topup as any).id,
+      _idempotency_key: `topup_${(topup as any).id}`,
+    });
+
+    if (!error) {
+      await supabaseClient
+        .from("wiize_api_topups")
+        .update({
+          status: "paid",
+          paid_at: new Date().toISOString(),
+          credited_at: new Date().toISOString(),
+        })
+        .eq("id", (topup as any).id);
+      logStep("WIIZE API topup credited", { topupId, tokens: (topup as any).tokens });
+
+      // Salvar cartão na conta para recargas futuras (1 clique / automático)
+      if (pi.payment_method && pi.customer && pi.setup_future_usage === "off_session") {
+        try {
+          const stripeForPm = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, { apiVersion: "2024-11-20.acacia" });
+          const pm = await stripeForPm.paymentMethods.retrieve(String(pi.payment_method));
+          if (pm && pm.card) {
+            const existing = await supabaseClient
+              .from("wiize_api_payment_methods")
+              .select("id, is_default")
+              .eq("user_id", (topup as any).user_id)
+              .eq("stripe_payment_method_id", pm.id)
+              .maybeSingle();
+
+            const payload = {
+              user_id: (topup as any).user_id,
+              stripe_payment_method_id: pm.id,
+              stripe_customer_id: String(pi.customer),
+              brand: pm.card?.brand || "unknown",
+              last4: pm.card?.last4 || "",
+              exp_month: pm.card?.exp_month || null,
+              exp_year: pm.card?.exp_year || null,
+              status: "active",
+            };
+
+            if (!existing?.data) {
+              const count = await supabaseClient
+                .from("wiize_api_payment_methods")
+                .select("id", { count: "exact", head: true })
+                .eq("user_id", (topup as any).user_id)
+                .eq("status", "active");
+              const isDefault = (count.count || 0) === 0;
+              await supabaseClient
+                .from("wiize_api_payment_methods")
+                .insert({ ...payload, is_default: isDefault });
+              if (isDefault) {
+                await supabaseClient
+                  .from("wiize_api_wallets")
+                  .update({ auto_topup_payment_method_id: pm.id })
+                  .eq("user_id", (topup as any).user_id);
+              }
+            } else {
+              await supabaseClient
+                .from("wiize_api_payment_methods")
+                .update(payload)
+                .eq("id", existing.data.id);
+            }
+            logStep("WIIZE API payment method saved", { pm: pm.id });
+          }
+        } catch (pmErr) {
+          logStep("WIIZE API payment method save failed", { error: String(pmErr) });
+        }
+      }
+    } else {
+      logStep("WIIZE API topup credit failed", { topupId, error: error.message });
+    }
+    break;
+  }
+
+  case "payment_intent.payment_failed": {
+    const pi = event.data.object as Stripe.PaymentIntent;
+    const topupId = pi.metadata?.wiize_api_topup_id;
+    if (!topupId) break;
+
+    logStep("WIIZE API topup payment_intent.payment_failed", { topupId, pi: pi.id, message: pi.last_payment_error?.message });
+    await supabaseClient
+      .from("wiize_api_topups")
+      .update({ status: "canceled", metadata: { failure_message: pi.last_payment_error?.message || "Pagamento recusado" } })
+      .eq("id", topupId)
+      .eq("status", "pending");
+    break;
+  }
+
+  case "charge.refunded": {
+    const charge = event.data.object as Stripe.Charge;
+    const topupId = charge.metadata?.wiize_api_topup_id;
+    if (!topupId) break; // deixa o fluxo principal de assinaturas lidar
+
+    logStep("WIIZE API topup charge.refunded", { topupId, charge: charge.id });
+    const { data: topup } = await supabaseClient
+      .from("wiize_api_topups")
+      .select("id, user_id, tokens, status")
+      .eq("id", topupId)
+      .maybeSingle();
+
+    if (!topup || (topup as any).status !== "paid") break;
+
+    const { error } = await supabaseClient.rpc("wiize_api_credit_wallet", {
+      _user_id: (topup as any).user_id,
+      _tokens: -((topup as any).tokens),
+      _amount_brl: 0,
+      _type: "REFUND",
+      _description: "Estorno de recarga com cartão",
+      _reference_type: "wiize_api_topup",
+      _reference_id: (topup as any).id,
+      _idempotency_key: `topup_refund_${(topup as any).id}`,
+    });
+
+    if (!error) {
+      await supabaseClient.from("wiize_api_topups").update({ status: "refunded" }).eq("id", (topup as any).id);
+      logStep("WIIZE API topup refunded", { topupId });
+    } else {
+      logStep("WIIZE API topup refund failed", { topupId, error: error.message });
+    }
+    break;
+  }
+
+  case "customer.subscription.created": {
         const subscription = event.data.object as Stripe.Subscription;
         logStep("Subscription created", {
           subscriptionId: subscription.id,
