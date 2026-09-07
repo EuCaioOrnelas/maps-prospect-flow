@@ -619,15 +619,24 @@ function BuyCreditsDialogInner({
 
               {cardMode === "new" && (
                 <div className="space-y-3">
-                  <StripeCardForm
-                    ref={cardFormRef}
-                    cardHolder={cardHolder}
-                    nameCase="title"
-                    onCardHolderChange={setCardHolder}
-                    onCardChange={(d) => setCardComplete(!!d.complete)}
-                    onCvcFocus={() => setCvcFocused(true)}
-                    onCvcBlur={() => setCvcFocused(false)}
-                    disabled={paying}
+                  <NewCardSection
+                    amount={amount}
+                    saveCard={saveCard}
+                    onCreateIntent={() =>
+                      createCardTopup.mutateAsync({ amount_brl: amount, save_card: saveCard })
+                    }
+                    onPending={(t) => {
+                      setTopup(t);
+                      setStep("payment");
+                    }}
+                    onPaid={() => {
+                      setStep("done");
+                      qc.invalidateQueries({ queryKey: ["wiize-api"] });
+                    }}
+                    onError={(msg) =>
+                      toast({ title: "Erro no pagamento", description: msg, variant: "destructive" })
+                    }
+                    onBack={() => setStep("amount")}
                   />
                   <div className="flex items-start gap-2">
                     <Checkbox
@@ -647,15 +656,18 @@ function BuyCreditsDialogInner({
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-3">
-              <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setStep("amount")}>
-                <ArrowLeft size={14} /> Voltar
-              </Button>
-              <Button className="gap-2" disabled={invalid || paying || !canPayCard} onClick={handleCardPayment}>
-                {paying ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
-                Pagar {brl(amount)}
-              </Button>
-            </div>
+            {cardMode === "saved" && (
+              <div className="flex items-center justify-between gap-3">
+                <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setStep("amount")}>
+                  <ArrowLeft size={14} /> Voltar
+                </Button>
+                <Button className="gap-2" disabled={invalid || paying || !canPayCard} onClick={handleCardPayment}>
+                  {paying ? <Loader2 size={15} className="animate-spin" /> : <CreditCard size={15} />}
+                  Pagar {brl(amount)}
+                </Button>
+              </div>
+            )}
+
 
             {termsNote}
           </div>
