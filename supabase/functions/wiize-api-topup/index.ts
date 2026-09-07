@@ -147,6 +147,7 @@ serve(async (req) => {
     const action = String((body as any)?.action || "create");
 
     if (action === "create") {
+      await markTerms();
       const cfg = await loadLimits();
       const amount = Math.round(Number((body as any)?.amount_brl || 0) * 100) / 100;
       if (!Number.isFinite(amount) || amount < cfg.min || amount > cfg.max) {
