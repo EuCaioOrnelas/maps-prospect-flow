@@ -19,6 +19,9 @@ import { createWiizeApiAccess, resolveWiizeApiAccess, type WiizeApiProfileInput 
 
 type Mode = "login" | "signup";
 
+/** Beta fechado: cadastro público desativado temporariamente. */
+export const API_SIGNUP_ENABLED = false;
+
 /** Evita spinner infinito quando o backend demora a responder. */
 function withTimeout<T>(p: PromiseLike<T>, ms = 15000): Promise<T> {
   return Promise.race([
@@ -58,7 +61,8 @@ function AutoHeight({ children, deps }: { children: React.ReactNode; deps: unkno
 
 export default function ApiLogin() {
   const [params, setParams] = useSearchParams();
-  const initialMode: Mode = params.get("modo") === "cadastro" ? "signup" : "login";
+  const initialMode: Mode =
+    API_SIGNUP_ENABLED && params.get("modo") === "cadastro" ? "signup" : "login";
   const [mode, setMode] = useState<Mode>(initialMode);
   const [step, setStep] = useState<1 | 2>(1);
 
@@ -92,7 +96,8 @@ export default function ApiLogin() {
 
   const isSignup = mode === "signup";
 
-  const switchMode = (next: Mode) => {
+  const switchMode = (nextMode: Mode) => {
+    const next: Mode = API_SIGNUP_ENABLED ? nextMode : "login";
     setMode(next);
     setStep(1);
     setAwaitingConfirm(null);
@@ -420,7 +425,18 @@ export default function ApiLogin() {
               : "Acesse seu workspace, API Keys, créditos e uso."}
           </p>
 
+          {!API_SIGNUP_ENABLED && (
+            <div className="mt-6 rounded-xl border border-border bg-muted/40 px-3.5 py-3 text-xs leading-relaxed text-muted-foreground">
+              <span className="mr-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                Beta
+              </span>
+              A Wiize API está em beta fechado: apenas alguns usuários selecionados podem testar
+              nesta fase. Em breve o acesso será aberto para todos.
+            </div>
+          )}
+
           {/* Toggle login / cadastro com indicador deslizante */}
+          {API_SIGNUP_ENABLED && (
           <div className="relative mt-6 grid grid-cols-2 gap-1 rounded-xl border border-border bg-muted/50 p-1">
             <div
               aria-hidden
@@ -441,6 +457,7 @@ export default function ApiLogin() {
               </button>
             ))}
           </div>
+          )}
 
           {/* Indicador de etapas */}
           {isSignup && (
@@ -704,6 +721,7 @@ export default function ApiLogin() {
             </div>
           </form>
 
+          {API_SIGNUP_ENABLED ? (
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {isSignup ? "Já tem uma conta? " : "Não tem uma conta? "}
             <button
@@ -714,6 +732,11 @@ export default function ApiLogin() {
               {isSignup ? "Entrar" : "Criar conta grátis"}
             </button>
           </p>
+          ) : (
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Ainda não tem acesso? O beta é liberado por convite.
+          </p>
+          )}
           </>
           )}
 
