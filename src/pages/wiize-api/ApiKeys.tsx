@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { KeyRound, Copy, Plus, ShieldAlert, RotateCw, Loader2 } from "lucide-react";
+import { KeyRound, Copy, Plus, ShieldAlert, RotateCw, Loader2, Trash2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -27,11 +28,46 @@ const fmtDate = (iso: string | null) =>
 export default function ApiKeys() {
   const { toast } = useToast();
   const { data: keys = [], isLoading } = useApiKeys();
-  const { create, revoke, rotate } = useApiKeyMutations();
+  const { create, revoke, rotate, remove, updateIps } = useApiKeyMutations();
 
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", environment: "live" as "live" | "test" });
+  const [form, setForm] = useState({ name: "", environment: "live" as "live" | "test", allowedIps: "" });
   const [secret, setSecret] = useState<string | null>(null);
+  const [ipTarget, setIpTarget] = useState<{ id: string; value: string } | null>(null);
+
+  const parseIps = (raw: string) =>
+    raw
+      .split(/[\s,;]+/)
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await remove.mutateAsync(id);
+      toast({ title: "Chave excluída" });
+    } catch (e) {
+      toast({
+        title: "Não foi possível excluir",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveIps = async () => {
+    if (!ipTarget) return;
+    try {
+      await updateIps.mutateAsync({ id: ipTarget.id, allowed_ips: parseIps(ipTarget.value) });
+      setIpTarget(null);
+      toast({ title: "IPs autorizados atualizados" });
+    } catch (e) {
+      toast({
+        title: "Não foi possível salvar os IPs",
+        description: e instanceof Error ? e.message : "Verifique o formato e tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleCreate = async () => {
     try {
@@ -39,9 +75,10 @@ export default function ApiKeys() {
         name: form.name.trim() || "Minha aplicação",
         environment: form.environment,
         permissions: ALL_PERMISSIONS,
+        allowed_ips: parseIps(form.allowedIps),
       });
       setOpen(false);
-      setForm({ name: "", environment: "live" });
+      setForm({ name: "", environment: "live", allowedIps: "" });
       setSecret(res.secret);
     } catch (e) {
       toast({
@@ -146,20 +183,43 @@ export default function ApiKeys() {
                     <RotateCw size={14} /> Rotacionar
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    disabled={k.status !== "active" || revoke.isPending}
-                    onClick={() => handleRevoke(k.id)}
+                    className="gap-1.5"
+                    onClick={() => setIpTarget({ id: k.id, value: (k.allowed_ips || []).join(", ") })}
                   >
-                    Revogar
+                    <Globe size={14} /> IPs
                   </Button>
+                  {k.status === "active" ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      disabled={revoke.isPending}
+                      onClick={() => handleRevoke(k.id)}
+                    >
+                      Revogar
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      disabled={remove.isPending}
+                      onClick={() => handleDelete(k.id)}
+                    >
+                      <Trash2 size={14} /> Excluir
+                    </Button>
+                  )}
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
                   <span>Criada em: {fmtDate(k.created_at)}</span>
                   <span>Último uso: {fmtDate(k.last_used_at)}</span>
                   <span>Permissões: {(k.permissions || []).length}</span>
+                  <span>
+                    IPs autorizados: {(k.allowed_ips || []).length > 0 ? (k.allowed_ips || []).join(", ") : "Qualquer IP"}
+                  </span>
                 </div>
               </li>
             ))}
@@ -205,12 +265,49 @@ export default function ApiKeys() {
                 ))}
               </RadioGroup>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="key-ips">IPs autorizados (opcional)</Label>
+              <Textarea
+                id="key-ips"
+                rows={2}
+                placeholder="200.1.2.3, 200.1.2.0/24"
+                value={form.allowedIps}
+                onChange={(e) => setForm((f) => ({ ...f, allowedIps: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">
+                Deixe em branco para aceitar qualquer IP. Aceita IPv4, IPv6 ou faixas CIDR, separados por vírgula.
+              </p>
+            </div>
           </div>
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button onClick={handleCreate} disabled={create.isPending} className="gap-2">
               {create.isPending && <Loader2 size={14} className="animate-spin" />} Gerar chave
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!ipTarget} onOpenChange={(v) => !v && setIpTarget(null)}>
+        <DialogContent className="bg-background sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>IPs autorizados</DialogTitle>
+            <DialogDescription>
+              Somente estes endereços poderão usar a chave. Deixe em branco para liberar qualquer IP.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            rows={3}
+            placeholder="200.1.2.3, 200.1.2.0/24"
+            value={ipTarget?.value || ""}
+            onChange={(e) => setIpTarget((t) => (t ? { ...t, value: e.target.value } : t))}
+          />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIpTarget(null)}>Cancelar</Button>
+            <Button onClick={handleSaveIps} disabled={updateIps.isPending} className="gap-2">
+              {updateIps.isPending && <Loader2 size={14} className="animate-spin" />} Salvar
             </Button>
           </DialogFooter>
         </DialogContent>

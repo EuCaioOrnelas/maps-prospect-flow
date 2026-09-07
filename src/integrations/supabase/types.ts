@@ -11032,6 +11032,7 @@ export type Database = {
       }
       wiize_api_keys: {
         Row: {
+          allowed_ips: string[]
           api_id: string
           created_at: string
           environment: string
@@ -11048,6 +11049,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          allowed_ips?: string[]
           api_id?: string
           created_at?: string
           environment?: string
@@ -11064,6 +11066,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          allowed_ips?: string[]
           api_id?: string
           created_at?: string
           environment?: string

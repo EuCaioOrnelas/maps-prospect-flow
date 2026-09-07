@@ -33,6 +33,24 @@ function generateSecret(environment: string) {
 
 const ALL_PERMISSIONS = ["prospecting:search", "prospecting:analyze", "prospecting:approach"];
 
+// Aceita IPv4/IPv6 simples ou CIDR IPv4 (ex.: 200.1.2.0/24). Máx. 20 entradas.
+function sanitizeAllowedIps(input: unknown): string[] | null {
+  if (input === undefined || input === null) return [];
+  if (!Array.isArray(input)) return null;
+  const out: string[] = [];
+  for (const raw of input) {
+    const v = String(raw || "").trim();
+    if (!v) continue;
+    const ok =
+      /^(\d{1,3}\.){3}\d{1,3}(\/([0-9]|[12][0-9]|3[0-2]))?$/.test(v) ||
+      /^[0-9a-fA-F:]{2,45}$/.test(v);
+    if (!ok) return null;
+    if (!out.includes(v)) out.push(v);
+    if (out.length > 20) return null;
+  }
+  return out;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -59,7 +77,7 @@ serve(async (req) => {
     if (action === "list") {
       const { data, error } = await admin
         .from("wiize_api_keys")
-        .select("id, name, environment, prefix, last_four, permissions, status, last_used_at, revoked_at, created_at")
+        .select("id, name, environment, prefix, last_four, permissions, allowed_ips, status, last_used_at, revoked_at, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -80,6 +98,9 @@ serve(async (req) => {
         .eq("status", "active");
       if ((count || 0) >= 10) return json({ error: "Limite de 10 chaves ativas atingido" }, 422);
 
+      const allowedIps = sanitizeAllowedIps((body as any)?.allowed_ips);
+      if (allowedIps === null) return json({ error: "Lista de IPs inválida. Use IPv4, IPv6 ou CIDR (máx. 20)." }, 422);
+
       const secret = generateSecret(environment);
       const prefix = secret.slice(0, 20);
       const { data, error } = await admin
@@ -92,8 +113,9 @@ serve(async (req) => {
           secret_hash: await sha256Hex(secret),
           last_four: secret.slice(-4),
           permissions,
+          allowed_ips: allowedIps,
         })
-        .select("id, name, environment, prefix, last_four, permissions, status, created_at")
+        .select("id, name, environment, prefix, last_four, permissions, allowed_ips, status, created_at")
         .single();
       if (error) throw error;
 
@@ -113,12 +135,48 @@ serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (action === "update_ips") {
+      const id = String((body as any)?.id || "");
+      if (!id) return json({ error: "id é obrigatório" }, 422);
+      const allowedIps = sanitizeAllowedIps((body as any)?.allowed_ips);
+      if (allowedIps === null) return json({ error: "Lista de IPs inválida. Use IPv4, IPv6 ou CIDR (máx. 20)." }, 422);
+      const { error } = await admin
+        .from("wiize_api_keys")
+        .update({ allowed_ips: allowedIps })
+        .eq("id", id)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return json({ ok: true, allowed_ips: allowedIps });
+    }
+
+    if (action === "delete") {
+      const id = String((body as any)?.id || "");
+      if (!id) return json({ error: "id é obrigatório" }, 422);
+      const { data: existing } = await admin
+        .from("wiize_api_keys")
+        .select("id, status")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!existing) return json({ error: "Chave não encontrada" }, 404);
+      if ((existing as any).status === "active") {
+        return json({ error: "Revogue a chave antes de excluí-la." }, 422);
+      }
+      const { error } = await admin
+        .from("wiize_api_keys")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return json({ ok: true });
+    }
+
     if (action === "rotate") {
       const id = String((body as any)?.id || "");
       if (!id) return json({ error: "id é obrigatório" }, 422);
       const { data: existing } = await admin
         .from("wiize_api_keys")
-        .select("id, name, environment, permissions")
+        .select("id, name, environment, permissions, allowed_ips")
         .eq("id", id)
         .eq("user_id", user.id)
         .maybeSingle();
@@ -140,11 +198,12 @@ serve(async (req) => {
           name: (existing as any).name,
           environment: (existing as any).environment,
           permissions: (existing as any).permissions,
+          allowed_ips: (existing as any).allowed_ips || [],
           prefix,
           secret_hash: await sha256Hex(secret),
           last_four: secret.slice(-4),
         })
-        .select("id, name, environment, prefix, last_four, permissions, status, created_at")
+        .select("id, name, environment, prefix, last_four, permissions, allowed_ips, status, created_at")
         .single();
       if (error) throw error;
 

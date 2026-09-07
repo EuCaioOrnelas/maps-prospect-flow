@@ -161,6 +161,7 @@ export interface ApiKeyRow {
   prefix: string;
   last_four: string | null;
   permissions: string[];
+  allowed_ips?: string[] | null;
   status: string;
   last_used_at: string | null;
   revoked_at?: string | null;
@@ -184,7 +185,7 @@ export function useApiKeyMutations() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["wiize-api", "keys"] });
 
   const create = useMutation({
-    mutationFn: async (input: { name: string; environment: "live" | "test"; permissions: string[] }) => {
+    mutationFn: async (input: { name: string; environment: "live" | "test"; permissions: string[]; allowed_ips?: string[] }) => {
       const { data, error } = await supabase.functions.invoke("wiize-api-keys", {
         body: { action: "create", ...input },
       });
@@ -215,7 +216,29 @@ export function useApiKeyMutations() {
     onSuccess: invalidate,
   });
 
-  return { create, revoke, rotate };
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.functions.invoke("wiize-api-keys", { body: { action: "delete", id } });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: invalidate,
+  });
+
+  const updateIps = useMutation({
+    mutationFn: async (input: { id: string; allowed_ips: string[] }) => {
+      const { data, error } = await supabase.functions.invoke("wiize-api-keys", {
+        body: { action: "update_ips", ...input },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      return data as { allowed_ips: string[] };
+    },
+    onSuccess: invalidate,
+  });
+
+  return { create, revoke, rotate, remove, updateIps };
 }
 
 export function useCreateTopup() {
