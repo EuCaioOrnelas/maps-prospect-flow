@@ -213,6 +213,7 @@ serve(async (req) => {
       }
 
       await antifraudLimits(user.id);
+      await markTerms();
 
       const tokens = Math.round(amount / cfg.tokenPrice);
       const { stripe, customerId } = await ensureStripeCustomer(user.id, user.email || "");
@@ -250,6 +251,7 @@ serve(async (req) => {
       }
 
       await antifraudLimits(user.id);
+      await markTerms();
 
       const { data: wallet } = await admin
         .from("wiize_api_wallets")
