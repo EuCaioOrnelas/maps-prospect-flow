@@ -1298,17 +1298,108 @@ serve(async (req) => {
               logStep("Failed cancelling partner commissions on refund", { error: String(e) });
             }
 
-            logStep("Refund processed: user downgraded to free", { 
-              email: customer.email, 
-              amount: refundAmount,
-              previousPlan,
-            });
-          }
-        }
-        break;
+        logStep("Refund processed: user downgraded to free", { 
+          email: customer.email, 
+          amount: refundAmount,
+          previousPlan,
+        });
       }
+    }
+    break;
+  }
 
-      case "customer.subscription.created": {
+  // ========== WIIZE API TOPUPS (cartão) ==========
+  case "payment_intent.succeeded": {
+    const pi = event.data.object as Stripe.PaymentIntent;
+    const topupId = pi.metadata?.wiize_api_topup_id;
+    if (!topupId) break;
+
+    logStep("WIIZE API topup payment_intent.succeeded", { topupId, pi: pi.id });
+
+    const { data: topup } = await supabaseClient
+      .from("wiize_api_topups")
+      .select("id, user_id, amount_brl, tokens, status")
+      .eq("id", topupId)
+      .maybeSingle();
+
+    if (!topup || (topup as any).status === "paid") break;
+
+    const { error } = await supabaseClient.rpc("wiize_api_credit_wallet", {
+      _user_id: (topup as any).user_id,
+      _tokens: (topup as any).tokens,
+      _amount_brl: Number((topup as any).amount_brl),
+      _type: "CREDIT_PURCHASE",
+      _description: `Recarga cartão de ${Number((topup as any).amount_brl).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`,
+      _reference_type: "wiize_api_topup",
+      _reference_id: (topup as any).id,
+      _idempotency_key: `topup_${(topup as any).id}`,
+    });
+
+    if (!error) {
+      await supabaseClient
+        .from("wiize_api_topups")
+        .update({
+          status: "paid",
+          paid_at: new Date().toISOString(),
+          credited_at: new Date().toISOString(),
+        })
+        .eq("id", (topup as any).id);
+      logStep("WIIZE API topup credited", { topupId, tokens: (topup as any).tokens });
+    } else {
+      logStep("WIIZE API topup credit failed", { topupId, error: error.message });
+    }
+    break;
+  }
+
+  case "payment_intent.payment_failed": {
+    const pi = event.data.object as Stripe.PaymentIntent;
+    const topupId = pi.metadata?.wiize_api_topup_id;
+    if (!topupId) break;
+
+    logStep("WIIZE API topup payment_intent.payment_failed", { topupId, pi: pi.id, message: pi.last_payment_error?.message });
+    await supabaseClient
+      .from("wiize_api_topups")
+      .update({ status: "canceled", metadata: { failure_message: pi.last_payment_error?.message || "Pagamento recusado" } })
+      .eq("id", topupId)
+      .eq("status", "pending");
+    break;
+  }
+
+  case "charge.refunded": {
+    const charge = event.data.object as Stripe.Charge;
+    const topupId = charge.metadata?.wiize_api_topup_id;
+    if (!topupId) break; // deixa o fluxo principal de assinaturas lidar
+
+    logStep("WIIZE API topup charge.refunded", { topupId, charge: charge.id });
+    const { data: topup } = await supabaseClient
+      .from("wiize_api_topups")
+      .select("id, user_id, tokens, status")
+      .eq("id", topupId)
+      .maybeSingle();
+
+    if (!topup || (topup as any).status !== "paid") break;
+
+    const { error } = await supabaseClient.rpc("wiize_api_credit_wallet", {
+      _user_id: (topup as any).user_id,
+      _tokens: -((topup as any).tokens),
+      _amount_brl: 0,
+      _type: "REFUND",
+      _description: "Estorno de recarga com cartão",
+      _reference_type: "wiize_api_topup",
+      _reference_id: (topup as any).id,
+      _idempotency_key: `topup_refund_${(topup as any).id}`,
+    });
+
+    if (!error) {
+      await supabaseClient.from("wiize_api_topups").update({ status: "refunded" }).eq("id", (topup as any).id);
+      logStep("WIIZE API topup refunded", { topupId });
+    } else {
+      logStep("WIIZE API topup refund failed", { topupId, error: error.message });
+    }
+    break;
+  }
+
+  case "customer.subscription.created": {
         const subscription = event.data.object as Stripe.Subscription;
         logStep("Subscription created", {
           subscriptionId: subscription.id,

@@ -20,6 +20,7 @@ export interface ApiWallet {
   auto_topup_threshold_tokens: number;
   auto_topup_monthly_limit_brl: number;
   low_balance_threshold_tokens: number;
+  auto_topup_payment_method_id: string | null;
 }
 
 export function useApiWallet() {
@@ -109,9 +110,11 @@ export interface ApiTopup {
   amount_brl: number;
   tokens: number;
   status: string;
+  provider: string;
   method: string;
   pix_payload: string | null;
   pix_qr_image: string | null;
+  stripe_payment_intent_id: string | null;
   expires_at: string;
   created_at: string;
 }
@@ -124,7 +127,7 @@ export function useApiTopups() {
       if (!uid) return [];
       const { data, error } = await supabase
         .from("wiize_api_topups")
-        .select("id, amount_brl, tokens, status, method, pix_payload, pix_qr_image, expires_at, created_at")
+        .select("id, amount_brl, tokens, status, provider, method, pix_payload, pix_qr_image, stripe_payment_intent_id, expires_at, created_at")
         .eq("user_id", uid)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -268,6 +271,7 @@ export function useUpdateWalletPrefs() {
       auto_topup_threshold_tokens?: number;
       auto_topup_amount_brl?: number;
       auto_topup_monthly_limit_brl?: number;
+      auto_topup_payment_method_id?: string | null;
       low_balance_threshold_tokens?: number;
     }) => {
       const uid = await currentUserId();
@@ -306,14 +310,14 @@ export async function acceptApiTerms(version = "2026-09") {
   return true;
 }
 
-/** Recarga PIX ainda aberta — permite retomar o pagamento após fechar a aba. */
+/** Recarga ainda aberta — permite retomar o pagamento após fechar a aba. */
 export async function fetchPendingTopup(): Promise<ApiTopup | null> {
   const uid = await currentUserId();
   if (!uid) return null;
   const since = new Date(Date.now() - 2 * 3600_000).toISOString();
   const { data } = await supabase
     .from("wiize_api_topups")
-    .select("id, amount_brl, tokens, status, method, pix_payload, pix_qr_image, expires_at, created_at")
+    .select("id, amount_brl, tokens, status, provider, method, pix_payload, pix_qr_image, stripe_payment_intent_id, expires_at, created_at")
     .eq("user_id", uid)
     .eq("status", "pending")
     .gte("created_at", since)
@@ -327,4 +331,103 @@ export async function cancelTopup(id: string) {
   const { error } = await supabase.functions.invoke("wiize-api-topup", { body: { action: "cancel", id } });
   if (error) throw new Error(error.message);
   return true;
+}
+
+// ========== CARTÃO (Stripe) ==========
+
+export interface ApiPaymentMethod {
+  id: string;
+  brand: string;
+  last4: string;
+  exp_month: number;
+  exp_year: number;
+  is_default: boolean;
+  status: string;
+  created_at: string;
+}
+
+export interface CardTopupSetupResult {
+  topup: ApiTopup;
+  client_secret: string;
+  save_card: boolean;
+}
+
+export function useApiPaymentMethods() {
+  return useQuery({
+    queryKey: ["wiize-api", "payment-methods"],
+    queryFn: async (): Promise<ApiPaymentMethod[]> => {
+      const { data, error } = await supabase.functions.invoke("wiize-api-card", { body: { action: "list" } });
+      if (error) throw error;
+      return (data?.methods || []) as ApiPaymentMethod[];
+    },
+    staleTime: 10_000,
+  });
+}
+
+export function useCreateCardTopup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { amount_brl: number; save_card: boolean }) => {
+      const { data, error } = await supabase.functions.invoke("wiize-api-card", {
+        body: { action: "setup", amount_brl: input.amount_brl, save_card: input.save_card },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      return data as CardTopupSetupResult;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["wiize-api", "topups"] });
+      qc.invalidateQueries({ queryKey: ["wiize-api", "payment-methods"] });
+    },
+  });
+}
+
+export function useChargeSavedCard() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (amount_brl: number) => {
+      const { data, error } = await supabase.functions.invoke("wiize-api-card", {
+        body: { action: "charge_saved", amount_brl },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      return data as { status: string; client_secret?: string; topup: ApiTopup };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["wiize-api", "topups"] });
+      qc.invalidateQueries({ queryKey: ["wiize-api", "wallet"] });
+    },
+  });
+}
+
+export function useSetDefaultPaymentMethod() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.functions.invoke("wiize-api-card", { body: { action: "set_default", id } });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["wiize-api", "payment-methods"] });
+      qc.invalidateQueries({ queryKey: ["wiize-api", "wallet"] });
+    },
+  });
+}
+
+export function useRemovePaymentMethod() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.functions.invoke("wiize-api-card", { body: { action: "remove", id } });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["wiize-api", "payment-methods"] });
+      qc.invalidateQueries({ queryKey: ["wiize-api", "wallet"] });
+    },
+  });
 }

@@ -9,9 +9,10 @@ import {
   RefreshCw,
   Gift,
   SlidersHorizontal,
-  Clock,
   Info,
   Loader2,
+  Star,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,9 @@ import {
   useApiTransactions,
   useApiWallet,
   useUpdateWalletPrefs,
+  useApiPaymentMethods,
+  useSetDefaultPaymentMethod,
+  useRemovePaymentMethod,
 } from "@/hooks/useWiizeApi";
 
 const statusLabel: Record<string, string> = {
@@ -67,6 +71,103 @@ const fmtDate = (iso: string) =>
     hour: "2-digit",
     minute: "2-digit",
   });
+
+function SavedCardsSection() {
+  const { toast } = useToast();
+  const { data: methods = [], isLoading } = useApiPaymentMethods();
+  const setDefault = useSetDefaultPaymentMethod();
+  const remove = useRemovePaymentMethod();
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      await setDefault.mutateAsync(id);
+      toast({ title: "Cartão definido como padrão" });
+    } catch (e) {
+      toast({
+        title: "Erro",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    try {
+      await remove.mutateAsync(id);
+      toast({ title: "Cartão removido" });
+    } catch (e) {
+      toast({
+        title: "Erro",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <SectionCard icon={CreditCard} title="Cartões salvos" description="Gerencie seus cartões na Stripe">
+      {isLoading ? (
+        <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+          <Loader2 size={15} className="animate-spin" /> Carregando…
+        </div>
+      ) : methods.length === 0 ? (
+        <EmptyState
+          icon={CreditCard}
+          title="Nenhum cartão salvo"
+          description="Adicione um cartão ao comprar créditos e ele aparecerá aqui."
+        />
+      ) : (
+        <div className="space-y-2">
+          {methods.map((m) => (
+            <div
+              key={m.id}
+              className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <CreditCard size={18} className="text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {m.brand?.toUpperCase()} •••• {m.last4}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Válido até {String(m.exp_month).padStart(2, "0")}/{m.exp_year}
+                  </p>
+                </div>
+                {m.is_default && (
+                  <Badge variant="outline" className="gap-1 text-[10px]">
+                    <Star size={10} /> Padrão
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {!m.is_default && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => handleSetDefault(m.id)}
+                    disabled={setDefault.isPending}
+                  >
+                    <Star size={12} /> Tornar padrão
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1 text-destructive hover:text-destructive"
+                  onClick={() => handleRemove(m.id)}
+                  disabled={remove.isPending}
+                >
+                  <Trash2 size={12} /> Remover
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
 
 export default function ApiBilling() {
   const { toast } = useToast();
@@ -248,24 +349,26 @@ export default function ApiBilling() {
                 </Button>
               </div>
 
-              <div className="flex flex-col gap-3 rounded-xl border border-dashed border-border p-4 opacity-70 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-hover bg-muted">
-                    <CreditCard size={18} className="text-muted-foreground" strokeWidth={1.75} />
+                  <span className="flex h-10 w-10 items-center justify-center rounded-hover bg-primary/10">
+                    <CreditCard size={18} className="text-primary" strokeWidth={1.75} />
                   </span>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground">Cartão de crédito</p>
                     <p className="text-xs text-muted-foreground">
-                      Em breve, com recarga automática no cartão
+                      Pague agora e salve o cartão para recargas automáticas
                     </p>
                   </div>
                 </div>
-                <Badge variant="outline" className="gap-1 self-start text-[10px] sm:self-auto">
-                  <Clock size={10} /> Em breve
-                </Badge>
+                <Button size="sm" variant="outline" className="gap-2" onClick={() => setBuyOpen(true)}>
+                  Adicionar cartão
+                </Button>
               </div>
             </div>
           </SectionCard>
+
+          <SavedCardsSection />
 
           <SectionCard
             icon={RefreshCw}
@@ -280,7 +383,7 @@ export default function ApiBilling() {
             <p className="text-sm text-muted-foreground">
               {wallet?.auto_topup_enabled
                 ? `Ativa: recarrega ${brl(wallet.auto_topup_amount_brl)} quando o saldo chegar em ${brl(brlForTokens(wallet.auto_topup_threshold_tokens))}.`
-                : "Desativada. Ative para gerar uma recarga PIX automaticamente quando o saldo ficar baixo."}
+                : "Desativada. Ative para recarregar automaticamente quando o saldo ficar baixo."}
             </p>
           </SectionCard>
         </TabsContent>
