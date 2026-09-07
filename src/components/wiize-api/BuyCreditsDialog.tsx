@@ -35,6 +35,7 @@ import {
   MAX_TOPUP_BRL,
   MIN_TOPUP_BRL,
   tokensForAmount,
+  WIIZE_TOKEN_PRICE,
 } from "@/data/wiizeApi";
 import {
   cancelTopup,
