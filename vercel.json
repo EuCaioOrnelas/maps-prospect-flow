@@ -22,6 +22,16 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/",
+      "destination": "/api/health",
+      "has": [{ "type": "host", "value": "api.wiize.com.br" }]
+    },
+    {
+      "source": "/:path((?!v1(?:/|$)|api(?:/|$)).*)",
+      "destination": "/api/health",
+      "has": [{ "type": "host", "value": "api.wiize.com.br" }]
+    },
     { "source": "/assinatura-email", "destination": "/assinatura-email.html" },
     { "source": "/v1/:path*", "destination": "/api/v1/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
