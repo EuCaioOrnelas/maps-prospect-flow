@@ -431,3 +431,13 @@ export function useRemovePaymentMethod() {
     },
   });
 }
+
+/** Retoma uma cobrança de cartão pendente (usuário saiu para o app do banco no 3DS). */
+export async function resumeCardTopup(topupId: string) {
+  const { data, error } = await supabase.functions.invoke("wiize-api-card", {
+    body: { action: "resume", topup_id: topupId },
+  });
+  if (error) throw new Error(error.message);
+  if (data?.error) throw new Error(data.error);
+  return data as { status: string; client_secret?: string };
+}
