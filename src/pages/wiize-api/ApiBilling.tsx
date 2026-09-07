@@ -305,44 +305,48 @@ export default function ApiBilling() {
                 </span>
               </div>
 
-              <div className="mt-5 flex flex-col gap-3 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-start gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-hover bg-primary/10">
-                    <RefreshCw size={16} className="text-primary" strokeWidth={1.75} />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      Recarga automática
-                      <Badge
-                        variant="outline"
-                        className={
-                          wallet?.auto_topup_enabled
-                            ? "border-primary/30 bg-primary/10 text-[10px] text-primary"
-                            : "text-[10px] text-muted-foreground"
-                        }
-                      >
-                        {wallet?.auto_topup_enabled ? "ATIVA" : "DESATIVADA"}
-                      </Badge>
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {wallet?.auto_topup_enabled
-                        ? `Quando o saldo chegar em ${brl(brlForTokens(wallet.auto_topup_threshold_tokens))}, recarrega ${brl(wallet.auto_topup_amount_brl)}, com limite mensal de ${brl(wallet.auto_topup_monthly_limit_brl)}.`
-                        : "Ative para nunca ficar sem saldo no meio de uma integração."}
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => setAutoOpen(true)}>
-                  Gerenciar recarga automática
-                </Button>
-              </div>
-
               <div className="mt-5 flex flex-wrap gap-2">
                 <Button className="gap-2" onClick={() => setBuyOpen(true)}>
-                  <QrCode size={15} /> Comprar créditos
+                  <Wallet size={15} /> Comprar créditos
                 </Button>
               </div>
             </CardContent>
           </Card>
+
+          {/* Recarga automática — card próprio */}
+          <Card className="border-border/70 shadow-none">
+            <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-hover bg-primary/10">
+                  <RefreshCw size={16} className="text-primary" strokeWidth={1.75} />
+                </span>
+                <div className="min-w-0">
+                  <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    Recarga automática
+                    <Badge
+                      variant="outline"
+                      className={
+                        wallet?.auto_topup_enabled
+                          ? "border-primary/30 bg-primary/10 text-[10px] text-primary"
+                          : "text-[10px] text-muted-foreground"
+                      }
+                    >
+                      {wallet?.auto_topup_enabled ? "ATIVA" : "DESATIVADA"}
+                    </Badge>
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {wallet?.auto_topup_enabled
+                      ? `Quando o saldo chegar em ${brl(brlForTokens(wallet.auto_topup_threshold_tokens))}, recarrega ${brl(wallet.auto_topup_amount_brl)}, com limite mensal de ${brl(wallet.auto_topup_monthly_limit_brl)}.`
+                      : "Ative para nunca ficar sem saldo no meio de uma integração."}
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setAutoOpen(true)}>
+                Gerenciar recarga automática
+              </Button>
+            </CardContent>
+          </Card>
+
 
           <div className="grid gap-4 sm:grid-cols-3">
             <StatCard
