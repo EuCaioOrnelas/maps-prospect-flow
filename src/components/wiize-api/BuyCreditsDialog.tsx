@@ -116,12 +116,8 @@ function BuyCreditsDialogInner({
   // Cartão
   const [cardMode, setCardMode] = useState<CardMode>("saved");
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const [cardHolder, setCardHolder] = useState("");
-  const [cardComplete, setCardComplete] = useState(false);
-  const [cvcFocused, setCvcFocused] = useState(false);
   const [saveCard, setSaveCard] = useState(true);
   const [paying, setPaying] = useState(false);
-  const cardFormRef = useRef<StripeCardFormHandle>(null);
 
   const amount = useMemo(
     () => (selected === "custom" ? unmaskBRL(custom) : selected),
@@ -263,28 +259,6 @@ function BuyCreditsDialogInner({
         return;
       }
 
-      // Primeiro cartão: 3DS obrigatório.
-      const paymentMethodId = await cardFormRef.current!.createPaymentMethod({
-        name: cardHolder,
-        email: "",
-      });
-
-      const setup = await createCardTopup.mutateAsync({ amount_brl: amount, save_card: saveCard });
-      setTopup(setup.topup);
-      setStep("payment");
-      setNeeds3ds(setup.client_secret);
-
-      const confirm = await stripe.confirmCardPayment(setup.client_secret, {
-        payment_method: paymentMethodId,
-        ...(saveCard ? { setup_future_usage: "off_session" as const } : {}),
-      });
-
-      if (confirm.error) throw new Error(confirm.error.message || "Falha no pagamento do cartão.");
-      if (confirm.paymentIntent?.status === "succeeded") {
-        setNeeds3ds(null);
-        setStep("done");
-        qc.invalidateQueries({ queryKey: ["wiize-api"] });
-      }
     } catch (e) {
       toast({
         title: "Erro no pagamento",
@@ -330,9 +304,7 @@ function BuyCreditsDialogInner({
     setStep("amount");
   };
 
-  const canPayCard =
-    (cardMode === "saved" && !!selectedCardId) ||
-    (cardMode === "new" && cardComplete && cardHolder.trim().length > 2);
+  const canPayCard = cardMode === "saved" && !!selectedCardId;
 
   const termsNote = (
     <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
