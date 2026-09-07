@@ -467,9 +467,11 @@ export default function ApiBilling() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-destructive hover:text-destructive"
+                        disabled={canceling === t.id}
+                        className="gap-2 text-destructive hover:text-destructive"
                         onClick={() => handleCancelTopup(t.id)}
                       >
+                        {canceling === t.id && <Loader2 size={13} className="animate-spin" />}
                         Cancelar
                       </Button>
                     </div>
