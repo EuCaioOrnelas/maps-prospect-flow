@@ -28,7 +28,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
-import AnimatedCreditCard from "@/components/ui/animated-credit-card";
+
 import {
   brl,
   creditPackages,
