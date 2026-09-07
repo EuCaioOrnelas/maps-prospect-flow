@@ -25,7 +25,7 @@ export const ApiCTASection = () => {
           <div className="mb-5 inline-flex items-center gap-1.5 rounded-hover glass px-3 py-1.5 sm:mb-6 sm:gap-2 sm:px-4 sm:py-2">
             <Zap size={14} className="text-primary" />
             <span className="text-[11px] text-muted-foreground sm:text-sm">
-              Conta gratuita, sem cartão de crédito
+              Programa beta • acesso por convite
             </span>
           </div>
           <h2 className="mb-6 font-display text-4xl font-bold text-foreground sm:text-5xl md:text-6xl">
