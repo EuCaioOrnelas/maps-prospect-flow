@@ -177,9 +177,12 @@ export default function ApiBilling() {
   const { data: topups = [] } = useApiTopups();
   const updatePrefs = useUpdateWalletPrefs();
 
+  const qc = useQueryClient();
   const [buyOpen, setBuyOpen] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
-  const [lowBalance, setLowBalance] = useState<string | null>(null);
+  const [resumeTopup, setResumeTopup] = useState<ApiTopup | null>(null);
+  const [lowBalance, setLowBalance] = useState("");
+  const [canceling, setCanceling] = useState<string | null>(null);
 
   const balance = wallet?.balance_tokens ?? 0;
   const spent = useMemo(
@@ -194,19 +197,62 @@ export default function ApiBilling() {
     [transactions],
   );
 
+  // Pendentes só aparecem por 24 horas; depois somem da tela automaticamente.
+  const dayAgo = Date.now() - 24 * 3600_000;
+  const pendingTopups = useMemo(
+    () => topups.filter((t) => t.status === "pending" && new Date(t.created_at).getTime() >= dayAgo),
+    [topups, dayAgo],
+  );
+  const visibleTopups = useMemo(
+    () =>
+      topups.filter(
+        (t) => t.status !== "pending" || new Date(t.created_at).getTime() >= dayAgo,
+      ),
+    [topups, dayAgo],
+  );
 
-  const lowBalanceValue =
-    lowBalance ?? String(brlForTokens(wallet?.low_balance_threshold_tokens ?? 500));
+  const handleCancelTopup = async (id: string) => {
+    setCanceling(id);
+    try {
+      await cancelTopup(id);
+      qc.invalidateQueries({ queryKey: ["wiize-api", "topups"] });
+      toast({ title: "Cobrança cancelada" });
+    } catch (e) {
+      toast({
+        title: "Não foi possível cancelar",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setCanceling(null);
+    }
+  };
+
+  // Reflete sempre o valor salvo na carteira, inclusive após recarregar a página.
+  const savedLowBalance = wallet ? brlForTokens(wallet.low_balance_threshold_tokens ?? 0) : null;
+  useEffect(() => {
+    if (savedLowBalance !== null) {
+      setLowBalance(
+        savedLowBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      );
+    }
+  }, [savedLowBalance]);
 
   const saveLowBalance = async () => {
-    const n = Number(lowBalanceValue.replace(",", "."));
+    const n = Number(String(lowBalance).replace(/\./g, "").replace(",", "."));
     if (!Number.isFinite(n) || n < 0) {
       toast({ title: "Informe um valor válido", variant: "destructive" });
       return;
     }
     try {
       await updatePrefs.mutateAsync({ low_balance_threshold_tokens: tokensForAmount(n) });
-      toast({ title: "Preferências salvas" });
+      toast({
+        title: "Preferências salvas",
+        description:
+          n > 0
+            ? `Avisaremos por e-mail quando o saldo ficar abaixo de ${brl(n)}.`
+            : "Alerta de saldo baixo desativado.",
+      });
     } catch (e) {
       toast({
         title: "Não foi possível salvar",
