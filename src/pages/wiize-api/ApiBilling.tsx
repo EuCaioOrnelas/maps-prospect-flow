@@ -34,6 +34,7 @@ import { PageHeader, StatCard, SectionCard, EmptyState } from "@/components/wiiz
 import { BuyCreditsDialog } from "@/components/wiize-api/BuyCreditsDialog";
 import { AutoReloadDialog } from "@/components/wiize-api/AutoReloadDialog";
 import { brl, brlForTokens, tokensForAmount, WIIZE_TOKEN_PRICE } from "@/data/wiizeApi";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useApiTopups,
   useApiTransactions,
@@ -42,6 +43,8 @@ import {
   useApiPaymentMethods,
   useSetDefaultPaymentMethod,
   useRemovePaymentMethod,
+  cancelTopup,
+  type ApiTopup,
 } from "@/hooks/useWiizeApi";
 
 const statusLabel: Record<string, string> = {
