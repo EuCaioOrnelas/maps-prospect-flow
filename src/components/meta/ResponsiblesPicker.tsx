@@ -128,9 +128,9 @@ export function ResponsiblesPicker({
                     selected && "bg-primary/10"
                   )}
                 >
-                  <Avatar className="h-7 w-7 shrink-0 rounded-[28%]">
-                    <AvatarImage className="rounded-[28%]" src={m.avatar_url || undefined} alt={label} />
-                    <AvatarFallback className="text-[10px] rounded-[28%]">{initialsOf(label)}</AvatarFallback>
+                  <Avatar className="h-7 w-7 shrink-0 rounded-lg border border-border/60 bg-muted">
+                    <AvatarImage className="rounded-lg object-cover" src={m.avatar_url || undefined} alt={label} />
+                    <AvatarFallback className="text-[10px] rounded-lg bg-primary/10 text-primary font-medium">{initialsOf(label)}</AvatarFallback>
                   </Avatar>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{label}</span>
@@ -163,9 +163,9 @@ export function ResponsiblesPicker({
                 key={id}
                 className="flex items-center gap-1.5 rounded-md border border-border bg-muted/40 py-1 pl-1 pr-1.5 text-xs font-medium transition-colors hover:border-primary/30"
               >
-                <Avatar className="h-5 w-5 rounded-[4px]">
-                  <AvatarImage className="rounded-[4px] object-cover" src={m?.avatar_url || undefined} alt={label} />
-                  <AvatarFallback className="rounded-[4px] bg-primary/10 text-[9px] text-primary">{initialsOf(label)}</AvatarFallback>
+                <Avatar className="h-5 w-5 rounded-md border border-border/50 bg-muted">
+                  <AvatarImage className="rounded-md object-cover" src={m?.avatar_url || undefined} alt={label} />
+                  <AvatarFallback className="rounded-md bg-primary/10 text-[9px] text-primary font-medium">{initialsOf(label)}</AvatarFallback>
                 </Avatar>
                 <span className="max-w-[140px] truncate">{label}</span>
                 <button
@@ -199,9 +199,9 @@ export function ResponsibleAvatars({
         const m = byId[id];
         const label = m?.name || m?.email || id.slice(0, 8);
         return (
-          <Avatar key={id} className="h-6 w-6 rounded-[28%] border-2 border-background" title={label}>
-            <AvatarImage className="rounded-[28%]" src={m?.avatar_url || undefined} alt={label} />
-            <AvatarFallback className="text-[9px] rounded-[28%]">{initialsOf(label)}</AvatarFallback>
+          <Avatar key={id} className="h-6 w-6 rounded-lg border-2 border-background bg-muted" title={label}>
+            <AvatarImage className="rounded-lg object-cover" src={m?.avatar_url || undefined} alt={label} />
+            <AvatarFallback className="text-[9px] rounded-lg bg-primary/10 text-primary font-medium">{initialsOf(label)}</AvatarFallback>
           </Avatar>
         );
       })}
@@ -241,9 +241,9 @@ export function ResponsiblesStack({
                     "hover:z-20 hover:!ml-2 hover:mr-2 hover:scale-125 hover:-translate-y-1"
                   )}
                 >
-                  <Avatar className="h-7 w-7 rounded-sm border-2 border-background shadow-sm ring-1 ring-border/40 transition-shadow duration-300 hover:shadow-md [&>img]:rounded-sm">
-                    <AvatarImage className="rounded-sm object-cover" src={m?.avatar_url || undefined} alt={label} />
-                    <AvatarFallback className="text-[10px] rounded-sm bg-primary/10 text-primary font-medium">
+                  <Avatar className="h-7 w-7 rounded-lg border-2 border-background bg-muted shadow-sm ring-1 ring-border/40 transition-shadow duration-300 hover:shadow-md [&>img]:rounded-lg">
+                    <AvatarImage className="rounded-lg object-cover" src={m?.avatar_url || undefined} alt={label} />
+                    <AvatarFallback className="text-[10px] rounded-lg bg-primary/10 text-primary font-medium">
                       {initialsOf(label)}
                     </AvatarFallback>
                   </Avatar>
