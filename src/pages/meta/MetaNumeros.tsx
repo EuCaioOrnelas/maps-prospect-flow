@@ -398,22 +398,23 @@ export default function MetaNumeros() {
   }
   const isExpired = expiredTokenIds.has(conn.id);
   const webhookOk = webhookVerifiedIds.has(conn.id);
+  const responsibles = responsiblesOf(conn.id);
   return (
     <div
       key={conn.id}
-      className={`flex flex-col gap-3 rounded-xl border p-4 transition-colors ${
-        isExpired ? "border-destructive/40 bg-destructive/5" : "border-border hover:bg-muted/20"
+      className={`flex flex-col gap-3 rounded-card border bg-card p-4 shadow-sm transition-shadow hover:shadow-md ${
+        isExpired ? "border-destructive/40 bg-destructive/5" : "border-border/80"
       }`}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0 ${
-            isExpired ? "bg-destructive/10" : "bg-primary/10"
+          <div className={`w-9 h-9 rounded-hover flex items-center justify-center shrink-0 ring-1 ${
+            isExpired ? "bg-destructive/10 ring-destructive/15" : "bg-primary/10 ring-primary/15"
           }`}>
             {isExpired ? (
-              <AlertTriangle size={14} className="text-destructive" />
+              <AlertTriangle size={15} className="text-destructive" />
             ) : (
-              <Phone size={14} className="text-primary" />
+              <Phone size={15} className="text-primary" />
             )}
           </div>
           <div className="truncate">
@@ -445,7 +446,6 @@ export default function MetaNumeros() {
           >
             <Pencil size={13} className="text-muted-foreground" />
           </Button>
-          <ResponsibleAvatars userIds={responsiblesOf(conn.id)} members={members} max={3} />
           <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground items-center gap-1">
             <Megaphone size={9} /> Marketing
           </span>
