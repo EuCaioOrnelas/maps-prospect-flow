@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2, Webhook, CheckCircle2,
-  Headset, Megaphone, QrCode, Settings2, Smartphone,
+  Headset, Megaphone, QrCode, Settings2, Smartphone, User, Hash, Building2, Key,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProviderChoiceDialog } from "@/components/numbers/ProviderChoiceDialog";
@@ -31,6 +31,7 @@ import { useAccountRole } from "@/hooks/useAccountRole";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { useWabaResponsibles } from "@/hooks/useWabaResponsibles";
 import { ResponsiblesPicker, ResponsiblesStack } from "@/components/meta/ResponsiblesPicker";
+import { cn } from "@/lib/utils";
 
 export interface WabaConnection {
   id: string;
@@ -715,10 +716,10 @@ export default function MetaNumeros() {
           </DialogHeader>
           {editingConn && isEvo(editingConn) && (
             <div className="space-y-4">
-              <div className="space-y-3">
-                <DetailRow label="Tipo" value="Número de Atendimento (QR code)" />
-                <DetailRow label="Número" value={editingConn.display_phone_number ? `+${editingConn.display_phone_number}` : "Aguardando conexão"} />
-                <DetailRow label="Perfil" value={editingConn.profile_name || "N/A"} />
+              <div className="grid grid-cols-1 gap-2">
+                <DetailRow icon={Headset} label="Tipo" value="Número de Atendimento (QR code)" />
+                <DetailRow icon={Phone} label="Número" value={editingConn.display_phone_number ? `+${editingConn.display_phone_number}` : "Aguardando conexão"} />
+                <DetailRow icon={User} label="Perfil" value={editingConn.profile_name || "N/A"} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Apelido do número</label>
@@ -766,15 +767,12 @@ export default function MetaNumeros() {
           )}
           {editingConn && !isEvo(editingConn) && (
             <div className="space-y-4">
-              <div className="space-y-3">
-                <DetailRow label="Phone Number ID" value={editingConn.phone_number_id} />
-                <DetailRow label="WABA ID" value={editingConn.waba_id} />
-                <DetailRow label="Número" value={editingConn.display_phone_number || "N/A"} />
-                <DetailRow label="Empresa" value={editingConn.business_name || "N/A"} />
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Access Token</p>
-                  <p className="text-sm font-mono truncate">{maskSecret(editingConn.access_token || "")}</p>
-                </div>
+              <div className="grid grid-cols-1 gap-2">
+                <DetailRow icon={Hash} label="Phone Number ID" value={editingConn.phone_number_id} />
+                <DetailRow icon={Building2} label="WABA ID" value={editingConn.waba_id} />
+                <DetailRow icon={Phone} label="Número" value={editingConn.display_phone_number || "N/A"} />
+                <DetailRow icon={Building2} label="Empresa" value={editingConn.business_name || "N/A"} />
+                <DetailRow icon={Key} label="Access Token" value={maskSecret(editingConn.access_token || "")} isMono />
               </div>
 
               <div className="space-y-2">
@@ -948,9 +946,18 @@ export default function MetaNumeros() {
   );
 }
 
-const DetailRow = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex flex-col gap-0.5">
-    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-    <p className="text-sm font-medium text-foreground truncate">{value}</p>
+import type { LucideIcon } from "lucide-react";
+
+const DetailRow = ({ icon: Icon, label, value, isMono }: { icon?: LucideIcon; label: string; value: string; isMono?: boolean }) => (
+  <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-card px-3 py-2.5">
+    {Icon && (
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <Icon size={15} strokeWidth={1.75} />
+      </div>
+    )}
+    <div className="min-w-0 flex-1">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className={cn("text-sm font-medium text-foreground truncate", isMono && "font-mono")}>{value}</p>
+    </div>
   </div>
 );
