@@ -494,23 +494,6 @@ export default function MetaNumeros() {
       <MetaPageHeader
         title="Números"
         description="Conecte e gerencie seus números de Atendimento e de Marketing."
-        titleBadge={
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => window.open("/meta-api-guide", "_blank", "noopener,noreferrer")}
-                  className="inline-flex items-center justify-center w-6 h-6 rounded-[7px] border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                >
-                  <HelpCircle size={14} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>Guia de conexão de números</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        }
         actions={
           <div className="flex items-center gap-3">
             <span
