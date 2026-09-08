@@ -47,6 +47,11 @@ export function EvolutionConnectDialog({ open, onOpenChange, onConnected }: Prop
   const [refreshingQr, setRefreshingQr] = useState(false);
   const [settings, setSettings] = useState<EvolutionSettings>(DEFAULT_EVOLUTION_SETTINGS);
   const [pendingKey, setPendingKey] = useState<keyof EvolutionSettings | null>(null);
+  const [responsibles, setResponsibles] = useState<string[]>([]);
+  const { members } = useAccountMembers();
+  const { role } = useAccountRole();
+  const { setNumberResponsibles, assignmentByUser } = useWabaResponsibles();
+  const canChangeResponsible = role === "owner" || role === "admin";
   const pollRef = useRef<number | null>(null);
 
   const stopPolling = () => {
