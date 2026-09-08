@@ -17,10 +17,10 @@ type ToolbarButton = {
 };
 
 const nodeButtons: ToolbarButton[] = [
-  { type: "entry", icon: Zap, label: "Gatilho", color: "text-violet-500" },
-  { type: "message", icon: MessageSquare, label: "Mensagem", color: "text-blue-500" },
-  { type: "buttons", icon: ToggleLeft, label: "Botões / Opções", color: "text-indigo-500" },
-  { type: "condition", icon: GitBranch, label: "Condição", color: "text-indigo-500" },
+  { type: "entry", icon: Zap, label: "Gatilho", color: "text-whatsapp" },
+  { type: "message", icon: MessageSquare, label: "Mensagem", color: "text-primary" },
+  { type: "buttons", icon: ToggleLeft, label: "Botões / Opções", color: "text-primary" },
+  { type: "condition", icon: GitBranch, label: "Condição", color: "text-amber-500" },
   { type: "wait", icon: Clock, label: "Espera", color: "text-amber-500" },
   { type: "rating", icon: Star, label: "Avaliação", color: "text-amber-500" },
   { type: "action", icon: Settings, label: "Ação", color: "text-cyan-500" },

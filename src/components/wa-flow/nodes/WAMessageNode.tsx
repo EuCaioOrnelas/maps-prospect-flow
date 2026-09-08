@@ -22,7 +22,7 @@ export function WAMessageNode({ data }: NodeProps) {
   return (
     <NodeShell
       icon={Icon}
-      accent="bg-blue-500"
+      accent="bg-primary"
       title={String((data as any).label || "Mensagem")}
       subtitle={contents.length > 0 ? `${contentCount} conteúdo${contentCount !== 1 ? "s" : ""}` : null}
       placeholder="Clique para editar"

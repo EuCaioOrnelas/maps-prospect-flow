@@ -40,7 +40,7 @@ export function WAConditionNode({ data }: NodeProps) {
     <div ref={nodeRef}>
       <NodeShell
         icon={GitBranch}
-        accent="bg-indigo-500"
+        accent="bg-amber-500"
         title={String((data as any).label || "Condição")}
         subtitle={isConfigured ? (conditionLabels[cfg.condition_type] || cfg.condition_type) : null}
         placeholder="Clique para configurar"

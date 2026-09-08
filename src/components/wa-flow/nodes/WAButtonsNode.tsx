@@ -55,7 +55,7 @@ export function WAButtonsNode({ data }: NodeProps) {
     <div ref={nodeRef}>
       <NodeShell
         icon={Icon}
-        accent="bg-blue-500"
+        accent="bg-primary"
         width="w-60"
         title={String((data as any).label || (isEvolution ? "Opções" : "Botões"))}
         subtitle={subtitle}
@@ -78,9 +78,9 @@ export function WAButtonsNode({ data }: NodeProps) {
                 className="text-[11px] bg-muted/50 rounded-lg px-2.5 py-1.5 truncate text-foreground/80 flex items-center gap-1.5"
               >
                 {isEvolution ? (
-                  <span className="text-[10px] font-bold text-blue-500 shrink-0">{i + 1}.</span>
+                  <span className="text-[10px] font-bold text-primary shrink-0">{i + 1}.</span>
                 ) : (
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                 )}
                 {item.title}
               </div>
