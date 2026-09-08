@@ -618,6 +618,37 @@ Deno.serve(async (req) => {
       return json({ ok: true, marked: readMessages.length });
     }
 
+    // ------------------------------------------------------ fetch_profile_pic
+    // Busca a foto de perfil atual do contato no WhatsApp e guarda na conversa
+    // (cache no banco) para o chat carregar mais rápido.
+    if (action === "fetch_profile_pic") {
+      const conversationId = String(body.conversation_id || "");
+      if (!conversationId) return json({ error: "conversation_id obrigatório" }, 400);
+      const { data: conv } = await admin
+        .from("chat_conversations")
+        .select("id, contact_phone, waba_connection_id")
+        .eq("id", conversationId)
+        .maybeSingle();
+      if (!conv || conv.waba_connection_id !== conn.id) return json({ error: "Conversa não encontrada" }, 404);
+      const number = String(conv.contact_phone).replace(/\D/g, "");
+      let url: string | null = null;
+      try {
+        const r: any = await evo(`/chat/fetchProfilePictureUrl/${name}`, {
+          method: "POST",
+          body: JSON.stringify({ number }),
+        });
+        url = r?.profilePictureUrl || r?.profilePicUrl || null;
+      } catch (e) {
+        console.warn("[evolution-instance] fetchProfilePictureUrl:", (e as Error).message);
+        return json({ ok: false, error: "Não foi possível obter a foto agora." }, 200);
+      }
+      await admin
+        .from("chat_conversations")
+        .update({ contact_profile_pic: url })
+        .eq("id", conv.id);
+      return json({ ok: true, url });
+    }
+
     // ---------------------------------------------------------- sync_webhook
     // Reaplica a configuração do webhook na instância (auto-cura).
     if (action === "sync_webhook") {
