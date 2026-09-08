@@ -15,7 +15,9 @@ const PRICES = [
 
 Deno.serve(async (req) => {
   const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "").trim() || "";
-  if (token !== SERVICE_ROLE) return new Response("no", { status: 401 });
+  const cron = req.headers.get("x-cron-secret") || "";
+  const ok = token === SERVICE_ROLE || (!!cron && cron === Deno.env.get("WIIZE_API_CRON_SECRET"));
+  if (!ok) return new Response("no", { status: 401 });
 
   const key = Deno.env.get("STRIPE_SECRET_KEY") || "";
   const out: Record<string, unknown> = {
