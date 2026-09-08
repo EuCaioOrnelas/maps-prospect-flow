@@ -727,6 +727,17 @@ export default function MetaNumeros() {
                 <p className="text-[11px] text-muted-foreground">Cada alteração é aplicada imediatamente no número.</p>
                 <EvolutionSettingsForm value={evoSettings} onChange={handleEvoToggle} pendingKey={evoPendingKey} />
               </div>
+              <div className="rounded-xl border border-border bg-muted/20 p-3 space-y-2">
+                <p className="text-sm font-medium flex items-center gap-1.5"><QrCode size={13} className="text-primary" /> Reconectar o WhatsApp</p>
+                <p className="text-[11px] text-muted-foreground">Se o número cair e não voltar sozinho, gere um novo QR code e leia pelo celular.</p>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+                  const id = editingConn.id;
+                  setEditingConn(null);
+                  setTimeout(() => setEvoReconnectId(id), 50);
+                }}>
+                  <QrCode size={12} /> Gerar novo QR code
+                </Button>
+              </div>
               <div className="flex gap-2">
                 <Button onClick={handleSaveEdit} className="flex-1">Salvar</Button>
                 <Button variant="destructive" size="icon" onClick={() => {
