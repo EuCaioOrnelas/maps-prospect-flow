@@ -11,10 +11,11 @@ interface LeadEngagementScoreProps {
 }
 
 const getScoreTier = (score: number) => {
-  if (score >= 750) return { color: "bg-emerald-500", text: "text-emerald-500", glow: "shadow-[0_0_12px_-2px_hsl(142_71%_45%/0.6)]", label: "Excelente" };
-  if (score >= 500) return { color: "bg-blue-500", text: "text-blue-500", glow: "shadow-[0_0_12px_-2px_hsl(217_91%_60%/0.6)]", label: "Bom" };
-  if (score >= 250) return { color: "bg-orange-500", text: "text-orange-500", glow: "shadow-[0_0_12px_-2px_hsl(25_95%_53%/0.6)]", label: "Médio" };
-  return { color: "bg-red-500", text: "text-red-500", glow: "shadow-[0_0_12px_-2px_hsl(0_84%_60%/0.6)]", label: "Baixo" };
+  const base = { color: "bg-primary", text: "text-primary", glow: "shadow-[0_0_12px_-2px_hsl(var(--primary)/0.6)]" };
+  if (score >= 750) return { ...base, label: "Excelente" };
+  if (score >= 500) return { ...base, label: "Bom" };
+  if (score >= 250) return { ...base, label: "Médio" };
+  return { ...base, label: "Baixo" };
 };
 
 const LeadEngagementScoreComponent = ({
