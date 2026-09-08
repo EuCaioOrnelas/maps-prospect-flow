@@ -54,6 +54,8 @@ interface ChatMessageAreaProps {
   onSaveContactName?: (conversationId: string, name: string) => Promise<void>;
   onForwardMessages?: (targetPhone: string, targetName: string | undefined, msgs: ChatMessage[], templateName?: string) => Promise<{ requiresTemplate?: boolean }>;
   onDeleteMessages?: (messageIds: string[], mode?: "me" | "all") => Promise<void>;
+  /** Número de Atendimento (Evolution): sem janela de 24h nem templates da Meta. */
+  isEvolution?: boolean;
 }
 
 
@@ -1155,9 +1157,12 @@ export function ChatMessageArea({
               const lastInbound = [...messages].reverse().find(m => m.direction === "inbound");
               // Se nunca houve inbound (contato importado sem resposta), a janela de 24h NÃO está aberta.
               // Só consideramos a janela aberta se houver uma inbound nas últimas 24h.
-              const isWindowExpired = lastInbound
-                ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) >= 24
-                : true;
+              // Número de Atendimento (Evolution) não possui janela de 24h da Meta.
+              const isWindowExpired = isEvolution
+                ? false
+                : lastInbound
+                  ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) >= 24
+                  : true;
 
               if (isWindowExpired && onReopenConversation) {
                   return (
