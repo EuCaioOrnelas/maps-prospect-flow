@@ -594,7 +594,7 @@ export default function MetaNumeros() {
               <h3 className="mt-4 text-lg font-semibold">Nenhum número conectado</h3>
               <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
                 Conecte um <strong className="text-foreground">Número de Atendimento</strong> por QR code em segundos, ou um
-                {" "}<strong className="text-foreground">Número de Marketing</strong> pela API oficial da Meta para campanhas e disparos.
+                {" "}<strong className="text-foreground">Número de Marketing</strong> via Meta Cloud API para campanhas de mensagem.
               </p>
               <div className="mt-5 flex flex-col items-center gap-2">
                 <Button onClick={() => setShowProviderChoice(true)}><Plus size={14} className="mr-1.5" /> Conectar número</Button>
