@@ -1,7 +1,8 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
 import { NodeShell } from "./NodeShell";
-import { Zap, Phone, Radio, Wifi } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import { Phone, Radio, Wifi } from "lucide-react";
 
 const triggerLabels: Record<string, string> = {
   keyword: "Palavra-chave",
@@ -21,8 +22,8 @@ export function WAEntryNode({ data }: NodeProps) {
 
   return (
     <NodeShell
-      icon={Zap}
-      accent="bg-violet-500"
+      icon={WhatsAppIcon}
+      accent="bg-whatsapp"
       title={String((data as any).label || "Gatilho")}
       subtitle={isConfigured ? (triggerLabels[cfg.trigger_type] || cfg.trigger_type) : null}
       placeholder="Clique para configurar"
