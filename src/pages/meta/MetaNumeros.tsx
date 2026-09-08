@@ -330,15 +330,16 @@ export default function MetaNumeros() {
   if (isEvo(conn)) {
     const online = conn.evolution_state === "open";
     const connecting = conn.evolution_state === "connecting";
+    const responsibles = responsiblesOf(conn.id);
     return (
-      <div key={conn.id} className={`flex flex-col gap-3 rounded-xl border p-4 transition-colors ${online ? "border-border hover:bg-muted/20" : "border-amber-500/40 bg-amber-500/5"}`}>
+      <div key={conn.id} className={`flex flex-col gap-3 rounded-card border bg-card p-4 shadow-sm transition-shadow hover:shadow-md ${online ? "border-border/80" : "border-amber-500/40 bg-amber-500/5"}`}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {conn.profile_pic_url ? (
-              <img src={conn.profile_pic_url} alt="" className="h-8 w-8 rounded-[9px] object-cover shrink-0" />
+              <img src={conn.profile_pic_url} alt="" className="h-9 w-9 rounded-hover object-cover shrink-0 ring-1 ring-border/50" />
             ) : (
-              <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0 bg-primary/10">
-                <Headset size={14} className="text-primary" />
+              <div className="w-9 h-9 rounded-hover flex items-center justify-center shrink-0 bg-primary/10 ring-1 ring-primary/15">
+                <Headset size={15} className="text-primary" />
               </div>
             )}
             <div className="truncate">
