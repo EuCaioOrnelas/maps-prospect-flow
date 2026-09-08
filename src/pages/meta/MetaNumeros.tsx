@@ -294,18 +294,21 @@ export default function MetaNumeros() {
     try {
       const target = connections.find((c) => c.id === connId);
       if (target && isEvo(target)) {
+        // Número de Atendimento: as conversas ficam guardadas na Wiize e voltam
+        // automaticamente quando a mesma linha (DDD + 8 dígitos) for reconectada.
         await callEvolution({ action: "delete", connection_id: connId });
+      } else {
+        await Promise.allSettled([
+          supabase.from("chat_messages").delete().in(
+            "conversation_id",
+            (await supabase.from("chat_conversations").select("id").eq("waba_connection_id", connId)).data?.map((c: any) => c.id) || []
+          ),
+        ]);
+        await Promise.allSettled([
+          supabase.from("chat_conversations").delete().eq("waba_connection_id", connId),
+          (supabase as any).from("meta_campaigns").delete().eq("connection_id", connId),
+        ]);
       }
-      await Promise.allSettled([
-        supabase.from("chat_messages").delete().in(
-          "conversation_id",
-          (await supabase.from("chat_conversations").select("id").eq("waba_connection_id", connId)).data?.map((c: any) => c.id) || []
-        ),
-      ]);
-      await Promise.allSettled([
-        supabase.from("chat_conversations").delete().eq("waba_connection_id", connId),
-        (supabase as any).from("meta_campaigns").delete().eq("connection_id", connId),
-      ]);
       const { error } = await supabase.from("user_waba_connections").delete().eq("id", connId);
       if (error) throw error;
       setConnections((prev) => prev.filter((c) => c.id !== connId));

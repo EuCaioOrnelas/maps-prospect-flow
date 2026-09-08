@@ -2,6 +2,7 @@
 // Gerencia instâncias conectadas por QR code (criar, QR, status, configurações, logout, excluir).
 // Docs: https://docs.evolutionfoundation.com.br/
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { relinkConversationsToLine } from "../_shared/evolutionLine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -143,6 +144,69 @@ Deno.serve(async (req) => {
     }
 
     const authHeader = req.headers.get("Authorization") || "";
+
+    // ------------------------------------------------------------- keepalive
+    // Chamado pelo cron (service role): mantém todos os Números de Atendimento
+    // conectados o máximo possível — religa sessões caídas e reaplica o webhook.
+    if (new URL(req.url).searchParams.get("keepalive") === "1") {
+      if (authHeader !== `Bearer ${SERVICE_KEY}`) return json({ error: "Unauthorized" }, 401);
+      const { data: conns } = await admin
+        .from("user_waba_connections")
+        .select("id, user_id, owner_user_id, evolution_instance_name, evolution_token, evolution_state, last_connected_at, display_phone_number, status")
+        .eq("provider", "evolution")
+        .neq("status", "disconnected");
+      const report: Record<string, string> = {};
+      for (const c of conns || []) {
+        const iname = c.evolution_instance_name as string;
+        if (!iname) continue;
+        let state = "close";
+        try { state = normalizeState(await evo(`/instance/connectionState/${iname}`, { method: "GET" })); }
+        catch (e) { state = (e as any).status === 404 ? "missing" : "close"; }
+
+        if (state === "open") {
+          if (c.evolution_state !== "open") {
+            await admin.from("user_waba_connections").update({ evolution_state: "open", last_connected_at: new Date().toISOString() }).eq("id", c.id);
+            if (c.display_phone_number) await relinkConversationsToLine(admin, c as any, c.display_phone_number);
+          }
+          // Auto-cura do webhook: garante que eventos continuem chegando
+          try {
+            const wh = await evo(`/webhook/find/${iname}`, { method: "GET" });
+            const url = wh?.url || wh?.webhook?.url;
+            if (url !== WEBHOOK_URL || wh?.enabled === false) {
+              await evo(`/webhook/set/${iname}`, {
+                method: "POST",
+                body: JSON.stringify({ webhook: { enabled: true, url: WEBHOOK_URL, byEvents: false, base64: true, headers: { "x-wiize-token": c.evolution_token }, events: WEBHOOK_EVENTS } }),
+              });
+              report[iname] = "open+webhook_fixed";
+              continue;
+            }
+          } catch {}
+          report[iname] = "open";
+          continue;
+        }
+
+        if (state === "missing") {
+          await admin.from("user_waba_connections").update({ evolution_state: "close" }).eq("id", c.id);
+          report[iname] = "missing";
+          continue;
+        }
+
+        // close/connecting: se já esteve conectada, força reconexão sem novo QR
+        if (c.last_connected_at) {
+          try {
+            const r = await evo(`/instance/connect/${iname}`, { method: "GET" });
+            const st = r?.instance?.state ? normalizeState(r) : (r?.base64 ? "connecting" : state);
+            await admin.from("user_waba_connections").update({ evolution_state: st }).eq("id", c.id);
+            report[iname] = `reconnect:${st}`;
+          } catch (e) {
+            report[iname] = `reconnect_failed:${(e as Error).message}`;
+          }
+        } else {
+          report[iname] = state;
+        }
+      }
+      return json({ ok: true, checked: (conns || []).length, report });
+    }
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
     const jwt = authHeader.slice(7);
     let userId: string | null = null;
@@ -218,7 +282,7 @@ Deno.serve(async (req) => {
           alwaysOnline: settings.alwaysOnline,
           readMessages: settings.readMessages,
           readStatus: settings.readStatus,
-          syncFullHistory: settings.syncFullHistory,
+          syncFullHistory: false, // Wiize nunca importa histórico antigo
           webhook: {
             url: WEBHOOK_URL,
             byEvents: false,
@@ -331,12 +395,17 @@ Deno.serve(async (req) => {
       if (profileName) update.profile_name = profileName;
       if (profilePic) update.profile_pic_url = profilePic;
       if (state === "open") update.last_connected_at = new Date().toISOString();
+      else if (state === "close" && conn.last_connected_at) {
+        // Sessão caiu: tenta religar automaticamente (credenciais ainda salvas na Evolution)
+        try { await evo(`/instance/connect/${name}`, { method: "GET" }); } catch {}
+      }
       const { data: updated } = await admin
         .from("user_waba_connections")
         .update(update)
         .eq("id", conn.id)
         .select("*")
         .single();
+      if (state === "open" && phone) await relinkConversationsToLine(admin, conn, phone);
       return json({ state, connection: publicConn(updated || conn) });
     }
 
@@ -360,7 +429,7 @@ Deno.serve(async (req) => {
           alwaysOnline: merged.alwaysOnline,
           readMessages: merged.readMessages,
           readStatus: merged.readStatus,
-          syncFullHistory: merged.syncFullHistory,
+          syncFullHistory: false, // Wiize nunca importa histórico antigo
         }),
       });
       await admin.from("user_waba_connections").update({ evolution_settings: merged }).eq("id", conn.id);
