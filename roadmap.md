@@ -9,3 +9,4 @@
 - [x] Liberar 10 números na conta do usuário
 - [x] Refinar seletor e comparativo de tipos de número
 - [x] Liberar cadastro nos CTAs e navegação pública da Wiize API
+- [x] Refinar ícones, conectores e controles do canvas de Fluxos

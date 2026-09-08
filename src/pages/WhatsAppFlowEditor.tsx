@@ -132,17 +132,17 @@ const defaultEdgeOptions = {
 // Cor padrão usada por todas as categorias (exceto Gatilho de Ativação e Integrações)
 // Cores por categoria — cada categoria tem sua cor, espelhada nos cards do canvas.
 // Exceções: "Gatilho de Ativação" e "Integrações" usam cores de marca por item.
-const COLOR_MESSAGES = "text-blue-500 bg-blue-500/10";
-const COLOR_LOGIC = "text-purple-500 bg-purple-500/10";
-const COLOR_AI = "text-violet-500 bg-violet-500/10";
-const COLOR_SERVICE = "text-amber-500 bg-amber-500/10";
-const COLOR_ACTIONS = "text-cyan-500 bg-cyan-500/10";
+const COLOR_MESSAGES = "text-primary-foreground bg-blue-500";
+const COLOR_LOGIC = "text-primary-foreground bg-indigo-500";
+const COLOR_AI = "text-primary-foreground bg-violet-500";
+const COLOR_SERVICE = "text-primary-foreground bg-amber-500";
+const COLOR_ACTIONS = "text-primary-foreground bg-cyan-500";
 
 const sidebarCategories = [
   {
     label: "Gatilho de Ativação",
     items: [
-      { type: "entry", icon: Zap, label: "Gatilho", desc: "Escolha o número e como o fluxo começa", color: "text-violet-500 bg-violet-500/10" },
+      { type: "entry", icon: Zap, label: "Gatilho", desc: "Escolha o número e como o fluxo começa", color: "text-primary-foreground bg-violet-500" },
     ],
   },
   {
@@ -185,9 +185,9 @@ const sidebarCategories = [
   {
     label: "Integrações",
     items: [
-      { type: "google_sheets", icon: Sheet, label: "Google Sheets", desc: "Salvar lead em planilha", color: "text-green-500 bg-green-500/10", iconImg: sheetsIcon },
-      { type: "google_calendar", icon: CalendarPlus, label: "Google Agenda", desc: "Criar evento no calendário", color: "text-blue-500 bg-blue-500/10", iconImg: calendarIcon },
-      { type: "gmail", icon: Mail, label: "Gmail", desc: "Enviar email automático", color: "text-red-500 bg-red-500/10", iconImg: gmailIcon },
+      { type: "google_sheets", icon: Sheet, label: "Google Sheets", desc: "Salvar lead em planilha", color: "text-primary-foreground bg-muted", iconImg: sheetsIcon },
+      { type: "google_calendar", icon: CalendarPlus, label: "Google Agenda", desc: "Criar evento no calendário", color: "text-primary-foreground bg-muted", iconImg: calendarIcon },
+      { type: "gmail", icon: Mail, label: "Gmail", desc: "Enviar email automático", color: "text-primary-foreground bg-muted", iconImg: gmailIcon },
     ],
   },
 ];
@@ -813,28 +813,18 @@ export default function WhatsAppFlowEditor() {
           onChange={(e) => { setFlowName(e.target.value); setHasChanges(true); }}
           className="max-w-[220px] h-9 text-sm font-medium bg-transparent border-transparent hover:border-border focus:border-border"
         />
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted border border-border shrink-0">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted border border-border shrink-0">
           <MessageSquare size={12} className="text-emerald-500" />
           <span className="text-[11px] font-medium text-muted-foreground">WhatsApp</span>
         </div>
 
 
         {hasChanges && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-destructive/10 border border-destructive/30 text-destructive animate-in fade-in slide-in-from-left-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive animate-in fade-in slide-in-from-left-2">
             <AlertCircle size={12} />
             <span className="text-[11px] font-medium">Alterações não salvas</span>
           </div>
         )}
-
-        <div className="h-6 w-px bg-border mx-1" />
-
-        {/* Undo/Redo */}
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndexRef.current <= 0} title="Desfazer (Ctrl+Z)">
-          <Undo2 size={15} />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndexRef.current >= historyRef.current.length - 1} title="Refazer (Ctrl+Y)">
-          <Redo2 size={15} />
-        </Button>
 
         <div className="h-6 w-px bg-border mx-1" />
 
@@ -873,7 +863,7 @@ export default function WhatsAppFlowEditor() {
         {/* Activate/Deactivate toggle */}
         <div className="flex items-center gap-2 mx-2">
           <span className={cn("text-xs font-medium", flow?.status === "active" ? "text-primary" : "text-muted-foreground")}>
-            {flow?.status === "active" ? "Em produção" : "Teste"}
+            {flow?.status === "active" ? "Ativo" : "Inativo"}
           </span>
           <Switch
             checked={flow?.status === "active"}
@@ -1021,11 +1011,11 @@ export default function WhatsAppFlowEditor() {
                             "hover:bg-muted/40 hover:border-primary/30 cursor-grab active:cursor-grabbing active:shadow-lg active:scale-[1.02] active:border-primary/50",
                           )}
                         >
-                          <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
+                          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
                             {(item as any).iconImg ? (
                               <img src={(item as any).iconImg} alt={item.label} width={20} height={20} loading="eager" decoding="async" className="w-5 h-5 object-contain" />
                             ) : (
-                              <item.icon size={16} className={cn(item.color.split(" ")[0])} />
+                              <item.icon size={17} className={cn(item.color.split(" ")[0])} />
                             )}
                           </div>
                           <div className="min-w-0">
@@ -1135,6 +1125,15 @@ export default function WhatsAppFlowEditor() {
             <Background id="grid" color="hsl(var(--border) / 0.08)" gap={24} variant={"lines" as any} />
             <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
           </ReactFlow>
+          <div className="absolute bottom-4 right-4 z-10 flex items-center rounded-lg border border-border bg-card p-1 shadow-sm">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md" onClick={undo} disabled={historyIndexRef.current <= 0} title="Desfazer (Ctrl+Z)">
+              <Undo2 size={15} />
+            </Button>
+            <div className="h-5 w-px bg-border" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md" onClick={redo} disabled={historyIndexRef.current >= historyRef.current.length - 1} title="Refazer (Ctrl+Y)">
+              <Redo2 size={15} />
+            </Button>
+          </div>
         </div>
 
         {/* Config drawer - inside main area */}

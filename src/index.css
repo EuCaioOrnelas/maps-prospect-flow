@@ -1553,10 +1553,10 @@ input::placeholder, textarea::placeholder {
 
 /* ─── React Flow Handle Styling ─── */
 .react-flow .wa-flow-handle {
-  min-width: 12px !important;
-  min-height: 12px !important;
-  width: 12px !important;
-  height: 12px !important;
+  min-width: 10px !important;
+  min-height: 10px !important;
+  width: 10px !important;
+  height: 10px !important;
   border-radius: 9999px !important;
   border: 1.5px solid hsl(var(--background)) !important;
   display: flex !important;
@@ -1580,10 +1580,10 @@ input::placeholder, textarea::placeholder {
 }
 
 .react-flow .wa-flow-handle.is-connected {
-  min-width: 18px !important;
-  min-height: 18px !important;
-  width: 18px !important;
-  height: 18px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
 }
 
 .react-flow .wa-flow-handle.target.is-connected {
