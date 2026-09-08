@@ -13,7 +13,7 @@ export function WAGoogleCalendarNode({ data }: NodeProps) {
       <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
         <div className="w-9 h-9 flex items-center justify-center shrink-0">
-          <img src={calendarIcon} alt="Google Calendar" width={20} height={20} className="w-9 h-9 object-contain" />
+          <img src={calendarIcon} alt="Google Calendar" width={18} height={18} className="w-[18px] h-[18px] object-contain" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">
