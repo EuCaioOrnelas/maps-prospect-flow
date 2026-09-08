@@ -210,3 +210,59 @@ export function ResponsibleAvatars({
     </div>
   );
 }
+
+/**
+ * Pilha animada de responsáveis: avatares sobrepostos que se afastam,
+ * crescem e revelam nome/e-mail ao passar o mouse.
+ */
+export function ResponsiblesStack({
+  userIds,
+  members,
+  max = 5,
+}: { userIds: string[]; members: ResponsibleOption[]; max?: number }) {
+  if (!userIds.length) return null;
+  const byId: Record<string, ResponsibleOption> = {};
+  members.forEach((m) => { byId[m.user_id] = m; });
+  const shown = userIds.slice(0, max);
+  return (
+    <TooltipProvider delayDuration={120}>
+      <div className="group/stack flex items-center">
+        {shown.map((id, idx) => {
+          const m = byId[id];
+          const label = m?.name || m?.email || id.slice(0, 8);
+          return (
+            <Tooltip key={id}>
+              <TooltipTrigger asChild>
+                <div
+                  className={cn(
+                    "relative cursor-default transition-all duration-300 ease-out",
+                    idx > 0 && "-ml-2 group-hover/stack:ml-0.5",
+                    "hover:z-20 hover:!ml-2 hover:mr-2 hover:scale-125 hover:-translate-y-1"
+                  )}
+                >
+                  <Avatar className="h-7 w-7 rounded-[28%] border-2 border-background shadow-sm ring-1 ring-border/40 transition-shadow duration-300 hover:shadow-md">
+                    <AvatarImage className="rounded-[28%]" src={m?.avatar_url || undefined} alt={label} />
+                    <AvatarFallback className="text-[10px] rounded-[28%] bg-primary/10 text-primary font-medium">
+                      {initialsOf(label)}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[220px]">
+                <p className="text-xs font-medium">{label}</p>
+                {m?.email && m?.name && (
+                  <p className="text-[10px] text-muted-foreground">{m.email}</p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+        {userIds.length > max && (
+          <span className="ml-2 text-[10px] font-medium text-muted-foreground transition-transform duration-300 group-hover/stack:translate-x-0.5">
+            +{userIds.length - max}
+          </span>
+        )}
+      </div>
+    </TooltipProvider>
+  );
+}
