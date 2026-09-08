@@ -602,15 +602,18 @@ Deno.serve(async (req) => {
     }
 
     // ---------------------------------------------------------------- delete
+    // O número sai da conta na hora (libera vaga no plano), mas as conversas ficam
+    // guardadas por 30 dias caso a mesma linha volte. Depois disso são apagadas.
     if (action === "delete") {
       try { await evo(`/instance/logout/${name}`, { method: "DELETE" }); } catch {}
       try { await evo(`/instance/delete/${name}`, { method: "DELETE" }); } catch (e) {
         if ((e as any).status !== 404) console.warn("[evolution-instance] delete remote:", (e as Error).message);
       }
-      const { error: delErr } = await admin.from("user_waba_connections").delete().eq("id", conn.id);
-      if (delErr) {
-        await admin.from("user_waba_connections").update({ status: "disconnected", evolution_state: "close" }).eq("id", conn.id);
-      }
+      await admin.from("user_waba_connections").update({
+        status: "disconnected",
+        evolution_state: "close",
+        evolution_disconnected_since: conn.evolution_disconnected_since || new Date().toISOString(),
+      }).eq("id", conn.id);
       return json({ ok: true });
     }
 
