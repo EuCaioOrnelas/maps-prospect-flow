@@ -452,38 +452,27 @@ export default function MetaNumeros() {
         </div>
       </div>
 
-      <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${
-        webhookOk
-          ? "border-emerald-500/25 bg-emerald-500/5"
-          : "border-amber-500/25 bg-amber-500/5"
-      }`}>
-        <div className="flex items-center gap-2 min-w-0">
-          {webhookOk ? (
-            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-          ) : (
+      {!webhookOk && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-2">
+          <div className="flex items-center gap-2 min-w-0">
             <AlertTriangle size={14} className="text-amber-600 shrink-0" />
-          )}
-          <div className="min-w-0">
-            <p className={`text-[11px] font-semibold ${webhookOk ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
-              {webhookOk ? "Webhook configurado" : "Webhook pendente"}
-            </p>
-            <p className="text-[10px] text-muted-foreground truncate">
-              {webhookOk
-                ? "Eventos da Meta chegando normalmente."
-                : "Chat e Campanhas precisam do webhook para funcionar."}
-            </p>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">Webhook pendente</p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                Chat e Campanhas precisam do webhook para funcionar.
+              </p>
+            </div>
           </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 h-7 px-2 shrink-0 text-[11px]"
+            onClick={() => handleTabChange("webhook")}
+          >
+            <Webhook size={11} /> Configurar
+          </Button>
         </div>
-        <Button
-          size="sm"
-          variant={webhookOk ? "ghost" : "outline"}
-          className="gap-1.5 h-7 px-2 shrink-0 text-[11px]"
-          onClick={() => handleTabChange("webhook")}
-        >
-          <Webhook size={11} />
-          {webhookOk ? "Ver webhook" : "Configurar"}
-        </Button>
-      </div>
+      )}
     </div>
   );
   };
