@@ -362,7 +362,6 @@ export default function MetaNumeros() {
             }}>
               <Pencil size={13} className="text-muted-foreground" />
             </Button>
-            <ResponsibleAvatars userIds={responsiblesOf(conn.id)} members={members} max={3} />
             <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground items-center gap-1">
               <Headset size={9} /> Atendimento
             </span>
@@ -387,6 +386,12 @@ export default function MetaNumeros() {
             <Button size="sm" variant="outline" className="gap-1.5 h-7 px-2 shrink-0 text-[11px]" onClick={() => setEvoReconnectId(conn.id)}>
               <QrCode size={11} /> Reconectar
             </Button>
+          </div>
+        )}
+        {responsibles.length > 0 && (
+          <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Responsáveis</span>
+            <ResponsiblesStack userIds={responsibles} members={members} />
           </div>
         )}
       </div>

@@ -63,7 +63,17 @@ export function ProviderChoiceDialog({ open, onOpenChange, onChoose }: Props) {
                 <div className="flex h-11 w-11 items-center justify-center rounded-hover bg-primary/10 text-primary ring-1 ring-primary/15">
                   <Megaphone size={20} />
                 </div>
-                <ArrowRight size={17} className="text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/meta-api-guide"
+                    onClick={(e) => { e.stopPropagation(); onOpenChange(false); }}
+                    title="Guia de conexão da API oficial da Meta"
+                    className="flex h-7 w-7 items-center justify-center rounded-hover border border-primary/30 bg-primary/10 text-primary transition-colors hover:bg-primary/20"
+                  >
+                    <HelpCircle size={14} />
+                  </Link>
+                  <ArrowRight size={17} className="text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                </div>
               </div>
               <h3 className="mt-5 text-base font-semibold text-foreground">Número de Marketing</h3>
               <p className="mt-1.5 min-h-[60px] text-sm leading-relaxed text-muted-foreground">
