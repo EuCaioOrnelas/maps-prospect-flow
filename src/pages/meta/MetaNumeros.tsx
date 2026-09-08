@@ -31,6 +31,7 @@ import { useAccountRole } from "@/hooks/useAccountRole";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { useWabaResponsibles } from "@/hooks/useWabaResponsibles";
 import { ResponsiblesPicker, ResponsiblesStack } from "@/components/meta/ResponsiblesPicker";
+import { cn } from "@/lib/utils";
 
 export interface WabaConnection {
   id: string;
