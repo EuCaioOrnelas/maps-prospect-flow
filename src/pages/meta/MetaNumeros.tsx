@@ -551,46 +551,38 @@ export default function MetaNumeros() {
         <TabsContent value="numeros" className="mt-5">
           {!loading && connections.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-              <div className="rounded-card border border-border bg-card p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hover bg-primary text-primary-foreground">
-                    <Smartphone size={22} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-muted-foreground">Números conectados</p>
-                    <p className="mt-0.5 text-2xl font-semibold tabular-nums">
-                      {connections.length}<span className="text-sm text-muted-foreground font-normal"> / {Number.isFinite(maxMetaConnections) ? maxMetaConnections : "∞"}</span>
-                    </p>
-                  </div>
+              <div className="rounded-card border border-border bg-card p-5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-hover bg-primary/10 text-primary">
+                  <Smartphone size={18} />
                 </div>
+                <p className="mt-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Números conectados</p>
+                <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight">
+                  {connections.length}<span className="ml-1 text-sm font-normal text-muted-foreground">/ {Number.isFinite(maxMetaConnections) ? maxMetaConnections : "∞"}</span>
+                </p>
                 <div className="mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">
                   <div className={`h-full rounded-full transition-all ${reachedConnectionLimit ? "bg-destructive" : "bg-primary"}`} style={{ width: `${Number.isFinite(maxMetaConnections) && maxMetaConnections > 0 ? Math.min(100, (connections.length / maxMetaConnections) * 100) : 5}%` }} />
                 </div>
                 <p className="mt-2 text-[11px] text-muted-foreground">{basePlanNumbers} do plano {userPlan}{extraNumbers > 0 ? ` + ${extraNumbers} adicionais` : ""}</p>
               </div>
-              <div className="rounded-card border border-border bg-card p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hover bg-primary text-primary-foreground">
-                    <Headset size={22} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Atendimento</p>
-                    <p className="mt-0.5 text-2xl font-semibold tabular-nums">{connections.filter(isEvo).length}</p>
-                  </div>
+              <div className="rounded-card border border-border bg-card p-5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-hover bg-primary/10 text-primary">
+                  <Headset size={18} />
                 </div>
-                <p className="mt-3 text-[11px] text-muted-foreground">{connections.filter((c) => isEvo(c) && c.evolution_state === "open").length} online agora</p>
+                <p className="mt-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Atendimento</p>
+                <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight">
+                  {connections.filter(isEvo).length}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">{connections.filter((c) => isEvo(c) && c.evolution_state === "open").length} online agora</span>
+                </p>
               </div>
-              <div className="rounded-card border border-border bg-card p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hover bg-primary text-primary-foreground">
-                    <Megaphone size={22} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Marketing</p>
-                    <p className="mt-0.5 text-2xl font-semibold tabular-nums">{connections.filter((c) => !isEvo(c)).length}</p>
-                  </div>
+              <div className="rounded-card border border-border bg-card p-5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-hover bg-primary/10 text-primary">
+                  <Megaphone size={18} />
                 </div>
-                <p className="mt-3 text-[11px] text-muted-foreground">{expiredConnections.length > 0 ? `${expiredConnections.length} com token expirado` : "Todos os tokens válidos"}</p>
+                <p className="mt-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Marketing</p>
+                <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight">
+                  {connections.filter((c) => !isEvo(c)).length}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">{expiredConnections.length > 0 ? `${expiredConnections.length} com token expirado` : "todos os tokens válidos"}</span>
+                </p>
               </div>
             </div>
           )}

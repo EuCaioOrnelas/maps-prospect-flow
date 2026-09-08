@@ -267,8 +267,8 @@ const LeadCardComponent = ({
       {scoreData && scoreData.score_total > 0 && (() => {
         const s = Math.max(0, Math.min(scoreData.score_total, 1000));
         const pct = (s / 1000) * 100;
-        const bg = s >= 750 ? 'bg-emerald-500' : s >= 500 ? 'bg-blue-500' : s >= 250 ? 'bg-orange-500' : 'bg-red-500';
-        const fg = s >= 750 ? 'text-emerald-500' : s >= 500 ? 'text-blue-500' : s >= 250 ? 'text-orange-500' : 'text-red-500';
+        const bg = 'bg-primary';
+        const fg = 'text-primary';
         return (
           <div
             className="-mx-5 -mb-5 mt-3 px-5 pt-2.5 pb-3 relative cursor-pointer rounded-b-[18px]"
