@@ -12,8 +12,8 @@ export function WAGmailNode({ data }: NodeProps) {
     <div className="bg-card border border-border/70 rounded-2xl shadow-[0_6px_20px_-12px_hsl(var(--foreground)/0.35)] w-52 relative">
       <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
-        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-          <img src={gmailIcon} alt="Gmail" width={20} height={20} className="w-5 h-5 object-contain" />
+        <div className="w-9 h-9 flex items-center justify-center shrink-0">
+          <img src={gmailIcon} alt="Gmail" width={20} height={20} className="w-9 h-9 object-contain" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">

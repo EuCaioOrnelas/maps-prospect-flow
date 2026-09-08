@@ -1011,13 +1011,18 @@ export default function WhatsAppFlowEditor() {
                             "hover:bg-muted/40 hover:border-primary/30 cursor-grab active:cursor-grabbing active:shadow-lg active:scale-[1.02] active:border-primary/50",
                           )}
                         >
-                          <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
-                            {(item as any).iconImg ? (
-                              <img src={(item as any).iconImg} alt={item.label} width={20} height={20} loading="eager" decoding="async" className="w-5 h-5 object-contain" />
-                            ) : (
-                              <item.icon size={17} className={cn(item.color.split(" ")[0])} />
-                            )}
-                          </div>
+                          {(() => {
+                            const isLogoOnly = ["google_sheets", "google_calendar", "gmail"].includes(item.type);
+                            return (
+                              <div className={cn("w-9 h-9 flex items-center justify-center shrink-0", !isLogoOnly && "rounded-lg", !isLogoOnly && item.color.split(" ")[1])}>
+                                {(item as any).iconImg ? (
+                                  <img src={(item as any).iconImg} alt={item.label} width={isLogoOnly ? 36 : 20} height={isLogoOnly ? 36 : 20} loading="eager" decoding="async" className={cn(isLogoOnly ? "w-9 h-9" : "w-5 h-5", "object-contain")} />
+                                ) : (
+                                  <item.icon size={17} className={cn(item.color.split(" ")[0])} />
+                                )}
+                              </div>
+                            );
+                          })()}
                           <div className="min-w-0">
                             <p className="text-xs font-semibold text-foreground">{item.label}</p>
                             <p className="text-[10px] text-muted-foreground leading-tight">{item.desc}</p>
