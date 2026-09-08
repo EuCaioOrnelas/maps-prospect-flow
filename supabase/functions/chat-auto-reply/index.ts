@@ -90,13 +90,14 @@ serve(async (req) => {
       }
     }
 
-    // Get connection credentials
+    // Get connection credentials (Meta ou Evolution)
     const { data: conn } = await supabase
       .from("user_waba_connections")
-      .select("access_token, phone_number_id, status")
+      .select("access_token, phone_number_id, status, provider, evolution_instance_name")
       .eq("id", conv.waba_connection_id)
       .single();
-    if (!conn?.access_token || !conn.phone_number_id) {
+    const isEvolution = conn?.provider === "evolution";
+    if (!conn || (isEvolution ? !conn.evolution_instance_name : (!conn.access_token || !conn.phone_number_id))) {
       return new Response(JSON.stringify({ skipped: "connection missing" }), { headers: corsHeaders });
     }
 
@@ -136,21 +137,35 @@ serve(async (req) => {
       },
     );
 
-    // Send via Meta Cloud API
-    const payload = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: conv.contact_phone,
-      type: "text",
-      text: { body: resolvedMessage },
-    };
-    const metaRes = await fetch(`https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${conn.access_token}`, "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const metaJson = await metaRes.json();
-    const wabaMsgId = metaJson?.messages?.[0]?.id;
+    // Send via Meta Cloud API ou Evolution API
+    let metaRes: Response;
+    let metaJson: any;
+    let wabaMsgId: string | null = null;
+    if (isEvolution) {
+      const base = (Deno.env.get("EVOLUTION_API_URL") || "").replace(/\/+$/, "");
+      metaRes = await fetch(`${base}/message/sendText/${encodeURIComponent(conn.evolution_instance_name!)}`, {
+        method: "POST",
+        headers: { apikey: Deno.env.get("EVOLUTION_API_KEY") || "", "Content-Type": "application/json" },
+        body: JSON.stringify({ number: String(conv.contact_phone || "").replace(/\D/g, ""), text: resolvedMessage }),
+      });
+      metaJson = await metaRes.json().catch(() => ({}));
+      wabaMsgId = metaJson?.key?.id ?? null;
+    } else {
+      const payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: conv.contact_phone,
+        type: "text",
+        text: { body: resolvedMessage },
+      };
+      metaRes = await fetch(`https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${conn.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      metaJson = await metaRes.json();
+      wabaMsgId = metaJson?.messages?.[0]?.id ?? null;
+    }
 
     // Persist outbound message
     await supabase.from("chat_messages").insert({

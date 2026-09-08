@@ -488,18 +488,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
             )}
 
-            {/* Números (Atendimento + Marketing) */}
-            <li data-tour="sidebar-numeros">
-              <SidebarNavItem
-                title="Números"
-                icon={Phone}
-                url="/numeros"
-                isActive={currentPath.startsWith("/numeros") || currentPath === "/meta/numeros"}
-                isExpanded={isExpanded}
-                tooltip="Números"
-              />
-            </li>
-
             {/* Chat */}
             {can("chat") && (
             <li data-tour="sidebar-chat">
@@ -584,6 +572,17 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
             )}
 
+            {/* Números (Atendimento + Marketing) */}
+            <li data-tour="sidebar-numeros">
+              <SidebarNavItem
+                title="Números"
+                icon={Phone}
+                url="/numeros"
+                isActive={currentPath.startsWith("/numeros") || currentPath === "/meta/numeros"}
+                isExpanded={isExpanded}
+                tooltip="Números"
+              />
+            </li>
           </ul>
         </nav>
 

@@ -837,7 +837,7 @@ function FinalStep({ title, body, onFinish, isReplay }: FinalStepProps) {
       window.location.assign("/signup/escolher-plano");
       return;
     }
-    navigate("/meta-campaigns");
+    navigate("/numeros");
   };
 
   // Demo público: fechar/voltar nunca pode deixar o visitante dentro do cockpit

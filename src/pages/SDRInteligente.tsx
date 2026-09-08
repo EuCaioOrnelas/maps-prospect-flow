@@ -252,7 +252,7 @@ export default function SDRInteligente() {
                         <Button
                           size="sm"
                           className="mt-2 w-full"
-                          onClick={() => navigate("/meta/numeros")}
+                          onClick={() => navigate("/numeros")}
                         >
                           Comprar mais números
                         </Button>

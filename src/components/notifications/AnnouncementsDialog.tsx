@@ -193,7 +193,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
                           className="h-7 text-xs gap-1.5"
                           onClick={() => {
                             onOpenChange(false);
-                            navigate('/meta/numeros');
+                            navigate('/numeros');
                           }}
                         >
                           <Smartphone className="w-3 h-3" />
