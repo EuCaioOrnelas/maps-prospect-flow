@@ -26,8 +26,8 @@ export function WAAgentNode({ data }: NodeProps) {
     <div className="rounded-2xl bg-card border border-border/70 shadow-[0_6px_20px_-12px_hsl(var(--foreground)/0.35)] w-52">
       <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-3 py-2.5">
-        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-          <img src={providerIcon} alt={providerLabel} className="w-[18px] h-[18px] object-contain" />
+        <div className="w-9 h-9 flex items-center justify-center shrink-0">
+          <img src={providerIcon} alt={providerLabel} width={27} height={27} className="w-[27px] h-[27px] object-contain" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">
