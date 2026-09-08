@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
       .select("id, phone_number_id, access_token")
       .eq("user_id", lead.user_id)
       .eq("status", "active")
+      .or("provider.is.null,provider.eq.meta")
       .limit(1)
       .maybeSingle();
 

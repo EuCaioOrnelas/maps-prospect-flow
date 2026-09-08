@@ -85,9 +85,16 @@ Deno.serve(async (req) => {
     // Get WABA connection
     const { data: conn } = await supabase
       .from("user_waba_connections")
-      .select("id, phone_number_id, access_token, status")
+      .select("id, phone_number_id, access_token, status, provider")
       .eq("id", connectionId)
       .maybeSingle();
+
+    if ((conn as any)?.provider === "evolution") {
+      return new Response(JSON.stringify({ success: false, error: "Números de Atendimento não podem ser usados em disparos. Use um Número de Marketing (Meta)." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     if (!conn || !conn.phone_number_id || !conn.access_token) {
       return new Response(JSON.stringify({ success: false, error: "Conexão Meta inválida" }), {
