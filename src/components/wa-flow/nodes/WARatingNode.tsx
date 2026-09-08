@@ -19,7 +19,7 @@ export function WARatingNode({ data }: NodeProps) {
     <div className="bg-card border border-border/70 rounded-2xl shadow-[0_6px_20px_-12px_hsl(var(--foreground)/0.35)] w-60 relative">
       <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-4 py-3">
-        <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center shrink-0">
           <Star size={17} className="text-white" />
         </div>
         <div className="min-w-0 flex-1">

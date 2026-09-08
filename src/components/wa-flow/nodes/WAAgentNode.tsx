@@ -20,7 +20,7 @@ export function WAAgentNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
   const provider = cfg.ai_provider || "openai";
   const providerIcon = PROVIDER_ICONS[provider] || openaiIcon;
-  const providerLabel = PROVIDER_LABELS[provider] || providerLabel_fallback(provider);
+  const providerLabel = PROVIDER_LABELS[provider] || String(provider);
 
   return (
     <div className="rounded-2xl bg-card border border-border/70 shadow-[0_6px_20px_-12px_hsl(var(--foreground)/0.35)] w-52">
@@ -39,8 +39,4 @@ export function WAAgentNode({ data }: NodeProps) {
       <FlowHandle type="source" position={Position.Right} />
     </div>
   );
-}
-
-function providerLabel_fallback(provider: string) {
-  return provider;
 }
