@@ -6,6 +6,10 @@ import { Loader2, QrCode, Smartphone, CheckCircle2, RefreshCw, Headset, Settings
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DEFAULT_EVOLUTION_SETTINGS, EvolutionSettingsForm, type EvolutionSettings } from "./EvolutionSettingsForm";
+import { ResponsiblesPicker } from "@/components/meta/ResponsiblesPicker";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { useAccountRole } from "@/hooks/useAccountRole";
+import { useWabaResponsibles } from "@/hooks/useWabaResponsibles";
 
 type Step = "name" | "qr" | "settings";
 
