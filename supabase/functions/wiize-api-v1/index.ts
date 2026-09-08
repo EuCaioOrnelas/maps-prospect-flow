@@ -606,22 +606,29 @@ serve(async (req) => {
       );
     }
 
+    const payload = shapeResponse(path, result.data);
+
+    // Unidades realmente entregues (leads na busca; 1 nas demais operações)
+    const deliveredUnits = path === "/v1/prospecting/search"
+      ? Number((payload as any)?.results_count ?? 0)
+      : 1;
+    const chargedTokens = Math.min(unitPrice * deliveredUnits, tokens);
+
     const { data: commitRes } = await admin.rpc("wiize_api_commit_reservation", {
       _reservation_id: reserve.reservation_id,
       _reference_id: requestId,
+      _actual_tokens: chargedTokens,
     });
     activeReservationId = null;
     const commit = (commitRes || {}) as any;
-
-    const payload = shapeResponse(path, result.data);
 
     await admin.from("wiize_api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id);
 
     await logRequest({
       user_id: userId, api_key_id: key.id, request_id: requestId, endpoint: path,
-      environment: key.environment, status_code: 200, tokens_charged: tokens,
+      environment: key.environment, status_code: 200, tokens_charged: chargedTokens,
       duration_ms: Date.now() - startedAt, ip_address: ip, user_agent: req.headers.get("user-agent"),
-      idempotency_key: idempotencyKey, metadata: { response: payload },
+      idempotency_key: idempotencyKey, metadata: { response: payload, units: deliveredUnits, unit_tokens: unitPrice },
     });
 
     return json(
@@ -629,8 +636,10 @@ serve(async (req) => {
         data: payload,
         usage: {
           operation: route.operation,
-          tokens_charged: tokens,
-          cost_brl: Number((tokens * limits.tokenPriceBrl).toFixed(2)),
+          units: deliveredUnits,
+          tokens_per_unit: unitPrice,
+          tokens_charged: chargedTokens,
+          cost_brl: Number((chargedTokens * limits.tokenPriceBrl).toFixed(2)),
           balance_tokens: commit.balance_tokens ?? null,
         },
         request_id: requestId,
@@ -638,6 +647,7 @@ serve(async (req) => {
       200,
       rateHeaders,
     );
+
   } catch (e) {
     console.error("[wiize-api-v1] erro", String(e));
     // Falha inesperada nunca pode reter tokens do cliente.
