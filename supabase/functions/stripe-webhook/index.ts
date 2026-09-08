@@ -1377,13 +1377,15 @@ serve(async (req) => {
                 .eq("user_id", (topup as any).user_id)
                 .eq("status", "active");
               const isDefault = (count.count || 0) === 0;
-              await supabaseClient
+              const { data: savedPm } = await supabaseClient
                 .from("wiize_api_payment_methods")
-                .insert({ ...payload, is_default: isDefault });
-              if (isDefault) {
+                .insert({ ...payload, is_default: isDefault })
+                .select("id")
+                .maybeSingle();
+              if (isDefault && savedPm?.id) {
                 await supabaseClient
                   .from("wiize_api_wallets")
-                  .update({ auto_topup_payment_method_id: pm.id })
+                  .update({ auto_topup_payment_method_id: savedPm.id })
                   .eq("user_id", (topup as any).user_id);
               }
             } else {

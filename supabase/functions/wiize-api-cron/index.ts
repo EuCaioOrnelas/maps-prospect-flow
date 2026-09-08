@@ -4,7 +4,7 @@
 // 3) cancela recargas vencidas
 // 4) dispara os e-mails de saldo baixo, erros de requisição e relatório mensal
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
-import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
+import Stripe from "npm:stripe@14.21.0";
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -103,11 +103,13 @@ async function asaas(path: string) {
 
 /** 1) Concilia recargas pendentes diretamente no Asaas. */
 async function reconcileTopups() {
-  const since = new Date(Date.now() - 24 * 3600_000).toISOString();
+  // Janela de 7 dias e inclui recargas já expiradas: o PIX pode ser pago depois do
+  // vencimento do registro interno — o dinheiro entrou, então o crédito precisa entrar também.
+  const since = new Date(Date.now() - 7 * 24 * 3600_000).toISOString();
   const { data: rows } = await admin
     .from("wiize_api_topups")
     .select("*")
-    .eq("status", "pending")
+    .in("status", ["pending", "canceled"])
     .not("asaas_payment_id", "is", null)
     .gte("created_at", since)
     .limit(200);
@@ -139,7 +141,7 @@ async function reconcileTopups() {
             .eq("id", (row as any).id);
           credited++;
         }
-      } else if (["REFUNDED", "OVERDUE", "CANCELED", "DELETED"].includes(status)) {
+      } else if ((row as any).status === "pending" && ["REFUNDED", "OVERDUE", "CANCELED", "DELETED"].includes(status)) {
         await admin.from("wiize_api_topups").update({ status: "canceled" }).eq("id", (row as any).id);
       }
     } catch (e) {
@@ -155,12 +157,14 @@ async function reconcileStripeCardTopups() {
   if (!stripeKey) return 0;
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2024-11-20.acacia" });
-  const since = new Date(Date.now() - 24 * 3600_000).toISOString();
+  const since = new Date(Date.now() - 7 * 24 * 3600_000).toISOString();
 
+  // Inclui recargas expiradas/canceladas: uma cobrança aprovada com atraso (ex.: 3DS
+  // concluído depois do vencimento do registro) precisa ser creditada mesmo assim.
   const { data: rows } = await admin
     .from("wiize_api_topups")
     .select("*")
-    .eq("status", "pending")
+    .in("status", ["pending", "canceled"])
     .eq("provider", "stripe")
     .eq("method", "card")
     .not("stripe_payment_intent_id", "is", null)
@@ -189,7 +193,7 @@ async function reconcileStripeCardTopups() {
             .eq("id", (row as any).id);
           credited++;
         }
-      } else if (["canceled", "payment_failed"].includes(pi.status)) {
+      } else if ((row as any).status === "pending" && ["canceled", "payment_failed"].includes(pi.status)) {
         await admin
           .from("wiize_api_topups")
           .update({ status: "canceled", metadata: { failure_message: pi.last_payment_error?.message || "Pagamento recusado" } })
