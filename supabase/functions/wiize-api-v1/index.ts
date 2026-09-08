@@ -575,8 +575,12 @@ serve(async (req) => {
     if (unitPrice === null) {
       return apiError("OPERATION_UNAVAILABLE", "Operação temporariamente indisponível.", 503, requestId, rateHeaders);
     }
+    const isApproach = path === "/v1/prospecting/approach";
+    const approachTypes = isApproach ? parseApproachTypes(body) : [];
     const requestedUnits = path === "/v1/prospecting/search"
       ? Math.max(1, Number((validated.payload as any)?.limit ?? 20))
+      : isApproach
+      ? approachTypes.length
       : 1;
     const tokens = unitPrice * requestedUnits;
 
