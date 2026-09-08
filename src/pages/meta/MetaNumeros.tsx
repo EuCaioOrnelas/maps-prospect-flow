@@ -331,7 +331,7 @@ export default function MetaNumeros() {
     const connecting = conn.evolution_state === "connecting";
     const responsibles = responsiblesOf(conn.id);
     return (
-      <div key={conn.id} className={`flex flex-col gap-3 rounded-card border bg-card p-4 shadow-sm transition-shadow hover:shadow-md ${online ? "border-border/80" : "border-amber-500/40 bg-amber-500/5"}`}>
+      <div key={conn.id} className={`flex flex-col gap-2.5 rounded-card border bg-card p-3.5 shadow-sm transition-shadow hover:shadow-md ${online ? "border-border/80" : "border-amber-500/40 bg-amber-500/5"}`}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {conn.profile_pic_url ? (
@@ -388,8 +388,8 @@ export default function MetaNumeros() {
           </div>
         )}
         {responsibles.length > 0 && (
-          <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Responsáveis</span>
+          <div className="flex items-center gap-2 border-t border-border/60 pt-2.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Responsáveis:</span>
             <ResponsiblesStack userIds={responsibles} members={members} />
           </div>
         )}
@@ -402,7 +402,7 @@ export default function MetaNumeros() {
   return (
     <div
       key={conn.id}
-      className={`flex flex-col gap-3 rounded-card border bg-card p-4 shadow-sm transition-shadow hover:shadow-md ${
+      className={`flex flex-col gap-2.5 rounded-card border bg-card p-3.5 shadow-sm transition-shadow hover:shadow-md ${
         isExpired ? "border-destructive/40 bg-destructive/5" : "border-border/80"
       }`}
     >
@@ -480,8 +480,8 @@ export default function MetaNumeros() {
       )}
 
       {responsibles.length > 0 && (
-        <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Responsáveis</span>
+        <div className="flex items-center gap-2 border-t border-border/60 pt-2.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Responsáveis:</span>
           <ResponsiblesStack userIds={responsibles} members={members} />
         </div>
       )}
@@ -645,7 +645,7 @@ export default function MetaNumeros() {
                         Nenhum número deste tipo conectado ainda.
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{items.map(renderCard)}</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{items.map(renderCard)}</div>
                     )}
                   </section>
                 );

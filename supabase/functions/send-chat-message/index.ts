@@ -74,12 +74,39 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Resolve "responder" (quoted message) so the reply also appears as a reply
+    // inside WhatsApp itself — works for both Meta Cloud API and Evolution.
+    let quotedWabaId: string | null = null;
+    let quotedFromMe = false;
+    try {
+      const { data: outRow } = await supabase
+        .from('chat_messages')
+        .select('reply_to_message_id')
+        .eq('id', message_id)
+        .maybeSingle();
+      const replyId = (outRow as any)?.reply_to_message_id || body.reply_to_message_id || null;
+      if (replyId) {
+        const { data: quoted } = await supabase
+          .from('chat_messages')
+          .select('waba_message_id, direction')
+          .eq('id', replyId)
+          .maybeSingle();
+        if (quoted?.waba_message_id) {
+          quotedWabaId = quoted.waba_message_id as string;
+          quotedFromMe = (quoted as any).direction === 'outbound';
+        }
+      }
+    } catch (e) {
+      console.warn('[send-chat-message] quoted lookup failed:', (e as Error).message);
+    }
+
     // Build Meta API request
     let messagePayload: any = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
       to: to,
     };
+    if (quotedWabaId) messagePayload.context = { message_id: quotedWabaId };
 
 
     if (type === "text") {
@@ -159,6 +186,11 @@ Deno.serve(async (req) => {
           media: mediaLink,
           caption: caption || undefined,
           fileName: filename || (type === 'document' ? 'documento' : undefined),
+        };
+      }
+      if (quotedWabaId) {
+        evoBody.quoted = {
+          key: { id: quotedWabaId, remoteJid: `${number}@s.whatsapp.net`, fromMe: quotedFromMe },
         };
       }
       console.log(`[send-chat-message] Sending ${type} to ${to} via Evolution ${instance}`);

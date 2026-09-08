@@ -5,7 +5,7 @@ import { ptBR } from "date-fns/locale";
 import {
   X, Search as SearchIcon, Ban, Trash2, Image as ImageIcon, FileText,
   Phone, Mail, MapPin, Globe, Building2, Tag, DollarSign, Clock, StickyNote,
-  ExternalLink, Eraser, ChevronRight, User, Plus, Copy, Check, Play, Loader2,
+  ExternalLink, Eraser, ChevronRight, User, Plus, Copy, Check, Play, Loader2, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +20,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { ImageLightbox } from "./ImageLightbox";
+import { ProfilePhotoViewer } from "./ProfilePhotoViewer";
+import { getCachedProfilePic, setCachedProfilePic } from "@/lib/profilePicCache";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
 import { SDRStatusBanner } from "@/components/sdr/SDRStatusBanner";
 
@@ -116,6 +121,9 @@ export function ContactDetailsPanel({
   const [phoneCopied, setPhoneCopied] = useState(false);
   const [lightboxId, setLightboxId] = useState<string | null>(null);
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [photoRefreshing, setPhotoRefreshing] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [savingNote, setSavingNote] = useState(false);
 
@@ -127,6 +135,40 @@ export function ContactDetailsPanel({
     () => getChatAvatarColor(conversation?.contact_phone || ""),
     [conversation],
   );
+
+  // Foto de perfil: banco -> cache local (carregamento instantâneo) -> atualização sob demanda
+  useEffect(() => {
+    if (!conversation) return;
+    const fromDb = conversation.contact_profile_pic || null;
+    const cached = getCachedProfilePic(conversation.contact_phone);
+    setPhotoUrl(fromDb || cached || null);
+    if (fromDb) setCachedProfilePic(conversation.contact_phone, fromDb);
+  }, [conversation?.id, conversation?.contact_profile_pic]);
+
+  const effectivePic = photoUrl || conversation?.contact_profile_pic || null;
+
+  const refreshProfilePic = async () => {
+    if (!conversation) return;
+    setPhotoRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("evolution-instance", {
+        body: { action: "fetch_profile_pic", connection_id: conversation.waba_connection_id, conversation_id: conversation.id },
+      });
+      if (error) throw error;
+      if ((data as any)?.ok) {
+        const url = (data as any).url || null;
+        setPhotoUrl(url);
+        setCachedProfilePic(conversation.contact_phone, url);
+        toast.success(url ? "Foto de perfil atualizada" : "Este contato não tem foto visível");
+      } else {
+        toast.error((data as any)?.error || "Disponível apenas em Números de Atendimento");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível atualizar a foto");
+    } finally {
+      setPhotoRefreshing(false);
+    }
+  };
 
   const reloadLeadData = async (leadId: string) => {
     const [n, a, d] = await Promise.all([
@@ -288,16 +330,38 @@ export function ContactDetailsPanel({
         <div className="flex-1 overflow-y-auto wa-scrollbar">
           {/* Identity */}
           <div className="flex flex-col items-center gap-3 px-6 py-6 border-b border-border">
-            <div className={cn(
-              "w-[110px] h-[110px] rounded-full flex items-center justify-center text-white text-3xl font-medium",
-              avatarColor,
-            )}>
-              {conversation.contact_profile_pic ? (
-                <img src={conversation.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
-              ) : (
-                <span>{initials}</span>
-              )}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "group relative w-[110px] h-[110px] rounded-full flex items-center justify-center text-white text-3xl font-medium",
+                    "ring-2 ring-transparent hover:ring-primary/40 transition-all duration-200",
+                    avatarColor,
+                  )}
+                  aria-label="Foto de perfil"
+                >
+                  {effectivePic ? (
+                    <img src={effectivePic} className="w-full h-full rounded-full object-cover" alt="" />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
+                  <span className="absolute inset-0 rounded-full bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <ImageIcon size={22} className="text-white" />
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56">
+                <DropdownMenuItem onClick={() => setPhotoOpen(true)}>
+                  <ImageIcon size={14} className="mr-2" /> Ver foto de perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={refreshProfilePic} disabled={photoRefreshing}>
+                  {photoRefreshing
+                    ? <Loader2 size={14} className="mr-2 animate-spin" />
+                    : <RefreshCw size={14} className="mr-2" />}
+                  Atualizar imagem de perfil
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="text-center w-full">
               <h2 className="text-lg font-semibold text-foreground truncate">
                 {conversation.contact_name || "Sem nome"}
@@ -636,7 +700,18 @@ export function ContactDetailsPanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+          <ProfilePhotoViewer
+        open={photoOpen}
+        url={effectivePic}
+        name={conversation?.contact_name || phoneFmt.display}
+        subtitle={phoneFmt.display}
+        initials={initials}
+        avatarColor={avatarColor}
+        refreshing={photoRefreshing}
+        onRefresh={refreshProfilePic}
+        onClose={() => setPhotoOpen(false)}
+      />
+</>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { hydrateProfilePics } from "@/lib/profilePicCache";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPhoneForMeta } from "@/lib/phoneUtils";
@@ -188,7 +189,7 @@ export function useChat() {
         .order("is_pinned", { ascending: false })
         .order("last_message_at", { ascending: false, nullsFirst: false });
 
-      setConversations((data as ChatConversation[]) || []);
+      setConversations(hydrateProfilePics((data as ChatConversation[]) || []));
       loadedConvForConnRef.current = activeConnectionId;
       setLoading(false);
     };
