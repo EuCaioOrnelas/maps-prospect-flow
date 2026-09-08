@@ -74,8 +74,9 @@ export function ResponsiblesPicker({
         disabled={disabled}
         onClick={() => { if (!disabled) { setOpen((o) => !o); setQuery(""); } }}
         className={cn(
-          "flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-input bg-background px-3 text-left text-sm transition-colors",
-          "hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
+          "flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-border bg-card px-3.5 text-left text-sm shadow-sm transition-colors",
+          "hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed",
+          open && "border-primary/50 ring-2 ring-primary/10"
         )}
       >
         <span className="flex items-center gap-2 truncate">
@@ -92,7 +93,7 @@ export function ResponsiblesPicker({
       </button>
 
       {open && (
-        <div className="rounded-xl border border-border bg-popover text-popover-foreground shadow-sm overflow-hidden">
+        <div className="rounded-lg border border-border bg-card text-card-foreground shadow-md overflow-hidden">
           <div className="flex items-center gap-2 border-b border-border px-3 py-2">
             <Search size={14} className="text-muted-foreground shrink-0" />
             <Input
@@ -150,9 +151,9 @@ export function ResponsiblesPicker({
 
 
       {/* Selecionados aparecem abaixo do input */}
-      <div className="min-h-[38px] rounded-lg border border-dashed border-border/70 bg-muted/30 px-2 py-1.5 flex flex-wrap items-center gap-2">
+      <div className="min-h-[44px] rounded-lg border border-border bg-card px-2.5 py-2 flex flex-wrap items-center gap-1.5 shadow-sm">
         {value.length === 0 ? (
-          <span className="text-xs text-muted-foreground">Nenhum responsável selecionado ainda</span>
+          <span className="px-1 text-xs text-muted-foreground">Nenhum responsável selecionado ainda</span>
         ) : (
           value.map((id) => {
             const m = byId[id];
@@ -160,17 +161,17 @@ export function ResponsiblesPicker({
             return (
               <span
                 key={id}
-                className="flex items-center gap-1.5 rounded-full border border-border bg-background py-0.5 pl-0.5 pr-1.5 text-xs"
+                className="flex items-center gap-1.5 rounded-md border border-border bg-muted/40 py-1 pl-1 pr-1.5 text-xs font-medium transition-colors hover:border-primary/30"
               >
-                <Avatar className="h-5 w-5 rounded-[28%]">
-                  <AvatarImage className="rounded-[28%]" src={m?.avatar_url || undefined} alt={label} />
-                  <AvatarFallback className="text-[9px] rounded-[28%]">{initialsOf(label)}</AvatarFallback>
+                <Avatar className="h-5 w-5 rounded-[4px]">
+                  <AvatarImage className="rounded-[4px] object-cover" src={m?.avatar_url || undefined} alt={label} />
+                  <AvatarFallback className="rounded-[4px] bg-primary/10 text-[9px] text-primary">{initialsOf(label)}</AvatarFallback>
                 </Avatar>
                 <span className="max-w-[140px] truncate">{label}</span>
                 <button
                   type="button"
                   onClick={() => toggle(id)}
-                  className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="rounded-[3px] p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <X size={11} />
                 </button>
