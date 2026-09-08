@@ -832,7 +832,9 @@ export default function MetaNumeros() {
               Excluir este número?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação é permanente. Todas as conversas, mensagens e campanhas vinculadas a este número serão removidas e não poderão ser recuperadas.
+              {connections.find((c) => c.id === pendingDeleteId) && isEvo(connections.find((c) => c.id === pendingDeleteId)!)
+                ? "O número sai da conta na hora e libera uma vaga no seu plano. As conversas ficam guardadas por 30 dias caso a mesma linha volte; depois disso são apagadas para sempre."
+                : "Esta ação é permanente. Todas as conversas, mensagens e campanhas vinculadas a este número serão removidas e não poderão ser recuperadas."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
