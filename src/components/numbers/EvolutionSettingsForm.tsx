@@ -1,5 +1,5 @@
 import { Switch } from "@/components/ui/switch";
-import { PhoneOff, Users, Wifi, CheckCheck, History, Eye } from "lucide-react";
+import { PhoneOff, Users, Wifi, CheckCheck, Eye } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type EvolutionSettings = {
@@ -27,7 +27,8 @@ const OPTIONS: { key: keyof EvolutionSettings; icon: LucideIcon; title: string; 
   { key: "groupsIgnore", icon: Users, title: "Ignorar grupos", description: "Não recebe nem processa mensagens de grupos." },
   { key: "alwaysOnline", icon: Wifi, title: "Sempre online", description: "Mantém o WhatsApp com status online o tempo todo." },
   { key: "readMessages", icon: CheckCheck, title: "Marcar como lidas", description: "Marca todas as mensagens recebidas como lidas." },
-  { key: "syncFullHistory", icon: History, title: "Sincronizar histórico completo", description: "Importa todo o histórico de conversas ao ler o QR code." },
+  // "Sincronizar histórico" removido: a Wiize nunca importa conversas antigas do aparelho.
+  // As conversas ficam guardadas na Wiize e voltam automaticamente ao reconectar a mesma linha.
   { key: "readStatus", icon: Eye, title: "Ver status", description: "Marca todos os status (stories) como visualizados." },
 ];
 

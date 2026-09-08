@@ -1,6 +1,7 @@
 # Roadmap
 - [x] Atualizar secrets Evolution (URL/KEY)
 - [x] Auditoria Evolution em SDR/chat/CRM/IA (janela 24h, áudio, mídia, leitura, eco fromMe, transcrição)
+- [x] Reconexão automática Evolution (webhook + keepalive 5min), histórico nunca importado, conversas presas à linha DDD+8
 - [ ] Teste E2E com número Evolution real conectado (nenhum conectado ainda na conta)
 - [x] Onboarding: "Conectar número" -> /numeros
 - [x] Sidebar: Números como última opção

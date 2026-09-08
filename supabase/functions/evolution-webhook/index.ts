@@ -1,6 +1,8 @@
 // Evolution API webhook — "Número de Atendimento"
 // Recebe eventos da instância (QR, conexão, mensagens) e alimenta Chat/CRM/SDR.
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { lineRef, relinkConversationsToLine } from "../_shared/evolutionLine.ts";
+
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -184,7 +186,7 @@ Deno.serve(async (req) => {
 
   const { data: conn } = await supabase
     .from("user_waba_connections")
-    .select("id, user_id, owner_user_id, evolution_token, evolution_state, status, display_phone_number")
+    .select("id, user_id, owner_user_id, evolution_token, evolution_state, status, display_phone_number, evolution_instance_name, created_at, last_connected_at")
     .eq("evolution_instance_name", instance)
     .eq("provider", "evolution")
     .maybeSingle();
@@ -201,21 +203,39 @@ Deno.serve(async (req) => {
   const userId = conn.user_id as string;
   const ownerId = (conn.owner_user_id || conn.user_id) as string;
   const connectionId = conn.id as string;
+  // Referência estável da linha (DDD+8) para as conversas; cai para o nome da instância até conhecer o número
+  const lineReference = lineRef(conn.display_phone_number) || instance;
+  // Nunca importar histórico antigo: só mensagens após a criação da instância na Wiize
+  const historyCutoff = conn.created_at ? new Date(conn.created_at).getTime() - 5 * 60 * 1000 : 0;
 
   try {
     // ------------------------------------------------------------ conexão
     if (event === "connection.update") {
       const state = normalizeState(data.state || data.status);
       const patch: Record<string, unknown> = { evolution_state: state };
+      let phone: string | null = null;
       if (state === "open") {
         patch.last_connected_at = new Date().toISOString();
         patch.status = "active";
-        const phone = data.wuid ? jidToPhone(data.wuid) : (body.sender ? jidToPhone(body.sender) : null);
+        phone = data.wuid ? jidToPhone(data.wuid) : (body.sender ? jidToPhone(body.sender) : null);
         if (phone) patch.display_phone_number = phone;
         if (data.profileName) patch.profile_name = data.profileName;
         if (data.profilePictureUrl) patch.profile_pic_url = data.profilePictureUrl;
       }
       await supabase.from("user_waba_connections").update(patch).eq("id", connectionId);
+      if (state === "open" && (phone || conn.display_phone_number)) {
+        const n = await relinkConversationsToLine(supabase, conn as any, phone || conn.display_phone_number);
+        if (n) console.log(`[evolution-webhook] ${instance}: ${n} conversa(s) reanexada(s) à linha`);
+      }
+      // Sessão caiu (não foi logout pelo usuário): religa imediatamente sem novo QR.
+      // Código 401/403/loggedOut significa que o aparelho desconectou de propósito → precisa de QR.
+      const reason = Number(data.statusReason ?? data.lastDisconnect?.error?.output?.statusCode ?? 0);
+      const loggedOut = reason === 401 || reason === 403 || reason === 440;
+      if (state === "close" && conn.last_connected_at && !loggedOut && EVO_URL && EVO_KEY) {
+        fetch(`${EVO_URL}/instance/connect/${encodeURIComponent(instance)}`, { headers: { apikey: EVO_KEY } })
+          .then((r) => console.log(`[evolution-webhook] auto-reconnect ${instance}: ${r.status}`))
+          .catch((e) => console.warn(`[evolution-webhook] auto-reconnect ${instance} falhou`, e));
+      }
       return ok();
     }
     if (event === "qrcode.updated") {
@@ -242,7 +262,10 @@ Deno.serve(async (req) => {
         if (!contactPhone) continue;
         const contactName = !fromMe ? (item.pushName || null) : null;
         const tsSec = Number(item.messageTimestamp?.low ?? item.messageTimestamp ?? Math.floor(Date.now() / 1000));
-        const msgTime = new Date((tsSec > 1e12 ? tsSec : tsSec * 1000)).toISOString();
+        const msgMs = tsSec > 1e12 ? tsSec : tsSec * 1000;
+        const msgTime = new Date(msgMs).toISOString();
+        // Histórico antigo do aparelho (anterior à conexão na Wiize) nunca é importado
+        if (historyCutoff && msgMs < historyCutoff) continue;
 
         const parsed = parseMessage(item.message, item);
         if (parsed.type === "reaction" || parsed.type === "unsupported" && !parsed.text) continue;
