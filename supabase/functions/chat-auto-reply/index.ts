@@ -90,13 +90,14 @@ serve(async (req) => {
       }
     }
 
-    // Get connection credentials
+    // Get connection credentials (Meta ou Evolution)
     const { data: conn } = await supabase
       .from("user_waba_connections")
-      .select("access_token, phone_number_id, status")
+      .select("access_token, phone_number_id, status, provider, evolution_instance_name")
       .eq("id", conv.waba_connection_id)
       .single();
-    if (!conn?.access_token || !conn.phone_number_id) {
+    const isEvolution = conn?.provider === "evolution";
+    if (!conn || (isEvolution ? !conn.evolution_instance_name : (!conn.access_token || !conn.phone_number_id))) {
       return new Response(JSON.stringify({ skipped: "connection missing" }), { headers: corsHeaders });
     }
 
