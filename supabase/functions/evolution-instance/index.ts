@@ -2,7 +2,7 @@
 // Gerencia instâncias conectadas por QR code (criar, QR, status, configurações, logout, excluir).
 // Docs: https://docs.evolutionfoundation.com.br/
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
-import { relinkConversationsToLine } from "../_shared/evolutionLine.ts";
+import { relinkConversationsToLine, lineRef } from "../_shared/evolutionLine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -126,6 +126,75 @@ function publicConn(c: any) {
   return rest;
 }
 
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+// Apaga definitivamente as conversas guardadas de uma linha que ficou 30 dias fora do ar.
+async function purgeEvolutionLine(admin: any, c: any) {
+  try {
+    const iname = c.evolution_instance_name;
+    if (iname) {
+      try { await evo(`/instance/logout/${iname}`, { method: "DELETE" }); } catch {}
+      try { await evo(`/instance/delete/${iname}`, { method: "DELETE" }); } catch {}
+    }
+    const ownerId = c.owner_user_id || c.user_id;
+    const ref = c.display_phone_number ? lineRef(c.display_phone_number) : null;
+
+    const ids = new Set<string>();
+    const { data: byConn } = await admin.from("chat_conversations").select("id").eq("waba_connection_id", c.id);
+    (byConn || []).forEach((r: any) => ids.add(r.id));
+    if (ref) {
+      const { data: byLine } = await admin
+        .from("chat_conversations").select("id").eq("phone_number_id", ref).eq("owner_user_id", ownerId);
+      (byLine || []).forEach((r: any) => ids.add(r.id));
+    }
+    const list = Array.from(ids);
+    for (let i = 0; i < list.length; i += 200) {
+      const chunk = list.slice(i, i + 200);
+      await admin.from("chat_messages").delete().in("conversation_id", chunk);
+      await admin.from("chat_conversations").delete().in("id", chunk);
+    }
+    await admin.from("user_waba_connections").delete().eq("id", c.id);
+    console.log(`[evolution-instance] purge 30d: ${c.id} (${list.length} conversas)`);
+  } catch (e) {
+    console.warn("[evolution-instance] purge falhou", (e as Error).message);
+  }
+}
+
+// Avisa o cliente por e-mail quando a religação automática não resolve e é preciso ler o QR code.
+async function sendReconnectEmail(admin: any, c: any): Promise<boolean> {
+  const apiKey = Deno.env.get("RESEND_API_KEY");
+  if (!apiKey) return false;
+  try {
+    const ownerId = c.owner_user_id || c.user_id;
+    const { data: profile } = await admin.from("profiles").select("email, full_name").eq("id", ownerId).maybeSingle();
+    const to = profile?.email;
+    if (!to) return false;
+    const label = c.nickname || (c.display_phone_number ? `+${c.display_phone_number}` : "Número de Atendimento");
+    const link = "https://app.wiize.com.br/numeros";
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "Wiize <no-reply@wiize.com.br>",
+        to: [to],
+        subject: `Seu Número de Atendimento ${label} está desconectado`,
+        html: `
+          <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;color:#0f172a">
+            <h2 style="font-size:18px;margin:0 0 12px">Reconecte seu WhatsApp</h2>
+            <p style="font-size:14px;line-height:1.6">Olá${profile?.full_name ? `, ${profile.full_name}` : ""}. O número <strong>${label}</strong> saiu do ar e não conseguimos religar sozinhos.</p>
+            <p style="font-size:14px;line-height:1.6">Enquanto isso, o chat, o CRM e a IA não recebem novas mensagens nessa linha. Abra a página de Números, clique em <strong>Reconectar</strong> e leia o novo QR code pelo celular.</p>
+            <p style="margin:20px 0"><a href="${link}" style="background:#16a34a;color:#fff;text-decoration:none;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:600">Reconectar agora</a></p>
+            <p style="font-size:12px;color:#64748b;line-height:1.6">Se a linha ficar 30 dias sem reconectar, o histórico guardado dessas conversas será apagado.</p>
+          </div>`,
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn("[evolution-instance] e-mail de reconexão falhou", (e as Error).message);
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -150,22 +219,42 @@ Deno.serve(async (req) => {
     // conectados o máximo possível — religa sessões caídas e reaplica o webhook.
     if (new URL(req.url).searchParams.get("keepalive") === "1") {
       if (authHeader !== `Bearer ${SERVICE_KEY}`) return json({ error: "Unauthorized" }, 401);
+      const COLS = "id, user_id, owner_user_id, nickname, evolution_instance_name, evolution_token, evolution_state, evolution_disconnected_since, evolution_qr_alert_sent_at, last_connected_at, display_phone_number, status";
+      const report: Record<string, string> = {};
+
+      // Varredura de 30 dias: linhas removidas ou fora do ar há muito tempo perdem o histórico guardado
+      const cutoff = new Date(Date.now() - THIRTY_DAYS_MS).toISOString();
+      const { data: stale } = await admin
+        .from("user_waba_connections").select(COLS)
+        .eq("provider", "evolution")
+        .not("evolution_disconnected_since", "is", null)
+        .lt("evolution_disconnected_since", cutoff);
+      for (const c of stale || []) {
+        await purgeEvolutionLine(admin, c);
+        report[(c.evolution_instance_name as string) || c.id] = "purged_30d";
+      }
+
+      const staleIds = new Set((stale || []).map((c: any) => c.id));
       const { data: conns } = await admin
         .from("user_waba_connections")
-        .select("id, user_id, owner_user_id, evolution_instance_name, evolution_token, evolution_state, last_connected_at, display_phone_number, status")
+        .select(COLS)
         .eq("provider", "evolution")
         .neq("status", "disconnected");
-      const report: Record<string, string> = {};
       for (const c of conns || []) {
         const iname = c.evolution_instance_name as string;
-        if (!iname) continue;
+        if (!iname || staleIds.has(c.id)) continue;
         let state = "close";
         try { state = normalizeState(await evo(`/instance/connectionState/${iname}`, { method: "GET" })); }
         catch (e) { state = (e as any).status === 404 ? "missing" : "close"; }
 
         if (state === "open") {
-          if (c.evolution_state !== "open") {
-            await admin.from("user_waba_connections").update({ evolution_state: "open", last_connected_at: new Date().toISOString() }).eq("id", c.id);
+          if (c.evolution_state !== "open" || c.evolution_disconnected_since || c.evolution_qr_alert_sent_at) {
+            await admin.from("user_waba_connections").update({
+              evolution_state: "open",
+              last_connected_at: new Date().toISOString(),
+              evolution_disconnected_since: null,
+              evolution_qr_alert_sent_at: null,
+            }).eq("id", c.id);
             if (c.display_phone_number) await relinkConversationsToLine(admin, c as any, c.display_phone_number);
           }
           // Auto-cura do webhook: garante que eventos continuem chegando
@@ -185,25 +274,42 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        if (state === "missing") {
-          await admin.from("user_waba_connections").update({ evolution_state: "close" }).eq("id", c.id);
-          report[iname] = "missing";
+        // Fora do ar: marca desde quando (base para o aviso e para a limpeza de 30 dias)
+        const since = c.evolution_disconnected_since ? new Date(c.evolution_disconnected_since).getTime() : Date.now();
+        const patch: Record<string, unknown> = { evolution_state: state === "missing" ? "close" : state };
+        if (!c.evolution_disconnected_since) patch.evolution_disconnected_since = new Date(since).toISOString();
+
+        // 30 dias sem voltar: apaga conversas guardadas e a conexão
+        if (Date.now() - since > THIRTY_DAYS_MS) {
+          await purgeEvolutionLine(admin, c);
+          report[iname] = "purged_30d";
           continue;
         }
 
-        // close/connecting: se já esteve conectada, força reconexão sem novo QR
-        if (c.last_connected_at) {
+        let needsQr = state === "missing";
+        if (state !== "missing" && c.last_connected_at) {
+          // já esteve conectada: tenta religar sem QR code
           try {
             const r = await evo(`/instance/connect/${iname}`, { method: "GET" });
             const st = r?.instance?.state ? normalizeState(r) : (r?.base64 ? "connecting" : state);
-            await admin.from("user_waba_connections").update({ evolution_state: st }).eq("id", c.id);
-            report[iname] = `reconnect:${st}`;
+            patch.evolution_state = st;
+            needsQr = !!(r?.base64 || r?.code) && st !== "open";
+            report[iname] = `reconnect:${st}${needsQr ? "+qr" : ""}`;
           } catch (e) {
             report[iname] = `reconnect_failed:${(e as Error).message}`;
           }
         } else {
           report[iname] = state;
         }
+
+        // Só avisa o cliente quando a religação automática não resolve (precisa de QR code)
+        const alerted = c.evolution_qr_alert_sent_at ? new Date(c.evolution_qr_alert_sent_at).getTime() : 0;
+        if (needsQr && Date.now() - alerted > 24 * 60 * 60 * 1000) {
+          const sent = await sendReconnectEmail(admin, c);
+          if (sent) patch.evolution_qr_alert_sent_at = new Date().toISOString();
+        }
+
+        await admin.from("user_waba_connections").update(patch).eq("id", c.id);
       }
       return json({ ok: true, checked: (conns || []).length, report });
     }
@@ -496,15 +602,18 @@ Deno.serve(async (req) => {
     }
 
     // ---------------------------------------------------------------- delete
+    // O número sai da conta na hora (libera vaga no plano), mas as conversas ficam
+    // guardadas por 30 dias caso a mesma linha volte. Depois disso são apagadas.
     if (action === "delete") {
       try { await evo(`/instance/logout/${name}`, { method: "DELETE" }); } catch {}
       try { await evo(`/instance/delete/${name}`, { method: "DELETE" }); } catch (e) {
         if ((e as any).status !== 404) console.warn("[evolution-instance] delete remote:", (e as Error).message);
       }
-      const { error: delErr } = await admin.from("user_waba_connections").delete().eq("id", conn.id);
-      if (delErr) {
-        await admin.from("user_waba_connections").update({ status: "disconnected", evolution_state: "close" }).eq("id", conn.id);
-      }
+      await admin.from("user_waba_connections").update({
+        status: "disconnected",
+        evolution_state: "close",
+        evolution_disconnected_since: conn.evolution_disconnected_since || new Date().toISOString(),
+      }).eq("id", conn.id);
       return json({ ok: true });
     }
 
