@@ -430,6 +430,34 @@ Deno.serve(async (req) => {
       return ok();
     }
 
+    // ---------------------------------------------------- contatos (foto/nome)
+    if (event === "contacts.update" || event === "contacts.upsert") {
+      const items: any[] = Array.isArray(data) ? data : [data];
+      for (const c of items) {
+        const jid: string = c.remoteJid || c.id || "";
+        if (!jid || jid.endsWith("@g.us")) continue;
+        const phone = jidToPhone(jid);
+        if (!phone) continue;
+        const patch: Record<string, unknown> = {};
+        if (c.profilePicUrl || c.profilePictureUrl) patch.contact_profile_pic = c.profilePicUrl || c.profilePictureUrl;
+        if (c.pushName) patch.contact_name = c.pushName;
+        if (!Object.keys(patch).length) continue;
+        // Nome só é atualizado quando ainda não existe (não sobrescreve nome salvo pelo usuário)
+        const { data: convs } = await supabase
+          .from("chat_conversations")
+          .select("id, contact_name")
+          .eq("waba_connection_id", connectionId)
+          .ilike("contact_phone", `%${phoneTail8(phone)}`);
+        for (const cv of convs || []) {
+          const p = { ...patch };
+          if (cv.contact_name && p.contact_name) delete p.contact_name;
+          if (Object.keys(p).length) await supabase.from("chat_conversations").update(p).eq("id", cv.id);
+        }
+      }
+      return ok();
+    }
+
+
     return ok({ ignored: event });
   } catch (e) {
     console.error("[evolution-webhook] error", event, e);
