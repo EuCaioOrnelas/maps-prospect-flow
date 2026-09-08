@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2, Webhook, CheckCircle2,
-  Headset, Megaphone, QrCode, Settings2,
+  Headset, Megaphone, QrCode, Settings2, Smartphone,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProviderChoiceDialog } from "@/components/numbers/ProviderChoiceDialog";
@@ -551,25 +551,46 @@ export default function MetaNumeros() {
         <TabsContent value="numeros" className="mt-5">
           {!loading && connections.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-              <div className="rounded-2xl border border-border bg-card p-4">
-                <p className="text-xs text-muted-foreground">Números conectados</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums">
-                  {connections.length}<span className="text-sm text-muted-foreground font-normal"> / {Number.isFinite(maxMetaConnections) ? maxMetaConnections : "∞"}</span>
-                </p>
-                <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <div className="rounded-card border border-border bg-card p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hover bg-primary text-primary-foreground">
+                    <Smartphone size={22} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-muted-foreground">Números conectados</p>
+                    <p className="mt-0.5 text-2xl font-semibold tabular-nums">
+                      {connections.length}<span className="text-sm text-muted-foreground font-normal"> / {Number.isFinite(maxMetaConnections) ? maxMetaConnections : "∞"}</span>
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">
                   <div className={`h-full rounded-full transition-all ${reachedConnectionLimit ? "bg-destructive" : "bg-primary"}`} style={{ width: `${Number.isFinite(maxMetaConnections) && maxMetaConnections > 0 ? Math.min(100, (connections.length / maxMetaConnections) * 100) : 5}%` }} />
                 </div>
-                <p className="mt-1.5 text-[11px] text-muted-foreground">{basePlanNumbers} do plano {userPlan}{extraNumbers > 0 ? ` + ${extraNumbers} adicionais` : ""}</p>
+                <p className="mt-2 text-[11px] text-muted-foreground">{basePlanNumbers} do plano {userPlan}{extraNumbers > 0 ? ` + ${extraNumbers} adicionais` : ""}</p>
               </div>
-              <div className="rounded-2xl border border-border bg-card p-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Headset size={12} /> Atendimento</div>
-                <p className="mt-1 text-2xl font-semibold tabular-nums">{connections.filter(isEvo).length}</p>
-                <p className="mt-1.5 text-[11px] text-muted-foreground">{connections.filter((c) => isEvo(c) && c.evolution_state === "open").length} online agora</p>
+              <div className="rounded-card border border-border bg-card p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hover bg-primary text-primary-foreground">
+                    <Headset size={22} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Atendimento</p>
+                    <p className="mt-0.5 text-2xl font-semibold tabular-nums">{connections.filter(isEvo).length}</p>
+                  </div>
+                </div>
+                <p className="mt-3 text-[11px] text-muted-foreground">{connections.filter((c) => isEvo(c) && c.evolution_state === "open").length} online agora</p>
               </div>
-              <div className="rounded-2xl border border-border bg-card p-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Megaphone size={12} /> Marketing</div>
-                <p className="mt-1 text-2xl font-semibold tabular-nums">{connections.filter((c) => !isEvo(c)).length}</p>
-                <p className="mt-1.5 text-[11px] text-muted-foreground">{expiredConnections.length > 0 ? `${expiredConnections.length} com token expirado` : "Todos os tokens válidos"}</p>
+              <div className="rounded-card border border-border bg-card p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-hover bg-primary text-primary-foreground">
+                    <Megaphone size={22} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Marketing</p>
+                    <p className="mt-0.5 text-2xl font-semibold tabular-nums">{connections.filter((c) => !isEvo(c)).length}</p>
+                  </div>
+                </div>
+                <p className="mt-3 text-[11px] text-muted-foreground">{expiredConnections.length > 0 ? `${expiredConnections.length} com token expirado` : "Todos os tokens válidos"}</p>
               </div>
             </div>
           )}

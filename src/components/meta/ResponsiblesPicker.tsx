@@ -240,9 +240,9 @@ export function ResponsiblesStack({
                     "hover:z-20 hover:!ml-2 hover:mr-2 hover:scale-125 hover:-translate-y-1"
                   )}
                 >
-                  <Avatar className="h-7 w-7 rounded-[28%] border-2 border-background shadow-sm ring-1 ring-border/40 transition-shadow duration-300 hover:shadow-md">
-                    <AvatarImage className="rounded-[28%]" src={m?.avatar_url || undefined} alt={label} />
-                    <AvatarFallback className="text-[10px] rounded-[28%] bg-primary/10 text-primary font-medium">
+                  <Avatar className="h-7 w-7 rounded-sm border-2 border-background shadow-sm ring-1 ring-border/40 transition-shadow duration-300 hover:shadow-md [&>img]:rounded-sm">
+                    <AvatarImage className="rounded-sm object-cover" src={m?.avatar_url || undefined} alt={label} />
+                    <AvatarFallback className="text-[10px] rounded-sm bg-primary/10 text-primary font-medium">
                       {initialsOf(label)}
                     </AvatarFallback>
                   </Avatar>
