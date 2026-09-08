@@ -43,7 +43,8 @@ Envelope de erro:
 
 ## 2. Autenticação
 
-- Header obrigatório: `Authorization: Bearer wk_live_...` (alternativa: `x-wiize-api-key`).
+- Header recomendado: `Authorization: Bearer wk_live_...`.
+- Alternativas compatíveis: `x-api-key: wk_live_...`, `x-wiize-api-key: wk_live_...` ou a chave diretamente em `Authorization`.
 - Chaves de produção: prefixo `wk_live_`. Chaves de teste: prefixo `wk_test_`.
 - O segredo é exibido apenas uma vez, na criação da chave.
 - Chave em query string é rejeitada com HTTP 400.
