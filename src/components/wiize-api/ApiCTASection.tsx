@@ -38,10 +38,10 @@ export const ApiCTASection = () => {
             liberando novos acessos aos poucos.
           </p>
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/50 px-5 py-3 text-sm font-medium text-muted-foreground">
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-              Beta
-            </span>
-            Acesso em beta fechado — em breve liberado para todos
+             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+               BETA
+             </span>
+             Acesso em beta fechado em breve liberado para todos
           </div>
           <p className="mt-6 text-sm text-muted-foreground">
             Ambientes separados • Chaves revogáveis • Documentação completa
