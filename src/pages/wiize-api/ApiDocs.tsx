@@ -214,8 +214,8 @@ export default function ApiDocs() {
 
           <Doc id="auth" title="Autenticação">
             <p>
-              Toda requisição exige uma API Key no cabeçalho <code>Authorization: Bearer</code> (ou{" "}
-              <code>x-wiize-api-key</code>). Chaves de produção começam com <code>wk_live_</code> e as de
+              Toda requisição exige uma API Key no cabeçalho <code>Authorization: Bearer</code>. Também são
+              aceitos <code>x-api-key</code> e <code>x-wiize-api-key</code>. Chaves de produção começam com <code>wk_live_</code> e as de
               teste com <code>wk_test_</code>. O segredo é exibido uma única vez na criação — guarde-o em
               local seguro.
             </p>

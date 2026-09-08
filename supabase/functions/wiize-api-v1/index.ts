@@ -10,7 +10,7 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-wiize-api-key, content-type, idempotency-key, x-client-info, apikey",
+    "authorization, x-api-key, x-wiize-api-key, content-type, idempotency-key, x-client-info, apikey",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
 
@@ -385,9 +385,10 @@ serve(async (req) => {
     }
 
     // ---- autenticação por API Key ----
-    const headerKey = req.headers.get("x-wiize-api-key");
-    const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
-    const rawKey = (headerKey || bearer || "").trim();
+    const headerKey = req.headers.get("x-wiize-api-key") || req.headers.get("x-api-key");
+    const authorization = req.headers.get("authorization")?.trim() || "";
+    const authorizationKey = authorization.replace(/^Bearer\s+/i, "").trim();
+    const rawKey = (headerKey || authorizationKey || "").trim();
 
     if (!rawKey || !/^wk_(live|test)_[a-zA-Z0-9]{24,}$/.test(rawKey)) {
       await registerAbuse(null, null, ip, "auth_failure", { reason: "malformed_key" });

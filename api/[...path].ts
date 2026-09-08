@@ -5,6 +5,7 @@ const REQUEST_HEADERS = [
   "authorization",
   "content-type",
   "idempotency-key",
+  "x-api-key",
   "x-wiize-api-key",
   "x-client-info",
   "x-forwarded-for",
@@ -47,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "authorization, x-wiize-api-key, content-type, idempotency-key, x-client-info",
+    "authorization, x-api-key, x-wiize-api-key, content-type, idempotency-key, x-client-info",
   );
   res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
 
