@@ -221,7 +221,8 @@ export default function MetaNumeros() {
       const { data } = await supabase
         .from("user_waba_connections")
         .select("*")
-        .eq("owner_user_id", accountOwnerId);
+        .eq("owner_user_id", accountOwnerId)
+        .neq("status", "disconnected");
       const conns = (data || []) as unknown as WabaConnection[];
       setConnections(conns);
       const metaConns = conns.filter((c) => !isEvo(c));
@@ -374,13 +375,13 @@ export default function MetaNumeros() {
                 {online ? "WhatsApp conectado" : connecting ? "Aguardando leitura do QR code" : "WhatsApp desconectado"}
               </p>
               <p className="text-[10px] text-muted-foreground truncate">
-                {online ? "Chat, CRM e IA funcionando normalmente." : "Leia o QR code para voltar a receber mensagens."}
+                {online ? "Chat, CRM e IA funcionando normalmente." : "Gere um novo QR code para voltar a receber mensagens."}
               </p>
             </div>
           </div>
           {!online && (
             <Button size="sm" variant="outline" className="gap-1.5 h-7 px-2 shrink-0 text-[11px]" onClick={() => setEvoReconnectId(conn.id)}>
-              <QrCode size={11} /> Conectar
+              <QrCode size={11} /> Reconectar
             </Button>
           )}
         </div>
