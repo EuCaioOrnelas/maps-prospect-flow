@@ -3,7 +3,7 @@ import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { Button } from "@/components/ui/button";
 import {
-  Headset, Megaphone, Check, X, Minus, ArrowLeft, QrCode, CloudCog, ShieldCheck, AlertTriangle, ArrowRight,
+  Headset, Megaphone, Check, X, Minus, ArrowLeft, QrCode, CloudCog, ShieldCheck, AlertTriangle, ArrowRight, CircleHelp,
 } from "lucide-react";
 
 type Cell = "yes" | "no" | "partial";
@@ -42,6 +42,7 @@ export default function NumerosComparativo() {
       <MetaPageHeader
         title="Qual número usar?"
         description="Os dois tipos funcionam no chat, CRM e IA. A diferença está em risco, custo e no que cada um pode fazer."
+        titleBadge={<span className="flex h-9 w-9 items-center justify-center rounded-hover bg-primary/10 text-primary ring-1 ring-primary/20"><CircleHelp size={17} /></span>}
         actions={
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate("/numeros")}>
             <ArrowLeft size={14} /> Voltar para Números
@@ -50,10 +51,9 @@ export default function NumerosComparativo() {
       />
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
-          <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-primary/10 blur-2xl" />
+        <div className="relative overflow-hidden rounded-card border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20"><Headset size={22} /></div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-hover bg-primary/10 text-primary ring-1 ring-primary/20"><Headset size={22} /></div>
             <div>
               <h2 className="text-lg font-semibold tracking-tight">Número de Atendimento</h2>
               <p className="text-xs text-muted-foreground flex items-center gap-1"><QrCode size={11} /> Conecta por QR code</p>
@@ -62,19 +62,18 @@ export default function NumerosComparativo() {
           <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
             Usa o seu próprio WhatsApp, como o WhatsApp Web. Ideal para responder clientes que já falam com você, organizar tudo no CRM e deixar a IA analisar e engajar as conversas.
           </p>
-          <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/5 px-3 py-2.5">
-            <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600" />
-            <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-400">
+          <div className="mt-4 flex items-start gap-2 rounded-hover border border-warning/30 bg-warning/10 px-3 py-2.5">
+            <AlertTriangle size={14} className="mt-0.5 shrink-0 text-warning" />
+            <p className="text-xs leading-relaxed text-foreground/80">
               Pelas regras da Meta, este número não pode enviar mensagens para desconhecidos nem ser usado para marketing. Por isso ele não faz campanhas de mensagem.
             </p>
           </div>
         </div>
 
-        <div className="group relative overflow-hidden rounded-2xl border border-primary/30 bg-card p-6 transition-all hover:border-primary/60 hover:shadow-lg hover:shadow-primary/10">
-          <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
-          <span className="absolute right-4 top-4 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary ring-1 ring-primary/20">Recomendado</span>
+        <div className="relative overflow-hidden rounded-card border border-primary/45 bg-primary/5 p-6 shadow-sm ring-1 ring-primary/10">
+          <span className="absolute right-4 top-4 rounded-hover bg-primary/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/25">Recomendado</span>
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20"><Megaphone size={22} /></div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-hover bg-primary/15 text-primary ring-1 ring-primary/25"><Megaphone size={22} /></div>
             <div>
               <h2 className="text-lg font-semibold tracking-tight">Número de Marketing</h2>
               <p className="text-xs text-muted-foreground flex items-center gap-1"><CloudCog size={11} /> Conecta via Meta Cloud API</p>
@@ -83,16 +82,16 @@ export default function NumerosComparativo() {
           <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
             É o WhatsApp Business oficial. Serve tanto para atendimento quanto para marketing: campanhas de mensagem, templates aprovados e fluxos automáticos, tudo sem risco de bloqueio.
           </p>
-          <div className="mt-4 flex items-start gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/5 px-3 py-2.5">
-            <ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-600" />
-            <p className="text-xs leading-relaxed text-emerald-700 dark:text-emerald-400">
+          <div className="mt-4 flex items-start gap-2 rounded-hover border border-primary/35 bg-primary/10 px-3 py-2.5">
+            <ShieldCheck size={14} className="mt-0.5 shrink-0 text-primary" />
+            <p className="text-xs font-medium leading-relaxed text-foreground">
               Funciona para atendimento e para marketing, sem bloqueios. A Meta cobra por conversa iniciada, direto na sua conta de anúncios, fora da assinatura Wiize.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="mt-6 overflow-hidden rounded-card border border-border bg-card shadow-sm">
         <table className="w-full text-left">
           <thead className="bg-muted/40">
             <tr>
@@ -116,8 +115,7 @@ export default function NumerosComparativo() {
         </table>
       </div>
 
-      <div className="mt-6 relative overflow-hidden rounded-2xl border border-primary/30 bg-primary/5 p-6">
-        <div className="pointer-events-none absolute -left-8 -bottom-10 h-32 w-32 rounded-full bg-primary/10 blur-2xl" />
+      <div className="mt-6 relative overflow-hidden rounded-card border border-primary/30 bg-primary/5 p-6">
         <p className="text-sm font-semibold text-foreground">Resumo rápido</p>
         <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
           Quer só atender quem já fala com você, sem custo? <strong className="text-foreground">Número de Atendimento</strong>.

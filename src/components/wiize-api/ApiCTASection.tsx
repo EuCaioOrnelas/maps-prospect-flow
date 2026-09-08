@@ -25,24 +25,20 @@ export const ApiCTASection = () => {
           <div className="mb-5 inline-flex items-center gap-1.5 rounded-hover glass px-3 py-1.5 sm:mb-6 sm:gap-2 sm:px-4 sm:py-2">
             <Zap size={14} className="text-primary" />
             <span className="text-[11px] text-muted-foreground sm:text-sm">
-              Programa beta • acesso por convite
+              Conta gratuita • acesso imediato
             </span>
           </div>
           <h2 className="mb-6 font-display text-4xl font-bold text-foreground sm:text-5xl md:text-6xl">
-            Estamos em beta.
+            Sua integração começa agora.
             <br />
-            <span className="text-shimmer-highlight">Em breve, aberto para todos.</span>
+            <span className="text-shimmer-highlight">Leve a inteligência Wiize ao seu produto.</span>
           </h2>
           <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-            No momento apenas alguns usuários selecionados podem testar a Wiize API. Estamos
-            liberando novos acessos aos poucos.
+            Crie sua conta, gere sua chave e comece a integrar prospecção e inteligência comercial em minutos.
           </p>
-          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/50 px-5 py-3 text-sm font-medium text-muted-foreground">
-             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-               BETA
-             </span>
-             Acesso em beta fechado em breve liberado para todos
-          </div>
+          <Link to="/api/login?modo=cadastro">
+            <Button size="lg" className="h-12 rounded-hover px-7 text-base">Criar conta grátis <ArrowRight size={17} /></Button>
+          </Link>
           <p className="mt-6 text-sm text-muted-foreground">
             Ambientes separados • Chaves revogáveis • Documentação completa
           </p>

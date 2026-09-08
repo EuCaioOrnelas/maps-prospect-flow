@@ -506,7 +506,7 @@ export default function MetaNumeros() {
         actions={
           <div className="flex items-center gap-3">
             <span
-              className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${
+              className={`hidden sm:inline-flex items-center gap-1.5 rounded-hover border px-3 py-1.5 text-xs font-medium ${
                 reachedConnectionLimit
                   ? "border-destructive/40 bg-destructive/10 text-destructive"
                   : "border-border bg-muted/40 text-muted-foreground"
@@ -516,9 +516,9 @@ export default function MetaNumeros() {
               <strong className="text-foreground tabular-nums">
                 {String(connections.length).padStart(2, "0")}
               </strong>
-              /
+              <span className="opacity-50">/</span>
               <span className="tabular-nums">{String(maxMetaConnections).padStart(2, "0")}</span>
-              <span className="opacity-70">números</span>
+              <span className="ml-0.5 opacity-70">números</span>
             </span>
             <Button
               size="sm"
