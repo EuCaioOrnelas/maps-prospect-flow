@@ -1673,6 +1673,13 @@ body.tour-active {
     color: hsl(var(--whatsapp));
   }
 
+  .bg-wa-trigger {
+    background-color: hsl(var(--wa-trigger));
+  }
+  .text-wa-trigger {
+    color: hsl(var(--wa-trigger));
+  }
+
   .blog-content {
     color: hsl(var(--foreground));
     font-size: 1.125rem;
