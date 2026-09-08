@@ -89,26 +89,45 @@ serve(async (req) => {
       });
     }
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
-    if (authErr || !user) {
-      return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+
+    // Modo interno (Wiize API V1): service role + id da conta API no header
+    const internalUserId = req.headers.get("x-wiize-api-user");
+    const internalMode = !!internalUserId && token === SUPABASE_SERVICE_ROLE_KEY;
+
+    let user: { id: string } | null = null;
+    if (internalMode) {
+      user = { id: internalUserId! };
+    } else {
+      const { data: { user: authUser }, error: authErr } = await supabase.auth.getUser(token);
+      if (authErr || !authUser) {
+        return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      user = authUser;
     }
 
-    const { lead_id } = await req.json();
-    if (!lead_id) {
-      return new Response(JSON.stringify({ error: "lead_id é obrigatório" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const body = await req.json();
+    const { lead_id } = body ?? {};
 
-    const { data: lead, error: leadErr } = await supabase
-      .from("leads").select("*").eq("id", lead_id).eq("user_id", user.id).single();
-    if (leadErr || !lead) {
-      return new Response(JSON.stringify({ error: "Lead não encontrado" }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // No modo interno o lead chega inline no corpo (a conta API não tem CRM na Wiize)
+    let lead: any = null;
+    if (internalMode && body?.lead && typeof body.lead === "object") {
+      lead = body.lead;
+    } else {
+      if (!lead_id) {
+        return new Response(JSON.stringify({ error: "lead_id é obrigatório" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: leadRow, error: leadErr } = await supabase
+        .from("leads").select("*").eq("id", lead_id).eq("user_id", user.id).single();
+      if (leadErr || !leadRow) {
+        return new Response(JSON.stringify({ error: "Lead não encontrado" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      lead = leadRow;
     }
 
     const { data: companyProfile } = await supabase
