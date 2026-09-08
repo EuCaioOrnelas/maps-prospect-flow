@@ -1,5 +1,5 @@
 const BACKEND_BASE_URL =
-  "https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/wiize-api-v1";
+  "https://lqfqnqfeuneorxocybru.supabase.co/functions/v1/wiize-api-v1";
 
 const REQUEST_HEADERS = [
   "authorization",

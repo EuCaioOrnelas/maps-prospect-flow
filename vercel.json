@@ -31,11 +31,11 @@
   "rewrites": [
     {
       "source": "/v1/:path*",
-      "destination": "https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/wiize-api-v1/v1/:path*"
+      "destination": "/api/v1/:path*"
     },
     {
       "source": "/",
-      "destination": "https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/wiize-api-v1/v1/health",
+      "destination": "/api/health",
       "has": [{ "type": "host", "value": "api.wiize.com.br" }]
     },
     { "source": "/assinatura-email", "destination": "/assinatura-email.html" },
