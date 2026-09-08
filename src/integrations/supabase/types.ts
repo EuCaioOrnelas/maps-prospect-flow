@@ -10007,8 +10007,10 @@ export type Database = {
           business_name: string | null
           created_at: string
           display_phone_number: string | null
+          evolution_disconnected_since: string | null
           evolution_instance_id: string | null
           evolution_instance_name: string | null
+          evolution_qr_alert_sent_at: string | null
           evolution_settings: Json
           evolution_state: string | null
           evolution_token: string | null
@@ -10034,8 +10036,10 @@ export type Database = {
           business_name?: string | null
           created_at?: string
           display_phone_number?: string | null
+          evolution_disconnected_since?: string | null
           evolution_instance_id?: string | null
           evolution_instance_name?: string | null
+          evolution_qr_alert_sent_at?: string | null
           evolution_settings?: Json
           evolution_state?: string | null
           evolution_token?: string | null
@@ -10061,8 +10065,10 @@ export type Database = {
           business_name?: string | null
           created_at?: string
           display_phone_number?: string | null
+          evolution_disconnected_since?: string | null
           evolution_instance_id?: string | null
           evolution_instance_name?: string | null
+          evolution_qr_alert_sent_at?: string | null
           evolution_settings?: Json
           evolution_state?: string | null
           evolution_token?: string | null
