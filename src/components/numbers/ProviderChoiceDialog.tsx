@@ -56,7 +56,7 @@ export function ProviderChoiceDialog({ open, onOpenChange, onChoose }: Props) {
             </div>
             <h3 className="mt-4 text-base font-semibold text-foreground">Número de Marketing</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              API oficial da Meta. Serve para tudo: atendimento, campanhas, automações e disparos em massa.
+              Conecta via Meta Cloud API. Serve para tudo: atendimento, campanhas de mensagem e automações.
             </p>
             <div className="mt-3 flex items-start gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-2.5 py-2">
               <ShieldCheck size={13} className="mt-0.5 shrink-0 text-emerald-600" />

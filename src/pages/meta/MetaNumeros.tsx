@@ -594,7 +594,7 @@ export default function MetaNumeros() {
               <h3 className="mt-4 text-lg font-semibold">Nenhum número conectado</h3>
               <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
                 Conecte um <strong className="text-foreground">Número de Atendimento</strong> por QR code em segundos, ou um
-                {" "}<strong className="text-foreground">Número de Marketing</strong> pela API oficial da Meta para campanhas e disparos.
+                {" "}<strong className="text-foreground">Número de Marketing</strong> via Meta Cloud API para campanhas de mensagem.
               </p>
               <div className="mt-5 flex flex-col items-center gap-2">
                 <Button onClick={() => setShowProviderChoice(true)}><Plus size={14} className="mr-1.5" /> Conectar número</Button>
@@ -660,8 +660,8 @@ export default function MetaNumeros() {
                 );
                 return (
                   <>
-                    <Section icon={Headset} title="Números de Atendimento" subtitle="WhatsApp conectado por QR code. Chat, CRM e IA — sem disparos em massa." count={evoConns.length} items={evoConns} cta="Conectar por QR code" ctaIcon={QrCode} onCta={() => setShowEvolutionConnect(true)} />
-                    <Section icon={Megaphone} title="Números de Marketing" subtitle="API oficial da Meta. Campanhas, templates, fluxos e atendimento sem risco de bloqueio." count={metaConns.length} items={metaConns} cta="Conectar via Meta" ctaIcon={Plus} onCta={() => setShowAddNumber(true)} />
+                    <Section icon={Headset} title="Números de Atendimento" subtitle="WhatsApp conectado por QR code. Chat, CRM e IA, sem campanhas de mensagem." count={evoConns.length} items={evoConns} cta="Conectar por QR code" ctaIcon={QrCode} onCta={() => setShowEvolutionConnect(true)} />
+                    <Section icon={Megaphone} title="Números de Marketing" subtitle="Conecta via Meta Cloud API. Atendimento, campanhas, templates e fluxos sem risco de bloqueio." count={metaConns.length} items={metaConns} cta="Conectar via Meta" ctaIcon={Plus} onCta={() => setShowAddNumber(true)} />
                   </>
                 );
               })()}
@@ -671,23 +671,6 @@ export default function MetaNumeros() {
                 <Link to="/numeros/comparativo" className="text-primary hover:underline inline-flex items-center gap-1"><Info size={11} /> Atendimento vs Marketing</Link>
               </div>
 
-              <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5">
-                <Info size={18} className="text-primary mt-0.5 shrink-0" />
-                <div className="text-sm">
-                  <p className="font-semibold text-foreground">API de Marketing do WhatsApp (Cloud API)</p>
-                  <p className="text-muted-foreground mt-0.5">
-                    Disparo via WhatsApp Cloud API utilizando <strong>HSM templates</strong> pré-aprovados pela Meta (categorias: marketing, utility e authentication). O envio é tarifado por <strong>conversa de 24h</strong> conforme a tabela oficial da Meta por país e categoria, com cobrança realizada diretamente pela Meta na conta de billing vinculada ao WABA — independente da assinatura da plataforma. Cada número possui limite de envio próprio definido pelo <strong>messaging tier</strong> e <strong>quality rating</strong> atribuídos pela Meta.
-                  </p>
-                  <a
-                    href="https://developers.facebook.com/docs/whatsapp/messaging-limits"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline flex items-center gap-1 mt-1 text-xs"
-                  >
-                    <ExternalLink size={10} /> Ver limites de envio da Meta
-                  </a>
-                </div>
-              </div>
             </div>
           )}
         </TabsContent>
