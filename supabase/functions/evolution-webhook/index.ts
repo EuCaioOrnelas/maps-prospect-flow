@@ -4,7 +4,27 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const EVO_URL = (Deno.env.get("EVOLUTION_API_URL") || "").replace(/\/+$/, "");
+const EVO_KEY = Deno.env.get("EVOLUTION_API_KEY") || "";
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+
+// Fallback: quando o webhook não traz o base64 da mídia, busca na Evolution.
+async function fetchMediaBase64(instance: string, key: any, hasVideo: boolean): Promise<{ base64: string | null; mime: string | null }> {
+  if (!EVO_URL || !EVO_KEY || !key?.id) return { base64: null, mime: null };
+  try {
+    const r = await fetch(`${EVO_URL}/chat/getBase64FromMediaMessage/${encodeURIComponent(instance)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: EVO_KEY },
+      body: JSON.stringify({ message: { key }, convertToMp4: hasVideo }),
+    });
+    if (!r.ok) { console.warn("[evolution-webhook] getBase64 failed", r.status); return { base64: null, mime: null }; }
+    const j = await r.json().catch(() => ({}));
+    return { base64: j?.base64 || null, mime: j?.mimetype || null };
+  } catch (e) {
+    console.warn("[evolution-webhook] getBase64 error", e);
+    return { base64: null, mime: null };
+  }
+}
 
 const ok = (body: unknown = { ok: true }) =>
   new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
