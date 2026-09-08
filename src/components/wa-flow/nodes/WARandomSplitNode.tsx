@@ -1,14 +1,15 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
+import { NodeShell } from "./NodeShell";
 import { Shuffle } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 
 const dotColors = [
-  "bg-primary",
-  "bg-primary",
-  "bg-primary",
-  "bg-primary",
-  "bg-primary",
+  "bg-amber-400",
+  "bg-amber-400",
+  "bg-amber-400",
+  "bg-amber-400",
+  "bg-amber-400",
 ];
 
 export function WARandomSplitNode({ data }: NodeProps) {
@@ -39,55 +40,49 @@ export function WARandomSplitNode({ data }: NodeProps) {
   const equalShare = outputs.length > 0 ? 100 / outputs.length : 0;
 
   return (
-    <div ref={nodeRef} className="bg-card border border-border/70 rounded-2xl shadow-[0_6px_20px_-12px_hsl(var(--foreground)/0.35)] w-52 relative">
-      <FlowHandle type="target" position={Position.Left} />
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
-        <div className="w-9 h-9 rounded-xl bg-purple-500 flex items-center justify-center shrink-0">
-          <Shuffle size={17} className="text-white" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-foreground truncate">
-            {String((data as any).label || "Random Split")}
-          </p>
-          <p className="text-[10px] text-muted-foreground">
-            {stats && stats.total > 0
-              ? `${stats.total} divisões reais`
-              : `${outputs.length} saídas aleatórias`}
-          </p>
-        </div>
-      </div>
+    <div ref={nodeRef}>
+      <NodeShell
+        icon={Shuffle}
+        accent="bg-amber-500"
+        title={String((data as any).label || "Random Split")}
+        subtitle={stats && stats.total > 0 ? `${stats.total} divisões reais` : `${outputs.length} saídas aleatórias`}
+        placeholder="Clique para configurar"
+        width="w-52"
+      >
+        <FlowHandle type="target" position={Position.Left} />
 
-      <div className="px-3 py-2 space-y-1">
-        {outputs.map((o, i) => {
-          const vs = stats?.variants?.[o.id];
-          const pct = vs ? vs.share : equalShare;
-          return (
-            <div
-              key={o.id}
-              ref={(el) => { outputRefs.current[i] = el; }}
-              className="text-[10px] bg-muted/30 border border-border/30 rounded px-2 py-1.5 flex items-center justify-between gap-2 font-semibold text-foreground"
-            >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className={`w-1.5 h-1.5 rounded-full ${dotColors[i % dotColors.length]} shrink-0`} />
-                <span className="truncate">{o.name}</span>
+        <div className="px-3.5 pb-3 space-y-1">
+          {outputs.map((o, i) => {
+            const vs = stats?.variants?.[o.id];
+            const pct = vs ? vs.share : equalShare;
+            return (
+              <div
+                key={o.id}
+                ref={(el) => { outputRefs.current[i] = el; }}
+                className="text-[10px] bg-muted/30 border border-border/30 rounded-lg px-2 py-1.5 flex items-center justify-between gap-2 font-semibold text-foreground"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className={`w-1.5 h-1.5 rounded-full ${dotColors[i % dotColors.length]} shrink-0`} />
+                  <span className="truncate">{o.name}</span>
+                </div>
+                <span className="text-[9px] font-bold text-muted-foreground shrink-0">
+                  {pct.toFixed(0)}%
+                </span>
               </div>
-              <span className="text-[9px] font-bold text-muted-foreground shrink-0">
-                {pct.toFixed(0)}%
-              </span>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {outputs.map((o, i) => (
-        <FlowHandle
-          key={o.id}
-          type="source"
-          position={Position.Right}
-          id={o.id}
-          style={{ top: handleTops[i] != null ? `${handleTops[i]}%` : "50%" }}
-        />
-      ))}
+        {outputs.map((o, i) => (
+          <FlowHandle
+            key={o.id}
+            type="source"
+            position={Position.Right}
+            id={o.id}
+            style={{ top: handleTops[i] != null ? `${handleTops[i]}%` : "50%" }}
+          />
+        ))}
+      </NodeShell>
     </div>
   );
 }
