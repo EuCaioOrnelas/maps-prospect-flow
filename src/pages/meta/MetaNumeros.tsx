@@ -30,8 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { useWabaResponsibles } from "@/hooks/useWabaResponsibles";
-import { ResponsiblesPicker, ResponsibleAvatars } from "@/components/meta/ResponsiblesPicker";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { ResponsiblesPicker, ResponsiblesStack } from "@/components/meta/ResponsiblesPicker";
 
 export interface WabaConnection {
   id: string;

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Headset, Megaphone, ArrowRight, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Headset, Megaphone, ArrowRight, ShieldCheck, AlertTriangle, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
