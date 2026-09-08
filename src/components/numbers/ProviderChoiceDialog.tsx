@@ -56,14 +56,14 @@ export function ProviderChoiceDialog({ open, onOpenChange, onChoose }: Props) {
             variant="outline"
             type="button"
             onClick={() => onChoose("meta")}
-            className="group h-auto min-h-[270px] w-full items-stretch justify-start whitespace-normal rounded-card border-primary/55 bg-primary/5 p-5 text-left shadow-sm ring-1 ring-primary/10 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/80 hover:bg-primary/5 hover:shadow-md focus-visible:ring-primary"
+            className="group h-auto min-h-[270px] w-full items-stretch justify-start whitespace-normal rounded-card border-border/90 bg-card p-5 text-left shadow-sm transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card hover:shadow-md focus-visible:ring-primary"
           >
             <div className="flex w-full flex-col">
               <div className="flex items-center justify-between">
-                <div className="flex h-11 w-11 items-center justify-center rounded-hover bg-primary/15 text-primary ring-1 ring-primary/25">
+                <div className="flex h-11 w-11 items-center justify-center rounded-hover bg-primary/10 text-primary ring-1 ring-primary/15">
                   <Megaphone size={20} />
                 </div>
-                <ArrowRight size={17} className="text-primary transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight size={17} className="text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
               </div>
               <h3 className="mt-5 text-base font-semibold text-foreground">Número de Marketing</h3>
               <p className="mt-1.5 min-h-[60px] text-sm leading-relaxed text-muted-foreground">

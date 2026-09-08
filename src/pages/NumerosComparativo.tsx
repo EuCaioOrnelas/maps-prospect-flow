@@ -70,10 +70,10 @@ export default function NumerosComparativo() {
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-card border border-primary/45 bg-primary/5 p-6 shadow-sm ring-1 ring-primary/10">
+        <div className="relative overflow-hidden rounded-card border border-border bg-card p-6 shadow-sm">
           <span className="absolute right-4 top-4 rounded-hover bg-primary/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/25">Recomendado</span>
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-hover bg-primary/15 text-primary ring-1 ring-primary/25"><Megaphone size={22} /></div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-hover bg-primary/10 text-primary ring-1 ring-primary/20"><Megaphone size={22} /></div>
             <div>
               <h2 className="text-lg font-semibold tracking-tight">Número de Marketing</h2>
               <p className="text-xs text-muted-foreground flex items-center gap-1"><CloudCog size={11} /> Conecta via Meta Cloud API</p>
