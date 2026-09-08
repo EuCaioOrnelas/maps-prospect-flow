@@ -715,10 +715,10 @@ export default function MetaNumeros() {
           </DialogHeader>
           {editingConn && isEvo(editingConn) && (
             <div className="space-y-4">
-              <div className="space-y-3">
-                <DetailRow label="Tipo" value="Número de Atendimento (QR code)" />
-                <DetailRow label="Número" value={editingConn.display_phone_number ? `+${editingConn.display_phone_number}` : "Aguardando conexão"} />
-                <DetailRow label="Perfil" value={editingConn.profile_name || "N/A"} />
+              <div className="grid grid-cols-1 gap-2">
+                <DetailRow icon={Headset} label="Tipo" value="Número de Atendimento (QR code)" />
+                <DetailRow icon={Phone} label="Número" value={editingConn.display_phone_number ? `+${editingConn.display_phone_number}` : "Aguardando conexão"} />
+                <DetailRow icon={User} label="Perfil" value={editingConn.profile_name || "N/A"} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Apelido do número</label>
@@ -766,15 +766,12 @@ export default function MetaNumeros() {
           )}
           {editingConn && !isEvo(editingConn) && (
             <div className="space-y-4">
-              <div className="space-y-3">
-                <DetailRow label="Phone Number ID" value={editingConn.phone_number_id} />
-                <DetailRow label="WABA ID" value={editingConn.waba_id} />
-                <DetailRow label="Número" value={editingConn.display_phone_number || "N/A"} />
-                <DetailRow label="Empresa" value={editingConn.business_name || "N/A"} />
-                <div>
-                  <p className="text-[11px] text-muted-foreground">Access Token</p>
-                  <p className="text-sm font-mono truncate">{maskSecret(editingConn.access_token || "")}</p>
-                </div>
+              <div className="grid grid-cols-1 gap-2">
+                <DetailRow icon={Hash} label="Phone Number ID" value={editingConn.phone_number_id} />
+                <DetailRow icon={Building2} label="WABA ID" value={editingConn.waba_id} />
+                <DetailRow icon={Phone} label="Número" value={editingConn.display_phone_number || "N/A"} />
+                <DetailRow icon={Building2} label="Empresa" value={editingConn.business_name || "N/A"} />
+                <DetailRow icon={Key} label="Access Token" value={maskSecret(editingConn.access_token || "")} isMono />
               </div>
 
               <div className="space-y-2">
