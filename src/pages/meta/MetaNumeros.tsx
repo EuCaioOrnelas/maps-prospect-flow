@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2, Webhook, CheckCircle2,
-  Headset, Megaphone, QrCode, Settings2, Smartphone,
+  Headset, Megaphone, QrCode, Settings2, Smartphone, User, Hash, Building2, Key,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProviderChoiceDialog } from "@/components/numbers/ProviderChoiceDialog";
