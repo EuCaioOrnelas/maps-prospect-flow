@@ -27,6 +27,8 @@ import {
 import gmailIcon from "@/assets/icons/gmail-sm.png";
 import sheetsIcon from "@/assets/icons/google-sheets-sm.png";
 import calendarIcon from "@/assets/icons/google-calendar-sm.png";
+import openaiIcon from "@/assets/logos/openai-icon.png";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { Switch } from "@/components/ui/switch";
 import { WAEntryNode } from "@/components/wa-flow/nodes/WAEntryNode";
 import { WAMessageNode } from "@/components/wa-flow/nodes/WAMessageNode";
