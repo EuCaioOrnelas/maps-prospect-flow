@@ -1,7 +1,50 @@
 // Evolution API webhook — "Número de Atendimento"
 // Recebe eventos da instância (QR, conexão, mensagens) e alimenta Chat/CRM/SDR.
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
-import { lineRef, relinkConversationsToLine } from "../_shared/evolutionLine.ts";
+// Identidade estável de uma linha WhatsApp (Número de Atendimento).
+// Chave = DDD + 8 últimos dígitos (ignora o "9" extra e o DDI 55).
+function lineKey(phone: string | null | undefined): string | null {
+  let d = String(phone || "").replace(/\D/g, "");
+  if (!d) return null;
+  if (d.length >= 12 && d.startsWith("55")) d = d.slice(2);
+  if (d.length < 10) return null;
+  return `${d.slice(0, 2)}${d.slice(-8)}`;
+}
+
+function lineRef(phone: string | null | undefined): string | null {
+  const k = lineKey(phone);
+  return k ? `evo:${k}` : null;
+}
+
+// Reanexa à conexão atual todas as conversas salvas para a mesma linha.
+async function relinkConversationsToLine(
+  supabase: any,
+  conn: { id: string; user_id: string; owner_user_id?: string | null; evolution_instance_name?: string | null },
+  phone: string | null | undefined,
+): Promise<number> {
+  const ref = lineRef(phone);
+  if (!ref) return 0;
+  const ownerId = conn.owner_user_id || conn.user_id;
+
+  await supabase
+    .from("chat_conversations")
+    .update({ phone_number_id: ref })
+    .eq("waba_connection_id", conn.id)
+    .neq("phone_number_id", ref);
+
+  const { data, error } = await supabase
+    .from("chat_conversations")
+    .update({ waba_connection_id: conn.id })
+    .eq("phone_number_id", ref)
+    .or(`owner_user_id.eq.${ownerId},user_id.eq.${conn.user_id}`)
+    .or(`waba_connection_id.is.null,waba_connection_id.neq.${conn.id}`)
+    .select("id");
+  if (error) {
+    console.warn("[lineRef] relink error", error.message);
+    return 0;
+  }
+  return (data || []).length;
+}
 
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
