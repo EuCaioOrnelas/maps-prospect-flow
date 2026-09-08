@@ -103,7 +103,7 @@ export function RoutedEdge(props: EdgeProps) {
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
               pointerEvents: "all",
             }}
-            className={`px-2.5 py-1 rounded-lg bg-card border text-[11px] font-medium text-foreground shadow-sm whitespace-nowrap ${
+            className={`px-2.5 py-1 rounded-xs bg-card border text-[11px] font-medium text-foreground shadow-sm whitespace-nowrap ${
               selected ? "border-primary" : "border-border"
             }`}
           >

@@ -75,7 +75,7 @@ export function WAButtonsNode({ data }: NodeProps) {
               <div
                 key={item.id}
                 ref={(el) => { itemRefs.current[i] = el; }}
-                className="text-[11px] bg-muted/50 rounded-xl px-3 py-2 truncate text-foreground/80 flex items-center gap-2"
+                className="text-[11px] bg-muted/50 rounded-xs px-3 py-2 truncate text-foreground/80 flex items-center gap-2"
               >
                 {isEvolution ? (
                   <span className="text-[10px] font-bold text-primary shrink-0">{i + 1}.</span>
