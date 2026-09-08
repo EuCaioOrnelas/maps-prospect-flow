@@ -447,9 +447,10 @@ export default function MetaNumeros() {
           >
             <Pencil size={13} className="text-muted-foreground" />
           </Button>
-          <span className="hidden sm:inline text-muted-foreground" title="Número de Marketing">
-            <Megaphone size={15} />
+          <span className="hidden sm:flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/15" title="Número de Marketing">
+            <Megaphone size={13} />
           </span>
+
           <span className={`text-[10px] px-2 py-0.5 rounded-full ${
             isExpired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
           }`}>
