@@ -361,8 +361,8 @@ export default function MetaNumeros() {
             }}>
               <Pencil size={13} className="text-muted-foreground" />
             </Button>
-            <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground items-center gap-1">
-              <Headset size={9} /> Atendimento
+            <span className="hidden sm:inline text-muted-foreground" title="Número de Atendimento">
+              <Headset size={15} />
             </span>
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${online ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
               {online ? "Ativo" : connecting ? "Conectando" : "Inativo"}
@@ -388,7 +388,7 @@ export default function MetaNumeros() {
           </div>
         )}
         {responsibles.length > 0 && (
-          <div className="flex items-center gap-2 border-t border-border/60 pt-2.5">
+          <div className="flex items-center gap-2 rounded-lg bg-background px-3 py-2">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Responsáveis:</span>
             <ResponsiblesStack userIds={responsibles} members={members} />
           </div>
@@ -446,8 +446,8 @@ export default function MetaNumeros() {
           >
             <Pencil size={13} className="text-muted-foreground" />
           </Button>
-          <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground items-center gap-1">
-            <Megaphone size={9} /> Marketing
+          <span className="hidden sm:inline text-muted-foreground" title="Número de Marketing">
+            <Megaphone size={15} />
           </span>
           <span className={`text-[10px] px-2 py-0.5 rounded-full ${
             isExpired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
@@ -480,7 +480,7 @@ export default function MetaNumeros() {
       )}
 
       {responsibles.length > 0 && (
-        <div className="flex items-center gap-2 border-t border-border/60 pt-2.5">
+        <div className="flex items-center gap-2 rounded-lg bg-background px-3 py-2">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Responsáveis:</span>
           <ResponsiblesStack userIds={responsibles} members={members} />
         </div>
