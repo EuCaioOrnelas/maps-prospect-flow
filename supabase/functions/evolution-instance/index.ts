@@ -2,7 +2,7 @@
 // Gerencia instâncias conectadas por QR code (criar, QR, status, configurações, logout, excluir).
 // Docs: https://docs.evolutionfoundation.com.br/
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
-import { relinkConversationsToLine } from "../_shared/evolutionLine.ts";
+import { relinkConversationsToLine, lineRef } from "../_shared/evolutionLine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
