@@ -348,7 +348,7 @@ export default function ApiLanding() {
             <Link to="/api/login" className="hover:text-foreground">
               Entrar
             </Link>
-            <span className="text-muted-foreground">Beta fechado</span>
+            <Link to="/api/login?modo=cadastro" className="hover:text-foreground">Criar conta grátis</Link>
             <Link to="/privacy" className="hover:text-foreground">
               Política de Privacidade
             </Link>
