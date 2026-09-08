@@ -136,6 +136,40 @@ export function ContactDetailsPanel({
     [conversation],
   );
 
+  // Foto de perfil: banco -> cache local (carregamento instantâneo) -> atualização sob demanda
+  useEffect(() => {
+    if (!conversation) return;
+    const fromDb = conversation.contact_profile_pic || null;
+    const cached = getCachedProfilePic(conversation.contact_phone);
+    setPhotoUrl(fromDb || cached || null);
+    if (fromDb) setCachedProfilePic(conversation.contact_phone, fromDb);
+  }, [conversation?.id, conversation?.contact_profile_pic]);
+
+  const effectivePic = photoUrl || conversation?.contact_profile_pic || null;
+
+  const refreshProfilePic = async () => {
+    if (!conversation) return;
+    setPhotoRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("evolution-instance", {
+        body: { action: "fetch_profile_pic", connection_id: conversation.waba_connection_id, conversation_id: conversation.id },
+      });
+      if (error) throw error;
+      if ((data as any)?.ok) {
+        const url = (data as any).url || null;
+        setPhotoUrl(url);
+        setCachedProfilePic(conversation.contact_phone, url);
+        toast.success(url ? "Foto de perfil atualizada" : "Este contato não tem foto visível");
+      } else {
+        toast.error((data as any)?.error || "Disponível apenas em Números de Atendimento");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível atualizar a foto");
+    } finally {
+      setPhotoRefreshing(false);
+    }
+  };
+
   const reloadLeadData = async (leadId: string) => {
     const [n, a, d] = await Promise.all([
       supabase.from("lead_notes").select("*").eq("lead_id", leadId).order("created_at", { ascending: false }).limit(50),
@@ -666,7 +700,18 @@ export function ContactDetailsPanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+          <ProfilePhotoViewer
+        open={photoOpen}
+        url={effectivePic}
+        name={conversation?.contact_name || phoneFmt.display}
+        subtitle={phoneFmt.display}
+        initials={initials}
+        avatarColor={avatarColor}
+        refreshing={photoRefreshing}
+        onRefresh={refreshProfilePic}
+        onClose={() => setPhotoOpen(false)}
+      />
+</>
   );
 }
 
