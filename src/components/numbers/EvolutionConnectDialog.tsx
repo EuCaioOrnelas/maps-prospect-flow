@@ -6,6 +6,10 @@ import { Loader2, QrCode, Smartphone, CheckCircle2, RefreshCw, Headset, Settings
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DEFAULT_EVOLUTION_SETTINGS, EvolutionSettingsForm, type EvolutionSettings } from "./EvolutionSettingsForm";
+import { ResponsiblesPicker } from "@/components/meta/ResponsiblesPicker";
+import { useAccountMembers } from "@/hooks/useAccountMembers";
+import { useAccountRole } from "@/hooks/useAccountRole";
+import { useWabaResponsibles } from "@/hooks/useWabaResponsibles";
 
 type Step = "name" | "qr" | "settings";
 
@@ -43,6 +47,11 @@ export function EvolutionConnectDialog({ open, onOpenChange, onConnected }: Prop
   const [refreshingQr, setRefreshingQr] = useState(false);
   const [settings, setSettings] = useState<EvolutionSettings>(DEFAULT_EVOLUTION_SETTINGS);
   const [pendingKey, setPendingKey] = useState<keyof EvolutionSettings | null>(null);
+  const [responsibles, setResponsibles] = useState<string[]>([]);
+  const { members } = useAccountMembers();
+  const { role } = useAccountRole();
+  const { setNumberResponsibles, assignmentByUser } = useWabaResponsibles();
+  const canChangeResponsible = role === "owner" || role === "admin";
   const pollRef = useRef<number | null>(null);
 
   const stopPolling = () => {
@@ -57,6 +66,7 @@ export function EvolutionConnectDialog({ open, onOpenChange, onConnected }: Prop
     setQr(null);
     setState("connecting");
     setSettings(DEFAULT_EVOLUTION_SETTINGS);
+    setResponsibles([]);
   };
 
   useEffect(() => { if (!open) reset(); return stopPolling; }, [open]);
@@ -128,7 +138,14 @@ export function EvolutionConnectDialog({ open, onOpenChange, onConnected }: Prop
     }
   };
 
-  const finish = () => {
+  const finish = async () => {
+    if (canChangeResponsible && connection?.id) {
+      try {
+        await setNumberResponsibles(connection.id, responsibles);
+      } catch (e: any) {
+        toast({ title: "Não foi possível salvar os responsáveis", description: e.message, variant: "destructive" });
+      }
+    }
     onConnected({ ...connection, evolution_settings: settings, evolution_state: "open" });
     onOpenChange(false);
   };
@@ -245,6 +262,19 @@ export function EvolutionConnectDialog({ open, onOpenChange, onConnected }: Prop
 
             <div className="flex items-center gap-2 text-sm font-medium"><Settings2 size={14} className="text-primary" /> Preferências do número</div>
             <EvolutionSettingsForm value={settings} onChange={handleToggle} pendingKey={pendingKey} />
+
+            {canChangeResponsible && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Responsáveis pelo número</label>
+                <ResponsiblesPicker
+                  members={members}
+                  value={responsibles}
+                  onChange={setResponsibles}
+                  assignmentByUser={assignmentByUser}
+                  currentConnectionId={connection?.id ?? null}
+                />
+              </div>
+            )}
 
             <Button className="w-full" onClick={finish}>Concluir</Button>
           </div>

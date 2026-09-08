@@ -362,29 +362,32 @@ export default function MetaNumeros() {
               <Pencil size={13} className="text-muted-foreground" />
             </Button>
             <ResponsibleAvatars userIds={responsiblesOf(conn.id)} members={members} max={3} />
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground inline-flex items-center gap-1">
+            <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground items-center gap-1">
               <Headset size={9} /> Atendimento
+            </span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${online ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+              {online ? "Ativo" : connecting ? "Conectando" : "Inativo"}
             </span>
           </div>
         </div>
-        <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${online ? "border-emerald-500/25 bg-emerald-500/5" : "border-amber-500/25 bg-amber-500/5"}`}>
-          <div className="flex items-center gap-2 min-w-0">
-            {online ? <CheckCircle2 size={14} className="text-emerald-600 shrink-0" /> : connecting ? <Loader2 size={14} className="animate-spin text-amber-600 shrink-0" /> : <AlertTriangle size={14} className="text-amber-600 shrink-0" />}
-            <div className="min-w-0">
-              <p className={`text-[11px] font-semibold ${online ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
-                {online ? "WhatsApp conectado" : connecting ? "Aguardando leitura do QR code" : "WhatsApp desconectado"}
-              </p>
-              <p className="text-[10px] text-muted-foreground truncate">
-                {online ? "Chat, CRM e IA funcionando normalmente." : "Gere um novo QR code para voltar a receber mensagens."}
-              </p>
+        {!online && (
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {connecting ? <Loader2 size={14} className="animate-spin text-amber-600 shrink-0" /> : <AlertTriangle size={14} className="text-amber-600 shrink-0" />}
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                  {connecting ? "Aguardando leitura do QR code" : "WhatsApp desconectado"}
+                </p>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  Gere um novo QR code para voltar a receber mensagens.
+                </p>
+              </div>
             </div>
-          </div>
-          {!online && (
             <Button size="sm" variant="outline" className="gap-1.5 h-7 px-2 shrink-0 text-[11px]" onClick={() => setEvoReconnectId(conn.id)}>
               <QrCode size={11} /> Reconectar
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -449,38 +452,27 @@ export default function MetaNumeros() {
         </div>
       </div>
 
-      <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${
-        webhookOk
-          ? "border-emerald-500/25 bg-emerald-500/5"
-          : "border-amber-500/25 bg-amber-500/5"
-      }`}>
-        <div className="flex items-center gap-2 min-w-0">
-          {webhookOk ? (
-            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-          ) : (
+      {!webhookOk && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-2">
+          <div className="flex items-center gap-2 min-w-0">
             <AlertTriangle size={14} className="text-amber-600 shrink-0" />
-          )}
-          <div className="min-w-0">
-            <p className={`text-[11px] font-semibold ${webhookOk ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
-              {webhookOk ? "Webhook configurado" : "Webhook pendente"}
-            </p>
-            <p className="text-[10px] text-muted-foreground truncate">
-              {webhookOk
-                ? "Eventos da Meta chegando normalmente."
-                : "Chat e Campanhas precisam do webhook para funcionar."}
-            </p>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">Webhook pendente</p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                Chat e Campanhas precisam do webhook para funcionar.
+              </p>
+            </div>
           </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 h-7 px-2 shrink-0 text-[11px]"
+            onClick={() => handleTabChange("webhook")}
+          >
+            <Webhook size={11} /> Configurar
+          </Button>
         </div>
-        <Button
-          size="sm"
-          variant={webhookOk ? "ghost" : "outline"}
-          className="gap-1.5 h-7 px-2 shrink-0 text-[11px]"
-          onClick={() => handleTabChange("webhook")}
-        >
-          <Webhook size={11} />
-          {webhookOk ? "Ver webhook" : "Configurar"}
-        </Button>
-      </div>
+      )}
     </div>
   );
   };
