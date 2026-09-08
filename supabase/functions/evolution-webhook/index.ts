@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
 
   const { data: conn } = await supabase
     .from("user_waba_connections")
-    .select("id, user_id, owner_user_id, evolution_token, evolution_state, status, display_phone_number, evolution_instance_name, created_at")
+    .select("id, user_id, owner_user_id, evolution_token, evolution_state, status, display_phone_number, evolution_instance_name, created_at, last_connected_at")
     .eq("evolution_instance_name", instance)
     .eq("provider", "evolution")
     .maybeSingle();
