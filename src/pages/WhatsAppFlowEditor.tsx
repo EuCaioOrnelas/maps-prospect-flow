@@ -129,11 +129,9 @@ const defaultEdgeOptions = {
   style: { strokeWidth: 2, stroke: "hsl(var(--muted-foreground) / 0.45)", strokeLinecap: "round" as const },
 };
 
-// Cor padrão usada por todas as categorias (exceto Gatilho de Ativação e Integrações)
-// Cores por categoria — cada categoria tem sua cor, espelhada nos cards do canvas.
-// Exceções: "Gatilho de Ativação" e "Integrações" usam cores de marca por item.
-const COLOR_MESSAGES = "text-primary-foreground bg-blue-500";
-const COLOR_LOGIC = "text-primary-foreground bg-indigo-500";
+// Cores por categoria — espelhadas nos cards do canvas e no seletor de blocos.
+const COLOR_MESSAGES = "text-primary-foreground bg-primary";
+const COLOR_LOGIC = "text-primary-foreground bg-amber-500";
 const COLOR_AI = "text-primary-foreground bg-violet-500";
 const COLOR_SERVICE = "text-primary-foreground bg-amber-500";
 const COLOR_ACTIONS = "text-primary-foreground bg-cyan-500";
@@ -142,7 +140,7 @@ const sidebarCategories = [
   {
     label: "Gatilho de Ativação",
     items: [
-      { type: "entry", icon: Zap, label: "Gatilho", desc: "Escolha o número e como o fluxo começa", color: "text-primary-foreground bg-violet-500" },
+      { type: "entry", icon: Zap, label: "Gatilho", desc: "Escolha o número e como o fluxo começa", color: "text-primary-foreground bg-whatsapp" },
     ],
   },
   {
