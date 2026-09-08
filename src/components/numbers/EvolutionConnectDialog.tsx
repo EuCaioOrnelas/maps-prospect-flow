@@ -128,7 +128,14 @@ export function EvolutionConnectDialog({ open, onOpenChange, onConnected }: Prop
     }
   };
 
-  const finish = () => {
+  const finish = async () => {
+    if (canChangeResponsible && connection?.id) {
+      try {
+        await setNumberResponsibles(connection.id, responsibles);
+      } catch (e: any) {
+        toast({ title: "Não foi possível salvar os responsáveis", description: e.message, variant: "destructive" });
+      }
+    }
     onConnected({ ...connection, evolution_settings: settings, evolution_state: "open" });
     onOpenChange(false);
   };
