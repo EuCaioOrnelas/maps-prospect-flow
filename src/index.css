@@ -111,15 +111,16 @@
     --background: 220 20% 4%;
     --foreground: 210 40% 98%;
   }
+}
 
-  @layer components {
-    .bg-whatsapp {
-      background-color: hsl(var(--whatsapp));
-    }
-    .text-whatsapp {
-      color: hsl(var(--whatsapp));
-    }
+@layer components {
+  .bg-whatsapp {
+    background-color: hsl(var(--whatsapp));
   }
+  .text-whatsapp {
+    color: hsl(var(--whatsapp));
+  }
+}
 
   /* Light theme for landing/sales pages */
   .landing-light {
