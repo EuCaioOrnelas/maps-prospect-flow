@@ -78,6 +78,9 @@
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
     --shadow-button: 0 4px 16px hsl(158 72% 38% / 0.3);
 
+    /* WhatsApp brand green */
+    --whatsapp: 142 70% 52%;
+
     /* Sidebar */
     --sidebar-background: 220 18% 6%;
     --sidebar-foreground: 210 40% 98%;
@@ -107,6 +110,15 @@
   .dark {
     --background: 220 20% 4%;
     --foreground: 210 40% 98%;
+  }
+
+  @layer components {
+    .bg-whatsapp {
+      background-color: hsl(var(--whatsapp));
+    }
+    .text-whatsapp {
+      color: hsl(var(--whatsapp));
+    }
   }
 
   /* Light theme for landing/sales pages */
