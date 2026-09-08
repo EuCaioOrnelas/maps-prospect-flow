@@ -136,9 +136,14 @@ Deno.serve(async (req) => {
       // Discover waba_id from the connection row
       const { data: connRow } = await supabase
         .from("user_waba_connections")
-        .select("waba_id")
+        .select("waba_id, provider")
         .eq("id", connection_id)
         .maybeSingle();
+      if ((connRow as any)?.provider === "evolution") {
+        return new Response(JSON.stringify({ success: false, error: "Números de Atendimento não podem ser usados em campanhas. Use um Número de Marketing (Meta)." }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400,
+        });
+      }
       const wabaId = connRow?.waba_id;
       if (wabaId) {
         const tplResp = await fetch(

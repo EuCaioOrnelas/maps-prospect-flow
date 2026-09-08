@@ -1136,7 +1136,7 @@ async function buildSendCtx(flow: any, phone: string, leadName: string | null, u
     };
   }
 
-  let connQuery = supabase.from("user_waba_connections").select("id,access_token,phone_number_id").eq("status", "active");
+  let connQuery = supabase.from("user_waba_connections").select("id,access_token,phone_number_id").eq("status", "active").or("provider.is.null,provider.eq.meta");
   connQuery = flow.waba_connection_id
     ? connQuery.eq("id", flow.waba_connection_id)
     : connQuery.eq("user_id", ownerId);

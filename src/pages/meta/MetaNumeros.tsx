@@ -322,6 +322,165 @@ export default function MetaNumeros() {
 
   const maskSecret = (token: string) => (!token || token.length < 12) ? "••••••••" : token.slice(0, 8) + "••••••••••••";
 
+  const renderCard = (conn: WabaConnection) => {
+  if (isEvo(conn)) {
+    const online = conn.evolution_state === "open";
+    const connecting = conn.evolution_state === "connecting";
+    return (
+      <div key={conn.id} className={`flex flex-col gap-3 rounded-xl border p-4 transition-colors ${online ? "border-border hover:bg-muted/20" : "border-amber-500/40 bg-amber-500/5"}`}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {conn.profile_pic_url ? (
+              <img src={conn.profile_pic_url} alt="" className="h-8 w-8 rounded-[9px] object-cover shrink-0" />
+            ) : (
+              <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0 bg-primary/10">
+                <Headset size={14} className="text-primary" />
+              </div>
+            )}
+            <div className="truncate">
+              <p className="font-medium text-sm truncate">
+                {conn.nickname || conn.profile_name || (conn.display_phone_number ? `+${conn.display_phone_number}` : "Número de Atendimento")}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">
+                {conn.display_phone_number ? `+${conn.display_phone_number}` : "Aguardando conexão"}{conn.profile_name ? ` · ${conn.profile_name}` : ""}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
+              setEditingConn(conn);
+              setEditNickname(conn.nickname || "");
+              setEditResponsibles(responsiblesOf(conn.id));
+              setEditToken("");
+              setShowTokenField(false);
+              setEvoSettings({ ...DEFAULT_EVOLUTION_SETTINGS, ...(conn.evolution_settings || {}) });
+            }}>
+              <Pencil size={13} className="text-muted-foreground" />
+            </Button>
+            <ResponsibleAvatars userIds={responsiblesOf(conn.id)} members={members} max={3} />
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground inline-flex items-center gap-1">
+              <Headset size={9} /> Atendimento
+            </span>
+          </div>
+        </div>
+        <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${online ? "border-emerald-500/25 bg-emerald-500/5" : "border-amber-500/25 bg-amber-500/5"}`}>
+          <div className="flex items-center gap-2 min-w-0">
+            {online ? <CheckCircle2 size={14} className="text-emerald-600 shrink-0" /> : connecting ? <Loader2 size={14} className="animate-spin text-amber-600 shrink-0" /> : <AlertTriangle size={14} className="text-amber-600 shrink-0" />}
+            <div className="min-w-0">
+              <p className={`text-[11px] font-semibold ${online ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
+                {online ? "WhatsApp conectado" : connecting ? "Aguardando leitura do QR code" : "WhatsApp desconectado"}
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {online ? "Chat, CRM e IA funcionando normalmente." : "Leia o QR code para voltar a receber mensagens."}
+              </p>
+            </div>
+          </div>
+          {!online && (
+            <Button size="sm" variant="outline" className="gap-1.5 h-7 px-2 shrink-0 text-[11px]" onClick={() => setEvoReconnectId(conn.id)}>
+              <QrCode size={11} /> Conectar
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+  const isExpired = expiredTokenIds.has(conn.id);
+  const webhookOk = webhookVerifiedIds.has(conn.id);
+  return (
+    <div
+      key={conn.id}
+      className={`flex flex-col gap-3 rounded-xl border p-4 transition-colors ${
+        isExpired ? "border-destructive/40 bg-destructive/5" : "border-border hover:bg-muted/20"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0 ${
+            isExpired ? "bg-destructive/10" : "bg-primary/10"
+          }`}>
+            {isExpired ? (
+              <AlertTriangle size={14} className="text-destructive" />
+            ) : (
+              <Phone size={14} className="text-primary" />
+            )}
+          </div>
+          <div className="truncate">
+            <p className="font-medium text-sm truncate">
+              {conn.nickname || conn.display_phone_number || conn.phone_number_id}
+            </p>
+            <p className="text-[11px] text-muted-foreground truncate">
+              {conn.business_name || conn.waba_id}
+            </p>
+            {isExpired && (
+              <p className="mt-1 text-[11px] font-medium text-destructive">
+                Atualize o token para voltar a carregar templates e enviar mensagens.
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={() => {
+              setEditingConn(conn);
+              setEditNickname(conn.nickname || "");
+              setEditResponsibles(responsiblesOf(conn.id));
+              setEditToken("");
+              setShowTokenField(isExpired);
+            }}
+          >
+            <Pencil size={13} className="text-muted-foreground" />
+          </Button>
+          <ResponsibleAvatars userIds={responsiblesOf(conn.id)} members={members} max={3} />
+          <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground items-center gap-1">
+            <Megaphone size={9} /> Marketing
+          </span>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+            isExpired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+          }`}>
+            {isExpired ? "Expirado" : "Ativo"}
+          </span>
+        </div>
+      </div>
+
+      <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${
+        webhookOk
+          ? "border-emerald-500/25 bg-emerald-500/5"
+          : "border-amber-500/25 bg-amber-500/5"
+      }`}>
+        <div className="flex items-center gap-2 min-w-0">
+          {webhookOk ? (
+            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+          ) : (
+            <AlertTriangle size={14} className="text-amber-600 shrink-0" />
+          )}
+          <div className="min-w-0">
+            <p className={`text-[11px] font-semibold ${webhookOk ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
+              {webhookOk ? "Webhook configurado" : "Webhook pendente"}
+            </p>
+            <p className="text-[10px] text-muted-foreground truncate">
+              {webhookOk
+                ? "Eventos da Meta chegando normalmente."
+                : "Chat e Campanhas precisam do webhook para funcionar."}
+            </p>
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant={webhookOk ? "ghost" : "outline"}
+          className="gap-1.5 h-7 px-2 shrink-0 text-[11px]"
+          onClick={() => handleTabChange("webhook")}
+        >
+          <Webhook size={11} />
+          {webhookOk ? "Ver webhook" : "Configurar"}
+        </Button>
+      </div>
+    </div>
+  );
+  };
+
   return (
     <MetaLayout title="Números" description="Gerencie seus números de WhatsApp: Atendimento (QR code) e Marketing (API oficial da Meta).">
       <MetaPageHeader
@@ -394,11 +553,35 @@ export default function MetaNumeros() {
           </TabsTrigger>
           <TabsTrigger value="webhook">
             <Webhook size={13} className="mr-1.5" />
-            Webhook
+            Webhook Meta
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="numeros" className="mt-5">
+          {!loading && connections.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <p className="text-xs text-muted-foreground">Números conectados</p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums">
+                  {connections.length}<span className="text-sm text-muted-foreground font-normal"> / {Number.isFinite(maxMetaConnections) ? maxMetaConnections : "∞"}</span>
+                </p>
+                <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${reachedConnectionLimit ? "bg-destructive" : "bg-primary"}`} style={{ width: `${Number.isFinite(maxMetaConnections) && maxMetaConnections > 0 ? Math.min(100, (connections.length / maxMetaConnections) * 100) : 5}%` }} />
+                </div>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">{basePlanNumbers} do plano {userPlan}{extraNumbers > 0 ? ` + ${extraNumbers} adicionais` : ""}</p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Headset size={12} /> Atendimento</div>
+                <p className="mt-1 text-2xl font-semibold tabular-nums">{connections.filter(isEvo).length}</p>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">{connections.filter((c) => isEvo(c) && c.evolution_state === "open").length} online agora</p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Megaphone size={12} /> Marketing</div>
+                <p className="mt-1 text-2xl font-semibold tabular-nums">{connections.filter((c) => !isEvo(c)).length}</p>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">{expiredConnections.length > 0 ? `${expiredConnections.length} com token expirado` : "Todos os tokens válidos"}</p>
+              </div>
+            </div>
+          )}
           {loading ? (
             <div className="flex items-center justify-center py-20 text-muted-foreground">
               <Loader2 className="animate-spin mr-2" size={16} /> Carregando números…
@@ -444,170 +627,48 @@ export default function MetaNumeros() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {connections.map((conn) => {
-                  if (isEvo(conn)) {
-                    const online = conn.evolution_state === "open";
-                    const connecting = conn.evolution_state === "connecting";
-                    return (
-                      <div key={conn.id} className={`flex flex-col gap-3 rounded-xl border p-4 transition-colors ${online ? "border-border hover:bg-muted/20" : "border-amber-500/40 bg-amber-500/5"}`}>
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            {conn.profile_pic_url ? (
-                              <img src={conn.profile_pic_url} alt="" className="h-8 w-8 rounded-[9px] object-cover shrink-0" />
-                            ) : (
-                              <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0 bg-primary/10">
-                                <Headset size={14} className="text-primary" />
-                              </div>
-                            )}
-                            <div className="truncate">
-                              <p className="font-medium text-sm truncate">
-                                {conn.nickname || conn.profile_name || (conn.display_phone_number ? `+${conn.display_phone_number}` : "Número de Atendimento")}
-                              </p>
-                              <p className="text-[11px] text-muted-foreground truncate">
-                                {conn.display_phone_number ? `+${conn.display_phone_number}` : "Aguardando conexão"}{conn.profile_name ? ` · ${conn.profile_name}` : ""}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
-                              setEditingConn(conn);
-                              setEditNickname(conn.nickname || "");
-                              setEditResponsibles(responsiblesOf(conn.id));
-                              setEditToken("");
-                              setShowTokenField(false);
-                              setEvoSettings({ ...DEFAULT_EVOLUTION_SETTINGS, ...(conn.evolution_settings || {}) });
-                            }}>
-                              <Pencil size={13} className="text-muted-foreground" />
-                            </Button>
-                            <ResponsibleAvatars userIds={responsiblesOf(conn.id)} members={members} max={3} />
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground inline-flex items-center gap-1">
-                              <Headset size={9} /> Atendimento
-                            </span>
-                          </div>
+              {(() => {
+                const evoConns = connections.filter(isEvo);
+                const metaConns = connections.filter((c) => !isEvo(c));
+                const Section = ({ icon: Icon, title, subtitle, count, items, cta, ctaIcon: CtaIcon, onCta }: any) => (
+                  <section className="rounded-2xl border border-border bg-card p-5">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-primary/10 text-primary">
+                          <Icon size={16} />
                         </div>
-                        <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${online ? "border-emerald-500/25 bg-emerald-500/5" : "border-amber-500/25 bg-amber-500/5"}`}>
-                          <div className="flex items-center gap-2 min-w-0">
-                            {online ? <CheckCircle2 size={14} className="text-emerald-600 shrink-0" /> : connecting ? <Loader2 size={14} className="animate-spin text-amber-600 shrink-0" /> : <AlertTriangle size={14} className="text-amber-600 shrink-0" />}
-                            <div className="min-w-0">
-                              <p className={`text-[11px] font-semibold ${online ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
-                                {online ? "WhatsApp conectado" : connecting ? "Aguardando leitura do QR code" : "WhatsApp desconectado"}
-                              </p>
-                              <p className="text-[10px] text-muted-foreground truncate">
-                                {online ? "Chat, CRM e IA funcionando normalmente." : "Leia o QR code para voltar a receber mensagens."}
-                              </p>
-                            </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-sm">{title}</h3>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground tabular-nums">{count}</span>
                           </div>
-                          {!online && (
-                            <Button size="sm" variant="outline" className="gap-1.5 h-7 px-2 shrink-0 text-[11px]" onClick={() => setEvoReconnectId(conn.id)}>
-                              <QrCode size={11} /> Conectar
-                            </Button>
-                          )}
+                          <p className="text-xs text-muted-foreground">{subtitle}</p>
                         </div>
                       </div>
-                    );
-                  }
-                  const isExpired = expiredTokenIds.has(conn.id);
-                  const webhookOk = webhookVerifiedIds.has(conn.id);
-                  return (
-                    <div
-                      key={conn.id}
-                      className={`flex flex-col gap-3 rounded-xl border p-4 transition-colors ${
-                        isExpired ? "border-destructive/40 bg-destructive/5" : "border-border hover:bg-muted/20"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className={`w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0 ${
-                            isExpired ? "bg-destructive/10" : "bg-primary/10"
-                          }`}>
-                            {isExpired ? (
-                              <AlertTriangle size={14} className="text-destructive" />
-                            ) : (
-                              <Phone size={14} className="text-primary" />
-                            )}
-                          </div>
-                          <div className="truncate">
-                            <p className="font-medium text-sm truncate">
-                              {conn.nickname || conn.display_phone_number || conn.phone_number_id}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground truncate">
-                              {conn.business_name || conn.waba_id}
-                            </p>
-                            {isExpired && (
-                              <p className="mt-1 text-[11px] font-medium text-destructive">
-                                Atualize o token para voltar a carregar templates e enviar mensagens.
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7"
-                            onClick={() => {
-                              setEditingConn(conn);
-                              setEditNickname(conn.nickname || "");
-                              setEditResponsibles(responsiblesOf(conn.id));
-                              setEditToken("");
-                              setShowTokenField(isExpired);
-                            }}
-                          >
-                            <Pencil size={13} className="text-muted-foreground" />
-                          </Button>
-                          <ResponsibleAvatars userIds={responsiblesOf(conn.id)} members={members} max={3} />
-                          <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground items-center gap-1">
-                            <Megaphone size={9} /> Marketing
-                          </span>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                            isExpired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
-                          }`}>
-                            {isExpired ? "Expirado" : "Ativo"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${
-                        webhookOk
-                          ? "border-emerald-500/25 bg-emerald-500/5"
-                          : "border-amber-500/25 bg-amber-500/5"
-                      }`}>
-                        <div className="flex items-center gap-2 min-w-0">
-                          {webhookOk ? (
-                            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-                          ) : (
-                            <AlertTriangle size={14} className="text-amber-600 shrink-0" />
-                          )}
-                          <div className="min-w-0">
-                            <p className={`text-[11px] font-semibold ${webhookOk ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
-                              {webhookOk ? "Webhook configurado" : "Webhook pendente"}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              {webhookOk
-                                ? "Eventos da Meta chegando normalmente."
-                                : "Chat e Campanhas precisam do webhook para funcionar."}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant={webhookOk ? "ghost" : "outline"}
-                          className="gap-1.5 h-7 px-2 shrink-0 text-[11px]"
-                          onClick={() => handleTabChange("webhook")}
-                        >
-                          <Webhook size={11} />
-                          {webhookOk ? "Ver webhook" : "Configurar"}
-                        </Button>
-                      </div>
+                      <Button size="sm" variant="outline" className="gap-1.5 shrink-0" disabled={reachedConnectionLimit} onClick={onCta}>
+                        <CtaIcon size={12} /> {cta}
+                      </Button>
                     </div>
-                  );
-                })}
-              </div>
+                    {items.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
+                        Nenhum número deste tipo conectado ainda.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{items.map(renderCard)}</div>
+                    )}
+                  </section>
+                );
+                return (
+                  <>
+                    <Section icon={Headset} title="Números de Atendimento" subtitle="WhatsApp conectado por QR code. Chat, CRM e IA — sem disparos em massa." count={evoConns.length} items={evoConns} cta="Conectar por QR code" ctaIcon={QrCode} onCta={() => setShowEvolutionConnect(true)} />
+                    <Section icon={Megaphone} title="Números de Marketing" subtitle="API oficial da Meta. Campanhas, templates, fluxos e atendimento sem risco de bloqueio." count={metaConns.length} items={metaConns} cta="Conectar via Meta" ctaIcon={Plus} onCta={() => setShowAddNumber(true)} />
+                  </>
+                );
+              })()}
 
-              <div className="text-xs text-muted-foreground">
-                {connections.length}/{maxMetaConnections} números conectados
-                {" "}<span className="opacity-70">({basePlanNumbers} do plano {userPlan}{extraNumbers > 0 ? ` + ${extraNumbers} da Expansão de Atendimento` : ""})</span>
+              <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                <span>Ambos os tipos somam no limite de números do seu plano.</span>
+                <Link to="/numeros/comparativo" className="text-primary hover:underline inline-flex items-center gap-1"><Info size={11} /> Atendimento vs Marketing</Link>
               </div>
 
               <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5">

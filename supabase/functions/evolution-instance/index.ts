@@ -130,6 +130,17 @@ Deno.serve(async (req) => {
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
+    // Health check (sem dados sensíveis): confirma se o servidor Evolution responde.
+    if (new URL(req.url).searchParams.get("ping") === "1") {
+      if (!EVO_URL || !EVO_KEY) return json({ ok: false, configured: false }, 200);
+      try {
+        const r = await fetch(`${EVO_URL}/instance/fetchInstances`, { headers: { apikey: EVO_KEY } });
+        return json({ ok: r.ok, configured: true, status: r.status }, 200);
+      } catch (e) {
+        return json({ ok: false, configured: true, error: String((e as Error)?.message || e) }, 200);
+      }
+    }
+
     const authHeader = req.headers.get("Authorization") || "";
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
     const jwt = authHeader.slice(7);
