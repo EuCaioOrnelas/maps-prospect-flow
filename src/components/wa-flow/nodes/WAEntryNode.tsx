@@ -32,7 +32,7 @@ export function WAEntryNode({ data }: NodeProps) {
 
       {numberName && (
         <div className="px-3.5 pb-3 -mt-1">
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/50 rounded-xl px-2.5 py-1.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/50 rounded-lg px-2.5 py-1.5">
             <Phone size={11} className="shrink-0" />
             <span className="truncate flex-1">{numberName}</span>
             {isMeta && (
