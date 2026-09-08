@@ -18,6 +18,8 @@ interface ForwardDialogProps {
   conversations: ChatConversation[];
   onForward: (targetPhone: string, targetName: string | undefined, msgs: ChatMessage[], templateName?: string) => Promise<{ requiresTemplate?: boolean }>;
   fetchTemplates?: () => Promise<any[]>;
+  /** Número de Atendimento (Evolution): não exige template nem janela de 24h. */
+  skipWindowCheck?: boolean;
 }
 
 type Tab = "recentes" | "crm" | "oportunidades" | "novo";
@@ -33,7 +35,7 @@ const formatPhone = (phone: string) => {
   return `+${d}`;
 };
 
-export function ForwardDialog({ open, onOpenChange, messages, conversations, onForward, fetchTemplates }: ForwardDialogProps) {
+export function ForwardDialog({ open, onOpenChange, messages, conversations, onForward, fetchTemplates, skipWindowCheck }: ForwardDialogProps) {
   const { accountOwnerId } = useAuth();
   const [tab, setTab] = useState<Tab>("recentes");
   const [search, setSearch] = useState("");
@@ -94,7 +96,9 @@ export function ForwardDialog({ open, onOpenChange, messages, conversations, onF
       const targetKey = phoneKey(phone);
       const conv = conversations.find(c => phoneKey(c.contact_phone) === targetKey);
       const lastInboundAt = conv?.last_message_direction === "inbound" ? conv?.last_message_at : null;
-      const windowOpen = lastInboundAt ? differenceInHours(new Date(), parseISO(lastInboundAt)) < 24 : false;
+      const windowOpen = skipWindowCheck
+        ? true
+        : lastInboundAt ? differenceInHours(new Date(), parseISO(lastInboundAt)) < 24 : false;
 
       if (!windowOpen && !templateName) {
         // Need template

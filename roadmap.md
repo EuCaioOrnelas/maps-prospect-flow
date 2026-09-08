@@ -1,6 +1,7 @@
 # Roadmap
 - [x] Atualizar secrets Evolution (URL/KEY)
-- [ ] Verificar SDR/chat/IA com Evolution (chat-auto-reply, sdr-brain texto, etc.)
+- [x] Auditoria Evolution em SDR/chat/CRM/IA (janela 24h, áudio, mídia, leitura, eco fromMe, transcrição)
+- [ ] Teste E2E com número Evolution real conectado (nenhum conectado ainda na conta)
 - [x] Onboarding: "Conectar número" -> /numeros
 - [x] Sidebar: Números como última opção
 - [x] Redesign página Números

@@ -28,6 +28,7 @@ const WEBHOOK_EVENTS = [
   "MESSAGES_DELETE",
   "SEND_MESSAGE",
   "CONTACTS_UPDATE",
+  "CONTACTS_UPSERT",
   "LOGOUT_INSTANCE",
   "REMOVE_INSTANCE",
 ];
@@ -364,6 +365,56 @@ Deno.serve(async (req) => {
       });
       await admin.from("user_waba_connections").update({ evolution_settings: merged }).eq("id", conn.id);
       return json({ settings: merged });
+    }
+
+    // -------------------------------------------------------------- mark_read
+    // Marca como lidas (ticks azuis) as últimas mensagens recebidas de uma conversa.
+    if (action === "mark_read") {
+      const conversationId = String(body.conversation_id || "");
+      if (!conversationId) return json({ error: "conversation_id obrigatório" }, 400);
+      const { data: conv } = await admin
+        .from("chat_conversations")
+        .select("id, contact_phone, waba_connection_id")
+        .eq("id", conversationId)
+        .maybeSingle();
+      if (!conv || conv.waba_connection_id !== conn.id) return json({ error: "Conversa não encontrada" }, 404);
+      const { data: msgs } = await admin
+        .from("chat_messages")
+        .select("waba_message_id")
+        .eq("conversation_id", conv.id)
+        .eq("direction", "inbound")
+        .not("waba_message_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      const remoteJid = `${String(conv.contact_phone).replace(/\D/g, "")}@s.whatsapp.net`;
+      const readMessages = (msgs || []).map((m) => ({ remoteJid, fromMe: false, id: m.waba_message_id }));
+      if (readMessages.length === 0) return json({ ok: true, marked: 0 });
+      try {
+        await evo(`/chat/markMessageAsRead/${name}`, { method: "POST", body: JSON.stringify({ readMessages }) });
+      } catch (e) {
+        console.warn("[evolution-instance] markMessageAsRead:", (e as Error).message);
+        return json({ ok: false, error: (e as Error).message });
+      }
+      return json({ ok: true, marked: readMessages.length });
+    }
+
+    // ---------------------------------------------------------- sync_webhook
+    // Reaplica a configuração do webhook na instância (auto-cura).
+    if (action === "sync_webhook") {
+      await evo(`/webhook/set/${name}`, {
+        method: "POST",
+        body: JSON.stringify({
+          webhook: {
+            enabled: true,
+            url: WEBHOOK_URL,
+            byEvents: false,
+            base64: true,
+            headers: { "x-wiize-token": conn.evolution_token },
+            events: WEBHOOK_EVENTS,
+          },
+        }),
+      });
+      return json({ ok: true });
     }
 
     // ---------------------------------------------------------------- logout
