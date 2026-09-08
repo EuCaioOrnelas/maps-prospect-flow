@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2, HelpCircle, Webhook, CheckCircle2,
+  Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2, Webhook, CheckCircle2,
   Headset, Megaphone, QrCode, Settings2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -30,8 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { useWabaResponsibles } from "@/hooks/useWabaResponsibles";
-import { ResponsiblesPicker, ResponsibleAvatars } from "@/components/meta/ResponsiblesPicker";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { ResponsiblesPicker, ResponsiblesStack } from "@/components/meta/ResponsiblesPicker";
 
 export interface WabaConnection {
   id: string;
@@ -330,15 +329,16 @@ export default function MetaNumeros() {
   if (isEvo(conn)) {
     const online = conn.evolution_state === "open";
     const connecting = conn.evolution_state === "connecting";
+    const responsibles = responsiblesOf(conn.id);
     return (
-      <div key={conn.id} className={`flex flex-col gap-3 rounded-xl border p-4 transition-colors ${online ? "border-border hover:bg-muted/20" : "border-amber-500/40 bg-amber-500/5"}`}>
+      <div key={conn.id} className={`flex flex-col gap-3 rounded-card border bg-card p-4 shadow-sm transition-shadow hover:shadow-md ${online ? "border-border/80" : "border-amber-500/40 bg-amber-500/5"}`}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {conn.profile_pic_url ? (
-              <img src={conn.profile_pic_url} alt="" className="h-8 w-8 rounded-[9px] object-cover shrink-0" />
+              <img src={conn.profile_pic_url} alt="" className="h-9 w-9 rounded-hover object-cover shrink-0 ring-1 ring-border/50" />
             ) : (
-              <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0 bg-primary/10">
-                <Headset size={14} className="text-primary" />
+              <div className="w-9 h-9 rounded-hover flex items-center justify-center shrink-0 bg-primary/10 ring-1 ring-primary/15">
+                <Headset size={15} className="text-primary" />
               </div>
             )}
             <div className="truncate">
@@ -361,7 +361,6 @@ export default function MetaNumeros() {
             }}>
               <Pencil size={13} className="text-muted-foreground" />
             </Button>
-            <ResponsibleAvatars userIds={responsiblesOf(conn.id)} members={members} max={3} />
             <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground items-center gap-1">
               <Headset size={9} /> Atendimento
             </span>
@@ -388,27 +387,34 @@ export default function MetaNumeros() {
             </Button>
           </div>
         )}
+        {responsibles.length > 0 && (
+          <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Responsáveis</span>
+            <ResponsiblesStack userIds={responsibles} members={members} />
+          </div>
+        )}
       </div>
     );
   }
   const isExpired = expiredTokenIds.has(conn.id);
   const webhookOk = webhookVerifiedIds.has(conn.id);
+  const responsibles = responsiblesOf(conn.id);
   return (
     <div
       key={conn.id}
-      className={`flex flex-col gap-3 rounded-xl border p-4 transition-colors ${
-        isExpired ? "border-destructive/40 bg-destructive/5" : "border-border hover:bg-muted/20"
+      className={`flex flex-col gap-3 rounded-card border bg-card p-4 shadow-sm transition-shadow hover:shadow-md ${
+        isExpired ? "border-destructive/40 bg-destructive/5" : "border-border/80"
       }`}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0 ${
-            isExpired ? "bg-destructive/10" : "bg-primary/10"
+          <div className={`w-9 h-9 rounded-hover flex items-center justify-center shrink-0 ring-1 ${
+            isExpired ? "bg-destructive/10 ring-destructive/15" : "bg-primary/10 ring-primary/15"
           }`}>
             {isExpired ? (
-              <AlertTriangle size={14} className="text-destructive" />
+              <AlertTriangle size={15} className="text-destructive" />
             ) : (
-              <Phone size={14} className="text-primary" />
+              <Phone size={15} className="text-primary" />
             )}
           </div>
           <div className="truncate">
@@ -440,7 +446,6 @@ export default function MetaNumeros() {
           >
             <Pencil size={13} className="text-muted-foreground" />
           </Button>
-          <ResponsibleAvatars userIds={responsiblesOf(conn.id)} members={members} max={3} />
           <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground items-center gap-1">
             <Megaphone size={9} /> Marketing
           </span>
@@ -473,6 +478,13 @@ export default function MetaNumeros() {
           </Button>
         </div>
       )}
+
+      {responsibles.length > 0 && (
+        <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Responsáveis</span>
+          <ResponsiblesStack userIds={responsibles} members={members} />
+        </div>
+      )}
     </div>
   );
   };
@@ -482,23 +494,6 @@ export default function MetaNumeros() {
       <MetaPageHeader
         title="Números"
         description="Conecte e gerencie seus números de Atendimento e de Marketing."
-        titleBadge={
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => window.open("/meta-api-guide", "_blank", "noopener,noreferrer")}
-                  className="inline-flex items-center justify-center w-6 h-6 rounded-[7px] border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                >
-                  <HelpCircle size={14} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>Guia de conexão de números</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        }
         actions={
           <div className="flex items-center gap-3">
             <span
