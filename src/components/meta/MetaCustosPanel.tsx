@@ -75,6 +75,7 @@ export function MetaCustosPanel({ data }: MetaCustosPanelProps) {
       const { data: conns } = await supabase
         .from("user_waba_connections")
         .select("waba_id,access_token")
+        .eq("provider", "meta")
         .eq("owner_user_id", accountOwnerId)
         .limit(1);
       const conn = conns?.[0];

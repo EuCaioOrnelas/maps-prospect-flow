@@ -471,6 +471,7 @@ export default function CreateFlowAI() {
       const { data: conns } = await supabase
         .from("user_waba_connections")
         .select("id, webhook_verified_at, status")
+        .eq("provider", "meta")
         .eq("user_id", user!.id)
         .eq("status", "active");
       const eligible = (conns || []).find((c: any) => !!c.webhook_verified_at);

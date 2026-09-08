@@ -569,6 +569,7 @@ Deno.serve(async (req) => {
       .select("id, waba_id, phone_number_id, display_phone_number, business_name, status, webhook_verified_at, access_token")
       .or(`owner_user_id.eq.${ownerId},user_id.eq.${ownerId}`)
       .eq("status", "active")
+      .eq("provider", "meta")
       .order("created_at", { ascending: true });
     if (connsErr) console.error("[meta-webhook-config] list error", connsErr);
 

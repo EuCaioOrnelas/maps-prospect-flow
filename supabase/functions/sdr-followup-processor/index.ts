@@ -217,10 +217,11 @@ Deno.serve(async (req) => {
         .maybeSingle();
       const { data: connection } = await backend
         .from("user_waba_connections")
-        .select("access_token,phone_number_id")
+        .select("access_token,phone_number_id,provider,evolution_instance_name")
         .eq("id", session.waba_connection_id)
         .maybeSingle();
-      if (!template || !connection?.access_token) {
+      const isEvolution = connection?.provider === "evolution";
+      if (!template || !connection || (!isEvolution && !connection.access_token)) {
         await backend.from("sdr_sessions").update({
           status: "handoff",
           next_followup_at: null,
@@ -229,18 +230,25 @@ Deno.serve(async (req) => {
         handedOff += 1;
         continue;
       }
-      const metaResponse = await fetch(`https://graph.facebook.com/v21.0/${session.phone_number_id || connection.phone_number_id}/messages`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${connection.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to: String(session.phone).replace(/\D/g, ""),
-          type: "template",
-          template: { name: template.name, language: { code: template.language || "pt_BR" } },
-        }),
-      });
+      // Número de Atendimento (Evolution) não tem janela de 24h: envia o corpo do template como texto.
+      const metaResponse = isEvolution
+        ? await fetch(`${(Deno.env.get("EVOLUTION_API_URL") || "").replace(/\/+$/, "")}/message/sendText/${connection.evolution_instance_name}`, {
+            method: "POST",
+            headers: { apikey: Deno.env.get("EVOLUTION_API_KEY") || "", "Content-Type": "application/json" },
+            body: JSON.stringify({ number: String(session.phone).replace(/\D/g, ""), text: template.body || `[${template.name}]` }),
+          })
+        : await fetch(`https://graph.facebook.com/v21.0/${session.phone_number_id || connection.phone_number_id}/messages`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${connection.access_token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messaging_product: "whatsapp",
+              to: String(session.phone).replace(/\D/g, ""),
+              type: "template",
+              template: { name: template.name, language: { code: template.language || "pt_BR" } },
+            }),
+          });
       if (!metaResponse.ok) {
-        console.error("[sdr-followup-processor] Meta template failed:", metaResponse.status, await metaResponse.text());
+        console.error("[sdr-followup-processor] follow-up send failed:", metaResponse.status, await metaResponse.text());
         continue;
       }
       if (session.conversation_id) {

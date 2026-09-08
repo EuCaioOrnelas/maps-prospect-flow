@@ -957,6 +957,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
         supabase
           .from("user_waba_connections")
           .select("id, waba_id, access_token, phone_number_id, display_phone_number, status, nickname")
+          .eq("provider", "meta")
           .eq("user_id", user!.id)
           .eq("status", "active"),
       ]);

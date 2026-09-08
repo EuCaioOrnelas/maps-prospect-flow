@@ -526,14 +526,43 @@ Deno.serve(async (req) => {
     // 6) Envio pelo WhatsApp (Meta Cloud API)
     const { data: connection } = await supabase
       .from("user_waba_connections")
-      .select("access_token, phone_number_id")
+      .select("access_token, phone_number_id, provider, evolution_instance_name")
       .eq("id", waba_connection_id)
       .maybeSingle();
 
-    if (!connection?.access_token) {
+    const isEvolution = connection?.provider === "evolution";
+    if (!connection || (!isEvolution && !connection.access_token)) {
       return json({ error: "Conexão WhatsApp não encontrada" }, 404);
     }
     const pnid = phone_number_id || connection.phone_number_id;
+    const EVO_URL = (Deno.env.get("EVOLUTION_API_URL") || "").replace(/\/+$/, "");
+    const EVO_KEY = Deno.env.get("EVOLUTION_API_KEY") || "";
+
+    // Envia uma mensagem de texto pelo provedor correto (Meta Cloud ou Evolution)
+    const sendText = async (body: string): Promise<{ ok: boolean; id: string | null; raw: any }> => {
+      if (isEvolution) {
+        const r = await fetch(`${EVO_URL}/message/sendText/${connection.evolution_instance_name}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", apikey: EVO_KEY },
+          body: JSON.stringify({ number: String(contact_phone).replace(/\D/g, ""), text: body }),
+        });
+        const j = await r.json().catch(() => ({}));
+        return { ok: r.ok && !!j?.key?.id, id: j?.key?.id || null, raw: j };
+      }
+      const r = await fetch(`https://graph.facebook.com/v21.0/${pnid}/messages`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${connection.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: String(contact_phone).replace(/\D/g, ""),
+          type: "text",
+          text: { body },
+        }),
+      });
+      const j = await r.json().catch(() => ({}));
+      return { ok: r.ok, id: j?.messages?.[0]?.id || null, raw: j };
+    };
 
     let sent = 0;
     const initialDelay = responseDelayMs(agent, inboundMessage || "", messages.join(" "), trigger_type);
@@ -545,23 +574,10 @@ Deno.serve(async (req) => {
       // pausa curta entre mensagens para soar humano
       if (sent > 0) await new Promise((r) => setTimeout(r, 1800));
 
-      const metaRes = await fetch(`https://graph.facebook.com/v21.0/${pnid}/messages`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${connection.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: String(contact_phone).replace(/\D/g, ""),
-          type: "text",
-          text: { body: text },
-        }),
-      });
-      const metaJson = await metaRes.json().catch(() => ({}));
-      if (!metaRes.ok) {
-        console.error("[sdr-dispatch] Meta erro:", metaRes.status, JSON.stringify(metaJson));
+      const sendResult = await sendText(text);
+      const metaJson = sendResult.raw;
+      if (!sendResult.ok) {
+        console.error("[sdr-dispatch] envio falhou:", isEvolution ? "evolution" : "meta", JSON.stringify(metaJson));
         if (convId) {
           await supabase.from("chat_messages").insert({
             conversation_id: convId,
@@ -582,7 +598,7 @@ Deno.serve(async (req) => {
           conversation_id: convId,
           user_id: user_id || owner_user_id,
           owner_user_id,
-          waba_message_id: metaJson?.messages?.[0]?.id || null,
+          waba_message_id: sendResult.id || null,
           direction: "outbound",
           message_type: "text",
           content: text,

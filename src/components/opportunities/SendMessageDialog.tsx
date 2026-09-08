@@ -84,6 +84,7 @@ export function SendMessageDialog({
         supabase
           .from("user_waba_connections")
           .select("id, phone_number_id, display_phone_number, business_name, status")
+          .eq("provider", "meta")
           .eq("user_id", userId)
           .eq("status", "active"),
         supabase

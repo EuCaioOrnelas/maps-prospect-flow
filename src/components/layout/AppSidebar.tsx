@@ -400,7 +400,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     {[
                       { title: "Dashboard", url: "/meta", icon: LayoutDashboardIcon, tour: "sidebar-meta-dashboard" },
                       { title: "Campanhas", url: "/meta/campanhas", icon: MegaphoneIcon, tour: "sidebar-meta-campanhas" },
-                      { title: "Números & WABA", url: "/meta/numeros", icon: Phone, tour: "sidebar-meta-numeros" },
                       { title: "Configurações", url: "/meta/configuracoes", icon: SettingsIcon, tour: "sidebar-meta-configuracoes" },
                     ].map((item) => {
                       const active = item.url === "/meta" ? currentPath === "/meta" : currentPath === item.url;
@@ -488,6 +487,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               )}
             </li>
             )}
+
+            {/* Números (Atendimento + Marketing) */}
+            <li data-tour="sidebar-numeros">
+              <SidebarNavItem
+                title="Números"
+                icon={Phone}
+                url="/numeros"
+                isActive={currentPath.startsWith("/numeros") || currentPath === "/meta/numeros"}
+                isExpanded={isExpanded}
+                tooltip="Números"
+              />
+            </li>
 
             {/* Chat */}
             {can("chat") && (

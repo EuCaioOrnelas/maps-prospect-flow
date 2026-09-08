@@ -991,10 +991,29 @@ ${historyText}`;
               .createSignedUrl(proposalFile.path, 60 * 60 * 24 * 7);
             const { data: connection } = await supabase
               .from("user_waba_connections")
-              .select("access_token, phone_number_id")
+              .select("access_token, phone_number_id, provider, evolution_instance_name")
               .eq("id", session.waba_connection_id)
               .maybeSingle();
-            if (signed?.signedUrl && connection?.access_token) {
+            if (signed?.signedUrl && connection?.provider === "evolution") {
+              const evoRes = await fetch(
+                `${(Deno.env.get("EVOLUTION_API_URL") || "").replace(/\/+$/, "")}/message/sendMedia/${connection.evolution_instance_name}`,
+                {
+                  method: "POST",
+                  headers: { apikey: Deno.env.get("EVOLUTION_API_KEY") || "", "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    number: String(session.phone).replace(/\D/g, ""),
+                    mediatype: "document",
+                    mimetype: "application/pdf",
+                    media: signed.signedUrl,
+                    fileName: proposalFile.name || "proposta.pdf",
+                    caption: "Segue a proposta comercial em anexo.",
+                  }),
+                },
+              );
+              if (!evoRes.ok) {
+                console.error("[sdr-brain] falha ao enviar proposta (evolution):", evoRes.status, await evoRes.text());
+              }
+            } else if (signed?.signedUrl && connection?.access_token) {
               const proposalResponse = await fetch(
                 `https://graph.facebook.com/v21.0/${session.phone_number_id || connection.phone_number_id}/messages`,
                 {
