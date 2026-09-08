@@ -361,7 +361,9 @@ export default function MetaNumeros() {
             }}>
               <Pencil size={13} className="text-muted-foreground" />
             </Button>
-            <Headset size={15} className="hidden sm:inline text-muted-foreground" title="Número de Atendimento" />
+            <span className="hidden sm:inline text-muted-foreground" title="Número de Atendimento">
+              <Headset size={15} />
+            </span>
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${online ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
               {online ? "Ativo" : connecting ? "Conectando" : "Inativo"}
             </span>
