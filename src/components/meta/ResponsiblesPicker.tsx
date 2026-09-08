@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Check, ChevronsUpDown, Search, X, UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 export interface ResponsibleOption {
