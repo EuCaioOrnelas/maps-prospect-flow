@@ -1,7 +1,7 @@
 // Wiize — Conexão de contas profissionais do Instagram (Meta oficial)
 // Ações: list | connect | disconnect | refresh
 // Autocontido (sem _shared).
-import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

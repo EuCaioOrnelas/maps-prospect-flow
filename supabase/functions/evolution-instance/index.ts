@@ -1,7 +1,7 @@
 // Evolution API — "Número de Atendimento"
 // Gerencia instâncias conectadas por QR code (criar, QR, status, configurações, logout, excluir).
 // Docs: https://docs.evolutionfoundation.com.br/
-import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 // Identidade estável de uma linha WhatsApp (Número de Atendimento).
 // Chave = DDD + 8 últimos dígitos (ignora o "9" extra e o DDI 55), para que as
 // conversas salvas na Wiize sobrevivam a desconexões, exclusões e novas instâncias.
