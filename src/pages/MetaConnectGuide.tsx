@@ -132,7 +132,7 @@ export default function MetaConnectGuide() {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => navigate("/meta/numeros")}
+            onClick={() => navigate("/numeros")}
             className="text-xs gap-1.5 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
           >
             <ArrowLeft size={12} /> Voltar
@@ -340,7 +340,7 @@ export default function MetaConnectGuide() {
             </div>
             <Button
               size="lg"
-              onClick={() => navigate("/meta/numeros")}
+              onClick={() => navigate("/numeros")}
               className="bg-[hsl(158_72%_32%)] text-white hover:bg-[hsl(158_72%_28%)] gap-2"
             >
               Voltar para a Wiize <ChevronRight size={16} />
@@ -800,7 +800,7 @@ const PhaseWebhookContent = ({ navigate }: { navigate: (path: string) => void })
       </p>
       <button
         type="button"
-        onClick={() => navigate("/meta/numeros?tab=webhook")}
+        onClick={() => navigate("/numeros?tab=webhook")}
         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[hsl(158_72%_32%)] text-white text-sm font-medium hover:bg-[hsl(158_72%_28%)] transition-colors"
       >
         Abrir configuração de Webhook
@@ -882,7 +882,7 @@ const PhaseWebhookContent = ({ navigate }: { navigate: (path: string) => void })
       </p>
       <button
         type="button"
-        onClick={() => navigate("/meta/numeros?tab=webhook")}
+        onClick={() => navigate("/numeros?tab=webhook")}
         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[hsl(158_72%_32%)] text-white text-sm font-medium hover:bg-[hsl(158_72%_28%)] transition-colors"
       >
         Ir para Testar todos

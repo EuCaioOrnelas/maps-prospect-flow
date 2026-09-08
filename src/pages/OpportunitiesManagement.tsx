@@ -1549,7 +1549,7 @@ export default function OpportunitiesManagement() {
                       variant="outline"
                       size="sm"
                       className="gap-2"
-                      onClick={() => navigate("/meta/numeros")}
+                      onClick={() => navigate("/numeros")}
                     >
                       <Wifi size={14} />
                       Números WhatsApp (Meta)

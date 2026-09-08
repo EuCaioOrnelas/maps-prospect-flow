@@ -61,7 +61,7 @@ export function WebhookRequiredDialog({ open, onOpenChange, pendingConnections, 
           <Button
             onClick={() => {
               onOpenChange(false);
-              navigate("/meta/numeros?tab=webhook");
+              navigate("/numeros?tab=webhook");
             }}
             className="gap-1.5"
           >
