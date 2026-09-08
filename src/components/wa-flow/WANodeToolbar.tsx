@@ -4,6 +4,7 @@ import {
   HeadphonesIcon, CircleStop, Star, Zap,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 
 interface WANodeToolbarProps {
   onAddNode: (type: string) => void;
@@ -17,7 +18,7 @@ type ToolbarButton = {
 };
 
 const nodeButtons: ToolbarButton[] = [
-  { type: "entry", icon: Zap, label: "Gatilho", color: "text-whatsapp" },
+  { type: "entry", icon: WhatsAppIcon, label: "Gatilho", color: "text-whatsapp" },
   { type: "message", icon: MessageSquare, label: "Mensagem", color: "text-primary" },
   { type: "buttons", icon: ToggleLeft, label: "Botões / Opções", color: "text-primary" },
   { type: "condition", icon: GitBranch, label: "Condição", color: "text-amber-500" },

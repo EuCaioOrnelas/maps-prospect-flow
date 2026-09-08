@@ -37,7 +37,7 @@ export function NodeShell({
       )}
     >
       <div className="flex items-center gap-3 px-3.5 py-3">
-        <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0", accent)}>
+        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", accent)}>
           {iconImg ? (
             <img src={iconImg} alt="" className="w-[18px] h-[18px] object-contain" />
           ) : Icon ? (
