@@ -132,7 +132,7 @@ const defaultEdgeOptions = {
 // Cores por categoria — espelhadas nos cards do canvas e no seletor de blocos.
 const COLOR_MESSAGES = "text-primary-foreground bg-primary";
 const COLOR_LOGIC = "text-primary-foreground bg-amber-500";
-const COLOR_AI = "text-primary-foreground bg-violet-500";
+const COLOR_AI = "text-primary-foreground bg-muted";
 const COLOR_SERVICE = "text-primary-foreground bg-amber-500";
 const COLOR_ACTIONS = "text-primary-foreground bg-cyan-500";
 
@@ -140,7 +140,7 @@ const sidebarCategories = [
   {
     label: "Gatilho de Ativação",
     items: [
-      { type: "entry", icon: Zap, label: "Gatilho", desc: "Escolha o número e como o fluxo começa", color: "text-primary-foreground bg-whatsapp" },
+      { type: "entry", icon: WhatsAppIcon, label: "Gatilho", desc: "Escolha o número e como o fluxo começa", color: "text-primary-foreground bg-whatsapp" },
     ],
   },
   {
@@ -163,7 +163,7 @@ const sidebarCategories = [
   {
     label: "Inteligência",
     items: [
-      { type: "ai_agent", icon: Bot, label: "Agente IA", desc: "IA responde e direciona", color: COLOR_AI },
+      { type: "ai_agent", icon: Bot, label: "Agente IA", desc: "IA responde e direciona", color: COLOR_AI, iconImg: openaiIcon },
     ],
   },
   {
@@ -1009,7 +1009,7 @@ export default function WhatsAppFlowEditor() {
                             "hover:bg-muted/40 hover:border-primary/30 cursor-grab active:cursor-grabbing active:shadow-lg active:scale-[1.02] active:border-primary/50",
                           )}
                         >
-                          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
+                          <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", item.color.split(" ")[1])}>
                             {(item as any).iconImg ? (
                               <img src={(item as any).iconImg} alt={item.label} width={20} height={20} loading="eager" decoding="async" className="w-5 h-5 object-contain" />
                             ) : (
