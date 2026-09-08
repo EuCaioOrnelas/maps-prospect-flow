@@ -2,12 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Workflow, Sparkles, ArrowLeft, Loader2, Wand2, RefreshCw, ShieldAlert, Instagram, MessageSquare, Plus } from "lucide-react";
-import { useInstagramAccounts } from "@/hooks/useInstagramAccounts";
-import { InstagramConnectDialog } from "./InstagramConnectDialog";
-import { InstagramAISimulation } from "./InstagramAISimulation";
-import type { FlowChannel } from "@/lib/flowChannels";
-import { cn } from "@/lib/utils";
+import { Workflow, Sparkles, ArrowLeft, Loader2, Wand2, ShieldAlert } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,20 +35,33 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
   const { user } = useAuth();
   const navigate = useNavigate();
   const { connections, loading: loadingGate } = useWebhookGate();
-  const [channel, setChannel] = useState<FlowChannel>("whatsapp");
-  const [igDialogOpen, setIgDialogOpen] = useState(false);
-  const { accounts: igAccounts, isLoading: loadingIg } = useInstagramAccounts();
-  const defaultIgAccount = igAccounts.find((a) => a.status === "active") || igAccounts[0] || null;
+  const channel = "whatsapp" as const;
 
-  // Only Meta connections with verified webhook can power a flow.
-  const eligible = (connections || []).filter(
+  // Números de Marketing (Meta) precisam de webhook verificado.
+  const eligibleMeta = (connections || []).filter(
     (c) => !!c.webhook_verified_at && (c.status === "connected" || c.status === "active"),
   );
-  const hasMetaEligible = eligible.length > 0;
-  const defaultConnection = eligible[0] || null;
-  const isInstagram = channel === "instagram";
-  const hasEligible = isInstagram ? !!defaultIgAccount : hasMetaEligible;
-  const gateLoading = isInstagram ? loadingIg : loadingGate;
+
+  // Números de Atendimento (QR code) também podem rodar fluxos.
+  const { data: evoConnections = [], isLoading: loadingEvo } = useQuery({
+    queryKey: ["evolution-connections-for-flow", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_waba_connections")
+        .select("id, nickname, display_phone_number, evolution_state, status")
+        .eq("user_id", user!.id)
+        .eq("provider", "evolution")
+        .neq("status", "disconnected");
+      return data || [];
+    },
+    enabled: !!user && open,
+  });
+
+  const defaultConnection = eligibleMeta[0] || null;
+  const defaultEvoConnection = (evoConnections as any[])[0] || null;
+  const hasEligible = !!defaultConnection || !!defaultEvoConnection;
+  const gateLoading = loadingGate || loadingEvo;
+  const preferMeta = !!defaultConnection;
 
   useEffect(() => {
     if (open) {
@@ -64,21 +72,17 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
 
   const createBlank = useMutation({
     mutationFn: async () => {
-      if (isInstagram && !defaultIgAccount) {
-        throw new Error("Conecte uma conta profissional do Instagram antes de criar fluxos.");
-      }
-      if (!isInstagram && !defaultConnection) {
-        throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos.");
+      if (!hasEligible) {
+        throw new Error("Conecte um número de Atendimento ou de Marketing antes de criar fluxos.");
       }
       const { data, error } = await supabase
         .from("wa_automation_flows")
         .insert({
           user_id: user!.id,
-          name: isInstagram ? "Novo Fluxo Instagram" : "Novo Fluxo",
+          name: "Novo Fluxo",
           channel,
-          api_type: "meta",
-          waba_connection_id: isInstagram ? null : defaultConnection!.id,
-          instagram_connection_id: isInstagram ? defaultIgAccount!.id : null,
+          api_type: preferMeta ? "meta" : "evolution",
+          waba_connection_id: preferMeta ? defaultConnection!.id : defaultEvoConnection!.id,
         } as any)
         .select()
         .single();
@@ -99,23 +103,19 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
         throw new Error("Descreva o que deseja para o fluxo");
       }
 
-      if (isInstagram && !defaultIgAccount) {
-        throw new Error("Conecte uma conta profissional do Instagram antes de criar fluxos.");
-      }
-      if (!isInstagram && !defaultConnection) {
-        throw new Error("Conecte um número Meta oficial com webhook verificado antes de criar fluxos.");
+      if (!hasEligible) {
+        throw new Error("Conecte um número de Atendimento ou de Marketing antes de criar fluxos.");
       }
 
-      // 1. Create flow (Meta-bound)
+      // 1. Criar fluxo
       const { data: flow, error: flowErr } = await supabase
         .from("wa_automation_flows")
         .insert({
           user_id: user!.id,
-          name: isInstagram ? "Fluxo IA Instagram" : "Fluxo IA",
+          name: "Fluxo IA",
           channel,
-          api_type: "meta",
-          waba_connection_id: isInstagram ? null : defaultConnection!.id,
-          instagram_connection_id: isInstagram ? defaultIgAccount!.id : null,
+          api_type: preferMeta ? "meta" : "evolution",
+          waba_connection_id: preferMeta ? defaultConnection!.id : defaultEvoConnection!.id,
         } as any)
         .select()
         .single();
@@ -160,65 +160,23 @@ export function CreateFlowDialog({ open, onOpenChange, initialMode, initialPromp
 
   return (
     <>
-    <InstagramConnectDialog open={igDialogOpen} onOpenChange={setIgDialogOpen} />
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] p-0 gap-0 overflow-hidden border-border/50 bg-card">
-        {isInstagram && createWithAI.isPending ? (
-          <div className="flex items-center justify-center py-8 px-4 relative overflow-hidden">
-            <InstagramAISimulation userPrompt={prompt} isFinished={createWithAI.isSuccess} />
-          </div>
-        ) : mode === "choose" ? (
+        {mode === "choose" ? (
           <div className="p-8">
             <div className="text-center mb-6">
               <h2 className="text-xl font-bold text-foreground mb-1">Criar Novo Fluxo</h2>
               <p className="text-sm text-muted-foreground">Escolha como deseja começar</p>
             </div>
 
-            {/* Seletor de canal */}
-            <div className="mb-5 grid grid-cols-2 gap-2 p-1 rounded-xl bg-muted/40 border border-border">
-              {([
-                { id: "whatsapp" as const, label: "WhatsApp", Icon: MessageSquare },
-                { id: "instagram" as const, label: "Instagram", Icon: Instagram },
-              ]).map(({ id, label, Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setChannel(id)}
-                  className={cn(
-                    "flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors",
-                    channel === id
-                      ? "bg-card text-foreground shadow-sm border border-border"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Icon size={14} className={id === "instagram" ? "text-pink-500" : "text-emerald-500"} />
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {isInstagram && !loadingIg && !defaultIgAccount && (
-              <div className="mb-6 flex items-start gap-3 rounded-lg border border-pink-500/40 bg-pink-500/5 p-3 text-sm">
-                <Instagram className="h-5 w-5 text-pink-500 shrink-0 mt-0.5" />
-                <div className="space-y-2">
-                  <p className="font-semibold text-foreground">Conecte uma conta do Instagram</p>
-                  <p className="text-xs text-muted-foreground">
-                    É necessário um perfil Empresa/Criador vinculado a uma Página do Facebook. O WhatsApp continua
-                    funcionando normalmente.
-                  </p>
-                  <Button size="sm" variant="outline" className="gap-1.5 h-7 text-xs" onClick={() => setIgDialogOpen(true)}>
-                    <Plus size={12} /> Conectar Instagram
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {!isInstagram && !loadingGate && !hasEligible && (
+            {!gateLoading && !hasEligible && (
               <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
                 <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-semibold text-amber-700">Webhook Meta obrigatório</p>
+                  <p className="font-semibold text-amber-700">Conecte um número primeiro</p>
                   <p className="text-xs text-amber-700/80">
-                    Fluxos só funcionam em números conectados via API oficial da Meta <strong>com webhook verificado</strong>. Conecte ou verifique o webhook em Configurações &rsaquo; WhatsApp Oficial.
+                    Fluxos funcionam com o Número de Atendimento (QR code) ou com o Número de Marketing
+                    (Meta Cloud API com webhook verificado). Conecte um número na página Números.
                   </p>
                 </div>
               </div>

@@ -122,6 +122,10 @@ type FlowChannel = "whatsapp" | "instagram";
 
 interface SendCtx {
   channel: FlowChannel;
+  /** meta = Número de Marketing (Cloud API) | evolution = Número de Atendimento (QR code) */
+  provider?: "meta" | "evolution";
+  /** nome da instância na Evolution API */
+  instanceName?: string | null;
   token: string;
   phoneNumberId: string;
   /** ID da conta profissional do Instagram (IG User ID) — usado no canal instagram */
@@ -264,8 +268,66 @@ async function igHideComment(ctx: SendCtx, commentId: string, hide: boolean) {
   return res.ok;
 }
 
+const EVOLUTION_API_URL = (Deno.env.get("EVOLUTION_API_URL") || "").replace(/\/+$/, "");
+const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY") || "";
+
+function evolutionJid(phone: string) {
+  return `${digits(phone)}@s.whatsapp.net`;
+}
+
+async function evolutionCall(path: string, body: Record<string, any>) {
+  const res = await fetch(`${EVOLUTION_API_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
+
+/** Envia pelo Número de Atendimento (Evolution). Só texto e mídia — sem botões nativos. */
+async function evolutionSend(ctx: SendCtx, payload: Record<string, any>, logText: string, logType: string) {
+  if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY || !ctx.instanceName) {
+    console.error("[wa-flow-runner] Evolution não configurada");
+    await logOutbound(ctx, logText, logType, null, false);
+    return false;
+  }
+  const number = evolutionJid(ctx.to);
+  let path = `/message/sendText/${ctx.instanceName}`;
+  let body: Record<string, any> = { number, text: logText };
+
+  if (payload.type === "text") {
+    body = { number, text: payload.text?.body ?? logText };
+  } else if (["image", "video", "document", "audio"].includes(payload.type)) {
+    const media = payload[payload.type] || {};
+    if (payload.type === "audio") {
+      path = `/message/sendWhatsAppAudio/${ctx.instanceName}`;
+      body = { number, audio: media.link };
+    } else {
+      path = `/message/sendMedia/${ctx.instanceName}`;
+      body = {
+        number,
+        mediatype: payload.type === "document" ? "document" : payload.type,
+        media: media.link,
+        caption: media.caption || undefined,
+        fileName: media.filename || undefined,
+      };
+    }
+  }
+
+  const { ok, status, data } = await evolutionCall(path, body);
+  if (!ok) {
+    console.error("[wa-flow-runner] Evolution erro:", status, JSON.stringify(data).slice(0, 400));
+    await logOutbound(ctx, logText, logType, null, false);
+    return false;
+  }
+  await logOutbound(ctx, logText, logType, data?.key?.id || null, true);
+  return true;
+}
+
 async function metaSend(ctx: SendCtx, payload: Record<string, any>, logText: string, logType = "text") {
   if (ctx.channel === "instagram") return await igSend(ctx, payload, logText, logType);
+  if (ctx.provider === "evolution") return await evolutionSend(ctx, payload, logText, logType);
   const res = await fetch(`https://graph.facebook.com/v21.0/${ctx.phoneNumberId}/messages`, {
     method: "POST",
     headers: { Authorization: `Bearer ${ctx.token}`, "Content-Type": "application/json" },
@@ -302,6 +364,17 @@ async function sendInteractive(ctx: SendCtx, cfg: Record<string, any>, vars: Rec
   const isList = cfg.interaction_type === "list";
 
   if (!items.length) return await sendText(ctx, [header, body, footer].filter(Boolean).join("\n\n"));
+
+  // Número de Atendimento: sem botões nativos — enviamos opções numeradas em texto.
+  if (ctx.provider === "evolution") {
+    const list = items
+      .map((it, i) => `${i + 1}. ${interpolate(it.title, vars)}${it.description ? ` — ${interpolate(it.description, vars)}` : ""}`)
+      .join("\n");
+    const msg = [header, body, list, footer || "Responda com o número da opção."]
+      .filter(Boolean)
+      .join("\n\n");
+    return await sendText(ctx, msg);
+  }
 
   const interactive: Record<string, any> = { body: { text: body.slice(0, 1024) } };
   if (header) interactive.header = { type: "text", text: header.slice(0, 60) };
@@ -1136,12 +1209,27 @@ async function buildSendCtx(flow: any, phone: string, leadName: string | null, u
     };
   }
 
-  let connQuery = supabase.from("user_waba_connections").select("id,access_token,phone_number_id").eq("status", "active").or("provider.is.null,provider.eq.meta");
-  connQuery = flow.waba_connection_id
-    ? connQuery.eq("id", flow.waba_connection_id)
-    : connQuery.eq("user_id", ownerId);
+  const wantsEvolution = (flow.api_type || "") === "evolution";
+  let connQuery = supabase
+    .from("user_waba_connections")
+    .select("id,access_token,phone_number_id,provider,evolution_instance_name,status");
+  if (flow.waba_connection_id) {
+    connQuery = connQuery.eq("id", flow.waba_connection_id);
+  } else {
+    connQuery = connQuery.eq("user_id", ownerId).eq("status", "active");
+    connQuery = wantsEvolution
+      ? connQuery.eq("provider", "evolution")
+      : connQuery.or("provider.is.null,provider.eq.meta");
+  }
   const { data: conn } = await connQuery.limit(1).maybeSingle();
-  if (!conn?.access_token) return null;
+  if (!conn) return null;
+
+  const isEvolutionConn = conn.provider === "evolution";
+  if (isEvolutionConn) {
+    if (!conn.evolution_instance_name) return null;
+  } else if (!conn.access_token) {
+    return null;
+  }
 
   const tail = digits(phone).slice(-8);
   let convId: string | null = null;
@@ -1172,7 +1260,9 @@ async function buildSendCtx(flow: any, phone: string, leadName: string | null, u
 
   return {
     channel: "whatsapp",
-    token: conn.access_token,
+    provider: isEvolutionConn ? "evolution" : "meta",
+    instanceName: conn.evolution_instance_name || null,
+    token: conn.access_token || "",
     phoneNumberId: flow.phone_number_id || conn.phone_number_id,
     to: digits(phone),
     convId,
@@ -1290,11 +1380,32 @@ async function handleInbound(body: Record<string, any>) {
     const awaiting = nodes.find((n) => n.id === running.awaiting_node_id);
     if (awaiting && awaiting.node_type === "buttons") {
       const items = interactiveItems(awaiting.config || {});
-      const match = items.find(
+      const answer = text.trim().toLowerCase();
+      let match = items.find(
         (i) =>
           normalizeHandle(i.id) === normalizeHandle(runtime.lastButtonId) ||
-          i.title.toLowerCase() === text.trim().toLowerCase(),
+          i.title.toLowerCase() === answer,
       );
+      // Número de Atendimento: as opções vão numeradas, então aceitamos "2", "2)" etc.
+      if (!match) {
+        const numeric = Number(answer.replace(/[^0-9]/g, ""));
+        if (numeric >= 1 && numeric <= items.length && /^[^a-z]*[0-9]+[^a-z]*$/.test(answer)) {
+          match = items[numeric - 1];
+        }
+      }
+      if (!match && answer) {
+        match = items.find((i) => i.title.toLowerCase().includes(answer) || answer.includes(i.title.toLowerCase()));
+      }
+
+      if (!match && send.provider === "evolution") {
+        const cfg = awaiting.config || {};
+        const retry = String(cfg.invalid_option_text || "Não entendi sua resposta. Responda com o número da opção desejada.");
+        await sendText(send, retry);
+        await sendInteractive(send, cfg, vars);
+        await persist(running.id, { last_user_message_at: new Date().toISOString() });
+        return json({ ok: true, awaiting_valid_option: running.id });
+      }
+
       const handle = match?.id || runtime.lastButtonId;
       startId = handle ? targetByHandle(edges, awaiting.id, handle) : defaultTarget(edges, awaiting.id);
       if (!startId) startId = defaultTarget(edges, awaiting.id);

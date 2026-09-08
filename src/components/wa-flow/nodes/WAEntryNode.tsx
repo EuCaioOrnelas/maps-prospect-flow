@@ -1,7 +1,7 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
-import { Phone, AlertTriangle, Radio, Wifi } from "lucide-react";
-import { FaWhatsapp } from "react-icons/fa6";
+import { NodeShell } from "./NodeShell";
+import { Zap, Phone, Radio, Wifi } from "lucide-react";
 
 const triggerLabels: Record<string, string> = {
   keyword: "Palavra-chave",
@@ -15,67 +15,40 @@ export function WAEntryNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
   const isConfigured = !!cfg.trigger_type;
   const numberName = cfg.whatsapp_number_name;
-  const apiType = cfg.api_type; // "evolution" | "meta"
+  const apiType = cfg.api_type;
   const isEvolution = apiType === "evolution";
   const isMeta = apiType === "meta";
 
   return (
-    <div className="bg-card border-2 border-primary/40 rounded-2xl shadow-[0_2px_16px_hsl(158,72%,38%,0.15)] w-60 backdrop-blur-sm">
-      {/* Target handle - top center */}
+    <NodeShell
+      icon={Zap}
+      accent="bg-violet-500"
+      title={String((data as any).label || "Gatilho")}
+      subtitle={isConfigured ? (triggerLabels[cfg.trigger_type] || cfg.trigger_type) : null}
+      placeholder="Clique para configurar"
+    >
       <FlowHandle type="target" position={Position.Left} />
 
-      <div className="flex items-center gap-2.5 px-4 py-3">
-        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-          <FaWhatsapp size={18} className="text-emerald-500" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-foreground truncate">{String((data as any).label || "Entrada WhatsApp")}</p>
-          {isConfigured ? (
-            <p className="text-[10px] text-muted-foreground truncate">{triggerLabels[cfg.trigger_type] || cfg.trigger_type}</p>
-          ) : (
-            <p className="text-[10px] text-muted-foreground/60 italic">Clique para configurar</p>
-          )}
-        </div>
-      </div>
-
       {numberName && (
-        <div className="px-3 pb-2">
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground bg-muted/40 rounded-lg px-2 py-1.5">
-            <Phone size={10} className="shrink-0" />
+        <div className="px-3.5 pb-3 -mt-1">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/50 rounded-xl px-2.5 py-1.5">
+            <Phone size={11} className="shrink-0" />
             <span className="truncate flex-1">{numberName}</span>
             {isMeta && (
-              <span className="flex items-center gap-0.5 text-[8px] font-semibold text-primary bg-primary/10 rounded px-1 py-0.5 shrink-0">
-                <Wifi size={7} /> Inbound
+              <span className="flex items-center gap-0.5 text-[9px] font-semibold text-primary bg-primary/10 rounded-md px-1.5 py-0.5 shrink-0">
+                <Wifi size={8} /> Marketing
               </span>
             )}
             {isEvolution && (
-              <span className="flex items-center gap-0.5 text-[8px] font-semibold text-amber-500 bg-amber-500/10 rounded px-1 py-0.5 shrink-0">
-                <Radio size={7} /> Outbound
+              <span className="flex items-center gap-0.5 text-[9px] font-semibold text-emerald-600 bg-emerald-500/10 rounded-md px-1.5 py-0.5 shrink-0">
+                <Radio size={8} /> Atendimento
               </span>
             )}
           </div>
         </div>
       )}
 
-      {isEvolution && (
-        <div className="px-3 pb-2">
-          <div className="flex items-start gap-1.5 text-[9px] text-amber-500 bg-amber-500/5 border border-amber-500/20 rounded-lg px-2 py-1.5 leading-tight">
-            <AlertTriangle size={10} className="shrink-0 mt-0.5" />
-            <span>API Outbound — risco de bloqueio por spam</span>
-          </div>
-        </div>
-      )}
-
-      {isMeta && cfg.reopen_template_name && (
-        <div className="px-3 pb-2">
-          <div className="text-[9px] text-primary bg-primary/5 border border-primary/20 rounded-lg px-2 py-1.5">
-            📋 Template reabertura: {cfg.reopen_template_name}
-          </div>
-        </div>
-      )}
-
-      {/* Source handle - right center, green */}
       <FlowHandle type="source" position={Position.Right} />
-    </div>
+    </NodeShell>
   );
 }
