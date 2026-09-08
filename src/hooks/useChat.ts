@@ -565,10 +565,19 @@ export function useChat() {
 
   // Mark as read
   const markAsRead = useCallback(async (conversationId: string) => {
+    const conv = conversations.find(c => c.id === conversationId);
+    const hadUnread = (conv?.unread_count || 0) > 0;
     setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, unread_count: 0 } : c));
     const { error } = await supabase.from("chat_conversations").update({ unread_count: 0 }).eq("id", conversationId);
     if (error) throw error;
-  }, []);
+    // Número de Atendimento (Evolution): sincroniza o "lido" (ticks azuis) no WhatsApp do contato
+    const connection = conv ? connections.find(c => c.id === conv.waba_connection_id) : null;
+    if (hadUnread && connection?.provider === "evolution") {
+      supabase.functions.invoke("evolution-instance", {
+        body: { action: "mark_read", connection_id: connection.id, conversation_id: conversationId },
+      }).catch(() => {});
+    }
+  }, [conversations, connections]);
 
   // Mark as unread
   const markAsUnread = useCallback(async (conversationId: string) => {

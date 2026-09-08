@@ -111,19 +111,54 @@ Deno.serve(async (req) => {
       const EVO_KEY = Deno.env.get('EVOLUTION_API_KEY') || '';
       const instance = connection.evolution_instance_name;
       const number = String(to).replace(/\D/g, '');
+      if (type === 'template') {
+        await supabase.from('chat_messages').update({ status: 'failed', metadata: { error: 'template_not_supported_evolution' } }).eq('id', message_id);
+        return new Response(JSON.stringify({ error: 'Templates são exclusivos do Número de Marketing (Meta). Envie uma mensagem normal.' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       let path = `/message/sendText/${instance}`;
       let evoBody: any = { number, text: text || '' };
       if (type === 'audio') {
+        // Baixa o áudio e envia em base64 com `encoding: true` para a Evolution
+        // converter para OGG/Opus (nota de voz nativa), independente do formato
+        // gravado pelo navegador (webm/ogg/mp4).
         path = `/message/sendWhatsAppAudio/${instance}`;
-        evoBody = { number, audio: mediaLink };
+        let audioPayload: string = mediaLink || '';
+        try {
+          if (mediaLink) {
+            const r = await fetch(mediaLink);
+            if (r.ok) {
+              const buf = new Uint8Array(await r.arrayBuffer());
+              let bin = '';
+              const chunk = 0x8000;
+              for (let i = 0; i < buf.length; i += chunk) bin += String.fromCharCode(...buf.subarray(i, i + chunk));
+              audioPayload = btoa(bin);
+            }
+          }
+        } catch (e) {
+          console.warn('[send-chat-message] audio base64 fallback to url:', e);
+        }
+        evoBody = { number, audio: audioPayload, encoding: true, delay: 300 };
       } else if (type === 'image' || type === 'video' || type === 'document') {
         path = `/message/sendMedia/${instance}`;
+        const inferMime = () => {
+          const f = String(filename || '').toLowerCase();
+          if (type === 'image') return f.endsWith('.png') ? 'image/png' : f.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+          if (type === 'video') return 'video/mp4';
+          if (f.endsWith('.pdf')) return 'application/pdf';
+          if (f.endsWith('.xlsx')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+          if (f.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          if (f.endsWith('.csv')) return 'text/csv';
+          return 'application/octet-stream';
+        };
         evoBody = {
           number,
           mediatype: type,
+          mimetype: inferMime(),
           media: mediaLink,
           caption: caption || undefined,
-          fileName: filename || undefined,
+          fileName: filename || (type === 'document' ? 'documento' : undefined),
         };
       }
       console.log(`[send-chat-message] Sending ${type} to ${to} via Evolution ${instance}`);
