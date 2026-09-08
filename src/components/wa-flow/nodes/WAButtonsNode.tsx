@@ -70,19 +70,20 @@ export function WAButtonsNode({ data }: NodeProps) {
         )}
 
         {hasItems && (
-          <div className="px-3.5 pb-3 space-y-1">
+          <div className="px-3.5 pb-3 space-y-1.5">
             {items.map((item, i) => (
               <div
                 key={item.id}
                 ref={(el) => { itemRefs.current[i] = el; }}
-                className="text-[11px] bg-muted/50 rounded-lg px-2.5 py-1.5 truncate text-foreground/80 flex items-center gap-1.5"
+                className="text-[11px] bg-muted/50 rounded-xl px-3 py-2 truncate text-foreground/80 flex items-center gap-2"
               >
                 {isEvolution ? (
                   <span className="text-[10px] font-bold text-primary shrink-0">{i + 1}.</span>
                 ) : (
                   <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                 )}
-                {item.title}
+                <span className="flex-1 truncate">{item.title}</span>
+                <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
               </div>
             ))}
           </div>
