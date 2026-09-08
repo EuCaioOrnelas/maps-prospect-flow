@@ -126,6 +126,75 @@ function publicConn(c: any) {
   return rest;
 }
 
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+// Apaga definitivamente as conversas guardadas de uma linha que ficou 30 dias fora do ar.
+async function purgeEvolutionLine(admin: any, c: any) {
+  try {
+    const iname = c.evolution_instance_name;
+    if (iname) {
+      try { await evo(`/instance/logout/${iname}`, { method: "DELETE" }); } catch {}
+      try { await evo(`/instance/delete/${iname}`, { method: "DELETE" }); } catch {}
+    }
+    const ownerId = c.owner_user_id || c.user_id;
+    const ref = c.display_phone_number ? lineRef(c.display_phone_number) : null;
+
+    const ids = new Set<string>();
+    const { data: byConn } = await admin.from("chat_conversations").select("id").eq("waba_connection_id", c.id);
+    (byConn || []).forEach((r: any) => ids.add(r.id));
+    if (ref) {
+      const { data: byLine } = await admin
+        .from("chat_conversations").select("id").eq("phone_number_id", ref).eq("owner_user_id", ownerId);
+      (byLine || []).forEach((r: any) => ids.add(r.id));
+    }
+    const list = Array.from(ids);
+    for (let i = 0; i < list.length; i += 200) {
+      const chunk = list.slice(i, i + 200);
+      await admin.from("chat_messages").delete().in("conversation_id", chunk);
+      await admin.from("chat_conversations").delete().in("id", chunk);
+    }
+    await admin.from("user_waba_connections").delete().eq("id", c.id);
+    console.log(`[evolution-instance] purge 30d: ${c.id} (${list.length} conversas)`);
+  } catch (e) {
+    console.warn("[evolution-instance] purge falhou", (e as Error).message);
+  }
+}
+
+// Avisa o cliente por e-mail quando a religação automática não resolve e é preciso ler o QR code.
+async function sendReconnectEmail(admin: any, c: any): Promise<boolean> {
+  const apiKey = Deno.env.get("RESEND_API_KEY");
+  if (!apiKey) return false;
+  try {
+    const ownerId = c.owner_user_id || c.user_id;
+    const { data: profile } = await admin.from("profiles").select("email, full_name").eq("id", ownerId).maybeSingle();
+    const to = profile?.email;
+    if (!to) return false;
+    const label = c.nickname || (c.display_phone_number ? `+${c.display_phone_number}` : "Número de Atendimento");
+    const link = "https://app.wiize.com.br/numeros";
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "Wiize <no-reply@wiize.com.br>",
+        to: [to],
+        subject: `Seu Número de Atendimento ${label} está desconectado`,
+        html: `
+          <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;color:#0f172a">
+            <h2 style="font-size:18px;margin:0 0 12px">Reconecte seu WhatsApp</h2>
+            <p style="font-size:14px;line-height:1.6">Olá${profile?.full_name ? `, ${profile.full_name}` : ""}. O número <strong>${label}</strong> saiu do ar e não conseguimos religar sozinhos.</p>
+            <p style="font-size:14px;line-height:1.6">Enquanto isso, o chat, o CRM e a IA não recebem novas mensagens nessa linha. Abra a página de Números, clique em <strong>Reconectar</strong> e leia o novo QR code pelo celular.</p>
+            <p style="margin:20px 0"><a href="${link}" style="background:#16a34a;color:#fff;text-decoration:none;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:600">Reconectar agora</a></p>
+            <p style="font-size:12px;color:#64748b;line-height:1.6">Se a linha ficar 30 dias sem reconectar, o histórico guardado dessas conversas será apagado.</p>
+          </div>`,
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn("[evolution-instance] e-mail de reconexão falhou", (e as Error).message);
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
