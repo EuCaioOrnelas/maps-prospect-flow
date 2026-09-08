@@ -502,13 +502,15 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
       },
     };
 
-    const { error: updateErr } = await supabase
-      .from("leads")
-      .update({ enrichment_data: newEnrichment })
-      .eq("id", lead_id)
-      .eq("user_id", user.id);
+    if (!internalMode) {
+      const { error: updateErr } = await supabase
+        .from("leads")
+        .update({ enrichment_data: newEnrichment })
+        .eq("id", lead_id)
+        .eq("user_id", user.id);
 
-    if (updateErr) console.error("Update error:", updateErr);
+      if (updateErr) console.error("Update error:", updateErr);
+    }
 
     return new Response(
       JSON.stringify({
