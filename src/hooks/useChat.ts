@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { hydrateProfilePics, setCachedProfilePic } from "@/lib/profilePicCache";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPhoneForMeta } from "@/lib/phoneUtils";
