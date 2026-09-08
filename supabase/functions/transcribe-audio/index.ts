@@ -86,6 +86,17 @@ Deno.serve(async (req) => {
     let fetchUrl = audio_url;
     let fetchHeaders: Record<string, string> = {};
 
+    // Áudios armazenados em buckets privados (Evolution / uploads do chat):
+    // gera URL assinada server-side para conseguir baixar.
+    if (!inlineBlob && typeof audio_url === "string" && audio_url.includes("/storage/v1/object/")) {
+      const m = audio_url.match(/\/storage\/v1\/object\/(?:public\/|sign\/|authenticated\/)?([^/?]+)\/(.+?)(?:\?|$)/);
+      if (m && ["chat-media", "deal-attachments"].includes(m[1])) {
+        const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+        const { data: signed } = await sb.storage.from(m[1]).createSignedUrl(decodeURIComponent(m[2]), 60 * 10);
+        if (signed?.signedUrl) fetchUrl = signed.signedUrl;
+      }
+    }
+
     if (!inlineBlob && audio_url.startsWith("meta_media:")) {
 
       const mediaId = audio_url.slice("meta_media:".length).trim();
