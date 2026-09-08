@@ -219,12 +219,27 @@ Deno.serve(async (req) => {
     // conectados o máximo possível — religa sessões caídas e reaplica o webhook.
     if (new URL(req.url).searchParams.get("keepalive") === "1") {
       if (authHeader !== `Bearer ${SERVICE_KEY}`) return json({ error: "Unauthorized" }, 401);
+      const COLS = "id, user_id, owner_user_id, nickname, evolution_instance_name, evolution_token, evolution_state, evolution_disconnected_since, evolution_qr_alert_sent_at, last_connected_at, display_phone_number, status";
+      const report: Record<string, string> = {};
+
+      // Varredura de 30 dias: linhas removidas ou fora do ar há muito tempo perdem o histórico guardado
+      const cutoff = new Date(Date.now() - THIRTY_DAYS_MS).toISOString();
+      const { data: stale } = await admin
+        .from("user_waba_connections").select(COLS)
+        .eq("provider", "evolution")
+        .not("evolution_disconnected_since", "is", null)
+        .lt("evolution_disconnected_since", cutoff);
+      for (const c of stale || []) {
+        await purgeEvolutionLine(admin, c);
+        report[(c.evolution_instance_name as string) || c.id] = "purged_30d";
+      }
+
+      const staleIds = new Set((stale || []).map((c: any) => c.id));
       const { data: conns } = await admin
         .from("user_waba_connections")
-        .select("id, user_id, owner_user_id, evolution_instance_name, evolution_token, evolution_state, last_connected_at, display_phone_number, status")
+        .select(COLS)
         .eq("provider", "evolution")
         .neq("status", "disconnected");
-      const report: Record<string, string> = {};
       for (const c of conns || []) {
         const iname = c.evolution_instance_name as string;
         if (!iname) continue;
