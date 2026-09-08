@@ -66,6 +66,7 @@ export function EvolutionConnectDialog({ open, onOpenChange, onConnected }: Prop
     setQr(null);
     setState("connecting");
     setSettings(DEFAULT_EVOLUTION_SETTINGS);
+    setResponsibles([]);
   };
 
   useEffect(() => { if (!open) reset(); return stopPolling; }, [open]);
