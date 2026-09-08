@@ -31,7 +31,7 @@
   "rewrites": [
     {
       "source": "/v1/:path*",
-      "destination": "/api/v1/:path*"
+      "destination": "https://lqfqnqfeuneorxocybru.supabase.co/functions/v1/wiize-api-v1/v1/:path*"
     },
     {
       "source": "/",
