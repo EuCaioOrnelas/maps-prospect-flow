@@ -74,6 +74,7 @@ const searchSample = `POST /v1/prospecting/search
 
 const approachSample = `POST /v1/prospecting/approach
 {
+  "type": "both",
   "company": {
     "name": "Padaria Bella Paulista",
     "city": "São Paulo",
@@ -244,9 +245,9 @@ export default function ApiDocs() {
               <table className="w-full">
                 <tbody>
                   <Row head cells={["Operação", "Endpoint", "Custo"]} />
-                  <Row cells={["Buscar empresas", "/v1/prospecting/search", "9 tokens (R$ 0,09)"]} />
+                  <Row cells={["Buscar empresas", "/v1/prospecting/search", "9 tokens (R$ 0,09) por empresa retornada"]} />
                   <Row cells={["Analisar + diagnosticar", "/v1/prospecting/analyze", "5 tokens (R$ 0,05)"]} />
-                  <Row cells={["Gerar abordagem", "/v1/prospecting/approach", "4 tokens (R$ 0,04)"]} />
+                  <Row cells={["Gerar abordagem", "/v1/prospecting/approach", "4 tokens (R$ 0,04) por mensagem gerada"]} />
                 </tbody>
               </table>
             </div>
@@ -276,8 +277,13 @@ export default function ApiDocs() {
               <div>
                 <p className="font-medium text-foreground">POST /v1/prospecting/approach</p>
                 <p>
-                  Cria uma mensagem de abordagem personalizada. Envie o diagnóstico e o score obtidos na
-                  análise para um resultado mais preciso.
+                  Cria mensagem de abordagem personalizada. Envie o diagnóstico e o score obtidos na análise
+                  para um resultado mais preciso. O campo opcional <code>type</code> define o tipo de
+                  mensagem: <code>"manual"</code> (primeiro contato manual para WhatsApp),{" "}
+                  <code>"followup"</code> (padrão Meta, usado quando <code>type</code> não é enviado) ou{" "}
+                  <code>"both"</code> (gera as duas, cobrando 4 tokens por mensagem — 8 no total). Com{" "}
+                  <code>"both"</code>, a resposta vem em <code>manual</code> e <code>followup</code>; só é
+                  cobrada a mensagem realmente gerada.
                 </p>
                 <CodeBlock code={approachSample} lang="json" theme={codeTheme} />
               </div>
