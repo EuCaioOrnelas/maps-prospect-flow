@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
         .neq("status", "disconnected");
       for (const c of conns || []) {
         const iname = c.evolution_instance_name as string;
-        if (!iname) continue;
+        if (!iname || staleIds.has(c.id)) continue;
         let state = "close";
         try { state = normalizeState(await evo(`/instance/connectionState/${iname}`, { method: "GET" })); }
         catch (e) { state = (e as any).status === 404 ? "missing" : "close"; }
