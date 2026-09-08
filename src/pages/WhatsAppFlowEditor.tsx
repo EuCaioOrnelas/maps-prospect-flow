@@ -1012,11 +1012,11 @@ export default function WhatsAppFlowEditor() {
                           )}
                         >
                           {(() => {
-                            const hasBg = ["google_sheets", "google_calendar", "gmail"].includes(item.type);
+                            const hasBg = ["google_sheets", "google_calendar", "gmail", "ai_agent"].includes(item.type);
                             return (
                               <div className={cn("w-9 h-9 flex items-center justify-center shrink-0", !hasBg && "rounded-lg", !hasBg && item.color.split(" ")[1])}>
                                 {(item as any).iconImg ? (
-                                  <img src={(item as any).iconImg} alt={item.label} width={18} height={18} loading="eager" decoding="async" className="w-[18px] h-[18px] object-contain" />
+                                  <img src={(item as any).iconImg} alt={item.label} width={27} height={27} loading="eager" decoding="async" className="w-[27px] h-[27px] object-contain" />
                                 ) : (
                                   <item.icon size={17} className={cn(item.color.split(" ")[0])} />
                                 )}
