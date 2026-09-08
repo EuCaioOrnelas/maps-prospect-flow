@@ -533,10 +533,16 @@ serve(async (req) => {
     }
 
     // ---- pricing + reserva ----
-    const tokens = await getPrice(route.operation);
-    if (tokens === null) {
+    // Busca: o preço é por lead entregue. Reservamos o máximo pedido e,
+    // no commit, cobramos apenas a quantidade realmente retornada.
+    const unitPrice = await getPrice(route.operation);
+    if (unitPrice === null) {
       return apiError("OPERATION_UNAVAILABLE", "Operação temporariamente indisponível.", 503, requestId, rateHeaders);
     }
+    const requestedUnits = path === "/v1/prospecting/search"
+      ? Math.max(1, Number((validated.payload as any)?.limit ?? 20))
+      : 1;
+    const tokens = unitPrice * requestedUnits;
 
     const { data: reserveRes } = await admin.rpc("wiize_api_reserve_tokens", {
       _user_id: userId,
@@ -547,6 +553,7 @@ serve(async (req) => {
     });
     const reserve = (reserveRes || {}) as any;
     if (reserve.ok) activeReservationId = reserve.reservation_id ?? null;
+
 
     if (!reserve.ok) {
       const code = reserve.code === "ACCOUNT_SUSPENDED" ? "ACCOUNT_SUSPENDED" : "INSUFFICIENT_BALANCE";
