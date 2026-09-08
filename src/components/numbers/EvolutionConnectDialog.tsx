@@ -262,6 +262,19 @@ export function EvolutionConnectDialog({ open, onOpenChange, onConnected }: Prop
             <div className="flex items-center gap-2 text-sm font-medium"><Settings2 size={14} className="text-primary" /> Preferências do número</div>
             <EvolutionSettingsForm value={settings} onChange={handleToggle} pendingKey={pendingKey} />
 
+            {canChangeResponsible && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Responsáveis pelo número</label>
+                <ResponsiblesPicker
+                  members={members}
+                  value={responsibles}
+                  onChange={setResponsibles}
+                  assignmentByUser={assignmentByUser}
+                  currentConnectionId={connection?.id ?? null}
+                />
+              </div>
+            )}
+
             <Button className="w-full" onClick={finish}>Concluir</Button>
           </div>
         )}
