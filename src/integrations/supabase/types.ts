@@ -12229,10 +12229,19 @@ export type Database = {
         Args: { _api_key_id: string; _ip: string; _user_id: string }
         Returns: Json
       }
-      wiize_api_commit_reservation: {
-        Args: { _reference_id: string; _reservation_id: string }
-        Returns: Json
-      }
+      wiize_api_commit_reservation:
+        | {
+            Args: { _reference_id: string; _reservation_id: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _actual_tokens: number
+              _reference_id: string
+              _reservation_id: string
+            }
+            Returns: Json
+          }
       wiize_api_credit_wallet: {
         Args: {
           _amount_brl: number
