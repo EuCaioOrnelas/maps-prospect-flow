@@ -508,9 +508,83 @@ Deno.serve(async (req) => {
 
     // -------------------------------------------------------------------- qr
     if (action === "qr") {
-      const data = await evo(`/instance/connect/${name}`, { method: "GET" });
-      const state = data?.instance?.state ? normalizeState(data) : (data?.base64 ? "connecting" : conn.evolution_state);
-      if (state && state !== conn.evolution_state) {
+      // 1) Tenta reaproveitar a MESMA instância (credenciais podem voltar sozinhas)
+      let data: any = null;
+      try {
+        data = await evo(`/instance/connect/${name}`, { method: "GET" });
+      } catch (e) {
+        console.warn("[evolution-instance] connect falhou:", (e as Error).message);
+      }
+      let state = data?.instance?.state ? normalizeState(data) : (data?.base64 ? "connecting" : conn.evolution_state);
+      if (state === "open") {
+        await admin.from("user_waba_connections").update({ evolution_state: "open" }).eq("id", conn.id);
+        return json({ qr: { base64: null, code: null, pairingCode: null }, state: "open" });
+      }
+
+      // 2) Sem QR? Faz logout da sessão presa e tenta de novo na mesma instância.
+      if (!data?.base64) {
+        try { await evo(`/instance/logout/${name}`, { method: "DELETE" }); } catch {}
+        try { data = await evo(`/instance/connect/${name}`, { method: "GET" }); } catch {}
+      }
+
+      // 3) Ainda sem QR: apaga a instância e cria uma nova para a MESMA conexão.
+      if (!data?.base64) {
+        const settings = sanitizeSettings(conn.evolution_settings, DEFAULT_SETTINGS);
+        const newName = `wz_${ownerId.replace(/-/g, "").slice(0, 10)}_${randomSuffix()}`;
+        const newToken = crypto.randomUUID().replace(/-/g, "") + randomSuffix(8);
+        try { await evo(`/instance/delete/${name}`, { method: "DELETE" }); } catch {}
+        const created = await evo("/instance/create", {
+          method: "POST",
+          body: JSON.stringify({
+            instanceName: newName,
+            token: newToken,
+            qrcode: true,
+            integration: "WHATSAPP-BAILEYS",
+            rejectCall: settings.rejectCall,
+            msgCall: settings.msgCall || "",
+            groupsIgnore: settings.groupsIgnore,
+            alwaysOnline: settings.alwaysOnline,
+            readMessages: settings.readMessages,
+            readStatus: settings.readStatus,
+            syncFullHistory: false,
+            webhook: {
+              url: WEBHOOK_URL,
+              byEvents: false,
+              base64: true,
+              headers: { "x-wiize-token": newToken },
+              events: WEBHOOK_EVENTS,
+            },
+          }),
+        });
+        try {
+          await evo(`/webhook/set/${newName}`, {
+            method: "POST",
+            body: JSON.stringify({
+              webhook: { enabled: true, url: WEBHOOK_URL, byEvents: false, base64: true, headers: { "x-wiize-token": newToken }, events: WEBHOOK_EVENTS },
+            }),
+          });
+        } catch {}
+        await admin.from("user_waba_connections").update({
+          phone_number_id: newName,
+          evolution_instance_name: newName,
+          evolution_instance_id: created?.instance?.instanceId || created?.instance?.id || null,
+          evolution_token: newToken,
+          evolution_state: "connecting",
+        }).eq("id", conn.id);
+        let qrBase64 = created?.qrcode?.base64 || null;
+        let qrCode = created?.qrcode?.code || null;
+        if (!qrBase64) {
+          try {
+            const c2 = await evo(`/instance/connect/${newName}`, { method: "GET" });
+            qrBase64 = c2?.base64 || null;
+            qrCode = c2?.code || null;
+          } catch {}
+        }
+        return json({ qr: { base64: qrBase64, code: qrCode, pairingCode: null }, state: "connecting", recreated: true });
+      }
+
+      state = "connecting";
+      if (state !== conn.evolution_state) {
         await admin.from("user_waba_connections").update({ evolution_state: state }).eq("id", conn.id);
       }
       return json({
@@ -518,6 +592,7 @@ Deno.serve(async (req) => {
         state,
       });
     }
+
 
     // ---------------------------------------------------------------- status
     if (action === "status") {
