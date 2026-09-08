@@ -478,6 +478,13 @@ export default function MetaNumeros() {
           </Button>
         </div>
       )}
+
+      {responsibles.length > 0 && (
+        <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Responsáveis</span>
+          <ResponsiblesStack userIds={responsibles} members={members} />
+        </div>
+      )}
     </div>
   );
   };
