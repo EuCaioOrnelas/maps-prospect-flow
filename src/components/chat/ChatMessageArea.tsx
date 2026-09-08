@@ -349,7 +349,7 @@ function MessageActions({
 export function ChatMessageArea({
   conversation, conversations = [], messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
   members = [], canChangeResponsible = false, onTransferResponsible, currentUserId, onBack,
-  onDeleteConversation, onToggleBlock, onSaveContactName, onForwardMessages, onDeleteMessages,
+  onDeleteConversation, onToggleBlock, onSaveContactName, onForwardMessages, onDeleteMessages, isEvolution,
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -1311,6 +1311,7 @@ export function ChatMessageArea({
           conversations={conversations}
           fetchTemplates={fetchTemplates}
           onForward={onForwardMessages}
+          skipWindowCheck={isEvolution}
         />
       )}
 
