@@ -361,14 +361,7 @@ function shapeResponse(path: string, data: any) {
       estimated_revenue_potential: data?.potencial_receita_estimado ?? null,
     });
   }
-  return sanitize({
-    message: data?.mensagem ?? "",
-    strategy: data?.estrategia ?? "",
-    suggested_offer: data?.produto_sugerido ?? "",
-    niche_insight: data?.analise_nicho ?? "",
-    city_insight: data?.analise_cidade ?? "",
-    weaknesses: data?.pontos_fracos ?? [],
-  });
+  return shapeApproach(data);
 }
 
 // ---------- handler ----------
