@@ -620,38 +620,60 @@ serve(async (req) => {
     }
 
     // ---- execução ----
-    const fn = path === "/v1/prospecting/search"
-      ? "search-leads"
-      : path === "/v1/prospecting/analyze"
-      ? "score-opportunity"
-      : "approach-lead";
-
-    const result = await callInternal(fn, userId, validated.payload);
-
-    if (!result.ok) {
+    const failUpstream = async (status: number) => {
       await admin.rpc("wiize_api_release_reservation", { _reservation_id: reserve.reservation_id });
-      const code = result.status === 504 ? "TIMEOUT" : "UPSTREAM_ERROR";
+      const code = status === 504 ? "TIMEOUT" : "UPSTREAM_ERROR";
       await logRequest({
         user_id: userId, api_key_id: key.id, request_id: requestId, endpoint: path,
-        environment: key.environment, status_code: result.status === 504 ? 504 : 502, error_code: code,
+        environment: key.environment, status_code: status === 504 ? 504 : 502, error_code: code,
         duration_ms: Date.now() - startedAt, ip_address: ip, user_agent: req.headers.get("user-agent"),
-        metadata: { upstream_status: result.status },
+        metadata: { upstream_status: status },
       });
       return apiError(
         code,
         code === "TIMEOUT" ? "A operação excedeu o tempo limite. Nenhum token foi cobrado." : "Falha ao processar a operação. Nenhum token foi cobrado.",
-        result.status === 504 ? 504 : 502,
+        status === 504 ? 504 : 502,
         requestId,
         rateHeaders,
       );
+    };
+
+    let payload: any;
+    let deliveredUnits = 0;
+
+    if (isApproach) {
+      // Cada tipo pedido é uma mensagem gerada e cobrada separadamente.
+      const generated: Record<string, any> = {};
+      let lastFailStatus = 0;
+      for (const t of approachTypes) {
+        const fnName = t === "manual" ? "approach-lead-manual" : "approach-lead";
+        const r = await callInternal(fnName, userId, validated.payload);
+        if (r.ok) {
+          generated[t] = shapeApproach(r.data);
+          deliveredUnits += 1;
+        } else {
+          lastFailStatus = r.status;
+        }
+      }
+      if (deliveredUnits === 0) return await failUpstream(lastFailStatus || 502);
+
+      payload = approachTypes.length === 1
+        ? { type: approachTypes[0], ...generated[approachTypes[0]] }
+        : {
+            manual: generated.manual ?? null,
+            followup: generated.followup ?? null,
+            generated_types: Object.keys(generated),
+          };
+    } else {
+      const fn = path === "/v1/prospecting/search" ? "search-leads" : "score-opportunity";
+      const result = await callInternal(fn, userId, validated.payload);
+      if (!result.ok) return await failUpstream(result.status);
+      payload = shapeResponse(path, result.data);
+      // Unidades realmente entregues (leads na busca; 1 na análise)
+      deliveredUnits = path === "/v1/prospecting/search"
+        ? Number((payload as any)?.results_count ?? 0)
+        : 1;
     }
-
-    const payload = shapeResponse(path, result.data);
-
-    // Unidades realmente entregues (leads na busca; 1 nas demais operações)
-    const deliveredUnits = path === "/v1/prospecting/search"
-      ? Number((payload as any)?.results_count ?? 0)
-      : 1;
     const chargedTokens = Math.min(unitPrice * deliveredUnits, tokens);
 
     const { data: commitRes } = await admin.rpc("wiize_api_commit_reservation", {
