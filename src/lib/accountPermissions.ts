@@ -106,7 +106,7 @@ export function roleHasPermission(role: AccountRole | null | undefined, perm: Ac
  */
 export function getRolePermissionForPath(pathname: string): AccountPermission | null {
   if (pathname === "/dashboard" || pathname.startsWith("/reports")) return "dashboard_main";
-  if (pathname.startsWith("/meta") || pathname === "/meta-campaigns" || pathname === "/meta-api-guide") return "dashboard_meta";
+  if (pathname.startsWith("/meta") || pathname.startsWith("/numeros") || pathname === "/meta-campaigns" || pathname === "/meta-api-guide") return "dashboard_meta";
   if (pathname.startsWith("/oportunidades") || pathname === "/prospeccao") return "prospeccao";
   if (pathname.startsWith("/crm")) return "crm";
   if (pathname.startsWith("/chat")) return "atendimento";

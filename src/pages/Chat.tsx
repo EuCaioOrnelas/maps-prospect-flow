@@ -84,6 +84,7 @@ const Chat = () => {
     } catch {}
     (async () => {
       for (const conn of chat.connections) {
+        if (conn.provider === "evolution") continue; // Número de Atendimento não usa webhook Meta
         try {
           await supabase.functions.invoke("meta-webhook-config", {
             body: { action: "validate", connection_id: conn.id },

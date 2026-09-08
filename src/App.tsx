@@ -105,6 +105,7 @@ const MetaDashboard = lazyWithRetry(() => import("./pages/meta/MetaDashboard"), 
 const MetaCampanhas = lazyWithRetry(() => import("./pages/meta/MetaCampanhas"), "MetaCampanhas");
 const MetaTemplates = lazyWithRetry(() => import("./pages/meta/MetaTemplates"), "MetaTemplates");
 const MetaNumeros = lazyWithRetry(() => import("./pages/meta/MetaNumeros"), "MetaNumeros");
+const NumerosComparativo = lazyWithRetry(() => import("./pages/NumerosComparativo"), "NumerosComparativo");
 const MetaConnectGuide = lazyWithRetry(() => import("./pages/MetaConnectGuide"), "MetaConnectGuide");
 
 const MetaConfiguracoes = lazyWithRetry(() => import("./pages/meta/MetaConfiguracoes"), "MetaConfiguracoes");
@@ -379,7 +380,9 @@ const App = () => (
                 <Route path="/meta" element={<ProtectedRoute><MetaDashboard /></ProtectedRoute>} />
                 <Route path="/meta/campanhas" element={<ProtectedRoute><MetaCampanhas /></ProtectedRoute>} />
                 <Route path="/meta/templates" element={<ProtectedRoute><MetaTemplates /></ProtectedRoute>} />
-                <Route path="/meta/numeros" element={<ProtectedRoute><MetaNumeros /></ProtectedRoute>} />
+                <Route path="/numeros" element={<ProtectedRoute><MetaNumeros /></ProtectedRoute>} />
+                <Route path="/numeros/comparativo" element={<ProtectedRoute><NumerosComparativo /></ProtectedRoute>} />
+                <Route path="/meta/numeros" element={<Navigate to="/numeros" replace />} />
                 <Route path="/meta/guia-conexao" element={<MetaConnectGuide />} />
                 
                 <Route path="/meta/configuracoes" element={<ProtectedRoute><MetaConfiguracoes /></ProtectedRoute>} />

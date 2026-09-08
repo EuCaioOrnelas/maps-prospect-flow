@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
   const { data: connections, error } = await supabase
     .from("user_waba_connections")
     .select("id, user_id, waba_id, access_token, token_expires_at, display_phone_number, business_name, status")
+    .eq("provider", "meta")
     .neq("status", "disconnected");
 
   if (error) {

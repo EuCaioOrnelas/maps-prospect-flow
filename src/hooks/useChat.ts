@@ -56,9 +56,11 @@ export interface WabaConnection {
   business_name: string | null;
   nickname: string | null;
   status: string;
-  waba_id: string;
-  access_token?: string;
+  waba_id: string | null;
+  access_token?: string | null;
   token_expires_at?: string | null;
+  provider?: string | null;
+  evolution_state?: string | null;
 }
 
 export function useChat() {
@@ -94,7 +96,7 @@ export function useChat() {
     if (!user) return;
     const { data } = await supabase
       .from("user_waba_connections")
-      .select("id, phone_number_id, display_phone_number, business_name, nickname, status, waba_id, access_token, token_expires_at")
+      .select("id, phone_number_id, display_phone_number, business_name, nickname, status, waba_id, access_token, token_expires_at, provider, evolution_state")
       .eq("owner_user_id", accountOwnerId);
     if (!data || data.length === 0) {
       setConnections([]);
@@ -126,6 +128,11 @@ export function useChat() {
     const healthMap: Record<string, boolean> = {};
     await Promise.all(
       data.map(async (conn) => {
+        // Número de Atendimento (Evolution): saúde = sessão do WhatsApp aberta
+        if ((conn as any).provider === "evolution") {
+          healthMap[conn.id] = (conn as any).evolution_state === "open" && conn.status === "active";
+          return;
+        }
         if (!conn.access_token) {
           healthMap[conn.id] = false;
           return;

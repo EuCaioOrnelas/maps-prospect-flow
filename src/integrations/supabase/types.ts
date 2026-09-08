@@ -10003,57 +10003,84 @@ export type Database = {
       }
       user_waba_connections: {
         Row: {
-          access_token: string
+          access_token: string | null
           business_name: string | null
           created_at: string
           display_phone_number: string | null
+          evolution_instance_id: string | null
+          evolution_instance_name: string | null
+          evolution_settings: Json
+          evolution_state: string | null
+          evolution_token: string | null
           id: string
+          last_connected_at: string | null
           nickname: string | null
           owner_user_id: string | null
           phone_number_id: string | null
+          profile_name: string | null
+          profile_pic_url: string | null
+          provider: string
           raw_signup_data: Json | null
           responsible_user_id: string | null
           status: string
           token_expires_at: string | null
           updated_at: string
           user_id: string
-          waba_id: string
+          waba_id: string | null
           webhook_verified_at: string | null
         }
         Insert: {
-          access_token: string
+          access_token?: string | null
           business_name?: string | null
           created_at?: string
           display_phone_number?: string | null
+          evolution_instance_id?: string | null
+          evolution_instance_name?: string | null
+          evolution_settings?: Json
+          evolution_state?: string | null
+          evolution_token?: string | null
           id?: string
+          last_connected_at?: string | null
           nickname?: string | null
           owner_user_id?: string | null
           phone_number_id?: string | null
+          profile_name?: string | null
+          profile_pic_url?: string | null
+          provider?: string
           raw_signup_data?: Json | null
           responsible_user_id?: string | null
           status?: string
           token_expires_at?: string | null
           updated_at?: string
           user_id: string
-          waba_id: string
+          waba_id?: string | null
           webhook_verified_at?: string | null
         }
         Update: {
-          access_token?: string
+          access_token?: string | null
           business_name?: string | null
           created_at?: string
           display_phone_number?: string | null
+          evolution_instance_id?: string | null
+          evolution_instance_name?: string | null
+          evolution_settings?: Json
+          evolution_state?: string | null
+          evolution_token?: string | null
           id?: string
+          last_connected_at?: string | null
           nickname?: string | null
           owner_user_id?: string | null
           phone_number_id?: string | null
+          profile_name?: string | null
+          profile_pic_url?: string | null
+          provider?: string
           raw_signup_data?: Json | null
           responsible_user_id?: string | null
           status?: string
           token_expires_at?: string | null
           updated_at?: string
           user_id?: string
-          waba_id?: string
+          waba_id?: string | null
           webhook_verified_at?: string | null
         }
         Relationships: []

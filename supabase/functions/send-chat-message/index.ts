@@ -34,13 +34,27 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers: corsHeaders });
     }
 
-    // Get access token from connection
-    const { data: connection } = await supabase
+    // Get access token from connection (owner or member of the account)
+    const { data: connectionRow } = await supabase
       .from('user_waba_connections')
-      .select('access_token')
+      .select('access_token, provider, evolution_instance_name, evolution_token, user_id, owner_user_id')
       .eq('id', waba_connection_id)
-      .eq('user_id', userId)
       .single();
+
+    let connection = connectionRow;
+    if (connection) {
+      const connOwner = connection.owner_user_id || connection.user_id;
+      if (connOwner !== userId && connection.user_id !== userId) {
+        const { data: member } = await supabase
+          .from('account_members')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('owner_user_id', connOwner)
+          .eq('status', 'active')
+          .maybeSingle();
+        if (!member) connection = null;
+      }
+    }
 
     if (!connection) {
       await supabase.from('chat_messages').update({ status: 'failed' }).eq('id', message_id);
@@ -87,23 +101,64 @@ Deno.serve(async (req) => {
 
     console.log(`[send-chat-message] Sending ${type} to ${to} via ${phone_number_id}`);
 
-    const metaResponse = await fetch(
-      `https://graph.facebook.com/v21.0/${phone_number_id}/messages`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${connection.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(messagePayload),
+    let sendOk = false;
+    let sentMessageId: string | null = null;
+    let metaResult: any = {};
+
+    if (connection.provider === 'evolution') {
+      // ===== Número de Atendimento (Evolution API) =====
+      const EVO_URL = (Deno.env.get('EVOLUTION_API_URL') || '').replace(/\/+$/, '');
+      const EVO_KEY = Deno.env.get('EVOLUTION_API_KEY') || '';
+      const instance = connection.evolution_instance_name;
+      const number = String(to).replace(/\D/g, '');
+      let path = `/message/sendText/${instance}`;
+      let evoBody: any = { number, text: text || '' };
+      if (type === 'audio') {
+        path = `/message/sendWhatsAppAudio/${instance}`;
+        evoBody = { number, audio: mediaLink };
+      } else if (type === 'image' || type === 'video' || type === 'document') {
+        path = `/message/sendMedia/${instance}`;
+        evoBody = {
+          number,
+          mediatype: type,
+          media: mediaLink,
+          caption: caption || undefined,
+          fileName: filename || undefined,
+        };
       }
-    );
+      console.log(`[send-chat-message] Sending ${type} to ${to} via Evolution ${instance}`);
+      const evoRes = await fetch(`${EVO_URL}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: EVO_KEY },
+        body: JSON.stringify(evoBody),
+      });
+      metaResult = await evoRes.json().catch(() => ({}));
+      console.log(`[send-chat-message] Evolution response:`, JSON.stringify(metaResult).substring(0, 500));
+      sentMessageId = metaResult?.key?.id || null;
+      sendOk = evoRes.ok && !!sentMessageId;
+      if (!sendOk && !metaResult.error) {
+        metaResult.error = { message: metaResult?.response?.message?.[0] || metaResult?.message || `Evolution ${evoRes.status}` };
+      }
+    } else {
+      const metaResponse = await fetch(
+        `https://graph.facebook.com/v21.0/${phone_number_id}/messages`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${connection.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(messagePayload),
+        }
+      );
+      metaResult = await metaResponse.json();
+      console.log(`[send-chat-message] Meta response:`, JSON.stringify(metaResult).substring(0, 500));
+      sentMessageId = metaResult.messages?.[0]?.id || null;
+      sendOk = metaResponse.ok && !!sentMessageId;
+    }
 
-    const metaResult = await metaResponse.json();
-    console.log(`[send-chat-message] Meta response:`, JSON.stringify(metaResult).substring(0, 500));
-
-    if (metaResponse.ok && metaResult.messages?.[0]?.id) {
-      const wabaMessageId = metaResult.messages[0].id;
+    if (sendOk && sentMessageId) {
+      const wabaMessageId = sentMessageId;
       await supabase.from('chat_messages').update({
         status: 'sent',
         waba_message_id: wabaMessageId,
@@ -158,7 +213,7 @@ Deno.serve(async (req) => {
           await supabase.functions.invoke('revenue-processor', {
             body: {
               action: 'process_message',
-              source: 'meta',
+              source: connection.provider === 'evolution' ? 'evolution' : 'meta',
               user_id: userId,
               phone_e164: phoneE164,
               direction: 'outbound',

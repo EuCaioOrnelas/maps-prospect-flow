@@ -85,6 +85,7 @@ const MetaCampaigns = () => {
       const { data: conns } = await supabase
         .from("user_waba_connections")
         .select("*")
+        .eq("provider", "meta")
         .eq("owner_user_id", accountOwnerId);
 
       if (conns && conns.length > 0) {
