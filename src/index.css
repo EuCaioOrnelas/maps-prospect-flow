@@ -1663,6 +1663,13 @@ body.tour-active {
 
 
 @layer components {
+  .bg-whatsapp {
+    background-color: hsl(var(--whatsapp));
+  }
+  .text-whatsapp {
+    color: hsl(var(--whatsapp));
+  }
+
   .blog-content {
     color: hsl(var(--foreground));
     font-size: 1.125rem;
