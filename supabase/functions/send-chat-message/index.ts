@@ -188,6 +188,11 @@ Deno.serve(async (req) => {
           fileName: filename || (type === 'document' ? 'documento' : undefined),
         };
       }
+      if (quotedWabaId) {
+        evoBody.quoted = {
+          key: { id: quotedWabaId, remoteJid: `${number}@s.whatsapp.net`, fromMe: quotedFromMe },
+        };
+      }
       console.log(`[send-chat-message] Sending ${type} to ${to} via Evolution ${instance}`);
       const evoRes = await fetch(`${EVO_URL}${path}`, {
         method: 'POST',
