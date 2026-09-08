@@ -17,7 +17,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus, Phone, Pencil, Info, ExternalLink, Trash2, AlertTriangle, ShieldAlert, Loader2, HelpCircle, Webhook, CheckCircle2,
+  Headset, Megaphone, QrCode, Settings2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ProviderChoiceDialog } from "@/components/numbers/ProviderChoiceDialog";
+import { EvolutionConnectDialog } from "@/components/numbers/EvolutionConnectDialog";
+import { EvolutionSettingsForm, DEFAULT_EVOLUTION_SETTINGS, type EvolutionSettings } from "@/components/numbers/EvolutionSettingsForm";
 import { MetaManualSetup } from "@/components/meta-campaigns/MetaManualSetup";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,7 +43,15 @@ export interface WabaConnection {
   status: string | null;
   nickname: string | null;
   responsible_user_id?: string | null;
+  provider?: "meta" | "evolution" | string | null;
+  evolution_instance_name?: string | null;
+  evolution_state?: string | null;
+  evolution_settings?: Partial<EvolutionSettings> | null;
+  profile_name?: string | null;
+  profile_pic_url?: string | null;
 }
+
+const isEvo = (c: WabaConnection) => c.provider === "evolution";
 
 
 import { getNumbersLimit } from "@/lib/planAccess";
@@ -80,6 +93,78 @@ export default function MetaNumeros() {
   const [showTokenField, setShowTokenField] = useState(false);
 
   const [showAddNumber, setShowAddNumber] = useState(false);
+  const [showProviderChoice, setShowProviderChoice] = useState(false);
+  const [showEvolutionConnect, setShowEvolutionConnect] = useState(false);
+  const [evoSettings, setEvoSettings] = useState<EvolutionSettings>(DEFAULT_EVOLUTION_SETTINGS);
+  const [evoPendingKey, setEvoPendingKey] = useState<keyof EvolutionSettings | null>(null);
+  const [evoReconnectId, setEvoReconnectId] = useState<string | null>(null);
+  const [evoReconnectQr, setEvoReconnectQr] = useState<string | null>(null);
+
+  const callEvolution = useCallback(async (body: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke("evolution-instance", { body });
+    if (error) {
+      let msg = error.message;
+      try {
+        const ctx = (error as any).context;
+        if (ctx && typeof ctx.json === "function") { const j = await ctx.json(); msg = j?.message || j?.error || msg; }
+      } catch { /* ignore */ }
+      throw new Error(msg);
+    }
+    if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
+    return data as any;
+  }, []);
+
+  const handleEvoToggle = async (key: keyof EvolutionSettings, next: boolean) => {
+    if (!editingConn) return;
+    const previous = evoSettings;
+    const optimistic = { ...evoSettings, [key]: next };
+    setEvoSettings(optimistic);
+    setEvoPendingKey(key);
+    try {
+      const res = await callEvolution({ action: "set_settings", connection_id: editingConn.id, settings: optimistic });
+      const saved = res?.settings || optimistic;
+      setEvoSettings(saved);
+      setConnections((prev) => prev.map((c) => (c.id === editingConn.id ? { ...c, evolution_settings: saved } : c)));
+    } catch (e: any) {
+      setEvoSettings(previous);
+      toast({ title: "Não foi possível salvar", description: e.message, variant: "destructive" });
+    } finally {
+      setEvoPendingKey(null);
+    }
+  };
+
+  const refreshEvoStatus = useCallback(async (connId: string) => {
+    try {
+      const res = await callEvolution({ action: "status", connection_id: connId });
+      if (res?.connection) {
+        setConnections((prev) => prev.map((c) => (c.id === connId ? { ...c, ...res.connection } : c)));
+      }
+      return res?.state as string | undefined;
+    } catch { return undefined; }
+  }, [callEvolution]);
+
+  // Reconexão por QR de um número de atendimento existente
+  useEffect(() => {
+    if (!evoReconnectId) { setEvoReconnectQr(null); return; }
+    let alive = true;
+    const loadQr = async () => {
+      try {
+        const res = await callEvolution({ action: "qr", connection_id: evoReconnectId });
+        if (alive && res?.qr?.base64) setEvoReconnectQr(res.qr.base64);
+      } catch (e: any) {
+        if (alive) toast({ title: "Não foi possível gerar o QR code", description: e.message, variant: "destructive" });
+      }
+    };
+    loadQr();
+    let ticks = 0;
+    const timer = window.setInterval(async () => {
+      const st = await refreshEvoStatus(evoReconnectId);
+      if (st === "open") { setEvoReconnectId(null); toast({ title: "Número reconectado!" }); return; }
+      ticks += 1;
+      if (ticks % 10 === 0) loadQr();
+    }, 3000);
+    return () => { alive = false; window.clearInterval(timer); };
+  }, [evoReconnectId, callEvolution, refreshEvoStatus, toast]);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -139,12 +224,15 @@ export default function MetaNumeros() {
         .eq("owner_user_id", accountOwnerId);
       const conns = (data || []) as unknown as WabaConnection[];
       setConnections(conns);
-      if (conns.length) validateTokens(conns);
+      const metaConns = conns.filter((c) => !isEvo(c));
+      if (metaConns.length) validateTokens(metaConns);
       else setExpiredTokenIds(new Set());
+      // Atualiza estado da sessão dos números de atendimento em segundo plano
+      conns.filter(isEvo).forEach((c) => { refreshEvoStatus(c.id); });
     } finally {
       setLoading(false);
     }
-  }, [user, accountOwnerId, validateTokens]);
+  }, [user, accountOwnerId, validateTokens, refreshEvoStatus]);
 
   useEffect(() => { loadConnections(); }, [loadConnections]);
 
@@ -204,6 +292,10 @@ export default function MetaNumeros() {
   const handleDeleteConnection = async (connId: string) => {
     setDeleting(true);
     try {
+      const target = connections.find((c) => c.id === connId);
+      if (target && isEvo(target)) {
+        await callEvolution({ action: "delete", connection_id: connId });
+      }
       await Promise.allSettled([
         supabase.from("chat_messages").delete().in(
           "conversation_id",
@@ -231,10 +323,10 @@ export default function MetaNumeros() {
   const maskSecret = (token: string) => (!token || token.length < 12) ? "••••••••" : token.slice(0, 8) + "••••••••••••";
 
   return (
-    <MetaLayout title="Números & WABA" description="Gerencie os números do WhatsApp Business conectados via Meta Cloud API.">
+    <MetaLayout title="Números" description="Gerencie seus números de WhatsApp: Atendimento (QR code) e Marketing (API oficial da Meta).">
       <MetaPageHeader
-        title="Números & WABA"
-        description="Conecte, edite e gerencie os tokens dos seus números oficiais da Meta."
+        title="Números"
+        description="Conecte e gerencie seus números de Atendimento e de Marketing."
         titleBadge={
           <TooltipProvider>
             <Tooltip>
@@ -280,11 +372,11 @@ export default function MetaNumeros() {
                   });
                   return;
                 }
-                setShowAddNumber(true);
+                setShowProviderChoice(true);
               }}
               disabled={reachedConnectionLimit}
             >
-              <Plus size={14} className="mr-1.5" /> Adicionar número
+              <Plus size={14} className="mr-1.5" /> Conectar número
             </Button>
           </div>
         }
@@ -312,7 +404,20 @@ export default function MetaNumeros() {
               <Loader2 className="animate-spin mr-2" size={16} /> Carregando números…
             </div>
           ) : connections.length === 0 ? (
-            <MetaManualSetup onConnectionSaved={(c) => { handleConnectionSaved(c as any); reloadResponsibles(); }} />
+            <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Phone size={24} />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">Nenhum número conectado</h3>
+              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                Conecte um <strong className="text-foreground">Número de Atendimento</strong> por QR code em segundos, ou um
+                {" "}<strong className="text-foreground">Número de Marketing</strong> pela API oficial da Meta para campanhas e disparos.
+              </p>
+              <div className="mt-5 flex flex-col items-center gap-2">
+                <Button onClick={() => setShowProviderChoice(true)}><Plus size={14} className="mr-1.5" /> Conectar número</Button>
+                <Link to="/numeros/comparativo" className="text-xs text-primary hover:underline">Como funciona e qual a diferença?</Link>
+              </div>
+            </div>
           ) : (
             <div className="space-y-6">
               {hasExpired && (
@@ -341,6 +446,67 @@ export default function MetaNumeros() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {connections.map((conn) => {
+                  if (isEvo(conn)) {
+                    const online = conn.evolution_state === "open";
+                    const connecting = conn.evolution_state === "connecting";
+                    return (
+                      <div key={conn.id} className={`flex flex-col gap-3 rounded-xl border p-4 transition-colors ${online ? "border-border hover:bg-muted/20" : "border-amber-500/40 bg-amber-500/5"}`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            {conn.profile_pic_url ? (
+                              <img src={conn.profile_pic_url} alt="" className="h-8 w-8 rounded-[9px] object-cover shrink-0" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0 bg-primary/10">
+                                <Headset size={14} className="text-primary" />
+                              </div>
+                            )}
+                            <div className="truncate">
+                              <p className="font-medium text-sm truncate">
+                                {conn.nickname || conn.profile_name || (conn.display_phone_number ? `+${conn.display_phone_number}` : "Número de Atendimento")}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {conn.display_phone_number ? `+${conn.display_phone_number}` : "Aguardando conexão"}{conn.profile_name ? ` · ${conn.profile_name}` : ""}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => {
+                              setEditingConn(conn);
+                              setEditNickname(conn.nickname || "");
+                              setEditResponsibles(responsiblesOf(conn.id));
+                              setEditToken("");
+                              setShowTokenField(false);
+                              setEvoSettings({ ...DEFAULT_EVOLUTION_SETTINGS, ...(conn.evolution_settings || {}) });
+                            }}>
+                              <Pencil size={13} className="text-muted-foreground" />
+                            </Button>
+                            <ResponsibleAvatars userIds={responsiblesOf(conn.id)} members={members} max={3} />
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground inline-flex items-center gap-1">
+                              <Headset size={9} /> Atendimento
+                            </span>
+                          </div>
+                        </div>
+                        <div className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${online ? "border-emerald-500/25 bg-emerald-500/5" : "border-amber-500/25 bg-amber-500/5"}`}>
+                          <div className="flex items-center gap-2 min-w-0">
+                            {online ? <CheckCircle2 size={14} className="text-emerald-600 shrink-0" /> : connecting ? <Loader2 size={14} className="animate-spin text-amber-600 shrink-0" /> : <AlertTriangle size={14} className="text-amber-600 shrink-0" />}
+                            <div className="min-w-0">
+                              <p className={`text-[11px] font-semibold ${online ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
+                                {online ? "WhatsApp conectado" : connecting ? "Aguardando leitura do QR code" : "WhatsApp desconectado"}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground truncate">
+                                {online ? "Chat, CRM e IA funcionando normalmente." : "Leia o QR code para voltar a receber mensagens."}
+                              </p>
+                            </div>
+                          </div>
+                          {!online && (
+                            <Button size="sm" variant="outline" className="gap-1.5 h-7 px-2 shrink-0 text-[11px]" onClick={() => setEvoReconnectId(conn.id)}>
+                              <QrCode size={11} /> Conectar
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
                   const isExpired = expiredTokenIds.has(conn.id);
                   const webhookOk = webhookVerifiedIds.has(conn.id);
                   return (
@@ -391,6 +557,9 @@ export default function MetaNumeros() {
                             <Pencil size={13} className="text-muted-foreground" />
                           </Button>
                           <ResponsibleAvatars userIds={responsiblesOf(conn.id)} members={members} max={3} />
+                          <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground items-center gap-1">
+                            <Megaphone size={9} /> Marketing
+                          </span>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full ${
                             isExpired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
                           }`}>
@@ -482,7 +651,47 @@ export default function MetaNumeros() {
               )}
             </DialogTitle>
           </DialogHeader>
-          {editingConn && (
+          {editingConn && isEvo(editingConn) && (
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <DetailRow label="Tipo" value="Número de Atendimento (QR code)" />
+                <DetailRow label="Número" value={editingConn.display_phone_number ? `+${editingConn.display_phone_number}` : "Aguardando conexão"} />
+                <DetailRow label="Perfil" value={editingConn.profile_name || "N/A"} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Apelido do número</label>
+                <Input value={editNickname} onChange={(e) => setEditNickname(e.target.value)} placeholder="Ex: Suporte, Pós-venda..." />
+              </div>
+              {canChangeResponsible && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Responsáveis pelo número</label>
+                  <ResponsiblesPicker
+                    members={members}
+                    value={editResponsibles}
+                    onChange={setEditResponsibles}
+                    assignmentByUser={assignmentByUser}
+                    currentConnectionId={editingConn.id}
+                  />
+                </div>
+              )}
+              <div className="space-y-2">
+                <p className="text-sm font-medium flex items-center gap-1.5"><Settings2 size={13} className="text-primary" /> Preferências</p>
+                <p className="text-[11px] text-muted-foreground">Cada alteração é aplicada imediatamente no número.</p>
+                <EvolutionSettingsForm value={evoSettings} onChange={handleEvoToggle} pendingKey={evoPendingKey} />
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleSaveEdit} className="flex-1">Salvar</Button>
+                <Button variant="destructive" size="icon" onClick={() => {
+                  const id = editingConn.id;
+                  setEditingConn(null);
+                  setTimeout(() => setPendingDeleteId(id), 50);
+                }}>
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            </div>
+          )}
+          {editingConn && !isEvo(editingConn) && (
             <div className="space-y-4">
               <div className="space-y-3">
                 <DetailRow label="Phone Number ID" value={editingConn.phone_number_id} />
@@ -491,7 +700,7 @@ export default function MetaNumeros() {
                 <DetailRow label="Empresa" value={editingConn.business_name || "N/A"} />
                 <div>
                   <p className="text-[11px] text-muted-foreground">Access Token</p>
-                  <p className="text-sm font-mono truncate">{maskSecret(editingConn.access_token)}</p>
+                  <p className="text-sm font-mono truncate">{maskSecret(editingConn.access_token || "")}</p>
                 </div>
               </div>
 
@@ -612,7 +821,7 @@ export default function MetaNumeros() {
       <Dialog open={showAddNumber} onOpenChange={setShowAddNumber}>
         <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-3 border-b border-border shrink-0">
-            <DialogTitle>Adicionar Número</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Megaphone size={16} className="text-primary" /> Número de Marketing — Meta API oficial</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto px-6 py-4">
             <MetaManualSetup
@@ -625,6 +834,38 @@ export default function MetaNumeros() {
               isAddingExtra
             />
           </div>
+        </DialogContent>
+      </Dialog>
+      <ProviderChoiceDialog
+        open={showProviderChoice}
+        onOpenChange={setShowProviderChoice}
+        onChoose={(provider) => {
+          setShowProviderChoice(false);
+          if (provider === "meta") setShowAddNumber(true);
+          else setShowEvolutionConnect(true);
+        }}
+      />
+
+      <EvolutionConnectDialog
+        open={showEvolutionConnect}
+        onOpenChange={(o) => { setShowEvolutionConnect(o); if (!o) loadConnections(); }}
+        onConnected={(conn) => { handleConnectionSaved(conn); reloadResponsibles(); }}
+      />
+
+      {/* Reconexão QR de número de atendimento */}
+      <Dialog open={!!evoReconnectId} onOpenChange={(o) => { if (!o) setEvoReconnectId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><QrCode size={16} className="text-primary" /> Reconectar WhatsApp</DialogTitle>
+          </DialogHeader>
+          <div className="mx-auto flex h-[264px] w-[264px] items-center justify-center rounded-2xl border border-border bg-card p-3">
+            {evoReconnectQr ? (
+              <img src={evoReconnectQr} alt="QR code para reconectar o WhatsApp" className="h-full w-full rounded-lg object-contain" />
+            ) : (
+              <div className="flex flex-col items-center gap-2 text-muted-foreground"><Loader2 size={22} className="animate-spin" /><p className="text-xs">Gerando QR code…</p></div>
+            )}
+          </div>
+          <p className="text-center text-xs text-muted-foreground">WhatsApp → Dispositivos conectados → Conectar dispositivo</p>
         </DialogContent>
       </Dialog>
     </MetaLayout>
