@@ -942,49 +942,59 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
   const [reopenTemplates, setReopenTemplates] = useState<any[]>([]);
   const [tokenExpired, setTokenExpired] = useState(false);
 
-  // Build available numbers list from two sources:
-  // - Evolution: whatsapp_numbers connected
-  // - Meta oficial: active WABA connections only
+  // Números disponíveis para o fluxo:
+  // - Marketing (Meta Cloud API): conexões WABA ativas
+  // - Atendimento (QR code): conexões Evolution conectadas
   const { data: numbers = [] } = useQuery({
     queryKey: ["wa-numbers-for-flow", user?.id],
     queryFn: async () => {
-      const [{ data: evoNumbers }, { data: wabaConns }] = await Promise.all([
-        supabase
-          .from("whatsapp_numbers")
-          .select("id, phone_number, name, api_tier, is_connected")
-          .eq("user_id", user!.id)
-          .eq("is_connected", true),
-        supabase
-          .from("user_waba_connections")
-          .select("id, waba_id, access_token, phone_number_id, display_phone_number, status, nickname")
-          .eq("provider", "meta")
-          .eq("user_id", user!.id)
-          .eq("status", "active"),
-      ]);
+      const { data: conns } = await supabase
+        .from("user_waba_connections")
+        .select("id, provider, waba_id, access_token, phone_number_id, display_phone_number, status, nickname, evolution_instance_name, evolution_state, profile_name")
+        .eq("user_id", user!.id);
 
-      // Meta-only: fluxos só rodam na API Oficial Meta. Não listamos números Evolution aqui.
-      const metaOptions = (wabaConns || []).map((conn: any) => ({
-        id: `meta:${conn.id}`,
-        phone_number: conn.display_phone_number,
-        name: conn.nickname || conn.display_phone_number || conn.phone_number_id,
-        api_tier: "meta",
-        api_type: "meta" as const,
-        source_id: conn.id,
-        phone_number_id: conn.phone_number_id,
-        waba_connection_id: conn.id,
-        display_phone_number: conn.display_phone_number,
-        access_token: conn.access_token,
-        waba_id: conn.waba_id,
-      }));
+      const rows = (conns || []) as any[];
 
-      return metaOptions;
+      const metaOptions = rows
+        .filter((c) => (c.provider || "meta") === "meta" && c.status === "active")
+        .map((conn: any) => ({
+          id: `meta:${conn.id}`,
+          phone_number: conn.display_phone_number,
+          name: conn.nickname || conn.display_phone_number || conn.phone_number_id,
+          api_tier: "meta",
+          api_type: "meta" as const,
+          source_id: conn.id,
+          phone_number_id: conn.phone_number_id,
+          waba_connection_id: conn.id,
+          display_phone_number: conn.display_phone_number,
+          access_token: conn.access_token,
+          waba_id: conn.waba_id,
+        }));
+
+      const evoOptions = rows
+        .filter((c) => c.provider === "evolution" && c.status !== "disconnected")
+        .map((conn: any) => ({
+          id: `evolution:${conn.id}`,
+          phone_number: conn.display_phone_number,
+          name: conn.nickname || conn.profile_name || conn.display_phone_number || "Número de Atendimento",
+          api_tier: "evolution",
+          api_type: "evolution" as const,
+          source_id: conn.id,
+          phone_number_id: null,
+          waba_connection_id: conn.id,
+          display_phone_number: conn.display_phone_number,
+          access_token: null,
+          waba_id: null,
+        }));
+
+      return [...metaOptions, ...evoOptions];
     },
     enabled: !!user,
   });
 
   const selectedNumber = numbers.find((n: any) => n.id === config.whatsapp_number_id);
   const isMeta = selectedNumber?.api_type === "meta";
-  const isEvolution = false; // Meta-only: fluxos não suportam mais Evolution.
+  const isEvolution = selectedNumber?.api_type === "evolution";
 
   const wabaConn = isMeta && selectedNumber
     ? {
@@ -1069,7 +1079,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             const numIsMeta = num?.api_type === "meta";
             updateConfig("whatsapp_number_id", v);
             updateConfig("whatsapp_number_name", num?.name || num?.display_phone_number || num?.phone_number || "");
-            updateConfig("api_type", "meta");
+            updateConfig("api_type", numIsMeta ? "meta" : "evolution");
             updateConfig("waba_connection_id", num?.waba_connection_id || null);
             updateConfig("phone_number_id", num?.phone_number_id || null);
             updateConfig("source_id", num?.source_id || null);
@@ -1085,8 +1095,8 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
               <SelectItem key={n.id} value={n.id}>
                 <div className="flex items-center gap-2">
                   <span>{n.name || n.display_phone_number || n.phone_number}</span>
-                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                    API Oficial Meta
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${n.api_type === "meta" ? "bg-primary/10 text-primary" : "bg-emerald-500/10 text-emerald-600"}`}>
+                    {n.api_type === "meta" ? "Número de Marketing" : "Número de Atendimento"}
                   </span>
                 </div>
               </SelectItem>
@@ -1101,6 +1111,16 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           <Info size={14} className="text-primary shrink-0 mt-0.5" />
           <p className="text-[11px] text-primary leading-relaxed">
             <span className="font-semibold">API Oficial Meta</span> — Requer template HSM aprovado para reabrir conversas após 24h.
+          </p>
+        </div>
+      )}
+
+      {selectedNumber && isEvolution && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+          <Info size={14} className="text-emerald-600 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-emerald-700 leading-relaxed">
+            <span className="font-semibold">Número de Atendimento</span> — o fluxo responde só a quem já falou com você.
+            Blocos de botões viram opções numeradas e o cliente responde com o número da opção.
           </p>
         </div>
       )}
@@ -2982,20 +3002,22 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
           {node.type === "buttons" && (
             <div className="space-y-4">
               {isEvolution && (
-                <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/30 space-y-2">
+                <div className="p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/30 space-y-2">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle size={16} className="text-amber-500" />
-                    <p className="text-sm font-semibold text-amber-500">Funcionalidade indisponível</p>
+                    <Info size={16} className="text-emerald-600" />
+                    <p className="text-sm font-semibold text-emerald-600">Opções numeradas</p>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Botões interativos são exclusivos da <span className="font-semibold text-foreground">API Inbound (Oficial)</span>. A API Outbound não suporta mensagens interativas com botões ou listas. Altere o número na Entrada do fluxo para um número conectado à API Oficial.
+                    No Número de Atendimento não existem botões nativos. As opções abaixo são enviadas
+                    numeradas dentro da mensagem e o cliente responde com o número (ou o texto) da opção.
+                    Se a resposta não for reconhecida, o fluxo avisa e pergunta novamente.
                   </p>
                 </div>
               )}
-              {!isEvolution && (
+              {true && (
                 <>
                   {renderApiIndicator()}
-                  {renderInfoBanner("Botões interativos da WhatsApp API. Até 3 botões de resposta rápida ou 1 lista com até 10 opções.")}
+                  {!isEvolution && renderInfoBanner("Botões interativos da WhatsApp API. Até 3 botões de resposta rápida ou 1 lista com até 10 opções.")}
 
                   <div className="space-y-2">
                     <Label className="text-xs font-medium">Tipo de interação</Label>

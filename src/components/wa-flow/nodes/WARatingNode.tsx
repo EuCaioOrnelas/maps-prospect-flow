@@ -16,11 +16,11 @@ export function WARatingNode({ data }: NodeProps) {
   const askSuggestion = !!cfg.ask_suggestion;
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-sm w-60 relative">
+    <div className="bg-card border border-border/70 rounded-2xl shadow-[0_6px_20px_-12px_hsl(var(--foreground)/0.35)] w-60 relative">
       <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-4 py-3">
-        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-          <Star size={16} className="text-amber-400" />
+        <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+          <Star size={17} className="text-white" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold text-foreground truncate">

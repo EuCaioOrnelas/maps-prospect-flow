@@ -386,6 +386,31 @@ Deno.serve(async (req) => {
 
         if (fromMe) continue;
 
+        // Fluxos de Automação (motor único WhatsApp)
+        try {
+          const flowCall = fetch(`${SUPABASE_URL}/functions/v1/wa-flow-runner`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_KEY}` },
+            body: JSON.stringify({
+              action: "inbound",
+              channel: "whatsapp",
+              source: "evolution",
+              user_id: userId,
+              owner_user_id: ownerId,
+              waba_connection_id: connectionId,
+              lead_phone: contactPhone,
+              lead_name: contactName,
+              incoming_text: parsed.text || "",
+              conversation_id: conversation.id,
+            }),
+          }).then(async (r) => { if (!r.ok) console.error("[evolution-webhook] wa-flow-runner", r.status, await r.text()); })
+            .catch((e) => console.error("[evolution-webhook] wa-flow-runner", e));
+          // @ts-ignore EdgeRuntime disponível no runtime Supabase
+          if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(flowCall); else await flowCall;
+        } catch (e) {
+          console.error("[evolution-webhook] flow error", e);
+        }
+
         // SDR Inteligente (IA de análise e engajamento)
         try {
           const tail = phoneTail8(contactPhone);

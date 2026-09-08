@@ -1,6 +1,7 @@
 import { Position, type NodeProps } from "@xyflow/react";
 import { FlowHandle } from "./FlowHandle";
-import { ToggleLeft, List, AlertTriangle } from "lucide-react";
+import { NodeShell } from "./NodeShell";
+import { ToggleLeft, List, ListOrdered } from "lucide-react";
 import { useRef, useState, useLayoutEffect } from "react";
 
 type InteractiveItem = {
@@ -22,14 +23,14 @@ const normalizeItem = (item: any, index: number, prefix: "btn" | "item"): Intera
 
 export function WAButtonsNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
+  const isEvolution = cfg._provider === "evolution";
   const isListMode = cfg.interaction_type === "list";
   const rawItems = isListMode ? (cfg.list_items || []) : (cfg.buttons || cfg.reply_buttons || []);
   const items: InteractiveItem[] = rawItems.map((item: any, index: number) =>
     normalizeItem(item, index, isListMode ? "item" : "btn")
   );
   const hasItems = items.length > 0;
-  const Icon = isListMode ? List : ToggleLeft;
-  const isBlocked = cfg._blocked_evolution === true;
+  const Icon = isEvolution ? ListOrdered : isListMode ? List : ToggleLeft;
 
   const nodeRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -44,65 +45,71 @@ export function WAButtonsNode({ data }: NodeProps) {
       return ((elRect.top + elRect.height / 2 - nodeRect.top) / nodeRect.height) * 100;
     });
     setHandleTops(tops);
-  }, [items.length, hasItems, cfg.body_text]);
+  }, [items.length, hasItems, cfg.body_text, isEvolution]);
+
+  const subtitle = hasItems
+    ? `${items.length} ${isEvolution ? "opções numeradas" : isListMode ? "itens" : "botões"}`
+    : null;
 
   return (
-    <div ref={nodeRef} className={`bg-card border rounded-xl shadow-sm w-56 relative ${isBlocked ? "border-amber-500/40 opacity-60" : "border-border"}`}>
-      {isBlocked && (
-        <div className="absolute inset-0 z-10 rounded-xl bg-background/60 backdrop-blur-[1px] flex flex-col items-center justify-center gap-1.5 cursor-pointer" title="Funcionalidade exclusiva da API Inbound (Meta)">
-          <div className="w-8 h-8 rounded-[9px] bg-amber-500/15 flex items-center justify-center">
-            <AlertTriangle size={16} className="text-amber-500" />
+    <div ref={nodeRef}>
+      <NodeShell
+        icon={Icon}
+        accent="bg-blue-500"
+        width="w-60"
+        title={String((data as any).label || (isEvolution ? "Opções" : "Botões"))}
+        subtitle={subtitle}
+        placeholder="Clique para configurar"
+      >
+        <FlowHandle type="target" position={Position.Left} />
+
+        {cfg.body_text && (
+          <div className="px-3.5 -mt-1 pb-1">
+            <p className="text-[11px] text-foreground/70 line-clamp-3">{cfg.body_text}</p>
           </div>
-          <p className="text-[9px] text-amber-500 font-medium text-center px-3">API Inbound apenas</p>
-        </div>
-      )}
-      <FlowHandle type="target" position={Position.Left} />
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/50">
-        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-          <Icon size={16} className="text-blue-400" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-foreground truncate">{String((data as any).label || "Botões")}</p>
-          <p className="text-[10px] text-muted-foreground">
-            {hasItems ? `${items.length} ${isListMode ? "itens" : "botões"}` : "Configurar"}
-          </p>
-        </div>
-      </div>
+        )}
 
-      {cfg.body_text && (
-        <div className="px-3 pt-2">
-          <p className="text-[10px] text-foreground/70 line-clamp-3">{cfg.body_text}</p>
-        </div>
-      )}
+        {hasItems && (
+          <div className="px-3.5 pb-3 space-y-1">
+            {items.map((item, i) => (
+              <div
+                key={item.id}
+                ref={(el) => { itemRefs.current[i] = el; }}
+                className="text-[11px] bg-muted/50 rounded-lg px-2.5 py-1.5 truncate text-foreground/80 flex items-center gap-1.5"
+              >
+                {isEvolution ? (
+                  <span className="text-[10px] font-bold text-blue-500 shrink-0">{i + 1}.</span>
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                )}
+                {item.title}
+              </div>
+            ))}
+          </div>
+        )}
 
-      {hasItems && (
-        <div className="px-3 py-2 space-y-1">
-          {items.map((item, i) => (
-            <div
+        {isEvolution && (
+          <div className="px-3.5 pb-3">
+            <p className="text-[10px] text-muted-foreground leading-snug">
+              Número de Atendimento: as opções vão numeradas no texto e o cliente responde com o número.
+            </p>
+          </div>
+        )}
+
+        {hasItems ? (
+          items.map((item, i) => (
+            <FlowHandle
               key={item.id}
-              ref={(el) => { itemRefs.current[i] = el; }}
-              className="text-[10px] bg-muted/50 rounded px-2 py-1.5 truncate text-foreground/80 flex items-center gap-1.5"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-              {item.title}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {hasItems ? (
-        items.map((item, i) => (
-          <FlowHandle
-            key={item.id}
-            type="source"
-            position={Position.Right}
-            id={item.id}
-            style={{ top: handleTops[i] != null ? `${handleTops[i]}%` : `${50}%` }}
-          />
-        ))
-      ) : (
-        <FlowHandle type="source" position={Position.Right} />
-      )}
+              type="source"
+              position={Position.Right}
+              id={item.id}
+              style={{ top: handleTops[i] != null ? `${handleTops[i]}%` : "50%" }}
+            />
+          ))
+        ) : (
+          <FlowHandle type="source" position={Position.Right} />
+        )}
+      </NodeShell>
     </div>
   );
 }

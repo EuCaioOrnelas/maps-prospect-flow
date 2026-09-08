@@ -507,68 +507,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
             )}
 
-            {/* Automação with submenu */}
-            {(can("flows") || can("agents")) && (
+            {/* Fluxos */}
+            {can("flows") && (
             <li data-tour="sidebar-automacao">
               <SidebarNavItem
-                title="Automação"
+                title="Fluxos"
                 icon={Workflow}
-                onClick={handleAutomationClick}
+                url="/fluxos"
                 isActive={isOnAutomationPage}
                 isExpanded={isExpanded}
-                hasSubmenu
-                isSubmenuOpen={isAutomationOpen}
                 badge={undefined}
-                tooltip="Automação"
+                tooltip="Fluxos"
               />
-
-              {isExpanded && (
-                <div
-                  className={cn(
-                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    isAutomationOpen
-                      ? "max-h-40 opacity-100 mt-1"
-                      : "max-h-0 opacity-0"
-                  )}
-                >
-                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
-                    {can("flows") && (
-                    <li data-tour="sidebar-automacao-fluxos">
-                      <Link
-                        to="/fluxos"
-                        className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
-                          currentPath.startsWith("/fluxos")
-                            ? "bg-sidebar-accent/60 text-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <Workflow size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Fluxos</span>
-                      </Link>
-                    </li>
-                    )}
-                    {can("agents") && (
-                    <li data-tour="sidebar-automacao-agentes">
-                      <Link
-                        to="/equipe-ia"
-                        className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
-                          currentPath.startsWith("/equipe-ia") || currentPath.startsWith("/ai-workforce")
-                            ? "bg-sidebar-accent/60 text-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <Bot size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Equipe IA</span>
-                      </Link>
-                    </li>
-                    )}
-                    {/* Aquecimento removido do menu — página continua acessível via /warming */}
-
-                  </ul>
-                </div>
-              )}
             </li>
             )}
 

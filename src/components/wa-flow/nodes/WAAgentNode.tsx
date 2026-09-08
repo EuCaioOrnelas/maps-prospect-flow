@@ -24,14 +24,14 @@ export function WAAgentNode({ data }: NodeProps) {
   const providerLabel = PROVIDER_LABELS[provider] || provider;
 
   return (
-    <div className="rounded-xl bg-card border border-border shadow-sm w-52">
+    <div className="rounded-2xl bg-card border border-border/70 shadow-[0_6px_20px_-12px_hsl(var(--foreground)/0.35)] w-52">
       <FlowHandle type="target" position={Position.Left} />
       <div className="flex items-center gap-2.5 px-3 py-2.5">
-        <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-violet-500 flex items-center justify-center shrink-0">
           {providerIcon ? (
             <img src={providerIcon} alt={providerLabel} className="w-5 h-5 rounded" />
           ) : (
-            <Bot size={16} className="text-violet-500" />
+            <Bot size={17} className="text-white" />
           )}
         </div>
         <div className="min-w-0 flex-1">
