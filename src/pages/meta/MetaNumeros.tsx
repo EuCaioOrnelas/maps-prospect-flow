@@ -949,8 +949,8 @@ export default function MetaNumeros() {
 }
 
 const DetailRow = ({ label, value }: { label: string; value: string }) => (
-  <div>
-    <p className="text-[11px] text-muted-foreground">{label}</p>
-    <p className="text-sm font-mono truncate">{value}</p>
+  <div className="flex flex-col gap-0.5">
+    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+    <p className="text-sm font-medium text-foreground truncate">{value}</p>
   </div>
 );
