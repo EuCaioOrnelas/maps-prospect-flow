@@ -164,8 +164,13 @@ Deno.serve(async (req) => {
         catch (e) { state = (e as any).status === 404 ? "missing" : "close"; }
 
         if (state === "open") {
-          if (c.evolution_state !== "open") {
-            await admin.from("user_waba_connections").update({ evolution_state: "open", last_connected_at: new Date().toISOString() }).eq("id", c.id);
+          if (c.evolution_state !== "open" || c.evolution_disconnected_since || c.evolution_qr_alert_sent_at) {
+            await admin.from("user_waba_connections").update({
+              evolution_state: "open",
+              last_connected_at: new Date().toISOString(),
+              evolution_disconnected_since: null,
+              evolution_qr_alert_sent_at: null,
+            }).eq("id", c.id);
             if (c.display_phone_number) await relinkConversationsToLine(admin, c as any, c.display_phone_number);
           }
           // Auto-cura do webhook: garante que eventos continuem chegando
@@ -185,25 +190,42 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        if (state === "missing") {
-          await admin.from("user_waba_connections").update({ evolution_state: "close" }).eq("id", c.id);
-          report[iname] = "missing";
+        // Fora do ar: marca desde quando (base para o aviso e para a limpeza de 30 dias)
+        const since = c.evolution_disconnected_since ? new Date(c.evolution_disconnected_since).getTime() : Date.now();
+        const patch: Record<string, unknown> = { evolution_state: state === "missing" ? "close" : state };
+        if (!c.evolution_disconnected_since) patch.evolution_disconnected_since = new Date(since).toISOString();
+
+        // 30 dias sem voltar: apaga conversas guardadas e a conexão
+        if (Date.now() - since > THIRTY_DAYS_MS) {
+          await purgeEvolutionLine(admin, c);
+          report[iname] = "purged_30d";
           continue;
         }
 
-        // close/connecting: se já esteve conectada, força reconexão sem novo QR
-        if (c.last_connected_at) {
+        let needsQr = state === "missing";
+        if (state !== "missing" && c.last_connected_at) {
+          // já esteve conectada: tenta religar sem QR code
           try {
             const r = await evo(`/instance/connect/${iname}`, { method: "GET" });
             const st = r?.instance?.state ? normalizeState(r) : (r?.base64 ? "connecting" : state);
-            await admin.from("user_waba_connections").update({ evolution_state: st }).eq("id", c.id);
-            report[iname] = `reconnect:${st}`;
+            patch.evolution_state = st;
+            needsQr = !!(r?.base64 || r?.code) && st !== "open";
+            report[iname] = `reconnect:${st}${needsQr ? "+qr" : ""}`;
           } catch (e) {
             report[iname] = `reconnect_failed:${(e as Error).message}`;
           }
         } else {
           report[iname] = state;
         }
+
+        // Só avisa o cliente quando a religação automática não resolve (precisa de QR code)
+        const alerted = c.evolution_qr_alert_sent_at ? new Date(c.evolution_qr_alert_sent_at).getTime() : 0;
+        if (needsQr && Date.now() - alerted > 24 * 60 * 60 * 1000) {
+          const sent = await sendReconnectEmail(admin, c);
+          if (sent) patch.evolution_qr_alert_sent_at = new Date().toISOString();
+        }
+
+        await admin.from("user_waba_connections").update(patch).eq("id", c.id);
       }
       return json({ ok: true, checked: (conns || []).length, report });
     }
