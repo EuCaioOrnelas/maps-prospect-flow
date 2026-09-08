@@ -90,13 +90,20 @@ Resposta (`data`): `company_name`, `opportunity_score`, `opportunity_level`,
 `close_probability`, `diagnosis`, `recommended_action`, `score_breakdown`,
 `strengths[]`, `weaknesses[]`.
 
-### 3.3 POST /v1/prospecting/approach — 4 tokens (R$ 0,04)
+### 3.3 POST /v1/prospecting/approach — 4 tokens (R$ 0,04) por mensagem gerada
 
 Cria mensagem de abordagem comercial personalizada. Envie o `diagnosis` e o `score`
 retornados pelo `/analyze` para maior precisão.
 
+Campo `type` (opcional):
+
+- `"followup"` (padrão) — mensagem no padrão Meta / follow-up.
+- `"manual"` — mensagem de primeiro contato manual para WhatsApp.
+- `"both"` — gera as duas (custa 8 tokens: 4 por mensagem).
+
 ```json
 {
+  "type": "both",
   "company": {
     "name": "Padaria Bella Paulista",
     "city": "São Paulo",
@@ -106,6 +113,11 @@ retornados pelo `/analyze` para maior precisão.
   }
 }
 ```
+
+Resposta com um único tipo: `type`, `message`, `strategy`, `suggested_offer`,
+`niche_insight`, `city_insight`, `hook`, `insight`, `weaknesses[]`.
+Com `both`: `manual` e `followup`, cada um com os campos acima.
+Só é cobrado o que foi realmente gerado (`usage.units`).
 
 ## 4. Cobrança em tokens
 
@@ -118,9 +130,9 @@ retornados pelo `/analyze` para maior precisão.
 
 | Operação | Endpoint | Custo |
 | --- | --- | --- |
-| Buscar empresas | /v1/prospecting/search | 9 tokens |
-| Analisar + diagnosticar | /v1/prospecting/analyze | 5 tokens |
-| Gerar abordagem | /v1/prospecting/approach | 4 tokens |
+| Buscar empresas | /v1/prospecting/search | 9 tokens por empresa retornada |
+| Analisar + diagnosticar | /v1/prospecting/analyze | 5 tokens (score e diagnóstico juntos) |
+| Gerar abordagem | /v1/prospecting/approach | 4 tokens por mensagem gerada |
 
 ## 5. Idempotência
 

@@ -257,6 +257,9 @@ function validate(path: string, body: any): { ok: true; payload: Json } | { ok: 
   const company = body.company ?? body.lead ?? {};
   const nome = String(company.name ?? company.company_name ?? "").trim();
   if (nome.length < 2) return { ok: false, message: "company.name é obrigatório." };
+  if (parseApproachTypes(body).length === 0) {
+    return { ok: false, message: 'type deve ser "manual", "followup" ou "both".' };
+  }
   return {
     ok: true,
     payload: {
@@ -276,6 +279,46 @@ function validate(path: string, body: any): { ok: true; payload: Json } | { ok: 
       },
     },
   };
+}
+
+// Tipos de abordagem pedidos. "manual" = primeiro contato manual (WhatsApp),
+// "followup" = mensagem no padrão Meta. Cada um custa o preço da operação.
+type ApproachType = "manual" | "followup";
+function parseApproachTypes(body: any): ApproachType[] {
+  const rawList: unknown[] = Array.isArray(body?.types)
+    ? body.types
+    : body?.type !== undefined
+    ? [body.type]
+    : ["followup"]; // compatibilidade: comportamento anterior da API
+
+  const out: ApproachType[] = [];
+  for (const item of rawList) {
+    const v = String(item ?? "").trim().toLowerCase();
+    if (v === "both" || v === "all" || v === "ambos") {
+      if (!out.includes("manual")) out.push("manual");
+      if (!out.includes("followup")) out.push("followup");
+    } else if (v === "manual") {
+      if (!out.includes("manual")) out.push("manual");
+    } else if (v === "followup" || v === "follow_up" || v === "follow-up" || v === "meta") {
+      if (!out.includes("followup")) out.push("followup");
+    } else {
+      return [];
+    }
+  }
+  return out;
+}
+
+function shapeApproach(data: any) {
+  return sanitize({
+    message: data?.mensagem ?? "",
+    strategy: data?.estrategia ?? "",
+    suggested_offer: data?.produto_sugerido ?? "",
+    niche_insight: data?.analise_nicho ?? "",
+    city_insight: data?.analise_cidade ?? "",
+    hook: data?.gancho ?? "",
+    insight: data?.insight ?? "",
+    weaknesses: data?.pontos_fracos ?? [],
+  });
 }
 
 function shapeResponse(path: string, data: any) {
@@ -318,14 +361,7 @@ function shapeResponse(path: string, data: any) {
       estimated_revenue_potential: data?.potencial_receita_estimado ?? null,
     });
   }
-  return sanitize({
-    message: data?.mensagem ?? "",
-    strategy: data?.estrategia ?? "",
-    suggested_offer: data?.produto_sugerido ?? "",
-    niche_insight: data?.analise_nicho ?? "",
-    city_insight: data?.analise_cidade ?? "",
-    weaknesses: data?.pontos_fracos ?? [],
-  });
+  return shapeApproach(data);
 }
 
 // ---------- handler ----------
@@ -539,8 +575,12 @@ serve(async (req) => {
     if (unitPrice === null) {
       return apiError("OPERATION_UNAVAILABLE", "Operação temporariamente indisponível.", 503, requestId, rateHeaders);
     }
+    const isApproach = path === "/v1/prospecting/approach";
+    const approachTypes = isApproach ? parseApproachTypes(body) : [];
     const requestedUnits = path === "/v1/prospecting/search"
       ? Math.max(1, Number((validated.payload as any)?.limit ?? 20))
+      : isApproach
+      ? approachTypes.length
       : 1;
     const tokens = unitPrice * requestedUnits;
 
@@ -580,38 +620,60 @@ serve(async (req) => {
     }
 
     // ---- execução ----
-    const fn = path === "/v1/prospecting/search"
-      ? "search-leads"
-      : path === "/v1/prospecting/analyze"
-      ? "score-opportunity"
-      : "approach-lead";
-
-    const result = await callInternal(fn, userId, validated.payload);
-
-    if (!result.ok) {
+    const failUpstream = async (status: number) => {
       await admin.rpc("wiize_api_release_reservation", { _reservation_id: reserve.reservation_id });
-      const code = result.status === 504 ? "TIMEOUT" : "UPSTREAM_ERROR";
+      const code = status === 504 ? "TIMEOUT" : "UPSTREAM_ERROR";
       await logRequest({
         user_id: userId, api_key_id: key.id, request_id: requestId, endpoint: path,
-        environment: key.environment, status_code: result.status === 504 ? 504 : 502, error_code: code,
+        environment: key.environment, status_code: status === 504 ? 504 : 502, error_code: code,
         duration_ms: Date.now() - startedAt, ip_address: ip, user_agent: req.headers.get("user-agent"),
-        metadata: { upstream_status: result.status },
+        metadata: { upstream_status: status },
       });
       return apiError(
         code,
         code === "TIMEOUT" ? "A operação excedeu o tempo limite. Nenhum token foi cobrado." : "Falha ao processar a operação. Nenhum token foi cobrado.",
-        result.status === 504 ? 504 : 502,
+        status === 504 ? 504 : 502,
         requestId,
         rateHeaders,
       );
+    };
+
+    let payload: any;
+    let deliveredUnits = 0;
+
+    if (isApproach) {
+      // Cada tipo pedido é uma mensagem gerada e cobrada separadamente.
+      const generated: Record<string, any> = {};
+      let lastFailStatus = 0;
+      for (const t of approachTypes) {
+        const fnName = t === "manual" ? "approach-lead-manual" : "approach-lead";
+        const r = await callInternal(fnName, userId, validated.payload);
+        if (r.ok) {
+          generated[t] = shapeApproach(r.data);
+          deliveredUnits += 1;
+        } else {
+          lastFailStatus = r.status;
+        }
+      }
+      if (deliveredUnits === 0) return await failUpstream(lastFailStatus || 502);
+
+      payload = approachTypes.length === 1
+        ? { type: approachTypes[0], ...generated[approachTypes[0]] }
+        : {
+            manual: generated.manual ?? null,
+            followup: generated.followup ?? null,
+            generated_types: Object.keys(generated),
+          };
+    } else {
+      const fn = path === "/v1/prospecting/search" ? "search-leads" : "score-opportunity";
+      const result = await callInternal(fn, userId, validated.payload);
+      if (!result.ok) return await failUpstream(result.status);
+      payload = shapeResponse(path, result.data);
+      // Unidades realmente entregues (leads na busca; 1 na análise)
+      deliveredUnits = path === "/v1/prospecting/search"
+        ? Number((payload as any)?.results_count ?? 0)
+        : 1;
     }
-
-    const payload = shapeResponse(path, result.data);
-
-    // Unidades realmente entregues (leads na busca; 1 nas demais operações)
-    const deliveredUnits = path === "/v1/prospecting/search"
-      ? Number((payload as any)?.results_count ?? 0)
-      : 1;
     const chargedTokens = Math.min(unitPrice * deliveredUnits, tokens);
 
     const { data: commitRes } = await admin.rpc("wiize_api_commit_reservation", {
