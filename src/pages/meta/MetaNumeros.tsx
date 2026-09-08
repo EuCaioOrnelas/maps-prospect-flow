@@ -361,9 +361,10 @@ export default function MetaNumeros() {
             }}>
               <Pencil size={13} className="text-muted-foreground" />
             </Button>
-            <span className="hidden sm:inline text-muted-foreground" title="Número de Atendimento">
-              <Headset size={15} />
+            <span className="hidden sm:flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/15" title="Número de Atendimento">
+              <Headset size={13} />
             </span>
+
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${online ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
               {online ? "Ativo" : connecting ? "Conectando" : "Inativo"}
             </span>
@@ -446,9 +447,10 @@ export default function MetaNumeros() {
           >
             <Pencil size={13} className="text-muted-foreground" />
           </Button>
-          <span className="hidden sm:inline text-muted-foreground" title="Número de Marketing">
-            <Megaphone size={15} />
+          <span className="hidden sm:flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/15" title="Número de Marketing">
+            <Megaphone size={13} />
           </span>
+
           <span className={`text-[10px] px-2 py-0.5 rounded-full ${
             isExpired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
           }`}>
@@ -833,8 +835,9 @@ export default function MetaNumeros() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {connections.find((c) => c.id === pendingDeleteId) && isEvo(connections.find((c) => c.id === pendingDeleteId)!)
-                ? "O número sai da conta na hora e libera uma vaga no seu plano. As conversas ficam guardadas por 30 dias caso a mesma linha volte; depois disso são apagadas para sempre."
+                ? "A sessão do WhatsApp será desconectada e apagada de vez, e o número sai da conta na hora, liberando uma vaga no seu plano. Para usar de novo será preciso ler um novo QR code. As conversas ficam guardadas por 30 dias caso a mesma linha volte; depois disso são apagadas para sempre."
                 : "Esta ação é permanente. Todas as conversas, mensagens e campanhas vinculadas a este número serão removidas e não poderão ser recuperadas."}
+
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
