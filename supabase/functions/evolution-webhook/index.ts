@@ -251,9 +251,44 @@ Deno.serve(async (req) => {
         const { data: dup } = await supabase.from("chat_messages").select("id").eq("waba_message_id", msgId).limit(1).maybeSingle();
         if (dup) continue;
 
-        const mediaUrl = await storeMedia(ownerId, msgId, parsed);
+        // Mídia sem base64 no webhook → busca na Evolution
+        const isMedia = ["image", "video", "audio", "document", "sticker"].includes(parsed.type);
+        if (isMedia && !parsed.mediaBase64) {
+          const fetched = await fetchMediaBase64(instance, key, parsed.type === "video");
+          if (fetched.base64) {
+            parsed.mediaBase64 = fetched.base64;
+            if (fetched.mime) parsed.mime = fetched.mime;
+          }
+        }
+
         const lastText = previewText(parsed.type, parsed.text, parsed.filename);
         const direction = fromMe ? "outbound" : "inbound";
+
+        // Mensagem enviada pela própria Wiize (send-chat-message / SDR): o eco `fromMe`
+        // pode chegar antes do update do waba_message_id. Reconcilia em vez de duplicar.
+        if (fromMe) {
+          const since = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+          const { data: pendingOut } = await supabase
+            .from("chat_messages")
+            .select("id, conversation_id, chat_conversations!inner(waba_connection_id, contact_phone)")
+            .eq("direction", "outbound")
+            .is("waba_message_id", null)
+            .eq("message_type", parsed.type)
+            .gte("created_at", since)
+            .eq("chat_conversations.waba_connection_id", connectionId)
+            .ilike("chat_conversations.contact_phone", `%${phoneTail8(contactPhone)}`)
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          if (pendingOut) {
+            await supabase.from("chat_messages")
+              .update({ waba_message_id: msgId, status: "sent", status_updated_at: new Date().toISOString() })
+              .eq("id", pendingOut.id);
+            continue;
+          }
+        }
+
+        const mediaUrl = await storeMedia(ownerId, msgId, parsed);
 
         let { data: conversation } = await supabase
           .from("chat_conversations")
