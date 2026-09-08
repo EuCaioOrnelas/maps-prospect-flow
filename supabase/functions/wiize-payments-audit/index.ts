@@ -42,7 +42,19 @@ Deno.serve(async (req) => {
 
     try {
       const eps = await stripe.webhookEndpoints.list({ limit: 20 });
-      out.webhooks = eps.data.map((e) => ({ url: e.url, status: e.status, events: e.enabled_events }));
+      const wanted = ["payment_intent.succeeded", "payment_intent.payment_failed", "charge.refunded"];
+      const fix = new URL(req.url).searchParams.get("fix") === "1";
+      const report: unknown[] = [];
+      for (const e of eps.data) {
+        let events = e.enabled_events;
+        if (fix && e.status === "enabled" && e.url.includes("/functions/v1/stripe-webhook")) {
+          const merged = Array.from(new Set([...events, ...wanted]));
+          const up = await stripe.webhookEndpoints.update(e.id, { enabled_events: merged as any });
+          events = up.enabled_events;
+        }
+        report.push({ url: e.url, status: e.status, missing: wanted.filter((w) => !events.includes(w)) });
+      }
+      out.webhooks = report;
     } catch (e) {
       out.webhooks = `ERRO: ${String((e as Error).message)}`;
     }
