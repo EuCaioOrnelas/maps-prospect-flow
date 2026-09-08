@@ -44,6 +44,7 @@ export function useApiWallet() {
 
 export interface ApiRequestRow {
   id: string;
+  request_id: string | null;
   endpoint: string;
   method: string;
   status_code: number;
@@ -64,7 +65,7 @@ export function useApiRequests(period: PeriodKey) {
       const since = new Date(Date.now() - days * 86400000).toISOString();
       const { data, error } = await supabase
         .from("wiize_api_requests")
-        .select("id, endpoint, method, status_code, tokens_charged, duration_ms, error_code, environment, created_at")
+        .select("id, request_id, endpoint, method, status_code, tokens_charged, duration_ms, error_code, environment, created_at")
         .eq("user_id", uid)
         .gte("created_at", since)
         .order("created_at", { ascending: false })
