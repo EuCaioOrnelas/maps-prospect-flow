@@ -23,7 +23,7 @@ export function WAEntryNode({ data }: NodeProps) {
   return (
     <NodeShell
       icon={WhatsAppIcon}
-      accent="bg-whatsapp"
+      accent="bg-wa-trigger"
       title={String((data as any).label || "Gatilho")}
       subtitle={isConfigured ? (triggerLabels[cfg.trigger_type] || cfg.trigger_type) : null}
       placeholder="Clique para configurar"

@@ -142,7 +142,7 @@ const sidebarCategories = [
   {
     label: "Gatilho de Ativação",
     items: [
-      { type: "entry", icon: WhatsAppIcon, label: "Gatilho", desc: "Escolha o número e como o fluxo começa", color: "text-primary-foreground bg-whatsapp" },
+      { type: "entry", icon: WhatsAppIcon, label: "Gatilho", desc: "Escolha o número e como o fluxo começa", color: "text-primary-foreground bg-wa-trigger" },
     ],
   },
   {

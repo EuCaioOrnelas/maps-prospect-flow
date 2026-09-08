@@ -81,6 +81,9 @@
     /* WhatsApp brand green */
     --whatsapp: 142 70% 52%;
 
+    /* Trigger node - cleaner, premium muted teal-green */
+    --wa-trigger: 160 42% 44%;
+
     /* Sidebar */
     --sidebar-background: 220 18% 6%;
     --sidebar-foreground: 210 40% 98%;
@@ -1668,6 +1671,13 @@ body.tour-active {
   }
   .text-whatsapp {
     color: hsl(var(--whatsapp));
+  }
+
+  .bg-wa-trigger {
+    background-color: hsl(var(--wa-trigger));
+  }
+  .text-wa-trigger {
+    color: hsl(var(--wa-trigger));
   }
 
   .blog-content {
