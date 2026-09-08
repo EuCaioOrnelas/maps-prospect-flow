@@ -388,8 +388,8 @@ export default function MetaNumeros() {
           </div>
         )}
         {responsibles.length > 0 && (
-          <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Responsáveis</span>
+          <div className="flex items-center gap-2 border-t border-border/60 pt-2.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Responsáveis:</span>
             <ResponsiblesStack userIds={responsibles} members={members} />
           </div>
         )}
