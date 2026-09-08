@@ -553,11 +553,35 @@ export default function MetaNumeros() {
           </TabsTrigger>
           <TabsTrigger value="webhook">
             <Webhook size={13} className="mr-1.5" />
-            Webhook
+            Webhook Meta
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="numeros" className="mt-5">
+          {!loading && connections.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <p className="text-xs text-muted-foreground">Números conectados</p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums">
+                  {connections.length}<span className="text-sm text-muted-foreground font-normal"> / {Number.isFinite(maxMetaConnections) ? maxMetaConnections : "∞"}</span>
+                </p>
+                <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${reachedConnectionLimit ? "bg-destructive" : "bg-primary"}`} style={{ width: `${Number.isFinite(maxMetaConnections) && maxMetaConnections > 0 ? Math.min(100, (connections.length / maxMetaConnections) * 100) : 5}%` }} />
+                </div>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">{basePlanNumbers} do plano {userPlan}{extraNumbers > 0 ? ` + ${extraNumbers} adicionais` : ""}</p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Headset size={12} /> Atendimento</div>
+                <p className="mt-1 text-2xl font-semibold tabular-nums">{connections.filter(isEvo).length}</p>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">{connections.filter((c) => isEvo(c) && c.evolution_state === "open").length} online agora</p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Megaphone size={12} /> Marketing</div>
+                <p className="mt-1 text-2xl font-semibold tabular-nums">{connections.filter((c) => !isEvo(c)).length}</p>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">{expiredConnections.length > 0 ? `${expiredConnections.length} com token expirado` : "Todos os tokens válidos"}</p>
+              </div>
+            </div>
+          )}
           {loading ? (
             <div className="flex items-center justify-center py-20 text-muted-foreground">
               <Loader2 className="animate-spin mr-2" size={16} /> Carregando números…
@@ -636,15 +660,15 @@ export default function MetaNumeros() {
                 );
                 return (
                   <>
-                    <Section icon={Headset} title="Números de Atendimento" subtitle="WhatsApp conectado por QR code. Chat, CRM e IA — sem disparos em massa." count={evoConns.length} items={evoConns} cta="Conectar por QR code" ctaIcon={QrCode} onCta={() => setShowEvoConnect(true)} />
+                    <Section icon={Headset} title="Números de Atendimento" subtitle="WhatsApp conectado por QR code. Chat, CRM e IA — sem disparos em massa." count={evoConns.length} items={evoConns} cta="Conectar por QR code" ctaIcon={QrCode} onCta={() => setShowEvolutionConnect(true)} />
                     <Section icon={Megaphone} title="Números de Marketing" subtitle="API oficial da Meta. Campanhas, templates, fluxos e atendimento sem risco de bloqueio." count={metaConns.length} items={metaConns} cta="Conectar via Meta" ctaIcon={Plus} onCta={() => setShowAddNumber(true)} />
                   </>
                 );
               })()}
 
-              <div className="text-xs text-muted-foreground">
-                {connections.length}/{maxMetaConnections} números conectados
-                {" "}<span className="opacity-70">({basePlanNumbers} do plano {userPlan}{extraNumbers > 0 ? ` + ${extraNumbers} da Expansão de Atendimento` : ""})</span>
+              <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                <span>Ambos os tipos somam no limite de números do seu plano.</span>
+                <Link to="/numeros/comparativo" className="text-primary hover:underline inline-flex items-center gap-1"><Info size={11} /> Atendimento vs Marketing</Link>
               </div>
 
               <div className="flex items-start gap-3 p-4 rounded-xl border border-primary/30 bg-primary/5">
