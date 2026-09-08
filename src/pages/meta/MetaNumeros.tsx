@@ -388,7 +388,7 @@ export default function MetaNumeros() {
           </div>
         )}
         {responsibles.length > 0 && (
-          <div className="flex items-center gap-2 border-t border-border/60 pt-2.5">
+          <div className="flex items-center gap-2 rounded-lg bg-background px-3 py-2">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Responsáveis:</span>
             <ResponsiblesStack userIds={responsibles} members={members} />
           </div>
