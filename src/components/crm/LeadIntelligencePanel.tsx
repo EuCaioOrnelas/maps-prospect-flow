@@ -404,7 +404,9 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
     if (conv && conv.reciprocity >= 35) out.push({ label: `Reciprocidade de ${conv.reciprocity}%, o contato participa da conversa` });
     if (conv?.leadAvgResponseMinutes != null && conv.leadAvgResponseMinutes <= 60) out.push({ label: `O contato responde em média em ${conv.leadAvgResponseMinutes} min` });
     if (conv?.transcribedAudioCount) out.push({ label: `${conv.transcribedAudioCount} áudio(s) transcrito(s) e analisado(s)` });
-    if ((fit ?? 0) >= 60) out.push({ label: "Perfil compatível com o que você vende (fit calculado pelo motor)" });
+    if (fit !== null) out.push({ label: `Fit de ${fit}/100 com o que você vende, calculado a partir do segmento, região e dados da empresa` });
+    if (quality !== null) out.push({ label: `Qualidade do cadastro em ${quality}/100 (dados de contato e empresa preenchidos)` });
+
     if (prospect?.ai_diagnosis) out.push({ label: "Diagnóstico da empresa disponível na prospecção", quote: String(prospect.ai_diagnosis).slice(0, 300), source: "Prospecção" });
     if (prospect?.rating != null) out.push({ label: `Empresa com avaliação pública ${prospect.rating}${prospect.review_count ? ` (${prospect.review_count} avaliações)` : ""}`, source: "Google Maps" });
     (intel?.factors || []).forEach((f) => { if (f.impact > 0) out.push({ label: f.label }); });
