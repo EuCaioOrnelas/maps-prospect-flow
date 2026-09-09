@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import type { ResponsibleMember } from './ResponsibleAvatar';
 import type { ResponsibleFilter } from './CRMResponsibleFilter';
 
@@ -53,6 +54,9 @@ interface CRMFiltersProps {
   responsibleMembers?: ResponsibleMember[];
   currentUserId?: string | null;
   showResponsibleFilter?: boolean;
+  showArchived?: boolean;
+  onShowArchivedChange?: (value: boolean) => void;
+  archivedCount?: number;
 }
 
 export const CRMFilters = ({
@@ -67,6 +71,9 @@ export const CRMFilters = ({
   responsibleMembers = [],
   currentUserId,
   showResponsibleFilter = false,
+  showArchived = false,
+  onShowArchivedChange,
+  archivedCount = 0,
 }: CRMFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState(filters.search);
@@ -137,7 +144,7 @@ export const CRMFilters = ({
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
           placeholder="Buscar contatos..."
-          className="pl-9 rounded-full"
+          className="pl-9"
         />
       </div>
 
@@ -164,6 +171,22 @@ export const CRMFilters = ({
                 </Button>
               )}
             </div>
+
+            {/* Arquivados */}
+            {onShowArchivedChange && (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground">Ver arquivados</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {archivedCount} arquivado{archivedCount === 1 ? '' : 's'} · continuam no limite do plano
+                    </p>
+                  </div>
+                  <Switch checked={showArchived} onCheckedChange={onShowArchivedChange} />
+                </div>
+                <Separator />
+              </>
+            )}
 
             {/* Pipeline Section */}
             <div className="space-y-3">

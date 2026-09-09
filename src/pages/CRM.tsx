@@ -44,7 +44,7 @@ export default function CRM() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, accountOwnerId, profile, loading } = useAuth();
-  const { count: contactCount, limit: contactLimit, hasLimit: hasContactLimit, isAtLimit: contactsAtLimit, isNearLimit: contactsNearLimit } = useContactLimit();
+  const { count: contactCount, limit: contactLimit, baseLimit: contactBaseLimit, extraContacts, extraPacks, hasLimit: hasContactLimit, isAtLimit: contactsAtLimit, isNearLimit: contactsNearLimit } = useContactLimit();
   const isMobile = useIsMobile();
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
   useAutoScoreTracking("crm");
@@ -440,55 +440,67 @@ export default function CRM() {
 
               <CRMTabs />
 
-              <div className="mt-3 flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant={showArchived ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setShowArchived(v => !v)}
-                >
-                  {showArchived ? 'Ver funil ativo' : `Ver arquivados${archivedCount ? ` (${archivedCount})` : ''}`}
-                </Button>
-                {showArchived && (
+              {showArchived && (
+                <div className="mt-3 flex items-center gap-2">
+                  <Badge variant="outline" className="text-[11px]">Vendo arquivados</Badge>
                   <span className="text-xs text-muted-foreground">
                     Contatos arquivados continuam contando no limite do seu plano.
                   </span>
-                )}
-              </div>
+                </div>
+              )}
+
 
               <CRMMetrics stages={stages} leads={filteredLeads} hideValue={isOperational} loading={isLoading} />
 
 
-              {hasContactLimit && (
-                <div className={`mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 rounded-xl border ${contactsAtLimit ? 'border-destructive/40 bg-destructive/10' : contactsNearLimit ? 'border-amber-500/40 bg-amber-500/10' : 'border-border/50 bg-card'}`}>
+              <div className={`mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 rounded-xl border ${contactsAtLimit ? 'border-destructive/40 bg-destructive/10' : contactsNearLimit ? 'border-amber-500/40 bg-amber-500/10' : 'border-border/50 bg-card'}`}>
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs sm:text-sm text-foreground">
-                    <span className="text-muted-foreground">Contatos no CRM:</span>
+                    <span className="text-muted-foreground">Capacidade do CRM:</span>
                     <strong className="tabular-nums">{(Number(contactCount) || 0).toLocaleString('pt-BR')}</strong>
                     <span className="text-muted-foreground">/</span>
-                    <strong className="tabular-nums">{Number.isFinite(contactLimit) ? contactLimit.toLocaleString('pt-BR') : '∞'}</strong>
-                    <span className="text-[10px] text-muted-foreground hidden md:inline">
-                      ({((Number(contactCount) || 0) / Math.max(Number(contactLimit) || 1, 1) * 100).toFixed(0)}% usado)
-                    </span>
-                    {contactsAtLimit && <span className="ml-2 text-destructive font-medium">Limite atingido</span>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {(contactsAtLimit || contactsNearLimit) ? (
-                      <Button size="sm" variant={contactsAtLimit ? 'default' : 'outline'} onClick={() => navigate('/upgrade')} className="h-7 text-xs">
-                        Expandir CRM
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => navigate('/upgrade')}
-                        className="h-7 text-xs text-muted-foreground hover:text-foreground border border-border/40 hover:border-border bg-transparent hover:bg-muted/40 font-normal"
-                      >
-                        Comprar mais
-                      </Button>
+                    <strong className="tabular-nums">{hasContactLimit ? contactLimit.toLocaleString('pt-BR') : 'ilimitado'}</strong>
+                    {hasContactLimit && (
+                      <span className="text-[10px] text-muted-foreground hidden md:inline">
+                        ({Math.min(100, Math.round((Number(contactCount) || 0) / Math.max(Number(contactLimit) || 1, 1) * 100))}% usado)
+                      </span>
                     )}
+                    {hasContactLimit && extraPacks > 0 && (
+                      <span className="text-[10px] text-muted-foreground">
+                        (plano {contactBaseLimit.toLocaleString('pt-BR')} + {extraContacts.toLocaleString('pt-BR')} extras)
+                      </span>
+                    )}
+                    {contactsAtLimit && <span className="ml-1 text-destructive font-medium">CRM lotado</span>}
                   </div>
+                  {hasContactLimit && (
+                    <div className="mt-2 h-1.5 w-full max-w-md rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-[width] duration-500 ${contactsAtLimit ? 'bg-destructive' : contactsNearLimit ? 'bg-amber-500' : 'bg-primary'}`}
+                        style={{ width: `${Math.min(100, ((Number(contactCount) || 0) / Math.max(Number(contactLimit) || 1, 1)) * 100)}%` }}
+                      />
+                    </div>
+                  )}
+                  {contactsAtLimit && (
+                    <p className="mt-1.5 text-[11px] text-destructive">
+                      Você atingiu o limite de contatos. Aumente a capacidade para continuar adicionando leads.
+                    </p>
+                  )}
                 </div>
-              )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {hasContactLimit ? (
+                    <Button
+                      size="sm"
+                      variant={contactsAtLimit ? 'default' : contactsNearLimit ? 'outline' : 'ghost'}
+                      onClick={() => navigate('/upgrade')}
+                      className={contactsAtLimit || contactsNearLimit ? 'h-8 text-xs' : 'h-8 text-xs text-muted-foreground hover:text-foreground border border-border/40 hover:border-border bg-transparent hover:bg-muted/40 font-normal'}
+                    >
+                      Aumentar capacidade
+                    </Button>
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground">Seu plano não tem limite de contatos</span>
+                  )}
+                </div>
+              </div>
 
 
               <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
@@ -505,6 +517,9 @@ export default function CRM() {
                     onResponsibleFilterChange={setResponsibleFilter}
                     responsibleMembers={responsibleMembers}
                     currentUserId={user?.id ?? null}
+                    showArchived={showArchived}
+                    onShowArchivedChange={setShowArchived}
+                    archivedCount={archivedCount}
                   />
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">

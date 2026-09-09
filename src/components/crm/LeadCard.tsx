@@ -2,7 +2,7 @@ import { useState, memo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
-import { Phone, MessageCircle, Pencil, Check, X, Mail, Archive, DollarSign, Paperclip, ArchiveRestore, Brain } from 'lucide-react';
+import { Phone, MessageCircle, Pencil, Check, X, Mail, Archive, DollarSign, Paperclip, ArchiveRestore } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -258,10 +258,31 @@ const LeadCardComponent = ({
       </div>
 
       {/* Phone */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2.5 min-w-0">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2 min-w-0">
         <Phone className="w-3 h-3 shrink-0" />
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
+
+      {/* Inteligência — resultado 0-100 do motor central (logo abaixo do nome/telefone) */}
+      {(() => {
+        const s = intel
+          ? Math.max(0, Math.min(100, Math.round(intel.opportunity_score)))
+          : toIntel100(scoreData?.score_total);
+        if (!s) return null;
+        return (
+          <div
+            className="mb-2.5 flex items-center gap-2 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); navigate(`/crm/inteligencia?phone=${encodeURIComponent(lead.phone)}`); }}
+          >
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Inteligência</span>
+            <span className="text-xs font-semibold tabular-nums text-primary">{s} de 100</span>
+            <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
+              <div className="h-full rounded-full transition-[width] duration-700 bg-primary" style={{ width: `${s}%` }} />
+            </div>
+          </div>
+        );
+      })()}
+
 
 
 
@@ -325,34 +346,10 @@ const LeadCardComponent = ({
         </div>
       )}
 
-      {/* Inteligência — resultado 0-100 do motor central */}
-      {(() => {
-        const s = intel
-          ? Math.max(0, Math.min(100, Math.round(intel.opportunity_score)))
-          : toIntel100(scoreData?.score_total);
-        if (!s) return null;
-        return (
-          <div
-            className="mt-3 relative cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); navigate(`/crm/inteligencia?phone=${encodeURIComponent(lead.phone)}`); }}
-          >
-            <div className="wiize-hairline mb-2.5" />
-            <div className="flex items-center gap-2">
-              <Brain className="w-3 h-3 text-primary shrink-0" />
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Inteligência</span>
-              <span className="text-xs font-semibold tabular-nums text-primary">{s} de 100</span>
-              <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
-                <div className="h-full rounded-full transition-[width] duration-700 bg-primary" style={{ width: `${s}%` }} />
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
       {/* Ações rápidas */}
-      <div className="-mx-5 -mb-5 mt-3">
+      <div className="mt-3">
       <div className="wiize-hairline" />
-      <div className="px-3 py-2 flex items-center gap-1 rounded-b-[18px]">
+      <div className="-mx-2 pt-2 pb-0 flex items-center gap-1">
         {quickActions.map(({ key, label, icon: Icon, run, disabled }) => (
           <Tooltip key={key}>
             <TooltipTrigger asChild>
