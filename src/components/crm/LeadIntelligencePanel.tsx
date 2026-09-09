@@ -219,9 +219,9 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
   if (!intel) {
     // Sem perfil consolidado ainda: mostramos o mesmo valor exibido no card,
     // vindo do motor de pontuacao existente, para nao haver divergencia.
-    if (legacyScore > 0) {
-      return (
-        <div className={cn("rounded-xl border border-border/60 bg-card p-4", className)}>
+    return (
+      <div className={cn("space-y-3", className)}>
+        <div className="rounded-xl border border-border/60 bg-card p-4">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Brain className="w-[18px] h-[18px] text-primary" />
@@ -230,7 +230,7 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
                 Inteligência Wiize
               </p>
-              <p className="text-sm font-semibold text-foreground">Oportunidade {legacyScore}/100</p>
+              <p className="text-sm font-semibold text-foreground">Oportunidade {legacyScore} de 100</p>
             </div>
           </div>
           <div className="mt-3 h-1.5 rounded-full bg-muted/60 overflow-hidden">
@@ -241,8 +241,12 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
             (intenção, engajamento, risco) está sendo processada e aparece assim que ficar pronta.
           </p>
         </div>
-      );
-    }
+        <Breakdown leadId={legacy?.id} />
+        <ActionIntelligence score={legacyScore} />
+      </div>
+    );
+  }
+
     return (
       <div className={cn("rounded-xl border border-dashed border-border/60 bg-muted/20 p-4 text-center", className)}>
         <Brain className="w-5 h-5 mx-auto text-muted-foreground mb-1.5" />
