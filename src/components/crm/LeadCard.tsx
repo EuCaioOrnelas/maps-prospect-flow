@@ -290,13 +290,12 @@ const LeadCardComponent = ({
         if (!s) return null;
         return (
           <div
-            className="-mx-5 -mb-5 mt-3 px-5 pt-2.5 pb-3 relative cursor-pointer rounded-b-[18px]"
+            className="mt-3 pt-2.5 relative cursor-pointer border-t border-border/60"
             onClick={(e) => { e.stopPropagation(); navigate(`/crm/inteligencia?phone=${encodeURIComponent(lead.phone)}`); }}
           >
-            <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
             <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Inteligência</span>
-              <span className="text-xs font-semibold tabular-nums text-primary">{s}/100</span>
+              <span className="text-xs font-semibold tabular-nums text-primary">{s} de 100</span>
               <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
                 <div className="h-full rounded-full transition-[width] duration-700 bg-primary" style={{ width: `${s}%` }} />
               </div>
@@ -304,6 +303,29 @@ const LeadCardComponent = ({
           </div>
         );
       })()}
+
+      {/* Ações rápidas */}
+      <div className="-mx-5 -mb-5 mt-3 px-3 py-2 border-t border-border/60 flex items-center gap-1 rounded-b-[18px]">
+        {quickActions.map(({ key, label, icon: Icon, run, disabled }) => (
+          <Tooltip key={key}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={label}
+                disabled={disabled}
+                onClick={(e) => { e.stopPropagation(); run(); }}
+                className={cn(
+                  "p-1.5 rounded-lg text-muted-foreground transition-colors",
+                  disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{label}</TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
     </div>
   );
 };
