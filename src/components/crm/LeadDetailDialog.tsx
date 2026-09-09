@@ -162,7 +162,7 @@ const EditableInfoField = ({
   value: string; 
   placeholder: string; 
   onChange: (value: string) => void; 
-  onSave: () => Promise<void>;
+  onSave: (value: string) => Promise<void>;
   isLink?: boolean;
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -177,7 +177,7 @@ const EditableInfoField = ({
     setIsSaving(true);
     try {
       onChange(localValue);
-      await onSave();
+      await onSave(localValue);
       setIsEditing(false);
     } catch {
       toast.error('Erro ao salvar');
@@ -1065,8 +1065,8 @@ export const LeadDetailDialog = ({
                         value={formData.email}
                         placeholder="Adicionar e-mail"
                         onChange={(value) => setFormData({ ...formData, email: value })}
-                        onSave={async () => {
-                          await onUpdate(lead.id, { email: formData.email });
+                        onSave={async (v) => {
+                          await onUpdate(lead.id, { email: v });
                           toast.success('E-mail atualizado!');
                         }}
                       />
@@ -1078,8 +1078,8 @@ export const LeadDetailDialog = ({
                         value={formData.company_name}
                         placeholder="Adicionar empresa"
                         onChange={(value) => setFormData({ ...formData, company_name: value })}
-                        onSave={async () => {
-                          await onUpdate(lead.id, { company_name: formData.company_name });
+                        onSave={async (v) => {
+                          await onUpdate(lead.id, { company_name: v });
                           toast.success('Empresa atualizada!');
                         }}
                       />
@@ -1135,8 +1135,8 @@ export const LeadDetailDialog = ({
                       value={formData.city}
                       placeholder="Adicionar cidade"
                       onChange={(value) => setFormData({ ...formData, city: value })}
-                      onSave={async () => {
-                        await onUpdate(lead.id, { city: formData.city });
+                      onSave={async (v) => {
+                        await onUpdate(lead.id, { city: v });
                         toast.success('Cidade atualizada!');
                       }}
                     />
@@ -1148,8 +1148,8 @@ export const LeadDetailDialog = ({
                       value={formData.region}
                       placeholder="Adicionar região"
                       onChange={(value) => setFormData({ ...formData, region: value })}
-                      onSave={async () => {
-                        await onUpdate(lead.id, { region: formData.region });
+                      onSave={async (v) => {
+                        await onUpdate(lead.id, { region: v });
                         toast.success('Região atualizada!');
                       }}
                     />
@@ -1187,8 +1187,8 @@ export const LeadDetailDialog = ({
                       value={formData.category}
                       placeholder="Adicionar categoria"
                       onChange={(value) => setFormData({ ...formData, category: value })}
-                      onSave={async () => {
-                        await onUpdate(lead.id, { category: formData.category });
+                      onSave={async (v) => {
+                        await onUpdate(lead.id, { category: v });
                         toast.success('Categoria atualizada!');
                       }}
                     />
@@ -1200,8 +1200,8 @@ export const LeadDetailDialog = ({
                       value={formData.website}
                       placeholder="Adicionar website"
                       onChange={(value) => setFormData({ ...formData, website: value })}
-                      onSave={async () => {
-                        await onUpdate(lead.id, { website: formData.website });
+                      onSave={async (v) => {
+                        await onUpdate(lead.id, { website: v });
                         toast.success('Website atualizado!');
                       }}
                       isLink
