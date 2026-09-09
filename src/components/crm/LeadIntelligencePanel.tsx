@@ -84,46 +84,77 @@ function useScoreBreakdown(leadId?: string) {
 function actionAdvice(score: number) {
   if (score >= 81)
     return {
-      title: "Fechar agora",
+      title: "Fechar agora — prioridade máxima",
+      window: "Aja hoje, nas próximas 2 horas",
+      channel: "Ligação e, se não atender, áudio no WhatsApp",
       lines: [
-        "Ligue hoje: o contato está no melhor momento de decisão.",
-        "Envie proposta com prazo definido e condição clara.",
-        "Confirme a próxima etapa na mesma conversa.",
+        "Ligue agora: o contato está no melhor momento de decisão e a chance cai a cada dia parado.",
+        "Leve a proposta pronta, com valor, prazo de entrega e forma de pagamento definidos.",
+        "Ofereça uma condição com data de validade curta para criar decisão.",
+        "Antes de encerrar, marque na agenda a próxima etapa (assinatura, reunião ou pagamento).",
       ],
+      script:
+        "Oi [nome], tudo bem? Preparei a proposta do jeito que conversamos. Posso te explicar em 5 minutos agora e já deixamos fechado hoje?",
+      avoid: "Não mande só texto e espere. Sem chamada, este contato esfria rápido.",
     };
   if (score >= 61)
     return {
       title: "Avançar para proposta",
+      window: "Nas próximas 24 horas",
+      channel: "Chamada curta de diagnóstico + resumo por WhatsApp",
       lines: [
-        "Faça uma chamada curta de diagnóstico e alinhe valores.",
-        "Mostre um caso parecido com o nicho do contato.",
-        "Combine data para retomar antes de esfriar.",
+        "Faça uma chamada de 10 minutos para confirmar necessidade, prazo e orçamento.",
+        "Mostre um caso real parecido com o nicho dele, com resultado em número.",
+        "Envie a proposta ainda no mesmo dia, enquanto o interesse está alto.",
+        "Combine data e hora exatas para retomar — não deixe em aberto.",
       ],
+      script:
+        "Oi [nome], pelo que você me contou dá pra resolver isso rápido. Tem 10 minutinhos hoje pra eu te mostrar como ficaria e já te passar valores?",
+      avoid: "Evite mandar proposta genérica antes de confirmar o que ele precisa.",
     };
   if (score >= 41)
     return {
       title: "Aquecer e qualificar",
+      window: "Nos próximos 2 dias",
+      channel: "WhatsApp com pergunta objetiva",
       lines: [
-        "Retome a conversa com uma pergunta objetiva sobre a necessidade.",
-        "Confirme orçamento, urgência e quem decide.",
-        "Evite proposta antes de entender o problema.",
+        "Retome com uma pergunta direta sobre o problema dele, não sobre o seu produto.",
+        "Confirme os três pontos que destravam a venda: necessidade, prazo e quem decide.",
+        "Traga uma prova rápida (print, número, depoimento) ligada ao que ele falou.",
+        "Só apresente preço depois que ele confirmar o problema.",
       ],
+      script:
+        "Oi [nome]! Fiquei pensando no que você comentou. Hoje isso está te atrapalhando mais no [ponto A] ou no [ponto B]?",
+      avoid: "Não insista com follow-up vazio do tipo 'e aí, pensou?'.",
     };
   if (score >= 21)
     return {
       title: "Nutrir com conteúdo",
+      window: "Um contato a cada 5 a 7 dias",
+      channel: "WhatsApp com material curto e útil",
       lines: [
-        "Envie material útil e de baixo compromisso.",
+        "Envie algo de valor sem cobrar resposta: um caso, uma dica prática, um resultado.",
         "Espace os contatos para não queimar o relacionamento.",
-        "Reavalie em alguns dias com a nova leitura.",
+        "Observe qualquer sinal de retorno — leitura, resposta, clique — e suba a intensidade.",
+        "Reavalie a leitura em alguns dias antes de investir tempo de vendedor.",
       ],
+      script:
+        "Oi [nome], separei um exemplo de um cliente do seu setor que resolveu esse mesmo problema. Te mando aqui, dá uma olhada quando puder.",
+      avoid: "Não gaste ligações e propostas com quem ainda não deu sinal claro.",
     };
   return {
     title: "Reativar ou despriorizar",
+    window: "Uma última tentativa nesta semana",
+    channel: "Mensagem curta de reativação",
     lines: [
-      "Tente uma última reativação com abordagem diferente.",
-      "Se não houver resposta, priorize contatos com mais sinais.",
+      "Faça uma última tentativa com abordagem diferente da anterior.",
+      "Use uma pergunta de saída, que é fácil de responder com sim ou não.",
+      "Se não houver resposta, tire da fila ativa e foque em contatos com sinais reais.",
+      "Deixe o contato salvo: se ele voltar a interagir, a inteligência reativa sozinha.",
     ],
+    script:
+      "Oi [nome], só pra eu não te incomodar à toa: faz sentido eu te procurar mais pra frente ou prefere que eu encerre por aqui?",
+    avoid: "Não mantenha follow-up eterno em contato sem nenhum sinal — custa tempo e queima a lista.",
   };
 }
 
