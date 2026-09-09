@@ -680,6 +680,11 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
     region: crm?.city || null, avg_response_seconds: avgResp, inbound_7d: inb7,
     distinct_days: distinctDays, silence_days: Math.round(silenceDays), stage,
     signature,
+    analysis_state: analysisState,
+    analysis_confidence: analysisConfidence,
+    messages_count: evidenceMessages,
+    signals_count: evidenceSignals,
+
   };
 
   const row = {
