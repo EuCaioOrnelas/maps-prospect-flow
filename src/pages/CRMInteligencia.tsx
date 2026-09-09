@@ -771,6 +771,7 @@ const AdvancedFiltersPopover = ({
 // ═══════════════ USERS TAB ═══════════════
 
 const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
+  const { getByPhone: getIntelByPhone } = useLeadIntelligence();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [sortBy, setSortBy] = useState("score_total");
