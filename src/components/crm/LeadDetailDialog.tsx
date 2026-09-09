@@ -66,7 +66,7 @@ import { openStorageUrl } from '@/lib/privateStorage';
 import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 import { LeadSalesBlock } from '@/components/crm/LeadSalesBlock';
 import { useAuth } from '@/contexts/AuthContext';
-import { SDRStatusBanner } from '@/components/sdr/SDRStatusBanner';
+
 
 
 interface LeadDeal {
@@ -1012,23 +1012,24 @@ export const LeadDetailDialog = ({
         {/* Tab Navigation */}
         <div className="flex border-b border-border shrink-0">
           {[
-            { id: 'info', label: 'Informações' },
-            { id: 'deals', label: `Vendas (${deals.length})` },
-            { id: 'files', label: 'Arquivos' },
-            { id: 'intelligence', label: 'Inteligência' },
-            { id: 'notes', label: 'Notas e histórico' },
+            { id: 'info', label: 'Informações', icon: User },
+            { id: 'deals', label: `Vendas (${deals.length})`, icon: DollarSign },
+            { id: 'files', label: 'Arquivos', icon: FolderOpen },
+            { id: 'intelligence', label: 'Inteligência', icon: Bot },
+            { id: 'notes', label: 'Notas e histórico', icon: FileText },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={cn(
-                "flex-1 py-2.5 text-sm font-medium transition-colors relative",
+                "flex-1 py-2.5 px-2 text-sm font-medium transition-colors relative flex items-center justify-center gap-1.5",
                 activeTab === tab.id 
                   ? "text-primary" 
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {tab.label}
+              <tab.icon className="w-4 h-4 shrink-0" />
+              <span className="truncate">{tab.label}</span>
               {activeTab === tab.id && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
               )}
