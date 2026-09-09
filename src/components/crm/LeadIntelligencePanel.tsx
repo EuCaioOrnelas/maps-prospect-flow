@@ -724,42 +724,91 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   return (
     <div className={cn("space-y-4", className)}>
       {/* ---------------------------------------------------------- header */}
-      <section className="rounded-xl border border-border/60 bg-card overflow-hidden">
-        <header className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50">
-          <Brain className="w-4 h-4 text-primary" />
-          <h3 className="text-[12px] font-semibold uppercase tracking-wider text-foreground">Inteligência Wiize</h3>
-          <span className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary">
-            <span className="w-1 h-1 rounded-full bg-primary" /> Beta
+      <section className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm">
+        <header className="flex items-center gap-2 px-4 py-2.5 bg-muted/25 border-b border-border/50">
+          <span className="w-6 h-6 rounded-lg bg-primary/12 flex items-center justify-center shrink-0">
+            <Brain className="w-3.5 h-3.5 text-primary" />
+          </span>
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-foreground flex-1">Inteligência Wiize</h3>
+          <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Beta
           </span>
         </header>
 
-        <div className="px-4 py-4">
+        <div className="px-4 pt-4 pb-3">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</p>
-          {state === "NO_DATA" || opportunity === null ? (
-            <>
-              <p className="mt-1 text-[20px] font-semibold text-foreground leading-tight">Dados insuficientes</p>
-              <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">
-                Este contato ainda não possui sinais comerciais suficientes para uma análise confiável.
-              </p>
-            </>
-          ) : (
-            <>
-              <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className="text-[38px] font-semibold text-foreground leading-none tabular-nums">{opportunity}</span>
-                <span className="text-[13px] text-muted-foreground">de 100</span>
-              </div>
-              <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${Math.max(2, opportunity)}%` }} />
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <Badge variant="outline" className="text-[10px] font-medium">{bandF(opportunity)}</Badge>
+          <div className="flex items-end justify-between gap-3 mt-1">
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className={cn(
+                  "text-[40px] font-semibold leading-none tabular-nums tracking-tight",
+                  notAnalyzed ? "text-muted-foreground/50" : "text-foreground",
+                )}
+              >
+                {notAnalyzed ? 0 : opportunity}
+              </span>
+              <span className="text-[13px] text-muted-foreground">de 100</span>
+            </div>
+            <span
+              className={cn(
+                "text-[12px] font-medium pb-1",
+                notAnalyzed ? "text-muted-foreground" : "text-foreground",
+              )}
+            >
+              {notAnalyzed ? "Não analisado" : bandF(opportunity!)}
+            </span>
+          </div>
+
+          <div className="mt-2.5 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div
+              className={cn(
+                "h-full rounded-full transition-[width] duration-700",
+                notAnalyzed ? "bg-muted-foreground/25" : "bg-primary",
+              )}
+              style={{ width: notAnalyzed ? "100%" : `${Math.max(2, opportunity!)}%` }}
+            />
+          </div>
+
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            {notAnalyzed ? (
+              <Badge variant="outline" className="text-[10px] font-medium text-muted-foreground">
+                Sem sinais suficientes para pontuar
+              </Badge>
+            ) : (
+              <>
                 {state === "PARTIAL" && <Badge variant="outline" className="text-[10px] font-medium">Análise parcial</Badge>}
-                {profile?.priority && <Badge variant="outline" className="text-[10px] font-medium">Prioridade {PRIORITY_LABELS[profile.priority] || profile.priority}</Badge>}
-              </div>
-            </>
-          )}
+                {profile?.priority && (
+                  <Badge variant="outline" className="text-[10px] font-medium">
+                    Prioridade {PRIORITY_LABELS[profile.priority] || profile.priority}
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-[10px] font-medium">Etapa: {stageLabel}</Badge>
+              </>
+            )}
+          </div>
         </div>
+
+        {/* resumo da análise */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/50 border-t border-border/50 bg-muted/15">
+          {[
+            { l: "Estado", v: notAnalyzed ? "Não analisado" : state === "PARTIAL" ? "Parcial" : "Completa" },
+            { l: "Confiança", v: `${confidence}%` },
+            { l: "Mensagens", v: String(analyzedMessages) },
+            { l: "Sinais", v: String(analyzedSignals) },
+          ].map((s, i) => (
+            <div key={i} className={cn("px-3 py-2", i > 1 && "border-t sm:border-t-0 border-border/50")}>
+              <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium truncate">{s.l}</p>
+              <p className="text-[12px] font-semibold text-foreground mt-0.5 tabular-nums truncate">{s.v}</p>
+            </div>
+          ))}
+        </div>
+        {profile?.computed_at && (
+          <p className="px-4 py-1.5 text-[10px] text-muted-foreground border-t border-border/50">
+            Última análise {ago(profile.computed_at)}
+          </p>
+        )}
       </section>
+
 
 
       {/* ------------------------------------------------------------ tabs */}
