@@ -385,6 +385,8 @@ export const LeadCard = memo(LeadCardComponent, (prevProps, nextProps) => {
     prevProps.lead.estimated_value === nextProps.lead.estimated_value &&
     prevProps.lead.last_response_at === nextProps.lead.last_response_at &&
     prevProps.lead.responsible_user_id === nextProps.lead.responsible_user_id &&
+    prevProps.lead.archived_at === nextProps.lead.archived_at &&
+    prevProps.lead.email === nextProps.lead.email &&
     JSON.stringify(prevProps.lead.tags) === JSON.stringify(nextProps.lead.tags) &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.isDragging === nextProps.isDragging &&
