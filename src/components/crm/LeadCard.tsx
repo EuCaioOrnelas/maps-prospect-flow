@@ -2,7 +2,7 @@ import { useState, memo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
-import { Phone, MessageCircle, Pencil, Check, X, Mail, Archive, DollarSign, Paperclip, ArchiveRestore } from 'lucide-react';
+import { Phone, MessageCircle, Pencil, Check, X, Mail, Archive, DollarSign, Paperclip, ArchiveRestore, Brain } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -229,7 +229,7 @@ const LeadCardComponent = ({
         ) : (
           <>
             <h4 
-              className="font-medium text-sm text-foreground min-w-0 flex-1 w-0 overflow-hidden text-ellipsis whitespace-nowrap" 
+              className="font-semibold text-[15px] leading-snug text-foreground min-w-0 flex-1 w-0 overflow-hidden text-ellipsis whitespace-nowrap" 
               title={displayName}
             >
               {displayName}
@@ -333,10 +333,12 @@ const LeadCardComponent = ({
         if (!s) return null;
         return (
           <div
-            className="mt-3 pt-2.5 relative cursor-pointer border-t border-border/60"
+            className="mt-3 relative cursor-pointer"
             onClick={(e) => { e.stopPropagation(); navigate(`/crm/inteligencia?phone=${encodeURIComponent(lead.phone)}`); }}
           >
+            <div className="wiize-hairline mb-2.5" />
             <div className="flex items-center gap-2">
+              <Brain className="w-3 h-3 text-primary shrink-0" />
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Inteligência</span>
               <span className="text-xs font-semibold tabular-nums text-primary">{s} de 100</span>
               <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
@@ -348,7 +350,9 @@ const LeadCardComponent = ({
       })()}
 
       {/* Ações rápidas */}
-      <div className="-mx-5 -mb-5 mt-3 px-3 py-2 border-t border-border/60 flex items-center gap-1 rounded-b-[18px]">
+      <div className="-mx-5 -mb-5 mt-3">
+      <div className="wiize-hairline" />
+      <div className="px-3 py-2 flex items-center gap-1 rounded-b-[18px]">
         {quickActions.map(({ key, label, icon: Icon, run, disabled }) => (
           <Tooltip key={key}>
             <TooltipTrigger asChild>
@@ -365,9 +369,10 @@ const LeadCardComponent = ({
                 <Icon className="w-3.5 h-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{label}</TooltipContent>
+            <TooltipContent side="top" sideOffset={6}>{label}</TooltipContent>
           </Tooltip>
         ))}
+      </div>
       </div>
     </div>
   );

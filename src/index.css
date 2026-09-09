@@ -1198,7 +1198,7 @@ input::placeholder, textarea::placeholder {
   background-image: var(--wa-chat-bg-pattern, none);
   background-repeat: repeat;
   background-position: center center;
-  background-size: 240px auto;
+  background-size: 380px 698px;
   filter: invert(1) brightness(0.18) sepia(0.5) hue-rotate(80deg) saturate(1.4);
   opacity: 0.5;
   pointer-events: none;
@@ -1221,13 +1221,13 @@ input::placeholder, textarea::placeholder {
   background-image: var(--wa-chat-bg-pattern, none);
   background-repeat: repeat;
   background-position: center center;
-  background-size: 240px auto;
+  background-size: 380px 698px;
 }
 .landing-light .wa-chat-bg::before,
 .landing-light .wa-chat-bg::after { display: none; }
 @media (max-width: 640px) {
-  .landing-light .wa-chat-bg { background-size: 180px auto; }
-  .wa-chat-bg::before { background-size: 180px auto; }
+  .landing-light .wa-chat-bg { background-size: 190px 349px; }
+  .wa-chat-bg::before { background-size: 190px 349px; }
 }
 
 
@@ -2013,4 +2013,18 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
   .floating-cards {
     animation: none !important;
   }
+}
+
+
+/* ─── Hairline divider (tapered: thicker in the center, fading at the edges) ─── */
+.wiize-hairline {
+  height: 1px;
+  width: 100%;
+  border: 0;
+  background-image: linear-gradient(
+    to right,
+    hsl(var(--border) / 0) 0%,
+    hsl(var(--border) / 0.9) 50%,
+    hsl(var(--border) / 0) 100%
+  );
 }

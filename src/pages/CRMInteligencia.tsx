@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { toIntel100, toIntelDimension, phoneKey8 } from "@/lib/intelligence";
 import { Link, useSearchParams } from "react-router-dom";
 import { 
-  BarChart3, Users, Trophy, Settings, Loader2, 
+  BarChart3, Users, Trophy, Settings, Loader2, Brain, 
   Smartphone, Search, TrendingUp, TrendingDown, Minus,
   ChevronLeft, ChevronRight, Target, AlertTriangle, Zap,
   ChevronsLeft, ChevronsRight, Info, HelpCircle, Filter, X, Calendar,
@@ -24,6 +24,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
+import { IntelligenceOverview } from "@/components/crm/IntelligenceOverview";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -1701,11 +1702,11 @@ const CRMInteligencia = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Trophy className="w-6 h-6 text-primary" />
+                <Brain className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">Inteligência</h1>
+                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">Inteligência dos Leads</h1>
                   <button onClick={() => setScoreInfoOpen(true)} className="text-muted-foreground hover:text-foreground transition-colors">
                     <HelpCircle className="h-5 w-5" />
                   </button>
@@ -1729,8 +1730,8 @@ const CRMInteligencia = () => {
               <div className="-mx-4 px-4 overflow-x-auto">
                 <TabsList className="bg-muted/50 p-1 inline-flex w-max max-w-full">
                   <TabsTrigger value="dashboard" className="gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    Dashboard
+                    <Brain className="h-4 w-4" />
+                    Visão geral
                   </TabsTrigger>
                   <TabsTrigger value="users" className="gap-2">
                     <Users className="h-4 w-4" />
@@ -1742,12 +1743,14 @@ const CRMInteligencia = () => {
                   </TabsTrigger>
                   <TabsTrigger value="rules" className="gap-2 hidden lg:inline-flex">
                     <Settings className="h-4 w-4" />
-                    Regras
+                    Regras da Inteligência
                   </TabsTrigger>
                 </TabsList>
               </div>
 
-              <TabsContent value="dashboard">
+              <TabsContent value="dashboard" className="space-y-6">
+                <IntelligenceOverview leads={leads as any} onSelectLead={(l) => setAutoOpenedLead(l as any)} />
+                <div className="wiize-hairline" />
                 <ScoreDashboard leads={leads} />
               </TabsContent>
               <TabsContent value="users">
