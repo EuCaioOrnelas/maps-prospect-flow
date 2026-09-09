@@ -258,27 +258,33 @@ const LeadCardComponent = ({
       {/* Linha de separação */}
       <div className="wiize-hairline mb-2.5" />
 
-      {/* Inteligência — resultado 0-100 do motor central (mesma fonte da aba interna) */}
+      {/* Inteligência — resultado 0-100 do motor central (mesma fonte da aba interna).
+          Sem análise o valor é 0 e neutro: ausência de dados, não baixa oportunidade. */}
       {(() => {
-        const s = intel ? Math.max(0, Math.min(100, Math.round(intel.opportunity_score))) : null;
-        if (s === null) {
-          return (
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</span>
-              <span className="text-xs text-muted-foreground">Sem análise</span>
-            </div>
-          );
-        }
+        const analyzed = !!intel && (intel as any)?.features?.analysis_state !== "NO_DATA";
+        const s = analyzed ? Math.max(0, Math.min(100, Math.round(intel!.opportunity_score))) : 0;
         return (
           <div className="flex items-center gap-2">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</span>
-            <span className="text-xs font-semibold tabular-nums text-primary">{s} de 100</span>
-            <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
-              <div className="h-full rounded-full transition-[width] duration-700 bg-primary" style={{ width: `${s}%` }} />
-            </div>
+            <span
+              className={cn(
+                "text-xs font-semibold tabular-nums",
+                analyzed ? "text-primary" : "text-muted-foreground/70",
+              )}
+            >
+              {s} de 100
+            </span>
+            {analyzed ? (
+              <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
+                <div className="h-full rounded-full transition-[width] duration-700 bg-primary" style={{ width: `${s}%` }} />
+              </div>
+            ) : (
+              <span className="text-[10px] text-muted-foreground/70 ml-0.5">Não analisado</span>
+            )}
           </div>
         );
       })()}
+
 
 
 
