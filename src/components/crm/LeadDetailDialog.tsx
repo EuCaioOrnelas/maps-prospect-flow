@@ -1078,40 +1078,18 @@ export const LeadDetailDialog = ({
 
           <Popover open={isWhatsAppStatusOpen} onOpenChange={setIsWhatsAppStatusOpen}>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 text-sm min-w-[160px] justify-between gap-2">
-                <span className="truncate">{WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}</span>
+              <Button variant="outline" size="sm" className="h-9 text-sm min-w-[140px] justify-between gap-2">
+                <span className="truncate">Tags</span>
                 {localTags.length > 0 && (
-                  <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium">+{localTags.length}</span>
+                  <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium">{localTags.length}</span>
                 )}
                 <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-72 p-0" align="start" sideOffset={4}>
               <div className="max-h-[400px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-                {/* Status options */}
-                <div className="p-1">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-1 block">Tags padrão</span>
-                  {(Object.keys(WHATSAPP_STATUS_LABELS) as WhatsAppStatus[]).map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      className={cn(
-                        'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted',
-                        lead.whatsapp_status === status && 'bg-primary/10 text-primary font-medium'
-                      )}
-                      onClick={() => {
-                        void handleWhatsAppStatusChange(status);
-                        setIsWhatsAppStatusOpen(false);
-                      }}
-                    >
-                      {lead.whatsapp_status === status && <Check className="w-3.5 h-3.5 shrink-0" />}
-                      <span className={cn(lead.whatsapp_status !== status && 'ml-5.5')}>{WHATSAPP_STATUS_LABELS[status]}</span>
-                    </button>
-                  ))}
-                </div>
-
                 {/* Custom Tags Section */}
-                <div className="border-t border-border">
+                <div>
                   <div className="p-1">
                     <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-1 block">Tags personalizadas</span>
                     
