@@ -627,11 +627,11 @@ Deno.serve(async (req) => {
       let phone = conn.display_phone_number;
       let profileName = conn.profile_name;
       let profilePic = conn.profile_pic_url;
-      try {
-        const st = await evo(`/instance/connectionState/${name}`, { method: "GET" });
-        state = normalizeState(st);
-      } catch (e) {
-        if ((e as any).status === 404) state = "close";
+      {
+        const probe = await probeState(name);
+        // Falha não confirmada (rede/erro do servidor) mantém o estado atual:
+        // a linha só cai quando o próprio WhatsApp encerra a sessão.
+        if (!probe.transient) state = probe.state === "missing" ? "close" : probe.state;
       }
       if (state === "open") {
         try {
