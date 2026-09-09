@@ -1539,8 +1539,10 @@ export const LeadDetailDialog = ({
 
             {/* History Tab */}
             {activeTab === 'notes' && (
-              <div>
-                <h4 className="text-sm font-semibold mb-3">Histórico</h4>
+              <div className="rounded-xl border border-border/60 bg-card p-4 mt-6">
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-primary" /> Histórico
+                </h4>
                 <div className="space-y-1">
                 {activities
                   .slice((historyPage - 1) * HISTORY_PER_PAGE, historyPage * HISTORY_PER_PAGE)
