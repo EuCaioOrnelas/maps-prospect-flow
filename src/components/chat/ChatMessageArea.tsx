@@ -1076,7 +1076,7 @@ export function ChatMessageArea({
                                   </div>
                                 )}
                                 {replyMsg && <ReplyQuote replyMsg={replyMsg} />}
-                                {msg.message_type === "audio" && (
+                                 {msg.message_type === "audio" && (
                                   <div className="p-[3px]">
                                     <WhatsAppAudio
                                       src={msg.media_url || ""}
@@ -1097,14 +1097,27 @@ export function ChatMessageArea({
                                   <div className="p-[3px]"><MediaPreview msg={msg} onOpenImage={openImage} onQuickForward={quickForward} /></div>
                                 )}
                                  {msg.content && msg.message_type === "text" && (
-                                   <div className="px-[9px] pt-[3px] pb-0 pr-[36px]">
-                                     <span className="text-[14.2px] wa-text-primary leading-[17px] whitespace-pre-wrap break-words">
-                                       {msg.content}
+                                   <div className="px-[9px] pt-[4px] pb-[4px] pr-[10px] text-[14.2px] wa-text-primary leading-[18px] whitespace-pre-wrap break-words">
+                                     <span>{msg.content}</span>
+                                     <span className="inline-flex items-center gap-[3px] ml-[7px] align-[-2px] whitespace-nowrap">
+                                       {isOutbound && (msg.metadata as any)?.source === "flow" && (
+                                         <Workflow
+                                           size={11}
+                                           strokeWidth={2}
+                                           className="text-foreground/30"
+                                           aria-label={(msg.metadata as any)?.flow_name ? `Fluxo: ${(msg.metadata as any).flow_name}` : "Enviado pelo fluxo"}
+                                         />
+                                       )}
+                                       <span className="text-[11px] leading-none wa-text-timestamp select-none">
+                                         {format(parseISO(msg.created_at), "HH:mm")}
+                                       </span>
+                                       {isOutbound && <MessageStatus status={msg.status} />}
                                      </span>
                                    </div>
                                  )}
                                    </>
                                  )}
+                                 {msg.message_type !== "text" && (
                                  <div className="flex items-center justify-end gap-[4px] px-[7px] pb-[2px] -mt-[3px]">
                                   {isOutbound && (msg.metadata as any)?.source === "flow" && (
                                     <Workflow
@@ -1119,6 +1132,7 @@ export function ChatMessageArea({
                                   </span>
                                   {isOutbound && <MessageStatus status={msg.status} />}
                                 </div>
+                                 )}
                               </div>
                             </div>
                           </div>
