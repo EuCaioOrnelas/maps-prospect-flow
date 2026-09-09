@@ -286,9 +286,11 @@ export const LeadDetailDialog = ({
   const navigate = useNavigate();
   const { user, accountOwnerId } = useAuth();
   const { getScoreForPhone } = useLeadScores();
-  const [activeTab, setActiveTab] = useState<'info' | 'intelligence' | 'notes' | 'history' | 'deals' | 'files'>(initialTab || 'info');
+  const [activeTab, setActiveTab] = useState<'info' | 'intelligence' | 'notes' | 'history' | 'deals' | 'files'>(
+    (initialTab === 'history' ? 'notes' : initialTab) || 'info'
+  );
   useEffect(() => {
-    if (open && initialTab) setActiveTab(initialTab);
+    if (open && initialTab) setActiveTab(initialTab === 'history' ? 'notes' : initialTab);
   }, [open, initialTab]);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingHeaderName, setIsEditingHeaderName] = useState(false);
