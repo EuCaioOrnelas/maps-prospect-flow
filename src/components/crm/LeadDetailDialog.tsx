@@ -66,7 +66,7 @@ import { openStorageUrl } from '@/lib/privateStorage';
 import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 import { LeadSalesBlock } from '@/components/crm/LeadSalesBlock';
 import { useAuth } from '@/contexts/AuthContext';
-import { SDRStatusBanner } from '@/components/sdr/SDRStatusBanner';
+
 
 
 interface LeadDeal {
@@ -1005,75 +1005,31 @@ export const LeadDetailDialog = ({
           </div>
         </div>
 
-        {/* Status do SDR Inteligente neste contato */}
-        <SDRStatusBanner phone={lead.phone} accountOwnerId={accountOwnerId} />
 
 
-        {/* Quick Actions Bar */}
-        <div className="flex items-center gap-2 px-4 sm:px-6 py-3 border-b border-border bg-muted/30 shrink-0">
-          <div className="relative flex-1">
-            <Button 
-              size="sm" 
-              className="w-full"
-              onClick={() => setShowWhatsAppOptions(!showWhatsAppOptions)}
-            >
-              <MessageCircle className="w-4 h-4 mr-1.5" />
-              Conversar
-            </Button>
-            {showWhatsAppOptions && (
-              <div className="absolute top-full left-0 right-0 mt-1 rounded-2xl border border-border bg-popover/95 p-1 shadow-xl backdrop-blur-sm z-50">
-                {hasWiizeChatConnection && (
-                  <>
-                    <button
-                      className="w-full rounded-xl px-3 py-2.5 text-sm text-left transition-colors flex items-center gap-2 text-foreground hover:bg-primary/10"
-                      onClick={openWiizeChat}
-                    >
-                      <MessageCircle className="w-4 h-4 text-primary" />
-                      Chamar no Chat Wiize
-                    </button>
-                    <div className="my-1 h-px bg-border/60" />
-                  </>
-                )}
-                <button
-                  className="w-full rounded-xl px-3 py-2.5 text-sm text-left transition-colors flex items-center gap-2 text-foreground hover:bg-muted"
-                  onClick={() => openWhatsApp('web')}
-                >
-                  <Globe className="w-4 h-4" />
-                  WhatsApp Web
-                </button>
-                <button
-                  className="w-full rounded-xl px-3 py-2.5 text-sm text-left transition-colors flex items-center gap-2 text-foreground hover:bg-muted"
-                  onClick={() => openWhatsApp('app')}
-                >
-                  <Phone className="w-4 h-4" />
-                  WhatsApp App
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
 
 
         {/* Tab Navigation */}
         <div className="flex border-b border-border shrink-0">
           {[
-            { id: 'info', label: 'Informações' },
-            { id: 'deals', label: `Vendas (${deals.length})` },
-            { id: 'files', label: 'Arquivos' },
-            { id: 'intelligence', label: 'Inteligência' },
-            { id: 'notes', label: 'Notas e histórico' },
+            { id: 'info', label: 'Informações', icon: User },
+            { id: 'deals', label: `Vendas (${deals.length})`, icon: DollarSign },
+            { id: 'files', label: 'Arquivos', icon: FolderOpen },
+            { id: 'intelligence', label: 'Inteligência', icon: Bot },
+            { id: 'notes', label: 'Notas e histórico', icon: FileText },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={cn(
-                "flex-1 py-2.5 text-sm font-medium transition-colors relative",
+                "flex-1 py-2.5 px-2 text-sm font-medium transition-colors relative flex items-center justify-center gap-1.5",
                 activeTab === tab.id 
                   ? "text-primary" 
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {tab.label}
+              <tab.icon className="w-4 h-4 shrink-0" />
+              <span className="truncate">{tab.label}</span>
               {activeTab === tab.id && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
               )}

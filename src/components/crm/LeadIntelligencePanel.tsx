@@ -84,46 +84,77 @@ function useScoreBreakdown(leadId?: string) {
 function actionAdvice(score: number) {
   if (score >= 81)
     return {
-      title: "Fechar agora",
+      title: "Fechar agora — prioridade máxima",
+      window: "Aja hoje, nas próximas 2 horas",
+      channel: "Ligação e, se não atender, áudio no WhatsApp",
       lines: [
-        "Ligue hoje: o contato está no melhor momento de decisão.",
-        "Envie proposta com prazo definido e condição clara.",
-        "Confirme a próxima etapa na mesma conversa.",
+        "Ligue agora: o contato está no melhor momento de decisão e a chance cai a cada dia parado.",
+        "Leve a proposta pronta, com valor, prazo de entrega e forma de pagamento definidos.",
+        "Ofereça uma condição com data de validade curta para criar decisão.",
+        "Antes de encerrar, marque na agenda a próxima etapa (assinatura, reunião ou pagamento).",
       ],
+      script:
+        "Oi [nome], tudo bem? Preparei a proposta do jeito que conversamos. Posso te explicar em 5 minutos agora e já deixamos fechado hoje?",
+      avoid: "Não mande só texto e espere. Sem chamada, este contato esfria rápido.",
     };
   if (score >= 61)
     return {
       title: "Avançar para proposta",
+      window: "Nas próximas 24 horas",
+      channel: "Chamada curta de diagnóstico + resumo por WhatsApp",
       lines: [
-        "Faça uma chamada curta de diagnóstico e alinhe valores.",
-        "Mostre um caso parecido com o nicho do contato.",
-        "Combine data para retomar antes de esfriar.",
+        "Faça uma chamada de 10 minutos para confirmar necessidade, prazo e orçamento.",
+        "Mostre um caso real parecido com o nicho dele, com resultado em número.",
+        "Envie a proposta ainda no mesmo dia, enquanto o interesse está alto.",
+        "Combine data e hora exatas para retomar — não deixe em aberto.",
       ],
+      script:
+        "Oi [nome], pelo que você me contou dá pra resolver isso rápido. Tem 10 minutinhos hoje pra eu te mostrar como ficaria e já te passar valores?",
+      avoid: "Evite mandar proposta genérica antes de confirmar o que ele precisa.",
     };
   if (score >= 41)
     return {
       title: "Aquecer e qualificar",
+      window: "Nos próximos 2 dias",
+      channel: "WhatsApp com pergunta objetiva",
       lines: [
-        "Retome a conversa com uma pergunta objetiva sobre a necessidade.",
-        "Confirme orçamento, urgência e quem decide.",
-        "Evite proposta antes de entender o problema.",
+        "Retome com uma pergunta direta sobre o problema dele, não sobre o seu produto.",
+        "Confirme os três pontos que destravam a venda: necessidade, prazo e quem decide.",
+        "Traga uma prova rápida (print, número, depoimento) ligada ao que ele falou.",
+        "Só apresente preço depois que ele confirmar o problema.",
       ],
+      script:
+        "Oi [nome]! Fiquei pensando no que você comentou. Hoje isso está te atrapalhando mais no [ponto A] ou no [ponto B]?",
+      avoid: "Não insista com follow-up vazio do tipo 'e aí, pensou?'.",
     };
   if (score >= 21)
     return {
       title: "Nutrir com conteúdo",
+      window: "Um contato a cada 5 a 7 dias",
+      channel: "WhatsApp com material curto e útil",
       lines: [
-        "Envie material útil e de baixo compromisso.",
+        "Envie algo de valor sem cobrar resposta: um caso, uma dica prática, um resultado.",
         "Espace os contatos para não queimar o relacionamento.",
-        "Reavalie em alguns dias com a nova leitura.",
+        "Observe qualquer sinal de retorno — leitura, resposta, clique — e suba a intensidade.",
+        "Reavalie a leitura em alguns dias antes de investir tempo de vendedor.",
       ],
+      script:
+        "Oi [nome], separei um exemplo de um cliente do seu setor que resolveu esse mesmo problema. Te mando aqui, dá uma olhada quando puder.",
+      avoid: "Não gaste ligações e propostas com quem ainda não deu sinal claro.",
     };
   return {
     title: "Reativar ou despriorizar",
+    window: "Uma última tentativa nesta semana",
+    channel: "Mensagem curta de reativação",
     lines: [
-      "Tente uma última reativação com abordagem diferente.",
-      "Se não houver resposta, priorize contatos com mais sinais.",
+      "Faça uma última tentativa com abordagem diferente da anterior.",
+      "Use uma pergunta de saída, que é fácil de responder com sim ou não.",
+      "Se não houver resposta, tire da fila ativa e foque em contatos com sinais reais.",
+      "Deixe o contato salvo: se ele voltar a interagir, a inteligência reativa sozinha.",
     ],
+    script:
+      "Oi [nome], só pra eu não te incomodar à toa: faz sentido eu te procurar mais pra frente ou prefere que eu encerre por aqui?",
+    avoid: "Não mantenha follow-up eterno em contato sem nenhum sinal — custa tempo e queima a lista.",
   };
 }
 
@@ -170,8 +201,21 @@ function ActionIntelligence({ score }: { score: number }) {
           Inteligência de ação
         </p>
       </div>
-      <p className="text-sm font-semibold text-foreground mb-2">{advice.title}</p>
-      <ul className="space-y-1.5">
+      <p className="text-sm font-semibold text-foreground">{advice.title}</p>
+
+      <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
+        <div className="rounded-lg bg-card border border-border/60 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Quando agir</p>
+          <p className="text-sm text-foreground">{advice.window}</p>
+        </div>
+        <div className="rounded-lg bg-card border border-border/60 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Melhor canal</p>
+          <p className="text-sm text-foreground">{advice.channel}</p>
+        </div>
+      </div>
+
+      <p className="mt-3 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Passo a passo</p>
+      <ul className="mt-1.5 space-y-1.5">
         {advice.lines.map((l, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
             <Sparkles className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
@@ -179,11 +223,21 @@ function ActionIntelligence({ score }: { score: number }) {
           </li>
         ))}
       </ul>
+
+      <div className="mt-3 rounded-lg bg-card border border-border/60 px-3 py-2">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Mensagem sugerida</p>
+        <p className="text-sm text-foreground leading-relaxed">{advice.script}</p>
+      </div>
+
+      <div className="mt-2 flex items-start gap-2 text-sm text-muted-foreground">
+        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+        <span>{advice.avoid}</span>
+      </div>
     </div>
   );
 }
 
-function Dimension({ label, value, suffix = "/100" }: { label: string; value: number; suffix?: string }) {
+function Dimension({ label, value, suffix = "/100", help }: { label: string; value: number; suffix?: string; help?: string }) {
   return (
     <div className="rounded-lg border border-border/60 bg-card px-3 py-2.5">
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
@@ -197,6 +251,7 @@ function Dimension({ label, value, suffix = "/100" }: { label: string; value: nu
           style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
         />
       </div>
+      {help && <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">{help}</p>}
     </div>
   );
 }
@@ -313,14 +368,24 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
       </div>
 
       {/* Dimensões */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        <Dimension label="Fit" value={intel.fit_score} />
-        <Dimension label="Intenção" value={intel.intent_score} />
-        <Dimension label="Engajamento" value={intel.engagement_score} />
-        <Dimension label="Qualidade" value={intel.quality_score} />
-        <Dimension label="Risco" value={intel.risk_score} />
-        <Dimension label="Semelhança" value={intel.pattern_match_score} suffix="%" />
+      <div>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
+          Análise da inteligência
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <Dimension label="Fit" value={intel.fit_score} help="O quanto o perfil e o nicho do contato combinam com o que você vende." />
+          <Dimension label="Intenção de compra" value={intel.intent_score} help="Sinais de que ele quer comprar: pergunta preço, prazo, condições." />
+          <Dimension label="Engajamento" value={intel.engagement_score} help="Frequência e rapidez das respostas dele nas conversas." />
+          <Dimension label="Qualidade" value={intel.quality_score} help="Quanto de informação confiável existe sobre o contato e a empresa." />
+          <Dimension label="Risco" value={intel.risk_score} help="Chance de esfriar ou sumir: silêncio, recusas, respostas evasivas." />
+          <Dimension label="Semelhança" value={intel.pattern_match_score} suffix="%" help="Parecido com contatos que já viraram clientes na sua conta." />
+        </div>
+        <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
+          A Oportunidade de 0 a 100 é o resumo dessas dimensões. Ela sobe com conversa, intenção e
+          aderência ao nicho, e cai com silêncio e sinais de risco.
+        </p>
       </div>
+
 
       {/* Comportamento */}
       {intel.behaviors?.length > 0 && (

@@ -259,7 +259,7 @@ const LeadCardComponent = ({
 
       {/* Valor potencial — logo abaixo do número */}
       {!hideValue && Number(lead.estimated_value) > 0 && (
-        <div className="mb-2">
+        <div className="mb-3">
           <LeadPotentialValueCompact value={Number(lead.estimated_value)} />
         </div>
       )}
