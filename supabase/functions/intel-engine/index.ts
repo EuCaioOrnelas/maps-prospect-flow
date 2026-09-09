@@ -222,7 +222,7 @@ async function aiSignals(texts: { id: string; text: string }[]): Promise<Record<
 // ---------------------------------------------------------------------------
 // COMPUTE PROFILE
 // ---------------------------------------------------------------------------
-async function computeProfile(sb: any, owner: string, phone: string) {
+async function computeProfile(sb: any, owner: string, phone: string, opts: { force?: boolean } = {}) {
   const cfg = await loadConfig(sb, owner);
   const now = new Date();
   const norm = digits(phone);
@@ -237,6 +237,23 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     .limit(20);
   const rl = (rlAll || []).find((r: any) => suffix8(r.phone_e164) === sfx);
   if (!rl) return { skipped: true, reason: "revenue lead not found", phone };
+
+  // Concorrencia: varias mensagens quase simultaneas disparam recalculos em paralelo.
+  // Se o perfil acabou de ser calculado e nada novo entrou, nao recalcula (evita race e custo).
+  const { data: prevProfile } = await sb
+    .from("intel_lead_profiles")
+    .select("*")
+    .eq("owner_user_id", owner)
+    .eq("phone_e164", rl.phone_e164)
+    .maybeSingle();
+  if (!opts.force && prevProfile?.computed_at) {
+    const ageMs = now.getTime() - new Date(prevProfile.computed_at).getTime();
+    const lastAct = rl.last_activity_at ? new Date(rl.last_activity_at).getTime() : 0;
+    const staleActivity = lastAct <= new Date(prevProfile.computed_at).getTime();
+    if (ageMs < 20000 && staleActivity) {
+      return { success: true, debounced: true, profile: prevProfile };
+    }
+  }
 
   // --- empresa prospectada (CRM) ---
   const { data: crmAll } = await sb
@@ -640,13 +657,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     ? `${factors.slice(0, 3).map((f) => f.label).join("; ")}${riskFactors.length ? ` | risco: ${riskFactors[0].label}` : ""}`
     : null;
 
-  // --- diff / auditoria ---
-  const { data: prevProfile } = await sb
-    .from("intel_lead_profiles")
-    .select("*")
-    .eq("owner_user_id", owner)
-    .eq("phone_e164", rl.phone_e164)
-    .maybeSingle();
+  // --- diff / auditoria (prevProfile ja carregado no inicio) ---
 
   const features = {
     engagement, intent, quality, fit, momentum: momentumValue, risk, opportunity,
@@ -764,7 +775,16 @@ async function recordOutcome(sb: any, body: any) {
     predicted_pattern_match: prof?.pattern_match_score ?? null,
     occurred_at: body.occurred_at || new Date().toISOString(),
   };
-  await sb.from("intel_outcomes").upsert(row, { onConflict: "owner_user_id,outcome,crm_lead_id,deal_id", ignoreDuplicates: false });
+  // NULL != NULL em indice unico: checa antes para nao duplicar outcomes sem deal_id
+  let q = sb.from("intel_outcomes").select("id").eq("owner_user_id", owner).eq("outcome", outcome);
+  q = row.deal_id ? q.eq("deal_id", row.deal_id) : q.is("deal_id", null);
+  q = row.crm_lead_id ? q.eq("crm_lead_id", row.crm_lead_id) : q.is("crm_lead_id", null);
+  const { data: existing } = await q.maybeSingle();
+  if (existing?.id) {
+    await sb.from("intel_outcomes").update(row).eq("id", existing.id);
+  } else {
+    await sb.from("intel_outcomes").insert(row);
+  }
   return { success: true, outcome: row };
 }
 
@@ -881,7 +901,9 @@ async function backfillOutcomes(sb: any, owner: string) {
 async function getContext(sb: any, owner: string, limit = 10, phone?: string) {
   if (phone) {
     const sfx = suffix8(phone);
-    const { data: all } = await sb.from("intel_lead_profiles").select("*").eq("owner_user_id", owner).limit(3000);
+    const { data: all } = await sb
+      .from("intel_lead_profiles").select("*").eq("owner_user_id", owner)
+      .ilike("phone_e164", `%${sfx}`).limit(20);
     const prof = (all || []).find((p: any) => suffix8(p.phone_e164) === sfx) || null;
     if (!prof) return { profile: null };
     const { data: audit } = await sb
@@ -928,7 +950,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "compute_profile":
-        return json(await computeProfile(sb, owner, body.phone_e164));
+        return json(await computeProfile(sb, owner, body.phone_e164, { force: !!body.force }));
       case "record_outcome":
         return json(await recordOutcome(sb, { ...body, owner_user_id: owner }));
       case "recompute_patterns":
@@ -945,7 +967,7 @@ Deno.serve(async (req) => {
           .limit(body.limit || 200);
         let done = 0;
         for (const r of rls || []) {
-          try { await computeProfile(sb, owner, r.phone_e164); done++; } catch (_e) { /* segue */ }
+          try { await computeProfile(sb, owner, r.phone_e164, { force: true }); done++; } catch (_e) { /* segue */ }
         }
         return json({ success: true, processed: done });
       }
@@ -969,7 +991,7 @@ Deno.serve(async (req) => {
         let profiles = 0;
         for (const [o, phones] of byOwner) {
           for (const ph of phones) {
-            try { await computeProfile(sb, o, ph); profiles++; } catch (_e) { /* segue */ }
+            try { await computeProfile(sb, o, ph, { force: true }); profiles++; } catch (_e) { /* segue */ }
           }
           try { await recomputePatterns(sb, o); } catch (_e) { /* segue */ }
         }
