@@ -657,14 +657,15 @@ serve(async (req) => {
         );
       }
 
-      // META-ONLY: ignora qualquer fonte que não seja Meta Cloud API oficial.
-      // Mantém compatibilidade quando o caller é o próprio sweep interno (source === 'sweep').
-      if (source && source !== "meta" && source !== "sweep") {
+      // Fontes aceitas: Meta Cloud API, Número de Atendimento (Evolution) e sweep interno.
+      const ALLOWED_SOURCES = ["meta", "evolution", "sweep"];
+      if (source && !ALLOWED_SOURCES.includes(source)) {
         return new Response(
-          JSON.stringify({ success: false, skipped: true, reason: `Source '${source}' is not Meta Cloud API (Meta-only mode)` }),
+          JSON.stringify({ success: false, skipped: true, reason: `Source '${source}' not supported` }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
 
       const normalizedPhone = normalizeRevenuePhone(phone_e164);
       if (!normalizedPhone) {
