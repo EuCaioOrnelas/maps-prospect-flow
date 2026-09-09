@@ -458,7 +458,8 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
 
   // ---------------- DIMENSOES ----------------
   // ENGAGEMENT: reutiliza integralmente o score do motor atual (0-1000 -> 0-100)
-  const engagement = clamp(Number(rl.score_total || 0) / 10);
+  // Sem nenhuma interacao registrada nao existe engajamento para reportar.
+  const engagement = hasInteraction ? clamp(Number(rl.score_total || 0) / 10) : 0;
 
   // INTENT: soma ponderada com decay por recencia + retornos decrescentes por tipo
   // (repetir 5x "quanto custa" nao vale 5x o sinal de preco)
@@ -603,6 +604,9 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   opportunity += compoundBonus;
   if (present.has("NEGATIVE_INTENT")) opportunity *= 0.35;
   opportunity = clamp(opportunity);
+  // REGRA DE INTEGRIDADE: sem conversa e sem sinais nao existe oportunidade calculada.
+  // 0 aqui significa "nao analisado", nunca "baixa oportunidade".
+  if (analysisState === "NO_DATA") opportunity = 0;
 
   // BEHAVIOR
   const behaviors: string[] = [];
@@ -629,8 +633,11 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   else if (present.has("PROBLEM_DETECTED") || present.has("NEED_DETECTED")) stage = "QUALIFICATION";
   if (present.has("NEGATIVE_INTENT")) stage = "DISQUALIFIED";
   if (intent >= 75 && (present.has("INTENT_BUY") || present.has("INTENT_PAYMENT"))) stage = "READY_TO_BUY";
+  // Sem qualquer interacao a etapa vem do CRM/prospeccao, nunca da conversa.
+  if (analysisState === "NO_DATA") stage = crm ? "PROSPECTING" : "NEW";
 
   // NEXT BEST ACTION
+  // Nunca pode ficar "nao identificado": sempre existe uma proxima acao comercial.
   let nba = "QUALIFY";
   if (analysisState === "NO_DATA") nba = "FIRST_CONTACT"; // sem conversa e sem sinais: primeiro contato
   else if (stage === "DISQUALIFIED") nba = "DO_NOT_PRIORITIZE";
@@ -648,7 +655,9 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   // PRIORITY
   const th = cfg.thresholds || DEFAULT_CONFIG.thresholds;
   const urgencyBoost = (awaitingUsMin > 30 ? 8 : 0) + (momentumState === "STRONGLY_RISING" ? 5 : 0);
-  const prioScore = opportunity + urgencyBoost;
+  // Sem analise a prioridade nao pode competir com leads realmente avaliados,
+  // mas um fit alto ainda merece ficar acima do fundo da fila.
+  const prioScore = analysisState === "NO_DATA" ? Math.min(45, fit * 0.5) : opportunity + urgencyBoost;
   const priority =
     prioScore >= (th.priority?.p0 ?? 85) ? "P0" :
     prioScore >= (th.priority?.p1 ?? 72) ? "P1" :
@@ -669,6 +678,11 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   push(momentumState.includes("RISING"), `interesse em alta (${momentumValue > 0 ? "+" : ""}${momentumValue})`, 10);
   push(patternMatch >= (th.pattern_match_high ?? 70), `comportamento semelhante a clientes convertidos (${patternMatch}%)`, Math.round(patternMatch * ow.pattern));
   push(compound.length > 0, `combinacao de sinais: ${compound.join(", ")}`, Math.round(compoundBonus));
+  if (analysisState === "NO_DATA") {
+    factors.length = 0;
+    factors.push({ label: "lead ainda nao analisado: nenhuma conversa ou sinal registrado", impact: 0 });
+    if (crm) factors.push({ label: `dados de prospeccao disponiveis (fit ${fit}/100), usados apenas para a abordagem`, impact: 0 });
+  }
 
   const isHot =
     opportunity >= (th.hot_opportunity ?? 70) &&
