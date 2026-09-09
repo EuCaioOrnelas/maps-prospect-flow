@@ -32,6 +32,11 @@ export interface RadarLead {
   potential: number;
   status: string;
   scoreGrowth7d: number;
+  /** Inteligência Central (fonte única de verdade) */
+  opportunityScore?: number;
+  nextAction?: string;
+  priority?: string;
+  isHot?: boolean;
 }
 
 function getStatusFromScore(score: number): string {
@@ -290,6 +295,17 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
         revenueLeadsMap.set(key, rl);
       });
 
+      // Inteligência Central: fonte única de verdade para oportunidade/prioridade
+      const { data: intelProfiles } = await supabase
+        .from("intel_lead_profiles")
+        .select("phone_e164, crm_lead_id, opportunity_score, next_best_action, priority, is_hot")
+        .eq("owner_user_id", accountOwnerId)
+        .limit(1000);
+      const intelMap = new Map<string, any>();
+      (intelProfiles || []).forEach((p: any) => {
+        intelMap.set(String(p.phone_e164 || "").replace(/\D/g, "").slice(-8), p);
+      });
+
       const allRadarLeads: RadarLead[] = (crmLeadsForRadar || [])
         .map((lead) => {
           const phoneKey = (lead.phone || "").replace(/\D/g, "").slice(-8);
@@ -297,6 +313,7 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
           const score = revLead?.score_total || 0;
           const scoreGrowth = revLead ? (scoreGrowth7dMap.get(revLead.id) || 0) : 0;
           const potential = Number(lead.estimated_value) || avgTicket;
+          const intel = phoneKey.length >= 8 ? intelMap.get(phoneKey) : null;
           return {
             id: lead.id,
             name: lead.company_name || lead.phone || "Sem nome",
@@ -304,21 +321,29 @@ export function useDashboardKPIs(periodDays: number): DashboardKPIData {
             segment: lead.category || "",
             score,
             potential,
-            status: getStatusFromScore(score),
+            status: intel?.is_hot ? "Pronto p/ venda" : getStatusFromScore(score),
             scoreGrowth7d: scoreGrowth,
+            opportunityScore: intel ? Number(intel.opportunity_score) : undefined,
+            nextAction: intel?.next_best_action ?? undefined,
+            priority: intel?.priority ?? undefined,
+            isHot: !!intel?.is_hot,
           };
         })
-        .filter(l => l.score > 0 || l.scoreGrowth7d > 0);
+        .filter(l => l.score > 0 || l.scoreGrowth7d > 0 || (l.opportunityScore ?? 0) > 0);
 
-      // Prioritize: 1) leads with recent growth, 2) leads with highest score
-      const withGrowth = allRadarLeads
+      // Prioriza pela Inteligência Central quando disponível; senão mantém a regra antiga
+      const withIntel = allRadarLeads
+        .filter(l => typeof l.opportunityScore === "number")
+        .sort((a, b) => (b.opportunityScore! - a.opportunityScore!) || (b.scoreGrowth7d - a.scoreGrowth7d));
+      const rest = allRadarLeads.filter(l => typeof l.opportunityScore !== "number");
+      const withGrowth = rest
         .filter(l => l.scoreGrowth7d > 0)
         .sort((a, b) => b.scoreGrowth7d - a.scoreGrowth7d);
-      const withoutGrowth = allRadarLeads
+      const withoutGrowth = rest
         .filter(l => l.scoreGrowth7d === 0 && l.score > 0)
         .sort((a, b) => b.score - a.score);
 
-      const radarLeads: RadarLead[] = [...withGrowth, ...withoutGrowth].slice(0, 6);
+      const radarLeads: RadarLead[] = [...withIntel, ...withGrowth, ...withoutGrowth].slice(0, 6);
 
       // --- Executive Alerts (real data-driven, com comparação de períodos) ---
       const prevStart = subDays(now, periodDays * 2);
