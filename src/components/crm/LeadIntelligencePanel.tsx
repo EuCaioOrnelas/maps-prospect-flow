@@ -135,47 +135,76 @@ interface Dim {
 function DimensionCard({ dim }: { dim: Dim }) {
   const [open, setOpen] = useState(false);
   const empty = dim.value === null;
+  const accent = dim.tone === "warn" ? "text-amber-500" : "text-primary";
   return (
-    <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
-      <div className="flex items-center gap-1.5">
-        <dim.icon className={cn("w-3.5 h-3.5", empty ? "text-muted-foreground/60" : dim.tone === "warn" ? "text-amber-500" : "text-primary")} />
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate flex-1">{dim.label}</p>
-        {!empty && dim.basis.length > 0 && (
-          <button type="button" onClick={() => setOpen((o) => !o)} className="text-[10px] text-muted-foreground hover:text-foreground">
-            {open ? "ocultar" : "base"}
-          </button>
+    <div
+      className={cn(
+        "rounded-lg border bg-card px-3 py-2.5 transition-colors",
+        empty ? "border-dashed border-border/70" : "border-border/60 hover:border-border",
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "w-5 h-5 rounded-md flex items-center justify-center shrink-0",
+            empty ? "bg-muted" : dim.tone === "warn" ? "bg-amber-500/12" : "bg-primary/12",
+          )}
+        >
+          <dim.icon className={cn("w-3 h-3", empty ? "text-muted-foreground/70" : accent)} />
+        </span>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold truncate flex-1">{dim.label}</p>
+        {!empty && (
+          <span className={cn("text-[11px] font-medium shrink-0", dim.tone === "warn" ? "text-amber-600" : "text-muted-foreground")}>
+            {dim.status}
+          </span>
         )}
       </div>
+
       {empty ? (
-        <p className="text-[12px] text-muted-foreground mt-1.5 leading-snug">{dim.status}</p>
+        <p className="text-[11.5px] text-muted-foreground mt-1.5 leading-snug">{dim.status}</p>
       ) : (
         <>
-          <p className="mt-1 text-[15px] font-semibold text-foreground leading-none tabular-nums">
-            {dim.value}
-            <span className="text-[10px] font-normal text-muted-foreground"> de 100</span>
-          </p>
-          <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
+          <div className="mt-2 flex items-end gap-2">
+            <p className="text-[19px] font-semibold text-foreground leading-none tabular-nums">
+              {dim.value}
+              <span className="text-[10px] font-normal text-muted-foreground"> de 100</span>
+            </p>
+          </div>
+          <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
             <div
               className={cn("h-full rounded-full transition-[width] duration-700", dim.tone === "warn" ? "bg-amber-500" : "bg-primary")}
               style={{ width: `${Math.max(2, Math.min(100, dim.value))}%` }}
             />
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground truncate">
-            {dim.status}
-            {dim.partial ? " · análise parcial" : ""}
-          </p>
-          {open && (
-            <ul className="mt-1.5 space-y-0.5 border-t border-border/40 pt-1.5">
-              {dim.basis.map((b, i) => (
-                <li key={i} className="text-[11px] text-muted-foreground leading-snug">• {b}</li>
-              ))}
-            </ul>
+          {dim.partial && <p className="mt-1.5 text-[10px] text-muted-foreground">Análise parcial</p>}
+          {dim.basis.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={() => setOpen((o) => !o)}
+                className="mt-2 inline-flex items-center gap-1 text-[10.5px] font-medium text-primary hover:underline"
+              >
+                {open ? "Ocultar base" : "Base da análise"}
+                <ArrowRight className={cn("w-3 h-3 transition-transform", open && "rotate-90")} />
+              </button>
+              {open && (
+                <ul className="mt-1.5 space-y-1 border-t border-border/50 pt-1.5">
+                  {dim.basis.map((b, i) => (
+                    <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground leading-snug">
+                      <span className="w-1 h-1 rounded-full bg-primary/60 mt-1.5 shrink-0" />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </>
       )}
     </div>
   );
 }
+
 
 function StateCard({ label, icon: Icon, value, caption }: { label: string; icon: React.ElementType; value: string; caption?: string }) {
   return (
@@ -541,15 +570,40 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   const state: AnalysisState = useMemo(() => {
     const msgs = Math.max(conv?.total || 0, engineMessages);
     const sigs = Math.max(signals.length, engineSignals);
+    // O estado gravado pelo motor manda; o frontend so complementa quando ele nao existe.
+    const stored = engineFeatures.analysis_state as AnalysisState | undefined;
+    if (stored && msgs === 0 && sigs === 0) return stored;
     if (msgs === 0 && sigs === 0) return "NO_DATA";
     if (msgs < 4 || sigs < 2) return "PARTIAL";
     return "COMPLETE";
-  }, [conv, signals.length, engineMessages, engineSignals]);
+  }, [conv, signals.length, engineMessages, engineSignals, engineFeatures.analysis_state]);
 
   const opportunity = profile ? Math.round(Number(profile.opportunity_score || 0)) : null;
   const hasConv = !!conv && conv.total > 0;
   // O motor legado (revenue) pode ter engajamento sem mensagens espelhadas no chat.
   const hasEngagementData = hasConv || (history.length > 0 && Number(profile?.engagement_score || 0) > 0);
+
+  // "Não analisado" != "baixa oportunidade": sem perfil ou sem evidência, o número é 0 e neutro.
+  const notAnalyzed = !profile || state === "NO_DATA" || opportunity === null;
+  const analyzedMessages = Math.max(conv?.total || 0, engineMessages);
+  const analyzedSignals = Math.max(signals.length, engineSignals);
+  const confidence = Math.max(
+    0,
+    Math.min(100, Number(engineFeatures.analysis_confidence || 0) || analyzedMessages * 6 + analyzedSignals * 10 + (prospect ? 10 : 0)),
+  );
+
+  // Etapa comercial: com conversa vem do motor; sem conversa vem do CRM/prospecção.
+  const stageLabel = useMemo(() => {
+    if (hasConv && profile?.stage) return STAGE_LABELS[profile.stage] || profile.stage;
+    if ((lead as any)?.archived_at) return "Arquivado";
+    const st = (lead as any)?.status || (lead as any)?.stage_name || null;
+    if (st) return String(st);
+    if (deals.some((d: any) => ["ganho", "won"].includes(String(d.status || "").toLowerCase()))) return "Fechado";
+    if (deals.length) return "Negociação";
+    if (prospect) return "Prospecção";
+    return "Novo";
+  }, [hasConv, profile, lead, deals, prospect]);
+
 
 
   const dims: Dim[] = useMemo(() => {
@@ -655,12 +709,12 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       label: "Etapa",
       icon: ArrowRight,
       value: null,
-      status: hasConv && profile?.stage ? STAGE_LABELS[profile.stage] || profile.stage : "Não identificada",
+      status: stageLabel,
       basis: [],
     });
 
     return d;
-  }, [profile, conv, signals, history, prospect, hasConv, hasEngagementData, state]);
+  }, [profile, conv, signals, history, prospect, hasConv, hasEngagementData, state, stageLabel]);
 
   const playbook = useMemo(
     () => buildPlaybook(state, profile, conv, prospect, lead || null, signals.map((s) => signalLabel(s.signal_type))),
@@ -724,42 +778,91 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   return (
     <div className={cn("space-y-4", className)}>
       {/* ---------------------------------------------------------- header */}
-      <section className="rounded-xl border border-border/60 bg-card overflow-hidden">
-        <header className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50">
-          <Brain className="w-4 h-4 text-primary" />
-          <h3 className="text-[12px] font-semibold uppercase tracking-wider text-foreground">Inteligência Wiize</h3>
-          <span className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary">
-            <span className="w-1 h-1 rounded-full bg-primary" /> Beta
+      <section className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm">
+        <header className="flex items-center gap-2 px-4 py-2.5 bg-muted/25 border-b border-border/50">
+          <span className="w-6 h-6 rounded-lg bg-primary/12 flex items-center justify-center shrink-0">
+            <Brain className="w-3.5 h-3.5 text-primary" />
+          </span>
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-foreground flex-1">Inteligência Wiize</h3>
+          <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Beta
           </span>
         </header>
 
-        <div className="px-4 py-4">
+        <div className="px-4 pt-4 pb-3">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</p>
-          {state === "NO_DATA" || opportunity === null ? (
-            <>
-              <p className="mt-1 text-[20px] font-semibold text-foreground leading-tight">Dados insuficientes</p>
-              <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">
-                Este contato ainda não possui sinais comerciais suficientes para uma análise confiável.
-              </p>
-            </>
-          ) : (
-            <>
-              <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className="text-[38px] font-semibold text-foreground leading-none tabular-nums">{opportunity}</span>
-                <span className="text-[13px] text-muted-foreground">de 100</span>
-              </div>
-              <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${Math.max(2, opportunity)}%` }} />
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <Badge variant="outline" className="text-[10px] font-medium">{bandF(opportunity)}</Badge>
+          <div className="flex items-end justify-between gap-3 mt-1">
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className={cn(
+                  "text-[40px] font-semibold leading-none tabular-nums tracking-tight",
+                  notAnalyzed ? "text-muted-foreground/50" : "text-foreground",
+                )}
+              >
+                {notAnalyzed ? 0 : opportunity}
+              </span>
+              <span className="text-[13px] text-muted-foreground">de 100</span>
+            </div>
+            <span
+              className={cn(
+                "text-[12px] font-medium pb-1",
+                notAnalyzed ? "text-muted-foreground" : "text-foreground",
+              )}
+            >
+              {notAnalyzed ? "Não analisado" : bandF(opportunity!)}
+            </span>
+          </div>
+
+          <div className="mt-2.5 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div
+              className={cn(
+                "h-full rounded-full transition-[width] duration-700",
+                notAnalyzed ? "bg-muted-foreground/25" : "bg-primary",
+              )}
+              style={{ width: notAnalyzed ? "100%" : `${Math.max(2, opportunity!)}%` }}
+            />
+          </div>
+
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            {notAnalyzed ? (
+              <Badge variant="outline" className="text-[10px] font-medium text-muted-foreground">
+                Sem sinais suficientes para pontuar
+              </Badge>
+            ) : (
+              <>
                 {state === "PARTIAL" && <Badge variant="outline" className="text-[10px] font-medium">Análise parcial</Badge>}
-                {profile?.priority && <Badge variant="outline" className="text-[10px] font-medium">Prioridade {PRIORITY_LABELS[profile.priority] || profile.priority}</Badge>}
-              </div>
-            </>
-          )}
+                {profile?.priority && (
+                  <Badge variant="outline" className="text-[10px] font-medium">
+                    Prioridade {PRIORITY_LABELS[profile.priority] || profile.priority}
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-[10px] font-medium">Etapa: {stageLabel}</Badge>
+              </>
+            )}
+          </div>
         </div>
+
+        {/* resumo da análise */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/50 border-t border-border/50 bg-muted/15">
+          {[
+            { l: "Estado", v: notAnalyzed ? "Não analisado" : state === "PARTIAL" ? "Parcial" : "Completa" },
+            { l: "Confiança", v: `${confidence}%` },
+            { l: "Mensagens", v: String(analyzedMessages) },
+            { l: "Sinais", v: String(analyzedSignals) },
+          ].map((s, i) => (
+            <div key={i} className={cn("px-3 py-2", i > 1 && "border-t sm:border-t-0 border-border/50")}>
+              <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium truncate">{s.l}</p>
+              <p className="text-[12px] font-semibold text-foreground mt-0.5 tabular-nums truncate">{s.v}</p>
+            </div>
+          ))}
+        </div>
+        {profile?.computed_at && (
+          <p className="px-4 py-1.5 text-[10px] text-muted-foreground border-t border-border/50">
+            Última análise {ago(profile.computed_at)}
+          </p>
+        )}
       </section>
+
 
 
       {/* ------------------------------------------------------------ tabs */}
@@ -793,69 +896,113 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             </div>
           </Block>
 
-          <Block icon={Brain} title={state === "NO_DATA" ? "Por que a oportunidade não pode ser calculada" : `Por que a oportunidade está em ${opportunity}`}>
-            {state === "NO_DATA" ? (
-              <ul className="space-y-1">
-                {[
-                  "Nenhuma conversa encontrada para este número (Evolution ou Meta).",
-                  "Nenhum sinal de intenção registrado pelo motor.",
-                  "Nenhum comportamento comercial suficiente para estimar conversão.",
-                  prospect ? "Existem apenas dados de prospecção da empresa, que não indicam intenção de compra." : "Sem dados de prospecção para este contato.",
-                ].map((t, i) => (
-                  <li key={i} className="flex items-start gap-2 py-1 border-b border-border/40 last:border-0">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-                    <span className="text-[13px] text-foreground/90 leading-snug">{t}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Fatores que aumentam</p>
-                  {positives.length ? (
-                    <ul>
-                      {positives.map((f: any, i: number) => (
-                        <EvidenceRow
-                          key={i}
-                          label={`${f.label}${f.impact ? ` (+${Math.round(f.impact)} pts)` : ""}`}
-                          quote={conv?.intents.find((x) => f.label?.toLowerCase().includes("pre") && x.key === "PRICE")?.quote}
-                          at={conv?.intents[0]?.at}
-                          source={conv?.sources[0]}
-                        />
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-[12px] text-muted-foreground">Nenhum fator positivo identificado até agora.</p>
-                  )}
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Fatores que reduzem</p>
-                  {negatives.length ? (
-                    <ul>
-                      {negatives.map((f: any, i: number) => (
-                        <EvidenceRow key={i} label={`${f.label}${f.weight ? ` (-${Math.round(f.weight)} pts)` : ""}`} positive={false} />
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-[12px] text-muted-foreground">Nenhum fator de risco identificado.</p>
-                  )}
-                </div>
-                {(conv?.intents.length || conv?.objections.length) ? (
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Evidências na conversa</p>
-                    <ul>
-                      {conv!.intents.map((e) => (
-                        <EvidenceRow key={`i-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} />
-                      ))}
-                      {conv!.objections.map((e) => (
-                        <EvidenceRow key={`o-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} positive={false} />
-                      ))}
-                    </ul>
+          <section className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm">
+            <header className="flex items-center gap-2 px-3.5 py-2.5 bg-muted/25 border-b border-border/50">
+              <span className="w-6 h-6 rounded-lg bg-primary/12 flex items-center justify-center shrink-0">
+                <Brain className="w-3.5 h-3.5 text-primary" />
+              </span>
+              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-foreground flex-1 min-w-0 truncate">
+                {notAnalyzed ? "Por que ainda não há pontuação" : `Por que a oportunidade está em ${opportunity}`}
+              </h4>
+            </header>
+
+            <div className="px-3.5 py-3.5 space-y-3.5">
+              {/* resumo causal */}
+              <p className="text-[12.5px] text-foreground/90 leading-relaxed">
+                {notAnalyzed
+                  ? prospect
+                    ? "Não existe conversa nem sinal comercial registrado para este contato. Os dados da empresa vindos da prospecção ficam disponíveis para montar a abordagem, mas não geram pontuação de oportunidade."
+                    : "Não existe conversa, sinal comercial nem dado de prospecção para este contato. A pontuação só é calculada quando houver evidência real."
+                  : `A oportunidade é o resultado das dimensões calculadas: ${[
+                      profile?.fit_score != null ? `fit ${Math.round(Number(profile.fit_score))}` : null,
+                      profile?.intent_score != null ? `intenção ${Math.round(Number(profile.intent_score))}` : null,
+                      hasEngagementData ? `engajamento ${Math.round(Number(profile?.engagement_score || 0))}` : null,
+                      hasConv ? `qualidade ${Math.round(Number(profile?.quality_score || 0))}` : null,
+                      profile?.risk_score != null ? `risco ${Math.round(Number(profile.risk_score))}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}.`}
+              </p>
+
+              <div className="grid grid-cols-1 gap-2">
+                {/* fatores que aumentam */}
+                <div className="rounded-lg border border-border/60 overflow-hidden">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/[0.06] border-b border-border/50">
+                    <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                    <p className="text-[10px] uppercase tracking-wider text-primary font-semibold">Fatores que aumentam</p>
                   </div>
-                ) : null}
+                  <div className="px-3 py-2">
+                    {positives.length ? (
+                      <ul>
+                        {positives.map((f: any, i: number) => (
+                          <EvidenceRow
+                            key={i}
+                            label={`${f.label}${f.impact ? ` (+${Math.round(f.impact)} pts)` : ""}`}
+                            quote={conv?.intents.find((x) => f.label?.toLowerCase().includes("pre") && x.key === "PRICE")?.quote}
+                            at={conv?.intents[0]?.at}
+                            source={conv?.sources[0]}
+                          />
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-[12px] text-muted-foreground">Nenhum fator positivo identificado até agora.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* fatores que reduzem */}
+                <div className="rounded-lg border border-border/60 overflow-hidden">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/[0.08] border-b border-border/50">
+                    <TrendingDown className="w-3.5 h-3.5 text-amber-500" />
+                    <p className="text-[10px] uppercase tracking-wider text-amber-600 font-semibold">Fatores que reduzem</p>
+                  </div>
+                  <div className="px-3 py-2">
+                    {negatives.length || notAnalyzed ? (
+                      <ul>
+                        {notAnalyzed ? (
+                          <>
+                            <EvidenceRow label="Nenhuma conversa registrada nos canais conectados" positive={false} />
+                            <EvidenceRow label="Nenhum sinal de intenção identificado" positive={false} />
+                            <EvidenceRow label="Nenhuma interação recente" positive={false} />
+                          </>
+                        ) : (
+                          negatives.map((f: any, i: number) => (
+                            <EvidenceRow
+                              key={i}
+                              label={`${f.label}${f.weight ? ` (-${Math.round(f.weight)} pts)` : ""}`}
+                              positive={false}
+                            />
+                          ))
+                        )}
+                      </ul>
+                    ) : (
+                      <p className="text-[12px] text-muted-foreground">Nenhum fator de risco identificado.</p>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-          </Block>
+
+              {/* evidências */}
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">Evidências</p>
+                {conv && (conv.intents.length || conv.objections.length) ? (
+                  <ul className="rounded-lg border border-border/60 px-3 py-1">
+                    {conv.intents.map((e) => (
+                      <EvidenceRow key={`i-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} />
+                    ))}
+                    {conv.objections.map((e) => (
+                      <EvidenceRow key={`o-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} positive={false} />
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-[12px] text-muted-foreground rounded-lg border border-dashed border-border/70 px-3 py-2.5">
+                    Nenhuma conversa disponível para análise.
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+
 
           <section className="rounded-xl border border-primary/25 bg-card overflow-hidden shadow-sm">
             <header className="flex items-center gap-2 px-3.5 py-2.5 bg-primary/[0.07] border-b border-primary/20">

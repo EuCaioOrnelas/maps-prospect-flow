@@ -439,10 +439,17 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
 
   // ---------------- SUFICIENCIA DE DADOS ----------------
   // A Inteligencia nunca pode afirmar que analisou algo que nao possui evidencia.
-  const evidenceMessages = messages.length;
-  const evidenceSignals = signals.length;
+  // Conta tanto mensagens espelhadas no chat quanto agregados do motor Revenue legado.
+  const legacyMessages =
+    Number(conv?.inbound_count_7d || 0) + Number(conv?.outbound_count_7d || 0);
+  const hasLegacyInteraction = !!conv?.last_inbound_at || !!conv?.last_outbound_at;
+  const evidenceMessages = Math.max(messages.length, legacyMessages);
+  // Sinais vindos apenas do diagnostico/prospeccao descrevem a empresa, nao uma
+  // interacao comercial: nao contam como evidencia de analise.
+  const evidenceSignals = signals.filter((s) => s.source !== "prospecting").length;
+  const hasInteraction = evidenceMessages > 0 || hasLegacyInteraction;
   const analysisState =
-    evidenceMessages === 0 && evidenceSignals === 0
+    !hasInteraction && evidenceSignals === 0
       ? "NO_DATA"
       : evidenceMessages < 4 || evidenceSignals < 2
       ? "PARTIAL"
@@ -450,9 +457,11 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   const analysisConfidence = clamp(evidenceMessages * 6 + evidenceSignals * 10 + (crm ? 10 : 0));
 
 
+
   // ---------------- DIMENSOES ----------------
   // ENGAGEMENT: reutiliza integralmente o score do motor atual (0-1000 -> 0-100)
-  const engagement = clamp(Number(rl.score_total || 0) / 10);
+  // Sem nenhuma interacao registrada nao existe engajamento para reportar.
+  const engagement = hasInteraction ? clamp(Number(rl.score_total || 0) / 10) : 0;
 
   // INTENT: soma ponderada com decay por recencia + retornos decrescentes por tipo
   // (repetir 5x "quanto custa" nao vale 5x o sinal de preco)
@@ -597,6 +606,9 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   opportunity += compoundBonus;
   if (present.has("NEGATIVE_INTENT")) opportunity *= 0.35;
   opportunity = clamp(opportunity);
+  // REGRA DE INTEGRIDADE: sem conversa e sem sinais nao existe oportunidade calculada.
+  // 0 aqui significa "nao analisado", nunca "baixa oportunidade".
+  if (analysisState === "NO_DATA") opportunity = 0;
 
   // BEHAVIOR
   const behaviors: string[] = [];
@@ -623,8 +635,11 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   else if (present.has("PROBLEM_DETECTED") || present.has("NEED_DETECTED")) stage = "QUALIFICATION";
   if (present.has("NEGATIVE_INTENT")) stage = "DISQUALIFIED";
   if (intent >= 75 && (present.has("INTENT_BUY") || present.has("INTENT_PAYMENT"))) stage = "READY_TO_BUY";
+  // Sem qualquer interacao a etapa vem do CRM/prospeccao, nunca da conversa.
+  if (analysisState === "NO_DATA") stage = crm ? "PROSPECTING" : "NEW";
 
   // NEXT BEST ACTION
+  // Nunca pode ficar "nao identificado": sempre existe uma proxima acao comercial.
   let nba = "QUALIFY";
   if (analysisState === "NO_DATA") nba = "FIRST_CONTACT"; // sem conversa e sem sinais: primeiro contato
   else if (stage === "DISQUALIFIED") nba = "DO_NOT_PRIORITIZE";
@@ -634,15 +649,21 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   else if (present.has("INTENT_PAYMENT") || stage === "CLOSING") nba = "REQUEST_PAYMENT";
   else if (present.has("INTENT_PROPOSAL") || (intent >= 60 && stage === "NEGOTIATION")) nba = "SEND_PROPOSAL";
   else if (silenceDays > 7 && silenceDays < 900 && intent >= 30) nba = "REACTIVATE";
+  // Conversa antiga e parada: reativar antes de qualquer outra coisa, mesmo sem intencao registrada.
+  else if (hasInteraction && silenceDays > 30 && silenceDays < 900) nba = "REACTIVATE";
   else if (silenceDays > 1 && intent >= 40) nba = "FOLLOW_UP";
+  else if (hasInteraction && silenceDays > 1 && silenceDays <= 30) nba = "FOLLOW_UP";
   else if (opportunity < 30) nba = "NURTURE";
   else if (intent < 30 && fit >= 60) nba = "QUALIFY";
   else if (silenceDays <= 1 && awaitingUsMin === 0) nba = "WAIT";
 
+
   // PRIORITY
   const th = cfg.thresholds || DEFAULT_CONFIG.thresholds;
   const urgencyBoost = (awaitingUsMin > 30 ? 8 : 0) + (momentumState === "STRONGLY_RISING" ? 5 : 0);
-  const prioScore = opportunity + urgencyBoost;
+  // Sem analise a prioridade nao pode competir com leads realmente avaliados,
+  // mas um fit alto ainda merece ficar acima do fundo da fila.
+  const prioScore = analysisState === "NO_DATA" ? Math.min(45, fit * 0.5) : opportunity + urgencyBoost;
   const priority =
     prioScore >= (th.priority?.p0 ?? 85) ? "P0" :
     prioScore >= (th.priority?.p1 ?? 72) ? "P1" :
@@ -663,6 +684,11 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   push(momentumState.includes("RISING"), `interesse em alta (${momentumValue > 0 ? "+" : ""}${momentumValue})`, 10);
   push(patternMatch >= (th.pattern_match_high ?? 70), `comportamento semelhante a clientes convertidos (${patternMatch}%)`, Math.round(patternMatch * ow.pattern));
   push(compound.length > 0, `combinacao de sinais: ${compound.join(", ")}`, Math.round(compoundBonus));
+  if (analysisState === "NO_DATA") {
+    factors.length = 0;
+    factors.push({ label: "lead ainda nao analisado: nenhuma conversa ou sinal registrado", impact: 0 });
+    if (crm) factors.push({ label: `dados de prospeccao disponiveis (fit ${fit}/100), usados apenas para a abordagem`, impact: 0 });
+  }
 
   const isHot =
     opportunity >= (th.hot_opportunity ?? 70) &&
