@@ -2028,5 +2028,4 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
     hsl(var(--border) / 0) 100%
   );
   background-repeat: no-repeat;
-  );
 }
