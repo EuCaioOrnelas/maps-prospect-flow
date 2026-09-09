@@ -10,3 +10,7 @@
 - [x] Refinar seletor e comparativo de tipos de número
 - [x] Liberar cadastro nos CTAs e navegação pública da Wiize API
 - [x] Refinar ícones, conectores e controles do canvas de Fluxos
+- [x] Auditoria Central Intelligence: perf (consultas escopadas por telefone), dedupe de sinais, retornos decrescentes, qualidade da conversa, debounce de concorrência, outcomes sem duplicidade
+- [x] Página pública /inteligencia + link no menu e rodapé
+- [x] Reescrita da comunicação (hero, SEO, FAQ, planos, seções de vendas) para inteligência comercial
+- [ ] Validação E2E com conversa real de ponta a ponta (depende de volume de mensagens reais na conta)
