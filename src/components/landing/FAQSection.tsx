@@ -32,7 +32,7 @@ const faqs = [
  },
  {
  question: "Como sei quais oportunidades merecem atenção?",
- answer: "A Wiize acompanha respostas e engajamento de cada contato e mostra quem está mais perto de uma reunião, quem precisa de atenção agora e quem está esfriando. Internamente isso é feito por um score de intenção, mas o que você vê é a lista de quem chamar primeiro."
+ answer: "A Wiize cruza o que sabe da empresa, o que acontece na conversa e o histórico das suas vendas anteriores para mostrar quem está mais perto de uma reunião, quem precisa de atenção agora e quem está esfriando. O engajamento é uma das leituras; o que você vê é a lista de quem chamar primeiro e o que fazer em cada caso."
  },
  {
  question: "Quem conversa com o lead?",

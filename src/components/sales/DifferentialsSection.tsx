@@ -4,7 +4,7 @@ import { Check, X } from "lucide-react";
 
 const rows = [
  { feature: "Captação automatizada de leads", wiize: true, manual: false, tools: false },
- { feature: "Qualificação com IA e score", wiize: true, manual: false, tools: false },
+ { feature: "Inteligência comercial que lê empresa, conversa e histórico", wiize: true, manual: false, tools: false },
  { feature: "Mensagens personalizadas por contexto", wiize: true, manual: false, tools: false },
  { feature: "API oficial do WhatsApp", wiize: true, manual: false, tools: true },
  { feature: "Atendimento 24/7 com IA", wiize: true, manual: false, tools: false },

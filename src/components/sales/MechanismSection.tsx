@@ -45,11 +45,11 @@ const steps = [
   {
     icon: Sparkles,
     title: "Otimize",
-    desc: "Saiba quais oportunidades merecem atenção agora e reduza o trabalho manual do time com automação e inteligência em cada etapa.",
+    desc: "Uma única inteligência lê empresa, diagnóstico, conversas, comportamento e histórico de vendas para mostrar quais oportunidades merecem atenção agora e qual o próximo passo em cada uma.",
     bullets: [
-      "Priorização de quem está pronto para comprar",
-      "Alertas do que precisa de atenção hoje",
-      "Menos trabalho repetitivo para o time",
+      "Priorização por intenção, fit, momentum e risco",
+      "Próxima ação recomendada em cada oportunidade",
+      "Vendas ganhas e perdidas melhoram a leitura com o tempo",
     ],
   },
 ];

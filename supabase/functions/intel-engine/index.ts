@@ -222,27 +222,46 @@ async function aiSignals(texts: { id: string; text: string }[]): Promise<Record<
 // ---------------------------------------------------------------------------
 // COMPUTE PROFILE
 // ---------------------------------------------------------------------------
-async function computeProfile(sb: any, owner: string, phone: string) {
+async function computeProfile(sb: any, owner: string, phone: string, opts: { force?: boolean } = {}) {
   const cfg = await loadConfig(sb, owner);
   const now = new Date();
   const norm = digits(phone);
   const sfx = suffix8(norm);
 
-  // --- lead de conversa (motor Revenue) ---
+  // --- lead de conversa (motor Revenue) — busca escopada por telefone (sem varrer a base) ---
   const { data: rlAll } = await sb
     .from("revenue_leads")
     .select("*")
     .or(`owner_user_id.eq.${owner},user_id.eq.${owner}`)
-    .limit(3000);
+    .ilike("phone_e164", `%${sfx}`)
+    .limit(20);
   const rl = (rlAll || []).find((r: any) => suffix8(r.phone_e164) === sfx);
   if (!rl) return { skipped: true, reason: "revenue lead not found", phone };
+
+  // Concorrencia: varias mensagens quase simultaneas disparam recalculos em paralelo.
+  // Se o perfil acabou de ser calculado e nada novo entrou, nao recalcula (evita race e custo).
+  const { data: prevProfile } = await sb
+    .from("intel_lead_profiles")
+    .select("*")
+    .eq("owner_user_id", owner)
+    .eq("phone_e164", rl.phone_e164)
+    .maybeSingle();
+  if (!opts.force && prevProfile?.computed_at) {
+    const ageMs = now.getTime() - new Date(prevProfile.computed_at).getTime();
+    const lastAct = rl.last_activity_at ? new Date(rl.last_activity_at).getTime() : 0;
+    const staleActivity = lastAct <= new Date(prevProfile.computed_at).getTime();
+    if (ageMs < 20000 && staleActivity) {
+      return { success: true, debounced: true, profile: prevProfile };
+    }
+  }
 
   // --- empresa prospectada (CRM) ---
   const { data: crmAll } = await sb
     .from("leads")
     .select("id, company_name, contact_name, phone, category, city, region, website, rating, review_count, ai_score, opportunity_level, ai_diagnosis, enrichment_data, pipeline_stage_id, estimated_value, social_media, last_response_at")
     .eq("user_id", owner)
-    .limit(5000);
+    .ilike("phone", `%${sfx}`)
+    .limit(20);
   const crm = (crmAll || []).find((l: any) => suffix8(l.phone || "") === sfx) || null;
   if (crm && rl.crm_lead_id !== crm.id) {
     await sb.from("revenue_leads").update({ crm_lead_id: crm.id }).eq("id", rl.id);
@@ -277,18 +296,14 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     .order("created_at", { ascending: false })
     .limit(500);
 
-  // mensagens reais (para qualidade + sinais semanticos)
+  // mensagens reais (para qualidade + sinais semanticos) — escopadas por telefone
   let messages: any[] = [];
-  const { data: contact } = await sb
-    .from("chat_contacts")
-    .select("id")
-    .eq("owner_user_id", owner)
-    .limit(5000);
   const { data: convRows } = await sb
     .from("chat_conversations")
     .select("id, contact_phone")
     .eq("owner_user_id", owner)
-    .limit(5000);
+    .ilike("contact_phone", `%${sfx}`)
+    .limit(50);
   const convIds = (convRows || []).filter((c: any) => suffix8(c.contact_phone || "") === sfx).map((c: any) => c.id);
   if (convIds.length) {
     const { data: msgs } = await sb
@@ -300,16 +315,23 @@ async function computeProfile(sb: any, owner: string, phone: string) {
       .limit(200);
     messages = msgs || [];
   }
-  void contact;
 
   // ---------------- SINAIS ----------------
+  // Deduplicacao: a mesma frase chega por dois caminhos (revenue_intent_logs.raw_message
+  // e chat_messages). Sem dedupe o mesmo sinal era contado duas vezes.
   type Sig = { type: string; confidence: number; at: Date; source: string; message_id?: string };
-  const signals: Sig[] = [];
+  const signalMap = new Map<string, Sig>();
+  const BUCKET_MS = 5 * 60 * 1000; // janela de 5 min para colapsar o mesmo sinal repetido
+  const addSignal = (s: Sig) => {
+    const key = `${s.type}|${Math.floor(s.at.getTime() / BUCKET_MS)}`;
+    const cur = signalMap.get(key);
+    if (!cur || s.confidence > cur.confidence) signalMap.set(key, s);
+  };
 
   for (const il of intentLogs || []) {
     const mapped = REVENUE_INTENT_MAP[il.intent_category] || REVENUE_INTENT_MAP[il.intent_subtype || ""] || null;
     if (mapped) {
-      signals.push({
+      addSignal({
         type: mapped,
         confidence: Number(il.confidence_score) || 0.8,
         at: new Date(il.created_at),
@@ -318,7 +340,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     }
     if (il.raw_message) {
       for (const s of ruleSignals(il.raw_message)) {
-        signals.push({ type: s.type, confidence: s.confidence, at: new Date(il.created_at), source: "rule" });
+        addSignal({ type: s.type, confidence: s.confidence, at: new Date(il.created_at), source: "rule" });
       }
     }
   }
@@ -332,7 +354,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     const rs = ruleSignals(text);
     if (rs.length) {
       for (const s of rs) {
-        signals.push({ type: s.type, confidence: s.confidence, at: new Date(m.created_at), source: "rule", message_id: m.id });
+        addSignal({ type: s.type, confidence: s.confidence, at: new Date(m.created_at), source: "rule", message_id: m.id });
         persist.push({
           owner_user_id: owner, phone_e164: rl.phone_e164, revenue_lead_id: rl.id, crm_lead_id: crm?.id ?? null,
           signal_type: s.type, signal_group: SIGNAL_GROUP[s.type] || "INTENT", confidence: s.confidence,
@@ -354,7 +376,8 @@ async function computeProfile(sb: any, owner: string, phone: string) {
       .in("message_id", ambiguous.map((a) => a.id));
     const cachedIds = new Set((cached || []).map((c: any) => c.message_id));
     for (const c of cached || []) {
-      signals.push({ type: c.signal_type, confidence: Number(c.confidence), at: new Date(c.occurred_at), source: "ai" });
+      if (c.signal_type === "NO_SIGNAL") continue;
+      addSignal({ type: c.signal_type, confidence: Number(c.confidence), at: new Date(c.occurred_at), source: "ai" });
     }
     const todo = ambiguous.filter((a) => !cachedIds.has(a.id));
     if (todo.length) {
@@ -371,7 +394,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
           continue;
         }
         for (const s of list) {
-          signals.push({ type: s.type, confidence: s.confidence, at: new Date(at), source: "ai", message_id: a.id });
+          addSignal({ type: s.type, confidence: s.confidence, at: new Date(at), source: "ai", message_id: a.id });
           persist.push({
             owner_user_id: owner, phone_e164: rl.phone_e164, revenue_lead_id: rl.id, crm_lead_id: crm?.id ?? null,
             signal_type: s.type, signal_group: SIGNAL_GROUP[s.type] || "INTENT", confidence: s.confidence,
@@ -395,14 +418,14 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     if (Number(breakdown.estrutura_digital || 0) && Number(breakdown.estrutura_digital) < 50) gaps.push("estrutura digital fraca");
     if (Array.isArray(enrich?.pontos_fracos)) gaps.push(...enrich.pontos_fracos.slice(0, 3));
     if (gaps.length) {
-      signals.push({ type: "DIAGNOSIS_GAP", confidence: 0.9, at: now, source: "prospecting" });
+      addSignal({ type: "DIAGNOSIS_GAP", confidence: 0.9, at: now, source: "prospecting" });
     }
-    if (rating && rating < 4) signals.push({ type: "DIAGNOSIS_REPUTATION", confidence: 0.8, at: now, source: "prospecting" });
+    if (rating && rating < 4) addSignal({ type: "DIAGNOSIS_REPUTATION", confidence: 0.8, at: now, source: "prospecting" });
   }
 
   // resposta rapida do lead (comportamento)
   const avgResp = Number(conv?.avg_response_time_seconds || 0);
-  if (avgResp > 0 && avgResp <= 600) signals.push({ type: "FAST_RESPONSE", confidence: 0.9, at: now, source: "rule" });
+  if (avgResp > 0 && avgResp <= 600) addSignal({ type: "FAST_RESPONSE", confidence: 0.9, at: now, source: "rule" });
 
   if (persist.length) {
     await sb.from("intel_signals").upsert(persist, {
@@ -411,35 +434,48 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     });
   }
 
+  const signals: Sig[] = [...signalMap.values()].filter((s) => s.type !== "NO_SIGNAL");
   const present = new Set(signals.map((s) => s.type));
 
   // ---------------- DIMENSOES ----------------
   // ENGAGEMENT: reutiliza integralmente o score do motor atual (0-1000 -> 0-100)
   const engagement = clamp(Number(rl.score_total || 0) / 10);
 
-  // INTENT: soma ponderada com decay por recencia
+  // INTENT: soma ponderada com decay por recencia + retornos decrescentes por tipo
+  // (repetir 5x "quanto custa" nao vale 5x o sinal de preco)
   let intentRaw = 0;
-  for (const s of signals) {
+  const seenByType = new Map<string, number>();
+  const ordered = [...signals].sort((a, b) => b.at.getTime() - a.at.getTime());
+  for (const s of ordered) {
     const w = INTENT_WEIGHTS[s.type];
     if (!w) continue;
     const group = SIGNAL_GROUP[s.type] || "INTENT";
-    intentRaw += w * s.confidence * decayFactor(group, daysBetween(now, s.at), cfg);
+    const rank = seenByType.get(s.type) || 0;
+    seenByType.set(s.type, rank + 1);
+    const diminishing = Math.pow(0.45, rank); // 1, 0.45, 0.20, ...
+    intentRaw += w * s.confidence * decayFactor(group, daysBetween(now, s.at), cfg) * diminishing;
   }
   const intent = clamp(intentRaw);
 
-  // QUALITY: profundidade, perguntas, reciprocidade, progressao
+  // QUALITY: profundidade real da conversa (mensagens substantivas), perguntas,
+  // reciprocidade e continuidade. Muitas mensagens curtas ("ok", "kkk") nao inflam.
   const inbLen = inbound.map((m) => (m.content || "").length);
   const avgLen = inbLen.length ? inbLen.reduce((a, b) => a + b, 0) / inbLen.length : 0;
+  const substantive = inbound.filter((m) => (m.content || "").trim().length >= 25).length;
+  const substantiveRatio = inbound.length ? substantive / inbound.length : 0;
   const questions = inbound.filter((m) => (m.content || "").includes("?")).length;
   const outboundCount = messages.length - inbound.length;
   const reciprocity = messages.length ? Math.min(1, Math.min(inbound.length, outboundCount) / Math.max(1, Math.max(inbound.length, outboundCount))) : 0;
   const distinctDays = new Set(messages.map((m) => (m.created_at || "").slice(0, 10))).size;
-  const quality = clamp(
-    Math.min(35, (avgLen / 90) * 35) +
+  const depth = Math.min(35, (avgLen / 90) * 25 + Math.min(10, substantive * 2.5));
+  const qualityRaw =
+    depth +
     Math.min(20, questions * 4) +
     reciprocity * 25 +
-    Math.min(20, distinctDays * 4)
-  );
+    Math.min(20, distinctDays * 4);
+  // conversa dominada por mensagens curtas perde peso proporcionalmente
+  const chattyPenalty = inbound.length >= 5 ? 0.55 + 0.45 * Math.min(1, substantiveRatio / 0.4) : 1;
+  const quality = clamp(qualityRaw * chattyPenalty);
 
   // FIT: nicho + regiao + maturidade digital + reputacao + contatabilidade
   const fw = cfg.weights?.fit || DEFAULT_CONFIG.weights.fit;
@@ -621,13 +657,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     ? `${factors.slice(0, 3).map((f) => f.label).join("; ")}${riskFactors.length ? ` | risco: ${riskFactors[0].label}` : ""}`
     : null;
 
-  // --- diff / auditoria ---
-  const { data: prevProfile } = await sb
-    .from("intel_lead_profiles")
-    .select("*")
-    .eq("owner_user_id", owner)
-    .eq("phone_e164", rl.phone_e164)
-    .maybeSingle();
+  // --- diff / auditoria (prevProfile ja carregado no inicio) ---
 
   const features = {
     engagement, intent, quality, fit, momentum: momentumValue, risk, opportunity,
@@ -745,7 +775,16 @@ async function recordOutcome(sb: any, body: any) {
     predicted_pattern_match: prof?.pattern_match_score ?? null,
     occurred_at: body.occurred_at || new Date().toISOString(),
   };
-  await sb.from("intel_outcomes").upsert(row, { onConflict: "owner_user_id,outcome,crm_lead_id,deal_id", ignoreDuplicates: false });
+  // NULL != NULL em indice unico: checa antes para nao duplicar outcomes sem deal_id
+  let q = sb.from("intel_outcomes").select("id").eq("owner_user_id", owner).eq("outcome", outcome);
+  q = row.deal_id ? q.eq("deal_id", row.deal_id) : q.is("deal_id", null);
+  q = row.crm_lead_id ? q.eq("crm_lead_id", row.crm_lead_id) : q.is("crm_lead_id", null);
+  const { data: existing } = await q.maybeSingle();
+  if (existing?.id) {
+    await sb.from("intel_outcomes").update(row).eq("id", existing.id);
+  } else {
+    await sb.from("intel_outcomes").insert(row);
+  }
   return { success: true, outcome: row };
 }
 
@@ -862,7 +901,9 @@ async function backfillOutcomes(sb: any, owner: string) {
 async function getContext(sb: any, owner: string, limit = 10, phone?: string) {
   if (phone) {
     const sfx = suffix8(phone);
-    const { data: all } = await sb.from("intel_lead_profiles").select("*").eq("owner_user_id", owner).limit(3000);
+    const { data: all } = await sb
+      .from("intel_lead_profiles").select("*").eq("owner_user_id", owner)
+      .ilike("phone_e164", `%${sfx}`).limit(20);
     const prof = (all || []).find((p: any) => suffix8(p.phone_e164) === sfx) || null;
     if (!prof) return { profile: null };
     const { data: audit } = await sb
@@ -909,7 +950,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "compute_profile":
-        return json(await computeProfile(sb, owner, body.phone_e164));
+        return json(await computeProfile(sb, owner, body.phone_e164, { force: !!body.force }));
       case "record_outcome":
         return json(await recordOutcome(sb, { ...body, owner_user_id: owner }));
       case "recompute_patterns":
@@ -926,7 +967,7 @@ Deno.serve(async (req) => {
           .limit(body.limit || 200);
         let done = 0;
         for (const r of rls || []) {
-          try { await computeProfile(sb, owner, r.phone_e164); done++; } catch (_e) { /* segue */ }
+          try { await computeProfile(sb, owner, r.phone_e164, { force: true }); done++; } catch (_e) { /* segue */ }
         }
         return json({ success: true, processed: done });
       }
@@ -950,7 +991,7 @@ Deno.serve(async (req) => {
         let profiles = 0;
         for (const [o, phones] of byOwner) {
           for (const ph of phones) {
-            try { await computeProfile(sb, o, ph); profiles++; } catch (_e) { /* segue */ }
+            try { await computeProfile(sb, o, ph, { force: true }); profiles++; } catch (_e) { /* segue */ }
           }
           try { await recomputePatterns(sb, o); } catch (_e) { /* segue */ }
         }
