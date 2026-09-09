@@ -23,6 +23,7 @@ import {
   Mail,
   Receipt,
   Trophy,
+  Brain,
   MessageCircle,
   Workflow,
   LayoutDashboard as LayoutDashboardIcon,

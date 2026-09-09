@@ -15,6 +15,7 @@ import {
   Search,
   Handshake,
   Trophy,
+  Brain,
   MessageCircle,
   Workflow,
   Flame,
