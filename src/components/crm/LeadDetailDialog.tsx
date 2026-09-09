@@ -993,11 +993,6 @@ export const LeadDetailDialog = ({
                 </p>
               )}
               <div className="flex items-center gap-2 mt-2">
-                <Badge 
-                  className={cn("text-xs", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}
-                >
-                  {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
-                </Badge>
                 <span className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(lead.prospected_at), { addSuffix: true, locale: ptBR })}
                 </span>
