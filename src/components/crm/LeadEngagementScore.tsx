@@ -20,7 +20,7 @@ const getScoreTier = (score: number) => {
 
 const LeadEngagementScoreComponent = ({
   score,
-  max = 1000,
+  max = 100,
   showLabel = true,
   onClick,
   className,
