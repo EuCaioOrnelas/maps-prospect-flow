@@ -440,6 +440,22 @@ export default function CRM() {
 
               <CRMTabs />
 
+              <div className="mt-3 flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant={showArchived ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setShowArchived(v => !v)}
+                >
+                  {showArchived ? 'Ver funil ativo' : `Ver arquivados${archivedCount ? ` (${archivedCount})` : ''}`}
+                </Button>
+                {showArchived && (
+                  <span className="text-xs text-muted-foreground">
+                    Contatos arquivados continuam contando no limite do seu plano.
+                  </span>
+                )}
+              </div>
+
               <CRMMetrics stages={stages} leads={filteredLeads} hideValue={isOperational} loading={isLoading} />
 
 
@@ -622,6 +638,15 @@ export default function CRM() {
                 onChangeResponsible={assignLeadResponsible}
                 canChangeResponsible={canChangeResponsible}
                 hideValue={isOperational}
+                onOpenLeadTab={(lead, tab) => {
+                  setSelectedLead(lead);
+                  setPendingInitialTab(tab);
+                  setPendingInitialRegisterSale(false);
+                  setDialogOpen(true);
+                }}
+                onToggleArchive={async (lead) => {
+                  await setLeadArchived(lead.id, !lead.archived_at);
+                }}
               />
             )}
           </div>
