@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { toIntel100, toIntelDimension, phoneKey8 } from "@/lib/intelligence";
+import {
+  toIntel100, toIntelDimension, phoneKey8, dimensionTo100, dimensionLabel,
+  riskLabel, riskTextColor, momentumOf, MOMENTUM_SIMPLE_LABELS, intelTextColor,
+} from "@/lib/intelligence";
+import { useLeadIntelligence } from "@/hooks/useLeadIntelligence";
 import { Link, useSearchParams } from "react-router-dom";
 import { 
   BarChart3, Users, Trophy, Settings, Loader2, Brain, 
