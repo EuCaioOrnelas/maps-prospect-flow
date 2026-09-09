@@ -44,7 +44,7 @@ export default function CRM() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, accountOwnerId, profile, loading } = useAuth();
-  const { count: contactCount, limit: contactLimit, hasLimit: hasContactLimit, isAtLimit: contactsAtLimit, isNearLimit: contactsNearLimit } = useContactLimit();
+  const { count: contactCount, limit: contactLimit, baseLimit: contactBaseLimit, extraContacts, extraPacks, hasLimit: hasContactLimit, isAtLimit: contactsAtLimit, isNearLimit: contactsNearLimit } = useContactLimit();
   const isMobile = useIsMobile();
   const { showPopup: showBetaWarning, dismiss: dismissBetaWarning, canClose: canCloseBeta, countdown: betaCountdown } = usePagePopupDismiss("crm_beta_warning");
   useAutoScoreTracking("crm");
