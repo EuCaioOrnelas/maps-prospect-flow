@@ -4,27 +4,44 @@ import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * Leitura consolidada de TODOS os dados reais que alimentam o motor central
- * de Inteligência para um único contato. Nada é recalculado aqui: apenas
- * agregamos e interpretamos o que já existe no banco (conversas Evolution/Meta,
- * sinais do motor, histórico de pontuação, prospecção, vendas e padrões).
+ * de Inteligencia para um unico contato. Nada e recalculado aqui: apenas
+ * agregamos e interpretamos o que ja existe no banco (conversas Evolution/Meta,
+ * sinais do motor, historico de pontuacao, prospeccao, vendas e padroes).
+ *
+ * Regra: se o dado nao existe, o campo volta vazio/null. Nunca inventar.
  */
 
 const key8 = (p?: string | null) => (p || "").replace(/\D/g, "").slice(-8);
+
+export interface ConversationEvidence {
+  key: string;
+  label: string;
+  quote: string;
+  at: string;
+  source: string;
+}
 
 export interface ConversationAnalysis {
   total: number;
   inbound: number;
   outbound: number;
   reciprocity: number;         // 0-100
+  turns: number;               // idas e vindas reais
   avgResponseMinutes: number | null;
+  leadAvgResponseMinutes: number | null;
   lastInboundAt: string | null;
   lastOutboundAt: string | null;
   lastMessageAt: string | null;
+  firstMessageAt: string | null;
   waitingReplyHours: number | null; // inbound sem resposta
+  silenceHours: number | null;      // tempo desde a ultima mensagem
   activeDays: number;
   inboundStreak: number;
   audioCount: number;
+  transcribedAudioCount: number;
   sources: string[];           // Evolution / Meta
+  intents: ConversationEvidence[];
+  objections: ConversationEvidence[];
   leadMessages: { content: string; at: string; direction: string; type: string }[];
 }
 
@@ -44,6 +61,70 @@ export interface ScoreHistoryRow {
   category: string | null;
   points_applied: number;
   score_after: number | null;
+}
+
+export interface ProspectData {
+  id: string;
+  company_name: string | null;
+  contact_name: string | null;
+  phone: string | null;
+  email: string | null;
+  category: string | null;
+  city: string | null;
+  region: string | null;
+  address: string | null;
+  website: string | null;
+  origin: string | null;
+  prospected_at: string | null;
+  rating: number | null;
+  review_count: number | null;
+  google_maps_link: string | null;
+  social_media: Record<string, unknown> | null;
+  enrichment_data: Record<string, unknown> | null;
+  ai_diagnosis: string | null;
+  ai_recommended_action: string | null;
+  ai_approach_message: string | null;
+  opportunity_level: string | null;
+  closing_probability: string | null;
+  estimated_value: number | null;
+  tags: string[] | null;
+}
+
+/* --------------------------------------------------- deteccao textual real */
+
+const INTENT_RULES: { key: string; label: string; re: RegExp }[] = [
+  { key: "PRICE", label: "Perguntou preço", re: /\b(quanto custa|qual (o )?(valor|preç|preco)|preç|preco|valores?|orçament|orcament|investiment)/i },
+  { key: "BUY", label: "Falou em fechar", re: /\b(quero fechar|vamos fechar|pode fechar|quero contratar|fechado|topo)\b/i },
+  { key: "PROPOSAL", label: "Pediu proposta", re: /\b(propost|me manda|envia (a|o)|apresenta[çc][ãa]o|simula[çc][ãa]o)/i },
+  { key: "PAYMENT", label: "Falou sobre pagamento", re: /\b(pagament|pix|boleto|cart[ãa]o|parcel|assinatur|fatur)/i },
+  { key: "URGENCY", label: "Demonstrou urgência", re: /\b(urgent|com pressa|pra hoje|para hoje|o quanto antes|imediat|agora mesmo)/i },
+  { key: "AVAILABILITY", label: "Perguntou disponibilidade", re: /\b(tem (dispon|hor[áa]rio|vaga)|dispon[íi]vel|consegue (hoje|amanh[ãa])|agenda)/i },
+  { key: "MEETING", label: "Falou em reunião/visita", re: /\b(reuni[ãa]o|call|visita|conversa por telefone|liga[çc][ãa]o)\b/i },
+];
+
+const OBJECTION_RULES: { key: string; label: string; re: RegExp }[] = [
+  { key: "PRICE", label: "Objeção de preço", re: /\b(caro|muito alto|acima do (meu )?or[çc]amento|sem verba|n[ãa]o tenho (esse )?valor|desconto)\b/i },
+  { key: "TIME", label: "Objeção de tempo", re: /\b(depois|mais pra frente|mais para frente|outro momento|agora n[ãa]o|sem tempo|semana que vem)\b/i },
+  { key: "TRUST", label: "Objeção de confiança", re: /\b(garantia|funciona mesmo|golpe|refer[êe]ncia|comprova[çc][ãa]o|resultado real)\b/i },
+  { key: "COMPETITOR", label: "Citou concorrente", re: /\b(j[áa] (tenho|uso|trabalho com)|outra empresa|concorrent|contratei outro)\b/i },
+  { key: "DECISION", label: "Depende de outra pessoa", re: /\b(preciso falar com|meu s[óo]cio|minha esposa|meu marido|com a diretoria|vou avaliar com)\b/i },
+];
+
+function extract(rules: { key: string; label: string; re: RegExp }[], msgs: any[], source: string) {
+  const out: ConversationEvidence[] = [];
+  for (const rule of rules) {
+    const hit = [...msgs].reverse().find((m) => typeof m.content === "string" && rule.re.test(m.content));
+    if (hit) {
+      out.push({
+        key: rule.key,
+        label: rule.label,
+        quote: String(hit.content).slice(0, 220),
+        at: hit.created_at,
+        source,
+      });
+    }
+  }
+  return out;
 }
 
 export function useLeadIntelligenceDetail(phone?: string | null, crmLeadId?: string | null) {
@@ -75,24 +156,29 @@ export function useLeadIntelligenceDetail(phone?: string | null, crmLeadId?: str
       const inboundRows = rows.filter((m: any) => m.direction === "inbound");
       const outboundRows = rows.filter((m: any) => m.direction !== "inbound");
 
-      // tempo médio de resposta do vendedor (inbound -> próximo outbound)
-      const deltas: number[] = [];
+      // tempo medio de resposta do vendedor (inbound -> proximo outbound)
+      const sellerDeltas: number[] = [];
+      const leadDeltas: number[] = [];
+      let turns = 0;
       for (let i = 0; i < rows.length; i++) {
-        if (rows[i].direction !== "inbound") continue;
-        const next = rows.slice(i + 1).find((m: any) => m.direction !== "inbound");
-        if (!next) continue;
-        const d = (new Date(next.created_at).getTime() - new Date(rows[i].created_at).getTime()) / 60000;
-        if (d >= 0 && d < 60 * 48) deltas.push(d);
+        const cur: any = rows[i];
+        const next: any = rows[i + 1];
+        if (!next) break;
+        if (cur.direction !== next.direction) turns++;
+        const d = (new Date(next.created_at).getTime() - new Date(cur.created_at).getTime()) / 60000;
+        if (d < 0 || d > 60 * 48) continue;
+        if (cur.direction === "inbound" && next.direction !== "inbound") sellerDeltas.push(d);
+        if (cur.direction !== "inbound" && next.direction === "inbound") leadDeltas.push(d);
       }
 
-      const last = rows[rows.length - 1];
-      const lastInbound = [...inboundRows].pop();
-      const lastOutbound = [...outboundRows].pop();
+      const last: any = rows[rows.length - 1];
+      const first: any = rows[0];
+      const lastInbound: any = [...inboundRows].pop();
+      const lastOutbound: any = [...outboundRows].pop();
 
-      // sequência final de mensagens do contato sem resposta
       let inboundStreak = 0;
       for (let i = rows.length - 1; i >= 0; i--) {
-        if (rows[i].direction === "inbound") inboundStreak++;
+        if ((rows[i] as any).direction === "inbound") inboundStreak++;
         else break;
       }
 
@@ -107,25 +193,37 @@ export function useLeadIntelligenceDetail(phone?: string | null, crmLeadId?: str
           mine.map((c: any) => (c.phone_number_id ? "WhatsApp Oficial (Meta)" : "WhatsApp (Evolution)"))
         )
       );
+      const primarySource = sources[0] || "WhatsApp";
+
+      const avg = (a: number[]) => (a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : null);
+
+      const audios = rows.filter((m: any) => m.message_type === "audio");
 
       return {
         total: rows.length,
         inbound: inboundRows.length,
         outbound: outboundRows.length,
         reciprocity: rows.length ? Math.round((inboundRows.length / rows.length) * 100) : 0,
-        avgResponseMinutes: deltas.length ? Math.round(deltas.reduce((a, b) => a + b, 0) / deltas.length) : null,
+        turns,
+        avgResponseMinutes: avg(sellerDeltas),
+        leadAvgResponseMinutes: avg(leadDeltas),
         lastInboundAt: lastInbound?.created_at || null,
         lastOutboundAt: lastOutbound?.created_at || null,
         lastMessageAt: last?.created_at || null,
+        firstMessageAt: first?.created_at || null,
         waitingReplyHours,
+        silenceHours: last ? (Date.now() - new Date(last.created_at).getTime()) / 3600000 : null,
         activeDays: days.size,
         inboundStreak,
-        audioCount: rows.filter((m: any) => m.message_type === "audio").length,
+        audioCount: audios.length,
+        transcribedAudioCount: audios.filter((m: any) => !!m.content).length,
         sources,
+        intents: extract(INTENT_RULES, inboundRows, primarySource),
+        objections: extract(OBJECTION_RULES, inboundRows, primarySource),
         leadMessages: inboundRows
           .slice(-30)
           .map((m: any) => ({
-            content: m.content || (m.message_type === "audio" ? "(áudio)" : "(mídia)"),
+            content: m.content || (m.message_type === "audio" ? "(áudio sem transcrição)" : "(mídia)"),
             at: m.created_at,
             direction: m.direction,
             type: m.message_type,
@@ -186,6 +284,22 @@ export function useLeadIntelligenceDetail(phone?: string | null, crmLeadId?: str
     },
   });
 
+  const prospect = useQuery({
+    queryKey: ["intel-detail-prospect", crmLeadId],
+    enabled: !!crmLeadId,
+    staleTime: 120_000,
+    queryFn: async (): Promise<ProspectData | null> => {
+      const { data } = await supabase
+        .from("leads")
+        .select(
+          "id, company_name, contact_name, phone, email, category, city, region, address, website, origin, prospected_at, rating, review_count, google_maps_link, social_media, enrichment_data, ai_diagnosis, ai_recommended_action, ai_approach_message, opportunity_level, closing_probability, estimated_value, tags"
+        )
+        .eq("id", crmLeadId!)
+        .maybeSingle();
+      return (data || null) as unknown as ProspectData | null;
+    },
+  });
+
   const patterns = useQuery({
     queryKey: ["intel-detail-patterns", accountOwnerId],
     enabled: !!accountOwnerId,
@@ -203,11 +317,13 @@ export function useLeadIntelligenceDetail(phone?: string | null, crmLeadId?: str
 
   return {
     conversation: conversation.data || null,
+    conversationLoading: conversation.isLoading,
     signals: signals.data || [],
     history: history.data || [],
     deals: deals.data || [],
+    prospect: prospect.data || null,
     patterns: patterns.data || [],
     isLoading:
-      conversation.isLoading || signals.isLoading || history.isLoading || deals.isLoading,
+      conversation.isLoading || signals.isLoading || history.isLoading || deals.isLoading || prospect.isLoading,
   };
 }
