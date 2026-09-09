@@ -314,7 +314,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
   for (const il of intentLogs || []) {
     const mapped = REVENUE_INTENT_MAP[il.intent_category] || REVENUE_INTENT_MAP[il.intent_subtype || ""] || null;
     if (mapped) {
-      signals.push({
+      addSignal({
         type: mapped,
         confidence: Number(il.confidence_score) || 0.8,
         at: new Date(il.created_at),
@@ -323,7 +323,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     }
     if (il.raw_message) {
       for (const s of ruleSignals(il.raw_message)) {
-        signals.push({ type: s.type, confidence: s.confidence, at: new Date(il.created_at), source: "rule" });
+        addSignal({ type: s.type, confidence: s.confidence, at: new Date(il.created_at), source: "rule" });
       }
     }
   }
@@ -337,7 +337,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     const rs = ruleSignals(text);
     if (rs.length) {
       for (const s of rs) {
-        signals.push({ type: s.type, confidence: s.confidence, at: new Date(m.created_at), source: "rule", message_id: m.id });
+        addSignal({ type: s.type, confidence: s.confidence, at: new Date(m.created_at), source: "rule", message_id: m.id });
         persist.push({
           owner_user_id: owner, phone_e164: rl.phone_e164, revenue_lead_id: rl.id, crm_lead_id: crm?.id ?? null,
           signal_type: s.type, signal_group: SIGNAL_GROUP[s.type] || "INTENT", confidence: s.confidence,
@@ -359,7 +359,8 @@ async function computeProfile(sb: any, owner: string, phone: string) {
       .in("message_id", ambiguous.map((a) => a.id));
     const cachedIds = new Set((cached || []).map((c: any) => c.message_id));
     for (const c of cached || []) {
-      signals.push({ type: c.signal_type, confidence: Number(c.confidence), at: new Date(c.occurred_at), source: "ai" });
+      if (c.signal_type === "NO_SIGNAL") continue;
+      addSignal({ type: c.signal_type, confidence: Number(c.confidence), at: new Date(c.occurred_at), source: "ai" });
     }
     const todo = ambiguous.filter((a) => !cachedIds.has(a.id));
     if (todo.length) {
@@ -376,7 +377,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
           continue;
         }
         for (const s of list) {
-          signals.push({ type: s.type, confidence: s.confidence, at: new Date(at), source: "ai", message_id: a.id });
+          addSignal({ type: s.type, confidence: s.confidence, at: new Date(at), source: "ai", message_id: a.id });
           persist.push({
             owner_user_id: owner, phone_e164: rl.phone_e164, revenue_lead_id: rl.id, crm_lead_id: crm?.id ?? null,
             signal_type: s.type, signal_group: SIGNAL_GROUP[s.type] || "INTENT", confidence: s.confidence,
@@ -400,14 +401,14 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     if (Number(breakdown.estrutura_digital || 0) && Number(breakdown.estrutura_digital) < 50) gaps.push("estrutura digital fraca");
     if (Array.isArray(enrich?.pontos_fracos)) gaps.push(...enrich.pontos_fracos.slice(0, 3));
     if (gaps.length) {
-      signals.push({ type: "DIAGNOSIS_GAP", confidence: 0.9, at: now, source: "prospecting" });
+      addSignal({ type: "DIAGNOSIS_GAP", confidence: 0.9, at: now, source: "prospecting" });
     }
-    if (rating && rating < 4) signals.push({ type: "DIAGNOSIS_REPUTATION", confidence: 0.8, at: now, source: "prospecting" });
+    if (rating && rating < 4) addSignal({ type: "DIAGNOSIS_REPUTATION", confidence: 0.8, at: now, source: "prospecting" });
   }
 
   // resposta rapida do lead (comportamento)
   const avgResp = Number(conv?.avg_response_time_seconds || 0);
-  if (avgResp > 0 && avgResp <= 600) signals.push({ type: "FAST_RESPONSE", confidence: 0.9, at: now, source: "rule" });
+  if (avgResp > 0 && avgResp <= 600) addSignal({ type: "FAST_RESPONSE", confidence: 0.9, at: now, source: "rule" });
 
   if (persist.length) {
     await sb.from("intel_signals").upsert(persist, {
@@ -416,6 +417,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     });
   }
 
+  const signals: Sig[] = [...signalMap.values()].filter((s) => s.type !== "NO_SIGNAL");
   const present = new Set(signals.map((s) => s.type));
 
   // ---------------- DIMENSOES ----------------
