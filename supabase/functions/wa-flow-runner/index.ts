@@ -141,23 +141,29 @@ interface SendCtx {
 
 async function logOutbound(ctx: SendCtx, content: string, type: string, wamid: string | null, ok: boolean) {
   if (!ctx.convId) return;
-  await supabase.from("chat_messages").insert({
+  // O chat só renderiza os tipos nativos do WhatsApp. Mensagens interativas
+  // (botões/listas) do fluxo eram gravadas como "interactive" e apareciam
+  // quebradas — gravamos como texto para exibirem o conteúdo enviado.
+  const uiType = type === "text" || type === "interactive" || type === "button" || type === "list" ? "text" : type;
+  const { error } = await supabase.from("chat_messages").insert({
     conversation_id: ctx.convId,
     user_id: ctx.userId,
     owner_user_id: ctx.ownerId,
     waba_message_id: wamid,
     direction: "outbound",
-    message_type: type === "text" ? "text" : type,
+    message_type: uiType,
     content,
     status: ok ? "sent" : "failed",
+    metadata: { source: "wa_flow", original_type: type },
   });
+  if (error) console.error("[wa-flow-runner] logOutbound insert falhou:", error.message);
   if (ok) {
     await supabase
       .from("chat_conversations")
       .update({
         last_message_text: content,
         last_message_at: new Date().toISOString(),
-        last_message_type: type === "text" ? "text" : type,
+        last_message_type: uiType,
         last_message_direction: "outbound",
       })
       .eq("id", ctx.convId);
@@ -744,6 +750,16 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
   let currentId: string | null = startNodeId;
   const history: any[] = Array.isArray(execution.node_history) ? [...execution.node_history] : [];
   let steps = 0;
+
+  // Guarda a resposta do contato no nó que fez a pergunta, para os
+  // resultados do fluxo mostrarem a última resposta recebida.
+  if (runtime.hasFreshUserInput && runtime.lastUserText && history.length) {
+    history[history.length - 1] = {
+      ...history[history.length - 1],
+      response: runtime.lastUserText,
+      responded_at: new Date().toISOString(),
+    };
+  }
 
   while (currentId && steps < MAX_STEPS) {
     steps++;
