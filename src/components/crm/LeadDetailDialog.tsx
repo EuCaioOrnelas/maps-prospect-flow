@@ -1145,8 +1145,7 @@ export const LeadDetailDialog = ({
             { id: 'deals', label: `Vendas (${deals.length})` },
             { id: 'files', label: 'Arquivos' },
             { id: 'intelligence', label: 'Inteligência' },
-            { id: 'notes', label: 'Notas' },
-            { id: 'history', label: 'Histórico' },
+            { id: 'notes', label: 'Notas e histórico' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1668,7 +1667,7 @@ export const LeadDetailDialog = ({
             )}
 
             {/* History Tab */}
-            {activeTab === 'history' && (
+            {activeTab === 'notes' && (
               <div>
                 <h4 className="text-sm font-semibold mb-3">Histórico</h4>
                 <div className="space-y-1">
