@@ -12,7 +12,6 @@ import { useLeadScores } from '@/hooks/useLeadScores';
 import { toIntel100 } from '@/lib/intelligence';
 import { useLeadIntelligence, NEXT_ACTION_LABELS } from '@/hooks/useLeadIntelligence';
 import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
-import { LeadEngagementScore } from './LeadEngagementScore';
 import { LeadPotentialValueCompact } from './LeadPotentialValueCompact';
 import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 
