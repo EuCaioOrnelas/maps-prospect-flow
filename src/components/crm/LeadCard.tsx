@@ -43,6 +43,8 @@ const LeadCardComponent = ({
   onChangeResponsible,
   canChangeResponsible = true,
   hideValue = false,
+  onOpenTab,
+  onToggleArchive,
 }: LeadCardProps) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.contact_name || '');
