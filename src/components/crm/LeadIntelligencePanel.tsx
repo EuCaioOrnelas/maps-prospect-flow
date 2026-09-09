@@ -522,7 +522,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                 <Search className="w-3.5 h-3.5 text-primary" />
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Diagnóstico da prospecção</p>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">{String(lead.ai_diagnosis)}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{String((lead as any).ai_diagnosis)}</p>
             </div>
           )}
           {intel?.diagnosis_summary && (
