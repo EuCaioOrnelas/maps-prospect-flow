@@ -551,6 +551,28 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   // O motor legado (revenue) pode ter engajamento sem mensagens espelhadas no chat.
   const hasEngagementData = hasConv || (history.length > 0 && Number(profile?.engagement_score || 0) > 0);
 
+  // "Não analisado" != "baixa oportunidade": sem perfil ou sem evidência, o número é 0 e neutro.
+  const notAnalyzed = !profile || state === "NO_DATA" || opportunity === null;
+  const analyzedMessages = Math.max(conv?.total || 0, engineMessages);
+  const analyzedSignals = Math.max(signals.length, engineSignals);
+  const confidence = Math.max(
+    0,
+    Math.min(100, Number(engineFeatures.analysis_confidence || 0) || analyzedMessages * 6 + analyzedSignals * 10 + (prospect ? 10 : 0)),
+  );
+
+  // Etapa comercial: com conversa vem do motor; sem conversa vem do CRM/prospecção.
+  const stageLabel = useMemo(() => {
+    if (hasConv && profile?.stage) return STAGE_LABELS[profile.stage] || profile.stage;
+    if ((lead as any)?.archived_at) return "Arquivado";
+    const st = (lead as any)?.status || (lead as any)?.stage_name || null;
+    if (st) return String(st);
+    if (deals.some((d: any) => ["ganho", "won"].includes(String(d.status || "").toLowerCase()))) return "Fechado";
+    if (deals.length) return "Negociação";
+    if (prospect) return "Prospecção";
+    return "Novo";
+  }, [hasConv, profile, lead, deals, prospect]);
+
+
 
   const dims: Dim[] = useMemo(() => {
     const d: Dim[] = [];
