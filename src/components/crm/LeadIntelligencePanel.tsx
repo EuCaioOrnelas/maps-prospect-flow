@@ -22,7 +22,7 @@ import type { Lead } from "@/hooks/useCRM";
 import {
   Brain, Target, Zap, TrendingUp, TrendingDown, Minus, AlertTriangle,
   MessageSquare, MapPin, DollarSign, CheckCircle2, Clock, Star, Globe,
-  ShieldAlert, Sparkles, Copy, Building2, ArrowRight, Gauge,
+  ShieldAlert, Sparkles, Copy, Building2, ArrowRight, Compass, ListChecks, HelpCircle, Ban, Flag,
 } from "lucide-react";
 
 interface Props {
@@ -152,7 +152,7 @@ function DimensionCard({ dim }: { dim: Dim }) {
         <>
           <p className="mt-1 text-[15px] font-semibold text-foreground leading-none tabular-nums">
             {dim.value}
-            <span className="text-[10px] font-normal text-muted-foreground"> /100</span>
+            <span className="text-[10px] font-normal text-muted-foreground"> de 100</span>
           </p>
           <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
             <div
@@ -292,6 +292,7 @@ function buildPlaybook(
   conv: ConversationAnalysis | null,
   prospect: ProspectData | null,
   lead: Lead | null,
+  signalNames: string[] = [],
 ): Playbook {
   const msg = buildMessage(prospect, lead, conv);
   const priority = profile?.priority ? PRIORITY_LABELS[profile.priority] || profile.priority : "Média";
@@ -328,6 +329,50 @@ function buildPlaybook(
       expected: "Primeira resposta do contato, que libera o cálculo das dimensões.",
     };
   }
+
+  // Sem nenhuma mensagem trocada: nunca afirmar que existe conversa, mesmo com sinais do motor.
+  if (!conv || conv.total === 0) {
+    const empresa = prospect?.company_name || lead?.company_name || null;
+    const nicho = prospect?.category || lead?.category || null;
+    const cidade = prospect?.city || lead?.city || null;
+    const contexto = [
+      empresa ? `${empresa}${nicho ? `, do segmento ${nicho.toLowerCase()}` : ""}${cidade ? `, em ${cidade}` : ""}` : null,
+      prospect?.rating != null ? `nota ${prospect.rating} no Google com ${prospect.review_count || 0} avaliações` : null,
+      prospect && !prospect.website ? "sem site ativo encontrado" : null,
+      signalNames.length ? `sinais já registrados: ${signalNames.slice(0, 3).join(", ").toLowerCase()}` : null,
+    ].filter(Boolean) as string[];
+
+    return {
+      ...base,
+      code: "FIRST_CONTACT",
+      title: "Iniciar o primeiro contato",
+      priority: profile?.priority ? PRIORITY_LABELS[profile.priority] || priority : "Média",
+      when: "Hoje, em horário comercial",
+      why: signalNames.length
+        ? `Nenhuma mensagem foi trocada com este contato. O que existe são sinais do diagnóstico e da prospecção (${signalNames.slice(0, 2).join(", ").toLowerCase()}), que indicam necessidade, mas não interação.`
+        : "Nenhuma mensagem foi trocada com este contato nos canais conectados. A pontuação atual vem apenas do perfil da empresa.",
+      objective: empresa
+        ? `Abrir a conversa com a ${empresa} usando um gancho específico do negócio dela e conseguir a primeira resposta.`
+        : "Abrir a conversa e conseguir a primeira resposta, que é o que libera a análise real.",
+      steps: [
+        contexto.length
+          ? `Citar um dado concreto que você já tem: ${contexto[0]}.`
+          : "Apresentar-se em uma frase e dizer por que está falando com esta empresa.",
+        prospect && !prospect.website
+          ? "Mostrar o impacto prático da ausência de site ou presença digital fraca em captação de clientes."
+          : "Apontar um ganho concreto e mensurável para o negócio dele.",
+        "Fazer uma única pergunta fechada, fácil de responder.",
+        "Aguardar 48 horas antes de qualquer nova tentativa.",
+      ],
+      question: nicho
+        ? `Vocês estão querendo atrair mais clientes de ${nicho.toLowerCase()} agora ou isso fica para os próximos meses?`
+        : "Vocês estão buscando atrair mais clientes agora ou isso é algo para os próximos meses?",
+      avoid: "Não dizer que já conversaram, não citar retomada e não mandar mensagem genérica. Nenhuma mensagem foi trocada até aqui.",
+      expected: "Primeira resposta do contato, que libera engajamento, intenção e momentum reais.",
+    };
+  }
+
+
 
   if (waiting != null && waiting >= 0.25) {
     return {
@@ -501,14 +546,6 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
     return "COMPLETE";
   }, [conv, signals.length, engineMessages, engineSignals]);
 
-  const confidence = useMemo(() => {
-    const v =
-      Math.max(conv?.total || 0, engineMessages) * 6 +
-      Math.max(signals.length, engineSignals) * 10 +
-      (prospect ? 10 : 0);
-    return Math.max(0, Math.min(100, v));
-  }, [conv, signals.length, prospect, engineMessages, engineSignals]);
-
   const opportunity = profile ? Math.round(Number(profile.opportunity_score || 0)) : null;
   const hasConv = !!conv && conv.total > 0;
   // O motor legado (revenue) pode ter engajamento sem mensagens espelhadas no chat.
@@ -626,8 +663,8 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   }, [profile, conv, signals, history, prospect, hasConv, hasEngagementData, state]);
 
   const playbook = useMemo(
-    () => buildPlaybook(state, profile, conv, prospect, lead || null),
-    [state, profile, conv, prospect, lead]
+    () => buildPlaybook(state, profile, conv, prospect, lead || null, signals.map((s) => signalLabel(s.signal_type))),
+    [state, profile, conv, prospect, lead, signals]
   );
 
   const positives = ((profile?.factors as any[]) || []).filter((f) => f?.label);
@@ -647,13 +684,42 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
 
   if (profileLoading || detail.isLoading) {
     return (
-      <div className={cn("space-y-3", className)}>
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-24 rounded-xl border border-border/60 bg-muted/20 animate-pulse" />
-        ))}
+      <div className={cn("space-y-4 animate-fade-in", className)}>
+        <section className="rounded-xl border border-border/60 bg-card overflow-hidden">
+          <header className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50">
+            <Brain className="w-4 h-4 text-primary animate-pulse" />
+            <h3 className="text-[12px] font-semibold uppercase tracking-wider text-foreground">Inteligência Wiize</h3>
+            <span className="ml-auto flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="w-3 h-3 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+              Analisando o contato
+            </span>
+          </header>
+          <div className="px-4 py-4 space-y-3">
+            <div className="h-3 w-24 rounded bg-muted/70 overflow-hidden relative">
+              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-foreground/10 to-transparent animate-shimmer" />
+            </div>
+            <div className="h-9 w-32 rounded-lg bg-muted/60" />
+            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <div className="h-full w-1/3 rounded-full bg-primary/50 animate-pulse" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-14 rounded-lg border border-border/50 bg-muted/25 animate-pulse"
+                  style={{ animationDelay: `${i * 90}ms` }}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+        <p className="text-[11px] text-muted-foreground text-center">
+          Cruzando conversas, sinais, prospecção e histórico comercial deste contato.
+        </p>
       </div>
     );
   }
+
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -678,9 +744,9 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             </>
           ) : (
             <>
-              <div className="flex items-end gap-2 mt-0.5">
+              <div className="flex items-baseline gap-1.5 mt-0.5">
                 <span className="text-[38px] font-semibold text-foreground leading-none tabular-nums">{opportunity}</span>
-                <span className="text-[13px] text-muted-foreground mb-1">/ 100</span>
+                <span className="text-[13px] text-muted-foreground">de 100</span>
               </div>
               <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
                 <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${Math.max(2, opportunity)}%` }} />
@@ -692,17 +758,9 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
               </div>
             </>
           )}
-
-          <div className="mt-3 flex items-center gap-2 border-t border-border/50 pt-2.5">
-            <Gauge className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-[11px] text-muted-foreground">Confiança da análise</span>
-            <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
-              <div className="h-full rounded-full bg-primary/60" style={{ width: `${Math.max(2, confidence)}%` }} />
-            </div>
-            <span className="text-[11px] tabular-nums text-muted-foreground">{confidence}%</span>
-          </div>
         </div>
       </section>
+
 
       {/* ------------------------------------------------------------ tabs */}
       <Tabs defaultValue="overview" className="w-full">
@@ -799,65 +857,98 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             )}
           </Block>
 
-          <Block icon={Sparkles} title="Próxima melhor ação">
-            <div className="space-y-3">
+          <section className="rounded-xl border border-primary/25 bg-card overflow-hidden shadow-sm">
+            <header className="flex items-center gap-2 px-3.5 py-2.5 bg-primary/[0.07] border-b border-primary/20">
+              <span className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+              </span>
+              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-primary flex-1">Próxima melhor ação</h4>
+              <Badge variant="outline" className="text-[10px] border-primary/30 text-primary bg-primary/5">
+                Prioridade {playbook.priority}
+              </Badge>
+            </header>
+
+            <div className="px-3.5 py-3.5 space-y-3.5">
               <div>
-                <p className="text-[15px] font-semibold text-foreground leading-tight">{playbook.title}</p>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  <Badge variant="outline" className="text-[10px]">Prioridade {playbook.priority}</Badge>
-                  <Badge variant="outline" className="text-[10px]">Canal: {playbook.channel}</Badge>
-                  <Badge variant="outline" className="text-[10px]">Momento: {playbook.when}</Badge>
+                <p className="text-[17px] font-semibold text-foreground leading-tight tracking-tight">{playbook.title}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-primary/70" /> {playbook.channel}
+                  </span>
+                  <span className="w-px h-3 bg-border" />
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-primary/70" /> {playbook.when}
+                  </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Por que</p>
-                  <p className="text-[12px] text-foreground mt-0.5 leading-relaxed">{playbook.why}</p>
+              <div className="rounded-lg bg-muted/25 border border-border/50 divide-y divide-border/50">
+                <div className="flex items-start gap-2.5 px-3 py-2.5">
+                  <Brain className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Por que agora</p>
+                    <p className="text-[12.5px] text-foreground mt-0.5 leading-relaxed">{playbook.why}</p>
+                  </div>
                 </div>
-                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Objetivo</p>
-                  <p className="text-[12px] text-foreground mt-0.5 leading-relaxed">{playbook.objective}</p>
+                <div className="flex items-start gap-2.5 px-3 py-2.5">
+                  <Compass className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Objetivo desta ação</p>
+                    <p className="text-[12.5px] text-foreground mt-0.5 leading-relaxed">{playbook.objective}</p>
+                  </div>
                 </div>
               </div>
 
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">O que fazer</p>
-                <ol className="space-y-1">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
+                  <ListChecks className="w-3.5 h-3.5 text-primary/70" /> Roteiro da abordagem
+                </p>
+                <ol className="relative pl-1">
                   {playbook.steps.map((s, i) => (
-                    <li key={i} className="flex items-start gap-2 text-[13px] text-foreground/90 leading-snug">
-                      <span className="w-4 h-4 rounded-md bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0 mt-0.5">
+                    <li key={i} className="relative flex items-start gap-2.5 pb-2.5 last:pb-0">
+                      {i < playbook.steps.length - 1 && (
+                        <span className="absolute left-[9px] top-5 bottom-0 w-px bg-border/70" />
+                      )}
+                      <span className="relative z-10 w-[19px] h-[19px] rounded-md bg-primary/10 border border-primary/20 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0">
                         {i + 1}
                       </span>
-                      {s}
+                      <span className="text-[13px] text-foreground/90 leading-snug pt-0.5">{s}</span>
                     </li>
                   ))}
                 </ol>
               </div>
 
-              <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Pergunta principal</p>
-                <p className="text-[13px] text-foreground mt-0.5 leading-relaxed">“{playbook.question}”</p>
+              <div className="rounded-lg border-l-2 border-primary bg-primary/[0.06] px-3 py-2.5">
+                <p className="text-[10px] uppercase tracking-wider text-primary font-semibold flex items-center gap-1.5">
+                  <HelpCircle className="w-3.5 h-3.5" /> Pergunta que destrava
+                </p>
+                <p className="text-[13.5px] text-foreground mt-1 leading-relaxed italic">“{playbook.question}”</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">O que evitar</p>
-                  <p className="text-[12px] text-foreground mt-0.5 leading-relaxed">{playbook.avoid}</p>
+                <div className="rounded-lg border border-border/60 bg-card px-3 py-2.5">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
+                    <Ban className="w-3.5 h-3.5 text-destructive/70" /> O que evitar
+                  </p>
+                  <p className="text-[12px] text-foreground/90 mt-1 leading-relaxed">{playbook.avoid}</p>
                 </div>
-                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Resultado esperado</p>
-                  <p className="text-[12px] text-foreground mt-0.5 leading-relaxed">{playbook.expected}</p>
+                <div className="rounded-lg border border-border/60 bg-card px-3 py-2.5">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
+                    <Flag className="w-3.5 h-3.5 text-primary/70" /> Resultado esperado
+                  </p>
+                  <p className="text-[12px] text-foreground/90 mt-1 leading-relaxed">{playbook.expected}</p>
                 </div>
               </div>
 
               {playbook.message ? (
-                <div className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <p className="text-[10px] uppercase tracking-wider text-primary font-semibold flex-1">Mensagem sugerida</p>
+                <div className="rounded-lg border border-border/60 bg-muted/20 overflow-hidden">
+                  <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex-1">
+                      Mensagem sugerida
+                    </p>
                     <Button
                       size="sm"
-                      variant="ghost"
+                      variant="outline"
                       className="h-6 px-2 text-[11px]"
                       onClick={() => {
                         navigator.clipboard.writeText(playbook.message!);
@@ -867,10 +958,12 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                       <Copy className="w-3 h-3 mr-1" /> Copiar
                     </Button>
                   </div>
-                  <p className="text-[13px] text-foreground mt-1 leading-relaxed whitespace-pre-wrap">{playbook.message}</p>
-                  {playbook.messageOrigin && (
-                    <p className="text-[10px] text-muted-foreground mt-1.5">{playbook.messageOrigin}</p>
-                  )}
+                  <div className="px-3 py-2.5">
+                    <p className="text-[13px] text-foreground leading-relaxed whitespace-pre-wrap">{playbook.message}</p>
+                    {playbook.messageOrigin && (
+                      <p className="text-[10px] text-muted-foreground mt-2">{playbook.messageOrigin}</p>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <Empty
@@ -879,7 +972,8 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                 />
               )}
             </div>
-          </Block>
+          </section>
+
         </TabsContent>
 
         {/* -------------------------------------------------------- conversa */}
@@ -1005,68 +1099,127 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
 
         {/* -------------------------------------------------------- comercial */}
         <TabsContent value="comercial" className="mt-4 space-y-4">
-          <Block icon={DollarSign} title="Negociações deste contato">
-            {deals.length ? (
-              <ul className="space-y-1.5">
-                {deals.map((d: any) => (
-                  <li key={d.id} className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-medium text-foreground truncate">{d.title || "Negociação"}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {[d.status, d.closed_at ? format(new Date(d.closed_at), "dd/MM/yyyy") : null].filter(Boolean).join(" · ")}
-                      </p>
-                    </div>
-                    {d.value != null && (
-                      <span className="text-[13px] font-semibold tabular-nums text-foreground shrink-0">
-                        R$ {Number(d.value).toLocaleString("pt-BR")}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[12px] text-muted-foreground">Nenhuma negociação registrada para este contato.</p>
-            )}
-          </Block>
+          {(() => {
+            const norm = (s: string | null) => (s || "").toLowerCase();
+            const won = deals.filter((d: any) => ["ganho", "won", "fechado", "closed_won"].includes(norm(d.status)));
+            const lost = deals.filter((d: any) => ["perdido", "lost", "closed_lost"].includes(norm(d.status)));
+            const open = deals.filter((d: any) => !won.includes(d) && !lost.includes(d));
+            const sum = (arr: any[]) => arr.reduce((t, d) => t + Number(d.value || 0), 0);
+            const brl = (v: number) => `R$ ${v.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
+            const statusLabel = (s: string | null) =>
+              won.some((d: any) => norm(d.status) === norm(s)) ? "Ganha"
+              : lost.some((d: any) => norm(d.status) === norm(s)) ? "Perdida"
+              : s || "Em aberto";
 
-          <Block icon={TrendingUp} title="Padrões históricos da sua conta">
-            {patterns.length ? (
-              <ul className="space-y-1">
-                {patterns.slice(0, 6).map((p: any, i: number) => (
-                  <li key={i} className="flex items-center gap-2 py-1 border-b border-border/40 last:border-0">
-                    <span className="text-[13px] text-foreground/90 flex-1 min-w-0 truncate">
-                      {p.pattern_key} {p.niche ? `· ${p.niche}` : ""}
-                    </span>
-                    <span className="text-[11px] tabular-nums text-muted-foreground shrink-0">
-                      {Math.round(Number(p.rate || 0) * 100)}% · {p.sample_size} casos
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[12px] text-muted-foreground">
-                Ainda não há padrões suficientes. Eles aparecem conforme você registra vendas ganhas e perdidas.
-              </p>
-            )}
-          </Block>
+            return (
+              <>
+                <Block icon={DollarSign} title="Resumo comercial deste contato">
+                  {deals.length ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      <Stat label="Em aberto" value={String(open.length)} hint={open.length ? brl(sum(open)) : undefined} />
+                      <Stat label="Ganhas" value={String(won.length)} hint={won.length ? brl(sum(won)) : undefined} />
+                      <Stat label="Perdidas" value={String(lost.length)} hint={lost.length ? brl(sum(lost)) : undefined} />
+                    </div>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground">
+                      Nenhuma negociação registrada. Ao criar uma venda na aba Vendas deste contato, ela aparece aqui e
+                      passa a alimentar os padrões da sua conta.
+                    </p>
+                  )}
+                </Block>
+
+                {deals.length > 0 && (
+                  <Block icon={DollarSign} title="Negociações">
+                    <ul className="space-y-1.5">
+                      {deals.map((d: any) => (
+                        <li key={d.id} className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-medium text-foreground truncate">{d.title || "Negociação"}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {[
+                                statusLabel(d.status),
+                                d.sale_type || null,
+                                format(new Date(d.closed_at || d.created_at), "dd/MM/yyyy"),
+                              ].filter(Boolean).join(" · ")}
+                            </p>
+                          </div>
+                          {d.value != null && (
+                            <span className="text-[13px] font-semibold tabular-nums text-foreground shrink-0">
+                              {brl(Number(d.value))}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </Block>
+                )}
+
+                <Block icon={TrendingUp} title="Padrões históricos da sua conta">
+                  {patterns.length ? (
+                    <ul className="space-y-1">
+                      {patterns.slice(0, 6).map((p: any, i: number) => (
+                        <li key={i} className="flex items-center gap-2 py-1.5 border-b border-border/40 last:border-0">
+                          <span className="text-[13px] text-foreground/90 flex-1 min-w-0 truncate">
+                            {signalLabel(p.pattern_key)}
+                            {p.niche ? <span className="text-muted-foreground"> · {p.niche}</span> : null}
+                          </span>
+                          <span className="text-[11px] tabular-nums text-muted-foreground shrink-0">
+                            {Math.round(Number(p.rate || 0) * 100)}% de conversão · {p.sample_size} caso(s)
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground">
+                      Ainda não há padrões suficientes. Eles aparecem conforme você registra vendas ganhas e perdidas.
+                    </p>
+                  )}
+                </Block>
+              </>
+            );
+          })()}
+
         </TabsContent>
 
         {/* --------------------------------------------------------- evolução */}
         <TabsContent value="evolucao" className="mt-4 space-y-4">
           {chartData.length > 1 ? (
             <Block icon={TrendingUp} title="Evolução da oportunidade">
-              <div className="h-40">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>
-                    <XAxis dataKey="at" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
-                    <RTooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-                    <RLine type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              {(() => {
+                const first = chartData[0].value;
+                const last = chartData[chartData.length - 1].value;
+                const delta = last - first;
+                const peak = Math.max(...chartData.map((c) => c.value));
+                return (
+                  <>
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <Stat label="Atual" value={`${last} de 100`} />
+                      <Stat
+                        label="Variação no período"
+                        value={`${delta > 0 ? "+" : ""}${delta} pts`}
+                        hint={delta > 0 ? "em crescimento" : delta < 0 ? "em queda" : "estável"}
+                      />
+                      <Stat label="Pico" value={`${peak} de 100`} />
+                    </div>
+                    <div className="h-40">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>
+                          <XAxis dataKey="at" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
+                          <YAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
+                          <RTooltip
+                            contentStyle={{ fontSize: 11, borderRadius: 8 }}
+                            formatter={(v: any) => [`${v} de 100`, "Oportunidade"]}
+                          />
+                          <RLine type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                );
+              })()}
             </Block>
           ) : (
+
             <Empty
               title="Sem histórico suficiente"
               description="A evolução aparece a partir da segunda variação registrada pelo motor para este contato."
@@ -1085,7 +1238,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                       <p className="text-[13px] text-foreground/90 leading-snug">{signalLabel(h.event_type || "Atualização")}</p>
                       <p className="text-[10px] text-muted-foreground">
                         {format(new Date(h.created_at), "dd/MM HH:mm")}
-                        {h.score_after != null ? ` · oportunidade ${Math.round(Number(h.score_after) / 10)}/100` : ""}
+                        {h.score_after != null ? ` · oportunidade ${Math.round(Number(h.score_after) / 10)} de 100` : ""}
                       </p>
                     </div>
                   </li>

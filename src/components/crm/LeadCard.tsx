@@ -258,11 +258,17 @@ const LeadCardComponent = ({
       {/* Linha de separação */}
       <div className="wiize-hairline mb-2.5" />
 
-      {/* Inteligência — resultado 0-100 do motor central */}
+      {/* Inteligência — resultado 0-100 do motor central (mesma fonte da aba interna) */}
       {(() => {
-        const s = intel
-          ? Math.max(0, Math.min(100, Math.round(intel.opportunity_score)))
-          : toIntel100(scoreData?.score_total);
+        const s = intel ? Math.max(0, Math.min(100, Math.round(intel.opportunity_score))) : null;
+        if (s === null) {
+          return (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</span>
+              <span className="text-xs text-muted-foreground">Sem análise</span>
+            </div>
+          );
+        }
         return (
           <div className="flex items-center gap-2">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</span>
@@ -273,6 +279,7 @@ const LeadCardComponent = ({
           </div>
         );
       })()}
+
 
 
       {/* Footer - Tags and Response time */}

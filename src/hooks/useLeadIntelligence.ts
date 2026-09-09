@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -138,17 +138,22 @@ export function useLeadIntelligence() {
 /** Perfil de um unico lead (usado no detalhe do lead e no chat). */
 export function useLeadIntelligenceProfile(phone?: string | null) {
   const { accountOwnerId } = useAuth();
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: ["intel-lead-profile", accountOwnerId, key8(phone || "")],
     queryFn: async () => {
       if (!accountOwnerId || !phone) return null;
+      const target = key8(phone);
+
+      // Busca direta pelo sufixo do telefone (evita baixar todos os perfis da conta)
       const { data, error } = await supabase
         .from("intel_lead_profiles")
         .select("*")
-        .eq("owner_user_id", accountOwnerId);
+        .eq("owner_user_id", accountOwnerId)
+        .ilike("phone_e164", `%${target}`)
+        .limit(1);
       if (error) throw error;
-      const target = key8(phone);
-      const found = (data || []).find((p: any) => key8(p.phone_e164) === target) || null;
+      const found = (data || [])[0];
       if (found) return found as unknown as LeadIntelligence;
 
       // Sem perfil ainda: pede ao motor central (nao cria calculo novo, apenas processa este contato)
@@ -156,7 +161,6 @@ export function useLeadIntelligenceProfile(phone?: string | null) {
         await supabase.functions.invoke("intel-engine", {
           body: { action: "compute_profile", phone_e164: phone },
         });
-
       } catch {
         return null;
       }
@@ -164,8 +168,14 @@ export function useLeadIntelligenceProfile(phone?: string | null) {
       const { data: after } = await supabase
         .from("intel_lead_profiles")
         .select("*")
-        .eq("owner_user_id", accountOwnerId);
-      return ((after || []).find((p: any) => key8(p.phone_e164) === target) || null) as unknown as LeadIntelligence | null;
+        .eq("owner_user_id", accountOwnerId)
+        .ilike("phone_e164", `%${target}`)
+        .limit(1);
+
+      // Mantem o card do funil em sincronia com o valor recem calculado
+      queryClient.invalidateQueries({ queryKey: ["intel-lead-profiles", accountOwnerId] });
+
+      return ((after || [])[0] || null) as unknown as LeadIntelligence | null;
     },
     enabled: !!accountOwnerId && !!phone,
     staleTime: 30_000,
