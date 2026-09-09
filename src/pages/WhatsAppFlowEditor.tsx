@@ -179,7 +179,7 @@ const sidebarCategories = [
     items: [
       { type: "action", icon: Settings, label: "Ação", desc: "Tag, Kanban, CRM", color: COLOR_ACTIONS },
       { type: "handoff", icon: HeadphonesIcon, label: "Humano", desc: "Transferir para humano", color: COLOR_ACTIONS },
-      { type: "end", icon: CircleStop, label: "Encerramento", desc: "Encerrar o fluxo", color: COLOR_ACTIONS },
+      { type: "end", icon: CircleStop, label: "Encerramento", desc: "Encerrar o fluxo", color: "text-primary-foreground bg-rose-500" },
     ],
   },
   {

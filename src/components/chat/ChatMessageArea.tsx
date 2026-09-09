@@ -44,7 +44,7 @@ interface ChatMessageAreaProps {
   messagesEndRef: React.RefObject<HTMLDivElement>;
   onReopenConversation?: (templateName: string) => void;
   fetchTemplates?: () => Promise<any[]>;
-  members?: { user_id: string; name: string | null; email: string | null }[];
+  members?: { user_id: string; name: string | null; email: string | null; avatar_url?: string | null }[];
   canChangeResponsible?: boolean;
   onTransferResponsible?: (conversationId: string, userId: string | null) => Promise<void>;
   currentUserId?: string;
@@ -225,19 +225,48 @@ function InboundTail() {
 function ReplyQuote({ replyMsg }: { replyMsg: ChatMessage | undefined }) {
   if (!replyMsg) return null;
   const isSelf = replyMsg.direction === "outbound";
-  const color = isSelf ? "#128c7e" : "#1f7aec";
+  const color = isSelf ? "hsl(var(--primary))" : "#1f7aec";
   return (
     <div
-      className="mx-[4px] mt-[4px] mb-[2px] rounded-[7px] bg-black/10 dark:bg-white/10 px-[8px] py-[5px] border-l-[3px] cursor-pointer"
+      className="mx-[4px] mt-[4px] mb-[3px] rounded-[6px] bg-black/[0.07] dark:bg-white/[0.09] px-[8px] py-[5px] border-l-[3px] cursor-pointer"
       style={{ borderLeftColor: color }}
     >
-      <p className="text-[11px] font-medium" style={{ color }}>
+      <p className="text-[11px] font-semibold leading-[15px]" style={{ color }}>
         {isSelf ? "Você" : "Contato"}
       </p>
-      <p className="text-[12px] wa-text-muted truncate">{replyMsg.content || "📎 Mídia"}</p>
+      <p className="text-[12px] leading-[16px] truncate text-foreground/75">
+        {replyMsg.content || "📎 Mídia"}
+      </p>
     </div>
   );
 }
+
+/** Avatar do colaborador (foto de perfil real, com fallback nas iniciais). */
+function MemberAvatar({
+  member,
+  size = 22,
+}: {
+  member: { user_id: string; name: string | null; email: string | null; avatar_url?: string | null };
+  size?: number;
+}) {
+  const initials = getChatInitials(member.name, member.email || "");
+  return (
+    <span
+      className={cn(
+        "rounded-full overflow-hidden flex items-center justify-center text-white font-medium shrink-0",
+        member.avatar_url ? "bg-muted" : getChatAvatarColor(member.user_id)
+      )}
+      style={{ width: size, height: size, fontSize: Math.max(9, Math.round(size * 0.42)) }}
+    >
+      {member.avatar_url ? (
+        <img src={member.avatar_url} alt={member.name || member.email || ""} className="w-full h-full object-cover" />
+      ) : (
+        initials
+      )}
+    </span>
+  );
+}
+
 
 function SearchMessagesBar({ messages, onClose, onJumpToMessage }: { messages: ChatMessage[]; onClose: () => void; onJumpToMessage?: (messageId: string) => void }) {
   const [query, setQuery] = useState("");
@@ -759,9 +788,7 @@ export function ChatMessageArea({
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted/70 hover:bg-muted text-xs text-foreground transition">
                     {respMember ? (
-                      <span className={cn("w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-medium shrink-0", getChatAvatarColor(respMember.user_id))}>
-                        {getChatInitials(respMember.name, respMember.email || "")}
-                      </span>
+                      <MemberAvatar member={respMember} size={18} />
                     ) : (
                       <UserCog size={13} className="text-muted-foreground" />
                     )}
@@ -782,8 +809,6 @@ export function ChatMessageArea({
                     <span className="flex-1">Sem responsável</span>
                   </DropdownMenuItem>
                   {members.map((m) => {
-                    const c = getChatAvatarColor(m.user_id);
-                    const i = getChatInitials(m.name, m.email || "");
                     const selected = m.user_id === conversation.responsible_user_id;
                     return (
                       <DropdownMenuItem
@@ -794,7 +819,7 @@ export function ChatMessageArea({
                         }}
                         className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                       >
-                        <span className={cn("w-[22px] h-[22px] rounded-full flex items-center justify-center text-white text-[10px] font-medium shrink-0", c)}>{i}</span>
+                        <MemberAvatar member={m} size={22} />
                         <span className="flex-1 truncate">
                           {m.name || m.email || m.user_id.slice(0, 8)}
                           {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
@@ -891,8 +916,6 @@ export function ChatMessageArea({
                             <span className="flex-1">Sem responsável</span>
                           </DropdownMenuItem>
                           {members.map((m) => {
-                            const c = getChatAvatarColor(m.user_id);
-                            const i = getChatInitials(m.name, m.email || "");
                             const selected = m.user_id === conversation.responsible_user_id;
                             return (
                               <DropdownMenuItem
@@ -903,7 +926,7 @@ export function ChatMessageArea({
                                 }}
                                 className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
                               >
-                                <span className={cn("w-[22px] h-[22px] rounded-full flex items-center justify-center text-white text-[10px] font-medium shrink-0", c)}>{i}</span>
+                                <MemberAvatar member={m} size={22} />
                                 <span className="flex-1 truncate">
                                   {m.name || m.email || m.user_id.slice(0, 8)}
                                   {m.user_id === currentUserId && <span className="text-[10px] text-muted-foreground ml-1">(você)</span>}
@@ -1038,9 +1061,9 @@ export function ChatMessageArea({
                                   />
                                 )}
                                 {msg.deleted_for_all_at ? (
-                                  <div className="px-[10px] pt-[7px] pb-[6px] pr-[36px] flex items-center gap-1.5 italic">
-                                    <Ban size={14} className="wa-text-muted shrink-0" />
-                                    <span className="text-[13.5px] wa-text-muted leading-[19px]">
+                                  <div className="px-[9px] pt-[5px] pb-[3px] pr-[36px] flex items-center gap-1.5 italic">
+                                    <Ban size={14} className="shrink-0 text-foreground/45" />
+                                    <span className="text-[13.5px] leading-[18px] text-foreground/60">
                                       {isOutbound ? "Você apagou esta mensagem" : "Esta mensagem foi apagada"}
                                     </span>
                                   </div>
@@ -1074,15 +1097,15 @@ export function ChatMessageArea({
                                   <div className="p-[3px]"><MediaPreview msg={msg} onOpenImage={openImage} onQuickForward={quickForward} /></div>
                                 )}
                                 {msg.content && msg.message_type === "text" && (
-                                  <div className="px-[9px] pt-[6px] pb-[8px] pr-[36px]">
-                                    <span className="text-[14.2px] wa-text-primary leading-[19px] whitespace-pre-wrap break-words">
+                                  <div className="px-[9px] pt-[5px] pb-[2px] pr-[36px]">
+                                    <span className="text-[14.2px] wa-text-primary leading-[18px] whitespace-pre-wrap break-words">
                                       {msg.content}
                                     </span>
                                   </div>
                                 )}
                                   </>
                                 )}
-                                <div className="flex items-center justify-end gap-[4px] px-[7px] pb-[5px] -mt-[2px]">
+                                <div className="flex items-center justify-end gap-[4px] px-[7px] pb-[3px] -mt-[1px]">
                                   {isOutbound && (msg.metadata as any)?.source === "flow" && (
                                     <Workflow
                                       size={11}
@@ -1270,35 +1293,21 @@ export function ChatMessageArea({
               {pendingDeleteIds.length === 1 ? "Apagar mensagem?" : `Apagar ${pendingDeleteIds.length} mensagens?`}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Você pode apagar mensagens na Wiize somente para você ou para todos os usuários da sua conta. Esta ação não pode ser desfeita.
+              A mensagem será apagada apenas para você, aqui na Wiize. Esta ação não pode ser desfeita.
               <span className="mt-2 block text-xs text-muted-foreground">
-                Importante: a API oficial do WhatsApp (Meta) não permite apagar mensagens já entregues no aparelho do cliente — a mensagem continuará visível no WhatsApp dele.
+                Apagar para todos não é permitido: a API oficial do WhatsApp não oferece esse recurso, então a mensagem continua visível no aparelho do contato.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {(() => {
-            const pendingMsgs = messages.filter(m => pendingDeleteIds.includes(m.id));
-            const allOutbound = pendingMsgs.length > 0 && pendingMsgs.every(m => m.direction === "outbound");
-            return (
-              <AlertDialogFooter className="flex-col sm:flex-col gap-2 sm:space-x-0">
-                {allOutbound && (
-                  <button
-                    onClick={() => handleConfirmDeleteMessages("all")}
-                    className="w-full px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 text-sm font-medium transition-colors"
-                  >
-                    Apagar na Wiize para todos
-                  </button>
-                )}
-                <button
-                  onClick={() => handleConfirmDeleteMessages("me")}
-                  className="w-full px-4 py-2.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 text-sm font-medium transition-colors"
-                >
-                  Apagar para mim
-                </button>
-                <AlertDialogCancel className="w-full mt-0">Cancelar</AlertDialogCancel>
-              </AlertDialogFooter>
-            );
-          })()}
+          <AlertDialogFooter className="flex-col sm:flex-col gap-2 sm:space-x-0">
+            <button
+              onClick={() => handleConfirmDeleteMessages("me")}
+              className="w-full px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 text-sm font-medium transition-colors"
+            >
+              Apagar para mim
+            </button>
+            <AlertDialogCancel className="w-full mt-0">Cancelar</AlertDialogCancel>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 

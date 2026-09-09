@@ -70,7 +70,22 @@ export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [connections, setConnections] = useState<WabaConnection[]>([]);
-  const [activeConnectionId, setActiveConnectionId] = useState<string | null>(null);
+  const [activeConnectionId, setActiveConnectionIdState] = useState<string | null>(null);
+
+  // Número selecionado fica salvo no cache: ao voltar ao chat o usuário
+  // continua no mesmo número, em vez de cair sempre no primeiro.
+  const activeConnKey = user ? `wa_active_connection_${user.id}` : null;
+  const setActiveConnectionId = useCallback((id: string | null) => {
+    setActiveConnectionIdState(id);
+    try {
+      if (!activeConnKey) return;
+      if (id) localStorage.setItem(activeConnKey, id);
+      else localStorage.removeItem(activeConnKey);
+    } catch {}
+  }, [activeConnKey]);
+  const readSavedConnectionId = useCallback(() => {
+    try { return activeConnKey ? localStorage.getItem(activeConnKey) : null; } catch { return null; }
+  }, [activeConnKey]);
   const [loading, setLoading] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -120,7 +135,9 @@ export function useChat() {
       setConnectionHealth(cached.health);
       // Pick best active connection
       const healthyConn = data.find(c => cached!.health[c.id] !== false);
-      setActiveConnectionId(healthyConn?.id || data[0].id);
+      const savedId = readSavedConnectionId();
+      const saved = savedId ? data.find(c => c.id === savedId) : null;
+      setActiveConnectionId(saved?.id || healthyConn?.id || data[0].id);
       setLoading(false);
       return;
     }
@@ -160,9 +177,11 @@ export function useChat() {
 
     // Prefer a healthy connection
     const healthyConn = data.find(c => healthMap[c.id] === true);
-    setActiveConnectionId(healthyConn?.id || data[0].id);
+    const savedId2 = readSavedConnectionId();
+    const saved2 = savedId2 ? data.find(c => c.id === savedId2) : null;
+    setActiveConnectionId(saved2?.id || healthyConn?.id || data[0].id);
     setLoading(false);
-  }, [user, accountOwnerId, validateToken]);
+  }, [user, accountOwnerId, validateToken, readSavedConnectionId, setActiveConnectionId]);
 
   useEffect(() => {
     if (!user) return;
@@ -271,8 +290,15 @@ export function useChat() {
             return [next, ...prev];
           });
         } else if (payload.eventType === "UPDATE") {
+          const updatedConv = payload.new as ChatConversation;
+          const isOpen = updatedConv.id === activeConversationIdRef.current;
+          // A conversa aberta na tela nunca mostra contador de não lidas:
+          // se o webhook incrementar, zeramos de novo no banco.
+          if (isOpen && (updatedConv.unread_count || 0) > 0) {
+            supabase.from("chat_conversations").update({ unread_count: 0 }).eq("id", updatedConv.id).then(() => {});
+          }
           setConversations(prev =>
-            prev.map(c => c.id === (payload.new as ChatConversation).id ? payload.new as ChatConversation : c)
+            prev.map(c => c.id === updatedConv.id ? (isOpen ? { ...updatedConv, unread_count: 0 } : updatedConv) : c)
               .sort((a, b) => {
                 if (a.is_pinned && !b.is_pinned) return -1;
                 if (!a.is_pinned && b.is_pinned) return 1;
@@ -309,6 +335,12 @@ export function useChat() {
             );
           } else {
             applyMsg(newMsg);
+          }
+          // Conversa aberta: zera o aviso de não lidas em tempo real, sem
+          // precisar sair e voltar da conversa.
+          if (newMsg.direction === "inbound") {
+            setConversations(prev => prev.map(c => c.id === currentActive ? { ...c, unread_count: 0 } : c));
+            supabase.from("chat_conversations").update({ unread_count: 0 }).eq("id", currentActive).then(() => {});
           }
         }
         // Browser notification on inbound (skip muted, blocked, active conversation, or hidden tab off)

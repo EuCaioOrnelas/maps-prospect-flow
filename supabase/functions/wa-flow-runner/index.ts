@@ -141,23 +141,29 @@ interface SendCtx {
 
 async function logOutbound(ctx: SendCtx, content: string, type: string, wamid: string | null, ok: boolean) {
   if (!ctx.convId) return;
-  await supabase.from("chat_messages").insert({
+  // O chat só renderiza os tipos nativos do WhatsApp. Mensagens interativas
+  // (botões/listas) do fluxo eram gravadas como "interactive" e apareciam
+  // quebradas — gravamos como texto para exibirem o conteúdo enviado.
+  const uiType = type === "text" || type === "interactive" || type === "button" || type === "list" ? "text" : type;
+  const { error } = await supabase.from("chat_messages").insert({
     conversation_id: ctx.convId,
     user_id: ctx.userId,
     owner_user_id: ctx.ownerId,
     waba_message_id: wamid,
     direction: "outbound",
-    message_type: type === "text" ? "text" : type,
+    message_type: uiType,
     content,
     status: ok ? "sent" : "failed",
+    metadata: { source: "wa_flow", original_type: type },
   });
+  if (error) console.error("[wa-flow-runner] logOutbound insert falhou:", error.message);
   if (ok) {
     await supabase
       .from("chat_conversations")
       .update({
         last_message_text: content,
         last_message_at: new Date().toISOString(),
-        last_message_type: type === "text" ? "text" : type,
+        last_message_type: uiType,
         last_message_direction: "outbound",
       })
       .eq("id", ctx.convId);
@@ -745,6 +751,16 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
   const history: any[] = Array.isArray(execution.node_history) ? [...execution.node_history] : [];
   let steps = 0;
 
+  // Guarda a resposta do contato no nó que fez a pergunta, para os
+  // resultados do fluxo mostrarem a última resposta recebida.
+  if (runtime.hasFreshUserInput && runtime.lastUserText && history.length) {
+    history[history.length - 1] = {
+      ...history[history.length - 1],
+      response: runtime.lastUserText,
+      responded_at: new Date().toISOString(),
+    };
+  }
+
   while (currentId && steps < MAX_STEPS) {
     steps++;
     const node = byId.get(currentId);
@@ -924,13 +940,24 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
       case "handoff": {
         const pre = interpolate(cfg.pre_message || cfg.handoff_message || "", runtime.vars);
         if (pre) await sendText(ctx.send, pre);
+        const memberIds: string[] = Array.isArray(cfg.member_ids) ? cfg.member_ids.filter(Boolean) : [];
         const responsible = cfg.distribution_type === "specific"
-          ? cfg.specific_member_id
-          : Array.isArray(cfg.member_ids) && cfg.member_ids.length
-            ? cfg.member_ids[Math.floor(Math.random() * cfg.member_ids.length)]
-            : null;
+          ? (cfg.specific_member_id || memberIds[0] || null)
+          : memberIds.length
+            ? memberIds[Math.floor(Math.random() * memberIds.length)]
+            : (cfg.specific_member_id || null);
         if (responsible && ctx.send.convId) {
-          await supabase.from("chat_conversations").update({ responsible_user_id: responsible }).eq("id", ctx.send.convId);
+          const { error: assignErr } = await supabase
+            .from("chat_conversations")
+            .update({ responsible_user_id: responsible, updated_at: new Date().toISOString() })
+            .eq("id", ctx.send.convId);
+          if (assignErr) {
+            console.error("[wa-flow-runner] handoff: falha ao atribuir responsável", assignErr.message);
+          } else {
+            console.log(`[wa-flow-runner] handoff: conversa ${ctx.send.convId} atribuída a ${responsible}`);
+          }
+        } else if (!responsible) {
+          console.warn("[wa-flow-runner] handoff sem responsável configurado — conversa segue sem atribuição");
         }
         if (cfg.crm_stage_id && cfg.crm_stage_id !== "none" && ctx.leadId) {
           const stageId = await resolveStageId(execution.owner_user_id || execution.user_id, cfg.crm_stage_id);
@@ -953,6 +980,7 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
 
       case "ai_agent": {
         if (!runtime.hasFreshUserInput) {
+          execution.awaiting_node_id = node.id;
           await persist(execution.id, {
             status: "awaiting_input",
             awaiting_node_id: node.id,
@@ -964,6 +992,7 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
           return;
         }
         runtime.hasFreshUserInput = false;
+        execution.awaiting_node_id = null;
         if (cfg.ai_output_type !== "route_only") {
           const cred = await getOpenAiKey(execution.owner_user_id || execution.user_id);
           if (cred) {
@@ -990,7 +1019,13 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
 
       case "data_collect": {
         const varName = String(cfg.variable_name || "resposta").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 30);
-        if (!runtime.hasFreshUserInput) {
+        const retryKey = `__retry_${node.id}`;
+        // A pergunta só é pulada quando a execução estava realmente parada
+        // NESTE nó aguardando resposta. Sem isso, a mensagem que disparou o
+        // fluxo era tratada como resposta e a pergunta nunca era enviada
+        // (acontecia no Número de Atendimento/Evolution).
+        const answeringThisNode = runtime.hasFreshUserInput && execution.awaiting_node_id === node.id;
+        if (!answeringThisNode) {
           const question = interpolate(cfg.question_text || cfg.prompt_message || "", runtime.vars);
           if (question) {
             if (cfg.use_delay) {
@@ -1000,6 +1035,7 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
             }
             await sendText(ctx.send, question);
           }
+          execution.awaiting_node_id = node.id;
           await persist(execution.id, {
             status: "awaiting_input",
             awaiting_node_id: node.id,
@@ -1012,6 +1048,7 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         }
         runtime.hasFreshUserInput = false;
         let value = runtime.lastUserText.trim();
+        let understood = true;
         const cred = await getOpenAiKey(execution.owner_user_id || execution.user_id);
         if (cred) {
           try {
@@ -1022,10 +1059,35 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
               value,
             );
             if (extracted && extracted !== "NAO_ENCONTRADO") value = extracted;
-            else if (cfg.error_message) await sendText(ctx.send, interpolate(cfg.error_message, runtime.vars));
+            else understood = false;
           } catch (_e) { /* fallback: texto cru */ }
         }
+
+        // Não entendeu: pergunta de novo (respeitando max_retries) em vez de
+        // avançar com um dado inválido.
+        if (!understood) {
+          const attempts = Number(runtime.vars[retryKey] ?? 0) + 1;
+          const maxRetries = Number(cfg.max_retries ?? 2);
+          const msg = interpolate(cfg.error_message || "Não entendi sua resposta. Pode enviar novamente?", runtime.vars);
+          if (attempts <= maxRetries) {
+            runtime.vars[retryKey] = attempts;
+            if (msg) await sendText(ctx.send, msg);
+            execution.awaiting_node_id = node.id;
+            await persist(execution.id, {
+              status: "awaiting_input",
+              awaiting_node_id: node.id,
+              current_node_id: node.id,
+              current_node_name: node.name,
+              node_history: history,
+              collected_data: runtime.vars,
+            });
+            return;
+          }
+        }
+
+        delete runtime.vars[retryKey];
         runtime.vars[varName] = value;
+        execution.awaiting_node_id = null;
         if (ctx.leadId && cfg.collect_type === "name") {
           await supabase.from("leads").update({ contact_name: value }).eq("id", ctx.leadId);
         }
@@ -1033,6 +1095,7 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         currentId = defaultTarget(edges, node.id);
         break;
       }
+
 
       case "ab_test": {
         const chosen = pickWeighted(cfg.variants || []);

@@ -474,16 +474,16 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     <>
       {replyingTo && !attachments.length && (() => {
         const isSelf = replyingTo.direction === "outbound";
-        const color = isSelf ? "#128c7e" : "#1f7aec";
+        const color = isSelf ? "hsl(var(--primary))" : "#1f7aec";
         return (
-          <div className="flex items-center gap-2 mx-4 mt-2 px-3 py-2 rounded-t-xl wa-input-field">
-            <div className="w-[3px] h-8 rounded-full shrink-0" style={{ backgroundColor: color }} />
+          <div className="flex items-center gap-2.5 mx-4 mt-2 px-3 py-2 rounded-t-xl bg-muted/70 border border-b-0 border-border/60">
+            <div className="w-[3px] self-stretch rounded-full shrink-0" style={{ backgroundColor: color }} />
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-medium" style={{ color }}>{isSelf ? "Você" : "Contato"}</p>
-              <p className="text-[12px] wa-text-muted truncate">{replyingTo.content || "📎 Mídia"}</p>
+              <p className="text-[11.5px] font-semibold leading-[16px]" style={{ color }}>{isSelf ? "Você" : "Contato"}</p>
+              <p className="text-[12.5px] leading-[17px] truncate text-foreground/80">{replyingTo.content || "📎 Mídia"}</p>
             </div>
-            <button onClick={onCancelReply} className="p-1 rounded-full hover:bg-white/10">
-              <X size={16} className="wa-icon-muted" />
+            <button onClick={onCancelReply} className="p-1 rounded-full hover:bg-foreground/10 transition-colors">
+              <X size={16} className="text-muted-foreground" />
             </button>
           </div>
         );
