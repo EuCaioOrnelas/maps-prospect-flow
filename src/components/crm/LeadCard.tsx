@@ -133,6 +133,49 @@ const LeadCardComponent = ({
     document.addEventListener('pointercancel', handlePointerUp, { once: true });
   }, [isEditingName]);
 
+  const isArchived = !!lead.archived_at;
+  const quickActions = [
+    {
+      key: 'chat',
+      label: 'Abrir conversa',
+      icon: MessageCircle,
+      disabled: false,
+      run: () => navigate(`/chat?phone=${encodeURIComponent(lead.phone)}`),
+    },
+    {
+      key: 'email',
+      label: lead.email ? `Enviar e-mail para ${lead.email}` : 'Contato sem e-mail cadastrado',
+      icon: Mail,
+      disabled: !lead.email,
+      run: () => { if (lead.email) window.location.href = `mailto:${lead.email}`; },
+    },
+    {
+      key: 'sale',
+      label: 'Cadastrar venda',
+      icon: DollarSign,
+      disabled: !onOpenTab,
+      run: () => onOpenTab?.(lead, 'deals'),
+    },
+    {
+      key: 'files',
+      label: 'Arquivos do contato',
+      icon: Paperclip,
+      disabled: !onOpenTab,
+      run: () => onOpenTab?.(lead, 'files'),
+    },
+    {
+      key: 'archive',
+      label: isArchived ? 'Desarquivar contato' : 'Arquivar contato',
+      icon: isArchived ? ArchiveRestore : Archive,
+      disabled: !onToggleArchive,
+      run: async () => {
+        if (!onToggleArchive) return;
+        await onToggleArchive(lead);
+        toast.success(isArchived ? 'Contato desarquivado' : 'Contato arquivado');
+      },
+    },
+  ];
+
   return (
     <div
       data-lead-id={lead.id}
