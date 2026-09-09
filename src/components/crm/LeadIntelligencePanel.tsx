@@ -1099,50 +1099,86 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
 
         {/* -------------------------------------------------------- comercial */}
         <TabsContent value="comercial" className="mt-4 space-y-4">
-          <Block icon={DollarSign} title="Negociações deste contato">
-            {deals.length ? (
-              <ul className="space-y-1.5">
-                {deals.map((d: any) => (
-                  <li key={d.id} className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-medium text-foreground truncate">{d.title || "Negociação"}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {[d.status, d.closed_at ? format(new Date(d.closed_at), "dd/MM/yyyy") : null].filter(Boolean).join(" · ")}
-                      </p>
-                    </div>
-                    {d.value != null && (
-                      <span className="text-[13px] font-semibold tabular-nums text-foreground shrink-0">
-                        R$ {Number(d.value).toLocaleString("pt-BR")}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[12px] text-muted-foreground">Nenhuma negociação registrada para este contato.</p>
-            )}
-          </Block>
+          {(() => {
+            const norm = (s: string | null) => (s || "").toLowerCase();
+            const won = deals.filter((d: any) => ["ganho", "won", "fechado", "closed_won"].includes(norm(d.status)));
+            const lost = deals.filter((d: any) => ["perdido", "lost", "closed_lost"].includes(norm(d.status)));
+            const open = deals.filter((d: any) => !won.includes(d) && !lost.includes(d));
+            const sum = (arr: any[]) => arr.reduce((t, d) => t + Number(d.value || 0), 0);
+            const brl = (v: number) => `R$ ${v.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
+            const statusLabel = (s: string | null) =>
+              won.some((d: any) => norm(d.status) === norm(s)) ? "Ganha"
+              : lost.some((d: any) => norm(d.status) === norm(s)) ? "Perdida"
+              : s || "Em aberto";
 
-          <Block icon={TrendingUp} title="Padrões históricos da sua conta">
-            {patterns.length ? (
-              <ul className="space-y-1">
-                {patterns.slice(0, 6).map((p: any, i: number) => (
-                  <li key={i} className="flex items-center gap-2 py-1 border-b border-border/40 last:border-0">
-                    <span className="text-[13px] text-foreground/90 flex-1 min-w-0 truncate">
-                      {p.pattern_key} {p.niche ? `· ${p.niche}` : ""}
-                    </span>
-                    <span className="text-[11px] tabular-nums text-muted-foreground shrink-0">
-                      {Math.round(Number(p.rate || 0) * 100)}% · {p.sample_size} casos
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[12px] text-muted-foreground">
-                Ainda não há padrões suficientes. Eles aparecem conforme você registra vendas ganhas e perdidas.
-              </p>
-            )}
-          </Block>
+            return (
+              <>
+                <Block icon={DollarSign} title="Resumo comercial deste contato">
+                  {deals.length ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      <Stat label="Em aberto" value={String(open.length)} hint={open.length ? brl(sum(open)) : undefined} />
+                      <Stat label="Ganhas" value={String(won.length)} hint={won.length ? brl(sum(won)) : undefined} />
+                      <Stat label="Perdidas" value={String(lost.length)} hint={lost.length ? brl(sum(lost)) : undefined} />
+                    </div>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground">
+                      Nenhuma negociação registrada. Ao criar uma venda na aba Vendas deste contato, ela aparece aqui e
+                      passa a alimentar os padrões da sua conta.
+                    </p>
+                  )}
+                </Block>
+
+                {deals.length > 0 && (
+                  <Block icon={DollarSign} title="Negociações">
+                    <ul className="space-y-1.5">
+                      {deals.map((d: any) => (
+                        <li key={d.id} className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-medium text-foreground truncate">{d.title || "Negociação"}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {[
+                                statusLabel(d.status),
+                                d.sale_type || null,
+                                format(new Date(d.closed_at || d.created_at), "dd/MM/yyyy"),
+                              ].filter(Boolean).join(" · ")}
+                            </p>
+                          </div>
+                          {d.value != null && (
+                            <span className="text-[13px] font-semibold tabular-nums text-foreground shrink-0">
+                              {brl(Number(d.value))}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </Block>
+                )}
+
+                <Block icon={TrendingUp} title="Padrões históricos da sua conta">
+                  {patterns.length ? (
+                    <ul className="space-y-1">
+                      {patterns.slice(0, 6).map((p: any, i: number) => (
+                        <li key={i} className="flex items-center gap-2 py-1.5 border-b border-border/40 last:border-0">
+                          <span className="text-[13px] text-foreground/90 flex-1 min-w-0 truncate">
+                            {signalLabel(p.pattern_key)}
+                            {p.niche ? <span className="text-muted-foreground"> · {p.niche}</span> : null}
+                          </span>
+                          <span className="text-[11px] tabular-nums text-muted-foreground shrink-0">
+                            {Math.round(Number(p.rate || 0) * 100)}% de conversão · {p.sample_size} caso(s)
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground">
+                      Ainda não há padrões suficientes. Eles aparecem conforme você registra vendas ganhas e perdidas.
+                    </p>
+                  )}
+                </Block>
+              </>
+            );
+          })()}
+
         </TabsContent>
 
         {/* --------------------------------------------------------- evolução */}
