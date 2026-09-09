@@ -4683,6 +4683,381 @@ export type Database = {
         }
         Relationships: []
       }
+      intel_audit: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          dimension: string
+          engine_version: string
+          id: string
+          owner_user_id: string
+          phone_e164: string | null
+          reason: string | null
+          rule_key: string | null
+          score_after: number | null
+          score_before: number | null
+          signal_source: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          dimension: string
+          engine_version?: string
+          id?: string
+          owner_user_id: string
+          phone_e164?: string | null
+          reason?: string | null
+          rule_key?: string | null
+          score_after?: number | null
+          score_before?: number | null
+          signal_source?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          dimension?: string
+          engine_version?: string
+          id?: string
+          owner_user_id?: string
+          phone_e164?: string | null
+          reason?: string | null
+          rule_key?: string | null
+          score_after?: number | null
+          score_before?: number | null
+          signal_source?: string | null
+        }
+        Relationships: []
+      }
+      intel_config: {
+        Row: {
+          ai_enabled: boolean
+          compound_rules: Json
+          created_at: string
+          decay: Json
+          engine_version: string
+          id: string
+          niche_weights: Json
+          owner_user_id: string
+          region_weights: Json
+          thresholds: Json
+          updated_at: string
+          weights: Json
+        }
+        Insert: {
+          ai_enabled?: boolean
+          compound_rules?: Json
+          created_at?: string
+          decay?: Json
+          engine_version?: string
+          id?: string
+          niche_weights?: Json
+          owner_user_id: string
+          region_weights?: Json
+          thresholds?: Json
+          updated_at?: string
+          weights?: Json
+        }
+        Update: {
+          ai_enabled?: boolean
+          compound_rules?: Json
+          created_at?: string
+          decay?: Json
+          engine_version?: string
+          id?: string
+          niche_weights?: Json
+          owner_user_id?: string
+          region_weights?: Json
+          thresholds?: Json
+          updated_at?: string
+          weights?: Json
+        }
+        Relationships: []
+      }
+      intel_lead_profiles: {
+        Row: {
+          behaviors: string[]
+          city: string | null
+          company_name: string | null
+          compound_signals: string[]
+          computed_at: string
+          created_at: string
+          crm_lead_id: string | null
+          diagnosis_summary: string | null
+          engagement_score: number
+          engine_version: string
+          factors: Json
+          features: Json
+          fit_score: number
+          hot_reason: string | null
+          id: string
+          intent_score: number
+          is_hot: boolean
+          last_change: Json
+          loss_pattern_match_score: number
+          momentum_state: string
+          momentum_value: number
+          next_best_action: string
+          niche: string | null
+          opportunity_score: number
+          owner_user_id: string
+          pattern_match_score: number
+          pattern_matched_key: string | null
+          phone_e164: string
+          priority: string
+          quality_score: number
+          region: string | null
+          revenue_lead_id: string | null
+          risk_factors: Json
+          risk_score: number
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          behaviors?: string[]
+          city?: string | null
+          company_name?: string | null
+          compound_signals?: string[]
+          computed_at?: string
+          created_at?: string
+          crm_lead_id?: string | null
+          diagnosis_summary?: string | null
+          engagement_score?: number
+          engine_version?: string
+          factors?: Json
+          features?: Json
+          fit_score?: number
+          hot_reason?: string | null
+          id?: string
+          intent_score?: number
+          is_hot?: boolean
+          last_change?: Json
+          loss_pattern_match_score?: number
+          momentum_state?: string
+          momentum_value?: number
+          next_best_action?: string
+          niche?: string | null
+          opportunity_score?: number
+          owner_user_id: string
+          pattern_match_score?: number
+          pattern_matched_key?: string | null
+          phone_e164: string
+          priority?: string
+          quality_score?: number
+          region?: string | null
+          revenue_lead_id?: string | null
+          risk_factors?: Json
+          risk_score?: number
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          behaviors?: string[]
+          city?: string | null
+          company_name?: string | null
+          compound_signals?: string[]
+          computed_at?: string
+          created_at?: string
+          crm_lead_id?: string | null
+          diagnosis_summary?: string | null
+          engagement_score?: number
+          engine_version?: string
+          factors?: Json
+          features?: Json
+          fit_score?: number
+          hot_reason?: string | null
+          id?: string
+          intent_score?: number
+          is_hot?: boolean
+          last_change?: Json
+          loss_pattern_match_score?: number
+          momentum_state?: string
+          momentum_value?: number
+          next_best_action?: string
+          niche?: string | null
+          opportunity_score?: number
+          owner_user_id?: string
+          pattern_match_score?: number
+          pattern_matched_key?: string | null
+          phone_e164?: string
+          priority?: string
+          quality_score?: number
+          region?: string | null
+          revenue_lead_id?: string | null
+          risk_factors?: Json
+          risk_score?: number
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      intel_outcomes: {
+        Row: {
+          created_at: string
+          crm_lead_id: string | null
+          days_to_close: number | null
+          deal_id: string | null
+          features: Json
+          id: string
+          niche: string | null
+          occurred_at: string
+          outcome: string
+          owner_user_id: string
+          phone_e164: string | null
+          predicted_opportunity: number | null
+          predicted_pattern_match: number | null
+          region: string | null
+          revenue_lead_id: string | null
+          signature: string[]
+          ticket: number | null
+        }
+        Insert: {
+          created_at?: string
+          crm_lead_id?: string | null
+          days_to_close?: number | null
+          deal_id?: string | null
+          features?: Json
+          id?: string
+          niche?: string | null
+          occurred_at?: string
+          outcome: string
+          owner_user_id: string
+          phone_e164?: string | null
+          predicted_opportunity?: number | null
+          predicted_pattern_match?: number | null
+          region?: string | null
+          revenue_lead_id?: string | null
+          signature?: string[]
+          ticket?: number | null
+        }
+        Update: {
+          created_at?: string
+          crm_lead_id?: string | null
+          days_to_close?: number | null
+          deal_id?: string | null
+          features?: Json
+          id?: string
+          niche?: string | null
+          occurred_at?: string
+          outcome?: string
+          owner_user_id?: string
+          phone_e164?: string | null
+          predicted_opportunity?: number | null
+          predicted_pattern_match?: number | null
+          region?: string | null
+          revenue_lead_id?: string | null
+          signature?: string[]
+          ticket?: number | null
+        }
+        Relationships: []
+      }
+      intel_patterns: {
+        Row: {
+          avg_days_to_close: number | null
+          avg_ticket: number | null
+          computed_at: string
+          created_at: string
+          id: string
+          niche: string | null
+          outcome_count: number
+          owner_user_id: string
+          pattern_key: string
+          pattern_kind: string
+          rate: number
+          region: string | null
+          sample_size: number
+          signature: string[]
+          updated_at: string
+        }
+        Insert: {
+          avg_days_to_close?: number | null
+          avg_ticket?: number | null
+          computed_at?: string
+          created_at?: string
+          id?: string
+          niche?: string | null
+          outcome_count?: number
+          owner_user_id: string
+          pattern_key: string
+          pattern_kind: string
+          rate?: number
+          region?: string | null
+          sample_size?: number
+          signature?: string[]
+          updated_at?: string
+        }
+        Update: {
+          avg_days_to_close?: number | null
+          avg_ticket?: number | null
+          computed_at?: string
+          created_at?: string
+          id?: string
+          niche?: string | null
+          outcome_count?: number
+          owner_user_id?: string
+          pattern_key?: string
+          pattern_kind?: string
+          rate?: number
+          region?: string | null
+          sample_size?: number
+          signature?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      intel_signals: {
+        Row: {
+          analyzer_version: string
+          confidence: number
+          content_hash: string | null
+          created_at: string
+          crm_lead_id: string | null
+          id: string
+          message_id: string | null
+          meta: Json
+          occurred_at: string
+          owner_user_id: string
+          phone_e164: string
+          revenue_lead_id: string | null
+          signal_group: string
+          signal_type: string
+          source: string
+        }
+        Insert: {
+          analyzer_version?: string
+          confidence?: number
+          content_hash?: string | null
+          created_at?: string
+          crm_lead_id?: string | null
+          id?: string
+          message_id?: string | null
+          meta?: Json
+          occurred_at?: string
+          owner_user_id: string
+          phone_e164: string
+          revenue_lead_id?: string | null
+          signal_group?: string
+          signal_type: string
+          source?: string
+        }
+        Update: {
+          analyzer_version?: string
+          confidence?: number
+          content_hash?: string | null
+          created_at?: string
+          crm_lead_id?: string | null
+          id?: string
+          message_id?: string | null
+          meta?: Json
+          occurred_at?: string
+          owner_user_id?: string
+          phone_e164?: string
+          revenue_lead_id?: string | null
+          signal_group?: string
+          signal_type?: string
+          source?: string
+        }
+        Relationships: []
+      }
       job_leases: {
         Row: {
           locked_until: string
@@ -7350,6 +7725,7 @@ export type Database = {
         Row: {
           assigned_to_user_id: string | null
           created_at: string
+          crm_lead_id: string | null
           estimated_ticket_value: number | null
           first_seen_at: string
           id: string
@@ -7378,6 +7754,7 @@ export type Database = {
         Insert: {
           assigned_to_user_id?: string | null
           created_at?: string
+          crm_lead_id?: string | null
           estimated_ticket_value?: number | null
           first_seen_at?: string
           id?: string
@@ -7406,6 +7783,7 @@ export type Database = {
         Update: {
           assigned_to_user_id?: string | null
           created_at?: string
+          crm_lead_id?: string | null
           estimated_ticket_value?: number | null
           first_seen_at?: string
           id?: string

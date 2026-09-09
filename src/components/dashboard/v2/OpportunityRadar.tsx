@@ -4,6 +4,7 @@ import { ArrowRight, Radar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import type { RadarLead } from "@/hooks/useDashboardKPIs";
+import { NEXT_ACTION_LABELS as ACTION_LABELS } from "@/hooks/useLeadIntelligence";
 
 interface OpportunityRadarProps {
   radarLeads: RadarLead[];
@@ -84,7 +85,18 @@ export function OpportunityRadar({ radarLeads }: OpportunityRadarProps) {
                   className="border-b border-border/20 last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
                   onClick={() => navigate('/crm')}
                 >
-                  <td className="px-6 py-3 font-medium text-foreground">{lead.name}</td>
+                  <td className="px-6 py-3">
+                    <div className="flex items-center gap-1.5">
+                      {lead.isHot && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                      <span className="font-medium text-foreground">{lead.name}</span>
+                    </div>
+                    {lead.nextAction && (
+                      <p className="text-[10px] text-primary mt-0.5">
+                        {ACTION_LABELS[lead.nextAction] || lead.nextAction}
+                        {lead.priority ? ` · ${lead.priority}` : ""}
+                      </p>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-muted-foreground">{lead.segment || "—"}</td>
                   <td className="px-3 py-3 text-center">
                     <span className={cn(

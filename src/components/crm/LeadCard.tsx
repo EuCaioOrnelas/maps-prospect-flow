@@ -9,6 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatPhoneShort } from '@/lib/phoneUtils';
 import { useLeadScores } from '@/hooks/useLeadScores';
+import { useLeadIntelligence, NEXT_ACTION_LABELS } from '@/hooks/useLeadIntelligence';
 import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
 import { LeadEngagementScore } from './LeadEngagementScore';
 import { LeadPotentialValueCompact } from './LeadPotentialValueCompact';
@@ -47,9 +48,11 @@ const LeadCardComponent = ({
   const leadIdRef = useRef(lead.id);
   const navigate = useNavigate();
   const { getScoreForPhone } = useLeadScores();
+  const { getByPhone: getIntelForPhone } = useLeadIntelligence();
   const { hidden: phoneHidden } = usePhonePrivacy();
   
   const scoreData = getScoreForPhone(lead.phone);
+  const intel = lead.phone ? getIntelForPhone(lead.phone) : undefined;
   const phoneFormatted = formatPhoneShort(lead.phone);
   const phoneDisplay = phoneHidden ? maskPhoneTail(phoneFormatted) : phoneFormatted;
   const displayName = lead.contact_name || lead.company_name || phoneDisplay;
@@ -262,6 +265,19 @@ const LeadCardComponent = ({
           </span>
         )}
       </div>
+
+      {/* Inteligência: próxima ação sugerida pelo motor central */}
+      {intel && intel.opportunity_score >= 40 && (
+        <div className="mt-2 flex items-center gap-1.5 min-w-0">
+          {intel.is_hot && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+          <span className="text-[10px] font-medium text-primary truncate">
+            {NEXT_ACTION_LABELS[intel.next_best_action] || intel.next_best_action}
+          </span>
+          <span className="text-[10px] text-muted-foreground tabular-nums ml-auto shrink-0">
+            {intel.opportunity_score}
+          </span>
+        </div>
+      )}
 
       {/* Score footer — divisor suave + Score + número + progressbar */}
       {scoreData && scoreData.score_total > 0 && (() => {

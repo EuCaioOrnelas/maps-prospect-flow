@@ -239,6 +239,59 @@ async function loadAccountData(supabase: any, ownerId: string, caps: Caps = {}):
       }
     }
 
+    // INTELIGENCIA CENTRAL WIIZE — fonte unica de verdade sobre leads/oportunidades
+    try {
+      const [intelRes, patternsRes] = await Promise.all([
+        supabase
+          .from("intel_lead_profiles")
+          .select("company_name, niche, city, opportunity_score, intent_score, risk_score, momentum_state, stage, next_best_action, priority, is_hot, hot_reason, behaviors")
+          .eq("owner_user_id", ownerId)
+          .order("opportunity_score", { ascending: false })
+          .limit(200),
+        supabase
+          .from("intel_patterns")
+          .select("pattern_type, pattern_key, label, rate, sample_size")
+          .eq("owner_user_id", ownerId)
+          .gte("sample_size", 3)
+          .order("rate", { ascending: false })
+          .limit(12),
+      ]);
+      const intel: any[] = intelRes?.data ?? [];
+      if (intel.length) {
+        const hot = intel.filter((p) => p.is_hot);
+        const atRisk = intel.filter((p) => Number(p.risk_score) >= 60);
+        const avgOpp = Math.round(intel.reduce((a, p) => a + Number(p.opportunity_score || 0), 0) / intel.length);
+        lines.push("");
+        lines.push("INTELIGENCIA CENTRAL (fonte unica de verdade — use SEMPRE estes numeros ao falar de oportunidades):");
+        lines.push(`- Leads analisados: ${intel.length} | Oportunidade media: ${avgOpp}/100 | Quentes agora: ${hot.length} | Em risco: ${atRisk.length}`);
+        const byAction: Record<string, number> = {};
+        intel.forEach((p) => { byAction[p.next_best_action] = (byAction[p.next_best_action] ?? 0) + 1; });
+        lines.push(`- Proximas acoes recomendadas: ${Object.entries(byAction).map(([k, v]) => `${k}=${v}`).join(", ")}`);
+        if (hot.length) {
+          lines.push("- Oportunidades quentes (prioridade primeiro):");
+          hot.slice(0, 8).forEach((p) =>
+            lines.push(
+              `  - ${p.company_name ?? "Contato"}${p.niche ? ` (${p.niche})` : ""} | ${p.priority} | oportunidade ${p.opportunity_score} | intencao ${p.intent_score} | ${p.momentum_state} | etapa ${p.stage} | acao: ${p.next_best_action}${p.hot_reason ? ` | motivo: ${p.hot_reason}` : ""}`,
+            ),
+          );
+        }
+        if (atRisk.length) {
+          lines.push("- Em risco de perder:");
+          atRisk.slice(0, 6).forEach((p) =>
+            lines.push(`  - ${p.company_name ?? "Contato"} | risco ${p.risk_score} | ${p.momentum_state} | acao: ${p.next_best_action}`),
+          );
+        }
+      }
+      const patterns: any[] = patternsRes?.data ?? [];
+      if (patterns.length) {
+        lines.push("");
+        lines.push("PADROES HISTORICOS DA CONTA (aprendidos com vendas e perdas reais):");
+        patterns.forEach((pt) =>
+          lines.push(`- ${pt.label ?? pt.pattern_key} (${pt.pattern_type}): ${Math.round(Number(pt.rate) * 100)}% em ${pt.sample_size} casos`),
+        );
+      }
+    } catch (_e) { /* inteligencia indisponivel: segue com o restante do contexto */ }
+
     const deals: any[] = dealsRes?.data ?? [];
     if (deals.length) {
       const won = deals.filter((d) => (d.status ?? "").toLowerCase() !== "cancelado");

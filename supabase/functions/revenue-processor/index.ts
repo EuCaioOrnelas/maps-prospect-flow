@@ -1157,6 +1157,15 @@ serve(async (req) => {
 
       await supabase.from("revenue_leads").update(leadUpdate).eq("id", leadId);
 
+      // Alimenta a Inteligencia Central (nao bloqueia a resposta do webhook)
+      try {
+        await supabase.functions.invoke("intel-engine", {
+          body: { action: "compute_profile", owner_user_id: user_id, phone_e164: normalizedPhone },
+        });
+      } catch (intelErr) {
+        console.error("[revenue-processor] intel-engine falhou:", intelErr);
+      }
+
       return new Response(
         JSON.stringify({
           success: true,

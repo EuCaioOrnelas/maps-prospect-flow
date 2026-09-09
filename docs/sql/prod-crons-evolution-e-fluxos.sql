@@ -72,3 +72,23 @@ WHERE jobname IN ('evolution-keepalive-5min', 'wa-flow-runner-tick-1min');
 -- JOIN cron.job j ON j.jobid = d.jobid
 -- WHERE j.jobname IN ('evolution-keepalive-5min','wa-flow-runner-tick-1min')
 -- ORDER BY d.start_time DESC LIMIT 20;
+
+-- =====================================================================
+-- INTELIGENCIA CENTRAL WIIZE — recalculo diario (perfis + padroes)
+-- =====================================================================
+select cron.unschedule('intel-engine-sweep-daily')
+where exists (select 1 from cron.job where jobname = 'intel-engine-sweep-daily');
+
+select cron.schedule(
+  'intel-engine-sweep-daily',
+  '10 6 * * *',
+  $$
+  select net.http_post(
+    url := 'https://lqfqnqfeuneorxocybru.supabase.co/functions/v1/intel-engine',
+    headers := '{"Content-Type": "application/json"}'::jsonb,
+    body := '{"action":"sweep_all","limit":3000,"per_account":300}'::jsonb
+  );
+  $$
+);
+
+select jobname, schedule from cron.job where jobname = 'intel-engine-sweep-daily';

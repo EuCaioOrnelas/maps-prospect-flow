@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { type Lead, type PipelineStage, type LeadNote, type LeadActivity, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS, type WhatsAppStatus } from '@/hooks/useCRM';
 import { useLeadScores } from '@/hooks/useLeadScores';
 import { cn } from '@/lib/utils';
+import { LeadIntelligencePanel } from './LeadIntelligencePanel';
 import { formatPhoneNumber } from '@/lib/phoneUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1242,6 +1243,9 @@ export const LeadDetailDialog = ({
                       );
                     })()}
                   </div>
+
+                  {/* Inteligência Central Wiize */}
+                  <LeadIntelligencePanel phone={lead.phone} className="mt-3" />
                 </div>
 
                 {/* Responsible Section */}
