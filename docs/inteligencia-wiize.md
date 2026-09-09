@@ -28,7 +28,7 @@ Tudo é filtrado por conta (RLS por `owner_user_id`), então uma conta nunca vê
 - **Dimensões** (também 0 a 100, apenas explicativas): Intenção, Engajamento, Momentum, Risco,
   Qualidade, Fit, Comportamento e Recência.
 - **Estado da análise**:
-  - `NO_DATA` — sem mensagens e sem sinais. A interface não mostra número e recomenda o primeiro contato.
+  - `NO_DATA` — sem conversa e sem sinal comercial (sinais de diagnóstico/prospecção não contam como evidência). A Oportunidade é forçada a 0, exibida de forma neutra como "0 de 100 · Não analisado" tanto no card do CRM quanto na aba interna. Zero significa ausência de análise, nunca baixa oportunidade. A etapa vem do CRM/prospecção (`PROSPECTING`/`NEW`) e a próxima ação é sempre `FIRST_CONTACT`.
   - `PARTIAL` — pouca evidência (poucas mensagens ou poucos sinais). Aparece o selo "Análise parcial".
   - `COMPLETE` — conversa e sinais suficientes.
 - **Próxima melhor ação** — código da ação, prioridade, canal, momento, motivo, objetivo, roteiro de
