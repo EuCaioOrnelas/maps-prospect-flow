@@ -12,14 +12,14 @@ const LeadPotentialValueCompactComponent = ({ value, className }: LeadPotentialV
   return (
     <div
       className={cn(
-        "w-full flex items-center justify-between gap-2 rounded-lg bg-emerald-50 border border-emerald-200/60 px-2.5 py-1.5",
+        "w-full flex items-center justify-between gap-2 rounded-hover bg-primary/10 border border-primary/20 px-2.5 py-1.5",
         className
       )}
     >
-      <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-900/70">
+      <span className="text-[9px] font-semibold uppercase tracking-wider text-primary/80">
         Em negociação
       </span>
-      <span className="text-[11px] leading-none font-bold tabular-nums text-emerald-950">
+      <span className="text-[11px] leading-none font-bold tabular-nums text-primary">
         R$ {value.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
       </span>
     </div>

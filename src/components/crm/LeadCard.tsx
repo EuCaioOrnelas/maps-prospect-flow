@@ -180,10 +180,9 @@ const LeadCardComponent = ({
     <div
       data-lead-id={lead.id}
       className={cn(
-        "w-full max-w-full bg-card border border-border/60 rounded-[18px] p-5 cursor-pointer transition-all duration-200 relative",
-        "shadow-sm hover:shadow-lg hover:border-primary/30 hover:-translate-y-px",
+        "w-full max-w-full bg-card border border-border/60 rounded-[18px] p-5 cursor-pointer relative",
         isSelected && "ring-2 ring-inset ring-primary border-primary",
-        isDragging && "opacity-60 ring-1 ring-primary/30 shadow-sm scale-[0.995]"
+        isDragging && "opacity-60 ring-1 ring-primary/30 scale-[0.995]"
       )}
       onClick={(e) => {
         if (suppressNextClickRef.current) {

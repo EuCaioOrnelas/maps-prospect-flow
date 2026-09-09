@@ -194,44 +194,59 @@ function Breakdown({ leadId }: { leadId?: string }) {
 function ActionIntelligence({ score }: { score: number }) {
   const advice = actionAdvice(score);
   return (
-    <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
-      <div className="flex items-center gap-2 mb-1.5">
-        <Lightbulb className="w-3.5 h-3.5 text-primary" />
-        <p className="text-[10px] uppercase tracking-wider text-primary/80 font-medium">
-          Inteligência de ação
-        </p>
-      </div>
-      <p className="text-sm font-semibold text-foreground">{advice.title}</p>
-
-      <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
-        <div className="rounded-lg bg-card border border-border/60 px-3 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Quando agir</p>
-          <p className="text-sm text-foreground">{advice.window}</p>
+    <div className="rounded-xl border border-primary/25 bg-card overflow-hidden">
+      <div className="flex items-center gap-2 bg-primary/8 border-b border-primary/20 px-4 py-3">
+        <div className="w-7 h-7 rounded-md bg-primary/15 flex items-center justify-center shrink-0">
+          <Lightbulb className="w-4 h-4 text-primary" />
         </div>
-        <div className="rounded-lg bg-card border border-border/60 px-3 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Melhor canal</p>
-          <p className="text-sm text-foreground">{advice.channel}</p>
+        <div className="min-w-0">
+          <p className="text-[10px] uppercase tracking-wider text-primary/80 font-medium leading-none">
+            Inteligência de ação
+          </p>
+          <p className="text-sm font-semibold text-foreground mt-1 truncate">{advice.title}</p>
         </div>
       </div>
 
-      <p className="mt-3 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Passo a passo</p>
-      <ul className="mt-1.5 space-y-1.5">
-        {advice.lines.map((l, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-            <Sparkles className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-            <span>{l}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="p-4 space-y-4">
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div className="rounded-lg bg-muted/40 border border-border/60 px-3 py-2.5">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Quando agir</p>
+            <p className="text-sm text-foreground mt-0.5">{advice.window}</p>
+          </div>
+          <div className="rounded-lg bg-muted/40 border border-border/60 px-3 py-2.5">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Melhor canal</p>
+            <p className="text-sm text-foreground mt-0.5">{advice.channel}</p>
+          </div>
+        </div>
 
-      <div className="mt-3 rounded-lg bg-card border border-border/60 px-3 py-2">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Mensagem sugerida</p>
-        <p className="text-sm text-foreground leading-relaxed">{advice.script}</p>
-      </div>
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-2">Passo a passo</p>
+          <ol className="space-y-2">
+            {advice.lines.map((l, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm text-foreground/90">
+                <span className="mt-0.5 w-5 h-5 rounded-md bg-primary/10 text-primary text-[11px] font-semibold flex items-center justify-center shrink-0 tabular-nums">
+                  {i + 1}
+                </span>
+                <span className="leading-relaxed">{l}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
 
-      <div className="mt-2 flex items-start gap-2 text-sm text-muted-foreground">
-        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-        <span>{advice.avoid}</span>
+        <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Mensagem sugerida</p>
+          <p className="text-sm text-foreground leading-relaxed border-l-2 border-primary/40 pl-3 italic">
+            {advice.script}
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5 flex items-start gap-2">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-medium">O que evitar</p>
+            <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{advice.avoid}</p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -275,7 +290,7 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
     // Sem perfil consolidado ainda: mostramos o mesmo valor exibido no card,
     // vindo do motor de pontuacao existente, para nao haver divergencia.
     return (
-      <div className={cn("space-y-3", className)}>
+      <div className={cn("space-y-4", className)}>
         <div className="rounded-xl border border-border/60 bg-card p-4">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -309,7 +324,7 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
     intel.momentum_state.includes("DECLINING") ? TrendingDown : Minus;
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-4", className)}>
       {/* Cabeçalho: oportunidade + prioridade + ação */}
       <div className="rounded-xl border border-border/60 bg-card p-4">
         <div className="flex items-start justify-between gap-3">
