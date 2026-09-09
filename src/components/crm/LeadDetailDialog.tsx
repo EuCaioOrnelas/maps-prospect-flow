@@ -3,6 +3,7 @@ import { type Lead, type PipelineStage, type LeadNote, type LeadActivity, WHATSA
 import { useLeadScores } from '@/hooks/useLeadScores';
 import { cn } from '@/lib/utils';
 import { LeadIntelligencePanel } from './LeadIntelligencePanel';
+import { LeadIntelligenceEvolution } from './LeadIntelligenceEvolution';
 import { formatPhoneNumber } from '@/lib/phoneUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1750,7 +1751,6 @@ export const LeadDetailDialog = ({
                     </Button>
                   </div>
                 )}
-                  </div>
                 </div>
               </div>
             )}
