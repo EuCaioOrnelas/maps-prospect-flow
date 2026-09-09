@@ -300,8 +300,16 @@ async function computeProfile(sb: any, owner: string, phone: string) {
   }
 
   // ---------------- SINAIS ----------------
+  // Deduplicacao: a mesma frase chega por dois caminhos (revenue_intent_logs.raw_message
+  // e chat_messages). Sem dedupe o mesmo sinal era contado duas vezes.
   type Sig = { type: string; confidence: number; at: Date; source: string; message_id?: string };
-  const signals: Sig[] = [];
+  const signalMap = new Map<string, Sig>();
+  const BUCKET_MS = 5 * 60 * 1000; // janela de 5 min para colapsar o mesmo sinal repetido
+  const addSignal = (s: Sig) => {
+    const key = `${s.type}|${Math.floor(s.at.getTime() / BUCKET_MS)}`;
+    const cur = signalMap.get(key);
+    if (!cur || s.confidence > cur.confidence) signalMap.set(key, s);
+  };
 
   for (const il of intentLogs || []) {
     const mapped = REVENUE_INTENT_MAP[il.intent_category] || REVENUE_INTENT_MAP[il.intent_subtype || ""] || null;
