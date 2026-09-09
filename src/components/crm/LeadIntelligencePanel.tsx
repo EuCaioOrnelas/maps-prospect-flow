@@ -330,6 +330,50 @@ function buildPlaybook(
     };
   }
 
+  // Sem nenhuma mensagem trocada: nunca afirmar que existe conversa, mesmo com sinais do motor.
+  if (!conv || conv.total === 0) {
+    const empresa = prospect?.company_name || lead?.company || null;
+    const nicho = prospect?.category || lead?.category || null;
+    const cidade = prospect?.city || lead?.city || null;
+    const contexto = [
+      empresa ? `${empresa}${nicho ? `, do segmento ${nicho.toLowerCase()}` : ""}${cidade ? `, em ${cidade}` : ""}` : null,
+      prospect?.rating != null ? `nota ${prospect.rating} no Google com ${prospect.review_count || 0} avaliações` : null,
+      prospect && !prospect.website ? "sem site ativo encontrado" : null,
+      signalNames.length ? `sinais já registrados: ${signalNames.slice(0, 3).join(", ").toLowerCase()}` : null,
+    ].filter(Boolean) as string[];
+
+    return {
+      ...base,
+      code: "FIRST_CONTACT",
+      title: "Iniciar o primeiro contato",
+      priority: profile?.priority ? PRIORITY_LABELS[profile.priority] || priority : "Média",
+      when: "Hoje, em horário comercial",
+      why: signalNames.length
+        ? `Nenhuma mensagem foi trocada com este contato. O que existe são sinais do diagnóstico e da prospecção (${signalNames.slice(0, 2).join(", ").toLowerCase()}), que indicam necessidade, mas não interação.`
+        : "Nenhuma mensagem foi trocada com este contato nos canais conectados. A pontuação atual vem apenas do perfil da empresa.",
+      objective: empresa
+        ? `Abrir a conversa com a ${empresa} usando um gancho específico do negócio dela e conseguir a primeira resposta.`
+        : "Abrir a conversa e conseguir a primeira resposta, que é o que libera a análise real.",
+      steps: [
+        contexto.length
+          ? `Citar um dado concreto que você já tem: ${contexto[0]}.`
+          : "Apresentar-se em uma frase e dizer por que está falando com esta empresa.",
+        prospect && !prospect.website
+          ? "Mostrar o impacto prático da ausência de site ou presença digital fraca em captação de clientes."
+          : "Apontar um ganho concreto e mensurável para o negócio dele.",
+        "Fazer uma única pergunta fechada, fácil de responder.",
+        "Aguardar 48 horas antes de qualquer nova tentativa.",
+      ],
+      question: nicho
+        ? `Vocês estão querendo atrair mais clientes de ${nicho.toLowerCase()} agora ou isso fica para os próximos meses?`
+        : "Vocês estão buscando atrair mais clientes agora ou isso é algo para os próximos meses?",
+      avoid: "Não dizer que já conversaram, não citar retomada e não mandar mensagem genérica. Nenhuma mensagem foi trocada até aqui.",
+      expected: "Primeira resposta do contato, que libera engajamento, intenção e momentum reais.",
+    };
+  }
+
+
+
   if (waiting != null && waiting >= 0.25) {
     return {
       ...base,
