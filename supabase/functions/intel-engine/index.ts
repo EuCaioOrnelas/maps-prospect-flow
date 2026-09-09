@@ -444,7 +444,9 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
     Number(conv?.inbound_count_7d || 0) + Number(conv?.outbound_count_7d || 0);
   const hasLegacyInteraction = !!conv?.last_inbound_at || !!conv?.last_outbound_at;
   const evidenceMessages = Math.max(messages.length, legacyMessages);
-  const evidenceSignals = signals.length;
+  // Sinais vindos apenas do diagnostico/prospeccao descrevem a empresa, nao uma
+  // interacao comercial: nao contam como evidencia de analise.
+  const evidenceSignals = signals.filter((s) => s.source !== "prospecting").length;
   const hasInteraction = evidenceMessages > 0 || hasLegacyInteraction;
   const analysisState =
     !hasInteraction && evidenceSignals === 0
