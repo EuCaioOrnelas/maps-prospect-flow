@@ -30,6 +30,8 @@ interface KanbanColumnProps {
   onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
   canChangeResponsible?: boolean;
   hideValue?: boolean;
+  onOpenLeadTab?: (lead: Lead, tab: 'deals' | 'files') => void;
+  onToggleArchive?: (lead: Lead) => Promise<void> | void;
 }
 
 const getColumnWidthClass = (width: ColumnWidth, isExpanded: boolean): string => {
@@ -69,6 +71,8 @@ const KanbanColumnComponent = ({
   onChangeResponsible,
   canChangeResponsible = true,
   hideValue = false,
+  onOpenLeadTab,
+  onToggleArchive,
 }: KanbanColumnProps) => {
   const totalValue = useMemo(() => 
     leads.reduce((sum, lead) => sum + (lead.estimated_value || 0), 0),
@@ -187,6 +191,8 @@ const KanbanColumnComponent = ({
                 onChangeResponsible={onChangeResponsible}
                 canChangeResponsible={canChangeResponsible}
                 hideValue={hideValue}
+                onOpenTab={onOpenLeadTab}
+                onToggleArchive={onToggleArchive}
               />
             </div>
           ))}
