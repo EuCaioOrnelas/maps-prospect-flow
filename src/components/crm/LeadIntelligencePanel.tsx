@@ -368,14 +368,24 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
       </div>
 
       {/* Dimensões */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        <Dimension label="Fit" value={intel.fit_score} />
-        <Dimension label="Intenção" value={intel.intent_score} />
-        <Dimension label="Engajamento" value={intel.engagement_score} />
-        <Dimension label="Qualidade" value={intel.quality_score} />
-        <Dimension label="Risco" value={intel.risk_score} />
-        <Dimension label="Semelhança" value={intel.pattern_match_score} suffix="%" />
+      <div>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
+          Análise da inteligência
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <Dimension label="Fit" value={intel.fit_score} help="O quanto o perfil e o nicho do contato combinam com o que você vende." />
+          <Dimension label="Intenção de compra" value={intel.intent_score} help="Sinais de que ele quer comprar: pergunta preço, prazo, condições." />
+          <Dimension label="Engajamento" value={intel.engagement_score} help="Frequência e rapidez das respostas dele nas conversas." />
+          <Dimension label="Qualidade" value={intel.quality_score} help="Quanto de informação confiável existe sobre o contato e a empresa." />
+          <Dimension label="Risco" value={intel.risk_score} help="Chance de esfriar ou sumir: silêncio, recusas, respostas evasivas." />
+          <Dimension label="Semelhança" value={intel.pattern_match_score} suffix="%" help="Parecido com contatos que já viraram clientes na sua conta." />
+        </div>
+        <p className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
+          A Oportunidade de 0 a 100 é o resumo dessas dimensões. Ela sobe com conversa, intenção e
+          aderência ao nicho, e cai com silêncio e sinais de risco.
+        </p>
       </div>
+
 
       {/* Comportamento */}
       {intel.behaviors?.length > 0 && (
