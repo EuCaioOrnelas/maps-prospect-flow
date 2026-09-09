@@ -53,6 +53,9 @@ interface CRMFiltersProps {
   responsibleMembers?: ResponsibleMember[];
   currentUserId?: string | null;
   showResponsibleFilter?: boolean;
+  showArchived?: boolean;
+  onShowArchivedChange?: (value: boolean) => void;
+  archivedCount?: number;
 }
 
 export const CRMFilters = ({
