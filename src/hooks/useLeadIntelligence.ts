@@ -154,8 +154,9 @@ export function useLeadIntelligenceProfile(phone?: string | null) {
       // Sem perfil ainda: pede ao motor central (nao cria calculo novo, apenas processa este contato)
       try {
         await supabase.functions.invoke("intel-engine", {
-          body: { action: "compute_profile", phone },
+          body: { action: "compute_profile", phone_e164: phone },
         });
+
       } catch {
         return null;
       }
