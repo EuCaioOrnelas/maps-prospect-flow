@@ -434,7 +434,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   const nicheName = lead?.category || prospect?.category || intel?.niche || null;
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-4", className)}>
       {/* ------------------------------------------------------------ header */}
       <header className="rounded-xl border border-border/60 bg-card p-4">
         <div className="flex items-start justify-between gap-3">
@@ -456,7 +456,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,260px)_1fr] lg:items-center">
+        <div className="mt-4 space-y-3">
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</p>
             <div className="flex items-end gap-2 mt-1">
@@ -464,15 +464,17 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                 {opportunity}<span className="text-base font-medium text-muted-foreground"> de 100</span>
               </p>
             </div>
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="rounded-md text-[11px]">{classification}</Badge>
               <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                 <MomentumIcon className="w-3.5 h-3.5" /> {momentumLabel}
               </span>
+              <Badge variant="secondary" className="rounded-md text-[10px] font-normal">{basis.badge}</Badge>
             </div>
             <div className="mt-2.5 h-1.5 rounded-full bg-muted overflow-hidden">
               <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${opportunity}%` }} />
             </div>
+            <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">{basis.explain}</p>
           </div>
           <p className="text-[13px] text-muted-foreground leading-relaxed">{summary}</p>
         </div>
@@ -481,18 +483,18 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       {/* -------------------------------------------------------------- tabs */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto rounded-lg">
-          <TabsTrigger value="overview" className="text-[12px]">Visão geral</TabsTrigger>
-          <TabsTrigger value="conversation" className="text-[12px]">Conversa</TabsTrigger>
-          <TabsTrigger value="company" className="text-[12px]">Empresa</TabsTrigger>
-          <TabsTrigger value="prospect" className="text-[12px]">Prospecção</TabsTrigger>
-          <TabsTrigger value="commercial" className="text-[12px]">Comercial</TabsTrigger>
-          <TabsTrigger value="evolution" className="text-[12px]">Evolução</TabsTrigger>
+          <TabsTrigger value="overview" className="text-[12px] gap-1.5"><Target className="w-3.5 h-3.5" />Visão geral</TabsTrigger>
+          <TabsTrigger value="conversation" className="text-[12px] gap-1.5"><MessageSquare className="w-3.5 h-3.5" />Conversa</TabsTrigger>
+          <TabsTrigger value="company" className="text-[12px] gap-1.5"><Building2 className="w-3.5 h-3.5" />Empresa</TabsTrigger>
+          <TabsTrigger value="prospect" className="text-[12px] gap-1.5"><MapPin className="w-3.5 h-3.5" />Prospecção</TabsTrigger>
+          <TabsTrigger value="commercial" className="text-[12px] gap-1.5"><DollarSign className="w-3.5 h-3.5" />Comercial</TabsTrigger>
+          <TabsTrigger value="evolution" className="text-[12px] gap-1.5"><TrendingUp className="w-3.5 h-3.5" />Evolução</TabsTrigger>
         </TabsList>
 
         {/* ------------------------------------------------------- visão geral */}
-        <TabsContent value="overview" className="mt-3 space-y-3">
+        <TabsContent value="overview" className="mt-4 space-y-4">
           <Block icon={Target} title="Dimensões da Inteligência">
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <DimensionCard label="Intenção" icon={Target} value={intent} caption={intent !== null ? bandF(intent) : ""} />
               <DimensionCard label="Engajamento" icon={Zap} value={engagement} caption={engagement !== null ? bandM(engagement) : ""} />
               <StateCard
@@ -513,6 +515,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
               />
             </div>
           </Block>
+
 
           <div className="grid gap-3 lg:grid-cols-2">
             <Block icon={Sparkles} title={`Por que a Oportunidade está em ${opportunity}`}>
