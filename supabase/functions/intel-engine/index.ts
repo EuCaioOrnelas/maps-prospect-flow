@@ -649,10 +649,14 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   else if (present.has("INTENT_PAYMENT") || stage === "CLOSING") nba = "REQUEST_PAYMENT";
   else if (present.has("INTENT_PROPOSAL") || (intent >= 60 && stage === "NEGOTIATION")) nba = "SEND_PROPOSAL";
   else if (silenceDays > 7 && silenceDays < 900 && intent >= 30) nba = "REACTIVATE";
+  // Conversa antiga e parada: reativar antes de qualquer outra coisa, mesmo sem intencao registrada.
+  else if (hasInteraction && silenceDays > 30 && silenceDays < 900) nba = "REACTIVATE";
   else if (silenceDays > 1 && intent >= 40) nba = "FOLLOW_UP";
+  else if (hasInteraction && silenceDays > 1 && silenceDays <= 30) nba = "FOLLOW_UP";
   else if (opportunity < 30) nba = "NURTURE";
   else if (intent < 30 && fit >= 60) nba = "QUALIFY";
   else if (silenceDays <= 1 && awaitingUsMin === 0) nba = "WAIT";
+
 
   // PRIORITY
   const th = cfg.thresholds || DEFAULT_CONFIG.thresholds;
