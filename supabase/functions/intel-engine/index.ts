@@ -424,29 +424,41 @@ async function computeProfile(sb: any, owner: string, phone: string) {
   // ENGAGEMENT: reutiliza integralmente o score do motor atual (0-1000 -> 0-100)
   const engagement = clamp(Number(rl.score_total || 0) / 10);
 
-  // INTENT: soma ponderada com decay por recencia
+  // INTENT: soma ponderada com decay por recencia + retornos decrescentes por tipo
+  // (repetir 5x "quanto custa" nao vale 5x o sinal de preco)
   let intentRaw = 0;
-  for (const s of signals) {
+  const seenByType = new Map<string, number>();
+  const ordered = [...signals].sort((a, b) => b.at.getTime() - a.at.getTime());
+  for (const s of ordered) {
     const w = INTENT_WEIGHTS[s.type];
     if (!w) continue;
     const group = SIGNAL_GROUP[s.type] || "INTENT";
-    intentRaw += w * s.confidence * decayFactor(group, daysBetween(now, s.at), cfg);
+    const rank = seenByType.get(s.type) || 0;
+    seenByType.set(s.type, rank + 1);
+    const diminishing = Math.pow(0.45, rank); // 1, 0.45, 0.20, ...
+    intentRaw += w * s.confidence * decayFactor(group, daysBetween(now, s.at), cfg) * diminishing;
   }
   const intent = clamp(intentRaw);
 
-  // QUALITY: profundidade, perguntas, reciprocidade, progressao
+  // QUALITY: profundidade real da conversa (mensagens substantivas), perguntas,
+  // reciprocidade e continuidade. Muitas mensagens curtas ("ok", "kkk") nao inflam.
   const inbLen = inbound.map((m) => (m.content || "").length);
   const avgLen = inbLen.length ? inbLen.reduce((a, b) => a + b, 0) / inbLen.length : 0;
+  const substantive = inbound.filter((m) => (m.content || "").trim().length >= 25).length;
+  const substantiveRatio = inbound.length ? substantive / inbound.length : 0;
   const questions = inbound.filter((m) => (m.content || "").includes("?")).length;
   const outboundCount = messages.length - inbound.length;
   const reciprocity = messages.length ? Math.min(1, Math.min(inbound.length, outboundCount) / Math.max(1, Math.max(inbound.length, outboundCount))) : 0;
   const distinctDays = new Set(messages.map((m) => (m.created_at || "").slice(0, 10))).size;
-  const quality = clamp(
-    Math.min(35, (avgLen / 90) * 35) +
+  const depth = Math.min(35, (avgLen / 90) * 25 + Math.min(10, substantive * 2.5));
+  const qualityRaw =
+    depth +
     Math.min(20, questions * 4) +
     reciprocity * 25 +
-    Math.min(20, distinctDays * 4)
-  );
+    Math.min(20, distinctDays * 4);
+  // conversa dominada por mensagens curtas perde peso proporcionalmente
+  const chattyPenalty = inbound.length >= 5 ? 0.55 + 0.45 * Math.min(1, substantiveRatio / 0.4) : 1;
+  const quality = clamp(qualityRaw * chattyPenalty);
 
   // FIT: nicho + regiao + maturidade digital + reputacao + contatabilidade
   const fw = cfg.weights?.fit || DEFAULT_CONFIG.weights.fit;
