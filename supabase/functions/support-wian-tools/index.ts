@@ -223,6 +223,53 @@ async function get_user_score({ sb, userId }: Ctx) {
   } : { info: "Sem score registrado ainda." };
 }
 
+// INTELIGENCIA CENTRAL — leitura da camada unica de inteligencia comercial
+async function get_lead_intelligence({ sb, userId }: Ctx, params: any = {}) {
+  const phone = String(params?.phone || "").replace(/\D/g, "").slice(-8);
+  const { data } = await sb
+    .from("intel_lead_profiles")
+    .select("phone_e164, company_name, niche, city, fit_score, intent_score, engagement_score, quality_score, risk_score, opportunity_score, momentum_state, stage, next_best_action, priority, is_hot, hot_reason, behaviors, factors, risk_factors")
+    .eq("owner_user_id", userId)
+    .order("opportunity_score", { ascending: false })
+    .limit(200);
+  const rows: any[] = data ?? [];
+  if (phone) {
+    const found = rows.find((r) => String(r.phone_e164 || "").replace(/\D/g, "").slice(-8) === phone);
+    return found ?? { info: "Sem inteligencia consolidada para esse contato ainda." };
+  }
+  if (!rows.length) return { info: "A inteligencia ainda nao processou leads desta conta." };
+  return {
+    total_analisados: rows.length,
+    quentes: rows.filter((r) => r.is_hot).length,
+    em_risco: rows.filter((r) => Number(r.risk_score) >= 60).length,
+    top: rows.slice(0, 10),
+  };
+}
+
+async function get_hot_opportunities({ sb, userId }: Ctx) {
+  const { data } = await sb
+    .from("intel_lead_profiles")
+    .select("company_name, niche, opportunity_score, intent_score, priority, momentum_state, next_best_action, hot_reason, crm_lead_id")
+    .eq("owner_user_id", userId)
+    .eq("is_hot", true)
+    .order("opportunity_score", { ascending: false })
+    .limit(20);
+  const rows: any[] = data ?? [];
+  return rows.length ? { total: rows.length, oportunidades: rows } : { info: "Nenhuma oportunidade quente agora." };
+}
+
+async function get_conversion_patterns({ sb, userId }: Ctx) {
+  const { data } = await sb
+    .from("intel_patterns")
+    .select("pattern_type, pattern_key, label, rate, sample_size, updated_at")
+    .eq("owner_user_id", userId)
+    .gte("sample_size", 3)
+    .order("rate", { ascending: false })
+    .limit(25);
+  const rows: any[] = data ?? [];
+  return rows.length ? { padroes: rows } : { info: "Ainda nao ha historico suficiente para padroes confiaveis." };
+}
+
 async function get_subscription_info({ sb, userId }: Ctx) {
   const { data: p } = await sb
     .from("profiles")
@@ -313,6 +360,9 @@ const HANDLERS: Record<string, (ctx: Ctx, params: any) => Promise<any>> = {
   get_recent_errors,
   get_recent_frontend_errors,
   get_user_score,
+  get_lead_intelligence,
+  get_hot_opportunities,
+  get_conversion_patterns,
   get_subscription_info,
   silence_ai_agent,
   unsilence_ai_agent,
