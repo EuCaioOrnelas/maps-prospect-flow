@@ -247,15 +247,7 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
     );
   }
 
-    return (
-      <div className={cn("rounded-xl border border-dashed border-border/60 bg-muted/20 p-4 text-center", className)}>
-        <Brain className="w-5 h-5 mx-auto text-muted-foreground mb-1.5" />
-        <p className="text-xs text-muted-foreground">
-          A inteligência ainda não tem dados suficientes sobre este contato.
-        </p>
-      </div>
-    );
-  }
+
 
   const MomentumIcon =
     intel.momentum_state.includes("RISING") ? TrendingUp :
