@@ -868,6 +868,10 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
     if (filters.scoreMax) c++;
     if (filters.bucket !== "all") c++;
     if (filters.riskState !== "all") c++;
+    if (filters.oppBand !== "all") c++;
+    if (filters.intentLevel !== "all") c++;
+    if (filters.momentum !== "all") c++;
+    if (filters.riskLevel !== "all") c++;
     return c;
   }, [filters]);
 
@@ -882,6 +886,27 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
         if (mapped !== filters.bucket) return false;
       }
       if (filters.riskState !== "all" && l.risk_state !== filters.riskState) return false;
+      // Filtros da Inteligência — mesma fonte única usada na tabela.
+      if (filters.oppBand !== "all" || filters.intentLevel !== "all" || filters.momentum !== "all" || filters.riskLevel !== "all") {
+        const p = getIntelByPhone(l.phone_e164);
+        const opp = p ? Math.max(0, Math.min(100, Math.round(p.opportunity_score))) : dimensionTo100(l.score_total);
+        const intent = p ? Math.round(p.intent_score) : dimensionTo100(l.score_intent);
+        const risk = p ? Math.round(p.risk_score) : dimensionTo100(l.score_risk);
+        const mom = p ? momentumOf(p.momentum_state) : (l.risk_state === "AT_RISK" || l.risk_state === "CRITICAL" ? "down" : "unknown");
+        if (filters.oppBand !== "all") {
+          const o = OPP_BAND_OPTIONS.find(x => x.value === filters.oppBand)!;
+          if (opp < o.min || opp > o.max) return false;
+        }
+        if (filters.intentLevel !== "all") {
+          const o = INTENT_OPTIONS.find(x => x.value === filters.intentLevel)!;
+          if (intent < o.min || intent > o.max) return false;
+        }
+        if (filters.riskLevel !== "all") {
+          const o = RISK_LEVEL_OPTIONS.find(x => x.value === filters.riskLevel)!;
+          if (risk < o.min || risk > o.max) return false;
+        }
+        if (filters.momentum !== "all" && mom !== filters.momentum) return false;
+      }
       if (filters.scoreMin) {
         const min = parseInt(filters.scoreMin);
         if (!isNaN(min) && l.score_total < min) return false;
