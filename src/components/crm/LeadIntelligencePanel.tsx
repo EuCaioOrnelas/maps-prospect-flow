@@ -1185,18 +1185,41 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
         <TabsContent value="evolucao" className="mt-4 space-y-4">
           {chartData.length > 1 ? (
             <Block icon={TrendingUp} title="Evolução da oportunidade">
-              <div className="h-40">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>
-                    <XAxis dataKey="at" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
-                    <RTooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-                    <RLine type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              {(() => {
+                const first = chartData[0].value;
+                const last = chartData[chartData.length - 1].value;
+                const delta = last - first;
+                const peak = Math.max(...chartData.map((c) => c.value));
+                return (
+                  <>
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <Stat label="Atual" value={`${last} de 100`} />
+                      <Stat
+                        label="Variação no período"
+                        value={`${delta > 0 ? "+" : ""}${delta} pts`}
+                        hint={delta > 0 ? "em crescimento" : delta < 0 ? "em queda" : "estável"}
+                      />
+                      <Stat label="Pico" value={`${peak} de 100`} />
+                    </div>
+                    <div className="h-40">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>
+                          <XAxis dataKey="at" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
+                          <YAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
+                          <RTooltip
+                            contentStyle={{ fontSize: 11, borderRadius: 8 }}
+                            formatter={(v: any) => [`${v} de 100`, "Oportunidade"]}
+                          />
+                          <RLine type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                );
+              })()}
             </Block>
           ) : (
+
             <Empty
               title="Sem histórico suficiente"
               description="A evolução aparece a partir da segunda variação registrada pelo motor para este contato."
