@@ -571,10 +571,21 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             >
               <p className="text-sm font-semibold text-foreground">{action.title}</p>
               <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">{action.why}</p>
-              <div className="grid grid-cols-2 gap-2 mt-3">
-                <Stat label="Canal" value={action.channel} />
-                <Stat label="O que fazer" value={action.what.length > 42 ? action.what.slice(0, 42) + "…" : action.what} hint={action.what.length > 42 ? action.what : undefined} />
+              <div className="mt-3 space-y-2">
+                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2 flex items-center gap-2">
+                  <MessageSquare className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Canal</p>
+                  <p className="text-[13px] font-semibold text-foreground ml-auto">{action.channel}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">O que fazer</p>
+                  </div>
+                  <p className="text-[13px] text-foreground leading-relaxed mt-1">{action.what}</p>
+                </div>
               </div>
+
               <div className="mt-3 rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Mensagem sugerida</p>
                 {action.script ? (
