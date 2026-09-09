@@ -389,12 +389,28 @@ const ScoreInfoModal = ({ open, onClose }: { open: boolean; onClose: () => void 
               </div>
             </div>
           ))}
-          <div className="border-t border-border pt-2 mt-2">
-            <p className="text-[11px] text-muted-foreground">
-              A pontuação é recalculada automaticamente a cada novo sinal. Sinais repetidos têm impacto decrescente e sinais antigos perdem relevância com o tempo.
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/60 p-4">
+            <p className="text-sm font-semibold text-foreground mb-1">Onde a Inteligência aparece</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              No card de cada contato (Oportunidade de 0 a 100), dentro do contato (dimensões, sinais e o que
+              explica o número), nesta Central (visão geral, rankings e tendências), no radar de oportunidades
+              quentes e nas respostas da Wian. O valor é o mesmo em todos os lugares.
             </p>
           </div>
-          <Button variant="outline" className="w-full mt-2" size="sm" onClick={onClose}>Fechar</Button>
+
+          <div className="rounded-xl border border-border/60 p-4">
+            <p className="text-sm font-semibold text-foreground mb-1">Atualização e transparência</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              O valor é recalculado automaticamente a cada novo sinal e revisto diariamente. Todo cálculo fica
+              registrado com data, origem e motivo, então sempre dá para ver por que um contato subiu ou caiu.
+              Contatos sem histórico suficiente aparecem com leitura parcial até acumularem interações.
+            </p>
+          </div>
+
+          <Button variant="outline" className="w-full" size="sm" onClick={onClose}>Fechar</Button>
         </CardContent>
       </Card>
     </div>
