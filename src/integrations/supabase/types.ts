@@ -5526,6 +5526,7 @@ export type Database = {
           ai_recommended_action: string | null
           ai_score: number | null
           archived_at: string | null
+          archived_by: string | null
           category: string | null
           city: string | null
           closing_probability: string | null
@@ -5581,6 +5582,7 @@ export type Database = {
           ai_recommended_action?: string | null
           ai_score?: number | null
           archived_at?: string | null
+          archived_by?: string | null
           category?: string | null
           city?: string | null
           closing_probability?: string | null
@@ -5636,6 +5638,7 @@ export type Database = {
           ai_recommended_action?: string | null
           ai_score?: number | null
           archived_at?: string | null
+          archived_by?: string | null
           category?: string | null
           city?: string | null
           closing_probability?: string | null
