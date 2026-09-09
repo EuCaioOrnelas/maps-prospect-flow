@@ -42,7 +42,7 @@ const LeadEngagementScoreComponent = ({
       {showLabel && (
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] font-medium text-muted-foreground tracking-wide uppercase">
-            Inteligência
+            Oportunidade
           </span>
           <span className={cn("text-[10px] font-medium opacity-70", tier.text)}>
             {tier.label}
