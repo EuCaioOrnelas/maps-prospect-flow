@@ -120,7 +120,7 @@ export function MockSidebar({
           {openSection === "crm" && (
             <>
               <SubItem label="Pipeline" tour="sidebar-crm-pipeline" />
-              <SubItem label="Score de contatos" tour="sidebar-crm-score" />
+              <SubItem label="Inteligência" tour="sidebar-crm-score" />
             </>
           )}
         </ul>
