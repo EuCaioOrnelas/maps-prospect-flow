@@ -260,7 +260,7 @@ function buildAction(ctx: {
         ? "Responder objetivamente à pergunta sobre valores e propor o próximo passo."
         : "Responder ao que ele escreveu e encerrar com uma pergunta que exija resposta.",
       script: last
-        ? `${hello}! Sobre "${String(last).slice(0, 80)}" — já consigo te responder. ${priceIntent ? "Te passo o valor e o prazo agora; prefere por aqui ou numa ligação rápida?" : "Me confirma só uma coisa pra eu te passar certinho?"}`
+        ? `${hello}! Sobre "${String(last).slice(0, 80)}", já consigo te responder. ${priceIntent ? "Te passo o valor e o prazo agora; prefere por aqui ou numa ligação rápida?" : "Me confirma só uma coisa pra eu te passar certinho?"}`
         : null,
       cta: "Abrir conversa",
     };
@@ -300,7 +300,7 @@ function buildAction(ctx: {
       why: `A última mensagem foi há ${hoursLabel(conv.silenceHours)} e a atividade parou.`,
       channel,
       what: "Retomar com uma pergunta objetiva sobre o problema dele, não sobre o produto.",
-      script: `${hello}! Retomando nossa conversa — hoje o que mais atrapalha${niche ? ` na operação de ${niche.toLowerCase()}` : ""} aí?`,
+      script: `${hello}! Retomando nossa conversa. Hoje o que mais atrapalha${niche ? ` na operação de ${niche.toLowerCase()}` : ""} aí?`,
       cta: "Abrir conversa",
     };
   }
@@ -389,7 +389,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       else parts.push("ainda sem sinais claros de intenção de compra");
       if (conv.waitingReplyHours !== null) parts.push(`contato aguardando resposta há ${hoursLabel(conv.waitingReplyHours)}`);
     } else {
-      parts.push("nenhuma conversa registrada no WhatsApp — intenção e engajamento ainda não podem ser avaliados");
+      parts.push("nenhuma conversa registrada no WhatsApp, portanto intenção e engajamento ainda não podem ser avaliados");
       if (company || niche) parts.push(`avaliação baseada apenas nos dados de prospecção${niche ? ` (${niche})` : ""}`);
     }
     if (deals.length) parts.push(`${deals.length} negociação(ões) no histórico`);
@@ -401,7 +401,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
     const out: { label: string; quote?: string; at?: string; source?: string }[] = [];
     conv?.intents.forEach((i) => out.push({ label: i.label, quote: i.quote, at: i.at, source: i.source }));
     if (conv && conv.total >= 5) out.push({ label: `Conversa ativa com ${conv.total} mensagens em ${conv.activeDays} dia(s)` });
-    if (conv && conv.reciprocity >= 35) out.push({ label: `Reciprocidade de ${conv.reciprocity}% — o contato participa da conversa` });
+    if (conv && conv.reciprocity >= 35) out.push({ label: `Reciprocidade de ${conv.reciprocity}%, o contato participa da conversa` });
     if (conv?.leadAvgResponseMinutes != null && conv.leadAvgResponseMinutes <= 60) out.push({ label: `O contato responde em média em ${conv.leadAvgResponseMinutes} min` });
     if (conv?.transcribedAudioCount) out.push({ label: `${conv.transcribedAudioCount} áudio(s) transcrito(s) e analisado(s)` });
     if ((fit ?? 0) >= 60) out.push({ label: "Perfil compatível com o que você vende (fit calculado pelo motor)" });
@@ -607,9 +607,9 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                   <Stat label="Do contato" value={String(conv.inbound)} hint={`${conv.reciprocity}% reciprocidade`} />
                   <Stat label="Suas" value={String(conv.outbound)} />
                   <Stat label="Dias com conversa" value={String(conv.activeDays)} />
-                  <Stat label="Sua resposta média" value={conv.avgResponseMinutes != null ? `${conv.avgResponseMinutes} min` : "—"} />
-                  <Stat label="Resposta do contato" value={conv.leadAvgResponseMinutes != null ? `${conv.leadAvgResponseMinutes} min` : "—"} />
-                  <Stat label="Última mensagem" value={conv.lastMessageAt ? formatDistanceToNow(new Date(conv.lastMessageAt), { addSuffix: true, locale: ptBR }) : "—"} />
+                  <Stat label="Sua resposta média" value={conv.avgResponseMinutes != null ? `${conv.avgResponseMinutes} min` : "sem dado"} />
+                  <Stat label="Resposta do contato" value={conv.leadAvgResponseMinutes != null ? `${conv.leadAvgResponseMinutes} min` : "sem dado"} />
+                  <Stat label="Última mensagem" value={conv.lastMessageAt ? formatDistanceToNow(new Date(conv.lastMessageAt), { addSuffix: true, locale: ptBR }) : "sem dado"} />
                   <Stat
                     label="Áudios"
                     value={String(conv.audioCount)}
@@ -777,7 +777,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                       <div className="min-w-0">
                         <p className="text-[13px] font-medium text-foreground truncate">{d.title || "Negociação"}</p>
                         <p className="text-[11px] text-muted-foreground">
-                          {d.status || "—"} · {format(new Date(d.closed_at || d.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                          {d.status || "Sem status"} · {format(new Date(d.closed_at || d.created_at), "dd/MM/yyyy", { locale: ptBR })}
                         </p>
                       </div>
                       <span className="text-[13px] font-semibold tabular-nums text-foreground shrink-0">
@@ -812,7 +812,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                 <p className="text-[13px] text-muted-foreground leading-relaxed">
                   {lostPattern.sample_size} oportunidade(s) perdida(s) apresentaram padrão parecido
                   {lostPattern.niche ? ` no segmento ${lostPattern.niche}` : ""}.
-                  {intel?.loss_pattern_match_score ? ` Aderência atual deste contato: ${intel.loss_pattern_match_score}%.` : ""} Não é previsão — é um alerta para agir antes.
+                  {intel?.loss_pattern_match_score ? ` Aderência atual deste contato: ${intel.loss_pattern_match_score}%.` : ""} Não é previsão, é um alerta para agir antes.
                 </p>
               ) : (
                 <Empty title="Dados insuficientes" description="Ainda não há oportunidades perdidas suficientes registradas para identificar padrões de perda." />
