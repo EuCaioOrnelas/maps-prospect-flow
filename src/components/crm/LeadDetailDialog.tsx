@@ -1545,6 +1545,8 @@ export const LeadDetailDialog = ({
                   )}
                 </div>
                 </div>
+              </div>
+            )}
 
             {/* Deals Tab */}
             {activeTab === 'deals' && (
@@ -1683,9 +1685,10 @@ export const LeadDetailDialog = ({
             )}
 
             {/* History Tab */}
-                <div>
-                  <h4 className="text-sm font-semibold mb-3">Histórico</h4>
-                  <div className="space-y-1">
+            {activeTab === 'intelligence' && (
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold mb-3">Histórico</h4>
+                <div className="space-y-1">
                 {activities
                   .slice((historyPage - 1) * HISTORY_PER_PAGE, historyPage * HISTORY_PER_PAGE)
                   .map((activity, index, arr) => {
