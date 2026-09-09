@@ -263,7 +263,25 @@ const LeadCardComponent = ({
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
 
-      {/* Inteligência — resultado 0-100 do motor central (logo abaixo do nome/telefone) */}
+      {/* Status do contato (ex.: Nunca contatado) — logo abaixo do número */}
+      {lead.whatsapp_status && (
+        <div className="mb-2.5">
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-[10px] px-1.5 py-0 pointer-events-none",
+              WHATSAPP_STATUS_COLORS[lead.whatsapp_status]
+            )}
+          >
+            {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
+          </Badge>
+        </div>
+      )}
+
+      {/* Linha de separação */}
+      <div className="wiize-hairline mb-2.5" />
+
+      {/* Inteligência — resultado 0-100 do motor central */}
       {(() => {
         const s = intel
           ? Math.max(0, Math.min(100, Math.round(intel.opportunity_score)))
@@ -295,20 +313,8 @@ const LeadCardComponent = ({
         </div>
       )}
 
-      {/* Footer - Status, Tags and Response time */}
+      {/* Footer - Tags and Response time */}
       <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-        {lead.whatsapp_status && (
-          <Badge
-            variant="secondary"
-            className={cn(
-              "text-[10px] px-1.5 py-0 shrink-0 pointer-events-none",
-              WHATSAPP_STATUS_COLORS[lead.whatsapp_status]
-            )}
-          >
-            {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
-          </Badge>
-        )}
-
         {/* Custom tags */}
         {Array.isArray(lead.tags) && lead.tags.slice(0, 2).map((tag) => (
           <Badge

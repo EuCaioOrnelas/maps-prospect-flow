@@ -2018,13 +2018,14 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
 
 /* ─── Hairline divider (tapered: thicker in the center, fading at the edges) ─── */
 .wiize-hairline {
-  height: 1px;
+  height: 3px;
   width: 100%;
   border: 0;
-  background-image: linear-gradient(
-    to right,
-    hsl(var(--border) / 0) 0%,
-    hsl(var(--border) / 0.9) 50%,
+  background-image: radial-gradient(
+    ellipse 50% 100% at 50% 50%,
+    hsl(var(--border) / 0.9) 0%,
+    hsl(var(--border) / 0.45) 55%,
     hsl(var(--border) / 0) 100%
   );
+  background-repeat: no-repeat;
 }
