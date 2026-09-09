@@ -171,6 +171,22 @@ export const CRMFilters = ({
               )}
             </div>
 
+            {/* Arquivados */}
+            {onShowArchivedChange && (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground">Ver arquivados</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {archivedCount} arquivado{archivedCount === 1 ? '' : 's'} · continuam no limite do plano
+                    </p>
+                  </div>
+                  <Switch checked={showArchived} onCheckedChange={onShowArchivedChange} />
+                </div>
+                <Separator />
+              </>
+            )}
+
             {/* Pipeline Section */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
