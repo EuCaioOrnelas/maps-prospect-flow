@@ -921,11 +921,11 @@ export const LeadDetailDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl h-[90vh] sm:h-[85vh] overflow-hidden flex flex-col min-h-0 p-0 gap-0 border-border w-[95vw] sm:w-full rounded-lg">
         {/* Header */}
-        <div className="relative bg-primary text-primary-foreground dark:bg-primary/15 dark:text-foreground px-4 sm:px-6 py-4 sm:py-5 shrink-0">
+        <div className="relative bg-primary/15 text-foreground dark:bg-primary/10 px-4 sm:px-6 py-4 sm:py-5 shrink-0 border-b border-primary/20">
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div 
-              className="w-12 h-12 rounded-[14px] flex items-center justify-center text-lg font-semibold shrink-0 bg-primary-foreground/20 text-primary-foreground dark:bg-primary/20 dark:text-primary"
+              className="w-12 h-12 rounded-[14px] flex items-center justify-center text-lg font-semibold shrink-0 bg-primary/15 text-primary"
             >
               {displayName.charAt(0).toUpperCase()}
             </div>
