@@ -315,9 +315,9 @@ Deno.serve(async (req) => {
       for (const c of conns || []) {
         const iname = c.evolution_instance_name as string;
         if (!iname || staleIds.has(c.id)) continue;
-        let state = "close";
-        try { state = normalizeState(await evo(`/instance/connectionState/${iname}`, { method: "GET" })); }
-        catch (e) { state = (e as any).status === 404 ? "missing" : "close"; }
+        const probe = await probeState(iname);
+        if (probe.transient) { report[iname] = "skipped_unconfirmed"; continue; }
+        const state = probe.state;
 
         if (state === "open") {
           if (c.evolution_state !== "open" || c.evolution_disconnected_since || c.evolution_qr_alert_sent_at) {
