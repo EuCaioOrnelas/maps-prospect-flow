@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import type { ResponsibleMember } from './ResponsibleAvatar';
 import type { ResponsibleFilter } from './CRMResponsibleFilter';
 
