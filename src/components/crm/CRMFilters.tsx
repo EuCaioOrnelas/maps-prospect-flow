@@ -137,7 +137,7 @@ export const CRMFilters = ({
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
           placeholder="Buscar contatos..."
-          className="pl-9 rounded-full"
+          className="pl-9"
         />
       </div>
 
