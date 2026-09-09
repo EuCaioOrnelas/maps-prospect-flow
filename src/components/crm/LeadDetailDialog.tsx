@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, FileText, Upload, FolderOpen } from 'lucide-react';
+import { ChevronDown, FileText, Upload, FolderOpen, Mail } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -307,6 +307,7 @@ export const LeadDetailDialog = ({
   const [hasWiizeChatConnection, setHasWiizeChatConnection] = useState(false);
   const [formData, setFormData] = useState({
     phone: '',
+    email: '',
     company_name: '',
     contact_name: '',
     category: '',
@@ -667,6 +668,7 @@ export const LeadDetailDialog = ({
     const estimatedValue = Number(lead.estimated_value || 0);
     setFormData({
       phone: lead.phone || '',
+      email: lead.email || '',
       company_name: lead.company_name || '',
       contact_name: lead.contact_name || '',
       category: lead.category || '',
@@ -917,7 +919,7 @@ export const LeadDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl h-[90vh] sm:h-[85vh] overflow-hidden flex flex-col min-h-0 p-0 gap-0 border-border w-[95vw] sm:w-full rounded-lg">
+      <DialogContent className="max-w-3xl h-[90vh] sm:h-[85vh] overflow-hidden flex flex-col min-h-0 p-0 gap-0 border-border w-[95vw] sm:w-full rounded-lg">
         {/* Header */}
         <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 px-4 sm:px-6 py-4 sm:py-5 shrink-0">
           <div className="flex items-start gap-4">
@@ -1049,96 +1051,8 @@ export const LeadDetailDialog = ({
               </div>
             )}
           </div>
-          
-          <Select
-            value={lead.pipeline_stage_id || ''}
-            onValueChange={(value) => onMoveToStage(lead.id, value)}
-          >
-            <SelectTrigger className="w-auto min-w-[140px] h-9 text-sm">
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: currentStage?.color }}
-                />
-                <span className="truncate">{currentStage?.name || 'Etapa'}</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              {stages.map((stage) => (
-                <SelectItem key={stage.id} value={stage.id}>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: stage.color }}
-                    />
-                    {stage.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Popover open={isWhatsAppStatusOpen} onOpenChange={setIsWhatsAppStatusOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 text-sm min-w-[140px] justify-between gap-2">
-                <span className="truncate">Tags</span>
-                {localTags.length > 0 && (
-                  <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium">{localTags.length}</span>
-                )}
-                <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 p-0" align="start" sideOffset={4}>
-              <div className="max-h-[400px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-                {/* Custom Tags Section */}
-                <div>
-                  <div className="p-1">
-                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-1 block">Tags personalizadas</span>
-                    
-                    {/* Active custom tags */}
-                    {localTags.length > 0 && (
-                      <div className="space-y-0.5 mb-1">
-                        {localTags.map((tag) => (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => handleRemoveTag(tag)}
-                            className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors bg-primary/10 text-primary hover:bg-primary/20 group"
-                          >
-                            <Check className="w-3.5 h-3.5 shrink-0" />
-                            <span className="flex-1 text-left truncate">{tag}</span>
-                            <X className="w-3 h-3 opacity-0 group-hover:opacity-100 shrink-0" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Available suggestions */}
-                    {tagSuggestions.length > 0 && (
-                      <div className="space-y-0.5">
-                        {tagSuggestions.map((tag) => (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => handleAddTag(tag)}
-                            className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-muted text-foreground"
-                          >
-                            <Tag className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                            <span className="flex-1 text-left truncate">{tag}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {tagSuggestions.length === 0 && localTags.length === 0 && (
-                      <p className="px-3 py-2 text-xs text-muted-foreground">Nenhuma tag personalizada. Crie em Configurações.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
         </div>
+
 
         {/* Tab Navigation */}
         <div className="flex border-b border-border shrink-0">
@@ -1188,6 +1102,19 @@ export const LeadDetailDialog = ({
                         </div>
                       </div>
 
+                      {/* Email - Editable */}
+                      <EditableInfoField
+                        icon={<Mail className="w-4 h-4 text-muted-foreground" />}
+                        label="E-mail"
+                        value={formData.email}
+                        placeholder="Adicionar e-mail"
+                        onChange={(value) => setFormData({ ...formData, email: value })}
+                        onSave={async () => {
+                          await onUpdate(lead.id, { email: formData.email });
+                          toast.success('E-mail atualizado!');
+                        }}
+                      />
+
                       {/* Company Name - Editable */}
                       <EditableInfoField
                         icon={<Building2 className="w-4 h-4 text-muted-foreground" />}
@@ -1202,24 +1129,8 @@ export const LeadDetailDialog = ({
                       />
                     </div>
 
-                    {/* Score Inteligente — borda inferior limpa do card */}
-                    {(() => {
-                      const scoreData = lead.phone ? getScoreForPhone(lead.phone) : undefined;
-                      const s = toIntel100(scoreData?.score_total ?? lead.ai_score ?? 0);
-                      const pct = s;
-                      const bg = s >= 75 ? 'bg-emerald-500' : s >= 50 ? 'bg-blue-500' : s >= 25 ? 'bg-orange-500' : 'bg-red-500';
-                      const fg = s >= 75 ? 'text-emerald-500' : s >= 50 ? 'text-blue-500' : s >= 25 ? 'text-orange-500' : 'text-red-500';
-                      return (
-                        <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50 bg-background/40">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">Inteligência</span>
-                          <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden">
-                            <div className={cn("h-full rounded-full transition-[width] duration-700", bg)} style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className={cn("text-xs font-semibold tabular-nums tracking-tight", fg)}>{s}/100</span>
-                        </div>
-                      );
-                    })()}
                   </div>
+
 
                   {/* Inteligência Central Wiize */}
                 </div>

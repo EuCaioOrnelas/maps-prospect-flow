@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useLeadIntelligenceProfile,
   NEXT_ACTION_LABELS,
@@ -10,7 +12,7 @@ import {
 } from "@/hooks/useLeadIntelligence";
 import {
   Brain, Target, Flame, TrendingUp, TrendingDown, Minus,
-  AlertTriangle, Sparkles, Building2, Gauge,
+  AlertTriangle, Sparkles, Building2, Gauge, ListChecks, Lightbulb,
 } from "lucide-react";
 import { useLeadScores } from "@/hooks/useLeadScores";
 import { toIntel100 } from "@/lib/intelligence";
@@ -18,6 +20,167 @@ import { toIntel100 } from "@/lib/intelligence";
 interface Props {
   phone?: string | null;
   className?: string;
+}
+
+const EVENT_LABELS: Record<string, string> = {
+  message_received: "Mensagem recebida do contato",
+  message_sent: "Mensagem enviada",
+  reply_fast: "Resposta rápida",
+  keyword_intent: "Palavra de intenção de compra",
+  meeting_scheduled: "Reunião agendada",
+  stage_change: "Mudança de etapa no funil",
+  inactivity: "Inatividade",
+  no_reply: "Sem resposta",
+  audio_received: "Áudio recebido",
+  link_click: "Clique em link",
+  niche_fit: "Aderência ao nicho",
+  profile_enrichment: "Dados da empresa enriquecidos",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  engagement: "Interação",
+  interaction: "Interação",
+  intent: "Intenção",
+  niche: "Nicho e perfil",
+  fit: "Nicho e perfil",
+  quality: "Qualidade dos dados",
+  risk: "Risco",
+  decay: "Perda por tempo",
+};
+
+/** Pontos reais registrados pelo motor para este contato, agrupados. */
+function useScoreBreakdown(leadId?: string) {
+  return useQuery({
+    queryKey: ["intel-breakdown", leadId],
+    queryFn: async () => {
+      if (!leadId) return [];
+      const { data, error } = await supabase
+        .from("revenue_score_logs")
+        .select("event_type, category, points_applied, created_at")
+        .eq("lead_id", leadId)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      const groups = new Map<string, { key: string; label: string; points: number; count: number }>();
+      for (const row of data || []) {
+        const key = row.category || row.event_type || "outros";
+        const label =
+          CATEGORY_LABELS[row.category || ""] ||
+          EVENT_LABELS[row.event_type || ""] ||
+          (row.category || row.event_type || "Outros sinais");
+        const g = groups.get(key) || { key, label, points: 0, count: 0 };
+        g.points += Number(row.points_applied || 0);
+        g.count += 1;
+        groups.set(key, g);
+      }
+      return Array.from(groups.values()).sort((a, b) => Math.abs(b.points) - Math.abs(a.points));
+    },
+    enabled: !!leadId,
+    staleTime: 60_000,
+  });
+}
+
+/** Recomendação comercial derivada da leitura atual — sem criar novo cálculo. */
+function actionAdvice(score: number) {
+  if (score >= 81)
+    return {
+      title: "Fechar agora",
+      lines: [
+        "Ligue hoje: o contato está no melhor momento de decisão.",
+        "Envie proposta com prazo definido e condição clara.",
+        "Confirme a próxima etapa na mesma conversa.",
+      ],
+    };
+  if (score >= 61)
+    return {
+      title: "Avançar para proposta",
+      lines: [
+        "Faça uma chamada curta de diagnóstico e alinhe valores.",
+        "Mostre um caso parecido com o nicho do contato.",
+        "Combine data para retomar antes de esfriar.",
+      ],
+    };
+  if (score >= 41)
+    return {
+      title: "Aquecer e qualificar",
+      lines: [
+        "Retome a conversa com uma pergunta objetiva sobre a necessidade.",
+        "Confirme orçamento, urgência e quem decide.",
+        "Evite proposta antes de entender o problema.",
+      ],
+    };
+  if (score >= 21)
+    return {
+      title: "Nutrir com conteúdo",
+      lines: [
+        "Envie material útil e de baixo compromisso.",
+        "Espace os contatos para não queimar o relacionamento.",
+        "Reavalie em alguns dias com a nova leitura.",
+      ],
+    };
+  return {
+    title: "Reativar ou despriorizar",
+    lines: [
+      "Tente uma última reativação com abordagem diferente.",
+      "Se não houver resposta, priorize contatos com mais sinais.",
+    ],
+  };
+}
+
+function Breakdown({ leadId }: { leadId?: string }) {
+  const { data: rows = [] } = useScoreBreakdown(leadId);
+  if (!rows.length) return null;
+  return (
+    <div className="rounded-xl border border-border/60 bg-card p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <ListChecks className="w-3.5 h-3.5 text-muted-foreground" />
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+          Por que esta pontuação
+        </p>
+      </div>
+      <ul className="space-y-1.5">
+        {rows.map((r) => (
+          <li key={r.key} className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-foreground truncate">
+              {r.label}
+              <span className="text-muted-foreground text-xs"> · {r.count} sinal(is)</span>
+            </span>
+            <span className={cn("tabular-nums font-semibold shrink-0", r.points >= 0 ? "text-emerald-600" : "text-destructive")}>
+              {r.points > 0 ? "+" : ""}{Math.round(r.points / 10)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2.5 text-[11px] text-muted-foreground leading-relaxed">
+        Cada sinal registrado (conversa, intenção, nicho, tempo de resposta) soma ou desconta pontos.
+        Sinais repetidos valem menos a cada repetição e sinais antigos perdem peso com o tempo.
+        O total é convertido para a escala de 0 a 100 exibida como Oportunidade.
+      </p>
+    </div>
+  );
+}
+
+function ActionIntelligence({ score }: { score: number }) {
+  const advice = actionAdvice(score);
+  return (
+    <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
+      <div className="flex items-center gap-2 mb-1.5">
+        <Lightbulb className="w-3.5 h-3.5 text-primary" />
+        <p className="text-[10px] uppercase tracking-wider text-primary/80 font-medium">
+          Inteligência de ação
+        </p>
+      </div>
+      <p className="text-sm font-semibold text-foreground mb-2">{advice.title}</p>
+      <ul className="space-y-1.5">
+        {advice.lines.map((l, i) => (
+          <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+            <Sparkles className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+            <span>{l}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 function Dimension({ label, value, suffix = "/100" }: { label: string; value: number; suffix?: string }) {
@@ -44,6 +207,7 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
   const legacy = phone ? getScoreForPhone(phone) : undefined;
   const legacyScore = toIntel100(legacy?.score_total);
 
+
   if (isLoading) {
     return (
       <div className={cn("rounded-xl border border-border/60 bg-card p-4", className)}>
@@ -55,9 +219,9 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
   if (!intel) {
     // Sem perfil consolidado ainda: mostramos o mesmo valor exibido no card,
     // vindo do motor de pontuacao existente, para nao haver divergencia.
-    if (legacyScore > 0) {
-      return (
-        <div className={cn("rounded-xl border border-border/60 bg-card p-4", className)}>
+    return (
+      <div className={cn("space-y-3", className)}>
+        <div className="rounded-xl border border-border/60 bg-card p-4">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Brain className="w-[18px] h-[18px] text-primary" />
@@ -66,7 +230,7 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
                 Inteligência Wiize
               </p>
-              <p className="text-sm font-semibold text-foreground">Oportunidade {legacyScore}/100</p>
+              <p className="text-sm font-semibold text-foreground">Oportunidade {legacyScore} de 100</p>
             </div>
           </div>
           <div className="mt-3 h-1.5 rounded-full bg-muted/60 overflow-hidden">
@@ -77,17 +241,13 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
             (intenção, engajamento, risco) está sendo processada e aparece assim que ficar pronta.
           </p>
         </div>
-      );
-    }
-    return (
-      <div className={cn("rounded-xl border border-dashed border-border/60 bg-muted/20 p-4 text-center", className)}>
-        <Brain className="w-5 h-5 mx-auto text-muted-foreground mb-1.5" />
-        <p className="text-xs text-muted-foreground">
-          A inteligência ainda não tem dados suficientes sobre este contato.
-        </p>
+        <Breakdown leadId={legacy?.id} />
+        <ActionIntelligence score={legacyScore} />
       </div>
     );
   }
+
+
 
   const MomentumIcon =
     intel.momentum_state.includes("RISING") ? TrendingUp :
@@ -127,7 +287,7 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1.5 text-primary">
             <Target className="w-3.5 h-3.5" />
-            <span className="text-xs font-semibold">Oportunidade {intel.opportunity_score}/100</span>
+            <span className="text-xs font-semibold">Oportunidade {intel.opportunity_score} de 100</span>
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1.5">
             <MomentumIcon className="w-3.5 h-3.5 text-muted-foreground" />
@@ -224,6 +384,9 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
           <p className="text-sm text-muted-foreground leading-relaxed">{intel.diagnosis_summary}</p>
         </div>
       )}
+
+      <Breakdown leadId={legacy?.id} />
+      <ActionIntelligence score={intel.opportunity_score} />
     </div>
   );
 }

@@ -257,6 +257,13 @@ const LeadCardComponent = ({
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
 
+      {/* Valor potencial — logo abaixo do número */}
+      {!hideValue && Number(lead.estimated_value) > 0 && (
+        <div className="mb-2">
+          <LeadPotentialValueCompact value={Number(lead.estimated_value)} />
+        </div>
+      )}
+
       {/* Linha de separação */}
       <div className="wiize-hairline mb-2.5" />
 
@@ -265,7 +272,6 @@ const LeadCardComponent = ({
         const s = intel
           ? Math.max(0, Math.min(100, Math.round(intel.opportunity_score)))
           : toIntel100(scoreData?.score_total);
-        if (!s) return null;
         return (
           <div
             className="flex items-center gap-2 cursor-pointer"
@@ -280,17 +286,6 @@ const LeadCardComponent = ({
         );
       })()}
 
-
-
-
-      {/* (Score movido para o rodapé do card) */}
-
-      {/* Valor potencial — pill verde compacto */}
-      {!hideValue && Number(lead.estimated_value) > 0 && (
-        <div className="mt-2.5">
-          <LeadPotentialValueCompact value={Number(lead.estimated_value)} />
-        </div>
-      )}
 
       {/* Footer - Tags and Response time */}
       <div className="flex flex-wrap items-center gap-1.5 min-w-0">

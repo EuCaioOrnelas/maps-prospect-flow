@@ -12,7 +12,7 @@ const LeadPotentialValueCompactComponent = ({ value, className }: LeadPotentialV
   return (
     <div
       className={cn(
-        "w-full flex items-center justify-between gap-2 rounded-full bg-emerald-50 border border-emerald-200/60 px-2.5 py-1",
+        "w-full flex items-center justify-between gap-2 rounded-lg bg-emerald-50 border border-emerald-200/60 px-2.5 py-1.5",
         className
       )}
     >
