@@ -896,69 +896,113 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             </div>
           </Block>
 
-          <Block icon={Brain} title={state === "NO_DATA" ? "Por que a oportunidade não pode ser calculada" : `Por que a oportunidade está em ${opportunity}`}>
-            {state === "NO_DATA" ? (
-              <ul className="space-y-1">
-                {[
-                  "Nenhuma conversa encontrada para este número (Evolution ou Meta).",
-                  "Nenhum sinal de intenção registrado pelo motor.",
-                  "Nenhum comportamento comercial suficiente para estimar conversão.",
-                  prospect ? "Existem apenas dados de prospecção da empresa, que não indicam intenção de compra." : "Sem dados de prospecção para este contato.",
-                ].map((t, i) => (
-                  <li key={i} className="flex items-start gap-2 py-1 border-b border-border/40 last:border-0">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-                    <span className="text-[13px] text-foreground/90 leading-snug">{t}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Fatores que aumentam</p>
-                  {positives.length ? (
-                    <ul>
-                      {positives.map((f: any, i: number) => (
-                        <EvidenceRow
-                          key={i}
-                          label={`${f.label}${f.impact ? ` (+${Math.round(f.impact)} pts)` : ""}`}
-                          quote={conv?.intents.find((x) => f.label?.toLowerCase().includes("pre") && x.key === "PRICE")?.quote}
-                          at={conv?.intents[0]?.at}
-                          source={conv?.sources[0]}
-                        />
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-[12px] text-muted-foreground">Nenhum fator positivo identificado até agora.</p>
-                  )}
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Fatores que reduzem</p>
-                  {negatives.length ? (
-                    <ul>
-                      {negatives.map((f: any, i: number) => (
-                        <EvidenceRow key={i} label={`${f.label}${f.weight ? ` (-${Math.round(f.weight)} pts)` : ""}`} positive={false} />
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-[12px] text-muted-foreground">Nenhum fator de risco identificado.</p>
-                  )}
-                </div>
-                {(conv?.intents.length || conv?.objections.length) ? (
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Evidências na conversa</p>
-                    <ul>
-                      {conv!.intents.map((e) => (
-                        <EvidenceRow key={`i-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} />
-                      ))}
-                      {conv!.objections.map((e) => (
-                        <EvidenceRow key={`o-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} positive={false} />
-                      ))}
-                    </ul>
+          <section className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm">
+            <header className="flex items-center gap-2 px-3.5 py-2.5 bg-muted/25 border-b border-border/50">
+              <span className="w-6 h-6 rounded-lg bg-primary/12 flex items-center justify-center shrink-0">
+                <Brain className="w-3.5 h-3.5 text-primary" />
+              </span>
+              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-foreground flex-1 min-w-0 truncate">
+                {notAnalyzed ? "Por que ainda não há pontuação" : `Por que a oportunidade está em ${opportunity}`}
+              </h4>
+            </header>
+
+            <div className="px-3.5 py-3.5 space-y-3.5">
+              {/* resumo causal */}
+              <p className="text-[12.5px] text-foreground/90 leading-relaxed">
+                {notAnalyzed
+                  ? prospect
+                    ? "Não existe conversa nem sinal comercial registrado para este contato. Os dados da empresa vindos da prospecção ficam disponíveis para montar a abordagem, mas não geram pontuação de oportunidade."
+                    : "Não existe conversa, sinal comercial nem dado de prospecção para este contato. A pontuação só é calculada quando houver evidência real."
+                  : `A oportunidade é o resultado das dimensões calculadas: ${[
+                      profile?.fit_score != null ? `fit ${Math.round(Number(profile.fit_score))}` : null,
+                      profile?.intent_score != null ? `intenção ${Math.round(Number(profile.intent_score))}` : null,
+                      hasEngagementData ? `engajamento ${Math.round(Number(profile?.engagement_score || 0))}` : null,
+                      hasConv ? `qualidade ${Math.round(Number(profile?.quality_score || 0))}` : null,
+                      profile?.risk_score != null ? `risco ${Math.round(Number(profile.risk_score))}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}.`}
+              </p>
+
+              <div className="grid grid-cols-1 gap-2">
+                {/* fatores que aumentam */}
+                <div className="rounded-lg border border-border/60 overflow-hidden">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/[0.06] border-b border-border/50">
+                    <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                    <p className="text-[10px] uppercase tracking-wider text-primary font-semibold">Fatores que aumentam</p>
                   </div>
-                ) : null}
+                  <div className="px-3 py-2">
+                    {positives.length ? (
+                      <ul>
+                        {positives.map((f: any, i: number) => (
+                          <EvidenceRow
+                            key={i}
+                            label={`${f.label}${f.impact ? ` (+${Math.round(f.impact)} pts)` : ""}`}
+                            quote={conv?.intents.find((x) => f.label?.toLowerCase().includes("pre") && x.key === "PRICE")?.quote}
+                            at={conv?.intents[0]?.at}
+                            source={conv?.sources[0]}
+                          />
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-[12px] text-muted-foreground">Nenhum fator positivo identificado até agora.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* fatores que reduzem */}
+                <div className="rounded-lg border border-border/60 overflow-hidden">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/[0.08] border-b border-border/50">
+                    <TrendingDown className="w-3.5 h-3.5 text-amber-500" />
+                    <p className="text-[10px] uppercase tracking-wider text-amber-600 font-semibold">Fatores que reduzem</p>
+                  </div>
+                  <div className="px-3 py-2">
+                    {negatives.length || notAnalyzed ? (
+                      <ul>
+                        {notAnalyzed ? (
+                          <>
+                            <EvidenceRow label="Nenhuma conversa registrada nos canais conectados" positive={false} />
+                            <EvidenceRow label="Nenhum sinal de intenção identificado" positive={false} />
+                            <EvidenceRow label="Nenhuma interação recente" positive={false} />
+                          </>
+                        ) : (
+                          negatives.map((f: any, i: number) => (
+                            <EvidenceRow
+                              key={i}
+                              label={`${f.label}${f.weight ? ` (-${Math.round(f.weight)} pts)` : ""}`}
+                              positive={false}
+                            />
+                          ))
+                        )}
+                      </ul>
+                    ) : (
+                      <p className="text-[12px] text-muted-foreground">Nenhum fator de risco identificado.</p>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-          </Block>
+
+              {/* evidências */}
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">Evidências</p>
+                {conv && (conv.intents.length || conv.objections.length) ? (
+                  <ul className="rounded-lg border border-border/60 px-3 py-1">
+                    {conv.intents.map((e) => (
+                      <EvidenceRow key={`i-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} />
+                    ))}
+                    {conv.objections.map((e) => (
+                      <EvidenceRow key={`o-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} positive={false} />
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-[12px] text-muted-foreground rounded-lg border border-dashed border-border/70 px-3 py-2.5">
+                    Nenhuma conversa disponível para análise.
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+
 
           <section className="rounded-xl border border-primary/25 bg-card overflow-hidden shadow-sm">
             <header className="flex items-center gap-2 px-3.5 py-2.5 bg-primary/[0.07] border-b border-primary/20">
