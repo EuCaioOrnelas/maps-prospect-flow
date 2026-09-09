@@ -258,10 +258,31 @@ const LeadCardComponent = ({
       </div>
 
       {/* Phone */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2.5 min-w-0">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2 min-w-0">
         <Phone className="w-3 h-3 shrink-0" />
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
+
+      {/* Inteligência — resultado 0-100 do motor central (logo abaixo do nome/telefone) */}
+      {(() => {
+        const s = intel
+          ? Math.max(0, Math.min(100, Math.round(intel.opportunity_score)))
+          : toIntel100(scoreData?.score_total);
+        if (!s) return null;
+        return (
+          <div
+            className="mb-2.5 flex items-center gap-2 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); navigate(`/crm/inteligencia?phone=${encodeURIComponent(lead.phone)}`); }}
+          >
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Inteligência</span>
+            <span className="text-xs font-semibold tabular-nums text-primary">{s} de 100</span>
+            <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
+              <div className="h-full rounded-full transition-[width] duration-700 bg-primary" style={{ width: `${s}%` }} />
+            </div>
+          </div>
+        );
+      })()}
+
 
 
 
