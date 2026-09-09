@@ -73,6 +73,9 @@ const WIAN_TOOLS = [
   { type: "function", function: { name: "get_active_flows", description: "Flows de WhatsApp do user: status, número WABA vinculado.", parameters: { type: "object", properties: {} } } },
   { type: "function", function: { name: "get_recent_errors", description: "Incidentes/erros recentes da conta.", parameters: { type: "object", properties: {} } } },
   { type: "function", function: { name: "get_recent_frontend_errors", description: "Erros JavaScript no NAVEGADOR do usuário (arquivo, linha, stack trace, rota). Use SEMPRE quando reclamar de tela travada, botão sem ação, página em branco, bug visual.", parameters: { type: "object", properties: { limit: { type: "number" }, route: { type: "string" } } } } },
+  { type: "function", function: { name: "get_lead_intelligence", description: "Inteligencia Central Wiize sobre os leads: fit, intencao, engajamento, qualidade, risco, oportunidade, momentum, etapa, proxima acao e prioridade. Passe phone para um contato especifico.", parameters: { type: "object", properties: { phone: { type: "string", description: "Telefone do contato (opcional)" } } } } },
+  { type: "function", function: { name: "get_hot_opportunities", description: "Oportunidades quentes agora segundo a Inteligencia Central (visualizacao da mesma fonte de verdade do CRM).", parameters: { type: "object", properties: {} } } },
+  { type: "function", function: { name: "get_conversion_patterns", description: "Padroes historicos da conta aprendidos com vendas ganhas e perdidas: conversao, perda, sumico e objecoes.", parameters: { type: "object", properties: {} } } },
   { type: "function", function: { name: "get_user_score", description: "Score do usuário na plataforma: pontuação total, tier, badges, última atividade.", parameters: { type: "object", properties: {} } } },
   { type: "function", function: { name: "get_subscription_info", description: "Detalhes de assinatura: plano, status, provedor (Stripe/Asaas), fim do trial, fim do período.", parameters: { type: "object", properties: {} } } },
   { type: "function", function: { name: "silence_ai_agent", description: "Silencia o agente IA em uma conversa específica. Padrão de confirmação.", parameters: { type: "object", properties: { conversationId: { type: "string" }, confirmed: { type: "boolean" } }, required: ["conversationId"] } } },
@@ -517,7 +520,7 @@ REGRAS OBRIGATÓRIAS POR CAUSA DA TRIAGEM:
 2. NUNCA ofereça opções fora desse tema (ex: se categoria é "WhatsApp e conexões", não pergunte se é sobre leads/CRM/financeiro).
    Exceção: se a mensagem atual citar excluir/remover/deletar número ou conexão WhatsApp, trate como problema de WhatsApp/conexões e use get_whatsapp_connections + ação apropriada.
 3. Se a mensagem do user for vaga ("não consigo gerar nada", "não funciona", "como faço"), interprete-a DENTRO de "${category}" e:
-   a) Se autenticado: chame as tools relacionadas a "${category}" ANTES de perguntar (ex: categoria conexões → get_whatsapp_connections; campanhas → get_meta_campaigns; crm → get_crm_summary; score → get_user_score; financeiro → get_subscription_info).
+   a) Se autenticado: chame as tools relacionadas a "${category}" ANTES de perguntar (ex: categoria conexões → get_whatsapp_connections; campanhas → get_meta_campaigns; crm → get_crm_summary; score → get_user_score; oportunidades/leads quentes → get_hot_opportunities e get_lead_intelligence; financeiro → get_subscription_info).
    b) Só depois faça no MÁXIMO 1 pergunta curta e específica do tema.
 4. Faça UMA pergunta por vez. Não dispare 3 blocos de perguntas seguidos.`;
     }
