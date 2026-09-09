@@ -11,7 +11,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatPhoneShort } from '@/lib/phoneUtils';
 import { useLeadScores } from '@/hooks/useLeadScores';
-import { toIntel100 } from '@/lib/intelligence';
 import { useLeadIntelligence, NEXT_ACTION_LABELS } from '@/hooks/useLeadIntelligence';
 import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
 import { LeadPotentialValueCompact } from './LeadPotentialValueCompact';
