@@ -1503,12 +1503,17 @@ export const LeadDetailDialog = ({
               </div>
             )}
 
-            {/* Notes Tab */}
+            {/* Intelligence Tab */}
             {activeTab === 'intelligence' && (
               <div className="space-y-6">
                 <LeadIntelligencePanel phone={lead.phone} />
                 <LeadIntelligenceEvolution phone={lead.phone} />
+              </div>
+            )}
 
+            {/* Notes Tab */}
+            {activeTab === 'notes' && (
+              <div className="space-y-6">
                 <div>
                   <h4 className="text-sm font-semibold mb-3">Notas</h4>
               <div className="space-y-4">
