@@ -981,7 +981,7 @@ export const LeadDetailDialog = ({
                       setHeaderNameValue(lead.contact_name || lead.company_name || '');
                       setIsEditingHeaderName(true);
                     }}
-                    className="p-1 rounded hover:bg-primary-foreground/20 dark:hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                    className="p-1 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
