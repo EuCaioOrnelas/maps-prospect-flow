@@ -536,8 +536,8 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       key: "engagement",
       label: "Engajamento",
       icon: Zap,
-      value: profile && hasConv ? Math.round(Number(profile.engagement_score || 0)) : null,
-      status: hasConv ? bandM(Number(profile?.engagement_score || 0)) : "Sem interação registrada",
+      value: profile && hasEngagementData ? Math.round(Number(profile.engagement_score || 0)) : null,
+      status: hasEngagementData ? bandM(Number(profile?.engagement_score || 0)) : "Sem interação registrada",
       partial,
       basis: hasConv
         ? [
@@ -546,7 +546,10 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             conv!.lastMessageAt ? `última interação ${ago(conv!.lastMessageAt)}` : "",
             `${conv!.activeDays} dia(s) com conversa`,
           ].filter(Boolean)
+        : hasEngagementData
+        ? [`${history.length} evento(s) de pontuação registrados pelo motor`, "sem mensagens espelhadas no chat deste número"]
         : [],
+
     });
 
     const momentumKnown = history.length > 1 && hasConv;
