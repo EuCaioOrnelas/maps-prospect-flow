@@ -440,21 +440,15 @@ export default function CRM() {
 
               <CRMTabs />
 
-              <div className="mt-3 flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant={showArchived ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setShowArchived(v => !v)}
-                >
-                  {showArchived ? 'Ver funil ativo' : `Ver arquivados${archivedCount ? ` (${archivedCount})` : ''}`}
-                </Button>
-                {showArchived && (
+              {showArchived && (
+                <div className="mt-3 flex items-center gap-2">
+                  <Badge variant="outline" className="text-[11px]">Vendo arquivados</Badge>
                   <span className="text-xs text-muted-foreground">
                     Contatos arquivados continuam contando no limite do seu plano.
                   </span>
-                )}
-              </div>
+                </div>
+              )}
+
 
               <CRMMetrics stages={stages} leads={filteredLeads} hideValue={isOperational} loading={isLoading} />
 
