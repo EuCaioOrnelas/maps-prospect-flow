@@ -362,6 +362,18 @@ export const useCRM = () => {
     // Log activity
     await logActivity(leadId, 'stage_changed', `Movido para ${newStage.name}`);
     trackScoreEvent("crm_advanced_feature_used", { action: "move_stage" });
+
+    // Alimenta a Inteligência Central com desfechos reais
+    if (newStage.name === 'Perdido') {
+      void recordIntelligenceOutcome({ outcome: 'LOST', crm_lead_id: leadId, phone_e164: lead.phone });
+    } else if (newStage.name === 'Fechado (Ganho)') {
+      void recordIntelligenceOutcome({
+        outcome: 'CONVERTED',
+        crm_lead_id: leadId,
+        phone_e164: lead.phone,
+        ticket: (lead as any).estimated_value ?? null,
+      });
+    }
   };
 
   // Assign / change lead responsible (member of the account)
