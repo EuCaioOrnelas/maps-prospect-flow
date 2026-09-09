@@ -478,7 +478,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <Trophy size={20} className="shrink-0" />
+                        <Brain size={20} className="shrink-0" />
                         <span className="whitespace-nowrap truncate">Inteligência</span>
                       </Link>
                     </li>

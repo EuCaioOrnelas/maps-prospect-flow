@@ -202,7 +202,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                   <TopLink to="/chat" icon={MessageCircle} label="Chat" />
                 )}
                 {can("crm") && (
-                  <TopLink to="/crm/inteligencia" icon={Trophy} label="Inteligência" />
+                  <TopLink to="/crm/inteligencia" icon={Brain} label="Inteligência" />
                 )}
                 <TopLink to="/meta" icon={BarChart3} label="Meta (WhatsApp)" />
                 {isAdmin && (
