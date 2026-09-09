@@ -921,12 +921,11 @@ export const LeadDetailDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl h-[90vh] sm:h-[85vh] overflow-hidden flex flex-col min-h-0 p-0 gap-0 border-border w-[95vw] sm:w-full rounded-lg">
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 px-4 sm:px-6 py-4 sm:py-5 shrink-0">
+        <div className="relative bg-primary text-primary-foreground dark:bg-primary/15 dark:text-foreground px-4 sm:px-6 py-4 sm:py-5 shrink-0">
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div 
-              className="w-12 h-12 rounded-[14px] flex items-center justify-center text-lg font-semibold text-primary-foreground shrink-0"
-              style={{ backgroundColor: currentStage?.color || 'hsl(var(--primary))' }}
+              className="w-12 h-12 rounded-[14px] flex items-center justify-center text-lg font-semibold shrink-0 bg-primary-foreground/20 text-primary-foreground dark:bg-primary/20 dark:text-primary"
             >
               {displayName.charAt(0).toUpperCase()}
             </div>
@@ -974,7 +973,7 @@ export const LeadDetailDialog = ({
                 </div>
               ) : (
                 <div className="flex items-center gap-2 group">
-                  <h2 className="text-lg font-semibold text-foreground truncate" title={displayName}>
+                  <h2 className="text-lg font-semibold truncate" title={displayName}>
                     {displayName.length > 50 ? `${displayName.slice(0, 50)}...` : displayName}
                   </h2>
                   <button
@@ -982,14 +981,14 @@ export const LeadDetailDialog = ({
                       setHeaderNameValue(lead.contact_name || lead.company_name || '');
                       setIsEditingHeaderName(true);
                     }}
-                    className="p-1 rounded hover:bg-white/20 text-muted-foreground hover:text-foreground transition-opacity opacity-0 group-hover:opacity-100 shrink-0"
+                    className="p-1 rounded hover:bg-primary-foreground/20 dark:hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                 </div>
               )}
               {lead.company_name && lead.contact_name && (
-                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                <p className="text-sm opacity-80 flex items-center gap-1 mt-1">
                   <Building2 className="w-3 h-3" />
                   <span className="truncate" title={lead.company_name}>
                     {lead.company_name.length > 40 ? `${lead.company_name.slice(0, 40)}...` : lead.company_name}
@@ -997,7 +996,7 @@ export const LeadDetailDialog = ({
                 </p>
               )}
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs opacity-70">
                   {formatDistanceToNow(new Date(lead.prospected_at), { addSuffix: true, locale: ptBR })}
                 </span>
               </div>
@@ -1349,7 +1348,7 @@ export const LeadDetailDialog = ({
             {/* Intelligence Tab */}
             {activeTab === 'intelligence' && (
               <div className="space-y-6">
-                <LeadIntelligencePanel phone={lead.phone} />
+                <LeadIntelligencePanel phone={lead.phone} lead={lead} />
                 <LeadIntelligenceEvolution phone={lead.phone} />
               </div>
             )}
