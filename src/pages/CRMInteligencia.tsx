@@ -658,6 +658,11 @@ interface FilterState {
   scoreMax: string;
   bucket: string;
   riskState: string;
+  /* Filtros de Inteligência (dimensões do motor central) */
+  oppBand: string;
+  intentLevel: string;
+  momentum: string;
+  riskLevel: string;
 }
 
 const defaultFilters: FilterState = {
@@ -667,7 +672,33 @@ const defaultFilters: FilterState = {
   scoreMax: "",
   bucket: "all",
   riskState: "all",
+  oppBand: "all",
+  intentLevel: "all",
+  momentum: "all",
+  riskLevel: "all",
 };
+
+const OPP_BAND_OPTIONS: { value: string; label: string; min: number; max: number }[] = [
+  { value: "VERY_HIGH", label: "Muito alta (81–100)", min: 81, max: 100 },
+  { value: "HIGH", label: "Alta (61–80)", min: 61, max: 80 },
+  { value: "MEDIUM", label: "Média (41–60)", min: 41, max: 60 },
+  { value: "LOW", label: "Baixa (21–40)", min: 21, max: 40 },
+  { value: "VERY_LOW", label: "Muito baixa (0–20)", min: 0, max: 20 },
+];
+
+const INTENT_OPTIONS: { value: string; label: string; min: number; max: number }[] = [
+  { value: "VERY_HIGH", label: "Muito alta", min: 81, max: 100 },
+  { value: "HIGH", label: "Alta", min: 61, max: 80 },
+  { value: "MEDIUM", label: "Média", min: 41, max: 60 },
+  { value: "LOW", label: "Baixa", min: 1, max: 40 },
+  { value: "NONE", label: "Não identificada", min: 0, max: 0 },
+];
+
+const RISK_LEVEL_OPTIONS: { value: string; label: string; min: number; max: number }[] = [
+  { value: "HIGH", label: "Alto", min: 61, max: 100 },
+  { value: "MEDIUM", label: "Médio", min: 31, max: 60 },
+  { value: "LOW", label: "Baixo", min: 0, max: 30 },
+];
 
 const AdvancedFiltersPopover = ({ 
   filters, 
