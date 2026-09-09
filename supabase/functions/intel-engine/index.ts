@@ -578,7 +578,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
   // NEXT BEST ACTION
   let nba = "QUALIFY";
   if (stage === "DISQUALIFIED") nba = "DO_NOT_PRIORITIZE";
-  else if (awaitingUsMin > 15 && intent >= 40) nba = "RESPOND_NOW";
+  else if (awaitingUsMin > 15) nba = "RESPOND_NOW"; // lead esperando resposta: sempre prioridade
   else if (present.has("OBJECTION") && !present.has("NEGATIVE_INTENT")) nba = "HANDLE_OBJECTION";
   else if (present.has("INTENT_PAYMENT") || stage === "CLOSING") nba = "REQUEST_PAYMENT";
   else if (present.has("INTENT_PROPOSAL") || (intent >= 60 && stage === "NEGOTIATION")) nba = "SEND_PROPOSAL";
