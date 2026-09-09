@@ -2,7 +2,9 @@ import { useState, memo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
-import { Phone, MessageCircle, Pencil, Check, X } from 'lucide-react';
+import { Phone, MessageCircle, Pencil, Check, X, Mail, Archive, DollarSign, Paperclip, ArchiveRestore } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
@@ -26,6 +28,8 @@ interface LeadCardProps {
   onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
   canChangeResponsible?: boolean;
   hideValue?: boolean;
+  onOpenTab?: (lead: Lead, tab: 'deals' | 'files') => void;
+  onToggleArchive?: (lead: Lead) => Promise<void> | void;
 }
 
 const LeadCardComponent = ({
