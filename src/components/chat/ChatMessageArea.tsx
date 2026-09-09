@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useMemo } from "react";
+import { useRef, useEffect, useLayoutEffect, useState, useMemo } from "react";
 import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles, Workflow, CheckSquare } from "lucide-react";
 import { ConversationSummaryDialog } from "./ConversationSummaryDialog";
 import { cn } from "@/lib/utils";
@@ -100,6 +100,59 @@ function MessageStatus({ status }: { status: string }) {
     );
   }
   return null;
+}
+
+function TextMessageContent({ msg, isOutbound }: { msg: ChatMessage; isOutbound: boolean }) {
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [hasMoreThanTwoLines, setHasMoreThanTwoLines] = useState(false);
+  const isFlowMessage = (msg.metadata as any)?.source === "flow";
+
+  useLayoutEffect(() => {
+    const text = textRef.current;
+    if (!text) return;
+
+    const measure = () => {
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      const lineTops = new Set(
+        Array.from(range.getClientRects()).map((rect) => Math.round(rect.top))
+      );
+      setHasMoreThanTwoLines(lineTops.size > 2);
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(text.parentElement ?? text);
+    return () => observer.disconnect();
+  }, [msg.content]);
+
+  const metadata = (
+    <span className="inline-flex items-center gap-[3px] whitespace-nowrap">
+      {isOutbound && isFlowMessage && (
+        <Workflow
+          size={11}
+          strokeWidth={2}
+          className="text-foreground/30"
+          aria-label={(msg.metadata as any)?.flow_name ? `Fluxo: ${(msg.metadata as any).flow_name}` : "Enviado pelo fluxo"}
+        />
+      )}
+      <span className="text-[11px] leading-none wa-text-timestamp select-none">
+        {format(parseISO(msg.created_at), "HH:mm")}
+      </span>
+      {isOutbound && <MessageStatus status={msg.status} />}
+    </span>
+  );
+
+  return (
+    <div className="px-[9px] pt-[4px] pb-[4px] pr-[10px] text-[14.2px] wa-text-primary leading-[18px] whitespace-pre-wrap break-words">
+      <span ref={textRef}>{msg.content}</span>
+      {hasMoreThanTwoLines ? (
+        <span className="flex justify-end mt-[1px]">{metadata}</span>
+      ) : (
+        <span className="ml-[7px] align-[-2px]">{metadata}</span>
+      )}
+    </div>
+  );
 }
 
 function DateDivider({ date }: { date: Date }) {
@@ -1097,23 +1150,7 @@ export function ChatMessageArea({
                                   <div className="p-[3px]"><MediaPreview msg={msg} onOpenImage={openImage} onQuickForward={quickForward} /></div>
                                 )}
                                  {msg.content && msg.message_type === "text" && (
-                                   <div className="px-[9px] pt-[4px] pb-[4px] pr-[10px] text-[14.2px] wa-text-primary leading-[18px] whitespace-pre-wrap break-words">
-                                     <span>{msg.content}</span>
-                                     <span className="inline-flex items-center gap-[3px] ml-[7px] align-[-2px] whitespace-nowrap">
-                                       {isOutbound && (msg.metadata as any)?.source === "flow" && (
-                                         <Workflow
-                                           size={11}
-                                           strokeWidth={2}
-                                           className="text-foreground/30"
-                                           aria-label={(msg.metadata as any)?.flow_name ? `Fluxo: ${(msg.metadata as any).flow_name}` : "Enviado pelo fluxo"}
-                                         />
-                                       )}
-                                       <span className="text-[11px] leading-none wa-text-timestamp select-none">
-                                         {format(parseISO(msg.created_at), "HH:mm")}
-                                       </span>
-                                       {isOutbound && <MessageStatus status={msg.status} />}
-                                     </span>
-                                   </div>
+                                   <TextMessageContent msg={msg} isOutbound={isOutbound} />
                                  )}
                                    </>
                                  )}
