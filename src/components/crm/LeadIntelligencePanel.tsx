@@ -692,13 +692,42 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
 
   if (profileLoading || detail.isLoading) {
     return (
-      <div className={cn("space-y-3", className)}>
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-24 rounded-xl border border-border/60 bg-muted/20 animate-pulse" />
-        ))}
+      <div className={cn("space-y-4 animate-fade-in", className)}>
+        <section className="rounded-xl border border-border/60 bg-card overflow-hidden">
+          <header className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50">
+            <Brain className="w-4 h-4 text-primary animate-pulse" />
+            <h3 className="text-[12px] font-semibold uppercase tracking-wider text-foreground">Inteligência Wiize</h3>
+            <span className="ml-auto flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <span className="w-3 h-3 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+              Analisando o contato
+            </span>
+          </header>
+          <div className="px-4 py-4 space-y-3">
+            <div className="h-3 w-24 rounded bg-muted/70 overflow-hidden relative">
+              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-foreground/10 to-transparent animate-[shimmer_1.2s_infinite]" />
+            </div>
+            <div className="h-9 w-32 rounded-lg bg-muted/60" />
+            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <div className="h-full w-1/3 rounded-full bg-primary/50 animate-[shimmer-bar_1.1s_ease-in-out_infinite]" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-14 rounded-lg border border-border/50 bg-muted/25 animate-pulse"
+                  style={{ animationDelay: `${i * 90}ms` }}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+        <p className="text-[11px] text-muted-foreground text-center">
+          Cruzando conversas, sinais, prospecção e histórico comercial deste contato.
+        </p>
       </div>
     );
   }
+
 
   return (
     <div className={cn("space-y-4", className)}>
