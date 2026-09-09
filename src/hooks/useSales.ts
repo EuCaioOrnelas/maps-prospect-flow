@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { recordIntelligenceOutcome } from "@/hooks/useLeadIntelligence";
 
 export type SaleType = "one_time" | "recurring";
 export type SaleStatus = "active" | "expiring" | "expired" | "cancelled" | "renewed";
@@ -211,6 +212,13 @@ export const useSales = (leadId?: string) => {
         .select()
         .single();
       if (error) throw error;
+      // Alimenta a Inteligência Central com o desfecho real (venda ganha)
+      void recordIntelligenceOutcome({
+        outcome: "CONVERTED",
+        crm_lead_id: input.lead_id,
+        deal_id: (data as any)?.id ?? null,
+        ticket: input.value,
+      });
       await fetchSales();
       notifySalesChanged();
       return data as unknown as Sale;
