@@ -865,10 +865,10 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
               <TableRow>
                 <TableHead>Contato</TableHead>
                 <TableHead className="cursor-pointer" onClick={() => { setSortBy("score_total"); setSortAsc(sortBy === "score_total" ? !sortAsc : false); }}>
-                  Inteligência {sortBy === "score_total" && (sortAsc ? "↑" : "↓")}
+                  Oportunidade {sortBy === "score_total" && (sortAsc ? "↑" : "↓")}
                 </TableHead>
                 <TableHead>Classificação</TableHead>
-                <TableHead className="hidden md:table-cell">Tendência</TableHead>
+                <TableHead className="hidden md:table-cell">Momentum</TableHead>
                 <TableHead className="hidden md:table-cell">Engajamento</TableHead>
                 <TableHead className="hidden md:table-cell">Intenção</TableHead>
                 <TableHead className="hidden lg:table-cell">Risco</TableHead>
@@ -878,6 +878,13 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
             <TableBody>
               {paginated.map((lead) => {
                 const bucket = mapBucket(lead.status_bucket, lead.score_total);
+                // Fonte unica: perfil do motor central quando existir; senao o motor legado normalizado 0-100.
+                const p = getIntelByPhone(lead.phone_e164);
+                const opportunity = p ? Math.max(0, Math.min(100, Math.round(p.opportunity_score))) : dimensionTo100(lead.score_total);
+                const engagement = p ? Math.round(p.engagement_score) : dimensionTo100(lead.score_engagement);
+                const intent = p ? Math.round(p.intent_score) : dimensionTo100(lead.score_intent);
+                const risk = p ? Math.round(p.risk_score) : dimensionTo100(lead.score_risk);
+                const mom = p ? momentumOf(p.momentum_state) : (lead.risk_state === "AT_RISK" || lead.risk_state === "CRITICAL" ? "down" : "unknown");
                 return (
                   <TableRow key={lead.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setSelectedLead(lead)}>
                     <TableCell>
@@ -887,8 +894,8 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className={`text-lg font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</span>
-                      <span className="text-xs text-muted-foreground ml-1">/100</span>
+                      <span className={`text-lg font-bold tabular-nums ${intelTextColor(opportunity)}`}>{fmtNum(opportunity)}</span>
+                      <span className="text-xs text-muted-foreground ml-1">de 100</span>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
@@ -896,22 +903,22 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {lead.score_risk < -5 ? (
-                        <TrendingDown className="h-4 w-4 text-destructive" />
-                      ) : lead.score_engagement > 2 || lead.score_intent > 0 ? (
-                        <TrendingUp className="h-4 w-4 text-emerald-400" />
-                      ) : (
-                        <Minus className="h-4 w-4 text-muted-foreground" />
-                      )}
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        {mom === "down" ? <TrendingDown className="h-4 w-4 text-destructive" />
+                          : mom === "up" ? <TrendingUp className="h-4 w-4 text-emerald-400" />
+                            : <Minus className="h-4 w-4 text-muted-foreground" />}
+                        {MOMENTUM_SIMPLE_LABELS[mom]}
+                      </span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <span className="text-sm font-semibold tabular-nums">{fmtNum(lead.score_engagement)}</span>
+                      <span className="text-sm font-semibold tabular-nums">{fmtNum(engagement)}</span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <span className="text-sm font-semibold tabular-nums">{fmtNum(lead.score_intent)}</span>
+                      <span className="text-sm font-semibold tabular-nums">{fmtNum(intent)}</span>
+                      <span className="text-[11px] text-muted-foreground ml-1.5">{dimensionLabel(intent)}</span>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      <span className="text-sm font-semibold tabular-nums text-destructive">{fmtNum(lead.score_risk)}</span>
+                      <span className={`text-sm font-semibold tabular-nums ${riskTextColor(risk)}`}>{riskLabel(risk)}</span>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
                       {new Date(lead.last_activity_at).toLocaleDateString('pt-BR')}
