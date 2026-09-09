@@ -168,11 +168,19 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
     return "—";
   };
 
-  const getLastResponse = (history: any[]) => {
-    if (!Array.isArray(history) || history.length === 0) return "—";
-    for (let i = history.length - 1; i >= 0; i--) {
-      if (history[i].response) return history[i].response;
+  const getLastResponse = (exec: FlowExecution) => {
+    const history = exec?.node_history;
+    if (Array.isArray(history)) {
+      for (let i = history.length - 1; i >= 0; i--) {
+        const h = history[i] as any;
+        const value = h?.response ?? h?.user_response ?? h?.answer;
+        if (value) return String(value);
+      }
     }
+    // Fallback: último dado coletado pelo fluxo.
+    const collected = (exec?.collected_data || {}) as Record<string, any>;
+    const entries = Object.entries(collected).filter(([k, v]) => !k.startsWith("__") && v !== null && v !== "" && typeof v !== "object");
+    if (entries.length > 0) return String(entries[entries.length - 1][1]);
     return "—";
   };
 
@@ -189,7 +197,7 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
         "Nome": e.lead_name || "",
         "Status": STATUS_MAP[e.status]?.label || e.status,
         "Parou em": getStoppedAt(e),
-        "Última Resposta": getLastResponse(e.node_history),
+        "Última Resposta": getLastResponse(e),
       };
       // Dynamic columns for each collected variable
       collectedDataKeys.forEach((key) => {
