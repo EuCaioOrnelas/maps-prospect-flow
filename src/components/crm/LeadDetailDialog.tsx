@@ -1547,6 +1547,7 @@ export const LeadDetailDialog = ({
                   )}
                 </div>
                 </div>
+                </div>
               </div>
             )}
 
