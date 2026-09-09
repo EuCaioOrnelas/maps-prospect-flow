@@ -3,7 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Flame, AlertTriangle, Gauge, Users, ArrowRight } from "lucide-react";
 import { useLeadIntelligence, NEXT_ACTION_LABELS, PRIORITY_LABELS } from "@/hooks/useLeadIntelligence";
-import { INTEL_BANDS, phoneKey8 } from "@/lib/intelligence";
+import { INTEL_BAND_LABELS, intelBand, phoneKey8 } from "@/lib/intelligence";
+
+const INTEL_BANDS = [
+  { key: "VERY_HIGH", label: INTEL_BAND_LABELS.VERY_HIGH, min: 81, max: 100 },
+  { key: "HIGH", label: INTEL_BAND_LABELS.HIGH, min: 61, max: 80 },
+  { key: "MEDIUM", label: INTEL_BAND_LABELS.MEDIUM, min: 41, max: 60 },
+  { key: "LOW", label: INTEL_BAND_LABELS.LOW, min: 21, max: 40 },
+  { key: "VERY_LOW", label: INTEL_BAND_LABELS.VERY_LOW, min: 0, max: 20 },
+] as const;
 
 /**
  * Central de Inteligencia — visao consolidada.
@@ -19,8 +27,7 @@ export interface IntelLeadRow {
   last_activity_at?: string | null;
 }
 
-const bandOf = (score: number) =>
-  INTEL_BANDS.find((b) => score >= b.min && score <= b.max) || INTEL_BANDS[0];
+const bandOf = (score: number) => ({ label: INTEL_BAND_LABELS[intelBand(score)] });
 
 export const IntelligenceOverview = ({
   leads,
