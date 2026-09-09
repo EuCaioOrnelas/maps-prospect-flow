@@ -335,20 +335,45 @@ const fmtPhone = (phone: string) => {
 const ScoreInfoModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <Card className="w-full max-w-sm bg-card" onClick={(e) => e.stopPropagation()}>
-        <CardHeader className="pb-2">
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+      <Card
+        className="w-full max-w-3xl bg-card max-h-[88vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Como funciona a Inteligência</CardTitle>
+            <CardTitle className="text-lg">Como funciona a Inteligência da Wiize</CardTitle>
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
               <X className="h-5 w-5" />
             </button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            A Inteligência da Wiize analisa os sinais comerciais de cada contato (conversa, intenção, comportamento, tempo de resposta e risco) e atribui uma pontuação de 0 a 100.
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            A Inteligência é o sistema central que lê tudo o que acontece com cada contato — conversas do
+            WhatsApp (Evolution e Meta Cloud), áudios transcritos, movimentações no funil, vendas, propostas,
+            respostas, silêncios e o diagnóstico da empresa — e transforma isso em decisões: quem procurar
+            primeiro, o que fazer e o que está em risco.
           </p>
         </CardHeader>
-        <CardContent className="space-y-2 pb-4">
+        <CardContent className="space-y-5 pb-6">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              { t: "1. Coleta de sinais", d: "Cada evento vira um sinal: mensagem recebida, pergunta de preço, pedido de proposta, tempo até responder, sumiço, retomada, mudança de etapa, venda ganha ou perdida. Texto e áudio entram no mesmo caminho." },
+              { t: "2. Peso e contexto", d: "Sinais iguais repetidos valem cada vez menos, mensagens muito curtas pesam menos e existe um intervalo mínimo entre leituras para evitar inflar o valor. Sinais antigos perdem força com o tempo." },
+              { t: "3. Dimensões", d: "Os sinais alimentam Intenção, Engajamento, Qualidade, Fit, Momentum, Risco, Comportamento e Recência — cada uma numa escala de 0 a 100." },
+              { t: "4. Oportunidade 0–100", d: "As dimensões são combinadas em um único número: a Oportunidade. É esse valor que aparece no card do contato, no ranking e na Central." },
+              { t: "5. Comparação com o histórico", d: "O sistema compara o contato com os padrões reais da sua conta: como eram os leads que fecharam e como eram os que se perderam. Daí sai a semelhança com conversão." },
+              { t: "6. Prioridade e próxima ação", d: "Com Oportunidade, Momentum e Risco o sistema define a prioridade (de crítica a baixa) e sugere a próxima ação: responder agora, enviar proposta, reativar, tratar objeção, nutrir ou aguardar." },
+            ].map((s) => (
+              <div key={s.t} className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                <p className="text-sm font-semibold text-foreground mb-1">{s.t}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{s.d}</p>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-foreground mb-2">Faixas da Oportunidade</p>
+            <div className="space-y-2">
           {[
             { label: "Frio", range: "0 – 20", desc: "Sem interação relevante", color: "border-red-500/40 bg-red-500/10", text: "text-red-400" },
             { label: "Baixo engajamento", range: "21 – 40", desc: "Pouca atividade", color: "border-yellow-500/40 bg-yellow-500/10", text: "text-yellow-400" },
@@ -364,12 +389,28 @@ const ScoreInfoModal = ({ open, onClose }: { open: boolean; onClose: () => void 
               </div>
             </div>
           ))}
-          <div className="border-t border-border pt-2 mt-2">
-            <p className="text-[11px] text-muted-foreground">
-              A pontuação é recalculada automaticamente a cada novo sinal. Sinais repetidos têm impacto decrescente e sinais antigos perdem relevância com o tempo.
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border/60 p-4">
+            <p className="text-sm font-semibold text-foreground mb-1">Onde a Inteligência aparece</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              No card de cada contato (Oportunidade de 0 a 100), dentro do contato (dimensões, sinais e o que
+              explica o número), nesta Central (visão geral, rankings e tendências), no radar de oportunidades
+              quentes e nas respostas da Wian. O valor é o mesmo em todos os lugares.
             </p>
           </div>
-          <Button variant="outline" className="w-full mt-2" size="sm" onClick={onClose}>Fechar</Button>
+
+          <div className="rounded-xl border border-border/60 p-4">
+            <p className="text-sm font-semibold text-foreground mb-1">Atualização e transparência</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              O valor é recalculado automaticamente a cada novo sinal e revisto diariamente. Todo cálculo fica
+              registrado com data, origem e motivo, então sempre dá para ver por que um contato subiu ou caiu.
+              Contatos sem histórico suficiente aparecem com leitura parcial até acumularem interações.
+            </p>
+          </div>
+
+          <Button variant="outline" className="w-full" size="sm" onClick={onClose}>Fechar</Button>
         </CardContent>
       </Card>
     </div>

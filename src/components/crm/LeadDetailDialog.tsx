@@ -286,9 +286,11 @@ export const LeadDetailDialog = ({
   const navigate = useNavigate();
   const { user, accountOwnerId } = useAuth();
   const { getScoreForPhone } = useLeadScores();
-  const [activeTab, setActiveTab] = useState<'info' | 'intelligence' | 'notes' | 'history' | 'deals' | 'files'>(initialTab || 'info');
+  const [activeTab, setActiveTab] = useState<'info' | 'intelligence' | 'notes' | 'history' | 'deals' | 'files'>(
+    (initialTab === 'history' ? 'notes' : initialTab) || 'info'
+  );
   useEffect(() => {
-    if (open && initialTab) setActiveTab(initialTab);
+    if (open && initialTab) setActiveTab(initialTab === 'history' ? 'notes' : initialTab);
   }, [open, initialTab]);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingHeaderName, setIsEditingHeaderName] = useState(false);
@@ -993,11 +995,6 @@ export const LeadDetailDialog = ({
                 </p>
               )}
               <div className="flex items-center gap-2 mt-2">
-                <Badge 
-                  className={cn("text-xs", WHATSAPP_STATUS_COLORS[lead.whatsapp_status])}
-                >
-                  {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
-                </Badge>
                 <span className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(lead.prospected_at), { addSuffix: true, locale: ptBR })}
                 </span>
@@ -1083,40 +1080,18 @@ export const LeadDetailDialog = ({
 
           <Popover open={isWhatsAppStatusOpen} onOpenChange={setIsWhatsAppStatusOpen}>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 text-sm min-w-[160px] justify-between gap-2">
-                <span className="truncate">{WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}</span>
+              <Button variant="outline" size="sm" className="h-9 text-sm min-w-[140px] justify-between gap-2">
+                <span className="truncate">Tags</span>
                 {localTags.length > 0 && (
-                  <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium">+{localTags.length}</span>
+                  <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-medium">{localTags.length}</span>
                 )}
                 <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-72 p-0" align="start" sideOffset={4}>
               <div className="max-h-[400px] overflow-y-auto [&::-webkit-scrollbar]:w-[3px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-                {/* Status options */}
-                <div className="p-1">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-1 block">Tags padrão</span>
-                  {(Object.keys(WHATSAPP_STATUS_LABELS) as WhatsAppStatus[]).map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      className={cn(
-                        'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted',
-                        lead.whatsapp_status === status && 'bg-primary/10 text-primary font-medium'
-                      )}
-                      onClick={() => {
-                        void handleWhatsAppStatusChange(status);
-                        setIsWhatsAppStatusOpen(false);
-                      }}
-                    >
-                      {lead.whatsapp_status === status && <Check className="w-3.5 h-3.5 shrink-0" />}
-                      <span className={cn(lead.whatsapp_status !== status && 'ml-5.5')}>{WHATSAPP_STATUS_LABELS[status]}</span>
-                    </button>
-                  ))}
-                </div>
-
                 {/* Custom Tags Section */}
-                <div className="border-t border-border">
+                <div>
                   <div className="p-1">
                     <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-1 block">Tags personalizadas</span>
                     
@@ -1172,8 +1147,7 @@ export const LeadDetailDialog = ({
             { id: 'deals', label: `Vendas (${deals.length})` },
             { id: 'files', label: 'Arquivos' },
             { id: 'intelligence', label: 'Inteligência' },
-            { id: 'notes', label: 'Notas' },
-            { id: 'history', label: 'Histórico' },
+            { id: 'notes', label: 'Notas e histórico' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1695,7 +1669,7 @@ export const LeadDetailDialog = ({
             )}
 
             {/* History Tab */}
-            {activeTab === 'history' && (
+            {activeTab === 'notes' && (
               <div>
                 <h4 className="text-sm font-semibold mb-3">Histórico</h4>
                 <div className="space-y-1">

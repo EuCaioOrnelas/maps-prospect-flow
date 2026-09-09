@@ -1,6 +1,6 @@
 import { useState, memo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
+import { type Lead } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
 import { Phone, MessageCircle, Pencil, Check, X, Mail, Archive, DollarSign, Paperclip, ArchiveRestore } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -246,12 +246,6 @@ const LeadCardComponent = ({
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
               )}
-              <ResponsibleAvatar
-                responsibleId={lead.responsible_user_id}
-                members={members}
-                canEdit={canChangeResponsible && !!onChangeResponsible}
-                onChange={async (uid) => { if (onChangeResponsible) await onChangeResponsible(lead.id, uid); }}
-              />
             </div>
           </>
         )}
@@ -262,21 +256,6 @@ const LeadCardComponent = ({
         <Phone className="w-3 h-3 shrink-0" />
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
-
-      {/* Status do contato (ex.: Nunca contatado) — logo abaixo do número */}
-      {lead.whatsapp_status && (
-        <div className="mb-2.5">
-          <Badge
-            variant="secondary"
-            className={cn(
-              "text-[10px] px-1.5 py-0 pointer-events-none",
-              WHATSAPP_STATUS_COLORS[lead.whatsapp_status]
-            )}
-          >
-            {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
-          </Badge>
-        </div>
-      )}
 
       {/* Linha de separação */}
       <div className="wiize-hairline mb-2.5" />
@@ -375,6 +354,14 @@ const LeadCardComponent = ({
             <TooltipContent side="top" sideOffset={6} className="px-2 py-1 text-xs">{label}</TooltipContent>
           </Tooltip>
         ))}
+        <div className="ml-auto mr-2 flex items-center" onClick={(e) => e.stopPropagation()}>
+          <ResponsibleAvatar
+            responsibleId={lead.responsible_user_id}
+            members={members}
+            canEdit={canChangeResponsible && !!onChangeResponsible}
+            onChange={async (uid) => { if (onChangeResponsible) await onChangeResponsible(lead.id, uid); }}
+          />
+        </div>
       </div>
       </div>
     </div>

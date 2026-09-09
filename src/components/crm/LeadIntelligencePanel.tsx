@@ -12,6 +12,8 @@ import {
   Brain, Target, Flame, TrendingUp, TrendingDown, Minus,
   AlertTriangle, Sparkles, Building2, Gauge,
 } from "lucide-react";
+import { useLeadScores } from "@/hooks/useLeadScores";
+import { toIntel100 } from "@/lib/intelligence";
 
 interface Props {
   phone?: string | null;
@@ -38,6 +40,9 @@ function Dimension({ label, value, suffix = "/100" }: { label: string; value: nu
 
 export function LeadIntelligencePanel({ phone, className }: Props) {
   const { data: intel, isLoading } = useLeadIntelligenceProfile(phone);
+  const { getScoreForPhone } = useLeadScores();
+  const legacy = phone ? getScoreForPhone(phone) : undefined;
+  const legacyScore = toIntel100(legacy?.score_total);
 
   if (isLoading) {
     return (
@@ -48,6 +53,32 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
   }
 
   if (!intel) {
+    // Sem perfil consolidado ainda: mostramos o mesmo valor exibido no card,
+    // vindo do motor de pontuacao existente, para nao haver divergencia.
+    if (legacyScore > 0) {
+      return (
+        <div className={cn("rounded-xl border border-border/60 bg-card p-4", className)}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Brain className="w-[18px] h-[18px] text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                Inteligência Wiize
+              </p>
+              <p className="text-sm font-semibold text-foreground">Oportunidade {legacyScore}/100</p>
+            </div>
+          </div>
+          <div className="mt-3 h-1.5 rounded-full bg-muted/60 overflow-hidden">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${legacyScore}%` }} />
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
+            Esta é a leitura atual do motor de pontuação. A análise detalhada por dimensões
+            (intenção, engajamento, risco) está sendo processada e aparece assim que ficar pronta.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className={cn("rounded-xl border border-dashed border-border/60 bg-muted/20 p-4 text-center", className)}>
         <Brain className="w-5 h-5 mx-auto text-muted-foreground mb-1.5" />
