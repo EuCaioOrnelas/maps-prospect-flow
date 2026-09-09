@@ -6,11 +6,11 @@ import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line as RLine, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer } from "recharts";
+import { toast } from "sonner";
 import {
   useLeadIntelligenceProfile,
   PRIORITY_LABELS,
   STAGE_LABELS,
-  BEHAVIOR_LABELS,
   MOMENTUM_LABELS,
 } from "@/hooks/useLeadIntelligence";
 import {
@@ -18,13 +18,11 @@ import {
   type ConversationAnalysis,
   type ProspectData,
 } from "@/hooks/useLeadIntelligenceDetail";
-import { useLeadScores } from "@/hooks/useLeadScores";
-import { toIntel100, dimensionTo100 } from "@/lib/intelligence";
 import type { Lead } from "@/hooks/useCRM";
 import {
   Brain, Target, Zap, TrendingUp, TrendingDown, Minus, AlertTriangle,
-  Building2, MessageSquare, Lightbulb, Sparkles, ShieldAlert, MapPin,
-  DollarSign, CheckCircle2, Clock, ArrowRight, Star, Globe, Mail, Phone,
+  MessageSquare, MapPin, DollarSign, CheckCircle2, Clock, Star, Globe,
+  ShieldAlert, Sparkles, Copy, Building2, ArrowRight, Gauge,
 } from "lucide-react";
 
 interface Props {
@@ -33,40 +31,39 @@ interface Props {
   className?: string;
 }
 
-/* ------------------------------------------------------------------ labels */
+/* ------------------------------------------------------------------ helpers */
 
 const SIGNAL_LABELS: Record<string, string> = {
   INTENT_PRICE: "Perguntou preço",
+  INTENT_BUY: "Falou em comprar",
   INTENT_BUY_NOW: "Disse que quer comprar",
   INTENT_PAYMENT: "Falou sobre pagamento",
   INTENT_PROPOSAL: "Pediu proposta",
+  INTENT_URGENCY: "Demonstrou urgência",
   INTENT_URGENT: "Demonstrou urgência",
   INTENT_AVAILABILITY: "Perguntou disponibilidade",
+  INTENT_DEMO: "Pediu demonstração",
+  INTENT_DECISION: "Falou sobre decisão",
+  INTENT_CONTRACT: "Falou sobre contrato",
+  OBJECTION: "Registrou objeção",
   OBJECTION_PRICE: "Objeção de preço",
   OBJECTION_TIME: "Objeção de tempo",
-  INBOUND_MESSAGE: "Mensagem do contato",
-  INBOUND_STREAK_3: "3 mensagens seguidas do contato",
-  INBOUND_AFTER_24H_SILENCE: "Voltou a falar após 24h de silêncio",
-  INBOUND_AFTER_7D_SILENCE: "Reativou após 7 dias parado",
-  BACK_AND_FORTH_5_TURNS: "Conversa com 5 idas e vindas",
-  CONVERSATION_ACTIVE_3D: "Conversa ativa nos últimos 3 dias",
-  CONVERSATION_ACTIVE_5D: "Conversa ativa nos últimos 5 dias",
-  OUTBOUND_REPLY_RECEIVED_WITHIN_1H: "Respondeu em menos de 1 hora",
-  MEETING_SCHEDULED: "Reunião agendada",
-  NO_REPLY: "Sem resposta",
-  INACTIVITY: "Inatividade",
-  NICHE_FIT: "Aderência ao nicho",
+  PROBLEM_DETECTED: "Reconheceu um problema",
+  NEED_DETECTED: "Declarou uma necessidade",
+  NEGATIVE_INTENT: "Sinal negativo",
   AUDIO_RECEIVED: "Áudio recebido",
+  DIAGNOSIS_GAP: "Diagnóstico indica necessidade",
 };
-
 const signalLabel = (t: string) =>
   SIGNAL_LABELS[t] || t.replace(/_/g, " ").toLowerCase().replace(/^./, (c) => c.toUpperCase());
 
 const bandF = (v: number) => (v >= 80 ? "Muito alta" : v >= 60 ? "Alta" : v >= 40 ? "Média" : v >= 20 ? "Baixa" : "Muito baixa");
 const bandM = (v: number) => (v >= 80 ? "Muito alto" : v >= 60 ? "Alto" : v >= 40 ? "Médio" : v >= 20 ? "Baixo" : "Muito baixo");
+const hoursLabel = (h: number) => (h < 1 ? "menos de 1 hora" : h < 48 ? `${Math.round(h)} h` : `${Math.round(h / 24)} dias`);
+const ago = (d?: string | null) =>
+  d ? formatDistanceToNow(new Date(d), { addSuffix: true, locale: ptBR }) : null;
 
-const hoursLabel = (h: number) =>
-  h < 1 ? "menos de 1 hora" : h < 48 ? `${Math.round(h)} h` : `${Math.round(h / 24)} dias`;
+type AnalysisState = "NO_DATA" | "PARTIAL" | "COMPLETE";
 
 /* -------------------------------------------------------------- primitives */
 
@@ -105,42 +102,82 @@ function Field({ label, value, icon: Icon }: { label: string; value?: React.Reac
   );
 }
 
-function DimensionCard({
-  label, icon: Icon, value, caption, tone = "primary",
-}: {
-  label: string; icon: React.ElementType; value: number | null; caption: string;
-  tone?: "primary" | "warn";
-}) {
-  const empty = value === null;
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5 hover:bg-muted/40 transition-colors">
+    <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate">{label}</p>
+      <p className="text-sm font-semibold text-foreground mt-0.5 tabular-nums leading-tight">{value}</p>
+      {hint && <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{hint}</p>}
+    </div>
+  );
+}
+
+function Empty({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-5 text-center">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed max-w-md mx-auto">{description}</p>
+    </div>
+  );
+}
+
+interface Dim {
+  key: string;
+  label: string;
+  icon: React.ElementType;
+  value: number | null;
+  status: string;
+  basis: string[];
+  tone?: "primary" | "warn";
+  partial?: boolean;
+}
+
+function DimensionCard({ dim }: { dim: Dim }) {
+  const [open, setOpen] = useState(false);
+  const empty = dim.value === null;
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
       <div className="flex items-center gap-1.5">
-        <Icon className={cn("w-3.5 h-3.5", empty ? "text-muted-foreground/60" : tone === "warn" ? "text-amber-500" : "text-primary")} />
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate">{label}</p>
+        <dim.icon className={cn("w-3.5 h-3.5", empty ? "text-muted-foreground/60" : dim.tone === "warn" ? "text-amber-500" : "text-primary")} />
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate flex-1">{dim.label}</p>
+        {!empty && dim.basis.length > 0 && (
+          <button type="button" onClick={() => setOpen((o) => !o)} className="text-[10px] text-muted-foreground hover:text-foreground">
+            {open ? "ocultar" : "base"}
+          </button>
+        )}
       </div>
       {empty ? (
-        <p className="text-[12px] text-muted-foreground mt-1.5 leading-snug">Sem dados suficientes</p>
+        <p className="text-[12px] text-muted-foreground mt-1.5 leading-snug">{dim.status}</p>
       ) : (
         <>
           <p className="mt-1 text-[15px] font-semibold text-foreground leading-none tabular-nums">
-            {value}<span className="text-[10px] font-normal text-muted-foreground"> /100</span>
+            {dim.value}
+            <span className="text-[10px] font-normal text-muted-foreground"> /100</span>
           </p>
           <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
             <div
-              className={cn("h-full rounded-full transition-[width] duration-700", tone === "warn" ? "bg-amber-500" : "bg-primary")}
-              style={{ width: `${Math.max(2, Math.min(100, value))}%` }}
+              className={cn("h-full rounded-full transition-[width] duration-700", dim.tone === "warn" ? "bg-amber-500" : "bg-primary")}
+              style={{ width: `${Math.max(2, Math.min(100, dim.value))}%` }}
             />
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground truncate">{caption}</p>
+          <p className="mt-1 text-[11px] text-muted-foreground truncate">
+            {dim.status}
+            {dim.partial ? " · análise parcial" : ""}
+          </p>
+          {open && (
+            <ul className="mt-1.5 space-y-0.5 border-t border-border/40 pt-1.5">
+              {dim.basis.map((b, i) => (
+                <li key={i} className="text-[11px] text-muted-foreground leading-snug">• {b}</li>
+              ))}
+            </ul>
+          )}
         </>
       )}
     </div>
   );
 }
 
-function StateCard({
-  label, icon: Icon, value, caption,
-}: { label: string; icon: React.ElementType; value: string; caption?: string }) {
+function StateCard({ label, icon: Icon, value, caption }: { label: string; icon: React.ElementType; value: string; caption?: string }) {
   return (
     <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
       <div className="flex items-center gap-1.5">
@@ -153,53 +190,29 @@ function StateCard({
   );
 }
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate">{label}</p>
-      <p className="text-sm font-semibold text-foreground mt-0.5 tabular-nums leading-tight">{value}</p>
-      {hint && <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{hint}</p>}
-    </div>
-  );
-}
-
-function Empty({ title, description, action }: { title: string; description: string; action?: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-5 text-center">
-      <p className="text-sm font-medium text-foreground">{title}</p>
-      <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed max-w-md mx-auto">{description}</p>
-      {action && <div className="mt-3 flex justify-center">{action}</div>}
-    </div>
-  );
-}
-
 function EvidenceRow({
   label, quote, at, source, positive = true,
 }: { label: string; quote?: string; at?: string; source?: string; positive?: boolean }) {
   const [open, setOpen] = useState(false);
-  const hasQuote = !!quote;
   return (
     <li className="border-b border-border/40 last:border-0">
       <button
         type="button"
-        disabled={!hasQuote}
+        disabled={!quote}
         onClick={() => setOpen((o) => !o)}
-        className={cn(
-          "w-full flex items-start gap-2 py-1.5 text-left",
-          hasQuote && "hover:opacity-80 transition-opacity cursor-pointer"
-        )}
+        className={cn("w-full flex items-start gap-2 py-1.5 text-left", quote && "hover:opacity-80 cursor-pointer")}
       >
         {positive
           ? <CheckCircle2 className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
           : <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />}
         <span className="text-[13px] text-foreground/90 leading-snug flex-1 min-w-0">{label}</span>
-        {hasQuote && <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">{open ? "ocultar" : "evidência"}</span>}
+        {quote && <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">{open ? "ocultar" : "evidência"}</span>}
       </button>
-      {open && hasQuote && (
+      {open && quote && (
         <div className="ml-5 mb-2 rounded-md border-l-2 border-primary/40 bg-muted/30 px-2.5 py-1.5">
           <p className="text-[12px] text-foreground leading-relaxed">“{quote}”</p>
           <p className="text-[10px] text-muted-foreground mt-1">
-            {at ? format(new Date(at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : ""}{source ? ` · ${source}` : ""}
+            {[source, at ? ago(at) : null].filter(Boolean).join(" · ")}
           </p>
         </div>
       )}
@@ -207,687 +220,870 @@ function EvidenceRow({
   );
 }
 
-/* ------------------------------------------------------ próxima melhor ação */
+/* ------------------------------------------------------- próxima melhor ação */
 
-interface NextAction {
+interface Playbook {
+  code: string;
   title: string;
-  why: string;
+  priority: string;
   channel: string;
-  what: string;
-  script: string | null;
-  cta: string;
+  when: string;
+  why: string;
+  objective: string;
+  steps: string[];
+  question: string;
+  avoid: string;
+  expected: string;
+  message: string | null;
+  messageOrigin: string | null;
 }
 
-function buildAction(ctx: {
-  conv: ConversationAnalysis | null;
-  prospect: ProspectData | null;
-  lead?: Lead | null;
-  opportunity: number;
-  intent: number | null;
-}): NextAction {
-  const { conv, prospect, lead, opportunity, intent } = ctx;
-  const firstName = (lead?.contact_name || prospect?.contact_name || "").trim().split(/\s+/)[0] || "";
-  const hello = firstName ? `Oi ${firstName}` : "Olá";
-  const company = lead?.company_name || prospect?.company_name || "";
-  const niche = lead?.category || prospect?.category || "";
-  const diagnosis = prospect?.ai_diagnosis || "";
-  const channel = conv?.sources?.[0] || "WhatsApp";
+function firstName(v?: string | null) {
+  const n = (v || "").trim().split(/\s+/)[0];
+  return n && n.length > 1 ? n : null;
+}
 
-  // 1. Sem conversa registrada — nunca afirmar interação.
-  if (!conv) {
-    const hasContext = !!(company || niche || diagnosis);
+function buildMessage(prospect: ProspectData | null, lead: Lead | null, conv: ConversationAnalysis | null): { text: string | null; origin: string | null } {
+  const name = firstName(prospect?.contact_name || (lead as any)?.name || (lead as any)?.contact_name);
+  const company = prospect?.company_name || (lead as any)?.company_name || null;
+  const niche = prospect?.category || null;
+  const city = prospect?.city || null;
+
+  // Sem conversa: usa a mensagem já preparada pela prospecção quando existir.
+  if (!conv || conv.total === 0) {
+    if (prospect?.ai_approach_message) return { text: prospect.ai_approach_message, origin: "Mensagem gerada na prospecção" };
+    if (!company && !name) return { text: null, origin: null };
+    const parts: string[] = [];
+    parts.push(`Oi${name ? `, ${name}` : ""}! Tudo bem?`);
+    if (company) {
+      parts.push(
+        `Vi a ${company}${niche ? ` (${niche})` : ""}${city ? ` em ${city}` : ""} e analisei rapidamente a presença comercial de vocês.`
+      );
+    }
+    if (prospect?.rating != null && prospect?.review_count != null) {
+      parts.push(`Vocês estão com ${prospect.rating} de nota e ${prospect.review_count} avaliações no Google.`);
+    }
+    if (!prospect?.website) parts.push("Não encontrei um site ativo, o que costuma custar contatos que chegam pela busca.");
+    parts.push("Posso te mostrar em poucos minutos como empresas desse perfil estão captando mais clientes?");
+    return { text: parts.join(" "), origin: "Gerada com os dados reais da prospecção" };
+  }
+
+  // Com conversa: só monta retomada quando há contexto real do que o lead falou.
+  const lastIntent = conv.intents[0];
+  const lastObjection = conv.objections[0];
+  if (lastObjection) {
     return {
-      title: "Fazer o primeiro contato",
-      why: "Este contato foi prospectado, mas não existe nenhuma conversa registrada no WhatsApp. Sem interação, a Inteligência não consegue avaliar intenção nem engajamento.",
-      channel,
-      what: "Abrir a conversa com uma abordagem específica sobre a empresa e uma única pergunta.",
-      script: hasContext
-        ? `${hello}! Falo com ${company || "vocês"}${niche ? ` (${niche})` : ""}? ${diagnosis ? `Reparei em algo no material de vocês: ${String(diagnosis).slice(0, 140)}` : "Estudei rapidamente o trabalho de vocês"}. Posso te fazer uma pergunta rápida sobre isso?`
-        : null,
-      cta: "Iniciar conversa",
+      text: `Oi${name ? `, ${name}` : ""}! Sobre o ponto que você levantou (${lastObjection.label.toLowerCase()}), separei uma alternativa que costuma resolver isso. Posso te explicar em 2 minutos?`,
+      origin: "Baseada na objeção registrada na conversa",
+    };
+  }
+  if (lastIntent) {
+    return {
+      text: `Oi${name ? `, ${name}` : ""}! Voltando ao ponto do nosso contato (${lastIntent.label.toLowerCase()}), consigo te passar tudo hoje. Prefere que eu envie por aqui ou marcamos uma conversa rápida?`,
+      origin: "Baseada no último sinal identificado na conversa",
+    };
+  }
+  return { text: null, origin: null };
+}
+
+function buildPlaybook(
+  state: AnalysisState,
+  profile: any,
+  conv: ConversationAnalysis | null,
+  prospect: ProspectData | null,
+  lead: Lead | null,
+): Playbook {
+  const msg = buildMessage(prospect, lead, conv);
+  const priority = profile?.priority ? PRIORITY_LABELS[profile.priority] || profile.priority : "Média";
+  const silenceH = conv?.silenceHours ?? null;
+  const waiting = conv?.waitingReplyHours ?? null;
+  const hasObjection = !!conv?.objections.length;
+  const intents = conv?.intents || [];
+  const has = (k: string) => intents.some((i) => i.key === k);
+
+  const base = {
+    priority,
+    channel: "WhatsApp",
+    avoid: "Não repetir mensagens genéricas nem cobrar resposta de forma agressiva.",
+    message: msg.text,
+    messageOrigin: msg.origin,
+  };
+
+  if (state === "NO_DATA") {
+    return {
+      ...base,
+      code: "FIRST_CONTACT",
+      title: "Iniciar o primeiro contato",
+      priority: "Média",
+      when: "Assim que possível, em horário comercial",
+      why: "Não existe nenhuma conversa nem sinal comercial registrado para este contato. Não há base para qualquer outra recomendação.",
+      objective: "Abrir a conversa e gerar a primeira resposta para que a Inteligência passe a ter dados reais.",
+      steps: [
+        "Enviar a primeira mensagem citando apenas informações que você realmente conhece da empresa.",
+        "Fazer uma única pergunta simples que gere resposta.",
+        "Aguardar até 48 horas antes de qualquer novo contato.",
+      ],
+      question: "Vocês estão buscando atrair mais clientes agora ou isso é algo para os próximos meses?",
+      avoid: "Não afirmar que já conversaram antes. Nenhuma interação foi registrada.",
+      expected: "Primeira resposta do contato, que libera o cálculo das dimensões.",
     };
   }
 
-  // 2. Contato aguardando resposta.
-  if (conv.waitingReplyHours !== null) {
-    const last = conv.leadMessages[conv.leadMessages.length - 1]?.content;
-    const priceIntent = conv.intents.find((i) => i.key === "PRICE");
+  if (waiting != null && waiting >= 0.25) {
     return {
+      ...base,
+      code: "RESPOND_NOW",
       title: "Responder agora",
-      why: `A última mensagem é do contato e está sem resposta há ${hoursLabel(conv.waitingReplyHours)}.`,
-      channel,
-      what: priceIntent
-        ? "Responder objetivamente à pergunta sobre valores e propor o próximo passo."
-        : "Responder ao que ele escreveu e encerrar com uma pergunta que exija resposta.",
-      script: last
-        ? `${hello}! Sobre "${String(last).slice(0, 80)}", já consigo te responder. ${priceIntent ? "Te passo o valor e o prazo agora; prefere por aqui ou numa ligação rápida?" : "Me confirma só uma coisa pra eu te passar certinho?"}`
-        : null,
-      cta: "Abrir conversa",
+      priority: "Alta",
+      when: "Imediatamente",
+      why: `O contato enviou a última mensagem e está sem resposta há ${hoursLabel(waiting)}.`,
+      objective: "Retomar o controle da conversa antes que o interesse caia.",
+      steps: [
+        "Ler a última mensagem do contato.",
+        "Responder diretamente ao que foi perguntado, sem rodeios.",
+        "Encerrar com uma pergunta que avance a etapa.",
+      ],
+      question: "Consigo te enviar isso ainda hoje. Faz sentido para você?",
+      expected: "Resposta rápida e retomada do ritmo da conversa.",
     };
   }
 
-  // 3. Objeção real detectada.
-  const objection = conv.objections[0];
-  if (objection) {
+  if (hasObjection) {
+    const obj = conv!.objections[0];
     return {
-      title: `Tratar ${objection.label.toLowerCase()}`,
-      why: `Objeção identificada na conversa em ${format(new Date(objection.at), "dd/MM", { locale: ptBR })}: “${objection.quote.slice(0, 90)}”.`,
-      channel,
-      what: objection.key === "PRICE"
-        ? "Entender a comparação antes de qualquer desconto e mostrar o retorno em número."
-        : "Endereçar diretamente a objeção citada e combinar o próximo passo com data.",
-      script: `${hello}, entendi o seu ponto. Posso te mostrar rapidamente como resolvemos exatamente isso${company ? ` em casos como o da ${company}` : ""}?`,
-      cta: "Abrir conversa",
+      ...base,
+      code: "HANDLE_OBJECTION",
+      title: "Tratar a objeção",
+      when: "Nas próximas horas",
+      why: `O contato registrou uma objeção: ${obj.label.toLowerCase()}.`,
+      objective: "Remover o bloqueio antes de avançar para proposta ou fechamento.",
+      steps: [
+        "Reconhecer a objeção sem discutir.",
+        "Trazer um caso ou dado que responda especificamente a ela.",
+        "Oferecer uma alternativa (formato, escopo ou condição).",
+        "Confirmar se o ponto foi resolvido.",
+      ],
+      question: "Se esse ponto estivesse resolvido, teria mais alguma coisa te impedindo de avançar?",
+      expected: "Objeção neutralizada e caminho livre para a proposta.",
     };
   }
 
-  // 4. Alta intenção e conversa viva.
-  if ((intent ?? 0) >= 60 || opportunity >= 75) {
+  if (has("PAYMENT") || profile?.stage === "CLOSING" || profile?.stage === "READY_TO_BUY") {
     return {
-      title: "Levar para o fechamento",
-      why: `Intenção e oportunidade altas com base em ${conv.total} mensagens reais e ${conv.intents.length} sinal(is) de intenção na conversa.`,
-      channel,
-      what: "Enviar proposta com valor, prazo e forma de pagamento e marcar a data da decisão.",
-      script: `${hello}! Já consigo montar a proposta com o que conversamos. Consigo te apresentar em 5 minutos hoje?`,
-      cta: "Abrir conversa",
+      ...base,
+      code: "REQUEST_PAYMENT",
+      title: "Conduzir para o fechamento",
+      priority: "Alta",
+      when: "Agora",
+      why: "O contato já falou sobre pagamento ou decisão, indicando etapa final.",
+      objective: "Transformar o interesse declarado em contratação.",
+      steps: [
+        "Recapitular em uma frase o que foi combinado.",
+        "Enviar o link ou os dados de pagamento.",
+        "Definir uma data de início.",
+      ],
+      question: "Prefere começar por PIX ou cartão?",
+      expected: "Pagamento realizado ou data de início confirmada.",
     };
   }
 
-  // 5. Conversa parada.
-  if (conv.silenceHours !== null && conv.silenceHours > 72) {
+  if (has("PROPOSAL")) {
     return {
-      title: "Reaquecer o contato",
-      why: `A última mensagem foi há ${hoursLabel(conv.silenceHours)} e a atividade parou.`,
-      channel,
-      what: "Retomar com uma pergunta objetiva sobre o problema dele, não sobre o produto.",
-      script: `${hello}! Retomando nossa conversa. Hoje o que mais atrapalha${niche ? ` na operação de ${niche.toLowerCase()}` : ""} aí?`,
-      cta: "Abrir conversa",
+      ...base,
+      code: "SEND_PROPOSAL",
+      title: "Enviar a proposta",
+      priority: "Alta",
+      when: "Hoje",
+      why: "O contato pediu uma proposta ou material.",
+      objective: "Entregar a proposta ainda com o interesse quente.",
+      steps: [
+        "Montar a proposta com o escopo já conversado.",
+        "Enviar com um resumo curto no WhatsApp.",
+        "Combinar quando vocês retomam.",
+      ],
+      question: "Te envio a proposta agora. Podemos conversar sobre ela amanhã?",
+      expected: "Proposta enviada e retorno agendado.",
+    };
+  }
+
+  if (has("PRICE")) {
+    return {
+      ...base,
+      code: "QUALIFY",
+      title: "Qualificar e avançar para proposta",
+      priority: "Alta",
+      when: "Nas próximas horas",
+      why: "O contato perguntou sobre preço, mas ainda faltam prazo, decisão e escopo.",
+      objective: "Entender a necessidade real antes de apresentar valores.",
+      steps: [
+        "Confirmar a necessidade principal.",
+        "Identificar o prazo de decisão.",
+        "Identificar quem decide junto.",
+        "Confirmar a faixa de investimento.",
+        "Conduzir para proposta ou demonstração.",
+      ],
+      question: "Você está querendo resolver isso ainda este mês ou está avaliando opções?",
+      expected: "Necessidade, prazo e orçamento identificados.",
+    };
+  }
+
+  if (silenceH != null && silenceH >= 24 * 7) {
+    return {
+      ...base,
+      code: "REACTIVATE",
+      title: "Reativar o contato",
+      when: "Hoje",
+      why: `A conversa está parada há ${hoursLabel(silenceH)}.`,
+      objective: "Reabrir a conversa com um motivo novo, sem cobrança.",
+      steps: [
+        "Trazer uma novidade concreta (condição, caso, disponibilidade).",
+        "Mensagem curta, com uma única pergunta.",
+        "Se não houver resposta, encerrar a cadência por agora.",
+      ],
+      question: "Faz sentido retomarmos isso agora ou prefere que eu volte mais para frente?",
+      expected: "Retomada da conversa ou definição clara de que não é o momento.",
+    };
+  }
+
+  if (silenceH != null && silenceH >= 48) {
+    return {
+      ...base,
+      code: "FOLLOW_UP",
+      title: "Fazer follow-up contextualizado",
+      when: "Hoje",
+      why: `Sem interação há ${hoursLabel(silenceH)} após uma conversa já iniciada.`,
+      objective: "Retomar do ponto exato onde a conversa parou.",
+      steps: [
+        "Relembrar em uma frase o último ponto tratado.",
+        "Trazer uma informação nova que ajude a decidir.",
+        "Fazer uma pergunta objetiva.",
+      ],
+      question: "Ficou alguma dúvida do que conversamos?",
+      expected: "Resposta do contato e retomada da negociação.",
     };
   }
 
   return {
-    title: "Qualificar e avançar",
-    why: `Existe conversa (${conv.total} mensagens), mas ainda sem sinais claros de decisão de compra.`,
-    channel,
-    what: "Confirmar necessidade, prazo e quem decide antes de enviar proposta.",
-    script: `${hello}! Pra eu te ajudar direito: qual é o prazo que vocês têm em mente e quem mais participa dessa decisão?`,
-    cta: "Abrir conversa",
+    ...base,
+    code: "QUALIFY",
+    title: "Qualificar o contato",
+    when: "Nas próximas horas",
+    why: "A conversa está ativa, mas ainda faltam sinais de necessidade, prazo e decisão.",
+    objective: "Descobrir se existe intenção real de compra e avançar a qualificação.",
+    steps: [
+      "Confirmar a necessidade principal.",
+      "Identificar o prazo de decisão.",
+      "Identificar quem participa da decisão.",
+      "Confirmar a faixa de investimento.",
+      "Conduzir para proposta ou demonstração quando houver fit.",
+    ],
+    question: "Você está buscando resolver isso ainda este mês ou está apenas avaliando as opções?",
+    expected: "Qualificação concluída com prazo e orçamento identificados.",
   };
 }
 
-/* ------------------------------------------------------------------- panel */
+/* -------------------------------------------------------------------- panel */
 
 export function LeadIntelligencePanel({ phone, lead, className }: Props) {
-  const { data: intel, isLoading } = useLeadIntelligenceProfile(phone);
-  const { getScoreForPhone } = useLeadScores();
-  const legacy = phone ? getScoreForPhone(phone) : undefined;
-  const {
-    conversation: conv, conversationLoading, signals, history, deals, prospect, patterns,
-  } = useLeadIntelligenceDetail(phone, lead?.id);
+  const { data: profile, isLoading: profileLoading } = useLeadIntelligenceProfile(phone);
+  const detail = useLeadIntelligenceDetail(phone, (lead as any)?.id || null);
+  const { conversation: conv, signals, history, deals, prospect, patterns } = detail;
 
-  const openChat = () => {
-    const p = (phone || lead?.phone || "").replace(/\D/g, "");
-    window.location.href = p ? `/chat?phone=${p}` : "/chat";
-  };
+  const state: AnalysisState = useMemo(() => {
+    const msgs = conv?.total || 0;
+    const sigs = signals.length;
+    if (msgs === 0 && sigs === 0) return "NO_DATA";
+    if (msgs < 4 || sigs < 2) return "PARTIAL";
+    return "COMPLETE";
+  }, [conv, signals.length]);
 
-  /* ---------- valores centrais (mesma fonte do card, ranking e central) ---------- */
-  const opportunity = intel ? intel.opportunity_score : toIntel100(legacy?.score_total);
-  const hasConversationData = !!conv;
-  const hasSignals = signals.length > 0;
+  const confidence = useMemo(() => {
+    const v = (conv?.total || 0) * 6 + signals.length * 10 + (prospect ? 10 : 0);
+    return Math.max(0, Math.min(100, v));
+  }, [conv, signals.length, prospect]);
 
-  const dim = (raw: number | null | undefined, requires: boolean) => {
-    if (!intel || !requires) return null;
-    const v = dimensionTo100(raw);
-    return v > 0 ? v : null;
-  };
+  const opportunity = profile ? Math.round(Number(profile.opportunity_score || 0)) : null;
+  const hasConv = !!conv && conv.total > 0;
 
-  const intent = dim(intel?.intent_score, hasConversationData || hasSignals);
-  const engagement = dim(intel?.engagement_score, hasConversationData);
-  const quality = dim(intel?.quality_score, true);
-  const fit = dim(intel?.fit_score, true);
-  const risk = dim(intel?.risk_score, hasConversationData || hasSignals);
+  const dims: Dim[] = useMemo(() => {
+    const d: Dim[] = [];
+    const partial = state === "PARTIAL";
 
-  const momentumState = intel?.momentum_state || "";
-  const MomentumIcon = momentumState.includes("RISING") ? TrendingUp : momentumState.includes("DECLINING") ? TrendingDown : Minus;
-  const momentumLabel = momentumState ? MOMENTUM_LABELS[momentumState] || "Estável" : "Sem dados";
+    d.push({
+      key: "intent",
+      label: "Intenção",
+      icon: Target,
+      value: profile && (hasConv || signals.length > 0) ? Math.round(Number(profile.intent_score || 0)) : null,
+      status: profile && (hasConv || signals.length > 0) ? bandF(Number(profile.intent_score || 0)) : "Sem sinais de intenção",
+      partial,
+      basis: [
+        ...(conv?.intents || []).map((i) => i.label),
+        ...signals.slice(0, 4).map((s) => signalLabel(s.signal_type)),
+      ].slice(0, 6),
+    });
 
-  const classification = bandF(opportunity);
+    d.push({
+      key: "engagement",
+      label: "Engajamento",
+      icon: Zap,
+      value: profile && hasConv ? Math.round(Number(profile.engagement_score || 0)) : null,
+      status: hasConv ? bandM(Number(profile?.engagement_score || 0)) : "Sem interação registrada",
+      partial,
+      basis: hasConv
+        ? [
+            `${conv!.total} mensagens trocadas`,
+            `${conv!.inbound} respostas do contato`,
+            conv!.lastMessageAt ? `última interação ${ago(conv!.lastMessageAt)}` : "",
+            `${conv!.activeDays} dia(s) com conversa`,
+          ].filter(Boolean)
+        : [],
+    });
 
-  /* --------- base de cálculo: explica de onde vem a nota mesmo sem conversa --- */
-  const basis = useMemo(() => {
-    if (hasConversationData) {
-      return {
-        badge: "Base: conversa + empresa",
-        explain: "A nota considera as mensagens trocadas no WhatsApp, os dados da empresa e o histórico comercial deste contato.",
-      };
-    }
-    if (hasSignals) {
-      return {
-        badge: "Base: sinais + empresa",
-        explain: "Ainda não há conversa registrada. A nota vem dos sinais captados pelo motor e dos dados da empresa.",
-      };
-    }
-    return {
-      badge: "Base: só prospecção",
-      explain:
-        "Não existe conversa nem sinal registrado. Esta nota é um potencial inicial, calculado apenas com os dados de empresa (fit e qualidade da prospecção). Ela muda assim que houver a primeira interação.",
-    };
-  }, [hasConversationData, hasSignals]);
+    const momentumKnown = history.length > 1 && hasConv;
+    d.push({
+      key: "momentum",
+      label: "Momentum",
+      icon: profile?.momentum_state?.includes("RISING") ? TrendingUp : profile?.momentum_state?.includes("DECLINING") ? TrendingDown : Minus,
+      value: null,
+      status: momentumKnown ? MOMENTUM_LABELS[profile!.momentum_state] || "Estável" : "Sem histórico suficiente",
+      basis: [],
+    });
 
+    d.push({
+      key: "risk",
+      label: "Risco",
+      icon: ShieldAlert,
+      tone: "warn",
+      value: profile && hasConv ? Math.round(Number(profile.risk_score || 0)) : null,
+      status: hasConv ? bandM(Number(profile?.risk_score || 0)) : "Sem dados para avaliar risco",
+      partial,
+      basis: ((profile?.risk_factors as any[]) || []).map((r: any) => r.label),
+    });
 
-  const lastTouch = conv?.lastMessageAt || lead?.last_response_at || lead?.last_message_sent_at || null;
-  const recency = lastTouch ? formatDistanceToNow(new Date(lastTouch), { addSuffix: true, locale: ptBR }) : null;
+    const fitKnown = !!prospect || !!profile?.niche || !!profile?.city;
+    d.push({
+      key: "fit",
+      label: "Fit",
+      icon: Building2,
+      value: profile && fitKnown ? Math.round(Number(profile.fit_score || 0)) : null,
+      status: fitKnown ? bandF(Number(profile?.fit_score || 0)) : "Sem dados da empresa",
+      basis: [
+        prospect?.category ? `segmento: ${prospect.category}` : "",
+        prospect?.city ? `cidade: ${prospect.city}` : "",
+        prospect?.rating != null ? `nota ${prospect.rating} no Google` : "",
+        prospect?.website ? "possui site" : prospect ? "sem site identificado" : "",
+      ].filter(Boolean),
+    });
 
-  /* --------------------------------- resumo executivo baseado só em fato --- */
-  const summary = useMemo(() => {
-    const parts: string[] = [];
-    const company = lead?.company_name || prospect?.company_name;
-    const niche = lead?.category || prospect?.category;
-    if (conv) {
-      parts.push(`${conv.total} mensagens trocadas (${conv.inbound} do contato) em ${conv.activeDays} dia(s)`);
-      if (conv.intents.length) parts.push(`${conv.intents.length} sinal(is) de intenção na conversa`);
-      else parts.push("ainda sem sinais claros de intenção de compra");
-      if (conv.waitingReplyHours !== null) parts.push(`contato aguardando resposta há ${hoursLabel(conv.waitingReplyHours)}`);
-    } else {
-      parts.push("nenhuma conversa registrada no WhatsApp, portanto intenção e engajamento ainda não podem ser avaliados");
-      if (company || niche) parts.push(`avaliação baseada apenas nos dados de prospecção${niche ? ` (${niche})` : ""}`);
-    }
-    if (deals.length) parts.push(`${deals.length} negociação(ões) no histórico`);
-    return parts.join(" · ").replace(/^./, (c) => c.toUpperCase()) + ".";
-  }, [conv, deals.length, lead?.company_name, lead?.category, prospect]);
+    d.push({
+      key: "quality",
+      label: "Qualidade",
+      icon: Sparkles,
+      value: profile && hasConv ? Math.round(Number(profile.quality_score || 0)) : null,
+      status: hasConv ? bandF(Number(profile?.quality_score || 0)) : "Sem conversa para avaliar",
+      partial,
+      basis: hasConv
+        ? [
+            `reciprocidade de ${conv!.reciprocity}%`,
+            `${conv!.turns} idas e vindas`,
+            conv!.leadAvgResponseMinutes != null ? `contato responde em ~${conv!.leadAvgResponseMinutes} min` : "",
+          ].filter(Boolean)
+        : [],
+    });
 
-  /* --------------------------------------------- sinais positivos / atenção */
-  const positives = useMemo(() => {
-    const out: { label: string; quote?: string; at?: string; source?: string }[] = [];
-    conv?.intents.forEach((i) => out.push({ label: i.label, quote: i.quote, at: i.at, source: i.source }));
-    if (conv && conv.total >= 5) out.push({ label: `Conversa ativa com ${conv.total} mensagens em ${conv.activeDays} dia(s)` });
-    if (conv && conv.reciprocity >= 35) out.push({ label: `Reciprocidade de ${conv.reciprocity}%, o contato participa da conversa` });
-    if (conv?.leadAvgResponseMinutes != null && conv.leadAvgResponseMinutes <= 60) out.push({ label: `O contato responde em média em ${conv.leadAvgResponseMinutes} min` });
-    if (conv?.transcribedAudioCount) out.push({ label: `${conv.transcribedAudioCount} áudio(s) transcrito(s) e analisado(s)` });
-    if (fit !== null) out.push({ label: `Fit de ${fit}/100 com o que você vende, calculado a partir do segmento, região e dados da empresa` });
-    if (quality !== null) out.push({ label: `Qualidade do cadastro em ${quality}/100 (dados de contato e empresa preenchidos)` });
+    d.push({
+      key: "recency",
+      label: "Recência",
+      icon: Clock,
+      value: null,
+      status: hasConv && conv!.lastMessageAt ? `Última interação ${ago(conv!.lastMessageAt)}` : "Sem interação",
+      basis: [],
+    });
 
-    if (prospect?.ai_diagnosis) out.push({ label: "Diagnóstico da empresa disponível na prospecção", quote: String(prospect.ai_diagnosis).slice(0, 300), source: "Prospecção" });
-    if (prospect?.rating != null) out.push({ label: `Empresa com avaliação pública ${prospect.rating}${prospect.review_count ? ` (${prospect.review_count} avaliações)` : ""}`, source: "Google Maps" });
-    (intel?.factors || []).forEach((f) => { if (f.impact > 0) out.push({ label: f.label }); });
-    return out;
-  }, [conv, fit, quality, prospect, intel]);
+    d.push({
+      key: "stage",
+      label: "Etapa",
+      icon: ArrowRight,
+      value: null,
+      status: hasConv && profile?.stage ? STAGE_LABELS[profile.stage] || profile.stage : "Não identificada",
+      basis: [],
+    });
 
-  const attention = useMemo(() => {
-    const out: { label: string; quote?: string; at?: string; source?: string }[] = [];
-    if (!conv) out.push({ label: "Nenhuma conversa registrada para este número (Evolution ou Meta)" });
-    if (conv?.waitingReplyHours != null) out.push({ label: `Mensagem do contato sem resposta há ${hoursLabel(conv.waitingReplyHours)}` });
-    conv?.objections.forEach((o) => out.push({ label: o.label, quote: o.quote, at: o.at, source: o.source }));
-    if (conv && conv.silenceHours != null && conv.silenceHours > 168) out.push({ label: `Sem nenhuma mensagem há ${hoursLabel(conv.silenceHours)}` });
-    if (momentumState.includes("DECLINING")) out.push({ label: "Atividade em queda em relação ao período anterior" });
-    if (conv && !conv.intents.length) out.push({ label: "Nenhum sinal de intenção comercial identificado na conversa" });
-    if (!lead?.email) out.push({ label: "Contato sem e-mail cadastrado" });
-    (intel?.risk_factors || []).forEach((r) => out.push({ label: r.label }));
-    return out;
-  }, [conv, momentumState, lead?.email, intel]);
+    return d;
+  }, [profile, conv, signals, history, prospect, hasConv, state]);
 
-  const action = buildAction({ conv, prospect, lead, opportunity, intent });
+  const playbook = useMemo(
+    () => buildPlaybook(state, profile, conv, prospect, lead || null),
+    [state, profile, conv, prospect, lead]
+  );
 
-  const wonDeals = deals.filter((d: any) => /ganho|fechad|pago|conclu/i.test(String(d.status || "")));
-  const lostDeals = deals.filter((d: any) => /perdid|cancel/i.test(String(d.status || "")));
-  const convertedPattern: any = patterns.find((p: any) => p.pattern_kind === "CONVERTED" && (p.sample_size || 0) >= 5);
-  const lostPattern: any = patterns.find((p: any) => p.pattern_kind === "LOST" && (p.sample_size || 0) >= 5);
+  const positives = ((profile?.factors as any[]) || []).filter((f) => f?.label);
+  const negatives = ((profile?.risk_factors as any[]) || []).filter((f) => f?.label);
 
   const chartData = useMemo(
     () =>
       [...history]
-        .filter((h) => h.score_after != null)
         .reverse()
+        .filter((h) => h.score_after != null)
         .map((h) => ({
-          date: format(new Date(h.created_at), "dd/MM", { locale: ptBR }),
-          valor: toIntel100(h.score_after),
+          at: format(new Date(h.created_at), "dd/MM HH:mm"),
+          value: Math.max(0, Math.min(100, Math.round(Number(h.score_after) / 10))),
         })),
     [history]
   );
 
-  if (isLoading) {
+  if (profileLoading || detail.isLoading) {
     return (
       <div className={cn("space-y-3", className)}>
-        <div className="h-28 rounded-xl border border-border/60 bg-muted/30 animate-pulse" />
-        <div className="h-40 rounded-xl border border-border/60 bg-muted/20 animate-pulse" />
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="h-24 rounded-xl border border-border/60 bg-muted/20 animate-pulse" />
+        ))}
       </div>
     );
   }
 
-  const companyName = lead?.company_name || prospect?.company_name || intel?.company_name || lead?.contact_name || "Contato";
-  const nicheName = lead?.category || prospect?.category || intel?.niche || null;
-
   return (
     <div className={cn("space-y-4", className)}>
-      {/* ------------------------------------------------------------ header */}
-      <header className="rounded-xl border border-border/60 bg-card p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Brain className="w-[18px] h-[18px] text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Inteligência Wiize</p>
-              <p className="text-sm font-semibold text-foreground truncate">
-                {companyName}
-                {nicheName && <span className="text-muted-foreground font-normal"> · {nicheName}</span>}
+      {/* ---------------------------------------------------------- header */}
+      <section className="rounded-xl border border-border/60 bg-card overflow-hidden">
+        <header className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50">
+          <Brain className="w-4 h-4 text-primary" />
+          <h3 className="text-[12px] font-semibold uppercase tracking-wider text-foreground">Inteligência Wiize</h3>
+          <span className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary">
+            <span className="w-1 h-1 rounded-full bg-primary" /> Beta
+          </span>
+        </header>
+
+        <div className="px-4 py-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</p>
+          {state === "NO_DATA" || opportunity === null ? (
+            <>
+              <p className="mt-1 text-[20px] font-semibold text-foreground leading-tight">Dados insuficientes</p>
+              <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">
+                Este contato ainda não possui sinais comerciais suficientes para uma análise confiável.
               </p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-end gap-2 mt-0.5">
+                <span className="text-[38px] font-semibold text-foreground leading-none tabular-nums">{opportunity}</span>
+                <span className="text-[13px] text-muted-foreground mb-1">/ 100</span>
+              </div>
+              <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${Math.max(2, opportunity)}%` }} />
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <Badge variant="outline" className="text-[10px] font-medium">{bandF(opportunity)}</Badge>
+                {state === "PARTIAL" && <Badge variant="outline" className="text-[10px] font-medium">Análise parcial</Badge>}
+                {profile?.priority && <Badge variant="outline" className="text-[10px] font-medium">Prioridade {PRIORITY_LABELS[profile.priority] || profile.priority}</Badge>}
+              </div>
+            </>
+          )}
+
+          <div className="mt-3 flex items-center gap-2 border-t border-border/50 pt-2.5">
+            <Gauge className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-[11px] text-muted-foreground">Confiança da análise</span>
+            <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+              <div className="h-full rounded-full bg-primary/60" style={{ width: `${Math.max(2, confidence)}%` }} />
             </div>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            {intel && <Badge variant="outline" className="rounded-md text-[10px]">Prioridade {PRIORITY_LABELS[intel.priority] || intel.priority}</Badge>}
-            {intel && <Badge variant="secondary" className="rounded-md text-[10px]">{STAGE_LABELS[intel.stage] || intel.stage}</Badge>}
+            <span className="text-[11px] tabular-nums text-muted-foreground">{confidence}%</span>
           </div>
         </div>
+      </section>
 
-        <div className="mt-4 space-y-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</p>
-            <div className="flex items-end gap-2 mt-1">
-              <p className="text-[34px] leading-none font-bold tabular-nums text-foreground">
-                {opportunity}<span className="text-base font-medium text-muted-foreground"> de 100</span>
-              </p>
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="rounded-md text-[11px]">{classification}</Badge>
-              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                <MomentumIcon className="w-3.5 h-3.5" /> {momentumLabel}
-              </span>
-              <Badge variant="secondary" className="rounded-md text-[10px] font-normal">{basis.badge}</Badge>
-            </div>
-            <div className="mt-2.5 h-1.5 rounded-full bg-muted overflow-hidden">
-              <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${opportunity}%` }} />
-            </div>
-            <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">{basis.explain}</p>
-          </div>
-          <p className="text-[13px] text-muted-foreground leading-relaxed">{summary}</p>
-        </div>
-      </header>
-
-      {/* -------------------------------------------------------------- tabs */}
+      {/* ------------------------------------------------------------ tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full justify-start overflow-x-auto rounded-lg">
-          <TabsTrigger value="overview" className="text-[12px] gap-1.5"><Target className="w-3.5 h-3.5" />Visão geral</TabsTrigger>
-          <TabsTrigger value="conversation" className="text-[12px] gap-1.5"><MessageSquare className="w-3.5 h-3.5" />Conversa</TabsTrigger>
-          <TabsTrigger value="company" className="text-[12px] gap-1.5"><Building2 className="w-3.5 h-3.5" />Empresa</TabsTrigger>
-          <TabsTrigger value="prospect" className="text-[12px] gap-1.5"><MapPin className="w-3.5 h-3.5" />Prospecção</TabsTrigger>
-          <TabsTrigger value="commercial" className="text-[12px] gap-1.5"><DollarSign className="w-3.5 h-3.5" />Comercial</TabsTrigger>
-          <TabsTrigger value="evolution" className="text-[12px] gap-1.5"><TrendingUp className="w-3.5 h-3.5" />Evolução</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-5 h-auto p-1">
+          {[
+            { v: "overview", l: "Visão geral", i: Target },
+            { v: "conversa", l: "Conversa", i: MessageSquare },
+            { v: "prospeccao", l: "Prospecção", i: MapPin },
+            { v: "comercial", l: "Comercial", i: DollarSign },
+            { v: "evolucao", l: "Evolução", i: TrendingUp },
+          ].map((t) => (
+            <TabsTrigger key={t.v} value={t.v} className="text-[11px] gap-1.5 py-1.5">
+              <t.i className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t.l}</span>
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        {/* ------------------------------------------------------- visão geral */}
+        {/* ------------------------------------------------------- overview */}
         <TabsContent value="overview" className="mt-4 space-y-4">
-          <Block icon={Target} title="Dimensões da Inteligência">
+          <Block icon={Target} title="Dimensões da inteligência">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <DimensionCard label="Intenção" icon={Target} value={intent} caption={intent !== null ? bandF(intent) : ""} />
-              <DimensionCard label="Engajamento" icon={Zap} value={engagement} caption={engagement !== null ? bandM(engagement) : ""} />
-              <StateCard
-                label="Momentum"
-                icon={MomentumIcon}
-                value={momentumLabel}
-                caption={intel && intel.momentum_value !== 0 ? `${intel.momentum_value > 0 ? "+" : ""}${intel.momentum_value} vs. período anterior` : undefined}
-              />
-              <DimensionCard label="Risco" icon={ShieldAlert} value={risk} caption={risk !== null ? bandM(risk) : ""} tone="warn" />
-              <DimensionCard label="Fit" icon={Building2} value={fit} caption={fit !== null ? bandM(fit) : ""} />
-              <DimensionCard label="Qualidade" icon={Sparkles} value={quality} caption={quality !== null ? bandF(quality) : ""} />
-              <StateCard label="Recência" icon={Clock} value={recency || "Sem interação"} caption={recency ? "Última interação registrada" : "Nenhuma mensagem registrada"} />
-              <StateCard
-                label="Comportamento"
-                icon={Brain}
-                value={intel?.behaviors?.length ? BEHAVIOR_LABELS[intel.behaviors[0]] || intel.behaviors[0] : "Sem dados"}
-                caption={intel?.behaviors?.length ? intel.behaviors.slice(1, 3).map((b) => BEHAVIOR_LABELS[b] || b).join(" · ") || undefined : undefined}
-              />
+              {dims.map((d) =>
+                d.value === null && d.basis.length === 0 && ["momentum", "recency", "stage"].includes(d.key) ? (
+                  <StateCard key={d.key} label={d.label} icon={d.icon} value={d.status} />
+                ) : (
+                  <DimensionCard key={d.key} dim={d} />
+                )
+              )}
             </div>
           </Block>
 
-
-          <div className="space-y-4">
-            <Block icon={Sparkles} title={`Por que a Oportunidade está em ${opportunity}`}>
-              {positives.length === 0 && attention.length === 0 ? (
-                <Empty title="Ainda sem evidências" description="Quando houver conversa, sinais ou dados de prospecção, a Inteligência explica aqui cada fator que influenciou a Oportunidade." />
-              ) : (
-                <div className="space-y-3">
-                  {positives.length > 0 && (
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Influências positivas</p>
-                      <ul>{positives.slice(0, 7).map((p, i) => <EvidenceRow key={i} {...p} />)}</ul>
-                    </div>
-                  )}
-                  {attention.length > 0 && (
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Pontos de atenção</p>
-                      <ul>{attention.slice(0, 7).map((p, i) => <EvidenceRow key={i} positive={false} {...p} />)}</ul>
-                    </div>
+          <Block icon={Brain} title={state === "NO_DATA" ? "Por que a oportunidade não pode ser calculada" : `Por que a oportunidade está em ${opportunity}`}>
+            {state === "NO_DATA" ? (
+              <ul className="space-y-1">
+                {[
+                  "Nenhuma conversa encontrada para este número (Evolution ou Meta).",
+                  "Nenhum sinal de intenção registrado pelo motor.",
+                  "Nenhum comportamento comercial suficiente para estimar conversão.",
+                  prospect ? "Existem apenas dados de prospecção da empresa, que não indicam intenção de compra." : "Sem dados de prospecção para este contato.",
+                ].map((t, i) => (
+                  <li key={i} className="flex items-start gap-2 py-1 border-b border-border/40 last:border-0">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+                    <span className="text-[13px] text-foreground/90 leading-snug">{t}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Fatores que aumentam</p>
+                  {positives.length ? (
+                    <ul>
+                      {positives.map((f: any, i: number) => (
+                        <EvidenceRow
+                          key={i}
+                          label={`${f.label}${f.impact ? ` (+${Math.round(f.impact)} pts)` : ""}`}
+                          quote={conv?.intents.find((x) => f.label?.toLowerCase().includes("pre") && x.key === "PRICE")?.quote}
+                          at={conv?.intents[0]?.at}
+                          source={conv?.sources[0]}
+                        />
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground">Nenhum fator positivo identificado até agora.</p>
                   )}
                 </div>
-              )}
-            </Block>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Fatores que reduzem</p>
+                  {negatives.length ? (
+                    <ul>
+                      {negatives.map((f: any, i: number) => (
+                        <EvidenceRow key={i} label={`${f.label}${f.weight ? ` (-${Math.round(f.weight)} pts)` : ""}`} positive={false} />
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground">Nenhum fator de risco identificado.</p>
+                  )}
+                </div>
+                {(conv?.intents.length || conv?.objections.length) ? (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Evidências na conversa</p>
+                    <ul>
+                      {conv!.intents.map((e) => (
+                        <EvidenceRow key={`i-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} />
+                      ))}
+                      {conv!.objections.map((e) => (
+                        <EvidenceRow key={`o-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} positive={false} />
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </Block>
 
-            <Block
-              icon={Lightbulb}
-              title="Próxima melhor ação"
-              className="border-primary/30"
-              action={<Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={openChat}>{action.cta}<ArrowRight className="w-3 h-3" /></Button>}
-            >
-              <p className="text-sm font-semibold text-foreground">{action.title}</p>
-              <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">{action.why}</p>
-              <div className="mt-3 space-y-2">
-                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2 flex items-center gap-2">
-                  <MessageSquare className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Canal</p>
-                  <p className="text-[13px] font-semibold text-foreground ml-auto">{action.channel}</p>
+          <Block icon={Sparkles} title="Próxima melhor ação">
+            <div className="space-y-3">
+              <div>
+                <p className="text-[15px] font-semibold text-foreground leading-tight">{playbook.title}</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <Badge variant="outline" className="text-[10px]">Prioridade {playbook.priority}</Badge>
+                  <Badge variant="outline" className="text-[10px]">Canal: {playbook.channel}</Badge>
+                  <Badge variant="outline" className="text-[10px]">Momento: {playbook.when}</Badge>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Por que</p>
+                  <p className="text-[12px] text-foreground mt-0.5 leading-relaxed">{playbook.why}</p>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">O que fazer</p>
-                  </div>
-                  <p className="text-[13px] text-foreground leading-relaxed mt-1">{action.what}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Objetivo</p>
+                  <p className="text-[12px] text-foreground mt-0.5 leading-relaxed">{playbook.objective}</p>
                 </div>
               </div>
 
-              <div className="mt-3 rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Mensagem sugerida</p>
-                {action.script ? (
-                  <p className="text-[13px] text-foreground leading-relaxed border-l-2 border-primary/40 pl-2.5 italic">{action.script}</p>
-                ) : (
-                  <p className="text-[12px] text-muted-foreground leading-relaxed">
-                    Não há contexto suficiente para gerar uma mensagem personalizada. Complete os dados da empresa ou registre a primeira conversa.
-                  </p>
-                )}
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">O que fazer</p>
+                <ol className="space-y-1">
+                  {playbook.steps.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-[13px] text-foreground/90 leading-snug">
+                      <span className="w-4 h-4 rounded-md bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0 mt-0.5">
+                        {i + 1}
+                      </span>
+                      {s}
+                    </li>
+                  ))}
+                </ol>
               </div>
-            </Block>
-          </div>
+
+              <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Pergunta principal</p>
+                <p className="text-[13px] text-foreground mt-0.5 leading-relaxed">“{playbook.question}”</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">O que evitar</p>
+                  <p className="text-[12px] text-foreground mt-0.5 leading-relaxed">{playbook.avoid}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Resultado esperado</p>
+                  <p className="text-[12px] text-foreground mt-0.5 leading-relaxed">{playbook.expected}</p>
+                </div>
+              </div>
+
+              {playbook.message ? (
+                <div className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] uppercase tracking-wider text-primary font-semibold flex-1">Mensagem sugerida</p>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-[11px]"
+                      onClick={() => {
+                        navigator.clipboard.writeText(playbook.message!);
+                        toast.success("Mensagem copiada");
+                      }}
+                    >
+                      <Copy className="w-3 h-3 mr-1" /> Copiar
+                    </Button>
+                  </div>
+                  <p className="text-[13px] text-foreground mt-1 leading-relaxed whitespace-pre-wrap">{playbook.message}</p>
+                  {playbook.messageOrigin && (
+                    <p className="text-[10px] text-muted-foreground mt-1.5">{playbook.messageOrigin}</p>
+                  )}
+                </div>
+              ) : (
+                <Empty
+                  title="Sem contexto para sugerir uma mensagem"
+                  description="Não há dados suficientes da empresa nem da conversa para escrever uma mensagem específica. Escrever algo genérico reduziria a chance de resposta."
+                />
+              )}
+            </div>
+          </Block>
         </TabsContent>
 
-        {/* ---------------------------------------------------------- conversa */}
-        <TabsContent value="conversation" className="mt-4 space-y-4">
-          {conversationLoading ? (
-            <div className="h-32 rounded-xl border border-border/60 bg-muted/20 animate-pulse" />
-          ) : !conv ? (
-            <Block icon={MessageSquare} title="Conversa">
-              <Empty
-                title="Não encontramos conversas registradas para este contato"
-                description="Quando este contato trocar mensagens pelo WhatsApp (Evolution ou Meta Cloud API), a Inteligência analisa intenção, objeções, reciprocidade e tempo de resposta automaticamente."
-                action={<Button size="sm" onClick={openChat}>Iniciar conversa</Button>}
-              />
-            </Block>
+        {/* -------------------------------------------------------- conversa */}
+        <TabsContent value="conversa" className="mt-4 space-y-4">
+          {!hasConv ? (
+            <Empty
+              title="Nenhuma conversa registrada"
+              description="Não existem mensagens deste número nos canais conectados (WhatsApp via Evolution ou Meta Cloud API). Assim que a primeira mensagem for trocada, a análise de conversa aparece aqui."
+            />
           ) : (
             <>
-              <Block icon={MessageSquare} title={`Interações · ${conv.sources.join(" · ")}`}>
-                <div className="grid grid-cols-2 gap-2">
-                  <Stat label="Mensagens" value={String(conv.total)} hint={`${conv.turns} idas e vindas`} />
-                  <Stat label="Do contato" value={String(conv.inbound)} hint={`${conv.reciprocity}% reciprocidade`} />
-                  <Stat label="Suas" value={String(conv.outbound)} />
-                  <Stat label="Dias com conversa" value={String(conv.activeDays)} />
-                  <Stat label="Sua resposta média" value={conv.avgResponseMinutes != null ? `${conv.avgResponseMinutes} min` : "sem dado"} />
-                  <Stat label="Resposta do contato" value={conv.leadAvgResponseMinutes != null ? `${conv.leadAvgResponseMinutes} min` : "sem dado"} />
-                  <Stat label="Última mensagem" value={conv.lastMessageAt ? formatDistanceToNow(new Date(conv.lastMessageAt), { addSuffix: true, locale: ptBR }) : "sem dado"} />
+              <Block icon={MessageSquare} title={`Conversa · ${conv!.sources.join(" + ")}`}>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <Stat label="Mensagens" value={String(conv!.total)} hint={`${conv!.inbound} do contato · ${conv!.outbound} suas`} />
+                  <Stat label="Idas e vindas" value={String(conv!.turns)} />
+                  <Stat label="Reciprocidade" value={`${conv!.reciprocity}%`} />
+                  <Stat
+                    label="Resposta do contato"
+                    value={conv!.leadAvgResponseMinutes != null ? `${conv!.leadAvgResponseMinutes} min` : "Sem dados"}
+                  />
+                  <Stat
+                    label="Sua resposta"
+                    value={conv!.avgResponseMinutes != null ? `${conv!.avgResponseMinutes} min` : "Sem dados"}
+                  />
+                  <Stat
+                    label="Silêncio"
+                    value={conv!.silenceHours != null ? hoursLabel(conv!.silenceHours) : "Sem dados"}
+                  />
+                  <Stat label="Dias com conversa" value={String(conv!.activeDays)} />
                   <Stat
                     label="Áudios"
-                    value={String(conv.audioCount)}
-                    hint={conv.audioCount ? `${conv.transcribedAudioCount} transcrito(s) e analisado(s)` : undefined}
+                    value={String(conv!.audioCount)}
+                    hint={conv!.audioCount ? `${conv!.transcribedAudioCount} transcrito(s)` : undefined}
+                  />
+                  <Stat
+                    label="Primeira mensagem"
+                    value={conv!.firstMessageAt ? format(new Date(conv!.firstMessageAt), "dd/MM/yy") : "Sem dados"}
                   />
                 </div>
-                {conv.waitingReplyHours !== null && (
-                  <div className="mt-2.5 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-                    <p className="text-[12px] text-muted-foreground leading-relaxed">
-                      O contato enviou a última mensagem e aguarda resposta há {hoursLabel(conv.waitingReplyHours)}
-                      {conv.inboundStreak > 1 ? ` (${conv.inboundStreak} mensagens seguidas sem resposta)` : ""}.
-                    </p>
-                  </div>
-                )}
               </Block>
 
-              <div className="space-y-4">
-                <Block icon={Target} title="Intenção detectada na conversa">
-                  {conv.intents.length ? (
-                    <ul>{conv.intents.map((i) => <EvidenceRow key={i.key} label={i.label} quote={i.quote} at={i.at} source={i.source} />)}</ul>
-                  ) : (
-                    <Empty title="Nenhum sinal de intenção identificado" description="As mensagens deste contato ainda não contêm pedidos de preço, proposta, pagamento, urgência ou disponibilidade." />
-                  )}
-                </Block>
-
-                <Block icon={ShieldAlert} title="Objeções">
-                  {conv.objections.length ? (
-                    <ul>{conv.objections.map((o) => <EvidenceRow key={o.key} positive={false} label={o.label} quote={o.quote} at={o.at} source={o.source} />)}</ul>
-                  ) : (
-                    <Empty title="Nenhuma objeção registrada" description="Não identificamos objeções de preço, prazo, confiança ou concorrência nas mensagens deste contato." />
-                  )}
-                </Block>
-              </div>
-
-              {signals.length > 0 && (
-                <Block icon={Sparkles} title={`Sinais do motor · ${signals.length}`}>
-                  <div className="grid gap-1.5">
-                    {signals.slice(0, 10).map((s) => {
-                      const evidence = (s.meta as any)?.snippet || (s.meta as any)?.text || (s.meta as any)?.content;
-                      return (
-                        <div key={s.id} className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-                          <p className="text-[13px] font-medium text-foreground truncate">{signalLabel(s.signal_type)}</p>
-                          {evidence && <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">“{String(evidence).slice(0, 120)}”</p>}
-                          <p className="text-[10px] text-muted-foreground mt-1">
-                            {format(new Date(s.occurred_at), "dd/MM 'às' HH:mm", { locale: ptBR })}{s.source ? ` · ${s.source}` : ""}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </Block>
-              )}
-
-              {conv.leadMessages.length > 0 && (
-                <Block icon={MessageSquare} title="Últimas mensagens do contato">
-                  <div className="space-y-1.5">
-                    {conv.leadMessages.slice(-4).reverse().map((m, i) => (
-                      <div key={i} className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-                        <p className="text-[13px] text-foreground leading-relaxed">{m.content.slice(0, 240)}</p>
-                        <p className="text-[10px] text-muted-foreground mt-1">{format(new Date(m.at), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Block>
-              )}
-            </>
-          )}
-        </TabsContent>
-
-        {/* ----------------------------------------------------------- empresa */}
-        <TabsContent value="company" className="mt-4 space-y-4">
-          <Block icon={Building2} title="Dados da empresa">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-              <Field label="Empresa" value={lead?.company_name || prospect?.company_name} />
-              <Field label="Contato" value={lead?.contact_name || prospect?.contact_name} />
-              <Field label="Segmento" value={lead?.category || prospect?.category} />
-              <Field label="Telefone" value={lead?.phone || prospect?.phone} icon={Phone} />
-              <Field label="E-mail" value={lead?.email || prospect?.email} icon={Mail} />
-              <Field label="Site" value={(lead?.website || prospect?.website)?.replace(/^https?:\/\//, "")} icon={Globe} />
-              <Field label="Cidade" value={lead?.city || prospect?.city} icon={MapPin} />
-              <Field label="Região" value={lead?.region || prospect?.region} />
-              <Field label="Endereço" value={prospect?.address} />
-              <Field
-                label="Avaliação pública"
-                value={prospect?.rating != null ? `${prospect.rating}${prospect.review_count ? ` · ${prospect.review_count} avaliações` : ""}` : undefined}
-                icon={Star}
-              />
-              <Field label="Valor estimado" value={lead?.estimated_value ? `R$ ${Number(lead.estimated_value).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}` : undefined} />
-              <Field label="Tags" value={lead?.tags?.length ? lead.tags.join(", ") : undefined} />
-            </div>
-            {!lead?.company_name && !prospect?.company_name && (
-              <Empty title="Sem dados de empresa" description="Este contato não possui dados de empresa preenchidos. Complete o cadastro para que a Inteligência avalie fit e qualidade." />
-            )}
-          </Block>
-        </TabsContent>
-
-        {/* -------------------------------------------------------- prospecção */}
-        <TabsContent value="prospect" className="mt-4 space-y-4">
-          {prospect ? (
-            <>
-              <Block icon={MapPin} title="Como este contato chegou">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-                  <Field label="Origem" value={prospect.origin || lead?.origin} />
-                  <Field label="Prospectado em" value={prospect.prospected_at ? format(new Date(prospect.prospected_at), "dd/MM/yyyy", { locale: ptBR }) : undefined} />
-                  <Field label="Segmento" value={prospect.category} />
-                  <Field label="Região" value={[prospect.city, prospect.region].filter(Boolean).join(" · ") || undefined} />
-                  <Field label="Google Maps" value={prospect.google_maps_link ? "Ficha encontrada" : undefined} />
-                  <Field label="Nível de oportunidade (prospecção)" value={prospect.opportunity_level} />
-                  <Field label="Probabilidade de fechamento (prospecção)" value={prospect.closing_probability} />
-                </div>
-              </Block>
-
-              {prospect.ai_diagnosis ? (
-                <Block icon={Sparkles} title="Diagnóstico da prospecção">
-                  <p className="text-[13px] text-muted-foreground leading-relaxed">{prospect.ai_diagnosis}</p>
-                  {prospect.ai_recommended_action && (
-                    <p className="mt-2 text-[13px] text-foreground leading-relaxed border-l-2 border-primary/40 pl-2.5">
-                      {prospect.ai_recommended_action}
-                    </p>
-                  )}
-                </Block>
-              ) : (
-                <Block icon={Sparkles} title="Diagnóstico da prospecção">
-                  <Empty title="Sem diagnóstico registrado" description="Este contato não possui diagnóstico gerado na prospecção. Sem ele, o fit é avaliado apenas por segmento e região." />
-                </Block>
-              )}
-
-              <Block icon={Building2} title="Fit comercial">
-                {fit !== null || prospect.category || prospect.city ? (
+              <Block icon={Target} title="Sinais identificados na conversa">
+                {conv!.intents.length || conv!.objections.length ? (
                   <ul>
-                    {fit !== null && <EvidenceRow label={`Fit calculado pelo motor: ${bandM(fit)} (${fit}/100)`} />}
-                    {prospect.category && <EvidenceRow label={`Segmento identificado: ${prospect.category}`} source="Prospecção" />}
-                    {(prospect.city || prospect.region) && <EvidenceRow label={`Região atendida: ${[prospect.city, prospect.region].filter(Boolean).join(" · ")}`} source="Prospecção" />}
-                    {prospect.ai_diagnosis && <EvidenceRow label="Problema identificado no diagnóstico" quote={String(prospect.ai_diagnosis).slice(0, 300)} source="Prospecção" />}
-                    {convertedPattern?.niche && prospect.category && convertedPattern.niche === prospect.category && (
-                      <EvidenceRow label={`Mesmo segmento de ${convertedPattern.sample_size} clientes já convertidos`} source="Histórico da conta" />
-                    )}
+                    {conv!.intents.map((e) => (
+                      <EvidenceRow key={`ci-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} />
+                    ))}
+                    {conv!.objections.map((e) => (
+                      <EvidenceRow key={`co-${e.key}`} label={e.label} quote={e.quote} at={e.at} source={e.source} positive={false} />
+                    ))}
                   </ul>
                 ) : (
-                  <Empty title="Sem dados para avaliar fit" description="Preencha segmento, região e diagnóstico para que a Inteligência avalie a compatibilidade deste contato." />
+                  <p className="text-[12px] text-muted-foreground">
+                    Nenhuma intenção ou objeção identificada nas mensagens do contato até agora.
+                  </p>
                 )}
               </Block>
+
+              {signals.length > 0 && (
+                <Block icon={Zap} title="Sinais registrados pelo motor">
+                  <ul className="space-y-1">
+                    {signals.slice(0, 12).map((s) => (
+                      <li key={s.id} className="flex items-center gap-2 py-1 border-b border-border/40 last:border-0">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="text-[13px] text-foreground/90 flex-1 min-w-0 truncate">{signalLabel(s.signal_type)}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">{ago(s.occurred_at)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Block>
+              )}
             </>
-          ) : (
-            <Block icon={MapPin} title="Prospecção">
-              <Empty title="Sem dados de prospecção" description="Este contato não possui registro de prospecção associado." />
-            </Block>
           )}
         </TabsContent>
 
-        {/* --------------------------------------------------------- comercial */}
-        <TabsContent value="commercial" className="mt-4 space-y-4">
-          <Block icon={DollarSign} title="Histórico comercial">
+        {/* ------------------------------------------------------ prospecção */}
+        <TabsContent value="prospeccao" className="mt-4 space-y-4">
+          {!prospect ? (
+            <Empty
+              title="Sem dados de prospecção"
+              description="Este contato não veio da prospecção da Wiize ou os dados da empresa ainda não foram enriquecidos."
+            />
+          ) : (
+            <>
+              <Block icon={MapPin} title="Empresa prospectada">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Field label="Empresa" value={prospect.company_name} icon={Building2} />
+                  <Field label="Segmento" value={prospect.category} />
+                  <Field label="Cidade" value={[prospect.city, prospect.region].filter(Boolean).join(" · ")} icon={MapPin} />
+                  <Field label="Site" value={prospect.website} icon={Globe} />
+                  <Field
+                    label="Reputação"
+                    value={prospect.rating != null ? `${prospect.rating} (${prospect.review_count || 0} avaliações)` : null}
+                    icon={Star}
+                  />
+                  <Field label="Origem" value={prospect.origin} />
+                  <Field
+                    label="Valor estimado"
+                    value={prospect.estimated_value != null ? `R$ ${Number(prospect.estimated_value).toLocaleString("pt-BR")}` : null}
+                    icon={DollarSign}
+                  />
+                  <Field
+                    label="Prospectado em"
+                    value={prospect.prospected_at ? format(new Date(prospect.prospected_at), "dd/MM/yyyy") : null}
+                  />
+                </div>
+              </Block>
+
+              {prospect.ai_diagnosis && (
+                <Block icon={Brain} title="Diagnóstico da prospecção">
+                  <p className="text-[13px] text-foreground/90 leading-relaxed whitespace-pre-wrap">{prospect.ai_diagnosis}</p>
+                </Block>
+              )}
+
+              {prospect.ai_recommended_action && (
+                <Block icon={ArrowRight} title="Ação recomendada na prospecção">
+                  <p className="text-[13px] text-foreground/90 leading-relaxed whitespace-pre-wrap">{prospect.ai_recommended_action}</p>
+                </Block>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        {/* -------------------------------------------------------- comercial */}
+        <TabsContent value="comercial" className="mt-4 space-y-4">
+          <Block icon={DollarSign} title="Negociações deste contato">
             {deals.length ? (
-              <>
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  <Stat label="Negociações" value={String(deals.length)} />
-                  <Stat label="Ganhas" value={String(wonDeals.length)} />
-                  <Stat label="Perdidas" value={String(lostDeals.length)} />
-                </div>
-                <div className="space-y-1.5">
-                  {deals.map((d: any) => (
-                    <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-medium text-foreground truncate">{d.title || "Negociação"}</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {d.status || "Sem status"} · {format(new Date(d.closed_at || d.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                        </p>
-                      </div>
-                      <span className="text-[13px] font-semibold tabular-nums text-foreground shrink-0">
-                        R$ {Number(d.value || 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
-                      </span>
+              <ul className="space-y-1.5">
+                {deals.map((d: any) => (
+                  <li key={d.id} className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-medium text-foreground truncate">{d.title || "Negociação"}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {[d.status, d.closed_at ? format(new Date(d.closed_at), "dd/MM/yyyy") : null].filter(Boolean).join(" · ")}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </>
+                    {d.value != null && (
+                      <span className="text-[13px] font-semibold tabular-nums text-foreground shrink-0">
+                        R$ {Number(d.value).toLocaleString("pt-BR")}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <Empty title="Este contato ainda não possui histórico comercial" description="Quando uma venda ou negociação for registrada para este contato, ela aparece aqui e passa a alimentar os padrões de ganhos e perdas da sua conta." />
+              <p className="text-[12px] text-muted-foreground">Nenhuma negociação registrada para este contato.</p>
             )}
           </Block>
 
-          <div className="space-y-4">
-            <Block icon={CheckCircle2} title="Padrão de clientes convertidos">
-              {convertedPattern ? (
-                <p className="text-[13px] text-muted-foreground leading-relaxed">
-                  Sua conta tem {convertedPattern.sample_size} cliente(s) convertido(s) com perfil semelhante
-                  {convertedPattern.niche ? ` no segmento ${convertedPattern.niche}` : ""}
-                  {convertedPattern.region ? ` em ${convertedPattern.region}` : ""}.
-                  {intel?.pattern_match_score ? ` Este contato tem ${intel.pattern_match_score}% de aderência a esse padrão.` : ""}
-                  {convertedPattern.avg_days_to_close ? ` Tempo médio até fechar: ${Math.round(convertedPattern.avg_days_to_close)} dias.` : ""}
-                </p>
-              ) : (
-                <Empty title="Dados insuficientes" description="Ainda não há clientes convertidos suficientes na sua conta para identificar um padrão confiável de conversão." />
-              )}
-            </Block>
-
-            <Block icon={ShieldAlert} title="Padrões de perda">
-              {lostPattern ? (
-                <p className="text-[13px] text-muted-foreground leading-relaxed">
-                  {lostPattern.sample_size} oportunidade(s) perdida(s) apresentaram padrão parecido
-                  {lostPattern.niche ? ` no segmento ${lostPattern.niche}` : ""}.
-                  {intel?.loss_pattern_match_score ? ` Aderência atual deste contato: ${intel.loss_pattern_match_score}%.` : ""} Não é previsão, é um alerta para agir antes.
-                </p>
-              ) : (
-                <Empty title="Dados insuficientes" description="Ainda não há oportunidades perdidas suficientes registradas para identificar padrões de perda." />
-              )}
-            </Block>
-          </div>
+          <Block icon={TrendingUp} title="Padrões históricos da sua conta">
+            {patterns.length ? (
+              <ul className="space-y-1">
+                {patterns.slice(0, 6).map((p: any, i: number) => (
+                  <li key={i} className="flex items-center gap-2 py-1 border-b border-border/40 last:border-0">
+                    <span className="text-[13px] text-foreground/90 flex-1 min-w-0 truncate">
+                      {p.pattern_key} {p.niche ? `· ${p.niche}` : ""}
+                    </span>
+                    <span className="text-[11px] tabular-nums text-muted-foreground shrink-0">
+                      {Math.round(Number(p.rate || 0) * 100)}% · {p.sample_size} casos
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[12px] text-muted-foreground">
+                Ainda não há padrões suficientes. Eles aparecem conforme você registra vendas ganhas e perdidas.
+              </p>
+            )}
+          </Block>
         </TabsContent>
 
-        {/* ---------------------------------------------------------- evolução */}
-        <TabsContent value="evolution" className="mt-4 space-y-4">
-          <Block icon={TrendingUp} title="Evolução da Oportunidade">
-            {chartData.length >= 2 ? (
-              <div className="h-44">
+        {/* --------------------------------------------------------- evolução */}
+        <TabsContent value="evolucao" className="mt-4 space-y-4">
+          {chartData.length > 1 ? (
+            <Block icon={TrendingUp} title="Evolução da oportunidade">
+              <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 6, right: 8, bottom: 0, left: -22 }}>
-                    <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                    <RTooltip
-                      contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
-                      formatter={(v: any) => [`${v} de 100`, "Oportunidade"]}
-                    />
-                    <RLine type="monotone" dataKey="valor" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                  <LineChart data={chartData} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>
+                    <XAxis dataKey="at" tick={{ fontSize: 9 }} interval="preserveStartEnd" />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
+                    <RTooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+                    <RLine type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            ) : (
-              <Empty title="Sem histórico suficiente" description="A curva de evolução aparece quando a Inteligência registrar pelo menos dois momentos diferentes de leitura deste contato." />
-            )}
-          </Block>
+            </Block>
+          ) : (
+            <Empty
+              title="Sem histórico suficiente"
+              description="A evolução aparece a partir da segunda variação registrada pelo motor para este contato."
+            />
+          )}
 
-          <Block icon={Clock} title="Eventos que mudaram a leitura">
-            {history.length ? (
-              <div className="space-y-0.5">
+          {history.length > 0 && (
+            <Block icon={Clock} title="Histórico da inteligência">
+              <ul className="space-y-1">
                 {history.slice(0, 20).map((h, i) => (
-                  <div key={i} className="flex items-center justify-between gap-3 py-1.5 border-b border-border/40 last:border-0">
-                    <div className="min-w-0">
-                      <p className="text-[13px] text-foreground truncate">{signalLabel(h.event_type || h.category || "Sinal")}</p>
-                      <p className="text-[10px] text-muted-foreground">{format(new Date(h.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}</p>
+                  <li key={i} className="flex items-start gap-2 py-1.5 border-b border-border/40 last:border-0">
+                    <span className={cn("text-[11px] font-semibold tabular-nums shrink-0 w-10", Number(h.points_applied) >= 0 ? "text-primary" : "text-destructive")}>
+                      {Number(h.points_applied) >= 0 ? "+" : ""}{Math.round(Number(h.points_applied))}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] text-foreground/90 leading-snug">{signalLabel(h.event_type || "Atualização")}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {format(new Date(h.created_at), "dd/MM HH:mm")}
+                        {h.score_after != null ? ` · oportunidade ${Math.round(Number(h.score_after) / 10)}/100` : ""}
+                      </p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <span className={cn("text-[11px] font-medium", h.points_applied >= 0 ? "text-primary" : "text-destructive")}>
-                        {h.points_applied >= 0 ? "Reforçou" : "Reduziu"}
-                      </span>
-                      {h.score_after != null && (
-                        <p className="text-[10px] text-muted-foreground tabular-nums">{toIntel100(h.score_after)} de 100</p>
-                      )}
-                    </div>
-                  </div>
+                  </li>
                 ))}
-              </div>
-            ) : (
-              <Empty title="Nenhum evento registrado" description="Assim que houver interações ou sinais, cada mudança na leitura deste contato passa a ser registrada aqui." />
-            )}
-          </Block>
-
-          {intel && (
-            <p className="text-[11px] text-muted-foreground px-1">
-              Leitura do motor central em {format(new Date(intel.computed_at), "dd/MM 'às' HH:mm", { locale: ptBR })}. Fontes: WhatsApp (Evolution e Meta Cloud API), CRM, prospecção e módulo comercial.
-            </p>
+              </ul>
+            </Block>
           )}
         </TabsContent>
       </Tabs>
     </div>
   );
 }
+
+export default LeadIntelligencePanel;

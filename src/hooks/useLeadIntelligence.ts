@@ -39,8 +39,10 @@ export interface LeadIntelligence {
 }
 
 export const NEXT_ACTION_LABELS: Record<string, string> = {
+  FIRST_CONTACT: "Iniciar primeiro contato",
   RESPOND_NOW: "Responder agora",
   FOLLOW_UP: "Fazer follow-up",
+
   REACTIVATE: "Reativar contato",
   HANDLE_OBJECTION: "Tratar objeção",
   SEND_PROPOSAL: "Enviar proposta",
