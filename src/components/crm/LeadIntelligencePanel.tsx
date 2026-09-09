@@ -541,10 +541,13 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   const state: AnalysisState = useMemo(() => {
     const msgs = Math.max(conv?.total || 0, engineMessages);
     const sigs = Math.max(signals.length, engineSignals);
+    // O estado gravado pelo motor manda; o frontend so complementa quando ele nao existe.
+    const stored = engineFeatures.analysis_state as AnalysisState | undefined;
+    if (stored && msgs === 0 && sigs === 0) return stored;
     if (msgs === 0 && sigs === 0) return "NO_DATA";
     if (msgs < 4 || sigs < 2) return "PARTIAL";
     return "COMPLETE";
-  }, [conv, signals.length, engineMessages, engineSignals]);
+  }, [conv, signals.length, engineMessages, engineSignals, engineFeatures.analysis_state]);
 
   const opportunity = profile ? Math.round(Number(profile.opportunity_score || 0)) : null;
   const hasConv = !!conv && conv.total > 0;
@@ -677,12 +680,12 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       label: "Etapa",
       icon: ArrowRight,
       value: null,
-      status: hasConv && profile?.stage ? STAGE_LABELS[profile.stage] || profile.stage : "Não identificada",
+      status: stageLabel,
       basis: [],
     });
 
     return d;
-  }, [profile, conv, signals, history, prospect, hasConv, hasEngagementData, state]);
+  }, [profile, conv, signals, history, prospect, hasConv, hasEngagementData, state, stageLabel]);
 
   const playbook = useMemo(
     () => buildPlaybook(state, profile, conv, prospect, lead || null, signals.map((s) => signalLabel(s.signal_type))),
