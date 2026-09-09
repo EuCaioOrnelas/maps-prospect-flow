@@ -1061,7 +1061,7 @@ export function ChatMessageArea({
                                   />
                                 )}
                                 {msg.deleted_for_all_at ? (
-                                  <div className="px-[9px] pt-[5px] pb-[3px] pr-[36px] flex items-center gap-1.5 italic">
+                                  <div className="px-[9px] pt-[3px] pb-[1px] pr-[36px] flex items-center gap-1.5 italic">
                                     <Ban size={14} className="shrink-0 text-foreground/45" />
                                     <span className="text-[13.5px] leading-[18px] text-foreground/60">
                                       {isOutbound ? "Você apagou esta mensagem" : "Esta mensagem foi apagada"}
