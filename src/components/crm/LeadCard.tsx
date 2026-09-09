@@ -289,7 +289,7 @@ const LeadCardComponent = ({
         if (!s) return null;
         return (
           <div
-            className="mb-2.5 flex items-center gap-2 cursor-pointer"
+            className="flex items-center gap-2 cursor-pointer"
             onClick={(e) => { e.stopPropagation(); navigate(`/crm/inteligencia?phone=${encodeURIComponent(lead.phone)}`); }}
           >
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</span>
@@ -308,7 +308,7 @@ const LeadCardComponent = ({
 
       {/* Valor potencial — pill verde compacto */}
       {!hideValue && Number(lead.estimated_value) > 0 && (
-        <div className="mb-2.5">
+        <div className="mt-2.5">
           <LeadPotentialValueCompact value={Number(lead.estimated_value)} />
         </div>
       )}
@@ -353,11 +353,11 @@ const LeadCardComponent = ({
       )}
 
       {/* Ações rápidas */}
-      <div className="mt-3">
+      <div className="mt-2.5">
       <div className="wiize-hairline" />
-      <div className="-mx-2 pt-2 pb-0 flex items-center gap-1">
+      <div className="-mx-2 pt-2.5 pb-0 flex items-center gap-1">
         {quickActions.map(({ key, label, icon: Icon, run, disabled }) => (
-          <Tooltip key={key}>
+          <Tooltip key={key} delayDuration={80} disableHoverableContent>
             <TooltipTrigger asChild>
               <button
                 type="button"
@@ -365,14 +365,14 @@ const LeadCardComponent = ({
                 disabled={disabled}
                 onClick={(e) => { e.stopPropagation(); run(); }}
                 className={cn(
-                  "p-1.5 rounded-lg text-muted-foreground transition-colors",
+                  "p-1.5 rounded-md text-muted-foreground transition-colors duration-100",
                   disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-muted hover:text-foreground",
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" sideOffset={6}>{label}</TooltipContent>
+            <TooltipContent side="top" sideOffset={6} className="px-2 py-1 text-xs">{label}</TooltipContent>
           </Tooltip>
         ))}
       </div>

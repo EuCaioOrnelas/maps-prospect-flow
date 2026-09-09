@@ -87,7 +87,7 @@ const KanbanColumnComponent = ({
   // Paginação de renderização: mostra os cards em blocos para não montar
   // centenas de nós de uma vez. Não altera contagem, seleção, totais
   // nem qualquer filtro — apenas o que está renderizado na tela.
-  const PAGE_SIZE = 30;
+  const PAGE_SIZE = 12;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
@@ -112,7 +112,7 @@ const KanbanColumnComponent = ({
     <div
       data-stage-id={stage.id}
       className={cn(
-        "flex flex-col bg-card rounded-xl border transition-colors duration-150 h-[600px] overflow-hidden",
+        "flex flex-col bg-card rounded-xl border transition-colors duration-150 h-[720px] overflow-hidden",
         isDragOver
           ? "border-primary/70 bg-primary/5"
           : "border-border/60",
