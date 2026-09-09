@@ -921,11 +921,11 @@ export const LeadDetailDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl h-[90vh] sm:h-[85vh] overflow-hidden flex flex-col min-h-0 p-0 gap-0 border-border w-[95vw] sm:w-full rounded-lg">
         {/* Header */}
-        <div className="relative bg-primary text-primary-foreground dark:bg-primary/15 dark:text-foreground px-4 sm:px-6 py-4 sm:py-5 shrink-0">
+        <div className="relative bg-primary/15 text-foreground dark:bg-primary/10 px-4 sm:px-6 py-4 sm:py-5 shrink-0 border-b border-primary/20">
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div 
-              className="w-12 h-12 rounded-[14px] flex items-center justify-center text-lg font-semibold shrink-0 bg-primary-foreground/20 text-primary-foreground dark:bg-primary/20 dark:text-primary"
+              className="w-12 h-12 rounded-[14px] flex items-center justify-center text-lg font-semibold shrink-0 bg-primary/15 text-primary"
             >
               {displayName.charAt(0).toUpperCase()}
             </div>
@@ -981,7 +981,7 @@ export const LeadDetailDialog = ({
                       setHeaderNameValue(lead.contact_name || lead.company_name || '');
                       setIsEditingHeaderName(true);
                     }}
-                    className="p-1 rounded hover:bg-primary-foreground/20 dark:hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                    className="p-1 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
@@ -1046,7 +1046,7 @@ export const LeadDetailDialog = ({
                 <div className="space-y-3">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Informações de Contato</span>
 
-                  <div className="bg-muted/40 rounded-lg overflow-hidden">
+                  <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
                     <div className="divide-y divide-border/50">
                       {/* Phone - Read only */}
                       <div className="flex items-center gap-3 p-3">
