@@ -1221,7 +1221,13 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
               </div>
             </div>
             <div className="flex sm:flex-col items-center justify-between sm:justify-center gap-2 sm:gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/40">
-              <p className={`text-3xl sm:text-4xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</p>
+              <div className="text-center">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</p>
+                <p className={`text-3xl sm:text-4xl font-bold tabular-nums ${intelTextColor(toIntel100(lead.score_total))}`}>
+                  {fmtNum(toIntel100(lead.score_total))}
+                  <span className="text-sm font-normal text-muted-foreground ml-1">de 100</span>
+                </p>
+              </div>
               <div className="flex flex-col items-center gap-1">
                 <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
                   {BUCKET_SHORT_LABELS[bucket]}
