@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { toIntel100, toIntelDimension, phoneKey8 } from "@/lib/intelligence";
+import {
+  toIntel100, toIntelDimension, phoneKey8, dimensionTo100, dimensionLabel,
+  riskLabel, riskTextColor, momentumOf, MOMENTUM_SIMPLE_LABELS, intelTextColor,
+} from "@/lib/intelligence";
+import { useLeadIntelligence } from "@/hooks/useLeadIntelligence";
 import { Link, useSearchParams } from "react-router-dom";
 import { 
   BarChart3, Users, Trophy, Settings, Loader2, Brain, 
@@ -654,6 +658,11 @@ interface FilterState {
   scoreMax: string;
   bucket: string;
   riskState: string;
+  /* Filtros de Inteligência (dimensões do motor central) */
+  oppBand: string;
+  intentLevel: string;
+  momentum: string;
+  riskLevel: string;
 }
 
 const defaultFilters: FilterState = {
@@ -663,7 +672,33 @@ const defaultFilters: FilterState = {
   scoreMax: "",
   bucket: "all",
   riskState: "all",
+  oppBand: "all",
+  intentLevel: "all",
+  momentum: "all",
+  riskLevel: "all",
 };
+
+const OPP_BAND_OPTIONS: { value: string; label: string; min: number; max: number }[] = [
+  { value: "VERY_HIGH", label: "Muito alta (81–100)", min: 81, max: 100 },
+  { value: "HIGH", label: "Alta (61–80)", min: 61, max: 80 },
+  { value: "MEDIUM", label: "Média (41–60)", min: 41, max: 60 },
+  { value: "LOW", label: "Baixa (21–40)", min: 21, max: 40 },
+  { value: "VERY_LOW", label: "Muito baixa (0–20)", min: 0, max: 20 },
+];
+
+const INTENT_OPTIONS: { value: string; label: string; min: number; max: number }[] = [
+  { value: "VERY_HIGH", label: "Muito alta", min: 81, max: 100 },
+  { value: "HIGH", label: "Alta", min: 61, max: 80 },
+  { value: "MEDIUM", label: "Média", min: 41, max: 60 },
+  { value: "LOW", label: "Baixa", min: 1, max: 40 },
+  { value: "NONE", label: "Não identificada", min: 0, max: 0 },
+];
+
+const RISK_LEVEL_OPTIONS: { value: string; label: string; min: number; max: number }[] = [
+  { value: "HIGH", label: "Alto", min: 61, max: 100 },
+  { value: "MEDIUM", label: "Médio", min: 31, max: 60 },
+  { value: "LOW", label: "Baixo", min: 0, max: 30 },
+];
 
 const AdvancedFiltersPopover = ({ 
   filters, 
@@ -745,7 +780,7 @@ const AdvancedFiltersPopover = ({
             </Select>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground mb-1 block">Risco</Label>
+            <Label className="text-xs text-muted-foreground mb-1 block">Estado de risco</Label>
             <Select value={local.riskState} onValueChange={(v) => setLocal(l => ({ ...l, riskState: v }))}>
               <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -755,6 +790,55 @@ const AdvancedFiltersPopover = ({
                 <SelectItem value="CRITICAL">Crítico</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Filtros da Inteligência */}
+          <div className="pt-1 border-t border-border/60">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground mt-2 mb-2">Inteligência</p>
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Oportunidade</Label>
+                <Select value={local.oppBand} onValueChange={(v) => setLocal(l => ({ ...l, oppBand: v }))}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {OPP_BAND_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Intenção</Label>
+                <Select value={local.intentLevel} onValueChange={(v) => setLocal(l => ({ ...l, intentLevel: v }))}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {INTENT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Momentum</Label>
+                <Select value={local.momentum} onValueChange={(v) => setLocal(l => ({ ...l, momentum: v }))}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="up">Crescendo</SelectItem>
+                    <SelectItem value="flat">Estável</SelectItem>
+                    <SelectItem value="down">Em queda</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Nível de risco</Label>
+                <Select value={local.riskLevel} onValueChange={(v) => setLocal(l => ({ ...l, riskLevel: v }))}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {RISK_LEVEL_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -767,6 +851,7 @@ const AdvancedFiltersPopover = ({
 // ═══════════════ USERS TAB ═══════════════
 
 const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
+  const { getByPhone: getIntelByPhone } = useLeadIntelligence();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [sortBy, setSortBy] = useState("score_total");
@@ -783,6 +868,10 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
     if (filters.scoreMax) c++;
     if (filters.bucket !== "all") c++;
     if (filters.riskState !== "all") c++;
+    if (filters.oppBand !== "all") c++;
+    if (filters.intentLevel !== "all") c++;
+    if (filters.momentum !== "all") c++;
+    if (filters.riskLevel !== "all") c++;
     return c;
   }, [filters]);
 
@@ -797,6 +886,27 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
         if (mapped !== filters.bucket) return false;
       }
       if (filters.riskState !== "all" && l.risk_state !== filters.riskState) return false;
+      // Filtros da Inteligência — mesma fonte única usada na tabela.
+      if (filters.oppBand !== "all" || filters.intentLevel !== "all" || filters.momentum !== "all" || filters.riskLevel !== "all") {
+        const p = getIntelByPhone(l.phone_e164);
+        const opp = p ? Math.max(0, Math.min(100, Math.round(p.opportunity_score))) : dimensionTo100(l.score_total);
+        const intent = p ? Math.round(p.intent_score) : dimensionTo100(l.score_intent);
+        const risk = p ? Math.round(p.risk_score) : dimensionTo100(l.score_risk);
+        const mom = p ? momentumOf(p.momentum_state) : (l.risk_state === "AT_RISK" || l.risk_state === "CRITICAL" ? "down" : "unknown");
+        if (filters.oppBand !== "all") {
+          const o = OPP_BAND_OPTIONS.find(x => x.value === filters.oppBand)!;
+          if (opp < o.min || opp > o.max) return false;
+        }
+        if (filters.intentLevel !== "all") {
+          const o = INTENT_OPTIONS.find(x => x.value === filters.intentLevel)!;
+          if (intent < o.min || intent > o.max) return false;
+        }
+        if (filters.riskLevel !== "all") {
+          const o = RISK_LEVEL_OPTIONS.find(x => x.value === filters.riskLevel)!;
+          if (risk < o.min || risk > o.max) return false;
+        }
+        if (filters.momentum !== "all" && mom !== filters.momentum) return false;
+      }
       if (filters.scoreMin) {
         const min = parseInt(filters.scoreMin);
         if (!isNaN(min) && l.score_total < min) return false;
@@ -865,10 +975,10 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
               <TableRow>
                 <TableHead>Contato</TableHead>
                 <TableHead className="cursor-pointer" onClick={() => { setSortBy("score_total"); setSortAsc(sortBy === "score_total" ? !sortAsc : false); }}>
-                  Inteligência {sortBy === "score_total" && (sortAsc ? "↑" : "↓")}
+                  Oportunidade {sortBy === "score_total" && (sortAsc ? "↑" : "↓")}
                 </TableHead>
                 <TableHead>Classificação</TableHead>
-                <TableHead className="hidden md:table-cell">Tendência</TableHead>
+                <TableHead className="hidden md:table-cell">Momentum</TableHead>
                 <TableHead className="hidden md:table-cell">Engajamento</TableHead>
                 <TableHead className="hidden md:table-cell">Intenção</TableHead>
                 <TableHead className="hidden lg:table-cell">Risco</TableHead>
@@ -878,6 +988,13 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
             <TableBody>
               {paginated.map((lead) => {
                 const bucket = mapBucket(lead.status_bucket, lead.score_total);
+                // Fonte unica: perfil do motor central quando existir; senao o motor legado normalizado 0-100.
+                const p = getIntelByPhone(lead.phone_e164);
+                const opportunity = p ? Math.max(0, Math.min(100, Math.round(p.opportunity_score))) : dimensionTo100(lead.score_total);
+                const engagement = p ? Math.round(p.engagement_score) : dimensionTo100(lead.score_engagement);
+                const intent = p ? Math.round(p.intent_score) : dimensionTo100(lead.score_intent);
+                const risk = p ? Math.round(p.risk_score) : dimensionTo100(lead.score_risk);
+                const mom = p ? momentumOf(p.momentum_state) : (lead.risk_state === "AT_RISK" || lead.risk_state === "CRITICAL" ? "down" : "unknown");
                 return (
                   <TableRow key={lead.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setSelectedLead(lead)}>
                     <TableCell>
@@ -887,8 +1004,8 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className={`text-lg font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</span>
-                      <span className="text-xs text-muted-foreground ml-1">/100</span>
+                      <span className={`text-lg font-bold tabular-nums ${intelTextColor(opportunity)}`}>{fmtNum(opportunity)}</span>
+                      <span className="text-xs text-muted-foreground ml-1">de 100</span>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
@@ -896,22 +1013,22 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {lead.score_risk < -5 ? (
-                        <TrendingDown className="h-4 w-4 text-destructive" />
-                      ) : lead.score_engagement > 2 || lead.score_intent > 0 ? (
-                        <TrendingUp className="h-4 w-4 text-emerald-400" />
-                      ) : (
-                        <Minus className="h-4 w-4 text-muted-foreground" />
-                      )}
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        {mom === "down" ? <TrendingDown className="h-4 w-4 text-destructive" />
+                          : mom === "up" ? <TrendingUp className="h-4 w-4 text-emerald-400" />
+                            : <Minus className="h-4 w-4 text-muted-foreground" />}
+                        {MOMENTUM_SIMPLE_LABELS[mom]}
+                      </span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <span className="text-sm font-semibold tabular-nums">{fmtNum(lead.score_engagement)}</span>
+                      <span className="text-sm font-semibold tabular-nums">{fmtNum(engagement)}</span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <span className="text-sm font-semibold tabular-nums">{fmtNum(lead.score_intent)}</span>
+                      <span className="text-sm font-semibold tabular-nums">{fmtNum(intent)}</span>
+                      <span className="text-[11px] text-muted-foreground ml-1.5">{dimensionLabel(intent)}</span>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      <span className="text-sm font-semibold tabular-nums text-destructive">{fmtNum(lead.score_risk)}</span>
+                      <span className={`text-sm font-semibold tabular-nums ${riskTextColor(risk)}`}>{riskLabel(risk)}</span>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
                       {new Date(lead.last_activity_at).toLocaleDateString('pt-BR')}
@@ -1104,7 +1221,13 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
               </div>
             </div>
             <div className="flex sm:flex-col items-center justify-between sm:justify-center gap-2 sm:gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/40">
-              <p className={`text-3xl sm:text-4xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</p>
+              <div className="text-center">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</p>
+                <p className={`text-3xl sm:text-4xl font-bold tabular-nums ${intelTextColor(toIntel100(lead.score_total))}`}>
+                  {fmtNum(toIntel100(lead.score_total))}
+                  <span className="text-sm font-normal text-muted-foreground ml-1">de 100</span>
+                </p>
+              </div>
               <div className="flex flex-col items-center gap-1">
                 <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
                   {BUCKET_SHORT_LABELS[bucket]}

@@ -70,3 +70,38 @@ export const intelBadgeClass = (score: number) => {
 
 /** Ultimos 8 digitos — chave de casamento de telefone usada em todo o produto. */
 export const phoneKey8 = (phone?: string | null) => (phone || "").replace(/\D/g, "").slice(-8);
+
+/**
+ * Normaliza uma dimensao bruta do motor legado (revenue_leads.score_*, escala interna 0-1000)
+ * para 0-100 inteiro. Usar SEMPRE isto — escalas fixas pequenas saturavam tudo em 100.
+ */
+export const dimensionTo100 = (raw: number | null | undefined): number => {
+  const n = Math.abs(Number(raw || 0)) / 10;
+  return Math.max(0, Math.min(100, Math.round(n)));
+};
+
+/** Rotulo qualitativo de uma dimensao 0-100 (intencao, engajamento, qualidade, fit). */
+export const dimensionLabel = (v: number) =>
+  v >= 81 ? "Muito alta" : v >= 61 ? "Alta" : v >= 41 ? "Média" : v >= 21 ? "Baixa" : v > 0 ? "Muito baixa" : "Não identificada";
+
+/** Rotulo de risco 0-100. */
+export const riskLabel = (v: number) => (v >= 61 ? "Alto" : v >= 31 ? "Médio" : v > 0 ? "Baixo" : "Sem risco");
+
+export const riskTextColor = (v: number) =>
+  v >= 61 ? "text-destructive" : v >= 31 ? "text-yellow-500" : "text-muted-foreground";
+
+/** Estado de momentum simplificado. */
+export type MomentumSimple = "up" | "flat" | "down" | "unknown";
+export const momentumOf = (state?: string | null): MomentumSimple => {
+  if (!state) return "unknown";
+  if (state.includes("RISING")) return "up";
+  if (state.includes("DECLINING")) return "down";
+  if (state === "STABLE") return "flat";
+  return "unknown";
+};
+export const MOMENTUM_SIMPLE_LABELS: Record<MomentumSimple, string> = {
+  up: "Crescendo",
+  flat: "Estável",
+  down: "Em queda",
+  unknown: "Sem dados",
+};

@@ -274,7 +274,7 @@ const LeadCardComponent = ({
             className="mb-2.5 flex items-center gap-2 cursor-pointer"
             onClick={(e) => { e.stopPropagation(); navigate(`/crm/inteligencia?phone=${encodeURIComponent(lead.phone)}`); }}
           >
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Inteligência</span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</span>
             <span className="text-xs font-semibold tabular-nums text-primary">{s} de 100</span>
             <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
               <div className="h-full rounded-full transition-[width] duration-700 bg-primary" style={{ width: `${s}%` }} />
