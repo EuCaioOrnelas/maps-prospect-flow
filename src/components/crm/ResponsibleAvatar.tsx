@@ -46,7 +46,7 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
   const current = members.find((m) => m.user_id === responsibleId) || null;
   const label = current ? current.name || current.email || "Sem nome" : "Sem responsável";
 
-  const dim = size === "xl" ? "w-14 h-14 text-base" : size === "lg" ? "w-10 h-10 text-sm" : size === "md" ? "w-9 h-9 text-xs" : "w-8 h-8 text-xs";
+  const dim = size === "xl" ? "w-14 h-14 text-base" : size === "lg" ? "w-10 h-10 text-sm" : size === "md" ? "w-9 h-9 text-xs" : "w-7 h-7 text-[11px]";
 
   const filtered = members.filter((m) => {
     if (!query.trim()) return true;
@@ -67,7 +67,7 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
           "relative rounded-[28%] flex items-center justify-center font-semibold shrink-0 overflow-hidden border border-border/60 transition-transform duration-200 ease-out will-change-transform",
           current ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
           dim,
-          canEdit && "hover:ring-2 hover:ring-primary/50 hover:border-primary/50 hover:scale-105 cursor-pointer"
+          canEdit && "hover:scale-125 cursor-pointer"
         )}
         aria-label={`Responsável: ${label}`}
       >
