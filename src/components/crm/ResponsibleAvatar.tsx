@@ -65,7 +65,7 @@ export function ResponsibleAvatar({ responsibleId, members, onChange, canEdit = 
         title={`Responsável: ${label}${canEdit ? " — clique para alterar" : ""}`}
         className={cn(
           "relative rounded-[28%] flex items-center justify-center font-semibold shrink-0 overflow-hidden border border-border/60 transition-transform duration-200 ease-out will-change-transform",
-          current ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+          current ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
           dim,
           canEdit && "hover:scale-125 cursor-pointer"
         )}
