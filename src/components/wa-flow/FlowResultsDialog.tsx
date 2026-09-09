@@ -408,8 +408,8 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
                     <TableCell className="text-xs text-muted-foreground">
                       {getStoppedAt(exec)}
                     </TableCell>
-                    <TableCell className="text-xs max-w-[180px] truncate" title={getLastResponse(exec.node_history)}>
-                      {getLastResponse(exec.node_history)}
+                    <TableCell className="text-xs max-w-[180px] truncate" title={getLastResponse(exec)}>
+                      {getLastResponse(exec)}
                     </TableCell>
                     {collectedDataKeys.map((key) => (
                       <TableCell key={key} className="text-xs max-w-[140px] truncate">
