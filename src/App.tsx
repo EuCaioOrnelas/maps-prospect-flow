@@ -363,8 +363,9 @@ const App = () => (
                 <Route path="/agenda/lembretes" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><AgendaEmailSettings /></Suspense></ProtectedRoute>} />
                 <Route path="/crm/vendas/compromissos" element={<Navigate to="/agenda/lembretes" replace />} />
                 <Route path="/crm/agenda" element={<Navigate to="/agenda" replace />} />
-                <Route path="/crm/inteligencia" element={<ProtectedRoute><CRMInteligencia /></ProtectedRoute>} />
-                <Route path="/crm/score" element={<Navigate to="/crm/inteligencia" replace />} />
+                {/* Página de Inteligência temporariamente desativada — usamos a aba dentro do lead */}
+                <Route path="/crm/inteligencia" element={<Navigate to="/crm" replace />} />
+                <Route path="/crm/score" element={<Navigate to="/crm" replace />} />
                 <Route path="/crm-coming-soon" element={<ProtectedRoute><CRMComingSoon /></ProtectedRoute>} />
                 <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes" element={<ProtectedRoute><ChatSettings /></ProtectedRoute>} />

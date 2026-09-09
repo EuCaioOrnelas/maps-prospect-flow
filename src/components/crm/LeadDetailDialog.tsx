@@ -925,7 +925,7 @@ export const LeadDetailDialog = ({
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div 
-              className="w-12 h-12 rounded-[14px] flex items-center justify-center text-lg font-semibold shrink-0 bg-primary/15 text-primary"
+              className="w-12 h-12 rounded-[14px] flex items-center justify-center text-lg font-semibold shrink-0 bg-primary text-primary-foreground shadow-sm"
             >
               {displayName.charAt(0).toUpperCase()}
             </div>
@@ -1009,7 +1009,7 @@ export const LeadDetailDialog = ({
 
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-border shrink-0">
+        <div className="flex items-stretch gap-1 px-6 border-b border-border shrink-0">
           {[
             { id: 'info', label: 'Informações', icon: User },
             { id: 'deals', label: `Vendas (${deals.length})`, icon: DollarSign },
