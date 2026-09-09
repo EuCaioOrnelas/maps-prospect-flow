@@ -1,6 +1,6 @@
 import { useState, memo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
+import { type Lead } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
 import { Phone, MessageCircle, Pencil, Check, X, Mail, Archive, DollarSign, Paperclip, ArchiveRestore } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
