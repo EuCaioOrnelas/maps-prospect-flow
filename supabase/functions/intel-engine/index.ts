@@ -905,7 +905,7 @@ Deno.serve(async (req) => {
         }
       }
     }
-    if (!owner) return json({ error: "owner_user_id required" }, 400);
+    if (!owner && action !== "sweep_all") return json({ error: "owner_user_id required" }, 400);
 
     switch (action) {
       case "compute_profile":
