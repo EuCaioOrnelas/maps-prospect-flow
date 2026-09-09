@@ -930,6 +930,32 @@ Deno.serve(async (req) => {
         }
         return json({ success: true, processed: done });
       }
+      case "sweep_all": {
+        // Varredura diaria: recalcula perfis ativos e padroes de todas as contas.
+        const since = new Date(Date.now() - (body.days || 30) * 86400000).toISOString();
+        const { data: rows } = await sb
+          .from("revenue_leads")
+          .select("owner_user_id, user_id, phone_e164, last_activity_at")
+          .gte("last_activity_at", since)
+          .order("last_activity_at", { ascending: false })
+          .limit(body.limit || 1500);
+        const byOwner = new Map<string, string[]>();
+        for (const r of rows || []) {
+          const o = (r as any).owner_user_id || (r as any).user_id;
+          if (!o) continue;
+          const list = byOwner.get(o) || [];
+          if (list.length < (body.per_account || 150)) list.push((r as any).phone_e164);
+          byOwner.set(o, list);
+        }
+        let profiles = 0;
+        for (const [o, phones] of byOwner) {
+          for (const ph of phones) {
+            try { await computeProfile(sb, o, ph); profiles++; } catch (_e) { /* segue */ }
+          }
+          try { await recomputePatterns(sb, o); } catch (_e) { /* segue */ }
+        }
+        return json({ success: true, accounts: byOwner.size, profiles });
+      }
       default:
         return json({ error: "Unknown action" }, 400);
     }
