@@ -1005,53 +1005,8 @@ export const LeadDetailDialog = ({
           </div>
         </div>
 
-        {/* Status do SDR Inteligente neste contato */}
-        <SDRStatusBanner phone={lead.phone} accountOwnerId={accountOwnerId} />
 
 
-        {/* Quick Actions Bar */}
-        <div className="flex items-center gap-2 px-4 sm:px-6 py-3 border-b border-border bg-muted/30 shrink-0">
-          <div className="relative flex-1">
-            <Button 
-              size="sm" 
-              className="w-full"
-              onClick={() => setShowWhatsAppOptions(!showWhatsAppOptions)}
-            >
-              <MessageCircle className="w-4 h-4 mr-1.5" />
-              Conversar
-            </Button>
-            {showWhatsAppOptions && (
-              <div className="absolute top-full left-0 right-0 mt-1 rounded-2xl border border-border bg-popover/95 p-1 shadow-xl backdrop-blur-sm z-50">
-                {hasWiizeChatConnection && (
-                  <>
-                    <button
-                      className="w-full rounded-xl px-3 py-2.5 text-sm text-left transition-colors flex items-center gap-2 text-foreground hover:bg-primary/10"
-                      onClick={openWiizeChat}
-                    >
-                      <MessageCircle className="w-4 h-4 text-primary" />
-                      Chamar no Chat Wiize
-                    </button>
-                    <div className="my-1 h-px bg-border/60" />
-                  </>
-                )}
-                <button
-                  className="w-full rounded-xl px-3 py-2.5 text-sm text-left transition-colors flex items-center gap-2 text-foreground hover:bg-muted"
-                  onClick={() => openWhatsApp('web')}
-                >
-                  <Globe className="w-4 h-4" />
-                  WhatsApp Web
-                </button>
-                <button
-                  className="w-full rounded-xl px-3 py-2.5 text-sm text-left transition-colors flex items-center gap-2 text-foreground hover:bg-muted"
-                  onClick={() => openWhatsApp('app')}
-                >
-                  <Phone className="w-4 h-4" />
-                  WhatsApp App
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
 
 
         {/* Tab Navigation */}
