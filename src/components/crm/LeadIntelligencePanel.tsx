@@ -290,7 +290,7 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
     // Sem perfil consolidado ainda: mostramos o mesmo valor exibido no card,
     // vindo do motor de pontuacao existente, para nao haver divergencia.
     return (
-      <div className={cn("space-y-3", className)}>
+      <div className={cn("space-y-4", className)}>
         <div className="rounded-xl border border-border/60 bg-card p-4">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -324,7 +324,7 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
     intel.momentum_state.includes("DECLINING") ? TrendingDown : Minus;
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-4", className)}>
       {/* Cabeçalho: oportunidade + prioridade + ação */}
       <div className="rounded-xl border border-border/60 bg-card p-4">
         <div className="flex items-start justify-between gap-3">
