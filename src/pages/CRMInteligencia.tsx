@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { toIntel100, toIntelDimension, phoneKey8 } from "@/lib/intelligence";
 import { Link, useSearchParams } from "react-router-dom";
 import { 
-  BarChart3, Users, Trophy, Settings, Loader2, 
+  BarChart3, Users, Trophy, Settings, Loader2, Brain, 
   Smartphone, Search, TrendingUp, TrendingDown, Minus,
   ChevronLeft, ChevronRight, Target, AlertTriangle, Zap,
   ChevronsLeft, ChevronsRight, Info, HelpCircle, Filter, X, Calendar,
