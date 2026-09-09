@@ -146,7 +146,23 @@ export function useLeadIntelligenceProfile(phone?: string | null) {
         .eq("owner_user_id", accountOwnerId);
       if (error) throw error;
       const target = key8(phone);
-      return ((data || []).find((p: any) => key8(p.phone_e164) === target) || null) as unknown as LeadIntelligence | null;
+      const found = (data || []).find((p: any) => key8(p.phone_e164) === target) || null;
+      if (found) return found as unknown as LeadIntelligence;
+
+      // Sem perfil ainda: pede ao motor central (nao cria calculo novo, apenas processa este contato)
+      try {
+        await supabase.functions.invoke("intel-engine", {
+          body: { action: "compute_profile", phone },
+        });
+      } catch {
+        return null;
+      }
+
+      const { data: after } = await supabase
+        .from("intel_lead_profiles")
+        .select("*")
+        .eq("owner_user_id", accountOwnerId);
+      return ((after || []).find((p: any) => key8(p.phone_e164) === target) || null) as unknown as LeadIntelligence | null;
     },
     enabled: !!accountOwnerId && !!phone,
     staleTime: 30_000,

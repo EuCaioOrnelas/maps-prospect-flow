@@ -2,7 +2,9 @@ import { useState, memo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type Lead, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
-import { Phone, MessageCircle, Pencil, Check, X } from 'lucide-react';
+import { Phone, MessageCircle, Pencil, Check, X, Mail, Archive, DollarSign, Paperclip, ArchiveRestore } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
@@ -26,6 +28,8 @@ interface LeadCardProps {
   onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
   canChangeResponsible?: boolean;
   hideValue?: boolean;
+  onOpenTab?: (lead: Lead, tab: 'deals' | 'files') => void;
+  onToggleArchive?: (lead: Lead) => Promise<void> | void;
 }
 
 const LeadCardComponent = ({
@@ -39,6 +43,8 @@ const LeadCardComponent = ({
   onChangeResponsible,
   canChangeResponsible = true,
   hideValue = false,
+  onOpenTab,
+  onToggleArchive,
 }: LeadCardProps) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(lead.contact_name || '');
@@ -126,6 +132,49 @@ const LeadCardComponent = ({
     document.addEventListener('pointerup', handlePointerUp, { once: true });
     document.addEventListener('pointercancel', handlePointerUp, { once: true });
   }, [isEditingName]);
+
+  const isArchived = !!lead.archived_at;
+  const quickActions = [
+    {
+      key: 'chat',
+      label: 'Abrir conversa',
+      icon: MessageCircle,
+      disabled: false,
+      run: () => navigate(`/chat?phone=${encodeURIComponent(lead.phone)}`),
+    },
+    {
+      key: 'email',
+      label: lead.email ? `Enviar e-mail para ${lead.email}` : 'Contato sem e-mail cadastrado',
+      icon: Mail,
+      disabled: !lead.email,
+      run: () => { if (lead.email) window.location.href = `mailto:${lead.email}`; },
+    },
+    {
+      key: 'sale',
+      label: 'Cadastrar venda',
+      icon: DollarSign,
+      disabled: !onOpenTab,
+      run: () => onOpenTab?.(lead, 'deals'),
+    },
+    {
+      key: 'files',
+      label: 'Arquivos do contato',
+      icon: Paperclip,
+      disabled: !onOpenTab,
+      run: () => onOpenTab?.(lead, 'files'),
+    },
+    {
+      key: 'archive',
+      label: isArchived ? 'Desarquivar contato' : 'Arquivar contato',
+      icon: isArchived ? ArchiveRestore : Archive,
+      disabled: !onToggleArchive,
+      run: async () => {
+        if (!onToggleArchive) return;
+        await onToggleArchive(lead);
+        toast.success(isArchived ? 'Contato desarquivado' : 'Contato arquivado');
+      },
+    },
+  ];
 
   return (
     <div
@@ -284,13 +333,12 @@ const LeadCardComponent = ({
         if (!s) return null;
         return (
           <div
-            className="-mx-5 -mb-5 mt-3 px-5 pt-2.5 pb-3 relative cursor-pointer rounded-b-[18px]"
+            className="mt-3 pt-2.5 relative cursor-pointer border-t border-border/60"
             onClick={(e) => { e.stopPropagation(); navigate(`/crm/inteligencia?phone=${encodeURIComponent(lead.phone)}`); }}
           >
-            <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
             <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Inteligência</span>
-              <span className="text-xs font-semibold tabular-nums text-primary">{s}/100</span>
+              <span className="text-xs font-semibold tabular-nums text-primary">{s} de 100</span>
               <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
                 <div className="h-full rounded-full transition-[width] duration-700 bg-primary" style={{ width: `${s}%` }} />
               </div>
@@ -298,6 +346,29 @@ const LeadCardComponent = ({
           </div>
         );
       })()}
+
+      {/* Ações rápidas */}
+      <div className="-mx-5 -mb-5 mt-3 px-3 py-2 border-t border-border/60 flex items-center gap-1 rounded-b-[18px]">
+        {quickActions.map(({ key, label, icon: Icon, run, disabled }) => (
+          <Tooltip key={key}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={label}
+                disabled={disabled}
+                onClick={(e) => { e.stopPropagation(); run(); }}
+                className={cn(
+                  "p-1.5 rounded-lg text-muted-foreground transition-colors",
+                  disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{label}</TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
     </div>
   );
 };
@@ -314,6 +385,8 @@ export const LeadCard = memo(LeadCardComponent, (prevProps, nextProps) => {
     prevProps.lead.estimated_value === nextProps.lead.estimated_value &&
     prevProps.lead.last_response_at === nextProps.lead.last_response_at &&
     prevProps.lead.responsible_user_id === nextProps.lead.responsible_user_id &&
+    prevProps.lead.archived_at === nextProps.lead.archived_at &&
+    prevProps.lead.email === nextProps.lead.email &&
     JSON.stringify(prevProps.lead.tags) === JSON.stringify(nextProps.lead.tags) &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.isDragging === nextProps.isDragging &&

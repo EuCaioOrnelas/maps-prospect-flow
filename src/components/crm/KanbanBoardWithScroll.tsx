@@ -30,6 +30,8 @@ interface KanbanBoardWithScrollProps {
   onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
   canChangeResponsible?: boolean;
   hideValue?: boolean;
+  onOpenLeadTab?: (lead: Lead, tab: 'deals' | 'files') => void;
+  onToggleArchive?: (lead: Lead) => Promise<void> | void;
 }
 
 const KanbanBoardWithScrollComponent = ({
@@ -50,6 +52,8 @@ const KanbanBoardWithScrollComponent = ({
   onChangeResponsible,
   canChangeResponsible,
   hideValue,
+  onOpenLeadTab,
+  onToggleArchive,
 }: KanbanBoardWithScrollProps) => {
   const { getScoreForPhone } = useLeadScores();
   const { hidden: phoneHidden } = usePhonePrivacy();
@@ -386,6 +390,8 @@ const KanbanBoardWithScrollComponent = ({
             onChangeResponsible={onChangeResponsible}
             canChangeResponsible={canChangeResponsible}
             hideValue={hideValue}
+            onOpenLeadTab={onOpenLeadTab}
+            onToggleArchive={onToggleArchive}
           />
         ))}
       </div>

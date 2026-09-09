@@ -69,6 +69,7 @@ export default function CRM() {
     setSelectedLead,
     moveLeadToStage,
     updateLead,
+    setLeadArchived,
     deleteLead,
     deleteLeads,
     createLead,
@@ -100,7 +101,8 @@ export default function CRM() {
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [manageStagesOpen, setManageStagesOpen] = useState(false);
   const [numbersManagerOpen, setNumbersManagerOpen] = useState(false);
-  const [pendingInitialTab, setPendingInitialTab] = useState<'info' | 'intelligence' | 'deals' | 'files' | undefined>(undefined);
+  const [pendingInitialTab, setPendingInitialTab] = useState<'info' | 'intelligence' | 'notes' | 'history' | 'deals' | 'files' | undefined>(undefined);
+  const [showArchived, setShowArchived] = useState(false);
   const [pendingInitialRegisterSale, setPendingInitialRegisterSale] = useState(false);
   const columnWidth: ColumnWidth = 'medium';
 
@@ -324,7 +326,9 @@ export default function CRM() {
   }
 
   // Filter leads
+  const archivedCount = leads.filter(l => !!l.archived_at).length;
   const filteredLeads = leads.filter(lead => {
+    if (showArchived ? !lead.archived_at : !!lead.archived_at) return false;
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       const matchesSearch = 
@@ -435,6 +439,22 @@ export default function CRM() {
               </div>
 
               <CRMTabs />
+
+              <div className="mt-3 flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant={showArchived ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setShowArchived(v => !v)}
+                >
+                  {showArchived ? 'Ver funil ativo' : `Ver arquivados${archivedCount ? ` (${archivedCount})` : ''}`}
+                </Button>
+                {showArchived && (
+                  <span className="text-xs text-muted-foreground">
+                    Contatos arquivados continuam contando no limite do seu plano.
+                  </span>
+                )}
+              </div>
 
               <CRMMetrics stages={stages} leads={filteredLeads} hideValue={isOperational} loading={isLoading} />
 
@@ -618,6 +638,15 @@ export default function CRM() {
                 onChangeResponsible={assignLeadResponsible}
                 canChangeResponsible={canChangeResponsible}
                 hideValue={isOperational}
+                onOpenLeadTab={(lead, tab) => {
+                  setSelectedLead(lead);
+                  setPendingInitialTab(tab);
+                  setPendingInitialRegisterSale(false);
+                  setDialogOpen(true);
+                }}
+                onToggleArchive={async (lead) => {
+                  await setLeadArchived(lead.id, !lead.archived_at);
+                }}
               />
             )}
           </div>
