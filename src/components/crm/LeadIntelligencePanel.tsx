@@ -22,7 +22,7 @@ import type { Lead } from "@/hooks/useCRM";
 import {
   Brain, Target, Zap, TrendingUp, TrendingDown, Minus, AlertTriangle,
   MessageSquare, MapPin, DollarSign, CheckCircle2, Clock, Star, Globe,
-  ShieldAlert, Sparkles, Copy, Building2, ArrowRight, Gauge,
+  ShieldAlert, Sparkles, Copy, Building2, ArrowRight, Compass, ListChecks, HelpCircle, Ban, Flag,
 } from "lucide-react";
 
 interface Props {
@@ -152,7 +152,7 @@ function DimensionCard({ dim }: { dim: Dim }) {
         <>
           <p className="mt-1 text-[15px] font-semibold text-foreground leading-none tabular-nums">
             {dim.value}
-            <span className="text-[10px] font-normal text-muted-foreground"> /100</span>
+            <span className="text-[10px] font-normal text-muted-foreground"> de 100</span>
           </p>
           <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
             <div
