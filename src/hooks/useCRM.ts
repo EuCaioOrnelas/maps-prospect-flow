@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccountRole } from '@/hooks/useAccountRole';
 import { useUserScoreTracking } from '@/hooks/useUserScoreTracking';
+import { recordIntelligenceOutcome } from '@/hooks/useLeadIntelligence';
 
 export interface PipelineStage {
   id: string;
