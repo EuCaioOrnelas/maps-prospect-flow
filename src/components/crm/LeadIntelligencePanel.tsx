@@ -292,6 +292,7 @@ function buildPlaybook(
   conv: ConversationAnalysis | null,
   prospect: ProspectData | null,
   lead: Lead | null,
+  signalNames: string[] = [],
 ): Playbook {
   const msg = buildMessage(prospect, lead, conv);
   const priority = profile?.priority ? PRIORITY_LABELS[profile.priority] || profile.priority : "Média";
