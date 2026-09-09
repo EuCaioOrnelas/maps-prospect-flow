@@ -103,7 +103,7 @@ interface LeadDetailDialogProps {
   onAddOrigin: (origin: string) => Promise<void>;
   onUpdateOrigin?: (oldName: string, newName: string) => Promise<void>;
   onDeleteOrigin?: (name: string) => Promise<void>;
-  initialTab?: 'info' | 'notes' | 'history' | 'deals' | 'files';
+  initialTab?: 'info' | 'intelligence' | 'deals' | 'files';
   initialRegisterSale?: boolean;
   members?: ResponsibleMember[];
   onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
