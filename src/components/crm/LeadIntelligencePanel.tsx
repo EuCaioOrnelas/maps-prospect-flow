@@ -287,7 +287,7 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1.5 text-primary">
             <Target className="w-3.5 h-3.5" />
-            <span className="text-xs font-semibold">Oportunidade {intel.opportunity_score}/100</span>
+            <span className="text-xs font-semibold">Oportunidade {intel.opportunity_score} de 100</span>
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1.5">
             <MomentumIcon className="w-3.5 h-3.5 text-muted-foreground" />
@@ -384,6 +384,9 @@ export function LeadIntelligencePanel({ phone, className }: Props) {
           <p className="text-sm text-muted-foreground leading-relaxed">{intel.diagnosis_summary}</p>
         </div>
       )}
+
+      <Breakdown leadId={legacy?.id} />
+      <ActionIntelligence score={intel.opportunity_score} />
     </div>
   );
 }
