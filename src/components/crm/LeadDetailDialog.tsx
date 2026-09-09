@@ -104,7 +104,7 @@ interface LeadDetailDialogProps {
   onAddOrigin: (origin: string) => Promise<void>;
   onUpdateOrigin?: (oldName: string, newName: string) => Promise<void>;
   onDeleteOrigin?: (name: string) => Promise<void>;
-  initialTab?: 'info' | 'intelligence' | 'deals' | 'files';
+  initialTab?: 'info' | 'intelligence' | 'notes' | 'history' | 'deals' | 'files';
   initialRegisterSale?: boolean;
   members?: ResponsibleMember[];
   onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
@@ -286,7 +286,7 @@ export const LeadDetailDialog = ({
   const navigate = useNavigate();
   const { user, accountOwnerId } = useAuth();
   const { getScoreForPhone } = useLeadScores();
-  const [activeTab, setActiveTab] = useState<'info' | 'intelligence' | 'deals' | 'files'>(initialTab || 'info');
+  const [activeTab, setActiveTab] = useState<'info' | 'intelligence' | 'notes' | 'history' | 'deals' | 'files'>(initialTab || 'info');
   useEffect(() => {
     if (open && initialTab) setActiveTab(initialTab);
   }, [open, initialTab]);
@@ -1172,6 +1172,8 @@ export const LeadDetailDialog = ({
             { id: 'deals', label: `Vendas (${deals.length})` },
             { id: 'files', label: 'Arquivos' },
             { id: 'intelligence', label: 'Inteligência' },
+            { id: 'notes', label: 'Notas' },
+            { id: 'history', label: 'Histórico' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1693,8 +1695,8 @@ export const LeadDetailDialog = ({
             )}
 
             {/* History Tab */}
-            {activeTab === 'intelligence' && (
-              <div className="mt-6">
+            {activeTab === 'history' && (
+              <div>
                 <h4 className="text-sm font-semibold mb-3">Histórico</h4>
                 <div className="space-y-1">
                 {activities
