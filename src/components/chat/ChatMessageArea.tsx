@@ -1096,16 +1096,16 @@ export function ChatMessageArea({
                                 ) : (msg.message_type !== "text" && msg.message_type !== "audio") && (
                                   <div className="p-[3px]"><MediaPreview msg={msg} onOpenImage={openImage} onQuickForward={quickForward} /></div>
                                 )}
-                                {msg.content && msg.message_type === "text" && (
-                                  <div className="px-[9px] pt-[5px] pb-[2px] pr-[36px]">
-                                    <span className="text-[14.2px] wa-text-primary leading-[18px] whitespace-pre-wrap break-words">
-                                      {msg.content}
-                                    </span>
-                                  </div>
-                                )}
-                                  </>
-                                )}
-                                <div className="flex items-center justify-end gap-[4px] px-[7px] pb-[3px] -mt-[1px]">
+                                 {msg.content && msg.message_type === "text" && (
+                                   <div className="px-[9px] pt-[3px] pb-0 pr-[36px]">
+                                     <span className="text-[14.2px] wa-text-primary leading-[17px] whitespace-pre-wrap break-words">
+                                       {msg.content}
+                                     </span>
+                                   </div>
+                                 )}
+                                   </>
+                                 )}
+                                 <div className="flex items-center justify-end gap-[4px] px-[7px] pb-[2px] -mt-[3px]">
                                   {isOutbound && (msg.metadata as any)?.source === "flow" && (
                                     <Workflow
                                       size={11}
