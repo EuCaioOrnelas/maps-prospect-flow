@@ -671,8 +671,8 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   }, [profile, conv, signals, history, prospect, hasConv, hasEngagementData, state]);
 
   const playbook = useMemo(
-    () => buildPlaybook(state, profile, conv, prospect, lead || null),
-    [state, profile, conv, prospect, lead]
+    () => buildPlaybook(state, profile, conv, prospect, lead || null, signals.map((s) => signalLabel(s.signal_type))),
+    [state, profile, conv, prospect, lead, signals]
   );
 
   const positives = ((profile?.factors as any[]) || []).filter((f) => f?.label);
