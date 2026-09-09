@@ -219,7 +219,7 @@ export const TOUR_CONTENT: TourContentStep[] = [
   {
     id: "sidebar-crm-score",
     title: "Quem merece atenção agora",
-    body: "A Wiize mostra quem está mais perto de uma reunião, com base no engajamento e nas respostas no WhatsApp.",
+    body: "A Inteligência da Wiize analisa conversa, intenção, comportamento e histórico e dá a cada contato uma pontuação de 0 a 100 com a próxima ação recomendada.",
     placement: "right",
     pillar: "gestao",
   },

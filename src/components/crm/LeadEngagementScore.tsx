@@ -12,15 +12,15 @@ interface LeadEngagementScoreProps {
 
 const getScoreTier = (score: number) => {
   const base = { color: "bg-primary", text: "text-primary", glow: "shadow-[0_0_12px_-2px_hsl(var(--primary)/0.6)]" };
-  if (score >= 750) return { ...base, label: "Excelente" };
-  if (score >= 500) return { ...base, label: "Bom" };
-  if (score >= 250) return { ...base, label: "Médio" };
+  if (score >= 75) return { ...base, label: "Excelente" };
+  if (score >= 50) return { ...base, label: "Bom" };
+  if (score >= 25) return { ...base, label: "Médio" };
   return { ...base, label: "Baixo" };
 };
 
 const LeadEngagementScoreComponent = ({
   score,
-  max = 1000,
+  max = 100,
   showLabel = true,
   onClick,
   className,
@@ -42,7 +42,7 @@ const LeadEngagementScoreComponent = ({
       {showLabel && (
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] font-medium text-muted-foreground tracking-wide uppercase">
-            Score Inteligente
+            Inteligência
           </span>
           <span className={cn("text-[10px] font-medium opacity-70", tier.text)}>
             {tier.label}

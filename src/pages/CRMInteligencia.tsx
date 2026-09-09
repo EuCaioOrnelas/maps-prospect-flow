@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { toIntel100, toIntelDimension, phoneKey8 } from "@/lib/intelligence";
 import { Link, useSearchParams } from "react-router-dom";
 import { 
   BarChart3, Users, Trophy, Settings, Loader2, 
@@ -76,11 +77,11 @@ const BUCKET_COLORS: Record<string, string> = {
 };
 
 const BUCKET_LABELS: Record<string, string> = {
-  "COLD": "Frio (0-200)",
-  "LOW_ENGAGEMENT": "Baixo engajamento (201-400)",
-  "ENGAGED": "Engajado (401-600)",
-  "HIGH_VALUE": "Alto valor (601-800)",
-  "READY_TO_SELL": "Pronto para venda (801-1000)",
+  "COLD": "Frio (0-20)",
+  "LOW_ENGAGEMENT": "Baixo engajamento (21-40)",
+  "ENGAGED": "Engajado (41-60)",
+  "HIGH_VALUE": "Alto valor (61-80)",
+  "READY_TO_SELL": "Pronto para venda (81-100)",
 };
 
 const BUCKET_SHORT_LABELS: Record<string, string> = {
@@ -100,10 +101,10 @@ const BUCKET_BADGE_COLORS: Record<string, string> = {
 };
 
 const mapBucket = (bucket: string, score: number): string => {
-  if (score >= 801) return "READY_TO_SELL";
-  if (score >= 601) return "HIGH_VALUE";
-  if (score >= 401) return "ENGAGED";
-  if (score >= 201) return "LOW_ENGAGEMENT";
+  if (score >= 81) return "READY_TO_SELL";
+  if (score >= 61) return "HIGH_VALUE";
+  if (score >= 41) return "ENGAGED";
+  if (score >= 21) return "LOW_ENGAGEMENT";
   return "COLD";
 };
 
@@ -296,18 +297,18 @@ const PER_PAGE_OPTIONS = [20, 50, 100];
 const DEFAULT_PER_PAGE = 20;
 
 const getScoreColor = (score: number) => {
-  if (score >= 801) return "text-emerald-400";
-  if (score >= 601) return "text-purple-400";
-  if (score >= 401) return "text-blue-400";
-  if (score >= 201) return "text-yellow-400";
+  if (score >= 81) return "text-emerald-400";
+  if (score >= 61) return "text-purple-400";
+  if (score >= 41) return "text-blue-400";
+  if (score >= 21) return "text-yellow-400";
   return "text-red-400";
 };
 
 const getScoreCircleColor = (score: number) => {
-  if (score >= 801) return "bg-emerald-500/[0.12]";
-  if (score >= 601) return "bg-purple-500/[0.12]";
-  if (score >= 401) return "bg-blue-500/[0.12]";
-  if (score >= 201) return "bg-yellow-500/[0.12]";
+  if (score >= 81) return "bg-emerald-500/[0.12]";
+  if (score >= 61) return "bg-purple-500/[0.12]";
+  if (score >= 41) return "bg-blue-500/[0.12]";
+  if (score >= 21) return "bg-yellow-500/[0.12]";
   return "bg-red-500/[0.12]";
 };
 
@@ -333,22 +334,22 @@ const ScoreInfoModal = ({ open, onClose }: { open: boolean; onClose: () => void 
       <Card className="w-full max-w-sm bg-card" onClick={(e) => e.stopPropagation()}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Como funciona o Score</CardTitle>
+            <CardTitle className="text-base">Como funciona a Inteligência</CardTitle>
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
               <X className="h-5 w-5" />
             </button>
           </div>
           <p className="text-xs text-muted-foreground">
-            O score vai de 0 a 1.000 pontos e é calculado automaticamente com base nas interações dos contatos no WhatsApp.
+            A Inteligência da Wiize analisa os sinais comerciais de cada contato (conversa, intenção, comportamento, tempo de resposta e risco) e atribui uma pontuação de 0 a 100.
           </p>
         </CardHeader>
         <CardContent className="space-y-2 pb-4">
           {[
-            { label: "Frio", range: "0 – 200", desc: "Sem interação relevante", color: "border-red-500/40 bg-red-500/10", text: "text-red-400" },
-            { label: "Baixo engajamento", range: "201 – 400", desc: "Pouca atividade", color: "border-yellow-500/40 bg-yellow-500/10", text: "text-yellow-400" },
-            { label: "Engajado", range: "401 – 600", desc: "Interagindo ativamente", color: "border-blue-500/40 bg-blue-500/10", text: "text-blue-400" },
-            { label: "Alto valor", range: "601 – 800", desc: "Forte interesse", color: "border-purple-500/40 bg-purple-500/10", text: "text-purple-400" },
-            { label: "Pronto p/ venda", range: "801 – 1.000", desc: "Contato quente", color: "border-emerald-500/40 bg-emerald-500/10", text: "text-emerald-400" },
+            { label: "Frio", range: "0 – 20", desc: "Sem interação relevante", color: "border-red-500/40 bg-red-500/10", text: "text-red-400" },
+            { label: "Baixo engajamento", range: "21 – 40", desc: "Pouca atividade", color: "border-yellow-500/40 bg-yellow-500/10", text: "text-yellow-400" },
+            { label: "Engajado", range: "41 – 60", desc: "Interagindo ativamente", color: "border-blue-500/40 bg-blue-500/10", text: "text-blue-400" },
+            { label: "Alto valor", range: "61 – 80", desc: "Forte interesse", color: "border-purple-500/40 bg-purple-500/10", text: "text-purple-400" },
+            { label: "Pronto p/ venda", range: "81 – 100", desc: "Contato quente", color: "border-emerald-500/40 bg-emerald-500/10", text: "text-emerald-400" },
           ].map((b) => (
             <div key={b.label} className={`flex items-center justify-between px-3 py-2.5 rounded-lg border ${b.color}`}>
               <span className={`text-xs font-semibold ${b.text}`}>{b.label}</span>
@@ -360,7 +361,7 @@ const ScoreInfoModal = ({ open, onClose }: { open: boolean; onClose: () => void 
           ))}
           <div className="border-t border-border pt-2 mt-2">
             <p className="text-[11px] text-muted-foreground">
-              O score é atualizado automaticamente. Cada regra soma ou subtrai pontos. Contatos inativos perdem score diariamente.
+              A pontuação é recalculada automaticamente a cada novo sinal. Sinais repetidos têm impacto decrescente e sinais antigos perdem relevância com o tempo.
             </p>
           </div>
           <Button variant="outline" className="w-full mt-2" size="sm" onClick={onClose}>Fechar</Button>
@@ -863,7 +864,7 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
               <TableRow>
                 <TableHead>Contato</TableHead>
                 <TableHead className="cursor-pointer" onClick={() => { setSortBy("score_total"); setSortAsc(sortBy === "score_total" ? !sortAsc : false); }}>
-                  Score {sortBy === "score_total" && (sortAsc ? "↑" : "↓")}
+                  Inteligência {sortBy === "score_total" && (sortAsc ? "↑" : "↓")}
                 </TableHead>
                 <TableHead>Classificação</TableHead>
                 <TableHead className="hidden md:table-cell">Tendência</TableHead>
@@ -886,7 +887,7 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                     </TableCell>
                     <TableCell>
                       <span className={`text-lg font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>{fmtNum(lead.score_total)}</span>
-                      <span className="text-xs text-muted-foreground ml-1">/1.000</span>
+                      <span className="text-xs text-muted-foreground ml-1">/100</span>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={BUCKET_BADGE_COLORS[bucket] || ""}>
@@ -894,9 +895,9 @@ const ScoreUsersTab = ({ leads }: { leads: RevenueLead[] }) => {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {lead.score_risk < -50 ? (
+                      {lead.score_risk < -5 ? (
                         <TrendingDown className="h-4 w-4 text-destructive" />
-                      ) : lead.score_engagement > 20 || lead.score_intent > 0 ? (
+                      ) : lead.score_engagement > 2 || lead.score_intent > 0 ? (
                         <TrendingUp className="h-4 w-4 text-emerald-400" />
                       ) : (
                         <Minus className="h-4 w-4 text-muted-foreground" />
@@ -985,10 +986,10 @@ interface ScoreLog {
 }
 
 const SCORE_BAR_CONFIG = [
-  { key: "score_engagement", label: "Engajamento", icon: MessageSquare, color: "bg-blue-500", max: 500 },
-  { key: "score_intent", label: "Intenção Compra", icon: ShoppingCart, color: "bg-yellow-500", max: 500 },
-  { key: "score_urgency", label: "Urgência", icon: Zap, color: "bg-purple-500", max: 300 },
-  { key: "score_risk", label: "Risco", icon: AlertTriangle, color: "bg-destructive", max: 300, isNegative: true },
+  { key: "score_engagement", label: "Engajamento", icon: MessageSquare, color: "bg-blue-500", max: 50 },
+  { key: "score_intent", label: "Intenção Compra", icon: ShoppingCart, color: "bg-yellow-500", max: 50 },
+  { key: "score_urgency", label: "Urgência", icon: Zap, color: "bg-purple-500", max: 30 },
+  { key: "score_risk", label: "Risco", icon: AlertTriangle, color: "bg-destructive", max: 30, isNegative: true },
 ];
 
 const HISTORY_PER_PAGE = 15;
@@ -1017,7 +1018,7 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
         .order("created_at", { ascending: false })
         .limit(500)
         .then(({ data }) => {
-          setLogs((data || []) as ScoreLog[]);
+          setLogs(((data || []) as any[]).map((l) => ({ ...l, points_applied: toIntelDimension(l.points_applied), score_after: toIntel100(l.score_after) })) as ScoreLog[]);
           setLogsLoading(false);
         });
     }
@@ -1051,7 +1052,7 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
         .then(({ data }) => {
           const points = (data || []).map((d: any) => ({
             date: new Date(d.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-            score: d.score_after,
+            score: toIntel100(d.score_after),
           }));
           setEvoData(points);
           setEvoLoading(false);
@@ -1108,9 +1109,9 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                   {BUCKET_SHORT_LABELS[bucket]}
                 </Badge>
                 <div className="flex items-center gap-1">
-                  {lead.score_risk < -50 ? (
+                  {lead.score_risk < -5 ? (
                     <><TrendingDown className="h-3.5 w-3.5 text-destructive" /><span className="text-[10px] text-destructive">Em queda</span></>
-                  ) : lead.score_engagement > 20 || lead.score_intent > 0 ? (
+                  ) : lead.score_engagement > 2 || lead.score_intent > 0 ? (
                     <><TrendingUp className="h-3.5 w-3.5 text-emerald-400" /><span className="text-[10px] text-emerald-400">Em alta</span></>
                   ) : (
                     <><Minus className="h-3.5 w-3.5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground">Estável</span></>
@@ -1131,7 +1132,7 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                   tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {t === "score" ? "Score" : t === "history" ? `Histórico (${logs.length || "..."})` : "Evolução"}
+                {t === "score" ? "Inteligência" : t === "history" ? `Histórico (${logs.length || "..."})` : "Evolução"}
               </button>
             ))}
           </div>
@@ -1168,14 +1169,14 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                   <div>
                     <p className="text-sm font-semibold mb-1">Insights</p>
                     <ul className="text-xs text-muted-foreground space-y-0.5 list-disc list-inside">
-                      {lead.score_total >= 801 && <li>Lead pronto para venda. priorize o contato imediato.</li>}
-                      {lead.score_total >= 601 && lead.score_total < 801 && <li>Lead de alto valor. mantenha o engajamento para converter.</li>}
-                      {lead.score_total >= 401 && lead.score_total < 601 && <li>Lead engajado. aumente a frequência de interação.</li>}
-                      {lead.score_total >= 201 && lead.score_total < 401 && <li>Baixo engajamento. envie conteúdo relevante para reativar.</li>}
-                      {lead.score_total < 201 && <li>Lead frio. considere uma campanha de reativação.</li>}
-                      {lead.score_risk < -50 && <li>Risco elevado de perda. ação urgente recomendada.</li>}
-                      {lead.score_intent > 30 && <li>Alta intenção de compra detectada.</li>}
-                      {lead.score_engagement > 50 && <li>Usuário com alto engajamento nas conversas.</li>}
+                      {lead.score_total >= 81 && <li>Lead pronto para venda. priorize o contato imediato.</li>}
+                      {lead.score_total >= 61 && lead.score_total < 81 && <li>Lead de alto valor. mantenha o engajamento para converter.</li>}
+                      {lead.score_total >= 41 && lead.score_total < 61 && <li>Lead engajado. aumente a frequência de interação.</li>}
+                      {lead.score_total >= 21 && lead.score_total < 41 && <li>Baixo engajamento. envie conteúdo relevante para reativar.</li>}
+                      {lead.score_total < 21 && <li>Lead frio. considere uma campanha de reativação.</li>}
+                      {lead.score_risk < -5 && <li>Risco elevado de perda. ação urgente recomendada.</li>}
+                      {lead.score_intent > 3 && <li>Alta intenção de compra detectada.</li>}
+                      {lead.score_engagement > 5 && <li>Usuário com alto engajamento nas conversas.</li>}
                     </ul>
                   </div>
                 </div>
@@ -1239,7 +1240,7 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
           {tab === "evolution" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-sm">Evolução do Score</h4>
+                <h4 className="font-semibold text-sm">Evolução da Inteligência</h4>
               </div>
               <div className="flex flex-wrap gap-2">
                 {["7d", "14d", "30d", "90d"].map((p) => (
@@ -1268,10 +1269,10 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
                   <LineChart data={evoData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} domain={[0, 1000]} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} domain={[0, 100]} />
                     <RechartsTooltip
                       contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
-                      formatter={(value: number) => [`${fmtNum(value)}`, "Score"]}
+                      formatter={(value: number) => [`${fmtNum(value)}`, "Inteligência"]}
                     />
                     <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3, fill: "hsl(var(--primary))" }} activeDot={{ r: 5 }} />
                   </LineChart>
@@ -1385,7 +1386,7 @@ const ScoreRankingTab = ({ leads }: { leads: RevenueLead[] }) => {
                     {BUCKET_SHORT_LABELS[bucket] || bucket}
                   </Badge>
                   <div className="hidden sm:flex items-center w-8 justify-center">
-                    {lead.score_risk < -50 ? (
+                    {lead.score_risk < -5 ? (
                       <TrendingDown className="h-4 w-4 text-destructive" />
                     ) : lead.score_engagement > 20 ? (
                       <TrendingUp className="h-4 w-4 text-emerald-400" />
@@ -1618,13 +1619,13 @@ const ScoreRulesTab = ({ userId }: { userId: string }) => {
 
 // ═══════════════ MAIN PAGE ═══════════════
 
-const CRMScore = () => {
+const CRMInteligencia = () => {
   const { user, accountOwnerId, profile } = useAuth();
   const [searchParams] = useSearchParams();
   const [deepLinkPhone] = useState(() => searchParams.get("phone"));
   const [scoreInfoOpen, setScoreInfoOpen] = useState(false);
   const [autoOpenedLead, setAutoOpenedLead] = useState<RevenueLead | null>(null);
-  useAutoScoreTracking("crm_score");
+  useAutoScoreTracking("crm_intelligence");
 
   const { data: sidebarProfile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -1646,7 +1647,33 @@ const CRMScore = () => {
         .eq("owner_user_id", accountOwnerId)
         .order("score_total", { ascending: false });
       if (error) throw error;
-      return (data || []) as RevenueLead[];
+
+      // Inteligencia = unico resultado exibido (0-100).
+      // Preferimos o perfil do motor central (intel_lead_profiles); quando ele
+      // ainda nao existe para o contato, normalizamos a escala interna 0-1000.
+      const { data: profiles } = await supabase
+        .from("intel_lead_profiles")
+        .select("phone_e164, opportunity_score")
+        .eq("owner_user_id", accountOwnerId);
+      const byPhone = new Map<string, number>();
+      for (const p of profiles || []) {
+        byPhone.set(phoneKey8((p as any).phone_e164), Number((p as any).opportunity_score || 0));
+      }
+
+      const normalized = (data || []).map((l: any) => {
+        const fromEngine = byPhone.get(phoneKey8(l.phone_e164));
+        return {
+          ...l,
+          score_raw: l.score_total,
+          score_total: typeof fromEngine === "number" ? Math.max(0, Math.min(100, Math.round(fromEngine))) : toIntel100(l.score_total),
+          score_engagement: toIntelDimension(l.score_engagement),
+          score_intent: toIntelDimension(l.score_intent),
+          score_urgency: toIntelDimension(l.score_urgency),
+          score_risk: toIntelDimension(l.score_risk),
+        };
+      }) as RevenueLead[];
+      normalized.sort((a, b) => b.score_total - a.score_total);
+      return normalized;
     },
     enabled: !!user,
   });
@@ -1663,7 +1690,7 @@ const CRMScore = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <BackgroundGlow />
-      <SEO title="Score CRM - Wiize" description="Análise de score de engajamento dos seus leads via WhatsApp" />
+      <SEO title="Inteligência do CRM - Wiize" description="Inteligência comercial da Wiize: análise de sinais e pontuação de oportunidade de 0 a 100 para cada contato." />
       <AppSidebar profile={profile || sidebarProfile} />
 
       <main className="lg:pl-[72px] min-h-screen">
@@ -1678,13 +1705,13 @@ const CRMScore = () => {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">Score de Contatos</h1>
+                  <h1 className="text-xl lg:text-2xl font-bold text-foreground">Inteligência</h1>
                   <button onClick={() => setScoreInfoOpen(true)} className="text-muted-foreground hover:text-foreground transition-colors">
                     <HelpCircle className="h-5 w-5" />
                   </button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Análise de engajamento e intenção de compra via WhatsApp · Score de 0 a 1.000
+                  A Inteligência analisa os sinais comerciais de cada contato e atribui uma pontuação de oportunidade de 0 a 100
                 </p>
               </div>
             </div>
@@ -1748,4 +1775,4 @@ const CRMScore = () => {
   );
 };
 
-export default CRMScore;
+export default CRMInteligencia;

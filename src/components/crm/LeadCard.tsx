@@ -9,9 +9,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { formatPhoneShort } from '@/lib/phoneUtils';
 import { useLeadScores } from '@/hooks/useLeadScores';
+import { toIntel100 } from '@/lib/intelligence';
 import { useLeadIntelligence, NEXT_ACTION_LABELS } from '@/hooks/useLeadIntelligence';
 import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
-import { LeadEngagementScore } from './LeadEngagementScore';
 import { LeadPotentialValueCompact } from './LeadPotentialValueCompact';
 import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 
@@ -273,30 +273,26 @@ const LeadCardComponent = ({
           <span className="text-[10px] font-medium text-primary truncate">
             {NEXT_ACTION_LABELS[intel.next_best_action] || intel.next_best_action}
           </span>
-          <span className="text-[10px] text-muted-foreground tabular-nums ml-auto shrink-0">
-            {intel.opportunity_score}
-          </span>
         </div>
       )}
 
-      {/* Score footer — divisor suave + Score + número + progressbar */}
-      {scoreData && scoreData.score_total > 0 && (() => {
-        const s = Math.max(0, Math.min(scoreData.score_total, 1000));
-        const pct = (s / 1000) * 100;
-        const bg = 'bg-primary';
-        const fg = 'text-primary';
+      {/* Inteligência — resultado 0-100 do motor central */}
+      {(() => {
+        const s = intel
+          ? Math.max(0, Math.min(100, Math.round(intel.opportunity_score)))
+          : toIntel100(scoreData?.score_total);
+        if (!s) return null;
         return (
           <div
             className="-mx-5 -mb-5 mt-3 px-5 pt-2.5 pb-3 relative cursor-pointer rounded-b-[18px]"
-            onClick={(e) => { e.stopPropagation(); navigate(`/crm/score?phone=${encodeURIComponent(lead.phone)}`); }}
+            onClick={(e) => { e.stopPropagation(); navigate(`/crm/inteligencia?phone=${encodeURIComponent(lead.phone)}`); }}
           >
-            {/* divisor suave: forte no meio, fade nas pontas */}
             <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
             <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Score</span>
-              <span className={cn("text-xs font-semibold tabular-nums", fg)}>{s}</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Inteligência</span>
+              <span className="text-xs font-semibold tabular-nums text-primary">{s}/100</span>
               <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
-                <div className={cn("h-full rounded-full transition-[width] duration-700", bg)} style={{ width: `${pct}%` }} />
+                <div className="h-full rounded-full transition-[width] duration-700 bg-primary" style={{ width: `${s}%` }} />
               </div>
             </div>
           </div>

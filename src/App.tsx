@@ -73,7 +73,7 @@ const CRM = lazyWithRetry(() => import("./pages/CRM"), "CRM");
 const CRMSales = lazyWithRetry(() => import("./pages/CRMSales"), "CRMSales");
 const CRMRenewalSettings = lazyWithRetry(() => import("./pages/CRMRenewalSettings"), "CRMRenewalSettings");
 const AgendaEmailSettings = lazyWithRetry(() => import("./pages/AgendaEmailSettings"), "AgendaEmailSettings");
-const CRMScore = lazyWithRetry(() => import("./pages/CRMScore"), "CRMScore");
+const CRMInteligencia = lazyWithRetry(() => import("./pages/CRMInteligencia"), "CRMInteligencia");
 const Agenda = lazyWithRetry(() => import("./pages/Agenda"), "Agenda");
 const EquipeEmBreve = lazyWithRetry(() => import("./pages/equipe-ia/EquipeEmBreve"), "EquipeEmBreve");
 const Consultoria = lazyWithRetry(() => import("./pages/Consultoria"), "Consultoria");
@@ -363,7 +363,8 @@ const App = () => (
                 <Route path="/agenda/lembretes" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><AgendaEmailSettings /></Suspense></ProtectedRoute>} />
                 <Route path="/crm/vendas/compromissos" element={<Navigate to="/agenda/lembretes" replace />} />
                 <Route path="/crm/agenda" element={<Navigate to="/agenda" replace />} />
-                <Route path="/crm/score" element={<ProtectedRoute><CRMScore /></ProtectedRoute>} />
+                <Route path="/crm/inteligencia" element={<ProtectedRoute><CRMInteligencia /></ProtectedRoute>} />
+                <Route path="/crm/score" element={<Navigate to="/crm/inteligencia" replace />} />
                 <Route path="/crm-coming-soon" element={<ProtectedRoute><CRMComingSoon /></ProtectedRoute>} />
                 <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes" element={<ProtectedRoute><ChatSettings /></ProtectedRoute>} />

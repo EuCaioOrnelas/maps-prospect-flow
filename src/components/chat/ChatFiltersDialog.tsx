@@ -54,7 +54,7 @@ export function ChatFiltersDialog({
     }));
   };
 
-  const activeCount = local.tags.length + local.crmStages.length + (local.scoreMin > 0 || local.scoreMax < 1000 ? 1 : 0);
+  const activeCount = local.tags.length + local.crmStages.length + (local.scoreMin > 0 || local.scoreMax < 100 ? 1 : 0);
 
   const handleApply = () => {
     onApply(local);
@@ -62,7 +62,7 @@ export function ChatFiltersDialog({
   };
 
   const handleClear = () => {
-    const cleared: ChatFilterConfig = { tags: [], crmStages: [], scoreMin: 0, scoreMax: 1000 };
+    const cleared: ChatFilterConfig = { tags: [], crmStages: [], scoreMin: 0, scoreMax: 100 };
     setLocal(cleared);
     onApply(cleared);
     onOpenChange(false);
@@ -148,20 +148,20 @@ export function ChatFiltersDialog({
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <BarChart3 size={14} className="text-primary" />
-                <span className="text-[13px] font-semibold text-foreground">Score do contato</span>
+                <span className="text-[13px] font-semibold text-foreground">Inteligência do contato</span>
               </div>
               <div className="px-1">
                 <Slider
                   value={[local.scoreMin, local.scoreMax]}
                   min={0}
-                  max={1000}
-                  step={50}
+                  max={100}
+                  step={5}
                   onValueChange={([min, max]) => setLocal(prev => ({ ...prev, scoreMin: min, scoreMax: max }))}
                   className="mb-2"
                 />
                 <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>{local.scoreMin} pts</span>
-                  <span>{local.scoreMax} pts</span>
+                  <span>{local.scoreMin}/100</span>
+                  <span>{local.scoreMax}/100</span>
                 </div>
               </div>
             </div>

@@ -96,7 +96,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isOnReportsPage = currentPath === "/dashboard" || currentPath === "/reports/prospeccao";
   const isOnCampaignsPage = currentPath === "/meta-campaigns";
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/gestao" || currentPath === "/oportunidades/sdr";
-  const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/score";
+  const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/inteligencia";
   const isOnAutomationPage = currentPath.startsWith("/fluxos");
   const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/") || currentPath === "/meta-campaigns";
 
@@ -470,16 +470,16 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     </li>
                     <li data-tour="sidebar-crm-score">
                       <Link
-                        to="/crm/score"
+                        to="/crm/inteligencia"
                         className={cn(
                           "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
-                          currentPath === "/crm/score"
+                          currentPath === "/crm/inteligencia"
                             ? "bg-sidebar-accent/60 text-primary font-medium"
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
                         <Trophy size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Score</span>
+                        <span className="whitespace-nowrap truncate">Inteligência</span>
                       </Link>
                     </li>
                   </ul>

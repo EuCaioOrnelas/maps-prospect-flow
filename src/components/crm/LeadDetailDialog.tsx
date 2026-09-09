@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { type Lead, type PipelineStage, type LeadNote, type LeadActivity, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS, type WhatsAppStatus } from '@/hooks/useCRM';
 import { useLeadScores } from '@/hooks/useLeadScores';
 import { cn } from '@/lib/utils';
+import { toIntel100 } from '@/lib/intelligence';
 import { LeadIntelligencePanel } from './LeadIntelligencePanel';
+import { LeadIntelligenceEvolution } from './LeadIntelligenceEvolution';
 import { formatPhoneNumber } from '@/lib/phoneUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -102,7 +104,7 @@ interface LeadDetailDialogProps {
   onAddOrigin: (origin: string) => Promise<void>;
   onUpdateOrigin?: (oldName: string, newName: string) => Promise<void>;
   onDeleteOrigin?: (name: string) => Promise<void>;
-  initialTab?: 'info' | 'notes' | 'history' | 'deals' | 'files';
+  initialTab?: 'info' | 'intelligence' | 'deals' | 'files';
   initialRegisterSale?: boolean;
   members?: ResponsibleMember[];
   onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
@@ -284,7 +286,7 @@ export const LeadDetailDialog = ({
   const navigate = useNavigate();
   const { user, accountOwnerId } = useAuth();
   const { getScoreForPhone } = useLeadScores();
-  const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files'>(initialTab || 'info');
+  const [activeTab, setActiveTab] = useState<'info' | 'intelligence' | 'deals' | 'files'>(initialTab || 'info');
   useEffect(() => {
     if (open && initialTab) setActiveTab(initialTab);
   }, [open, initialTab]);
@@ -1168,9 +1170,8 @@ export const LeadDetailDialog = ({
           {[
             { id: 'info', label: 'Informações' },
             { id: 'deals', label: `Vendas (${deals.length})` },
-            { id: 'notes', label: `Notas (${notes.length})` },
             { id: 'files', label: 'Arquivos' },
-            { id: 'history', label: 'Histórico' },
+            { id: 'intelligence', label: 'Inteligência' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1228,24 +1229,23 @@ export const LeadDetailDialog = ({
                     {/* Score Inteligente — borda inferior limpa do card */}
                     {(() => {
                       const scoreData = lead.phone ? getScoreForPhone(lead.phone) : undefined;
-                      const s = Math.max(0, Math.min(scoreData?.score_total ?? lead.ai_score ?? 0, 1000));
-                      const pct = (s / 1000) * 100;
-                      const bg = s >= 750 ? 'bg-emerald-500' : s >= 500 ? 'bg-blue-500' : s >= 250 ? 'bg-orange-500' : 'bg-red-500';
-                      const fg = s >= 750 ? 'text-emerald-500' : s >= 500 ? 'text-blue-500' : s >= 250 ? 'text-orange-500' : 'text-red-500';
+                      const s = toIntel100(scoreData?.score_total ?? lead.ai_score ?? 0);
+                      const pct = s;
+                      const bg = s >= 75 ? 'bg-emerald-500' : s >= 50 ? 'bg-blue-500' : s >= 25 ? 'bg-orange-500' : 'bg-red-500';
+                      const fg = s >= 75 ? 'text-emerald-500' : s >= 50 ? 'text-blue-500' : s >= 25 ? 'text-orange-500' : 'text-red-500';
                       return (
                         <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50 bg-background/40">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">Score</span>
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">Inteligência</span>
                           <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden">
                             <div className={cn("h-full rounded-full transition-[width] duration-700", bg)} style={{ width: `${pct}%` }} />
                           </div>
-                          <span className={cn("text-xs font-semibold tabular-nums tracking-tight", fg)}>{s}</span>
+                          <span className={cn("text-xs font-semibold tabular-nums tracking-tight", fg)}>{s}/100</span>
                         </div>
                       );
                     })()}
                   </div>
 
                   {/* Inteligência Central Wiize */}
-                  <LeadIntelligencePanel phone={lead.phone} className="mt-3" />
                 </div>
 
                 {/* Responsible Section */}
@@ -1504,7 +1504,13 @@ export const LeadDetailDialog = ({
             )}
 
             {/* Notes Tab */}
-            {activeTab === 'notes' && (
+            {activeTab === 'intelligence' && (
+              <div className="space-y-6">
+                <LeadIntelligencePanel phone={lead.phone} />
+                <LeadIntelligenceEvolution phone={lead.phone} />
+
+                <div>
+                  <h4 className="text-sm font-semibold mb-3">Notas</h4>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <Textarea
@@ -1539,6 +1545,8 @@ export const LeadDetailDialog = ({
                       Nenhuma nota adicionada
                     </p>
                   )}
+                </div>
+                </div>
                 </div>
               </div>
             )}
@@ -1680,8 +1688,10 @@ export const LeadDetailDialog = ({
             )}
 
             {/* History Tab */}
-            {activeTab === 'history' && (
-              <div className="space-y-1">
+            {activeTab === 'intelligence' && (
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold mb-3">Histórico</h4>
+                <div className="space-y-1">
                 {activities
                   .slice((historyPage - 1) * HISTORY_PER_PAGE, historyPage * HISTORY_PER_PAGE)
                   .map((activity, index, arr) => {
@@ -1743,6 +1753,7 @@ export const LeadDetailDialog = ({
                     </Button>
                   </div>
                 )}
+                </div>
               </div>
             )}
           </div>
