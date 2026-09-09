@@ -517,6 +517,9 @@ export default function CRM() {
                     onResponsibleFilterChange={setResponsibleFilter}
                     responsibleMembers={responsibleMembers}
                     currentUserId={user?.id ?? null}
+                    showArchived={showArchived}
+                    onShowArchivedChange={setShowArchived}
+                    archivedCount={archivedCount}
                   />
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
