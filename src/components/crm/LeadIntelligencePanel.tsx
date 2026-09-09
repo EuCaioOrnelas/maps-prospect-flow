@@ -332,7 +332,7 @@ function buildPlaybook(
 
   // Sem nenhuma mensagem trocada: nunca afirmar que existe conversa, mesmo com sinais do motor.
   if (!conv || conv.total === 0) {
-    const empresa = prospect?.company_name || lead?.company || null;
+    const empresa = prospect?.company_name || lead?.company_name || null;
     const nicho = prospect?.category || lead?.category || null;
     const cidade = prospect?.city || lead?.city || null;
     const contexto = [
