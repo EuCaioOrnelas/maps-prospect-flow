@@ -201,8 +201,21 @@ function ActionIntelligence({ score }: { score: number }) {
           Inteligência de ação
         </p>
       </div>
-      <p className="text-sm font-semibold text-foreground mb-2">{advice.title}</p>
-      <ul className="space-y-1.5">
+      <p className="text-sm font-semibold text-foreground">{advice.title}</p>
+
+      <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
+        <div className="rounded-lg bg-card border border-border/60 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Quando agir</p>
+          <p className="text-sm text-foreground">{advice.window}</p>
+        </div>
+        <div className="rounded-lg bg-card border border-border/60 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Melhor canal</p>
+          <p className="text-sm text-foreground">{advice.channel}</p>
+        </div>
+      </div>
+
+      <p className="mt-3 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Passo a passo</p>
+      <ul className="mt-1.5 space-y-1.5">
         {advice.lines.map((l, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
             <Sparkles className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
@@ -210,6 +223,16 @@ function ActionIntelligence({ score }: { score: number }) {
           </li>
         ))}
       </ul>
+
+      <div className="mt-3 rounded-lg bg-card border border-border/60 px-3 py-2">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Mensagem sugerida</p>
+        <p className="text-sm text-foreground leading-relaxed">{advice.script}</p>
+      </div>
+
+      <div className="mt-2 flex items-start gap-2 text-sm text-muted-foreground">
+        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+        <span>{advice.avoid}</span>
+      </div>
     </div>
   );
 }
