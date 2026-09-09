@@ -46,6 +46,8 @@ export interface Lead {
   whatsapp_number_id: string | null;
   created_at: string;
   updated_at: string;
+  archived_at?: string | null;
+  archived_by?: string | null;
   // Joined data
   whatsapp_number?: {
     id: string;
@@ -348,6 +350,29 @@ export const useCRM = () => {
     setLeads((prev) => prev.map((lead) => (lead.id === id ? { ...lead, ...data } as Lead : lead)));
     setSelectedLead((prev) => (prev?.id === id ? { ...prev, ...data } as Lead : prev));
 
+    return data;
+  };
+
+  // Arquivar / desarquivar lead (o contato continua existindo e contando no limite do plano)
+  const setLeadArchived = async (leadId: string, archived: boolean) => {
+    if (!user) return null;
+    const { data, error } = await supabase
+      .from('leads')
+      .update({
+        archived_at: archived ? new Date().toISOString() : null,
+        archived_by: archived ? user.id : null,
+      })
+      .eq('id', leadId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error archiving lead:', error);
+      throw error;
+    }
+
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, ...data } as Lead : l)));
+    await logActivity(leadId, archived ? 'archived' : 'unarchived', archived ? 'Contato arquivado' : 'Contato desarquivado');
     return data;
   };
 
@@ -769,6 +794,7 @@ export const useCRM = () => {
     fetchLeads,
     createLead,
     updateLead,
+    setLeadArchived,
     assignLeadResponsible,
     moveLeadToStage,
     deleteLead,
