@@ -953,6 +953,7 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
 
       case "ai_agent": {
         if (!runtime.hasFreshUserInput) {
+          execution.awaiting_node_id = node.id;
           await persist(execution.id, {
             status: "awaiting_input",
             awaiting_node_id: node.id,
@@ -964,6 +965,7 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
           return;
         }
         runtime.hasFreshUserInput = false;
+        execution.awaiting_node_id = null;
         if (cfg.ai_output_type !== "route_only") {
           const cred = await getOpenAiKey(execution.owner_user_id || execution.user_id);
           if (cred) {
@@ -990,7 +992,13 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
 
       case "data_collect": {
         const varName = String(cfg.variable_name || "resposta").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 30);
-        if (!runtime.hasFreshUserInput) {
+        const retryKey = `__retry_${node.id}`;
+        // A pergunta só é pulada quando a execução estava realmente parada
+        // NESTE nó aguardando resposta. Sem isso, a mensagem que disparou o
+        // fluxo era tratada como resposta e a pergunta nunca era enviada
+        // (acontecia no Número de Atendimento/Evolution).
+        const answeringThisNode = runtime.hasFreshUserInput && execution.awaiting_node_id === node.id;
+        if (!answeringThisNode) {
           const question = interpolate(cfg.question_text || cfg.prompt_message || "", runtime.vars);
           if (question) {
             if (cfg.use_delay) {
@@ -1000,6 +1008,7 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
             }
             await sendText(ctx.send, question);
           }
+          execution.awaiting_node_id = node.id;
           await persist(execution.id, {
             status: "awaiting_input",
             awaiting_node_id: node.id,
@@ -1012,6 +1021,7 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         }
         runtime.hasFreshUserInput = false;
         let value = runtime.lastUserText.trim();
+        let understood = true;
         const cred = await getOpenAiKey(execution.owner_user_id || execution.user_id);
         if (cred) {
           try {
@@ -1022,10 +1032,35 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
               value,
             );
             if (extracted && extracted !== "NAO_ENCONTRADO") value = extracted;
-            else if (cfg.error_message) await sendText(ctx.send, interpolate(cfg.error_message, runtime.vars));
+            else understood = false;
           } catch (_e) { /* fallback: texto cru */ }
         }
+
+        // Não entendeu: pergunta de novo (respeitando max_retries) em vez de
+        // avançar com um dado inválido.
+        if (!understood) {
+          const attempts = Number(runtime.vars[retryKey] ?? 0) + 1;
+          const maxRetries = Number(cfg.max_retries ?? 2);
+          const msg = interpolate(cfg.error_message || "Não entendi sua resposta. Pode enviar novamente?", runtime.vars);
+          if (attempts <= maxRetries) {
+            runtime.vars[retryKey] = attempts;
+            if (msg) await sendText(ctx.send, msg);
+            execution.awaiting_node_id = node.id;
+            await persist(execution.id, {
+              status: "awaiting_input",
+              awaiting_node_id: node.id,
+              current_node_id: node.id,
+              current_node_name: node.name,
+              node_history: history,
+              collected_data: runtime.vars,
+            });
+            return;
+          }
+        }
+
+        delete runtime.vars[retryKey];
         runtime.vars[varName] = value;
+        execution.awaiting_node_id = null;
         if (ctx.leadId && cfg.collect_type === "name") {
           await supabase.from("leads").update({ contact_name: value }).eq("id", ctx.leadId);
         }
@@ -1033,6 +1068,7 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         currentId = defaultTarget(edges, node.id);
         break;
       }
+
 
       case "ab_test": {
         const chosen = pickWeighted(cfg.variants || []);

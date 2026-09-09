@@ -397,7 +397,7 @@ const Chat = () => {
                       onMarkRead={chat.markAsRead}
                       onMarkUnread={chat.markAsUnread}
                       connectionHealth={chat.connectionHealth}
-                      members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
+                      members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email, avatar_url: m.avatar_url }))}
                       currentUserId={user?.id || null}
                       responsibleFilter={responsibleFilter}
                       topToolbar={
@@ -429,7 +429,7 @@ const Chat = () => {
                     messagesEndRef={chat.messagesEndRef as React.RefObject<HTMLDivElement>}
                     onReopenConversation={chat.reopenConversation}
                     fetchTemplates={chat.fetchTemplates}
-                    members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email }))}
+                    members={members.map(m => ({ user_id: m.user_id, name: m.name, email: m.email, avatar_url: m.avatar_url }))}
                     canChangeResponsible={canChangeResponsible}
                     onTransferResponsible={chat.transferConversation}
                     currentUserId={user?.id || ""}

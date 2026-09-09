@@ -195,6 +195,15 @@ export function ChatSidebar({
           <span className="text-[18px] font-semibold wa-sidebar-header-text">Conversas</span>
         </div>
         <div className="flex items-center gap-2">
+          {/* Chat settings — fica à esquerda do seletor de número */}
+          <button
+            onClick={() => navigate("/chat/configuracoes")}
+            className="shrink-0 p-[7px] rounded-full wa-sidebar-header-btn transition-colors border border-border/40 hover:border-primary/40"
+            title="Configurações do chat"
+            aria-label="Configurações do chat"
+          >
+            <Settings size={16} className="wa-sidebar-header-icon" />
+          </button>
           {/* Number selector dropdown */}
           {connections.length > 0 && (
             <DropdownMenu>
@@ -294,22 +303,14 @@ export function ChatSidebar({
               <Search size={18} className="wa-sidebar-header-icon" />
             </button>
           )}
-          <button
-            onClick={() => navigate("/chat/configuracoes")}
-            className="shrink-0 p-[7px] rounded-full wa-sidebar-header-btn transition-colors border border-border/40 hover:border-primary/40"
-            title="Configurações do chat"
-            aria-label="Configurações do chat"
-          >
-            <Settings size={18} className="wa-sidebar-header-icon" />
-          </button>
           {onNewConversation && (
             <button
               onClick={() => setNewConvOpen(true)}
-              className="shrink-0 p-[7px] rounded-full wa-sidebar-header-btn transition-colors border border-border/40 hover:border-primary/40"
+              className="shrink-0 p-[7px] rounded-full bg-primary hover:bg-primary/90 transition-colors shadow-sm"
               title="Nova conversa"
               aria-label="Nova conversa"
             >
-              <MessageSquarePlus size={18} className="wa-sidebar-header-icon" />
+              <MessageSquarePlus size={18} className="text-primary-foreground" />
             </button>
           )}
         </div>
