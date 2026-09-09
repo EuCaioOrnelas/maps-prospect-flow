@@ -260,7 +260,7 @@ function buildAction(ctx: {
         ? "Responder objetivamente à pergunta sobre valores e propor o próximo passo."
         : "Responder ao que ele escreveu e encerrar com uma pergunta que exija resposta.",
       script: last
-        ? `${hello}! Sobre "${String(last).slice(0, 80)}" — já consigo te responder. ${priceIntent ? "Te passo o valor e o prazo agora; prefere por aqui ou numa ligação rápida?" : "Me confirma só uma coisa pra eu te passar certinho?"}`
+        ? `${hello}! Sobre "${String(last).slice(0, 80)}", já consigo te responder. ${priceIntent ? "Te passo o valor e o prazo agora; prefere por aqui ou numa ligação rápida?" : "Me confirma só uma coisa pra eu te passar certinho?"}`
         : null,
       cta: "Abrir conversa",
     };
@@ -300,7 +300,7 @@ function buildAction(ctx: {
       why: `A última mensagem foi há ${hoursLabel(conv.silenceHours)} e a atividade parou.`,
       channel,
       what: "Retomar com uma pergunta objetiva sobre o problema dele, não sobre o produto.",
-      script: `${hello}! Retomando nossa conversa — hoje o que mais atrapalha${niche ? ` na operação de ${niche.toLowerCase()}` : ""} aí?`,
+      script: `${hello}! Retomando nossa conversa. Hoje o que mais atrapalha${niche ? ` na operação de ${niche.toLowerCase()}` : ""} aí?`,
       cta: "Abrir conversa",
     };
   }
@@ -353,6 +353,28 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
 
   const classification = bandF(opportunity);
 
+  /* --------- base de cálculo: explica de onde vem a nota mesmo sem conversa --- */
+  const basis = useMemo(() => {
+    if (hasConversationData) {
+      return {
+        badge: "Base: conversa + empresa",
+        explain: "A nota considera as mensagens trocadas no WhatsApp, os dados da empresa e o histórico comercial deste contato.",
+      };
+    }
+    if (hasSignals) {
+      return {
+        badge: "Base: sinais + empresa",
+        explain: "Ainda não há conversa registrada. A nota vem dos sinais captados pelo motor e dos dados da empresa.",
+      };
+    }
+    return {
+      badge: "Base: só prospecção",
+      explain:
+        "Não existe conversa nem sinal registrado. Esta nota é um potencial inicial, calculado apenas com os dados de empresa (fit e qualidade da prospecção). Ela muda assim que houver a primeira interação.",
+    };
+  }, [hasConversationData, hasSignals]);
+
+
   const lastTouch = conv?.lastMessageAt || lead?.last_response_at || lead?.last_message_sent_at || null;
   const recency = lastTouch ? formatDistanceToNow(new Date(lastTouch), { addSuffix: true, locale: ptBR }) : null;
 
@@ -367,7 +389,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       else parts.push("ainda sem sinais claros de intenção de compra");
       if (conv.waitingReplyHours !== null) parts.push(`contato aguardando resposta há ${hoursLabel(conv.waitingReplyHours)}`);
     } else {
-      parts.push("nenhuma conversa registrada no WhatsApp — intenção e engajamento ainda não podem ser avaliados");
+      parts.push("nenhuma conversa registrada no WhatsApp, portanto intenção e engajamento ainda não podem ser avaliados");
       if (company || niche) parts.push(`avaliação baseada apenas nos dados de prospecção${niche ? ` (${niche})` : ""}`);
     }
     if (deals.length) parts.push(`${deals.length} negociação(ões) no histórico`);
@@ -379,15 +401,17 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
     const out: { label: string; quote?: string; at?: string; source?: string }[] = [];
     conv?.intents.forEach((i) => out.push({ label: i.label, quote: i.quote, at: i.at, source: i.source }));
     if (conv && conv.total >= 5) out.push({ label: `Conversa ativa com ${conv.total} mensagens em ${conv.activeDays} dia(s)` });
-    if (conv && conv.reciprocity >= 35) out.push({ label: `Reciprocidade de ${conv.reciprocity}% — o contato participa da conversa` });
+    if (conv && conv.reciprocity >= 35) out.push({ label: `Reciprocidade de ${conv.reciprocity}%, o contato participa da conversa` });
     if (conv?.leadAvgResponseMinutes != null && conv.leadAvgResponseMinutes <= 60) out.push({ label: `O contato responde em média em ${conv.leadAvgResponseMinutes} min` });
     if (conv?.transcribedAudioCount) out.push({ label: `${conv.transcribedAudioCount} áudio(s) transcrito(s) e analisado(s)` });
-    if ((fit ?? 0) >= 60) out.push({ label: "Perfil compatível com o que você vende (fit calculado pelo motor)" });
+    if (fit !== null) out.push({ label: `Fit de ${fit}/100 com o que você vende, calculado a partir do segmento, região e dados da empresa` });
+    if (quality !== null) out.push({ label: `Qualidade do cadastro em ${quality}/100 (dados de contato e empresa preenchidos)` });
+
     if (prospect?.ai_diagnosis) out.push({ label: "Diagnóstico da empresa disponível na prospecção", quote: String(prospect.ai_diagnosis).slice(0, 300), source: "Prospecção" });
     if (prospect?.rating != null) out.push({ label: `Empresa com avaliação pública ${prospect.rating}${prospect.review_count ? ` (${prospect.review_count} avaliações)` : ""}`, source: "Google Maps" });
     (intel?.factors || []).forEach((f) => { if (f.impact > 0) out.push({ label: f.label }); });
     return out;
-  }, [conv, fit, prospect, intel]);
+  }, [conv, fit, quality, prospect, intel]);
 
   const attention = useMemo(() => {
     const out: { label: string; quote?: string; at?: string; source?: string }[] = [];
@@ -434,7 +458,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   const nicheName = lead?.category || prospect?.category || intel?.niche || null;
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-4", className)}>
       {/* ------------------------------------------------------------ header */}
       <header className="rounded-xl border border-border/60 bg-card p-4">
         <div className="flex items-start justify-between gap-3">
@@ -456,7 +480,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,260px)_1fr] lg:items-center">
+        <div className="mt-4 space-y-3">
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</p>
             <div className="flex items-end gap-2 mt-1">
@@ -464,15 +488,17 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                 {opportunity}<span className="text-base font-medium text-muted-foreground"> de 100</span>
               </p>
             </div>
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="rounded-md text-[11px]">{classification}</Badge>
               <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                 <MomentumIcon className="w-3.5 h-3.5" /> {momentumLabel}
               </span>
+              <Badge variant="secondary" className="rounded-md text-[10px] font-normal">{basis.badge}</Badge>
             </div>
             <div className="mt-2.5 h-1.5 rounded-full bg-muted overflow-hidden">
               <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${opportunity}%` }} />
             </div>
+            <p className="mt-2 text-[12px] text-muted-foreground leading-relaxed">{basis.explain}</p>
           </div>
           <p className="text-[13px] text-muted-foreground leading-relaxed">{summary}</p>
         </div>
@@ -481,18 +507,18 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       {/* -------------------------------------------------------------- tabs */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto rounded-lg">
-          <TabsTrigger value="overview" className="text-[12px]">Visão geral</TabsTrigger>
-          <TabsTrigger value="conversation" className="text-[12px]">Conversa</TabsTrigger>
-          <TabsTrigger value="company" className="text-[12px]">Empresa</TabsTrigger>
-          <TabsTrigger value="prospect" className="text-[12px]">Prospecção</TabsTrigger>
-          <TabsTrigger value="commercial" className="text-[12px]">Comercial</TabsTrigger>
-          <TabsTrigger value="evolution" className="text-[12px]">Evolução</TabsTrigger>
+          <TabsTrigger value="overview" className="text-[12px] gap-1.5"><Target className="w-3.5 h-3.5" />Visão geral</TabsTrigger>
+          <TabsTrigger value="conversation" className="text-[12px] gap-1.5"><MessageSquare className="w-3.5 h-3.5" />Conversa</TabsTrigger>
+          <TabsTrigger value="company" className="text-[12px] gap-1.5"><Building2 className="w-3.5 h-3.5" />Empresa</TabsTrigger>
+          <TabsTrigger value="prospect" className="text-[12px] gap-1.5"><MapPin className="w-3.5 h-3.5" />Prospecção</TabsTrigger>
+          <TabsTrigger value="commercial" className="text-[12px] gap-1.5"><DollarSign className="w-3.5 h-3.5" />Comercial</TabsTrigger>
+          <TabsTrigger value="evolution" className="text-[12px] gap-1.5"><TrendingUp className="w-3.5 h-3.5" />Evolução</TabsTrigger>
         </TabsList>
 
         {/* ------------------------------------------------------- visão geral */}
-        <TabsContent value="overview" className="mt-3 space-y-3">
+        <TabsContent value="overview" className="mt-4 space-y-4">
           <Block icon={Target} title="Dimensões da Inteligência">
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <DimensionCard label="Intenção" icon={Target} value={intent} caption={intent !== null ? bandF(intent) : ""} />
               <DimensionCard label="Engajamento" icon={Zap} value={engagement} caption={engagement !== null ? bandM(engagement) : ""} />
               <StateCard
@@ -514,7 +540,8 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             </div>
           </Block>
 
-          <div className="grid gap-3 lg:grid-cols-2">
+
+          <div className="space-y-4">
             <Block icon={Sparkles} title={`Por que a Oportunidade está em ${opportunity}`}>
               {positives.length === 0 && attention.length === 0 ? (
                 <Empty title="Ainda sem evidências" description="Quando houver conversa, sinais ou dados de prospecção, a Inteligência explica aqui cada fator que influenciou a Oportunidade." />
@@ -544,10 +571,21 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             >
               <p className="text-sm font-semibold text-foreground">{action.title}</p>
               <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">{action.why}</p>
-              <div className="grid grid-cols-2 gap-2 mt-3">
-                <Stat label="Canal" value={action.channel} />
-                <Stat label="O que fazer" value={action.what.length > 42 ? action.what.slice(0, 42) + "…" : action.what} hint={action.what.length > 42 ? action.what : undefined} />
+              <div className="mt-3 space-y-2">
+                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2 flex items-center gap-2">
+                  <MessageSquare className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Canal</p>
+                  <p className="text-[13px] font-semibold text-foreground ml-auto">{action.channel}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">O que fazer</p>
+                  </div>
+                  <p className="text-[13px] text-foreground leading-relaxed mt-1">{action.what}</p>
+                </div>
               </div>
+
               <div className="mt-3 rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Mensagem sugerida</p>
                 {action.script ? (
@@ -563,7 +601,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
         </TabsContent>
 
         {/* ---------------------------------------------------------- conversa */}
-        <TabsContent value="conversation" className="mt-3 space-y-3">
+        <TabsContent value="conversation" className="mt-4 space-y-4">
           {conversationLoading ? (
             <div className="h-32 rounded-xl border border-border/60 bg-muted/20 animate-pulse" />
           ) : !conv ? (
@@ -577,14 +615,14 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
           ) : (
             <>
               <Block icon={MessageSquare} title={`Interações · ${conv.sources.join(" · ")}`}>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Stat label="Mensagens" value={String(conv.total)} hint={`${conv.turns} idas e vindas`} />
                   <Stat label="Do contato" value={String(conv.inbound)} hint={`${conv.reciprocity}% reciprocidade`} />
                   <Stat label="Suas" value={String(conv.outbound)} />
                   <Stat label="Dias com conversa" value={String(conv.activeDays)} />
-                  <Stat label="Sua resposta média" value={conv.avgResponseMinutes != null ? `${conv.avgResponseMinutes} min` : "—"} />
-                  <Stat label="Resposta do contato" value={conv.leadAvgResponseMinutes != null ? `${conv.leadAvgResponseMinutes} min` : "—"} />
-                  <Stat label="Última mensagem" value={conv.lastMessageAt ? formatDistanceToNow(new Date(conv.lastMessageAt), { addSuffix: true, locale: ptBR }) : "—"} />
+                  <Stat label="Sua resposta média" value={conv.avgResponseMinutes != null ? `${conv.avgResponseMinutes} min` : "sem dado"} />
+                  <Stat label="Resposta do contato" value={conv.leadAvgResponseMinutes != null ? `${conv.leadAvgResponseMinutes} min` : "sem dado"} />
+                  <Stat label="Última mensagem" value={conv.lastMessageAt ? formatDistanceToNow(new Date(conv.lastMessageAt), { addSuffix: true, locale: ptBR }) : "sem dado"} />
                   <Stat
                     label="Áudios"
                     value={String(conv.audioCount)}
@@ -602,7 +640,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                 )}
               </Block>
 
-              <div className="grid gap-3 lg:grid-cols-2">
+              <div className="space-y-4">
                 <Block icon={Target} title="Intenção detectada na conversa">
                   {conv.intents.length ? (
                     <ul>{conv.intents.map((i) => <EvidenceRow key={i.key} label={i.label} quote={i.quote} at={i.at} source={i.source} />)}</ul>
@@ -622,7 +660,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
 
               {signals.length > 0 && (
                 <Block icon={Sparkles} title={`Sinais do motor · ${signals.length}`}>
-                  <div className="grid gap-1.5 sm:grid-cols-2">
+                  <div className="grid gap-1.5">
                     {signals.slice(0, 10).map((s) => {
                       const evidence = (s.meta as any)?.snippet || (s.meta as any)?.text || (s.meta as any)?.content;
                       return (
@@ -656,9 +694,9 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
         </TabsContent>
 
         {/* ----------------------------------------------------------- empresa */}
-        <TabsContent value="company" className="mt-3 space-y-3">
+        <TabsContent value="company" className="mt-4 space-y-4">
           <Block icon={Building2} title="Dados da empresa">
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
               <Field label="Empresa" value={lead?.company_name || prospect?.company_name} />
               <Field label="Contato" value={lead?.contact_name || prospect?.contact_name} />
               <Field label="Segmento" value={lead?.category || prospect?.category} />
@@ -683,11 +721,11 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
         </TabsContent>
 
         {/* -------------------------------------------------------- prospecção */}
-        <TabsContent value="prospect" className="mt-3 space-y-3">
+        <TabsContent value="prospect" className="mt-4 space-y-4">
           {prospect ? (
             <>
               <Block icon={MapPin} title="Como este contato chegou">
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
                   <Field label="Origem" value={prospect.origin || lead?.origin} />
                   <Field label="Prospectado em" value={prospect.prospected_at ? format(new Date(prospect.prospected_at), "dd/MM/yyyy", { locale: ptBR }) : undefined} />
                   <Field label="Segmento" value={prospect.category} />
@@ -737,7 +775,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
         </TabsContent>
 
         {/* --------------------------------------------------------- comercial */}
-        <TabsContent value="commercial" className="mt-3 space-y-3">
+        <TabsContent value="commercial" className="mt-4 space-y-4">
           <Block icon={DollarSign} title="Histórico comercial">
             {deals.length ? (
               <>
@@ -752,7 +790,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                       <div className="min-w-0">
                         <p className="text-[13px] font-medium text-foreground truncate">{d.title || "Negociação"}</p>
                         <p className="text-[11px] text-muted-foreground">
-                          {d.status || "—"} · {format(new Date(d.closed_at || d.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                          {d.status || "Sem status"} · {format(new Date(d.closed_at || d.created_at), "dd/MM/yyyy", { locale: ptBR })}
                         </p>
                       </div>
                       <span className="text-[13px] font-semibold tabular-nums text-foreground shrink-0">
@@ -767,7 +805,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             )}
           </Block>
 
-          <div className="grid gap-3 lg:grid-cols-2">
+          <div className="space-y-4">
             <Block icon={CheckCircle2} title="Padrão de clientes convertidos">
               {convertedPattern ? (
                 <p className="text-[13px] text-muted-foreground leading-relaxed">
@@ -787,7 +825,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                 <p className="text-[13px] text-muted-foreground leading-relaxed">
                   {lostPattern.sample_size} oportunidade(s) perdida(s) apresentaram padrão parecido
                   {lostPattern.niche ? ` no segmento ${lostPattern.niche}` : ""}.
-                  {intel?.loss_pattern_match_score ? ` Aderência atual deste contato: ${intel.loss_pattern_match_score}%.` : ""} Não é previsão — é um alerta para agir antes.
+                  {intel?.loss_pattern_match_score ? ` Aderência atual deste contato: ${intel.loss_pattern_match_score}%.` : ""} Não é previsão, é um alerta para agir antes.
                 </p>
               ) : (
                 <Empty title="Dados insuficientes" description="Ainda não há oportunidades perdidas suficientes registradas para identificar padrões de perda." />
@@ -797,7 +835,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
         </TabsContent>
 
         {/* ---------------------------------------------------------- evolução */}
-        <TabsContent value="evolution" className="mt-3 space-y-3">
+        <TabsContent value="evolution" className="mt-4 space-y-4">
           <Block icon={TrendingUp} title="Evolução da Oportunidade">
             {chartData.length >= 2 ? (
               <div className="h-44">
