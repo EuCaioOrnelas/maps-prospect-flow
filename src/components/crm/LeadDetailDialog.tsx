@@ -1349,7 +1349,7 @@ export const LeadDetailDialog = ({
             {/* Intelligence Tab */}
             {activeTab === 'intelligence' && (
               <div className="space-y-6">
-                <LeadIntelligencePanel phone={lead.phone} />
+                <LeadIntelligencePanel phone={lead.phone} lead={lead} />
                 <LeadIntelligenceEvolution phone={lead.phone} />
               </div>
             )}

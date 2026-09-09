@@ -317,7 +317,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   if (conv?.avgResponseMinutes != null && conv.avgResponseMinutes <= 30) positives.push("Respostas rápidas na conversa");
   if (intentSignals.length) positives.push(`Sinais de interesse comercial: ${intentSignals.slice(0, 3).map((s) => signalLabel(s.signal_type).toLowerCase()).join(", ")}`);
   if (fit >= 60) positives.push("Perfil da empresa compatível com o que você vende");
-  if (lead?.ai_diagnosis) positives.push("Diagnóstico da empresa disponível na prospecção");
+  if ((lead as any)?.ai_diagnosis) positives.push("Diagnóstico da empresa disponível na prospecção");
   if (conv?.waitingReplyHours != null) attention.push(`Última mensagem do contato sem resposta há ${Math.max(1, Math.round(conv.waitingReplyHours))}h`);
   if (hasPriceObjection) attention.push("Objeção de preço detectada na conversa");
   if (momentumState.includes("DECLINING")) attention.push("Atividade em queda em relação ao período anterior");
@@ -501,7 +501,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       )}
 
       {/* 7. Empresa e prospecção */}
-      {(lead?.company_name || lead?.category || lead?.city || lead?.website || lead?.ai_diagnosis || lead?.origin) && (
+      {(lead?.company_name || lead?.category || lead?.city || lead?.website || (lead as any)?.ai_diagnosis || lead?.origin) && (
         <Section icon={Building2} title="Empresa e prospecção" subtitle="Dados coletados na origem do contato" defaultOpen={false}>
           <div className="grid grid-cols-2 gap-2">
             {lead?.company_name && <Metric label="Empresa" value={lead.company_name} />}
@@ -516,7 +516,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
               <Metric label="Prospectado" value={format(new Date((lead as any).prospected_at), "dd/MM/yyyy", { locale: ptBR })} />
             )}
           </div>
-          {lead?.ai_diagnosis && (
+          {(lead as any)?.ai_diagnosis && (
             <div className="mt-2.5 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5">
               <div className="flex items-center gap-1.5 mb-1">
                 <Search className="w-3.5 h-3.5 text-primary" />
