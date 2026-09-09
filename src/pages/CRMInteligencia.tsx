@@ -24,7 +24,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
-import { IntelligenceOverview } from "@/components/crm/IntelligenceOverview";
+import { IntelligenceCenter } from "@/components/crm/IntelligenceCenter";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -1077,7 +1077,7 @@ const LeadDetailPopup = ({ lead, onClose }: { lead: RevenueLead; onClose: () => 
       <Card className="w-full max-w-2xl bg-card max-h-[95vh] sm:max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Detalhe do Contato</CardTitle>
+            <CardTitle className="text-lg">Detalhes da Inteligência</CardTitle>
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
               <X className="h-5 w-5" />
             </button>
@@ -1712,7 +1712,7 @@ const CRMInteligencia = () => {
                   </button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  A Inteligência analisa os sinais comerciais de cada contato e atribui uma pontuação de oportunidade de 0 a 100
+                  Analise a intenção, o engajamento, o comportamento e as oportunidades dos seus leads.
                 </p>
               </div>
             </div>
@@ -1731,7 +1731,7 @@ const CRMInteligencia = () => {
                 <TabsList className="bg-muted/50 p-1 inline-flex w-max max-w-full">
                   <TabsTrigger value="dashboard" className="gap-2">
                     <Brain className="h-4 w-4" />
-                    Visão geral
+                    Central
                   </TabsTrigger>
                   <TabsTrigger value="users" className="gap-2">
                     <Users className="h-4 w-4" />
@@ -1739,19 +1739,17 @@ const CRMInteligencia = () => {
                   </TabsTrigger>
                   <TabsTrigger value="ranking" className="gap-2">
                     <Trophy className="h-4 w-4" />
-                    Ranking
+                    Ranking geral
                   </TabsTrigger>
                   <TabsTrigger value="rules" className="gap-2 hidden lg:inline-flex">
                     <Settings className="h-4 w-4" />
-                    Regras da Inteligência
+                    Ajustes do motor
                   </TabsTrigger>
                 </TabsList>
               </div>
 
               <TabsContent value="dashboard" className="space-y-6">
-                <IntelligenceOverview leads={leads as any} onSelectLead={(l) => setAutoOpenedLead(l as any)} />
-                <div className="wiize-hairline" />
-                <ScoreDashboard leads={leads} />
+                <IntelligenceCenter leads={leads as any} onSelectLead={(l) => setAutoOpenedLead(l as any)} />
               </TabsContent>
               <TabsContent value="users">
                 <ScoreUsersTab leads={leads} />
