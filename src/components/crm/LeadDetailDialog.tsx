@@ -1357,8 +1357,10 @@ export const LeadDetailDialog = ({
             {/* Notes Tab */}
             {activeTab === 'notes' && (
               <div className="space-y-6">
-                <div>
-                  <h4 className="text-sm font-semibold mb-3">Notas</h4>
+                <div className="rounded-xl border border-border/60 bg-card p-4">
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" /> Notas
+                  </h4>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <Textarea
