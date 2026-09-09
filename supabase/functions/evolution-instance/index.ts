@@ -173,6 +173,33 @@ function publicConn(c: any) {
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
+// Consulta o estado real da sessão na Evolution.
+// `transient: true` = não deu para confirmar (rede/erro do servidor). Nesses casos
+// NUNCA marcamos a linha como fora do ar — só o WhatsApp pode derrubar a conexão.
+async function probeState(iname: string): Promise<{ state: string; transient: boolean }> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return { state: normalizeState(await evo(`/instance/connectionState/${iname}`, { method: "GET" })), transient: false };
+    } catch (e) {
+      const status = (e as any).status;
+      if (status === 404) {
+        // 404 pode ser rota instável: confirma se a instância sumiu mesmo
+        try {
+          const list = await evo(`/instance/fetchInstances?instanceName=${encodeURIComponent(iname)}`, { method: "GET" });
+          const arr = Array.isArray(list) ? list : list ? [list] : [];
+          if (arr.length) return { state: normalizeState(arr[0]?.instance || arr[0]), transient: false };
+          return { state: "missing", transient: false };
+        } catch {
+          return { state: "close", transient: true };
+        }
+      }
+      if (attempt === 0) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+      return { state: "close", transient: true };
+    }
+  }
+  return { state: "close", transient: true };
+}
+
 // Apaga definitivamente as conversas guardadas de uma linha que ficou 30 dias fora do ar.
 async function purgeEvolutionLine(admin: any, c: any) {
   try {
@@ -288,9 +315,9 @@ Deno.serve(async (req) => {
       for (const c of conns || []) {
         const iname = c.evolution_instance_name as string;
         if (!iname || staleIds.has(c.id)) continue;
-        let state = "close";
-        try { state = normalizeState(await evo(`/instance/connectionState/${iname}`, { method: "GET" })); }
-        catch (e) { state = (e as any).status === 404 ? "missing" : "close"; }
+        const probe = await probeState(iname);
+        if (probe.transient) { report[iname] = "skipped_unconfirmed"; continue; }
+        const state = probe.state;
 
         if (state === "open") {
           if (c.evolution_state !== "open" || c.evolution_disconnected_since || c.evolution_qr_alert_sent_at) {
@@ -600,11 +627,11 @@ Deno.serve(async (req) => {
       let phone = conn.display_phone_number;
       let profileName = conn.profile_name;
       let profilePic = conn.profile_pic_url;
-      try {
-        const st = await evo(`/instance/connectionState/${name}`, { method: "GET" });
-        state = normalizeState(st);
-      } catch (e) {
-        if ((e as any).status === 404) state = "close";
+      {
+        const probe = await probeState(name);
+        // Falha não confirmada (rede/erro do servidor) mantém o estado atual:
+        // a linha só cai quando o próprio WhatsApp encerra a sessão.
+        if (!probe.transient) state = probe.state === "missing" ? "close" : probe.state;
       }
       if (state === "open") {
         try {
