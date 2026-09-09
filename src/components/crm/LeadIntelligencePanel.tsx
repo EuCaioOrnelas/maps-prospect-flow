@@ -489,21 +489,31 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   const detail = useLeadIntelligenceDetail(phone, (lead as any)?.id || null);
   const { conversation: conv, signals, history, deals, prospect, patterns } = detail;
 
+  const engineFeatures = ((profile as any)?.features || {}) as Record<string, any>;
+  const engineSignals = Number(engineFeatures.signals_count || 0);
+  const engineMessages = Number(engineFeatures.messages_count || 0);
+
   const state: AnalysisState = useMemo(() => {
-    const msgs = conv?.total || 0;
-    const sigs = signals.length;
+    const msgs = Math.max(conv?.total || 0, engineMessages);
+    const sigs = Math.max(signals.length, engineSignals);
     if (msgs === 0 && sigs === 0) return "NO_DATA";
     if (msgs < 4 || sigs < 2) return "PARTIAL";
     return "COMPLETE";
-  }, [conv, signals.length]);
+  }, [conv, signals.length, engineMessages, engineSignals]);
 
   const confidence = useMemo(() => {
-    const v = (conv?.total || 0) * 6 + signals.length * 10 + (prospect ? 10 : 0);
+    const v =
+      Math.max(conv?.total || 0, engineMessages) * 6 +
+      Math.max(signals.length, engineSignals) * 10 +
+      (prospect ? 10 : 0);
     return Math.max(0, Math.min(100, v));
-  }, [conv, signals.length, prospect]);
+  }, [conv, signals.length, prospect, engineMessages, engineSignals]);
 
   const opportunity = profile ? Math.round(Number(profile.opportunity_score || 0)) : null;
   const hasConv = !!conv && conv.total > 0;
+  // O motor legado (revenue) pode ter engajamento sem mensagens espelhadas no chat.
+  const hasEngagementData = hasConv || (history.length > 0 && Number(profile?.engagement_score || 0) > 0);
+
 
   const dims: Dim[] = useMemo(() => {
     const d: Dim[] = [];
