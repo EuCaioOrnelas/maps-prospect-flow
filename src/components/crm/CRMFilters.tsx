@@ -70,6 +70,9 @@ export const CRMFilters = ({
   responsibleMembers = [],
   currentUserId,
   showResponsibleFilter = false,
+  showArchived = false,
+  onShowArchivedChange,
+  archivedCount = 0,
 }: CRMFiltersProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [localSearch, setLocalSearch] = useState(filters.search);
