@@ -1046,7 +1046,7 @@ export const LeadDetailDialog = ({
                 <div className="space-y-3">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Informações de Contato</span>
 
-                  <div className="bg-muted/40 rounded-lg overflow-hidden">
+                  <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
                     <div className="divide-y divide-border/50">
                       {/* Phone - Read only */}
                       <div className="flex items-center gap-3 p-3">
