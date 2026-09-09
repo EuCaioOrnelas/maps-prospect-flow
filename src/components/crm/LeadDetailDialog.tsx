@@ -284,7 +284,7 @@ export const LeadDetailDialog = ({
   const navigate = useNavigate();
   const { user, accountOwnerId } = useAuth();
   const { getScoreForPhone } = useLeadScores();
-  const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'history' | 'deals' | 'files'>(initialTab || 'info');
+  const [activeTab, setActiveTab] = useState<'info' | 'intelligence' | 'deals' | 'files'>(initialTab || 'info');
   useEffect(() => {
     if (open && initialTab) setActiveTab(initialTab);
   }, [open, initialTab]);
@@ -1168,9 +1168,8 @@ export const LeadDetailDialog = ({
           {[
             { id: 'info', label: 'Informações' },
             { id: 'deals', label: `Vendas (${deals.length})` },
-            { id: 'notes', label: `Notas (${notes.length})` },
             { id: 'files', label: 'Arquivos' },
-            { id: 'history', label: 'Histórico' },
+            { id: 'intelligence', label: 'Inteligência' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1245,7 +1244,6 @@ export const LeadDetailDialog = ({
                   </div>
 
                   {/* Inteligência Central Wiize */}
-                  <LeadIntelligencePanel phone={lead.phone} className="mt-3" />
                 </div>
 
                 {/* Responsible Section */}
@@ -1504,7 +1502,13 @@ export const LeadDetailDialog = ({
             )}
 
             {/* Notes Tab */}
-            {activeTab === 'notes' && (
+            {activeTab === 'intelligence' && (
+              <div className="space-y-6">
+                <LeadIntelligencePanel phone={lead.phone} />
+                <LeadIntelligenceEvolution phone={lead.phone} />
+
+                <div>
+                  <h4 className="text-sm font-semibold mb-3">Notas</h4>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <Textarea
@@ -1540,8 +1544,7 @@ export const LeadDetailDialog = ({
                     </p>
                   )}
                 </div>
-              </div>
-            )}
+                </div>
 
             {/* Deals Tab */}
             {activeTab === 'deals' && (
@@ -1680,8 +1683,9 @@ export const LeadDetailDialog = ({
             )}
 
             {/* History Tab */}
-            {activeTab === 'history' && (
-              <div className="space-y-1">
+                <div>
+                  <h4 className="text-sm font-semibold mb-3">Histórico</h4>
+                  <div className="space-y-1">
                 {activities
                   .slice((historyPage - 1) * HISTORY_PER_PAGE, historyPage * HISTORY_PER_PAGE)
                   .map((activity, index, arr) => {
@@ -1743,6 +1747,8 @@ export const LeadDetailDialog = ({
                     </Button>
                   </div>
                 )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
