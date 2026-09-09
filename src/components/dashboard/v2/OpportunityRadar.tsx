@@ -72,7 +72,7 @@ export function OpportunityRadar({ radarLeads }: OpportunityRadarProps) {
               <tr className="border-b border-border/30">
                 <th className="text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-6 pb-2">Lead</th>
                 <th className="text-left text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-3 pb-2">Segmento</th>
-                <th className="text-center text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-3 pb-2">Score IA</th>
+                <th className="text-center text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-3 pb-2">Inteligência</th>
                 <th className="text-right text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-3 pb-2">Potencial</th>
                 <th className="text-center text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-3 pb-2">Status</th>
                 <th className="text-right text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-6 pb-2">Crescimento 7d</th>

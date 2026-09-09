@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { type Lead, type PipelineStage, type LeadNote, type LeadActivity, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS, type WhatsAppStatus } from '@/hooks/useCRM';
 import { useLeadScores } from '@/hooks/useLeadScores';
 import { cn } from '@/lib/utils';
+import { toIntel100 } from '@/lib/intelligence';
 import { LeadIntelligencePanel } from './LeadIntelligencePanel';
 import { LeadIntelligenceEvolution } from './LeadIntelligenceEvolution';
 import { formatPhoneNumber } from '@/lib/phoneUtils';
@@ -1228,17 +1229,17 @@ export const LeadDetailDialog = ({
                     {/* Score Inteligente — borda inferior limpa do card */}
                     {(() => {
                       const scoreData = lead.phone ? getScoreForPhone(lead.phone) : undefined;
-                      const s = Math.max(0, Math.min(scoreData?.score_total ?? lead.ai_score ?? 0, 1000));
-                      const pct = (s / 1000) * 100;
-                      const bg = s >= 750 ? 'bg-emerald-500' : s >= 500 ? 'bg-blue-500' : s >= 250 ? 'bg-orange-500' : 'bg-red-500';
-                      const fg = s >= 750 ? 'text-emerald-500' : s >= 500 ? 'text-blue-500' : s >= 250 ? 'text-orange-500' : 'text-red-500';
+                      const s = toIntel100(scoreData?.score_total ?? lead.ai_score ?? 0);
+                      const pct = s;
+                      const bg = s >= 75 ? 'bg-emerald-500' : s >= 50 ? 'bg-blue-500' : s >= 25 ? 'bg-orange-500' : 'bg-red-500';
+                      const fg = s >= 75 ? 'text-emerald-500' : s >= 50 ? 'text-blue-500' : s >= 25 ? 'text-orange-500' : 'text-red-500';
                       return (
                         <div className="flex items-center gap-2 px-3 py-2 border-t border-border/50 bg-background/40">
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">Score</span>
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">Inteligência</span>
                           <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden">
                             <div className={cn("h-full rounded-full transition-[width] duration-700", bg)} style={{ width: `${pct}%` }} />
                           </div>
-                          <span className={cn("text-xs font-semibold tabular-nums tracking-tight", fg)}>{s}</span>
+                          <span className={cn("text-xs font-semibold tabular-nums tracking-tight", fg)}>{s}/100</span>
                         </div>
                       );
                     })()}

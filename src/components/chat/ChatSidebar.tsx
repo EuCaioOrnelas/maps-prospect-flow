@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { toIntel100 } from '@/lib/intelligence';
 import { Search, Pin, VolumeX, ChevronDown, MessageSquarePlus, Phone, Check, SlidersHorizontal, AlertTriangle, UserPlus, Trash2, Ban, Settings, CheckCheck, Mail, User as UserIcon, Columns } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -79,7 +80,7 @@ function getLastMessagePreview(conv: ChatConversation): string {
 
 type FilterType = "all" | "unread" | "filtered";
 
-const DEFAULT_FILTER_CONFIG: ChatFilterConfig = { tags: [], crmStages: [], scoreMin: 0, scoreMax: 1000 };
+const DEFAULT_FILTER_CONFIG: ChatFilterConfig = { tags: [], crmStages: [], scoreMin: 0, scoreMax: 100 };
 
 export function ChatSidebar({
   conversations, activeConversationId, onSelectConversation,
@@ -113,11 +114,11 @@ export function ChatSidebar({
     return m;
   }, [members]);
 
-  const hasCustomFilters = customFilters.tags.length > 0 || customFilters.crmStages.length > 0 || customFilters.scoreMin > 0 || customFilters.scoreMax < 1000;
-  const customFilterCount = customFilters.tags.length + customFilters.crmStages.length + (customFilters.scoreMin > 0 || customFilters.scoreMax < 1000 ? 1 : 0);
+  const hasCustomFilters = customFilters.tags.length > 0 || customFilters.crmStages.length > 0 || customFilters.scoreMin > 0 || customFilters.scoreMax < 100;
+  const customFilterCount = customFilters.tags.length + customFilters.crmStages.length + (customFilters.scoreMin > 0 || customFilters.scoreMax < 100 ? 1 : 0);
 
   const handleApplyFilters = (filters: ChatFilterConfig) => {
-    const nextHasFilters = filters.tags.length > 0 || filters.crmStages.length > 0 || filters.scoreMin > 0 || filters.scoreMax < 1000;
+    const nextHasFilters = filters.tags.length > 0 || filters.crmStages.length > 0 || filters.scoreMin > 0 || filters.scoreMax < 100;
 
     setCustomFilters(filters);
     setActiveFilter(nextHasFilters ? "filtered" : "all");
@@ -156,7 +157,8 @@ export function ChatSidebar({
         }
       }
 
-      if (crmLead.score < customFilters.scoreMin || crmLead.score > customFilters.scoreMax) {
+      const intelScore = toIntel100(crmLead.score);
+      if (intelScore < customFilters.scoreMin || intelScore > customFilters.scoreMax) {
         return false;
       }
 

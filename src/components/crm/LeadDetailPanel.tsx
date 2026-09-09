@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toIntel100 } from '@/lib/intelligence';
 import { type Lead, type PipelineStage, type LeadNote, type LeadActivity, WHATSAPP_STATUS_LABELS, WHATSAPP_STATUS_COLORS, type WhatsAppStatus } from '@/hooks/useCRM';
 import { cn } from '@/lib/utils';
 import { formatPhoneNumber } from '@/lib/phoneUtils';
@@ -427,7 +428,7 @@ export const LeadDetailPanel = ({
               </h2>
               <div className="flex items-center gap-1.5 bg-primary/10 px-2 py-1 rounded-full shrink-0">
                 <Trophy className="w-3.5 h-3.5 text-primary" />
-                <span className="text-xs font-bold text-primary">{lead.ai_score || 0}</span>
+                <span className="text-xs font-bold text-primary">{toIntel100(lead.ai_score)}/100</span>
               </div>
               <Button 
                 variant="ghost" 
@@ -505,10 +506,10 @@ export const LeadDetailPanel = ({
             </div>
             {/* Score */}
             <div className="text-right">
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Score</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Inteligência</label>
               <div className="flex items-center gap-1.5 justify-end">
                 <Trophy className="w-3.5 h-3.5 text-primary" />
-                <span className="text-sm font-bold text-primary">{lead.ai_score || 0}</span>
+                <span className="text-sm font-bold text-primary">{toIntel100(lead.ai_score)}/100</span>
               </div>
             </div>
           </div>
