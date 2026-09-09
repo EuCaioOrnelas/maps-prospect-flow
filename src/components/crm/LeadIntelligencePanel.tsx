@@ -353,6 +353,28 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
 
   const classification = bandF(opportunity);
 
+  /* --------- base de cálculo: explica de onde vem a nota mesmo sem conversa --- */
+  const basis = useMemo(() => {
+    if (hasConversationData) {
+      return {
+        badge: "Base: conversa + empresa",
+        explain: "A nota considera as mensagens trocadas no WhatsApp, os dados da empresa e o histórico comercial deste contato.",
+      };
+    }
+    if (hasSignals) {
+      return {
+        badge: "Base: sinais + empresa",
+        explain: "Ainda não há conversa registrada. A nota vem dos sinais captados pelo motor e dos dados da empresa.",
+      };
+    }
+    return {
+      badge: "Base: só prospecção",
+      explain:
+        "Não existe conversa nem sinal registrado. Esta nota é um potencial inicial, calculado apenas com os dados de empresa (fit e qualidade da prospecção). Ela muda assim que houver a primeira interação.",
+    };
+  }, [hasConversationData, hasSignals]);
+
+
   const lastTouch = conv?.lastMessageAt || lead?.last_response_at || lead?.last_message_sent_at || null;
   const recency = lastTouch ? formatDistanceToNow(new Date(lastTouch), { addSuffix: true, locale: ptBR }) : null;
 
