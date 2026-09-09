@@ -546,14 +546,6 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
     return "COMPLETE";
   }, [conv, signals.length, engineMessages, engineSignals]);
 
-  const confidence = useMemo(() => {
-    const v =
-      Math.max(conv?.total || 0, engineMessages) * 6 +
-      Math.max(signals.length, engineSignals) * 10 +
-      (prospect ? 10 : 0);
-    return Math.max(0, Math.min(100, v));
-  }, [conv, signals.length, prospect, engineMessages, engineSignals]);
-
   const opportunity = profile ? Math.round(Number(profile.opportunity_score || 0)) : null;
   const hasConv = !!conv && conv.total > 0;
   // O motor legado (revenue) pode ter engajamento sem mensagens espelhadas no chat.
@@ -1151,7 +1143,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
                       <p className="text-[13px] text-foreground/90 leading-snug">{signalLabel(h.event_type || "Atualização")}</p>
                       <p className="text-[10px] text-muted-foreground">
                         {format(new Date(h.created_at), "dd/MM HH:mm")}
-                        {h.score_after != null ? ` · oportunidade ${Math.round(Number(h.score_after) / 10)}/100` : ""}
+                        {h.score_after != null ? ` · oportunidade ${Math.round(Number(h.score_after) / 10)} de 100` : ""}
                       </p>
                     </div>
                   </li>
