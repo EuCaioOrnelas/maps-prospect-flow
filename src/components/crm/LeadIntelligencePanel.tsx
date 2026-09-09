@@ -183,7 +183,7 @@ function ActionIntelligence({ score }: { score: number }) {
   );
 }
 
-function Dimension({ label, value, suffix = "/100" }: { label: string; value: number; suffix?: string }) {
+function Dimension({ label, value, suffix = "/100", help }: { label: string; value: number; suffix?: string; help?: string }) {
   return (
     <div className="rounded-lg border border-border/60 bg-card px-3 py-2.5">
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
@@ -197,6 +197,7 @@ function Dimension({ label, value, suffix = "/100" }: { label: string; value: nu
           style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
         />
       </div>
+      {help && <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">{help}</p>}
     </div>
   );
 }
