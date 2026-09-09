@@ -313,20 +313,8 @@ const LeadCardComponent = ({
         </div>
       )}
 
-      {/* Footer - Status, Tags and Response time */}
+      {/* Footer - Tags and Response time */}
       <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-        {lead.whatsapp_status && (
-          <Badge
-            variant="secondary"
-            className={cn(
-              "text-[10px] px-1.5 py-0 shrink-0 pointer-events-none",
-              WHATSAPP_STATUS_COLORS[lead.whatsapp_status]
-            )}
-          >
-            {WHATSAPP_STATUS_LABELS[lead.whatsapp_status]}
-          </Badge>
-        )}
-
         {/* Custom tags */}
         {Array.isArray(lead.tags) && lead.tags.slice(0, 2).map((tag) => (
           <Badge
