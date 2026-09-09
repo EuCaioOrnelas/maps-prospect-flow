@@ -921,7 +921,7 @@ Deno.serve(async (req) => {
       case "recompute_account": {
         const { data: rls } = await sb
           .from("revenue_leads").select("phone_e164, last_activity_at")
-          .eq("owner_user_id", owner)
+          .or(`owner_user_id.eq.${owner},user_id.eq.${owner}`)
           .order("last_activity_at", { ascending: false })
           .limit(body.limit || 200);
         let done = 0;
