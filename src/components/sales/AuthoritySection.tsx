@@ -12,7 +12,7 @@ const stats = [
 const pillars = [
  { icon: Shield, title: "API Oficial do WhatsApp", desc: "Operação segura, sem risco de banimento. Parceiro oficial Meta Business." },
  { icon: Cpu, title: "IA proprietária", desc: "Modelos treinados para qualificação, personalização e atendimento B2B." },
- { icon: MessageSquare, title: "CRM nativo", desc: "Pipeline, score, histórico e automação integrados sem ferramentas externas." },
+ { icon: MessageSquare, title: "CRM nativo", desc: "Pipeline, histórico, automação e priorização de oportunidades sem ferramentas externas." },
  { icon: BarChart3, title: "Métricas em tempo real", desc: "Dashboards com visibilidade total sobre performance e conversão." },
 ];
 

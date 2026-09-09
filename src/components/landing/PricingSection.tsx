@@ -247,8 +247,8 @@ export const PricingSection = () => {
  rows: [
  { label: "Contatos totais no CRM", start: "Até 1.000", growth: "Até 10.000", scale: "Sob medida" },
  { label: "CRM completo com kanban e pipeline visual", start: true, growth: true, scale: true },
- { label: "Score de Intenção de Compra prioriza quem está pronto pra fechar", start: true, growth: true, scale: true },
- { label: "Controle de engajamento por lead em tempo real", start: true, growth: true, scale: true },
+ { label: "Inteligência comercial prioriza quem está pronto pra fechar e sugere a próxima ação", start: true, growth: true, scale: true },
+ { label: "Engajamento, intenção, risco e momentum de cada lead em tempo real", start: true, growth: true, scale: true },
  { label: "Identifica leads prontos para upgrade e recompra", start: true, growth: true, scale: true },
  { label: "Detecção de leads frios e reativação automática", start: true, growth: true, scale: true },
  { label: "Tags, filtros avançados e segmentação dinâmica", start: true, growth: true, scale: true },

@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 const included = [
  "Captação inteligente de leads B2B",
- "Diagnóstico e score com IA",
+ "Diagnóstico da empresa e leitura de oportunidade",
  "Mensagens personalizadas automaticamente",
  "Envio via WhatsApp API oficial",
  "Agente de IA para atendimento 24/7",

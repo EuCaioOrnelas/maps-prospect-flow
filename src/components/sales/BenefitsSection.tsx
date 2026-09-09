@@ -8,7 +8,7 @@ const benefits = [
  { icon: MessageCircle, title: "Mais respostas", desc: "Mensagens personalizadas com contexto geram até 3x mais interesse." },
  { icon: Headphones, title: "Operação 24/7", desc: "Atendimento automatizado mantém sua operação ativa o dia inteiro." },
  { icon: RefreshCw, title: "Zero oportunidades perdidas", desc: "Follow-up inteligente reengaja leads no momento certo." },
- { icon: LayoutGrid, title: "Visão total do funil", desc: "CRM integrado com score, histórico e automação em um só lugar." },
+ { icon: LayoutGrid, title: "Visão total do funil", desc: "CRM integrado com histórico, automação e a leitura de oportunidade de cada lead em um só lugar." },
 ];
 
 export const BenefitsSection = () => {

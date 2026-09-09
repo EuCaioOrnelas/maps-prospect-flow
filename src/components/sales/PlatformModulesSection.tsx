@@ -620,7 +620,7 @@ const CampaignMock = () => (
 
 /* ---------------------------- 5. CRM ---------------------------- */
 const CrmMock = () => (
-  <MockShell title="CRM Inteligente — Pipeline comercial" badge="score IA">
+  <MockShell title="CRM Inteligente — Pipeline comercial" badge="inteligência">
     <Reveal className="grid grid-cols-3 gap-1.5 mb-2.5">
       {[
         { l: "Em negociação", v: "R$ 184k" },
@@ -1167,7 +1167,7 @@ const modules: ModuleItem[] = [
       "Busca inteligente por nicho e localização",
       "Diagnóstico e análise de cada empresa com IA",
       "Abordagem gerada com base no perfil da sua empresa",
-      "Score de oportunidade e dados enriquecidos",
+      "Diagnóstico da empresa e leitura de oportunidade",
     ],
     mock: ProspectMock,
   },
@@ -1219,7 +1219,7 @@ const modules: ModuleItem[] = [
     title: "Tenha todas as oportunidades sob controle",
     description:
       "Conversas, atividades, histórico e etapa comercial ficam organizados sozinhos. Você vê na hora quais oportunidades merecem atenção.",
-    benefits: ["Pipeline inteligente", "Score de intenção", "Histórico completo", "Priorização automática"],
+    benefits: ["Pipeline inteligente", "Intenção e risco por lead", "Histórico completo", "Próxima ação recomendada"],
     mock: CrmMock,
   },
   {

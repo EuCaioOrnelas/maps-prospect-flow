@@ -80,8 +80,8 @@ const Index = () => {
   return (
     <>
       <SEO
-        description="Plataforma de vendas B2B que centraliza e automatiza sua operação comercial com IA: capte oportunidades, converse com clientes, feche vendas e gerencie tudo em um só lugar."
-        keywords="plataforma de vendas B2B, software de vendas B2B, prospecção B2B, encontrar clientes B2B, agendamento de reuniões, SDR com IA, follow-up automático, WhatsApp Business oficial, pipeline B2B, CRM, ICP, Wiize"
+        description="Plataforma de inteligência comercial B2B: prospecta empresas, entende conversas no WhatsApp, identifica intenção de compra e prioriza as oportunidades certas dentro do CRM."
+        keywords="inteligência comercial, CRM inteligente, qualificação de leads, intenção de compra, plataforma de vendas B2B, software de vendas B2B, prospecção B2B, encontrar clientes B2B, agendamento de reuniões, SDR com IA, follow-up automático, WhatsApp Business oficial, pipeline B2B, CRM, ICP, Wiize"
         url="https://wiize.com.br/"
         jsonLd={[
           {
@@ -91,7 +91,7 @@ const Index = () => {
             applicationCategory: "BusinessApplication",
             operatingSystem: "Web",
             description:
-              "Plataforma de vendas B2B que centraliza e automatiza a operação comercial com IA: captação, análise, abordagem, conversas, follow-up, reuniões e CRM em um só lugar.",
+              "Plataforma de inteligência comercial B2B que reúne prospecção, diagnóstico de empresas, conversas no WhatsApp, CRM e histórico de vendas para priorizar oportunidades e recomendar a próxima ação.",
             offers: {
               "@type": "AggregateOffer",
               priceCurrency: "BRL",
