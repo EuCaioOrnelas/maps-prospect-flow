@@ -232,7 +232,7 @@ async function computeProfile(sb: any, owner: string, phone: string) {
   const { data: rlAll } = await sb
     .from("revenue_leads")
     .select("*")
-    .eq("owner_user_id", owner)
+    .or(`owner_user_id.eq.${owner},user_id.eq.${owner}`)
     .limit(3000);
   const rl = (rlAll || []).find((r: any) => suffix8(r.phone_e164) === sfx);
   if (!rl) return { skipped: true, reason: "revenue lead not found", phone };
