@@ -255,13 +255,6 @@ const LeadCardComponent = ({
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
 
-      {/* Valor potencial — logo abaixo do número */}
-      {!hideValue && Number(lead.estimated_value) > 0 && (
-        <div className="mb-3">
-          <LeadPotentialValueCompact value={Number(lead.estimated_value)} />
-        </div>
-      )}
-
       {/* Linha de separação */}
       <div className="wiize-hairline mb-2.5" />
 
@@ -271,10 +264,7 @@ const LeadCardComponent = ({
           ? Math.max(0, Math.min(100, Math.round(intel.opportunity_score)))
           : toIntel100(scoreData?.score_total);
         return (
-          <div
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); navigate(`/crm/inteligencia?phone=${encodeURIComponent(lead.phone)}`); }}
-          >
+          <div className="flex items-center gap-2">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</span>
             <span className="text-xs font-semibold tabular-nums text-primary">{s} de 100</span>
             <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">

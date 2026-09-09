@@ -435,57 +435,13 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             {can("crm") && (
             <li data-tour="sidebar-crm">
               <SidebarNavItem
-                title="Contatos"
+                title="CRM"
                 icon={Users}
-                onClick={handleCrmClick}
-                isActive={isOnCrmPage}
+                url="/crm"
+                isActive={currentPath === "/crm"}
                 isExpanded={isExpanded}
-                hasSubmenu
-                isSubmenuOpen={isCrmOpen}
-                tooltip="Contatos"
+                tooltip="CRM"
               />
-
-              {isExpanded && (
-                <div
-                  className={cn(
-                    "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    isCrmOpen
-                      ? "max-h-40 opacity-100 mt-1"
-                      : "max-h-0 opacity-0"
-                  )}
-                >
-                  <ul className="pl-4 space-y-0.5 relative before:absolute before:left-2 before:top-1 before:bottom-1 before:w-px before:bg-sidebar-foreground/10 before:rounded-full before:transition-all before:duration-300 before:origin-top">
-                    <li data-tour="sidebar-crm-pipeline">
-                      <Link
-                        to="/crm"
-                        className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
-                          currentPath === "/crm"
-                            ? "bg-sidebar-accent/60 text-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <Users size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">CRM</span>
-                      </Link>
-                    </li>
-                    <li data-tour="sidebar-crm-score">
-                      <Link
-                        to="/crm/inteligencia"
-                        className={cn(
-                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
-                          currentPath === "/crm/inteligencia"
-                            ? "bg-sidebar-accent/60 text-primary font-medium"
-                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                        )}
-                      >
-                        <Brain size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Inteligência</span>
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              )}
             </li>
             )}
 
