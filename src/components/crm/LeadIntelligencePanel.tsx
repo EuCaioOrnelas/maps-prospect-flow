@@ -411,7 +411,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
     if (prospect?.rating != null) out.push({ label: `Empresa com avaliação pública ${prospect.rating}${prospect.review_count ? ` (${prospect.review_count} avaliações)` : ""}`, source: "Google Maps" });
     (intel?.factors || []).forEach((f) => { if (f.impact > 0) out.push({ label: f.label }); });
     return out;
-  }, [conv, fit, prospect, intel]);
+  }, [conv, fit, quality, prospect, intel]);
 
   const attention = useMemo(() => {
     const out: { label: string; quote?: string; at?: string; source?: string }[] = [];
