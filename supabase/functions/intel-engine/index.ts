@@ -439,15 +439,21 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
 
   // ---------------- SUFICIENCIA DE DADOS ----------------
   // A Inteligencia nunca pode afirmar que analisou algo que nao possui evidencia.
-  const evidenceMessages = messages.length;
+  // Conta tanto mensagens espelhadas no chat quanto agregados do motor Revenue legado.
+  const legacyMessages =
+    Number(conv?.inbound_count_7d || 0) + Number(conv?.outbound_count_7d || 0);
+  const hasLegacyInteraction = !!conv?.last_inbound_at || !!conv?.last_outbound_at;
+  const evidenceMessages = Math.max(messages.length, legacyMessages);
   const evidenceSignals = signals.length;
+  const hasInteraction = evidenceMessages > 0 || hasLegacyInteraction;
   const analysisState =
-    evidenceMessages === 0 && evidenceSignals === 0
+    !hasInteraction && evidenceSignals === 0
       ? "NO_DATA"
       : evidenceMessages < 4 || evidenceSignals < 2
       ? "PARTIAL"
       : "COMPLETE";
   const analysisConfidence = clamp(evidenceMessages * 6 + evidenceSignals * 10 + (crm ? 10 : 0));
+
 
 
   // ---------------- DIMENSOES ----------------
