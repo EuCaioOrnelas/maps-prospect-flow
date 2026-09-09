@@ -228,12 +228,13 @@ async function computeProfile(sb: any, owner: string, phone: string) {
   const norm = digits(phone);
   const sfx = suffix8(norm);
 
-  // --- lead de conversa (motor Revenue) ---
+  // --- lead de conversa (motor Revenue) — busca escopada por telefone (sem varrer a base) ---
   const { data: rlAll } = await sb
     .from("revenue_leads")
     .select("*")
     .or(`owner_user_id.eq.${owner},user_id.eq.${owner}`)
-    .limit(3000);
+    .ilike("phone_e164", `%${sfx}`)
+    .limit(20);
   const rl = (rlAll || []).find((r: any) => suffix8(r.phone_e164) === sfx);
   if (!rl) return { skipped: true, reason: "revenue lead not found", phone };
 
@@ -242,7 +243,8 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     .from("leads")
     .select("id, company_name, contact_name, phone, category, city, region, website, rating, review_count, ai_score, opportunity_level, ai_diagnosis, enrichment_data, pipeline_stage_id, estimated_value, social_media, last_response_at")
     .eq("user_id", owner)
-    .limit(5000);
+    .ilike("phone", `%${sfx}`)
+    .limit(20);
   const crm = (crmAll || []).find((l: any) => suffix8(l.phone || "") === sfx) || null;
   if (crm && rl.crm_lead_id !== crm.id) {
     await sb.from("revenue_leads").update({ crm_lead_id: crm.id }).eq("id", rl.id);
@@ -277,18 +279,14 @@ async function computeProfile(sb: any, owner: string, phone: string) {
     .order("created_at", { ascending: false })
     .limit(500);
 
-  // mensagens reais (para qualidade + sinais semanticos)
+  // mensagens reais (para qualidade + sinais semanticos) — escopadas por telefone
   let messages: any[] = [];
-  const { data: contact } = await sb
-    .from("chat_contacts")
-    .select("id")
-    .eq("owner_user_id", owner)
-    .limit(5000);
   const { data: convRows } = await sb
     .from("chat_conversations")
     .select("id, contact_phone")
     .eq("owner_user_id", owner)
-    .limit(5000);
+    .ilike("contact_phone", `%${sfx}`)
+    .limit(50);
   const convIds = (convRows || []).filter((c: any) => suffix8(c.contact_phone || "") === sfx).map((c: any) => c.id);
   if (convIds.length) {
     const { data: msgs } = await sb
@@ -300,7 +298,6 @@ async function computeProfile(sb: any, owner: string, phone: string) {
       .limit(200);
     messages = msgs || [];
   }
-  void contact;
 
   // ---------------- SINAIS ----------------
   type Sig = { type: string; confidence: number; at: Date; source: string; message_id?: string };
