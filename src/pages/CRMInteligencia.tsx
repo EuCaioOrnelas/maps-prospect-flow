@@ -780,7 +780,7 @@ const AdvancedFiltersPopover = ({
             </Select>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground mb-1 block">Risco</Label>
+            <Label className="text-xs text-muted-foreground mb-1 block">Estado de risco</Label>
             <Select value={local.riskState} onValueChange={(v) => setLocal(l => ({ ...l, riskState: v }))}>
               <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -790,6 +790,55 @@ const AdvancedFiltersPopover = ({
                 <SelectItem value="CRITICAL">Crítico</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Filtros da Inteligência */}
+          <div className="pt-1 border-t border-border/60">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground mt-2 mb-2">Inteligência</p>
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Oportunidade</Label>
+                <Select value={local.oppBand} onValueChange={(v) => setLocal(l => ({ ...l, oppBand: v }))}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {OPP_BAND_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Intenção</Label>
+                <Select value={local.intentLevel} onValueChange={(v) => setLocal(l => ({ ...l, intentLevel: v }))}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {INTENT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Momentum</Label>
+                <Select value={local.momentum} onValueChange={(v) => setLocal(l => ({ ...l, momentum: v }))}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="up">Crescendo</SelectItem>
+                    <SelectItem value="flat">Estável</SelectItem>
+                    <SelectItem value="down">Em queda</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">Nível de risco</Label>
+                <Select value={local.riskLevel} onValueChange={(v) => setLocal(l => ({ ...l, riskLevel: v }))}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {RISK_LEVEL_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
         </div>
 
