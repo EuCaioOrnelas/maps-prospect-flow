@@ -940,13 +940,24 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
       case "handoff": {
         const pre = interpolate(cfg.pre_message || cfg.handoff_message || "", runtime.vars);
         if (pre) await sendText(ctx.send, pre);
+        const memberIds: string[] = Array.isArray(cfg.member_ids) ? cfg.member_ids.filter(Boolean) : [];
         const responsible = cfg.distribution_type === "specific"
-          ? cfg.specific_member_id
-          : Array.isArray(cfg.member_ids) && cfg.member_ids.length
-            ? cfg.member_ids[Math.floor(Math.random() * cfg.member_ids.length)]
-            : null;
+          ? (cfg.specific_member_id || memberIds[0] || null)
+          : memberIds.length
+            ? memberIds[Math.floor(Math.random() * memberIds.length)]
+            : (cfg.specific_member_id || null);
         if (responsible && ctx.send.convId) {
-          await supabase.from("chat_conversations").update({ responsible_user_id: responsible }).eq("id", ctx.send.convId);
+          const { error: assignErr } = await supabase
+            .from("chat_conversations")
+            .update({ responsible_user_id: responsible, updated_at: new Date().toISOString() })
+            .eq("id", ctx.send.convId);
+          if (assignErr) {
+            console.error("[wa-flow-runner] handoff: falha ao atribuir responsável", assignErr.message);
+          } else {
+            console.log(`[wa-flow-runner] handoff: conversa ${ctx.send.convId} atribuída a ${responsible}`);
+          }
+        } else if (!responsible) {
+          console.warn("[wa-flow-runner] handoff sem responsável configurado — conversa segue sem atribuição");
         }
         if (cfg.crm_stage_id && cfg.crm_stage_id !== "none" && ctx.leadId) {
           const stageId = await resolveStageId(execution.owner_user_id || execution.user_id, cfg.crm_stage_id);
