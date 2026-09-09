@@ -623,7 +623,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
     });
 
     return d;
-  }, [profile, conv, signals, history, prospect, hasConv, state]);
+  }, [profile, conv, signals, history, prospect, hasConv, hasEngagementData, state]);
 
   const playbook = useMemo(
     () => buildPlaybook(state, profile, conv, prospect, lead || null),
