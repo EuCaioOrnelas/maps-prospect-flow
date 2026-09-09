@@ -752,9 +752,9 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             </>
           ) : (
             <>
-              <div className="flex items-end gap-2 mt-0.5">
+              <div className="flex items-baseline gap-1.5 mt-0.5">
                 <span className="text-[38px] font-semibold text-foreground leading-none tabular-nums">{opportunity}</span>
-                <span className="text-[13px] text-muted-foreground mb-1">/ 100</span>
+                <span className="text-[13px] text-muted-foreground">de 100</span>
               </div>
               <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
                 <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${Math.max(2, opportunity)}%` }} />
@@ -766,17 +766,9 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
               </div>
             </>
           )}
-
-          <div className="mt-3 flex items-center gap-2 border-t border-border/50 pt-2.5">
-            <Gauge className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-[11px] text-muted-foreground">Confiança da análise</span>
-            <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
-              <div className="h-full rounded-full bg-primary/60" style={{ width: `${Math.max(2, confidence)}%` }} />
-            </div>
-            <span className="text-[11px] tabular-nums text-muted-foreground">{confidence}%</span>
-          </div>
         </div>
       </section>
+
 
       {/* ------------------------------------------------------------ tabs */}
       <Tabs defaultValue="overview" className="w-full">
