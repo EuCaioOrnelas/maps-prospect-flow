@@ -39,8 +39,10 @@ export interface LeadIntelligence {
 }
 
 export const NEXT_ACTION_LABELS: Record<string, string> = {
+  FIRST_CONTACT: "Iniciar primeiro contato",
   RESPOND_NOW: "Responder agora",
   FOLLOW_UP: "Fazer follow-up",
+
   REACTIVATE: "Reativar contato",
   HANDLE_OBJECTION: "Tratar objeção",
   SEND_PROPOSAL: "Enviar proposta",
@@ -152,8 +154,9 @@ export function useLeadIntelligenceProfile(phone?: string | null) {
       // Sem perfil ainda: pede ao motor central (nao cria calculo novo, apenas processa este contato)
       try {
         await supabase.functions.invoke("intel-engine", {
-          body: { action: "compute_profile", phone },
+          body: { action: "compute_profile", phone_e164: phone },
         });
+
       } catch {
         return null;
       }

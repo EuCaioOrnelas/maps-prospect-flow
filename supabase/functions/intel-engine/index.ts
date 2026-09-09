@@ -437,6 +437,19 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   const signals: Sig[] = [...signalMap.values()].filter((s) => s.type !== "NO_SIGNAL");
   const present = new Set(signals.map((s) => s.type));
 
+  // ---------------- SUFICIENCIA DE DADOS ----------------
+  // A Inteligencia nunca pode afirmar que analisou algo que nao possui evidencia.
+  const evidenceMessages = messages.length;
+  const evidenceSignals = signals.length;
+  const analysisState =
+    evidenceMessages === 0 && evidenceSignals === 0
+      ? "NO_DATA"
+      : evidenceMessages < 4 || evidenceSignals < 2
+      ? "PARTIAL"
+      : "COMPLETE";
+  const analysisConfidence = clamp(evidenceMessages * 6 + evidenceSignals * 10 + (crm ? 10 : 0));
+
+
   // ---------------- DIMENSOES ----------------
   // ENGAGEMENT: reutiliza integralmente o score do motor atual (0-1000 -> 0-100)
   const engagement = clamp(Number(rl.score_total || 0) / 10);
@@ -613,7 +626,9 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
 
   // NEXT BEST ACTION
   let nba = "QUALIFY";
-  if (stage === "DISQUALIFIED") nba = "DO_NOT_PRIORITIZE";
+  if (analysisState === "NO_DATA") nba = "FIRST_CONTACT"; // sem conversa e sem sinais: primeiro contato
+  else if (stage === "DISQUALIFIED") nba = "DO_NOT_PRIORITIZE";
+
   else if (awaitingUsMin > 15) nba = "RESPOND_NOW"; // lead esperando resposta: sempre prioridade
   else if (present.has("OBJECTION") && !present.has("NEGATIVE_INTENT")) nba = "HANDLE_OBJECTION";
   else if (present.has("INTENT_PAYMENT") || stage === "CLOSING") nba = "REQUEST_PAYMENT";
@@ -665,6 +680,11 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
     region: crm?.city || null, avg_response_seconds: avgResp, inbound_7d: inb7,
     distinct_days: distinctDays, silence_days: Math.round(silenceDays), stage,
     signature,
+    analysis_state: analysisState,
+    analysis_confidence: analysisConfidence,
+    messages_count: evidenceMessages,
+    signals_count: evidenceSignals,
+
   };
 
   const row = {
