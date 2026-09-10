@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Cookie, Shield, Info, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Cookie, Shield, Info, X, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ALL_GRANTED,
   ConsentPrefs,
+  DEFAULT_PREFS,
   getConsent,
   hasConsentDecision,
   saveConsent,
@@ -127,8 +128,18 @@ const CookiePanel = (props: CookiePanelProps) => {
       >
         <div className="rounded-panel border border-border bg-card text-card-foreground shadow-2xl shadow-black/30 overflow-hidden">
           <div className="h-1.5 w-full bg-primary" />
-          <div className="p-6">
-            <div className="flex items-center gap-3">
+          <div className="relative p-6">
+            <button
+              type="button"
+              onClick={() => decide(DEFAULT_PREFS)}
+              className="absolute right-3 top-3 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground/40 transition-colors hover:bg-muted hover:text-muted-foreground/70"
+              aria-label="Recusar cookies opcionais e usar apenas essenciais"
+              title="Usar apenas cookies essenciais"
+            >
+              <X className="size-4" />
+            </button>
+
+            <div className="flex items-center gap-3 pr-6">
               <span className="inline-flex size-11 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <IconEl className="size-5" />
               </span>
