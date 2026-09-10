@@ -229,8 +229,9 @@ export default function OpportunitiesManagement() {
   };
 
   useEffect(() => {
-    if ((user || publicDemo) && profileLoaded && !showOnboarding) fetchLeads();
-  }, [user, publicDemo, profileLoaded, showOnboarding]);
+    if (user || publicDemo) fetchLeads();
+  }, [user, publicDemo, accountOwnerId]);
+
 
   // Auto-score unscored leads when they appear
   useEffect(() => {
