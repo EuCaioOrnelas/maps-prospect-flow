@@ -465,6 +465,70 @@ export const UserActionsMenu = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Entrar como usuário */}
+      <Dialog open={showImpersonateDialog} onOpenChange={setShowImpersonateDialog}>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Entrar como usuário</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Gera um acesso temporário e de uso único à conta de{" "}
+                  <strong>{userEmail}</strong>. O acesso fica registrado na auditoria.
+                </p>
+                {!impersonateLink ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="impersonate-reason">Motivo do acesso (registrado)</Label>
+                    <Input
+                      id="impersonate-reason"
+                      value={impersonateReason}
+                      onChange={(e) => setImpersonateReason(e.target.value)}
+                      placeholder="Ex.: suporte — verificar prospecção sem resultados"
+                      autoComplete="off"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Abra em uma janela anônima para não desconectar sua conta de administrador.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(impersonateLink);
+                          toast({ title: "Link copiado" });
+                        }}
+                      >
+                        <Copy size={14} /> Copiar link
+                      </Button>
+                      <Button
+                        className="gap-2"
+                        onClick={() => window.open(impersonateLink, "_blank", "noopener")}
+                      >
+                        <ExternalLink size={14} /> Abrir agora
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImpersonateDialog(false)} disabled={isLoading}>
+              Fechar
+            </Button>
+            {!impersonateLink && (
+              <Button onClick={handleImpersonate} disabled={isLoading || impersonateReason.trim().length < 3}>
+                {isLoading ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+                Gerar acesso
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
