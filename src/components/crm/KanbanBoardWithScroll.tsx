@@ -24,7 +24,7 @@ interface KanbanBoardWithScrollProps {
   onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
   columnWidth?: ColumnWidth;
-  agentSilencedStages?: Set<string>;
+  
   onAddLead?: (stageId: string) => void;
   members?: import('./ResponsibleAvatar').ResponsibleMember[];
   onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
@@ -46,7 +46,7 @@ const KanbanBoardWithScrollComponent = ({
   onSelectAllInColumn,
   onUpdateLeadName,
   columnWidth = 'medium',
-  agentSilencedStages,
+  
   onAddLead,
   members,
   onChangeResponsible,
@@ -384,7 +384,7 @@ const KanbanBoardWithScrollComponent = ({
             onSelectAllInColumn={onSelectAllInColumn}
             onUpdateLeadName={onUpdateLeadName}
             columnWidth={columnWidth}
-            isAgentSilenced={agentSilencedStages?.has(stage.name)}
+            
             onAddLead={onAddLead}
             members={members}
             onChangeResponsible={onChangeResponsible}

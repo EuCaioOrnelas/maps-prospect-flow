@@ -606,7 +606,7 @@ export default function CRM() {
                   await updateLead(leadId, { contact_name: newName });
                 }}
                 columnWidth={columnWidth}
-                agentSilencedStages={agentSilencedStages}
+                
                 onAddLead={(stageId) => {
                   setAddLeadDefaultStageId(stageId);
                   setAddLeadOpen(true);
