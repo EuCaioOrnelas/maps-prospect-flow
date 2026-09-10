@@ -132,9 +132,9 @@ function Row({ cells, head = false }: { cells: string[]; head?: boolean }) {
 export default function ApiDocs() {
   const [active, setActive] = useState("intro");
   const [copied, setCopied] = useState(false);
-  const { resolvedTheme } = useTheme();
   const { toast } = useToast();
-  const codeTheme = resolvedTheme === "dark" ? "dark" : "light";
+  // Terminal sempre claro (fundo branco), independente do tema do app.
+  const codeTheme = "light" as const;
 
   const copyAiDoc = async () => {
     try {
