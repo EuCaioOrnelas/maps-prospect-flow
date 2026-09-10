@@ -56,6 +56,9 @@ export const UserActionsMenu = ({
   const [showUnarchiveDialog, setShowUnarchiveDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [showImpersonateDialog, setShowImpersonateDialog] = useState(false);
+  const [impersonateReason, setImpersonateReason] = useState("");
+  const [impersonateLink, setImpersonateLink] = useState<string | null>(null);
   const { toast } = useToast();
 
   const updateProfile = async (patch: Record<string, any>) => {
