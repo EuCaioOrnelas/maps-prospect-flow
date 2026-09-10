@@ -58,10 +58,10 @@ const CookiePanel = (props: CookiePanelProps) => {
   const {
     title = "Sua privacidade, sua escolha",
     message =
-      "Usamos cookies para operar a plataforma, manter sua sessão segura, medir o uso e melhorar sua experiência. Para navegar com todos os recursos ativos, aceite todos os cookies.",
-    acceptText = "Aceitar todos os cookies",
-    rejectText = "Usar apenas essenciais",
-    customizeText = "Personalizar minhas escolhas",
+      "Usamos cookies para operar a plataforma, manter sua sessão segura, medir o uso e melhorar sua experiência.",
+    acceptText = "Aceitar todos",
+    rejectText = "Apenas essenciais",
+    customizeText = "Personalizar",
     icon = "cookie",
     className,
     privacyHref = "/privacidade",
@@ -112,7 +112,7 @@ const CookiePanel = (props: CookiePanelProps) => {
       aria-modal="false"
       aria-label="Aviso de cookies"
       className={cn(
-        "fixed bottom-4 left-4 z-[100] w-[min(420px,calc(100vw-2rem))] max-h-[80vh] overflow-y-auto",
+        "fixed bottom-4 left-4 z-[100] w-[min(560px,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto",
         "transition-all duration-300",
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
         className,
@@ -124,53 +124,54 @@ const CookiePanel = (props: CookiePanelProps) => {
           <button
             type="button"
             onClick={() => decide(DEFAULT_PREFS)}
-            className="absolute right-2.5 top-2.5 inline-flex size-8 items-center justify-center rounded-md text-muted-foreground/30 transition-colors hover:bg-muted hover:text-muted-foreground/60"
+            className="absolute right-2.5 top-2.5 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground/30 transition-colors hover:bg-muted hover:text-muted-foreground/60"
             aria-label="Recusar cookies opcionais e usar apenas essenciais"
             title="Usar apenas cookies essenciais"
           >
-            <X className="size-4" />
+            <X className="size-3.5" />
           </button>
 
-          <div className="flex items-center gap-3 pr-7">
-            <span className="inline-flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <IconEl className="size-5" />
+          <div className="flex items-start gap-3 pr-6">
+            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+              <IconEl className="size-4" />
             </span>
-            <p className="text-base font-semibold leading-tight">{title}</p>
+            <div>
+              <p className="text-sm font-semibold leading-tight">{title}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {message} Cookies essenciais são sempre ativos. Veja nossa{" "}
+                <a href={privacyHref} className="text-primary hover:underline">
+                  Política de Privacidade
+                </a>{" "}
+                e os{" "}
+                <a href={termsHref} className="text-primary hover:underline">
+                  Termos de Uso
+                </a>
+                .
+              </p>
+            </div>
           </div>
 
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            {message} Cookies essenciais (funcionamento, segurança, rastreamento interno de uso e
-            atribuição de parceiros) são sempre ativos. Veja nossa{" "}
-            <a href={privacyHref} className="text-primary hover:underline">
-              Política de Privacidade
-            </a>{" "}
-            e os{" "}
-            <a href={termsHref} className="text-primary hover:underline">
-              Termos de Uso
-            </a>
-            .
-          </p>
-
-          <button
-            type="button"
-            onClick={() => decide(ALL_GRANTED)}
-            className="mt-4 w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-colors hover:bg-primary/90"
-          >
-            {acceptText}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => decide(DEFAULT_PREFS)}
-            className="mt-2.5 w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
-          >
-            {rejectText}
-          </button>
+          <div className="mt-4 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => decide(ALL_GRANTED)}
+              className="flex-1 rounded-xl bg-primary px-3 py-2.5 text-xs sm:text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-colors hover:bg-primary/90"
+            >
+              {acceptText}
+            </button>
+            <button
+              type="button"
+              onClick={() => decide(DEFAULT_PREFS)}
+              className="flex-1 rounded-xl border border-border bg-muted px-3 py-2.5 text-xs sm:text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
+            >
+              {rejectText}
+            </button>
+          </div>
 
           <button
             type="button"
             onClick={() => setShowPrefs((p) => !p)}
-            className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
             aria-expanded={showPrefs}
           >
             {customizeText}
@@ -181,7 +182,7 @@ const CookiePanel = (props: CookiePanelProps) => {
             className="overflow-hidden transition-all duration-300"
             style={{ height: prefsHeight ? `${prefsHeight}px` : "0px" }}
           >
-            <div ref={prefsRef} className="pt-3 space-y-3">
+            <div ref={prefsRef} className="pt-3 space-y-2.5">
               {CATEGORIES.map((c) => (
                 <div key={c.field} className="flex items-start gap-3">
                   <button
@@ -229,16 +230,11 @@ const CookiePanel = (props: CookiePanelProps) => {
                   onClick={() => decide(prefs)}
                   className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/80"
                 >
-                  Salvar apenas o que marquei
+                  Salvar escolhas
                 </button>
               </div>
             </div>
           </div>
-
-          <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-            Sua escolha fica salva neste navegador. Se você limpar os dados do navegador, o aviso
-            aparecerá novamente.
-          </p>
         </div>
       </div>
     </div>
