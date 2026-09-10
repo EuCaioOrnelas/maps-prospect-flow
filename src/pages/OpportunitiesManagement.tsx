@@ -258,6 +258,8 @@ export default function OpportunitiesManagement() {
     try {
       const baseCols = "id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id";
       const ownerFilter = `owner_user_id.eq.${ownerId},and(owner_user_id.is.null,user_id.eq.${user.id})`;
+      // Linhas antigas podem ter origem nula: elas também são oportunidades.
+      const originFilter = "origin.in.(oportunidades,prospeccao),origin.is.null";
 
       // Primeira tentativa: consulta completa (inclui arquivamento).
       let { data, error } = await supabase
@@ -265,7 +267,7 @@ export default function OpportunitiesManagement() {
         .select(`${baseCols}, archived_at`)
         // inclui linhas antigas sem owner definido, criadas pelo próprio usuário
         .or(ownerFilter)
-        .in("origin", ["oportunidades", "prospeccao"])
+        .or(originFilter)
         .is("archived_at", null)
         .order("created_at", { ascending: false });
 
@@ -277,11 +279,12 @@ export default function OpportunitiesManagement() {
           .from("leads")
           .select(baseCols)
           .or(ownerFilter)
-          .in("origin", ["oportunidades", "prospeccao"])
+          .or(originFilter)
           .order("created_at", { ascending: false });
         data = retry.data as any;
         error = retry.error;
       }
+
 
       if (error) throw error;
       setLeads((data as unknown as OpportunityLead[]) || []);
