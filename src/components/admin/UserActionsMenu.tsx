@@ -175,6 +175,32 @@ export const UserActionsMenu = ({
     }
   };
 
+  const handleImpersonate = async () => {
+    setIsLoading(true);
+    setImpersonateLink(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-impersonate", {
+        body: {
+          user_id: userId,
+          redirect_to: `${window.location.origin}/dashboard`,
+          reason: impersonateReason,
+        },
+      });
+      if (error || (data as any)?.error) {
+        throw new Error((data as any)?.error || error?.message);
+      }
+      setImpersonateLink((data as any).action_link as string);
+    } catch (e: any) {
+      toast({
+        title: "Erro ao gerar acesso",
+        description: e?.message ?? "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
