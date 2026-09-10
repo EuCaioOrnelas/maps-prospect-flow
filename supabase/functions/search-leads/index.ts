@@ -694,18 +694,27 @@ serve(async (req) => {
             .update({ owner_user_id: ownerId, origin: 'oportunidades', archived_at: null })
             .eq('user_id', user.id)
             .in('phone', phones);
-          if (fixErr) console.error('Owner backfill failed:', fixErr.message);
+          if (fixErr) {
+            console.error('Owner backfill failed:', fixErr.message);
+            // Banco sem a coluna de arquivamento: corrige ao menos dono e origem.
+            const { error: fixErr2 } = await supabase
+              .from('leads')
+              .update({ owner_user_id: ownerId, origin: 'oportunidades' })
+              .eq('user_id', user.id)
+              .in('phone', phones);
+            if (fixErr2) console.error('Owner backfill retry failed:', fixErr2.message);
+          }
 
           // Conta o que realmente está visível na Gestão de Oportunidades.
           const { count: visibleCount } = await supabase
             .from('leads')
             .select('id', { count: 'exact', head: true })
             .eq('user_id', user.id)
-            .in('phone', phones)
-            .is('archived_at', null);
+            .in('phone', phones);
           if ((visibleCount || 0) > 0) saveError = null;
           console.log(`Visible opportunities for this search: ${visibleCount || 0}`);
         }
+
       }
 
 
