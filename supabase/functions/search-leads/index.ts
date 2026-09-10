@@ -657,16 +657,16 @@ serve(async (req) => {
           console.log(`Fallback saved ${savedCount}/${leadsToInsert.length} leads`);
         }
 
-        // Garantia: linhas antigas (ou criadas por triggers) precisam ter dono/origem
-        // corretos, senão somem da Gestão de Oportunidades.
+        // Garantia: linhas já existentes também precisam voltar à Gestão de
+        // Oportunidades. Não restrinja a correção a owner nulo: um duplicado
+        // antigo pode ter dono correto, mas origem incompatível com a tela.
         const phones = leadsToInsert.map((l) => l.phone).filter(Boolean);
         if (phones.length > 0) {
           const { error: fixErr } = await supabase
             .from('leads')
-            .update({ owner_user_id: ownerId, origin: 'oportunidades' })
+            .update({ owner_user_id: ownerId, origin: 'oportunidades', archived_at: null })
             .eq('user_id', user.id)
-            .in('phone', phones)
-            .is('owner_user_id', null);
+            .in('phone', phones);
           if (fixErr) console.error('Owner backfill failed:', fixErr.message);
         }
       }

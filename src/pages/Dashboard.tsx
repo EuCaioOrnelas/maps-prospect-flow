@@ -337,7 +337,13 @@ const Dashboard = () => {
       });
 
       if (response.error) {
-        throw new Error(response.error.message || 'Erro ao buscar leads');
+        let message = response.error.message || 'Erro ao buscar leads';
+        const errorContext = (response.error as { context?: Response }).context;
+        if (errorContext) {
+          const payload = await errorContext.clone().json().catch(() => null) as { message?: string; error?: string } | null;
+          message = payload?.message || payload?.error || message;
+        }
+        throw new Error(message);
       }
 
       const data = response.data;
