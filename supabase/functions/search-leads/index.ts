@@ -776,6 +776,7 @@ serve(async (req) => {
     const invalidCount = totalWithPhone - allValidLeads.length;
 
     let savedCount = internalMode ? leads.length : 0;
+    let visibleCount = internalMode ? leads.length : 0;
     let saveError: string | null = null;
 
     if (!internalMode) {
@@ -788,10 +789,11 @@ serve(async (req) => {
       });
       const persistence = await persistOpportunityLeads(supabase, userClient, user.id, ownerId, leads);
       savedCount = persistence.insertedCount;
+      visibleCount = persistence.visibleCount;
       saveError = persistence.error;
-      console.log(`Opportunity persistence: inserted=${savedCount}, visible=${persistence.visibleCount}`);
+      console.log(`Opportunity persistence: inserted=${savedCount}, visible=${visibleCount}`);
 
-      if (leads.length > 0 && persistence.visibleCount === 0) {
+      if (leads.length > 0 && visibleCount === 0) {
         console.error('Persistence verification failed for authenticated user', {
           userId: user.id,
           ownerId,
@@ -873,7 +875,7 @@ serve(async (req) => {
         opportunitiesLimit: profile.searches_limit,
         resultsCount: leads.length,
         savedCount,
-        visibleCount: leads.length > 0 ? leads.length : 0,
+        visibleCount,
         saveError,
         locationsSearched: searchedLocations,
         foundLessThanExpected: foundLess,
