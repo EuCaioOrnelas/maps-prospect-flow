@@ -182,7 +182,7 @@ export default function OpportunitiesManagement() {
     if (user || publicDemo) {
       fetchCompanyProfile();
     }
-  }, [user, publicDemo]);
+  }, [user, publicDemo, accountOwnerId]);
 
   // Cooldown timer
   useEffect(() => {
@@ -204,10 +204,12 @@ export default function OpportunitiesManagement() {
     }
     if (!user) return;
     try {
+      const ownerId = accountOwnerId || user.id;
       const { data } = await supabase
         .from("company_profiles" as any)
         .select("*")
-        .eq("owner_user_id", accountOwnerId)
+        .or(`owner_user_id.eq.${ownerId},user_id.eq.${user.id}`)
+        .limit(1)
         .maybeSingle();
 
       if (data) {

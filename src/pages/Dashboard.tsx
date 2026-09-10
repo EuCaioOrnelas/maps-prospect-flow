@@ -124,14 +124,17 @@ const Dashboard = () => {
     }
     if (!user) return;
     (async () => {
+      const ownerId = accountOwnerId || user.id;
+      // aceita o perfil da conta (dono) ou o do próprio usuário (linhas antigas)
       const { data } = await supabase
         .from("company_profiles" as any)
         .select("*")
-        .eq("user_id", user.id)
+        .or(`owner_user_id.eq.${ownerId},user_id.eq.${user.id}`)
+        .limit(1)
         .maybeSingle();
       if (data) setCompanyProfile(data);
     })();
-  }, [user]);
+  }, [user, accountOwnerId]);
 
   const searchesRemaining = profile ? (profile.searches_limit - profile.searches_used) + (((profile as any).bonus_searches) || 0) + ((((profile as any).extra_opportunities_packs) || 0) * 1000) : 0;  // opportunities remaining (plan + bonus + add-on packs)
   // Perfil ainda carregando não pode ser tratado como "sem oportunidades"
