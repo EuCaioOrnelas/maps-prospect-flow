@@ -226,9 +226,13 @@ serve(async (req) => {
     // Create Supabase client for rate limiting
     const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
-    // Rate limiting check by IP
+    // Rate limiting check by IP. Internal Wiize API calls already pass through
+    // their own account/API-key limits, so avoid a second shared gateway bucket.
     const clientIP = getClientIP(req);
-    const rateLimitResult = await checkRateLimit(supabaseAdmin, clientIP, 'search-leads', 30, 60);
+    const hasInternalUserHeader = Boolean(req.headers.get('x-wiize-api-user'));
+    const rateLimitResult = hasInternalUserHeader
+      ? { allowed: true }
+      : await checkRateLimit(supabaseAdmin, clientIP, 'search-leads', 30, 60);
     
     if (!rateLimitResult.allowed) {
       console.log('Rate limit exceeded for IP:', clientIP);
@@ -297,22 +301,6 @@ serve(async (req) => {
 
     console.log('User authenticated:', user.id, internalMode ? '(internal)' : '');
 
-    // Per-user rate limit: 1 prospecção / 60s (chave = auth.uid, isolado por usuário)
-    if (!internalMode) {
-      const userRl = await checkRateLimit(supabase, user.id, 'search_leads_user', 1, 60);
-      if (!userRl.allowed) {
-        return new Response(
-          JSON.stringify({
-            error: 'rate_limited',
-            message: `Aguarde ${userRl.retryAfter || 60} segundos antes de realizar uma nova prospecção.`,
-            retry_after: userRl.retryAfter || 60,
-          }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(userRl.retryAfter || 60) } }
-        );
-      }
-    }
-
-
     // Parse request body
     const rawBody = await req.json().catch(() => ({}));
     const { keyword, location } = rawBody || {};
@@ -322,6 +310,25 @@ serve(async (req) => {
         JSON.stringify({ error: 'Palavra-chave e localização são obrigatórios' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Allow normal retries and slow/double-click clients without blocking a
+    // user for a full minute. The IP limiter above remains the abuse barrier.
+    // This check runs only after authentication and input validation so bad
+    // requests do not consume the user's prospecting allowance.
+    if (!internalMode) {
+      const userRl = await checkRateLimit(supabaseAdmin, user.id, 'search_leads_user', 5, 60);
+      if (!userRl.allowed) {
+        const retryAfter = Math.max(1, Number(userRl.retryAfter) || 60);
+        return new Response(
+          JSON.stringify({
+            error: 'rate_limited',
+            message: `Muitas prospecções em sequência. Aguarde ${retryAfter} segundos e tente novamente.`,
+            retry_after: retryAfter,
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(retryAfter) } }
+        );
+      }
     }
 
     // Get user profile to check opportunity limits (não se aplica ao modo interno da Wiize API)
@@ -601,6 +608,8 @@ serve(async (req) => {
     const validCount = leads.length;
     const invalidCount = totalWithPhone - allValidLeads.length;
 
+    let savedCount = internalMode ? leads.length : 0;
+
     if (!internalMode) {
       // ownerId / billingProfileId já resolvidos na checagem de limite
 
@@ -625,7 +634,6 @@ serve(async (req) => {
         prospected_at: new Date().toISOString(),
       }));
 
-      let savedCount = 0;
       let persistedIds: string[] = [];
       if (leadsToInsert.length > 0) {
         // Preferred path: upsert ignoring duplicates (needs unique index user_id,phone)
@@ -649,16 +657,16 @@ serve(async (req) => {
           console.log(`Fallback saved ${savedCount}/${leadsToInsert.length} leads`);
         }
 
-        // Garantia: linhas antigas (ou criadas por triggers) precisam ter dono/origem
-        // corretos, senão somem da Gestão de Oportunidades.
+        // Garantia: linhas já existentes também precisam voltar à Gestão de
+        // Oportunidades. Não restrinja a correção a owner nulo: um duplicado
+        // antigo pode ter dono correto, mas origem incompatível com a tela.
         const phones = leadsToInsert.map((l) => l.phone).filter(Boolean);
         if (phones.length > 0) {
           const { error: fixErr } = await supabase
             .from('leads')
-            .update({ owner_user_id: ownerId, origin: 'oportunidades' })
+            .update({ owner_user_id: ownerId, origin: 'oportunidades', archived_at: null })
             .eq('user_id', user.id)
-            .in('phone', phones)
-            .is('owner_user_id', null);
+            .in('phone', phones);
           if (fixErr) console.error('Owner backfill failed:', fixErr.message);
         }
       }
@@ -721,9 +729,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         leads,
-        opportunitiesUsed: profile.searches_used + leads.length,
+        opportunitiesUsed: profile.searches_used,
         opportunitiesLimit: profile.searches_limit,
         resultsCount: leads.length,
+        savedCount,
         locationsSearched: searchedLocations,
         foundLessThanExpected: foundLess,
         message: foundLess 
