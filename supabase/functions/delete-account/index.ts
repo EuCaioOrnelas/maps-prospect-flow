@@ -102,7 +102,7 @@ async function sendCodeEmail(email: string, name: string, code: string) {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: "Wiize <seguranca@wiize.com.br>",
+      from: "Wiize <no-reply@wiize.com.br>",
       to: [email],
       subject: "Código para excluir sua conta Wiize",
       html,
