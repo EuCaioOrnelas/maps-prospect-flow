@@ -710,7 +710,7 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   const urgencyBoost = (awaitingUsMin > 30 ? 8 : 0) + (momentumState === "STRONGLY_RISING" ? 5 : 0);
   // Sem analise a prioridade nao pode competir com leads realmente avaliados,
   // mas um fit alto ainda merece ficar acima do fundo da fila.
-  const prioScore = analysisState === "NO_DATA" ? Math.min(45, fit * 0.5) : opportunity + urgencyBoost;
+  const prioScore = analysisState === "NO_DATA" ? Math.min(45, (fitAvailable ? fit : 0) * 0.5) : opportunity + urgencyBoost;
   const priority =
     prioScore >= (th.priority?.p0 ?? 85) ? "P0" :
     prioScore >= (th.priority?.p1 ?? 72) ? "P1" :
@@ -720,7 +720,7 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   // EXPLICABILIDADE
   const factors: any[] = [];
   const push = (cond: boolean, label: string, impact: number) => { if (cond) factors.push({ label, impact }); };
-  push(fit >= (th.high_fit ?? 65), `alto fit com o perfil ideal (${fit}/100)`, Math.round(fit * ow.fit));
+  push(fitAvailable && fit >= (th.high_fit ?? 65), `alto fit com o perfil ideal (${fit}/100)`, Math.round(fit * ow.fit));
   push(intent >= (th.high_intent ?? 65), `forte intencao de compra (${intent}/100)`, Math.round(intent * ow.intent));
   push(present.has("INTENT_PRICE"), "perguntou sobre preco", INTENT_WEIGHTS.INTENT_PRICE);
   push(present.has("INTENT_AVAILABILITY"), "perguntou sobre disponibilidade", INTENT_WEIGHTS.INTENT_AVAILABILITY);
@@ -734,7 +734,7 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   if (analysisState === "NO_DATA") {
     factors.length = 0;
     factors.push({ label: "lead ainda nao analisado: nenhuma conversa ou sinal registrado", impact: 0 });
-    if (crm) factors.push({ label: `dados de prospeccao disponiveis (fit ${fit}/100), usados apenas para a abordagem`, impact: 0 });
+    if (crm && fitAvailable) factors.push({ label: `dados de prospeccao disponiveis (fit ${fit}/100), usados apenas para a abordagem`, impact: 0 });
   }
 
   const isHot =
@@ -757,6 +757,8 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
     analysis_confidence: analysisConfidence,
     messages_count: evidenceMessages,
     signals_count: evidenceSignals,
+    available: availability,
+    fit_basis: fitBasis,
 
   };
 
