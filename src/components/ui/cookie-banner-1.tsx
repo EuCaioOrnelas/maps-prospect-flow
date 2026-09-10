@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Cookie, Shield, Info, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Cookie, Shield, Info, X, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ALL_GRANTED,

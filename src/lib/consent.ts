@@ -14,7 +14,7 @@ export const CONSENT_KEY = "cookie-consent";
 export const CONSENT_PREFS_KEY = "cookie-preferences";
 export const CONSENT_ANON_KEY = "cookie-anon-id";
 export const CONSENT_EVENT = "wiize:consent-change";
-export const CONSENT_VERSION = "v2";
+export const CONSENT_VERSION = "v3";
 export const CONSENT_VERSION_KEY = "cookie-consent-version";
 
 export const DEFAULT_PREFS: ConsentPrefs = {
