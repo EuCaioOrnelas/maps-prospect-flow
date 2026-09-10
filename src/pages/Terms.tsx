@@ -225,7 +225,54 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">13. Limitação de responsabilidade</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">13. SLA de suporte e atendimento</h2>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li><strong>Horário de atendimento</strong>: de segunda a sexta-feira, das 9h às 17h (horário de Brasília). Não há atendimento aos sábados, domingos e feriados nacionais.</li>
+                <li><strong>Canais oficiais</strong>: página de contato da plataforma e e-mail de suporte. Mensagens recebidas fora do horário são consideradas recebidas no próximo dia útil.</li>
+                <li><strong>Primeira resposta</strong>: até 1 (um) dia útil para dúvidas gerais e até 8 (oito) horas úteis para incidentes que impeçam o uso da plataforma.</li>
+                <li><strong>Prazo de solução</strong>: incidentes críticos (plataforma indisponível) são tratados com prioridade máxima; demais solicitações seguem fila por ordem de chegada e complexidade. Correções que dependam de terceiros (Meta, Google, gateways de pagamento, provedores de IA) seguem os prazos desses fornecedores, fora do controle da Wiize.</li>
+                <li><strong>Fora de escopo do SLA</strong>: consultoria de estratégia comercial, criação de conteúdo, configurações em contas de terceiros do cliente, resultados comerciais, aprovações de número/template pela Meta e bloqueios aplicados por provedores.</li>
+                <li>Este SLA descreve metas de atendimento e não constitui garantia de resultado comercial nem de disponibilidade ininterrupta.</li>
+              </ul>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">14. Cookies, rastreamento e programa de parceiros</h2>
+              <p>
+                Ao navegar em nossas páginas públicas, o visitante decide, no aviso de cookies, quais
+                categorias autoriza. Cookies <strong>essenciais</strong> são sempre ativos e cobrem
+                funcionamento do site, sessão e autenticação, segurança e prevenção a fraude,
+                rastreamento interno de uso do produto e a <strong>atribuição de indicações do programa
+                de parceiros</strong> (parâmetro de indicação usado para calcular comissões). Sem eles a
+                plataforma e o pagamento de comissões não funcionam.
+              </p>
+              <p>
+                Cookies funcionais, analíticos e de marketing (incluindo Google Ads e Meta Ads, quando
+                ativados) só são carregados após consentimento e podem ser recusados individualmente. O
+                consentimento é registrado com data, categorias aceitas e versão da política, para fins
+                de prova.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">15. Exclusão de conta pelo cliente</h2>
+              <p>
+                O cliente pode excluir a própria conta a qualquer momento em Configurações. A exclusão
+                exige verificação por código enviado ao e-mail cadastrado e é <strong>permanente e
+                irreversível</strong>: apaga leads, contatos, conversas, números conectados, campanhas,
+                relatórios, chaves de integração e configurações, cancela assinaturas ativas no cartão e
+                no Pix e encerra o envio de qualquer comunicação, inclusive promocional.
+              </p>
+              <p>
+                Não há backup de recuperação após a exclusão. Permanecem apenas os registros exigidos por
+                lei (obrigações fiscais e logs de segurança), pelo prazo legal e sem uso comercial.
+                Valores já pagos não são devolvidos pela exclusão, salvo o disposto na política de
+                reembolso e na legislação aplicável.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">16. Limitação de responsabilidade</h2>
               <p>
                 Na máxima extensão permitida em lei, a Wiize não responde por danos indiretos,
                 incidentais, lucros cessantes, perda de oportunidade, perda de dados de terceiros ou
