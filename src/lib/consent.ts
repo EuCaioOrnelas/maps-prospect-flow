@@ -33,10 +33,21 @@ export const ALL_GRANTED: ConsentPrefs = {
 
 export function hasConsentDecision(): boolean {
   try {
-    return !!localStorage.getItem(CONSENT_KEY);
+    if (!localStorage.getItem(CONSENT_KEY)) return false;
+    // Decisões feitas em versões anteriores do aviso precisam ser refeitas.
+    return localStorage.getItem(CONSENT_VERSION_KEY) === CONSENT_VERSION;
   } catch {
     return false;
   }
+}
+
+/** Reabre o aviso de cookies (limpa a decisão salva neste navegador). */
+export function resetConsent() {
+  try {
+    localStorage.removeItem(CONSENT_KEY);
+    localStorage.removeItem(CONSENT_VERSION_KEY);
+    localStorage.removeItem(CONSENT_PREFS_KEY);
+  } catch {}
 }
 
 export function getConsent(): ConsentPrefs {
