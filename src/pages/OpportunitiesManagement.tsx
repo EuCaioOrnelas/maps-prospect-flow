@@ -287,9 +287,33 @@ export default function OpportunitiesManagement() {
         error = retry.error;
       }
 
-
       if (error) throw error;
-      const fetchedLeads = (data as unknown as OpportunityLead[]) || [];
+      let fetchedLeads = (data as unknown as OpportunityLead[]) || [];
+
+      // Algumas contas antigas receberam valores de origem diferentes durante
+      // versões anteriores da prospecção. Se o dono tem contatos, não trate a
+      // tela como vazia nem chame a recuperação: busque os registros reais da
+      // conta e deixe a origem ser normalizada pelas próximas gravações.
+      if (fetchedLeads.length === 0) {
+        let fallback = await supabase
+          .from("leads")
+          .select(`${baseCols}, archived_at`)
+          .or(ownerFilter)
+          .is("archived_at", null)
+          .order("created_at", { ascending: false });
+
+        if (fallback.error && (fallback.error.code === "42703" || /archived_at/.test(fallback.error.message || ""))) {
+          fallback = await supabase
+            .from("leads")
+            .select(baseCols)
+            .or(ownerFilter)
+            .order("created_at", { ascending: false }) as typeof fallback;
+        }
+
+        if (fallback.error) throw fallback.error;
+        fetchedLeads = (fallback.data as unknown as OpportunityLead[]) || [];
+      }
+
       setLeads(fetchedLeads);
 
       if (
