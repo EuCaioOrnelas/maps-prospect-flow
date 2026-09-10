@@ -509,7 +509,7 @@ serve(async (req) => {
       const effectiveLimit = ((profileData as any).searches_limit || 0) + extraPacks * 1000 + bonus;
       remainingOpportunities = effectiveLimit - ((profileData as any).searches_used || 0);
 
-      if (remainingOpportunities <= 0) {
+      if (remainingOpportunities <= 0 && action !== 'recover_recent_history') {
         console.log('Opportunity limit reached for user:', user.id);
         return new Response(
           JSON.stringify({
