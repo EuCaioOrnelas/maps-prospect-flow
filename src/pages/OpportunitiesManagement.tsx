@@ -113,7 +113,9 @@ export default function OpportunitiesManagement() {
   const [filterCity, setFilterCity] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(20);
-  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>("me");
+  // Padrão "todos": o filtro "meus" escondia oportunidades atribuídas a outras
+  // pessoas da conta e fazia a contagem da tela divergir do total real.
+  const [responsibleFilter, setResponsibleFilter] = useState<ResponsibleFilter>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedLead, setSelectedLead] = useState<OpportunityLead | null>(null);
   const [popupTab, setPopupTab] = useState<"score" | "dados">("dados");
