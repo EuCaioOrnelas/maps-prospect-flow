@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { cn } from "@/lib/utils";
+import { isProfileAnalyzed } from "@/lib/intelligence";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LineChart, Line as RLine, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer } from "recharts";
@@ -139,14 +140,14 @@ interface Dim {
 function DimensionCard({ dim }: { dim: Dim }) {
   const [open, setOpen] = useState(false);
   const empty = dim.value === null;
-  const accent = dim.tone === "warn" ? "text-amber-500" : "text-primary";
+  const accent = "text-primary";
   return (
     <div className="rounded-lg border border-border/60 bg-card px-3 py-2.5 transition-colors hover:border-border">
       <div className="flex items-center gap-2">
         <span
           className={cn(
             "w-5 h-5 rounded-md flex items-center justify-center shrink-0",
-            dim.tone === "warn" ? "bg-amber-500/12" : "bg-primary/12",
+            "bg-primary/12",
           )}
         >
           <dim.icon className={cn("w-3 h-3", accent)} />
@@ -169,7 +170,7 @@ function DimensionCard({ dim }: { dim: Dim }) {
           </Tooltip>
         </TooltipProvider>
         {!empty && (
-          <span className={cn("text-[11px] font-medium shrink-0", dim.tone === "warn" ? "text-amber-600" : "text-muted-foreground")}>
+          <span className="text-[11px] font-medium shrink-0 text-muted-foreground">
             {dim.status}
           </span>
         )}
@@ -179,7 +180,7 @@ function DimensionCard({ dim }: { dim: Dim }) {
         <>
           <p className="text-[13px] font-semibold text-muted-foreground mt-2">{dim.status}</p>
           <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-            <div className={cn("h-full w-full rounded-full", dim.tone === "warn" ? "bg-amber-500/15" : "bg-primary/15")} />
+            <div className="h-full w-full rounded-full bg-primary/15" />
           </div>
         </>
       ) : (
@@ -192,7 +193,7 @@ function DimensionCard({ dim }: { dim: Dim }) {
           </div>
           <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
             <div
-              className={cn("h-full rounded-full transition-[width] duration-700", dim.tone === "warn" ? "bg-amber-500" : "bg-primary")}
+              className="h-full rounded-full bg-primary transition-[width] duration-700"
               style={{ width: `${Math.max(2, Math.min(100, dim.value))}%` }}
             />
           </div>
@@ -627,10 +628,10 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
     // O estado gravado pelo motor manda; o frontend so complementa quando ele nao existe.
     const stored = engineFeatures.analysis_state as AnalysisState | undefined;
     if (stored && msgs === 0 && sigs === 0) return stored;
-    if (msgs === 0 && sigs === 0) return "NO_DATA";
+    if (msgs === 0 && sigs === 0) return isProfileAnalyzed(profile) ? "PARTIAL" : "NO_DATA";
     if (msgs < 4 || sigs < 2) return "PARTIAL";
     return "COMPLETE";
-  }, [conv, signals.length, engineMessages, engineSignals, engineFeatures.analysis_state]);
+  }, [conv, signals.length, engineMessages, engineSignals, engineFeatures.analysis_state, profile]);
 
   const opportunity = profile ? Math.round(Number(profile.opportunity_score || 0)) : null;
   const hasConv = !!conv && conv.total > 0;
@@ -638,7 +639,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   const hasEngagementData = hasConv || (history.length > 0 && Number(profile?.engagement_score || 0) > 0);
 
   // "Não analisado" != "baixa oportunidade": sem perfil ou sem evidência, o número é 0 e neutro.
-  const notAnalyzed = !profile || state === "NO_DATA" || opportunity === null;
+  const notAnalyzed = !isProfileAnalyzed(profile) || opportunity === null;
   const analyzedMessages = Math.max(conv?.total || 0, engineMessages);
   const analyzedSignals = Math.max(signals.length, engineSignals);
 
@@ -715,7 +716,6 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       key: "risk",
       label: "Risco",
       icon: ShieldAlert,
-      tone: "warn",
       hint: "Mede a chance de perder o contato: silêncio prolongado, mensagens dele sem resposta e objeções não tratadas.",
       value: profile && riskKnown ? Math.round(Number(profile.risk_score || 0)) : null,
       status: riskKnown ? bandM(Number(profile?.risk_score || 0)) : "Sem dados",

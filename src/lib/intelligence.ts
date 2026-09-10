@@ -105,3 +105,15 @@ export const MOMENTUM_SIMPLE_LABELS: Record<MomentumSimple, string> = {
   down: "Em queda",
   unknown: "Sem dados",
 };
+
+/**
+ * Regra unica de "analisado" usada pelo card do CRM, painel interno e rankings.
+ * Perfis antigos podem nao ter `features.analysis_state`; nesse caso o proprio
+ * resultado (>0) define se ha analise. Evita card e painel divergirem.
+ */
+export function isProfileAnalyzed(profile: any): boolean {
+  if (!profile) return false;
+  const stored = profile?.features?.analysis_state as string | undefined;
+  if (stored) return stored !== "NO_DATA";
+  return Number(profile.opportunity_score || 0) > 0;
+}
