@@ -609,6 +609,7 @@ serve(async (req) => {
     const invalidCount = totalWithPhone - allValidLeads.length;
 
     let savedCount = internalMode ? leads.length : 0;
+    let saveError: string | null = null;
 
     if (!internalMode) {
       // ownerId / billingProfileId já resolvidos na checagem de limite
@@ -635,7 +636,6 @@ serve(async (req) => {
       }));
 
       let persistedIds: string[] = [];
-      let saveError: string | null = null;
       if (leadsToInsert.length > 0) {
         // Some databases may be missing a newer column (schema drift) or the
         // unique index. Strip the offending column and retry so the leads are
@@ -771,6 +771,7 @@ serve(async (req) => {
         opportunitiesLimit: profile.searches_limit,
         resultsCount: leads.length,
         savedCount,
+        saveError,
         locationsSearched: searchedLocations,
         foundLessThanExpected: foundLess,
         message: foundLess 
