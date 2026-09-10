@@ -288,7 +288,7 @@ const Terms = () => {
               <p>
                 O cliente pode excluir a própria conta a qualquer momento em Configurações. A exclusão
                 exige verificação por código enviado ao e-mail cadastrado e é <strong>permanente e
-                irreversível</strong>: apaga leads, contatos, conversas, números conectados, campanhas,
+                irreversível</strong>: apaga leads, contatos, conversas, números conectados, fluxos,
                 relatórios, chaves de integração e configurações, cancela assinaturas ativas no cartão e
                 no Pix e encerra o envio de qualquer comunicação, inclusive promocional.
               </p>
