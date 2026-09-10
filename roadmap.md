@@ -14,3 +14,4 @@
 - [x] Página pública /inteligencia + link no menu e rodapé
 - [x] Reescrita da comunicação (hero, SEO, FAQ, planos, seções de vendas) para inteligência comercial
 - [ ] Validação E2E com conversa real de ponta a ponta (depende de volume de mensagens reais na conta)
+- [x] Corrigir oportunidades vazias após prospecção em contas recém-criadas (validação autenticada depende de login na prévia)

@@ -57,6 +57,7 @@ const SERP_API_KEYS = [
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 
 interface Lead {
   name: string;
@@ -69,6 +70,123 @@ interface Lead {
   reviewCount: number;
   mapsLink: string;
   hasWhatsApp?: boolean;
+}
+
+type PersistResult = {
+  insertedCount: number;
+  visibleCount: number;
+  error: string | null;
+};
+
+async function persistOpportunityLeads(
+  admin: any,
+  userClient: any,
+  userId: string,
+  ownerId: string,
+  leads: Lead[],
+): Promise<PersistResult> {
+  const rowsWithAllColumns = leads.map((lead) => ({
+    user_id: userId,
+    owner_user_id: ownerId,
+    created_by_user_id: userId,
+    responsible_user_id: userId,
+    company_name: lead.name !== '-' ? lead.name : null,
+    phone: lead.phone,
+    category: lead.category !== '-' ? lead.category : null,
+    city: lead.city !== '-' ? lead.city : null,
+    website: lead.website !== '-' ? lead.website : null,
+    google_maps_link: lead.mapsLink !== '-' ? lead.mapsLink : null,
+    address: lead.address !== '-' ? lead.address : null,
+    rating: lead.rating || null,
+    review_count: lead.reviewCount || null,
+    origin: 'oportunidades',
+    prospected_at: new Date().toISOString(),
+  }));
+
+  if (rowsWithAllColumns.length === 0) {
+    return { insertedCount: 0, visibleCount: 0, error: null };
+  }
+
+  const missingColumnName = (err: any): string | null => {
+    const message = `${err?.message || ''} ${err?.details || ''}`;
+    if (err?.code !== '42703' && err?.code !== 'PGRST204') return null;
+    const match = message.match(/'([a-z0-9_]+)' column/i) || message.match(/column "?([a-z0-9_]+)"?/i);
+    return match ? match[1] : null;
+  };
+  const stripColumn = (rows: any[], column: string) => rows.map((row) => {
+    const { [column]: removed, ...rest } = row;
+    void removed;
+    return rest;
+  });
+
+  let rows = rowsWithAllColumns as any[];
+  let insertedCount = 0;
+  let lastError: string | null = null;
+
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const { data, error } = await admin
+      .from('leads')
+      .upsert(rows, { onConflict: 'user_id,phone', ignoreDuplicates: true })
+      .select('id');
+
+    if (!error) {
+      insertedCount = data?.length || 0;
+      lastError = null;
+      break;
+    }
+
+    lastError = error.message;
+    const missing = missingColumnName(error);
+    if (missing) {
+      rows = stripColumn(rows, missing);
+      continue;
+    }
+
+    insertedCount = 0;
+    const failures: string[] = [];
+    for (const row of rows) {
+      const { error: rowError } = await admin.from('leads').insert(row);
+      if (!rowError) insertedCount++;
+      else if (rowError.code !== '23505') failures.push(rowError.message);
+    }
+    lastError = failures.length > 0 ? failures.slice(0, 3).join(' | ') : null;
+    break;
+  }
+
+  const phones = rowsWithAllColumns.map((row) => row.phone).filter(Boolean);
+  if (phones.length === 0) return { insertedCount, visibleCount: 0, error: lastError };
+
+  const repairPayload = {
+    owner_user_id: ownerId,
+    responsible_user_id: userId,
+    origin: 'oportunidades',
+    archived_at: null,
+  };
+  const { error: repairError } = await admin
+    .from('leads')
+    .update(repairPayload)
+    .eq('user_id', userId)
+    .in('phone', phones);
+
+  if (repairError) {
+    const { error: fallbackRepairError } = await admin
+      .from('leads')
+      .update({ owner_user_id: ownerId, responsible_user_id: userId, origin: 'oportunidades' })
+      .eq('user_id', userId)
+      .in('phone', phones);
+    if (fallbackRepairError) lastError = fallbackRepairError.message;
+  }
+
+  // This is intentionally queried with the caller's JWT. A service-role count
+  // proves that rows exist, but not that the account can see them through RLS.
+  const { count: visibleCount, error: visibilityError } = await userClient
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .in('phone', phones);
+
+  if (visibilityError) lastError = visibilityError.message;
+  return { insertedCount, visibleCount: visibleCount || 0, error: lastError };
 }
 
 // Normalize phone — aceita BR (celular/fixo) E qualquer número internacional E.164.
@@ -273,7 +391,7 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client with user's token
+    // Separate privileged writes from the real authenticated visibility check.
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
     // Verify user token
@@ -303,9 +421,9 @@ serve(async (req) => {
 
     // Parse request body
     const rawBody = await req.json().catch(() => ({}));
-    const { keyword, location } = rawBody || {};
+    const { keyword, location, action } = rawBody || {};
 
-    if (!keyword || !location) {
+    if (action !== 'recover_recent_history' && (!keyword || !location)) {
       return new Response(
         JSON.stringify({ error: 'Palavra-chave e localização são obrigatórios' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -316,7 +434,7 @@ serve(async (req) => {
     // user for a full minute. The IP limiter above remains the abuse barrier.
     // This check runs only after authentication and input validation so bad
     // requests do not consume the user's prospecting allowance.
-    if (!internalMode) {
+    if (!internalMode && action !== 'recover_recent_history') {
       const userRl = await checkRateLimit(supabaseAdmin, user.id, 'search_leads_user', 5, 60);
       if (!userRl.allowed) {
         const retryAfter = Math.max(1, Number(userRl.retryAfter) || 60);
@@ -391,7 +509,7 @@ serve(async (req) => {
       const effectiveLimit = ((profileData as any).searches_limit || 0) + extraPacks * 1000 + bonus;
       remainingOpportunities = effectiveLimit - ((profileData as any).searches_used || 0);
 
-      if (remainingOpportunities <= 0) {
+      if (remainingOpportunities <= 0 && action !== 'recover_recent_history') {
         console.log('Opportunity limit reached for user:', user.id);
         return new Response(
           JSON.stringify({
@@ -402,6 +520,55 @@ serve(async (req) => {
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+    }
+
+    if (!internalMode && action === 'recover_recent_history') {
+      if (!SUPABASE_ANON_KEY) {
+        return new Response(JSON.stringify({ error: 'Configuração de autenticação indisponível' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const userClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data: recentHistory, error: historyReadError } = await supabase
+        .from('search_history')
+        .select('leads')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (historyReadError) {
+        return new Response(JSON.stringify({ error: 'Não foi possível recuperar o histórico', details: historyReadError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const recoveredByPhone = new Map<string, Lead>();
+      for (const history of recentHistory || []) {
+        if (!Array.isArray(history.leads)) continue;
+        for (const candidate of history.leads as Lead[]) {
+          const phone = normalizePhone(candidate.phone || '');
+          if (phone) recoveredByPhone.set(phone, { ...candidate, phone });
+        }
+      }
+      const recovery = await persistOpportunityLeads(
+        supabase,
+        userClient,
+        user.id,
+        ownerId,
+        Array.from(recoveredByPhone.values()),
+      );
+      const recoverySucceeded = recovery.visibleCount > 0 || recoveredByPhone.size === 0;
+      return new Response(JSON.stringify({
+        recovered: recovery.visibleCount,
+        candidates: recoveredByPhone.size,
+        error: recoverySucceeded ? null : (recovery.error || 'Os contatos ainda não ficaram visíveis para esta conta'),
+      }), {
+        status: recoverySucceeded ? 200 : 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
 
@@ -609,112 +776,40 @@ serve(async (req) => {
     const invalidCount = totalWithPhone - allValidLeads.length;
 
     let savedCount = internalMode ? leads.length : 0;
+    let visibleCount = internalMode ? leads.length : 0;
     let saveError: string | null = null;
 
     if (!internalMode) {
       // ownerId / billingProfileId já resolvidos na checagem de limite
 
-      // Save leads to the leads table with enriched data.
-      // owner/responsible are set explicitly (not relying on DB triggers) so the
-      // rows are always visible in "Gestão de Oportunidades".
-      const leadsToInsert = leads.map(lead => ({
-        user_id: user.id,
-        owner_user_id: ownerId,
-        created_by_user_id: user.id,
-        responsible_user_id: user.id,
-        company_name: lead.name !== '-' ? lead.name : null,
-        phone: lead.phone,
-        category: lead.category !== '-' ? lead.category : null,
-        city: lead.city !== '-' ? lead.city : null,
-        website: lead.website !== '-' ? lead.website : null,
-        google_maps_link: lead.mapsLink !== '-' ? lead.mapsLink : null,
-        address: lead.address !== '-' ? lead.address : null,
-        rating: lead.rating || null,
-        review_count: lead.reviewCount || null,
-        origin: 'oportunidades',
-        prospected_at: new Date().toISOString(),
-      }));
+      if (!SUPABASE_ANON_KEY) throw new Error('SUPABASE_ANON_KEY is not configured');
+      const userClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const persistence = await persistOpportunityLeads(supabase, userClient, user.id, ownerId, leads);
+      savedCount = persistence.insertedCount;
+      visibleCount = persistence.visibleCount;
+      saveError = persistence.error;
+      console.log(`Opportunity persistence: inserted=${savedCount}, visible=${visibleCount}`);
 
-      let persistedIds: string[] = [];
-      if (leadsToInsert.length > 0) {
-        // Some databases may be missing a newer column (schema drift) or the
-        // unique index. Strip the offending column and retry so the leads are
-        // never silently lost between the search and "Gestão de Oportunidades".
-        const missingColumnName = (err: any): string | null => {
-          const msg = `${err?.message || ''} ${err?.details || ''}`;
-          if (err?.code !== '42703' && err?.code !== 'PGRST204') return null;
-          const m = msg.match(/'([a-z0-9_]+)' column/i) || msg.match(/column "?([a-z0-9_]+)"?/i);
-          return m ? m[1] : null;
-        };
-        const stripColumn = (rows: any[], col: string) =>
-          rows.map((r) => { const { [col]: _drop, ...rest } = r; return rest; });
-
-        let rows = leadsToInsert as any[];
-        for (let attempt = 0; attempt < 6; attempt++) {
-          const { data: upserted, error: insertError } = await supabase
-            .from('leads')
-            .upsert(rows, { onConflict: 'user_id,phone', ignoreDuplicates: true })
-            .select('id');
-
-          if (!insertError) {
-            persistedIds = (upserted || []).map((r: any) => r.id);
-            savedCount = persistedIds.length;
-            saveError = null;
-            console.log(`Saved ${savedCount} leads to leads table`);
-            break;
-          }
-
-          saveError = insertError.message;
-          const missing = missingColumnName(insertError);
-          if (missing) {
-            console.error(`Column "${missing}" missing on leads, retrying without it`);
-            rows = stripColumn(rows, missing);
-            continue;
-          }
-
-          // Fallback: insert one by one, skipping duplicates / unexpected conflicts.
-          console.error('Upsert failed, falling back to individual inserts:', insertError);
-          savedCount = 0;
-          for (const row of rows) {
-            const { data: ins, error: rowErr } = await supabase.from('leads').insert(row).select('id').maybeSingle();
-            if (!rowErr) { savedCount++; if (ins?.id) persistedIds.push(ins.id); saveError = null; }
-            else if (rowErr.code !== '23505') console.error('Lead insert failed:', rowErr.message);
-          }
-          console.log(`Fallback saved ${savedCount}/${rows.length} leads`);
-          break;
-        }
-
-        // Garantia: linhas já existentes também precisam voltar à Gestão de
-        // Oportunidades. Não restrinja a correção a owner nulo: um duplicado
-        // antigo pode ter dono correto, mas origem incompatível com a tela.
-        const phones = leadsToInsert.map((l) => l.phone).filter(Boolean);
-        if (phones.length > 0) {
-          const { error: fixErr } = await supabase
-            .from('leads')
-            .update({ owner_user_id: ownerId, origin: 'oportunidades', archived_at: null })
-            .eq('user_id', user.id)
-            .in('phone', phones);
-          if (fixErr) {
-            console.error('Owner backfill failed:', fixErr.message);
-            // Banco sem a coluna de arquivamento: corrige ao menos dono e origem.
-            const { error: fixErr2 } = await supabase
-              .from('leads')
-              .update({ owner_user_id: ownerId, origin: 'oportunidades' })
-              .eq('user_id', user.id)
-              .in('phone', phones);
-            if (fixErr2) console.error('Owner backfill retry failed:', fixErr2.message);
-          }
-
-          // Conta o que realmente está visível na Gestão de Oportunidades.
-          const { count: visibleCount } = await supabase
-            .from('leads')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .in('phone', phones);
-          if ((visibleCount || 0) > 0) saveError = null;
-          console.log(`Visible opportunities for this search: ${visibleCount || 0}`);
-        }
-
+      if (leads.length > 0 && visibleCount === 0) {
+        console.error('Persistence verification failed for authenticated user', {
+          userId: user.id,
+          ownerId,
+          saveError,
+        });
+        return new Response(JSON.stringify({
+          error: 'Não foi possível salvar as oportunidades nesta conta',
+          message: 'Os resultados foram encontrados, mas a conta ainda não conseguiu acessá-los. Tente novamente em instantes.',
+          resultsCount: leads.length,
+          savedCount,
+          visibleCount: 0,
+          saveError,
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
 
@@ -780,6 +875,7 @@ serve(async (req) => {
         opportunitiesLimit: profile.searches_limit,
         resultsCount: leads.length,
         savedCount,
+        visibleCount,
         saveError,
         locationsSearched: searchedLocations,
         foundLessThanExpected: foundLess,
