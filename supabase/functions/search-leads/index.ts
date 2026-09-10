@@ -179,14 +179,14 @@ async function persistOpportunityLeads(
 
   // This is intentionally queried with the caller's JWT. A service-role count
   // proves that rows exist, but not that the account can see them through RLS.
-  const { count: visibleCount, error: visibilityError } = await userClient
+  const { data: visibleRows, error: visibilityError } = await userClient
     .from('leads')
-    .select('id', { count: 'exact', head: true })
+    .select('id')
     .eq('user_id', userId)
     .in('phone', phones);
 
   if (visibilityError) lastError = visibilityError.message;
-  return { insertedCount, visibleCount: visibleCount || 0, error: lastError };
+  return { insertedCount, visibleCount: visibleRows?.length || 0, error: lastError };
 }
 
 // Normalize phone — aceita BR (celular/fixo) E qualquer número internacional E.164.
