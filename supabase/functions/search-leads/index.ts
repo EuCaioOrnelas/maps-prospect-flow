@@ -602,16 +602,7 @@ serve(async (req) => {
     const invalidCount = totalWithPhone - allValidLeads.length;
 
     if (!internalMode) {
-      // Resolve account owner (sub-users share the owner's data)
-      let ownerId = user.id;
-      try {
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('parent_owner_id')
-          .eq('id', user.id)
-          .maybeSingle();
-        if (prof?.parent_owner_id) ownerId = prof.parent_owner_id as string;
-      } catch (_) { /* keep user.id */ }
+      // ownerId / billingProfileId já resolvidos na checagem de limite
 
       // Save leads to the leads table with enriched data.
       // owner/responsible are set explicitly (not relying on DB triggers) so the
@@ -635,6 +626,7 @@ serve(async (req) => {
       }));
 
       let savedCount = 0;
+      let persistedIds: string[] = [];
       if (leadsToInsert.length > 0) {
         // Preferred path: upsert ignoring duplicates (needs unique index user_id,phone)
         const { data: upserted, error: insertError } = await supabase
@@ -643,17 +635,31 @@ serve(async (req) => {
           .select('id');
 
         if (!insertError) {
-          savedCount = upserted?.length ?? leadsToInsert.length;
+          persistedIds = (upserted || []).map((r: any) => r.id);
+          savedCount = persistedIds.length;
           console.log(`Saved ${savedCount} leads to leads table`);
         } else {
           // Fallback: insert one by one, skipping duplicates / unexpected conflicts.
           console.error('Upsert failed, falling back to individual inserts:', insertError);
           for (const row of leadsToInsert) {
-            const { error: rowErr } = await supabase.from('leads').insert(row);
-            if (!rowErr) savedCount++;
+            const { data: ins, error: rowErr } = await supabase.from('leads').insert(row).select('id').maybeSingle();
+            if (!rowErr) { savedCount++; if (ins?.id) persistedIds.push(ins.id); }
             else if (rowErr.code !== '23505') console.error('Lead insert failed:', rowErr.message);
           }
           console.log(`Fallback saved ${savedCount}/${leadsToInsert.length} leads`);
+        }
+
+        // Garantia: linhas antigas (ou criadas por triggers) precisam ter dono/origem
+        // corretos, senão somem da Gestão de Oportunidades.
+        const phones = leadsToInsert.map((l) => l.phone).filter(Boolean);
+        if (phones.length > 0) {
+          const { error: fixErr } = await supabase
+            .from('leads')
+            .update({ owner_user_id: ownerId, origin: 'oportunidades' })
+            .eq('user_id', user.id)
+            .in('phone', phones)
+            .is('owner_user_id', null);
+          if (fixErr) console.error('Owner backfill failed:', fixErr.message);
         }
       }
 
@@ -661,11 +667,12 @@ serve(async (req) => {
       if (savedCount > 0) {
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ searches_used: profile.searches_used + savedCount })
-          .eq('id', user.id);
+          .update({ searches_used: (profile.searches_used || 0) + savedCount })
+          .eq('id', billingProfileId);
         if (updateError) console.error('Error updating opportunity count:', updateError);
-        profile.searches_used = profile.searches_used + savedCount;
+        profile.searches_used = (profile.searches_used || 0) + savedCount;
       }
+
 
 
       // Save search to history with leads data
