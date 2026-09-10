@@ -61,9 +61,6 @@ export default function AdminTracking() {
       .from("tracking_settings")
       .update({
         gtm_id: values.gtm_id.trim() || null,
-        ga4_id: values.ga4_id.trim() || null,
-        google_ads_id: values.google_ads_id.trim() || null,
-        google_ads_conversion_label: values.google_ads_conversion_label.trim() || null,
         meta_pixel_id: values.meta_pixel_id.trim() || null,
         enabled: values.enabled,
         updated_at: new Date().toISOString(),
