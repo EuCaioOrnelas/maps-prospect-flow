@@ -140,14 +140,14 @@ interface Dim {
 function DimensionCard({ dim }: { dim: Dim }) {
   const [open, setOpen] = useState(false);
   const empty = dim.value === null;
-  const accent = dim.tone === "warn" ? "text-amber-500" : "text-primary";
+  const accent = "text-primary";
   return (
     <div className="rounded-lg border border-border/60 bg-card px-3 py-2.5 transition-colors hover:border-border">
       <div className="flex items-center gap-2">
         <span
           className={cn(
             "w-5 h-5 rounded-md flex items-center justify-center shrink-0",
-            dim.tone === "warn" ? "bg-amber-500/12" : "bg-primary/12",
+            "bg-primary/12",
           )}
         >
           <dim.icon className={cn("w-3 h-3", accent)} />
@@ -170,7 +170,7 @@ function DimensionCard({ dim }: { dim: Dim }) {
           </Tooltip>
         </TooltipProvider>
         {!empty && (
-          <span className={cn("text-[11px] font-medium shrink-0", dim.tone === "warn" ? "text-amber-600" : "text-muted-foreground")}>
+          <span className="text-[11px] font-medium shrink-0 text-muted-foreground">
             {dim.status}
           </span>
         )}
@@ -180,7 +180,7 @@ function DimensionCard({ dim }: { dim: Dim }) {
         <>
           <p className="text-[13px] font-semibold text-muted-foreground mt-2">{dim.status}</p>
           <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-            <div className={cn("h-full w-full rounded-full", dim.tone === "warn" ? "bg-amber-500/15" : "bg-primary/15")} />
+            <div className="h-full w-full rounded-full bg-primary/15" />
           </div>
         </>
       ) : (
@@ -193,7 +193,7 @@ function DimensionCard({ dim }: { dim: Dim }) {
           </div>
           <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
             <div
-              className={cn("h-full rounded-full transition-[width] duration-700", dim.tone === "warn" ? "bg-amber-500" : "bg-primary")}
+              className="h-full rounded-full bg-primary transition-[width] duration-700"
               style={{ width: `${Math.max(2, Math.min(100, dim.value))}%` }}
             />
           </div>
