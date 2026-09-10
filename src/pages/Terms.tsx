@@ -243,7 +243,7 @@ const Terms = () => {
               </p>
               <p>O cliente declara estar ciente e aceitar, ao conectar um número por esse caminho, que:</p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
-                <li><strong>Risco de bloqueio</strong>: o WhatsApp pode advertir, limitar, banir temporária ou definitivamente o número, sem aviso prévio e sem possibilidade de recurso pela Wiize. Esse risco existe mesmo com uso moderado e com o aquecimento de número disponível na plataforma.</li>
+                <li><strong>Risco de bloqueio</strong>: o WhatsApp pode advertir, limitar, banir temporária ou definitivamente o número, sem aviso prévio e sem possibilidade de recurso pela Wiize. Esse risco existe mesmo com uso moderado e restrito ao atendimento.</li>
                 <li><strong>Sem garantia de disponibilidade</strong>: atualizações do WhatsApp podem derrubar a sessão, exigir nova leitura de QR Code ou inviabilizar a conexão a qualquer momento, de forma permanente. Não há SLA de funcionamento para esse caminho.</li>
                 <li><strong>Aparelho e sessão</strong>: a sessão depende do celular do cliente estar ativo e vinculado; perda de sessão, troca de aparelho ou desconexão interrompem os envios e recebimentos.</li>
                 <li><strong>Uso permitido</strong>: é proibido spam, disparo em massa para contatos sem relacionamento ou sem base legal, compra de listas, conteúdo enganoso, ilícito ou que viole os Termos do WhatsApp/Meta e a LGPD. O cliente é o único responsável pelo conteúdo, pela base de contatos e pelo cumprimento das políticas das plataformas.</li>
