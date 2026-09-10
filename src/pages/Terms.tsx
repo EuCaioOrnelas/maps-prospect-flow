@@ -58,10 +58,15 @@ const Terms = () => {
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">2. Natureza do serviço (B2B)</h2>
               <p>
                 A Wiize é uma plataforma <strong>estritamente B2B</strong> destinada a pessoas jurídicas
-                para: prospecção de oportunidades comerciais, gestão de leads (CRM), campanhas e
-                atendimento via WhatsApp (API Oficial da Meta), fluxos
-                automatizados, agentes de IA, integrações com Google (Sheets, Calendar, Gmail, Drive),
-                relatórios e APIs (Integration Layer).
+                para: prospecção de oportunidades comerciais, gestão de leads (CRM), atendimento no
+                número de suporte, chat, fluxos automatizados, SDR e agentes de IA, sistema de
+                Inteligência, integrações com Google (Sheets, Calendar, Gmail, Drive), relatórios e
+                APIs (Integration Layer).
+              </p>
+              <p>
+                A plataforma <strong>não oferece aquecimento de números</strong> nem
+                <strong> campanhas ou disparos de mensagens em massa</strong>. Esse tipo de uso é
+                <strong> proibido</strong> dentro da Wiize e pode levar à suspensão da conta.
               </p>
               <p>
                 É vedado o uso da plataforma para finalidades pessoais, de consumo (B2C) ou para tratar
