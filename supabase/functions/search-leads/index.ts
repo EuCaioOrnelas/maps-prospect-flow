@@ -150,7 +150,7 @@ async function persistOpportunityLeads(
     return rest;
   });
 
-  let rows = rowsWithAllColumns as any[];
+  let rows = accountRows as any[];
   let insertedCount = 0;
   let lastError: string | null = null;
 
