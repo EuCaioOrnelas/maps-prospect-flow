@@ -245,6 +245,16 @@ export const UserActionsMenu = ({
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
+            onClick={() => { setImpersonateLink(null); setImpersonateReason(""); setShowImpersonateDialog(true); }}
+            className="gap-2"
+          >
+            <LogIn size={14} />
+            Entrar como usuário
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
             onClick={() => setShowDeleteDialog(true)}
             className="gap-2 text-destructive focus:text-destructive"
           >
