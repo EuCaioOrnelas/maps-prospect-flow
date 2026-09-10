@@ -20,6 +20,8 @@ import { DashboardThemeProvider } from "@/contexts/ThemeContext";
 import { lazyWithRetry } from "@/lib/runtimeRecovery";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PartnerTrackingProvider } from "@/components/partners/PartnerTrackingProvider";
+import { CookieConsent } from "@/components/CookieConsent";
+import { TrackingTags } from "@/components/TrackingTags";
 import { PageVisitTracker } from "@/components/tracking/PageVisitTracker";
 
 // Eager load critical pages
@@ -141,6 +143,7 @@ const AdminAPIs = lazyWithRetry(() => import("./pages/admin/AdminAPIs"), "AdminA
 const AdminProxies = lazyWithRetry(() => import("./pages/admin/AdminProxies"), "AdminProxies");
 const AdminWebhooks = lazyWithRetry(() => import("./pages/admin/AdminWebhooks"), "AdminWebhooks");
 const AdminTermos = lazyWithRetry(() => import("./pages/admin/AdminTermos"), "AdminTermos");
+const AdminTracking = lazyWithRetry(() => import("./pages/admin/AdminTracking"), "AdminTracking");
 const AdminAuditoria = lazyWithRetry(() => import("./pages/admin/AdminAuditoria"), "AdminAuditoria");
 
 const AdminGrowthIntelligence = lazyWithRetry(() => import("./pages/admin/AdminGrowthIntelligence"), "AdminGrowthIntelligence");
@@ -438,6 +441,7 @@ const App = () => (
                   {/* Admin */}
                   <Route path="announcements" element={<AdminAnnouncements />} />
                   <Route path="termos" element={<AdminTermos />} />
+                  <Route path="tags" element={<AdminTracking />} />
                   <Route path="auditoria" element={<AdminAuditoria />} />
                   <Route path="insights" element={<UserInsights />} />
                   <Route path="onboarding" element={<AdminOnboarding />} />
@@ -549,6 +553,8 @@ const App = () => (
               </PartnerTrackingProvider>
             </Suspense>
             <ActivationChecklist />
+            <TrackingTags />
+            <CookieConsent />
             <GuidedTour />
             </GuidedTourProvider>
             </MetricStateCacheProvider>

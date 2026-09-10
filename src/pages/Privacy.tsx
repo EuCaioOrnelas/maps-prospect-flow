@@ -245,6 +245,18 @@ const Privacy = () => {
                 <li><strong>Tokens de terceiros</strong> (WhatsApp/Meta, Google) — eliminados em até 30 dias após revogação/desconexão.</li>
                 <li><strong>Logs de segurança</strong> — mantidos por período proporcional à finalidade de prevenção a fraude e auditoria.</li>
               </ul>
+              <p>
+                <strong>Exclusão imediata pelo cliente</strong> — em Configurações existe a opção
+                "Excluir minha conta". Após verificação por código enviado ao e-mail cadastrado, apagamos
+                de forma permanente e irreversível todos os registros vinculados ao usuário (leads,
+                contatos, conversas, mensagens, números conectados, campanhas, relatórios, chaves de
+                integração, preferências e o próprio login), cancelamos assinaturas ativas junto aos
+                processadores de pagamento (Stripe e Asaas), removendo também o cadastro de cliente
+                nesses provedores quando permitido pela API deles, e encerramos qualquer envio de e-mail,
+                inclusive promocional. Não há backup de recuperação. Permanecem apenas registros exigidos
+                por lei (documentos fiscais e logs de segurança), pelo prazo legal e sem uso comercial;
+                dados já anonimizados e estatísticas agregadas não são reversíveis a você.
+              </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
@@ -268,10 +280,38 @@ const Privacy = () => {
             <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">12. Cookies e tecnologias similares</h2>
               <p>
-                Utilizamos cookies <strong>essenciais</strong> (sessão, autenticação, segurança) e cookies
-                <strong> analíticos</strong> para entender o uso da plataforma e da página de vendas. O
-                usuário pode gerenciar preferências no navegador; a desativação de cookies essenciais pode
-                comprometer o funcionamento do serviço.
+                Nas páginas públicas e na tela de login exibimos um aviso de cookies em que o visitante
+                autoriza cada categoria separadamente ou aceita todas.
+              </p>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li>
+                  <strong>Essenciais (sempre ativos)</strong> — sessão e autenticação, segurança e
+                  prevenção a fraude, equilíbrio de carga, funcionamento das telas, <strong>rastreamento
+                  interno de uso do produto</strong> (páginas acessadas, ações e erros, para suporte,
+                  faturamento e melhoria) e <strong>atribuição do programa de parceiros</strong>
+                  (identificador de indicação armazenado para calcular comissões, no modelo de último
+                  clique). Sem essa categoria a plataforma e o pagamento de comissões não funcionam, por
+                  isso ela é tratada com base no legítimo interesse e na execução do contrato.
+                </li>
+                <li>
+                  <strong>Funcionais</strong> — memorizam preferências como tema, idioma e itens já
+                  visualizados. Opcionais.
+                </li>
+                <li>
+                  <strong>Analíticos</strong> — métricas agregadas de navegação e desempenho das páginas
+                  (por exemplo, Google Analytics 4, quando ativado). Opcionais.
+                </li>
+                <li>
+                  <strong>Marketing</strong> — mensuração e personalização de campanhas e remarketing
+                  (Google Ads e Meta Ads/Pixel, quando ativados). Opcionais e desligados por padrão.
+                </li>
+              </ul>
+              <p>
+                Enquanto o visitante não decidir, nenhuma tag de analytics ou de publicidade é carregada
+                e o Consent Mode do Google permanece negado. Registramos data, categorias aceitas, página
+                e versão da política como prova de consentimento, e a escolha pode ser alterada limpando
+                os dados do site no navegador. Bloquear cookies essenciais pelo navegador pode
+                inviabilizar o uso do serviço.
               </p>
             </section>
 

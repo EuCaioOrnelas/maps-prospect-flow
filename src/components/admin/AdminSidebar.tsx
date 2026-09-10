@@ -30,6 +30,7 @@ import {
   Target,
   Bell,
   ScrollText,
+  Tags,
   Lock,
   Receipt,
   ArrowLeft,
@@ -156,6 +157,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { title: "Avisos", url: "/admin/announcements", icon: Bell },
       { title: "Termos", url: "/admin/termos", icon: ScrollText },
+      { title: "Tags & Rastreamento", url: "/admin/tags", icon: Tags },
       { title: "Auditoria", url: "/admin/auditoria", icon: Lock },
     ],
   },

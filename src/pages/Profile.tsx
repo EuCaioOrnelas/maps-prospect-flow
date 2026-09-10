@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { SEO } from "@/components/SEO";
 import { TrialCancelCard } from "@/components/profile/TrialCancelCard";
+import { DeleteAccountCard } from "@/components/profile/DeleteAccountCard";
 import {
   Dialog,
   DialogContent,
@@ -1373,6 +1374,8 @@ const Profile = () => {
               </div>
             </CardContent>
           </Card>
+
+          <DeleteAccountCard />
         </div>
       </main>
 

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import wianAvatar from "@/assets/wian-avatar-sm.jpg";
+import { hasConsentDecision, onConsentChange } from "@/lib/consent";
 
 const DISMISS_KEY = "wiize_wian_popup_dismissed_v2";
 
@@ -16,17 +17,30 @@ export const FloatingChatButton = () => {
     } catch {}
 
     let opened = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
     const open = () => {
       if (opened) return;
       opened = true;
       setShowPopup(true);
     };
 
-    // Abre somente após 1 minuto de permanência na página
-    const timer = setTimeout(open, 60000);
+    // Enquanto o aviso de cookies não for respondido, o popup não abre sozinho.
+    const startTimer = () => {
+      if (timer) return;
+      timer = setTimeout(open, 60000);
+    };
+
+    let stopListening: (() => void) | undefined;
+    if (hasConsentDecision()) {
+      startTimer();
+    } else {
+      stopListening = onConsentChange(() => startTimer());
+    }
 
     return () => {
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
+      stopListening?.();
     };
   }, []);
 
