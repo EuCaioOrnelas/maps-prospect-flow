@@ -299,10 +299,15 @@ export default function OpportunitiesManagement() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "leads" },
         (payload) => {
-          const inserted = payload.new as OpportunityLead;
+          const inserted = payload.new as any as OpportunityLead & { owner_user_id?: string | null; user_id?: string | null };
           if (!inserted?.id) return;
+          const ownerId = accountOwnerId || user.id;
+          const mine = inserted.owner_user_id === ownerId || inserted.user_id === user.id;
+          const isOpportunity = !inserted.origin || ["oportunidades", "prospeccao"].includes(inserted.origin);
+          if (!mine || !isOpportunity || inserted.archived_at) return;
           setLeads((prev) => (prev.some((l) => l.id === inserted.id) ? prev : [inserted, ...prev]));
         }
+
       )
       .on(
         "postgres_changes",
