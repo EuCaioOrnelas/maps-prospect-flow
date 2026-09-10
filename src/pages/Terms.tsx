@@ -11,7 +11,7 @@ const Terms = () => {
     <>
       <SEO
         title="Termos de Uso"
-        description="Termos de Uso da plataforma Wiize: prospecção B2B, IA, CRM, campanhas Meta e integrações. Regras, responsabilidades e conformidade legal."
+        description="Termos de Uso da plataforma Wiize: prospecção B2B, IA, CRM, atendimento, fluxos e integrações. Regras, responsabilidades e conformidade legal."
         keywords="termos de uso, termos de serviço, wiize, B2B, LGPD, whatsapp business, meta"
       />
       <div className="min-h-screen bg-background">
@@ -58,10 +58,15 @@ const Terms = () => {
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">2. Natureza do serviço (B2B)</h2>
               <p>
                 A Wiize é uma plataforma <strong>estritamente B2B</strong> destinada a pessoas jurídicas
-                para: prospecção de oportunidades comerciais, gestão de leads (CRM), campanhas e
-                atendimento via WhatsApp (API Oficial da Meta), fluxos
-                automatizados, agentes de IA, integrações com Google (Sheets, Calendar, Gmail, Drive),
-                relatórios e APIs (Integration Layer).
+                para: prospecção de oportunidades comerciais, gestão de leads (CRM), atendimento no
+                número de suporte, chat, fluxos automatizados, SDR e agentes de IA, sistema de
+                Inteligência, integrações com Google (Sheets, Calendar, Gmail, Drive), relatórios e
+                APIs (Integration Layer).
+              </p>
+              <p>
+                A plataforma <strong>não oferece aquecimento de números</strong> nem
+                <strong> campanhas ou disparos de mensagens em massa</strong>. Esse tipo de uso é
+                <strong> proibido</strong> dentro da Wiize e pode levar à suspensão da conta.
               </p>
               <p>
                 É vedado o uso da plataforma para finalidades pessoais, de consumo (B2C) ou para tratar
@@ -100,7 +105,7 @@ const Terms = () => {
             <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">5. Responsabilidades sobre dados de leads</h2>
               <p>
-                Nos módulos de prospecção, CRM, campanhas e fluxos, o <strong>cliente é o controlador</strong>
+                Nos módulos de prospecção, CRM, atendimento, chat, fluxos, SDR/IA e Inteligência, o <strong>cliente é o controlador</strong>
                 dos dados dos leads. Cabe ao cliente:
               </p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
@@ -238,11 +243,11 @@ const Terms = () => {
               </p>
               <p>O cliente declara estar ciente e aceitar, ao conectar um número por esse caminho, que:</p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
-                <li><strong>Risco de bloqueio</strong>: o WhatsApp pode advertir, limitar, banir temporária ou definitivamente o número, sem aviso prévio e sem possibilidade de recurso pela Wiize. Esse risco existe mesmo com uso moderado e com o aquecimento de número disponível na plataforma.</li>
+                <li><strong>Risco de bloqueio</strong>: o WhatsApp pode advertir, limitar, banir temporária ou definitivamente o número, sem aviso prévio e sem possibilidade de recurso pela Wiize. Esse risco existe mesmo com uso moderado e restrito ao atendimento.</li>
                 <li><strong>Sem garantia de disponibilidade</strong>: atualizações do WhatsApp podem derrubar a sessão, exigir nova leitura de QR Code ou inviabilizar a conexão a qualquer momento, de forma permanente. Não há SLA de funcionamento para esse caminho.</li>
                 <li><strong>Aparelho e sessão</strong>: a sessão depende do celular do cliente estar ativo e vinculado; perda de sessão, troca de aparelho ou desconexão interrompem os envios e recebimentos.</li>
                 <li><strong>Uso permitido</strong>: é proibido spam, disparo em massa para contatos sem relacionamento ou sem base legal, compra de listas, conteúdo enganoso, ilícito ou que viole os Termos do WhatsApp/Meta e a LGPD. O cliente é o único responsável pelo conteúdo, pela base de contatos e pelo cumprimento das políticas das plataformas.</li>
-                <li><strong>Recomendação</strong>: para volume, campanhas e operações críticas, use o número na API Oficial da Meta. O caminho não oficial é indicado para atendimento e conversas individuais.</li>
+                <li><strong>Uso restrito</strong>: esse caminho serve exclusivamente para atendimento e conversas individuais no número de suporte, com fluxos, chat, SDR e IA. Não é permitido usá-lo para aquecimento de número nem para disparos ou campanhas de mensagens.</li>
                 <li><strong>Isenção</strong>: a Wiize não responde por bloqueios, banimentos, perda de número, perda de conversas, prejuízos comerciais ou sanções decorrentes do uso desse caminho, nem por mudanças unilaterais promovidas pelo WhatsApp/Meta ou pelo fornecedor da tecnologia de suporte.</li>
                 <li><strong>Sem devolução por bloqueio</strong>: o bloqueio de um número pelo WhatsApp não gera direito a reembolso da assinatura, por se tratar de evento externo e fora do controle da Wiize.</li>
               </ul>
@@ -283,7 +288,7 @@ const Terms = () => {
               <p>
                 O cliente pode excluir a própria conta a qualquer momento em Configurações. A exclusão
                 exige verificação por código enviado ao e-mail cadastrado e é <strong>permanente e
-                irreversível</strong>: apaga leads, contatos, conversas, números conectados, campanhas,
+                irreversível</strong>: apaga leads, contatos, conversas, números conectados, fluxos,
                 relatórios, chaves de integração e configurações, cancela assinaturas ativas no cartão e
                 no Pix e encerra o envio de qualquer comunicação, inclusive promocional.
               </p>
