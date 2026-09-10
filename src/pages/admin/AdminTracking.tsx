@@ -10,28 +10,29 @@ import { useToast } from "@/hooks/use-toast";
 
 type Settings = {
   gtm_id: string;
-  ga4_id: string;
-  google_ads_id: string;
-  google_ads_conversion_label: string;
   meta_pixel_id: string;
   enabled: boolean;
 };
 
 const EMPTY: Settings = {
   gtm_id: "",
-  ga4_id: "",
-  google_ads_id: "",
-  google_ads_conversion_label: "",
   meta_pixel_id: "",
   enabled: true,
 };
 
 const FIELDS: { key: keyof Settings; label: string; placeholder: string; hint: string }[] = [
-  { key: "gtm_id", label: "Google Tag Manager", placeholder: "GTM-XXXXXXX", hint: "Carrega quando o visitante aceita analíticos ou marketing." },
-  { key: "ga4_id", label: "Google Analytics 4", placeholder: "G-XXXXXXXXXX", hint: "Carrega apenas com consentimento de analíticos." },
-  { key: "google_ads_id", label: "Google Ads", placeholder: "AW-XXXXXXXXX", hint: "Carrega apenas com consentimento de marketing." },
-  { key: "google_ads_conversion_label", label: "Rótulo de conversão do Google Ads", placeholder: "abcDEfGhIjk", hint: "Opcional, usado nas conversões." },
-  { key: "meta_pixel_id", label: "Pixel do Meta (Facebook)", placeholder: "1234567890", hint: "Carrega apenas com consentimento de marketing." },
+  {
+    key: "gtm_id",
+    label: "Google Tag Manager",
+    placeholder: "GTM-XXXXXXX",
+    hint: "Carrega quando o visitante aceita analíticos ou marketing. Google Ads e Analytics devem ser configurados dentro do próprio GTM.",
+  },
+  {
+    key: "meta_pixel_id",
+    label: "Pixel do Meta (Facebook)",
+    placeholder: "1234567890",
+    hint: "Carrega apenas com consentimento de marketing.",
+  },
 ];
 
 export default function AdminTracking() {
