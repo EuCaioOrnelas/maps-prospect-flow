@@ -249,12 +249,17 @@ export default function OpportunitiesManagement() {
       return;
     }
     if (!user) return;
+    // Enquanto o perfil (dono da conta) ainda não carregou, não consultamos com
+    // dono nulo — isso devolvia lista vazia para quem acabou de entrar.
+    const ownerId = accountOwnerId || user.id;
     setLoading(true);
     try {
+      const cols = "id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id, archived_at";
       const { data, error } = await supabase
         .from("leads")
-        .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id, archived_at")
-        .eq("owner_user_id", accountOwnerId)
+        .select(cols)
+        // inclui linhas antigas sem owner definido, criadas pelo próprio usuário
+        .or(`owner_user_id.eq.${ownerId},and(owner_user_id.is.null,user_id.eq.${user.id})`)
         .in("origin", ["oportunidades", "prospeccao"])
         .is("archived_at", null)
         .order("created_at", { ascending: false });
@@ -267,6 +272,7 @@ export default function OpportunitiesManagement() {
       setLoading(false);
     }
   };
+
 
   // Realtime — merge row-level changes in place (no full refetch, no reorder)
   useEffect(() => {
