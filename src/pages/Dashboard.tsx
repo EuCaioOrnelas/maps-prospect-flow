@@ -86,6 +86,7 @@ const Dashboard = () => {
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const searchInFlightRef = useRef(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const resultsRef = useRef<HTMLDivElement | null>(null);
@@ -278,6 +279,10 @@ const Dashboard = () => {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // React state is asynchronous: two submit events can arrive before the
+    // button is visually disabled. The ref closes that gap synchronously.
+    if (searchInFlightRef.current) return;
     
     if (!keyword.trim() || !location.trim()) {
       toast({
@@ -304,6 +309,7 @@ const Dashboard = () => {
       return;
     }
 
+    searchInFlightRef.current = true;
     setIsSearching(true);
     // A preferência é lida na Gestão de Oportunidades, logo após o diagnóstico dos leads.
     if (autoApproach.manual || autoApproach.meta) saveAutoApproachPrefs(autoApproach);
@@ -325,8 +331,9 @@ const Dashboard = () => {
         return;
       }
 
+      const requestId = crypto.randomUUID();
       const response = await supabase.functions.invoke('search-leads', {
-        body: { keyword, location },
+        body: { keyword: keyword.trim(), location: location.trim(), request_id: requestId },
       });
 
       if (response.error) {
@@ -418,6 +425,7 @@ const Dashboard = () => {
         variant: "destructive",
       });
     } finally {
+      searchInFlightRef.current = false;
       setIsSearching(false);
     }
   };

@@ -297,22 +297,6 @@ serve(async (req) => {
 
     console.log('User authenticated:', user.id, internalMode ? '(internal)' : '');
 
-    // Per-user rate limit: 1 prospecção / 60s (chave = auth.uid, isolado por usuário)
-    if (!internalMode) {
-      const userRl = await checkRateLimit(supabase, user.id, 'search_leads_user', 1, 60);
-      if (!userRl.allowed) {
-        return new Response(
-          JSON.stringify({
-            error: 'rate_limited',
-            message: `Aguarde ${userRl.retryAfter || 60} segundos antes de realizar uma nova prospecção.`,
-            retry_after: userRl.retryAfter || 60,
-          }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(userRl.retryAfter || 60) } }
-        );
-      }
-    }
-
-
     // Parse request body
     const rawBody = await req.json().catch(() => ({}));
     const { keyword, location } = rawBody || {};
@@ -322,6 +306,25 @@ serve(async (req) => {
         JSON.stringify({ error: 'Palavra-chave e localização são obrigatórios' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Allow normal retries and slow/double-click clients without blocking a
+    // user for a full minute. The IP limiter above remains the abuse barrier.
+    // This check runs only after authentication and input validation so bad
+    // requests do not consume the user's prospecting allowance.
+    if (!internalMode) {
+      const userRl = await checkRateLimit(supabaseAdmin, user.id, 'search_leads_user', 5, 60);
+      if (!userRl.allowed) {
+        const retryAfter = Math.max(1, Number(userRl.retryAfter) || 60);
+        return new Response(
+          JSON.stringify({
+            error: 'rate_limited',
+            message: `Muitas prospecções em sequência. Aguarde ${retryAfter} segundos e tente novamente.`,
+            retry_after: retryAfter,
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': String(retryAfter) } }
+        );
+      }
     }
 
     // Get user profile to check opportunity limits (não se aplica ao modo interno da Wiize API)
@@ -601,6 +604,8 @@ serve(async (req) => {
     const validCount = leads.length;
     const invalidCount = totalWithPhone - allValidLeads.length;
 
+    let savedCount = internalMode ? leads.length : 0;
+
     if (!internalMode) {
       // ownerId / billingProfileId já resolvidos na checagem de limite
 
@@ -625,7 +630,6 @@ serve(async (req) => {
         prospected_at: new Date().toISOString(),
       }));
 
-      let savedCount = 0;
       let persistedIds: string[] = [];
       if (leadsToInsert.length > 0) {
         // Preferred path: upsert ignoring duplicates (needs unique index user_id,phone)
@@ -721,9 +725,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         leads,
-        opportunitiesUsed: profile.searches_used + leads.length,
+        opportunitiesUsed: profile.searches_used,
         opportunitiesLimit: profile.searches_limit,
         resultsCount: leads.length,
+        savedCount,
         locationsSearched: searchedLocations,
         foundLessThanExpected: foundLess,
         message: foundLess 
