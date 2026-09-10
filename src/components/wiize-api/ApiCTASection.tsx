@@ -29,9 +29,9 @@ export const ApiCTASection = () => {
             </span>
           </div>
           <h2 className="mb-6 font-display text-4xl font-bold text-foreground sm:text-5xl md:text-6xl">
-            Sua integração começa agora.
+            Sua integração começa agora
             <br />
-            <span className="text-shimmer-highlight">Leve a inteligência Wiize ao seu produto.</span>
+            <span className="text-shimmer-highlight">Tenha a inteligência da Wiize</span>
           </h2>
           <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground sm:text-xl">
             Crie sua conta, gere sua chave e comece a integrar prospecção e inteligência comercial em minutos.
