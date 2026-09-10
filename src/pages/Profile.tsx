@@ -1373,8 +1373,6 @@ const Profile = () => {
                 </Link>
               </div>
             </CardContent>
-              </div>
-            </CardContent>
           </Card>
 
           <DeleteAccountCard />
