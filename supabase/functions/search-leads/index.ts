@@ -609,6 +609,7 @@ serve(async (req) => {
     const invalidCount = totalWithPhone - allValidLeads.length;
 
     let savedCount = internalMode ? leads.length : 0;
+    let saveError: string | null = null;
 
     if (!internalMode) {
       // ownerId / billingProfileId já resolvidos na checagem de limite
@@ -636,25 +637,51 @@ serve(async (req) => {
 
       let persistedIds: string[] = [];
       if (leadsToInsert.length > 0) {
-        // Preferred path: upsert ignoring duplicates (needs unique index user_id,phone)
-        const { data: upserted, error: insertError } = await supabase
-          .from('leads')
-          .upsert(leadsToInsert, { onConflict: 'user_id,phone', ignoreDuplicates: true })
-          .select('id');
+        // Some databases may be missing a newer column (schema drift) or the
+        // unique index. Strip the offending column and retry so the leads are
+        // never silently lost between the search and "Gestão de Oportunidades".
+        const missingColumnName = (err: any): string | null => {
+          const msg = `${err?.message || ''} ${err?.details || ''}`;
+          if (err?.code !== '42703' && err?.code !== 'PGRST204') return null;
+          const m = msg.match(/'([a-z0-9_]+)' column/i) || msg.match(/column "?([a-z0-9_]+)"?/i);
+          return m ? m[1] : null;
+        };
+        const stripColumn = (rows: any[], col: string) =>
+          rows.map((r) => { const { [col]: _drop, ...rest } = r; return rest; });
 
-        if (!insertError) {
-          persistedIds = (upserted || []).map((r: any) => r.id);
-          savedCount = persistedIds.length;
-          console.log(`Saved ${savedCount} leads to leads table`);
-        } else {
+        let rows = leadsToInsert as any[];
+        for (let attempt = 0; attempt < 6; attempt++) {
+          const { data: upserted, error: insertError } = await supabase
+            .from('leads')
+            .upsert(rows, { onConflict: 'user_id,phone', ignoreDuplicates: true })
+            .select('id');
+
+          if (!insertError) {
+            persistedIds = (upserted || []).map((r: any) => r.id);
+            savedCount = persistedIds.length;
+            saveError = null;
+            console.log(`Saved ${savedCount} leads to leads table`);
+            break;
+          }
+
+          saveError = insertError.message;
+          const missing = missingColumnName(insertError);
+          if (missing) {
+            console.error(`Column "${missing}" missing on leads, retrying without it`);
+            rows = stripColumn(rows, missing);
+            continue;
+          }
+
           // Fallback: insert one by one, skipping duplicates / unexpected conflicts.
           console.error('Upsert failed, falling back to individual inserts:', insertError);
-          for (const row of leadsToInsert) {
+          savedCount = 0;
+          for (const row of rows) {
             const { data: ins, error: rowErr } = await supabase.from('leads').insert(row).select('id').maybeSingle();
-            if (!rowErr) { savedCount++; if (ins?.id) persistedIds.push(ins.id); }
+            if (!rowErr) { savedCount++; if (ins?.id) persistedIds.push(ins.id); saveError = null; }
             else if (rowErr.code !== '23505') console.error('Lead insert failed:', rowErr.message);
           }
-          console.log(`Fallback saved ${savedCount}/${leadsToInsert.length} leads`);
+          console.log(`Fallback saved ${savedCount}/${rows.length} leads`);
+          break;
         }
 
         // Garantia: linhas já existentes também precisam voltar à Gestão de
@@ -668,8 +695,19 @@ serve(async (req) => {
             .eq('user_id', user.id)
             .in('phone', phones);
           if (fixErr) console.error('Owner backfill failed:', fixErr.message);
+
+          // Conta o que realmente está visível na Gestão de Oportunidades.
+          const { count: visibleCount } = await supabase
+            .from('leads')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .in('phone', phones)
+            .is('archived_at', null);
+          if ((visibleCount || 0) > 0) saveError = null;
+          console.log(`Visible opportunities for this search: ${visibleCount || 0}`);
         }
       }
+
 
       // Only charge opportunities that were actually persisted
       if (savedCount > 0) {
@@ -733,6 +771,7 @@ serve(async (req) => {
         opportunitiesLimit: profile.searches_limit,
         resultsCount: leads.length,
         savedCount,
+        saveError,
         locationsSearched: searchedLocations,
         foundLessThanExpected: foundLess,
         message: foundLess 

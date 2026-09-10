@@ -413,11 +413,21 @@ const Dashboard = () => {
         ? data.message
         : `${resultsCount} oportunidades encontradas para "${keyword}" em ${location}`;
 
+      if (resultsCount > 0 && data.saveError) {
+        toast({
+          title: "Resultados encontrados, mas não salvos",
+          description: "Encontramos as empresas, porém não conseguimos gravá-las na Gestão de Oportunidades. Já registramos o erro — tente novamente em instantes.",
+          variant: "destructive",
+          duration: 10000,
+        });
+      } else {
       toast({
         title: resultsCount > 0 ? "Busca concluída!" : "Nenhuma oportunidade encontrada",
         description: resultsCount > 0 ? `${baseDescription} Abrindo a gestão de oportunidades...` : baseDescription,
         duration: data.foundLessThanExpected ? 8000 : 5000,
       });
+      }
+
 
       if (resultsCount > 0) {
         navigate("/oportunidades/gestao");
