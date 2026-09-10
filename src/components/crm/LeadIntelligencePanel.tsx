@@ -607,10 +607,6 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   const notAnalyzed = !profile || state === "NO_DATA" || opportunity === null;
   const analyzedMessages = Math.max(conv?.total || 0, engineMessages);
   const analyzedSignals = Math.max(signals.length, engineSignals);
-  const confidence = Math.max(
-    0,
-    Math.min(100, Number(engineFeatures.analysis_confidence || 0) || analyzedMessages * 6 + analyzedSignals * 10 + (prospect ? 10 : 0)),
-  );
 
   // Etapa comercial: com conversa vem do motor; sem conversa vem do CRM/prospecção.
   const stageLabel = useMemo(() => {
@@ -882,9 +878,9 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
         <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/50 border-t border-border/50 bg-muted/15">
           {[
             { l: "Estado", v: notAnalyzed ? "Não analisado" : state === "PARTIAL" ? "Parcial" : "Completa" },
-            { l: "Confiança", v: `${confidence}%` },
             { l: "Mensagens", v: String(analyzedMessages) },
             { l: "Sinais", v: String(analyzedSignals) },
+            { l: "Etapa", v: stageLabel },
           ].map((s, i) => (
             <div key={i} className={cn("px-3 py-2", i > 1 && "border-t sm:border-t-0 border-border/50")}>
               <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium truncate">{s.l}</p>
