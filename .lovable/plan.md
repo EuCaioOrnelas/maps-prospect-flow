@@ -1,66 +1,52 @@
-# Wiize Central Intelligence Engine
+# Correção definitiva: oportunidades vazias em contas novas
 
-Unificar a inteligência que já existe (engajamento, CRM, prospecção, Wian, oportunidades quentes, vendas) numa única camada central, sem recriar nada e sem quebrar o que funciona hoje.
+## Diagnóstico confirmado até aqui
 
-## O que já existe (mapeamento concluído)
+- O histórico funciona porque lê `search_history`, que recebe uma cópia dos resultados mesmo quando a gravação real em `leads` falha.
+- A Gestão de Oportunidades lê exclusivamente `leads`; portanto, “busca concluída” não prova que as oportunidades foram persistidas ou ficaram visíveis para a conta.
+- Cookies não participam desse vínculo. A diferença relevante entre conta antiga e nova está na criação do perfil, definição do dono da conta, responsável, políticas de acesso e versão publicada da função de busca.
+- A função atual ainda pode retornar sucesso com empresas encontradas mesmo quando nenhuma linha ficou efetivamente legível pela sessão do usuário. A verificação existente usa o cliente privilegiado e, por isso, não comprova a visibilidade real pelas permissões da conta.
 
-- **Motor de engajamento (Revenue)**: `revenue-processor` classifica intenção por léxico, aplica regras (`revenue_score_rules`) com cooldown e limite diário, grava `revenue_events`, `revenue_score_logs`, `revenue_intent_logs`, `revenue_score_snapshots` e atualiza `revenue_leads` (score total + componentes engagement/intent/urgency/risk + bucket + risco). Cron a cada 30 min penaliza leads sem resposta; decaimento diário reduz score por inatividade.
-- **Prospecção**: `search-leads` (Google Maps/SERP) grava empresas em `leads`; `score-opportunity` enriquece com site, redes sociais, reputação e diagnóstico e grava `ai_score`, `opportunity_level`, `ai_diagnosis`, `enrichment_data`; `approach-lead` gera a abordagem.
-- **Vendas**: `lead_deals` (ticket, tipo, datas, renovação) e ganho/perda pelas etapas do CRM (`Fechado (Ganho)` / `Perdido`).
-- **Wian**: briefing diário (`briefing-chat`) e o assistente de suporte (`support-wian-tools`), cada um montando o próprio contexto.
-- **Oportunidades quentes**: hoje existem **três** definições diferentes de "quente" (score 0–100 de prospecção, score 0–1000 de engajamento e os buckets do processador), com limiares divergentes entre telas.
+## Correção
 
-Problemas centrais: a empresa prospectada e a conversa do WhatsApp são dois mundos separados (ligados só pelo telefone), as vendas não retroalimentam nada, e cada tela recalcula "quente" do seu jeito.
+1. **Tornar a persistência obrigatória antes do sucesso**
+   - Na função `search-leads`, validar o usuário e resolver o dono da conta antes de montar os registros.
+   - Gravar `user_id`, `owner_user_id`, `created_by_user_id`, `responsible_user_id` e `origin` de forma determinística.
+   - Tratar duplicados como oportunidades existentes, reativando e corrigindo dono/origem/responsável quando necessário.
+   - Se nenhum resultado ficar persistido, retornar erro explícito e não exibir “Busca concluída”.
 
-## O que será construído
+2. **Verificar com a mesma identidade da tela**
+   - Após a gravação, consultar as oportunidades usando um cliente autenticado com o token real do usuário, não o cliente privilegiado.
+   - Considerar sucesso somente quando essa consulta comprovar que a própria sessão consegue ler os registros.
+   - Registrar no retorno quantos resultados foram encontrados, persistidos e realmente visíveis.
 
-### Fase 1 — Núcleo de inteligência (banco)
-Novas tabelas por conta, com RLS e permissões:
-- `intel_lead_profiles`: visão consolidada por lead (fit, engagement, intent, quality, momentum, risk, opportunity, pattern match, estágio, comportamentos, próxima ação, prioridade P0–P4, motivos/explicação, versão do motor).
-- `intel_signals`: sinais reutilizáveis (tipo, confiança, origem regra/IA, mensagem de origem, timestamp) — event sourcing.
-- `intel_config`: pesos, limiares, decay, cooldowns e combinações configuráveis por conta (nada de número solto no código), com valores padrão.
-- `intel_patterns`: padrões de conversão, perda, ghosting e objeção calculados a partir do histórico real da própria conta.
-- `intel_audit`: antes/depois, dimensão, motivo, regra, confiança, versão.
-- Vínculo explícito entre empresa prospectada (`leads`) e lead de conversa (`revenue_leads`), acabando com o casamento frágil por telefone.
+3. **Eliminar corrida em contas recém-criadas**
+   - Confirmar que o perfil existe e que o dono efetivo foi resolvido antes da busca.
+   - Corrigir a função de dono da conta para sempre retornar o próprio usuário quando ele é owner, mesmo sem linha em `account_members`.
+   - Garantir defaults e triggers de `leads` para owner/criador/responsável sem depender do tempo de carregamento do frontend.
 
-Isolamento total por conta: uma conta só aprende com os próprios dados.
+4. **Fortalecer a tela de Gestão**
+   - Consultar por dono efetivo e manter compatibilidade com linhas legadas do próprio usuário.
+   - Remover qualquer estado vazio enganoso causado por erro de consulta; mostrar o erro real.
+   - Após redirecionar da busca, repetir a leitura por um curto período para cobrir a confirmação da gravação, sem depender de realtime.
 
-### Fase 2 — Motor central (`intel-engine`)
-Uma única edge function que lê os sinais existentes e produz o perfil consolidado:
-- **Fit**: nicho, região, porte, presença digital e diagnóstico da prospecção.
-- **Engagement**: reaproveita integralmente o score atual, sem recalcular.
-- **Intent**: intenções atuais + novas (comparação, decisão, aprovação, próximo passo, necessidade, problema, solução).
-- **Quality**: profundidade, perguntas, reciprocidade, progressão — impede farm de pontos.
-- **Momentum**: variação, velocidade, recência (5 estados).
-- **Risk**: silêncio, mensagens sem resposta, atraso do vendedor, objeções, queda.
-- **Behavior**: perfis dinâmicos (respondedor rápido, sensível a preço, pesquisador, decisor, pronto para comprar, sumido, reativado...).
-- **Opportunity**: composição das dimensões acima + sinais compostos, separado de engajamento.
-- **Next best action** e **prioridade comercial**, sempre com explicação por fatores.
+5. **Recuperar buscas já afetadas**
+   - Preparar uma correção segura que reconstrua em `leads` os resultados recentes existentes em `search_history` para usuários afetados, sem duplicar contatos.
+   - Corrigir dono, origem, responsável e arquivamento dos registros já existentes.
 
-Regra absoluta: a IA só devolve sinais; quem calcula score é o motor. IA só entra em contexto complexo (áudio, ambiguidade, múltiplas intenções), com cache por mensagem para não reprocessar.
+## Validação
 
-### Fase 3 — Aprendizado com vendas
-- Ao ganhar ou perder um negócio, os sinais que antecederam o desfecho são registrados.
-- Cálculo periódico dos padrões da conta (conversão, perda, ghosting, objeção) com percentuais reais, nunca inventados.
-- Comparação de cada lead novo com esses padrões: "similaridade alta com clientes convertidos", nunca "vai comprar".
-- Ciclo de feedback: previsão × resultado, guardado para calibrar pesos e, no futuro, treinar modelo.
+- Conta antiga: nova busca continua aparecendo normalmente.
+- Conta recém-criada: busca → persistência → redirecionamento → oportunidades visíveis.
+- Conta nova sem linha em `account_members`: usa o próprio usuário como dono.
+- Subusuário: grava e lê na conta do owner, com responsável correto.
+- Duplicados: reaparecem na Gestão sem cobrança indevida ou duplicação.
+- Falha de gravação/permissão: a interface mostra erro e nunca “Busca concluída”.
+- Comparar `search_history`, `leads`, dono, responsável e visibilidade pela sessão real.
 
-### Fase 4 — Consumo pelo produto
-- **CRM**: cards, lista, pipeline e detalhe passam a mostrar as dimensões centrais; ordenação e filtros por oportunidade, intenção, momentum, risco, fit, prioridade e similaridade.
-- **Oportunidades quentes**: deixa de ter regra própria e passa a ser uma visualização do motor, com motivo e ação recomendada.
-- **Wian**: briefing e perguntas contextuais passam a receber o perfil consolidado (empresa, diagnóstico, dimensões, comportamento, padrões, o que mudou, próxima ação) e ganham ferramentas para responder "por que está quente", "o que mudou nas últimas 24h", "parece com clientes que já compraram", "quem abordar agora".
-- **Prospecção**: o diagnóstico entra na inteligência assim que a empresa é prospectada.
-- **Áudio**: transcrição entra no mesmo pipeline, sem score separado.
+## Arquivos previstos
 
-### Fase 5 — Validação
-Testes com dados reais da conta: leads com conversa, leads ganhos, leads perdidos; conferência de explicação, histórico, isolamento entre contas e ausência de scores conflitantes.
-
-## Garantias
-
-- Nada do motor atual é removido: score, histórico, crescimento e queda continuam funcionando exatamente como hoje.
-- Nenhum arquivo compartilhado novo é criado; cada função carrega o próprio código.
-- Um único núcleo de inteligência — sem score paralelo por módulo.
-
-## Entrega
-
-Sugiro executar por fases, validando cada uma. As fases 1 e 2 já entregam o perfil consolidado funcionando; 3 a 5 completam o aprendizado e a integração em todo o produto. Ao final de cada fase envio a lista completa de arquivos criados e editados.
+- `supabase/functions/search-leads/index.ts`
+- `src/pages/Dashboard.tsx`
+- `src/pages/OpportunitiesManagement.tsx`
+- Uma migration pequena apenas se a auditoria final confirmar divergência em função, trigger ou política de acesso.
