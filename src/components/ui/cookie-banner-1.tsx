@@ -115,7 +115,7 @@ const CookiePanel = (props: CookiePanelProps) => {
       aria-modal="false"
       aria-label="Aviso de cookies"
       className={cn(
-        "fixed bottom-4 left-4 z-[100] w-[min(560px,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto",
+        "fixed bottom-6 left-6 z-[100] w-[min(560px,calc(100vw-3rem))] max-h-[70vh] overflow-visible",
         "transition-all duration-700",
         visible
           ? "opacity-100 translate-x-0 [transition-timing-function:cubic-bezier(0.34,1.4,0.64,1)]"
@@ -123,31 +123,9 @@ const CookiePanel = (props: CookiePanelProps) => {
         className,
       )}
     >
-      <div className="relative rounded-2xl border border-border/80 bg-card text-card-foreground shadow-[0_2px_4px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.12),0_24px_64px_rgba(0,0,0,0.16)] overflow-hidden">
-        <svg
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-px left-0 w-full h-5 text-primary"
-          viewBox="0 0 560 20"
-          preserveAspectRatio="none"
-          fill="none"
-        >
-          <defs>
-            <linearGradient id="cookie-top-fade" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0%" stopColor="currentColor" stopOpacity="0" />
-              <stop offset="8%" stopColor="currentColor" stopOpacity="0.85" />
-              <stop offset="92%" stopColor="currentColor" stopOpacity="0.85" />
-              <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M0,18 C0,8 8,0 18,0 L542,0 C552,0 560,8 560,18"
-            stroke="url(#cookie-top-fade)"
-            strokeWidth="3"
-            fill="none"
-            strokeLinecap="round"
-          />
-        </svg>
-        <div className="relative p-5 pt-6">
+      <div className="rounded-2xl border border-border/80 bg-card text-card-foreground shadow-[0_4px_6px_-2px_rgba(0,0,0,0.08),0_12px_24px_-4px_rgba(0,0,0,0.16),0_24px_48px_-8px_rgba(0,0,0,0.24)] overflow-hidden">
+        <div className="h-1 w-full bg-primary" />
+        <div className="relative p-5">
           <button
             type="button"
             onClick={() => decide(DEFAULT_PREFS)}
