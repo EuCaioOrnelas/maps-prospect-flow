@@ -553,6 +553,8 @@ const App = () => (
               </PartnerTrackingProvider>
             </Suspense>
             <ActivationChecklist />
+            <TrackingTags />
+            <CookieConsent />
             <GuidedTour />
             </GuidedTourProvider>
             </MetricStateCacheProvider>
