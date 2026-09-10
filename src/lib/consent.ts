@@ -14,7 +14,8 @@ export const CONSENT_KEY = "cookie-consent";
 export const CONSENT_PREFS_KEY = "cookie-preferences";
 export const CONSENT_ANON_KEY = "cookie-anon-id";
 export const CONSENT_EVENT = "wiize:consent-change";
-export const CONSENT_VERSION = "v1";
+export const CONSENT_VERSION = "v2";
+export const CONSENT_VERSION_KEY = "cookie-consent-version";
 
 export const DEFAULT_PREFS: ConsentPrefs = {
   necessary: true,
@@ -32,10 +33,21 @@ export const ALL_GRANTED: ConsentPrefs = {
 
 export function hasConsentDecision(): boolean {
   try {
-    return !!localStorage.getItem(CONSENT_KEY);
+    if (!localStorage.getItem(CONSENT_KEY)) return false;
+    // Decisões feitas em versões anteriores do aviso precisam ser refeitas.
+    return localStorage.getItem(CONSENT_VERSION_KEY) === CONSENT_VERSION;
   } catch {
     return false;
   }
+}
+
+/** Reabre o aviso de cookies (limpa a decisão salva neste navegador). */
+export function resetConsent() {
+  try {
+    localStorage.removeItem(CONSENT_KEY);
+    localStorage.removeItem(CONSENT_VERSION_KEY);
+    localStorage.removeItem(CONSENT_PREFS_KEY);
+  } catch {}
 }
 
 export function getConsent(): ConsentPrefs {
@@ -67,6 +79,7 @@ export function saveConsent(prefs: ConsentPrefs) {
   try {
     localStorage.setItem(CONSENT_PREFS_KEY, JSON.stringify(value));
     localStorage.setItem(CONSENT_KEY, "true");
+    localStorage.setItem(CONSENT_VERSION_KEY, CONSENT_VERSION);
   } catch {}
   applyConsentToTags(value);
   window.dispatchEvent(new CustomEvent<ConsentPrefs>(CONSENT_EVENT, { detail: value }));
