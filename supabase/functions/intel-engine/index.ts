@@ -635,10 +635,11 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   if (momentumAvailable) opParts.push({ w: ow.momentum, v: momentumNorm });
   if (patternAvailable) opParts.push({ w: ow.pattern, v: patternMatch });
 
-  const opWeightSum = opParts.reduce((a, p) => a + p.w, 0);
-  let opportunity = opWeightSum > 0
-    ? opParts.reduce((a, p) => a + p.v * p.w, 0) / opWeightSum
-    : 0;
+  // O denominador e sempre o peso total: uma dimensao sem evidencia contribui zero,
+  // nunca um valor presumido, e nunca infla o resultado por renormalizacao.
+  const opTotalWeight =
+    ow.fit + ow.intent + ow.engagement + ow.quality + ow.momentum + ow.pattern;
+  let opportunity = opParts.reduce((a, p) => a + p.v * p.w, 0) / (opTotalWeight || 1);
   opportunity += compoundBonus;
   if (present.has("NEGATIVE_INTENT")) opportunity *= 0.35;
   opportunity = clamp(opportunity);
