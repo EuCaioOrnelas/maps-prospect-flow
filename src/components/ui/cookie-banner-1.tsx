@@ -115,7 +115,7 @@ const CookiePanel = (props: CookiePanelProps) => {
       aria-modal="false"
       aria-label="Aviso de cookies"
       className={cn(
-        "fixed bottom-6 left-6 z-[100] w-[min(560px,calc(100vw-3rem))] max-h-[70vh] overflow-visible",
+        "fixed bottom-3 left-3 right-3 z-[100] max-h-[75vh] overflow-visible sm:bottom-6 sm:left-6 sm:right-auto sm:w-[min(560px,calc(100vw-3rem))]",
         "transition-all duration-700",
         visible
           ? "opacity-100 translate-x-0 [transition-timing-function:cubic-bezier(0.34,1.4,0.64,1)]"
@@ -123,9 +123,9 @@ const CookiePanel = (props: CookiePanelProps) => {
         className,
       )}
     >
-      <div className="rounded-2xl border border-border/80 bg-card text-card-foreground shadow-[0_4px_6px_-2px_rgba(0,0,0,0.08),0_12px_24px_-4px_rgba(0,0,0,0.16),0_24px_48px_-8px_rgba(0,0,0,0.24)] overflow-hidden">
+      <div className="rounded-2xl border border-border/80 bg-card text-card-foreground shadow-[0_4px_6px_-2px_rgba(0,0,0,0.08),0_12px_24px_-4px_rgba(0,0,0,0.16),0_24px_48px_-8px_rgba(0,0,0,0.24)] overflow-hidden max-h-[inherit] overflow-y-auto">
         <div className="h-1 w-full bg-primary" />
-        <div className="relative p-5">
+        <div className="relative p-4 sm:p-5">
           <button
             type="button"
             onClick={() => decide(DEFAULT_PREFS)}
@@ -136,24 +136,24 @@ const CookiePanel = (props: CookiePanelProps) => {
             <X className="size-3.5" />
           </button>
 
-          <div className="flex items-start gap-3 pr-6">
-            <span className="mt-0.5 inline-flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
-              <IconEl className="size-4" />
-            </span>
-            <div>
+          <div className="pr-6">
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 sm:size-9">
+                <IconEl className="size-4" />
+              </span>
               <p className="text-sm font-semibold leading-tight">{title}</p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                {message} Cookies essenciais são sempre ativos. Veja nossa{" "}
-                <a href={privacyHref} className="text-primary hover:underline">
-                  Política de Privacidade
-                </a>{" "}
-                e os{" "}
-                <a href={termsHref} className="text-primary hover:underline">
-                  Termos de Uso
-                </a>
-                .
-              </p>
             </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
+              {message} Cookies essenciais são sempre ativos. Veja nossa{" "}
+              <a href={privacyHref} className="text-primary hover:underline">
+                Política de Privacidade
+              </a>{" "}
+              e os{" "}
+              <a href={termsHref} className="text-primary hover:underline">
+                Termos de Uso
+              </a>
+              .
+            </p>
           </div>
 
           <div className="mt-4 flex items-center gap-2">

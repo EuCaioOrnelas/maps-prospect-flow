@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 import { PageHeader } from "@/components/wiize-api/WiizeApiUI";
-import { useTheme } from "@/contexts/ThemeContext";
+
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Bot, Copy, Download, Check } from "lucide-react";
@@ -132,9 +132,9 @@ function Row({ cells, head = false }: { cells: string[]; head?: boolean }) {
 export default function ApiDocs() {
   const [active, setActive] = useState("intro");
   const [copied, setCopied] = useState(false);
-  const { resolvedTheme } = useTheme();
   const { toast } = useToast();
-  const codeTheme = resolvedTheme === "dark" ? "dark" : "light";
+  // Terminal sempre claro (fundo branco), independente do tema do app.
+  const codeTheme = "light" as const;
 
   const copyAiDoc = async () => {
     try {
