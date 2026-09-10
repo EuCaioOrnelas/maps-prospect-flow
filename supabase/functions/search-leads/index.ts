@@ -184,7 +184,7 @@ async function persistOpportunityLeads(
     break;
   }
 
-  const phones = rowsWithAllColumns.map((row) => row.phone).filter(Boolean);
+  const phones = accountRows.map((row) => row.phone).filter(Boolean);
   if (phones.length === 0) return { insertedCount, visibleCount: 0, error: lastError };
 
   const repairPayload = {
