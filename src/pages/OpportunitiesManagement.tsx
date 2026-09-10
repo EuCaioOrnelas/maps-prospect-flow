@@ -256,24 +256,47 @@ export default function OpportunitiesManagement() {
     const ownerId = accountOwnerId || user.id;
     setLoading(true);
     try {
-      const cols = "id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id, archived_at";
-      const { data, error } = await supabase
+      const baseCols = "id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id";
+      const ownerFilter = `owner_user_id.eq.${ownerId},and(owner_user_id.is.null,user_id.eq.${user.id})`;
+
+      // Primeira tentativa: consulta completa (inclui arquivamento).
+      let { data, error } = await supabase
         .from("leads")
-        .select(cols)
+        .select(`${baseCols}, archived_at`)
         // inclui linhas antigas sem owner definido, criadas pelo próprio usuário
-        .or(`owner_user_id.eq.${ownerId},and(owner_user_id.is.null,user_id.eq.${user.id})`)
+        .or(ownerFilter)
         .in("origin", ["oportunidades", "prospeccao"])
         .is("archived_at", null)
         .order("created_at", { ascending: false });
 
+      // Se o banco ainda não tem a coluna de arquivamento, não deixe a tela
+      // vazia: repete a consulta sem esse campo.
+      if (error && (error.code === "42703" || /archived_at/.test(error.message || ""))) {
+        console.warn("Coluna archived_at indisponível, buscando sem ela:", error.message);
+        const retry = await supabase
+          .from("leads")
+          .select(baseCols)
+          .or(ownerFilter)
+          .in("origin", ["oportunidades", "prospeccao"])
+          .order("created_at", { ascending: false });
+        data = retry.data as any;
+        error = retry.error;
+      }
+
       if (error) throw error;
-      setLeads((data as OpportunityLead[]) || []);
+      setLeads((data as unknown as OpportunityLead[]) || []);
     } catch (err) {
       console.error("Error fetching leads:", err);
+      toast({
+        title: "Não foi possível carregar as oportunidades",
+        description: (err as any)?.message || "Tente recarregar a página.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
+
 
 
   // Realtime — merge row-level changes in place (no full refetch, no reorder)
