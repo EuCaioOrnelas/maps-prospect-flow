@@ -30,6 +30,9 @@ import {
   Archive,
   ArchiveRestore,
   Trash2,
+  LogIn,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 
 interface UserActionsMenuProps {
