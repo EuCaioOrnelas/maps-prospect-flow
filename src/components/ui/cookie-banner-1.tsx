@@ -123,7 +123,7 @@ const CookiePanel = (props: CookiePanelProps) => {
         className,
       )}
     >
-      <div className="rounded-2xl border border-border/80 bg-card text-card-foreground shadow-[0_4px_6px_-2px_rgba(0,0,0,0.08),0_12px_24px_-4px_rgba(0,0,0,0.16),0_24px_48px_-8px_rgba(0,0,0,0.24)] overflow-hidden">
+      <div className="rounded-2xl border border-border/80 bg-card text-card-foreground shadow-[0_4px_6px_-2px_rgba(0,0,0,0.08),0_12px_24px_-4px_rgba(0,0,0,0.16),0_24px_48px_-8px_rgba(0,0,0,0.24)] overflow-hidden max-h-[inherit] overflow-y-auto">
         <div className="h-1 w-full bg-primary" />
         <div className="relative p-4 sm:p-5">
           <button
