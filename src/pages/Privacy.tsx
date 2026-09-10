@@ -245,6 +245,18 @@ const Privacy = () => {
                 <li><strong>Tokens de terceiros</strong> (WhatsApp/Meta, Google) — eliminados em até 30 dias após revogação/desconexão.</li>
                 <li><strong>Logs de segurança</strong> — mantidos por período proporcional à finalidade de prevenção a fraude e auditoria.</li>
               </ul>
+              <p>
+                <strong>Exclusão imediata pelo cliente</strong> — em Configurações existe a opção
+                "Excluir minha conta". Após verificação por código enviado ao e-mail cadastrado, apagamos
+                de forma permanente e irreversível todos os registros vinculados ao usuário (leads,
+                contatos, conversas, mensagens, números conectados, campanhas, relatórios, chaves de
+                integração, preferências e o próprio login), cancelamos assinaturas ativas junto aos
+                processadores de pagamento (Stripe e Asaas), removendo também o cadastro de cliente
+                nesses provedores quando permitido pela API deles, e encerramos qualquer envio de e-mail,
+                inclusive promocional. Não há backup de recuperação. Permanecem apenas registros exigidos
+                por lei (documentos fiscais e logs de segurança), pelo prazo legal e sem uso comercial;
+                dados já anonimizados e estatísticas agregadas não são reversíveis a você.
+              </p>
             </section>
 
             <section className="space-y-3 sm:space-y-4">
