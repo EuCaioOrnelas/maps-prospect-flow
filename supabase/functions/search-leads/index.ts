@@ -107,6 +107,37 @@ async function persistOpportunityLeads(
     return { insertedCount: 0, visibleCount: 0, error: null };
   }
 
+  // Deduplicação por CONTA (e não por usuário): se outra pessoa da mesma conta
+  // já prospectou este telefone, não criamos linha nova nem cobramos de novo.
+  let accountRows = rowsWithAllColumns;
+  try {
+    const allPhones = rowsWithAllColumns.map((row) => row.phone).filter(Boolean);
+    if (allPhones.length > 0) {
+      const { data: existing } = await admin
+        .from('leads')
+        .select('phone')
+        .eq('owner_user_id', ownerId)
+        .in('phone', allPhones);
+      const known = new Set((existing || []).map((row: any) => row.phone));
+      if (known.size > 0) {
+        accountRows = rowsWithAllColumns.filter((row) => !known.has(row.phone));
+      }
+    }
+  } catch (_dedupeError) {
+    // Se a checagem falhar, seguimos com o comportamento anterior.
+    accountRows = rowsWithAllColumns;
+  }
+
+  if (accountRows.length === 0) {
+    const phonesOnly = rowsWithAllColumns.map((row) => row.phone).filter(Boolean);
+    const { data: visibleExisting } = await userClient
+      .from('leads')
+      .select('id')
+      .eq('owner_user_id', ownerId)
+      .in('phone', phonesOnly);
+    return { insertedCount: 0, visibleCount: visibleExisting?.length || 0, error: null };
+  }
+
   const missingColumnName = (err: any): string | null => {
     const message = `${err?.message || ''} ${err?.details || ''}`;
     if (err?.code !== '42703' && err?.code !== 'PGRST204') return null;
