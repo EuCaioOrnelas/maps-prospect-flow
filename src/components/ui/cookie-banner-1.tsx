@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   ALL_GRANTED,
   ConsentPrefs,
+  DEFAULT_PREFS,
   getConsent,
   hasConsentDecision,
   saveConsent,
