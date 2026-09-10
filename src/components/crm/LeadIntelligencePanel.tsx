@@ -335,6 +335,40 @@ function buildMessage(prospect: ProspectData | null, lead: Lead | null, conv: Co
   return { text: null, origin: null };
 }
 
+/**
+ * Pergunta de abertura adaptada ao nicho real, a prospecçao e ao diagnostico ja coletados.
+ * Nao inventa dados: so usa o que existe em prospect/lead.
+ */
+function buildQuestion(prospect: ProspectData | null, lead: Lead | null): string {
+  const niche = (prospect?.category || (lead as any)?.category || "").toLowerCase();
+  const city = prospect?.city || (lead as any)?.city || null;
+  const semSite = !!prospect && !prospect.website;
+  const poucasAvaliacoes = prospect?.review_count != null && prospect.review_count < 20;
+
+  const porNicho: Array<[RegExp, string]> = [
+    [/restaurante|pizzar|lanchon|hamburg|bar\b|caf[eé]|food/, "Hoje vocês recebem mais pedidos pelo balcão ou pelo WhatsApp?"],
+    [/im[oó]ve|imobili|corretor/, "Hoje vocês conseguem responder todos os interessados nos imóveis no mesmo dia?"],
+    [/cl[ií]nic|odonto|dentist|sa[uú]de|m[eé]dic|est[eé]tic/, "A agenda de vocês está cheia neste mês ou ainda sobram horários?"],
+    [/advoc|jur[ií]dic|contab/, "Vocês estão querendo receber mais consultas novas agora ou o foco é atender a carteira atual?"],
+    [/academia|crossfit|pilates|personal/, "Vocês estão focados em trazer novos alunos agora ou em segurar os atuais?"],
+    [/sal[aã]o|barbear|cabelo|manicure/, "A agenda de vocês está lotada durante a semana ou só no fim de semana?"],
+    [/loja|varej|comerc|boutique|[oó]tica/, "As vendas de vocês vêm mais de quem passa na frente ou de quem chama no WhatsApp?"],
+    [/oficina|autom|mec[aâ]nic|funilar|carro/, "Vocês têm mais dificuldade em atrair clientes novos ou em fazer o cliente voltar?"],
+    [/escola|curso|educa|ensino/, "Vocês estão em período de captação de matrículas agora?"],
+    [/pet|veterin/, "Vocês conseguem dar conta dos atendimentos ou ainda cabe mais cliente na agenda?"],
+    [/constru|reforma|arquitet|engenh|marcen/, "Vocês estão com obras fechadas para os próximos meses ou ainda buscando novos projetos?"],
+    [/marketing|ag[eê]ncia|software|tecnolog|consultor/, "Hoje a captação de clientes de vocês vem mais de indicação ou de prospecção ativa?"],
+  ];
+
+  for (const [re, q] of porNicho) if (re.test(niche)) return q;
+
+  if (semSite) return "Hoje os clientes de vocês encontram vocês por onde, só pelo Google ou também pelas redes?";
+  if (poucasAvaliacoes) return "Vocês costumam pedir avaliação para os clientes depois do atendimento?";
+  if (niche) return `Vocês estão querendo atrair mais clientes de ${niche} agora ou isso fica para os próximos meses?`;
+  if (city) return `Vocês atendem só em ${city} ou também na região?`;
+  return "Vocês estão buscando atrair mais clientes agora ou isso é algo para os próximos meses?";
+}
+
 function buildPlaybook(
   state: AnalysisState,
   profile: any,
@@ -373,7 +407,7 @@ function buildPlaybook(
         "Fazer uma única pergunta simples que gere resposta.",
         "Aguardar até 48 horas antes de qualquer novo contato.",
       ],
-      question: "Vocês estão buscando atrair mais clientes agora ou isso é algo para os próximos meses?",
+      question: buildQuestion(prospect, lead),
       avoid: "Não afirmar que já conversaram antes. Nenhuma interação foi registrada.",
       expected: "Primeira resposta do contato, que libera o cálculo das dimensões.",
     };
@@ -413,9 +447,7 @@ function buildPlaybook(
         "Fazer uma única pergunta fechada, fácil de responder.",
         "Aguardar 48 horas antes de qualquer nova tentativa.",
       ],
-      question: nicho
-        ? `Vocês estão querendo atrair mais clientes de ${nicho.toLowerCase()} agora ou isso fica para os próximos meses?`
-        : "Vocês estão buscando atrair mais clientes agora ou isso é algo para os próximos meses?",
+      question: buildQuestion(prospect, lead),
       avoid: "Não dizer que já conversaram, não citar retomada e não mandar mensagem genérica. Nenhuma mensagem foi trocada até aqui.",
       expected: "Primeira resposta do contato, que libera engajamento, intenção e momentum reais.",
     };
@@ -571,7 +603,9 @@ function buildPlaybook(
       "Confirmar a faixa de investimento.",
       "Conduzir para proposta ou demonstração quando houver fit.",
     ],
-    question: "Você está buscando resolver isso ainda este mês ou está apenas avaliando as opções?",
+    question: conv && conv.total > 0
+      ? "Você está buscando resolver isso ainda este mês ou está apenas avaliando as opções?"
+      : buildQuestion(prospect, lead),
     expected: "Qualificação concluída com prazo e orçamento identificados.",
   };
 }
