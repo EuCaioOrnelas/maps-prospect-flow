@@ -130,6 +130,8 @@ interface Dim {
   basis: string[];
   tone?: "primary" | "warn";
   partial?: boolean;
+  /** Explicacao curta exibida no tooltip "?" do card. */
+  hint: string;
 }
 
 function DimensionCard({ dim }: { dim: Dim }) {
@@ -137,22 +139,33 @@ function DimensionCard({ dim }: { dim: Dim }) {
   const empty = dim.value === null;
   const accent = dim.tone === "warn" ? "text-amber-500" : "text-primary";
   return (
-    <div
-      className={cn(
-        "rounded-lg border bg-card px-3 py-2.5 transition-colors",
-        empty ? "border-dashed border-border/70" : "border-border/60 hover:border-border",
-      )}
-    >
+    <div className="rounded-lg border border-border/60 bg-card px-3 py-2.5 transition-colors hover:border-border">
       <div className="flex items-center gap-2">
         <span
           className={cn(
             "w-5 h-5 rounded-md flex items-center justify-center shrink-0",
-            empty ? "bg-muted" : dim.tone === "warn" ? "bg-amber-500/12" : "bg-primary/12",
+            dim.tone === "warn" ? "bg-amber-500/12" : "bg-primary/12",
           )}
         >
-          <dim.icon className={cn("w-3 h-3", empty ? "text-muted-foreground/70" : accent)} />
+          <dim.icon className={cn("w-3 h-3", accent)} />
         </span>
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold truncate flex-1">{dim.label}</p>
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={`O que é ${dim.label}`}
+                className="w-4 h-4 rounded-full border border-border/70 text-muted-foreground text-[9px] font-semibold flex items-center justify-center shrink-0 hover:text-foreground hover:border-border"
+              >
+                ?
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[240px] text-[11.5px] leading-relaxed">
+              {dim.hint}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         {!empty && (
           <span className={cn("text-[11px] font-medium shrink-0", dim.tone === "warn" ? "text-amber-600" : "text-muted-foreground")}>
             {dim.status}
@@ -161,7 +174,12 @@ function DimensionCard({ dim }: { dim: Dim }) {
       </div>
 
       {empty ? (
-        <p className="text-[11.5px] text-muted-foreground mt-1.5 leading-snug">{dim.status}</p>
+        <>
+          <p className="text-[13px] font-semibold text-muted-foreground mt-2">{dim.status}</p>
+          <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className={cn("h-full w-full rounded-full", dim.tone === "warn" ? "bg-amber-500/15" : "bg-primary/15")} />
+          </div>
+        </>
       ) : (
         <>
           <div className="mt-2 flex items-end gap-2">
