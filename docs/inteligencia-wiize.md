@@ -69,3 +69,14 @@ roda uma vez por dia (06:10) e por evento quando o contato se mexe.
 - Contatos com histórico legado podem mostrar engajamento sem mensagens espelhadas no chat; nesse caso
   o painel diz explicitamente que a origem é o histórico de pontuação do motor.
 - O módulo está marcado como Beta na interface.
+
+## Rodada final MVP
+
+- **Fit baseado em evidência**: o Fit só é calculado quando existem pelo menos dois componentes reais (nicho, região, maturidade digital, reputação, contatabilidade). Sem isso, o motor grava `fit_score = 0` e marca `features.available.fit = false`, e a interface mostra "Sem dados".
+- **`features.available`**: o motor persiste um mapa de disponibilidade por dimensão (fit, intent, engagement, quality, momentum, risk, recency, pattern). O painel usa esse mapa como fonte única para decidir entre número e "Sem dados".
+- **Oportunidade sem inflação**: a fórmula divide sempre pelo peso total das dimensões; uma dimensão sem evidência contribui zero em vez de renormalizar o resultado para cima.
+- **Confiança**: removida de toda a interface. O resumo do painel mostra Estado, Mensagens, Sinais e Etapa.
+- **Tooltips**: cada card de dimensão tem um "?" com a explicação do que ela mede.
+- **Cards sempre ativos**: dimensões sem dados mantêm ícone, cor e barra da identidade visual, exibindo "Sem dados" no lugar do número.
+- **Pergunta principal contextual**: gerada a partir do nicho real, cidade, ausência de site e volume de avaliações da prospecção, sem chamada de IA adicional.
+- **Fonte única**: card do CRM, painel interno, ranking e Central usam `intel_lead_profiles.opportunity_score`. Contato sem perfil aparece como `0 de 100 · Não analisado`.
