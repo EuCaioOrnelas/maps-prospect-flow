@@ -289,7 +289,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">14. Suspensão e encerramento</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">17. Suspensão e encerramento</h2>
               <p>
                 A Wiize pode suspender ou encerrar o acesso, no todo ou em parte, em caso de: violação
                 destes Termos, inadimplência, risco de segurança, uso abusivo, ordem legal ou
@@ -299,7 +299,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">15. Alterações destes Termos</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">18. Alterações destes Termos</h2>
               <p>
                 Estes Termos podem ser atualizados periodicamente. A versão vigente é a publicada nesta
                 página. Alterações materiais serão comunicadas pela plataforma ou por e-mail. O uso
@@ -308,7 +308,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">16. Lei aplicável e foro</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">19. Lei aplicável e foro</h2>
               <p>
                 Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro
                 da comarca da sede da Wiize para dirimir controvérsias, com renúncia a qualquer outro,
@@ -317,7 +317,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">17. Contato</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">20. Contato</h2>
               <p>
                 Dúvidas sobre estes Termos ou sobre privacidade e LGPD:{" "}
                 <a href="mailto:wiize.app@gmail.com" className="text-primary hover:underline">wiize.app@gmail.com</a>{" "}
