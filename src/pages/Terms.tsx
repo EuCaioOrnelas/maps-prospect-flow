@@ -11,7 +11,7 @@ const Terms = () => {
     <>
       <SEO
         title="Termos de Uso"
-        description="Termos de Uso da plataforma Wiize: prospecção B2B, IA, CRM, campanhas Meta e integrações. Regras, responsabilidades e conformidade legal."
+        description="Termos de Uso da plataforma Wiize: prospecção B2B, IA, CRM, atendimento, fluxos e integrações. Regras, responsabilidades e conformidade legal."
         keywords="termos de uso, termos de serviço, wiize, B2B, LGPD, whatsapp business, meta"
       />
       <div className="min-h-screen bg-background">
