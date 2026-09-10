@@ -79,6 +79,7 @@ export function saveConsent(prefs: ConsentPrefs) {
   try {
     localStorage.setItem(CONSENT_PREFS_KEY, JSON.stringify(value));
     localStorage.setItem(CONSENT_KEY, "true");
+    localStorage.setItem(CONSENT_VERSION_KEY, CONSENT_VERSION);
   } catch {}
   applyConsentToTags(value);
   window.dispatchEvent(new CustomEvent<ConsentPrefs>(CONSENT_EVENT, { detail: value }));
