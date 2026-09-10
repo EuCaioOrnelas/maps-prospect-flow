@@ -104,7 +104,7 @@ const Dashboard = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { profile, signOut, refreshProfile, user, accountOwnerId, isTrialExpired, trialDaysRemaining } = useAuth();
+  const { profile, signOut, refreshProfile, user, accountOwnerId, isTrialExpired, trialDaysRemaining, loading: authLoading } = useAuth();
   const { requestPermission, notifyCreditsExhausted, notifyLowCredits, isSupported, permission } = useNotifications();
   const { trackScoreEvent } = useAutoScoreTracking("dashboard");
 
@@ -134,6 +134,9 @@ const Dashboard = () => {
   }, [user]);
 
   const searchesRemaining = profile ? (profile.searches_limit - profile.searches_used) + (((profile as any).bonus_searches) || 0) + ((((profile as any).extra_opportunities_packs) || 0) * 1000) : 0;  // opportunities remaining (plan + bonus + add-on packs)
+  // Perfil ainda carregando não pode ser tratado como "sem oportunidades"
+  const profileReady = !!profile && !authLoading;
+  const limitReached = profileReady && searchesRemaining <= 0;
   const isFreePlan = profile?.plan === 'free' || !profile?.plan;
   const showTrialIndicator = isFreePlan && trialDaysRemaining > 0 && !isTrialExpired;
 
@@ -282,7 +285,7 @@ const Dashboard = () => {
       return;
     }
 
-    if (searchesRemaining <= 0) {
+    if (limitReached) {
       setShowUpgradeModal(true);
       return;
     }
@@ -795,7 +798,7 @@ const Dashboard = () => {
                 variant="hero"
                 size="lg"
                 className="w-full h-14 text-base font-semibold"
-                disabled={isSearching || (!publicDemo && searchesRemaining <= 0)}
+                disabled={isSearching || (!publicDemo && limitReached)}
                 data-tour="search-button"
               >
                 {isSearching ? (
@@ -811,7 +814,7 @@ const Dashboard = () => {
                 )}
               </Button>
 
-              {!publicDemo && searchesRemaining <= 0 && (
+              {!publicDemo && limitReached && (
                 <div className="flex items-center justify-center gap-2 mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl">
                   <AlertCircle size={16} className="text-destructive" />
                   <p className="text-destructive text-sm font-medium">
