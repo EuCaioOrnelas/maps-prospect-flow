@@ -12,12 +12,49 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 
 /**
- * Banner de cookies: aparece em todas as páginas públicas (sem login) e na
- * página de login. Não aparece para usuários autenticados dentro do app.
+ * Páginas públicas (site de vendas, produtos, blog, legais, parceiros) e
+ * páginas de acesso (login, cadastro, recuperação de senha). O aviso aparece
+ * em todas elas, mesmo se o visitante já estiver logado — o que não acontece
+ * é aparecer dentro do app autenticado.
  */
+const PUBLIC_PATTERNS: RegExp[] = [
+  /^\/$/,
+  /^\/login$/,
+  /^\/signup(\/|$)/,
+  /^\/forgot-password$/,
+  /^\/reset-password$/,
+  /^\/terms$/,
+  /^\/privacy$/,
+  /^\/refund-policy$/,
+  /^\/prospeccao$/,
+  /^\/demonstracao$/,
+  /^\/enterprise$/,
+  /^\/blog(\/|$)/,
+  /^\/produtos(\/|$)/,
+  /^\/inteligencia$/,
+  /^\/seguranca-faq$/,
+  /^\/diretrizes-de-envio$/,
+  /^\/ajuda(\/|$)/,
+  /^\/tour-completo$/,
+  /^\/tour-guiado$/,
+  /^\/contato$/,
+  /^\/descadastro$/,
+  /^\/avaliacao(\/|$)/,
+  /^\/thank-you$/,
+  /^\/parceiros(\/|$)/,
+  /^\/partners(\/|$)/,
+  /^\/wiize-partners(\/|$)/,
+  /^\/api$/,
+  /^\/api\/login$/,
+  /^\/404$/,
+];
+
+export const isPublicConsentPath = (pathname: string) =>
+  PUBLIC_PATTERNS.some((r) => r.test(pathname));
+
 export const CookieConsent = () => {
   const location = useLocation();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [decided, setDecided] = useState(hasConsentDecision());
 
   useEffect(() => {
@@ -39,14 +76,12 @@ export const CookieConsent = () => {
         user_agent: navigator.userAgent,
       } as any);
     } catch {
-      /* consentimento já está salvo localmente */
+      /* o consentimento já ficou salvo no navegador */
     }
   };
 
   if (decided) return null;
-  if (loading) return null;
-  // Só em páginas públicas / login
-  if (user && location.pathname !== "/login") return null;
+  if (!isPublicConsentPath(location.pathname)) return null;
 
   return <CookiePanel privacyHref="/privacy" termsHref="/terms" onDecision={logConsent} />;
 };
