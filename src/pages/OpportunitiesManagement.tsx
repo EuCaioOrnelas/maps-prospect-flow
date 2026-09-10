@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -91,6 +91,7 @@ export default function OpportunitiesManagement() {
   const { profile, user, accountOwnerId } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   useAutoScoreTracking("opportunities_management");
   const { role } = useAccountRole();
   const { members: accountMembers } = useAccountMembers();
@@ -153,6 +154,7 @@ export default function OpportunitiesManagement() {
   const [companyProfile, setCompanyProfile] = useState<any>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const recoveryAttemptedRef = useRef(false);
 
   // Send message state
   const [sendingLead, setSendingLead] = useState<OpportunityLead | null>(null);
@@ -244,7 +246,7 @@ export default function OpportunitiesManagement() {
     }
   }, [leads.length, loading]);
 
-  const fetchLeads = async () => {
+  const fetchLeads = async (allowRecovery = true) => {
     if (publicDemo) {
       setLeads([]);
       setLoading(false);
@@ -287,7 +289,29 @@ export default function OpportunitiesManagement() {
 
 
       if (error) throw error;
-      setLeads((data as unknown as OpportunityLead[]) || []);
+      const fetchedLeads = (data as unknown as OpportunityLead[]) || [];
+      setLeads(fetchedLeads);
+
+      if (
+        fetchedLeads.length === 0 &&
+        allowRecovery &&
+        !recoveryAttemptedRef.current &&
+        (location.state as { justSearched?: boolean } | null)?.justSearched
+      ) {
+        recoveryAttemptedRef.current = true;
+        const { data: recoveryData, error: recoveryError } = await supabase.functions.invoke("search-leads", {
+          body: { action: "recover_recent_history" },
+        });
+        if (!recoveryError && (recoveryData?.recovered || 0) > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          await fetchLeads(false);
+          navigate(location.pathname, { replace: true, state: null });
+          return;
+        }
+        if (recoveryError || recoveryData?.error) {
+          throw new Error(recoveryData?.error || recoveryError?.message || "Não foi possível recuperar as oportunidades da busca.");
+        }
+      }
     } catch (err) {
       console.error("Error fetching leads:", err);
       toast({

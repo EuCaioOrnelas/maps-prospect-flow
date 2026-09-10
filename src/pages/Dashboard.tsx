@@ -413,7 +413,7 @@ const Dashboard = () => {
         ? data.message
         : `${resultsCount} oportunidades encontradas para "${keyword}" em ${location}`;
 
-      if (resultsCount > 0 && data.saveError) {
+      if (resultsCount > 0 && (data.saveError || data.visibleCount === 0)) {
         toast({
           title: "Resultados encontrados, mas não salvos",
           description: "Encontramos as empresas, porém não conseguimos gravá-las na Gestão de Oportunidades. Já registramos o erro — tente novamente em instantes.",
@@ -430,7 +430,7 @@ const Dashboard = () => {
 
 
       if (resultsCount > 0) {
-        navigate("/oportunidades/gestao");
+        navigate("/oportunidades/gestao", { state: { justSearched: true } });
       }
       
     } catch (error: any) {
