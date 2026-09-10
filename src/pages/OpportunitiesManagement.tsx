@@ -295,8 +295,7 @@ export default function OpportunitiesManagement() {
       if (
         fetchedLeads.length === 0 &&
         allowRecovery &&
-        !recoveryAttemptedRef.current &&
-        (location.state as { justSearched?: boolean } | null)?.justSearched
+        !recoveryAttemptedRef.current
       ) {
         recoveryAttemptedRef.current = true;
         const { data: recoveryData, error: recoveryError } = await supabase.functions.invoke("search-leads", {
