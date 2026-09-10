@@ -663,10 +663,12 @@ export default function OpportunitiesManagement() {
       result = result.filter(l => l.city === filterCity);
     }
     if (responsibleFilter === "me") {
-      result = result.filter(l => l.responsible_user_id === user?.id);
+      // Leads sem responsável definido continuam visíveis para quem está usando a conta
+      result = result.filter(l => !l.responsible_user_id || l.responsible_user_id === user?.id);
     } else if (responsibleFilter !== "all") {
       result = result.filter(l => l.responsible_user_id === responsibleFilter);
     }
+
     if (sortOrder === "score_desc") {
       result = [...result].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0));
     } else if (sortOrder === "score_asc") {

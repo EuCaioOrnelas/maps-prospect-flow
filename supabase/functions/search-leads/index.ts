@@ -570,19 +570,25 @@ serve(async (req) => {
     const invalidCount = totalWithPhone - allValidLeads.length;
 
     if (!internalMode) {
-      // Update user's opportunity count (each lead = 1 opportunity)
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ searches_used: profile.searches_used + leads.length })
-        .eq('id', user.id);
+      // Resolve account owner (sub-users share the owner's data)
+      let ownerId = user.id;
+      try {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('parent_owner_id')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (prof?.parent_owner_id) ownerId = prof.parent_owner_id as string;
+      } catch (_) { /* keep user.id */ }
 
-      if (updateError) {
-        console.error('Error updating opportunity count:', updateError);
-      }
-
-      // Save leads to the leads table with enriched data
+      // Save leads to the leads table with enriched data.
+      // owner/responsible are set explicitly (not relying on DB triggers) so the
+      // rows are always visible in "Gestão de Oportunidades".
       const leadsToInsert = leads.map(lead => ({
         user_id: user.id,
+        owner_user_id: ownerId,
+        created_by_user_id: user.id,
+        responsible_user_id: user.id,
         company_name: lead.name !== '-' ? lead.name : null,
         phone: lead.phone,
         category: lead.category !== '-' ? lead.category : null,
@@ -596,21 +602,39 @@ serve(async (req) => {
         prospected_at: new Date().toISOString(),
       }));
 
-      // Use upsert to avoid duplicate phone errors
+      let savedCount = 0;
       if (leadsToInsert.length > 0) {
-        const { error: insertError } = await supabase
+        // Preferred path: upsert ignoring duplicates (needs unique index user_id,phone)
+        const { data: upserted, error: insertError } = await supabase
           .from('leads')
-          .upsert(leadsToInsert, { 
-            onConflict: 'user_id,phone',
-            ignoreDuplicates: true 
-          });
-      
-        if (insertError) {
-          console.error('Error saving leads to table:', insertError);
+          .upsert(leadsToInsert, { onConflict: 'user_id,phone', ignoreDuplicates: true })
+          .select('id');
+
+        if (!insertError) {
+          savedCount = upserted?.length ?? leadsToInsert.length;
+          console.log(`Saved ${savedCount} leads to leads table`);
         } else {
-          console.log(`Saved ${leadsToInsert.length} leads to leads table`);
+          // Fallback: insert one by one, skipping duplicates / unexpected conflicts.
+          console.error('Upsert failed, falling back to individual inserts:', insertError);
+          for (const row of leadsToInsert) {
+            const { error: rowErr } = await supabase.from('leads').insert(row);
+            if (!rowErr) savedCount++;
+            else if (rowErr.code !== '23505') console.error('Lead insert failed:', rowErr.message);
+          }
+          console.log(`Fallback saved ${savedCount}/${leadsToInsert.length} leads`);
         }
       }
+
+      // Only charge opportunities that were actually persisted
+      if (savedCount > 0) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ searches_used: profile.searches_used + savedCount })
+          .eq('id', user.id);
+        if (updateError) console.error('Error updating opportunity count:', updateError);
+        profile.searches_used = profile.searches_used + savedCount;
+      }
+
 
       // Save search to history with leads data
       const { error: historyError } = await supabase
