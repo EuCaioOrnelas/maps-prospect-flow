@@ -184,7 +184,7 @@ function sanitize<T>(value: T): T {
   return value;
 }
 
-async function callInternal(fn: string, userId: string, body: Json, timeoutMs = 90_000) {
+async function callInternal(fn: string, userId: string, body: Json, timeoutMs = 90_000, clientIp?: string) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -195,6 +195,7 @@ async function callInternal(fn: string, userId: string, body: Json, timeoutMs = 
         apikey: SERVICE_ROLE,
         "Content-Type": "application/json",
         "x-wiize-api-user": userId,
+        ...(clientIp ? { "x-forwarded-for": clientIp } : {}),
       },
       body: JSON.stringify(body),
       signal: controller.signal,
@@ -647,7 +648,7 @@ serve(async (req) => {
       let lastFailStatus = 0;
       for (const t of approachTypes) {
         const fnName = t === "manual" ? "approach-lead-manual" : "approach-lead";
-        const r = await callInternal(fnName, userId, validated.payload);
+        const r = await callInternal(fnName, userId, validated.payload, 90_000, ip);
         if (r.ok) {
           generated[t] = shapeApproach(r.data);
           deliveredUnits += 1;
@@ -666,7 +667,7 @@ serve(async (req) => {
           };
     } else {
       const fn = path === "/v1/prospecting/search" ? "search-leads" : "score-opportunity";
-      const result = await callInternal(fn, userId, validated.payload);
+      const result = await callInternal(fn, userId, validated.payload, 90_000, ip);
       if (!result.ok) return await failUpstream(result.status);
       payload = shapeResponse(path, result.data);
       // Unidades realmente entregues (leads na busca; 1 na análise)

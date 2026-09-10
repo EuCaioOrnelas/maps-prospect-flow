@@ -226,9 +226,13 @@ serve(async (req) => {
     // Create Supabase client for rate limiting
     const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
-    // Rate limiting check by IP
+    // Rate limiting check by IP. Internal Wiize API calls already pass through
+    // their own account/API-key limits, so avoid a second shared gateway bucket.
     const clientIP = getClientIP(req);
-    const rateLimitResult = await checkRateLimit(supabaseAdmin, clientIP, 'search-leads', 30, 60);
+    const hasInternalUserHeader = Boolean(req.headers.get('x-wiize-api-user'));
+    const rateLimitResult = hasInternalUserHeader
+      ? { allowed: true }
+      : await checkRateLimit(supabaseAdmin, clientIP, 'search-leads', 30, 60);
     
     if (!rateLimitResult.allowed) {
       console.log('Rate limit exceeded for IP:', clientIP);
