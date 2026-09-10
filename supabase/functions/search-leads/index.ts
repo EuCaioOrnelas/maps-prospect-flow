@@ -327,31 +327,62 @@ serve(async (req) => {
     // Get user profile to check opportunity limits (não se aplica ao modo interno da Wiize API)
     let profile: { searches_used: number; searches_limit: number } = { searches_used: 0, searches_limit: 0 };
     let remainingOpportunities: number;
+    // Conta dona dos dados (sub-usuários compartilham a conta do dono)
+    let ownerId = user.id;
+    // Perfil onde o consumo é contabilizado (dono da conta, quando houver)
+    let billingProfileId = user.id;
 
     if (internalMode) {
       const requested = Number(rawBody?.limit);
       remainingOpportunities = Math.min(Number.isFinite(requested) && requested > 0 ? requested : 20, 60);
     } else {
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('searches_used, searches_limit, plan, bonus_searches, extra_opportunities_packs')
-        .eq('id', user.id)
-        .single();
+      const PROFILE_COLS = 'id, searches_used, searches_limit, plan, bonus_searches, extra_opportunities_packs, parent_owner_id';
 
-      if (profileError || !profileData) {
-        console.error('Profile error:', profileError);
+      let { data: profileData } = await supabase
+        .from('profiles')
+        .select(PROFILE_COLS)
+        .eq('id', user.id)
+        .maybeSingle();
+
+      // Perfil pode ainda não existir logo após o cadastro (trigger assíncrono).
+      if (!profileData) {
+        await new Promise((r) => setTimeout(r, 800));
+        const retry = await supabase
+          .from('profiles')
+          .select(PROFILE_COLS)
+          .eq('id', user.id)
+          .maybeSingle();
+        profileData = retry.data;
+      }
+
+      if (!profileData) {
+        console.error('Profile not found for user:', user.id);
         return new Response(
-          JSON.stringify({ error: 'Erro ao buscar perfil do usuário' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: 'Seu perfil ainda está sendo criado. Aguarde alguns segundos e tente novamente.' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
+      }
+
+      // Sub-usuário: dados e limites pertencem ao dono da conta
+      if ((profileData as any).parent_owner_id) {
+        ownerId = (profileData as any).parent_owner_id as string;
+        const { data: ownerProfile } = await supabase
+          .from('profiles')
+          .select(PROFILE_COLS)
+          .eq('id', ownerId)
+          .maybeSingle();
+        if (ownerProfile) {
+          profileData = ownerProfile;
+          billingProfileId = ownerId;
+        }
       }
 
       profile = profileData as any;
       // Effective limit = plan + add-on packs (1k each) + carried bonus
       const extraPacks = (profileData as any).extra_opportunities_packs || 0;
       const bonus = (profileData as any).bonus_searches || 0;
-      const effectiveLimit = profileData.searches_limit + extraPacks * 1000 + bonus;
-      remainingOpportunities = effectiveLimit - profileData.searches_used;
+      const effectiveLimit = ((profileData as any).searches_limit || 0) + extraPacks * 1000 + bonus;
+      remainingOpportunities = effectiveLimit - ((profileData as any).searches_used || 0);
 
       if (remainingOpportunities <= 0) {
         console.log('Opportunity limit reached for user:', user.id);
@@ -365,6 +396,7 @@ serve(async (req) => {
         );
       }
     }
+
 
 
     console.log(`Searching for: ${keyword} in ${location}`);
