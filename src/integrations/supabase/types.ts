@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      account_deletion_requests: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       account_members: {
         Row: {
           created_at: string
@@ -2480,6 +2510,48 @@ export type Database = {
           owner_user_id?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      cookie_consents: {
+        Row: {
+          analytics: boolean
+          anon_id: string | null
+          created_at: string
+          functional: boolean
+          id: string
+          marketing: boolean
+          necessary: boolean
+          page_url: string | null
+          policy_version: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analytics?: boolean
+          anon_id?: string | null
+          created_at?: string
+          functional?: boolean
+          id?: string
+          marketing?: boolean
+          necessary?: boolean
+          page_url?: string | null
+          policy_version?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analytics?: boolean
+          anon_id?: string | null
+          created_at?: string
+          functional?: boolean
+          id?: string
+          marketing?: boolean
+          necessary?: boolean
+          page_url?: string | null
+          policy_version?: string
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -9091,6 +9163,42 @@ export type Database = {
         }
         Relationships: []
       }
+      tracking_settings: {
+        Row: {
+          enabled: boolean
+          ga4_id: string | null
+          google_ads_conversion_label: string | null
+          google_ads_id: string | null
+          gtm_id: string | null
+          id: boolean
+          meta_pixel_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          ga4_id?: string | null
+          google_ads_conversion_label?: string | null
+          google_ads_id?: string | null
+          gtm_id?: string | null
+          id?: boolean
+          meta_pixel_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          ga4_id?: string | null
+          google_ads_conversion_label?: string | null
+          google_ads_id?: string | null
+          gtm_id?: string | null
+          id?: boolean
+          meta_pixel_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       trial_activation_config: {
         Row: {
           config_key: string
@@ -12544,6 +12652,7 @@ export type Database = {
         Args: { _is_active: boolean; _link_id: string }
         Returns: boolean
       }
+      purge_account_data: { Args: { _user_id: string }; Returns: Json }
       purge_operational_logs: { Args: never; Returns: Json }
       recalc_partner_level: {
         Args: { p_partner_id: string; p_reason?: string }
