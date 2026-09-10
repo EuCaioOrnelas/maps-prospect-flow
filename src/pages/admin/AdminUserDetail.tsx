@@ -248,7 +248,11 @@ export default function AdminUserDetail() {
             </div>
           )}
         </div>
+        {profile?.email && (
+          <ImpersonateUserButton userId={profile.id} userEmail={profile.email} />
+        )}
       </div>
+
 
       {/* Aquisição */}
       <Card className="border-border/40">
