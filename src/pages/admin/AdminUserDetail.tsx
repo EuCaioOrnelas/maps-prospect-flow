@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { acquisitionLabel } from "@/lib/acquisitionSources";
+import { ImpersonateUserButton } from "@/components/admin/ImpersonateUserButton";
 
 interface ProfileLite {
   id: string;
