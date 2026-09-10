@@ -79,8 +79,11 @@ const CookiePanel = (props: CookiePanelProps) => {
 
   useEffect(() => {
     if (!hasConsentDecision()) {
-      setRender(true);
-      requestAnimationFrame(() => setVisible(true));
+      const timer = setTimeout(() => {
+        setRender(true);
+        requestAnimationFrame(() => setVisible(true));
+      }, 3000);
+      return () => clearTimeout(timer);
     }
     setPrefs(getConsent());
   }, []);
@@ -92,7 +95,7 @@ const CookiePanel = (props: CookiePanelProps) => {
 
   const close = () => {
     setVisible(false);
-    setTimeout(() => setRender(false), 300);
+    setTimeout(() => setRender(false), 400);
   };
 
   const decide = (value: ConsentPrefs) => {
@@ -113,12 +116,12 @@ const CookiePanel = (props: CookiePanelProps) => {
       aria-label="Aviso de cookies"
       className={cn(
         "fixed bottom-4 left-4 z-[100] w-[min(560px,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto",
-        "transition-all duration-300",
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
+        "transition-all duration-500 ease-out",
+        visible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-8",
         className,
       )}
     >
-      <div className="rounded-2xl border border-border bg-card text-card-foreground shadow-xl shadow-black/20 overflow-hidden">
+      <div className="rounded-2xl border border-border/80 bg-card text-card-foreground shadow-[0_12px_40px_-8px_rgba(0,0,0,0.35)] overflow-hidden">
         <div className="h-1 w-full bg-primary" />
         <div className="relative p-5">
           <button
@@ -154,17 +157,17 @@ const CookiePanel = (props: CookiePanelProps) => {
           <div className="mt-4 flex items-center gap-2">
             <button
               type="button"
+              onClick={() => decide(DEFAULT_PREFS)}
+              className="flex-1 rounded-xl border border-border bg-muted/60 px-3 py-2.5 text-xs sm:text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {rejectText}
+            </button>
+            <button
+              type="button"
               onClick={() => decide(ALL_GRANTED)}
               className="flex-1 rounded-xl bg-primary px-3 py-2.5 text-xs sm:text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-colors hover:bg-primary/90"
             >
               {acceptText}
-            </button>
-            <button
-              type="button"
-              onClick={() => decide(DEFAULT_PREFS)}
-              className="flex-1 rounded-xl border border-border bg-muted px-3 py-2.5 text-xs sm:text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
-            >
-              {rejectText}
             </button>
           </div>
 
