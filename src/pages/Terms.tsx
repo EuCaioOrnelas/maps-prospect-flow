@@ -225,7 +225,31 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">13. SLA de suporte e atendimento</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">13. Conexão de número por API de suporte (WhatsApp Web) e riscos</h2>
+              <p>
+                A Wiize oferece dois caminhos para conectar um número de WhatsApp. O
+                <strong> Número de Marketing</strong> usa a API Oficial da Meta (WhatsApp Cloud API),
+                com regras, modelos e aprovações da própria Meta. O <strong>Número de Atendimento</strong>
+                usa uma <strong>API de suporte de terceiros que simula uma sessão do WhatsApp Web</strong>
+                (leitura de QR Code a partir do seu aparelho), recurso <strong>não oficial e não
+                homologado pela Meta/WhatsApp</strong>. A Wiize não é proprietária, revendedora ou
+                representante do WhatsApp, da Meta ou dessa tecnologia de suporte, e não vende acesso
+                direto a ela: trata-se de um componente técnico de conveniência dentro da plataforma.
+              </p>
+              <p>O cliente declara estar ciente e aceitar, ao conectar um número por esse caminho, que:</p>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
+                <li><strong>Risco de bloqueio</strong>: o WhatsApp pode advertir, limitar, banir temporária ou definitivamente o número, sem aviso prévio e sem possibilidade de recurso pela Wiize. Esse risco existe mesmo com uso moderado e com o aquecimento de número disponível na plataforma.</li>
+                <li><strong>Sem garantia de disponibilidade</strong>: atualizações do WhatsApp podem derrubar a sessão, exigir nova leitura de QR Code ou inviabilizar a conexão a qualquer momento, de forma permanente. Não há SLA de funcionamento para esse caminho.</li>
+                <li><strong>Aparelho e sessão</strong>: a sessão depende do celular do cliente estar ativo e vinculado; perda de sessão, troca de aparelho ou desconexão interrompem os envios e recebimentos.</li>
+                <li><strong>Uso permitido</strong>: é proibido spam, disparo em massa para contatos sem relacionamento ou sem base legal, compra de listas, conteúdo enganoso, ilícito ou que viole os Termos do WhatsApp/Meta e a LGPD. O cliente é o único responsável pelo conteúdo, pela base de contatos e pelo cumprimento das políticas das plataformas.</li>
+                <li><strong>Recomendação</strong>: para volume, campanhas e operações críticas, use o número na API Oficial da Meta. O caminho não oficial é indicado para atendimento e conversas individuais.</li>
+                <li><strong>Isenção</strong>: a Wiize não responde por bloqueios, banimentos, perda de número, perda de conversas, prejuízos comerciais ou sanções decorrentes do uso desse caminho, nem por mudanças unilaterais promovidas pelo WhatsApp/Meta ou pelo fornecedor da tecnologia de suporte.</li>
+                <li><strong>Sem devolução por bloqueio</strong>: o bloqueio de um número pelo WhatsApp não gera direito a reembolso da assinatura, por se tratar de evento externo e fora do controle da Wiize.</li>
+              </ul>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">14. SLA de suporte e atendimento</h2>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
                 <li><strong>Horário de atendimento</strong>: de segunda a sexta-feira, das 9h às 17h (horário de Brasília). Não há atendimento aos sábados, domingos e feriados nacionais.</li>
                 <li><strong>Canais oficiais</strong>: página de contato da plataforma e e-mail de suporte. Mensagens recebidas fora do horário são consideradas recebidas no próximo dia útil.</li>
@@ -237,7 +261,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">14. Cookies, rastreamento e programa de parceiros</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">15. Cookies, rastreamento e programa de parceiros</h2>
               <p>
                 Ao navegar em nossas páginas públicas, o visitante decide, no aviso de cookies, quais
                 categorias autoriza. Cookies <strong>essenciais</strong> são sempre ativos e cobrem
@@ -255,7 +279,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">15. Exclusão de conta pelo cliente</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">16. Exclusão de conta pelo cliente</h2>
               <p>
                 O cliente pode excluir a própria conta a qualquer momento em Configurações. A exclusão
                 exige verificação por código enviado ao e-mail cadastrado e é <strong>permanente e
@@ -272,7 +296,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">16. Limitação de responsabilidade</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">17. Limitação de responsabilidade</h2>
               <p>
                 Na máxima extensão permitida em lei, a Wiize não responde por danos indiretos,
                 incidentais, lucros cessantes, perda de oportunidade, perda de dados de terceiros ou
@@ -289,7 +313,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">17. Suspensão e encerramento</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">18. Suspensão e encerramento</h2>
               <p>
                 A Wiize pode suspender ou encerrar o acesso, no todo ou em parte, em caso de: violação
                 destes Termos, inadimplência, risco de segurança, uso abusivo, ordem legal ou
@@ -299,7 +323,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">18. Alterações destes Termos</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">19. Alterações destes Termos</h2>
               <p>
                 Estes Termos podem ser atualizados periodicamente. A versão vigente é a publicada nesta
                 página. Alterações materiais serão comunicadas pela plataforma ou por e-mail. O uso
@@ -308,7 +332,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">19. Lei aplicável e foro</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">20. Lei aplicável e foro</h2>
               <p>
                 Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro
                 da comarca da sede da Wiize para dirimir controvérsias, com renúncia a qualquer outro,
@@ -317,7 +341,7 @@ const Terms = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">20. Contato</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">21. Contato</h2>
               <p>
                 Dúvidas sobre estes Termos ou sobre privacidade e LGPD:{" "}
                 <a href="mailto:wiize.app@gmail.com" className="text-primary hover:underline">wiize.app@gmail.com</a>{" "}
