@@ -136,44 +136,6 @@ export default function CRM() {
     enabled: !!user && !!accountOwnerId,
   });
 
-  // Fetch agent-silenced stage names (columns where agents won't respond)
-  // Só conta stages referenciadas por agentes ativos/pausados; se o agente foi
-  // excluído ou trocou de stage, a coluna volta ao normal automaticamente.
-  const { data: agentSilencedStages = new Set<string>(), refetch: refetchSilencedStages } = useQuery({
-    queryKey: ['agent-silenced-stages', accountOwnerId],
-    queryFn: async () => {
-      if (!user) return new Set<string>();
-      const { data } = await supabase
-        .from('ai_agents')
-        .select('crm_stage_on_end, crm_stage_on_unknown')
-        .eq('owner_user_id', accountOwnerId)
-        .in('status', ['active', 'paused']);
-      const stageNames = new Set<string>();
-      data?.forEach(agent => {
-        if (agent.crm_stage_on_end) stageNames.add(agent.crm_stage_on_end);
-        if (agent.crm_stage_on_unknown) stageNames.add(agent.crm_stage_on_unknown);
-      });
-      return stageNames;
-    },
-    enabled: !!user && !!accountOwnerId,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnMount: 'always',
-  });
-
-  // Realtime: refetch sempre que ai_agents mudar (insert/update/delete)
-  useEffect(() => {
-    if (!user || !accountOwnerId) return;
-    const channel = supabase
-      .channel(`crm-ai-agents-${user.id}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'ai_agents', filter: `owner_user_id=eq.${accountOwnerId}` },
-        () => { refetchSilencedStages(); }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user, accountOwnerId, refetchSilencedStages]);
 
   // Open lead from navigation state (e.g. from /crm/vendas row click)
   useEffect(() => {
