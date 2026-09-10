@@ -629,13 +629,18 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   const dims: Dim[] = useMemo(() => {
     const d: Dim[] = [];
     const partial = state === "PARTIAL";
+    // Disponibilidade calculada pelo motor: unica fonte para decidir se ha evidencia.
+    const avail = (engineFeatures.available || {}) as Record<string, boolean>;
+    const can = (k: string, local: boolean) => (avail[k] === undefined ? local : avail[k] && local !== false);
 
+    const intentKnown = can("intent", hasConv || signals.length > 0);
     d.push({
       key: "intent",
       label: "Intenção",
       icon: Target,
-      value: profile && (hasConv || signals.length > 0) ? Math.round(Number(profile.intent_score || 0)) : null,
-      status: profile && (hasConv || signals.length > 0) ? bandF(Number(profile.intent_score || 0)) : "Sem sinais de intenção",
+      hint: "Mede o quanto o contato demonstrou querer avançar: pedidos de preço, prazo, proposta ou fechamento identificados nas mensagens e nos sinais.",
+      value: profile && intentKnown ? Math.round(Number(profile.intent_score || 0)) : null,
+      status: profile && intentKnown ? bandF(Number(profile.intent_score || 0)) : "Sem dados",
       partial,
       basis: [
         ...(conv?.intents || []).map((i) => i.label),
@@ -643,12 +648,14 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       ].slice(0, 6),
     });
 
+    const engKnown = can("engagement", hasEngagementData);
     d.push({
       key: "engagement",
       label: "Engajamento",
       icon: Zap,
-      value: profile && hasEngagementData ? Math.round(Number(profile.engagement_score || 0)) : null,
-      status: hasEngagementData ? bandM(Number(profile?.engagement_score || 0)) : "Sem interação registrada",
+      hint: "Mede o volume e a constância da troca de mensagens: quantas respostas o contato deu, em quantos dias e há quanto tempo.",
+      value: profile && engKnown ? Math.round(Number(profile.engagement_score || 0)) : null,
+      status: engKnown ? bandM(Number(profile?.engagement_score || 0)) : "Sem dados",
       partial,
       basis: hasConv
         ? [
@@ -657,54 +664,61 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             conv!.lastMessageAt ? `última interação ${ago(conv!.lastMessageAt)}` : "",
             `${conv!.activeDays} dia(s) com conversa`,
           ].filter(Boolean)
-        : hasEngagementData
+        : engKnown
         ? [`${history.length} evento(s) de pontuação registrados pelo motor`, "sem mensagens espelhadas no chat deste número"]
         : [],
-
     });
 
-    const momentumKnown = history.length > 1 && hasConv;
+    const momentumKnown = can("momentum", history.length > 1 && hasConv);
     d.push({
       key: "momentum",
       label: "Momentum",
       icon: profile?.momentum_state?.includes("RISING") ? TrendingUp : profile?.momentum_state?.includes("DECLINING") ? TrendingDown : Minus,
+      hint: "Mostra a direção da relação nos últimos dias: se o interesse está subindo, estável ou caindo em relação ao período anterior.",
       value: null,
-      status: momentumKnown ? MOMENTUM_LABELS[profile!.momentum_state] || "Estável" : "Sem histórico suficiente",
+      status: momentumKnown ? MOMENTUM_LABELS[profile!.momentum_state] || "Estável" : "Sem dados",
       basis: [],
     });
 
+    const riskKnown = can("risk", hasConv);
     d.push({
       key: "risk",
       label: "Risco",
       icon: ShieldAlert,
       tone: "warn",
-      value: profile && hasConv ? Math.round(Number(profile.risk_score || 0)) : null,
-      status: hasConv ? bandM(Number(profile?.risk_score || 0)) : "Sem dados para avaliar risco",
+      hint: "Mede a chance de perder o contato: silêncio prolongado, mensagens dele sem resposta e objeções não tratadas.",
+      value: profile && riskKnown ? Math.round(Number(profile.risk_score || 0)) : null,
+      status: riskKnown ? bandM(Number(profile?.risk_score || 0)) : "Sem dados",
       partial,
       basis: ((profile?.risk_factors as any[]) || []).map((r: any) => r.label),
     });
 
-    const fitKnown = !!prospect || !!profile?.niche || !!profile?.city;
+    const fitKnown = can("fit", !!prospect || !!profile?.niche || !!profile?.city || Number(profile?.fit_score || 0) > 0);
+    const fitBasis: string[] = Array.isArray(engineFeatures.fit_basis) ? engineFeatures.fit_basis : [];
     d.push({
       key: "fit",
       label: "Fit",
       icon: Building2,
+      hint: "Mede o quanto a empresa se parece com o seu cliente ideal: segmento, região, presença digital, reputação e facilidade de contato.",
       value: profile && fitKnown ? Math.round(Number(profile.fit_score || 0)) : null,
-      status: fitKnown ? bandF(Number(profile?.fit_score || 0)) : "Sem dados da empresa",
+      status: fitKnown ? bandF(Number(profile?.fit_score || 0)) : "Sem dados",
       basis: [
         prospect?.category ? `segmento: ${prospect.category}` : "",
         prospect?.city ? `cidade: ${prospect.city}` : "",
         prospect?.rating != null ? `nota ${prospect.rating} no Google` : "",
         prospect?.website ? "possui site" : prospect ? "sem site identificado" : "",
-      ].filter(Boolean),
+        ...fitBasis,
+      ].filter(Boolean).slice(0, 6),
     });
 
+    const qualityKnown = can("quality", hasConv);
     d.push({
       key: "quality",
       label: "Qualidade",
       icon: Sparkles,
-      value: profile && hasConv ? Math.round(Number(profile.quality_score || 0)) : null,
-      status: hasConv ? bandF(Number(profile?.quality_score || 0)) : "Sem conversa para avaliar",
+      hint: "Mede a profundidade da conversa: equilíbrio entre quem fala, número de idas e vindas e velocidade de resposta do contato.",
+      value: profile && qualityKnown ? Math.round(Number(profile.quality_score || 0)) : null,
+      status: qualityKnown ? bandF(Number(profile?.quality_score || 0)) : "Sem dados",
       partial,
       basis: hasConv
         ? [
@@ -719,8 +733,9 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       key: "recency",
       label: "Recência",
       icon: Clock,
+      hint: "Mostra há quanto tempo foi a última interação registrada em qualquer um dos números conectados.",
       value: null,
-      status: hasConv && conv!.lastMessageAt ? `Última interação ${ago(conv!.lastMessageAt)}` : "Sem interação",
+      status: hasConv && conv!.lastMessageAt ? `Última interação ${ago(conv!.lastMessageAt)}` : "Sem dados",
       basis: [],
     });
 
@@ -728,13 +743,14 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       key: "stage",
       label: "Etapa",
       icon: ArrowRight,
+      hint: "Etapa atual do contato no funil, considerando o CRM, as negociações abertas e o estágio detectado na conversa.",
       value: null,
       status: stageLabel,
       basis: [],
     });
 
     return d;
-  }, [profile, conv, signals, history, prospect, hasConv, hasEngagementData, state, stageLabel]);
+  }, [profile, conv, signals, history, prospect, hasConv, hasEngagementData, state, stageLabel, engineFeatures]);
 
   const playbook = useMemo(
     () => buildPlaybook(state, profile, conv, prospect, lead || null, signals.map((s) => signalLabel(s.signal_type))),
