@@ -105,7 +105,7 @@ const Terms = () => {
             <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">5. Responsabilidades sobre dados de leads</h2>
               <p>
-                Nos módulos de prospecção, CRM, campanhas e fluxos, o <strong>cliente é o controlador</strong>
+                Nos módulos de prospecção, CRM, atendimento, chat, fluxos, SDR/IA e Inteligência, o <strong>cliente é o controlador</strong>
                 dos dados dos leads. Cabe ao cliente:
               </p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
