@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { acquisitionLabel } from "@/lib/acquisitionSources";
+import { ImpersonateUserButton } from "@/components/admin/ImpersonateUserButton";
 
 interface ProfileLite {
   id: string;
@@ -248,7 +249,11 @@ export default function AdminUserDetail() {
             </div>
           )}
         </div>
+        {profile?.email && (
+          <ImpersonateUserButton userId={profile.id} userEmail={profile.email} />
+        )}
       </div>
+
 
       {/* Aquisição */}
       <Card className="border-border/40">
