@@ -115,7 +115,7 @@ const CookiePanel = (props: CookiePanelProps) => {
       aria-modal="false"
       aria-label="Aviso de cookies"
       className={cn(
-        "fixed bottom-6 left-6 z-[100] w-[min(560px,calc(100vw-3rem))] max-h-[70vh] overflow-visible",
+        "fixed bottom-3 left-3 right-3 z-[100] max-h-[75vh] overflow-visible sm:bottom-6 sm:left-6 sm:right-auto sm:w-[min(560px,calc(100vw-3rem))]",
         "transition-all duration-700",
         visible
           ? "opacity-100 translate-x-0 [transition-timing-function:cubic-bezier(0.34,1.4,0.64,1)]"

@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 import { PageHeader } from "@/components/wiize-api/WiizeApiUI";
-import { useTheme } from "@/contexts/ThemeContext";
+
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Bot, Copy, Download, Check } from "lucide-react";
