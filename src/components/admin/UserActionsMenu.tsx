@@ -30,6 +30,9 @@ import {
   Archive,
   ArchiveRestore,
   Trash2,
+  LogIn,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 
 interface UserActionsMenuProps {
@@ -56,6 +59,9 @@ export const UserActionsMenu = ({
   const [showUnarchiveDialog, setShowUnarchiveDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [showImpersonateDialog, setShowImpersonateDialog] = useState(false);
+  const [impersonateReason, setImpersonateReason] = useState("");
+  const [impersonateLink, setImpersonateLink] = useState<string | null>(null);
   const { toast } = useToast();
 
   const updateProfile = async (patch: Record<string, any>) => {
@@ -175,6 +181,32 @@ export const UserActionsMenu = ({
     }
   };
 
+  const handleImpersonate = async () => {
+    setIsLoading(true);
+    setImpersonateLink(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-impersonate", {
+        body: {
+          user_id: userId,
+          redirect_to: `${window.location.origin}/dashboard`,
+          reason: impersonateReason,
+        },
+      });
+      if (error || (data as any)?.error) {
+        throw new Error((data as any)?.error || error?.message);
+      }
+      setImpersonateLink((data as any).action_link as string);
+    } catch (e: any) {
+      toast({
+        title: "Erro ao gerar acesso",
+        description: e?.message ?? "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -212,6 +244,16 @@ export const UserActionsMenu = ({
               Arquivar
             </DropdownMenuItem>
           )}
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            onClick={() => { setImpersonateLink(null); setImpersonateReason(""); setShowImpersonateDialog(true); }}
+            className="gap-2"
+          >
+            <LogIn size={14} />
+            Entrar como usuário
+          </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
@@ -420,6 +462,70 @@ export const UserActionsMenu = ({
               {isLoading ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
               Excluir permanentemente
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Entrar como usuário */}
+      <Dialog open={showImpersonateDialog} onOpenChange={setShowImpersonateDialog}>
+        <DialogContent onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Entrar como usuário</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Gera um acesso temporário e de uso único à conta de{" "}
+                  <strong>{userEmail}</strong>. O acesso fica registrado na auditoria.
+                </p>
+                {!impersonateLink ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="impersonate-reason">Motivo do acesso (registrado)</Label>
+                    <Input
+                      id="impersonate-reason"
+                      value={impersonateReason}
+                      onChange={(e) => setImpersonateReason(e.target.value)}
+                      placeholder="Ex.: suporte — verificar prospecção sem resultados"
+                      autoComplete="off"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Abra em uma janela anônima para não desconectar sua conta de administrador.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(impersonateLink);
+                          toast({ title: "Link copiado" });
+                        }}
+                      >
+                        <Copy size={14} /> Copiar link
+                      </Button>
+                      <Button
+                        className="gap-2"
+                        onClick={() => window.open(impersonateLink, "_blank", "noopener")}
+                      >
+                        <ExternalLink size={14} /> Abrir agora
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImpersonateDialog(false)} disabled={isLoading}>
+              Fechar
+            </Button>
+            {!impersonateLink && (
+              <Button onClick={handleImpersonate} disabled={isLoading || impersonateReason.trim().length < 3}>
+                {isLoading ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+                Gerar acesso
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
