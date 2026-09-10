@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -130,6 +132,8 @@ interface Dim {
   basis: string[];
   tone?: "primary" | "warn";
   partial?: boolean;
+  /** Explicacao curta exibida no tooltip "?" do card. */
+  hint: string;
 }
 
 function DimensionCard({ dim }: { dim: Dim }) {
@@ -137,22 +141,33 @@ function DimensionCard({ dim }: { dim: Dim }) {
   const empty = dim.value === null;
   const accent = dim.tone === "warn" ? "text-amber-500" : "text-primary";
   return (
-    <div
-      className={cn(
-        "rounded-lg border bg-card px-3 py-2.5 transition-colors",
-        empty ? "border-dashed border-border/70" : "border-border/60 hover:border-border",
-      )}
-    >
+    <div className="rounded-lg border border-border/60 bg-card px-3 py-2.5 transition-colors hover:border-border">
       <div className="flex items-center gap-2">
         <span
           className={cn(
             "w-5 h-5 rounded-md flex items-center justify-center shrink-0",
-            empty ? "bg-muted" : dim.tone === "warn" ? "bg-amber-500/12" : "bg-primary/12",
+            dim.tone === "warn" ? "bg-amber-500/12" : "bg-primary/12",
           )}
         >
-          <dim.icon className={cn("w-3 h-3", empty ? "text-muted-foreground/70" : accent)} />
+          <dim.icon className={cn("w-3 h-3", accent)} />
         </span>
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold truncate flex-1">{dim.label}</p>
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={`O que é ${dim.label}`}
+                className="w-4 h-4 rounded-full border border-border/70 text-muted-foreground text-[9px] font-semibold flex items-center justify-center shrink-0 hover:text-foreground hover:border-border"
+              >
+                ?
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[240px] text-[11.5px] leading-relaxed">
+              {dim.hint}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         {!empty && (
           <span className={cn("text-[11px] font-medium shrink-0", dim.tone === "warn" ? "text-amber-600" : "text-muted-foreground")}>
             {dim.status}
@@ -161,7 +176,12 @@ function DimensionCard({ dim }: { dim: Dim }) {
       </div>
 
       {empty ? (
-        <p className="text-[11.5px] text-muted-foreground mt-1.5 leading-snug">{dim.status}</p>
+        <>
+          <p className="text-[13px] font-semibold text-muted-foreground mt-2">{dim.status}</p>
+          <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className={cn("h-full w-full rounded-full", dim.tone === "warn" ? "bg-amber-500/15" : "bg-primary/15")} />
+          </div>
+        </>
       ) : (
         <>
           <div className="mt-2 flex items-end gap-2">
@@ -315,6 +335,40 @@ function buildMessage(prospect: ProspectData | null, lead: Lead | null, conv: Co
   return { text: null, origin: null };
 }
 
+/**
+ * Pergunta de abertura adaptada ao nicho real, a prospecçao e ao diagnostico ja coletados.
+ * Nao inventa dados: so usa o que existe em prospect/lead.
+ */
+function buildQuestion(prospect: ProspectData | null, lead: Lead | null): string {
+  const niche = (prospect?.category || (lead as any)?.category || "").toLowerCase();
+  const city = prospect?.city || (lead as any)?.city || null;
+  const semSite = !!prospect && !prospect.website;
+  const poucasAvaliacoes = prospect?.review_count != null && prospect.review_count < 20;
+
+  const porNicho: Array<[RegExp, string]> = [
+    [/restaurante|pizzar|lanchon|hamburg|bar\b|caf[eé]|food/, "Hoje vocês recebem mais pedidos pelo balcão ou pelo WhatsApp?"],
+    [/im[oó]ve|imobili|corretor/, "Hoje vocês conseguem responder todos os interessados nos imóveis no mesmo dia?"],
+    [/cl[ií]nic|odonto|dentist|sa[uú]de|m[eé]dic|est[eé]tic/, "A agenda de vocês está cheia neste mês ou ainda sobram horários?"],
+    [/advoc|jur[ií]dic|contab/, "Vocês estão querendo receber mais consultas novas agora ou o foco é atender a carteira atual?"],
+    [/academia|crossfit|pilates|personal/, "Vocês estão focados em trazer novos alunos agora ou em segurar os atuais?"],
+    [/sal[aã]o|barbear|cabelo|manicure/, "A agenda de vocês está lotada durante a semana ou só no fim de semana?"],
+    [/loja|varej|comerc|boutique|[oó]tica/, "As vendas de vocês vêm mais de quem passa na frente ou de quem chama no WhatsApp?"],
+    [/oficina|autom|mec[aâ]nic|funilar|carro/, "Vocês têm mais dificuldade em atrair clientes novos ou em fazer o cliente voltar?"],
+    [/escola|curso|educa|ensino/, "Vocês estão em período de captação de matrículas agora?"],
+    [/pet|veterin/, "Vocês conseguem dar conta dos atendimentos ou ainda cabe mais cliente na agenda?"],
+    [/constru|reforma|arquitet|engenh|marcen/, "Vocês estão com obras fechadas para os próximos meses ou ainda buscando novos projetos?"],
+    [/marketing|ag[eê]ncia|software|tecnolog|consultor/, "Hoje a captação de clientes de vocês vem mais de indicação ou de prospecção ativa?"],
+  ];
+
+  for (const [re, q] of porNicho) if (re.test(niche)) return q;
+
+  if (semSite) return "Hoje os clientes de vocês encontram vocês por onde, só pelo Google ou também pelas redes?";
+  if (poucasAvaliacoes) return "Vocês costumam pedir avaliação para os clientes depois do atendimento?";
+  if (niche) return `Vocês estão querendo atrair mais clientes de ${niche} agora ou isso fica para os próximos meses?`;
+  if (city) return `Vocês atendem só em ${city} ou também na região?`;
+  return "Vocês estão buscando atrair mais clientes agora ou isso é algo para os próximos meses?";
+}
+
 function buildPlaybook(
   state: AnalysisState,
   profile: any,
@@ -353,7 +407,7 @@ function buildPlaybook(
         "Fazer uma única pergunta simples que gere resposta.",
         "Aguardar até 48 horas antes de qualquer novo contato.",
       ],
-      question: "Vocês estão buscando atrair mais clientes agora ou isso é algo para os próximos meses?",
+      question: buildQuestion(prospect, lead),
       avoid: "Não afirmar que já conversaram antes. Nenhuma interação foi registrada.",
       expected: "Primeira resposta do contato, que libera o cálculo das dimensões.",
     };
@@ -393,9 +447,7 @@ function buildPlaybook(
         "Fazer uma única pergunta fechada, fácil de responder.",
         "Aguardar 48 horas antes de qualquer nova tentativa.",
       ],
-      question: nicho
-        ? `Vocês estão querendo atrair mais clientes de ${nicho.toLowerCase()} agora ou isso fica para os próximos meses?`
-        : "Vocês estão buscando atrair mais clientes agora ou isso é algo para os próximos meses?",
+      question: buildQuestion(prospect, lead),
       avoid: "Não dizer que já conversaram, não citar retomada e não mandar mensagem genérica. Nenhuma mensagem foi trocada até aqui.",
       expected: "Primeira resposta do contato, que libera engajamento, intenção e momentum reais.",
     };
@@ -551,7 +603,9 @@ function buildPlaybook(
       "Confirmar a faixa de investimento.",
       "Conduzir para proposta ou demonstração quando houver fit.",
     ],
-    question: "Você está buscando resolver isso ainda este mês ou está apenas avaliando as opções?",
+    question: conv && conv.total > 0
+      ? "Você está buscando resolver isso ainda este mês ou está apenas avaliando as opções?"
+      : buildQuestion(prospect, lead),
     expected: "Qualificação concluída com prazo e orçamento identificados.",
   };
 }
@@ -587,10 +641,6 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   const notAnalyzed = !profile || state === "NO_DATA" || opportunity === null;
   const analyzedMessages = Math.max(conv?.total || 0, engineMessages);
   const analyzedSignals = Math.max(signals.length, engineSignals);
-  const confidence = Math.max(
-    0,
-    Math.min(100, Number(engineFeatures.analysis_confidence || 0) || analyzedMessages * 6 + analyzedSignals * 10 + (prospect ? 10 : 0)),
-  );
 
   // Etapa comercial: com conversa vem do motor; sem conversa vem do CRM/prospecção.
   const stageLabel = useMemo(() => {
@@ -609,13 +659,18 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   const dims: Dim[] = useMemo(() => {
     const d: Dim[] = [];
     const partial = state === "PARTIAL";
+    // Disponibilidade calculada pelo motor: unica fonte para decidir se ha evidencia.
+    const avail = (engineFeatures.available || {}) as Record<string, boolean>;
+    const can = (k: string, local: boolean) => (avail[k] === undefined ? local : avail[k] && local !== false);
 
+    const intentKnown = can("intent", hasConv || signals.length > 0);
     d.push({
       key: "intent",
       label: "Intenção",
       icon: Target,
-      value: profile && (hasConv || signals.length > 0) ? Math.round(Number(profile.intent_score || 0)) : null,
-      status: profile && (hasConv || signals.length > 0) ? bandF(Number(profile.intent_score || 0)) : "Sem sinais de intenção",
+      hint: "Mede o quanto o contato demonstrou querer avançar: pedidos de preço, prazo, proposta ou fechamento identificados nas mensagens e nos sinais.",
+      value: profile && intentKnown ? Math.round(Number(profile.intent_score || 0)) : null,
+      status: profile && intentKnown ? bandF(Number(profile.intent_score || 0)) : "Sem dados",
       partial,
       basis: [
         ...(conv?.intents || []).map((i) => i.label),
@@ -623,12 +678,14 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       ].slice(0, 6),
     });
 
+    const engKnown = can("engagement", hasEngagementData);
     d.push({
       key: "engagement",
       label: "Engajamento",
       icon: Zap,
-      value: profile && hasEngagementData ? Math.round(Number(profile.engagement_score || 0)) : null,
-      status: hasEngagementData ? bandM(Number(profile?.engagement_score || 0)) : "Sem interação registrada",
+      hint: "Mede o volume e a constância da troca de mensagens: quantas respostas o contato deu, em quantos dias e há quanto tempo.",
+      value: profile && engKnown ? Math.round(Number(profile.engagement_score || 0)) : null,
+      status: engKnown ? bandM(Number(profile?.engagement_score || 0)) : "Sem dados",
       partial,
       basis: hasConv
         ? [
@@ -637,54 +694,61 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
             conv!.lastMessageAt ? `última interação ${ago(conv!.lastMessageAt)}` : "",
             `${conv!.activeDays} dia(s) com conversa`,
           ].filter(Boolean)
-        : hasEngagementData
+        : engKnown
         ? [`${history.length} evento(s) de pontuação registrados pelo motor`, "sem mensagens espelhadas no chat deste número"]
         : [],
-
     });
 
-    const momentumKnown = history.length > 1 && hasConv;
+    const momentumKnown = can("momentum", history.length > 1 && hasConv);
     d.push({
       key: "momentum",
       label: "Momentum",
       icon: profile?.momentum_state?.includes("RISING") ? TrendingUp : profile?.momentum_state?.includes("DECLINING") ? TrendingDown : Minus,
+      hint: "Mostra a direção da relação nos últimos dias: se o interesse está subindo, estável ou caindo em relação ao período anterior.",
       value: null,
-      status: momentumKnown ? MOMENTUM_LABELS[profile!.momentum_state] || "Estável" : "Sem histórico suficiente",
+      status: momentumKnown ? MOMENTUM_LABELS[profile!.momentum_state] || "Estável" : "Sem dados",
       basis: [],
     });
 
+    const riskKnown = can("risk", hasConv);
     d.push({
       key: "risk",
       label: "Risco",
       icon: ShieldAlert,
       tone: "warn",
-      value: profile && hasConv ? Math.round(Number(profile.risk_score || 0)) : null,
-      status: hasConv ? bandM(Number(profile?.risk_score || 0)) : "Sem dados para avaliar risco",
+      hint: "Mede a chance de perder o contato: silêncio prolongado, mensagens dele sem resposta e objeções não tratadas.",
+      value: profile && riskKnown ? Math.round(Number(profile.risk_score || 0)) : null,
+      status: riskKnown ? bandM(Number(profile?.risk_score || 0)) : "Sem dados",
       partial,
       basis: ((profile?.risk_factors as any[]) || []).map((r: any) => r.label),
     });
 
-    const fitKnown = !!prospect || !!profile?.niche || !!profile?.city;
+    const fitKnown = can("fit", !!prospect || !!profile?.niche || !!profile?.city || Number(profile?.fit_score || 0) > 0);
+    const fitBasis: string[] = Array.isArray(engineFeatures.fit_basis) ? engineFeatures.fit_basis : [];
     d.push({
       key: "fit",
       label: "Fit",
       icon: Building2,
+      hint: "Mede o quanto a empresa se parece com o seu cliente ideal: segmento, região, presença digital, reputação e facilidade de contato.",
       value: profile && fitKnown ? Math.round(Number(profile.fit_score || 0)) : null,
-      status: fitKnown ? bandF(Number(profile?.fit_score || 0)) : "Sem dados da empresa",
+      status: fitKnown ? bandF(Number(profile?.fit_score || 0)) : "Sem dados",
       basis: [
         prospect?.category ? `segmento: ${prospect.category}` : "",
         prospect?.city ? `cidade: ${prospect.city}` : "",
         prospect?.rating != null ? `nota ${prospect.rating} no Google` : "",
         prospect?.website ? "possui site" : prospect ? "sem site identificado" : "",
-      ].filter(Boolean),
+        ...fitBasis,
+      ].filter(Boolean).slice(0, 6),
     });
 
+    const qualityKnown = can("quality", hasConv);
     d.push({
       key: "quality",
       label: "Qualidade",
       icon: Sparkles,
-      value: profile && hasConv ? Math.round(Number(profile.quality_score || 0)) : null,
-      status: hasConv ? bandF(Number(profile?.quality_score || 0)) : "Sem conversa para avaliar",
+      hint: "Mede a profundidade da conversa: equilíbrio entre quem fala, número de idas e vindas e velocidade de resposta do contato.",
+      value: profile && qualityKnown ? Math.round(Number(profile.quality_score || 0)) : null,
+      status: qualityKnown ? bandF(Number(profile?.quality_score || 0)) : "Sem dados",
       partial,
       basis: hasConv
         ? [
@@ -699,8 +763,9 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       key: "recency",
       label: "Recência",
       icon: Clock,
+      hint: "Mostra há quanto tempo foi a última interação registrada em qualquer um dos números conectados.",
       value: null,
-      status: hasConv && conv!.lastMessageAt ? `Última interação ${ago(conv!.lastMessageAt)}` : "Sem interação",
+      status: hasConv && conv!.lastMessageAt ? `Última interação ${ago(conv!.lastMessageAt)}` : "Sem dados",
       basis: [],
     });
 
@@ -708,13 +773,14 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       key: "stage",
       label: "Etapa",
       icon: ArrowRight,
+      hint: "Etapa atual do contato no funil, considerando o CRM, as negociações abertas e o estágio detectado na conversa.",
       value: null,
       status: stageLabel,
       basis: [],
     });
 
     return d;
-  }, [profile, conv, signals, history, prospect, hasConv, hasEngagementData, state, stageLabel]);
+  }, [profile, conv, signals, history, prospect, hasConv, hasEngagementData, state, stageLabel, engineFeatures]);
 
   const playbook = useMemo(
     () => buildPlaybook(state, profile, conv, prospect, lead || null, signals.map((s) => signalLabel(s.signal_type))),
@@ -846,9 +912,9 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
         <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/50 border-t border-border/50 bg-muted/15">
           {[
             { l: "Estado", v: notAnalyzed ? "Não analisado" : state === "PARTIAL" ? "Parcial" : "Completa" },
-            { l: "Confiança", v: `${confidence}%` },
             { l: "Mensagens", v: String(analyzedMessages) },
             { l: "Sinais", v: String(analyzedSignals) },
+            { l: "Etapa", v: stageLabel },
           ].map((s, i) => (
             <div key={i} className={cn("px-3 py-2", i > 1 && "border-t sm:border-t-0 border-border/50")}>
               <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium truncate">{s.l}</p>
