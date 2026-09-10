@@ -227,13 +227,11 @@ export const IntelligenceCenter = ({
     return leads.map((l) => {
       const p = getByPhone(l.phone_e164);
       const c = crm?.byPhone.get(phoneKey8(l.phone_e164));
-      // Fonte unica: perfil do motor central; fallback = motor legado ja normalizado 0-100.
-      const opportunity = p
-        ? Math.max(0, Math.min(100, Math.round(p.opportunity_score)))
-        : dimensionTo100(l.score_total);
-      const intent = p ? Math.round(p.intent_score) : dimensionTo100(l.score_intent);
-      const engagement = p ? Math.round(p.engagement_score) : dimensionTo100(l.score_engagement);
-      const risk = p ? Math.round(p.risk_score) : dimensionTo100(l.score_risk);
+      // Fonte unica: intel_lead_profiles. Sem perfil = nao analisado (0), nunca valor presumido.
+      const opportunity = p ? Math.max(0, Math.min(100, Math.round(p.opportunity_score))) : 0;
+      const intent = p ? Math.round(p.intent_score) : 0;
+      const engagement = p ? Math.round(p.engagement_score) : 0;
+      const risk = p ? Math.round(p.risk_score) : 0;
       const momentum = p
         ? momentumOf(p.momentum_state)
         : (l.risk_state === "AT_RISK" || l.risk_state === "CRITICAL" ? "down" : "unknown");
