@@ -24,7 +24,7 @@ interface KanbanColumnProps {
   onSelectAllInColumn?: (stageId: string, leadIds: string[]) => void;
   onUpdateLeadName?: (leadId: string, newName: string) => Promise<void>;
   columnWidth?: ColumnWidth;
-  isAgentSilenced?: boolean;
+  
   onAddLead?: (stageId: string) => void;
   members?: import('./ResponsibleAvatar').ResponsibleMember[];
   onChangeResponsible?: (leadId: string, userId: string | null) => Promise<void>;
@@ -65,7 +65,7 @@ const KanbanColumnComponent = ({
   onSelectAllInColumn,
   onUpdateLeadName,
   columnWidth = 'medium',
-  isAgentSilenced = false,
+  
   onAddLead,
   members = [],
   onChangeResponsible,
@@ -153,11 +153,6 @@ const KanbanColumnComponent = ({
             {leads.length}
           </span>
         </div>
-        {isAgentSilenced && (
-          <p className="text-[10px] text-muted-foreground/70 mt-1 leading-tight">
-            🤖 Agente não responde leads nesta coluna
-          </p>
-        )}
       </div>
 
       {/* Cards */}
