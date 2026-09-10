@@ -499,35 +499,52 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   const chattyPenalty = inbound.length >= 5 ? 0.55 + 0.45 * Math.min(1, substantiveRatio / 0.4) : 1;
   const quality = clamp(qualityRaw * chattyPenalty);
 
-  // FIT: nicho + regiao + maturidade digital + reputacao + contatabilidade
+  // FIT: so pode existir com evidencia real do lead/prospeccao.
+  // Cada componente entra apenas quando o dado existe; os pesos sao renormalizados.
   const fw = cfg.weights?.fit || DEFAULT_CONFIG.weights.fit;
   const nicheCfg = (cfg.niche_weights || {}) as Record<string, number>;
   const regionCfg = (cfg.region_weights || {}) as Record<string, number>;
   const icpNiche = (cp?.company_niche || "").toLowerCase();
   const leadNiche = (crm?.category || "").toLowerCase();
-  let nicheScore = crm ? 55 : 40;
-  if (leadNiche && icpNiche) {
-    const tokens = icpNiche.split(/[\s,/]+/).filter((t: string) => t.length > 3);
-    nicheScore = tokens.some((t: string) => leadNiche.includes(t)) ? 90 : 55;
-  }
-  if (leadNiche && nicheCfg[leadNiche] != null) nicheScore = clamp(nicheCfg[leadNiche]);
   const leadCity = (crm?.city || "").toLowerCase();
-  let regionScore = leadCity ? 60 : 45;
-  if (leadCity && regionCfg[leadCity] != null) regionScore = clamp(regionCfg[leadCity]);
-  const digitalMaturity = clamp(
-    (hasSite ? 45 : 5) + Math.min(30, reviewCount / 2) + (Array.isArray(crm?.social_media) || crm?.social_media ? 15 : 0)
-  );
-  // maturidade BAIXA = necessidade ALTA (potencial de melhoria)
-  const needFromMaturity = clamp(100 - digitalMaturity);
-  const reputation = clamp(rating ? (rating / 5) * 100 : 50);
-  const contactability = clamp((crm?.phone || rl.phone_e164 ? 60 : 20) + (hasSite ? 20 : 0) + (crm?.city ? 20 : 0));
-  const fit = clamp(
-    nicheScore * fw.niche +
-    regionScore * fw.region +
-    needFromMaturity * fw.digital_maturity +
-    reputation * fw.reputation +
-    contactability * fw.contactability
-  );
+  const hasMaturityData = hasSite || reviewCount > 0 || !!crm?.social_media;
+  const fitParts: { w: number; v: number; label: string }[] = [];
+
+  if (leadNiche) {
+    let nicheScore = 55;
+    if (icpNiche) {
+      const tokens = icpNiche.split(/[\s,/]+/).filter((t: string) => t.length > 3);
+      nicheScore = tokens.some((t: string) => leadNiche.includes(t)) ? 90 : 45;
+    }
+    if (nicheCfg[leadNiche] != null) nicheScore = clamp(nicheCfg[leadNiche]);
+    fitParts.push({ w: fw.niche, v: clamp(nicheScore), label: `segmento: ${crm?.category}` });
+  }
+  if (leadCity) {
+    const regionScore = regionCfg[leadCity] != null ? clamp(regionCfg[leadCity]) : 60;
+    fitParts.push({ w: fw.region, v: regionScore, label: `regiao: ${crm?.city}` });
+  }
+  if (hasMaturityData) {
+    const digitalMaturity = clamp(
+      (hasSite ? 45 : 5) + Math.min(30, reviewCount / 2) + (crm?.social_media ? 15 : 0)
+    );
+    // maturidade BAIXA = necessidade ALTA (potencial de melhoria)
+    fitParts.push({ w: fw.digital_maturity, v: clamp(100 - digitalMaturity), label: `maturidade digital ${digitalMaturity}/100` });
+  }
+  if (rating) {
+    fitParts.push({ w: fw.reputation, v: clamp((rating / 5) * 100), label: `reputacao ${rating}` });
+  }
+  if (crm) {
+    const contactability = clamp((crm?.phone || rl.phone_e164 ? 60 : 20) + (hasSite ? 20 : 0) + (crm?.city ? 20 : 0));
+    fitParts.push({ w: fw.contactability, v: contactability, label: `contatabilidade ${contactability}/100` });
+  }
+
+  // Menos de dois componentes reais nao permite afirmar adequacao ao perfil ideal.
+  const fitAvailable = fitParts.length >= 2;
+  const fitWeightSum = fitParts.reduce((a, p) => a + p.w, 0) || 1;
+  const fit = fitAvailable
+    ? clamp(fitParts.reduce((a, p) => a + p.v * p.w, 0) / fitWeightSum)
+    : 0;
+  const fitBasis = fitParts.map((p) => p.label);
 
   // MOMENTUM: variacao de pontos nas ultimas janelas
   const win = Number(cfg.decay?.momentum_window_days || 7);
@@ -599,16 +616,46 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   if (lossMatch >= 50) { risk = clamp(risk + 10); riskFactors.push({ key: "LOSS_PATTERN", label: `comportamento parecido com leads perdidos (${lossMatch}%)`, weight: 10 }); }
 
   // OPPORTUNITY
+  // Somente dimensoes com evidencia entram no calculo; os pesos sao renormalizados
+  // para que uma dimensao ausente nunca seja tratada como valor real.
   const ow = cfg.weights?.opportunity || DEFAULT_CONFIG.weights.opportunity;
-  let opportunity =
-    fit * ow.fit + intent * ow.intent + engagement * ow.engagement +
-    quality * ow.quality + momentumNorm * ow.momentum + patternMatch * ow.pattern;
+  const intentAvailable = evidenceSignals > 0;
+  const engagementAvailable = hasInteraction;
+  const qualityAvailable = messages.length > 0;
+  const momentumAvailable = (scoreLogs || []).length > 0;
+  const patternAvailable = patternMatch > 0;
+  const recencyAvailable = !!lastActivity;
+  const riskAvailable = riskFactors.length > 0;
+
+  const opParts: { w: number; v: number }[] = [];
+  if (fitAvailable) opParts.push({ w: ow.fit, v: fit });
+  if (intentAvailable) opParts.push({ w: ow.intent, v: intent });
+  if (engagementAvailable) opParts.push({ w: ow.engagement, v: engagement });
+  if (qualityAvailable) opParts.push({ w: ow.quality, v: quality });
+  if (momentumAvailable) opParts.push({ w: ow.momentum, v: momentumNorm });
+  if (patternAvailable) opParts.push({ w: ow.pattern, v: patternMatch });
+
+  const opWeightSum = opParts.reduce((a, p) => a + p.w, 0);
+  let opportunity = opWeightSum > 0
+    ? opParts.reduce((a, p) => a + p.v * p.w, 0) / opWeightSum
+    : 0;
   opportunity += compoundBonus;
   if (present.has("NEGATIVE_INTENT")) opportunity *= 0.35;
   opportunity = clamp(opportunity);
   // REGRA DE INTEGRIDADE: sem conversa e sem sinais nao existe oportunidade calculada.
   // 0 aqui significa "nao analisado", nunca "baixa oportunidade".
   if (analysisState === "NO_DATA") opportunity = 0;
+
+  const availability = {
+    fit: fitAvailable,
+    intent: intentAvailable,
+    engagement: engagementAvailable,
+    quality: qualityAvailable,
+    momentum: momentumAvailable,
+    risk: riskAvailable,
+    recency: recencyAvailable,
+    pattern: patternAvailable,
+  };
 
   // BEHAVIOR
   const behaviors: string[] = [];
