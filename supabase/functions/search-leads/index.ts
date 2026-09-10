@@ -327,31 +327,62 @@ serve(async (req) => {
     // Get user profile to check opportunity limits (não se aplica ao modo interno da Wiize API)
     let profile: { searches_used: number; searches_limit: number } = { searches_used: 0, searches_limit: 0 };
     let remainingOpportunities: number;
+    // Conta dona dos dados (sub-usuários compartilham a conta do dono)
+    let ownerId = user.id;
+    // Perfil onde o consumo é contabilizado (dono da conta, quando houver)
+    let billingProfileId = user.id;
 
     if (internalMode) {
       const requested = Number(rawBody?.limit);
       remainingOpportunities = Math.min(Number.isFinite(requested) && requested > 0 ? requested : 20, 60);
     } else {
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('searches_used, searches_limit, plan, bonus_searches, extra_opportunities_packs')
-        .eq('id', user.id)
-        .single();
+      const PROFILE_COLS = 'id, searches_used, searches_limit, plan, bonus_searches, extra_opportunities_packs, parent_owner_id';
 
-      if (profileError || !profileData) {
-        console.error('Profile error:', profileError);
+      let { data: profileData } = await supabase
+        .from('profiles')
+        .select(PROFILE_COLS)
+        .eq('id', user.id)
+        .maybeSingle();
+
+      // Perfil pode ainda não existir logo após o cadastro (trigger assíncrono).
+      if (!profileData) {
+        await new Promise((r) => setTimeout(r, 800));
+        const retry = await supabase
+          .from('profiles')
+          .select(PROFILE_COLS)
+          .eq('id', user.id)
+          .maybeSingle();
+        profileData = retry.data;
+      }
+
+      if (!profileData) {
+        console.error('Profile not found for user:', user.id);
         return new Response(
-          JSON.stringify({ error: 'Erro ao buscar perfil do usuário' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: 'Seu perfil ainda está sendo criado. Aguarde alguns segundos e tente novamente.' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
+      }
+
+      // Sub-usuário: dados e limites pertencem ao dono da conta
+      if ((profileData as any).parent_owner_id) {
+        ownerId = (profileData as any).parent_owner_id as string;
+        const { data: ownerProfile } = await supabase
+          .from('profiles')
+          .select(PROFILE_COLS)
+          .eq('id', ownerId)
+          .maybeSingle();
+        if (ownerProfile) {
+          profileData = ownerProfile;
+          billingProfileId = ownerId;
+        }
       }
 
       profile = profileData as any;
       // Effective limit = plan + add-on packs (1k each) + carried bonus
       const extraPacks = (profileData as any).extra_opportunities_packs || 0;
       const bonus = (profileData as any).bonus_searches || 0;
-      const effectiveLimit = profileData.searches_limit + extraPacks * 1000 + bonus;
-      remainingOpportunities = effectiveLimit - profileData.searches_used;
+      const effectiveLimit = ((profileData as any).searches_limit || 0) + extraPacks * 1000 + bonus;
+      remainingOpportunities = effectiveLimit - ((profileData as any).searches_used || 0);
 
       if (remainingOpportunities <= 0) {
         console.log('Opportunity limit reached for user:', user.id);
@@ -365,6 +396,7 @@ serve(async (req) => {
         );
       }
     }
+
 
 
     console.log(`Searching for: ${keyword} in ${location}`);
@@ -570,16 +602,7 @@ serve(async (req) => {
     const invalidCount = totalWithPhone - allValidLeads.length;
 
     if (!internalMode) {
-      // Resolve account owner (sub-users share the owner's data)
-      let ownerId = user.id;
-      try {
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('parent_owner_id')
-          .eq('id', user.id)
-          .maybeSingle();
-        if (prof?.parent_owner_id) ownerId = prof.parent_owner_id as string;
-      } catch (_) { /* keep user.id */ }
+      // ownerId / billingProfileId já resolvidos na checagem de limite
 
       // Save leads to the leads table with enriched data.
       // owner/responsible are set explicitly (not relying on DB triggers) so the
@@ -603,6 +626,7 @@ serve(async (req) => {
       }));
 
       let savedCount = 0;
+      let persistedIds: string[] = [];
       if (leadsToInsert.length > 0) {
         // Preferred path: upsert ignoring duplicates (needs unique index user_id,phone)
         const { data: upserted, error: insertError } = await supabase
@@ -611,17 +635,31 @@ serve(async (req) => {
           .select('id');
 
         if (!insertError) {
-          savedCount = upserted?.length ?? leadsToInsert.length;
+          persistedIds = (upserted || []).map((r: any) => r.id);
+          savedCount = persistedIds.length;
           console.log(`Saved ${savedCount} leads to leads table`);
         } else {
           // Fallback: insert one by one, skipping duplicates / unexpected conflicts.
           console.error('Upsert failed, falling back to individual inserts:', insertError);
           for (const row of leadsToInsert) {
-            const { error: rowErr } = await supabase.from('leads').insert(row);
-            if (!rowErr) savedCount++;
+            const { data: ins, error: rowErr } = await supabase.from('leads').insert(row).select('id').maybeSingle();
+            if (!rowErr) { savedCount++; if (ins?.id) persistedIds.push(ins.id); }
             else if (rowErr.code !== '23505') console.error('Lead insert failed:', rowErr.message);
           }
           console.log(`Fallback saved ${savedCount}/${leadsToInsert.length} leads`);
+        }
+
+        // Garantia: linhas antigas (ou criadas por triggers) precisam ter dono/origem
+        // corretos, senão somem da Gestão de Oportunidades.
+        const phones = leadsToInsert.map((l) => l.phone).filter(Boolean);
+        if (phones.length > 0) {
+          const { error: fixErr } = await supabase
+            .from('leads')
+            .update({ owner_user_id: ownerId, origin: 'oportunidades' })
+            .eq('user_id', user.id)
+            .in('phone', phones)
+            .is('owner_user_id', null);
+          if (fixErr) console.error('Owner backfill failed:', fixErr.message);
         }
       }
 
@@ -629,11 +667,12 @@ serve(async (req) => {
       if (savedCount > 0) {
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ searches_used: profile.searches_used + savedCount })
-          .eq('id', user.id);
+          .update({ searches_used: (profile.searches_used || 0) + savedCount })
+          .eq('id', billingProfileId);
         if (updateError) console.error('Error updating opportunity count:', updateError);
-        profile.searches_used = profile.searches_used + savedCount;
+        profile.searches_used = (profile.searches_used || 0) + savedCount;
       }
+
 
 
       // Save search to history with leads data

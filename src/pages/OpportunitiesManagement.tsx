@@ -182,7 +182,7 @@ export default function OpportunitiesManagement() {
     if (user || publicDemo) {
       fetchCompanyProfile();
     }
-  }, [user, publicDemo]);
+  }, [user, publicDemo, accountOwnerId]);
 
   // Cooldown timer
   useEffect(() => {
@@ -204,10 +204,12 @@ export default function OpportunitiesManagement() {
     }
     if (!user) return;
     try {
+      const ownerId = accountOwnerId || user.id;
       const { data } = await supabase
         .from("company_profiles" as any)
         .select("*")
-        .eq("owner_user_id", accountOwnerId)
+        .or(`owner_user_id.eq.${ownerId},user_id.eq.${user.id}`)
+        .limit(1)
         .maybeSingle();
 
       if (data) {
@@ -249,12 +251,17 @@ export default function OpportunitiesManagement() {
       return;
     }
     if (!user) return;
+    // Enquanto o perfil (dono da conta) ainda não carregou, não consultamos com
+    // dono nulo — isso devolvia lista vazia para quem acabou de entrar.
+    const ownerId = accountOwnerId || user.id;
     setLoading(true);
     try {
+      const cols = "id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id, archived_at";
       const { data, error } = await supabase
         .from("leads")
-        .select("id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id, archived_at")
-        .eq("owner_user_id", accountOwnerId)
+        .select(cols)
+        // inclui linhas antigas sem owner definido, criadas pelo próprio usuário
+        .or(`owner_user_id.eq.${ownerId},and(owner_user_id.is.null,user_id.eq.${user.id})`)
         .in("origin", ["oportunidades", "prospeccao"])
         .is("archived_at", null)
         .order("created_at", { ascending: false });
@@ -267,6 +274,7 @@ export default function OpportunitiesManagement() {
       setLoading(false);
     }
   };
+
 
   // Realtime — merge row-level changes in place (no full refetch, no reorder)
   useEffect(() => {
@@ -293,10 +301,15 @@ export default function OpportunitiesManagement() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "leads" },
         (payload) => {
-          const inserted = payload.new as OpportunityLead;
+          const inserted = payload.new as any as OpportunityLead & { owner_user_id?: string | null; user_id?: string | null };
           if (!inserted?.id) return;
+          const ownerId = accountOwnerId || user.id;
+          const mine = inserted.owner_user_id === ownerId || inserted.user_id === user.id;
+          const isOpportunity = !inserted.origin || ["oportunidades", "prospeccao"].includes(inserted.origin);
+          if (!mine || !isOpportunity || inserted.archived_at) return;
           setLeads((prev) => (prev.some((l) => l.id === inserted.id) ? prev : [inserted, ...prev]));
         }
+
       )
       .on(
         "postgres_changes",
