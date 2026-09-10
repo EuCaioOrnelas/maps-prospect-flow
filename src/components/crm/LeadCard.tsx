@@ -260,7 +260,7 @@ const LeadCardComponent = ({
       {/* Inteligência — resultado 0-100 do motor central (mesma fonte da aba interna).
           Sem análise o valor é 0 e neutro: ausência de dados, não baixa oportunidade. */}
       {(() => {
-        const analyzed = !!intel && (intel as any)?.features?.analysis_state !== "NO_DATA";
+        const analyzed = isProfileAnalyzed(intel);
         const s = analyzed ? Math.max(0, Math.min(100, Math.round(intel!.opportunity_score))) : 0;
         return (
           <div className="flex items-center gap-2">

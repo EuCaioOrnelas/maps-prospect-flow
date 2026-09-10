@@ -627,10 +627,10 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
     // O estado gravado pelo motor manda; o frontend so complementa quando ele nao existe.
     const stored = engineFeatures.analysis_state as AnalysisState | undefined;
     if (stored && msgs === 0 && sigs === 0) return stored;
-    if (msgs === 0 && sigs === 0) return "NO_DATA";
+    if (msgs === 0 && sigs === 0) return isProfileAnalyzed(profile) ? "PARTIAL" : "NO_DATA";
     if (msgs < 4 || sigs < 2) return "PARTIAL";
     return "COMPLETE";
-  }, [conv, signals.length, engineMessages, engineSignals, engineFeatures.analysis_state]);
+  }, [conv, signals.length, engineMessages, engineSignals, engineFeatures.analysis_state, profile]);
 
   const opportunity = profile ? Math.round(Number(profile.opportunity_score || 0)) : null;
   const hasConv = !!conv && conv.total > 0;
@@ -638,7 +638,7 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
   const hasEngagementData = hasConv || (history.length > 0 && Number(profile?.engagement_score || 0) > 0);
 
   // "Não analisado" != "baixa oportunidade": sem perfil ou sem evidência, o número é 0 e neutro.
-  const notAnalyzed = !profile || state === "NO_DATA" || opportunity === null;
+  const notAnalyzed = !isProfileAnalyzed(profile) || opportunity === null;
   const analyzedMessages = Math.max(conv?.total || 0, engineMessages);
   const analyzedSignals = Math.max(signals.length, engineSignals);
 
@@ -715,7 +715,6 @@ export function LeadIntelligencePanel({ phone, lead, className }: Props) {
       key: "risk",
       label: "Risco",
       icon: ShieldAlert,
-      tone: "warn",
       hint: "Mede a chance de perder o contato: silêncio prolongado, mensagens dele sem resposta e objeções não tratadas.",
       value: profile && riskKnown ? Math.round(Number(profile.risk_score || 0)) : null,
       status: riskKnown ? bandM(Number(profile?.risk_score || 0)) : "Sem dados",
