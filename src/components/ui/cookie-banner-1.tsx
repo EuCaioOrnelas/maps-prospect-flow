@@ -116,8 +116,10 @@ const CookiePanel = (props: CookiePanelProps) => {
       aria-label="Aviso de cookies"
       className={cn(
         "fixed bottom-4 left-4 z-[100] w-[min(560px,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto",
-        "transition-all duration-500 ease-out",
-        visible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-8",
+        "transition-all duration-700",
+        visible
+          ? "opacity-100 translate-x-0 [transition-timing-function:cubic-bezier(0.34,1.4,0.64,1)]"
+          : "opacity-0 -translate-x-14 [transition-timing-function:cubic-bezier(0.4,0,1,1)]",
         className,
       )}
     >
