@@ -410,7 +410,8 @@ const Login = () => {
               )}
               Entrar com Google
             </Button>
-
+              </>
+            )}
           </div>
         </div>
       </div>
