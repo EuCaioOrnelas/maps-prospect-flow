@@ -3,8 +3,21 @@ import { encryptConversationPreview, encryptMessageFields, isEncryptedMessage } 
 
 Deno.serve(async (req) => {
   const expected = Deno.env.get("WIIZE_API_CRON_SECRET");
-  if (!expected || req.headers.get("x-cron-secret") !== expected) return new Response("Unauthorized", { status: 401 });
   const db = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+  const suppliedCronSecret = req.headers.get("x-cron-secret");
+  let authorized = Boolean(expected && suppliedCronSecret === expected);
+  if (!authorized) {
+    const bearer = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
+    if (bearer) {
+      const { data: claims } = await db.auth.getClaims(bearer);
+      const callerId = claims?.claims?.sub as string | undefined;
+      if (callerId) {
+        const { data: isAdmin } = await db.rpc("has_role", { _user_id: callerId, _role: "admin" });
+        authorized = isAdmin === true;
+      }
+    }
+  }
+  if (!authorized) return new Response("Unauthorized", { status: 401 });
   let migratedMessages = 0;
   let migratedConversations = 0;
   try {
