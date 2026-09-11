@@ -44,7 +44,7 @@ export const MidCTASection = ({ onSignupClick }: MidCTASectionProps) => {
               <span className="text-primary">funcionar assim.</span>
             </h2>
 
-            <p className="mx-auto mt-4 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">
+            <p className="mx-auto mt-4 max-w-xl text-balance text-sm leading-relaxed text-muted-foreground sm:text-lg">
               Comece a usar a Wiize e coloque sua operação B2B para trabalhar em um só lugar.
             </p>
 

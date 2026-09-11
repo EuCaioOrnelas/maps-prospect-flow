@@ -56,7 +56,7 @@ export const OfficialAPISection = () => {
  <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">
  Tecnologia oficial e segura
  </h2>
- <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+ <p className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
  A Wiize utiliza a API oficial da Meta para campanhas de relacionamento.
  Sem gambiarras, sem riscos desnecessários.
  </p>

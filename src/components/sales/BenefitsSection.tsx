@@ -30,7 +30,7 @@ export const BenefitsSection = () => {
  Menos esforço.<br />
  <span className="text-shimmer-highlight">Mais resultado.</span>
  </h2>
- <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+ <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
  A Wiize reduz custo operacional, aumenta produtividade comercial e transforma vendas em um processo previsível e escalável.
  </p>
  </motion.div>

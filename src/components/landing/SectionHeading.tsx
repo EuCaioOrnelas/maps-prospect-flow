@@ -43,7 +43,7 @@ export const SectionHeading = ({
 
  const highlightClass =
  highlightFit === "tight"
- ? "whitespace-nowrap text-[1.6rem] xs:text-[1.85rem] sm:text-[2.4rem] md:text-[2.95rem] lg:text-[3.25rem]"
+ ? "whitespace-normal sm:whitespace-nowrap text-[1.45rem] xs:text-[1.85rem] sm:text-[2.4rem] md:text-[2.95rem] lg:text-[3.25rem]"
  : "text-[1.85rem] sm:text-[2.5rem] md:text-[3.1rem] lg:text-[3.4rem]";
 
  return (
@@ -65,7 +65,7 @@ export const SectionHeading = ({
  </span>
  </h2>
  {description && (
- <p className={`text-base sm:text-lg text-muted-foreground leading-relaxed ${align === "center" ? "max-w-2xl mx-auto" : ""}`}>
+ <p className={`text-sm sm:text-lg text-muted-foreground leading-relaxed ${align === "center" ? "max-w-2xl mx-auto" : ""}`}>
  {description}
  </p>
  )}

@@ -39,7 +39,7 @@ export const OfferSection = ({ onSignupClick }: OfferSectionProps) => {
  Tudo que você precisa<br />
  <span className="text-shimmer-highlight">em uma plataforma</span>
  </h2>
- <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+ <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
  Para empresas B2B que querem gerar demanda com escala, previsibilidade e inteligência.
  </p>
  </motion.div>
